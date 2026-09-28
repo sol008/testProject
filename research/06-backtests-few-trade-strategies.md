@@ -7,13 +7,13 @@
 
 ## TL;DR
 
-1. **Crash-buying works per trade, but it does not work as a strategy on its own.** Buying the S&P 500 after a -20% drawdown from its all-time high (ATH) and holding 3 years won 10 of 12 times since 1928 (83%). The median gain was +48% (total return, 1x). The worst was -58% (Oct-1929). Waiting in T-bills for these signals returned only **4–8% a year over 1928–2026, versus 10.2% for buy-and-hold**, because the index spends most of its time near highs. Use crash signals to **add** exposure to a portfolio that is already invested. Do not sit in cash waiting for them.
+1. **Crash-buying works per trade, but it does not work as a strategy on its own.** Buying the S&P 500 after a -20% drawdown from its all-time high (ATH) and holding 3 years won 10 of 12 times since 1928 (83%). The median gain was +48% (total return, 1x). The worst was -58% (Oct-1929). Waiting in T-bills for these signals returned only **3–8% a year over 1928–2026, versus 10.2% for buy-and-hold**, because the index spends most of its time near highs. Use crash signals to **add** exposure to a portfolio that is already invested. Do not sit in cash waiting for them.
 2. **"Hold until a new ATH" always wins eventually in the US, but it can take decades.** It took 25.0 years after 1929 (price), 7.5 years after 1973 and 7.2 years after 2000. Outside the US: 34 years for the Nikkei (1990–2024), 15 years for the Nasdaq (2000–2015), and 26+ years and counting for the Athens index.
 3. **Leverage is what turns a good rule into ruin.**
    - The 3x daily-rebalanced model (calibrated to SSO/UPRO within 0.1 pp/yr) lost more than 90% on every 1929–31 entry and on the Jul-2008 entry.
    - **Out of sample (36 non-US indices, 199 trades), 3x crash-buys held 3 years lost more than 50% in 43% of trades.** The median trade was -36%.
    - At 1x the same trades won 69% of the time, with a median of +21%.
-4. **Failure filters.** No filter would have avoided 1929 without hindsight: VIX>40, credit spread, Fed easing, CAPE<20, 50/200-day trend confirmation and stop-losses all fail on it. Out of sample, three things helped modestly:
+4. **Failure filters.** None of VIX>40, credit spread, Fed easing, CAPE<20 or 50/200-day trend confirmation avoids the 1929–32 losses. A price-vs-own-10-year-average filter blocked the 1929 entries but still let an Oct-1930 entry through (-37% at 3 years). Out of sample, three things helped modestly:
    - deeper thresholds: 3-year geometric return per trade was +15% at -20%, +21% at -40% and +35% at -50%;
    - price below 1.3x its own 10-year average;
    - a 200-day trend confirmation.
@@ -25,7 +25,7 @@
    - Its real use is to gate leverage: 10-month-SMA 3x returned 16.2% vs 9.6% for 3x buy-and-hold.
    - After publication it lagged: 2007–2026 1x returned 9.1% vs 11.0%. The 200-day MA with 3x (Gayed-Bilello) returned 23.7% vs 29.4% for 3x buy-and-hold in 2016–2026. GEM dual momentum returned 8.9% vs 15.2% in 2013–2026.
 6. **VIX ≥ 45 spike buys:** 8 signals since 1986, 7 wins, median 1-year gain +24%, worst -7% (Sep-2008). But the pre-VIX analogue (realised-volatility spikes, 1929–46) won only 4 of 11. The modern record is probably a regime-specific streak.
-7. **Bitcoin rules show the largest per-trade % returns in the data (+200% to +7,600% per trade), and the evidence behind them is the weakest.** There are 3–4 cycles. Returns fell roughly an order of magnitude per cycle: buying 18 months before a halving and selling 18 months after returned +6,802%, +4,791%, +920% and +478%. Intra-trade drawdowns reached -93%, and survivorship bias is extreme.
+7. **Bitcoin rules show the largest per-trade % returns in the data (hundreds to tens of thousands of percent per trade), and the evidence behind them is the weakest.** There are 3–4 cycles. Returns fell roughly an order of magnitude per cycle: buying 18 months before a halving and selling 18 months after returned +6,802%, +4,791%, +920% and +478%. Intra-trade drawdowns reached -93%, and survivorship bias is extreme.
 8. **Valuation is a poor timer but a strong risk flag.** Today's CAPE is **40.7 (own computation) / 41.5 (multpl.com, 25-Sep-2026)**, the 99th percentile since 1881. The 34 months in history with CAPE ≥ 35 (all 1998–2001) returned between -5.9% and +1.1% a year real over the next 10 years. The log-CAPE regression implies roughly 0–1% real per year for the next decade.
 9. **Status on 2026-09-28:**
    - **No US crash-buy trigger.** S&P 7,683.69 is 1.5% below its 13-Aug-2026 ATH of 7,798.99; the -20% line is 6,239. VIX is 16, HY OAS is 2.93%, and the S&P is above both its 10-month and 200-day moving averages.
@@ -173,7 +173,7 @@ Two things stand out. First, leverage raises the *average* trade but lowers the 
 | price > 50-day SMA (armed) | -20% | 12 | 75% | +43% | -58% | 67% | -90% | 4.2 |
 | price > 200-day SMA (armed) | -20% | 12 | 92% | +45% | -68% | 83% | -91% | 3.8 |
 | CAPE < 20 | -20% | 9 | 89% | +48% | -48% | 67% | -92% | 4.8 |
-| price < 1.3× 10y avg | -20% | 9 | 89% | +38% | -28% | 56% | -90% | 4.4 |
+| price < 1.3× 10y avg | -20% | 9 | 89% | +38% | -37% | 56% | -90% | 5.1 |
 | T-bill ≥1pp lower than 12m ago ("easing") | -20% | 7 | 71% | +43% | -64% | 57% | -90% | 6.3 |
 
 Every filter still let at least one 1929–31 entry through at 3x (worst -90% or below), because the 1929–32 decline contained many bear-market rallies, easing moves and volatility spikes. The filters mostly *delay* entries, and **a delayed entry into a 1929 is still a 1929**.
@@ -189,7 +189,7 @@ Every filter still let at least one 1929–31 entry through at 3x (worst -90% or
 | -40% | 3y | 8 | 75% | +28% | -48% | 38% | -46% |
 | -50% | 3y | 3 | 100% | +59% | +35% | 100% | +59% |
 
-Buying every new 20% bear market mechanically meant buying **eleven times between Oct-1929 and Jan-1932**. All eleven 3x entries were ruined, and the 1x entries lost up to 59% within a year. The three -50% bear-mode signals (May-1932, Mar-1938, Nov-2008) all came near major lows and all won. That is n = 3.
+Buying every new bear market mechanically meant buying **13 tranches between Oct-1929 and Dec-1931**, 5 of them at the -20% level. At 3x, 12 of the 13 were ruined within 3 years; at 1x they lost up to 59% within a year. The three -50% bear-mode signals (May-1932, Mar-1938, Nov-2008) all came near major lows and all won. That is n = 3.
 
 ### 1.6 Strategy level: idle money in cash vs. an invested core that is levered up during crash trades
 
@@ -207,7 +207,7 @@ Buying every new 20% bear market mechanically meant buying **eleven times betwee
 
 Two conclusions follow.
 
-1. **Sitting in cash waiting for crashes costs 3–6 percentage points a year.** Over 98 years that is the difference between roughly 12,000x and 50–1,500x final wealth.
+1. **Sitting in cash waiting for crashes costs 3–6 percentage points a year.** Over 98 years that is the difference between roughly 15,000x (buy-and-hold total return) and 20–1,500x final wealth.
 2. **Switching an invested core from 1x to 2x during crash trades added about 1–3 pp a year.** It did so at a much deeper worst drawdown (-73% to -97%), and the full-sample result depends entirely on whether 1929 is in the sample. From 1950 onward the 2x overlay nearly matches permanent 2x (14.6% vs 15.1%) with a smaller drawdown (-73% vs -88%).
 
 ### 1.7 Synthetic 2-year calls
@@ -247,7 +247,7 @@ The call portfolio had the best loss profile of any leveraged implementation: it
 | -50% | 1992-04-01 | 0.95 | +3% | -17% | -4% | -73% | 31.9 years, +110% |
 | BoJ easing ≥1pp + DD ≥20% | 1991-12-03 | — | -22% | -13% | -7% | -69% | 32.2 years |
 
-In 1989 Japan's CAPE was around 90 (published estimates; local earnings data was not available here). Even the -50% tranche lost at 3 and 5 years, and **policy easing did not help**: the BoJ cut from 6% in 1991 to 0.5% by 1995. The Nikkei then fell another 81% peak-to-trough, reaching its low in 2009.
+In 1989 Japan's CAPE was around 90 (published estimates; local earnings data was not available here). Even the -50% tranche lost at 3 and 5 years, and **policy easing did not help**: the BoJ cut from 6% in 1991 to 0.5% by 1995. The Nikkei ultimately fell 82% peak-to-trough, with the low in March 2009.
 
 ### 2.2 Nasdaq Composite and Nasdaq-100, 2000
 
@@ -325,7 +325,10 @@ Staging lowers the average return and roughly halves the dispersion.
 
 - **The stop-loss is the in-sample winner** (it "fixes" 1929). **Out of sample it destroys return**: the international 1x geometric return falls from +18% to +5%. Do not use it.
 - **VIX ≥ 40** is the worst in-sample filter (it fires on 1929-type panics). Out of sample it is neutral to negative.
-- **Valuation relative to the market's own history** (price < 1.1–1.3× its 10-year average) is mildly positive in all three samples. In the international data it raises the 1x geometric return from +18% to +19%, and at 3x it cuts the geometric loss from -41% to -21/-24% and the P(loss>30%) from 52% to 39–41%. It flags the classic bubble crashes: Nasdaq 2000 (3.0×), Nikkei 1990 (1.9×), Shanghai 2007 (2.8×) and KOSPI 2026 (2.7×). It does *not* flag 1929 (Shiller's 10-year average rose with the 1920s boom), Ireland 2007 (1.3×) or Greece.
+- **Valuation relative to the market's own history** (price < 1.1–1.3× its 10-year average) is mildly positive in all three samples. In the international data it raises the 1x geometric return from +18% to +19%, and at 3x it cuts the geometric loss from -41% to -21/-24% and the P(loss>30%) from 52% to 39–41%.
+  - **What it catches:** the classic bubble crashes, namely Nasdaq 2000 (3.0×), Nikkei 1990 (1.9×), Shanghai 2007 (2.8×) and KOSPI 2026 (2.7×), plus the **Oct/Nov-1929 S&P entries (1.4–1.9×)**.
+  - **What it misses:** a later S&P entry in Oct-1930 (1.30×; -37% at 3y, ruin at 3x), Ireland's 2007–08 tranches (0.8–1.3×) and Greece (too little history to compute).
+  - **What it costs:** it also blocks winners, namely 1957, 1987 and 2022 (1.4–1.5×).
 - **A 200-day trend confirmation** is the best out-of-sample filter for leverage. It does not help 1x much.
 - **Deeper thresholds** (-40% and -50%) help consistently out of sample, and they reduce trade count.
 - **Nothing makes 3x safe.** Even the best filtered 3x variants lose more than 30% in about 40% of international trades.
@@ -381,7 +384,7 @@ Staging lowers the average return and roughly halves the dispersion.
 **Out-of-sample check on 36 non-US series (price-only):**
 
 - The SMA rule cut max drawdown in **36 of 36** markets (median -36% vs -64%).
-- It lifted CAGR in 26 of 36 (median +0.4 pp/yr). Timing earns T-bills when out while price-only buy-and-hold misses about 2–3% of dividends, so on a total-return basis the CAGR effect is roughly zero.
+- It lifted CAGR in 26 of 36 (median +0.4 pp/yr). These are price indices, so both sides omit dividends. With dividends, buy-and-hold collects them all the time while timing collects them only about 65% of the time. Correcting for that (about -0.9 pp/yr for timing) turns the +0.4 pp price-basis edge into roughly -0.5 pp/yr, so **there is no return edge**.
 - **The robust effect is drawdown control:**
   - Nikkei max DD -40% vs -81%;
   - Athens -30% vs -91%;
@@ -408,7 +411,7 @@ Signal: close above the 200-day SMA → hold L× from the next close; otherwise 
 
 What it shows:
 
-- The Gayed-Bilello finding replicates over 1928–2026: leverage is survivable only with a trend filter. 3x buy-and-hold went to -99.9% in 1929–32 and to -99% in 2000–09.
+- The Gayed-Bilello finding replicates over 1928–2026: leverage is survivable only with a trend filter. 3x buy-and-hold went to -99.9% in 1929–32 and to -98% in 2000–09.
 - **Post-publication, every timed version lagged leveraged buy-and-hold**, because 2016–2026 had short, V-shaped sell-offs (2018, 2020, 2025) that whipsawed the rule.
 - The 3% band gives the best trade-off: 0.6 round trips a year and the smallest post-publication shortfall.
 - Even with the filter, 3x suffered -91% to -94% drawdowns (1929–32), because the signal lags by construction.
@@ -435,7 +438,7 @@ Data allows 1991-07 → 2026-08.
 | 2001–2012 | 11.2% | 2.6% |
 | **2013–2026 (post-publication)** | **8.9%** | **15.2%** |
 
-The whole edge came from 2001–2012, the in-sample decade of the original research. Per holding spell: 55 spells, 69% won, median +2.1%, worst -13%.
+The whole edge came from 2001–2012, which lies inside the original paper's backtest window. Per holding spell: 55 spells, 69% won, median +2.1%, worst -13%.
 
 **Current GEM pick (ETF proxies, 12 months to 2026-09-28):** SPY +16.9%, VEU +21.5%, T-bills about 3.7%, so hold **ex-US**.
 
@@ -529,7 +532,7 @@ The "+18 months" sells landed near the cycle tops: May-2014, Jan-2018 (one month
 
 - 40.72 on my computation (September-2026 average price, 10-year real earnings through June 2026, carried forward).
 - 41.48 per multpl.com (2026-09-25).
-- This is the **98.9th percentile of all months since 1881**. Only Dec-1998 to Sep-2000 were higher (peak 44.2).
+- This is the **98.9th percentile of all months since 1881**. The only higher months were 18 months between Mar-1999 and Sep-2000 (peak 44.0 in Dec-1999 on this computation; Shiller's published peak is 44.2) and Aug-2026 (41.2).
 
 **Implied next-10-year real return** from regressing forward returns on log(CAPE) (HAC t-stat -4.8):
 
@@ -624,7 +627,7 @@ Definition: monthly 10-year Treasury minus 3-month T-bill; the signal is the fir
 | 2019-10 | 4 | +10% | +57% | -34% | yes (5m) |
 | **2024-12** | **25** | **+18%** | (open) | -19% | **not so far** |
 
-A recession followed within 24 months in 9 of 11 cases. But the S&P's 12-month return after the signal averaged **+8.7%**, versus a +12.6% unconditional average. Selling on the signal avoided 2 major bear markets (2001, 2007) and missed large rallies in about 6 of the other 9 cases. **As a trade trigger it is roughly break-even and should not be used to go to cash.** At most, it can justify reducing leverage.
+A recession followed within 24 months in 9 of 11 cases, but in 5 of those 9 it had already begun when the curve re-steepened. The S&P's 12-month return after the signal averaged **+8.7%**, versus a +12.6% unconditional average. Selling on the signal avoided 2 major bear markets (2001, 2007) and missed large rallies in about 6 of the other 9 cases. **As a trade trigger it is roughly break-even and should not be used to go to cash.** At most, it can justify reducing leverage.
 
 ---
 
@@ -713,7 +716,7 @@ Expected volume is about 0.6–1 core switch a year, one US crash episode every 
 1. **Core risk switch.**
    - Test the core index's month-end close against its 10-month SMA, or use the daily 200-day SMA with a ±3% band.
    - Execute at the next close.
-   - Expect about 0.6–0.75 round trips a year and about 40% of trades to be whipsaws (median loss about -2% to -5%).
+   - Expect about 0.6–0.75 round trips a year and about 40% of trades to be whipsaws (the median losing spell was about -4%).
    - The purpose is drawdown control (US max DD -48% vs -83%; better in 36/36 international markets), **not** extra return. Expect to lag buy-and-hold in bull decades (post-2007 about -2 pp a year).
 2. **Crash-buy overlay (broad indices only).** Use S&P 500 / MSCI World / ACWI, drawdown measured from the ATH on closes.
    - **Tranches:** at -20%, -30%, -40% and -50%, add 10%, 15%, 25% and 50% of core notional. Total exposure is capped at **2.0x**.
@@ -724,7 +727,7 @@ Expected volume is about 0.6–1 core switch a year, one US crash episode every 
    - Leverage above 1x only after the index **closes above its 200-day SMA** following the trigger.
    - Do **not** use VIX, credit-spread, Fed-easing or stop-loss filters as entry gates. They failed out of sample, or failed on 1929 and Japan. Report them as context only.
 4. **Leverage caps.**
-   - **Never recommend 3x daily LETFs for multi-year holds.** Out of sample, 52% of such trades lost more than 30%, and every 1929 and 2000 tranche was ruined.
+   - **Never recommend 3x daily LETFs for multi-year holds.** Out of sample, 52% of such trades lost more than 30%, and every 1929 S&P tranche and every 2000 Nasdaq tranche was ruined.
    - 2x ETFs only for -40% and deeper tranches, and only with filters 3a and 3b satisfied.
    - The preferred leveraged implementation is **defined-risk calls**: 1–2-year ATM/ITM index calls with **≤10–20% of capital**. In the backtest the worst 2-year portfolio result was -20%, with a total loss of the premium in 4 of 12 trades.
    - Price every recommended option from live quotes, not from these approximations.

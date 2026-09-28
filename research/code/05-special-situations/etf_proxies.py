@@ -127,6 +127,22 @@ def main():
         "table": tab.reset_index().astype({"regime": str}).to_dict(orient="records"),
     }
 
+    # 5b. robustness: DAILY first-breach dates of BAA10Y >= 3.5% (episodes separated by > 60 days)
+    b = spread[spread >= 3.5]
+    grp = (b.index.to_series().diff() > pd.Timedelta(days=60)).cumsum()
+    rob = []
+    for _, s in b.groupby(grp):
+        t = s.index[0]
+        row = {"first_breach": str(t.date()), "last_breach": str(s.index[-1].date()), "peak_spread": float(s.max())}
+        for tk in ["VWEHX", "SPY"]:
+            v = px[tk].dropna()
+            w = v[(v.index >= t) & (v.index <= t + pd.Timedelta(days=365))]
+            row[f"{tk}_12m_%"] = round(100 * (w.iloc[-1] / w.iloc[0] - 1), 1)
+            row[f"{tk}_maxDD_%"] = round(100 * (w.min() / w.iloc[0] - 1), 1)
+        rob.append(row)
+    pd.DataFrame(rob).to_csv(OUT / "credit_trigger_daily_breaches.csv", index=False)
+    res["credit_spread_timing"]["daily_first_breach_robustness"] = rob
+
     # 6. share-class spreads
     g = (px["GOOGL"] / px["GOOG"] - 1).dropna()
     g = g.loc["2014-04-03":]

@@ -70,21 +70,21 @@
       "start": "2012-12-13",
       "end": "2026-09-28",
       "years": 13.8,
-      "CAGR_%": 2.08,
+      "CAGR_%": 2.07,
       "vol_%": 5.78,
       "sharpe": 0.08,
       "maxDD_%": -13.2,
       "monthly_skew": -0.4,
-      "monthly_exkurt": 1.98,
+      "monthly_exkurt": 1.97,
       "worst_month_%": -4.2,
       "best_month_%": 3.3,
       "beta": 0.055,
       "down_beta": 0.158,
-      "up_beta": 0.029,
+      "up_beta": 0.03,
       "corr": 0.208,
       "avg_ret_in_worst5pct_mkt_months_%": -0.52,
       "avg_mkt_in_those_months_%": -8.32,
-      "avg_excess_over_tbill_ann_%": 0.21,
+      "avg_excess_over_tbill_ann_%": 0.2,
       "SPY_same_period_CAGR_%": 14.94,
       "tbill_same_period_%": 1.8
     },
@@ -92,21 +92,21 @@
       "start": "2020-05-11",
       "end": "2026-09-28",
       "years": 6.4,
-      "CAGR_%": 4.16,
+      "CAGR_%": 4.17,
       "vol_%": 4.4,
       "sharpe": 0.28,
       "maxDD_%": -5.6,
-      "monthly_skew": 0.73,
-      "monthly_exkurt": 4.27,
+      "monthly_skew": 0.72,
+      "monthly_exkurt": 4.25,
       "worst_month_%": -1.9,
       "best_month_%": 4.2,
       "beta": 0.058,
       "down_beta": 0.1,
-      "up_beta": 0.098,
+      "up_beta": 0.097,
       "corr": 0.291,
       "avg_ret_in_worst5pct_mkt_months_%": -0.32,
       "avg_mkt_in_those_months_%": -8.01,
-      "avg_excess_over_tbill_ann_%": 1.43,
+      "avg_excess_over_tbill_ann_%": 1.44,
       "SPY_same_period_CAGR_%": 17.91,
       "tbill_same_period_%": 3.01
     },
@@ -370,7 +370,7 @@
         "mean": 0.0623,
         "median": 0.0459,
         "min": -0.2705,
-        "max": 0.3148,
+        "max": 0.3147,
         "share_negative": 0.103
       },
       {
@@ -408,6 +408,62 @@
         "min": 0.1955,
         "max": 0.4692,
         "share_negative": 0.0
+      }
+    ],
+    "daily_first_breach_robustness": [
+      {
+        "first_breach": "2001-09-19",
+        "last_breach": "2001-09-21",
+        "peak_spread": 3.53,
+        "VWEHX_12m_%": 2.9,
+        "VWEHX_maxDD_%": -1.1,
+        "SPY_12m_%": -15.8,
+        "SPY_maxDD_%": -20.5
+      },
+      {
+        "first_breach": "2002-09-17",
+        "last_breach": "2002-11-19",
+        "peak_spread": 3.9,
+        "VWEHX_12m_%": 13.2,
+        "VWEHX_maxDD_%": -4.1,
+        "SPY_12m_%": 19.7,
+        "SPY_maxDD_%": -10.7
+      },
+      {
+        "first_breach": "2008-03-17",
+        "last_breach": "2008-03-17",
+        "peak_spread": 3.5,
+        "VWEHX_12m_%": -17.1,
+        "VWEHX_maxDD_%": -25.8,
+        "SPY_12m_%": -37.6,
+        "SPY_maxDD_%": -45.6
+      },
+      {
+        "first_breach": "2008-09-15",
+        "last_breach": "2009-07-22",
+        "peak_spread": 6.16,
+        "VWEHX_12m_%": 5.5,
+        "VWEHX_maxDD_%": -26.5,
+        "SPY_12m_%": -9.6,
+        "SPY_maxDD_%": -42.5
+      },
+      {
+        "first_breach": "2016-02-03",
+        "last_breach": "2016-03-02",
+        "peak_spread": 3.63,
+        "VWEHX_12m_%": 14.5,
+        "VWEHX_maxDD_%": -2.6,
+        "SPY_12m_%": 21.6,
+        "SPY_maxDD_%": -4.4
+      },
+      {
+        "first_breach": "2020-03-18",
+        "last_breach": "2020-04-09",
+        "peak_spread": 4.31,
+        "VWEHX_12m_%": 22.1,
+        "VWEHX_maxDD_%": -5.0,
+        "SPY_12m_%": 66.2,
+        "SPY_maxDD_%": -6.6
       }
     ]
   },

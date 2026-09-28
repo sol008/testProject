@@ -189,10 +189,6 @@ def main():
     print(txt)
 
 
-if __name__ == "__main__":
-    main()
-
-
 def extra_tables():
     parts = []
     # trend
@@ -262,6 +258,7 @@ def extra_tables():
 
 
 if __name__ == "__main__":
+    main()
     txt = extra_tables()
     with open(os.path.join(SCR, "report_tables_extra.md"), "w") as f:
         f.write(txt)

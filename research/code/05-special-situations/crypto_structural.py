@@ -311,6 +311,14 @@ def main():
         by = b["basis_ann_%"].groupby(b.index.year).agg(["mean", "median", "min", "max", "count"]).round(2)
         res["B_deribit_quarterly_basis_by_year"] = by.reset_index().rename(columns={"index": "year"}).to_dict(orient="records")
         res["B_basis_quantiles_all"] = {q: round(float(b["basis_ann_%"].quantile(q)), 2) for q in (0.05, 0.25, 0.5, 0.75, 0.95)}
+        # how often was the carry worth doing? basis minus 3m T-bill >= 6pp
+        bi = b.copy()
+        bi.index = bi.index.tz_localize(None) if bi.index.tz is not None else bi.index
+        tb = fred("DTB3").reindex(bi.index, method="ffill")
+        ex = bi["basis_ann_%"] - tb
+        res["B_share_days_basis_ge_tbill_plus6"] = {"all": round(float((ex >= 6).mean()), 3),
+                                                    "by_year": ex.groupby(ex.index.year).apply(lambda z: round(float((z >= 6).mean()), 2)).to_dict(),
+                                                    "median_excess_over_tbill_pp": round(float(ex.median()), 2)}
     except Exception as e:  # noqa: BLE001
         res["B_error"] = str(e)
     res["C_snapshot"] = snapshot()

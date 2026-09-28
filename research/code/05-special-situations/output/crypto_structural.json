@@ -167,114 +167,129 @@
     "0.75": 9.86,
     "0.95": 19.96
   },
+  "B_share_days_basis_ge_tbill_plus6": {
+    "all": 0.309,
+    "by_year": {
+      "2018": 0.0,
+      "2019": 0.22,
+      "2020": 0.58,
+      "2021": 0.86,
+      "2022": 0.04,
+      "2023": 0.08,
+      "2024": 0.53,
+      "2025": 0.09,
+      "2026": 0.0
+    },
+    "median_excess_over_tbill_pp": 3.05
+  },
   "C_snapshot": {
     "term_structure": [
       {
         "venue": "Deribit",
         "inst": "BTC-9OCT26",
         "dte": 10.5,
-        "fut": 83556.68,
-        "index": 83454.18,
-        "basis_ann_%": 4.37,
-        "oi_usd": 5725280
+        "fut": 83717.23,
+        "index": 83613.29,
+        "basis_ann_%": 4.43,
+        "oi_usd": 5757260
       },
       {
         "venue": "Deribit",
         "inst": "BTC-16OCT26",
         "dte": 17.5,
-        "fut": 83640.83,
-        "index": 83454.18,
-        "basis_ann_%": 4.78,
-        "oi_usd": 1439190
+        "fut": 83800.99,
+        "index": 83613.29,
+        "basis_ann_%": 4.8,
+        "oi_usd": 1449250
       },
       {
         "venue": "Deribit",
         "inst": "BTC-30OCT26",
         "dte": 31.5,
-        "fut": 83799.56,
-        "index": 83454.18,
-        "basis_ann_%": 4.91,
-        "oi_usd": 74053610
+        "fut": 83961.66,
+        "index": 83613.29,
+        "basis_ann_%": 4.94,
+        "oi_usd": 74053800
       },
       {
         "venue": "Deribit",
         "inst": "BTC-27NOV26",
         "dte": 59.5,
-        "fut": 84168.96,
-        "index": 83454.18,
-        "basis_ann_%": 5.37,
-        "oi_usd": 33491870
+        "fut": 84327.3,
+        "index": 83613.29,
+        "basis_ann_%": 5.36,
+        "oi_usd": 33492640
       },
       {
         "venue": "Deribit",
         "inst": "BTC-25DEC26",
         "dte": 87.5,
-        "fut": 84497.77,
-        "index": 83454.18,
-        "basis_ann_%": 5.32,
-        "oi_usd": 311951290
+        "fut": 84656.26,
+        "index": 83613.29,
+        "basis_ann_%": 5.31,
+        "oi_usd": 311951920
       },
       {
         "venue": "Deribit",
         "inst": "BTC-26MAR27",
         "dte": 178.5,
-        "fut": 85545.24,
-        "index": 83454.18,
-        "basis_ann_%": 5.19,
-        "oi_usd": 83693130
+        "fut": 85702.46,
+        "index": 83613.29,
+        "basis_ann_%": 5.18,
+        "oi_usd": 83697090
       },
       {
         "venue": "Deribit",
         "inst": "BTC-25JUN27",
         "dte": 269.5,
-        "fut": 86730.88,
-        "index": 83454.18,
-        "basis_ann_%": 5.35,
+        "fut": 86896.3,
+        "index": 83613.29,
+        "basis_ann_%": 5.36,
         "oi_usd": 49755580
       },
       {
         "venue": "Deribit",
         "inst": "BTC-24SEP27",
         "dte": 360.5,
-        "fut": 87849.71,
-        "index": 83454.18,
+        "fut": 88013.63,
+        "index": 83613.29,
         "basis_ann_%": 5.33,
-        "oi_usd": 3554700
+        "oi_usd": 3581510
       },
       {
         "venue": "Kraken",
         "inst": "FF_XBTUSD_261030",
         "dte": 31.8,
-        "fut": 83755.16253395793,
-        "index": 83457.36,
-        "basis_ann_%": 4.17,
+        "fut": 83933.7063537297,
+        "index": 83609.01,
+        "basis_ann_%": 4.55,
         "oi_usd": null
       },
       {
         "venue": "Kraken",
         "inst": "FF_XBTUSD_261225",
         "dte": 87.8,
-        "fut": 84387.38093840524,
-        "index": 83457.36,
-        "basis_ann_%": 4.71,
+        "fut": 84551.1164275431,
+        "index": 83609.01,
+        "basis_ann_%": 4.77,
         "oi_usd": null
       },
       {
         "venue": "Kraken",
         "inst": "FF_XBTUSD_270326",
         "dte": 178.8,
-        "fut": 86326.97272872952,
-        "index": 83457.36,
-        "basis_ann_%": 7.14,
+        "fut": 86331.13679439788,
+        "index": 83609.01,
+        "basis_ann_%": 6.76,
         "oi_usd": null
       }
     ],
-    "cme_front_vs_spot_%_(timing-mismatched closes)": 0.51,
+    "cme_front_vs_spot_%_(timing-mismatched closes)": 0.23,
     "funding_now": {
-      "Kraken_PF_XBTUSD_ann_%": 7.64,
-      "OKX_BTC-USDT-SWAP_ann_%": 3.33,
+      "Kraken_PF_XBTUSD_ann_%": 10.92,
+      "OKX_BTC-USDT-SWAP_ann_%": 3.64,
       "BitMEX_XBTUSD_ann_%": 10.95,
-      "Hyperliquid_BTC_ann_%": 5.91
+      "Hyperliquid_BTC_ann_%": 5.65
     },
     "tbill_3m_%": 4.08
   },
@@ -309,10 +324,10 @@
     },
     {
       "current": "2026-09-28",
-      "px": 83452,
+      "px": 83624,
       "cycle_peak": 124753,
       "peak_date": "2025-10-06",
-      "drawdown_from_peak_%": -33.1
+      "drawdown_from_peak_%": -33.0
     }
   ],
   "E_depegs_defillama": [
