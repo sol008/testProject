@@ -16,7 +16,8 @@
 3. **Odd-lot tender offers are a real, low-risk retail edge, but a tiny one.** EDGAR shows 17–40 listed issuer tender offers a year that mention odd-lot priority. In only about 16–22% of parsed offers was the minimum tender price above the market price near expiry (by >2% and >0.5% respectively). Among those, the gain per 99-share trade had a median of about $40 and a mean of about $240 (our EDGAR + Yahoo sample; parsing is noisy). The expected value is positive but negligible for a portfolio unless the account is small.
 4. **Prediction markets price well, and the one documented bias only pays small, fat-tailed returns.**
    - Kalshi shows a classic favourite–longshot bias: contracts under 10¢ lose more than 60% of stake; makers buying at 50¢ or more earn about +2.6% per contract, with a 33% standard deviation (Bürgi, Deng & Whelan 2026).
-   - On Polymarket, 2023–26 (complete events, our data), we find **no exploitable bias after costs**: [see §6.3].
+   - On Polymarket, 2023–26 (10,537 markets in 1,525 complete events, our data), prices are well calibrated and the Kalshi bias does **not** replicate. After 2026 fees and half-spread, near-certain ≥98¢ "bonds" lose −0.2% to −0.3% per trade, 80–95¢ favourites lose −2% to −5%, and <2¢ longshots lose 65–78%. Only data-release (macro) markets hint at favourite underpricing (89/89 favourites won; n small).
+   - A naïve per-market sample (filtered on lifetime volume) roughly triples the apparent longshot win-rate excess. That is a selection effect, and a warning for the engine's own backtests.
    - Live cross-venue gaps on the biggest markets (House/Senate 2026, October FOMC) are ≤1¢. Buying both sides across venues costs **≥$1.005 per $1 payout after fees**, so there is no arbitrage (our live check).
    - Legal status is volatile. The circuits are split on sports contracts (3rd Cir. pro-Kalshi; 6th and 9th Cir. pro-state, 25-Sep-2026 and 28-Aug-2026). Polymarket US is live; the international Polymarket book is closed to US persons.
 5. **Pegs break violently, but you usually can't short them and can't time them.**
@@ -113,7 +114,8 @@ Returns are before tax. "Opps/yr" counts detectable candidates, not good ones. V
 | Biotech binary (PDUFA / Ph3) | No replicated edge; base rates public (Ph3→approval ≈ 52%, NDA/BLA→approval ≈ 91%, BIO 2021). Our 2020–26 study, small caps: approval +11.6% mean vs CRL −26.5% mean (10th pct −69%) → break-even p ≈ 70% | Binary, negative tail | Hundreds of PDUFA dates/readouts | Medium (company PRs; Drugs@FDA; openFDA CRLs since 2025) | Options/stock | Implied moves already large; insider-information asymmetry | **Avoid** |
 | Short a currency peg | Break: median ≈ −40% (12m) for local currency in 15 breaks; but carry cost, decades-long pegs, forwards pre-price risk | Positive skew, low hit-rate | 0–3 breaks/yr globally | Medium (reserves, parallel premium, forwards) | Frontier FX un-shortable for US retail; majors via FX/CME | Squeezes (offshore rates 1000%+), capital controls, timing | **Avoid** (monitor as risk signal) |
 | Buy after devaluation reset | Anecdotal (e.g., post-float rallies); no systematic study here | Positive | ~1/yr | Medium | Country ETFs (ARGT, TUR, EWZ) | Second devaluation, capital controls | **Opportunistic** (small, IMF-program + unified FX only) |
-| Prediction-market favourites ("bonds") | Kalshi ≥50¢ maker +2.6%/contract (SD 33%); live median ann. ≈ 12% (Kalshi), 17% (Polymarket) if resolved as priced, before tail losses | Negative (lose 100% on upset) | Thousands | High (public APIs) | Kalshi / Polymarket US; state restrictions | Resolution/oracle disputes, venue/legal risk, correlated upsets | **Opportunistic** (strict filters, capped) |
+| Prediction-market favourites ("bonds") | Kalshi ≥50¢ maker +2.6%/contract (SD 33%). Polymarket (our data): ≥98¢ −0.2% to −0.3% net per trade; 80–95¢ −2% to −5% net; macro/data-release favourites 89/89 won. Live "yields" 12–17% annualised are before upsets | Negative (lose 100% on upset) | Thousands | High (public APIs) | Kalshi / Polymarket US; state restrictions | Resolution/oracle disputes, venue/legal risk, correlated upsets | **Opportunistic, low priority** (data-release markets only, capped) |
+| Prediction-market "information edge" (e.g., CPI/payroll brackets vs nowcasts) | Untested here; only place a model can add value | Mixed | ~50–100 macro events/yr | High | Kalshi / Polymarket US | Model error; thin books | **Experimental** (tiny budget, monthly calibration) |
 | Prediction-market longshots | <10¢ lose >60% (Kalshi) | Lottery | Thousands | High | – | Negative EV | **Avoid** |
 | Cross-venue PM arbitrage | Box cost ≥ $1.005 on top markets after fees (our live check) | – | Rare, fleeting | High | Needs both venues (US: Kalshi + Polymarket US) | Resolution-wording mismatch | **Avoid** (unless automated) |
 | Crypto cash-and-carry (basis) | Deribit 3m basis median 5.8% (2019–26), 12% avg 2024, 3.4% 2026; now ~5.3% | Mildly negative (venue risk, margin calls) | Basis ≥ T-bill + 6pp on 31% of days 2019–26 (86% in 2021, 53% in 2024, 0% in 2026) | High (Deribit/CME/Kraken APIs) | US: spot ETF + CME (micro) futures | Exchange/counterparty, margin, basis blowout | **Opportunistic** (basis ≥ T-bill + 6%) |
@@ -431,9 +433,30 @@ Mid-price gaps are ≤1¢ and **no box is below $1**. Flagship markets are effic
 - **(a) Per-market sample:** the 6,000 highest-volume closed markets (3,795 clean binary resolutions).
 - **(b) Complete-event sample:** every resolved market in those markets' events, whatever its own volume.
 
-Sample (a) conditions on lifetime volume, a *post-outcome* variable (winning longshots attract late volume). As expected, it shows the *reverse* pattern: 5–20¢ contracts won 12–22% of the time vs 7–15% implied, and 80–95¢ favourites lost 6–9%. That pattern is a selection artefact, which is exactly the look-ahead bias a naïve backtest would fall into. Sample (b) removes this bias:
+Sample (a) conditions on lifetime volume, a *post-outcome* variable (winning longshots attract late volume). It shows a strong *reverse* favourite–longshot pattern: 5–20¢ contracts won 12–22% of the time vs 7–15% implied (+50–75% returns), and 80–95¢ favourites lost 6–9%. Sample (b) removes the selection: the effect shrinks by roughly two-thirds and mostly loses significance. That is exactly the look-ahead bias a naïve backtest would fall into.
 
-[PM_EVENT_RESULTS]
+**Complete-event results.** 10,537 markets in 1,525 events, resolutions Mar-2023 → Sep-2026. Both sides of every contract are included, so the table is symmetric. CIs are 95%, bootstrapped by event. Net = after a 0.5¢ half-spread plus the 2026 taker fee of 0.04·p(1−p); before 2026 most Polymarket markets were fee-free.
+
+| Price bucket | Horizon 1 day: win vs price | Pre-cost return | Net return (95% CI) | Horizon 7 days: net return (95% CI) | Horizon 30 days: net return (95% CI) |
+|---|---|---|---|---|---|
+| <2¢ | 0.34% vs 0.33% | −64% | **−78%** (−88, −67) | **−65%** (−82, −46) | **−65%** (−84, −46) |
+| 2–5¢ | 2.6% vs 3.2% | −25% | −37% (−67, −3) | −7% (−42, +40) | **−56%** (−80, −30) |
+| 5–10¢ | 8.8% vs 7.2% | +23% | +11% (−18, +46) | +11% (−14, +41) | −10% (−42, +25) |
+| 10–20¢ | 17.6% vs 14.8% | +21% | +13% (−2, +31) | +8% (−11, +30) | −3% (−25, +22) |
+| 80–90¢ | 82.1% vs 85.1% | −3.4% | **−4.5%** (−7.6, −1.4) | **−4.5%** (−8.3, −1.0) | −0.7% (−4.6, +3.0) |
+| 90–95¢ | 91.2% vs 92.7% | −1.6% | −2.4% (−5.1, +0.2) | **−2.6%** (−5.3, −0.3) | −0.8% (−3.9, +2.1) |
+| 95–98¢ | 97.5% vs 96.7% | +0.8% | +0.2% (−1.1, +1.4) | −1.0% (−2.8, +0.5) | +0.6% (−0.7, +1.7) |
+| ≥98¢ | 99.64% vs 99.66% | −0.02% | **−0.23%** (−0.43, −0.08) | **−0.32%** (−0.56, −0.11) | **−0.27%** (−0.54, −0.04) |
+
+Brier scores: 0.066 (1 day), 0.073 (7 days), 0.059 (30 days).
+
+**What this means.**
+1. Polymarket's large events are **well calibrated**. There is **no Kalshi-style favourite underpricing**. At 1–7-day horizons, 80–95¢ favourites were, if anything, slightly *over*-priced (net −2% to −5%). The mirror image, 5–20¢ contracts, was slightly under-priced (+8–13% net), but those CIs include zero.
+2. **Near-certain "bonds" (≥98¢) lose ~0.2–0.3% per trade after costs**, significantly. Their apparent 12–17% "annualised yield" is fully paid away in upsets and costs.
+3. **Ultra-longshots (<2¢) lose 65–78% net.** The only robust bias on both venues is the one against lottery tickets.
+4. **Category matters.** In macro/markets questions (data releases, Fed, prices), 7-day favourites at 90–98¢ won **89 of 89** (net +4.1%) and 2–10¢ longshots won **0 of 90**. Sports favourites earned +1.4%; crypto, politics and other favourites earned −2.7% to −3.3%. This is suggestive of Kalshi-style favourite underpricing *only* in objective, data-release markets, but n is small.
+
+Caveats: the prices are CLOB history values (mid/last), not executable asks. Events are still selected by their largest market's volume. The sample is heavy in sports, elections and crypto.
 
 **Documented large mispricings, and what they teach.**
 - **2016:** election-day markets had Clinton at ~80%+; she lost. That is not proof of mispricing, since 20% events happen.
@@ -445,9 +468,10 @@ The pattern: the biggest opportunities arise when *partisan or emotional* flow m
 ### 6.4 Strategies ranked
 
 1. **Near-certain "bond" markets** (buy the ≥95¢ side). Live medians, if resolved as priced: Kalshi 2,504 sides, 93 days, +1.9% gross, **~12% annualised after taker fee**; Polymarket 2,536 sides, 36 days, +2.0% gross, **~17% annualised**.
+   - Those yields are illusory on average. On Polymarket, the ≥98¢ bucket lost 0.2–0.3% per trade after costs; upsets and fees consume the whole "yield."
    - The tail: one upset wipes out about 20–50 trades' profit, and upsets cluster, for example on correlated sports or policy shocks.
-   - Kalshi evidence says favourites are *slightly* underpriced; our Polymarket complete-event evidence decides whether this holds there (§6.3).
-   - Only with objective, data-release-based resolution, ≤60 days to expiry and ≥15% annualised after fees. Cap at ≤1% of capital per market and ≤5% aggregate. **Opportunistic.**
+   - The only defensible version is **objective data-release markets** (CPI, payrolls, Fed decision, index/price thresholds). Here Kalshi's favourite underpricing and our macro subsample (89/89) point the same way.
+   - Conditions: ≤60 days to expiry, ≥15% annualised after fees, maker (limit) orders. Cap at ≤1% of capital per market and ≤5% aggregate. **Opportunistic, low priority.**
 2. **Fading longshots** (selling cheap YES = buying expensive NO). Economically identical to #1 at the other end.
 3. **Buying longshots.** Strongly negative EV. **Never.**
 4. **Cross-venue arbitrage.** Not available on flagship markets after fees. Resolution-wording mismatch makes "arbs" risky. **Avoid** unless fully automated.
@@ -614,7 +638,7 @@ A month-end-persistence filter would have skipped the 2001 and Mar-2008 spikes. 
 ## 10. Cross-cutting lessons
 
 1. **Negative skew clusters.** Merger arb, SPAC arb, PM favourites, carry and credit all lose together in liquidity crises (e.g., Mar-2020: MNA −12.8%, HY −20%, funding negative). The engine needs a single **aggregate "short-volatility" budget** across these modules.
-2. **Selection bias is everywhere.** Our Polymarket per-market sample flipped the sign of the bias purely through volume selection. EDGAR/Yahoo studies lose delisted names (survivorship), and ticker reuse corrupts old price histories. Every monthly recalibration must use point-in-time universes.
+2. **Selection bias is everywhere.** Our Polymarket per-market sample roughly tripled the apparent mispricing purely through volume selection. EDGAR/Yahoo studies lose delisted names (survivorship), and ticker reuse corrupts old price histories. Every monthly recalibration must use point-in-time universes.
 3. **Publication decay.** Index and spin-off effects shrank after publication. The Kalshi bias is now published (2026) and may decay. Retest monthly.
 4. **Capacity vs. % return.** Several edges (odd-lot, thrift subscriptions, PM favourites, micro-cap tenders) have high % per trade but tiny dollar capacity. They help a small account and are irrelevant to a large one. The engine should scale candidate lists by account size.
 5. **Rates matter.** With T-bills at ~4.1%, every "T-bill-plus" trade must clear a higher hurdle. Several (SPAC trust, carry at 5%) currently add only ~1%.
@@ -630,12 +654,12 @@ A month-end-persistence filter would have skipped the 2001 and Mar-2008 spikes. 
 |---|---|---|---|---|---|
 | **Credit crisis buy** (highest priority) | FRED `BAA10Y` ≥ 3.5% at a **month-end** (or ICE HY OAS ≥ 700bp). Staging: ⅓ at trigger, ⅓ if spread ≥ 4.5% or after 1 month, ⅓ once spread is ≥ 50bp off its peak | HY / fallen-angel ETF (ANGL/FALN/HYG) | 15–30% of portfolio in total | 12–24 months, or when BAA10Y < 2.5% | +14–35% in 12m at month-end triggers; −17% from a daily Mar-2008 trigger; −20% to −25% drawdown in GFC paths (n ≈ 4–6 episodes) |
 | **Stablecoin depeg buy** | USDC/USDT/PYUSD-class coin ≤ $0.97 on ≥2 venues; issuer regulated; reserves attested (T-bills/cash); primary redemptions not suspended >72h; no algorithmic/synthetic design | Buy coin on a regulated US venue | ≤5% | ≥$0.995, or 30-day time stop | +3–14% in days (n ≈ 3 cases) |
-| **Crypto cash-and-carry** | CME 2–3-month annualised basis ≥ 3m T-bill + 6% | Long spot BTC ETF + short CME (micro) futures to expiry | ≤15% notional, 2× margin buffer | At expiry | Basis − costs (historically 10–25% annualised when triggered) |
+| **Crypto cash-and-carry** | CME 2–3-month annualised basis ≥ 3m T-bill + 6% | Long spot BTC ETF + short CME (micro) futures to expiry | ≤15% notional, 2× margin buffer | At expiry | Basis − costs: ≈10–20% annualised when triggered (long stretches of 2020–21 and 2024; never in 2026 YTD) |
 | **Merger arb (select)** | Cash deal, strategic buyer, committed financing, no HSR second request / foreign-regulator overlap flagged, **annualised net spread ≥ 15%**, implied break probability ≥ 2× model estimate | Buy target | ≤5% per deal; ≤20% aggregate | Close or break | T-bill + 3–10% on selected deals; negative skew |
 | **Odd-lot tender** (optional micro) | EDGAR SC TO-I with odd-lot priority; (min price ÷ last price − 1) ≥ 3%; no financing condition; ≥5 trading days to expiry | Buy ≤99 shares, tender at the clearing price | ≤$10k per trade | Offer settlement | +3–10% per ~5 weeks; ~$50–300 each |
 | **SPAC trust parking** | Price ≤ trust NAV/share − 1%; redemption/vote ≤ 6 months; trust in T-bills | Buy common; submit redemption | Part of cash sleeve, ≤10% | Redeem (unless deal trades > trust + 5%) | ≈ T-bill + 1–3% |
 | **CEF tender capture** | Fund announces self-tender ≥ 98% NAV; discount ≥ 8% | Buy fund; optionally hedge NAV beta with index ETF | ≤5% | Tender, then sell remainder | +2–6% per event |
-| **PM favourites** | Objective data-release resolution; ≤60 days; after-fee annualised ≥ 15%; price ≥ 0.95; ≥$25k depth within 1¢; venue legal in user's state | Buy the favourite side (maker orders preferred) | ≤1% per market, ≤5% aggregate | Resolution | Small positive (Kalshi +2.6%/contract for makers ≥50¢; SD 33%) |
+| **PM favourites** (low priority) | Objective data-release resolution only (CPI, payrolls, FOMC, price thresholds); ≤60 days; after-fee annualised ≥ 15%; price 0.90–0.97 (avoid ≥0.98, which is negative after costs); ≥$25k depth within 1¢; venue legal in user's state | Buy the favourite side with maker (limit) orders | ≤1% per market, ≤5% aggregate | Resolution | Small positive at best (Kalshi +2.6%/contract for makers ≥50¢, SD 33%; Polymarket macro favourites 89/89 but n small; other categories negative) |
 | **Post-devaluation long** | Official FX unified (parallel premium <10%); IMF program approved; ≥20% real depreciation in 12m | Country ETF or EM USD-bond ETF | ≤5% | 12–24m, or on re-emergence of a parallel premium >15% | Anecdotal; low confidence |
 
 **B. Hard exclusions (never recommend):**
@@ -678,7 +702,7 @@ The reference scripts are in `research/code/05-special-situations/`.
 - Compute Brier score / calibration by bucket, and hit rate, average win/loss and skew per module.
 - Shrink a module's size by 50% if its trailing 12-month realised edge is below half of the expected edge, or if a single loss exceeds 3× the average win.
 - Re-enable at full size after 6 months in line with expectations.
-- Re-run the complete-event PM calibration and the Kalshi bias test quarterly. If the ≥90¢ bucket's after-fee return has a 95% CI below zero, disable the PM module.
+- Re-run the complete-event PM calibration and the Kalshi bias test quarterly, **on the module's own universe** (data-release markets). If the 90–97¢ bucket's after-fee return has a 95% CI below zero, disable the PM module. On all Polymarket categories combined, this test already fails (90–95¢ at 7 days: −2.6%, CI −5.3% to −0.3%). That is why the module is restricted.
 - Use **point-in-time universes** only (no current-ticker price histories for old events; no volume filters that use post-event volume).
 
 **F. Communicating to the user (email).** Each special-situation email must state:

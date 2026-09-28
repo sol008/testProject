@@ -49,7 +49,7 @@ This document turns the evidence into the rules the tool will enforce. Every num
    - The regime is late-cycle: a war-driven oil shock (Brent about $106), the Fed hiking again (3.75–4.00%), and a 10-year Treasury yield of 5.24%.
    - The S&P 500 is 1.5% below its high, at a CAPE of about 41 (99th percentile).
    - Armed triggers:
-     - Bitcoin halving-cycle window, opens about 8 Oct;
+     - Bitcoin at 1.27× its 200-week average; the entry trigger is ≤1.2× (about $79k);
      - S&P 500 crash tranches, the first at −30% = 5,459;
      - peak-yield bond call spread;
      - uranium-trust discount to its holdings (NAV);
@@ -142,6 +142,7 @@ That one sentence protects you from any system, or person, that promises more.
   | Correlated cluster | ≤ 8% |
   | All satellites combined (stress loss) | ≤ 15% |
   | Total outstanding option/event premium | ≤ 10% |
+  | Crash-correlated "short-put-like" modules combined (merger arb, SPAC, prediction-market favourites, carry, non-crisis credit; track 05) | ≤ 30% of portfolio; ≤ 15% when VIX > 30 |
   | Single stock | ≤ 15% |
   | Portfolio expected volatility | ≤ 20% a year |
 
@@ -157,7 +158,7 @@ That one sentence protects you from any system, or person, that promises more.
 | **S1 Core** | Harvest the equity premium | 70% (60–80%) | Broad, low-cost **global** index. The US is history's survivor market (Jorion & Goetzmann), so don't bet the core on one country | Initial build in 3 monthly tranches; valuations are extreme but CAPE timing fails out of sample (tracks 02, 06) | None by default. Optional trend switch (10-month SMA) is a preset, required if leverage is ever used | 0–1 |
 | **S2 Crash tranches** | Buy more when the market is on sale | Drawn from S0 | Same broad index, 1×. Calls only if they beat the index on Δg (§7) | See below | New all-time high or 5 years, whichever is first; **no stop-loss** | ≈0.5 on average; clustered in crises |
 | **S3 Opportunity** | Rare, rule-based asymmetric trades with a measurable structural edge | ≤3 concurrent; stress-loss caps in §3.1 | Liquid ETFs, trusts at a discount to NAV, long-dated calls or call spreads on liquid underlyings, event-driven situations (§3.6) | Every gate in §3.3 | Pre-registered: target, invalidation, time stop | 1–6 |
-| **S4 Speculative (Bitcoin)** | Crypto-cycle exposure | ≤5% of net worth | BTC via a spot ETF or a regulated exchange; **no leverage**; ETH at most ⅓ of the sleeve | Drawdown ≥75% from the all-time high, price ≤1.2× the 200-week average, or the halving window (−18/−12 months) (track 06) | Halving +12–18 months, or a pre-set multiple. Assume the next cycle returns at most ⅓ of the last one | ≈0.5 |
+| **S4 Speculative (Bitcoin)** | Crypto-cycle exposure | ≤5% of net worth | BTC via a spot ETF or a regulated exchange; **no leverage**; ETH at most ⅓ of the sleeve | Staged in halves. Trigger: price ≤1.2× the 200-week average, or a drawdown ≥75% from the all-time high (track 06). The halving calendar is **context only**: 4 cycles with shrinking amplitude, and this cycle peaked at just 1.9× the halving-day price (track 05) | Weekly close below the 20-week average after a ≥2× gain (track 02 trend filter), a pre-set multiple, or a weekly close below the prior cycle low (invalidation). Assume the next cycle returns at most ⅓ of the last one | ≈0.5 |
 | **S5 Incubator** | Test unproven edges without money | 0% (shadow only) | See §3.7 | Logged and scored monthly | n/a | 0 (monthly review only) |
 
 **S2 crash-tranche schedule** (track 06 §9; tested on 36 markets).
@@ -207,9 +208,43 @@ f = G(D) · min( 0.25 · Kelly(p_shrunk),         # quarter Kelly on the shrunk 
 - **Gaps.** What to do if the price gaps through a level.
 - **Crash tranches (S2)** exit only at a new high or after 5 years. The historical failure mode was selling in the second leg down, not the entry.
 
-### 3.6 Special situations and alternative markets
+### 3.6 Special situations and alternative markets (track 05)
 
-*[Filled in from track 05 when it completes.]*
+**Headline.** Almost none of these can drive a "1000%" goal. Most are small-edge, negatively skewed trades that lose *together* in liquidity crises. In March 2020, the merger-arb ETF (MNA) fell 12.8%, high yield fell 20%, and crypto funding rates turned negative. They enter the constitution as **modules that are off unless their trigger fires**. No trigger is active today.
+
+**Module roster.**
+
+| Module | Trigger (all must hold) | Instrument | Size | Exit | Evidence |
+|---|---|---|---|---|---|
+| **Credit-crisis buy** (highest priority; shares the S0 reserve with S2) | Moody's Baa minus 10-year Treasury spread (FRED `BAA10Y`) ≥ 3.5% at a **month-end**, or ICE HY OAS ≥ 700bp. Stage in thirds: at the trigger; at ≥4.5% or after 1 month; once the spread is ≥50bp off its peak | High-yield or fallen-angel bond ETFs | 15–30% of the portfolio in total | 12–24 months, or when the spread falls below 2.5% | +14% to +47% over 12 months at the 4 month-end triggers since 1990. A daily trigger in March 2008 lost 17%, and GFC paths drew down 20–26%. Scale in; n ≈ 4–6 |
+| **Stablecoin depeg buy** | A regulated, fiat-backed coin (USDC/USDT/PYUSD class) ≤ $0.97 on ≥2 venues, reserves attested, redemptions not suspended >72h, no algorithmic design | The coin, on a regulated US venue | ≤5% | ≥ $0.995, or a 30-day time stop | USDC at $0.877 (Mar 2023) and FDUSD at $0.881 (Apr 2025) were back at par in about 2 days (+13–14%); n ≈ 3. Algorithmic "dollars" went to zero |
+| **Crypto cash-and-carry** | CME 2–3-month annualized basis ≥ 3-month T-bill + 6 points | Long spot BTC ETF + short CME micro futures to expiry | ≤15% notional, 2× margin buffer | At expiry | Worth doing on 31% of days in 2019–26 (86% of days in 2021, 0% in 2026 so far); about 5.3% now vs 4.1% T-bills, so **off** |
+| **Selective merger arbitrage** | Cash deal, strategic buyer, committed financing, no second request or foreign-regulator overlap, **annualized net spread ≥15%** | The target's shares | ≤5% per deal, ≤20% in total | Close or break | Merger funds returned 4.9% a year (1990–2026) vs 2.8% for T-bills. The median pending spread is 0.6% today, so this is a cash substitute at best |
+| **Odd-lot tender** (small accounts only) | Company self-tender with odd-lot priority; minimum price ≥3% above market; no financing condition | Buy ≤99 shares and tender | ≤ $10k per trade | Settlement | Median gain about $40 per trade; only worth it for small accounts |
+| **SPAC trust parking / CEF tender capture** | Price ≤ trust value − 1%, with a vote or redemption ≤6 months away; or a fund self-tender ≥98% of NAV at a discount ≥8% | SPAC common (redeem) / closed-end fund | Part of the cash reserve, ≤10% / ≤5% | Redeem / tender | About T-bills + 1–3% / +2–6% per event |
+| **Prediction-market favourites** (low priority, incubator first) | Only markets that resolve on objective data releases (CPI, payrolls, FOMC); price 0.90–0.97 (≥0.98 is negative after costs); ≤60 days; legal in your state | Favourite side, limit (maker) orders | ≤1% per market, ≤5% in total | Resolution | Weak evidence: Polymarket macro favourites won 89 of 89 (small n). Most other categories lose after fees |
+
+**Aggregate cap.** All "short-put-like" modules together (merger arb, SPAC, prediction-market favourites, carry, non-crisis credit) are capped at **30% of the portfolio, and 15% when VIX > 30**. No single special-situation position may exceed 5%, except the diversified credit-crisis ETFs.
+
+**Monitor only, not traded:**
+
+- **Currency pegs.** The median 12-month fall after 15 breaks since 1992 was about −40% (Bolivia devalued 40% on 29 Jun 2026). But the currencies that break are usually untradable for a US retail account, and well-backed pegs last decades.
+- **Biotech FDA decisions.** Small caps rose about 12% on approval and fell about 27% on rejection, a break-even at roughly 70% approval odds. No free lunch without a probability model.
+- **Spin-offs.** The spin-off ETF returned 9.6% a year vs 10.9% for SPY.
+- **Index inclusion.** The S&P 500 effect has shrunk to about +0.8%.
+- **Thrift conversions.** Only depositors get the $10 offering price; buyers at the first trade earned a median +2% over a year.
+
+**Additional hard exclusions** (added to §3.8):
+
+- prediction-market long shots (<20¢ loses more than 60% on Kalshi);
+- old equity of companies in Chapter 11;
+- share-class pairs;
+- shorting untradable pegs;
+- airdrop farming and token-unlock shorts;
+- 144A distressed bonds;
+- chasing commodity squeezes in contango.
+
+**Backtest hygiene lesson.** Filtering prediction markets on lifetime volume roughly **tripled** the apparent mispricing — a look-ahead trap. The engine's own tests must use point-in-time universes only.
 
 ### 3.7 Switched off at launch (incubator only) and why
 
@@ -239,7 +274,17 @@ Each item traces to evidence in tracks 01, 02 and 04:
 - shorting names with more than 20% short interest;
 - averaging down on a levered loser;
 - more than 25% of the portfolio in one issuer (including your employer);
-- anything relying on MNPI or coordinated trading.
+- anything relying on MNPI or coordinated trading;
+- from track 05:
+  - prediction-market contracts under 20¢;
+  - old equity of companies in Chapter 11;
+  - share-class pairs;
+  - shorting untradable currency pegs;
+  - airdrop farming and token-unlock shorts;
+  - 144A distressed bonds;
+  - commodity squeezes in contango;
+  - biotech binary bets without an explicit probability model;
+- any recommendation centred on Anthropic (conflict of interest, §3.1).
 
 ---
 
@@ -262,7 +307,7 @@ Each item traces to evidence in tracks 01, 02 and 04:
 | Rates | Fed funds 3.75–4.00% after the 16 Sep hike; 10-year 5.24%; 30-year 5.56%; 10-year real 2.85% | 10-year ≥5.50% with MOVE ≥110 → yield-capitulation setup |
 | Credit | HY OAS 2.93%; IG 0.81%; CCC 11.28%; private-credit stress **[verify]** | HY ≥4.00% → stress mode |
 | Oil | Brent about $106; Hormuz traffic about 15% of normal; war since 28 Feb 2026 **[verify details]** | Hormuz reopening odds ≥50% → the "peace" factor |
-| Bitcoin | $83.5k; −33% from its $124.8k high; 1.27× its 200-week average (about $65.8k) | Halving window opens **about 8 Oct**; trough window about 4 Oct–16 Nov (track 08); weekly close below $57.7k invalidates |
+| Bitcoin | $83.5k; −33% from its $124.8k high; 1.27× its 200-week average (about $65.8k, rising) | **≤1.2× the 200-week average (about $79k) → S4 tranche 1.** Context only: the halving "−18 months" date (about 8 Oct) and a cycle-trough window of about 4 Oct–16 Nov (tracks 06, 08). A weekly close below $57.7k invalidates |
 | Yen | USDJPY 157.4 | ≥160 → yen setup window; ≥165 → invalidated |
 | International | Jakarta −32% from its peak, passes the valuation filter; KOSPI −38.6% (July) but blocked (2.5× its 10-year average) | Half-size tranche candidate: Jakarta |
 
@@ -572,6 +617,8 @@ data as of 2020-03-20 21:00 UTC (^GSPC, SPY, ^VIX) · ledger head 9f2c…
 | Per-trade loss caps | Track 08: 1.5% of premium per options trade. Track 04: 3%. Track 03: 2% stop-based / 3% defined premium. Track 01: 0.5–5% by archetype | **Track 03's global caps**, with track 01's archetype caps inside them; lottery-type 0.5–1% |
 | Crypto | Track 02: ≤5–10% with a 20-week MA. Track 06: ≤5% with cycle rules. Track 07: BTC (+ETH) only | **≤5%, BTC-first, cycle and drawdown entries, no leverage** |
 | Single stocks | Track 07: a 20–30-name sleeve only if proven. Track 02: insider buys only after our own test | **Incubator only at launch** (conflicts with "few trades"; unproven) |
+| Bitcoin halving timing | Track 06: halving-window entries won all 4 cycles, but gains fell about 10× per cycle. Track 08: a cycle-trough window of about 4 Oct–16 Nov. Track 05: 4 cycles with shrinking amplitude (1.9× peak this cycle); do not encode as a rule | **Context only.** Entries on valuation-like signals (200-week average, deep drawdown); exits on trend break or a pre-set multiple |
+| Crisis deployment budget | Track 06: equity crash tranches draw 10–50% of core notional. Track 05: credit-crisis buy 15–30% of the portfolio | **Both draw from the S0 reserve.** When both fire, the rule engine splits the reserve in proportion to each module's remaining allocation, subject to the drawdown governor |
 
 ## Appendix B — One-line summaries of the tracks
 
@@ -579,7 +626,7 @@ data as of 2020-03-20 21:00 UTC (^GSPC, SPY, ^VIX) · ledger head 9f2c…
 - **02** — Only the equity premium is large and robust; anomalies halve after publication. Retail over-trading destroys returns. Unlevered +1000% is a 20-year outcome.
 - **03** — Kelly and ergodicity math. The objective is log growth under a trade budget and hurdle, with quarter-Kelly on shrunk probabilities and a drawdown governor. Report P(11×) honestly.
 - **04** — Options are overpriced 86% of days. Long-dated calls work only through drift. Puts and volatility lose. Buy time, not strikes; no 3× for years.
-- **05** — Special situations and alternative markets *(pending)*.
+- **05** — Special situations are mostly small-edge, crash-correlated trades. Useful only as trigger-gated modules: credit-crisis buy, stablecoin depeg, crypto basis, selective merger arb. Prediction markets are well calibrated after fees; long shots lose more than 60%.
 - **06** — Crash-buying works as an add-on at 1×; 3× is ruinous. The valuation filter works out of sample. The trend switch controls drawdowns, not returns. Bitcoin cycles are decaying.
 - **07** — 10-baggers are about 1 in 250–350 stocks over 5 years. Predicting them means picking lottery tickets. Winners fell 56% (median) along the way.
 - **08** — The 28 Sep 2026 regime, a 30-gauge dashboard, armed triggers, the catalyst calendar, and data-hygiene traps.
