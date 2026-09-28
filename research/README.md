@@ -1,29 +1,45 @@
 # Research dossier — few-trade, high-return recommendation system
 
-Phase 1 (research and design) for a system that emails one person a small number of high-conviction trades, each with a plain-English execution plan, and recalibrates itself at the end of every month. The tool itself has **not** been built yet; building starts once the open decisions in `00-SYNTHESIS.md` are settled.
+Research and design for a system that emails one person a small number of trades, each with a plain-English execution plan, and recalibrates itself every month. **Nothing has been built yet.** Building starts after the owner answers the open questions in `00-SYSTEM-DESIGN-v3.md` §12.
 
 Research date: 2026-09-28.
 
+**Start here:**
+- `00-SYSTEM-DESIGN-v3.md` — the system that will be built: the 1–60 day rule book, portfolio rules, paper-trading gates, architecture, and decisions needed.
+- `DECISIONS.md` — the owner's decisions so far.
+
+## Phase 1 — long-horizon research (background)
+
 | # | File | Question it answers |
 |---|---|---|
-| 00 | `00-SYNTHESIS.md` | What should the system do, and why? Strategy constitution v0, architecture, open decisions. |
+| 00 | `00-SYNTHESIS.md` (rev. 2) | Long-horizon strategy constitution and presets. Still the reference for an optional long-term core held outside the trade system. |
 | 01 | `01-greatest-trades-and-blowups.md` | What produced history's largest percentage gains from the fewest decisions, and what ruined the people who tried? |
 | 02 | `02-academic-evidence.md` | Which return premia and anomalies survive out of sample, and what destroys retail traders? |
 | 03 | `03-sizing-and-growth-math.md` | What does "1000%" require mathematically? Kelly sizing, ruin, simulations. |
 | 04 | `04-derivatives-leverage-convexity.md` | When is buying convexity (options, leverage) positive expected value? |
-| 05 | `05-special-situations-and-alt-markets.md` | Event-driven, structural and alternative-market edges accessible to one person. |
+| 05 | `05-special-situations-and-alt-markets.md` | Event-driven, structural and alternative-market edges. |
 | 06 | `06-backtests-few-trade-strategies.md` | Real-data backtests of rule-based strategies with very few trades. |
 | 07 | `07-multibaggers-and-power-laws.md` | What identified 10–100x winners ahead of time, and what holding them felt like. |
 | 08 | `08-current-environment-2026-09.md` | The market regime as of 28 Sep 2026, and the setups on the watch list. |
 | 09 | `09-infrastructure-data-email-compliance.md` | Data sources, email delivery, scheduling, the LLM layer, broker and regulatory constraints. |
 | 10 | `10-calibration-and-self-improvement.md` | How the monthly calibration loop improves the system without overfitting. |
 | 11 | `11-trade-email-spec.md` | Exactly what each trade email contains. |
-| 12 | `12-red-team-review.md` | Adversarial review of the synthesis. Its critical and major findings are fixed in revision 2 of `00-SYNTHESIS.md` (see its Appendix C). |
+| 12 | `12-red-team-review.md` | Adversarial review of the phase-1 synthesis; its findings are fixed in rev. 2. |
 
-Code used for the analyses lives in `code/<track>/` and can be re-run with Python 3.11 plus `pandas numpy scipy statsmodels yfinance matplotlib requests xlrd openpyxl`. Scripts behind the synthesis's own numbers are in `code/00-synthesis/`:
+## Phase 2 — the 1–60 day horizon the owner chose
 
-- `preset_backtest.py` — the §10 preset table (historical and muted);
-- `preset_postpub.py` — the 2007–2026 check;
-- `example_base_rates.py` and `example_email_numbers.py` — the worked example.
+| # | File | Question it answers |
+|---|---|---|
+| 13 | `13-short-horizon-index-etf-rules.md` | Which index/ETF rules with 1–60 day holds have a persistent edge after costs? Only the VIX-gated uptrend dip-buy (ST-1). |
+| 14 | `14-short-horizon-options-vol.md` | Which option structures work for 1–60 day trades? The crash call spread (O2); put spreads are paper only; buying options into events loses. |
+| 15 | `15-short-horizon-futures-crypto.md` | Futures and crypto with 1–60 day holds. Only slow multi-asset trend survives; crypto trend is a risk control. |
+| 16 | `16-short-horizon-event-driven.md` | Event-driven single-stock catalysts. None survives for a follower acting the next day; shadow ledger only. |
+| 17 | `17-short-horizon-macro-events.md` | Macro and geopolitical event trades, and the 60-day watch list from 28 Sep 2026. |
+| 18 | `18-short-horizon-execution-sizing-paper.md` | Sizing, execution, taxes, the paper-trading protocol and the go-live gates for short-horizon trades. |
+| 19 | `19-red-team-v3.md` | Adversarial review of the v3 design. |
+
+## Reproducing the numbers
+
+Code for each track lives in `code/<track>/` and runs with Python 3.11 plus `pandas numpy scipy statsmodels yfinance matplotlib requests xlrd openpyxl`. The scripts behind the phase-1 synthesis's own numbers are in `code/00-synthesis/`.
 
 **Nothing in this folder is individualized financial advice.** It is research for the owner's personal use. Every strategy described here can lose money, including all of the capital committed to it.
