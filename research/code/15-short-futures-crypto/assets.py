@@ -224,26 +224,6 @@ def energy_rolled(sym: str) -> pd.DataFrame:
     return out
 
 
-def energy_check(sym: str) -> pd.DataFrame:
-    """Validation: monthly return from daily rolled series vs clean monthly (C2 at first day -> C1 next first day)."""
-    e = energy_rolled(sym)
-    df = C.eia_curve(sym).dropna(subset=["C1", "C2"])
-    first = df.groupby(df.index.to_period("M")).head(1)
-    clean = (first["C1"].shift(-1) / first["C2"] - 1).dropna()
-    clean.index = clean.index.to_period("M")
-    daily = (1 + e["ret"]).groupby(e.index.to_period("M")).prod() - 1
-    # daily compounding from first day of month (exclusive) to first day of next month (inclusive)
-    fd = first.index
-    acc = []
-    for a, b in zip(fd[:-1], fd[1:]):
-        seg = e["ret"].loc[a:b].iloc[1:]
-        acc.append((a.to_period("M"), float((1 + seg).prod() - 1)))
-    acc = pd.Series(dict(acc))
-    comp = pd.DataFrame({"clean": clean, "daily_chain": acc}).dropna()
-    comp["diff"] = comp["daily_chain"] - comp["clean"]
-    return comp
-
-
 def commodity_excess() -> pd.DataFrame:
     rf = C.fred("DTB3") / 100
     out = {}

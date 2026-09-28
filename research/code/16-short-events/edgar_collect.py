@@ -22,6 +22,7 @@ KINDS = {
                  '"repurchase authorization" OR "authorized the repurchase"', "8-K")],
     "specdiv": [('"special dividend" OR "special cash dividend"', "8-K")],
     "earn": [('"results of operations and financial condition"', "8-K")],
+    "ipo": [('"initial public offering"', "424B4")],
 }
 
 
@@ -35,10 +36,12 @@ def windows(kind: str):
     return [(a.date().isoformat(), (b - pd.Timedelta(days=1)).date().isoformat()) for a, b in zip(m[:-1], m[1:])]
 
 
-def collect(kind: str) -> pd.DataFrame:
+def collect(kind: str, y0: int = 2011, y1: int = 2026, assemble: bool = True) -> pd.DataFrame:
     parts = []
     for q, forms in KINDS[kind]:
         for s, e in windows(kind):
+            if not (y0 <= int(s[:4]) <= y1):
+                continue
             if forms == "SCHEDULE 13D" and e < "2024-11-01":
                 continue
             if forms == "SC 13D" and s > "2025-03-31":
@@ -47,6 +50,8 @@ def collect(kind: str) -> pd.DataFrame:
             if len(df):
                 parts.append(df)
         print(kind, forms, "done", sum(len(p) for p in parts), flush=True)
+    if not assemble:
+        return pd.DataFrame()
     raw = pd.concat(parts, ignore_index=True)
     raw["items_s"] = raw["items"].apply(lambda x: ",".join(sorted(set(x or []))))
     g = raw.groupby("adsh").agg(form=("form", "first"), file_date=("file_date", "first"), ciks=("ciks", "first"),
@@ -59,6 +64,12 @@ def collect(kind: str) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
+    # usage: python edgar_collect.py 13d buyback      (full collection + assembly)
+    #        python edgar_collect.py earn:2011:2014   (cache-fill a year range only, no assembly)
     kinds = sys.argv[1:] or ["13d", "specdiv", "buyback", "earn"]
     for k in kinds:
-        collect(k)
+        if ":" in k:
+            kk, a, b = k.split(":")
+            collect(kk, int(a), int(b), assemble=False)
+        else:
+            collect(k)

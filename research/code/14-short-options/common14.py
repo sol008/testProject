@@ -84,6 +84,29 @@ def dense(s: pd.Series, max_gap_days: int = 40) -> pd.Series:
     return s.loc[big.index[-1]:] if len(big) else s
 
 
+KNOWN_BREAKS = {"CLL": ["2009-10-16"]}   # permanent one-day level shifts inconsistent with the strategy (data errors)
+
+
+def clean_index(s: pd.Series, name: str | None = None, thresh: float = 0.05) -> pd.Series:
+    """Remove one-day reverting spikes (|r_t|>thresh, opposite |r_t+1|>thresh, |r_t + r_t+1| small) and
+    neutralise known permanent data breaks by rescaling the history before them."""
+    s = s.copy()
+    r = s.pct_change()
+    spx_r = yf_close("^GSPC").pct_change().reindex(s.index)
+    # a data spike: big one-day move that the S&P 500 did not make, reversed the next day
+    spike = (r.abs() > thresh) & (spx_r.abs() < 0.015) & (r.shift(-1).abs() > thresh) & \
+        (np.sign(r) != np.sign(r.shift(-1)))
+    s[spike] = np.nan
+    s = s.interpolate()
+    for d in KNOWN_BREAKS.get(name or s.name, []):
+        d = pd.Timestamp(d)
+        if d in s.index:
+            i = s.index.get_loc(d)
+            ratio = s.iloc[i] / s.iloc[i - 1]
+            s.iloc[:i] = s.iloc[:i] * ratio
+    return s
+
+
 def put_index() -> pd.Series:
     """CBOE PUT: the CBOE CSV is daily only from 2007; Yahoo ^PUT is daily from 1996-08 and
     matches CBOE on the 2007-2026 overlap (median ratio 1.000).  Splice at 2007-01-03."""

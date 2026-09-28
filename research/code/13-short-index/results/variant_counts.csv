@@ -33,4 +33,5 @@ s04_calendar,calendar:PREHOL,1,4,22
 s04_calendar,calendar:TOM,1,4,22
 s05_overnight,overnight,1,5,5
 s06_extras,meanrev:RSI2-sweep,25,2,100
+s06_extras,meanrev:VIXfilter,3,4,24
 s06_extras,panic:VIXterm-proxy,6,2,60

@@ -147,7 +147,7 @@ def period_trades(R, Wsig, H):
             s = S.iat[a, j]
             if s != 0:
                 seg = Rf[a + 1:b + 1, j]
-                ret = s * (np.prod(1 + s * seg) ** s - 1) if False else np.prod(1 + s * seg) - 1
+                ret = np.prod(1 + s * seg) - 1          # daily-rebalanced long/short notional return
                 rows.append((c, R.index[a], R.index[min(b, len(R) - 1)], int(s), float(ret), s != prev))
             prev = s
     return pd.DataFrame(rows, columns=["asset", "entry", "exit", "dir", "ret", "new"])

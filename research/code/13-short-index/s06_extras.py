@@ -220,6 +220,37 @@ def sweep():
     save(pd.DataFrame(rows), "dip_sweep.csv")
 
 
+def vix_filter():
+    """Dip-buy only when VIX at the signal close is >= v (fewer, larger trades).  The
+    in-sample (pre-2008) by-VIX breakdown and Nagel (2012) motivate v = 20; 15 and 25 are
+    shown for robustness.  All three are registered as variants."""
+    rows = []
+    vix = load("^VIX")["C"]
+    for tk, mode in (("SPY", "open"), ("QQQ", "open"), ("IWM", "open"), ("^GSPC", "close")):
+        df = load(tk)
+        c = df["C"]
+        r2 = rsi_wilder(c, 2)
+        base = (r2 < 10) & (c > sma(c, 200))
+        vx = vix.reindex(df.index)
+        for v in (0, 15, 20, 25):
+            e = base & (vx >= v) if v else base
+            tr = run_rule(df, e, mode=mode, hold=20, exit_sig=r2 > 70)
+            periods = {"IS (<2008)": ("1990-01-01", SPLIT), "OOS (2008-)": (SPLIT, END)}
+            for pname, (lo, hi) in periods.items():
+                lo2, hi2 = max(pd.Timestamp(lo), df.index[0]), min(pd.Timestamp(hi), df.index[-1])
+                sub = tr[(tr["signal"] >= lo2) & (tr["signal"] < hi2)]
+                st = trade_stats(sub, lo2, hi2)
+                u = float((df["aC"].pct_change() - df["rf"]).loc[lo2:hi2].mean())
+                edge = sub["excess"].values - u * sub["sessions"].values
+                ss = stream_stats(strategy_daily(df, sub, lo2, hi2), df["rf"])
+                if v:
+                    REG.add("meanrev:VIXfilter", f"RSI2<10|RSI2>70|trend|VIX>={v}", tk, mode, pname, st)
+                rows.append(dict(inst=tk, vix_min=v, period=pname, **st, edge=float(edge.mean()),
+                                 t_edge=float(edge.mean() / edge.std(ddof=1) * np.sqrt(len(edge))) if len(edge) > 2 else np.nan,
+                                 strat_mdd=ss.get("mdd"), strat_sharpe=ss.get("sharpe")))
+    save(pd.DataFrame(rows), "dip_vix_filter.csv")
+
+
 def main():
     k, x = vix_term_proxy()
     print("proxy", k, x)
@@ -227,6 +258,7 @@ def main():
     instruments()
     overlap(k, x)
     sweep()
+    vix_filter()
     REG.save()
     print("done")
 

@@ -22,7 +22,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from common14 import OUT, cagr, cboe, dense, max_dd, put_index, save, tbill_daily, yf_close
+from common14 import OUT, cagr, cboe, clean_index, dense, max_dd, put_index, save, tbill_daily, yf_close
 
 INDICES = ["PUT", "PUTY", "WPUT", "PUTD", "BXM", "BXMD", "BXY", "CNDR", "BFLY", "CLL", "PPUT",
            "PUTR", "VPD", "VPN"]
@@ -101,7 +101,7 @@ def stats(level: pd.Series, rf: pd.Series, bench: pd.Series | None = None) -> di
 def main():
     rf = tbill_daily()
     bench = spx_tr()
-    lv = {s: (put_index() if s == "PUT" else dense(cboe(s))) for s in INDICES}
+    lv = {s: clean_index(put_index() if s == "PUT" else dense(cboe(s)), s) for s in INDICES}
 
     rows = []
     for s, x in lv.items():

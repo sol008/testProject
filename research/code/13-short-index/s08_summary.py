@@ -149,6 +149,9 @@ def finalist_trades():
         spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=r2 > 70))
     F["C1-alt dip-buy SPY (exit close>SMA5 instead)"] = (
         spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=c > sma(c, 5)))
+    vix_s = load("^VIX")["C"].reindex(spy.index)
+    F["C1-V dip-buy SPY only when VIX>=20 at the signal close"] = (
+        spy, run_rule(spy, dip & (vix_s >= 20), mode="open", hold=20, exit_sig=r2 > 70))
     qqq = load("QQQ")
     cq = qqq["C"]
     r2q = rsi_wilder(cq, 2)

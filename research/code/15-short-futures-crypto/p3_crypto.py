@@ -421,10 +421,12 @@ def main():
     C.save({"funding_7d_ann_%_latest": fnow, "funding_last_dates": {c: str(F[c].dropna().index[-1].date()) for c in F.columns},
             "etf_flow_trigger": trig}, "p3_current.json")
     print(fnow)
-
-
-if __name__ == "__main__":
-    main()
+    A = alpha_vs_hold()
+    C.save(A, "p3_crypto_alpha_vs_hold.csv")
+    print(A.to_string())
+    cs = current_state()
+    C.save(cs, "p3_crypto_current.json")
+    print(json.dumps(cs, indent=1))
 
 
 # --------------------------------------------------------------------------- timing alpha vs buy & hold
@@ -478,5 +480,6 @@ def current_state():
     return out
 
 
-if __name__ == "__main__" and os.environ.get("P3_EXTRA"):
-    pass
+
+if __name__ == "__main__":
+    main()

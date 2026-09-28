@@ -44,6 +44,10 @@ def load_panel():
             continue
         if df.empty or "close" not in df:
             continue
+        base = sym[:-4]
+        # Binance tokenized US stocks/ETFs (e.g. NVDAB, SPYB, SNDKB) listed from June 2026: not crypto
+        if base.endswith("B") and len(base) >= 4 and base != "SHIB" and df.index[0] >= pd.Timestamp("2026-06-01"):
+            continue
         df = df[df["close"] > 0]
         df.index = df.index.normalize()
         df = df[~df.index.duplicated(keep="last")]

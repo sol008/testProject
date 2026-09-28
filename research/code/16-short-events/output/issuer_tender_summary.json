@@ -1,0 +1,17 @@
+{
+  "odd_lot": {
+    "n_parsed_operating_cos": 119,
+    "years": 14.6,
+    "share_with_min_price_above_market_by_0.5%": 0.21,
+    "qualifying_per_year": 1.7,
+    "median_edge_%_qualifying": 4.59,
+    "median_net_usd_per_trade_($25 fee)": 15.0,
+    "mean_net_usd_per_trade": 243.0,
+    "median_capital_usd": 1068.0,
+    "median_net_return_%": 0.58,
+    "share_net_negative_after_fee": 0.32,
+    "annual_usd_if_all_taken_median_x_n": 25.0,
+    "annual_usd_if_all_taken_mean_x_n": 417.0
+  },
+  "note": "round-lot table in issuer_tender_follower.csv"
+}
