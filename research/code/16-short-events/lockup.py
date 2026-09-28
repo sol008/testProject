@@ -67,6 +67,7 @@ def main():
         ev[f"x_{w}"] = ev[w] - ev[f"{w}_IWM"]
     ev["period"] = np.where(ev["ipo_date"] < "2015-07-01", "IS (IPO 2012-15H1)", "OOS (IPO 2015H2-26)")
     ev = ev[ev["raw_px"] >= 2]
+    ev.to_pickle(SCRATCH / "lockup_events.pkl")
     rows = []
     for per, g in list(ev.groupby("period")) + [("ALL", ev)]:
         yrs = 3.5 if per.startswith("IS") else (10.5 if per.startswith("OOS") else 14.0)

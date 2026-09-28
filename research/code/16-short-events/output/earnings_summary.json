@@ -1,0 +1,10 @@
+{
+  "n_universe": 108796,
+  "kelly_pead_ear_long_oos_h20": {
+    "f_full": 0.0,
+    "f_used": 0.0,
+    "g_per_trade": 0.0,
+    "shrunk_mean": -0.0030281776015447484
+  },
+  "note": "survivor universe (current tickers); see module docstring"
+}

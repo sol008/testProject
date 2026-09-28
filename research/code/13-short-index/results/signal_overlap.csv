@@ -1,0 +1,10 @@
+a,b,a_days,share_of_a_with_b_within_3d
+dip,dip,274,1
+dip,vixterm_up,274,0.20073
+dip,vix30_first,274,0.0620438
+vixterm_up,dip,36,0.722222
+vixterm_up,vixterm_up,36,1
+vixterm_up,vix30_first,36,0.166667
+vix30_first,dip,20,0.55
+vix30_first,vixterm_up,20,0.3
+vix30_first,vix30_first,20,1

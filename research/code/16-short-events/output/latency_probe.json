@@ -1,0 +1,23 @@
+{
+  "probe_time_utc": "2026-09-28T23:04:08.674799+00:00",
+  "atom_4": {
+    "entries": 40,
+    "request_secs": 23.42,
+    "newest_age_min": 0.3,
+    "oldest_of_40_age_min": 69.0
+  },
+  "efts_indexed_share_of_10_newest_form4": "10/10",
+  "atom_8-K": {
+    "entries": 40,
+    "request_secs": 1.86,
+    "newest_age_min": 93.6,
+    "oldest_of_40_age_min": 153.1
+  },
+  "atom_SC 13D": "error HTTPSConnectionPool(host='www.sec.gov', port=443): Read timed out. (read timeout=60)",
+  "atom_SCHEDULE 13D": {
+    "entries": 40,
+    "request_secs": 4.95,
+    "newest_age_min": 11.4,
+    "oldest_of_40_age_min": 4459.0
+  }
+}

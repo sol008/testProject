@@ -16,7 +16,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from common import COST_RT, OUT, cap_bucket, load_prices, save_csv, save_json, trade_stats
+from common import COST_RT, OUT, SCRATCH, cap_bucket, load_prices, save_csv, save_json, trade_stats
 from fastev import anchor_windows
 
 SRC = OUT.parent.parent / "05-special-situations" / "output" / "odd_lot_tenders.csv"
@@ -59,6 +59,7 @@ def main():
                                                  "micro ($50-300m)": COST_RT["micro ($50-300m)"]})
     for w in ["ann", "f5", "f20", "f60", "exp_to_60"]:
         ev[f"x_{w}"] = ev[w] - ev[f"{w}_IWM"]
+    ev.to_pickle(SCRATCH / "tender_events.pkl")
     rows = []
     for typ, g in list(ev.groupby("type")) + [("ALL", ev)]:
         for w in ["ann", "f5", "f20", "f60", "exp_to_60"]:

@@ -267,9 +267,10 @@ def main():
     save(ft, "finalists.csv")
     cs = cost_sensitivity(F)
     save(cs, "finalists_cost_sensitivity.csv")
+    import re
     for name, (df, tr) in F.items():
-        tag = name.split(" ")[0]
-        save(tr, f"finalist_trades_{tag}_{df.attrs.get('ticker', '').replace('^', '')}.csv")
+        tag = re.sub(r"[^A-Za-z0-9]+", "_", name).strip("_")[:64]
+        save(tr, f"finalist_trades_{tag}.csv")
     meta = pd.DataFrame([dict(N_all=N_all, N_families=N_families, E_max_z_all=expected_max_z(N_all),
                               bonferroni_t_all=bonferroni_t(N_all), E_max_z_families=expected_max_z(N_families),
                               bonferroni_t_families=bonferroni_t(N_families), **{f"N_{k}": v for k, v in N_fam_map.items()})])

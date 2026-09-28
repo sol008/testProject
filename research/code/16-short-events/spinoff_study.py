@@ -63,6 +63,7 @@ def main():
         ev[f"x_{w}"] = ev[w] - ev[f"{w}_IWM"]
     ev["period"] = np.where(ev["anchor"] < "2016-01-01", "2011-15", "2016-26")
     ev = ev[ev["first_close"] >= 2]
+    ev.to_pickle(SCRATCH / "spinoff_events.pkl")
     rows = []
     for per, g in list(ev.groupby("period")) + [("all", ev)]:
         yrs = 5.0 if per == "2011-15" else (10.7 if per == "2016-26" else 15.7)
