@@ -1,0 +1,4 @@
+structure,period,n,mean_pnl_pct_spot,median,worst,best,hit
+1y risk reversal: short 90% put / long 110% call (P&L % of spot),IS 1990-2007,216,0.0378,0.0099,-0.3178,0.3510,0.7037
+1y risk reversal: short 90% put / long 110% call (P&L % of spot),OOS 2008-2025,213,0.0684,0.0492,-0.3628,0.5541,0.9296
+1y risk reversal: short 90% put / long 110% call (P&L % of spot),ALL,429,0.0530,0.0269,-0.3628,0.5541,0.8159

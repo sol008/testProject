@@ -1,0 +1,164 @@
+{
+  "episodes": {
+    "cocoa CC=F": {
+      "ticker": "CC=F",
+      "2y_low_before_peak": 2498.0,
+      "low_date": "2022-12-20",
+      "peak": 12565.0,
+      "peak_date": "2024-12-18",
+      "run_up_x": 5.03,
+      "max_dd_after_peak_%": -77.7,
+      "last": 5607.0,
+      "last_vs_peak_%": -55.4,
+      "realised_vol_1y_%": 58.6
+    },
+    "uranium trust SRUUF": {
+      "ticker": "SRUUF",
+      "2y_low_before_peak": 9.75,
+      "low_date": "2022-07-13",
+      "peak": 25.06,
+      "peak_date": "2024-02-02",
+      "run_up_x": 2.57,
+      "max_dd_after_peak_%": -48.7,
+      "last": 18.6,
+      "last_vs_peak_%": -25.8,
+      "realised_vol_1y_%": 33.4
+    },
+    "uranium miners URA": {
+      "ticker": "URA",
+      "2y_low_before_peak": 19.34,
+      "low_date": "2025-04-08",
+      "peak": 61.81,
+      "peak_date": "2026-01-28",
+      "run_up_x": 3.2,
+      "max_dd_after_peak_%": -39.3,
+      "last": 40.13,
+      "last_vs_peak_%": -35.1,
+      "realised_vol_1y_%": 51.8
+    },
+    "Cameco CCJ": {
+      "ticker": "CCJ",
+      "2y_low_before_peak": 36.61,
+      "low_date": "2025-04-08",
+      "peak": 134.09,
+      "peak_date": "2026-01-28",
+      "run_up_x": 3.66,
+      "max_dd_after_peak_%": -36.9,
+      "last": 87.04,
+      "last_vs_peak_%": -35.1,
+      "realised_vol_1y_%": 54.0
+    },
+    "gold GC=F": {
+      "ticker": "GC=F",
+      "2y_low_before_peak": 2004.3,
+      "low_date": "2024-02-14",
+      "peak": 5318.4,
+      "peak_date": "2026-01-29",
+      "run_up_x": 2.65,
+      "max_dd_after_peak_%": -24.9,
+      "last": 4153.5,
+      "last_vs_peak_%": -21.9,
+      "realised_vol_1y_%": 29.3
+    },
+    "silver SI=F": {
+      "ticker": "SI=F",
+      "2y_low_before_peak": 22.1,
+      "low_date": "2024-02-13",
+      "peak": 115.08,
+      "peak_date": "2026-01-26",
+      "run_up_x": 5.21,
+      "max_dd_after_peak_%": -51.4,
+      "last": 61.13,
+      "last_vs_peak_%": -46.9,
+      "realised_vol_1y_%": 69.5
+    },
+    "copper HG=F": {
+      "ticker": "HG=F",
+      "2y_low_before_peak": 3.99,
+      "low_date": "2024-12-31",
+      "peak": 6.8,
+      "peak_date": "2026-09-09",
+      "run_up_x": 1.71,
+      "max_dd_after_peak_%": -7.0,
+      "last": 6.61,
+      "last_vs_peak_%": -2.9,
+      "realised_vol_1y_%": 28.3
+    },
+    "coffee KC=F": {
+      "ticker": "KC=F",
+      "2y_low_before_peak": 145.4,
+      "low_date": "2023-10-05",
+      "peak": 438.9,
+      "peak_date": "2025-02-13",
+      "run_up_x": 3.02,
+      "max_dd_after_peak_%": -44.3,
+      "last": 288.4,
+      "last_vs_peak_%": -34.3,
+      "realised_vol_1y_%": 40.8
+    },
+    "crude CL=F": {
+      "ticker": "CL=F",
+      "2y_low_before_peak": 76.08,
+      "low_date": "2022-01-03",
+      "peak": 123.7,
+      "peak_date": "2022-03-08",
+      "run_up_x": 1.63,
+      "max_dd_after_peak_%": -55.3,
+      "last": 93.07,
+      "last_vs_peak_%": -24.8,
+      "realised_vol_1y_%": 55.7
+    }
+  },
+  "term_structure_now": {
+    "crude (CL) Nov26 vs Dec27": {
+      "nearby": "CLX26.NYM",
+      "deferred": "CLZ27.NYM",
+      "p_near": 93.07,
+      "p_def": 74.66,
+      "annualised_roll_yield_%": 22.6
+    },
+    "cocoa (CC) Dec26 vs Jul27": {
+      "nearby": "CCZ26.NYB",
+      "deferred": "CCN27.NYB",
+      "p_near": 5607.0,
+      "p_def": 5857.0,
+      "annualised_roll_yield_%": -7.2
+    },
+    "coffee (KC) Dec26 vs Mar27": {
+      "nearby": "KCZ26.NYB",
+      "deferred": "KCH27.NYB",
+      "p_near": 288.4,
+      "p_def": 280.65,
+      "annualised_roll_yield_%": 11.5
+    },
+    "gold (GC) Dec26 vs Dec27": {
+      "nearby": "GCZ26.CMX",
+      "deferred": "GCZ27.CMX",
+      "p_near": 4153.6,
+      "p_def": 4401.9,
+      "annualised_roll_yield_%": -5.6
+    },
+    "silver (SI) Dec26 vs Mar27": {
+      "nearby": "SIZ26.CMX",
+      "deferred": "SIH27.CMX",
+      "p_near": 61.135,
+      "p_def": 61.95,
+      "annualised_roll_yield_%": -5.2
+    },
+    "copper (HG) Dec26 vs Mar27": {
+      "nearby": "HGZ26.CMX",
+      "deferred": "HGH27.CMX",
+      "p_near": 6.609,
+      "p_def": 6.715,
+      "annualised_roll_yield_%": -6.1
+    },
+    "corn (ZC) Dec26 vs Mar27": {
+      "nearby": "ZCZ26.CBT",
+      "deferred": "ZCH27.CBT",
+      "p_near": 522.25,
+      "p_def": 535.75,
+      "annualised_roll_yield_%": -9.7
+    }
+  },
+  "as_of": "2026-09-28T20:35:08.416171"
+}

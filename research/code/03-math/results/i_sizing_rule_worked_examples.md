@@ -1,0 +1,12 @@
+| Stage | Trade | p (model) | Breakeven p | p used | Stake (% of W) | Max loss (% of W) | Binding constraint | Growth contribution | Recommend? |
+|---|---|---|---|---|---|---|---|---|---|
+| Launch (kappa=0.5, k=0.25) | Crisis buy (index after crash) | 0.8 | 0.334 | 0.567 | 17.49% | 8.75% | fractional Kelly | 5.16% | yes |
+| Launch (kappa=0.5, k=0.25) | Trend trade (stake = R to stop) | 0.4 | 0.293 | 0.346 | 1.58% | 1.90% | fractional Kelly | 0.30% | yes |
+| Launch (kappa=0.5, k=0.25) | Convex option (premium) | 0.15 | 0.096 | 0.123 | 0.48% | 0.48% | robust Kelly (p - delta) | 0.12% | no (below 0.2% hurdle) |
+| Launch (kappa=0.5, k=0.25) | Binary event 60c vs 50c | 0.6 | 0.51 | 0.555 | 2.30% | 2.30% | fractional Kelly | 0.18% | no (below 0.2% hurdle) |
+| Launch (kappa=0.5, k=0.25) | Binary event 55c vs 50c | 0.55 | 0.51 | 0.53 | 0.00% | 0.00% | robust Kelly (p - delta) | 0.00% | no (below 0.2% hurdle) |
+| Proven (kappa=0.9, k=0.5) | Crisis buy (index after crash) | 0.8 | 0.334 | 0.753 | 62.98% | 31.49% | fractional Kelly | 27.41% | yes |
+| Proven (kappa=0.9, k=0.5) | Trend trade (stake = R to stop) | 0.4 | 0.293 | 0.389 | 1.67% | 2.00% | per-trade cap | 0.60% | yes |
+| Proven (kappa=0.9, k=0.5) | Convex option (premium) | 0.15 | 0.096 | 0.145 | 0.48% | 0.48% | robust Kelly (p - delta) | 0.23% | yes |
+| Proven (kappa=0.9, k=0.5) | Binary event 60c vs 50c | 0.6 | 0.51 | 0.591 | 3.00% | 3.00% | per-trade cap | 0.43% | yes |
+| Proven (kappa=0.9, k=0.5) | Binary event 55c vs 50c | 0.55 | 0.51 | 0.546 | 0.00% | 0.00% | robust Kelly (p - delta) | 0.00% | no (below 0.2% hurdle) |

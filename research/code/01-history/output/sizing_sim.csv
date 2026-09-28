@@ -1,0 +1,30 @@
+archetype,true_EV_per_bet,kelly_believed,sizing,fraction,n_bets,median_terminal_x,mean_terminal_x,p_lose_money,p_lose_90pct,p_drawdown_worse_50pct,p_10x_or_more,p99_terminal_x
+Cheap convexity (10% chance of 15x),0.5,0.036,1% per bet,0.01,30,1.13,1.16,0.413,0.0,0.0,0.0,2.0
+Cheap convexity (10% chance of 15x),0.5,0.036,2% per bet,0.02,30,1.22,1.35,0.41,0.0,0.0,0.0001,3.5
+Cheap convexity (10% chance of 15x),0.5,0.036,5% per bet,0.05,30,1.23,2.11,0.409,0.0,0.593,0.0263,12.6
+Cheap convexity (10% chance of 15x),0.5,0.036,half-Kelly (believed),0.018,30,1.2,1.31,0.411,0.0,0.0,0.0,3.2
+Cheap convexity (10% chance of 15x),0.5,0.036,full Kelly (believed),0.036,30,1.26,1.7,0.412,0.0,0.245,0.0076,7.4
+Cheap convexity (10% chance of 15x),0.5,0.036,2x Kelly,0.071,30,1.08,2.82,0.41,0.0,0.87,0.0728,23.3
+Cheap convexity (10% chance of 15x),0.5,0.036,25% per bet,0.25,30,0.04,40.6,0.824,0.646,1.0,0.0263,50.0
+Cheap convexity (10% chance of 15x),0.5,0.036,all-in (100%),1.0,30,0.0,0.0,1.0,1.0,1.0,0.0,0.0
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,1% per bet,0.01,30,1.1,1.13,0.123,0.0,0.0,0.0,1.5
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,2% per bet,0.02,30,1.2,1.27,0.122,0.0,0.0,0.0,2.1
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,5% per bet,0.05,30,1.45,1.81,0.224,0.0,0.041,0.0001,5.5
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,half-Kelly (believed),0.067,30,1.56,2.21,0.223,0.0,0.151,0.0045,9.0
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,full Kelly (believed),0.133,30,1.65,4.74,0.228,0.008,0.803,0.1252,47.5
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,2x Kelly,0.267,30,0.72,19.33,0.508,0.124,0.994,0.2195,387.7
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,25% per bet,0.25,30,0.85,17.81,0.507,0.124,0.994,0.2207,321.7
+Catalyst asymmetric bet (35% chance of 4x),0.4,0.133,all-in (100%),1.0,30,0.0,0.0,1.0,1.0,1.0,0.0,0.0
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,1% per bet,0.01,30,0.98,1.0,0.512,0.0,0.0,0.0,1.2
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,2% per bet,0.02,30,0.94,1.0,0.512,0.0,0.0,0.0,1.5
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,5% per bet,0.05,30,0.82,1.0,0.674,0.0,0.232,0.0,2.6
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,half-Kelly (believed),0.067,30,0.73,1.0,0.674,0.0,0.48,0.0,3.3
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,full Kelly (believed),0.133,30,0.39,1.0,0.672,0.099,0.96,0.008,7.0
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,2x Kelly,0.267,30,0.05,1.04,0.895,0.513,1.0,0.0212,10.7
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,25% per bet,0.25,30,0.07,0.99,0.895,0.517,1.0,0.0219,10.9
+"Same bet, but hit rate overestimated (true 25%)",0.0,0.133,all-in (100%),1.0,30,0.0,0.0,1.0,1.0,1.0,0.0,0.0
+Lottery-like bet with no edge (7% chance of 10x),-0.3,0.0,1% per bet,0.01,30,0.9,0.91,0.844,0.0,0.0,0.0,1.3
+Lottery-like bet with no edge (7% chance of 10x),-0.3,0.0,2% per bet,0.02,30,0.79,0.83,0.846,0.0,0.0,0.0,1.7
+Lottery-like bet with no edge (7% chance of 10x),-0.3,0.0,5% per bet,0.05,30,0.5,0.64,0.844,0.0,0.796,0.0,2.7
+Lottery-like bet with no edge (7% chance of 10x),-0.3,0.0,25% per bet,0.25,30,0.0,0.09,0.983,0.945,1.0,0.001,1.2
+Lottery-like bet with no edge (7% chance of 10x),-0.3,0.0,all-in (100%),1.0,30,0.0,0.0,1.0,1.0,1.0,0.0,0.0

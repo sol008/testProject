@@ -1,0 +1,651 @@
+{
+  "n_markets": 3795,
+  "min_volume_usd": 100000.0,
+  "anchor_range": [
+    "2023-03-23 23:20:14+00:00",
+    "2026-09-26 18:45:00+00:00"
+  ],
+  "category_counts": {
+    "other": 1528,
+    "politics/geopolitics": 817,
+    "sports": 744,
+    "crypto": 435,
+    "macro/markets": 271
+  },
+  "h1d": {
+    "n_markets": 3727,
+    "brier": 0.0836,
+    "mae": 0.1586,
+    "table": [
+      {
+        "bucket": "[0.0, 0.02)",
+        "n": 1937,
+        "n_events": 666,
+        "mean_price": 0.0031,
+        "win_rate": 0.0041,
+        "win_ci_lo": 0.0016,
+        "win_ci_hi": 0.0075,
+        "mean_ret_prefee": -0.5258,
+        "ret_ci_lo": -0.8235,
+        "ret_ci_hi": -0.1351
+      },
+      {
+        "bucket": "[0.02, 0.05)",
+        "n": 268,
+        "n_events": 190,
+        "mean_price": 0.0327,
+        "win_rate": 0.0187,
+        "win_ci_lo": 0.0039,
+        "win_ci_hi": 0.0344,
+        "mean_ret_prefee": -0.4096,
+        "ret_ci_lo": -0.8827,
+        "ret_ci_hi": 0.1642
+      },
+      {
+        "bucket": "[0.05, 0.1)",
+        "n": 264,
+        "n_events": 197,
+        "mean_price": 0.0709,
+        "win_rate": 0.125,
+        "win_ci_lo": 0.0879,
+        "win_ci_hi": 0.1674,
+        "mean_ret_prefee": 0.7544,
+        "ret_ci_lo": 0.2197,
+        "ret_ci_hi": 1.3992
+      },
+      {
+        "bucket": "[0.1, 0.2)",
+        "n": 312,
+        "n_events": 257,
+        "mean_price": 0.1459,
+        "win_rate": 0.2212,
+        "win_ci_lo": 0.177,
+        "win_ci_hi": 0.2771,
+        "mean_ret_prefee": 0.5207,
+        "ret_ci_lo": 0.2019,
+        "ret_ci_hi": 0.8986
+      },
+      {
+        "bucket": "[0.2, 0.3)",
+        "n": 313,
+        "n_events": 260,
+        "mean_price": 0.2496,
+        "win_rate": 0.2716,
+        "win_ci_lo": 0.2215,
+        "win_ci_hi": 0.3176,
+        "mean_ret_prefee": 0.0845,
+        "ret_ci_lo": -0.1235,
+        "ret_ci_hi": 0.2722
+      },
+      {
+        "bucket": "[0.3, 0.4)",
+        "n": 267,
+        "n_events": 235,
+        "mean_price": 0.3523,
+        "win_rate": 0.3558,
+        "win_ci_lo": 0.2952,
+        "win_ci_hi": 0.4076,
+        "mean_ret_prefee": 0.0096,
+        "ret_ci_lo": -0.166,
+        "ret_ci_hi": 0.1591
+      },
+      {
+        "bucket": "[0.4, 0.5)",
+        "n": 364,
+        "n_events": 336,
+        "mean_price": 0.4465,
+        "win_rate": 0.4835,
+        "win_ci_lo": 0.4359,
+        "win_ci_hi": 0.5335,
+        "mean_ret_prefee": 0.0822,
+        "ret_ci_lo": -0.0273,
+        "ret_ci_hi": 0.1922
+      },
+      {
+        "bucket": "[0.5, 0.6)",
+        "n": 361,
+        "n_events": 332,
+        "mean_price": 0.552,
+        "win_rate": 0.5152,
+        "win_ci_lo": 0.4679,
+        "win_ci_hi": 0.5714,
+        "mean_ret_prefee": -0.0673,
+        "ret_ci_lo": -0.1509,
+        "ret_ci_hi": 0.0326
+      },
+      {
+        "bucket": "[0.6, 0.7)",
+        "n": 271,
+        "n_events": 239,
+        "mean_price": 0.6459,
+        "win_rate": 0.6384,
+        "win_ci_lo": 0.581,
+        "win_ci_hi": 0.6944,
+        "mean_ret_prefee": -0.0116,
+        "ret_ci_lo": -0.0984,
+        "ret_ci_hi": 0.0769
+      },
+      {
+        "bucket": "[0.7, 0.8)",
+        "n": 315,
+        "n_events": 261,
+        "mean_price": 0.7498,
+        "win_rate": 0.7302,
+        "win_ci_lo": 0.6849,
+        "win_ci_hi": 0.775,
+        "mean_ret_prefee": -0.0264,
+        "ret_ci_lo": -0.0891,
+        "ret_ci_hi": 0.0333
+      },
+      {
+        "bucket": "[0.8, 0.9)",
+        "n": 311,
+        "n_events": 258,
+        "mean_price": 0.8536,
+        "win_rate": 0.7781,
+        "win_ci_lo": 0.7264,
+        "win_ci_hi": 0.8288,
+        "mean_ret_prefee": -0.089,
+        "ret_ci_lo": -0.1485,
+        "ret_ci_hi": -0.0304
+      },
+      {
+        "bucket": "[0.9, 0.95)",
+        "n": 263,
+        "n_events": 195,
+        "mean_price": 0.9287,
+        "win_rate": 0.8745,
+        "win_ci_lo": 0.8259,
+        "win_ci_hi": 0.9208,
+        "mean_ret_prefee": -0.0584,
+        "ret_ci_lo": -0.1118,
+        "ret_ci_hi": -0.0095
+      },
+      {
+        "bucket": "[0.95, 0.98)",
+        "n": 265,
+        "n_events": 185,
+        "mean_price": 0.9668,
+        "win_rate": 0.9849,
+        "win_ci_lo": 0.9669,
+        "win_ci_hi": 0.9964,
+        "mean_ret_prefee": 0.0187,
+        "ret_ci_lo": -0.0006,
+        "ret_ci_hi": 0.0317
+      },
+      {
+        "bucket": "[0.98, 1.0)",
+        "n": 1943,
+        "n_events": 669,
+        "mean_price": 0.9969,
+        "win_rate": 0.9954,
+        "win_ci_lo": 0.9921,
+        "win_ci_hi": 0.9979,
+        "mean_ret_prefee": -0.0015,
+        "ret_ci_lo": -0.0048,
+        "ret_ci_hi": 0.0011
+      }
+    ],
+    "by_category": [
+      {
+        "category": "crypto",
+        "fav_n": 305,
+        "fav_ret": -0.0016,
+        "ls_n": 305,
+        "ls_ret": -0.6207
+      },
+      {
+        "category": "macro/markets",
+        "fav_n": 242,
+        "fav_ret": -0.0147,
+        "ls_n": 242,
+        "ls_ret": -0.6737
+      },
+      {
+        "category": "other",
+        "fav_n": 746,
+        "fav_ret": -0.0176,
+        "ls_n": 745,
+        "ls_ret": 0.3683
+      },
+      {
+        "category": "politics/geopolitics",
+        "fav_n": 632,
+        "fav_ret": 0.0058,
+        "ls_n": 631,
+        "ls_ret": -0.8793
+      },
+      {
+        "category": "sports",
+        "fav_n": 546,
+        "fav_ret": 0.0002,
+        "ls_n": 546,
+        "ls_ret": -0.5425
+      }
+    ]
+  },
+  "h7d": {
+    "n_markets": 3253,
+    "brier": 0.0934,
+    "mae": 0.1748,
+    "table": [
+      {
+        "bucket": "[0.0, 0.02)",
+        "n": 1552,
+        "n_events": 474,
+        "mean_price": 0.004,
+        "win_rate": 0.0032,
+        "win_ci_lo": 0.0007,
+        "win_ci_hi": 0.0063,
+        "mean_ret_prefee": -0.5089,
+        "ret_ci_lo": -0.9167,
+        "ret_ci_hi": 0.0159
+      },
+      {
+        "bucket": "[0.02, 0.05)",
+        "n": 260,
+        "n_events": 167,
+        "mean_price": 0.0329,
+        "win_rate": 0.05,
+        "win_ci_lo": 0.025,
+        "win_ci_hi": 0.0779,
+        "mean_ret_prefee": 0.4871,
+        "ret_ci_lo": -0.2598,
+        "ret_ci_hi": 1.357
+      },
+      {
+        "bucket": "[0.05, 0.1)",
+        "n": 241,
+        "n_events": 187,
+        "mean_price": 0.072,
+        "win_rate": 0.1286,
+        "win_ci_lo": 0.0887,
+        "win_ci_hi": 0.1728,
+        "mean_ret_prefee": 0.819,
+        "ret_ci_lo": 0.2621,
+        "ret_ci_hi": 1.4564
+      },
+      {
+        "bucket": "[0.1, 0.2)",
+        "n": 314,
+        "n_events": 242,
+        "mean_price": 0.1481,
+        "win_rate": 0.2229,
+        "win_ci_lo": 0.1721,
+        "win_ci_hi": 0.2746,
+        "mean_ret_prefee": 0.4971,
+        "ret_ci_lo": 0.1345,
+        "ret_ci_hi": 0.8696
+      },
+      {
+        "bucket": "[0.2, 0.3)",
+        "n": 288,
+        "n_events": 241,
+        "mean_price": 0.2467,
+        "win_rate": 0.2812,
+        "win_ci_lo": 0.2357,
+        "win_ci_hi": 0.3357,
+        "mean_ret_prefee": 0.1331,
+        "ret_ci_lo": -0.0507,
+        "ret_ci_hi": 0.3566
+      },
+      {
+        "bucket": "[0.3, 0.4)",
+        "n": 290,
+        "n_events": 253,
+        "mean_price": 0.3496,
+        "win_rate": 0.3862,
+        "win_ci_lo": 0.3264,
+        "win_ci_hi": 0.4481,
+        "mean_ret_prefee": 0.1046,
+        "ret_ci_lo": -0.0608,
+        "ret_ci_hi": 0.2883
+      },
+      {
+        "bucket": "[0.4, 0.5)",
+        "n": 304,
+        "n_events": 283,
+        "mean_price": 0.4481,
+        "win_rate": 0.4737,
+        "win_ci_lo": 0.4166,
+        "win_ci_hi": 0.5226,
+        "mean_ret_prefee": 0.056,
+        "ret_ci_lo": -0.0711,
+        "ret_ci_hi": 0.1711
+      },
+      {
+        "bucket": "[0.5, 0.6)",
+        "n": 303,
+        "n_events": 279,
+        "mean_price": 0.5491,
+        "win_rate": 0.5182,
+        "win_ci_lo": 0.4607,
+        "win_ci_hi": 0.5696,
+        "mean_ret_prefee": -0.056,
+        "ret_ci_lo": -0.1573,
+        "ret_ci_hi": 0.0413
+      },
+      {
+        "bucket": "[0.6, 0.7)",
+        "n": 293,
+        "n_events": 258,
+        "mean_price": 0.6478,
+        "win_rate": 0.6177,
+        "win_ci_lo": 0.5601,
+        "win_ci_hi": 0.6667,
+        "mean_ret_prefee": -0.0461,
+        "ret_ci_lo": -0.1368,
+        "ret_ci_hi": 0.029
+      },
+      {
+        "bucket": "[0.7, 0.8)",
+        "n": 290,
+        "n_events": 242,
+        "mean_price": 0.7515,
+        "win_rate": 0.7207,
+        "win_ci_lo": 0.6711,
+        "win_ci_hi": 0.7718,
+        "mean_ret_prefee": -0.0426,
+        "ret_ci_lo": -0.1092,
+        "ret_ci_hi": 0.0231
+      },
+      {
+        "bucket": "[0.8, 0.9)",
+        "n": 314,
+        "n_events": 242,
+        "mean_price": 0.8506,
+        "win_rate": 0.7803,
+        "win_ci_lo": 0.7287,
+        "win_ci_hi": 0.8253,
+        "mean_ret_prefee": -0.0845,
+        "ret_ci_lo": -0.144,
+        "ret_ci_hi": -0.031
+      },
+      {
+        "bucket": "[0.9, 0.95)",
+        "n": 240,
+        "n_events": 188,
+        "mean_price": 0.9271,
+        "win_rate": 0.8625,
+        "win_ci_lo": 0.8182,
+        "win_ci_hi": 0.9076,
+        "mean_ret_prefee": -0.0702,
+        "ret_ci_lo": -0.1186,
+        "ret_ci_hi": -0.0207
+      },
+      {
+        "bucket": "[0.95, 0.98)",
+        "n": 259,
+        "n_events": 169,
+        "mean_price": 0.9665,
+        "win_rate": 0.9498,
+        "win_ci_lo": 0.9215,
+        "win_ci_hi": 0.9749,
+        "mean_ret_prefee": -0.0174,
+        "ret_ci_lo": -0.0472,
+        "ret_ci_hi": 0.0081
+      },
+      {
+        "bucket": "[0.98, 1.0)",
+        "n": 1558,
+        "n_events": 478,
+        "mean_price": 0.996,
+        "win_rate": 0.9961,
+        "win_ci_lo": 0.9927,
+        "win_ci_hi": 0.9988,
+        "mean_ret_prefee": 0.0002,
+        "ret_ci_lo": -0.0033,
+        "ret_ci_hi": 0.003
+      }
+    ],
+    "by_category": [
+      {
+        "category": "crypto",
+        "fav_n": 233,
+        "fav_ret": 0.0008,
+        "ls_n": 231,
+        "ls_ret": -0.8573
+      },
+      {
+        "category": "macro/markets",
+        "fav_n": 209,
+        "fav_ret": 0.0104,
+        "ls_n": 209,
+        "ls_ret": -0.5215
+      },
+      {
+        "category": "other",
+        "fav_n": 521,
+        "fav_ret": -0.0434,
+        "ls_n": 519,
+        "ls_ret": 1.0638
+      },
+      {
+        "category": "politics/geopolitics",
+        "fav_n": 573,
+        "fav_ret": -0.0042,
+        "ls_n": 573,
+        "ls_ret": -0.6568
+      },
+      {
+        "category": "sports",
+        "fav_n": 521,
+        "fav_ret": 0.0031,
+        "ls_n": 521,
+        "ls_ret": -0.642
+      }
+    ]
+  },
+  "h30d": {
+    "n_markets": 2363,
+    "brier": 0.0772,
+    "mae": 0.1485,
+    "table": [
+      {
+        "bucket": "[0.0, 0.02)",
+        "n": 1157,
+        "n_events": 294,
+        "mean_price": 0.0047,
+        "win_rate": 0.0061,
+        "win_ci_lo": 0.0019,
+        "win_ci_hi": 0.0104,
+        "mean_ret_prefee": -0.3596,
+        "ret_ci_lo": -0.8249,
+        "ret_ci_hi": 0.2476
+      },
+      {
+        "bucket": "[0.02, 0.05)",
+        "n": 227,
+        "n_events": 163,
+        "mean_price": 0.0323,
+        "win_rate": 0.0308,
+        "win_ci_lo": 0.0127,
+        "win_ci_hi": 0.0558,
+        "mean_ret_prefee": -0.1152,
+        "ret_ci_lo": -0.6796,
+        "ret_ci_hi": 0.5985
+      },
+      {
+        "bucket": "[0.05, 0.1)",
+        "n": 218,
+        "n_events": 156,
+        "mean_price": 0.0722,
+        "win_rate": 0.0963,
+        "win_ci_lo": 0.0588,
+        "win_ci_hi": 0.1456,
+        "mean_ret_prefee": 0.3962,
+        "ret_ci_lo": -0.1345,
+        "ret_ci_hi": 1.1106
+      },
+      {
+        "bucket": "[0.1, 0.2)",
+        "n": 244,
+        "n_events": 187,
+        "mean_price": 0.1456,
+        "win_rate": 0.1844,
+        "win_ci_lo": 0.1347,
+        "win_ci_hi": 0.2287,
+        "mean_ret_prefee": 0.2778,
+        "ret_ci_lo": -0.1095,
+        "ret_ci_hi": 0.5747
+      },
+      {
+        "bucket": "[0.2, 0.3)",
+        "n": 218,
+        "n_events": 175,
+        "mean_price": 0.2494,
+        "win_rate": 0.2844,
+        "win_ci_lo": 0.2263,
+        "win_ci_hi": 0.3463,
+        "mean_ret_prefee": 0.1221,
+        "ret_ci_lo": -0.1106,
+        "ret_ci_hi": 0.386
+      },
+      {
+        "bucket": "[0.3, 0.4)",
+        "n": 148,
+        "n_events": 124,
+        "mean_price": 0.3477,
+        "win_rate": 0.3176,
+        "win_ci_lo": 0.2415,
+        "win_ci_hi": 0.3919,
+        "mean_ret_prefee": -0.0768,
+        "ret_ci_lo": -0.2931,
+        "ret_ci_hi": 0.1285
+      },
+      {
+        "bucket": "[0.4, 0.5)",
+        "n": 147,
+        "n_events": 128,
+        "mean_price": 0.4491,
+        "win_rate": 0.4082,
+        "win_ci_lo": 0.3285,
+        "win_ci_hi": 0.4863,
+        "mean_ret_prefee": -0.0958,
+        "ret_ci_lo": -0.2719,
+        "ret_ci_hi": 0.0739
+      },
+      {
+        "bucket": "[0.5, 0.6)",
+        "n": 152,
+        "n_events": 130,
+        "mean_price": 0.5472,
+        "win_rate": 0.5855,
+        "win_ci_lo": 0.5127,
+        "win_ci_hi": 0.6691,
+        "mean_ret_prefee": 0.0674,
+        "ret_ci_lo": -0.0695,
+        "ret_ci_hi": 0.2227
+      },
+      {
+        "bucket": "[0.6, 0.7)",
+        "n": 144,
+        "n_events": 119,
+        "mean_price": 0.6489,
+        "win_rate": 0.7014,
+        "win_ci_lo": 0.6193,
+        "win_ci_hi": 0.7651,
+        "mean_ret_prefee": 0.081,
+        "ret_ci_lo": -0.0439,
+        "ret_ci_hi": 0.1807
+      },
+      {
+        "bucket": "[0.7, 0.8)",
+        "n": 219,
+        "n_events": 177,
+        "mean_price": 0.7476,
+        "win_rate": 0.6986,
+        "win_ci_lo": 0.6324,
+        "win_ci_hi": 0.7615,
+        "mean_ret_prefee": -0.0689,
+        "ret_ci_lo": -0.1559,
+        "ret_ci_hi": 0.0155
+      },
+      {
+        "bucket": "[0.8, 0.9)",
+        "n": 244,
+        "n_events": 189,
+        "mean_price": 0.8519,
+        "win_rate": 0.8156,
+        "win_ci_lo": 0.7672,
+        "win_ci_hi": 0.8615,
+        "mean_ret_prefee": -0.0425,
+        "ret_ci_lo": -0.1012,
+        "ret_ci_hi": 0.0109
+      },
+      {
+        "bucket": "[0.9, 0.95)",
+        "n": 218,
+        "n_events": 156,
+        "mean_price": 0.9264,
+        "win_rate": 0.9037,
+        "win_ci_lo": 0.8485,
+        "win_ci_hi": 0.9471,
+        "mean_ret_prefee": -0.0244,
+        "ret_ci_lo": -0.0852,
+        "ret_ci_hi": 0.0228
+      },
+      {
+        "bucket": "[0.95, 0.98)",
+        "n": 231,
+        "n_events": 165,
+        "mean_price": 0.9671,
+        "win_rate": 0.9654,
+        "win_ci_lo": 0.9444,
+        "win_ci_hi": 0.9867,
+        "mean_ret_prefee": -0.0019,
+        "ret_ci_lo": -0.0233,
+        "ret_ci_hi": 0.02
+      },
+      {
+        "bucket": "[0.98, 1.0)",
+        "n": 1159,
+        "n_events": 295,
+        "mean_price": 0.9953,
+        "win_rate": 0.994,
+        "win_ci_lo": 0.989,
+        "win_ci_hi": 0.9981,
+        "mean_ret_prefee": -0.0014,
+        "ret_ci_lo": -0.0061,
+        "ret_ci_hi": 0.0024
+      }
+    ],
+    "by_category": [
+      {
+        "category": "crypto",
+        "fav_n": 102,
+        "fav_ret": 0.0176,
+        "ls_n": 101,
+        "ls_ret": -0.4789
+      },
+      {
+        "category": "macro/markets",
+        "fav_n": 171,
+        "fav_ret": 0.0162,
+        "ls_n": 171,
+        "ls_ret": -0.6227
+      },
+      {
+        "category": "other",
+        "fav_n": 329,
+        "fav_ret": -0.0162,
+        "ls_n": 329,
+        "ls_ret": 0.7289
+      },
+      {
+        "category": "politics/geopolitics",
+        "fav_n": 492,
+        "fav_ret": -0.01,
+        "ls_n": 490,
+        "ls_ret": -0.2676
+      },
+      {
+        "category": "sports",
+        "fav_n": 514,
+        "fav_ret": -0.0032,
+        "ls_n": 511,
+        "ls_ret": -0.606
+      }
+    ]
+  }
+}

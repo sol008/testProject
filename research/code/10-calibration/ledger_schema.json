@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "trade-system/ledger-record.v1",
+  "title": "Ledger record (one JSON object per line, hash-chained)",
+  "type": "object",
+  "required": ["record_id", "record_type", "created_at", "as_of", "author", "strategy_version", "model", "payload", "prev_hash", "hash"],
+  "properties": {
+    "record_id": {"type": "string", "description": "UUID"},
+    "record_type": {"enum": ["constitution", "recommendation", "shadow_candidate", "forecast", "execution", "mark", "resolution", "postmortem", "change_proposal", "change_decision", "trial", "monthly_report", "correction", "annulment"]},
+    "created_at": {"type": "string", "format": "date-time", "description": "UTC wall-clock time the record was written (system clock)"},
+    "as_of": {"type": "string", "format": "date-time", "description": "Latest data timestamp the author could see (data cut-off)"},
+    "author": {"enum": ["system", "evaluator", "reviewer_llm", "rule_engine", "user", "human_owner"]},
+    "strategy_version": {"type": "string", "description": "Constitution semver + sha256, e.g. 'v1.3.0+9f2c...'"},
+    "model": {
+      "type": "object",
+      "description": "Provenance of any LLM output in the payload",
+      "properties": {
+        "llm_id": {"type": "string"},
+        "prompt_sha256": {"type": "string"},
+        "code_commit": {"type": "string"},
+        "temperature": {"type": "number"},
+        "n_samples": {"type": "integer"},
+        "aggregation": {"type": "string", "description": "e.g. 'median log-odds of 7 samples'"}
+      }
+    },
+    "payload": {"type": "object"},
+    "prev_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 of canonical JSON of the record without 'hash'"}
+  },
+  "$defs": {
+    "leg": {
+      "type": "object",
+      "required": ["symbol", "side", "ratio"],
+      "properties": {
+        "symbol": {"type": "string"}, "side": {"enum": ["buy", "sell"]}, "ratio": {"type": "number"},
+        "type": {"enum": ["stock", "etf", "call", "put", "future", "fx", "bond", "crypto", "other"]},
+        "strike": {"type": "number"}, "expiry": {"type": "string", "format": "date"},
+        "limit_price": {"type": "number"}
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "required": ["rec_id", "candidate_id", "archetype", "instrument", "legs", "direction", "thesis", "base_rate", "market_implied", "edge_estimate", "sizing", "entry_plan", "exit_plan", "invalidation", "premortem", "forecast_ids", "benchmark"],
+      "properties": {
+        "rec_id": {"type": "string"},
+        "candidate_id": {"type": "string", "description": "links to the shadow_candidate row of the same scan"},
+        "archetype": {"type": "string", "description": "e.g. 'post-earnings-drift-long', 'merger-arb', 'macro-rates-short'"},
+        "sleeve": {"type": "string"},
+        "instrument": {"type": "string", "description": "e.g. 'call_debit_spread'"},
+        "legs": {"type": "array", "items": {"$ref": "#/$defs/leg"}},
+        "direction": {"enum": ["long", "short", "neutral", "long_vol", "short_vol"]},
+        "thesis": {"type": "string", "description": "plain-English causal story, <= 150 words"},
+        "catalysts": {"type": "array", "items": {"type": "object", "properties": {"event": {"type": "string"}, "expected_date": {"type": "string"}, "forecast_id": {"type": "string"}}}},
+        "base_rate": {"type": "object", "required": ["reference_class", "rate", "n", "source"], "properties": {"reference_class": {"type": "string"}, "rate": {"type": "number"}, "n": {"type": "integer"}, "source": {"type": "string"}}},
+        "market_implied": {"type": "object", "description": "option-implied / prediction-market probabilities and implied vol at decision time, with method", "properties": {"p_target": {"type": "number"}, "iv": {"type": "number"}, "method": {"type": "string"}}},
+        "edge_estimate": {"type": "object", "properties": {"raw_expected_return": {"type": "number"}, "shrunk_expected_return": {"type": "number"}, "p_profit_raw": {"type": "number"}, "p_profit_final": {"type": "number"}, "prior_source": {"type": "string"}}},
+        "sizing": {"type": "object", "properties": {"fraction_equity_at_risk": {"type": "number"}, "kelly_fraction_used": {"type": "number"}, "cap_binding": {"type": "boolean"}, "max_loss_currency": {"type": "number"}}},
+        "entry_plan": {"type": "object", "properties": {"order_type": {"type": "string"}, "limit": {"type": "number"}, "valid_until": {"type": "string"}, "max_slippage_bps": {"type": "number"}, "do_not_chase_above": {"type": "number"}}},
+        "exit_plan": {"type": "object", "properties": {"target": {"type": "string"}, "stop": {"type": "string"}, "time_stop": {"type": "string"}, "adjustments": {"type": "string"}}},
+        "invalidation": {"type": "array", "items": {"type": "string"}, "description": "observable conditions that mean the thesis is wrong (kill criteria)"},
+        "premortem": {"type": "array", "items": {"type": "object", "properties": {"failure_mode": {"type": "string"}, "probability": {"type": "number"}}}},
+        "forecast_ids": {"type": "array", "items": {"type": "string"}, "minItems": 5},
+        "benchmark": {"type": "string", "description": "e.g. 'SPY', 'XLE', or 'underlying stock' for option structures"},
+        "decision_checklist": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "email_sha256": {"type": "string"}
+      }
+    },
+    "shadow_candidate": {
+      "type": "object",
+      "required": ["candidate_id", "scan_id", "archetype", "instrument", "score_raw", "rank", "selection_status", "sampling_weight", "hypothetical_plan", "forecast_ids"],
+      "properties": {
+        "candidate_id": {"type": "string"}, "scan_id": {"type": "string"}, "archetype": {"type": "string"},
+        "instrument": {"type": "string"}, "underlying": {"type": "string"},
+        "score_raw": {"type": "number"}, "rank": {"type": "integer"},
+        "selection_status": {"enum": ["selected", "rejected_top_k", "rejected_random_control", "filtered_rule"]},
+        "rejection_reason": {"type": "string"},
+        "sampling_weight": {"type": "number", "description": "inverse inclusion probability (random controls) so population estimates are unbiased"},
+        "hypothetical_plan": {"type": "object", "description": "same fields as recommendation entry/exit/sizing, executed on paper at next open with a cost haircut"},
+        "forecast_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "forecast": {
+      "type": "object",
+      "required": ["forecast_id", "parent_id", "family", "question", "resolution_rule", "resolution_criteria", "resolution_date", "p_raw", "p_final", "calibration_map", "baseline"],
+      "properties": {
+        "forecast_id": {"type": "string"},
+        "parent_id": {"type": "string", "description": "rec_id | candidate_id | 'gym:<batch>'"},
+        "supersedes": {"type": "string", "description": "forecast_id of the earlier forecast this one updates (entry forecast is never overwritten)"},
+        "family": {"enum": ["price_threshold_abs", "price_threshold_rel", "first_touch", "catalyst_event", "relative_perf", "vol_realized", "quantiles", "macro_release", "gym"]},
+        "question": {"type": "string"},
+        "resolution_rule": {"enum": ["at_date", "first_touch_by_date", "event_by_date"]},
+        "resolution_criteria": {"type": "object", "properties": {"source": {"type": "string"}, "field": {"type": "string"}, "threshold": {"type": "number"}, "reference_price": {"type": "number"}, "benchmark": {"type": "string"}}},
+        "resolution_date": {"type": "string", "format": "date-time"},
+        "horizon_days": {"type": "integer"},
+        "p_raw": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "p_final": {"type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "after recalibration map; the scored number"},
+        "calibration_map": {"type": "string", "description": "e.g. 'platt:v7(a=-0.05,b=0.71,n=412)' or 'identity'"},
+        "p_samples": {"type": "array", "items": {"type": "number"}, "description": "individual LLM samples, for noise audits"},
+        "baseline": {"type": "object", "description": "reference forecasts scored alongside", "properties": {"p_market_physical": {"type": "number"}, "p_market_risk_neutral": {"type": "number"}, "p_base_rate": {"type": "number"}, "method": {"type": "string"}}},
+        "quantiles": {"type": "object", "description": "for family=quantiles: {'0.05': -0.21, ..., '0.95': 0.34}", "additionalProperties": {"type": "number"}},
+        "cluster": {"type": "object", "properties": {"trade_id": {"type": "string"}, "underlying": {"type": "string"}, "sector": {"type": "string"}, "month": {"type": "string"}}},
+        "is_live": {"type": "boolean"}
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "required": ["forecast_id", "outcome", "resolved_at", "source", "status"],
+      "properties": {
+        "forecast_id": {"type": "string"},
+        "outcome": {"type": ["integer", "number", "null"], "description": "0/1 for binary, realised value for quantile questions"},
+        "realized_value": {"type": "number"},
+        "resolved_at": {"type": "string", "format": "date-time"},
+        "source": {"type": "string", "description": "vendor + field + timestamp or URL; resolution is mechanical from resolution_criteria"},
+        "evidence_sha256": {"type": "string"},
+        "resolver": {"enum": ["auto", "manual"]},
+        "status": {"enum": ["resolved", "annulled", "disputed"]}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": ["rec_id", "executed", "fills"],
+      "properties": {
+        "rec_id": {"type": "string"}, "executed": {"type": "boolean"},
+        "fills": {"type": "array", "items": {"type": "object", "properties": {"symbol": {"type": "string"}, "time": {"type": "string"}, "price": {"type": "number"}, "qty": {"type": "number"}, "fees": {"type": "number"}}}},
+        "deviation_reason": {"type": "string"},
+        "implementation_shortfall_bps": {"type": "number"}
+      }
+    },
+    "mark": {
+      "type": "object",
+      "required": ["position_id", "date", "price", "value"],
+      "properties": {"position_id": {"type": "string"}, "date": {"type": "string"}, "price": {"type": "number"}, "value": {"type": "number"}, "benchmark_level": {"type": "number"}, "paper": {"type": "boolean"}}
+    },
+    "postmortem": {
+      "type": "object",
+      "required": ["rec_id", "blind_grade", "outcome_grade", "classification", "return_decomposition", "pit", "lessons"],
+      "properties": {
+        "rec_id": {"type": "string"},
+        "blind_grade": {"type": "object", "description": "decision quality 1-5 per rubric item, graded from the pre-trade snapshot WITHOUT the outcome", "additionalProperties": {"type": "integer"}},
+        "outcome_grade": {"type": "object", "description": "same rubric graded after outcome reveal; difference = measured outcome bias"},
+        "thesis_outcome": {"enum": ["confirmed", "refuted", "indeterminate"]},
+        "classification": {"enum": ["skill", "bad_luck", "dumb_luck", "deserved_loss", "indeterminate"]},
+        "return_decomposition": {"type": "object", "properties": {"total": {"type": "number"}, "market_beta": {"type": "number"}, "sector": {"type": "number"}, "residual": {"type": "number"}, "instrument_effect": {"type": "number"}, "execution_effect": {"type": "number"}}},
+        "pit": {"type": "number", "description": "CDF of the entry forecast at the realised return (0.5 = as expected)"},
+        "premortem_hit": {"type": "boolean", "description": "was the realised failure mode on the pre-mortem list?"},
+        "lessons": {"type": "array", "items": {"type": "object", "properties": {"text": {"type": "string"}, "generalizable": {"type": "boolean"}, "proposed_change_id": {"type": "string"}}}}
+      }
+    },
+    "change_proposal": {
+      "type": "object",
+      "required": ["change_id", "tier", "target", "old_value", "new_value", "hypothesis", "primary_metric", "success_criterion", "min_sample", "shadow_window", "trial_count"],
+      "properties": {
+        "change_id": {"type": "string"}, "tier": {"enum": [1, 2, 3, 4]},
+        "target": {"type": "string", "description": "JSON pointer into the constitution, e.g. '/parameters/min_edge_logscore'"},
+        "old_value": {}, "new_value": {},
+        "hypothesis": {"type": "string"},
+        "predicted_effect": {"type": "number"},
+        "primary_metric": {"type": "string"},
+        "success_criterion": {"type": "string", "description": "e.g. 'P(delta>0)>=0.95 and delta>=0.005 nats/question, n>=100 paired candidates'"},
+        "min_sample": {"type": "integer"},
+        "shadow_window": {"type": "object", "properties": {"start": {"type": "string"}, "end": {"type": "string"}}},
+        "evidence_window_seen": {"type": "object", "description": "data the proposer looked at (never reused as validation)"},
+        "trial_count": {"type": "integer", "description": "cumulative variants evaluated to date (feeds DSR)"},
+        "red_team": {"type": "string"}
+      }
+    },
+    "change_decision": {
+      "type": "object",
+      "required": ["change_id", "decision", "evidence", "decided_by", "constitution_version"],
+      "properties": {
+        "change_id": {"type": "string"}, "decision": {"enum": ["adopt", "reject", "extend_shadow", "rollback"]},
+        "evidence": {"type": "object"}, "decided_by": {"enum": ["rule_engine", "human_owner"]},
+        "constitution_version": {"type": "string"}, "rollback_to": {"type": "string"}
+      }
+    }
+  }
+}

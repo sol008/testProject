@@ -1,0 +1,10 @@
+| Trade | Bets at once | Latent corr | Outcome corr | P(all lose) | Stake each at individual Kelly | Growth/round at individual Kelly | Joint-optimal stake each | Joint-optimal total | Growth/round joint-optimal | Heuristic f*/(1+(n-1)rho) each | Growth/round heuristic | Growth/round, half-heuristic |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Trend trade (p=.40, +3R/-1R) | 5 | 0.0 | 0.00 | 7.8% | 20.0% | -inf (ruin possible) | 15.0% | 75% | +0.2308 | 20.0% | -inf | +0.1982 |
+| Trend trade (p=.40, +3R/-1R) | 5 | 0.3 | 0.19 | 17.9% | 20.0% | -inf (ruin possible) | 10.7% | 54% | +0.1503 | 9.1% | +0.1466 | +0.1010 |
+| Trend trade (p=.40, +3R/-1R) | 5 | 0.6 | 0.40 | 29.3% | 20.0% | -inf (ruin possible) | 7.7% | 39% | +0.1051 | 5.9% | +0.0994 | +0.0668 |
+| Trend trade (p=.40, +3R/-1R) | 5 | 0.9 | 0.71 | 45.3% | 20.0% | -inf (ruin possible) | 5.3% | 27% | +0.0718 | 4.3% | +0.0697 | +0.0485 |
+| Convex option (p=.15, +10x/-100%) | 5 | 0.0 | -0.00 | 44.4% | 6.5% | +0.0850 | 6.0% | 30% | +0.0855 | 6.5% | +0.0850 | +0.0692 |
+| Convex option (p=.15, +10x/-100%) | 5 | 0.3 | 0.14 | 54.0% | 6.5% | +0.0461 | 4.3% | 21% | +0.0587 | 3.0% | +0.0540 | +0.0360 |
+| Convex option (p=.15, +10x/-100%) | 5 | 0.6 | 0.35 | 63.5% | 6.5% | +0.0012 | 3.0% | 15% | +0.0399 | 1.9% | +0.0357 | +0.0235 |
+| Convex option (p=.15, +10x/-100%) | 5 | 0.9 | 0.67 | 75.4% | 6.5% | -0.0610 | 1.9% | 9% | +0.0253 | 1.4% | +0.0241 | +0.0167 |

@@ -1,0 +1,3 @@
+peg,start,end,p001,p999,robust_range_pct,raw_min,raw_max
+HKD vs USD (peg since 1983),1998-01-01,2026-09-25,0.12739,0.12927,0.0148,0.12739,0.12973
+DKK vs EUR (ERM-II peg),1999-01-04,2026-09-25,0.1335,0.13478,0.0096,0.13249,0.14134

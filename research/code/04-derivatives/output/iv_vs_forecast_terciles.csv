@@ -1,0 +1,37 @@
+instrument,period,bucket,n,mean_spread_volpts,mean_R_hold,median_R_hold,mean_dh_pct_cost
+call 1.00 365d,IS,IV cheap vs forecast,39,0.1224,-0.1275,-1.0000,-0.1496
+call 1.00 365d,IS,middle,73,4.2084,0.1138,0.0056,-0.2194
+call 1.00 365d,IS,IV rich vs forecast,92,6.4108,0.8597,0.5427,-0.1965
+call 1.00 365d,OOS,IV cheap vs forecast,100,-2.2525,1.0507,0.8698,-0.0263
+call 1.00 365d,OOS,middle,66,4.0615,0.8967,0.9747,-0.0401
+call 1.00 365d,OOS,IV rich vs forecast,47,6.2784,0.5136,0.4110,-0.0654
+call 1.00 365d,ALL,IV cheap vs forecast,139,-1.5862,0.7201,0.7166,-0.0609
+call 1.00 365d,ALL,middle,139,4.1387,0.4855,0.3567,-0.1343
+call 1.00 365d,ALL,IV rich vs forecast,139,6.3660,0.7427,0.5384,-0.1522
+call 1.05 365d,IS,IV cheap vs forecast,39,0.1224,-0.0941,-1.0000,-0.1361
+call 1.05 365d,IS,middle,73,4.2084,0.0161,-0.4154,-0.3050
+call 1.05 365d,IS,IV rich vs forecast,92,6.4108,1.0215,0.4076,-0.2792
+call 1.05 365d,OOS,IV cheap vs forecast,100,-2.2525,1.2301,0.7630,-0.0632
+call 1.05 365d,OOS,middle,66,4.0615,1.1461,1.0466,-0.1095
+call 1.05 365d,OOS,IV rich vs forecast,47,6.2784,0.6543,0.1039,-0.0995
+call 1.05 365d,ALL,IV cheap vs forecast,139,-1.5862,0.8586,0.6222,-0.0837
+call 1.05 365d,ALL,middle,139,4.1387,0.5527,0.1213,-0.2122
+call 1.05 365d,ALL,IV rich vs forecast,139,6.3660,0.8974,0.3484,-0.2184
+call 1.10 730d,IS,IV cheap vs forecast,39,0.1224,-0.1484,-1.0000,-0.2574
+call 1.10 730d,IS,middle,73,4.2084,0.5092,-0.0204,-0.2906
+call 1.10 730d,IS,IV rich vs forecast,92,6.4108,2.2555,1.1064,-0.1849
+call 1.10 730d,OOS,IV cheap vs forecast,96,-2.2078,2.2925,2.1306,0.0325
+call 1.10 730d,OOS,middle,62,4.0299,2.3527,1.9445,-0.0747
+call 1.10 730d,OOS,IV rich vs forecast,43,6.3316,1.1865,0.9411,-0.0728
+call 1.10 730d,ALL,IV cheap vs forecast,135,-1.5346,1.5874,0.8962,-0.0512
+call 1.10 730d,ALL,middle,135,4.1264,1.3559,0.5290,-0.1914
+call 1.10 730d,ALL,IV rich vs forecast,135,6.3855,1.9150,0.9935,-0.1492
+put 0.90 365d,IS,IV cheap vs forecast,39,0.1224,-0.0468,-1.0000,-0.2172
+put 0.90 365d,IS,middle,73,4.2084,-0.6624,-1.0000,-0.3615
+put 0.90 365d,IS,IV rich vs forecast,92,6.4108,-0.8854,-1.0000,-0.3112
+put 0.90 365d,OOS,IV cheap vs forecast,100,-2.2525,-0.5133,-1.0000,0.1107
+put 0.90 365d,OOS,middle,66,4.0615,-1.0000,-1.0000,0.0535
+put 0.90 365d,OOS,IV rich vs forecast,47,6.2784,-0.8909,-1.0000,-0.1659
+put 0.90 365d,ALL,IV cheap vs forecast,139,-1.5862,-0.3824,-1.0000,0.0187
+put 0.90 365d,ALL,middle,139,4.1387,-0.8227,-1.0000,-0.1645
+put 0.90 365d,ALL,IV rich vs forecast,139,6.3660,-0.8872,-1.0000,-0.2620

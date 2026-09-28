@@ -1,0 +1,6 @@
+| Trade | Kelly multiple | N | exact P(end>=11x) | MC P(end>=11x) |
+|---|---|---|---|---|
+| Trend trade (p=.40, +3R/-1R) | 0.5 | 58 | 0.4644 | 0.4636 |
+| Convex option (p=.15, +10x/-100%) | 0.5 | 170 | 0.49 | 0.4886 |
+| Binary event 60c true vs 50c price | 0.25 | 400 | 0.8795 | 0.8789 |
+| Crisis buy (p=.80, +100%/-40%) | 0.5 | 6 | 0.6554 | 0.656 |

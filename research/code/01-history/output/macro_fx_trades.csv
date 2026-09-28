@@ -1,0 +1,4 @@
+trade,base_month,base_value_usd,move_after_3m,move_after_11m,move_after_13m,move_after_1m,move_after_6m
+"Soros 1985 long JPY (Plaza, 22-Sep-1985)",1985-09-01,0.00423,0.166,0.534,,,
+Druckenmiller long DEM after Berlin Wall (Nov-1989),1989-10-01,0.53585,0.103,,0.256,,
+Krieger short NZD after Oct-1987 crash,1987-10-01,0.6403,,,,-0.033,0.033

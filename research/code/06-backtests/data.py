@@ -139,6 +139,76 @@ def shiller(refresh: bool = False) -> pd.DataFrame:
     return out
 
 
+def multpl_table(slug: str, refresh: bool = False) -> pd.Series:
+    """Monthly table from multpl.com (e.g. 's-p-500-earnings', 's-p-500-dividend', 'shiller-pe')."""
+    fn = _cache(f"multpl_{slug}.html")
+    if not os.path.exists(fn) or refresh:
+        raw = _get(f"https://www.multpl.com/{slug}/table/by-month")
+        with open(fn, "wb") as f:
+            f.write(raw)
+    t = pd.read_html(fn)[0]
+    t["Date"] = pd.to_datetime(t["Date"])
+    s = pd.to_numeric(t["Value"].astype(str).str.replace("estimate", "").str.replace("%", "").str.strip(),
+                      errors="coerce")
+    s.index = t["Date"]
+    return s.sort_index().dropna()
+
+
+def shiller_extended(refresh: bool = False) -> pd.DataFrame:
+    """Shiller monthly data (Yale file ends 2023-09) extended to the current month:
+      P   : monthly average of daily ^GSPC closes (Shiller's convention)
+      D, E: chain-linked to Shiller's last value using month-on-month growth of multpl.com's
+            trailing-12m dividend / earnings tables (avoids a level jump from different EPS vintages);
+            months after multpl's last value are carried forward
+      CPI : FRED CPIAUCNS (CPI-U NSA, as used by Shiller), last value carried forward
+    CAPE is recomputed consistently for the whole history as P / mean(10y real E).
+    Adds real total-return index 'TRR' (dividends reinvested monthly) and nominal 'TRN'."""
+    sh = shiller(refresh=refresh)[["P", "D", "E", "CPI", "GS10", "CAPE"]].copy()
+    sh = sh.rename(columns={"CAPE": "CAPE_shiller"})
+    px = yf_close("^GSPC")
+    pm = px.groupby(px.index.to_period("M")).mean()
+    pm.index = pm.index.to_timestamp()
+    last_month = pm.index[-1]
+    idx = pd.date_range(sh.index[0], last_month, freq="MS")
+    sh = sh.reindex(idx)
+    lastP = sh["P"].last_valid_index()
+    sh.loc[sh.index > lastP, "P"] = pm.reindex(sh.index[sh.index > lastP]).values
+    for col, slug in [("E", "s-p-500-earnings"), ("D", "s-p-500-dividend")]:
+        m = multpl_table(slug, refresh=refresh)
+        m.index = m.index.to_period("M").to_timestamp()
+        m = m[~m.index.duplicated(keep="last")]
+        lv = sh[col].last_valid_index()
+        g = (m / m.shift(1)).reindex(sh.index)
+        vals = sh[col].copy()
+        for t in sh.index[sh.index > lv]:
+            prev = vals.loc[:t].iloc[-2]
+            gr = g.loc[t]
+            vals.loc[t] = prev * (gr if pd.notna(gr) else 1.0)
+        sh[col] = vals
+    cpi = fred("CPIAUCNS")
+    cpi.index = cpi.index.to_period("M").to_timestamp()
+    lc = sh["CPI"].last_valid_index()
+    fill = cpi.reindex(sh.index[sh.index > lc])
+    sh.loc[fill.index, "CPI"] = fill.values
+    sh["CPI"] = sh["CPI"].ffill()
+    try:
+        g10 = fred("GS10")
+        g10.index = g10.index.to_period("M").to_timestamp()
+        lg = shiller(refresh=False)["GS10"].last_valid_index()
+        f2 = g10.reindex(sh.index[sh.index > lg]).dropna()
+        sh.loc[f2.index, "GS10"] = f2.values
+    except Exception:
+        pass
+    sh["GS10"] = sh["GS10"].ffill()
+    ereal = sh["E"] / sh["CPI"]
+    sh["CAPE"] = sh["P"] / (sh["CPI"] * ereal.rolling(120, min_periods=120).mean())
+    # total return indices (Shiller's method: dividends D/12 paid each month)
+    ret = (sh["P"] + sh["D"] / 12.0) / sh["P"].shift(1)
+    sh["TRN"] = ret.fillna(1.0).cumprod()
+    sh["TRR"] = sh["TRN"] / (sh["CPI"] / sh["CPI"].iloc[0])
+    return sh
+
+
 # ----------------------------------------------------------------------------- Ken French
 def ff_factors(freq: str = "daily", refresh: bool = False) -> pd.DataFrame:
     """US Fama-French 3 factors (Mkt-RF, SMB, HML, RF) in decimal returns."""
@@ -219,6 +289,19 @@ def btc_daily(refresh: bool = False) -> pd.Series:
         pass
     s.name = "BTC"
     return s[s > 0]
+
+
+def gold_monthly(refresh: bool = False) -> pd.Series:
+    """Monthly gold price (USD/oz) since 1833 from the open 'datasets/gold-prices' repository
+    (monthly averages; London market after 1968).  Month-end stamped."""
+    fn = _cache("gold_monthly_github.csv")
+    if not os.path.exists(fn) or refresh:
+        raw = _get("https://raw.githubusercontent.com/datasets/gold-prices/main/data/monthly.csv")
+        with open(fn, "wb") as f:
+            f.write(raw)
+    g = pd.read_csv(fn)
+    g["Date"] = pd.to_datetime(g["Date"]) + pd.offsets.MonthEnd(0)
+    return g.set_index("Date")["Price"].astype(float)
 
 
 # ----------------------------------------------------------------------------- helpers

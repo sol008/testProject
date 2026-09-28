@@ -1,0 +1,32 @@
+| Return model | Trades | Rejection rate (power) at one-sided 90% |
+|---|---|---|
+| Normal returns, SR=0.306 | 12 | 40% |
+| Normal returns, SR=0.306 | 18 | 49% |
+| Normal returns, SR=0.306 | 24 | 58% |
+| Normal returns, SR=0.306 | 36 | 71% |
+| Normal returns, SR=0.306 | 50 | 81% |
+| Normal returns, SR=0.306 | 73 | 91% |
+| Normal returns, SR=0.306 | 100 | 96% |
+| Normal returns, SR=0.306 | 150 | 99% |
+| Normal returns, SR=0.306 | 250 | 100% |
+| Normal returns, SR=0.306 | 350 | 100% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 12 | 33% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 18 | 44% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 24 | 51% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 36 | 74% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 50 | 84% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 73 | 91% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 100 | 97% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 150 | 100% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 250 | 100% |
+| Trend trade +3R/-1R, p=0.40 (SR=0.306) | 350 | 100% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 12 | 9% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 18 | 12% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 24 | 28% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 36 | 29% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 50 | 48% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 73 | 55% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 100 | 66% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 150 | 82% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 250 | 92% |
+| Convex option +10x/-1x, p=0.15 (SR=0.165) | 350 | 98% |

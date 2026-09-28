@@ -1,0 +1,46 @@
+{
+  "n_letters": 458,
+  "last_updated_note": "openFDA CRL dataset (initial release Jul-2025 covered CRLs for later-approved products 2020-24; newer CRLs published as issued)",
+  "by_year": {
+    "2002.0": 1,
+    "2004.0": 1,
+    "2007.0": 1,
+    "2008.0": 1,
+    "2009.0": 2,
+    "2010.0": 2,
+    "2011.0": 2,
+    "2012.0": 4,
+    "2013.0": 12,
+    "2014.0": 8,
+    "2015.0": 9,
+    "2016.0": 20,
+    "2017.0": 25,
+    "2018.0": 33,
+    "2019.0": 38,
+    "2020.0": 35,
+    "2021.0": 48,
+    "2022.0": 25,
+    "2023.0": 30,
+    "2024.0": 69,
+    "2025.0": 59,
+    "2026.0": 32
+  },
+  "approval_status_counts": {
+    "Approved": 309,
+    "Unapproved": 149
+  },
+  "theme_share_of_letters": {
+    "manufacturing/CMC/facility": 0.755,
+    "clinical efficacy/adequate & well-controlled": 0.308,
+    "safety": 0.934,
+    "bioequivalence/PK": 0.135,
+    "labeling/REMS only": 0.985
+  },
+  "recent_2024plus": {
+    "n": 160,
+    "approval_status": {
+      "Unapproved": 146,
+      "Approved": 14
+    }
+  }
+}

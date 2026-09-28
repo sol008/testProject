@@ -1,0 +1,120 @@
+{
+  "unique_SC_TO-I_mentioning_odd_lot": 612,
+  "listed_with_ticker": 361,
+  "parsed_with_price_terms": 242,
+  "usable_with_prices": 128,
+  "share_dutch": 0.734,
+  "median_premium_vs_pre_announcement_%": -0.4,
+  "median_edge_min_price_vs_day30_close_%": -6.55,
+  "share_edge_gt_0.5pct": 0.219,
+  "share_edge_gt_2pct": 0.156,
+  "median_profit_99_shares_when_edge_gt_0.5pct_usd": 37.0,
+  "mean_profit_99_shares_when_edge_gt_0.5pct_usd": 244.0,
+  "per_year": [
+    {
+      "year": 2012,
+      "n": 6,
+      "n_pos_edge": 1,
+      "med_edge": -5.93,
+      "med_profit_99": -170.78
+    },
+    {
+      "year": 2013,
+      "n": 7,
+      "n_pos_edge": 2,
+      "med_edge": -5.74,
+      "med_profit_99": -34.65
+    },
+    {
+      "year": 2014,
+      "n": 9,
+      "n_pos_edge": 1,
+      "med_edge": -5.3,
+      "med_profit_99": -146.52
+    },
+    {
+      "year": 2015,
+      "n": 17,
+      "n_pos_edge": 8,
+      "med_edge": -0.16,
+      "med_profit_99": -2.97
+    },
+    {
+      "year": 2016,
+      "n": 6,
+      "n_pos_edge": 0,
+      "med_edge": -9.43,
+      "med_profit_99": -239.08
+    },
+    {
+      "year": 2017,
+      "n": 3,
+      "n_pos_edge": 1,
+      "med_edge": -4.04,
+      "med_profit_99": -83.16
+    },
+    {
+      "year": 2018,
+      "n": 11,
+      "n_pos_edge": 4,
+      "med_edge": -0.71,
+      "med_profit_99": -15.84
+    },
+    {
+      "year": 2019,
+      "n": 7,
+      "n_pos_edge": 3,
+      "med_edge": -5.44,
+      "med_profit_99": -122.76
+    },
+    {
+      "year": 2020,
+      "n": 11,
+      "n_pos_edge": 1,
+      "med_edge": -11.5,
+      "med_profit_99": -277.2
+    },
+    {
+      "year": 2021,
+      "n": 19,
+      "n_pos_edge": 3,
+      "med_edge": -11.47,
+      "med_profit_99": -286.11
+    },
+    {
+      "year": 2022,
+      "n": 11,
+      "n_pos_edge": 2,
+      "med_edge": -6.45,
+      "med_profit_99": -191.07
+    },
+    {
+      "year": 2023,
+      "n": 10,
+      "n_pos_edge": 1,
+      "med_edge": -5.66,
+      "med_profit_99": -233.14
+    },
+    {
+      "year": 2024,
+      "n": 2,
+      "n_pos_edge": 0,
+      "med_edge": -9.97,
+      "med_profit_99": -466.78
+    },
+    {
+      "year": 2025,
+      "n": 4,
+      "n_pos_edge": 0,
+      "med_edge": -4.05,
+      "med_profit_99": -247.01
+    },
+    {
+      "year": 2026,
+      "n": 5,
+      "n_pos_edge": 1,
+      "med_edge": -7.24,
+      "med_profit_99": -193.05
+    }
+  ]
+}

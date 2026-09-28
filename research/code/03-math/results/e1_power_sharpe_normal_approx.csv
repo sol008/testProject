@@ -1,0 +1,25 @@
+Per-trade Sharpe,Test,Power,Trades needed,Years @ 6/yr,Years @ 12/yr,Years @ 24/yr
+0.1,one-sided 90% conf.,50%,165,27.4,13.7,6.8
+0.1,one-sided 95% conf.,50%,271,45.1,22.5,11.3
+0.1,one-sided 90% conf.,80%,451,75.1,37.6,18.8
+0.1,one-sided 95% conf.,80%,619,103.0,51.5,25.8
+0.1,one-sided 90% conf.,90%,657,109.5,54.7,27.4
+0.1,one-sided 95% conf.,90%,857,142.7,71.4,35.7
+0.2,one-sided 90% conf.,50%,42,6.8,3.4,1.7
+0.2,one-sided 95% conf.,50%,68,11.3,5.6,2.8
+0.2,one-sided 90% conf.,80%,113,18.8,9.4,4.7
+0.2,one-sided 95% conf.,80%,155,25.8,12.9,6.4
+0.2,one-sided 90% conf.,90%,165,27.4,13.7,6.8
+0.2,one-sided 95% conf.,90%,215,35.7,17.8,8.9
+0.3,one-sided 90% conf.,50%,19,3.0,1.5,0.8
+0.3,one-sided 95% conf.,50%,31,5.0,2.5,1.3
+0.3,one-sided 90% conf.,80%,51,8.3,4.2,2.1
+0.3,one-sided 95% conf.,80%,69,11.4,5.7,2.9
+0.3,one-sided 90% conf.,90%,73,12.2,6.1,3.0
+0.3,one-sided 95% conf.,90%,96,15.9,7.9,4.0
+0.5,one-sided 90% conf.,50%,7,1.1,0.5,0.3
+0.5,one-sided 95% conf.,50%,11,1.8,0.9,0.5
+0.5,one-sided 90% conf.,80%,19,3.0,1.5,0.8
+0.5,one-sided 95% conf.,80%,25,4.1,2.1,1.0
+0.5,one-sided 90% conf.,90%,27,4.4,2.2,1.1
+0.5,one-sided 95% conf.,90%,35,5.7,2.9,1.4

@@ -1,0 +1,25 @@
+Trade,Track record n,plug-in full,plug-in half,plug-in quarter,best constant multiplier,growth at best multiplier,"Bayes (prior=no edge, n0=20) x0.5","Bayes (prior=no edge, n0=20) x1.0",plug-in x t^2/(1+t^2),"plug-in x max(0,1-1/t^2)","plug-in x 0.5*max(0,1-1/t^2)",SE of hit rate
+"Trend trade (p=.40, +3R/-1R)",10,25%,61%,44%,0.56,61%,33%,52%,29%,11%,31%,15.5pp
+"Trend trade (p=.40, +3R/-1R)",20,57%,66%,44%,0.69,71%,44%,66%,54%,41%,43%,11.0pp
+"Trend trade (p=.40, +3R/-1R)",50,81%,72%,45%,0.84,84%,58%,83%,76%,71%,58%,6.9pp
+"Trend trade (p=.40, +3R/-1R)",100,91%,74%,46%,0.91,91%,66%,91%,88%,87%,68%,4.9pp
+"Trend trade (p=.40, +3R/-1R)",250,96%,76%,46%,0.96,96%,72%,96%,96%,96%,74%,3.1pp
+"Trend trade (p=.40, +3R/-1R)",1000,99%,77%,46%,0.99,99%,76%,99%,99%,99%,76%,1.5pp
+"Convex option (p=.15, +10x/-100%)",10,-50%,37%,41%,0.34,43%,34%,43%,-3%,-17%,13%,11.3pp
+"Convex option (p=.15, +10x/-100%)",20,12%,53%,43%,0.47,53%,43%,53%,25%,12%,25%,8.0pp
+"Convex option (p=.15, +10x/-100%)",50,54%,64%,45%,0.66,67%,55%,67%,51%,34%,36%,5.0pp
+"Convex option (p=.15, +10x/-100%)",100,74%,69%,45%,0.78,78%,63%,78%,67%,58%,50%,3.6pp
+"Convex option (p=.15, +10x/-100%)",250,89%,74%,47%,0.90,90%,71%,89%,85%,83%,65%,2.3pp
+"Convex option (p=.15, +10x/-100%)",1000,97%,78%,48%,0.98,97%,77%,97%,97%,97%,76%,1.1pp
+Binary event 60c true vs 50c price,10,-129%,48%,43%,0.41,51%,33%,49%,-80%,-85%,26%,15.5pp
+Binary event 60c true vs 50c price,20,-3%,58%,42%,0.52,58%,42%,58%,12%,-1%,33%,11.0pp
+Binary event 60c true vs 50c price,50,55%,66%,42%,0.69,71%,54%,71%,52%,41%,44%,6.9pp
+Binary event 60c true vs 50c price,100,76%,69%,42%,0.80,81%,62%,81%,71%,64%,54%,4.9pp
+Binary event 60c true vs 50c price,250,90%,72%,43%,0.91,91%,69%,91%,88%,86%,66%,3.1pp
+Binary event 60c true vs 50c price,1000,98%,74%,43%,0.97,98%,73%,98%,97%,97%,73%,1.5pp
+Binary event 55c true vs 50c price,10,-636%,-24%,40%,0.22,40%,38%,31%,-374%,-347%,-13%,15.7pp
+Binary event 55c true vs 50c price,20,-225%,26%,43%,0.30,45%,43%,26%,-108%,-109%,10%,11.1pp
+Binary event 55c true vs 50c price,50,-38%,52%,43%,0.44,53%,51%,32%,-6%,-16%,27%,7.0pp
+Binary event 55c true vs 50c price,100,23%,60%,42%,0.56,61%,57%,46%,30%,16%,34%,5.0pp
+Binary event 55c true vs 50c price,250,64%,67%,42%,0.73,74%,64%,69%,59%,49%,47%,3.1pp
+Binary event 55c true vs 50c price,1000,90%,72%,43%,0.91,91%,72%,90%,88%,86%,66%,1.6pp

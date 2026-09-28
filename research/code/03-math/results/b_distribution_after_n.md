@@ -1,0 +1,50 @@
+| Trade | Sizing | Trades | Mean W | Median W | 5th pct W | 95th pct W | P(W<1) | P(W>=11x) | Median maxDD | P(maxDD>=50%) | P(maxDD>=80%) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Crisis buy (p=.80, +100%/-40%) | full Kelly | 3 | 12.1x | 22.0x | 0.22x | 22.0x | 10% | 51% | 0% | 49% | 7% |
+| Crisis buy (p=.80, +100%/-40%) | full Kelly | 5 | 63.8x | 17.2x | 0.17x | 172x | 6% | 74% | 72% | 67% | 14% |
+| Crisis buy (p=.80, +100%/-40%) | full Kelly | 10 | 4,071x | 296x | 2.96x | 29,620x | 3% | 88% | 72% | 89% | 29% |
+| Crisis buy (p=.80, +100%/-40%) | 100% invested, no leverage (0.56 Kelly) | 3 | 5.09x | 8.00x | 0.72x | 8.00x | 10% | 0% | 0% | 7% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | 100% invested, no leverage (0.56 Kelly) | 5 | 15.1x | 9.60x | 0.86x | 32.0x | 6% | 33% | 40% | 14% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | 100% invested, no leverage (0.56 Kelly) | 10 | 227x | 92.2x | 8.29x | 1,024x | 1% | 88% | 40% | 27% | 1% |
+| Crisis buy (p=.80, +100%/-40%) | half Kelly | 3 | 4.48x | 6.86x | 0.78x | 6.86x | 10% | 0% | 0% | 7% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | half Kelly | 5 | 12.2x | 8.34x | 0.95x | 24.8x | 6% | 33% | 36% | 14% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | half Kelly | 10 | 148x | 69.6x | 7.89x | 613x | 1% | 88% | 36% | 27% | 1% |
+| Crisis buy (p=.80, +100%/-40%) | quarter Kelly | 3 | 2.32x | 3.05x | 0.97x | 3.05x | 10% | 0% | 0% | 0% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | quarter Kelly | 5 | 4.07x | 3.62x | 1.16x | 6.41x | 1% | 0% | 18% | 0% | 0% |
+| Crisis buy (p=.80, +100%/-40%) | quarter Kelly | 10 | 16.6x | 13.1x | 4.20x | 41.1x | 0% | 68% | 18% | 1% | 0% |
+| Trend trade (p=.40, +3R/-1R) | full Kelly | 10 | 3.11x | 1.72x | 0.43x | 13.7x | 38% | 5% | 49% | 45% | 3% |
+| Trend trade (p=.40, +3R/-1R) | full Kelly | 30 | 30.0x | 5.07x | 0.32x | 81.1x | 18% | 29% | 73% | 89% | 28% |
+| Trend trade (p=.40, +3R/-1R) | full Kelly | 100 | 83,522x | 224x | 0.87x | 57,337x | 6% | 82% | 88% | 100% | 76% |
+| Trend trade (p=.40, +3R/-1R) | half Kelly | 10 | 1.79x | 1.52x | 0.73x | 4.57x | 17% | 0% | 27% | 6% | 0% |
+| Trend trade (p=.40, +3R/-1R) | half Kelly | 30 | 5.74x | 3.50x | 0.80x | 15.2x | 9% | 10% | 44% | 33% | 1% |
+| Trend trade (p=.40, +3R/-1R) | half Kelly | 100 | 339x | 64.9x | 3.43x | 1,230x | 1% | 82% | 59% | 79% | 6% |
+| Trend trade (p=.40, +3R/-1R) | quarter Kelly | 10 | 1.34x | 1.29x | 0.88x | 2.28x | 17% | 0% | 14% | 0% | 0% |
+| Trend trade (p=.40, +3R/-1R) | quarter Kelly | 30 | 2.43x | 2.13x | 0.99x | 4.56x | 9% | 0% | 24% | 1% | 0% |
+| Trend trade (p=.40, +3R/-1R) | quarter Kelly | 100 | 19.2x | 12.3x | 2.68x | 56.9x | 0% | 54% | 35% | 9% | 0% |
+| Convex option (p=.15, +10x/-100%) | full Kelly | 10 | 1.51x | 0.90x | 0.51x | 2.81x | 54% | 0% | 33% | 0% | 0% |
+| Convex option (p=.15, +10x/-100%) | full Kelly | 30 | 3.46x | 1.29x | 0.41x | 12.5x | 32% | 7% | 55% | 61% | 4% |
+| Convex option (p=.15, +10x/-100%) | full Kelly | 100 | 62.7x | 6.04x | 0.20x | 183x | 16% | 33% | 76% | 98% | 38% |
+| Convex option (p=.15, +10x/-100%) | half Kelly | 10 | 1.23x | 0.98x | 0.72x | 1.85x | 54% | 0% | 18% | 0% | 0% |
+| Convex option (p=.15, +10x/-100%) | half Kelly | 30 | 1.87x | 1.31x | 0.70x | 4.59x | 32% | 0% | 33% | 8% | 0% |
+| Convex option (p=.15, +10x/-100%) | half Kelly | 100 | 8.09x | 4.11x | 0.62x | 27.1x | 10% | 16% | 48% | 46% | 1% |
+| Convex option (p=.15, +10x/-100%) | quarter Kelly | 10 | 1.11x | 1.00x | 0.85x | 1.40x | 20% | 0% | 9% | 0% | 0% |
+| Convex option (p=.15, +10x/-100%) | quarter Kelly | 30 | 1.37x | 1.19x | 0.85x | 2.33x | 15% | 0% | 18% | 0% | 0% |
+| Convex option (p=.15, +10x/-100%) | quarter Kelly | 100 | 2.86x | 2.38x | 0.87x | 6.47x | 6% | 1% | 28% | 2% | 0% |
+| Binary event 55c true vs 50c price | full Kelly | 10 | 1.10x | 1.16x | 0.64x | 1.74x | 50% | 0% | 21% | 2% | 0% |
+| Binary event 55c true vs 50c price | full Kelly | 30 | 1.35x | 1.28x | 0.47x | 2.87x | 36% | 0% | 38% | 23% | 0% |
+| Binary event 55c true vs 50c price | full Kelly | 100 | 2.70x | 1.65x | 0.33x | 8.22x | 31% | 3% | 59% | 71% | 9% |
+| Binary event 55c true vs 50c price | half Kelly | 10 | 1.05x | 1.09x | 0.81x | 1.33x | 50% | 0% | 10% | 0% | 0% |
+| Binary event 55c true vs 50c price | half Kelly | 30 | 1.16x | 1.18x | 0.71x | 1.76x | 36% | 0% | 20% | 0% | 0% |
+| Binary event 55c true vs 50c price | half Kelly | 100 | 1.65x | 1.46x | 0.65x | 3.24x | 24% | 0% | 34% | 11% | 0% |
+| Binary event 55c true vs 50c price | quarter Kelly | 10 | 1.03x | 1.05x | 0.90x | 1.16x | 50% | 0% | 5% | 0% | 0% |
+| Binary event 55c true vs 50c price | quarter Kelly | 30 | 1.08x | 1.09x | 0.85x | 1.34x | 36% | 0% | 10% | 0% | 0% |
+| Binary event 55c true vs 50c price | quarter Kelly | 100 | 1.28x | 1.24x | 0.83x | 1.86x | 18% | 0% | 18% | 0% | 0% |
+| Binary event 60c true vs 50c price | full Kelly | 10 | 1.48x | 1.22x | 0.36x | 2.75x | 37% | 0% | 39% | 27% | 0% |
+| Binary event 60c true vs 50c price | full Kelly | 30 | 3.24x | 1.83x | 0.36x | 9.26x | 29% | 4% | 59% | 71% | 10% |
+| Binary event 60c true vs 50c price | full Kelly | 100 | 50.5x | 7.49x | 0.29x | 192x | 18% | 46% | 78% | 99% | 45% |
+| Binary event 60c true vs 50c price | half Kelly | 10 | 1.22x | 1.16x | 0.64x | 1.74x | 37% | 0% | 20% | 1% | 0% |
+| Binary event 60c true vs 50c price | half Kelly | 30 | 1.81x | 1.57x | 0.70x | 3.50x | 18% | 0% | 34% | 11% | 0% |
+| Binary event 60c true vs 50c price | half Kelly | 100 | 7.24x | 4.50x | 0.90x | 22.4x | 6% | 18% | 48% | 43% | 1% |
+| Binary event 60c true vs 50c price | quarter Kelly | 10 | 1.10x | 1.09x | 0.81x | 1.33x | 37% | 0% | 10% | 0% | 0% |
+| Binary event 60c true vs 50c price | quarter Kelly | 30 | 1.35x | 1.30x | 0.87x | 1.94x | 18% | 0% | 19% | 0% | 0% |
+| Binary event 60c true vs 50c price | quarter Kelly | 100 | 2.70x | 2.40x | 1.08x | 5.35x | 4% | 0% | 27% | 2% | 0% |

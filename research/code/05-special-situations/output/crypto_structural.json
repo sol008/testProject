@@ -1,0 +1,625 @@
+{
+  "A_bitmex_funding": {
+    "period": [
+      "2016-05-14",
+      "2026-09-16"
+    ],
+    "annualised_mean_all_%": 9.7,
+    "share_8h_periods_negative": 0.289,
+    "rolling30d_annualised_%_quantiles": {
+      "0.05": -38.7,
+      "0.25": -3.1,
+      "0.5": 4.9,
+      "0.75": 14.5,
+      "0.95": 68.8
+    },
+    "max_rolling30d_annualised_%": 200.0,
+    "min_rolling30d_annualised_%": -104.1,
+    "worst_90d_cumulative_funding_%": -10.42,
+    "per_year": [
+      {
+        "year": 2016,
+        "annualised_%": 53.508,
+        "share_negative": 0.277,
+        "n": 653
+      },
+      {
+        "year": 2017,
+        "annualised_%": 27.18,
+        "share_negative": 0.393,
+        "n": 1095
+      },
+      {
+        "year": 2018,
+        "annualised_%": -7.878,
+        "share_negative": 0.4,
+        "n": 1095
+      },
+      {
+        "year": 2019,
+        "annualised_%": 6.765,
+        "share_negative": 0.296,
+        "n": 1095
+      },
+      {
+        "year": 2020,
+        "annualised_%": 6.907,
+        "share_negative": 0.171,
+        "n": 1098
+      },
+      {
+        "year": 2021,
+        "annualised_%": 15.372,
+        "share_negative": 0.203,
+        "n": 1095
+      },
+      {
+        "year": 2022,
+        "annualised_%": -3.404,
+        "share_negative": 0.48,
+        "n": 1095
+      },
+      {
+        "year": 2023,
+        "annualised_%": 3.936,
+        "share_negative": 0.234,
+        "n": 1095
+      },
+      {
+        "year": 2024,
+        "annualised_%": 11.207,
+        "share_negative": 0.143,
+        "n": 1098
+      },
+      {
+        "year": 2025,
+        "annualised_%": 6.174,
+        "share_negative": 0.189,
+        "n": 1095
+      },
+      {
+        "year": 2026,
+        "annualised_%": 0.132,
+        "share_negative": 0.427,
+        "n": 776
+      }
+    ],
+    "years": 10.3
+  },
+  "B_deribit_quarterly_basis_by_year": [
+    {
+      "year": 2018,
+      "mean": -6.86,
+      "median": -6.86,
+      "min": -6.86,
+      "max": -6.86,
+      "count": 1
+    },
+    {
+      "year": 2019,
+      "mean": 2.83,
+      "median": 3.53,
+      "min": -12.89,
+      "max": 21.2,
+      "count": 365
+    },
+    {
+      "year": 2020,
+      "mean": 8.01,
+      "median": 7.75,
+      "min": -7.19,
+      "max": 31.4,
+      "count": 366
+    },
+    {
+      "year": 2021,
+      "mean": 15.04,
+      "median": 10.95,
+      "min": -0.31,
+      "max": 57.87,
+      "count": 358
+    },
+    {
+      "year": 2022,
+      "mean": 1.68,
+      "median": 1.6,
+      "min": -11.91,
+      "max": 8.02,
+      "count": 358
+    },
+    {
+      "year": 2023,
+      "mean": 5.17,
+      "median": 4.55,
+      "min": -2.24,
+      "max": 19.58,
+      "count": 365
+    },
+    {
+      "year": 2024,
+      "mean": 12.3,
+      "median": 11.28,
+      "min": 6.0,
+      "max": 26.86,
+      "count": 366
+    },
+    {
+      "year": 2025,
+      "mean": 6.99,
+      "median": 6.6,
+      "min": 3.77,
+      "max": 14.78,
+      "count": 365
+    },
+    {
+      "year": 2026,
+      "mean": 3.4,
+      "median": 3.37,
+      "min": 0.74,
+      "max": 5.88,
+      "count": 271
+    }
+  ],
+  "B_basis_quantiles_all": {
+    "0.05": -1.66,
+    "0.25": 2.97,
+    "0.5": 5.84,
+    "0.75": 9.86,
+    "0.95": 19.96
+  },
+  "C_snapshot": {
+    "term_structure": [
+      {
+        "venue": "Deribit",
+        "inst": "BTC-9OCT26",
+        "dte": 10.5,
+        "fut": 83556.68,
+        "index": 83454.18,
+        "basis_ann_%": 4.37,
+        "oi_usd": 5725280
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-16OCT26",
+        "dte": 17.5,
+        "fut": 83640.83,
+        "index": 83454.18,
+        "basis_ann_%": 4.78,
+        "oi_usd": 1439190
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-30OCT26",
+        "dte": 31.5,
+        "fut": 83799.56,
+        "index": 83454.18,
+        "basis_ann_%": 4.91,
+        "oi_usd": 74053610
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-27NOV26",
+        "dte": 59.5,
+        "fut": 84168.96,
+        "index": 83454.18,
+        "basis_ann_%": 5.37,
+        "oi_usd": 33491870
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-25DEC26",
+        "dte": 87.5,
+        "fut": 84497.77,
+        "index": 83454.18,
+        "basis_ann_%": 5.32,
+        "oi_usd": 311951290
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-26MAR27",
+        "dte": 178.5,
+        "fut": 85545.24,
+        "index": 83454.18,
+        "basis_ann_%": 5.19,
+        "oi_usd": 83693130
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-25JUN27",
+        "dte": 269.5,
+        "fut": 86730.88,
+        "index": 83454.18,
+        "basis_ann_%": 5.35,
+        "oi_usd": 49755580
+      },
+      {
+        "venue": "Deribit",
+        "inst": "BTC-24SEP27",
+        "dte": 360.5,
+        "fut": 87849.71,
+        "index": 83454.18,
+        "basis_ann_%": 5.33,
+        "oi_usd": 3554700
+      },
+      {
+        "venue": "Kraken",
+        "inst": "FF_XBTUSD_261030",
+        "dte": 31.8,
+        "fut": 83755.16253395793,
+        "index": 83457.36,
+        "basis_ann_%": 4.17,
+        "oi_usd": null
+      },
+      {
+        "venue": "Kraken",
+        "inst": "FF_XBTUSD_261225",
+        "dte": 87.8,
+        "fut": 84387.38093840524,
+        "index": 83457.36,
+        "basis_ann_%": 4.71,
+        "oi_usd": null
+      },
+      {
+        "venue": "Kraken",
+        "inst": "FF_XBTUSD_270326",
+        "dte": 178.8,
+        "fut": 86326.97272872952,
+        "index": 83457.36,
+        "basis_ann_%": 7.14,
+        "oi_usd": null
+      }
+    ],
+    "cme_front_vs_spot_%_(timing-mismatched closes)": 0.51,
+    "funding_now": {
+      "Kraken_PF_XBTUSD_ann_%": 7.64,
+      "OKX_BTC-USDT-SWAP_ann_%": 3.33,
+      "BitMEX_XBTUSD_ann_%": 10.95,
+      "Hyperliquid_BTC_ann_%": 5.91
+    },
+    "tbill_3m_%": 4.08
+  },
+  "D_halvings": [
+    {
+      "halving": "2012-11-28",
+      "px_at_halving": 12.35,
+      "ret_12m_%": 7997,
+      "peak_mult_within_18m": "~95x (Dec-2013 ~$1,150)",
+      "note": "pre-Yahoo data; approximate public Mt.Gox-era prices"
+    },
+    {
+      "halving": "2016-07-09",
+      "px_at_halving": 651.0,
+      "ret_12m_%": 287,
+      "peak_mult_within_18m": 29.95,
+      "max_drawdown_after_cycle_peak_%": -83
+    },
+    {
+      "halving": "2020-05-11",
+      "px_at_halving": 8602.0,
+      "ret_12m_%": 559,
+      "peak_mult_within_18m": 7.85,
+      "max_drawdown_after_cycle_peak_%": -77
+    },
+    {
+      "halving": "2024-04-20",
+      "px_at_halving": 64994.0,
+      "ret_12m_%": 31,
+      "peak_mult_within_18m": 1.92,
+      "max_drawdown_after_cycle_peak_%": null
+    },
+    {
+      "current": "2026-09-28",
+      "px": 83452,
+      "cycle_peak": 124753,
+      "peak_date": "2025-10-06",
+      "drawdown_from_peak_%": -33.1
+    }
+  ],
+  "E_depegs_defillama": [
+    {
+      "coin": "deUSD",
+      "llama_id": "elixir-deusd",
+      "raw_daily_min": 0.0,
+      "raw_min_date": "2026-05-20",
+      "smoothed_min": 0.0,
+      "smoothed_min_date": "2026-05-20",
+      "days_below_0.99_smoothed": 198,
+      "recovered_to_0.995": false,
+      "days_min_to_recovery": null,
+      "last_price": 0.0,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "UST",
+      "llama_id": "terrausd",
+      "raw_daily_min": 0.0064,
+      "raw_min_date": "2022-06-19",
+      "smoothed_min": 0.0071,
+      "smoothed_min_date": "2022-06-18",
+      "days_below_0.99_smoothed": 473,
+      "recovered_to_0.995": false,
+      "days_min_to_recovery": null,
+      "last_price": 0.0131,
+      "last_date": "2023-08-17"
+    },
+    {
+      "coin": "USDN",
+      "llama_id": "neutrino",
+      "raw_daily_min": 0.0105,
+      "raw_min_date": "2025-09-09",
+      "smoothed_min": 0.0152,
+      "smoothed_min_date": "2024-12-04",
+      "days_below_0.99_smoothed": 1674,
+      "recovered_to_0.995": false,
+      "days_min_to_recovery": null,
+      "last_price": 0.0157,
+      "last_date": "2026-09-27"
+    },
+    {
+      "coin": "MIM",
+      "llama_id": "magic-internet-money",
+      "raw_daily_min": 0.0178,
+      "raw_min_date": "2026-09-27",
+      "smoothed_min": 0.0182,
+      "smoothed_min_date": "2026-09-28",
+      "days_below_0.99_smoothed": 217,
+      "recovered_to_0.995": false,
+      "days_min_to_recovery": null,
+      "last_price": 0.0186,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "HUSD",
+      "llama_id": "husd",
+      "raw_daily_min": 0.0185,
+      "raw_min_date": "2024-07-04",
+      "smoothed_min": 0.0237,
+      "smoothed_min_date": "2025-04-15",
+      "days_below_0.99_smoothed": 1103,
+      "recovered_to_0.995": false,
+      "days_min_to_recovery": null,
+      "last_price": 0.0341,
+      "last_date": "2026-07-21"
+    },
+    {
+      "coin": "LUSD",
+      "llama_id": "liquity-usd",
+      "raw_daily_min": 0.5578,
+      "raw_min_date": "2025-01-02",
+      "smoothed_min": 0.572,
+      "smoothed_min_date": "2025-01-02",
+      "days_below_0.99_smoothed": 7,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 1.0039,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "FEI",
+      "llama_id": "fei-usd",
+      "raw_daily_min": 0.4397,
+      "raw_min_date": "2023-11-10",
+      "smoothed_min": 0.7331,
+      "smoothed_min_date": "2024-03-07",
+      "days_below_0.99_smoothed": 342,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 10,
+      "last_price": 1.0001,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "BUSD",
+      "llama_id": "binance-usd",
+      "raw_daily_min": 0.0508,
+      "raw_min_date": "2026-07-30",
+      "smoothed_min": 0.9305,
+      "smoothed_min_date": "2024-12-08",
+      "days_below_0.99_smoothed": 86,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 3,
+      "last_price": 0.9916,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "USDS",
+      "llama_id": "usds",
+      "raw_daily_min": 0.9599,
+      "raw_min_date": "2024-10-01",
+      "smoothed_min": 0.9602,
+      "smoothed_min_date": "2024-10-01",
+      "days_below_0.99_smoothed": 9,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 9,
+      "last_price": 0.9995,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "TUSD",
+      "llama_id": "true-usd",
+      "raw_daily_min": 0.9644,
+      "raw_min_date": "2024-02-29",
+      "smoothed_min": 0.9692,
+      "smoothed_min_date": "2024-02-28",
+      "days_below_0.99_smoothed": 45,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 0.9998,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "GUSD",
+      "llama_id": "gemini-dollar",
+      "raw_daily_min": 0.5594,
+      "raw_min_date": "2025-01-02",
+      "smoothed_min": 0.9783,
+      "smoothed_min_date": "2021-03-24",
+      "days_below_0.99_smoothed": 14,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 3,
+      "last_price": 0.9992,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "FRAX",
+      "llama_id": "frax",
+      "raw_daily_min": 0.5557,
+      "raw_min_date": "2025-01-02",
+      "smoothed_min": 0.9848,
+      "smoothed_min_date": "2026-01-30",
+      "days_below_0.99_smoothed": 24,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 126,
+      "last_price": 0.9885,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "USDP",
+      "llama_id": "paxos-standard",
+      "raw_daily_min": 0.9775,
+      "raw_min_date": "2021-01-05",
+      "smoothed_min": 0.9914,
+      "smoothed_min_date": "2021-01-04",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 0.995,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "USDC",
+      "llama_id": "usd-coin",
+      "raw_daily_min": 0.9611,
+      "raw_min_date": "2023-03-12",
+      "smoothed_min": 0.9919,
+      "smoothed_min_date": "2023-03-12",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 0.9998,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "FDUSD",
+      "llama_id": "first-digital-usd",
+      "raw_daily_min": 0.9807,
+      "raw_min_date": "2025-04-02",
+      "smoothed_min": 0.9933,
+      "smoothed_min_date": "2025-04-02",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 0.9985,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "DAI",
+      "llama_id": "dai",
+      "raw_daily_min": 0.9625,
+      "raw_min_date": "2023-03-12",
+      "smoothed_min": 0.9946,
+      "smoothed_min_date": "2021-09-28",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 1.0,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "USDe",
+      "llama_id": "ethena-usde",
+      "raw_daily_min": 0.9838,
+      "raw_min_date": "2026-02-01",
+      "smoothed_min": 0.9947,
+      "smoothed_min_date": "2026-01-31",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 2,
+      "last_price": 0.9998,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "USDT",
+      "llama_id": "tether",
+      "raw_daily_min": 0.9919,
+      "raw_min_date": "2021-09-22",
+      "smoothed_min": 0.9951,
+      "smoothed_min_date": "2021-05-15",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 1,
+      "last_price": 0.9998,
+      "last_date": "2026-09-28"
+    },
+    {
+      "coin": "PYUSD",
+      "llama_id": "paypal-usd",
+      "raw_daily_min": 0.9892,
+      "raw_min_date": "2023-08-17",
+      "smoothed_min": 0.9956,
+      "smoothed_min_date": "2023-08-17",
+      "days_below_0.99_smoothed": 0,
+      "recovered_to_0.995": true,
+      "days_min_to_recovery": 6,
+      "last_price": 0.9998,
+      "last_date": "2026-09-28"
+    }
+  ],
+  "E_depegs_yahoo_intraday": [
+    {
+      "ticker": "USDC-USD",
+      "intraday_low": 0.8774,
+      "date": "2023-03-11",
+      "close_that_day": 0.9715,
+      "days_to_close_>=0.995": 2,
+      "ret_low_to_par_%": 14.0
+    },
+    {
+      "ticker": "USDT-USD",
+      "intraday_low": 0.8995,
+      "date": "2020-03-13",
+      "close_that_day": 0.9996,
+      "days_to_close_>=0.995": 1,
+      "ret_low_to_par_%": 11.2
+    },
+    {
+      "ticker": "DAI-USD",
+      "intraday_low": 0.897,
+      "date": "2023-03-11",
+      "close_that_day": 0.9739,
+      "days_to_close_>=0.995": 2,
+      "ret_low_to_par_%": 11.5
+    },
+    {
+      "ticker": "FDUSD-USD",
+      "intraday_low": 0.8811,
+      "date": "2025-04-02",
+      "close_that_day": 0.9864,
+      "days_to_close_>=0.995": 2,
+      "ret_low_to_par_%": 13.5
+    },
+    {
+      "ticker": "TUSD-USD",
+      "intraday_low": 0.9179,
+      "date": "2020-03-13",
+      "close_that_day": 0.9923,
+      "days_to_close_>=0.995": 1,
+      "ret_low_to_par_%": 8.9
+    },
+    {
+      "ticker": "BUSD-USD",
+      "intraday_low": 0.8861,
+      "date": "2020-03-13",
+      "close_that_day": 0.9931,
+      "days_to_close_>=0.995": 1,
+      "ret_low_to_par_%": 12.9
+    },
+    {
+      "ticker": "PYUSD-USD",
+      "intraday_low": 0.9743,
+      "date": "2023-09-01",
+      "close_that_day": 0.9922,
+      "days_to_close_>=0.995": 1,
+      "ret_low_to_par_%": 2.6
+    }
+  ]
+}

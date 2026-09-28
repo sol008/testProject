@@ -1,0 +1,6 @@
+| Pre-tax return | No tax | Realised yearly, short-term (40.8%) | Realised yearly, long-term (23.8%) | Deferred, taxed once at end (23.8%) |
+|---|---|---|---|---|
+| 10% | 6.73x | 3.16x | 4.34x | 5.36x |
+| 15% | 16.4x | 5.48x | 8.71x | 12.7x |
+| 20% | 38.3x | 9.37x | 17.1x | 29.5x |
+| needed for 11x after tax | 12.7% | 21.5% | 16.7% | 14.2% |

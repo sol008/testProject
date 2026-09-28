@@ -1,0 +1,7 @@
+| Policy | Realised growth/yr | vs Kelly theory theta^2/2 | Theory for GZ: (1-alpha) x Kelly growth | Worst max-DD across paths | Median max-DD |
+|---|---|---|---|---|---|
+| Full Kelly (no constraint) | 12.74% | 102% | - | 100.0% | 91% |
+| Half Kelly (no constraint) | 9.49% | 76% | - | 97.6% | 64% |
+| Grossman-Zhou floor 50% of peak | 6.79% | 54% | 50% | 50.0% | 46% |
+| Grossman-Zhou floor 70% of peak | 4.12% | 33% | 30% | 30.0% | 27% |
+| Grossman-Zhou floor 70% of peak, half Kelly on cushion | 2.91% | 23% | 23% | 29.3% | 19% |

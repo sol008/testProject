@@ -1,0 +1,433 @@
+{
+  "merger_arb": {
+    "MERFX": {
+      "start": "1990-01-02",
+      "end": "2026-09-25",
+      "years": 36.7,
+      "CAGR_%": 4.86,
+      "vol_%": 5.29,
+      "sharpe": 0.41,
+      "maxDD_%": -15.1,
+      "monthly_skew": -1.72,
+      "monthly_exkurt": 7.11,
+      "worst_month_%": -7.6,
+      "best_month_%": 4.9,
+      "beta": 0.119,
+      "down_beta": 0.197,
+      "up_beta": 0.082,
+      "corr": 0.448,
+      "avg_ret_in_worst5pct_mkt_months_%": -1.42,
+      "avg_mkt_in_those_months_%": -9.31,
+      "avg_excess_over_tbill_ann_%": 2.21,
+      "SPY_same_period_CAGR_%": 10.83,
+      "tbill_same_period_%": 2.77
+    },
+    "ARBIX": {
+      "start": "2017-08-14",
+      "end": "2026-09-25",
+      "years": 9.1,
+      "CAGR_%": 5.24,
+      "vol_%": 1.6,
+      "sharpe": 1.59,
+      "maxDD_%": -4.3,
+      "monthly_skew": -1.35,
+      "monthly_exkurt": 6.58,
+      "worst_month_%": -3.1,
+      "best_month_%": 2.2,
+      "beta": 0.091,
+      "down_beta": 0.158,
+      "up_beta": 0.113,
+      "corr": 0.623,
+      "avg_ret_in_worst5pct_mkt_months_%": -0.89,
+      "avg_mkt_in_those_months_%": -9.25,
+      "avg_excess_over_tbill_ann_%": 2.42,
+      "SPY_same_period_CAGR_%": 15.01,
+      "tbill_same_period_%": 2.63
+    },
+    "MNA": {
+      "start": "2009-11-17",
+      "end": "2026-09-28",
+      "years": 16.9,
+      "CAGR_%": 2.69,
+      "vol_%": 7.42,
+      "sharpe": 0.2,
+      "maxDD_%": -16.7,
+      "monthly_skew": -1.32,
+      "monthly_exkurt": 8.06,
+      "worst_month_%": -8.6,
+      "best_month_%": 4.1,
+      "beta": 0.14,
+      "down_beta": 0.301,
+      "up_beta": 0.082,
+      "corr": 0.419,
+      "avg_ret_in_worst5pct_mkt_months_%": -1.76,
+      "avg_mkt_in_those_months_%": -8.16,
+      "avg_excess_over_tbill_ann_%": 1.27,
+      "SPY_same_period_CAGR_%": 14.13,
+      "tbill_same_period_%": 1.49
+    },
+    "MRGR": {
+      "start": "2012-12-13",
+      "end": "2026-09-28",
+      "years": 13.8,
+      "CAGR_%": 2.08,
+      "vol_%": 5.78,
+      "sharpe": 0.08,
+      "maxDD_%": -13.2,
+      "monthly_skew": -0.4,
+      "monthly_exkurt": 1.98,
+      "worst_month_%": -4.2,
+      "best_month_%": 3.3,
+      "beta": 0.055,
+      "down_beta": 0.158,
+      "up_beta": 0.029,
+      "corr": 0.208,
+      "avg_ret_in_worst5pct_mkt_months_%": -0.52,
+      "avg_mkt_in_those_months_%": -8.32,
+      "avg_excess_over_tbill_ann_%": 0.21,
+      "SPY_same_period_CAGR_%": 14.94,
+      "tbill_same_period_%": 1.8
+    },
+    "ARB": {
+      "start": "2020-05-11",
+      "end": "2026-09-28",
+      "years": 6.4,
+      "CAGR_%": 4.16,
+      "vol_%": 4.4,
+      "sharpe": 0.28,
+      "maxDD_%": -5.6,
+      "monthly_skew": 0.73,
+      "monthly_exkurt": 4.27,
+      "worst_month_%": -1.9,
+      "best_month_%": 4.2,
+      "beta": 0.058,
+      "down_beta": 0.1,
+      "up_beta": 0.098,
+      "corr": 0.291,
+      "avg_ret_in_worst5pct_mkt_months_%": -0.32,
+      "avg_mkt_in_those_months_%": -8.01,
+      "avg_excess_over_tbill_ann_%": 1.43,
+      "SPY_same_period_CAGR_%": 17.91,
+      "tbill_same_period_%": 3.01
+    },
+    "crisis_windows_%": {
+      "GFC 2007-10..2009-03": {
+        "MERFX": -2.9,
+        "SPY": -46.6
+      },
+      "COVID Feb-Mar 2020": {
+        "MERFX": -6.9,
+        "MNA": -12.8,
+        "SPY": -33.7
+      },
+      "2022 bear": {
+        "MERFX": 0.1,
+        "MNA": -2.9,
+        "SPY": -24.5
+      },
+      "Aug 1998 LTCM": {
+        "MERFX": -10.8,
+        "SPY": -18.2
+      }
+    }
+  },
+  "spinoffs_CSD": {
+    "CSD": {
+      "start": "2006-12-15",
+      "end": "2026-09-28",
+      "years": 19.8,
+      "CAGR_%": 9.63,
+      "vol_%": 23.81,
+      "sharpe": 0.44,
+      "maxDD_%": -70.5,
+      "monthly_skew": -0.79,
+      "monthly_exkurt": 4.08,
+      "worst_month_%": -33.4,
+      "best_month_%": 21.6
+    },
+    "SPY": {
+      "start": "2006-12-15",
+      "end": "2026-09-28",
+      "years": 19.8,
+      "CAGR_%": 10.87,
+      "vol_%": 19.54,
+      "sharpe": 0.55,
+      "maxDD_%": -55.2,
+      "monthly_skew": -0.55,
+      "monthly_exkurt": 1.02,
+      "worst_month_%": -16.5,
+      "best_month_%": 12.7
+    },
+    "IJH": {
+      "start": "2006-12-15",
+      "end": "2026-09-28",
+      "years": 19.8,
+      "CAGR_%": 9.41,
+      "vol_%": 22.22,
+      "sharpe": 0.45,
+      "maxDD_%": -55.1,
+      "monthly_skew": -0.56,
+      "monthly_exkurt": 1.81,
+      "worst_month_%": -21.3,
+      "best_month_%": 14.8
+    },
+    "IWM": {
+      "start": "2006-12-15",
+      "end": "2026-09-28",
+      "years": 19.8,
+      "CAGR_%": 8.06,
+      "vol_%": 24.57,
+      "sharpe": 0.38,
+      "maxDD_%": -58.6,
+      "monthly_skew": -0.38,
+      "monthly_exkurt": 1.16,
+      "worst_month_%": -21.5,
+      "best_month_%": 18.2
+    },
+    "RSP": {
+      "start": "2006-12-15",
+      "end": "2026-09-28",
+      "years": 19.8,
+      "CAGR_%": 9.52,
+      "vol_%": 20.79,
+      "sharpe": 0.47,
+      "maxDD_%": -59.9,
+      "monthly_skew": -0.47,
+      "monthly_exkurt": 2.36,
+      "worst_month_%": -20.9,
+      "best_month_%": 18.7
+    },
+    "2006-2013": {
+      "CSD": 9.78,
+      "SPY": 5.96,
+      "IJH": 8.83
+    },
+    "2014-2019": {
+      "CSD": 3.62,
+      "SPY": 12.07,
+      "IJH": 9.28
+    },
+    "2020-2026": {
+      "CSD": 15.32,
+      "SPY": 15.18,
+      "IJH": 10.31
+    }
+  },
+  "fallen_angels": {
+    "since_ANGL_inception": {
+      "ANGL": {
+        "start": "2012-04-11",
+        "end": "2026-09-28",
+        "years": 14.5,
+        "CAGR_%": 6.56,
+        "vol_%": 9.18,
+        "sharpe": 0.55,
+        "maxDD_%": -29.3,
+        "monthly_skew": -0.94,
+        "monthly_exkurt": 7.08,
+        "worst_month_%": -13.9,
+        "best_month_%": 8.1
+      },
+      "HYG": {
+        "start": "2012-04-11",
+        "end": "2026-09-28",
+        "years": 14.5,
+        "CAGR_%": 4.53,
+        "vol_%": 7.76,
+        "sharpe": 0.39,
+        "maxDD_%": -22.0,
+        "monthly_skew": -0.82,
+        "monthly_exkurt": 4.86,
+        "worst_month_%": -10.0,
+        "best_month_%": 6.7
+      },
+      "JNK": {
+        "start": "2012-04-11",
+        "end": "2026-09-28",
+        "years": 14.5,
+        "CAGR_%": 4.44,
+        "vol_%": 7.69,
+        "sharpe": 0.38,
+        "maxDD_%": -22.9,
+        "monthly_skew": -0.98,
+        "monthly_exkurt": 5.37,
+        "worst_month_%": -11.0,
+        "best_month_%": 6.8
+      },
+      "SPY": {
+        "start": "2012-04-11",
+        "end": "2026-09-28",
+        "years": 14.5,
+        "CAGR_%": 14.6,
+        "vol_%": 16.61,
+        "sharpe": 0.8,
+        "maxDD_%": -33.7,
+        "monthly_skew": -0.4,
+        "monthly_exkurt": 0.85,
+        "worst_month_%": -12.5,
+        "best_month_%": 12.7
+      }
+    },
+    "since_FALN_inception": {
+      "FALN": {
+        "start": "2016-06-21",
+        "end": "2026-09-28",
+        "years": 10.3,
+        "CAGR_%": 6.11,
+        "vol_%": 8.84,
+        "sharpe": 0.45,
+        "maxDD_%": -29.2,
+        "monthly_skew": -1.22,
+        "monthly_exkurt": 11.98,
+        "worst_month_%": -15.8,
+        "best_month_%": 11.7
+      },
+      "HYG": {
+        "start": "2016-06-21",
+        "end": "2026-09-28",
+        "years": 10.3,
+        "CAGR_%": 4.63,
+        "vol_%": 8.19,
+        "sharpe": 0.31,
+        "maxDD_%": -22.0,
+        "monthly_skew": -1.0,
+        "monthly_exkurt": 5.92,
+        "worst_month_%": -10.0,
+        "best_month_%": 6.7
+      },
+      "JNK": {
+        "start": "2016-06-21",
+        "end": "2026-09-28",
+        "years": 10.3,
+        "CAGR_%": 4.66,
+        "vol_%": 8.21,
+        "sharpe": 0.31,
+        "maxDD_%": -22.9,
+        "monthly_skew": -1.17,
+        "monthly_exkurt": 6.72,
+        "worst_month_%": -11.0,
+        "best_month_%": 6.8
+      }
+    }
+  },
+  "cef_activism_CEFS": {
+    "CEFS": {
+      "start": "2017-03-21",
+      "end": "2026-09-28",
+      "years": 9.5,
+      "CAGR_%": 11.69,
+      "vol_%": 15.07,
+      "sharpe": 0.65,
+      "maxDD_%": -39.0,
+      "monthly_skew": -1.2,
+      "monthly_exkurt": 7.34,
+      "worst_month_%": -21.5,
+      "best_month_%": 11.5
+    },
+    "SPY": {
+      "start": "2017-03-21",
+      "end": "2026-09-28",
+      "years": 9.5,
+      "CAGR_%": 15.04,
+      "vol_%": 18.31,
+      "sharpe": 0.72,
+      "maxDD_%": -33.7,
+      "monthly_skew": -0.42,
+      "monthly_exkurt": 0.52,
+      "worst_month_%": -12.5,
+      "best_month_%": 12.7
+    },
+    "AGG": {
+      "start": "2017-03-21",
+      "end": "2026-09-28",
+      "years": 9.5,
+      "CAGR_%": 1.47,
+      "vol_%": 5.51,
+      "sharpe": -0.16,
+      "maxDD_%": -18.4,
+      "monthly_skew": -0.03,
+      "monthly_exkurt": 0.77,
+      "worst_month_%": -4.1,
+      "best_month_%": 4.6
+    }
+  },
+  "credit_spread_timing": {
+    "note": "Monthly obs 1990-2025, overlapping 12m windows (effective independent obs ~ n/12). Spread = Moody's Baa minus 10y UST (FRED BAA10Y).",
+    "current_BAA10Y": 1.39,
+    "table": [
+      {
+        "regime": "(0.0, 2.0]",
+        "count": 179,
+        "mean": 0.0716,
+        "median": 0.0784,
+        "min": -0.2367,
+        "max": 0.2501,
+        "share_negative": 0.156
+      },
+      {
+        "regime": "(2.0, 2.5]",
+        "count": 107,
+        "mean": 0.0623,
+        "median": 0.0459,
+        "min": -0.2705,
+        "max": 0.3148,
+        "share_negative": 0.103
+      },
+      {
+        "regime": "(2.5, 3.0]",
+        "count": 82,
+        "mean": 0.0515,
+        "median": 0.0619,
+        "min": -0.2123,
+        "max": 0.17,
+        "share_negative": 0.146
+      },
+      {
+        "regime": "(3.0, 3.5]",
+        "count": 47,
+        "mean": 0.079,
+        "median": 0.107,
+        "min": -0.1736,
+        "max": 0.1775,
+        "share_negative": 0.128
+      },
+      {
+        "regime": "(3.5, 4.0]",
+        "count": 6,
+        "mean": 0.1658,
+        "median": 0.1682,
+        "min": 0.14,
+        "max": 0.1963,
+        "share_negative": 0.0
+      },
+      {
+        "regime": "(4.0, 10.0]",
+        "count": 8,
+        "mean": 0.3489,
+        "median": 0.3686,
+        "min": 0.1955,
+        "max": 0.4692,
+        "share_negative": 0.0
+      }
+    ]
+  },
+  "share_class": {
+    "GOOGL_premium_over_GOOG_%": {
+      "mean": 0.52,
+      "min": -4.35,
+      "max": 5.31,
+      "p5": -1.07,
+      "p95": 3.15,
+      "last": 1.06,
+      "daily_std_%": 1.48
+    },
+    "BRKA_vs_1500xBRKB_%": {
+      "mean": 0.191,
+      "min": -1.901,
+      "max": 3.417,
+      "p5": -0.186,
+      "p95": 1.144,
+      "last": -0.101
+    }
+  }
+}
