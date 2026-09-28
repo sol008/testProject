@@ -1,0 +1,15 @@
+family,cells,file
+insider grid (36 variants x 3 horizons x IS/OOS),108,insider_variant_grid.csv
+"insider baseline tables (W,K x period x size x h)",256,insider_baseline_by_bucket.csv
+insider strength bins,32,insider_strength_bins.csv
+earnings setups,160,earnings_setups.csv
+activist 13D,108,activist_13d_summary.csv
+buyback 8-K,64,buyback_8k_summary.csv
+S&P 500 changes,42,sp500_changes_summary.csv
+special dividends,15,special_div_summary.csv
+spin-offs,15,spinoff_summary.csv
+IPO lock-ups,45,lockup_summary.csv
+issuer tenders,20,issuer_tender_follower.csv
+FDA decisions,36,pdufa_runup.csv
+short squeeze,42,short_squeeze_summary.csv
+Russell proxy,8,russell_proxy.csv

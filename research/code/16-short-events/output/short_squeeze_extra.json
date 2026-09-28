@@ -1,0 +1,10 @@
+{
+  "kelly_squeeze_f20": {
+    "f_full": 0.0,
+    "f_used": 0.0,
+    "g_per_trade": 0.0,
+    "shrunk_mean": -0.03022084274175581
+  },
+  "right_tail_share_f20_gt_+50%": 0.048,
+  "left_tail_share_f20_lt_-30%": 0.163
+}
