@@ -8,12 +8,12 @@
 
 1. **Options are overpriced insurance on average. On the index the premium is large, persistent and almost never negative.** From 1990 to 2026, the VIX exceeded the S&P 500's realised volatility over the following 21 trading days on **86% of days**. The mean gap was **+4.1 vol points** (median +4.7). A buyer of 1-month variance lost **28% of notional on average** (median −47%). The literature agrees and has been replicated many times (Coval & Shumway 2001; Bakshi & Kapadia 2003; Carr & Wu 2009; Bondarenko 2014).
 2. **No simple observable condition reliably makes index options cheap.** The best screens raise the chance that implied vol ends below realised from 14% to roughly 23–41%: deep VIX backwardation (VIX/VIX3M > 1.1), widening credit spreads, or SPX below its 200-day average with VIX below trailing realised vol. Even so, the average premium stays positive in every bucket except extreme backwardation, which covered only 133 days concentrated in 2008 and 2020. A logistic model fitted on 1990–2007 scored an **out-of-sample AUC of 0.54** on 2008–2026 (0.5 is a coin flip). **A low VIX does not mean cheap options.** In the bottom decile of VIX, implied still beat realised 88% of the time.
-3. **Puts and short-dated OTM options are negative EV in every test.** This covers every modelled SPX put-buying rule (1y 5–10% OTM, 3m 10–20% OTM, under complacency, trend and credit conditions) and 3-month 10% OTM calls. Mean returns ranged from **−50% to −100% of premium per trade** in both the 1990–2007 and 2008–2025 halves. The CBOE PPUT index, which uses real prices (S&P plus monthly 5% OTM puts), trailed the S&P total return by **3.5% a year from 1988 to 2026** and beat it in only **5 of 38 calendar years**.
-4. **The only robust positive-EV convex trade on the index is long-dated calls (1–2 years, at-the-money to 20% OTM).** Examples: 1y ATM calls averaged **+39% per trade in-sample and +88% out-of-sample**, and 2y 10% OTM calls averaged +111% and +207%. The result is positive under all three pricing assumptions, and the IV would have had to be **6–17 vol points higher** to erase it. **But the delta-hedged P&L is negative** (−12% to −29% of premium), so the profit comes from the equity risk premium, not from mispriced options. LEAPS are equity beta with a floor under the loss, not free convexity.
+3. **Puts and short-dated OTM options are negative EV in every test.** Bought unconditionally, modelled SPX puts (1y 5–10% OTM, 3m 10–20% OTM) and 3-month 10% OTM calls lost **50–100% of premium per trade on average** in both the 1990–2007 and 2008–2025 halves (base pricing). No complacency, trend or credit condition made puts profitable. The best, downtrend-filtered puts, still lost about 5–8%. The CBOE PPUT index, which uses real prices (S&P plus monthly 5% OTM puts), trailed the S&P total return by **3.5% a year from 1988 to 2026** and beat it in only **5 of 38 calendar years**.
+4. **The only robust positive-EV convex trade on the index is long-dated calls (1–2 years, at-the-money to 20% OTM).** Examples: 1y ATM calls averaged **+39% per trade in-sample and +88% out-of-sample**, and 2y 10% OTM calls averaged +111% and +207%. The result is positive under all three pricing assumptions, and the IV would have had to be **6–17 vol points higher** to erase it. **But the delta-hedged P&L is negative** (−12% to −27% of premium), so the profit comes from the equity risk premium, not from mispriced options. LEAPS are equity beta with a floor under the loss, not free convexity.
 5. **Buy time, not strikes.** The variance premium is a similar fraction of the price at every tenor (a 1-year variance swap lost 21–34% to the buyer). Rolling 1-month options therefore bleeds roughly √12 ≈ 3.5× more premium per year than holding a 1-year option. Rolling 1-month ATM straddles cost about 6–7% of spot a year, against about 1–2% for 1-year options.
 6. **Leveraged ETFs are path-dependent beta, not magic.** TQQQ returned +43% a year (2010–26) and UPRO +33% a year, but with drawdowns of −82% and −77%, in one of the best equity windows on record. TQQQ beat 3× QQQ's return in only **34% of rolling 1-year windows**. A validated 1928–2026 simulation (correlation 0.998 with UPRO) gives **3× S&P a 10.5% CAGR against 10.2% for 1×**, with a **−99.9%** drawdown (1929–32) and −98% (2000–09). The Gayed–Bilello 200-day-moving-average rule helped in-sample but **lagged buy-and-hold after publication** (2016–26, 3×: 23.6% versus 30.1% CAGR), though with a smaller drawdown.
 7. **Vol products and high leverage destroy capital.** VIXY returned **−67% a year** (log) since 2011 while the VIX itself was flat, and was positive in only 10% of 12-month windows. Short-vol products blew up: SVXY fell 88% in two days in February 2018 and XIV was terminated. BTC at **10× long was liquidated within 30 days 43% of the time**, and at 100× within one day 73% of the time. EUR/USD at 50:1 hit a 50% margin close-out within a month 58% of the time. These figures are lower bounds from daily bars.
-8. **Frictions are small only in the right products.** One-year 5–10% OTM SPX and SPY options quote **0.2–0.5% of premium wide**. QQQ and IWM LEAPS quoted 4–12%, and short-dated far-OTM options 20–100% (snapshot taken after the close). SPX box spreads lend and borrow at **about 4.8–5.3%**, close to Treasuries, far below retail margin rates.
+8. **Frictions are small only in the right products.** One-year 5–10% OTM SPX and SPY options quote **0.2–0.5% of premium wide**. QQQ and IWM LEAPS quoted 4–14%, and short-dated far-OTM options 20–100% (snapshot taken after the close). SPX box spreads lend and borrow at **about 4.8–5.3%**, close to Treasuries, far below retail margin rates.
 9. **Design implication.** Express most views with spot, futures or box-financed leverage, or with 1–2y calls and call spreads on liquid indices. Buy puts or volatility only as a budgeted, explicitly negative-EV hedge, or when a measured IV-versus-forecast edge exceeds costs. Treat LETFs as tactical tools with hard exits. Never sell naked tails. The objective is expected log growth, not the maximum single-trade multiple: over 36 years the best index-option trades returned only **6–20×**.
 
 ---
@@ -239,7 +239,7 @@ IS = in-sample (1990–2007 entries); OOS = out-of-sample (2008–2025 entries).
 2. **But the options were not cheap.** Delta-hedged P&L is negative everywhere. The profit is the equity risk premium, earned through a leveraged, loss-capped position.
    - Full-sample Newey-West t-statistics on the unhedged means are 2.5–3.6. The in-sample halves alone are only 1.0–1.6.
    - With about 36 independent one-year periods, this is **evidence that the equity drift was strong, not that calls were mispriced**.
-3. **Short-dated OTM calls, the retail "lottery ticket", lose about 50–70% per trade**, with 8% hit rates.
+3. **Short-dated OTM calls, the retail "lottery ticket", lose about 30–70% per trade** (−50% to −62% under base pricing), with 8% hit rates.
 4. **Puts lose everywhere.** Pricing them fairly for a buyer would require IVs **8–11 vol points lower** than the model's. That is the skew premium.
 5. **Payoff multiples** (`output/best_multiples.csv`):
 
@@ -273,7 +273,7 @@ IS = in-sample (1990–2007 entries); OOS = out-of-sample (2008–2025 entries).
 - **The "cheap VIX" condition did not help.** For OTM calls it was worse in-sample. This is consistent with §3 and with Israelov & Nielsen (2015).
 - **Buying calls after crashes** (SPX below its 200-day average with VIX above 25) was positive in both halves.
   - The samples are small and clustered: roughly 2–4 episodes per half.
-  - Delta-hedged P&L was the worst of any condition (−22% to −34% of premium) because IV is high after crashes.
+  - Delta-hedged P&L stayed clearly negative (−16% to −35% of premium) because IV is high after crashes.
   - The edge is the post-crash equity premium. **Stock, futures or call spreads capture it more cheaply than outright calls** (§4.7).
 - **"VIX below trailing realised"** flipped sign between the halves, a classic in-sample/out-of-sample failure.
 - **Complacency puts lost almost 100%.** The best put condition (downtrend) was roughly break-even: −5% to −8% per trade.
@@ -328,7 +328,7 @@ Monthly purchases, each costing f% of equity (about 12 overlapping positions), w
 | 5% OTM | 9.9% (−17%) | 14.4% (−48%) | 16.9% (−72%) | 16.1% (−95%) | +87% / +66% / 58% |
 | 10% OTM | 10.7% (−31%) | 14.9% (−70%) | 16.4% (−89%) | 12.6% (−99%) | +105% / −13% / 47% |
 
-The S&P 500 total return over the same span was 10.8% a year. Growth peaks around 20–30% of equity per trade, which is about the full-Kelly level. That estimate is in-sample on a strong US equity window, so the system should use **at most a quarter to half of Kelly**. Drawdowns above 40% are otherwise near-certain.
+The S&P 500 total return over the same span was 10.8% a year. Growth peaks around 30% of equity per trade (30–50% for ATM), which is about the full-Kelly level. That estimate is in-sample on a strong US equity window, so the system should use **at most a quarter to half of Kelly**. Drawdowns above 40% are otherwise near-certain.
 
 ### 4.7 Spreads and risk reversals (base, legs from the same dates)
 
@@ -525,7 +525,7 @@ The screen compares 1y ATM IV with a heterogeneous-autoregressive (HAR)-style fo
 | 3× buy-and-hold | 8.3% / −99.9% | 30.1% / −77% |
 | **3× + 200-day rule** | 18.1% / **−92%** | 23.6% / −50% |
 
-The rule roughly halved drawdowns but **gave up 4–7% a year after publication**. It also does not protect against one-day gaps: 3× with the rule still suffered a −92% drawdown in-sample (1987, 1929–32 whipsaws). This is a risk-control tool, not a return enhancer.
+The rule roughly halved drawdowns but **gave up 4–7% a year after publication**. It also does not avoid ruin: 3× with the rule still suffered a −92% drawdown in-sample, from September 1929 to May 1935, through Depression whipsaws. No moving-average rule can sidestep a one-day gap like 19 October 1987. This is a risk-control tool, not a return enhancer.
 
 ### 7.4 Futures and micro futures
 
@@ -639,8 +639,8 @@ A long box on SPX is a synthetic zero-coupon bond: a long call spread plus a lon
 | SPY | 0.2% | 10.5% | 0.2% | 0.3–0.4% | 0.3–0.4% | 0.4% |
 | QQQ | 1.1% | 7.4% | 5.7% | 5.7–6.0% | 4.9–7.0% | 5.7% |
 | IWM | 0.8% | 9.5% | 7.7% | 3.9–7.6% | 6.3–8.0% | 13.8% |
-| AAPL / NVDA / TSLA | 1.6–5.8% | 2.1–8.9% | 1.2–2.5% | 1.1–3.7% | 1.3–4.1% | 1.3–3.8% |
-| IBIT | 1.5% | 3.2% | ~2.3% | 2.4–3.2% | 2.3–3.5% | 3.4% |
+| AAPL / NVDA / TSLA | 1.6–5.8% | 2.1–8.9% | 1.2–2.5% | 1.1–3.7% | 1.3–4.1% | 2.2–3.8% |
+| IBIT | 1.5% | 3.2% | ~2.3% | 2.4–3.2% | 2.3–3.8% | 3.4% |
 
 **Premium as a share of spot**, to size positions. SPX 1-year calls cost:
 
@@ -648,7 +648,7 @@ A long box on SPX is a synthetic zero-coupon bond: a long call spread plus a lon
 |---|---|---|---|
 | SPX call premium | 6.5% | 3.9% | 2.2% |
 
-For NVDA and TSLA the 1-year ATM call costs 15–18% of spot, and IBIT 19–29%. A 10× payoff on an SPX 110% 1-year call needs roughly a +32% index move. Base rate since 1928: about 10% of 1-year windows.
+For NVDA and TSLA the 1-year ATM call costs 15–18% of spot, and IBIT 19–29%. A 10× payoff on an SPX 110% 1-year call needs roughly a +32% index move. Base rate: about 9% of 1-year windows since 1928, 6% since 1990.
 
 **Commissions and fees** are negligible for SPX-sized contracts: about $0.50–$0.65 per contract plus exchange fees. Both matter for small-premium options.
 

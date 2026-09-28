@@ -217,15 +217,15 @@
       "error": NaN
     },
     {
-      "event": "BOB peg (6.96) abandoned",
-      "date": "2026-07-08",
+      "event": "BOB peg (6.96) abandoned (official 29-Jun-2026; Yahoo lags)",
+      "date": "2026-06-29",
       "source": "yahoo:BOB=X",
-      "day1_%": -30.9,
-      "1m_%": -43.5,
-      "3m_%": NaN,
+      "day1_%": -0.1,
+      "1m_%": -40.0,
+      "3m_%": -43.8,
       "12m_%": NaN,
       "max_loss_12m_%": -45.3,
-      "prior_12m_vol_%": 5.2,
+      "prior_12m_vol_%": 5.3,
       "error": NaN
     }
   ],
@@ -233,7 +233,7 @@
     {
       "ticker": "HKD=X",
       "regime": "currency board 7.75-7.85 since 1983",
-      "last": 7.8453,
+      "last": 7.8454,
       "dev_from_peg_%": 0.58,
       "chg_12m_%_(+ = local weaker)": 0.8,
       "realised_vol_1y_%": 0.6
@@ -289,7 +289,7 @@
     {
       "ticker": "DKK=X",
       "regime": "ERM-II vs EUR 7.46038 +/-2.25%",
-      "last": 6.5735,
+      "last": 6.5738,
       "dev_from_peg_%": NaN,
       "chg_12m_%_(+ = local weaker)": 2.7,
       "realised_vol_1y_%": 5.5
@@ -297,7 +297,7 @@
     {
       "ticker": "XOF=X",
       "regime": "CFA franc: EUR 655.957 (French Treasury guarantee)",
-      "last": 576.41,
+      "last": 576.39,
       "dev_from_peg_%": NaN,
       "chg_12m_%_(+ = local weaker)": 3.7,
       "realised_vol_1y_%": 17.8
@@ -321,9 +321,9 @@
     {
       "ticker": "EGP=X",
       "regime": "floated Mar-2024 (managed)",
-      "last": 52.05,
+      "last": 52.02,
       "dev_from_peg_%": NaN,
-      "chg_12m_%_(+ = local weaker)": 8.2,
+      "chg_12m_%_(+ = local weaker)": 8.1,
       "realised_vol_1y_%": 10.6
     },
     {
@@ -345,7 +345,7 @@
     {
       "ticker": "TRY=X",
       "regime": "managed depreciation",
-      "last": 48.9744,
+      "last": 48.9725,
       "dev_from_peg_%": NaN,
       "chg_12m_%_(+ = local weaker)": 17.8,
       "realised_vol_1y_%": 1.5

@@ -17,4 +17,4 @@ ARS (Milei) step devaluation,2023-12-13,yahoo:ARS=X,-54.6,-55.5,-57.1,-64.3,-64.
 NGN FX unification,2023-06-14,yahoo:NGN=X,-0.5,-40.8,-39.0,-69.4,-71.8,8.5,
 EGP float #2 (Mar-2024),2024-03-06,yahoo:EGP=X,-37.7,-34.8,-34.9,-39.0,-39.5,4.4,
 ETB float (IMF program),2024-07-29,yahoo:ETB=X,-0.9,-46.8,-53.1,-58.5,-58.9,6.7,
-BOB peg (6.96) abandoned,2026-07-08,yahoo:BOB=X,-30.9,-43.5,,,-45.3,5.2,
+BOB peg (6.96) abandoned (official 29-Jun-2026; Yahoo lags),2026-06-29,yahoo:BOB=X,-0.1,-40.0,-43.8,,-45.3,5.3,

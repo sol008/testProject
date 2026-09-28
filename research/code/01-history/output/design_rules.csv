@@ -1,0 +1,29 @@
+rule_id,area,rule,default_parameters
+R0,Objective,"Maximise long-run geometric growth subject to a hard ruin constraint; each email states max loss ($ and %), P(total loss), P(>=2x), P(>=5x), horizon, reference class incl. failures","11x needs 27%/yr over 10y, 17.3% over 15y, 12.7% over 20y, 8.3% over 30y"
+R1,Architecture,Unlevered diversified equity-index core,core 60-90%
+R2,Architecture,Opportunity sleeve of max 3-8 positions; idle cash in T-bills; total open max-loss capped,sleeve 10-40%; total satellite max loss <=15%; convexity+lottery premium <=2-3%/yr
+R3,Admission,Archetype with reference class of >=N analogs incl. failures; base rates computed,N >= 10
+R4,Admission,Positive EV after shrinking model probability toward base rate and after costs/taxes,shrink 25-50%
+R5,Admission,Max loss defined at entry (premium / unlevered long / hedged); stops do not define max loss,
+R6,Admission,Asymmetry: expected upside vs max loss; crisis index buys need base-rate 5y real multiple,>=3:1 satellites; >=1.5x crisis buys
+R7,Admission,Catalyst or valuation anchor; option expiry exceeds catalyst window,expiry >= 2x window
+R8,Admission,Liquidity,<=1% ADV; <=5% option OI; exit within 1 day; no physically settled futures into expiry
+R9,Admission,US-regulated venue with segregation; crypto only via regulated ETFs/self-custody,
+R10,Admission,"No MNPI, no coordination/manipulation; prediction markets only where legal",
+R11,Sizing,"Size = min(archetype max-loss cap, fractional Kelly on shrunk probability)",Kelly fraction 0.25-0.5; lottery 0.5-1%; convexity 0.5%/qtr (1% with catalyst); peg 1-2%; single-name catalyst 3-5%; distressed basket 2-3%/name
+R12,Sizing,"No gross leverage above 1.0x, no margin loans",gross <= 1.0x
+R13,Playbook: crisis buy,Deploy sleeve cash into broad index in thirds at drawdown triggers or VIX spike; CAPE adds a tranche; hold >=3-5y,S&P DD -30/-40/-50% from ATH or VIX close >=45; CAPE<12; <=1/3 per country ETF
+R14,Playbook: convexity,Buy long-dated OTM index put spreads / credit-ETF puts / VIX calls when vol is cheap AND a catalyst is emerging; ladder out; redeploy into R13,"VIX < 14 (bottom quintile); sell 1/3 at 5x, 1/3 at 10x, rest at 20x or VIX >45"
+R15,Playbook: peg break,Flag when >=3 of: reserve cover falling; real overvaluation; anchor-policy divergence; low carry; political stress; defined-risk options only,reserves -20% in 6m or <3-4 months imports; REER >15% over 10y avg; carry <3%/yr; max loss <=1-2%
+R16,Playbook: mania,Enter only with trend confirmation; profit ladder; trailing stop; cooling-off; never short with shares,<=5% at cost; sell 25% at 2x & 4x; 30% trailing stop or close < 200-dma; no re-entry for 3 months
+R17,Playbook: distressed,Baskets or senior securities; runway requirement; veto common equity of companies in Chapter 11,10-30 names; >=24 months liquidity runway
+R18,Playbook: compounders,Do not sell merely because up 5-10x; trim concentration; accept deep drawdowns only on small cost bases,trim >20-25% of portfolio; <=5% cost basis
+R19,Playbook: prediction markets,Only with a >= threshold gap AND a named informational edge; fees and resolution risk included,gap >=10 pts; max loss <=1-2% per market
+R20,Hard vetoes,Margin/leverage >1.0x; naked short options; short-vol ETPs; shorts with high SI/borrow; multi-day leveraged/inverse ETPs; averaging down on levered losers; >25% single issuer incl. employer; algorithmic stablecoins / unexplained yield; offshore custody; MNPI/coordination,SI >20% of float or borrow >10% = no short
+R21,Exits,"Pre-register invalidation condition, time stop, profit ladder, gap handling in every email",time stop = 1.5x catalyst window
+R22,Communication,Name the losers in each trade's reference class,
+R23,Calibration,"Immutable ex-ante log of probabilities, archetype, reference class, max loss, horizon",
+R24,Calibration,"Monthly scoring: Brier/log score, calibration by archetype, realised vs predicted multiple, slippage, rule adherence, graveyard ledger of rejected ideas",
+R25,Calibration,Beta/Bayesian priors per archetype with prior strength = reference-class size; change caps only after enough resolved trades; never loosen vetoes after wins,prior strength 10-30; >=10-20 resolved trades
+R26,Risk governor,Freeze new satellite trades if portfolio drawdown or satellite max-loss budget breached,portfolio DD >25%
+R27,Cadence,Expect 0-2 tier-1 setups per year; recommending nothing for months is correct,

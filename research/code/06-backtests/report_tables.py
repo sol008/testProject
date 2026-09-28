@@ -191,3 +191,77 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def extra_tables():
+    parts = []
+    # trend
+    t = pd.read_csv(os.path.join(OUT, "trend_sma10.csv"))
+    parts.append("## 10m SMA\n" + md(t[["strategy", "start", "end", "CAGR", "vol", "maxDD", "time_in_mkt", "round_trips_per_yr", "total_x"]],
+                                     {"CAGR": P1, "vol": P, "maxDD": P, "time_in_mkt": P, "round_trips_per_yr": F2, "total_x": lambda v: f"{v:,.0f}x"}))
+    t = pd.read_csv(os.path.join(OUT, "trend_sma10_postpub.csv"))
+    parts.append("## 10m SMA post-pub\n" + md(t, {"CAGR": P1, "vol": P, "maxDD": P, "MAR": F2}))
+    t = pd.read_csv(os.path.join(OUT, "trend_sma10_decades.csv"))
+    parts.append("## 10m SMA decades\n" + md(t, {c: P1 for c in t.columns if c != "decade"}))
+    t = pd.read_csv(os.path.join(OUT, "trend_200dma.csv"))
+    parts.append("## 200DMA\n" + md(t[["strategy", "CAGR", "vol", "maxDD", "MAR", "time_in_mkt", "round_trips_per_yr"]],
+                                    {"CAGR": P1, "vol": P, "maxDD": P, "MAR": F2, "time_in_mkt": P, "round_trips_per_yr": F2}))
+    t = pd.read_csv(os.path.join(OUT, "trend_200dma_postpub.csv"))
+    parts.append("## 200DMA post-pub\n" + md(t, {"CAGR": P1, "vol": P, "maxDD": P, "MAR": F2}))
+    t = pd.read_csv(os.path.join(OUT, "trend_200dma_decades.csv"))
+    parts.append("## 200DMA decades\n" + md(t, {c: P1 for c in t.columns if c != "decade"}))
+    t = pd.read_csv(os.path.join(OUT, "trend_gem.csv"))
+    parts.append("## GEM\n" + md(t[["strategy", "start", "end", "CAGR", "vol", "maxDD", "time_in_mkt", "round_trips_per_yr"]],
+                                 {"CAGR": P1, "vol": P, "maxDD": P, "time_in_mkt": P, "round_trips_per_yr": F2}))
+    t = pd.read_csv(os.path.join(OUT, "trend_gem_postpub.csv"))
+    parts.append("## GEM post-pub\n" + md(t, {"CAGR": P1, "vol": P, "maxDD": P, "MAR": F2}))
+    t = pd.read_csv(os.path.join(OUT, "trend_sma10_intl.csv"))
+    parts.append("## 10m SMA intl\n" + md(t[["market", "start", "timing_CAGR", "bh_CAGR", "timing_maxDD", "bh_maxDD", "round_trips_per_yr"]],
+                                          {"timing_CAGR": P1, "bh_CAGR": P1, "timing_maxDD": P, "bh_maxDD": P, "round_trips_per_yr": F2}))
+    # BTC
+    t = pd.read_csv(os.path.join(OUT, "btc_episodes.csv"))
+    parts.append("## BTC episodes\n" + md(t, {"max_dd": P}))
+    t = pd.read_csv(os.path.join(OUT, "btc_dd_wma_trades.csv"))
+    rows = []
+    for (rl, entry), g in t.groupby(["rule", "entry"], sort=False):
+        r = {"rule": rl, "entry": entry, "entry $": g["entry_px"].iloc[0], "DD@entry": g["dd_at_entry"].iloc[0],
+             "further fall": g["further_fall_from_entry"].min()}
+        for ex in ["1y", "2y", "3y"]:
+            y = g[g["exit_rule"] == ex]
+            r[ex] = y["ret"].iloc[0] if len(y) and not y["open"].iloc[0] else np.nan
+        a = g[g["exit_rule"] == "ATH"].iloc[0]
+        r["to old ATH"] = f"{a['ret']*100:+.0f}% in {a['years']:.1f}y" + (" (open)" if a["open"] else "")
+        rows.append(r)
+    d = pd.DataFrame(rows)
+    parts.append("## BTC dd/wma\n" + md(d, {"DD@entry": P, "further fall": P, "1y": P, "2y": P, "3y": P,
+                                           "entry $": lambda v: f"{v:,.2f}"}))
+    t = pd.read_csv(os.path.join(OUT, "btc_halving_trades.csv"))
+    parts.append("## BTC halving\n" + md(t[["rule", "halving", "buy", "buy_px", "sell", "sell_px", "ret", "mdd_in_trade"]],
+                                        {"ret": P, "mdd_in_trade": P, "buy_px": lambda v: f"{v:,.2f}", "sell_px": lambda v: f"{v:,.0f}"}))
+    t = pd.read_csv(os.path.join(OUT, "btc_halving_strategies.csv"))
+    parts.append("## BTC halving strat\n" + md(t, {"CAGR": P, "maxDD": P, "time_in_mkt": P, "total_x": lambda v: f"{v:,.0f}x"}))
+    # CAPE
+    t = pd.read_csv(os.path.join(OUT, "cape_deciles.csv"))
+    parts.append("## CAPE deciles\n" + md(t, {"cape_min": F1, "cape_max": F1, "mean": P1, "median": P1, "min": P1, "max": P1, "pct_negative": P}))
+    t = pd.read_csv(os.path.join(OUT, "cape_buckets.csv"))
+    parts.append("## CAPE buckets\n" + md(t, {"mean": P1, "median": P1, "min": P1, "max": P1, "pct_negative": P}))
+    # VIX
+    t = pd.read_csv(os.path.join(OUT, "vix45_spike_trades.csv"))
+    parts.append("## VIX45\n" + md(t[["signal", "vol_proxy", "source", "entry", "dd_from_ath_at_entry", "ret_6m_1x", "ret_1y_1x", "ret_2y_1x", "ret_1y_3x"]],
+                                   {"dd_from_ath_at_entry": P, "ret_6m_1x": P, "ret_1y_1x": P, "ret_2y_1x": P, "ret_1y_3x": P, "vol_proxy": F1}))
+    t = pd.read_csv(os.path.join(OUT, "three_down_years.csv"))
+    parts.append("## 3 down years\n" + md(t, {"next_1y": P, "next_3y": P, "next_5y": P}))
+    t = pd.read_csv(os.path.join(OUT, "yield_curve_resteepening.csv"))
+    parts.append("## Yield curve\n" + md(t, {"spx_tr_next_6m": P, "spx_tr_next_12m": P, "spx_tr_next_24m": P, "spx_maxDD_next_24m": P}))
+    t = pd.read_csv(os.path.join(OUT, "status_crash_state_by_market.csv"))
+    parts.append("## Status crash\n" + md(t, {"dd_now": P, "max_dd_this_episode": P, "p10ma_now": F2}))
+    t = pd.read_csv(os.path.join(OUT, "leaderboard.csv"))
+    parts.append("## Leaderboard\n" + md(t, {"win_rate": P, "median": P, "worst": P, "p_loss_gt50": P, "geo_per_trade": P,
+                                            "adj_geo_per_trade": P, "avg_years_held": F1, "geo_annualised": P1}))
+    return "\n\n".join(parts)
+
+
+if __name__ == "__main__":
+    txt = extra_tables()
+    with open(os.path.join(SCR, "report_tables_extra.md"), "w") as f:
+        f.write(txt)
