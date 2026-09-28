@@ -174,8 +174,10 @@ def finalist_trades():
     gauge = pd.concat([vxo[vxo.index < "1990-01-02"], vv[vv.index >= "1990-01-02"]]).reindex(gs0.index)
     ent = (r2g < 10) & (cg > sma(cg, 200)) & (gauge >= 20)
     ent[gs0.index < "1986-01-02"] = False
+    g86 = gs0.loc["1986-01-01":].copy()
+    g86.attrs["ticker"] = "^GSPC"
     F["ST-1 on ^GSPC 1986-2026 (VXO/VIX gate, next close, exit close>SMA5)"] = (
-        gs0, run_rule(gs0, ent, mode="close", hold=20, exit_sig=cg > sma(cg, 5)))
+        g86, run_rule(gs0, ent, mode="close", hold=20, exit_sig=cg > sma(cg, 5)))
     vix = load("^VIX")["C"].reindex(spy.index)
     v3 = load("^VIX3M")["C"].reindex(spy.index)
     vt = first_cross((vix / v3 >= 1.0).fillna(False)) & (c > sma(c, 200))
