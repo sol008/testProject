@@ -313,8 +313,8 @@ Monthly purchases, each costing f% of equity (about 12 overlapping positions), w
 |---|---|---|---|---|
 | S&P 500 TR 1× | 10.7% | −55% | 18% | n/a |
 | S&P 1.5× daily (T-bill + 0.4% financing) | 13.3% | −73% | 27% | n/a |
-| S&P 2× daily | 14.0% | −88% | 36% | n/a |
-| S&P 3× daily | 14.5% | −98% | 54% | n/a |
+| S&P 2× daily (plus 0.9% fee) | 14.0% | −88% | 36% | n/a |
+| S&P 3× daily (plus 0.9% fee) | 14.5% | −98% | 54% | n/a |
 | 1y ATM calls, f = 2% per month | 13.3% | **−58%** | 25% | Same CAGR as 1.5× with a smaller drawdown |
 | 1y 5% OTM calls, f = 1% / 2% / **5%** | 9.5% / 13.6% / 12.2% | −33% / −65% / **−99%** | 16% / 30% / 72% | Over-betting ruins |
 | 3m 10% OTM calls, f = 2% | **−11.5%** | −99% | 18% | n/a |
@@ -432,8 +432,8 @@ The screen compares 1y ATM IV with a heterogeneous-autoregressive (HAR)-style fo
 | Micro/E-mini futures | Linear | Notional 10–20× margin | Equal to the underlying's premium minus financing | Cheapest leverage (≈ T-bill + small basis); 60/40 tax | Margin calls; gaps; forced liquidation | Futures account | Good for leveraged beta |
 | Portfolio margin | Linear, high leverage | Up to ~12× on broad indices | n/a (a funding tool) | Low rates at some brokers | Stress-based margin calls exactly when it hurts | $100k+ equity, broker approval | Tool only |
 | Box spreads (borrowing) | Fixed-rate loan | n/a | Cheap financing (≈ Treasury + 0.3–0.8%) | 4 legs; SPX only | Early assignment if American-style (never use SPY) | Level 3 plus margin | Tool only |
-| 2× LETFs | Daily 2× | Multi-year 5–20× in bull runs | ≈ 2× beta minus drag (½σ²·2) minus fees | ER ~0.9% plus swap financing | Vol decay; −98% drawdowns historically | Brokerage (not in EU) | Tactical |
-| 3× LETFs | Daily 3× | 50–400× (TQQQ 2010–26) | Long-run ≈ 1× CAGR with −99.9% DD (1928–2026 sim) | Drag 3σ²/yr (12%/yr at σ = 20%) | Gap risk: −20% day costs −60% | Brokerage | Tactical with hard exits |
+| 2× LETFs | Daily 2× | ×20–100 over long bull runs (SSO ×20, QLD ×98, 2006–26) | ≈ 2× beta minus drag (½σ²·2) minus fees | ER ~0.9% plus swap financing | Vol decay; −98% drawdowns historically | Brokerage (not in EU) | Tactical |
+| 3× LETFs | Daily 3× | ×134–388 (UPRO, TQQQ; 2009/10–26, an exceptional window) | Long-run ≈ 1× CAGR with −99.9% DD (1928–2026 sim) | Drag 3σ²/yr (12%/yr at σ = 20%) | Gap risk: −20% day costs −60% | Brokerage | Tactical with hard exits |
 | Inverse LETFs | Daily −1×/−2×/−3× | Rare | Deeply negative long-run (SQQQ −53%/yr) | Drift plus drag | Nearly guaranteed decay | Brokerage | Days to weeks only |
 | Long VIX ETPs (VIXY, VXX, UVXY) | Convex to vol spikes | 4–10× in weeks (2020) | −53% to −161%/yr (log) | Contango roll 5–10%/month | Near-certain decay | Brokerage | ≤ 1 month hedges only |
 | Short VIX ETPs (SVXY) | Concave | n/a | Positive carry with ruin (−88% in 2 days) | n/a | XIV-style termination | Brokerage | **Never** |
@@ -751,6 +751,7 @@ Every line must pass and be logged. Any "no" blocks the recommendation.
 | VIX ETP holding | ≤ 21 trading days, hedges only; never short | §7.7 |
 | Crypto leverage / FX leverage | ≤ 2× / ≤ 5:1 | §7.9, §7.10 |
 | Maximum quoted spread | 2% (≥ 6 months), 5% (< 6 months) | §8 |
+| Trade cadence for option programmes | Review monthly; ≤ 1 new long-dated purchase per underlying per month; roll at 60–90 days to expiry. A one-trade-a-year January LEAPS programme is a valid minimal-trade variant (§4.6). | §4.6 |
 
 ### 9.6 Monthly self-improvement hooks
 

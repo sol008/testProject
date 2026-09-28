@@ -11,7 +11,7 @@ Code: `research/code/10-calibration/`. Every number marked "(sim)" can be reprod
    - An annual Sharpe of 1.0 needs about **6.2 years** of live results before it is detectable (80% power, one-sided 5%).
    - An option-style bet paying +4x or −1x with a 25% hit rate (+25% expected value per trade) needs **433 trades**, which is 36 years at 12 trades a year.
    - So the monthly loop must learn mainly from **scored forecasts**, not from P&L.
-2. **Multiply the evidence 30–60×.** Three sources:
+2. **Score about 60× more forecasts** (about 4,400 a year instead of about 72 from live trades alone). Three sources:
    - Every recommendation carries about 6 pre-registered sub-forecasts that resolve mechanically.
    - A **shadow book** scores the scanner's top-30 rejected candidates plus 10 random controls with the same forecasts.
    - A **calibration gym** poses about 200 cheap, standardized questions a month.
@@ -30,7 +30,7 @@ Code: `research/code/10-calibration/`. Every number marked "(sim)" can be reprod
    - Every "is it working?" and "adopt this change?" decision should use either e-values or a fixed calendar of pre-registered reviews with the error budget split across them.
 6. **Rule changes must be guarded: pre-registered, then validated forward.**
    - With realistic P&L noise, "switch to the best recent variant" changed rules 17–44 times in 5 years.
-   - It ended on a rule *worse than the original* in 30–46% of runs, and it lost 13–28 bp/month when most tweaks were harmful (sim).
+   - It ended on a rule *worse than the original* in 30–46% of runs, and when most tweaks were harmful it lost 18–28 bp/month after switching costs (sim).
    - The guarded loop works in three steps: nominate a change using past data, shadow-test it on fresh data, and adopt it only if P(better) ≥ 0.95 under a skeptical prior.
    - It almost never changes on P&L evidence, which is correct. On forecast-score evidence it captured 58% of the achievable improvement with about 1 switch in 5 years.
 7. **Normal drawdowns are large, and streaks are common.**
@@ -190,17 +190,17 @@ Two further notes on these numbers:
 |---|---|---|---|---|---|
 | Live P&L only | 12 | 5% | 11% | 19% | 29% |
 | Live forecasts only (6 per trade) | 72 | 20% | 28% | 36% | 45% |
-| Live + shadow + controls | ≈1,900 | 36% | 74% | 98% | 100% |
-| **Live + shadow + gym** | ≈4,300 | **45%** | **82%** | **99%** | 100% |
-| Same data, anytime-valid e-process | ≈4,300 | 15% | 63% | 98% | 100% |
+| Live + shadow + controls | ≈2,000 | 36% | 74% | 98% | 100% |
+| **Live + shadow + gym** | ≈4,400 | **45%** | **82%** | **>99%** | 100% |
+| Same data, anytime-valid e-process | ≈4,400 | 15% | 63% | 98% | 100% |
 
 The same measure for weaker or miscalibrated forecasters (live + shadow + gym, pre-registered looks):
 
 | Forecaster | 6 m | 12 m | 24 m | 36 m | Live P&L at 36 m |
 |---|---|---|---|---|---|
-| Skilled, IC 0.062 | 24% | 55% | 86% | 98% | 17% |
-| Skilled, IC 0.037 | 10% | 21% | 46% | 64% | 10% |
-| Overconfident (IC 0.087), raw probabilities | 0% | 1% | 1% | 1% | 36% |
+| Skilled, IC 0.062 | 24% | 55% | 86% | 98% | 18% |
+| Skilled, IC 0.037 | 10% | 22% | 46% | 64% | 10% |
+| Overconfident (IC 0.087), raw probabilities | <1% | <1% | <1% | <1% | 36% |
 | Same, after per-family Platt recalibration | 1% | 4% | 36% | 80% (Brier: 89%) | 36% |
 | Confident noise (no skill), false positives | 0% | 0% | 0% | 0% | 3% |
 | Near-null noise, false positives | 2% | 2% | 2% | 3% | 4% |
@@ -212,7 +212,7 @@ Reading the tables:
   - That gives a design effect (Kish 1965) of about 3, so six sub-questions are worth about **two** independent observations.
 - **Top-pick P&L needs about 77 months** for 80% power even for the best forecaster. Its per-trade Sharpe is 0.28 (sim).
 - **Overconfidence hides real skill.** The overconfident forecaster has exactly the same information as the IC 0.087 forecaster. Raw, it loses to the market (−0.019 nats/question). Recalibrated, it is detected.
-  - The recalibration maps must be **per question family**. A single pooled map mis-corrected the 3-month ±10% threshold questions in development runs, where the fitted intercepts were ±0.5 logits.
+  - The recalibration maps must be **per question family**. A single pooled map mis-corrected the 3-month ±10% threshold questions and cut 24-month detection to about 18% in development runs. Those families need intercepts of about ±0.5 logits that a pooled map cannot supply.
   - Families with fewer than 150 resolved questions borrow the map of the data-rich 1-month family.
 - **With live trades only, even the test's error rates are unreliable.** The near-null forecaster produced 7–10% false positives against 5% nominal, because t-tests on a handful of skewed clusters do not behave. This is another reason not to evaluate on live trades alone.
 - **Cross-check.** Foresight Arena (Nechepurenko & Shuvalov 2026) independently estimates that detecting a 0.02 edge over market consensus needs about 350 resolved predictions at 80% power.
@@ -726,7 +726,7 @@ Subject: [Trading system] <Month YYYY> review: <+x.x%> vs benchmark <+y.y%>; <n>
 
 ### (f) Reference implementation
 
-All files are under `research/code/10-calibration/`. It needs numpy, scipy and statsmodels-level Python 3.11, and uses fixed seeds throughout.
+All files are under `research/code/10-calibration/`. It needs only Python 3.11 with numpy and scipy, and uses fixed seeds throughout.
 
 | File | Contents |
 |---|---|
