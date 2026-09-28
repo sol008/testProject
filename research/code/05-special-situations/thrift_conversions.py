@@ -86,7 +86,7 @@ def main():
     # guard against non-$10 deals: drop first closes far from 10 (likely not a $10 conversion IPO)
     ok = ok[(ok["first_close"] > 5) & (ok["first_close"] < 25)]
     # keep depository institutions only (full-text query also hits a few non-bank S-1s, e.g. an E&P MLP)
-    ok = ok[ok["name"].str.contains(r"banc|bank|financial|savings|thrift|federal|homestead|mutual", case=False, regex=True)]
+    ok = ok[~ok["name"].str.contains(r"natural resources|\bLP\b|energy|oil|gas", case=False, regex=True)]
     summ = {"n_filers_with_ticker": int(len(df)), "n_first_time_listings_used": int(len(ok)),
             "day1_ret_%": ok["day1_ret_vs_10_%"].describe().round(1).to_dict(),
             "share_day1_below_10": round(float((ok["day1_ret_vs_10_%"] < 0).mean()), 2),

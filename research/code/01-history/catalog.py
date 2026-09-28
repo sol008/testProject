@@ -553,7 +553,7 @@ def main():
         lines.append(f"| {r['id']} | {md_escape(r['name'])} | {md_escape(r['period'])} | {md_escape(r['loss'])} | {md_escape(r['mechanism'])} | "
                      f"{md_escape(r['detail'])} | {md_escape(r['lesson'])} | {r['confidence']} |")
     (OUT_DIR / "catalog_tables.md").write_text("\n".join(lines) + "\n")
-    # split versions used by assemble_report.py
+    # split versions (convenient for pasting the catalog into the track-01 report)
     txt = "\n".join(lines) + "\n"
     i_cards = txt.index("### Trade cards")
     i_blow = txt.index("### Blowups table")
