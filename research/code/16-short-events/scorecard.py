@@ -80,8 +80,17 @@ def main():
     sd = pd.read_csv(OUT / "special_div_events.csv", parse_dates=["D"])
     for per, gg, yrs in [("2016-26", sd[sd["D"] >= "2016-01-01"], 10.7), ("2011-15", sd[sd["D"] < "2016-01-01"], 5)]:
         rows.append(row("Special dividend, buy D+1 sell ex-1", per, gg["follow"] - gg["cost_rt"], gg["follow_raw"], gg["follow_raw"] - gg["follow"], None, 9, yrs))
-    gg = sd[(sd["D"] >= "2016-01-01") & (sd["mcap"] >= 2e9)]
-    rows.append(row("Special dividend (>= $2bn), buy D+1 sell ex-1", "2016-26", gg["follow"] - gg["cost_rt"], gg["follow_raw"], gg["follow_raw"] - gg["follow"], None, 9, 10.7))
+    from evstudy import px as _px
+    dvl = []
+    for t_, d_ in zip(sd["ticker"], sd["D"]):
+        q = _px(t_)
+        q = q[q.index < d_].tail(20) if q is not None else None
+        dvl.append(float((q["Close"] * q["Volume"]).median()) if q is not None and len(q) else np.nan)
+    sd["dvol20"] = dvl
+    gg = sd[(sd["D"] >= "2016-01-01") & (sd["dvol20"] >= 1e6)]
+    rows.append(row("Special dividend (ADV >= $1m), buy D+1 sell ex-1", "2016-26", gg["follow"] - gg["cost_rt"], gg["follow_raw"], gg["follow_raw"] - gg["follow"], gg["dvol20"], 9, 10.7))
+    gg = sd[(sd["D"] < "2016-01-01") & (sd["dvol20"] >= 1e6)]
+    rows.append(row("Special dividend (ADV >= $1m), buy D+1 sell ex-1", "2011-15", gg["follow"] - gg["cost_rt"], gg["follow_raw"], gg["follow_raw"] - gg["follow"], gg["dvol20"], 9, 5))
     # 6 spin-offs
     s = pd.read_pickle(SCRATCH / "spinoff_events.pkl")
     g = s[s["period"] == "2016-26"]
