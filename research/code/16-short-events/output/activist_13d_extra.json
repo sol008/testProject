@@ -1,0 +1,17 @@
+{
+  "kelly_known_activist_f20_oos": {
+    "f_full": 0.0,
+    "f_used": 0.0,
+    "g_per_trade": 0.0,
+    "shrunk_mean": -0.005336095918927541
+  },
+  "kelly_known_activist_f60_oos": {
+    "f_full": 0.0,
+    "f_used": 0.0,
+    "g_per_trade": 0.0,
+    "shrunk_mean": -0.009807116464082869
+  },
+  "corr_raw_vs_bench_f20": 0.52,
+  "n_bench_below_-10%": 13,
+  "mean_excess_when_bench_below_-10%_%": -4.25
+}

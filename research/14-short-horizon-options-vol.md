@@ -29,8 +29,10 @@
    - Stacking four filters overfitted. **The 200-day trend filter alone was the only condition that helped in both halves:** +1.9% (t 3.5) before 2008 and +2.1% (t 2.9) after, about 9 trades a year, worst trade −68% of max loss.
    - After the data-mining haircut (840 variants), **no variant's Sharpe survives**: deflated-Sharpe probability ≤0.10 out-of-sample, and nothing clears a Bonferroni t of 3.3–4.0 after 2008.
 
-3. **Tail risk is real even with defined risk and every filter. Expect to lose the full max loss about once every 5–15 years.**
-   - The real iron condor lost ≈99% of its at-risk capital in October 1987, ≈92% in March 2020 and ≈100% in the April 2025 tariff shock.
+3. **Tail risk is real even with defined risk and every filter.**
+   - The real monthly iron condor lost ≥80% of its max loss in **8 of 437 monthly cycles** (1990–2026), about once every 4–5 years, and ≥50% in 16 cycles.
+   - Measured over each whole crisis window, it lost ≈99% of its at-risk capital in October 1987, ≈92% in March 2020 and ≈100% in the April 2025 tariff shock.
+   - Filters and management stretch that interval in the model but do not remove it. Plan on a full max loss every 5–15 years.
    - The modelled trend-filtered spreads lost 68–79% of max loss in Q4 2018 and in 2022. The 10-delta hold-to-expiry version lost 100% in August 2011 and March 2020.
    - The short-VIX-futures index (VPD) had a **−62%** drawdown and fell 31% on 16 March 2020.
 
@@ -38,7 +40,7 @@
    - The sample Kelly for the trend-filtered put spread exceeds 100% of capital at max loss, because no full loss occurred in the sample.
    - Adding one synthetic full loss per 100 trades cuts full Kelly to 0.34–0.45, so quarter Kelly is 8–11% at max loss.
    - Given the model's +0.6–1.2% of max loss per trade optimism and the deflated Sharpe near 0, we cap it at **2% of the portfolio at max loss per trade (3% hard cap)**.
-   - At that size the sleeve adds roughly **+0.3–0.5% a year** before tax, or about +0.25–0.35% after 60/40 tax at the top bracket. It is a harvest, not a return engine.
+   - At that size the sleeve adds roughly **+0.36–0.55% a year** before tax and before the model-bias haircut. That is about +0.25–0.39% after the haircut, and about **+0.2–0.3% after 60/40 tax** at the top bracket. It is a harvest, not a return engine.
 
 5. **Buying options for 1–60 day trades is negative EV in every event test.**
    - **Index event days (2022–2026, priced off VIX1D):** 1-day straddles lost 14% (CPI), 5% (FOMC) and 13% (normal days); NFP was +4% (t 0.3).
@@ -130,7 +132,7 @@
 
 These indices trade real SPX option prices at mid or VWAP (volume-weighted average price), with **no retail costs and no management**. The weekly put-write (WPUT) is the exception: it sells at the bid and buys back at the ask. The iron condor (CNDR) and iron butterfly (BFLY) hold T-bills equal to **10× the maximum loss**, so only about 10% of their capital is at risk. Multiply their returns by 10 to express them per unit of max loss.
 
-Code: `s01_cboe_indices.py`. Outputs: `cboe_index_stats.csv`, `cboe_index_crises.csv`. Two data errors were fixed: BXY had a one-day spike on 2013-03-11, and CLL had a −19.8% jump on 2009-10-16 that no S&P 500 move matches.
+Code: `s01_cboe_indices.py`. Outputs: `cboe_index_stats.csv`, `cboe_index_crises.csv`. Three data errors were fixed: one-day reverting spikes in BXY (2013-03-11) and CLL (2020-02-28), and a permanent −19.8% jump in CLL on 2009-10-16 that no S&P 500 move matches.
 
 ### 2.1 Before 2008, from 2008, after 2010
 
@@ -203,7 +205,8 @@ For CNDR and BFLY, multiply by 10 to get the loss as a share of the capital actu
 | | 2008–2026 | 222 | 46% | +27.4% | −28.1% | −2.6% | −6.4% | −73% | −1.2 | 0 |
 | PUT (per unit notional) | 2008–2026 | 224 | 80% | +1.8% | −4.4% | +0.57% | +1.3% | −27.9% | 2.3 | (equity beta) |
 
-A typical retail iron condor has an 80% win rate and a median of about +10% of max loss, and after 2008 its mean was about zero.
+- A typical retail iron condor has an 80% win rate and a median of about +10% of max loss, and after 2008 its mean was about zero.
+- **The tail is the whole story.** Real CNDR lost ≥80% of max loss in 8 of 437 cycles (Jul 1990, Feb and Aug 2001, Dec 2007, Sep 2008, Apr 2010, Jul 2011, Feb 2020) and ≥50% in 16. BFLY never lost 80% in one cycle but lost ≥50% in 20.
 
 ---
 
@@ -215,7 +218,7 @@ A typical retail iron condor has an 80% win rate and a median of about +10% of m
   - ATM(τ) = ratio(skew) × VIX_τ × (1 + markup). VIX_τ is interpolated in total variance from VIX9D, VIX, VIX3M and VIX6M. Proxies fill VIX9D before 2011 and VIX3M before 2006-07.
   - The smile *shape* comes from the real 2026-09-28 SPX chain (4 buckets by days to expiry) and is scaled over time by the CBOE SKEW index.
   - The ATM/VIX ratio is solved so that the model's own variance swap equals VIX_τ, which reproduces the snapshot's 30-day ATM/VIX ratio of about 0.8.
-- **Calibration.** Eight settings (skew mode × markup) were scored on **1990–2007 only**, by replicating the monthly overlay returns of PUT, PUTY, CNDR and BFLY. The winner was "half the SKEW-scaled skew, −5% IV".
+- **Calibration.** Eight settings (skew mode × markup) were scored on **1990–2007 only**, by replicating the monthly overlay returns of PUT, PUTY, CNDR and BFLY. The winner was "blend, −5% IV": a skew scale halfway between today's shape and the SKEW-index-scaled shape, with implied vols 5% below the variance-swap-consistent level.
 
 | Model vs real index: monthly overlay return (basis points) | 1990–2007 model / real (corr.) | 2008–2026 model / real (corr.) |
 |---|---|---|
@@ -278,10 +281,10 @@ A typical retail iron condor has an 80% win rate and a median of about +10% of m
 | Close at 21 DTE only | +2.0% (3.3) | +2.2% (2.5) | −68% | 24 | 0.09% |
 | Take profit or 21 DTE, plus stop at 2× credit | +0.3% (0.4) | +1.2% (1.7) | −38% | 13–17 | 0.09% |
 
-- The 50%/21-DTE rule **halves the mean per trade compared with holding** but also halves the time at risk, and removes the −100% outcomes.
+- Compared with holding to expiry, the 50%/21-DTE rule **cuts the mean per trade** by about a third (2008–2026) to three-quarters (1990–2007). It also cuts the time at risk by more than half and removed the −100% outcomes in this sample; gap risk remains.
 - **Stops at 2× credit hurt**: they lock in losses that later recover.
 - The 21-DTE exit only makes sense for **45-DTE** entries. A 30-DTE entry closed at 21 DTE lasts 9 days and lost money in every 30-DTE/tp21 variant.
-- **Width matters because of costs.** 2%-wide spreads were worse than 5%-wide ones in 56 of 70 comparisons: the same quoted spread is a larger share of a smaller max loss.
+- **Width matters because of costs.** 5%-wide spreads beat 2%-wide ones in 407 of 420 variant/filter pairs before 2008 and in 376 of 420 after. The same quoted spread is a larger share of a smaller max loss.
 
 ![Modelled 45-DTE SPX spreads, cumulative P&L](code/14-short-options/output/fig_model_spreads_cum.png)
 
@@ -329,7 +332,7 @@ Sum of R across the trades open during each window (1.0 = one full max loss):
 |---|---|---|---|---|---|---|---|---|---|
 | Put spread 20Δ/5%, F3, tp21 (1990–2026) | 9.1 | 83% | +2.0% / +4.8% | −68% | >1 | 0.45 | +2.0% | +0.36% | +0.55% |
 | Same, 2008–2026 only | 9.1 | 88% | +2.1% / +5.0% | −68% | >1 | 0.34 | +1.6% | +0.39% | +0.58% |
-| Put spread 10Δ/5%, F3, hold to expiry (1990–2026) | 9.1 | 98.5% | +2.8% / +3.8% | −100% | >1 | 0.53 | +3.3% | +0.51% | +0.76% |
+| Put spread 10Δ/5%, F3, hold to expiry (1990–2026) | 9.1 | 98.5% | +2.8% / +3.8% | −100% | 0.81 | 0.53 | +3.3% | +0.51% | +0.76% |
 | Prescribed F5 put spread, 2008–2026 | 4.9 | 82% | +0.4% / +4.9% | −68% | 0.28 | **0** | 0 | +0.04% | +0.06% |
 | Iron condor 20Δ/5%, F5, tp21, 2008–2026 | 4.9 | 71% | +2.9% / +8.7% | −66% | >1 | 0.45 | +1.5% | +0.28% | +0.42% |
 | Unfiltered iron condor, tp21, 2008–2026 | 11.9 | 66% | −0.1% / +6.9% | −71% | 0 | 0 | 0 | −0.03% | −0.05% |
@@ -348,7 +351,7 @@ Sum of R across the trades open during each window (1.0 = one full max loss):
   - SPX and XSP get Section 1256 60/40 treatment: 30.6% blended at the top bracket including NIIT (18.6% in the 24% bracket).
   - SPY options are always short-term for the writer: 40.8% (24%).
   - Per $100 of pre-tax gain you keep **$69 with SPX/XSP versus $59 with SPY** at the top bracket, or $81 versus $76 in the 24% bracket.
-  - At a 3% cap the trend-filtered sleeve therefore adds about **+0.55% a year before tax**, about +0.46% after the bias haircut, and **about +0.3% a year after 1256 tax**.
+  - At a 3% cap the trend-filtered sleeve therefore adds about **+0.55% a year before tax**, about +0.39% after the bias haircut, and **about +0.27% a year after 1256 tax** at the top bracket.
 
 ---
 
@@ -429,7 +432,8 @@ A normal day is 0.76%. Nothing here justifies a trade.
 | Straddle held through the report (3% round-trip cost) | −4.9% (t −2.0) | −6.0% (t −3.4) | **−5.4% (t −3.7); median −11.9%; 26% win** |
 | Pre-report run-up: buy 5 days before, sell the day before | −1.3% (t −1.1) | −3.8% (t −3.0) | **−2.5% (t −2.9); IV rose +2.2 pts** |
 
-- Implied earnings moves **exceeded realised moves on average for every stock except IBM**, and IBM's straddles still lost money after the crush.
+- Implied earnings moves exceeded realised moves in the pooled sample and in 6 of the 10 stock-periods (the exceptions are IBM in both halves, and AMZN and GOOGL in 2011–2018).
+- Straddles held through the report still lost money in 9 of 10 stock-periods; the one exception was GOOGL 2011–2018 at +0.9%. The IV crush plus the spread overwhelms the occasional big move.
 - The IV run-up documented by Gao, Xing & Zhang (2018) exists (+2.2 vol points) but is smaller than theta plus the bid-ask spread for these mega-caps.
 - This matches the literature: earnings volatility is priced richly (Dubinsky et al. 2019), and retail buyers overpay (de Silva, Smith & So, working paper).
 
@@ -461,7 +465,7 @@ A normal day is 0.76%. Nothing here justifies a trade.
 | SPX 60 days | +2.8% | +3.6% |
 | 60-DTE ATM calls | −7.6% | +33% (inconsistent) |
 
-- Credits are richer after spikes: credit/max loss is 12–17% against about 9% in calm markets. VIX mean-reverts.
+- Credits are richer after spikes: credit/max loss is 10–17% against about 9% in calm markets. VIX mean-reverts.
 - **But this is short volatility right after a shock.** The result hinges on two or three paths: March 2020 was saved only by holding to expiry, and May 2022 lost 100%.
 - With n = 52 and hold-to-expiry dependence, this is **incubator-only** (paper).
 - Buying volatility into or after spikes (VIX calls, puts): track 04 already showed tail hedges and VIX exchange-traded products lose; nothing here changes that.
@@ -491,7 +495,7 @@ A normal day is 0.76%. Nothing here justifies a trade.
   - Retail "lost $241,000 on an average day" (February 2021 to September 2023), and "$350,000 per day" after daily expiries began in May 2022.
   - "Roughly 60% of daily losses are the result of transaction costs." Effective spreads for retail were 6.0% (calls) and 5.0% (puts), about half the non-retail level thanks to price improvement.
   - Losses come from "single-leg trades, trades that require an upfront payment … and trades that use high-implied volatility options". Retail *credit* orders made +$122k a day while debit orders lost $364k.
-  - Median margin-adjusted returns: put spreads +3.0%, iron condors +5.5%. Means were negative, "driven by a few negative outliers".
+  - Median margin-adjusted returns: put spreads +3.0%, iron condors +5.5%. Mean *dollar* profits were mostly negative, "driven by a few negative outliers".
 - **Almeida, Freire & Hizmeri (2025 draft) ✓**
   - The 0DTE variance premium is high and "largely driven by compensation for upside risk".
   - "Most 0DTEs appear mispriced … Such mispricing is highly profitable before 2022, but dissipates after the daily availability of 0DTEs."
@@ -569,7 +573,7 @@ All rows are a 20Δ / 5%-wide put credit spread expiring 13 or 20 Nov 2026 (46�
 
 - About $0.65 per contract per leg at IBKR, Schwab and Fidelity-type brokers, plus the Cboe index-option fee on SPX (about $0.50–0.65 per contract) [unverified current schedule].
 - XSP and SPY fees are smaller per contract but not per dollar of risk.
-- **Commissions are negligible for SPX (0.1% of the credit) and material for small XSP positions** (about 0.5% of the credit per round trip at $0.75 a leg).
+- **Commissions are negligible for SPX (0.1% of the credit per side) and material for XSP** (about 0.6% of the credit per side, 1.2% per round trip, at $0.75 a leg).
 
 ### 6.5 Trading hours, early closes and expiry-day rules
 
@@ -614,7 +618,7 @@ These are concrete, testable rules. Anything not listed as allowed is vetoed. Ea
 
 | ID | Structure | When | Instrument | Expected per trade (evidence) | Trades/yr | Status at launch |
 |---|---|---|---|---|---|---|
-| **O1** | **Put credit spread**: short 0.20Δ (0.15–0.25), long 5% of spot below (4–6%), entered at 40–50 DTE | §7.2 filters | SPXW (portfolio ≥$1.1M per contract), XSP (≥$110k, intraday natural spread ≤10% of credit), SPY only if neither fits, and with §6.3 rules | +2.0% of max loss (model 1990–2026, t 4.6 over the full sample); bias-adjusted ≈+1.4%; median +4.8%; worst −68%; real-price analogue (PUT, CNDR) ≈0 alpha after 2008 | ≤9 (one open at a time) | **Paper only** until the §7.6 promotion test passes |
+| **O1** | **Put credit spread**: short 0.20Δ (0.15–0.25), long 5% of spot below (4–6%), entered at 40–50 DTE | §7.2 filters | SPXW (portfolio ≥$1.1M per contract), XSP (≥$110k, intraday natural spread ≤10% of credit), SPY only if neither fits, and with §6.3 rules | +2.0% of max loss (model 1990–2026, t 4.4 over the full sample); bias-adjusted ≈+1.4%; median +4.8%; worst −68%; real-price analogue (PUT, CNDR) ≈0 alpha after 2008 | ≤9 (one open at a time) | **Paper only** until the §7.6 promotion test passes |
 | O1-h | Same, short 0.10Δ, **held to expiry** (1 action per trade) | Same filters | SPXW/XSP only (cash-settled) | +2.8% of max loss; win 98.5%; **worst −100%** (Aug 2011, Mar 2020) | ≤9 | Paper only, as the fewest-trades variant of O1 |
 | **O2** | **Call debit spread**, 60 DTE, long ATM / short +5% | CRASH signal: SPX ≥15% below its 252-day high **and** VIX ≥30 (first day; 60-day cool-down) | SPX/XSP (or SPY) | +28% / +40% of debit (1990–2007 / 2008–2026, n 11/15); median +29% / +105%; 6 of 26 lost 100% | ≈0.7 (clustered in crises) | Allowed, but only when a loss cap is required; otherwise buy the index (S2) |
 | I1 | Put credit spread 20Δ/5%, 45 DTE, held to expiry, **after a fading VIX spike** | VIX ≥30 in the last 10 days and now ≤0.8× that peak | SPXW/XSP | +10% / +8% of max loss, win 94%; one −100% (May 2022); n = 52 | ≈1.5 | **Incubator** (paper; ≥20 trades before review) |
@@ -633,7 +637,7 @@ Iron condors are **not** a default structure:
 | Backwardation veto | VIX/VIX3M < 1.00 | Safety: costs nothing (+2.2% vs +2.1% after 2008); avoids the regime with a negative variance premium (track 04) |
 | Crisis veto | VIX < 30 (except I1 and O2) | Safety; consistent with the constitution's "VIX > 30: no new short-put-like positions" |
 | Entry DTE | 40–50 calendar days; SPXW PM-settled expiry | 30-DTE entries with a 21-DTE exit lose money on costs |
-| Liquidity | Natural combo spread ≤10% of the mid credit; open interest ≥100 per leg (≥500 for SPY) | XSP after-hours quotes fail this; measure intraday |
+| Liquidity | Natural combo spread ≤10% of the mid credit, measured intraday. For ETF options, open interest ≥500 per leg. SPX/XSP strikes are market-maker quoted, so the spread test governs | XSP after-hours quotes fail the spread test; the SPX example below has open interest of only 39 at the short strike but a 3.9% natural spread |
 | Event days | Do not open on an FOMC-statement day or a CPI day (open the day after) | Convenience only. The event-week filter added nothing (F4); 45-day positions always span events |
 | Not required | VIX/VIX3M < 0.9, a 12–30 VIX band, avoiding whole FOMC/CPI weeks | Tested: stacking them overfitted (+2.5% before 2008, +0.4% after) |
 
@@ -654,8 +658,7 @@ Iron condors are **not** a default structure:
 - **O1:**
   - At entry, place a good-till-cancelled order to buy the spread back at **50% of the credit received**.
   - If not filled, **close at the close on the first trading day with ≤21 calendar days to expiry**.
-  - **No stop-loss.** Stops at 2× credit lowered returns in both halves; the width is the stop.
-  - If the position is at ≥90% of max loss with >5 DTE left, leave it (the remaining loss is small). A cash-settled spread needs no action at expiry.
+  - **No stop-loss** and no other discretionary exit. Stops at 2× credit lowered returns in both halves; the width is the stop.
 - **O1-h:** no action after entry. It expires, cash-settled. That is one email per trade.
 - **O2:** hold 60 days to expiry (PM-settled). Optional take-profit when the spread is worth ≥80% of its width (≈1.7× the debit). No stop.
 - **American-style (SPY):** close by 3:00 pm Eastern on the business day before expiry. Close any short call that is in the money the day before its ex-dividend date.
@@ -668,7 +671,7 @@ Iron condors are **not** a default structure:
 | O1 open positions | 1 at a time (2 only during the overlap of an O1-h held to expiry) | Few trades; correlated tails |
 | O2 per trade | Debit ≤2% of the portfolio (≤3% cap) | Constitution defined-premium cap; ¼-Kelly would be 10%, which is in-sample on 26 events |
 | All short-premium modules (O1, I1, I2, plus track 05's short-put-like modules) | ≤6% at max loss combined, inside the constitution's **10% crash-correlated cap** | A 1987/2020-type shock should cost ≤6% of the portfolio |
-| Growth contribution to expect | O1 at 2–3%: **+0.36–0.55% a year pre-tax** (≈+0.25–0.35% after 1256 tax and bias). O2: ≈+0.2–0.7% a year | Report these ranges in monthly reviews; never report "win rate" alone |
+| Growth contribution to expect | O1 at 2–3%: **+0.36–0.55% a year pre-tax** (≈+0.2–0.3% after the bias haircut and 1256 tax). O2 at a 2% debit: ≈+0.3–0.6% a year (26 events; wide uncertainty) | Report these ranges in monthly reviews; never report "win rate" alone |
 
 ### 7.5 Hard veto list: the tool must refuse these
 
@@ -679,7 +682,7 @@ Iron condors are **not** a default structure:
 5. **Short premium on single stocks** (earnings gaps, early assignment) and on **leveraged or inverse ETFs or VIX ETPs**.
 6. **American-style short options into expiry day or across an ex-dividend date** (§6.3).
 7. **Any spread whose max loss exceeds 3% of the portfolio**, i.e. accounts too small for even one XSP/SPY spread (<≈$100k).
-8. **Any option order whose natural combo spread is >10% of mid** (credit or debit), or whose legs have open interest <100.
+8. **Any option order whose natural combo spread is >10% of mid** (credit or debit), measured intraday, or ETF-option legs with open interest <500.
 9. **New short premium when SPX < 200-day average, VIX ≥30, or VIX/VIX3M ≥1.0.** Exceptions: I1 (paper) and O2 (a long spread).
 10. **Stops on defined-risk spreads**, and **rolling a losing short spread** to a later date or lower strike ("defending"). Both turn a defined loss into an open-ended series of trades.
 11. **Iron butterflies and short straddles** at any tenor. BFLY returned −2.6% a year after 2008, and the 1-day butterfly lost 5.3% of max loss a day.
@@ -688,7 +691,7 @@ Iron condors are **not** a default structure:
 
 - **Promotion of O1 from paper to real money requires all of:**
   1. ≥24 paper trades, or 30 months, whichever comes first.
-  2. Paper mean R is **not below the model's expected mean minus 2 standard errors**. The model expects +2.0% with a per-trade SD of about 11%, so after 24 trades that floor is about −2.5%.
+  2. Paper mean R is **not below the model's expected mean minus 2 standard errors**. The model expects +2.0% with a per-trade SD of about 8.4%, so after 24 trades that floor is about −1.4%.
   3. Median paper slippage is ≤ the assumed ¼ of the natural width.
   4. No single loss >100% of the stated max loss. That would reveal a sizing or product error.
   5. The trend filter was respected on 100% of entries (process integrity).
@@ -783,5 +786,6 @@ All code is in `research/code/14-short-options/`; outputs are in `output/`; raw 
 - **Costs.** Spreads come from one after-hours snapshot, scaled by VIX and by an assumed era multiplier (2× before 2008). Base fills (¼ of the natural width) may be optimistic in fast markets and pessimistic for patient SPX limit orders. The sign of most results flips between mid and harsh fills, which is itself the main finding.
 - **Daily closes.** Take-profits and 21-DTE exits are checked at the close. Intraday gaps and wide crisis quotes are only partly captured, and 1987 is not in the model sample (it is in the real indices).
 - **Small samples.** Crash and spike signals have 26 and 52 events; single-stock earnings cover 5 mega-caps; VIX1D covers 4.4 years; BTC DVOL 5.5 years.
+- **VIX1D.** CBOE's file starts 2022-05-13, apparently backfilled before the index's 2023 launch [unverified]. 1-day results depend on the ATM/VIX1D ratio k, which is not pinned down (0.9–1.1 shown), and on the day-count convention for 1-day options.
 - **Event dates.** CPI and NFP dates were parsed from BLS archive filenames retrieved through a web summariser. All fall on weekdays and spot checks against known dates matched, but isolated errors of a day are possible before 2011.
 - **Regime.** 2008–2026 was an exceptional bull market. It flatters every positive-delta structure (put spreads, call spreads) and penalises short calls (the condor's call side). Part of the post-2008 decay in option-selling alpha is plausibly regime, not arbitrage. Either way, the system should not count on its return.
