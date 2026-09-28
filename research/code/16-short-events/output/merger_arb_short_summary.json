@@ -1,0 +1,9 @@
+{
+  "live_cash_deals_with_positive_spread": 19,
+  "live_spread_median_%": 1.38,
+  "live_spread_quartiles_%": [
+    0.48,
+    1.38,
+    2.38
+  ]
+}

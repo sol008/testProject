@@ -145,23 +145,37 @@ def finalist_trades():
     c = spy["C"]
     r2 = rsi_wilder(c, 2)
     dip = (r2 < 10) & (c > sma(c, 200))
-    F["C1 dip-buy SPY (RSI2<10 & >SMA200; exit RSI2>70, cap 20; next open)"] = (
-        spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=r2 > 70))
-    F["C1-alt dip-buy SPY (exit close>SMA5 instead)"] = (
-        spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=c > sma(c, 5)))
+    sma5 = c > sma(c, 5)
     vix_s = load("^VIX")["C"].reindex(spy.index)
-    F["C1-V dip-buy SPY only when VIX>=20 at the signal close"] = (
+    # ST-1 (recommended): VIX-gated dip-buy, exit on the first close above the 5-day SMA.
+    # The exit was chosen on pre-2008 evidence (SPY 1993-2007 t 4.8 vs 4.3; S&P 1986-2007
+    # t 4.1 vs 2.5 and a -4% instead of -21% trade in Oct 1987); OOS the two exits tie.
+    F["ST-1 dip-buy SPY: RSI2<10 & >SMA200 & VIX>=20; exit close>SMA5 (cap 20); next open"] = (
+        spy, run_rule(spy, dip & (vix_s >= 20), mode="open", hold=20, exit_sig=sma5))
+    F["ST-1 variant with RSI2>70 exit"] = (
         spy, run_rule(spy, dip & (vix_s >= 20), mode="open", hold=20, exit_sig=r2 > 70))
+    F["ST-1b dip-buy SPY without VIX gate (exit close>SMA5)"] = (
+        spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=sma5))
+    F["ST-1b variant with RSI2>70 exit (IS-best by t on SPY)"] = (
+        spy, run_rule(spy, dip, mode="open", hold=20, exit_sig=r2 > 70))
     qqq = load("QQQ")
     cq = qqq["C"]
     r2q = rsi_wilder(cq, 2)
     dipq = (r2q < 10) & (cq > sma(cq, 200))
-    F["C1b dip-buy QQQ (same rule, exit RSI2>70)"] = (qqq, run_rule(qqq, dipq, mode="open", hold=20, exit_sig=r2q > 70))
+    F["ST-1b on QQQ (exit close>SMA5)"] = (qqq, run_rule(qqq, dipq, mode="open", hold=20, exit_sig=cq > sma(cq, 5)))
     gs0 = load("^GSPC")
     cg = gs0["C"]
     r2g = rsi_wilder(cg, 2)
-    F["C1-hist dip-buy ^GSPC 1928-2026 (next close, exit RSI2>70)"] = (
-        gs0, run_rule(gs0, (r2g < 10) & (cg > sma(cg, 200)), mode="close", hold=20, exit_sig=r2g > 70))
+    F["ST-1b on ^GSPC 1928-2026 (next close, exit close>SMA5)"] = (
+        gs0, run_rule(gs0, (r2g < 10) & (cg > sma(cg, 200)), mode="close", hold=20, exit_sig=cg > sma(cg, 5)))
+    from common13 import fred as _fred
+    vxo = _fred("VXOCLS")
+    vv = load("^VIX")["C"]
+    gauge = pd.concat([vxo[vxo.index < "1990-01-02"], vv[vv.index >= "1990-01-02"]]).reindex(gs0.index)
+    ent = (r2g < 10) & (cg > sma(cg, 200)) & (gauge >= 20)
+    ent[gs0.index < "1986-01-02"] = False
+    F["ST-1 on ^GSPC 1986-2026 (VXO/VIX gate, next close, exit close>SMA5)"] = (
+        gs0, run_rule(gs0, ent, mode="close", hold=20, exit_sig=cg > sma(cg, 5)))
     vix = load("^VIX")["C"].reindex(spy.index)
     v3 = load("^VIX3M")["C"].reindex(spy.index)
     vt = first_cross((vix / v3 >= 1.0).fillna(False)) & (c > sma(c, 200))
@@ -200,7 +214,7 @@ def finalist_table(F, N_all, N_fam_map, N_families):
             edge_i = sub["excess"].values - u * sub["sessions"].values
             st["edge"] = float(edge_i.mean())
             st["t_edge"] = float(edge_i.mean() / edge_i.std(ddof=1) * np.sqrt(len(edge_i)))
-            fam = "meanrev" if "dip" in name else ("panic" if "VIX" in name else "calendar")
+            fam = "meanrev" if name.startswith("ST-1") else ("panic" if name.startswith("C2") else "calendar")
             nf = N_fam_map.get(fam, 50)
             row = dict(candidate=name, period=pname, **st, strat_cagr=ss.get("cagr"), strat_sharpe=ss.get("sharpe"),
                        strat_mdd=ss.get("mdd"),
@@ -220,7 +234,7 @@ def finalist_table(F, N_all, N_fam_map, N_families):
 def cost_sensitivity(F):
     rows = []
     for name, (df, tr) in F.items():
-        if "dip" not in name and "VIX" not in name:
+        if not (name.startswith("ST-1") or name.startswith("C2")):
             continue
         sub = tr[tr["signal"] >= SPLIT]
         for c in (0.0, 1.0, 2.0, 5.0, 10.0, 20.0):

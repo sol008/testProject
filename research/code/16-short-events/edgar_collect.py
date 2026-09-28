@@ -23,6 +23,7 @@ KINDS = {
     "specdiv": [('"special dividend" OR "special cash dividend"', "8-K")],
     "earn": [('"results of operations and financial condition"', "8-K")],
     "ipo": [('"initial public offering"', "424B4")],
+    "spinoff": [("", "10-12B")],
 }
 
 
