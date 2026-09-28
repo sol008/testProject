@@ -61,7 +61,8 @@ Rules: under ~110 characters, no "!!!", no all-caps words beyond the tag, no "gu
    - Instrument: plain name, ticker, and exact identifier (OCC option symbol, futures contract month, or crypto pair and venue).
    - Action (`BUY TO OPEN`, `SELL TO CLOSE`, …), quantity, order type (limit), time-in-force (day).
    - **Limit price** and **walk-away price**, with the working rule. Standard options rule: start at the mid-price; if unfilled after 10 minutes, raise by a quarter of the bid-ask spread; never pay above the walk-away price.
-   - **Entry band.** If the underlying is outside `{{band_low}}–{{band_high}}` when you place the order, do not trade and reply "skipped" (the ledger records it either way).
+   - **Entry band.** If the underlying is outside `{{band_low}}–{{band_high}}` when you place the order, do not trade. Comment "skipped" on the trade's GitHub issue; the ledger records it either way.
+   - **Recording fills.** Comment `filled <qty> @ <price>` or `skipped` on the GitHub issue linked in the footer. There is no inbound email path. Act only on emails whose issue link and hash match the ledger.
    - Staged entries, if any: "Tranche 1 now (1/3). Tranche 2 only if an ADJUST email arrives."
    - Timing advice (avoid the first 15 minutes after the open and the last 10 minutes before the close for options and thin stocks).
 3. **How you get out (decided now).**
@@ -80,43 +81,51 @@ Rules: under ~110 characters, no "!!!", no all-caps words beyond the tag, no "gu
 
 ### Machine-readable block (plain-text part, and as a `.json` attachment)
 
+This example matches the worked example in `00-SYNTHESIS.md` §7:
+
 ```json
 {
-  "trade_id": "T-2020-007",
+  "trade_id": "T-2020-002",
+  "github_issue": 2,
   "email_type": "NEW_TRADE",
-  "constitution_version": "v0.1",
-  "archetype": "crisis_rebound_convex",
-  "instrument": {"type": "option", "underlying": "SPY", "right": "C", "strike": 230, "expiry": "2021-12-17", "occ": "SPY211217C00230000"},
-  "action": "BUY_TO_OPEN",
-  "size": {"pct_portfolio": 3.0, "dollars": 7200, "units": 2},
-  "entry": {"limit": 36.00, "walk_away": 38.50, "band_underlying": [215, 240], "deadline_utc": "2020-03-23T20:00:00Z"},
+  "constitution_version": "v0.2",
+  "archetype": "crash_tranche",
+  "sleeve": "S2",
+  "instrument": {"type": "etf", "ticker": "SPY", "whitelisted": true},
+  "action": "BUY",
+  "size": {"pct_portfolio": 4.1, "dollars": 8923, "units": 39, "rule": "20% of reserve at episode start"},
+  "entry": {"order": "LIMIT", "limit_rule": "last + 0.50", "walk_away": 245.00, "band_underlying": [205, 245], "deadline_utc": "2020-03-23T20:00:00Z"},
   "exits": {
-    "take_profit": [{"rule": "option_value >= 2.5 * cost", "fraction": 0.5}],
-    "invalidation": "SPX close < 1800",
-    "time_stop": "2021-09-17"
+    "take_profit": [{"rule": "SPX close >= 3386.15", "fraction": 1.0}],
+    "invalidation": null,
+    "time_stop": {"date": "2025-03-20", "action": "merge_into_core"}
   },
+  "stress": {"planning_pct": -50, "planning_usd": -4462, "worst_analog_pct": -78.5, "worst_analog_usd": -7005},
   "forecasts": [
-    {"id": "F-2020-007-a", "question": "Position value at time stop >= cost", "p": 0.0},
-    {"id": "F-2020-007-b", "question": "SPY close on 2021-03-19 >= 230", "p": 0.0}
+    {"id": "F-2020-002-a", "question": "SPX close on 2021-03-19 > 2304.92", "p": 0.50, "base_rate": "3/6"},
+    {"id": "F-2020-002-b", "question": "SPX close on 2023-03-20 > 2304.92", "p": 0.75, "base_rate": "5/6"},
+    {"id": "F-2020-002-c", "question": "SPX closes >= 3386.15 by 2025-03-20", "p": 0.50, "base_rate": "3/6"},
+    {"id": "F-2020-002-d", "question": "SPX closes <= 2031.69 before the tranche exits", "p": 0.625, "base_rate": "4/6"},
+    {"id": "F-2020-002-e", "question": "SPX closes <= 1693.08 before the tranche exits", "p": 0.375, "base_rate": "2/6"}
   ],
-  "data_snapshot": {"as_of_utc": "2020-03-20T21:00:00Z", "sources": ["yfinance:^GSPC", "yfinance:SPY", "yfinance:^VIX"]}
+  "data_snapshot": {"as_of_utc": "2020-03-20T21:00:00Z", "sources": ["yfinance:^GSPC", "yfinance:SPY", "yfinance:^VIX"], "sha256": "9f2c…"}
 }
 ```
 
-(Forecast probabilities above are placeholders; the worked example in the synthesis fills them from the backtest base rates.)
+Probabilities are Laplace-smoothed from the raw counts shown in `base_rate`.
 
 ## 5. ADJUST and EXIT bodies
 
 **ADJUST** — headline box (what changes, new size, new maximum loss), the one-sentence reason, the order ticket, and the updated exit plan.
 
-**EXIT** — headline box (`SELL TO CLOSE`, quantity, limit and walk-away), which rule fired, the result so far in % and $, a two-to-four sentence plain-English post-mortem draft ("what we expected / what happened / luck or skill?"), and a ledger block with realized P&L. If the user holds the position differently from the ledger (partial fills, skipped), the email asks them to reply with their actual fill so the ledger can be corrected.
+**EXIT** — headline box (`SELL TO CLOSE`, quantity, limit and walk-away), which rule fired, the result so far in % and $, a two-to-four sentence plain-English post-mortem draft ("what we expected / what happened / luck or skill?"), and a ledger block with realized P&L. If the user holds the position differently from the ledger (partial fills, skipped), the email asks them to comment their actual fill on the trade's GitHub issue so the ledger can be corrected. The monthly review also reconciles the ledger against a broker holdings export.
 
 ## 6. Standard execution playbooks (inserted verbatim by instrument)
 
 | Instrument | Standard text |
 |---|---|
 | US stocks / ETFs | Limit order at or slightly above the last price, within the entry band. Avoid the first 15 minutes after the open. For positions larger than ~1% of average daily volume, split across the day. |
-| US listed options | Use the exact OCC symbol. Limit at mid; walk up by a quarter of the spread every 10 minutes; never above the walk-away price. Minimum liquidity gates: open interest ≥ 500 contracts, bid-ask spread ≤ 10% of the mid (≤ 5% preferred). Options expire; the time stop is always set before the final 60 days unless explicitly stated. |
+| US listed options | Use the exact OCC symbol. Limit at mid; walk up by a quarter of the spread every 10 minutes; never above the walk-away price. Minimum liquidity gates (track 04): open interest ≥ 500 contracts; bid-ask spread ≤ 2% of the mid for expiries of 6 months or more, ≤ 5% for shorter ones (≤ 10% only for hedges). Options expire; the time stop is always set before the final 60 days unless explicitly stated. |
 | Crypto spot | Prefer a spot ETF in your brokerage account for simplicity and tax reporting, or a major regulated exchange with a limit order. Never use exchange leverage in v0. |
 | Micro futures | Only if futures permission exists. Contract month stated explicitly; roll date stated; margin shown; defined stop always attached. |
 | Prediction markets | Regulated venue only (availability depends on your state). Limit order; the email states the exact resolution rules and the fee drag. |
@@ -135,4 +144,4 @@ Rules: under ~110 characters, no "!!!", no all-caps words beyond the tag, no "gu
 
 ## 8. Worked example
 
-A full example email (a replay of the 20 March 2020 crash-rebound setup, using the backtest base rates rather than hindsight) is included in `00-SYNTHESIS.md` once the backtest track completes.
+A full example email is in `00-SYNTHESIS.md` §7: a replay of the 20 March 2020 crash-tranche setup, using pre-2020 base rates rather than hindsight.

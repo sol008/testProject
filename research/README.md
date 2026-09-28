@@ -18,7 +18,12 @@ Research date: 2026-09-28.
 | 09 | `09-infrastructure-data-email-compliance.md` | Data sources, email delivery, scheduling, the LLM layer, broker and regulatory constraints. |
 | 10 | `10-calibration-and-self-improvement.md` | How the monthly calibration loop improves the system without overfitting. |
 | 11 | `11-trade-email-spec.md` | Exactly what each trade email contains. |
+| 12 | `12-red-team-review.md` | Adversarial review of the synthesis. Its critical and major findings are fixed in revision 2 of `00-SYNTHESIS.md` (see its Appendix C). |
 
-Code used for the analyses lives in `code/<track>/` and can be re-run with Python 3.11 plus `pandas numpy scipy statsmodels yfinance matplotlib requests xlrd openpyxl`.
+Code used for the analyses lives in `code/<track>/` and can be re-run with Python 3.11 plus `pandas numpy scipy statsmodels yfinance matplotlib requests xlrd openpyxl`. Scripts behind the synthesis's own numbers are in `code/00-synthesis/`:
+
+- `preset_backtest.py` — the §10 preset table (historical and muted);
+- `preset_postpub.py` — the 2007–2026 check;
+- `example_base_rates.py` and `example_email_numbers.py` — the worked example.
 
 **Nothing in this folder is individualized financial advice.** It is research for the owner's personal use. Every strategy described here can lose money, including all of the capital committed to it.
