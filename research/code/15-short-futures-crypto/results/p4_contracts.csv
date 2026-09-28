@@ -1,0 +1,11 @@
+contract,description,price,notional_$,vol_1y_ann_%,vol_60d_ann_%,$vol_per_contract_yr,$1sd_day,est_margin_$ (3.5 x daily sd)
+MES,Micro E-mini S&P 500,7742.5,38712,13.0,11.8,5032,317,1109
+MNQ,Micro E-mini Nasdaq-100,30550.25,61100,19.9,20.1,12138,765,2676
+M2K,Micro E-mini Russell 2000,2837.8,14189,18.5,13.4,2625,165,579
+MGC,Micro Gold (10 oz),4153.7,41537,29.3,22.9,12178,767,2685
+SIL,"Micro Silver (1,000 oz)",61.12,61125,69.5,37.6,42486,2676,9367
+MCL,Micro WTI Crude (100 bbl),93.39,9339,55.7,50.8,5200,328,1147
+M6E,"E-micro EUR/USD (12,500 EUR)",1.1409,14262,5.2,4.4,743,47,164
+10Y,Micro 10-Year Yield ($10 per bp),5.24,12975,5.1,5.6,667,42,147
+MBT,Micro Bitcoin (0.1 BTC),83169.16,8317,45.3,42.7,3768,237,831
+MET,Micro Ether (0.1 ETH),2671.48,267,63.8,57.6,170,11,38

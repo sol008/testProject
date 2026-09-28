@@ -1,0 +1,9 @@
+,asset,strategy,period,gross_sharpe,net_sharpe,net_cagr_%
+0,BTC,weekend only (Fri->Sun close),design,0.63,-0.1,-8.81
+1,BTC,weekend only (Fri->Sun close),test,0.44,-0.85,-14.88
+2,BTC,weekdays only,design,1.4,1.08,71.24
+3,BTC,weekdays only,test,0.42,-0.07,-13.6
+4,ETH,weekend only (Fri->Sun close),design,0.66,0.17,-4.09
+5,ETH,weekend only (Fri->Sun close),test,0.69,-0.12,-5.53
+6,ETH,weekdays only,design,1.15,0.88,48.66
+7,ETH,weekdays only,test,0.37,-0.0,-18.92

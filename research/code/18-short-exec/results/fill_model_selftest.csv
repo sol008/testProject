@@ -1,0 +1,10 @@
+Case,Result
+"Buy limit 99.00, low 98.90 (traded through)","(100, 99.0, 'filled at limit (traded through)')"
+"Buy limit 98.90, low 98.90 (touch only)","(0, None, 'no fill: limit not traded through')"
+"Buy, open outside band","(0, None, 'skipped: open outside entry band')"
+"Long stop 99.5 / target 101, both touched","(99.4005, 'stop: hit intraday')"
+"Long stop 101.5, gap below","(99.9, 'stop: gapped through at the open')"
+"Buy 10 options, ask size 7","(7, 2.08, 4.55, 'partial: 7/10')"
+"Buy options, wide spread","(0, None, 0.0, 'no fill: spread too wide')"
+"MES stop 4990, open 4980","(4979.5, 1.25)"
+"Crypto buy $5,000 at 65,000","(65045.49999999999, 19.0)"

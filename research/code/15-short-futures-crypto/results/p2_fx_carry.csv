@@ -1,0 +1,15 @@
+,strategy,period,years,ann_ret_%,vol_%,sharpe,maxDD_%,t_stat,skew,worst_month_%
+0,XS top3-bottom3 (USD incl.),design 1976-2007,31.9,5.3,7.63,0.69,-26.2,3.92,-0.84,-8.8
+1,XS top3-bottom3 (USD incl.),test 2008-2026,18.7,0.22,7.46,0.03,-28.4,0.13,-0.52,-10.6
+2,XS top3-bottom3 (USD incl.),since 2010,16.7,0.73,6.41,0.11,-19.5,0.46,-0.1,-5.3
+3,XS top3-bottom3 (USD incl.),2022-2026 (rate dispersion back),4.7,1.61,4.93,0.33,-7.4,0.7,-0.75,-3.7
+4,"each vs USD, sign of differential",design 1976-2007,31.9,3.43,4.23,0.81,-11.0,4.58,-0.6,-4.9
+5,"each vs USD, sign of differential",test 2008-2026,18.7,-0.22,5.24,-0.04,-23.3,-0.18,-0.49,-6.8
+6,"each vs USD, sign of differential",since 2010,16.7,0.2,4.89,0.04,-19.7,0.17,-0.16,-4.4
+7,"each vs USD, sign of differential",2022-2026 (rate dispersion back),4.7,1.62,5.05,0.32,-5.4,0.69,-0.02,-3.0
+8,long FCY if rate > USD+1pp,design 1976-2007,31.9,3.69,7.35,0.5,-33.2,2.84,-0.29,-10.1
+9,long FCY if rate > USD+1pp,test 2008-2026,18.7,0.06,8.43,0.01,-28.2,0.03,-0.44,-11.9
+10,long FCY if rate > USD+1pp,since 2010,16.7,-0.16,7.31,-0.02,-27.4,-0.09,-0.09,-8.1
+11,long FCY if rate > USD+1pp,2022-2026 (rate dispersion back),4.7,0.0,0.0,,0.0,,0.0,0.0
+12,ETF: long top-2 / short bottom-2 CurrencyShares,test 2008-2026,18.7,-2.92,8.4,-0.35,-51.7,-1.5,-1.01,-14.6
+13,ETF: long top-2 / short bottom-2 CurrencyShares,2022-2026,4.7,1.05,5.54,0.19,-9.8,0.41,-0.95,-4.2

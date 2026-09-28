@@ -1,0 +1,17 @@
+rule,entry_close,exit_close
+TOM (dead after 2008),2026-09-29,2026-10-05
+"MIDTERM Q4 (weak, t~1.9)",2026-09-30,2026-12-24
+OPEX week (no edge),2026-10-09,2026-10-16
+CPI (dead),2026-10-13,2026-10-14
+FOMC (dead),2026-10-27,2026-10-28
+TOM (dead after 2008),2026-10-29,2026-11-04
+ELECTION drift (no edge),2026-11-03,2026-12-02
+OPEX week (no edge),2026-11-13,2026-11-20
+PREHOL (weak),2026-11-24,2026-11-25
+TOM (dead after 2008),2026-11-27,2026-12-03
+FOMC (dead),2026-12-08,2026-12-09
+OPEX week (no edge),2026-12-11,2026-12-18
+PREHOL (weak),2026-12-23,2026-12-24
+TOM (dead after 2008),2026-12-30,2027-01-06
+PREHOL (weak),2026-12-30,2026-12-31
+TOM (dead after 2008),2027-01-05,

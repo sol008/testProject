@@ -1,0 +1,91 @@
+variant,window,trades,sum_R,worst_R,worst_intratrade_R
+PCS20/5% 45d tp21 F5 (prescribed),Oct-2008,0,0.0000,,
+PCS20/5% 45d tp21 F5 (prescribed),May-2010 flash,1,0.0514,0.0514,-0.0300
+PCS20/5% 45d tp21 F5 (prescribed),Aug-2011,1,-0.1369,-0.1369,-0.1369
+PCS20/5% 45d tp21 F5 (prescribed),Aug-2015,1,-0.2660,-0.2660,-0.6918
+PCS20/5% 45d tp21 F5 (prescribed),Feb-2018,0,0.0000,,
+PCS20/5% 45d tp21 F5 (prescribed),Q4-2018,1,-0.6784,-0.6784,-0.6784
+PCS20/5% 45d tp21 F5 (prescribed),Mar-2020,0,0.0000,,
+PCS20/5% 45d tp21 F5 (prescribed),2022,3,-0.7905,-0.3741,-0.5542
+PCS20/5% 45d tp21 F5 (prescribed),Aug-2024,1,0.0392,0.0392,-0.0029
+PCS20/5% 45d tp21 F5 (prescribed),Apr-2025,0,0.0000,,
+PCS20/5% 45d tp21 F3 (trend only),Oct-2008,0,0.0000,,
+PCS20/5% 45d tp21 F3 (trend only),May-2010 flash,2,-0.2092,-0.2606,-0.3942
+PCS20/5% 45d tp21 F3 (trend only),Aug-2011,1,-0.1369,-0.1369,-0.1369
+PCS20/5% 45d tp21 F3 (trend only),Aug-2015,1,-0.2660,-0.2660,-0.6918
+PCS20/5% 45d tp21 F3 (trend only),Feb-2018,1,-0.0246,-0.0246,-0.5083
+PCS20/5% 45d tp21 F3 (trend only),Q4-2018,1,-0.6784,-0.6784,-0.6784
+PCS20/5% 45d tp21 F3 (trend only),Mar-2020,1,0.0607,0.0607,-0.0053
+PCS20/5% 45d tp21 F3 (trend only),2022,3,-0.7905,-0.3741,-0.5542
+PCS20/5% 45d tp21 F3 (trend only),Aug-2024,2,0.0965,0.0392,-0.0169
+PCS20/5% 45d tp21 F3 (trend only),Apr-2025,1,0.0063,0.0063,-0.2055
+PCS20/5% 45d tp21 F0 (no filter),Oct-2008,3,-0.5299,-0.2696,-0.8061
+PCS20/5% 45d tp21 F0 (no filter),May-2010 flash,3,-0.1178,-0.2606,-0.3942
+PCS20/5% 45d tp21 F0 (no filter),Aug-2011,3,-0.4035,-0.2199,-0.4947
+PCS20/5% 45d tp21 F0 (no filter),Aug-2015,2,-0.1971,-0.2660,-0.6918
+PCS20/5% 45d tp21 F0 (no filter),Feb-2018,1,-0.0246,-0.0246,-0.5083
+PCS20/5% 45d tp21 F0 (no filter),Q4-2018,4,-0.9260,-0.6784,-0.7150
+PCS20/5% 45d tp21 F0 (no filter),Mar-2020,3,-0.4249,-0.5785,-0.9281
+PCS20/5% 45d tp21 F0 (no filter),2022,10,-0.4206,-0.3741,-0.5542
+PCS20/5% 45d tp21 F0 (no filter),Aug-2024,2,0.0965,0.0392,-0.0169
+PCS20/5% 45d tp21 F0 (no filter),Apr-2025,2,-0.0108,-0.0172,-0.5350
+IC20/5% 45d tp21 F5 (prescribed),Oct-2008,0,0.0000,,
+IC20/5% 45d tp21 F5 (prescribed),May-2010 flash,1,0.0383,0.0383,-0.0321
+IC20/5% 45d tp21 F5 (prescribed),Aug-2011,1,-0.0820,-0.0820,-0.0820
+IC20/5% 45d tp21 F5 (prescribed),Aug-2015,1,-0.2157,-0.2157,-0.6768
+IC20/5% 45d tp21 F5 (prescribed),Feb-2018,0,0.0000,,
+IC20/5% 45d tp21 F5 (prescribed),Q4-2018,1,-0.6562,-0.6562,-0.6562
+IC20/5% 45d tp21 F5 (prescribed),Mar-2020,0,0.0000,,
+IC20/5% 45d tp21 F5 (prescribed),2022,3,-0.5467,-0.3031,-0.5116
+IC20/5% 45d tp21 F5 (prescribed),Aug-2024,1,0.0238,0.0238,-0.1481
+IC20/5% 45d tp21 F5 (prescribed),Apr-2025,0,0.0000,,
+IC20/5% 45d tp21 F3 (trend only),Oct-2008,0,0.0000,,
+IC20/5% 45d tp21 F3 (trend only),May-2010 flash,2,-0.1394,-0.1777,-0.3711
+IC20/5% 45d tp21 F3 (trend only),Aug-2011,1,-0.0820,-0.0820,-0.0820
+IC20/5% 45d tp21 F3 (trend only),Aug-2015,2,-0.0906,-0.2157,-0.6768
+IC20/5% 45d tp21 F3 (trend only),Feb-2018,2,-0.6447,-0.7095,-0.7095
+IC20/5% 45d tp21 F3 (trend only),Q4-2018,1,-0.6562,-0.6562,-0.6562
+IC20/5% 45d tp21 F3 (trend only),Mar-2020,1,-0.5900,-0.5900,-0.5900
+IC20/5% 45d tp21 F3 (trend only),2022,3,-0.5467,-0.3031,-0.5116
+IC20/5% 45d tp21 F3 (trend only),Aug-2024,2,-0.2688,-0.2926,-0.2947
+IC20/5% 45d tp21 F3 (trend only),Apr-2025,1,0.1490,0.1490,-0.1280
+IC20/5% 45d tp21 F0 (no filter),Oct-2008,3,-0.3278,-0.1802,-0.7998
+IC20/5% 45d tp21 F0 (no filter),May-2010 flash,3,0.0263,-0.1777,-0.3711
+IC20/5% 45d tp21 F0 (no filter),Aug-2011,3,-0.1881,-0.1407,-0.4827
+IC20/5% 45d tp21 F0 (no filter),Aug-2015,3,0.0722,-0.2157,-0.6768
+IC20/5% 45d tp21 F0 (no filter),Feb-2018,2,-0.6447,-0.7095,-0.7095
+IC20/5% 45d tp21 F0 (no filter),Q4-2018,4,-0.9205,-0.6562,-0.6859
+IC20/5% 45d tp21 F0 (no filter),Mar-2020,3,-1.0851,-0.5900,-0.9218
+IC20/5% 45d tp21 F0 (no filter),2022,10,-0.2539,-0.3031,-0.5116
+IC20/5% 45d tp21 F0 (no filter),Aug-2024,2,-0.2688,-0.2926,-0.2947
+IC20/5% 45d tp21 F0 (no filter),Apr-2025,2,0.2250,0.0760,-0.5283
+PCS10/5% 45d hold F0,Oct-2008,4,-0.8246,-1.0000,-1.0601
+PCS10/5% 45d hold F0,May-2010 flash,4,0.1856,0.0398,-0.2940
+PCS10/5% 45d hold F0,Aug-2011,4,-0.8557,-1.0000,-1.0000
+PCS10/5% 45d hold F0,Aug-2015,3,0.1361,0.0382,-0.5246
+PCS10/5% 45d hold F0,Feb-2018,3,0.1023,0.0298,-0.3542
+PCS10/5% 45d hold F0,Q4-2018,5,-0.4213,-0.5895,-0.5895
+PCS10/5% 45d hold F0,Mar-2020,4,-0.8259,-1.0000,-1.0202
+PCS10/5% 45d hold F0,2022,11,0.0054,-0.5087,-0.5087
+PCS10/5% 45d hold F0,Aug-2024,3,0.1097,0.0296,-0.2574
+PCS10/5% 45d hold F0,Apr-2025,3,0.1095,0.0307,-0.5376
+IC10/5% 45d hold F6 (best IS Sharpe),Oct-2008,0,0.0000,,
+IC10/5% 45d hold F6 (best IS Sharpe),May-2010 flash,2,0.1624,0.0774,-0.2701
+IC10/5% 45d hold F6 (best IS Sharpe),Aug-2011,2,-0.9251,-1.0000,-1.0000
+IC10/5% 45d hold F6 (best IS Sharpe),Aug-2015,1,0.0727,0.0727,-0.5170
+IC10/5% 45d hold F6 (best IS Sharpe),Feb-2018,2,-0.4597,-0.5160,-0.5617
+IC10/5% 45d hold F6 (best IS Sharpe),Q4-2018,2,0.1275,0.0634,-0.4725
+IC10/5% 45d hold F6 (best IS Sharpe),Mar-2020,1,0.0723,0.0723,-0.0217
+IC10/5% 45d hold F6 (best IS Sharpe),2022,4,-0.2320,-0.4870,-0.4872
+IC10/5% 45d hold F6 (best IS Sharpe),Aug-2024,2,0.1240,0.0580,-0.3691
+IC10/5% 45d hold F6 (best IS Sharpe),Apr-2025,0,0.0000,,
+PCS30/2% 30d tp F0 (retail-typical),Oct-2008,4,0.6801,0.1404,-1.0577
+PCS30/2% 30d tp F0 (retail-typical),May-2010 flash,2,-0.8017,-1.0000,-1.0872
+PCS30/2% 30d tp F0 (retail-typical),Aug-2011,3,-0.6991,-1.0000,-1.0971
+PCS30/2% 30d tp F0 (retail-typical),Aug-2015,3,-0.7494,-1.0000,-1.0000
+PCS30/2% 30d tp F0 (retail-typical),Feb-2018,2,0.2608,0.1297,-0.0346
+PCS30/2% 30d tp F0 (retail-typical),Q4-2018,4,-0.6075,-1.0000,-1.0000
+PCS30/2% 30d tp F0 (retail-typical),Mar-2020,4,-0.5267,-1.0000,-1.0579
+PCS30/2% 30d tp F0 (retail-typical),2022,10,-0.6164,-1.0000,-1.0286
+PCS30/2% 30d tp F0 (retail-typical),Aug-2024,1,0.1477,0.1477,-0.8963
+PCS30/2% 30d tp F0 (retail-typical),Apr-2025,3,-0.6987,-1.0000,-1.0152

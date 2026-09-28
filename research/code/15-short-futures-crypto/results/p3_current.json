@@ -1,0 +1,27 @@
+{
+ "funding_7d_ann_%_latest": {
+  "bitmex_btc": 10.4,
+  "binance_btc": 9.0,
+  "binance_eth": 5.37
+ },
+ "funding_last_dates": {
+  "bitmex_btc": "2026-09-16",
+  "binance_btc": "2026-08-31",
+  "binance_eth": "2026-08-31"
+ },
+ "etf_flow_trigger": {
+  "weeks": 139,
+  "weeks_trigger_on": 26,
+  "fwd4w_when_on_%": 0.58,
+  "fwd4w_when_off_%": 3.32,
+  "last_4_weeks_flows_$bn": [
+   0.99,
+   -0.46,
+   0.01,
+   2.39
+  ],
+  "first": "2024-01-11",
+  "last": "2026-09-25",
+  "cum_flows_$bn": 57.9
+ }
+}

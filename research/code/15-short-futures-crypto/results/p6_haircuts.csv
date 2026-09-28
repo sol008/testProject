@@ -1,0 +1,14 @@
+,family,variants,design_pick,design_pick_test_SR,median_test_SR,best_test,best_test_SR,best_t,bonferroni_t,DSR_prob,SR0_expected_max_under_null
+0,Multi-asset trend: LONG (synthetic futures),20,LO-BRK N50,0.08,0.16,TSMOM L126 H5,0.34,1.46,3.02,0.541,0.32
+1,Multi-asset trend: ETF (tradable),20,n/a (no pre-2008 ETF history),,0.15,TSMOM L126 H42,0.35,1.49,3.02,0.384,0.42
+2,Multi-asset trend: MICRO8 (micro-futures markets),20,LO-TSMOM L252 H21,0.54,0.37,TSMOM L126 H5,0.63,2.72,3.02,0.813,0.42
+3,"Crypto trend BTC (alpha vs buy&hold, 0.25%/side)",11,BRK20,alpha -5.2%/yr (t -0.47),median alpha t -0.07,MA50,alpha 15.8%/yr,1.34,2.84,0.547,0.51
+4,"Crypto trend ETH (alpha vs buy&hold, 0.25%/side)",11,BRK20,alpha 18.0%/yr (t 1.14),median alpha t 0.66,TSMOM28,alpha 19.4%/yr,1.24,2.84,0.595,0.42
+5,Energy term structure (4 markets x 6 rules + 6 portfolio rules),30,,,,,,,3.14,,
+6,FX carry (3 FX rules x 4 periods + ETF),4,,,,,,,2.5,,
+7,Bond carry & roll-down (7 rules),7,,,,,,,2.69,,
+8,Crypto day-of-week (7 days x 2 assets) + weekend rules (2 x 2),18,,,,,,,2.99,,
+9,Crypto rebounds (4 triggers x 6 horizons x 2 assets),48,,,,,,,3.28,,
+10,Crypto funding (3 venues x 3 horizons x 6 buckets) + 3 rules x 3 venues,63,,,,,,,3.35,,
+11,Bitcoin ETF flows (3 windows x 3 horizons + 1 trigger),10,,,,,,,2.81,,
+12,Altcoin momentum (8 strategies x 4 universes),32,,,,,,,3.16,,

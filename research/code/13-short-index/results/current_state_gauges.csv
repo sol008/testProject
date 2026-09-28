@@ -1,0 +1,2 @@
+date,spx,spx_1d,spx_dd,spx_ath,spx_above200,vix,vix_1d,vix3m,vix_over_vix3m,vix9d,vix_max_20d,vix_ratio_max_20d,vix_needed_for_ratio_1,spx_level_minus10,spx_level_minus15
+2026-09-28,7683.69,-0.00771239,-0.014784,7798.99,True,16.07,0.0806994,18.23,0.881514,14.39,17.84,0.904207,18.23,7019.09,6629.14

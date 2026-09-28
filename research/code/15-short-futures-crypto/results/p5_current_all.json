@@ -1,0 +1,408 @@
+{
+ "asof": "2026-09-28",
+ "micro8_trend": {
+  "TSMOM L252 H21": {
+   "SPX": 0.297,
+   "CCMP": 0.2,
+   "UST10": -0.648,
+   "GOLD": 0.145,
+   "CL": 0.069,
+   "EUR": -0.721,
+   "JPY": -0.392,
+   "AUD": 0.524
+  },
+  "TSMOM L126 H21": {
+   "SPX": 0.297,
+   "CCMP": 0.2,
+   "UST10": -0.648,
+   "GOLD": -0.145,
+   "CL": 0.069,
+   "EUR": -0.721,
+   "JPY": 0.392,
+   "AUD": 0.524
+  },
+  "BLEND H21": {
+   "SPX": 0.297,
+   "CCMP": 0.2,
+   "UST10": -0.648,
+   "GOLD": 0.0,
+   "CL": 0.069,
+   "EUR": -0.36,
+   "JPY": 0.196,
+   "AUD": 0.262
+  },
+  "BRK N50": {
+   "SPX": 0.29,
+   "CCMP": 0.177,
+   "UST10": -0.602,
+   "GOLD": 0.0,
+   "CL": 0.066,
+   "EUR": -0.725,
+   "JPY": 0.4,
+   "AUD": 0.0
+  },
+  "trailing_12m_excess_%": {
+   "SPX": 14.8,
+   "CCMP": 17.1,
+   "UST10": -7.3,
+   "GOLD": 0.9,
+   "CL": 99.7,
+   "EUR": -3.0,
+   "JPY": -5.0,
+   "AUD": 7.7
+  },
+  "trailing_6m_excess_%": {
+   "SPX": 15.8,
+   "CCMP": 21.2,
+   "UST10": -5.9,
+   "GOLD": -12.8,
+   "CL": 6.8,
+   "EUR": -1.9,
+   "JPY": 0.4,
+   "AUD": 2.3
+  },
+  "last_date": "2026-09-28"
+ },
+ "carry": {
+  "fx_diff_vs_usd_pp": {
+   "CHF": -3.86,
+   "JPY": -2.36,
+   "SEK": -1.87,
+   "EUR": -1.79,
+   "CAD": -1.56,
+   "NZD": -0.97,
+   "GBP": -0.11,
+   "AUD": 0.66,
+   "NOK": 0.8
+  },
+  "bond": {
+   "asof": "2026-09-25",
+   "yields_%": {
+    "3m": 4.08,
+    "1": 4.5,
+    "2": 4.81,
+    "5": 4.98,
+    "7": 5.06,
+    "10": 5.17,
+    "30": 5.49
+   },
+   "carry_roll_ann_%": {
+    "UST10": 1.37,
+    "UST5": 1.15,
+    "UST2": 1.31,
+    "UST30": 1.64
+   }
+  }
+ },
+ "energy_curves_yahoo": {
+  "CL": {
+   "prices": {
+    "X26": [
+     "2026-09-28",
+     93.26
+    ],
+    "Z26": [
+     "2026-09-28",
+     89.65
+    ],
+    "F27": [
+     "2026-09-28",
+     87.09
+    ],
+    "G27": [
+     "2026-09-28",
+     85.2
+    ],
+    "H27": [
+     "2026-09-28",
+     83.63
+    ]
+   },
+   "annualised_roll_yield_%_(+=backwardation)": {
+    "X26->Z26": 47.4,
+    "Z26->F27": 34.8,
+    "F27->G27": 26.3,
+    "G27->H27": 22.3
+   }
+  },
+  "HO": {
+   "prices": {
+    "V26": [
+     "2026-09-28",
+     4.8032
+    ],
+    "X26": [
+     "2026-09-28",
+     4.5367
+    ],
+    "Z26": [
+     "2026-09-28",
+     4.4148
+    ],
+    "F27": [
+     "2026-09-28",
+     4.3345
+    ]
+   },
+   "annualised_roll_yield_%_(+=backwardation)": {
+    "V26->X26": 68.5,
+    "X26->Z26": 32.7,
+    "Z26->F27": 22.0
+   }
+  },
+  "RB": {
+   "prices": {
+    "V26": [
+     "2026-09-28",
+     3.3352
+    ],
+    "X26": [
+     "2026-09-28",
+     3.1716
+    ],
+    "Z26": [
+     "2026-09-28",
+     2.9845
+    ],
+    "F27": [
+     "2026-09-28",
+     2.8676
+    ]
+   },
+   "annualised_roll_yield_%_(+=backwardation)": {
+    "V26->X26": 60.4,
+    "X26->Z26": 73.0,
+    "Z26->F27": 47.9
+   }
+  },
+  "NG": {
+   "prices": {
+    "V26": [
+     "2026-09-28",
+     3.005
+    ],
+    "X26": [
+     "2026-09-28",
+     3.146
+    ],
+    "Z26": [
+     "2026-09-28",
+     3.481
+    ],
+    "F27": [
+     "2026-09-28",
+     3.855
+    ],
+    "G27": [
+     "2026-09-28",
+     3.515
+    ]
+   },
+   "annualised_roll_yield_%_(+=backwardation)": {
+    "V26->X26": -55.0,
+    "X26->Z26": -121.4,
+    "Z26->F27": -122.5,
+    "F27->G27": 110.8
+   }
+  },
+  "GC": {
+   "prices": {
+    "V26": [
+     "2026-09-28",
+     4119.3999
+    ],
+    "Z26": [
+     "2026-09-28",
+     4154.7002
+    ],
+    "G27": [
+     "2026-09-28",
+     4189.1001
+    ]
+   },
+   "annualised_roll_yield_%_(+=backwardation)": {
+    "V26->Z26": -5.1,
+    "Z26->G27": -4.9
+   }
+  }
+ },
+ "crypto_state": {
+  "BTC": {
+   "date": "2026-09-28",
+   "price": 83169.0,
+   "MA10": 84000.0,
+   "above_MA10": false,
+   "MA20": 80671.0,
+   "above_MA20": true,
+   "MA50": 76459.0,
+   "above_MA50": true,
+   "MA100": 69889.0,
+   "above_MA100": true,
+   "MA200": 71132.0,
+   "above_MA200": true,
+   "weekly_close_above_10wMA": true,
+   "10wMA": 75225.0,
+   "weekly_close_above_20wMA": true,
+   "20wMA": 70590.0,
+   "ret_28d_%": 5.9,
+   "high_20d_prior": 86505.0,
+   "low_10d_prior": 80944.0,
+   "drawdown_from_ATH_%": -33.4,
+   "ret_1d_%": -1.45,
+   "ret_3d_%": -1.06,
+   "dd_30d_high_%": -3.9
+  },
+  "ETH": {
+   "date": "2026-09-28",
+   "price": 2671.0,
+   "MA10": 2692.0,
+   "above_MA10": false,
+   "MA20": 2586.0,
+   "above_MA20": true,
+   "MA50": 2403.0,
+   "above_MA50": true,
+   "MA100": 2102.0,
+   "above_MA100": true,
+   "MA200": 2104.0,
+   "above_MA200": true,
+   "weekly_close_above_10wMA": true,
+   "10wMA": 2354.0,
+   "weekly_close_above_20wMA": true,
+   "20wMA": 2087.0,
+   "ret_28d_%": 8.3,
+   "high_20d_prior": 2774.0,
+   "low_10d_prior": 2613.0,
+   "drawdown_from_ATH_%": -44.7,
+   "ret_1d_%": -0.51,
+   "ret_3d_%": -0.76,
+   "dd_30d_high_%": -3.7
+  }
+ },
+ "crypto_positions": {
+  "BTC MA50": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-18",
+   "entry_px": 64696.0,
+   "days_in_trade": 41,
+   "open_pnl_%": 28.6
+  },
+  "BTC MA100": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-20",
+   "entry_px": 73071.0,
+   "days_in_trade": 39,
+   "open_pnl_%": 13.8
+  },
+  "BTC TSMOM28": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-20",
+   "entry_px": 73071.0,
+   "days_in_trade": 39,
+   "open_pnl_%": 13.8
+  },
+  "BTC WMA10": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-24",
+   "entry_px": 78894.0,
+   "days_in_trade": 35,
+   "open_pnl_%": 5.4
+  },
+  "BTC BRK20": {
+   "state": "LONG",
+   "current_trade_entry": "2026-09-20",
+   "entry_px": 81195.0,
+   "days_in_trade": 8,
+   "open_pnl_%": 2.4
+  },
+  "ETH MA50": {
+   "state": "LONG",
+   "current_trade_entry": "2026-09-09",
+   "entry_px": 2465.0,
+   "days_in_trade": 19,
+   "open_pnl_%": 8.4
+  },
+  "ETH MA100": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-16",
+   "entry_px": 1873.0,
+   "days_in_trade": 43,
+   "open_pnl_%": 42.6
+  },
+  "ETH TSMOM28": {
+   "state": "LONG",
+   "current_trade_entry": "2026-08-20",
+   "entry_px": 2327.0,
+   "days_in_trade": 39,
+   "open_pnl_%": 14.8
+  },
+  "ETH WMA10": {
+   "state": "LONG",
+   "current_trade_entry": "2026-09-18",
+   "entry_px": 2613.0,
+   "days_in_trade": 10,
+   "open_pnl_%": 2.3
+  },
+  "ETH BRK20": {
+   "state": "LONG",
+   "current_trade_entry": "2026-09-19",
+   "entry_px": 2633.0,
+   "days_in_trade": 9,
+   "open_pnl_%": 1.5
+  }
+ },
+ "funding_live": {
+  "kraken_PF_XBTUSD_ann_%": 6.56,
+  "kraken_PF_ETHUSD_ann_%": 12.97,
+  "bitmex_XBTUSD_ann_%": 10.95,
+  "okx_BTC-USDT-SWAP_ann_%": 4.91,
+  "deribit_basis_ann_%": [
+   [
+    "BTC-30OCT26",
+    31,
+    4.91
+   ],
+   [
+    "BTC-27NOV26",
+    59,
+    5.34
+   ],
+   [
+    "BTC-25DEC26",
+    87,
+    5.31
+   ],
+   [
+    "BTC-26MAR27",
+    178,
+    5.2
+   ]
+  ]
+ },
+ "crypto_hist": {
+  "funding_7d_ann_%_latest": {
+   "bitmex_btc": 10.4,
+   "binance_btc": 9.0,
+   "binance_eth": 5.37
+  },
+  "funding_last_dates": {
+   "bitmex_btc": "2026-09-16",
+   "binance_btc": "2026-08-31",
+   "binance_eth": "2026-08-31"
+  },
+  "etf_flow_trigger": {
+   "weeks": 139,
+   "weeks_trigger_on": 26,
+   "fwd4w_when_on_%": 0.58,
+   "fwd4w_when_off_%": 3.32,
+   "last_4_weeks_flows_$bn": [
+    0.99,
+    -0.46,
+    0.01,
+    2.39
+   ],
+   "first": "2024-01-11",
+   "last": "2026-09-25",
+   "cum_flows_$bn": 57.9
+  }
+ }
+}

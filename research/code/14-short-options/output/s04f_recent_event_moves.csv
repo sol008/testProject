@@ -1,0 +1,7 @@
+event,period,n,mean_abs,median_abs
+FOMC,last 24 months,16,0.0070,0.0046
+FOMC,2022-2026,38,0.0100,0.0087
+CPI,last 24 months,23,0.0069,0.0040
+CPI,2022-2026,56,0.0097,0.0071
+NFP,last 24 months,22,0.0111,0.0083
+NFP,2022-2026,54,0.0101,0.0083
