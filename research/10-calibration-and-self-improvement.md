@@ -20,7 +20,7 @@ Code: `research/code/10-calibration/`. Every number marked "(sim)" can be reprod
    - The log-score difference versus market-implied probabilities is exactly the log-growth a Kelly bettor would have earned at market odds. That makes it the score that matches a goal of compounding % return.
    - Risk-neutral option probabilities count the equity risk premium as "skill". Treating questions as independent when they share a monthly market move made a miscalibrated perma-bull **look skilled in 15–26% of simulated histories, versus 1–3%** with month-clustered tests.
 4. **Recalibrate before judging skill, and only when the data justify it.**
-   - An informative but overconfident forecaster (the typical LLM failure) scores worse than the market on raw probabilities: 0% detection.
+   - An informative but overconfident forecaster (the typical LLM failure) scores worse than the market on raw probabilities: under 1% detection.
    - After rolling Platt maps, fitted per question family and out-of-sample, it is detected in 80% of runs by 36 months (sim).
    - Platt scaling works from about 100–150 resolved questions per family. Isotonic needs about 1000 or more.
    - Unconditional Platt scaling *harms* an already-calibrated forecaster in 56–99% of samples (sim). So a map is adopted only when a likelihood-ratio test finds miscalibration.
@@ -40,8 +40,8 @@ Code: `research/code/10-calibration/`. Every number marked "(sim)" can be reprod
    - So strategies are retired on thesis invalidation or on pre-registered sequential tests, never on a drawdown alone.
 8. **Shrink everything toward sensible priors.**
    - Use Beta or Normal-Inverse-Gamma priors worth 20–50 trades, pooling across archetypes, and fractional Kelly sizing on the posterior predictive.
-   - After 5 straight wins, naive sizing jumps to its cap (25%). A strength-50 prior moves it from 2.1% to 4.2%.
-   - A strength-20 prior *switches a sound archetype off* after a 5-loss streak. Use strength of about 50 and a probation floor.
+   - After 5 straight wins, naive quarter-Kelly sizing (using the raw win rate) jumps to 25% of equity. A strength-50 prior moves it only from 2.1% to 4.2%.
+   - A strength-20 prior *switches a sound archetype off* after a 5-loss streak, which such a book suffers in 42% of 24-trade spans. Use strength of about 50 and a probation floor.
 9. **LLM-specific safeguards come from separation of powers.**
    - The evaluator code is frozen and hash-pinned, and the LLM cannot edit it. Frontier models have been documented rewriting tests and scorers (METR 2025).
    - Decisions are blind re-graded before the outcome is revealed.
@@ -106,7 +106,7 @@ Code: `research/code/10-calibration/`. Every number marked "(sim)" can be reprod
 | Trade selection | **Selection alpha**: selected trade minus random shadow controls, paired by month | Selected vs top-K rejected; hit rate; payoff ratio | Scores the *decision to pick*, not just the forecast. |
 | Process | Blind decision-quality rubric (1–5 per item) | Pre-mortem hit rate; outcome-bias gap (blind grade minus outcome-aware grade) | Feedback that does not depend on the outcome (Duke 2018). |
 
-Two principles apply throughout. Calibration is *necessary* but not sufficient. The goal is "maximize sharpness subject to calibration" (Gneiting, Balabdaoui & Raftery 2007), which the resolution/discrimination terms measure.
+Throughout, calibration is *necessary* but not sufficient. The goal is "maximize sharpness subject to calibration" (Gneiting, Balabdaoui & Raftery 2007), which the resolution and discrimination terms measure.
 
 ### 2.3 Decision quality vs outcome quality; pre-mortems
 
@@ -331,7 +331,7 @@ It does *not* prove trade-selection skill, because it has no selection step. Tha
 | 5 losses in 5 | 0% | **0%** (posterior 36% < 40%) | 0.4% (posterior 40.9%) |
 | 12 of 24 | 4.2% | 3.2% | 2.8% |
 
-At strength 20, a 5-loss streak switches the archetype off. Streaks like that happen **69% of the time** in 24 trades of a sound 35%-hit book (Section 6e). Hence: **strength ≈ 50 for established archetypes, a probation floor instead of zero, and retirement only through the pre-registered tests.**
+At strength 20, a 5-loss streak switches the archetype off. For this very book (45% hit, positive expected value), ≥5 straight losses occur somewhere within 24 trades **42% of the time**. For a 35%-hit book the figure is 69% (`power.py`, Section 6e). Hence: **strength ≈ 50 for established archetypes, a probation floor instead of zero, and retirement only through the pre-registered tests.**
 
 ### 4.6 Pooling information across archetypes
 
@@ -346,7 +346,7 @@ At strength 20, a 5-loss streak switches the archetype off. Streaks like that ha
   - at most 10 percentage points per sleeve per month;
   - floor 10% for each active sleeve, so evidence keeps accruing; cap 50%.
 - **Combining forecasters (models, prompts).** Prequential Bayesian model averaging: wⱼ ∝ πⱼ·exp(η·Σₜ log pⱼ(yₜ)) (Dawid 1984; Hoeting et al. 1999). Use tempering η ≤ 1 and a rolling window so the weights do not collapse onto one model after a lucky run.
-- **Live data alone cannot tell sleeves apart** (Simulation G: 18 live trades a year, four archetypes with true per-trade edges of −0.05R to +0.25R). The allocator identifies the best sleeve only 42% of the time after 3 years, which is near the 25% chance level. With shadow sleeves it reaches 93%.
+- **Live data alone cannot tell sleeves apart** (Simulation G: 18 live trades a year, four archetypes with true per-trade edges of −0.05R to +0.25R). The allocator identifies the best sleeve only 42% of the time after 3 years, where chance would give 25%. With shadow sleeves it reaches 93%.
 
 ### 4.8 Recalibration maps (Simulation H, 200 repetitions per cell)
 
@@ -639,7 +639,8 @@ NIG posterior    κₙ = κ₀ + n; μₙ = (κ₀μ₀ + n·x̄)/κₙ; aₙ = 
 Shrinkage        θₖ = Bₖ·μ̄ + (1−Bₖ)·x̄ₖ,  Bₖ = seₖ²/(seₖ² + τ̂²)   (DerSimonian-Laird τ̂²)
 Thompson weight  wₖ = P(k = argmax θ | data) via posterior draws; w ← proj_[floor,cap](w + clip(0.25(w* − w), ±0.10))
 e-process        Eₜ = 2√(ρ/(Vₜ+ρ))·exp(Sₜ²/(2(Vₜ+ρ)))·Φ(Sₜ/√(Vₜ+ρ)),  Sₜ = Σ monthly means, Vₜ = Σ their variances;
-                 "proven" when Eₜ ≥ 20 (α = 5%); valid under monthly peeking (Ville's inequality)
+                 "proven" when Eₜ ≥ 20 (α = 5%); valid under monthly peeking (Ville's inequality;
+                 approximately so when the variance is estimated; check the false-positive rate by simulation)
 CUSUM            Sₜ = max(0, Sₜ₋₁ + ((μ_bad − μ_good)/σ²)(xₜ − (μ_good + μ_bad)/2)); alarm at h calibrated by simulation
 Design effect    deff = 1 + (m − 1)·ICC;  effective n = N/deff
 Outcome-bias gap mean(outcome-aware grade − blind grade) over closed trades
@@ -787,7 +788,7 @@ All files are under `research/code/10-calibration/`. It needs only Python 3.11 w
     - ≤1 change per parameter per quarter;
     - ≤1 structural (tier 3) change per quarter;
     - tier 4 (risk limits, objective, evaluator, change policy) is the human's only.
-15. **Adoption standard (tier 2):** ≥3 months *forward* shadow A/B test, ≥100 paired shadow candidates, posterior P(Δ > 0) ≥ 0.95 under a skeptical N(0, σ²) prior, and a pre-registered minimum effect. The change then runs 3 months on probation at 50% influence with automatic rollback.
+15. **Adoption standard (tier 2):** a *forward* shadow A/B test of 6 months (the setting simulated; 3 months at minimum when evidence is abundant), ≥100 paired shadow candidates, posterior P(Δ > 0) ≥ 0.95 under a skeptical N(0, σ²) prior, and a pre-registered minimum effect. The change then runs 3 months on probation at 50% influence with automatic rollback.
 16. **New archetypes:** incubation (shadow only, ≥3–6 months), then probation (live at 25–50% size for ≥6 trades or 6 months), then active.
 17. **Trial registry.** Log every variant considered, and feed the count into the DSR. Weigh any proposal against the expected best Sharpe of the count so far (for example, 20 trials over 3 years gives an expected best in-sample Sharpe of 1.1 by luck).
 

@@ -102,8 +102,13 @@ def tables():
                         trades_exact_binomial_80=n_exact, mintrl_50pct_power=n_mintrl,
                         years_at_12_exact=n_exact / 12))
     out["option_like"] = opt
-    out["streaks"] = [dict(n=n, p=p, k=k, prob=expected_longest_streak_prob(n, p, k))
-                      for (n, p, k) in ((24, 0.5, 5), (24, 0.4, 4), (60, 0.5, 6), (12, 0.5, 4))]
+    # p is the per-trade probability of the streak's outcome (win OR loss)
+    out["streaks"] = [dict(label=label, n=n, p=p, k=k, prob=expected_longest_streak_prob(n, p, k))
+                      for (label, n, p, k) in (
+                          ("wins, 50% hit", 24, 0.5, 5), ("wins, 40% hit", 24, 0.4, 4),
+                          ("wins, 50% hit", 60, 0.5, 6), ("wins, 50% hit", 12, 0.5, 4),
+                          ("losses, 45% hit book", 24, 0.55, 5),
+                          ("losses, 35% hit book", 24, 0.65, 5))]
     out["design_effect"] = [dict(m=m, icc=icc, deff=design_effect(m, icc),
                                  effective_per_trade=m / design_effect(m, icc))
                             for m in (4, 6, 10) for icc in (0.3, 0.5, 0.7)]

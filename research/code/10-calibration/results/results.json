@@ -158,28 +158,46 @@
   ],
   "streaks": [
    {
+    "label": "wins, 50% hit",
     "n": 24,
     "p": 0.5,
     "k": 5,
     "prob": 0.29953
    },
    {
+    "label": "wins, 40% hit",
     "n": 24,
     "p": 0.4,
     "k": 4,
     "prob": 0.29981
    },
    {
+    "label": "wins, 50% hit",
     "n": 60,
     "p": 0.5,
     "k": 6,
     "prob": 0.3688
    },
    {
+    "label": "wins, 50% hit",
     "n": 12,
     "p": 0.5,
     "k": 4,
     "prob": 0.29859
+   },
+   {
+    "label": "losses, 45% hit book",
+    "n": 24,
+    "p": 0.55,
+    "k": 5,
+    "prob": 0.41975
+   },
+   {
+    "label": "losses, 35% hit book",
+    "n": 24,
+    "p": 0.65,
+    "k": 5,
+    "prob": 0.682655
    }
   ],
   "design_effect": [
@@ -4074,5 +4092,5 @@
    "horizon_trades": 60
   }
  },
- "runtime_seconds": 91.9969573020935
+ "runtime_seconds": 89.78445506095886
 }
