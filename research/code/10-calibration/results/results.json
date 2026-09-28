@@ -349,16 +349,16 @@
   }
  },
  "ledger_demo": {
-  "verify": "ok; head=6334e0dfbf7d4d4234e92b1d42959bc0f4b015410d6ca27e42d45daf685f7acc",
+  "verify": "ok; head=e8fe7d86bd5c689616a2df67424d4920b6e1838ce440df430e75b99cbdc48fdf",
   "ok": true,
-  "head": "6334e0dfbf7d4d4234e92b1d42959bc0f4b015410d6ca27e42d45daf685f7acc",
+  "head": "e8fe7d86bd5c689616a2df67424d4920b6e1838ce440df430e75b99cbdc48fdf",
   "tamper_detected": "existing ledger failed verification: line 2: content hash mismatch (record edited?)",
   "late_forecast_refused": "forecast must be registered before its resolution date",
   "n_records": 5
  },
  "A_forecaster_detection": {
   "params": {
-   "n_sims": 100,
+   "n_sims": 400,
    "universe": 500,
    "n_shadow": 30,
    "n_controls": 10,
@@ -384,34 +384,34 @@
    "alpha": 0.05
   },
   "icc_live_log": {
-   "skilled_0.7": 0.387319226853743,
-   "noise": 0.38756174980751107
+   "skilled_0.7": 0.37210426035634153,
+   "noise": 0.4136950593348822
   },
   "final_platt_maps": {
    "overconfident_0.7_recal": {
     "h1_c+0.00": {
-     "a_mean": 0.0014426170840696638,
-     "b_mean": 0.38591267988002564
+     "a_mean": 0.0031835395811875334,
+     "b_mean": 0.39597456006389586
     },
     "h3_c-0.10": {
-     "a_mean": 0.5283323963925564,
-     "b_mean": 0.3748267006027954
+     "a_mean": 0.5252736317067466,
+     "b_mean": 0.37907803019254804
     },
     "h3_c+0.00": {
-     "a_mean": 0.0035774461729609565,
-     "b_mean": 0.3760489803866329
+     "a_mean": 0.004336284719817087,
+     "b_mean": 0.3748865674227797
     },
     "h3_c+0.10": {
-     "a_mean": -0.5041465735880302,
-     "b_mean": 0.38646538267156616
+     "a_mean": -0.5134636116720378,
+     "b_mean": 0.37998412287525396
     },
     "h6_c+0.00": {
-     "a_mean": 0.0014426170840696638,
-     "b_mean": 0.38591267988002564
+     "a_mean": 0.0031835395811875334,
+     "b_mean": 0.39597456006389586
     },
     "h6_c+0.15": {
-     "a_mean": 0.0014426170840696638,
-     "b_mean": 0.38591267988002564
+     "a_mean": 0.0031835395811875334,
+     "b_mean": 0.39597456006389586
     }
    }
   },
@@ -420,41 +420,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.13,
-      "seq": 0.02,
-      "mean_diff_per_q": 0.00846714740437686,
+      "fixed": 0.12,
+      "seq": 0.06,
+      "mean_diff_per_q": 0.00975678901734709,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.13,
-      "seq": 0.03,
-      "mean_diff_per_q": 0.007493047206231117,
+      "fixed": 0.1175,
+      "seq": 0.1,
+      "mean_diff_per_q": 0.01173506177184454,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.1,
-      "seq": 0.05,
-      "mean_diff_per_q": 0.011596657048542175,
+      "fixed": 0.1125,
+      "seq": 0.115,
+      "mean_diff_per_q": 0.013431015801761405,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.13,
-      "seq": 0.08,
-      "mean_diff_per_q": 0.010769323124480317,
+      "fixed": 0.1525,
+      "seq": 0.1325,
+      "mean_diff_per_q": 0.013504893269284437,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.15,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.010977870920711588,
+      "fixed": 0.19,
+      "seq": 0.1625,
+      "mean_diff_per_q": 0.013711556447159521,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -462,41 +462,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.13,
-      "seq": 0.04,
-      "mean_diff_per_q": 0.004196990376634018,
+      "fixed": 0.12,
+      "seq": 0.0875,
+      "mean_diff_per_q": 0.0041620520702026495,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.11,
-      "seq": 0.05,
-      "mean_diff_per_q": 0.003682324093786906,
+      "fixed": 0.1125,
+      "seq": 0.1175,
+      "mean_diff_per_q": 0.004931230302171549,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.09,
-      "seq": 0.08,
-      "mean_diff_per_q": 0.0052012131809289555,
+      "fixed": 0.1125,
+      "seq": 0.1325,
+      "mean_diff_per_q": 0.0057313241722285945,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.1,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.004713805810559332,
+      "fixed": 0.1525,
+      "seq": 0.145,
+      "mean_diff_per_q": 0.005769904943587612,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.14,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.004769510621866302,
+      "fixed": 0.1825,
+      "seq": 0.1775,
+      "mean_diff_per_q": 0.005865248586581575,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -504,41 +504,41 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.15,
-      "seq": 0.06,
-      "mean_diff_per_q": 0.004028097941335007,
+      "fixed": 0.125,
+      "seq": 0.02,
+      "mean_diff_per_q": 0.0031108605277098533,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.25,
-      "seq": 0.14,
-      "mean_diff_per_q": 0.004205553452534383,
+      "fixed": 0.185,
+      "seq": 0.075,
+      "mean_diff_per_q": 0.0037741303539271572,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.41,
-      "seq": 0.25,
-      "mean_diff_per_q": 0.004506639335740949,
+      "fixed": 0.3375,
+      "seq": 0.1525,
+      "mean_diff_per_q": 0.004164835606603631,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.6,
-      "seq": 0.4,
-      "mean_diff_per_q": 0.004123222057928056,
+      "fixed": 0.565,
+      "seq": 0.3725,
+      "mean_diff_per_q": 0.004201615063784514,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.75,
-      "seq": 0.57,
-      "mean_diff_per_q": 0.004206408101939683,
+      "fixed": 0.7325,
+      "seq": 0.545,
+      "mean_diff_per_q": 0.004225780353089701,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -546,41 +546,41 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.16,
-      "seq": 0.05,
-      "mean_diff_per_q": 0.0017752085931434592,
+      "fixed": 0.12,
+      "seq": 0.025,
+      "mean_diff_per_q": 0.001371969651704923,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.22,
-      "seq": 0.14,
-      "mean_diff_per_q": 0.0018273918238983302,
+      "fixed": 0.195,
+      "seq": 0.075,
+      "mean_diff_per_q": 0.001614479221162528,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.41,
-      "seq": 0.25,
-      "mean_diff_per_q": 0.0019406094171501068,
+      "fixed": 0.345,
+      "seq": 0.15,
+      "mean_diff_per_q": 0.001776100546410747,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.6,
-      "seq": 0.38,
-      "mean_diff_per_q": 0.0017617841407273798,
+      "fixed": 0.5475,
+      "seq": 0.3775,
+      "mean_diff_per_q": 0.0017885871059251316,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.73,
-      "seq": 0.57,
-      "mean_diff_per_q": 0.0017930188770729533,
+      "fixed": 0.735,
+      "seq": 0.5325,
+      "mean_diff_per_q": 0.0017981510261316125,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -592,19 +592,19 @@
      },
      {
       "month": 6,
-      "detect": 0.01
+      "detect": 0.0075
      },
      {
       "month": 12,
-      "detect": 0.06
+      "detect": 0.035
      },
      {
       "month": 24,
-      "detect": 0.1
+      "detect": 0.0875
      },
      {
       "month": 36,
-      "detect": 0.14
+      "detect": 0.13
      }
     ],
     "live+shadow|eprocC": [
@@ -618,55 +618,55 @@
      },
      {
       "month": 12,
-      "detect": 0.12
+      "detect": 0.0625
      },
      {
       "month": 24,
-      "detect": 0.27
+      "detect": 0.24
      },
      {
       "month": 36,
-      "detect": 0.45
+      "detect": 0.41
      }
     ],
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.22,
-      "seq": 0.06,
-      "mean_diff_per_q": 0.0016420698616788443,
+      "fixed": 0.165,
+      "seq": 0.0375,
+      "mean_diff_per_q": 0.0012584832005259183,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.33,
-      "seq": 0.16,
-      "mean_diff_per_q": 0.0019420347391421449,
+      "fixed": 0.26,
+      "seq": 0.095,
+      "mean_diff_per_q": 0.0017138779140691467,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.47,
-      "seq": 0.3,
-      "mean_diff_per_q": 0.00218442407219741,
+      "fixed": 0.4375,
+      "seq": 0.215,
+      "mean_diff_per_q": 0.002017171789176873,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.63,
-      "seq": 0.5,
-      "mean_diff_per_q": 0.002049608940572328,
+      "fixed": 0.65,
+      "seq": 0.4625,
+      "mean_diff_per_q": 0.0020844946248835027,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.76,
-      "seq": 0.65,
-      "mean_diff_per_q": 0.0020948942235060972,
+      "fixed": 0.7975,
+      "seq": 0.6375,
+      "mean_diff_per_q": 0.0021138139778698315,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -674,41 +674,41 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.23,
-      "seq": 0.06,
-      "mean_diff_per_q": 0.0007514286431742127,
+      "fixed": 0.155,
+      "seq": 0.0425,
+      "mean_diff_per_q": 0.000575801921735909,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.34,
-      "seq": 0.16,
-      "mean_diff_per_q": 0.0008658757086986366,
+      "fixed": 0.2625,
+      "seq": 0.1,
+      "mean_diff_per_q": 0.0007528947529936086,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.48,
-      "seq": 0.32,
-      "mean_diff_per_q": 0.0009608493843012767,
+      "fixed": 0.445,
+      "seq": 0.22,
+      "mean_diff_per_q": 0.0008799475952039298,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.62,
-      "seq": 0.54,
-      "mean_diff_per_q": 0.0008936656130469924,
+      "fixed": 0.655,
+      "seq": 0.465,
+      "mean_diff_per_q": 0.0009057031486328701,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.75,
-      "seq": 0.66,
-      "mean_diff_per_q": 0.0009100580648094625,
+      "fixed": 0.795,
+      "seq": 0.6425,
+      "mean_diff_per_q": 0.0009175102604834967,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -716,23 +716,23 @@
     "live+shadow+gym|eproc1m": [
      {
       "month": 3,
-      "detect": 0.02
+      "detect": 0.0075
      },
      {
       "month": 6,
-      "detect": 0.05
+      "detect": 0.0325
      },
      {
       "month": 12,
-      "detect": 0.15
+      "detect": 0.1025
      },
      {
       "month": 24,
-      "detect": 0.23
+      "detect": 0.215
      },
      {
       "month": 36,
-      "detect": 0.32
+      "detect": 0.325
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -742,51 +742,51 @@
      },
      {
       "month": 6,
-      "detect": 0.01
+      "detect": 0.0175
      },
      {
       "month": 12,
-      "detect": 0.17
+      "detect": 0.0925
      },
      {
       "month": 24,
-      "detect": 0.36
+      "detect": 0.3575
      },
      {
       "month": 36,
-      "detect": 0.53
+      "detect": 0.5375
      }
     ],
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.07,
-      "seq": 0.02,
-      "mean_pnl": 0.0147118593851422
+      "fixed": 0.06,
+      "seq": 0.015,
+      "mean_pnl": 0.009576398341607093
      },
      {
       "month": 6,
-      "fixed": 0.08,
+      "fixed": 0.075,
       "seq": 0.03,
-      "mean_pnl": 0.013278782315305038
+      "mean_pnl": 0.007469295740168699
      },
      {
       "month": 12,
-      "fixed": 0.08,
-      "seq": 0.07,
-      "mean_pnl": 0.01081195802908641
+      "fixed": 0.0975,
+      "seq": 0.055,
+      "mean_pnl": 0.009345244145320487
      },
      {
       "month": 24,
-      "fixed": 0.12,
-      "seq": 0.08,
-      "mean_pnl": 0.008193956208427335
+      "fixed": 0.145,
+      "seq": 0.0825,
+      "mean_pnl": 0.00914806740925066
      },
      {
       "month": 36,
-      "fixed": 0.19,
-      "seq": 0.12,
-      "mean_pnl": 0.009202971833984814
+      "fixed": 0.16,
+      "seq": 0.1,
+      "mean_pnl": 0.008763654543596493
      }
     ],
     "pnl|eprocess": [
@@ -796,11 +796,11 @@
      },
      {
       "month": 6,
-      "detect": 0.01
+      "detect": 0.0025
      },
      {
       "month": 12,
-      "detect": 0.01
+      "detect": 0.0175
      },
      {
       "month": 24,
@@ -808,7 +808,7 @@
      },
      {
       "month": 36,
-      "detect": 0.06
+      "detect": 0.055
      }
     ]
    },
@@ -816,41 +816,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.15,
-      "seq": 0.07,
-      "mean_diff_per_q": 0.01079259829651563,
+      "fixed": 0.21,
+      "seq": 0.095,
+      "mean_diff_per_q": 0.030306037191722823,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.12,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.024605302508362004,
+      "fixed": 0.175,
+      "seq": 0.14,
+      "mean_diff_per_q": 0.0351684966652937,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.16,
-      "seq": 0.11,
-      "mean_diff_per_q": 0.019214165016162434,
+      "fixed": 0.19,
+      "seq": 0.185,
+      "mean_diff_per_q": 0.04042220821990895,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.2,
-      "seq": 0.15,
-      "mean_diff_per_q": 0.02868391389427546,
+      "fixed": 0.2425,
+      "seq": 0.235,
+      "mean_diff_per_q": 0.03948483700914456,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.24,
-      "seq": 0.19,
-      "mean_diff_per_q": 0.03211870482215593,
+      "fixed": 0.3175,
+      "seq": 0.3025,
+      "mean_diff_per_q": 0.04092682523494187,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -858,41 +858,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.15,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.004026808705404546,
+      "fixed": 0.21,
+      "seq": 0.1275,
+      "mean_diff_per_q": 0.01321852203017126,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.1,
-      "seq": 0.11,
-      "mean_diff_per_q": 0.010026012562919122,
+      "fixed": 0.1725,
+      "seq": 0.1675,
+      "mean_diff_per_q": 0.015037126052774772,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.11,
-      "seq": 0.13,
-      "mean_diff_per_q": 0.007995557311616889,
+      "fixed": 0.175,
+      "seq": 0.1975,
+      "mean_diff_per_q": 0.017288724346475704,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.21,
-      "seq": 0.17,
-      "mean_diff_per_q": 0.012248721730379943,
+      "fixed": 0.2475,
+      "seq": 0.25,
+      "mean_diff_per_q": 0.016931976453678547,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.24,
-      "seq": 0.2,
-      "mean_diff_per_q": 0.013722578898689363,
+      "fixed": 0.3275,
+      "seq": 0.3125,
+      "mean_diff_per_q": 0.01752443142065013,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -900,41 +900,41 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.19,
-      "seq": 0.06,
-      "mean_diff_per_q": 0.00903060528200428,
+      "fixed": 0.2025,
+      "seq": 0.065,
+      "mean_diff_per_q": 0.009314105155660297,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.37,
-      "seq": 0.18,
-      "mean_diff_per_q": 0.010178621891342714,
+      "fixed": 0.38,
+      "seq": 0.185,
+      "mean_diff_per_q": 0.010442924326288731,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.61,
-      "seq": 0.37,
-      "mean_diff_per_q": 0.010407136071433136,
+      "fixed": 0.6975,
+      "seq": 0.4575,
+      "mean_diff_per_q": 0.011373631988584256,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 0.93,
-      "seq": 0.79,
-      "mean_diff_per_q": 0.011292163053232067,
+      "seq": 0.7775,
+      "mean_diff_per_q": 0.0113419727187498,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.98,
-      "seq": 0.95,
-      "mean_diff_per_q": 0.011450715129385504,
+      "fixed": 0.985,
+      "seq": 0.9475,
+      "mean_diff_per_q": 0.011578698422981244,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -942,41 +942,41 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.19,
-      "seq": 0.07,
-      "mean_diff_per_q": 0.003883241024199057,
+      "fixed": 0.195,
+      "seq": 0.065,
+      "mean_diff_per_q": 0.004098934856790854,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.37,
-      "seq": 0.18,
-      "mean_diff_per_q": 0.004302226318407672,
+      "fixed": 0.3625,
+      "seq": 0.1825,
+      "mean_diff_per_q": 0.004456574184411055,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.62,
-      "seq": 0.38,
-      "mean_diff_per_q": 0.004414524817329287,
+      "fixed": 0.6825,
+      "seq": 0.45,
+      "mean_diff_per_q": 0.004838613311371202,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 0.92,
-      "seq": 0.78,
-      "mean_diff_per_q": 0.004793042726249235,
+      "seq": 0.7625,
+      "mean_diff_per_q": 0.004817514657374377,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.98,
-      "seq": 0.95,
-      "mean_diff_per_q": 0.004862890698817407,
+      "fixed": 0.985,
+      "seq": 0.945,
+      "mean_diff_per_q": 0.004917304285246117,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -992,15 +992,15 @@
      },
      {
       "month": 12,
-      "detect": 0.05
+      "detect": 0.0875
      },
      {
       "month": 24,
-      "detect": 0.19
+      "detect": 0.2125
      },
      {
       "month": 36,
-      "detect": 0.34
+      "detect": 0.3425
      }
     ],
     "live+shadow|eprocC": [
@@ -1010,51 +1010,51 @@
      },
      {
       "month": 6,
-      "detect": 0.01
+      "detect": 0.035
      },
      {
       "month": 12,
-      "detect": 0.14
+      "detect": 0.2225
      },
      {
       "month": 24,
-      "detect": 0.72
+      "detect": 0.65
      },
      {
       "month": 36,
-      "detect": 0.92
+      "detect": 0.8925
      }
     ],
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.26,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.0034907663178061293,
+      "fixed": 0.27,
+      "seq": 0.095,
+      "mean_diff_per_q": 0.0036774060681871758,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.4,
-      "seq": 0.24,
-      "mean_diff_per_q": 0.004641348247598375,
+      "fixed": 0.4675,
+      "seq": 0.245,
+      "mean_diff_per_q": 0.0047465276701206425,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.71,
-      "seq": 0.51,
-      "mean_diff_per_q": 0.005113640078266129,
+      "fixed": 0.7575,
+      "seq": 0.5475,
+      "mean_diff_per_q": 0.0055174540281985,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.97,
-      "seq": 0.88,
-      "mean_diff_per_q": 0.005654220147459474,
+      "fixed": 0.9575,
+      "seq": 0.8625,
+      "mean_diff_per_q": 0.005667232242886518,
       "questions": 8528.0,
       "clusters": 5784.0
      },
@@ -1062,7 +1062,7 @@
       "month": 36,
       "fixed": 0.99,
       "seq": 0.98,
-      "mean_diff_per_q": 0.005771990333805776,
+      "mean_diff_per_q": 0.005812613677192316,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1070,41 +1070,41 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.25,
-      "seq": 0.08,
-      "mean_diff_per_q": 0.0015611688089135314,
+      "fixed": 0.2675,
+      "seq": 0.1075,
+      "mean_diff_per_q": 0.001675679120937892,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.4,
-      "seq": 0.25,
-      "mean_diff_per_q": 0.0020200869877778104,
+      "fixed": 0.4775,
+      "seq": 0.245,
+      "mean_diff_per_q": 0.002080985585951973,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.68,
-      "seq": 0.48,
-      "mean_diff_per_q": 0.0022251794154532637,
+      "fixed": 0.7575,
+      "seq": 0.5375,
+      "mean_diff_per_q": 0.002402184809229015,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.97,
-      "seq": 0.88,
-      "mean_diff_per_q": 0.002453741388478639,
+      "fixed": 0.955,
+      "seq": 0.8575,
+      "mean_diff_per_q": 0.002460045077194259,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.98,
-      "seq": 0.98,
-      "mean_diff_per_q": 0.002503722920007017,
+      "fixed": 0.99,
+      "seq": 0.9775,
+      "mean_diff_per_q": 0.0025197735610393585,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1112,23 +1112,23 @@
     "live+shadow+gym|eproc1m": [
      {
       "month": 3,
-      "detect": 0.01
+      "detect": 0.0175
      },
      {
       "month": 6,
-      "detect": 0.06
+      "detect": 0.07
      },
      {
       "month": 12,
-      "detect": 0.22
+      "detect": 0.24
      },
      {
       "month": 24,
-      "detect": 0.55
+      "detect": 0.5025
      },
      {
       "month": 36,
-      "detect": 0.71
+      "detect": 0.6775
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -1138,61 +1138,61 @@
      },
      {
       "month": 6,
-      "detect": 0.03
+      "detect": 0.05
      },
      {
       "month": 12,
-      "detect": 0.26
+      "detect": 0.325
      },
      {
       "month": 24,
-      "detect": 0.81
+      "detect": 0.755
      },
      {
       "month": 36,
-      "detect": 0.97
+      "detect": 0.94
      }
     ],
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.06,
-      "seq": 0.02,
-      "mean_pnl": 0.013900611810372625
+      "fixed": 0.115,
+      "seq": 0.0275,
+      "mean_pnl": 0.019480496237612468
      },
      {
       "month": 6,
-      "fixed": 0.08,
-      "seq": 0.03,
-      "mean_pnl": 0.011808316440281243
+      "fixed": 0.1275,
+      "seq": 0.0475,
+      "mean_pnl": 0.018240630620870685
      },
      {
       "month": 12,
       "fixed": 0.17,
-      "seq": 0.07,
-      "mean_pnl": 0.013471154537723086
+      "seq": 0.0775,
+      "mean_pnl": 0.017591498899661842
      },
      {
       "month": 24,
-      "fixed": 0.2,
-      "seq": 0.11,
-      "mean_pnl": 0.014832782289432741
+      "fixed": 0.275,
+      "seq": 0.125,
+      "mean_pnl": 0.01681391066177613
      },
      {
       "month": 36,
-      "fixed": 0.34,
-      "seq": 0.14,
-      "mean_pnl": 0.015618521202868874
+      "fixed": 0.37,
+      "seq": 0.175,
+      "mean_pnl": 0.016704927188074124
      }
     ],
     "pnl|eprocess": [
      {
       "month": 3,
-      "detect": 0.01
+      "detect": 0.0
      },
      {
       "month": 6,
-      "detect": 0.01
+      "detect": 0.005
      },
      {
       "month": 12,
@@ -1200,11 +1200,11 @@
      },
      {
       "month": 24,
-      "detect": 0.08
+      "detect": 0.0825
      },
      {
       "month": 36,
-      "detect": 0.12
+      "detect": 0.13
      }
     ]
    },
@@ -1212,41 +1212,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.2,
-      "seq": 0.15,
-      "mean_diff_per_q": 0.033520012531877884,
+      "fixed": 0.2475,
+      "seq": 0.1225,
+      "mean_diff_per_q": 0.04882727127937499,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.15,
-      "seq": 0.17,
-      "mean_diff_per_q": 0.044954996955917155,
+      "fixed": 0.2275,
+      "seq": 0.195,
+      "mean_diff_per_q": 0.06351119335512306,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.23,
-      "seq": 0.21,
-      "mean_diff_per_q": 0.06607624441164744,
+      "fixed": 0.29,
+      "seq": 0.28,
+      "mean_diff_per_q": 0.07502135875347679,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.36,
-      "seq": 0.34,
-      "mean_diff_per_q": 0.06775279059430366,
+      "fixed": 0.38,
+      "seq": 0.36,
+      "mean_diff_per_q": 0.07666716579774091,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.49,
-      "seq": 0.45,
-      "mean_diff_per_q": 0.07428190144588785,
+      "fixed": 0.53,
+      "seq": 0.4475,
+      "mean_diff_per_q": 0.07815836348100365,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -1254,41 +1254,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.2,
-      "seq": 0.15,
-      "mean_diff_per_q": 0.01490751549232157,
+      "fixed": 0.2425,
+      "seq": 0.175,
+      "mean_diff_per_q": 0.02136476252272713,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.12,
-      "seq": 0.17,
-      "mean_diff_per_q": 0.019423804915846034,
+      "fixed": 0.215,
+      "seq": 0.23,
+      "mean_diff_per_q": 0.026900765774104426,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.24,
-      "seq": 0.21,
-      "mean_diff_per_q": 0.028416881963388745,
+      "fixed": 0.275,
+      "seq": 0.3025,
+      "mean_diff_per_q": 0.03215350611061693,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.38,
-      "seq": 0.33,
-      "mean_diff_per_q": 0.0289276048213588,
+      "fixed": 0.39,
+      "seq": 0.375,
+      "mean_diff_per_q": 0.03259116427149481,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.49,
-      "seq": 0.44,
-      "mean_diff_per_q": 0.0315751046017662,
+      "fixed": 0.5275,
+      "seq": 0.45,
+      "mean_diff_per_q": 0.03322677123424345,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -1296,33 +1296,33 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.29,
-      "seq": 0.1,
-      "mean_diff_per_q": 0.01797816135219466,
+      "fixed": 0.3275,
+      "seq": 0.1225,
+      "mean_diff_per_q": 0.01882060797530549,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.61,
-      "seq": 0.39,
-      "mean_diff_per_q": 0.02075888913560383,
+      "fixed": 0.5975,
+      "seq": 0.3575,
+      "mean_diff_per_q": 0.02044333552958155,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.87,
-      "seq": 0.71,
-      "mean_diff_per_q": 0.021350466542435144,
+      "fixed": 0.89,
+      "seq": 0.7375,
+      "mean_diff_per_q": 0.021428503917563842,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 1.0,
-      "seq": 0.96,
-      "mean_diff_per_q": 0.021607512860194644,
+      "seq": 0.985,
+      "mean_diff_per_q": 0.022316197929524124,
       "questions": 3728.0,
       "clusters": 984.0
      },
@@ -1330,7 +1330,7 @@
       "month": 36,
       "fixed": 1.0,
       "seq": 1.0,
-      "mean_diff_per_q": 0.02225199161995258,
+      "mean_diff_per_q": 0.022738287126404168,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -1338,33 +1338,33 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.28,
-      "seq": 0.08,
-      "mean_diff_per_q": 0.007887241891914289,
+      "fixed": 0.325,
+      "seq": 0.135,
+      "mean_diff_per_q": 0.008234281337464757,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.61,
-      "seq": 0.37,
-      "mean_diff_per_q": 0.008900154834285334,
+      "fixed": 0.5975,
+      "seq": 0.3475,
+      "mean_diff_per_q": 0.00872860254206425,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.86,
-      "seq": 0.69,
-      "mean_diff_per_q": 0.009072987990513133,
+      "fixed": 0.885,
+      "seq": 0.74,
+      "mean_diff_per_q": 0.009101075528794286,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 1.0,
-      "seq": 0.95,
-      "mean_diff_per_q": 0.0091524592096177,
+      "seq": 0.985,
+      "mean_diff_per_q": 0.00946058866968587,
       "questions": 3728.0,
       "clusters": 984.0
      },
@@ -1372,7 +1372,7 @@
       "month": 36,
       "fixed": 1.0,
       "seq": 1.0,
-      "mean_diff_per_q": 0.009413855745002598,
+      "mean_diff_per_q": 0.009638934432281213,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -1380,11 +1380,11 @@
     "live+shadow|eproc1m": [
      {
       "month": 3,
-      "detect": 0.0
+      "detect": 0.0225
      },
      {
       "month": 6,
-      "detect": 0.05
+      "detect": 0.055
      },
      {
       "month": 12,
@@ -1392,29 +1392,29 @@
      },
      {
       "month": 24,
-      "detect": 0.42
+      "detect": 0.3675
      },
      {
       "month": 36,
-      "detect": 0.58
+      "detect": 0.5975
      }
     ],
     "live+shadow|eprocC": [
      {
       "month": 3,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 6,
-      "detect": 0.09
+      "detect": 0.0975
      },
      {
       "month": 12,
-      "detect": 0.55
+      "detect": 0.53
      },
      {
       "month": 24,
-      "detect": 0.94
+      "detect": 0.9525
      },
      {
       "month": 36,
@@ -1424,33 +1424,33 @@
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.37,
-      "seq": 0.15,
-      "mean_diff_per_q": 0.006740020630037576,
+      "fixed": 0.435,
+      "seq": 0.2025,
+      "mean_diff_per_q": 0.007272758752820281,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.71,
-      "seq": 0.5,
-      "mean_diff_per_q": 0.0095491330990564,
+      "fixed": 0.675,
+      "seq": 0.4525,
+      "mean_diff_per_q": 0.009291860398607849,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.93,
-      "seq": 0.79,
-      "mean_diff_per_q": 0.010501430735297645,
+      "fixed": 0.9275,
+      "seq": 0.8175,
+      "mean_diff_per_q": 0.010403762370530995,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 1.0,
-      "seq": 1.0,
-      "mean_diff_per_q": 0.010929948462404747,
+      "seq": 0.995,
+      "mean_diff_per_q": 0.011085994044697602,
       "questions": 8528.0,
       "clusters": 5784.0
      },
@@ -1458,7 +1458,7 @@
       "month": 36,
       "fixed": 1.0,
       "seq": 1.0,
-      "mean_diff_per_q": 0.011235289927124373,
+      "mean_diff_per_q": 0.011391486400982349,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1466,33 +1466,33 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.4,
-      "seq": 0.14,
-      "mean_diff_per_q": 0.0030480422428854786,
+      "fixed": 0.4525,
+      "seq": 0.2075,
+      "mean_diff_per_q": 0.0032920828927020464,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.71,
-      "seq": 0.5,
-      "mean_diff_per_q": 0.004208161866701644,
+      "fixed": 0.6875,
+      "seq": 0.4675,
+      "mean_diff_per_q": 0.004074754614237159,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.91,
-      "seq": 0.8,
-      "mean_diff_per_q": 0.0045762815010651076,
+      "fixed": 0.9325,
+      "seq": 0.8275,
+      "mean_diff_per_q": 0.004523069779543202,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 1.0,
-      "seq": 1.0,
-      "mean_diff_per_q": 0.0047412090051896375,
+      "seq": 0.995,
+      "mean_diff_per_q": 0.004799366524988,
       "questions": 8528.0,
       "clusters": 5784.0
      },
@@ -1500,7 +1500,7 @@
       "month": 36,
       "fixed": 1.0,
       "seq": 1.0,
-      "mean_diff_per_q": 0.00485793425658168,
+      "mean_diff_per_q": 0.004928133298993445,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1508,41 +1508,41 @@
     "live+shadow+gym|eproc1m": [
      {
       "month": 3,
-      "detect": 0.02
+      "detect": 0.0475
      },
      {
       "month": 6,
-      "detect": 0.17
+      "detect": 0.145
      },
      {
       "month": 12,
-      "detect": 0.44
+      "detect": 0.385
      },
      {
       "month": 24,
-      "detect": 0.83
+      "detect": 0.7175
      },
      {
       "month": 36,
-      "detect": 0.92
+      "detect": 0.9175
      }
     ],
     "live+shadow+gym|eprocC": [
      {
       "month": 3,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 6,
-      "detect": 0.14
+      "detect": 0.1525
      },
      {
       "month": 12,
-      "detect": 0.67
+      "detect": 0.6325
      },
      {
       "month": 24,
-      "detect": 0.99
+      "detect": 0.9775
      },
      {
       "month": 36,
@@ -1552,55 +1552,55 @@
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.07,
-      "seq": 0.02,
-      "mean_pnl": 0.019477977959178775
+      "fixed": 0.11,
+      "seq": 0.0125,
+      "mean_pnl": 0.024772730988339174
      },
      {
       "month": 6,
-      "fixed": 0.14,
+      "fixed": 0.1625,
       "seq": 0.05,
-      "mean_pnl": 0.01773367868961524
+      "mean_pnl": 0.023310699014794718
      },
      {
       "month": 12,
-      "fixed": 0.21,
-      "seq": 0.09,
-      "mean_pnl": 0.019600594252583387
+      "fixed": 0.2475,
+      "seq": 0.1075,
+      "mean_pnl": 0.02318027529431065
      },
      {
       "month": 24,
       "fixed": 0.37,
-      "seq": 0.23,
-      "mean_pnl": 0.022429743579061967
+      "seq": 0.1875,
+      "mean_pnl": 0.02243853596791422
      },
      {
       "month": 36,
-      "fixed": 0.55,
-      "seq": 0.33,
-      "mean_pnl": 0.023178762333364963
+      "fixed": 0.5125,
+      "seq": 0.2925,
+      "mean_pnl": 0.022731864162263204
      }
     ],
     "pnl|eprocess": [
      {
       "month": 3,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.0175
      },
      {
       "month": 12,
-      "detect": 0.06
+      "detect": 0.0675
      },
      {
       "month": 24,
-      "detect": 0.13
+      "detect": 0.14
      },
      {
       "month": 36,
-      "detect": 0.24
+      "detect": 0.2225
      }
     ]
    },
@@ -1608,41 +1608,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.09,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.0917812357776268,
+      "fixed": 0.155,
+      "seq": 0.14,
+      "mean_diff_per_q": -0.03841719043093165,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.04,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.0865135067688262,
+      "fixed": 0.1125,
+      "seq": 0.1625,
+      "mean_diff_per_q": -0.0657972619504945,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.06,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.11582431762347213,
+      "fixed": 0.065,
+      "seq": 0.1725,
+      "mean_diff_per_q": -0.08349095188497697,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.01,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.11726057795286172,
+      "fixed": 0.03,
+      "seq": 0.1775,
+      "mean_diff_per_q": -0.08241424479825842,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
       "fixed": 0.02,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.12435020138052816,
+      "seq": 0.18,
+      "mean_diff_per_q": -0.08078261106932207,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -1650,41 +1650,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.09,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.02512350910464936,
+      "fixed": 0.155,
+      "seq": 0.1425,
+      "mean_diff_per_q": -0.005394610722759834,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.01639611502063195,
+      "fixed": 0.1025,
+      "seq": 0.1575,
+      "mean_diff_per_q": -0.006689698296283706,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.04,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.01899362401912104,
+      "fixed": 0.07,
+      "seq": 0.17,
+      "mean_diff_per_q": -0.006523216198876056,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.04,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.016235190517928603,
+      "fixed": 0.0575,
+      "seq": 0.18,
+      "mean_diff_per_q": -0.004056260893404918,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.02,
-      "seq": 0.09,
-      "mean_diff_per_q": -0.016740971608900902,
+      "fixed": 0.05,
+      "seq": 0.19,
+      "mean_diff_per_q": -0.003214818132820241,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -1692,41 +1692,41 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.029892402365399865,
+      "fixed": 0.0125,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.031525230474500975,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.03434338483278687,
+      "fixed": 0.0075,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.03565904625636255,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.03840012767457312,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.036922977356836445,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.04056538145829256,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.038544554346425626,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.03916857119206037,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.037831188500599654,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -1734,41 +1734,41 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.006749952605161635,
+      "fixed": 0.015,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.007459373766686317,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.006668739830176046,
+      "fixed": 0.015,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.007181999262331029,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.007681182585659717,
+      "fixed": 0.0025,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.007098018627599238,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.008160988931608376,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.0074325673139213925,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0075530581838004615,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.007106660179891544,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -1820,41 +1820,41 @@
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.012372996976012032,
+      "fixed": 0.015,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.012027605003657982,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.016139705261419956,
+      "fixed": 0.0075,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.01623510601434138,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.018848666100539892,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.017897678101527932,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.020182270020714422,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.019349675521287416,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.019786439160629766,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.019158073273939667,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1863,40 +1863,40 @@
      {
       "month": 3,
       "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.003639494291810404,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.003458251729309644,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.003929992504785911,
+      "fixed": 0.0125,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.003930110174970365,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.004465719790778437,
+      "fixed": 0.0025,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.004060363740858294,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.004673840487420524,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.004381720876714905,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.004450642121429856,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.004236052999267106,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -1908,19 +1908,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.005
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -1948,33 +1948,33 @@
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.1,
-      "seq": 0.04,
-      "mean_pnl": 0.021056295757242872
+      "fixed": 0.0975,
+      "seq": 0.015,
+      "mean_pnl": 0.025523677538732612
      },
      {
       "month": 6,
-      "fixed": 0.11,
-      "seq": 0.06,
-      "mean_pnl": 0.022552104626555245
+      "fixed": 0.175,
+      "seq": 0.0475,
+      "mean_pnl": 0.026464220267328163
      },
      {
       "month": 12,
-      "fixed": 0.26,
-      "seq": 0.1,
-      "mean_pnl": 0.02127980240346588
+      "fixed": 0.25,
+      "seq": 0.12,
+      "mean_pnl": 0.02547887191522061
      },
      {
       "month": 24,
-      "fixed": 0.35,
-      "seq": 0.19,
-      "mean_pnl": 0.020554179905848197
+      "fixed": 0.4375,
+      "seq": 0.2175,
+      "mean_pnl": 0.024837668281846272
      },
      {
       "month": 36,
-      "fixed": 0.4,
-      "seq": 0.24,
-      "mean_pnl": 0.019042552775970355
+      "fixed": 0.5725,
+      "seq": 0.36,
+      "mean_pnl": 0.02466389738791032
      }
     ],
     "pnl|eprocess": [
@@ -1984,19 +1984,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 12,
-      "detect": 0.03
+      "detect": 0.0725
      },
      {
       "month": 24,
-      "detect": 0.13
+      "detect": 0.16
      },
      {
       "month": 36,
-      "detect": 0.17
+      "detect": 0.28
      }
     ]
    },
@@ -2004,41 +2004,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.14,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.07128424906226405,
+      "fixed": 0.195,
+      "seq": 0.0375,
+      "mean_diff_per_q": -0.01845049499814819,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.04,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.027491517161291855,
+      "fixed": 0.1125,
+      "seq": 0.075,
+      "mean_diff_per_q": -0.005762892789720886,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.08,
-      "seq": 0.08,
-      "mean_diff_per_q": 0.012673972775631655,
+      "fixed": 0.13,
+      "seq": 0.105,
+      "mean_diff_per_q": 0.0297668866127494,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.14,
-      "seq": 0.1,
-      "mean_diff_per_q": 0.03899765117525586,
+      "fixed": 0.19,
+      "seq": 0.16,
+      "mean_diff_per_q": 0.0518043694170138,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.2,
-      "seq": 0.13,
-      "mean_diff_per_q": 0.04491408768210636,
+      "fixed": 0.2825,
+      "seq": 0.2,
+      "mean_diff_per_q": 0.059541658019106464,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2046,41 +2046,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.1,
-      "seq": 0.04,
-      "mean_diff_per_q": -0.017190645348087737,
+      "fixed": 0.1575,
+      "seq": 0.0525,
+      "mean_diff_per_q": 0.0024019881163383416,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.03,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.0017532621712120953,
+      "fixed": 0.1,
+      "seq": 0.0875,
+      "mean_diff_per_q": 0.006938531902841816,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.09,
-      "seq": 0.07,
-      "mean_diff_per_q": 0.00984001570596146,
+      "fixed": 0.1225,
+      "seq": 0.1175,
+      "mean_diff_per_q": 0.017684403406509022,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.14,
-      "seq": 0.09,
-      "mean_diff_per_q": 0.018493367303319484,
+      "fixed": 0.21,
+      "seq": 0.1675,
+      "mean_diff_per_q": 0.024747830921043948,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.19,
-      "seq": 0.11,
-      "mean_diff_per_q": 0.020655699732911436,
+      "fixed": 0.3175,
+      "seq": 0.205,
+      "mean_diff_per_q": 0.02718562301759377,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2088,41 +2088,41 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.023574996853033298,
+      "fixed": 0.015,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.025011171687283874,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.007599433449890403,
+      "fixed": 0.025,
+      "seq": 0.0175,
+      "mean_diff_per_q": -0.009397925701473969,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.13,
-      "seq": 0.02,
-      "mean_diff_per_q": 0.002796811318303705,
+      "fixed": 0.0975,
+      "seq": 0.035,
+      "mean_diff_per_q": 0.0029823777876307844,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.53,
-      "seq": 0.29,
-      "mean_diff_per_q": 0.011380035704754148,
+      "fixed": 0.5575,
+      "seq": 0.2575,
+      "mean_diff_per_q": 0.011714320182828072,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.86,
+      "fixed": 0.89,
       "seq": 0.72,
-      "mean_diff_per_q": 0.014818678417298108,
+      "mean_diff_per_q": 0.015037003932181228,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2130,41 +2130,41 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.004021573017448215,
+      "fixed": 0.0175,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.004631643449053496,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.05,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.0010283670544641074,
+      "fixed": 0.0425,
+      "seq": 0.015,
+      "mean_diff_per_q": -0.0017127637698813787,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.15,
-      "seq": 0.02,
-      "mean_diff_per_q": 0.0024486852705563594,
+      "fixed": 0.145,
+      "seq": 0.0425,
+      "mean_diff_per_q": 0.0025319502343935916,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.64,
-      "seq": 0.38,
-      "mean_diff_per_q": 0.005458407218966636,
+      "fixed": 0.65,
+      "seq": 0.3675,
+      "mean_diff_per_q": 0.005663492559999776,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.91,
-      "seq": 0.78,
-      "mean_diff_per_q": 0.006707887991164806,
+      "fixed": 0.9375,
+      "seq": 0.805,
+      "mean_diff_per_q": 0.006846813430287906,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2180,15 +2180,15 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 24,
-      "detect": 0.02
+      "detect": 0.0275
      },
      {
       "month": 36,
-      "detect": 0.09
+      "detect": 0.11
      }
     ],
     "live+shadow|eprocC": [
@@ -2206,51 +2206,51 @@
      },
      {
       "month": 24,
-      "detect": 0.09
+      "detect": 0.08
      },
      {
       "month": 36,
-      "detect": 0.49
+      "detect": 0.4925
      }
     ],
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.008536781532161114,
+      "fixed": 0.0275,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.008256331688013296,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.03,
-      "seq": 0.02,
-      "mean_diff_per_q": -0.003328870560277713,
+      "fixed": 0.0225,
+      "seq": 0.0125,
+      "mean_diff_per_q": -0.003630023470272966,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.14,
-      "seq": 0.03,
-      "mean_diff_per_q": 0.0014865054917092319,
+      "fixed": 0.1325,
+      "seq": 0.0375,
+      "mean_diff_per_q": 0.0018237733134530438,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.62,
-      "seq": 0.38,
-      "mean_diff_per_q": 0.005773280280203196,
+      "fixed": 0.645,
+      "seq": 0.3625,
+      "mean_diff_per_q": 0.005926813803076855,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.93,
+      "fixed": 0.9275,
       "seq": 0.8,
-      "mean_diff_per_q": 0.007441522137050554,
+      "mean_diff_per_q": 0.007588668480247909,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -2258,41 +2258,41 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.02,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.0019295733139383443,
+      "fixed": 0.025,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.0017753846961364283,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.04,
-      "seq": 0.02,
-      "mean_diff_per_q": -0.0005704364336861614,
+      "fixed": 0.045,
+      "seq": 0.015,
+      "mean_diff_per_q": -0.0006461818412689722,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.18,
+      "fixed": 0.1825,
       "seq": 0.06,
-      "mean_diff_per_q": 0.0012016654190940646,
+      "mean_diff_per_q": 0.0013628199673415137,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.7,
-      "seq": 0.47,
-      "mean_diff_per_q": 0.0027934262896035546,
+      "fixed": 0.7425,
+      "seq": 0.4675,
+      "mean_diff_per_q": 0.0028854652995270735,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.97,
-      "seq": 0.89,
-      "mean_diff_per_q": 0.003415420356530553,
+      "fixed": 0.96,
+      "seq": 0.8925,
+      "mean_diff_per_q": 0.0035011885889465024,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -2308,15 +2308,15 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.01
      },
      {
       "month": 24,
-      "detect": 0.05
+      "detect": 0.0775
      },
      {
       "month": 36,
-      "detect": 0.28
+      "detect": 0.33
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -2330,47 +2330,47 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 24,
-      "detect": 0.13
+      "detect": 0.1325
      },
      {
       "month": 36,
-      "detect": 0.58
+      "detect": 0.615
      }
     ],
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.1,
-      "seq": 0.04,
-      "mean_pnl": 0.021056295757242872
+      "fixed": 0.0975,
+      "seq": 0.015,
+      "mean_pnl": 0.025523677538732612
      },
      {
       "month": 6,
-      "fixed": 0.11,
-      "seq": 0.06,
-      "mean_pnl": 0.022552104626555245
+      "fixed": 0.175,
+      "seq": 0.0475,
+      "mean_pnl": 0.026464220267328163
      },
      {
       "month": 12,
-      "fixed": 0.26,
-      "seq": 0.1,
-      "mean_pnl": 0.02127980240346588
+      "fixed": 0.25,
+      "seq": 0.12,
+      "mean_pnl": 0.02547887191522061
      },
      {
       "month": 24,
-      "fixed": 0.35,
-      "seq": 0.19,
-      "mean_pnl": 0.020554179905848197
+      "fixed": 0.4375,
+      "seq": 0.2175,
+      "mean_pnl": 0.024837668281846272
      },
      {
       "month": 36,
-      "fixed": 0.4,
-      "seq": 0.24,
-      "mean_pnl": 0.019042552775970355
+      "fixed": 0.5725,
+      "seq": 0.36,
+      "mean_pnl": 0.02466389738791032
      }
     ],
     "pnl|eprocess": [
@@ -2380,19 +2380,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 12,
-      "detect": 0.03
+      "detect": 0.0725
      },
      {
       "month": 24,
-      "detect": 0.13
+      "detect": 0.16
      },
      {
       "month": 36,
-      "detect": 0.17
+      "detect": 0.28
      }
     ]
    },
@@ -2400,41 +2400,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.1,
-      "seq": 0.03,
-      "mean_diff_per_q": -0.0318029604356479,
+      "fixed": 0.1075,
+      "seq": 0.025,
+      "mean_diff_per_q": -0.017747962434316488,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.05,
-      "seq": 0.04,
-      "mean_diff_per_q": -0.036405140206039306,
+      "fixed": 0.0675,
+      "seq": 0.0425,
+      "mean_diff_per_q": -0.024078265702022303,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.03,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.038405610224652935,
+      "fixed": 0.0175,
+      "seq": 0.0475,
+      "mean_diff_per_q": -0.03235310988011331,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.02,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.03820866440486159,
+      "fixed": 0.01,
+      "seq": 0.0475,
+      "mean_diff_per_q": -0.03817328017821186,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.03955596131274181,
+      "seq": 0.0475,
+      "mean_diff_per_q": -0.03844358934125912,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2442,41 +2442,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.1,
-      "seq": 0.04,
-      "mean_diff_per_q": -0.014104777022894262,
+      "fixed": 0.1075,
+      "seq": 0.0475,
+      "mean_diff_per_q": -0.007614121409708183,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.05,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.015595139972074313,
+      "fixed": 0.0675,
+      "seq": 0.065,
+      "mean_diff_per_q": -0.00983068825595606,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.04,
-      "seq": 0.06,
-      "mean_diff_per_q": -0.015862339096689482,
+      "fixed": 0.0175,
+      "seq": 0.0675,
+      "mean_diff_per_q": -0.013367723174049488,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.03,
-      "seq": 0.06,
-      "mean_diff_per_q": -0.01566495671093146,
+      "fixed": 0.01,
+      "seq": 0.0675,
+      "mean_diff_per_q": -0.01574921095096587,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.0,
-      "seq": 0.06,
-      "mean_diff_per_q": -0.016223530369156736,
+      "fixed": 0.0025,
+      "seq": 0.0675,
+      "mean_diff_per_q": -0.01593548327887043,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2484,9 +2484,9 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.01,
+      "fixed": 0.015,
       "seq": 0.0,
-      "mean_diff_per_q": -0.007925836760569772,
+      "mean_diff_per_q": -0.008832086197759652,
       "questions": 246.0,
       "clusters": 123.0
      },
@@ -2494,7 +2494,7 @@
       "month": 6,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.010175594313974377,
+      "mean_diff_per_q": -0.010040584835069484,
       "questions": 740.0,
       "clusters": 246.0
      },
@@ -2502,7 +2502,7 @@
       "month": 12,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.012012116893170728,
+      "mean_diff_per_q": -0.010765808172367006,
       "questions": 1736.0,
       "clusters": 492.0
      },
@@ -2510,7 +2510,7 @@
       "month": 24,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.012433404279848577,
+      "mean_diff_per_q": -0.011280729641908486,
       "questions": 3728.0,
       "clusters": 984.0
      },
@@ -2518,7 +2518,7 @@
       "month": 36,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.012224751693860567,
+      "mean_diff_per_q": -0.011407620129436564,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2526,17 +2526,17 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.01,
+      "fixed": 0.015,
       "seq": 0.0,
-      "mean_diff_per_q": -0.00346296395123461,
+      "mean_diff_per_q": -0.0037930653631147782,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.0,
+      "fixed": 0.0025,
       "seq": 0.0,
-      "mean_diff_per_q": -0.004316332177625943,
+      "mean_diff_per_q": -0.004238473285111244,
       "questions": 740.0,
       "clusters": 246.0
      },
@@ -2544,7 +2544,7 @@
       "month": 12,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.0050352893938475675,
+      "mean_diff_per_q": -0.004518534341811471,
       "questions": 1736.0,
       "clusters": 492.0
      },
@@ -2552,7 +2552,7 @@
       "month": 24,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.005221928727692326,
+      "mean_diff_per_q": -0.004735446768902734,
       "questions": 3728.0,
       "clusters": 984.0
      },
@@ -2560,7 +2560,7 @@
       "month": 36,
       "fixed": 0.0,
       "seq": 0.0,
-      "mean_diff_per_q": -0.005129122160575524,
+      "mean_diff_per_q": -0.0047923018957847585,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2572,19 +2572,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.0025
      }
     ],
     "live+shadow|eprocC": [
@@ -2612,41 +2612,41 @@
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00310535155527688,
+      "fixed": 0.015,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.003353108897819049,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.004654548652651094,
+      "fixed": 0.005,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.004522786538142056,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.005780251713453656,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.005194606926642403,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.006098840395192099,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.0056077125093898774,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.006067014827288176,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.005732111869296029,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -2654,41 +2654,41 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0014059449816124035,
+      "fixed": 0.015,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.0014939841596581555,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.002031530984491369,
+      "fixed": 0.005,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.001961910121413051,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.002481225058474656,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.0022332989411266244,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0026132441017669194,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.002407053567796412,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
       "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.002596921449439919,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.0024612738399882217,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -2700,19 +2700,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.005
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0075
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.0075
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.0075
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -2740,33 +2740,33 @@
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.06,
-      "seq": 0.01,
-      "mean_pnl": 0.0005179172617610779
+      "fixed": 0.0575,
+      "seq": 0.0075,
+      "mean_pnl": 0.003987164995770519
      },
      {
       "month": 6,
-      "fixed": 0.06,
-      "seq": 0.01,
-      "mean_pnl": -0.0034297104115503354
+      "fixed": 0.055,
+      "seq": 0.0125,
+      "mean_pnl": 0.001989375423250554
      },
      {
       "month": 12,
-      "fixed": 0.02,
-      "seq": 0.02,
-      "mean_pnl": -0.004876010782215554
+      "fixed": 0.06,
+      "seq": 0.0225,
+      "mean_pnl": 0.001550099205736486
      },
      {
       "month": 24,
-      "fixed": 0.05,
-      "seq": 0.02,
-      "mean_pnl": -0.0033283969372979202
+      "fixed": 0.0425,
+      "seq": 0.0275,
+      "mean_pnl": 0.001201749502377024
      },
      {
       "month": 36,
-      "fixed": 0.02,
-      "seq": 0.02,
-      "mean_pnl": -0.0026430825790038502
+      "fixed": 0.045,
+      "seq": 0.03,
+      "mean_pnl": 0.00040320985294634655
      }
     ],
     "pnl|eprocess": [
@@ -2776,19 +2776,19 @@
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0125
      },
      {
       "month": 24,
-      "detect": 0.01
+      "detect": 0.015
      },
      {
       "month": 36,
-      "detect": 0.01
+      "detect": 0.02
      }
     ]
    },
@@ -2796,41 +2796,41 @@
     "live_only|log": [
      {
       "month": 3,
-      "fixed": 0.07,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.005984463567751417,
+      "fixed": 0.105,
+      "seq": 0.0325,
+      "mean_diff_per_q": -0.0018440338078194384,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
       "fixed": 0.05,
-      "seq": 0.02,
-      "mean_diff_per_q": -0.003231159173891512,
+      "seq": 0.0475,
+      "mean_diff_per_q": -0.0009096097343482675,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.03,
-      "seq": 0.03,
-      "mean_diff_per_q": -0.0006983139709634163,
+      "fixed": 0.055,
+      "seq": 0.065,
+      "mean_diff_per_q": -0.0014768200205292873,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.03,
-      "seq": 0.04,
-      "mean_diff_per_q": -0.0012668030580454315,
+      "fixed": 0.035,
+      "seq": 0.0675,
+      "mean_diff_per_q": -0.0016451754345295354,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.05,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.0015910834808409244,
+      "fixed": 0.0275,
+      "seq": 0.0725,
+      "mean_diff_per_q": -0.0022004711419411124,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2838,41 +2838,41 @@
     "live_only|brier": [
      {
       "month": 3,
-      "fixed": 0.07,
-      "seq": 0.02,
-      "mean_diff_per_q": -0.002490698231106149,
+      "fixed": 0.105,
+      "seq": 0.0625,
+      "mean_diff_per_q": -0.0007925783077596883,
       "questions": 6.0,
       "clusters": 3.0
      },
      {
       "month": 6,
-      "fixed": 0.06,
-      "seq": 0.04,
-      "mean_diff_per_q": -0.00137211300188153,
+      "fixed": 0.0575,
+      "seq": 0.08,
+      "mean_diff_per_q": -0.0003742896584153664,
       "questions": 20.0,
       "clusters": 6.0
      },
      {
       "month": 12,
-      "fixed": 0.04,
-      "seq": 0.05,
-      "mean_diff_per_q": -0.00031873436162090324,
+      "fixed": 0.0525,
+      "seq": 0.0975,
+      "mean_diff_per_q": -0.0006379544488731154,
       "questions": 56.0,
       "clusters": 12.0
      },
      {
       "month": 24,
-      "fixed": 0.03,
-      "seq": 0.07,
-      "mean_diff_per_q": -0.0005838692547859021,
+      "fixed": 0.0375,
+      "seq": 0.1,
+      "mean_diff_per_q": -0.0007114790120940099,
       "questions": 128.0,
       "clusters": 24.0
      },
      {
       "month": 36,
-      "fixed": 0.06,
-      "seq": 0.08,
-      "mean_diff_per_q": -0.0007070486959445681,
+      "fixed": 0.025,
+      "seq": 0.105,
+      "mean_diff_per_q": -0.0009540555030359116,
       "questions": 200.0,
       "clusters": 36.0
      }
@@ -2880,41 +2880,41 @@
     "live+shadow|log": [
      {
       "month": 3,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0002627041223570174,
+      "fixed": 0.035,
+      "seq": 0.0025,
+      "mean_diff_per_q": -0.00025281102409797766,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00044654212369072397,
+      "fixed": 0.0325,
+      "seq": 0.0075,
+      "mean_diff_per_q": -0.00041108463738975885,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0004259039808805036,
+      "fixed": 0.0325,
+      "seq": 0.0125,
+      "mean_diff_per_q": -0.00038622866283592044,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.000410335181244036,
+      "fixed": 0.0075,
+      "seq": 0.0125,
+      "mean_diff_per_q": -0.0004008817316703954,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0004295939486511689,
+      "fixed": 0.015,
+      "seq": 0.015,
+      "mean_diff_per_q": -0.00041225027635750927,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2922,41 +2922,41 @@
     "live+shadow|brier": [
      {
       "month": 3,
-      "fixed": 0.03,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00010751378632085199,
+      "fixed": 0.0325,
+      "seq": 0.005,
+      "mean_diff_per_q": -0.00011628536015861363,
       "questions": 246.0,
       "clusters": 123.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00018710876566324294,
+      "fixed": 0.0375,
+      "seq": 0.01,
+      "mean_diff_per_q": -0.00017835751658840554,
       "questions": 740.0,
       "clusters": 246.0
      },
      {
       "month": 12,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.0001816572247518266,
+      "fixed": 0.0275,
+      "seq": 0.0125,
+      "mean_diff_per_q": -0.00016819140608489598,
       "questions": 1736.0,
       "clusters": 492.0
      },
      {
       "month": 24,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00017429755713252164,
+      "fixed": 0.0075,
+      "seq": 0.0125,
+      "mean_diff_per_q": -0.00017474607579184801,
       "questions": 3728.0,
       "clusters": 984.0
      },
      {
       "month": 36,
-      "fixed": 0.0,
-      "seq": 0.0,
-      "mean_diff_per_q": -0.00018353456932649877,
+      "fixed": 0.015,
+      "seq": 0.015,
+      "mean_diff_per_q": -0.00017832536614007305,
       "questions": 5720.0,
       "clusters": 1476.0
      }
@@ -2972,15 +2972,15 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0075
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.01
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.01
      }
     ],
     "live+shadow|eprocC": [
@@ -2998,51 +2998,51 @@
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.0025
      }
     ],
     "live+shadow+gym|log": [
      {
       "month": 3,
-      "fixed": 0.03,
+      "fixed": 0.0425,
       "seq": 0.01,
-      "mean_diff_per_q": -0.00011743834130102974,
+      "mean_diff_per_q": -0.00010876294508939028,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.00021428567185552552,
+      "fixed": 0.04,
+      "seq": 0.0175,
+      "mean_diff_per_q": -0.00019223511233644735,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.01,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.00021304751354728066,
+      "fixed": 0.035,
+      "seq": 0.0225,
+      "mean_diff_per_q": -0.00019857034674331079,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
-      "fixed": 0.01,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.00021374410727047818,
+      "fixed": 0.0075,
+      "seq": 0.0225,
+      "mean_diff_per_q": -0.00020881299910013753,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.0,
-      "seq": 0.01,
-      "mean_diff_per_q": -0.00022267356569205372,
+      "fixed": 0.0125,
+      "seq": 0.025,
+      "mean_diff_per_q": -0.0002115554419139627,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -3050,41 +3050,41 @@
     "live+shadow+gym|brier": [
      {
       "month": 3,
-      "fixed": 0.03,
-      "seq": 0.01,
-      "mean_diff_per_q": -5.178366696021802e-05,
+      "fixed": 0.04,
+      "seq": 0.0175,
+      "mean_diff_per_q": -5.143665388969158e-05,
       "questions": 846.0,
       "clusters": 723.0
      },
      {
       "month": 6,
-      "fixed": 0.02,
-      "seq": 0.01,
-      "mean_diff_per_q": -9.334558631124824e-05,
+      "fixed": 0.0425,
+      "seq": 0.025,
+      "mean_diff_per_q": -8.574575428128676e-05,
       "questions": 1940.0,
       "clusters": 1446.0
      },
      {
       "month": 12,
-      "fixed": 0.01,
-      "seq": 0.01,
-      "mean_diff_per_q": -9.338576555874942e-05,
+      "fixed": 0.0375,
+      "seq": 0.03,
+      "mean_diff_per_q": -8.88221526183772e-05,
       "questions": 4136.0,
       "clusters": 2892.0
      },
      {
       "month": 24,
       "fixed": 0.01,
-      "seq": 0.01,
-      "mean_diff_per_q": -9.337468888497439e-05,
+      "seq": 0.03,
+      "mean_diff_per_q": -9.317185082760617e-05,
       "questions": 8528.0,
       "clusters": 5784.0
      },
      {
       "month": 36,
-      "fixed": 0.0,
-      "seq": 0.01,
-      "mean_diff_per_q": -9.749359732331445e-05,
+      "fixed": 0.015,
+      "seq": 0.0325,
+      "mean_diff_per_q": -9.346795160460336e-05,
       "questions": 12920.0,
       "clusters": 8676.0
      }
@@ -3092,23 +3092,23 @@
     "live+shadow+gym|eproc1m": [
      {
       "month": 3,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 6,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.01
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.01
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.01
      }
     ],
     "live+shadow+gym|eprocC": [
@@ -3122,47 +3122,47 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.0025
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.0025
      }
     ],
     "pnl|ttest": [
      {
       "month": 3,
-      "fixed": 0.05,
-      "seq": 0.0,
-      "mean_pnl": -0.0016320358361743578
+      "fixed": 0.0475,
+      "seq": 0.01,
+      "mean_pnl": -0.001891240949528845
      },
      {
       "month": 6,
-      "fixed": 0.04,
-      "seq": 0.0,
-      "mean_pnl": -0.001457168264093541
+      "fixed": 0.045,
+      "seq": 0.0125,
+      "mean_pnl": 0.0010864420786000618
      },
      {
       "month": 12,
-      "fixed": 0.06,
-      "seq": 0.0,
-      "mean_pnl": -0.001233070810149134
+      "fixed": 0.065,
+      "seq": 0.03,
+      "mean_pnl": 0.0011110693648952142
      },
      {
       "month": 24,
-      "fixed": 0.01,
-      "seq": 0.0,
-      "mean_pnl": -0.0022389354472726547
+      "fixed": 0.06,
+      "seq": 0.03,
+      "mean_pnl": 6.057232918121389e-05
      },
      {
       "month": 36,
-      "fixed": 0.02,
-      "seq": 0.0,
-      "mean_pnl": -0.0023164023667929167
+      "fixed": 0.055,
+      "seq": 0.0375,
+      "mean_pnl": 0.00011038801509256161
      }
     ],
     "pnl|eprocess": [
@@ -3176,41 +3176,41 @@
      },
      {
       "month": 12,
-      "detect": 0.0
+      "detect": 0.0075
      },
      {
       "month": 24,
-      "detect": 0.0
+      "detect": 0.0075
      },
      {
       "month": 36,
-      "detect": 0.0
+      "detect": 0.0075
      }
     ]
    }
   },
-  "pnl_skilled_0.7_per_trade_sr": 0.2860442345450646,
-  "pnl_skilled_0.7_months_for_80pct_power": 75.53284644794397
+  "pnl_skilled_0.7_per_trade_sr": 0.2825930010884099,
+  "pnl_skilled_0.7_months_for_80pct_power": 77.38903752624913
  },
  "B_permabull_trap": {
   "beta_only_vs_riskneutral": [
    {
     "month": 6,
     "true_expected_diff_per_q": 0.0013588174149281422,
-    "claim_skill_iid": 0.462,
-    "claim_skill_month_clustered": 0.092
+    "claim_skill_iid": 0.4585,
+    "claim_skill_month_clustered": 0.073
    },
    {
     "month": 12,
     "true_expected_diff_per_q": 0.0013588174149281422,
-    "claim_skill_iid": 0.48,
-    "claim_skill_month_clustered": 0.094
+    "claim_skill_iid": 0.467,
+    "claim_skill_month_clustered": 0.084
    },
    {
     "month": 24,
     "true_expected_diff_per_q": 0.0013588174149281422,
-    "claim_skill_iid": 0.544,
-    "claim_skill_month_clustered": 0.098
+    "claim_skill_iid": 0.5055,
+    "claim_skill_month_clustered": 0.0955
    }
   ],
   "beta_only_vs_physical": [
@@ -3237,20 +3237,20 @@
    {
     "month": 6,
     "true_expected_diff_per_q": -0.007379977936154476,
-    "claim_skill_iid": 0.264,
-    "claim_skill_month_clustered": 0.032
+    "claim_skill_iid": 0.2625,
+    "claim_skill_month_clustered": 0.026
    },
    {
     "month": 12,
     "true_expected_diff_per_q": -0.007379977936154476,
-    "claim_skill_iid": 0.23,
+    "claim_skill_iid": 0.2045,
     "claim_skill_month_clustered": 0.024
    },
    {
     "month": 24,
     "true_expected_diff_per_q": -0.007379977936154476,
-    "claim_skill_iid": 0.14,
-    "claim_skill_month_clustered": 0.018
+    "claim_skill_iid": 0.1545,
+    "claim_skill_month_clustered": 0.0095
    }
   ],
   "params": {
@@ -3265,53 +3265,53 @@
   "null_zero_edge": [
    {
     "month": 12,
-    "fixed_horizon_single_test": 0.0444,
-    "monthly_peeking_ttest": 0.1556,
-    "anytime_valid_eprocess": 0.0046
+    "fixed_horizon_single_test": 0.0503,
+    "monthly_peeking_ttest": 0.1585,
+    "anytime_valid_eprocess": 0.0035
    },
    {
     "month": 24,
-    "fixed_horizon_single_test": 0.0462,
-    "monthly_peeking_ttest": 0.2002,
-    "anytime_valid_eprocess": 0.009
+    "fixed_horizon_single_test": 0.0487,
+    "monthly_peeking_ttest": 0.20655,
+    "anytime_valid_eprocess": 0.00835
    },
    {
     "month": 36,
-    "fixed_horizon_single_test": 0.0492,
-    "monthly_peeking_ttest": 0.2294,
-    "anytime_valid_eprocess": 0.0116
+    "fixed_horizon_single_test": 0.05045,
+    "monthly_peeking_ttest": 0.23275,
+    "anytime_valid_eprocess": 0.0117
    },
    {
     "month": 60,
-    "fixed_horizon_single_test": 0.0488,
-    "monthly_peeking_ttest": 0.2628,
-    "anytime_valid_eprocess": 0.0154
+    "fixed_horizon_single_test": 0.05115,
+    "monthly_peeking_ttest": 0.26525,
+    "anytime_valid_eprocess": 0.0167
    }
   ],
   "edge_SR1": [
    {
     "month": 12,
-    "fixed_horizon_single_test": 0.2446,
-    "monthly_peeking_ttest": 0.4066,
-    "anytime_valid_eprocess": 0.0456
+    "fixed_horizon_single_test": 0.2412,
+    "monthly_peeking_ttest": 0.4044,
+    "anytime_valid_eprocess": 0.0404
    },
    {
     "month": 24,
-    "fixed_horizon_single_test": 0.394,
-    "monthly_peeking_ttest": 0.591,
-    "anytime_valid_eprocess": 0.1458
+    "fixed_horizon_single_test": 0.3979,
+    "monthly_peeking_ttest": 0.59815,
+    "anytime_valid_eprocess": 0.13835
    },
    {
     "month": 36,
-    "fixed_horizon_single_test": 0.525,
-    "monthly_peeking_ttest": 0.715,
-    "anytime_valid_eprocess": 0.242
+    "fixed_horizon_single_test": 0.5243,
+    "monthly_peeking_ttest": 0.71785,
+    "anytime_valid_eprocess": 0.24
    },
    {
     "month": 60,
-    "fixed_horizon_single_test": 0.7094,
-    "monthly_peeking_ttest": 0.863,
-    "anytime_valid_eprocess": 0.4198
+    "fixed_horizon_single_test": 0.7142,
+    "monthly_peeking_ttest": 0.8601,
+    "anytime_valid_eprocess": 0.42185
    }
   ]
  },
@@ -3323,39 +3323,39 @@
     "vs_static_net_of_switch_cost_bp": 0.0,
     "switches_mean": 0.0,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.003
+    "end_on_best": 0.005
    },
    "oracle": {
-    "avg_true_edge_bp_per_month": 137.71596609972372,
-    "vs_static_bp_per_month": 37.715966099723715,
-    "vs_static_net_of_switch_cost_bp": 37.38363276639038,
-    "switches_mean": 0.997,
+    "avg_true_edge_bp_per_month": 137.21660180096893,
+    "vs_static_bp_per_month": 37.216601800968924,
+    "vs_static_net_of_switch_cost_bp": 36.884935134302246,
+    "switches_mean": 0.995,
     "end_worse_than_original": 0.0,
     "end_on_best": 1.0
    },
    "naive_trailing_3m": {
-    "avg_true_edge_bp_per_month": 99.48552295195681,
-    "vs_static_bp_per_month": -0.5144770480431868,
-    "vs_static_net_of_switch_cost_bp": -12.540143714709854,
-    "switches_mean": 36.077,
-    "end_worse_than_original": 0.437,
-    "end_on_best": 0.126
+    "avg_true_edge_bp_per_month": 99.37255007628751,
+    "vs_static_bp_per_month": -0.6274499237124941,
+    "vs_static_net_of_switch_cost_bp": -12.598616590379155,
+    "switches_mean": 35.9135,
+    "end_worse_than_original": 0.45925,
+    "end_on_best": 0.13325
    },
    "naive_trailing_12m": {
-    "avg_true_edge_bp_per_month": 105.66987398241412,
-    "vs_static_bp_per_month": 5.669873982414118,
-    "vs_static_net_of_switch_cost_bp": 0.20420731574745388,
-    "switches_mean": 16.397,
-    "end_worse_than_original": 0.35,
-    "end_on_best": 0.19
+    "avg_true_edge_bp_per_month": 105.42168045980591,
+    "vs_static_bp_per_month": 5.421680459805917,
+    "vs_static_net_of_switch_cost_bp": -0.07140287352741526,
+    "switches_mean": 16.47925,
+    "end_worse_than_original": 0.3555,
+    "end_on_best": 0.20075
    },
    "guarded_forward_validated": {
-    "avg_true_edge_bp_per_month": 100.41967626132512,
-    "vs_static_bp_per_month": 0.4196762613251255,
-    "vs_static_net_of_switch_cost_bp": 0.3993429279917915,
-    "switches_mean": 0.061,
-    "end_worse_than_original": 0.01,
-    "end_on_best": 0.022
+    "avg_true_edge_bp_per_month": 100.30969223054072,
+    "vs_static_bp_per_month": 0.30969223054072226,
+    "vs_static_net_of_switch_cost_bp": 0.2945255638740589,
+    "switches_mean": 0.0455,
+    "end_worse_than_original": 0.0085,
+    "end_on_best": 0.01925
    },
    "params": {
     "K": 12,
@@ -3377,36 +3377,36 @@
     "end_on_best": 0.0
    },
    "oracle": {
-    "avg_true_edge_bp_per_month": 156.64582869292977,
-    "vs_static_bp_per_month": 56.645828692929776,
-    "vs_static_net_of_switch_cost_bp": 56.31249535959645,
+    "avg_true_edge_bp_per_month": 157.04111345010423,
+    "vs_static_bp_per_month": 57.04111345010423,
+    "vs_static_net_of_switch_cost_bp": 56.70778011677089,
     "switches_mean": 1.0,
     "end_worse_than_original": 0.0,
     "end_on_best": 1.0
    },
    "naive_trailing_3m": {
-    "avg_true_edge_bp_per_month": 102.5512816056496,
-    "vs_static_bp_per_month": 2.5512816056496095,
-    "vs_static_net_of_switch_cost_bp": -12.047051727683728,
-    "switches_mean": 43.795,
-    "end_worse_than_original": 0.436,
-    "end_on_best": 0.038
+    "avg_true_edge_bp_per_month": 102.57356179890047,
+    "vs_static_bp_per_month": 2.5735617989004753,
+    "vs_static_net_of_switch_cost_bp": -11.97818820109952,
+    "switches_mean": 43.65525,
+    "end_worse_than_original": 0.446,
+    "end_on_best": 0.0475
    },
    "naive_trailing_12m": {
-    "avg_true_edge_bp_per_month": 111.04871004145708,
-    "vs_static_bp_per_month": 11.048710041457085,
-    "vs_static_net_of_switch_cost_bp": 3.9537100414570836,
-    "switches_mean": 21.285,
-    "end_worse_than_original": 0.296,
-    "end_on_best": 0.109
+    "avg_true_edge_bp_per_month": 111.13479606083797,
+    "vs_static_bp_per_month": 11.134796060837965,
+    "vs_static_net_of_switch_cost_bp": 4.082962727504635,
+    "switches_mean": 21.1555,
+    "end_worse_than_original": 0.301,
+    "end_on_best": 0.0845
    },
    "guarded_forward_validated": {
-    "avg_true_edge_bp_per_month": 100.7258611980736,
-    "vs_static_bp_per_month": 0.725861198073597,
-    "vs_static_net_of_switch_cost_bp": 0.7081945314069311,
-    "switches_mean": 0.053,
-    "end_worse_than_original": 0.001,
-    "end_on_best": 0.013
+    "avg_true_edge_bp_per_month": 100.57864449533754,
+    "vs_static_bp_per_month": 0.5786444953375346,
+    "vs_static_net_of_switch_cost_bp": 0.5603944953375302,
+    "switches_mean": 0.05475,
+    "end_worse_than_original": 0.00675,
+    "end_on_best": 0.00775
    },
    "params": {
     "K": 50,
@@ -3438,26 +3438,26 @@
    "naive_trailing_3m": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -12.228333333333326,
-    "switches_mean": 36.685,
+    "vs_static_net_of_switch_cost_bp": -12.15158333333334,
+    "switches_mean": 36.45475,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.097
+    "end_on_best": 0.0825
    },
    "naive_trailing_12m": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -5.833000000000001,
-    "switches_mean": 17.499,
+    "vs_static_net_of_switch_cost_bp": -5.785000000000009,
+    "switches_mean": 17.355,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.09
+    "end_on_best": 0.08275
    },
    "guarded_forward_validated": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -0.012999999999992184,
-    "switches_mean": 0.039,
+    "vs_static_net_of_switch_cost_bp": -0.013583333333330727,
+    "switches_mean": 0.04075,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.969
+    "end_on_best": 0.96525
    },
    "params": {
     "K": 12,
@@ -3476,39 +3476,39 @@
     "vs_static_net_of_switch_cost_bp": 0.0,
     "switches_mean": 0.0,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.782
+    "end_on_best": 0.785
    },
    "oracle": {
-    "avg_true_edge_bp_per_month": 100.83395064590756,
-    "vs_static_bp_per_month": 0.8339506459075635,
-    "vs_static_net_of_switch_cost_bp": 0.7612839792408947,
-    "switches_mean": 0.218,
+    "avg_true_edge_bp_per_month": 100.83990952705112,
+    "vs_static_bp_per_month": 0.8399095270511179,
+    "vs_static_net_of_switch_cost_bp": 0.7682428603844431,
+    "switches_mean": 0.215,
     "end_worse_than_original": 0.0,
     "end_on_best": 1.0
    },
    "naive_trailing_3m": {
-    "avg_true_edge_bp_per_month": 83.89678655348763,
-    "vs_static_bp_per_month": -16.103213446512378,
-    "vs_static_net_of_switch_cost_bp": -28.293546779845713,
-    "switches_mean": 36.571,
-    "end_worse_than_original": 0.859,
-    "end_on_best": 0.119
+    "avg_true_edge_bp_per_month": 83.85031773571158,
+    "vs_static_bp_per_month": -16.149682264288423,
+    "vs_static_net_of_switch_cost_bp": -28.259098930955087,
+    "switches_mean": 36.32825,
+    "end_worse_than_original": 0.87725,
+    "end_on_best": 0.099
    },
    "naive_trailing_12m": {
-    "avg_true_edge_bp_per_month": 87.56953315543021,
-    "vs_static_bp_per_month": -12.4304668445698,
-    "vs_static_net_of_switch_cost_bp": -18.201466844569804,
-    "switches_mean": 17.313,
-    "end_worse_than_original": 0.846,
-    "end_on_best": 0.122
+    "avg_true_edge_bp_per_month": 87.36986775005214,
+    "vs_static_bp_per_month": -12.63013224994787,
+    "vs_static_net_of_switch_cost_bp": -18.36896558328121,
+    "switches_mean": 17.2165,
+    "end_worse_than_original": 0.84575,
+    "end_on_best": 0.128
    },
    "guarded_forward_validated": {
-    "avg_true_edge_bp_per_month": 99.74176779114747,
-    "vs_static_bp_per_month": -0.25823220885254006,
-    "vs_static_net_of_switch_cost_bp": -0.2715655421858809,
-    "switches_mean": 0.04,
-    "end_worse_than_original": 0.034,
-    "end_on_best": 0.757
+    "avg_true_edge_bp_per_month": 99.7902720272843,
+    "vs_static_bp_per_month": -0.20972797271569255,
+    "vs_static_net_of_switch_cost_bp": -0.22139463938235932,
+    "switches_mean": 0.035,
+    "end_worse_than_original": 0.029,
+    "end_on_best": 0.76025
    },
    "params": {
     "K": 12,
@@ -3527,39 +3527,39 @@
     "vs_static_net_of_switch_cost_bp": 0.0,
     "switches_mean": 0.0,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.003
+    "end_on_best": 0.005
    },
    "oracle": {
-    "avg_true_edge_bp_per_month": 137.71596609972372,
-    "vs_static_bp_per_month": 37.715966099723715,
-    "vs_static_net_of_switch_cost_bp": 37.38363276639038,
-    "switches_mean": 0.997,
+    "avg_true_edge_bp_per_month": 137.21660180096893,
+    "vs_static_bp_per_month": 37.216601800968924,
+    "vs_static_net_of_switch_cost_bp": 36.884935134302246,
+    "switches_mean": 0.995,
     "end_worse_than_original": 0.0,
     "end_on_best": 1.0
    },
    "naive_trailing_3m": {
-    "avg_true_edge_bp_per_month": 125.05086348434124,
-    "vs_static_bp_per_month": 25.050863484341235,
-    "vs_static_net_of_switch_cost_bp": 16.531196817674566,
-    "switches_mean": 25.559,
-    "end_worse_than_original": 0.091,
-    "end_on_best": 0.464
+    "avg_true_edge_bp_per_month": 124.71950865408144,
+    "vs_static_bp_per_month": 24.719508654081434,
+    "vs_static_net_of_switch_cost_bp": 16.200925320748095,
+    "switches_mean": 25.55575,
+    "end_worse_than_original": 0.107,
+    "end_on_best": 0.45
    },
    "naive_trailing_12m": {
-    "avg_true_edge_bp_per_month": 127.25794310295211,
-    "vs_static_bp_per_month": 27.257943102952115,
-    "vs_static_net_of_switch_cost_bp": 24.79094310295211,
-    "switches_mean": 7.401,
-    "end_worse_than_original": 0.024,
-    "end_on_best": 0.658
+    "avg_true_edge_bp_per_month": 126.85751940254886,
+    "vs_static_bp_per_month": 26.857519402548863,
+    "vs_static_net_of_switch_cost_bp": 24.29001940254886,
+    "switches_mean": 7.7025,
+    "end_worse_than_original": 0.028,
+    "end_on_best": 0.6755
    },
    "guarded_forward_validated": {
-    "avg_true_edge_bp_per_month": 122.19739903063487,
-    "vs_static_bp_per_month": 22.19739903063487,
-    "vs_static_net_of_switch_cost_bp": 21.82706569730153,
-    "switches_mean": 1.111,
-    "end_worse_than_original": 0.005,
-    "end_on_best": 0.707
+    "avg_true_edge_bp_per_month": 121.90693656477151,
+    "vs_static_bp_per_month": 21.90693656477151,
+    "vs_static_net_of_switch_cost_bp": 21.548519898104846,
+    "switches_mean": 1.07525,
+    "end_worse_than_original": 0.0065,
+    "end_on_best": 0.717
    },
    "params": {
     "K": 12,
@@ -3591,26 +3591,26 @@
    "naive_trailing_3m": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -12.228333333333326,
-    "switches_mean": 36.685,
+    "vs_static_net_of_switch_cost_bp": -12.15158333333334,
+    "switches_mean": 36.45475,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.097
+    "end_on_best": 0.0825
    },
    "naive_trailing_12m": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -5.833000000000001,
-    "switches_mean": 17.499,
+    "vs_static_net_of_switch_cost_bp": -5.785000000000009,
+    "switches_mean": 17.355,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.09
+    "end_on_best": 0.08275
    },
    "guarded_forward_validated": {
     "avg_true_edge_bp_per_month": 100.0,
     "vs_static_bp_per_month": 0.0,
-    "vs_static_net_of_switch_cost_bp": -0.1613333333333293,
-    "switches_mean": 0.484,
+    "vs_static_net_of_switch_cost_bp": -0.1625000000000064,
+    "switches_mean": 0.4875,
     "end_worse_than_original": 0.0,
-    "end_on_best": 0.639
+    "end_on_best": 0.64275
    },
    "params": {
     "K": 12,
@@ -3628,110 +3628,110 @@
    {
     "model": "normal mu=15% vol=20% (SR 0.75)",
     "months": 12,
-    "p50": 0.1147498520095257,
-    "p80": 0.17740388665312606,
-    "p95": 0.25517764627606027
+    "p50": 0.11473162759509364,
+    "p80": 0.17981284792961932,
+    "p95": 0.260252406798515
    },
    {
     "model": "normal mu=15% vol=20% (SR 0.75)",
     "months": 24,
-    "p50": 0.1615547955176324,
-    "p80": 0.2406177256505169,
-    "p95": 0.3322755882442805
+    "p50": 0.16395147453024367,
+    "p80": 0.24237233205011835,
+    "p95": 0.3313790137109818
    },
    {
     "model": "normal mu=15% vol=20% (SR 0.75)",
     "months": 60,
-    "p50": 0.2378132521153543,
-    "p80": 0.3241824258233078,
-    "p95": 0.4342654837126236
+    "p50": 0.2393947093504203,
+    "p80": 0.3247375142753011,
+    "p95": 0.4287676650090224
    },
    {
     "model": "normal mu=25% vol=25% (SR 1.00)",
     "months": 12,
-    "p50": 0.1293210078417017,
-    "p80": 0.20236151187866117,
-    "p95": 0.29367949560508594
+    "p50": 0.12916288735146564,
+    "p80": 0.20444180039139076,
+    "p95": 0.2977484213918095
    },
    {
     "model": "normal mu=25% vol=25% (SR 1.00)",
     "months": 24,
-    "p50": 0.18384118140362432,
-    "p80": 0.2665531280612491,
-    "p95": 0.3633057429910948
+    "p50": 0.1820413615486181,
+    "p80": 0.26517257558544344,
+    "p95": 0.36725785779958553
    },
    {
     "model": "normal mu=25% vol=25% (SR 1.00)",
     "months": 60,
-    "p50": 0.25879855403149793,
-    "p80": 0.3446199847927185,
-    "p95": 0.4492291800911122
+    "p50": 0.2589255738810009,
+    "p80": 0.3491389438095001,
+    "p95": 0.45339521814959927
    },
    {
     "model": "normal mu=30% vol=40% (SR 0.75)",
     "months": 12,
-    "p50": 0.22480229902559445,
-    "p80": 0.34554471262359765,
-    "p95": 0.47245753902020493
+    "p50": 0.22836187698412935,
+    "p80": 0.3467062080967679,
+    "p95": 0.4803727860149026
    },
    {
     "model": "normal mu=30% vol=40% (SR 0.75)",
     "months": 24,
-    "p50": 0.31401629812359055,
-    "p80": 0.445582989818202,
-    "p95": 0.5774316720981129
+    "p50": 0.31918153908213276,
+    "p80": 0.44741084879216475,
+    "p95": 0.5836372702670061
    },
    {
     "model": "normal mu=30% vol=40% (SR 0.75)",
     "months": 60,
-    "p50": 0.44442770726191155,
-    "p80": 0.5732009761212723,
-    "p95": 0.6993083263215077
+    "p50": 0.44727629202264696,
+    "p80": 0.5789222752213006,
+    "p95": 0.708100925882415
    },
    {
     "model": "normal mu=0% vol=25% (SR 0.00)",
     "months": 12,
-    "p50": 0.19978400885342745,
-    "p80": 0.30124943984556657,
-    "p95": 0.3990661315561145
+    "p50": 0.2008546192978356,
+    "p80": 0.3021079045206768,
+    "p95": 0.40578882615607886
    },
    {
     "model": "normal mu=0% vol=25% (SR 0.00)",
     "months": 24,
-    "p50": 0.29757149796907906,
-    "p80": 0.4204776674236973,
-    "p95": 0.5340372812779387
+    "p50": 0.2996917544592036,
+    "p80": 0.42183263654384323,
+    "p95": 0.5377607877022681
    },
    {
     "model": "normal mu=0% vol=25% (SR 0.00)",
     "months": 60,
-    "p50": 0.46731968602731294,
-    "p80": 0.6113912884049575,
-    "p95": 0.7278822332162243
+    "p50": 0.4692610901237637,
+    "p80": 0.6102824618909243,
+    "p95": 0.7287065583057153
    },
    {
     "model": "12 trades/yr, 5% risk, +3R p=.35 (EV +0.4R/trade)",
     "months": 12,
     "p50": 0.18549375000000012,
     "p80": 0.2649081093750002,
-    "p95": 0.3458798938820713
+    "p95": 0.3458798938820714
    },
    {
     "model": "12 trades/yr, 5% risk, +3R p=.35 (EV +0.4R/trade)",
     "months": 24,
     "p50": 0.2649081093750001,
-    "p80": 0.3458798938820713,
-    "p95": 0.45963991233736334
+    "p80": 0.3458798938820714,
+    "p95": 0.45478772275690893
    },
    {
     "model": "12 trades/yr, 5% risk, +3R p=.35 (EV +0.4R/trade)",
     "months": 60,
     "p50": 0.3550498401197122,
-    "p80": 0.45963991233736334,
-    "p95": 0.5765354727421963
+    "p80": 0.45963991233736345,
+    "p95": 0.5743368871756616
    }
   ],
-  "p_5plus_consecutive_losses_in_24_trades": 0.6918
+  "p_5plus_consecutive_losses_in_24_trades": 0.6868
  },
  "F_streak_sizing": {
   "payoff_b": 1.5,
@@ -3839,35 +3839,35 @@
   "live_only": [
    {
     "year": 1,
-    "p_identify_best": 0.21,
-    "weight_on_best": 0.24938272981196635
+    "p_identify_best": 0.33,
+    "weight_on_best": 0.27425362829932326
    },
    {
     "year": 2,
-    "p_identify_best": 0.33,
-    "weight_on_best": 0.2760422647107127
+    "p_identify_best": 0.37,
+    "weight_on_best": 0.2914074900690574
    },
    {
     "year": 3,
-    "p_identify_best": 0.39,
-    "weight_on_best": 0.29334122756828546
+    "p_identify_best": 0.4175,
+    "weight_on_best": 0.30429622306593257
    }
   ],
   "live+shadow": [
    {
     "year": 1,
-    "p_identify_best": 0.81,
-    "weight_on_best": 0.432212225880466
+    "p_identify_best": 0.77,
+    "weight_on_best": 0.4286560315216119
    },
    {
     "year": 2,
-    "p_identify_best": 0.89,
-    "weight_on_best": 0.4690842944409266
+    "p_identify_best": 0.87,
+    "weight_on_best": 0.46453096817090567
    },
    {
     "year": 3,
-    "p_identify_best": 0.91,
-    "weight_on_best": 0.48318167869474427
+    "p_identify_best": 0.925,
+    "weight_on_best": 0.4796535502187589
    }
   ],
   "params": {
@@ -3891,59 +3891,59 @@
    "rows": [
     {
      "n_train": 25,
-     "platt_gain_nats": 0.02522978650364389,
-     "isotonic_gain_nats": -0.10621941469485219,
-     "gated_platt_gain_nats": 0.005028011513769106,
-     "platt_p_worse": 0.1,
-     "isotonic_p_worse": 0.92,
+     "platt_gain_nats": 0.020711370888307646,
+     "isotonic_gain_nats": -0.12232090153772561,
+     "gated_platt_gain_nats": 0.005798492021558579,
+     "platt_p_worse": 0.16,
+     "isotonic_p_worse": 0.95,
      "gated_p_worse": 0.02,
-     "gate_fired": 0.22
+     "gate_fired": 0.245
     },
     {
      "n_train": 50,
-     "platt_gain_nats": 0.029051394590255013,
-     "isotonic_gain_nats": -0.04766909831171036,
-     "gated_platt_gain_nats": 0.01375636815184139,
-     "platt_p_worse": 0.06,
-     "isotonic_p_worse": 0.86,
-     "gated_p_worse": 0.0,
-     "gate_fired": 0.44
+     "platt_gain_nats": 0.02723871209530611,
+     "isotonic_gain_nats": -0.05101111157269417,
+     "gated_platt_gain_nats": 0.015607858487782766,
+     "platt_p_worse": 0.07,
+     "isotonic_p_worse": 0.82,
+     "gated_p_worse": 0.01,
+     "gate_fired": 0.49
     },
     {
      "n_train": 100,
-     "platt_gain_nats": 0.03649750392234238,
-     "isotonic_gain_nats": -0.006398012915115525,
-     "gated_platt_gain_nats": 0.029452545193632145,
-     "platt_p_worse": 0.0,
-     "isotonic_p_worse": 0.5,
+     "platt_gain_nats": 0.03436537531535427,
+     "isotonic_gain_nats": -0.010718906448248664,
+     "gated_platt_gain_nats": 0.027654527151004395,
+     "platt_p_worse": 0.005,
+     "isotonic_p_worse": 0.55,
      "gated_p_worse": 0.0,
-     "gate_fired": 0.8
+     "gate_fired": 0.765
     },
     {
      "n_train": 150,
-     "platt_gain_nats": 0.0368896265229789,
-     "isotonic_gain_nats": 0.005597050264805758,
-     "gated_platt_gain_nats": 0.03430412970417888,
+     "platt_gain_nats": 0.037716316393940366,
+     "isotonic_gain_nats": 0.006342817837240155,
+     "gated_platt_gain_nats": 0.03501874101247812,
      "platt_p_worse": 0.0,
-     "isotonic_p_worse": 0.3,
+     "isotonic_p_worse": 0.25,
      "gated_p_worse": 0.0,
-     "gate_fired": 0.9
+     "gate_fired": 0.915
     },
     {
      "n_train": 250,
-     "platt_gain_nats": 0.03995872792026353,
-     "isotonic_gain_nats": 0.01673211173371608,
-     "gated_platt_gain_nats": 0.03995872792026353,
+     "platt_gain_nats": 0.03920812900829693,
+     "isotonic_gain_nats": 0.01593938037972149,
+     "gated_platt_gain_nats": 0.03850446713052284,
      "platt_p_worse": 0.0,
      "isotonic_p_worse": 0.1,
      "gated_p_worse": 0.0,
-     "gate_fired": 1.0
+     "gate_fired": 0.975
     },
     {
      "n_train": 500,
-     "platt_gain_nats": 0.04147085628363827,
-     "isotonic_gain_nats": 0.029050582123722687,
-     "gated_platt_gain_nats": 0.04147085628363827,
+     "platt_gain_nats": 0.04158915352173962,
+     "isotonic_gain_nats": 0.02882011790858244,
+     "gated_platt_gain_nats": 0.04158915352173962,
      "platt_p_worse": 0.0,
      "isotonic_p_worse": 0.0,
      "gated_p_worse": 0.0,
@@ -3951,9 +3951,9 @@
     },
     {
      "n_train": 1000,
-     "platt_gain_nats": 0.04263991083022721,
-     "isotonic_gain_nats": 0.03561724878404563,
-     "gated_platt_gain_nats": 0.04263991083022721,
+     "platt_gain_nats": 0.042590603165121664,
+     "isotonic_gain_nats": 0.03493740610247353,
+     "gated_platt_gain_nats": 0.042590603165121664,
      "platt_p_worse": 0.0,
      "isotonic_p_worse": 0.0,
      "gated_p_worse": 0.0,
@@ -3961,9 +3961,9 @@
     },
     {
      "n_train": 2000,
-     "platt_gain_nats": 0.043134525202249606,
-     "isotonic_gain_nats": 0.03860042229063433,
-     "gated_platt_gain_nats": 0.043134525202249606,
+     "platt_gain_nats": 0.04309582294552441,
+     "isotonic_gain_nats": 0.03838919143632736,
+     "gated_platt_gain_nats": 0.04309582294552441,
      "platt_p_worse": 0.0,
      "isotonic_p_worse": 0.0,
      "gated_p_worse": 0.0,
@@ -3972,100 +3972,100 @@
    ]
   },
   "well_calibrated": {
-   "raw_logloss": 0.6110591657176626,
-   "oracle_logloss": 0.6012223158782246,
-   "max_possible_gain": 0.009836849839438,
+   "raw_logloss": 0.602673589109399,
+   "oracle_logloss": 0.5950662998169806,
+   "max_possible_gain": 0.007607289292418495,
    "rows": [
     {
      "n_train": 25,
-     "platt_gain_nats": -0.010961914891741354,
-     "isotonic_gain_nats": -0.18918658991358728,
-     "gated_platt_gain_nats": -0.001923856031360418,
-     "platt_p_worse": 1.0,
+     "platt_gain_nats": -0.011076191074203118,
+     "isotonic_gain_nats": -0.16921191233117627,
+     "gated_platt_gain_nats": -0.0029429719592237876,
+     "platt_p_worse": 0.99,
      "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.06,
-     "gate_fired": 0.06
+     "gated_p_worse": 0.075,
+     "gate_fired": 0.075
     },
     {
      "n_train": 50,
-     "platt_gain_nats": -0.010686425311640104,
-     "isotonic_gain_nats": -0.10618065711851245,
-     "gated_platt_gain_nats": -0.002505118205570278,
-     "platt_p_worse": 0.94,
+     "platt_gain_nats": -0.010565861671311816,
+     "isotonic_gain_nats": -0.0876403655080373,
+     "gated_platt_gain_nats": -0.002581082830202482,
+     "platt_p_worse": 0.98,
      "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.08,
-     "gate_fired": 0.08
+     "gated_p_worse": 0.07,
+     "gate_fired": 0.07
     },
     {
      "n_train": 100,
-     "platt_gain_nats": -0.007138786473735519,
-     "isotonic_gain_nats": -0.05944573646771365,
-     "gated_platt_gain_nats": -0.002046447573304906,
-     "platt_p_worse": 0.92,
+     "platt_gain_nats": -0.006000567031788219,
+     "isotonic_gain_nats": -0.04871205721333943,
+     "gated_platt_gain_nats": -0.0006438992851064412,
+     "platt_p_worse": 0.93,
+     "isotonic_p_worse": 1.0,
+     "gated_p_worse": 0.03,
+     "gate_fired": 0.03
+    },
+    {
+     "n_train": 150,
+     "platt_gain_nats": -0.004806166784122935,
+     "isotonic_gain_nats": -0.037831927942436124,
+     "gated_platt_gain_nats": -0.0008768694219235745,
+     "platt_p_worse": 0.95,
+     "isotonic_p_worse": 1.0,
+     "gated_p_worse": 0.045,
+     "gate_fired": 0.045
+    },
+    {
+     "n_train": 250,
+     "platt_gain_nats": -0.00288745606426197,
+     "isotonic_gain_nats": -0.024148000325860165,
+     "gated_platt_gain_nats": -0.00038940733334736743,
+     "platt_p_worse": 0.875,
+     "isotonic_p_worse": 1.0,
+     "gated_p_worse": 0.035,
+     "gate_fired": 0.035
+    },
+    {
+     "n_train": 500,
+     "platt_gain_nats": -0.001585883317248814,
+     "isotonic_gain_nats": -0.014382596324725529,
+     "gated_platt_gain_nats": -0.0005511946624532049,
+     "platt_p_worse": 0.875,
      "isotonic_p_worse": 1.0,
      "gated_p_worse": 0.1,
      "gate_fired": 0.1
     },
     {
-     "n_train": 150,
-     "platt_gain_nats": -0.002859974533983385,
-     "isotonic_gain_nats": -0.03503677592316654,
-     "gated_platt_gain_nats": 0.0,
-     "platt_p_worse": 0.84,
-     "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.0,
-     "gate_fired": 0.0
-    },
-    {
-     "n_train": 250,
-     "platt_gain_nats": -0.003097734632850937,
-     "isotonic_gain_nats": -0.026467564131389166,
-     "gated_platt_gain_nats": -0.0016085306476064632,
-     "platt_p_worse": 0.68,
-     "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.14,
-     "gate_fired": 0.14
-    },
-    {
-     "n_train": 500,
-     "platt_gain_nats": -0.000623399190641083,
-     "isotonic_gain_nats": -0.013554918234260433,
-     "gated_platt_gain_nats": -0.0003742378478876307,
-     "platt_p_worse": 0.56,
-     "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.18,
-     "gate_fired": 0.18
-    },
-    {
      "n_train": 1000,
-     "platt_gain_nats": 9.617479560914522e-05,
-     "isotonic_gain_nats": -0.008098856728190575,
-     "gated_platt_gain_nats": -2.8189700355196746e-05,
-     "platt_p_worse": 0.32,
+     "platt_gain_nats": -0.0006375586571773467,
+     "isotonic_gain_nats": -0.007328620944741813,
+     "gated_platt_gain_nats": -0.00032057695190449933,
+     "platt_p_worse": 0.715,
      "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.06,
-     "gate_fired": 0.16
+     "gated_p_worse": 0.165,
+     "gate_fired": 0.165
     },
     {
      "n_train": 2000,
-     "platt_gain_nats": 0.0005068239312147993,
-     "isotonic_gain_nats": -0.0036246712655611324,
-     "gated_platt_gain_nats": 0.0001108716702615431,
-     "platt_p_worse": 0.12,
+     "platt_gain_nats": -0.00030954337045516146,
+     "isotonic_gain_nats": -0.004337343362329579,
+     "gated_platt_gain_nats": -0.0003262309927676249,
+     "platt_p_worse": 0.555,
      "isotonic_p_worse": 1.0,
-     "gated_p_worse": 0.04,
-     "gate_fired": 0.32
+     "gated_p_worse": 0.355,
+     "gate_fired": 0.355
     }
    ]
   }
  },
  "I_cusum_decay": {
-  "h": 2.4995296381177545,
+  "h": 2.4622586648616305,
   "false_alarm_5y": 0.1,
-  "detected_within_horizon": 0.4234,
+  "detected_within_horizon": 0.43725,
   "median_delay_trades": 21.0,
-  "p80_delay_trades": 30.0,
-  "early_false_alarm_before_change": 0.0154,
+  "p80_delay_trades": 29.0,
+  "early_false_alarm_before_change": 0.01575,
   "params": {
    "mu_good": 0.3,
    "mu_bad": 0.0,
@@ -4074,5 +4074,5 @@
    "horizon_trades": 60
   }
  },
- "runtime_seconds": 24.334380626678467
+ "runtime_seconds": 91.9969573020935
 }

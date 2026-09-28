@@ -370,7 +370,7 @@
 **T58. Hertz - bankrupt equity** (May 2020-Jun 2021; conf. B)  
 *Instrument / entry -> exit:* HTZ/HTZGQ common in Chapter 11; ~$0.56 after the 22 May 2020 filing -> ~$5.50 (8 Jun 2020); 2021 plan gave holders ~$8/share (cash + new equity + warrants).  
 *Ex-ante signals:* Used-car price boom lifted fleet value above debt; bidding war for the equity. *Sizing:* n/a.  
-*What could have gone wrong:* Equity in Ch.11 is usually wiped out; new HTZ shares fell 94% from Nov 2021 to Sep 2026 (computed). *Sources:* Wikipedia; Bloomberg (12 May 2021); SEC filings; winners_and_squeezes.py.
+*What could have gone wrong:* Equity in Ch.11 is usually wiped out; the new HTZ shares fell ~96% from the Nov-2021 relisting-day high ($35.06) to Aug 2026 ($1.51) (computed). *Sources:* Wikipedia; Bloomberg (12 May 2021); SEC filings; winners_and_squeezes.py.
 
 **T59. Keith Gill (Roaring Kitty) - GameStop** (2019-Jan 2021 (and 2024); conf. A)  
 *Instrument / entry -> exit:* GME shares + calls; ~$53k from mid-2019 (~$4-5/share pre-split) -> ~$48m at the 27 Jan 2021 peak; 2024: ~9m shares ~$262m.  
@@ -455,4 +455,4 @@
 | B32 | Crypto liquidation cascade | 10-11 Oct 2025 | ~$19.3-19.5bn liquidated in 24h (largest ever, ~9x prior record); ~6,300 Hyperliquid wallets wiped | Leverage + liquidity (auto-deleveraging) | Triggered by a 100% China-tariff threat | Perpetual-futures leverage is liquidated at the worst print | A |
 | B33 | Bitcoin-treasury companies (MSTR et al.) | 2025-2026 | MSTR -83% (Nov 2024 -> Jun 2026); treasury stocks lost ~$62bn in the June-2026 rout | Reflexive premium + leverage | mNAV premium collapsed below 1 | Premiums to NAV funded by issuance are reflexive in both directions | A |
 | B34 | Late meme-stock and SPAC buyers | 2021-2022 | GME -88% and AMC -99.8% from 2021 peaks (computed); non-redeeming SPAC holders median -88% market-adjusted | Buying the mania late + dilution | Sponsors' promote and warrants diluted holders | The same trade is a different trade at a different price | A |
-| B35 | Hertz's post-bankruptcy equity | Nov 2021-Sep 2026 | -94% from the Nov 2021 relisting (computed); -41% in one day (24 Jun 2026) | Leverage + cyclical asset values | Used-car softness and dilutive financing | Yesterday's miracle recovery is not today's margin of safety | A |
+| B35 | Hertz's post-bankruptcy equity | Nov 2021-Sep 2026 | -96% from the 2 Nov 2021 relisting-day high ($35.06) to the Aug 2026 low ($1.51) (computed); -41% in one day (24 Jun 2026) | Leverage + cyclical asset values | Used-car softness and dilutive financing | Yesterday's miracle recovery is not today's margin of safety | A |

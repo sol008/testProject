@@ -1,6 +1,6 @@
 """Reproduce every table in research/03-sizing-and-growth-math.md.
 
-Usage:  python3 run_all.py            (about 5 minutes on 4 cores)
+Usage:  python3 run_all.py            (about 6-8 minutes on 4 cores)
 Outputs: results/*.csv and results/*.md. All random draws use fixed seeds (common.SEED).
 Data: data/F-F_Research_Data_Factors_daily.csv (Kenneth French Data Library, CRSP-based,
 through Aug 2026). yfinance is only used to validate the leveraged-ETF cost model.
@@ -9,7 +9,9 @@ import runpy
 import time
 
 SCRIPTS = ["sim_ab_trades_to_goal.py", "sim_c_estimation_error.py", "sim_e_power.py",
-           "sim_f_goal_seeking.py", "sim_g_misc.py", "sim_d_barbell.py"]
+           "sim_f_goal_seeking.py", "sim_g_misc.py", "sim_g8_dd_by_multiple.py",
+           "kelly_gaussian_vs_exact.py", "crisis_frequency.py", "sizing_rule.py",
+           "sim_d_barbell.py", "make_charts.py"]
 
 if __name__ == "__main__":
     for s in SCRIPTS:

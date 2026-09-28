@@ -1,0 +1,47 @@
+cik,name,ticker,s1_date,status,first_trade,first_close,day1_ret_vs_10_%,ret_6m_vs_10_%,ret_1y_vs_10_%,ret_2y_vs_10_%,ret_1y_from_first_close_%
+0001541119,"Sound Financial Bancorp, Inc.  (SFBC)  (CIK 0001541119)",SFBC,2012-03-27,history_predates_or_too_late (second-step/other),,,,,,,
+0001493225,"Northfield Bancorp, Inc.  (NFBK)  (CIK 0001493225)",NFBK,2012-06-08,no_yahoo_data,,,,,,,
+0001556727,First Northwest Bancorp  (FNWB)  (CIK 0001556727),FNWB,2012-11-21,history_predates_or_too_late (second-step/other),,,,,,,
+0001569994,"Waterstone Financial, Inc.  (WSBF)  (CIK 0001569994)",WSBF,2013-06-07,history_predates_or_too_late (second-step/other),,,,,,,
+0001609065,"Pathfinder Bancorp, Inc.  (PBHC)  (CIK 0001609065)",PBHC,2014-06-11,history_predates_or_too_late (second-step/other),,,,,,,
+0001617242,Kearny Financial Corp.  (KRNY)  (CIK 0001617242),KRNY,2014-09-05,history_predates_or_too_late (second-step/other),,,,,,,
+0001668340,"Bancorp 34, Inc.  (BCTF)  (CIK 0001668340)",BCTF,2016-06-03,history_predates_or_too_late (second-step/other),,,,,,,
+0001734875,"Mid-Southern Bancorp, Inc.  (MSVB)  (CIK 0001734875)",MSVB,2018-03-23,no_yahoo_data,,,,,,,
+0001751700,"TEB Bancorp, Inc.  (TBBA)  (CIK 0001751700)",TBBA,2018-09-12,ok,2019-05-06,9.0,-10.0,-17.0,-35.0,-5.7,-27.8
+0001767837,"Richmond Mutual Bancorporation, Inc.  (RMBI)  (CIK 0001767837)",RMBI,2019-03-11,ok,2019-07-02,10.51,5.1,22.8,-14.8,21.8,-18.9
+0001769725,"Eureka Homestead Bancorp, Inc.  (ERKH)  (CIK 0001769725)",ERKH,2019-03-11,ok,2019-07-10,12.1,21.0,22.4,-2.4,31.3,-19.3
+0001769617,"HarborOne NorthEast Bancorp, Inc.  (HONE)  (CIK 0001769617)",HONE,2019-03-11,no_yahoo_data,,,,,,,
+0001778784,"Provident Bancorp, Inc. /MD/  (PVBC)  (CIK 0001778784)",PVBC,2019-06-07,no_yahoo_data,,,,,,,
+0001787384,"FFBW, Inc. /MD/  (FFBW)  (CIK 0001787384)",FFBW,2019-09-13,ok,2020-01-21,10.66,6.6,-14.3,4.5,20.0,-2.0
+0001810546,"Eastern Bankshares, Inc.  (EBC)  (CIK 0001810546)",EBC,2020-06-18,ok,2020-10-15,10.47,4.7,72.7,83.5,87.9,75.2
+0001823365,"Generations Bancorp NY, Inc.  (GBNY)  (CIK 0001823365)",GBNY,2020-09-11,no_yahoo_data,,,,,,,
+0001823406,"Affinity Bancshares, Inc.  (AFBI)  (CIK 0001823406)",AFBI,2020-09-11,no_yahoo_data,,,,,,,
+0001828376,William Penn Bancorporation  (WMPN)  (CIK 0001828376),WMPN,2020-10-15,no_yahoo_data,,,,,,,
+0001847398,"NorthEast Community Bancorp, Inc./MD/  (NECB)  (CIK 0001847398)",NECB,2021-03-08,history_predates_or_too_late (second-step/other),,,,,,,
+0001849466,"Texas Community Bancshares, Inc.  (TCBS)  (CIK 0001849466)",TCBS,2021-03-09,ok,2021-07-16,14.46,44.6,51.2,53.3,17.0,6.0
+0001846017,Blue Foundry Bancorp  (BLFY)  (CIK 0001846017),BLFY,2021-03-10,no_yahoo_data,,,,,,,
+0001847360,"1895 Bancorp of Wisconsin, Inc. /MD/  (BCOW)  (CIK 0001847360)",BCOW,2021-03-11,history_predates_or_too_late (second-step/other),,,,,,,
+0001849670,"PB Bankshares, Inc.  (PBBK)  (CIK 0001849670)",PBBK,2021-03-12,no_yahoo_data,,,,,,,
+0001845799,"Cullman Bancorp, Inc. /MD/  (CULL)  (CIK 0001845799)",CULL,2021-03-12,history_predates_or_too_late (second-step/other),,,,,,,
+0001849867,"Catalyst Bancorp, Inc.  (CLST)  (CIK 0001849867)",CLST,2021-03-12,ok,2021-10-13,13.56,35.6,36.6,31.0,13.2,-3.4
+0001850398,"TC Bancshares, Inc.  (TCBC)  (CIK 0001850398)",TCBC,2021-03-12,no_yahoo_data,,,,,,,
+0001337068,"Magyar Bancorp, Inc.  (MGYR)  (CIK 0001337068)",MGYR,2021-03-15,history_predates_or_too_late (second-step/other),,,,,,,
+0001874071,"Ponce Financial Group, Inc.  (PDLB)  (CIK 0001874071)",PDLB,2021-08-03,history_predates_or_too_late (second-step/other),,,,,,,
+0001881592,"NSTS Bancorp, Inc.  (NSTS)  (CIK 0001881592)",NSTS,2021-09-13,ok,2022-01-19,12.59,25.9,9.2,4.2,-4.5,-17.2
+0001914605,"ECB Bancorp, Inc. /MD/  (ECBK)  (CIK 0001914605)",ECBK,2022-03-10,ok,2022-07-28,14.09,40.9,58.4,28.6,40.3,-8.7
+0001913838,"VWF Bancorp, Inc.  (VWFB)  (CIK 0001913838)",VWFB,2022-03-11,ok,2022-07-14,12.9,29.0,44.0,39.9,52.0,8.4
+0001943802,"First Seacoast Bancorp, Inc.  (FSEA)  (CIK 0001943802)",FSEA,2022-09-13,history_predates_or_too_late (second-step/other),,,,,,,
+0001967306,"Mercer Bancorp, Inc.  (MSBB)  (CIK 0001967306)",MSBB,2023-03-10,ok,2023-07-27,13.0,30.0,34.0,32.6,48.5,2.0
+0001967656,"PFS Bancorp, Inc.  (PFSB)  (CIK 0001967656)",PFSB,2023-03-10,ok,2023-10-19,8.9,-11.0,-14.0,4.5,27.5,17.4
+0001302387,"BV Financial, Inc.  (BVFL)  (CIK 0001302387)",BVFL,2023-03-13,history_predates_or_too_late (second-step/other),,,,,,,
+0001951276,"SR Bancorp, Inc.  (SRBK)  (CIK 0001951276)",SRBK,2023-03-13,ok,2023-09-20,9.09,-9.1,-6.9,6.3,50.0,16.9
+0001847986,"Dragonfly Energy Holdings Corp.  (DFLI, DFLIW)  (CIK 0001847986)",DFLI,2023-06-05,history_predates_or_too_late (second-step/other),,,,,,,
+0001978811,"Gouverneur Bancorp, Inc./MD/  (GOVB)  (CIK 0001978811)",GOVB,2023-06-09,history_predates_or_too_late (second-step/other),,,,,,,
+0001979330,"NB Bancorp, Inc.  (NBBK)  (CIK 0001979330)",NBBK,2023-06-09,ok,2023-12-28,13.53,35.3,45.0,80.3,101.9,33.3
+0001979332,"Central Plains Bancshares, Inc.  (CPBI)  (CIK 0001979332)",CPBI,2023-06-14,ok,2023-10-20,9.1,-9.0,0.7,38.9,59.8,52.6
+0001843165,LQR House Inc.  (LQR)  (CIK 0001843165),LQR,2023-06-15,no_yahoo_data,,,,,,,
+0001980088,MACH NATURAL RESOURCES LP  (MNR)  (CIK 0001980088),MNR,2023-09-22,ok,2023-10-25,12.05,20.5,38.7,23.5,6.4,2.5
+0002013639,"FB Bancorp, Inc. /MD/  (FBLA)  (CIK 0002013639)",FBLA,2024-03-04,ok,2024-10-23,11.86,18.6,10.8,20.0,,1.2
+0002012726,"Fifth District Bancorp, Inc.  (FDSB)  (CIK 0002012726)",FDSB,2024-03-08,ok,2024-08-01,10.25,2.5,30.5,31.0,76.7,27.8
+0001835385,"Marathon Bancorp, Inc. /MD/  (MBBC)  (CIK 0001835385)",MBBC,2024-12-13,history_predates_or_too_late (second-step/other),,,,,,,
+0001751783,"Rhinebeck Bancorp, Inc.  (RBKB)  (CIK 0001751783)",RBKB,2026-03-13,history_predates_or_too_late (second-step/other),,,,,,,

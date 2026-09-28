@@ -166,13 +166,13 @@ def run_all():
     allt = pd.concat(frames, ignore_index=True)
     allt.to_csv(os.path.join(SCRATCH, "intl_all_trades.csv"), index=False)  # large: keep in scratchpad
     eps = pd.concat(episodes, ignore_index=True)
-    eps.to_csv(os.path.join(OUT, "intl_ath_episodes.csv"), index=False)
+    eps.to_csv(os.path.join(OUT, "intl_ath_episodes.csv"), index=False, float_format="%.5g")
     # base trades for the failure-focus markets (small file for the repo)
     foc = allt[(allt["variant"].isin(["base", "base+stop25"])) & (allt["mode"] == "ath") &
                (allt["market"].isin(FAILURE_FOCUS + ["S&P 500"]))]
     keep = ["sample", "market", "variant", "thr", "peak_date", "entry", "entry_px", "dd_at_entry", "p10ma_at_entry",
             "exit_rule", "exit", "open", "years", "ret_1x", "ret_2x", "ret_3x", "ret_2x_ruin", "ret_3x_ruin", "mdd_1x"]
-    foc[keep].to_csv(os.path.join(OUT, "failure_market_trades.csv"), index=False)
+    foc[keep].to_csv(os.path.join(OUT, "failure_market_trades.csv"), index=False, float_format="%.5g")
     # pooled stats by sample
     res = []
     for samp, g in allt.groupby("sample"):
@@ -184,7 +184,7 @@ def run_all():
     p.insert(0, "sample", "OOS: all")
     res.append(p)
     pool = pd.concat(res, ignore_index=True)
-    pool.to_csv(os.path.join(OUT, "oos_filter_pooled.csv"), index=False)
+    pool.to_csv(os.path.join(OUT, "oos_filter_pooled.csv"), index=False, float_format="%.5g")
     return allt, pool, eps
 
 

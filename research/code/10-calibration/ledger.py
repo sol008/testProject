@@ -92,7 +92,8 @@ class Ledger:
     # ------------------------------------------------------------------
     def append(self, record_type: str, payload: dict, *, as_of: str,
                author: str = "system", strategy_version: str = "unversioned",
-               model: dict | None = None, created_at: str | None = None) -> dict:
+               model: dict | None = None, created_at: str | None = None,
+               record_id: str | None = None) -> dict:
         if record_type not in RECORD_TYPES:
             raise LedgerError(f"unknown record_type {record_type}")
         missing = [f for f in REQUIRED.get(record_type, []) if f not in payload]
@@ -103,7 +104,7 @@ class Ledger:
             raise LedgerError("created_at must be non-decreasing")
         self._check_semantics(record_type, payload, created_at)
         rec = {
-            "record_id": str(uuid.uuid4()),
+            "record_id": record_id or str(uuid.uuid4()),
             "record_type": record_type,
             "created_at": created_at,
             "as_of": as_of,

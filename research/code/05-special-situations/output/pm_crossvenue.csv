@@ -1,0 +1,5 @@
+question,kalshi_yes_bid,kalshi_yes_ask,poly_yes_bid,poly_yes_ask,mid_gap_cents,box_cost_K_yes_P_no,box_cost_P_yes_K_no
+Democrats win House 2026,0.916,0.917,0.92,0.93,-0.85,1.0053,1.022
+Democrats win Senate 2026,0.61,0.62,0.62,0.63,-1.0,1.0259,1.046
+Fed hikes 25bp Oct-2026,0.69,0.7,0.68,0.69,1.0,1.0435,1.0236
+Fed no change Oct-2026,0.29,0.3,0.3,0.31,-1.0,1.0231,1.0431

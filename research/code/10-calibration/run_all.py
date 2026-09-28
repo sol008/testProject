@@ -59,6 +59,9 @@ def ledger_demo():
     if os.path.exists(path):
         os.remove(path)
     L = Ledger(path)
+    counter = iter(range(1, 1000))
+    _append = L.append
+    L.append = lambda *a, **k: _append(*a, record_id=f"demo-{next(counter):04d}", **k)
     model = dict(llm_id="example-llm-2026-09", prompt_sha256="ab" * 32, code_commit="deadbeef",
                  temperature=0.3, n_samples=7, aggregation="median log-odds")
     const = dict(version="1.0.0", content_sha256=sha256_hex("constitution text v1.0.0"),

@@ -298,7 +298,7 @@
 **T58. Hertz - bankrupt equity** (May 2020-Jun 2021; conf. B)  
 *Instrument / entry -> exit:* HTZ/HTZGQ common in Chapter 11; ~$0.56 after the 22 May 2020 filing -> ~$5.50 (8 Jun 2020); 2021 plan gave holders ~$8/share (cash + new equity + warrants).  
 *Ex-ante signals:* Used-car price boom lifted fleet value above debt; bidding war for the equity. *Sizing:* n/a.  
-*What could have gone wrong:* Equity in Ch.11 is usually wiped out; new HTZ shares fell 94% from Nov 2021 to Sep 2026 (computed). *Sources:* Wikipedia; Bloomberg (12 May 2021); SEC filings; winners_and_squeezes.py.
+*What could have gone wrong:* Equity in Ch.11 is usually wiped out; the new HTZ shares fell ~96% from the Nov-2021 relisting-day high ($35.06) to Aug 2026 ($1.51) (computed). *Sources:* Wikipedia; Bloomberg (12 May 2021); SEC filings; winners_and_squeezes.py.
 
 **T59. Keith Gill (Roaring Kitty) - GameStop** (2019-Jan 2021 (and 2024); conf. A)  
 *Instrument / entry -> exit:* GME shares + calls; ~$53k from mid-2019 (~$4-5/share pre-split) -> ~$48m at the 27 Jan 2021 peak; 2024: ~9m shares ~$262m.  

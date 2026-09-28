@@ -380,7 +380,7 @@ t(name="Hertz - bankrupt equity", period="May 2020-Jun 2021", era="2020-2026", i
   entry_exit="~$0.56 after the 22 May 2020 filing -> ~$5.50 (8 Jun 2020); 2021 plan gave holders ~$8/share (cash + new equity + warrants)",
   ret_risk="~10x in 2 weeks; ~14x for holders to emergence", portfolio="n/a", hold="2 weeks-13 months", hold_years=1,
   decisions="1-2", archetype="EVENT", archetype2="CRISIS-C", signals="Used-car price boom lifted fleet value above debt; bidding war for the equity",
-  sizing="n/a", failure="Equity in Ch.11 is usually wiped out; new HTZ shares fell 94% from Nov 2021 to Sep 2026 (computed)", confidence="B",
+  sizing="n/a", failure="Equity in Ch.11 is usually wiped out; the new HTZ shares fell ~96% from the Nov-2021 relisting-day high ($35.06) to Aug 2026 ($1.51) (computed)", confidence="B",
   sources="Wikipedia; Bloomberg (12 May 2021); SEC filings; winners_and_squeezes.py")
 t(name="Keith Gill (Roaring Kitty) - GameStop", period="2019-Jan 2021 (and 2024)", era="2020-2026", instrument="GME shares + calls",
   entry_exit="~$53k from mid-2019 (~$4-5/share pre-split) -> ~$48m at the 27 Jan 2021 peak; 2024: ~9m shares ~$262m",
@@ -514,7 +514,7 @@ b(name="Bitcoin-treasury companies (MSTR et al.)", period="2025-2026", loss="MST
   mechanism="Reflexive premium + leverage", detail="mNAV premium collapsed below 1", lesson="Premiums to NAV funded by issuance are reflexive in both directions", confidence="A", sources="winners_and_squeezes.py; Yahoo Finance (2026); Strategy Q1-2026")
 b(name="Late meme-stock and SPAC buyers", period="2021-2022", loss="GME -88% and AMC -99.8% from 2021 peaks (computed); non-redeeming SPAC holders median -88% market-adjusted",
   mechanism="Buying the mania late + dilution", detail="Sponsors' promote and warrants diluted holders", lesson="The same trade is a different trade at a different price", confidence="A", sources="winners_and_squeezes.py; Klausner, Ohlrogge & Ruan (2022)")
-b(name="Hertz's post-bankruptcy equity", period="Nov 2021-Sep 2026", loss="-94% from the Nov 2021 relisting (computed); -41% in one day (24 Jun 2026)",
+b(name="Hertz's post-bankruptcy equity", period="Nov 2021-Sep 2026", loss="-96% from the 2 Nov 2021 relisting-day high ($35.06) to the Aug 2026 low ($1.51) (computed); -41% in one day (24 Jun 2026)",
   mechanism="Leverage + cyclical asset values", detail="Used-car softness and dilutive financing", lesson="Yesterday's miracle recovery is not today's margin of safety", confidence="A", sources="winners_and_squeezes.py; Bloomberg (24-25 Jun 2026)")
 
 

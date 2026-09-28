@@ -400,6 +400,32 @@ def easing_filter(mkt: Market, drop_pp=1.0, lookback_days=365) -> pd.Series:
     return (tb <= past - drop_pp)
 
 
+def strategies_by_start(mkt: Market | None = None) -> pd.DataFrame:
+    """Strategy-level CAGR / maxDD from 1928 and from 1950 for the ATH-mode rules: idle money in T-bills
+    ('cash') or in the 1x index ('index' = buy-and-hold core switched into L x during crash trades)."""
+    mkt = mkt or us_market()
+    sigs = find_signals(mkt, THRESHOLDS, "ath", None, False)
+    rows = []
+    for rule in ["2y", "3y", "5y", "ATH"]:
+        for L in LEVS:
+            for thrset in [[0.2], [0.3], [0.2, 0.3, 0.4, 0.5]]:
+                ss = sigs[sigs["thr"].isin(thrset)]
+                for idle in (["cash", "index"] if L > 1 else ["cash"]):
+                    for start in ["1927-12-30", "1950-01-03"]:
+                        eq, st = strategy(mkt, ss, rule, L, thrset, start=start, idle=idle)
+                        st.update(dict(rule=rule, L=L, idle=idle, thr="+".join(str(int(t * 100)) for t in thrset),
+                                       from_=start[:4]))
+                        rows.append(st)
+    for L in LEVS:
+        for start in ["1927-12-30", "1950-01-03"]:
+            e = mkt.eq[L].loc[start:]
+            rows.append({"from_": start[:4], "rule": "buy&hold", "L": L, "idle": "-", "thr": "-",
+                         "CAGR": C.cagr(e), "maxDD": C.max_drawdown(e), "time_in_mkt": 1.0, "trades": 1})
+    S = pd.DataFrame(rows)
+    S.to_csv(os.path.join(OUT, "us_crash_strategies_by_start.csv"), index=False, float_format="%.5g")
+    return S
+
+
 # ============================================================================ main (US)
 def run_us(verbose=True):
     mkt = us_market()
@@ -407,8 +433,8 @@ def run_us(verbose=True):
     # ---- episode list
     ep_ath = episode_table(mkt.px, 0.20, "ath")
     ep_bear = episode_table(mkt.px, 0.20, "bear")
-    ep_ath.to_csv(os.path.join(OUT, "us_ath_episodes.csv"), index=False)
-    ep_bear.to_csv(os.path.join(OUT, "us_bear_episodes.csv"), index=False)
+    ep_ath.to_csv(os.path.join(OUT, "us_ath_episodes.csv"), index=False, float_format="%.5g")
+    ep_bear.to_csv(os.path.join(OUT, "us_bear_episodes.csv"), index=False, float_format="%.5g")
     res["ep_ath"] = ep_ath
     res["ep_bear"] = ep_bear
 
@@ -477,9 +503,9 @@ def run_us(verbose=True):
     trades = pd.concat(all_trades, ignore_index=True)
     summ = pd.DataFrame(summaries)
     strat = pd.DataFrame(strat_rows)
-    trades.to_csv(os.path.join(OUT, "us_crash_trades.csv"), index=False)
-    summ.to_csv(os.path.join(OUT, "us_crash_summary.csv"), index=False)
-    strat.to_csv(os.path.join(OUT, "us_crash_strategies.csv"), index=False)
+    trades.to_csv(os.path.join(OUT, "us_crash_trades.csv"), index=False, float_format="%.5g")
+    summ.to_csv(os.path.join(OUT, "us_crash_summary.csv"), index=False, float_format="%.5g")
+    strat.to_csv(os.path.join(OUT, "us_crash_strategies.csv"), index=False, float_format="%.5g")
     # buy & hold reference
     bh = {}
     for L in LEVS:
@@ -494,6 +520,7 @@ if __name__ == "__main__":
     pd.set_option("display.width", 250)
     pd.set_option("display.max_columns", 40)
     r = run_us()
+    strategies_by_start(r["mkt"])
     print(r["ep_ath"].to_string())
     print(r["ep_bear"].to_string())
     s = r["summary"]

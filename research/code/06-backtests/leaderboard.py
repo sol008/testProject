@@ -72,7 +72,7 @@ def build():
     x = b[(b["exit_rule"] == "CALL2Y") & (b["thr"] == 0.2)]
     x = x.assign(years=2.0)
     add("S&P -20%: buy 2y ATM call (synthetic, return on premium)", x, "call2y_central_ret", "n/a",
-        "Black-Scholes approximation; -100% on 5/12")
+        "Black-Scholes approximation; -100% on 4/12")
     add("S&P -20%: 20% of capital in 2y ATM calls + 80% T-bills", x, "callport20_ret", "n/a", "approximation")
     x = b[(b["exit_rule"] == "CALL2Y") & (b["thr"] == 0.3)].assign(years=2.0)
     add("S&P -30%: buy 2y ATM call (synthetic)", x, "call2y_central_ret", "n/a", "approximation")

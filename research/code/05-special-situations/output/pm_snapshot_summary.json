@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-09-28T20:20:30.698636+00:00",
+  "as_of_utc": "2026-09-28T20:41:07.521632+00:00",
   "kalshi": {
     "open_markets_non_combo": 107403,
     "markets_with_any_volume": 51292,
@@ -171,60 +171,61 @@
       "share_ann_ret_above_10pct": 0.572
     }
   },
+  "kalshi_as_of_utc": "2026-09-28T20:20:30.698636+00:00",
   "polymarket": {
-    "open_markets": 40000,
-    "markets_with_24h_volume": 6603,
-    "total_24h_volume_usd": 16434852.0,
-    "total_liquidity_usd": 530032440.0,
+    "open_markets": 60100,
+    "markets_with_24h_volume": 16258,
+    "total_24h_volume_usd": 44376612.0,
+    "total_liquidity_usd": 425464604.0,
     "spread_all_two_sided": {
-      "p10": 0.004,
-      "p25": 0.01,
-      "p50": 0.033,
-      "p75": 0.175,
-      "p90": 0.9645,
-      "n": 25506,
-      "mean": 0.2081
+      "p10": 0.01,
+      "p25": 0.03,
+      "p50": 0.89,
+      "p75": 0.96,
+      "p90": 0.97,
+      "n": 49037,
+      "mean": 0.536
     },
     "spread_markets_with_24h_volume": {
-      "p10": 0.001,
-      "p25": 0.009,
+      "p10": 0.004,
+      "p25": 0.01,
       "p50": 0.02,
-      "p75": 0.042,
-      "p90": 0.1003,
-      "n": 6388,
-      "mean": 0.0456
+      "p75": 0.05,
+      "p90": 0.17,
+      "n": 13738,
+      "mean": 0.072
     },
     "spread_top200_by_24h_volume": {
       "p10": 0.001,
       "p25": 0.001,
-      "p50": 0.005,
+      "p50": 0.01,
       "p75": 0.01,
-      "p90": 0.01,
-      "n": 189,
-      "mean": 0.0066
+      "p90": 0.02,
+      "n": 155,
+      "mean": 0.0098
     },
     "feeType_counts": {
-      "sports_fees_v3": 20461,
-      "politics_fees": 10171,
-      "sports_fees_v2": 2892,
-      "culture_fees": 1503,
-      "crypto_fees_v2": 1349,
-      "tech_fees": 1206,
-      "finance_prices_fees": 991,
-      "none": 668,
-      "economics_fees": 441,
-      "weather_fees": 178,
-      "general_fees": 99,
-      "mentions_fees": 30
+      "sports_fees_v3": 45083,
+      "crypto_fees_v2": 4620,
+      "politics_fees": 3032,
+      "weather_fees": 2581,
+      "finance_prices_fees": 1016,
+      "culture_fees": 860,
+      "tech_fees": 829,
+      "none": 672,
+      "sports_fees_v2": 645,
+      "economics_fees": 408,
+      "zero_fees": 204,
+      "mentions_fees": 108
     },
-    "holding_rewards_markets": 279,
-    "share_24h_volume_top1pct_markets": 0.877,
+    "holding_rewards_markets": 223,
+    "share_24h_volume_top1pct_markets": 0.818,
     "bond_markets_ask_95_995_3to400d": {
-      "n": 1333,
-      "median_days": 94.4,
+      "n": 2536,
+      "median_days": 36.3,
       "median_gross_ret_%": 1.96,
-      "median_annualised_ret_%": 9.3,
-      "share_ann_ret_above_10pct": 0.481
+      "median_annualised_ret_%": 17.4,
+      "share_ann_ret_above_10pct": 0.649
     }
   }
 }
