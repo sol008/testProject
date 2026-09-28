@@ -94,6 +94,8 @@ def main():
     for w in ("f20", "f60"):
         bs[f"x_{w}"] = bs[w] - bs[f"{w}_IWM"]
     ev["grp"] = pd.cut(ev["si_pct"], [-1, 0.05, 0.10, 0.20, 10], labels=["low_si <5%", "5-10%", "mid_si 10-20%", "squeeze >=20%"])
+    ev.to_pickle(SCRATCH / "squeeze_events.pkl")
+    bs.to_pickle(SCRATCH / "squeeze_baseline.pkl")
     rows = []
     for per in ["2018-21", "2022-26", "all"]:
         e = ev if per == "all" else ev[ev["period"] == per]

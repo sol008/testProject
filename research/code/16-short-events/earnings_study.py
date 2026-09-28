@@ -144,6 +144,7 @@ def main():
                       by="cik", direction="backward", tolerance=pd.Timedelta(days=100))
     uni["sue"] = m.set_index("index")["sue"]
     uni["sue_dec"] = pit_deciles(uni, "sue")
+    uni.to_pickle(SCRATCH / "earn_universe.pkl")
 
     borrow20 = 0.005
     rows = []

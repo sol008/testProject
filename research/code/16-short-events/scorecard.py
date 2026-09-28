@@ -100,6 +100,42 @@ def main():
     cost = np.where(bio["prior_vol"] > 0.6, 0.02, 0.003)
     rows.append(row("FDA decision: run-up t-30 to t-1", "2020-26", bio["pre_-30_-1"] - cost, None, None, None, 29, 6.7, "selective sample, XBI-adjusted"))
     rows.append(row("FDA decision: hold through (t-1 to t+2)", "2020-26", bio["event_-1_+2"] - cost, None, None, None, 3, 6.7, "binary"))
+    # 10 earnings (survivor universe, liquid: price>=$5, $1m/day), OOS 2016-26, >= $300m caps
+    eu_p = SCRATCH / "earn_universe.pkl"
+    if eu_p.exists():
+        eu = pd.read_pickle(eu_p)
+        eu = eu[(eu["anchor"] >= "2016-01-01") & (eu["mcap"] >= 3e8)]
+        bpost20 = np.where(eu["mcap"] >= 2e9, eu["post20_SPY"], eu["post20_IWM"])
+        eu = eu.assign(b_post20=bpost20)
+        g = eu[eu["ear_dec"] == 10]
+        rows.append(row("PEAD (announcement-return top decile), long 20d", "2016-26", g["x_post20"] - g["cost_rt"], g["post20"], g["b_post20"], g["dvol20"], 20, 10.7))
+        g = eu[eu["sue_dec"] == 10]
+        rows.append(row("PEAD (SUE top decile), long 20d", "2016-26", g["x_post20"] - g["cost_rt"], g["post20"], g["b_post20"], g["dvol20"], 20, 10.7))
+        g = eu[eu["gapR"] < -0.05]
+        b5 = np.where(g["mcap"] >= 2e9, g["post5_SPY"], g["post5_IWM"])
+        rows.append(row("Earnings gap-down >5%, buy the fade 5d", "2016-26", g["x_post5"] - g["cost_rt"], g["post5"], b5, g["dvol20"], 5, 10.7))
+        g = eu[eu["mcap"] >= 2e9]
+        bp = g["pre10_SPY"]
+        rows.append(row("Pre-earnings run-up (>= $2bn), D-11 to D-1", "2016-26", g["x_pre10"] - g["cost_rt"], g["pre10"], bp, g["dvol20"], 10, 10.7))
+    # 11 short squeeze (FINRA SI >= 20% + catalyst day), 2018-26
+    sq_p = SCRATCH / "squeeze_events.pkl"
+    if sq_p.exists():
+        sq = pd.read_pickle(sq_p)
+        g = sq[sq["grp"] == "squeeze >=20%"]
+        rows.append(row("Short squeeze: SI>=20% + catalyst day, long 20d", "2018-26", g["x_f20"] - g["cost_rt"], g["f20"], g["f20_IWM"], g["dvol20"], 20, 8.7))
+        g = sq[sq["grp"] == "low_si <5%"]
+        rows.append(row("Control: same catalyst, SI<5%, long 20d", "2018-26", g["x_f20"] - g["cost_rt"], g["f20"], g["f20_IWM"], g["dvol20"], 20, 8.7))
+    # 12 merger-arb proxy (MNA ETF), rolling 20-session windows (overlapping), excess over bills
+    from common import load_prices, tr_index
+    pxm = load_prices(["MNA", "SPY", "^IRX"], verbose=False, download=False)
+    s_ = tr_index(pxm["MNA"]).dropna()
+    r20 = (s_.shift(-20) / s_ - 1).dropna()
+    rf = (pxm["^IRX"]["Close"] / 100).reindex(r20.index).ffill() * 20 / 252
+    spy_ = tr_index(pxm["SPY"])
+    b20 = (spy_.shift(-20) / spy_ - 1).reindex(r20.index)
+    step = r20.iloc[::20]
+    rows.append(row("Merger-arb proxy (MNA ETF), 20-session blocks, excess of bills", "2009-26", (step - rf.reindex(step.index)).values - 0.0005,
+                    step.values, b20.reindex(step.index).values, None, 20, 16.9, "diversified proxy; single near-close deals not testable"))
     out = pd.DataFrame(rows)
     # append earnings / squeeze if present
     for f in ["earnings_scorecard_rows.csv", "short_squeeze_scorecard_rows.csv"]:
