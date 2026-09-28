@@ -1,0 +1,32 @@
+Crumb fetch rate-limited (HTTP 429), continuing without crumb
+HTTP Error 404: Not Found{"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not found for symbol: PUTW"}}}
+$PUTW: possibly delisted; no timezone found
+
+1 Failed download:
+['PUTW']: possibly delisted; no timezone found
+Prices through 2026-09-25
+
+| Ticker | Exposure | Since | Yrs | CAGR | SPY CAGR (same window) | Diff | Vol | Beta | Max DD | SPY max DD |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| MTUM | Momentum (iShares MSCI USA Momentum) | 2013-04-18 | 13.4 | 16.0% | 14.7% | +1.3pp | 20% | 1.05 | -34% | -34% |
+| SPMO | Momentum (Invesco S&P 500 Momentum) | 2015-10-12 | 11.0 | 19.3% | 14.9% | +4.4pp | 20% | 0.97 | -31% | -34% |
+| QMOM | Concentrated momentum (~50 stocks, Alpha Architect) | 2015-12-02 | 10.8 | 11.0% | 14.7% | -3.8pp | 26% | 1.10 | -39% | -34% |
+| VLUE | Value (iShares MSCI USA Value Factor) | 2013-04-18 | 13.4 | 13.7% | 14.7% | -0.9pp | 19% | 0.98 | -39% | -34% |
+| QVAL | Concentrated value (~50 stocks, Alpha Architect) | 2014-10-22 | 11.9 | 9.2% | 14.2% | -5.0pp | 22% | 1.01 | -51% | -34% |
+| IWD | Large value (Russell 1000 Value) | 2000-05-26 | 26.3 | 8.3% | 8.7% | -0.4pp | 19% | 0.94 | -60% | -55% |
+| IWF | Large growth (Russell 1000 Growth) | 2000-05-26 | 26.3 | 8.5% | 8.7% | -0.2pp | 21% | 1.03 | -64% | -55% |
+| VBR | Small value (Vanguard Small-Cap Value) | 2004-01-30 | 22.7 | 9.4% | 10.8% | -1.4pp | 23% | 1.09 | -62% | -55% |
+| AVUV | Small value (Avantis US Small Cap Value) | 2019-09-26 | 7.0 | 15.2% | 16.3% | -1.1pp | 28% | 1.11 | -49% | -34% |
+| QUAL | Quality (iShares MSCI USA Quality) | 2013-07-18 | 13.2 | 13.6% | 14.1% | -0.5pp | 17% | 0.99 | -34% | -34% |
+| USMV | Min-vol (iShares MSCI USA Min Vol) | 2011-10-20 | 14.9 | 11.6% | 15.2% | -3.6pp | 13% | 0.71 | -33% | -34% |
+| SPLV | Low-vol (Invesco S&P 500 Low Volatility) | 2011-05-05 | 15.4 | 9.6% | 14.1% | -4.5pp | 14% | 0.68 | -36% | -34% |
+| SIZE | Size (iShares MSCI USA Size Factor) | 2013-04-18 | 13.4 | 11.7% | 14.7% | -3.0pp | 17% | 0.93 | -39% | -34% |
+| IWM | Small caps (Russell 2000) | 2000-05-26 | 26.3 | 8.6% | 8.7% | -0.1pp | 24% | 1.11 | -59% | -55% |
+| CSD | Spin-offs (Invesco S&P Spin-Off) | 2006-12-15 | 19.8 | 9.7% | 10.9% | -1.2pp | 24% | 0.97 | -70% | -55% |
+| PKW | Buybacks (Invesco Buyback Achievers) | 2006-12-20 | 19.8 | 10.5% | 10.9% | -0.4pp | 20% | 0.92 | -55% | -55% |
+| IPO | IPOs (Renaissance IPO ETF) | 2013-10-16 | 12.9 | 8.3% | 14.2% | -5.9pp | 29% | 1.26 | -69% | -34% |
+| AQMIX | Managed futures / trend (AQR Managed Futures, I shares) | 2010-01-05 | 16.7 | 4.6% | 14.1% | -9.5pp | 10% | -0.02 | -27% | -34% |
+| DBMF | Managed futures replication (iMGP DBi) | 2019-05-08 | 7.4 | 9.7% | 16.0% | -6.3pp | 12% | 0.12 | -20% | -34% |
+| SVXY | Short VIX futures (ProShares; -1x until 2018, -0.5x after) | 2011-10-04 | 15.0 | 12.8% | 15.7% | -2.9pp | 55% | 2.13 | -95% | -34% |
+
+SVXY 2018-02-02 -> 2018-02-06 close-to-close: -88.4%

@@ -1,0 +1,19 @@
+BTC weekly data 2014-09-28 .. 2026-09-27
+
+| Rule | Period | CAGR | Ann. vol | Sharpe (rf=0) | Max DD | % weeks invested | Switches / yr |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Buy & hold BTC | 2014-2018 (paper's sample era) | 107% | 80% | 1.30 | -83% | 100% | 0.0 |
+| Buy & hold BTC | 2019-2026 (post-publication) | 49% | 59% | 0.97 | -75% | 100% | 0.0 |
+| Buy & hold BTC | Full | 66% | 66% | 1.09 | -83% | 100% | 0.0 |
+| TSMOM 1-week | 2014-2018 (paper's sample era) | 60% | 64% | 1.04 | -79% | 61% | 25.7 |
+| TSMOM 1-week | 2019-2026 (post-publication) | 26% | 44% | 0.75 | -56% | 52% | 27.7 |
+| TSMOM 1-week | Full | 37% | 51% | 0.86 | -82% | 55% | 27.0 |
+| TSMOM 4-week | 2014-2018 (paper's sample era) | 82% | 62% | 1.26 | -68% | 62% | 11.4 |
+| TSMOM 4-week | 2019-2026 (post-publication) | 61% | 44% | 1.29 | -45% | 56% | 12.0 |
+| TSMOM 4-week | Full | 67% | 51% | 1.26 | -72% | 58% | 11.8 |
+| TSMOM 20-week | 2014-2018 (paper's sample era) | 133% | 72% | 1.52 | -68% | 70% | 3.6 |
+| TSMOM 20-week | 2019-2026 (post-publication) | 33% | 46% | 0.85 | -62% | 57% | 4.3 |
+| TSMOM 20-week | Full | 61% | 57% | 1.11 | -68% | 61% | 4.1 |
+| Price > 20-week MA | 2014-2018 (paper's sample era) | 111% | 69% | 1.41 | -72% | 64% | 3.1 |
+| Price > 20-week MA | 2019-2026 (post-publication) | 46% | 46% | 1.04 | -48% | 58% | 4.3 |
+| Price > 20-week MA | Full | 65% | 55% | 1.17 | -72% | 60% | 3.9 |

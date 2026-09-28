@@ -1,0 +1,25 @@
+CAGR needed for +1000% (11x): 5y = 61.5%, 10y = 27.1%, 20y = 12.7%
+
+| Strategy | Horizon | Windows | Median multiple | 10th pct | 90th pct | P(>= 11x, i.e. +1000%) | P(< 1x, i.e. loss) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| US market 1x | 5y | 1136 | 1.73x | 0.98x | 2.42x | 0.0% | 11.2% |
+| US market 1x | 10y | 1076 | 2.91x | 1.41x | 4.67x | 0.0% | 4.6% |
+| US market 1x | 20y | 956 | 7.88x | 3.97x | 15.74x | 28.3% | 0.0% |
+| Top-decile momentum (VW, gross) | 5y | 1136 | 2.25x | 1.08x | 3.57x | 0.0% | 7.7% |
+| Top-decile momentum (VW, gross) | 10y | 1076 | 5.14x | 2.07x | 9.00x | 2.0% | 1.4% |
+| Top-decile momentum (VW, gross) | 20y | 956 | 29.17x | 7.93x | 60.69x | 79.2% | 0.0% |
+| Small value (VW, gross) | 5y | 1136 | 2.08x | 0.98x | 3.50x | 0.1% | 10.7% |
+| Small value (VW, gross) | 10y | 1076 | 4.35x | 2.10x | 7.86x | 5.5% | 2.1% |
+| Small value (VW, gross) | 20y | 956 | 20.72x | 7.23x | 44.39x | 78.6% | 0.0% |
+| 2x market, buy&hold | 5y | 1136 | 2.12x | 0.61x | 4.42x | 0.2% | 21.7% |
+| 2x market, buy&hold | 10y | 1076 | 4.17x | 0.82x | 11.59x | 12.4% | 13.9% |
+| 2x market, buy&hold | 20y | 956 | 12.42x | 3.42x | 73.97x | 52.7% | 2.3% |
+| 2x market + 10m SMA | 5y | 1136 | 1.87x | 0.98x | 3.64x | 0.0% | 10.3% |
+| 2x market + 10m SMA | 10y | 1076 | 3.67x | 1.73x | 7.47x | 2.5% | 3.6% |
+| 2x market + 10m SMA | 20y | 956 | 13.67x | 6.14x | 33.70x | 61.0% | 0.0% |
+| 3x market, buy&hold | 5y | 1136 | 2.38x | 0.32x | 7.82x | 3.8% | 25.3% |
+| 3x market, buy&hold | 10y | 1076 | 5.05x | 0.41x | 29.41x | 27.9% | 19.1% |
+| 3x market, buy&hold | 20y | 956 | 12.43x | 1.94x | 352.31x | 52.4% | 4.8% |
+| 3x market + 10m SMA | 5y | 1136 | 2.18x | 0.76x | 5.83x | 0.8% | 14.0% |
+| 3x market + 10m SMA | 10y | 1076 | 4.85x | 1.56x | 16.54x | 18.4% | 5.1% |
+| 3x market + 10m SMA | 20y | 956 | 22.53x | 6.04x | 134.77x | 74.6% | 1.0% |
