@@ -1,0 +1,7 @@
+series,from,to,years,total_return,cagr,ann_vol,max_drawdown,sharpe_0rf
+AIEQ,2017-10-18,2026-09-28,8.94,1.259,0.0954,0.223,-0.39,0.52
+SPY,2017-10-18,2026-09-28,8.94,2.436,0.148,0.188,-0.337,0.83
+Finder ChatGPT fund (reported),2023-03-03,2026-03-27,,0.578,,,,
+SPY over the Finder window,2023-03-03,2026-03-27,,0.636,,,,
+ChatGPT micro-cap experiment (reported),2025-06-27,2025-12-26,,-0.171,,,,
+SPY over the micro-cap window,2025-06-27,2025-12-26,,0.129,,,,
