@@ -109,7 +109,44 @@ modules:
   # ---- Phase B (design v3.3 §10; docs/PHASE_B_CONTRACTS.md §10). Each block is completed by its build. ----
 
   M4:                      # O2 crash call debit spread: policy module, 90-day exception (design v3.3 §3 M4)
-    enabled: false
+    enabled: true
+    name: Crash call spread
+    index: "^GSPC"           # the S&P 500 close, two-source checked and the rule re-run on it (as W10's)
+    root: XSP                # XSP preferred (design §3a.4): cash-settled, European-style, Section 1256
+    fallback_root: SPY       # only when XSP fails the liquidity check (design §3 M4, §4 "Option liquidity")
+    account: taxable         # Robinhood individual account: IRAs allow no spreads (design §3a.1)
+    drop_from_high: -0.15    # close 15% or more below its 252-session high (closes, today's included; track 14 s05)
+    high_sessions: 252
+    vix_min: 30.0            # VIX close 30 or higher
+    cooldown_days: 90        # first day only; 90-day cool-down = one spread at a time (decision 12; track 23 §4.2 C)
+    max_calendar_days: 90    # the listed expiry nearest to, but not beyond, entry (next session) + 90 calendar days
+    min_dte: 40              # no option with fewer than 40 days to expiry at entry (design §4; contract §2)
+    short_strike_ratio: 1.05 # buy the at-the-money call, sell the 105% call
+    strike_tolerance: 0.01   # a chosen strike more than 1% from its target means no trade (fail closed)
+    spot_tolerance: 0.01     # the chain's spot must agree with the verified close within 1% (fail closed)
+    debit_pct_nav: 0.02      # debit <= 2% of NAV, nearest whole contract within the 3% premium cap (design §4)
+    close_sessions_before_expiry: 2  # close >= 1 trading day before expiry: planned two sessions before, one retry left
+    probe_drawdown: -0.10    # snapshot XSP and SPY at 10:17 ET while the last close is 10% below its high, so the
+                             # liquidity check is measured in market hours (design §4)
+    base_rates:              # track 21 §2.1 (o2_mid_summary.csv): 90 DTE, next-day entry (mid of the next-open and
+                             # next-close proxies), frozen fill model, all 26 signals 1990-2026 in 12 episodes;
+                             # returns per trade in % of the debit (model-priced surface)
+      since: 1990
+      signals: 26
+      episodes: 12
+      trades_per_year: 0.6   # one spread at a time (90-day cool-down): 22 signals in 36.6 years (track 23 §3.5)
+      win_rate: 0.69
+      mean_pct: 36
+      median_pct: 78
+      worst_pct: -100
+      lost_all_share: 0.15   # 4 of 26 lost the whole debit
+      is_mean_pct: 7         # 1990-2007
+      oos_mean_pct: 58       # 2008-2026
+      oos_since: 2008
+      placebo_mean_pct: 12   # the same spread bought after random sessions (+-3 years): edge +0.23, p 0.21
+      contribution_pct_nav_year: 0.04   # planning, at kappa 0.25 (+0.13 at kappa 0.5); design §6, track 23 §3.2
+    forecasts:
+      p_profit: 0.60         # 0.57 + 0.25 x (0.69 - 0.57): any-day 90-DTE spread win rate, O2's win rate, kappa 0.25
 
   # ----
 
@@ -130,8 +167,12 @@ shadow:                    # logged automatically, never emailed
 
   # ---- Phase B shadow books (design v3.3 §3 "Shadow ledger"). Each block is completed by its build. ----
 
-  M4_TWIN:                 # M4's 60-DTE paper twin
-    enabled: false
+  M4_TWIN:                 # M4's 60-DTE paper twin (design v3.3 §3 M4, "90-day exception"; track 23 §4.2 C)
+    enabled: true          # M4's signal; entered and exited at model prices at the 10:17 ET snapshots
+    root: XSP
+    max_calendar_days: 60  # the listed expiry nearest to, but not beyond, entry + 60 calendar days
+    min_dte: 40
+    max_entry_delay_sessions: 2   # no usable snapshot within two sessions of the entry session: entry missed
 
   # ----
 
