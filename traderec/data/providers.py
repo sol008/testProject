@@ -7,7 +7,9 @@ Sources (design v3.2 §10 "Data dependencies"; research/09 free data stack):
 * BTC-USD per UTC day  Coinbase Exchange public candles, then yfinance BTC-USD;
 * 3-month T-bill ..... FRED DTB3, then yfinance ^IRX / 100, then constitution ``data.fallback_tbill_rate``;
 * second-source close  for the two-source check (design §3 M1 "two-source-checked data"; track 13 §11.1):
-  Nasdaq's public historical-quote API, then Robinhood's public quotes endpoint.
+  Nasdaq's public historical-quote API, then Robinhood's public quotes endpoint;
+* option chains ...... CBOE's delayed-quotes JSON, then yfinance option chains in market hours only
+  (docs/PHASE_B_CONTRACTS.md §1; the normalisers are in ``traderec.options.chain``).
 
 `LiveProvider` does the network I/O. `FakeProvider` serves in-memory data to every offline test. Payload
 parsing lives in pure functions (``normalise_yf_frame``, ``parse_*``), which are tested with small fixtures.
@@ -15,12 +17,15 @@ parsing lives in pure functions (``normalise_yf_frame``, ``parse_*``), which are
 from __future__ import annotations
 
 import copy
+import dataclasses
+import hashlib
 import io
+import json
 import logging
 import math
 import numbers
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
 from urllib.parse import quote
@@ -29,6 +34,8 @@ import pandas as pd
 import requests
 
 from traderec import __version__
+from traderec.market_calendar import is_trading_day
+from traderec.options.chain import OptionChain, chain_root, parse_cboe_chain, parse_yahoo_chain
 
 if TYPE_CHECKING:
     from traderec.config import Config
@@ -39,6 +46,7 @@ __all__ = [
     "DataProvider",
     "FakeProvider",
     "LiveProvider",
+    "cboe_option_symbol",
     "iso_date",
     "normalise_yf_frame",
     "parse_cboe_csv",
@@ -83,6 +91,15 @@ NASDAQ_HISTORICAL_URL = "https://api.nasdaq.com/api/quote/{ticker}/historical"
 ROBINHOOD_QUOTES_URL = "https://api.robinhood.com/quotes/"
 YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
 CBOE_QUOTE_URL = "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_{name}.json"
+# CBOE's delayed option chains (≈6-13 MB each). The URL answers 307 to cdn-api.cboe.com, which _get follows.
+# Index roots take a leading underscore ("_XSP", "_SPX"; the SPX file holds SPXW too), equities do not ("SPY").
+CBOE_OPTIONS_URL = "https://cdn.cboe.com/api/global/delayed_quotes/options/{symbol}.json"
+CBOE_INDEX_OPTION_ROOTS = frozenset({"XSP", "SPX", "VIX", "NDX", "RUT", "XND", "MRUT", "DJX", "OEX", "XEO"})
+# yfinance lists index options under the index symbol.
+YAHOO_INDEX_OPTION_SYMBOLS = {"XSP": "^XSP", "SPX": "^SPX", "VIX": "^VIX", "NDX": "^NDX", "RUT": "^RUT"}
+YAHOO_OPTION_MAX_DTE = 200      # the Yahoo fallback fetches expiries up to this far out, one request each
+MARKET_OPEN_ET = "09:30"        # Yahoo option quotes are used only between these times on a trading day
+                                # (research/14 §6.7: never use Yahoo after-hours quotes)
 # Index tickers with a second source for their official close (design v3.3 W10: two-source S&P 500 closes):
 # FRED's copy of S&P Dow Jones Indices' series first (published the same evening, checked 2026-09-28 22:15 ET),
 # then CBOE's delayed index quote once its last trade is stamped at or after 16:00 ET that day.
@@ -125,10 +142,19 @@ class DataProvider(Protocol):
         """{"close": float, "source": "nasdaq" | "robinhood"}, or None when unavailable."""
         ...
 
+    def option_chain(self, underlying: str) -> OptionChain:
+        """A live snapshot of an option root's chain, "now" (docs/PHASE_B_CONTRACTS.md §1). No history exists."""
+        ...
+
 
 # --------------------------------------------------------------------------------------------------------
 # Pure helpers and payload parsers (no network, no clock)
 # --------------------------------------------------------------------------------------------------------
+
+def cboe_option_symbol(root: str) -> str:
+    """CBOE's file name for a root's option chain: "_XSP", "_SPX" (also for SPXW), or "SPY" for an equity."""
+    r = chain_root(root)
+    return f"_{r}" if r in CBOE_INDEX_OPTION_ROOTS else r
 
 def iso_date(value: Any) -> str:
     """'YYYY-MM-DD' for a date string or timestamp-like value; ValueError when it cannot be parsed."""
@@ -435,7 +461,27 @@ def _copy(value: T) -> T:
     """Callers get their own copy of a memoised result."""
     if isinstance(value, (pd.DataFrame, pd.Series)):
         return value.copy()
+    if isinstance(value, OptionChain):
+        return dataclasses.replace(value, frame=value.frame.copy())  # type: ignore[return-value]
     return copy.copy(value)
+
+
+def _in_market_hours(now: pd.Timestamp) -> bool:
+    """True from 09:30 to 16:00 America/New_York on an NYSE trading day. A naive `now` is read as UTC."""
+    ts = pd.Timestamp(now)
+    if ts.tzinfo is None:
+        ts = ts.tz_localize("UTC")
+    ts = ts.tz_convert(NY_TZ)
+    hhmm = ts.strftime("%H:%M")
+    return is_trading_day(ts.strftime("%Y-%m-%d")) and MARKET_OPEN_ET <= hhmm < CLOSE_ET
+
+
+def _response_bytes(resp: Any) -> bytes:
+    """The raw body of a requests-style response (its `.content`, else its `.text` as UTF-8)."""
+    content = getattr(resp, "content", None)
+    if isinstance(content, (bytes, bytearray)):
+        return bytes(content)
+    return str(resp.text).encode("utf-8")
 
 
 # --------------------------------------------------------------------------------------------------------
@@ -453,8 +499,9 @@ class LiveProvider(DataProvider):
     * Memo cache per instance: one run sees one consistent snapshot. Callers get copies. Failures are not
       cached, and neither is a None from second_source_close.
     * ``sources`` records which source served each call, e.g. ``{"vix:VIX": "cboe", "tbill_rate":
-      "fred:DTB3", "btc_daily_utc": "coinbase", "daily_bars:SPY": "yfinance"}``. A newest bar whose close
-      came from Robinhood shows as ``"yfinance+robinhood-close"`` (see `_fill_open_last_bar`).
+      "fred:DTB3", "btc_daily_utc": "coinbase", "daily_bars:SPY": "yfinance", "option_chain:XSP": "cboe"}``.
+      A newest bar whose close came from Robinhood shows as ``"yfinance+robinhood-close"`` (see
+      `_fill_open_last_bar`).
 
     ``session`` (anything with a requests-style ``get``), ``sleep`` (the backoff wait) and ``clock`` (returns
     the current time as a tz-aware Timestamp) are test seams. ``user_agent`` overrides the default UA.
@@ -534,6 +581,22 @@ class LiveProvider(DataProvider):
             log.warning("second-source close for %s on %s failed: %s", ticker, date, exc)
             return None
 
+    def option_chain(self, underlying: str) -> OptionChain:
+        """A snapshot of an option root's chain now: CBOE's delayed quotes, else yfinance in market hours.
+
+        * CBOE: ``CBOE_OPTIONS_URL`` for `cboe_option_symbol(root)`, parsed by `parse_cboe_chain`. `asof` is
+          CBOE's file time in ET. The quotes lag it by about 15 minutes. `raw_sha256` hashes the raw body.
+        * Yahoo, the fallback, runs only in market hours (09:30-16:00 ET on a trading day, by the provider's
+          clock). Track 14 §6.7 says never to use Yahoo's after-hours quotes. It fetches every expiry up to
+          YAHOO_OPTION_MAX_DTE days out. `asof` is the fetch time, and `raw_sha256` hashes the frames' CSV.
+        * "SPXW" is served from the SPX chain.
+        * The memo cache gives one snapshot per root per provider, so one run sees one set of quotes.
+
+        Raises DataError when both sources fail.
+        """
+        root = chain_root(underlying)
+        return self._memo(("option_chain", root), lambda: self._fetch_option_chain(root))
+
     # --- fetch chains ----------------------------------------------------------------------------------
 
     def _fetch_daily_bars(self, ticker: str) -> pd.DataFrame:
@@ -578,6 +641,57 @@ class LiveProvider(DataProvider):
             raise DataError("no T-bill rate: FRED and ^IRX failed and data.fallback_tbill_rate is missing") from exc
         self.sources["tbill_rate"] = "config:fallback_tbill_rate"
         return rate
+
+    def _fetch_option_chain(self, root: str) -> OptionChain:
+        problems: list[str] = []
+        for source, fetch in (("cboe", self._cboe_option_chain), ("yahoo", self._yahoo_option_chain)):
+            try:
+                chain = fetch(root)
+            except Exception as exc:  # noqa: BLE001 - fall through to the next source
+                log.warning("%s option chain for %s unavailable: %s", source, root, exc)
+                problems.append(f"{source}: {exc}")
+                continue
+            self.sources[f"option_chain:{root}"] = chain.source
+            return chain
+        raise DataError(f"no option chain for {root} ({'; '.join(problems)})")
+
+    def _cboe_option_chain(self, root: str) -> OptionChain:
+        resp = self._get(CBOE_OPTIONS_URL.format(symbol=cboe_option_symbol(root)))
+        raw = _response_bytes(resp)
+        try:
+            return parse_cboe_chain(json.loads(raw), root, raw_sha256=hashlib.sha256(raw).hexdigest())
+        except ValueError as exc:   # invalid JSON, or a payload that is not a usable chain
+            raise DataError(f"CBOE option chain for {root}: {exc}") from exc
+
+    def _yahoo_option_chain(self, root: str) -> OptionChain:
+        now = pd.Timestamp(self._clock())
+        if now.tzinfo is None:
+            now = now.tz_localize("UTC")
+        if not _in_market_hours(now):
+            raise DataError("Yahoo option quotes are used in market hours only (research/14 §6.7)")
+        symbol = YAHOO_INDEX_OPTION_SYMBOLS.get(root, root)
+        day = now.tz_convert(NY_TZ).tz_localize(None).normalize()
+        listed = self._with_retries(lambda: list(self._yf_option_expiries(symbol)), bool,
+                                    f"yfinance option expiries for {symbol}")
+        wanted = [e for e in listed if 0 <= (pd.Timestamp(e) - day).days <= YAHOO_OPTION_MAX_DTE]
+        frames: list[pd.DataFrame] = []
+        spot = None
+        for expiry in wanted:
+            calls, puts, underlying = self._with_retries(
+                lambda e=expiry: self._yf_option_frames(symbol, e), lambda r: r is not None,
+                f"yfinance option chain for {symbol} {expiry}")
+            frames += [calls, puts]
+            spot = spot or _to_price((underlying or {}).get("regularMarketPrice"))
+        if spot is None:
+            spot = _to_price((_yahoo_meta(self._yf_quote_meta(symbol)) or {}).get("regularMarketPrice"))
+        raw = pd.concat([f for f in frames if f is not None and len(f)], ignore_index=True) if frames else None
+        if raw is None or raw.empty or spot is None:
+            raise DataError(f"yfinance has no usable option chain for {symbol}")
+        try:
+            return parse_yahoo_chain(frames, root, spot, now.tz_convert(NY_TZ).strftime("%Y-%m-%dT%H:%M:%S"),
+                                     raw_sha256=hashlib.sha256(raw.to_csv(index=False).encode()).hexdigest())
+        except ValueError as exc:
+            raise DataError(f"yfinance option chain for {symbol}: {exc}") from exc
 
     def _index_second_source(self, symbol: str, day: str) -> dict | None:
         """FRED's copy of the index series, then CBOE's delayed quote (INDEX_SECOND_SOURCES)."""
@@ -747,6 +861,19 @@ class LiveProvider(DataProvider):
 
         return yf.Ticker(symbol).get_history_metadata()
 
+    def _yf_option_expiries(self, symbol: str) -> Sequence[str]:
+        """yfinance's listed option expiries ("YYYY-MM-DD") for `symbol` (e.g. "SPY", "^XSP")."""
+        import yfinance as yf  # lazy, as in _yf_download
+
+        return yf.Ticker(symbol).options
+
+    def _yf_option_frames(self, symbol: str, expiry: str) -> tuple[pd.DataFrame, pd.DataFrame, Mapping | None]:
+        """(calls, puts, underlying quote) from yfinance's `Ticker.option_chain(expiry)`."""
+        import yfinance as yf  # lazy, as in _yf_download
+
+        oc = yf.Ticker(symbol).option_chain(expiry)
+        return oc.calls, oc.puts, getattr(oc, "underlying", None)
+
     # --- plumbing --------------------------------------------------------------------------------------
 
     def _with_retries(self, fetch: Callable[[], T], ok: Callable[[T], bool], what: str) -> T:
@@ -833,11 +960,15 @@ class FakeProvider(DataProvider):
             btc=btc_close,                                # btc_daily_utc()
             tbill_rate=0.04,                              # tbill_rate(); None makes it raise DataError
             second_source={("SPY", "2026-09-25"): 772.5}, # overrides for second_source_close()
+            chains={"XSP": chain},                        # option_chain(); a list is served in order
         )
 
     * Getters return copies. Each index is made tz-naive and normalised, and sorted; the data is otherwise
       returned as given, so build frames with the contract columns (open, high, low, close, adj_close,
       volume).
+    * option_chain(root) serves `chains[root]` ("SPXW" asks for "SPX"). A list gives the next item on each
+      call and then repeats its last one. An Exception in the list is raised, to simulate a failed source.
+      A root with no chain raises DataError. `chain_calls` lists the roots asked for, in order.
     * A missing ticker, VIX name or BTC series raises DataError, as LiveProvider does when every source
       fails.
     * second_source_close(ticker, date):
@@ -854,7 +985,9 @@ class FakeProvider(DataProvider):
                  btc: pd.Series | None = None,
                  tbill_rate: float | None = 0.04,
                  second_source: Mapping[tuple[str, str], float | None] | None = None,
-                 second_source_name: str = "nasdaq") -> None:
+                 second_source_name: str = "nasdaq",
+                 chains: Mapping[str, OptionChain | Exception | Sequence[OptionChain | Exception]] | None = None,
+                 ) -> None:
         self._bars = {str(t): _as_session_indexed(frame) for t, frame in (bars or {}).items()}
         vix_map = {"VIX": vix} if isinstance(vix, pd.Series) else dict(vix or {})
         self._vix = {str(n).strip().upper().lstrip("^"): _as_session_indexed(s) for n, s in vix_map.items()}
@@ -862,6 +995,9 @@ class FakeProvider(DataProvider):
         self._tbill_rate = None if tbill_rate is None else float(tbill_rate)
         self._second = {(str(t), iso_date(d)): v for (t, d), v in (second_source or {}).items()}
         self._second_name = second_source_name
+        self._chains: dict[str, list[OptionChain | Exception]] = {
+            chain_root(root): list(v) if isinstance(v, (list, tuple)) else [v] for root, v in (chains or {}).items()}
+        self.chain_calls: list[str] = []
         self.sources: dict[str, str] = {}
 
     def daily_bars(self, ticker: str) -> pd.DataFrame:
@@ -901,3 +1037,15 @@ class FakeProvider(DataProvider):
         if closes.empty:
             return None
         return {"close": float(closes.iloc[-1]), "source": self._second_name}
+
+    def option_chain(self, underlying: str) -> OptionChain:
+        root = chain_root(underlying)
+        self.chain_calls.append(root)
+        served = self._chains.get(root)
+        if not served:
+            raise DataError(f"FakeProvider has no option chain for {root}")
+        item = served.pop(0) if len(served) > 1 else served[0]
+        if isinstance(item, Exception):
+            raise item
+        self.sources[f"option_chain:{root}"] = "fake"
+        return dataclasses.replace(item, frame=item.frame.copy())

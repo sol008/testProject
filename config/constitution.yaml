@@ -314,14 +314,33 @@ fills:                                # fill model v1.0 (frozen for the paper ph
     FXE: 8
     FXY: 8
     FXA: 8
-  options:                            # two-leg spreads (Phase B): model price = mid +/- concession x natural width
-    concession: 0.3                   # = mid + 0.6 x half-spread per leg; fills only within the order's limit
-    max_concession: 0.5               # the stated maximum for the one re-price: the natural price
-    multiplier: 100
+  options:                            # two-leg spreads (Phase B, design v3.3 §7): P = combo mid +/- concession x natural width
+    concession: 0.3                   # = mid + 0.6 x half-spread per leg (track 18 §5.1); fills only within the order's limit
+    max_concession: 0.5               # the stated maximum (open) / minimum (close) for the one re-price: the natural price
+    multiplier: 100                   # shares per contract
 
-# ---- Phase B options settings (docs/PHASE_B_CONTRACTS.md §1, §5). Completed by the options build. ----
+# ---- Phase B options settings (docs/PHASE_B_CONTRACTS.md §1-§5; design v3.3 §3a, §4, §7, §10). ----
 options:
-  enabled: false
+  enabled: true                       # the 10:17 ET options job (python -m traderec options; .github/workflows/options.yml)
+  preferred_root: XSP                 # design §3a.4: XSP preferred (cash-settled, European, Section 1256)
+  min_entry_dte: 40                   # design §4 and §5: no option with < 40 DTE at entry (contract §2)
+  close_sessions_before_expiry: 1     # design §3a.4: close >= 1 trading day before expiration (modules apply it)
+  snapshot_window_et: ["10:15", "16:00"]   # fills use only quotes stamped in this window on the run date (design §7:
+                                      # a market-hours snapshot; CBOE's quotes lag ~15 min, so 10:15 = quotes from 10:00)
+  close_after_et: "16:00"             # the daily run marks spreads only with chains stamped at or after the close
+  liquidity:                          # design §4 "Option liquidity" (track 17 R8), measured on the market-hours snapshot
+    max_leg_spread_frac: 0.10         # each leg: ask - bid <= 10% of its mid ...
+    min_open_interest: 500            # ... with open interest >= 500
+    max_round_trip_frac: 0.10         # the structure: round trip (its natural width) <= 10% of the debit ...
+    max_round_trip_frac_high_gain: 0.20   # ... or <= 20% when the expected gain is >= 2x the round-trip cost
+    high_gain_cost_multiple: 2.0
+  snapshots:                          # state/options/<date>/<root>-<HHMM>.csv.gz (contract §5)
+    max_bytes_per_day: 100000         # all roots and runs of a day; the book's legs are always kept
+    min_dte: 20                       # surface sample for the runners' roots: expiries 20-120 days out ...
+    max_dte: 120
+    max_expiries: 12                  # ... at most one a week, spread evenly ...
+    moneyness: 0.25                   # ... strikes within +/-25% of spot ...
+    strike_step: 0.025                # ... the listed strike nearest each 2.5% of spot
 
 data:
   two_source_tolerance: 0.001         # 0.1% close mismatch blocks new signals

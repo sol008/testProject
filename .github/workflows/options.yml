@@ -1,0 +1,166 @@
+# Market-hours run: option-chain snapshots -> paper spread fills (fill model v1.0) -> marks -> ledger.
+# No emails. Owner's guide: docs/phase-b/options.md (merged into docs/OPERATIONS.md at integration).
+name: options
+
+on:
+  schedule:
+    # Target: 10:17 America/New_York, Monday to Friday mornings. These crons are UTC, so two slots cover
+    # both clock settings: 14:17 UTC = 10:17 EDT (summer), 15:17 UTC = 10:17 EST (winter).
+    # - Winter: the 14:17 UTC slot is 09:17 EST, before the snapshot window. The CLI says "too_early" and
+    #   exits 0 without touching the state; the 15:17 UTC slot does the run.
+    # - Summer: the 15:17 UTC slot (11:17 EDT) is a no-op when the first run succeeded, and a retry when the
+    #   first run's option quotes were missing (exit code 3).
+    # Days 1-5 (Mon-Fri UTC) are the same weekdays in New York at these hours. The CLI is idempotent per ET
+    # date. If you change these, update EARLY_SLOT below to the first one.
+    - cron: "17 14 * * 1-5"
+    - cron: "17 15 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "ET date to run (YYYY-MM-DD). Leave empty for now: only works between 10:15 and 16:00 ET, as quotes are live."
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry run: commit nothing; the would-be state is attached to the run as an artifact."
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: "Force: redo the most recent run (only that one) from its pre-run snapshot."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # commit state/ (including state/options/) back to the branch
+
+# Every workflow that writes state/ shares this group, so runs never overlap.
+concurrency:
+  group: traderec-state
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  options:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+      FORCE: ${{ inputs.force && 'true' || 'false' }}
+      RUN_DATE: ${{ inputs.date }}
+      # The first slot of the morning; the later slot follows it and can retry.
+      EARLY_SLOT: ${{ github.event.schedule == '17 14 * * 1-5' }}
+    steps:
+      - name: Check out the branch head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # An explicit ref checks out the branch as it is when this job starts, so a run that waited in the
+          # concurrency queue sees the state that the run before it committed.
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Initialise state if missing
+        run: python -m traderec init --if-missing
+
+      - name: Run the options job
+        id: run
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL_OPTIONS }}   # one healthchecks.io check per workflow
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -n "${RUN_DATE}" ]; then
+            if ! [[ "${RUN_DATE}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::error::date must look like YYYY-MM-DD (got '${RUN_DATE}')."
+              exit 1
+            fi
+            args+=(--date "${RUN_DATE}")
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then args+=(--dry-run); fi
+          if [ "${FORCE}" = "true" ]; then args+=(--force); fi
+          echo "python -m traderec options ${args[*]}"
+          status=0
+          python -m traderec options "${args[@]}" || status=$?
+          # Exit code 3 = no usable market-hours quotes for today's spread orders: they stay pending. In the
+          # early slot the state is not committed, and the 15:17 UTC slot retries from the committed state.
+          if [ "${status}" -eq 3 ] && [ "${EARLY_SLOT}" = "true" ]; then
+            echo "::warning::Option quotes not usable yet (exit code 3); the 15:17 UTC slot will retry."
+            echo "retry=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          exit "${status}"
+
+      - name: Commit state changes
+        if: env.DRY_RUN != 'true' && steps.run.outputs.retry != 'true'
+        env:
+          RUN_KIND: options
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != refs/heads/* ]]; then
+            echo "::error::State can only be committed to a branch (this run is on ${GITHUB_REF})."
+            exit 1
+          fi
+          branch="${GITHUB_REF_NAME}"
+          if [ ! -d state ]; then
+            echo "No state/ folder; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all state/
+          if git diff --cached --quiet; then
+            echo "State unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit --quiet -m "state: ${RUN_KIND} run $(date -u +%Y-%m-%d) [skip ci]"
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash --quiet origin "${branch}" && git push --quiet origin "HEAD:${branch}"; then
+              echo "State committed and pushed to ${branch} (attempt ${attempt})."
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "::warning::Push attempt ${attempt} of 3 failed."
+            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 15)); fi
+          done
+          echo "::error::Could not push the state commit after 3 attempts. The run's state/ folder is attached to this run as an artifact; see docs/OPERATIONS.md, Troubleshooting."
+          exit 1
+
+      - name: Upload state/ (dry runs and failures)
+        if: always() && (env.DRY_RUN == 'true' || failure())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-options-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # The pipeline reports each run to healthchecks.io itself (start, then success or fail).
+      # This adds a fail signal for what happens outside it: setup, the state commit, a timeout.
+      - name: Tell healthchecks.io the job failed
+        if: always() && env.DRY_RUN != 'true' && job.status != 'success'
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL_OPTIONS }}
+        run: |
+          if [ -z "${HC_PING_URL}" ]; then
+            echo "HC_PING_URL_OPTIONS is not set; no ping."
+            exit 0
+          fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "${HC_PING_URL}/fail" \
+            || echo "::warning::Could not reach healthchecks.io."
