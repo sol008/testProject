@@ -94,10 +94,10 @@ W9 also needs a file from you, but only on the day official sources report oil e
 
 ### 5. Your contact for SEC requests (1 minute)
 
-The SEC asks automated tools to identify themselves in each request ([SEC: Accessing EDGAR data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data)). The SEC-filings shadow screens will use this secret. They are still being built, so nothing reads it yet.
+The SEC asks automated tools to identify themselves in each request ([SEC: Accessing EDGAR data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data)). The SEC-filings shadow screens send this secret with every request to sec.gov.
 
 - Add the secret `SEC_USER_AGENT` at **https://github.com/sol008/testProject/settings/secrets/actions/new**. The value is your name followed by a contact email address of your choice, on one line. It is sent only to sec.gov.
-- Without it, the screens will use a generic identity, which the SEC may throttle.
+- Without it, the screens use a generic identity, which the SEC may throttle: www.sec.gov then refuses the filing documents, and four of the five screens raise a data alert each evening until the secret exists (`docs/OPERATIONS.md` §2(e)).
 
 ### 6. Robinhood checks in the app (10 minutes, nothing is submitted)
 

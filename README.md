@@ -2,7 +2,7 @@
 
 A small, rule-based trade recommendation system for one person. Every weekday evening it runs on GitHub Actions and checks a few pre-registered rules against the day's closing prices. When a rule fires, it emails plain-English instructions for placing the order in the Robinhood app the next morning. It starts in paper mode.
 
-**Status: Phase B built, all paper.** Phases A and B are built: the modules below, the shadow books, the 10:17 ET options job, the hourly crypto job, and the quarterly and annual reviews. Everything runs on paper until the go-live gates pass. The EDGAR/FINRA shadow screens are still to come.
+**Status: Phase B built, all paper.** Phases A and B are built: the modules below, the shadow books (the EDGAR/FINRA screens included), the 10:17 ET options job, the hourly crypto job, and the quarterly and annual reviews. Everything runs on paper until the go-live gates pass. A replay of the Phase A pipeline over 2019–2026 reconciled it with the research (`docs/phase-b/replay.md`).
 
 ## What it does
 
@@ -17,7 +17,7 @@ A small, rule-based trade recommendation system for one person. Every weekday ev
   | **M4** | Crash call spread: after the S&P 500 closes 15% below its 252-session high with the VIX at 30 or more (first day only), buy the at-the-money / 105% call spread on the expiry nearest to, but not beyond, 90 days; debit about 2% of NAV; closed two trading days before expiry (policy module, 90-day exception) | XSP options (SPY if XSP fails liquidity) in the Robinhood taxable account |
   | **W8** | De-escalation call spread: an official US–Iran de-escalation announcement, Brent down 6% and a Polymarket move on the same day; an XSP, SPY or DAL call spread, 56–75 days, premium ≤ 1% of NAV; a frozen AI check may only veto (policy module, small) | Robinhood taxable account |
   | **W9** | Barrel-loss oil call spread: at least 1 mb/d of oil exports offline (the owner's record) and Brent or WTI up 5%; a USO call spread, 56–75 days, premium ≤ 0.75% of NAV (paper module) | Robinhood taxable account |
-  | Shadow books | Logged, never emailed: ST-1b and the W10 record (every uptrend −3% day scored at 60 and 90 days); M4's 60-day twin; the option books O1 (M7), O1-h, I1, I2 and ST-2; the crypto books (the ETH switch; M6's stablecoin depeg buy and Bitcoin cash-and-carry); the macro book (W3, W4, the gold spike fade, every scheduled release); the EDGAR/FINRA screens (to come) | — |
+  | Shadow books | Logged, never emailed: ST-1b and the W10 record (every uptrend −3% day scored at 60 and 90 days); M4's 60-day twin; the option books O1 (M7), O1-h, I1, I2 and ST-2; the crypto books (the ETH switch; M6's stablecoin depeg buy and Bitcoin cash-and-carry); the macro book (W3, W4, the gold spike fade, every scheduled release); the EDGAR/FINRA screens of each day's SEC filings (insider purchase clusters, special dividends, activist 13D filings, near-completion cash mergers and closed-end fund tenders) | — |
 
   - That is about 20 trades a year, including the 12 monthly rebalances. W10 fires about once every two years. M4, W8 and W9 add a few option-spread trades a year at most (design §6: M4 ≈ 0.6, W8 and W9 ≈ 0.4–2).
   - Every trade closes within 60 calendar days. The exceptions are W10 and M4 (90 days) and the continuing trend positions (M2, M3), per decision 12. The research on 60 vs 90 vs 120 days is in `research/21`–`24`.
@@ -83,8 +83,7 @@ Notes on the dry run:
 | `python -m traderec hourly [--dry-run]` | The hourly stablecoin depeg check (a shadow book) |
 | `python -m traderec verify-ledger` | Recompute the ledger's hash chain |
 | `python -m traderec status` | Print the paper book, including open spreads |
-
-> **Placeholder: replay build pending** (`docs/phase-b/replay.md`). Its command goes in this table.
+| `python scripts/replay.py fetch`, then `run [--start D] [--end D] [--resume]`, then `reconcile [--out DIR]` (or `all`), each with `--cache DIR` and `--work DIR` | The historical replay, on your own computer: downloads the data once, runs the real Phase A pipeline day by day over past years (2019 to 2026 by default, about 17 minutes) into a scratch directory, and compares its trades with the research (`docs/phase-b/replay.md`). It never touches `state/` |
 
 ## Running it for real
 
@@ -94,6 +93,7 @@ Follow **[docs/OWNER_SETUP.md](docs/OWNER_SETUP.md)**, the short to-do list with
 - the Gmail OAuth credential;
 - the healthchecks.io alarms;
 - the W8/W9 veto's key and pinned model, and W9's offline-barrels file;
+- your SEC contact for the EDGAR screens;
 - the first dry run;
 - the Robinhood checklist, placing option spreads and recording fills;
 - going live, pausing jobs, and troubleshooting.
@@ -130,10 +130,10 @@ config/              account.yaml (accounts, paper/live), constitution.yaml (the
 state/               written by the workflows: state.json, ledger.jsonl, pre_run.json, outbox/, options/;
                      inputs/w9_supply_loss.json is the owner's W9 record
 tests/               offline tests with fake data providers and small recorded fixtures
-scripts/             gmail_oauth_setup.py (the one-time Gmail credential)
+scripts/             gmail_oauth_setup.py (the one-time Gmail credential), replay.py (the historical replay harness)
 .github/workflows/   daily, options, hourly, weekly, monthly, ci
 docs/                OWNER_SETUP.md, OPERATIONS.md, INTERFACES.md, PHASE_B_CONTRACTS.md, phase-b/
-research/            the research dossier and the design
+research/            the research dossier and the design; code/25-replay/ holds the replay's reconciliation tables
 ```
 
 ## Disclaimer
