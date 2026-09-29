@@ -31,6 +31,7 @@ __all__ = ["ALLOWED_LITERALS", "html_to_text", "numeric_tokens", "validate"]
 ALLOWED_LITERALS: frozenset[str] = frozenset({
     "9:30",      # the NYSE open, when Robinhood fills market orders queued after hours
     "10:00",     # earliest time for option-spread orders (design §3a, Phase B)
+    "11:00",     # an option-spread order not filled by then is re-entered once at its stated price (design §3 M4)
     "24/7",      # Coinbase trading hours
     "S&P 500",   # index name
     "§8",        # design section on rule changes (the monthly email's "no rule changes" line)

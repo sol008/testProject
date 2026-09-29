@@ -8,8 +8,8 @@ Number registry
 ---------------
 Every number in an email comes from a `NumberRegistry` formatter (`fmt_money`, `fmt_pct`, `fmt_num`,
 `fmt_date`), which returns the string and records it in `RenderedEmail.numbers_registered`. Templates hold
-no digits: only list step numbers and `validator.ALLOWED_LITERALS` ("9:30", "10:00", "24/7", "S&P 500",
-"§8"). Rule constants (200-day average, RSI below 10, ...) are read from `rec.facts`, never typed into a
+no digits: only list step numbers and `validator.ALLOWED_LITERALS` ("9:30", "10:00", "11:00", "24/7",
+"S&P 500", "§8"). Rule constants (200-day average, RSI below 10, ...) are read from `rec.facts`, never typed into a
 template, so `validator.validate()` can prove that every number came from the data. Data-layer strings
 that contain digits (ids, labels, forecast questions, URLs, `exit_plan` lines) are registered verbatim.
 
@@ -69,6 +69,9 @@ flat dict.
        (+ placebo_mean_pct, worst_interim_pct, optional edge_since and worst_interim_when, e.g. "March 2020");
        EXIT: reason "calendar_stop", entry_date, days_held, sessions_held
 OrderIntent.meta may carry "ref_price", "qty" and "keep_qty" per order (REBALANCE).
+
+Option spreads (order_type "spread_limit", order kind (b) of design §3a) render as a vertical spread; their
+facts keys are listed on `_SpreadEmail` (docs/PHASE_B_CONTRACTS.md §8).
 """
 from __future__ import annotations
 
@@ -1012,6 +1015,10 @@ class _TradeEmail:
         return (self.t(*chosen) or self.t(*GENERIC_ONE_SENTENCE.get(self.kind, ())) or
                 f"{self.module_name}: see the order below.")
 
+    def explainer(self) -> list[tuple[str, Any]]:
+        """Blocks shown after the one-sentence summary: none for ETF orders (spreads explain the structure)."""
+        return []
+
     def steps(self) -> list[str]:
         record = "Record the fill (link below)" if self.issue_url else "Note the fill: dollars and price"
         if self.coinbase:
@@ -1280,6 +1287,7 @@ class _TradeEmail:
             ("banner", LIVE_BANNER if self.live else PAPER_BANNER),
             ("box", self.headline()),
             ("h", "In one sentence"), ("p", sentence),
+            *self.explainer(),
             ("h", f"Do this in {self.venue}"),
         ]
         if self.kind == "REBALANCE" and self.orders:
@@ -1321,13 +1329,539 @@ class _TradeEmail:
         return ["Ticker", "What it is", "Action", "Dollars"], rows
 
 
+# ------------------------------------------------------------------------------------------- spread emails
+# Order kind (b) of design §3a: one two-leg vertical spread at one net limit price, placed after 10:00 ET, with one
+# re-price at the stated maximum (the stated minimum credit when closing), otherwise skipped (contract §2, §8).
+# Module text (M4, W8, W9) comes from the shared tables above (MODULE_*, ONE_SENTENCE, WHY, EXIT_PLAN, RISKS, merged
+# from traderec/email_text/). The SPREAD_* tables below are the generic fallbacks, with no digits either.
+
+SPREAD_ORDER_TYPE = "spread_limit"
+CONTRACT_MULTIPLIER = 100                                # one contract = 100 x the per-share price (contract §2)
+INDEX_OPTION_ROOTS = frozenset({"XSP", "SPX", "SPXW"})   # cash-settled, European-style, Section 1256
+# Option roots with no TICKER_NAMES entry. Kept apart because module text may add these keys to TICKER_NAMES.
+OPTION_ROOT_NAMES = {"XSP": "Mini-S&P 500 index, one-tenth of the S&P 500", "SPX": "S&P 500 index",
+                     "SPXW": "S&P 500 index"}
+SETTLEMENT_CASH = "cash-settled, European-style"          # the facts["settlement"] values (contract §8)
+SETTLEMENT_SHARES = "shares, American-style"
+RIGHT_WORDS = {"C": "call", "P": "put"}
+# Fixed, reviewed text with digits, registered verbatim like the label tables. Design §9: the tax line names the
+# account family and whether the instrument is Section 1256.
+SECTION_1256_TAX = ("Tax: this is your {account}, and {root} options are Section 1256 contracts: gains and losses "
+                    "count 60% long-term and 40% short-term (the 60/40 rule), however long you hold them, and "
+                    "contracts still open at year end are taxed as if sold.")
+ORDINARY_OPTION_TAX = ("Tax: this is your {account}, and {root} options are not Section 1256 contracts: gains are "
+                       "short-term, taxed as ordinary income.")
+
+SPREAD_ONE_SENTENCE: dict[str, tuple] = {
+    "NEW_TRADE": (
+        "Buy {spreads_phrase} {when} for about {debit_usd:money}, as the {module_name} rule says: a bet that {root} "
+        "{direction}, where the most you can lose is what you pay.",
+        "Buy {spreads_phrase} {when}, as the {module_name} rule says: a bet that {root} {direction}, where the most "
+        "you can lose is what you pay.",
+    ),
+    "EXIT:time_stop": ("The planned holding time is up, so sell to close your {spreads_phrase} {when}.",),
+    "EXIT:take_profit": ("The spread reached its profit target, so sell to close your {spreads_phrase} {when} and "
+                         "keep the gain.",),
+    "EXIT:invalidation": ("The reason for this trade no longer holds, so sell to close your {spreads_phrase} "
+                          "{when}.",),
+    "EXIT:expiry_rule": ("The options expire soon, so sell to close your {spreads_phrase} {when}: every spread is "
+                         "closed at least one trading day before it expires.",),
+    "EXIT": ("The {module_name} exit rule fired: sell to close your {spreads_phrase} {when}.",),
+}
+SPREAD_WHY: dict[str, list[tuple]] = {
+    "NEW_TRADE": GENERIC_WHY["NEW_TRADE"],
+    "EXIT:time_stop": [("The planned close date is {exit_date:date}: the rule closes the spread then, whatever the "
+                        "result.",
+                        "The planned holding time is up: the rule closes the spread now, whatever the result.")],
+    "EXIT:take_profit": [("The spread is now worth enough to meet the profit target set when you bought it, so the "
+                          "rule takes the gain instead of waiting for the last bit.",)],
+    "EXIT:invalidation": [("The condition this trade depended on has broken, so the rule closes it now instead of "
+                           "hoping it comes back.",)],
+    "EXIT:expiry_rule": [("Every spread is closed at least one trading day before it expires. That avoids "
+                          "expiration-day surprises: Robinhood closing it for you, or an option being exercised.",)],
+    "EXIT": [("The {module_name} rule's exit condition fired, so the plan says close the spread {when}.",)],
+}
+SPREAD_EXIT_WHY_TAIL = "The exit was decided when you bought: profit or loss doesn't change it."
+SPREAD_NO_STOP = "No stop-loss order: the most you can lose is what you paid."
+
+
+def _float(x: Any) -> float | None:
+    return float(x) if _is_num(x) else None
+
+
+class _SpreadEmail(_TradeEmail):
+    """A two-leg vertical spread at one net limit price (order kind (b), design §3a; contract §8).
+
+    The order's side decides the email: "buy" opens a debit spread (NEW_TRADE), "sell" with close_all closes it
+    (EXIT). Facts come first; the order's own fields (ticker, legs, contracts, limit_price, max_price) fill the gaps,
+    and a sentence whose numbers are still missing falls back to a variant without them.
+
+    rec.facts keys (all optional):
+    - NEW_TRADE: root, underlying_name, strategy_label ("call debit spread"), legs, expiry, contracts, limit_price,
+      max_price (the stated maximum), debit_usd, max_debit_usd, max_value_usd, breakeven, spot, exit_date (the planned
+      close session), stress_usd (default max_debit_usd), stress_pct, section_1256 (default: an index root),
+      settlement (SETTLEMENT_CASH | SETTLEMENT_SHARES; default by root), base_rates, exit_plan, multiplier (100)
+    - EXIT: contracts, limit_price, max_price (the stated minimum), credit_usd, min_credit_usd, entry_price,
+      pnl_usd / pnl_pct (at tonight's mid; pnl_pct in percent units), reason ("time_stop" | "take_profit" |
+      "invalidation" | "expiry_rule"), exit_date
+    - both: execute_date (the session of the 10:00 ET window), labels and base_rates as for ETF emails.
+    Derived keys module text may use too: root, underlying_name, strategy_label, right ("call" | "put"), direction
+    ("rises" | "falls"), long_strike, short_strike, strikes ("770/810"), width, spreads_phrase ("2 XSP 770/810 call
+    spreads"), per_spread_usd, max_per_spread_usd, debit_frac, when ("after 10:00 ET on Wed 30 Sep").
+    """
+
+    def __init__(self, rec: Recommendation, ctx: dict) -> None:
+        super().__init__(rec, ctx)
+        f, reg = self.facts, self.reg
+        o = next((x for x in self.orders if x.order_type == SPREAD_ORDER_TYPE), None)
+        self.opening = o.side == "buy" if o is not None else self.kind not in SELL_KINDS
+        self.is_buy, self.is_sell = self.opening, not self.opening
+        self.spread_kind = "NEW_TRADE" if self.opening else "EXIT"
+
+        def pick(key: str, attr: str | None = None) -> Any:
+            """facts[key], else the order's field."""
+            value = f.get(key)
+            if _is_missing(value) and o is not None:
+                value = getattr(o, attr or key, None)
+            return None if _is_missing(value) else value
+
+        legs = [leg for leg in (pick("legs") or []) if isinstance(leg, dict)]
+        self.long_leg = next((leg for leg in legs if leg.get("position") == "long"), {})
+        self.short_leg = next((leg for leg in legs if leg.get("position") == "short"), {})
+        self.root = reg.register(str(pick("root", "ticker") or self.long_leg.get("root") or self.ticker))
+        label = str(f.get("strategy_label") or "").strip()
+        right = str(self.long_leg.get("right") or self.short_leg.get("right") or "").upper()[:1]
+        self.right = RIGHT_WORDS.get(right) or ("put" if "put" in label.lower() else "call")
+        self.strategy_label = reg.register(label or f"{self.right} debit spread")
+        self.underlying_name = reg.register(f.get("underlying_name") or TICKER_NAMES.get(self.root)
+                                            or OPTION_ROOT_NAMES.get(self.root) or self.root)
+        self.long_strike, self.short_strike = _float(self.long_leg.get("strike")), _float(self.short_leg.get("strike"))
+        self.width = (abs(self.short_strike - self.long_strike)
+                      if self.long_strike is not None and self.short_strike is not None else None)
+        try:
+            expiry = pick("expiry") or self.long_leg.get("expiry") or self.short_leg.get("expiry")
+            self.expiry: date | None = _to_date(expiry) if expiry else None
+        except (TypeError, ValueError):
+            self.expiry = None
+        contracts = _float(pick("contracts"))
+        self.contracts = int(contracts) if contracts is not None and contracts >= 1 else None
+        self.limit, self.max_price = _float(pick("limit_price")), _float(pick("max_price"))
+        mult = _float(f.get("multiplier"))
+        self.multiplier = int(mult) if mult and mult > 0 else CONTRACT_MULTIPLIER
+        section_1256 = f.get("section_1256")
+        self.section_1256 = section_1256 if isinstance(section_1256, bool) else self.root in INDEX_OPTION_ROOTS
+        self.settlement = (str(f.get("settlement") or "").strip()
+                           or (SETTLEMENT_CASH if self.root in INDEX_OPTION_ROOTS else SETTLEMENT_SHARES))
+        self.american = "american" in self.settlement.lower()
+
+        n, m = self.contracts, self.multiplier
+
+        def total(key: str, per_share: float | None) -> float | None:
+            """facts[key], else contracts x the price per share x the multiplier."""
+            given = _float(f.get(key))
+            if given is not None:
+                return given
+            return n * per_share * m if n and per_share is not None else None
+
+        values: dict[str, Any] = {
+            "per_spread_usd": self.limit * m if self.limit is not None else None,
+            "max_per_spread_usd": self.width * m if self.width is not None else None,
+        }
+        if self.opening:
+            values["debit_usd"] = total("debit_usd", self.limit)
+            values["max_debit_usd"] = total("max_debit_usd", self.max_price)
+            values["max_value_usd"] = total("max_value_usd", self.width)
+            breakeven = _float(f.get("breakeven"))
+            if breakeven is None and self.long_strike is not None and self.limit is not None:
+                breakeven = self.long_strike + (self.limit if self.right == "call" else -self.limit)
+            values["breakeven"] = breakeven
+            stress = f.get("stress_usd") if _is_num(f.get("stress_usd")) else values["max_debit_usd"]
+            values["stress_usd"], values["stress_frac"] = self._loss(stress, f.get("stress_pct"))
+            values["debit_frac"] = values["debit_usd"] / self.nav if values["debit_usd"] and self.nav else None
+        else:
+            values["credit_usd"] = total("credit_usd", self.limit)
+            values["min_credit_usd"] = total("min_credit_usd", self.max_price)
+
+        self.strikes = None
+        if self.long_strike is not None and self.short_strike is not None:
+            self.strikes = reg.register(f"{reg.fmt_num(self.long_strike)}/{reg.fmt_num(self.short_strike)}")
+        count = f"{reg.fmt_num(n)} " if n else ""
+        noun = f"{self.right} spread" + ("" if n == 1 else "s")
+        self.spreads_phrase = reg.register(" ".join(p for p in (f"{count}{self.root}", self.strikes, noun) if p))
+        self.contracts_phrase = f"{reg.fmt_num(n)} contract{'' if n == 1 else 's'}" if n else None
+        # "2 × $745" for the size line; left out for a single contract
+        self.times = (f"{reg.fmt_num(n)} × {reg.fmt_money(values['per_spread_usd'])}"
+                      if n and n > 1 and values["per_spread_usd"] is not None else None)
+        # what the owner can't place the order without: then the email says to place nothing
+        gaps = [what for what, known in (("both strikes", self.strikes), ("the expiration", self.expiry),
+                                         ("the limit price", self.limit)) if known is None]
+        self.missing = (", ".join(gaps[:-1]) + " and " + gaps[-1]) if len(gaps) > 1 else (gaps[0] if gaps else None)
+        when = (f"after 10:00 ET on {reg.fmt_date(self.execute_date)}" if self.execute_date
+                else "after 10:00 ET on the next trading day")
+        values.update({
+            "root": self.root, "ticker": self.root, "ticker_name": self.underlying_name,
+            "underlying_name": self.underlying_name, "strategy_label": self.strategy_label, "right": self.right,
+            "direction": "rises" if self.right == "call" else "falls", "long_strike": self.long_strike,
+            "short_strike": self.short_strike, "strikes": self.strikes, "width": self.width, "expiry": self.expiry,
+            "contracts": n, "limit_price": self.limit, "max_price": self.max_price, "multiplier": m,
+            "spreads_phrase": self.spreads_phrase, "when": when,
+        })
+        self.derived.update({k: v for k, v in values.items() if not _is_missing(v)})
+
+    # -------------------------------------------------------------- helpers
+    def _generic(self, table: dict) -> Any:
+        """The generic spread entry for "KIND:reason", else for KIND (NEW_TRADE when opening, EXIT when closing)."""
+        for key in (f"{self.spread_kind}:{self.reason}", self.spread_kind):
+            if key in table:
+                return table[key]
+        return None
+
+    def _legs_phrase(self) -> str | None:
+        if self.long_strike is None or self.short_strike is None:
+            return None
+        lo, sh, r = self.reg.fmt_num(self.long_strike), self.reg.fmt_num(self.short_strike), self.right
+        if self.opening:
+            return f"buy the {lo} {r}, sell the {sh} {r}"
+        return f"sell the {lo} {r}, buy back the {sh} {r}"
+
+    # -------------------------------------------------------------- pieces
+    def subject(self) -> str:
+        tag = KIND_TAGS.get(self.kind, self.kind or "TRADE")
+        tid = self.reg.register(self.rec.trade_id or "")
+        prefix = f"[{self.MODE}][{tag} {tid}]" if tid else f"[{self.MODE}][{tag}]"
+        what = [self.spreads_phrase]
+        if self.expiry:
+            what.append(self.reg.register(f"{self.expiry.day} {self.expiry:%b}"))
+        if self.limit is not None:
+            what.append(f"limit {self.reg.fmt_money(self.limit, cents=True)}")
+        window = f" — after 10:00 ET {self.reg.fmt_date(self.execute_date)}" if self.execute_date else ""
+        verb = "BUY" if self.opening else "CLOSE"       # not "SELL": selling a call spread would open a credit spread
+        return f"{prefix} {verb} {', '.join(what)} — {self.module_name} ({self.module}){window}"
+
+    def headline(self) -> list[tuple[str, str]]:
+        extra = {"acct": ACCOUNT_LABELS.get(self.account, self.account), "legs": self._legs_phrase()}
+        if self.opening:
+            action = self.t("BUY {spreads_phrase} ({legs}), expiring {expiry:datel}, at one net limit of "
+                            "{limit_price:money2} per share, in your {acct}",
+                            "BUY {spreads_phrase}, at one net limit of {limit_price:money2} per share, in your {acct}",
+                            "BUY {spreads_phrase} in your {acct}", **extra)
+            size = self.t("{debit_usd:money} net debit ({times}) = {debit_frac:pct2} of your {nav:money} portfolio",
+                          "{debit_usd:money} net debit = {debit_frac:pct2} of your {nav:money} portfolio",
+                          "{debit_usd:money} net debit ({times})",
+                          "{debit_usd:money} net debit", times=self.times) or "See the order below"
+            stress = self.t("Max loss {stress_usd:nmoney} ({stress_frac:npct2} of portfolio): the whole debit if the "
+                            "re-price at the stated maximum fills. It can't lose more",
+                            "Max loss {stress_usd:nmoney}: the whole debit if the re-price at the stated maximum "
+                            "fills. It can't lose more") or "Max loss: the whole debit you pay. It can't lose more"
+            stated, otherwise = "the stated maximum", "otherwise skip"
+        else:
+            action = self.t("SELL TO CLOSE {spreads_phrase} ({legs}), expiring {expiry:datel}, at one net limit of "
+                            "{limit_price:money2} per share (a credit), in your {acct}",
+                            "SELL TO CLOSE {spreads_phrase}, at one net limit of {limit_price:money2} per share (a "
+                            "credit), in your {acct}",
+                            "SELL TO CLOSE {spreads_phrase} in your {acct}", **extra)
+            size = self.t("The whole position: about {credit_usd:money} back at the limit, at least "
+                          "{min_credit_usd:money} at the stated minimum",
+                          "The whole position: about {credit_usd:money} back at the limit",
+                          ) or "The whole position this trade opened"
+            stress = "None once closed: this ends the trade"
+            stated, otherwise = "the stated minimum", "otherwise wait for tomorrow's email"
+        window = self.t("Place after 10:00 ET on {execute_date:date}. Not filled by 11:00 ET: re-enter once at "
+                        "{max_price:money2}, {stated}; {otherwise}",
+                        "Place after 10:00 ET on {execute_date:date}. Not filled by 11:00 ET: re-enter once at "
+                        "{stated}; {otherwise}",
+                        "Place after 10:00 ET. Not filled by 11:00 ET: re-enter once at {stated}; {otherwise}",
+                        stated=stated, otherwise=otherwise)
+        rows = [("ACTION", action), ("SIZE", size), ("STRESS", stress), ("WINDOW", window), ("ODDS", self.odds_line())]
+        if not self.opening:
+            result = self.t("{pnl_usd:smoney} ({pnl_pct:sppct2}) so far at tonight's mid prices, before closing",
+                            "{pnl_usd:smoney} so far at tonight's mid prices, before closing")
+            if result:
+                rows.append(("RESULT", result))
+        confidence = self.reg.register(self.facts.get("confidence") or
+                                       MODULE_CONFIDENCE.get(self.module, "Rule-based"))
+        status = self.reg.register(self.facts.get("status") or MODULE_STATUS.get(self.module, "module"))
+        stage = self.reg.register(self.facts.get("stage") or ("live" if self.live else "paper phase"))
+        rows += [("CONFIDENCE", confidence), ("STATUS", f"{self.MODE} · {self.module} {status} · {stage}")]
+        return rows
+
+    def odds_line(self) -> str:
+        line = super().odds_line()
+        # the base-rate line with an average and a worst case: for a spread those are percentages of the debit
+        if self.opening and all(_is_num(lookup(self.facts, k)) for k in ("win_rate", "mean_pct", "worst_pct")):
+            line += " (of the debit)"
+        return line
+
+    def one_sentence(self) -> str:
+        alts = ONE_SENTENCE.get(self.module, {})
+        chosen = alts.get(f"{self.kind}:{self.reason}") or alts.get(self.kind) or ()
+        return (self.t(*chosen) or self.t(*(self._generic(SPREAD_ONE_SENTENCE) or ())) or
+                f"{self.module_name}: see the order below.")
+
+    def explainer(self) -> list[tuple[str, Any]]:
+        call = self.right == "call"
+        way = {"below": "below" if call else "above", "above": "above" if call else "below",
+               "plus": "plus" if call else "minus"}
+        if not self.opening:
+            items = [
+                self.t("The position: {spreads_phrase}, expiring {expiry:datel}. You own the {long_strike:num} {right} "
+                       "and you sold the {short_strike:num} {right}.", None),
+                self.t("Closing sells the {right} you own and buys back the one you sold, in one order at one net "
+                       "price. That price is a credit, so money comes back to you: {per_spread_usd:money} per spread "
+                       "at the limit, {credit_usd:money} in all.",
+                       "Closing sells the {right} you own and buys back the one you sold, in one order at one net "
+                       "price. That price is a credit, so money comes back to you."),
+                self.t("You paid {entry_price:money2} per share to open it. Until expiry the spread is worth between "
+                       "zero and the width between the strikes: {width:num} per share, {max_per_spread_usd:money} per "
+                       "spread.",
+                       "Until expiry the spread is worth between zero and the width between the strikes: {width:num} "
+                       "per share, {max_per_spread_usd:money} per spread.", None),
+            ]
+            return [("h", "What you're closing"), ("ul", [s for s in items if s])]
+        on = self.root if self.underlying_name == self.root else f"{self.root} ({self.underlying_name})"
+        items = [
+            self.t("Two options on {on} in one order: buy the {long_strike:num} {right} and sell the "
+                   "{short_strike:num} {right}, both expiring {expiry:datel}.",
+                   "Two options on {on} in one order: buy one {right} and sell another with the same expiration.",
+                   on=on),
+            self.t("A call gains value as {root} rises above its strike price. The call you sell pays for part of the "
+                   "one you buy, and in exchange caps your gain." if call else
+                   "A put gains value as {root} falls below its strike price. The put you sell pays for part of the "
+                   "one you buy, and in exchange caps your gain."),
+            self.t("Price: one net limit of {limit_price:money2} per share, the debit you pay. Robinhood shows option "
+                   "prices per share, and one contract is {multiplier:int} times that, so each spread costs "
+                   "{per_spread_usd:money}.", None),
+            self.t("Most you can lose: what you pay, {debit_usd:money} in all ({max_debit_usd:money} if the re-price "
+                   "at the stated maximum fills). That happens if {root} ends at or {below} {long_strike:num} at "
+                   "expiry.",
+                   "Most you can lose: what you pay, {debit_usd:money} in all. That happens if {root} ends at or "
+                   "{below} {long_strike:num} at expiry.",
+                   "Most you can lose: what you pay for the spread, and no more.", **way),
+            self.t("Most it can be worth: the width between the strikes, {width:num} × {multiplier:int} = "
+                   "{max_per_spread_usd:money} per spread, {max_value_usd:money} in all. That happens if {root} ends "
+                   "at or {above} {short_strike:num} at expiry.",
+                   "Most it can be worth: the width between the strikes, {width:num} × {multiplier:int} = "
+                   "{max_per_spread_usd:money} per spread. That happens if {root} ends at or {above} "
+                   "{short_strike:num} at expiry.",
+                   "Most it can be worth: the width between the two strikes, times the contract size.", **way),
+            self.t("Breakeven at expiry: {root} at {breakeven:num2}, the {long_strike:num} strike {plus} the "
+                   "{limit_price:money2} you pay. {root} is at {spot:num2} now.",
+                   "Breakeven at expiry: {root} at {breakeven:num2}, the {long_strike:num} strike {plus} the "
+                   "{limit_price:money2} you pay.",
+                   "Breakeven at expiry: {root} at {breakeven:num2}.", None, **way),
+            self.t("You'll close it before expiry, on the planned date. Until then its value moves between zero and "
+                   "the width with {root}, the time left and volatility (how much traders expect prices to swing)."),
+            self.t("{root} options are cash-settled and European-style: they can't be exercised early, and at expiry "
+                   "they settle in cash, never in shares." if not self.american else
+                   "{root} options are American-style and settle in shares: the {right} you sell can be exercised "
+                   "early (see Risks and tax)."),
+        ]
+        occ_long, occ_short = self.long_leg.get("occ"), self.short_leg.get("occ")
+        if occ_long and occ_short:
+            items.append(f"Exact contracts, for reference: {self.reg.register(occ_long)} (buy) and "
+                         f"{self.reg.register(occ_short)} (sell).")
+        return [("h", f"What you're buying: a {self.strategy_label}"), ("ul", [s for s in items if s])]
+
+    def steps(self) -> list[str]:
+        switch = ACCOUNT_SWITCH.get(self.account, f"Open Robinhood and switch to your {self.account} account")
+        switch = switch[:1].lower() + switch[1:]
+        first = (self.t("After 10:00 ET on {execute_date:date}, {switch}", switch=switch)
+                 or f"After 10:00 ET, {switch}")
+        record = "Record the fill (link below)" if self.issue_url else "Note the fill: contracts and net price"
+        if self.missing:        # never guess an order: the email says to place nothing (see What if)
+            return [f"This email doesn't show {self.missing}, so don't place anything",
+                    "Record skipped (link below)" if self.issue_url else "Note that you skipped it"]
+        if not self.opening:
+            return [first,
+                    self.t("Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel} ({held})",
+                           "Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel}",
+                           held=self.contracts_phrase),
+                    "Tap Trade → Close position, so both legs close together in one order",
+                    self.t("Limit price: {limit_price:money2} (the net credit, per share) · Contracts: "
+                           "{contracts:int}, all of them · Time in force: Good for day",
+                           "Limit price: {limit_price:money2} (the net credit, per share) · Contracts: all of them · "
+                           "Time in force: Good for day"),
+                    self.t("Review → Submit. You should get back about {credit_usd:money}") or "Review → Submit",
+                    record]
+        cap = self.right.capitalize()
+        label = f"{cap} Debit Spread"           # Robinhood's name for the structure, whatever the module calls it
+        return [first,
+                self.t("Search {root}, then tap Trade → Trade Options"),
+                self.t("At the top choose Buy and {cap}, then the expiration {expiry:datel}", cap=cap),
+                self.t("Tap Select, then the {long_strike:num} and {short_strike:num} {right}s: set the "
+                       "{long_strike:num} to Buy and the {short_strike:num} to Sell. Robinhood shows one {label}; tap "
+                       "Continue", label=label),
+                self.t("Limit price: {limit_price:money2} (the net debit, per share) · Contracts: {contracts:int} · "
+                       "Time in force: Good for day",
+                       "Limit price: {limit_price:money2} (the net debit, per share) · Time in force: Good for day"),
+                self.t("Review → Submit. The total should be about {debit_usd:money} ({times})",
+                       "Review → Submit. The total should be about {debit_usd:money}", times=self.times)
+                or "Review → Submit",
+                record]
+
+    def what_if(self) -> list[str]:
+        if self.missing:
+            then = ("a new EXIT email follows while the spread is open" if not self.opening
+                    else "the system logs the skip either way")
+            return [f"This email doesn't show {self.missing}. Don't guess them: place nothing and record skipped; "
+                    f"{then}.",
+                    "Never leg in or out, meaning trade one option now and the other later: in between you'd hold a "
+                    "different, riskier position."]
+        if not self.opening:
+            items = [
+                self.t("Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated "
+                       "minimum ({min_credit_usd:money} in all). If that doesn't fill by the close, keep the spread: "
+                       "you'll get a new EXIT email tomorrow evening with fresh prices. The paper book does the same.",
+                       "Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated "
+                       "minimum. If that doesn't fill by the close, keep the spread: you'll get a new EXIT email "
+                       "tomorrow evening with fresh prices. The paper book does the same.",
+                       "Not filled by 11:00 ET: cancel it and place it once more at the stated minimum. If that "
+                       "doesn't fill by the close, keep the spread: you'll get a new EXIT email tomorrow evening with "
+                       "fresh prices. The paper book does the same."),
+                self.t("{root} moved a lot: close it anyway at these prices. The exit was decided in advance, and a "
+                       "limit order sells at {limit_price:money2} or better."),
+                self.t("Robinhood shows a different price for the spread (its mid and natural prices move all day): "
+                       "type {limit_price:money2} yourself."),
+                "Robinhood offers to close only one leg: don't. Never close one leg alone (legging out): close both "
+                "together, or wait for tomorrow's email.",
+                "Don't hold it into expiration day: the rule closes every spread at least one trading day before it "
+                "expires.",
+            ]
+            return [s for s in items if s]
+        items = [
+            self.t("Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated maximum "
+                   "({max_debit_usd:money} in all). If that doesn't fill by the close, skip the trade and comment "
+                   "skipped.",
+                   "Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated "
+                   "maximum. If that doesn't fill by the close, skip the trade and comment skipped.",
+                   "Not filled by 11:00 ET: cancel it and place it once more at the stated maximum. If that doesn't "
+                   "fill by the close, skip the trade and comment skipped."),
+            self.t("{root} moved a lot before you place it: place it anyway at these prices, and don't chase. If the "
+                   "spread now costs more than {max_price:money2}, it won't fill, and skipping is the rule working.",
+                   "{root} moved a lot before you place it: place it anyway at these prices, and don't chase."),
+            self.t("Robinhood shows a different price for the spread (its mid and natural prices move all day): type "
+                   "{limit_price:money2} yourself."),
+            "Robinhood offers only one leg, or won't take both strikes as one order: skip the trade. Never leg in, "
+            "meaning buy one option now and sell the other later: in between you'd hold a different, riskier "
+            "position.",
+            "Robinhood says this account can't trade spreads: spreads need your individual account with spread "
+            "trading enabled (IRAs can't hold them). Skip it and comment skipped.",
+        ]
+        return [s for s in items if s]
+
+    def exit_plan(self) -> list[str]:
+        if not self.opening:
+            return ["This email is the exit. Once both legs are closed in one order, this trade is done; nothing "
+                    "else to do.",
+                    "If it doesn't fill today, even at the stated minimum, you'll get a new EXIT email tomorrow "
+                    "evening with fresh prices."]
+        close = self.t("Planned close: sell to close the whole spread (both legs, one order) by {exit_date:date}, at "
+                       "least one trading day before it expires on {expiry:date}.",
+                       "Planned close: sell to close the whole spread (both legs, one order) by {exit_date:date}, at "
+                       "least one trading day before it expires.",
+                       "Planned close: sell to close the whole spread (both legs, one order) at least one trading day "
+                       "before it expires on {expiry:date}.",
+                       "Planned close: sell to close the whole spread (both legs, one order) at least one trading day "
+                       "before it expires.")
+        plan = super().exit_plan()      # facts["exit_plan"] or the module's EXIT_PLAN text, then the email reminder
+        if not (self.facts.get("exit_plan") or self.templates(EXIT_PLAN)):
+            plan.insert(0, SPREAD_NO_STOP)
+        return [close, *plan]
+
+    def why_heading(self) -> str:
+        return "Why this trade" if self.opening else "Why close it now"
+
+    def why(self) -> list[tuple[str, Any]]:
+        module_text = self.templates(WHY)
+        blocks: list[tuple[str, Any]] = [("p", s) for s in self.lines(module_text or self._generic(SPREAD_WHY) or [])]
+        if not self.opening:
+            if not module_text:
+                blocks.append(("p", SPREAD_EXIT_WHY_TAIL))
+            result = self.t("Result so far at tonight's mid prices: {pnl_usd:smoney} ({pnl_pct:sppct2}), on the "
+                            "{entry_price:money2} per share you paid.",
+                            "Result so far at tonight's mid prices: {pnl_usd:smoney} ({pnl_pct:sppct2}).",
+                            "Result so far at tonight's mid prices: {pnl_usd:smoney}.", None)
+            if result:
+                blocks.append(("p", result))
+        return blocks or [("p", f"The {self.module_name} rule fired.")]
+
+    def odds(self) -> list[tuple[str, Any]]:
+        blocks = super().odds()
+        if self.opening and any(_is_num(lookup(self.facts, k)) for k in ("win_rate", "mean_pct", "worst_pct")):
+            # right after the base-rate sentence, which super().odds() puts first when these keys are present
+            blocks.insert(1, ("p", "For a spread these percentages are of the debit you pay; the worst case is "
+                                   "losing all of it."))
+        return blocks
+
+    def risks(self) -> list[str]:
+        out: list[str] = []
+        call = self.right == "call"
+        if self.opening:
+            out += self.lines(RISKS.get(self.module, []))
+            out.append(self.t("The most you can lose is the debit: {debit_usd:money} at the limit, up to "
+                              "{stress_usd:money} ({stress_frac:pct2} of the portfolio) if the re-price fills. That's "
+                              "the stress figure in the box above.",
+                              "The most you can lose is the debit: {debit_usd:money} at the limit, up to "
+                              "{stress_usd:money} if the re-price fills. That's the stress figure in the box above.",
+                              "The most you can lose is the debit: up to {stress_usd:money}. That's the stress figure "
+                              "in the box above.",
+                              "The most you can lose is the debit, all of what you pay; the spread can't lose more."))
+            out.append(self.t("Time works against you: the spread loses value each day {root} doesn't {move}, and most "
+                              "of the debit is lost if {root} is still at or {below} {long_strike:num} at the planned "
+                              "close.",
+                              "Time works against you: the spread loses value each day {root} doesn't {move}.",
+                              move="rise" if call else "fall", below="below" if call else "above"))
+            out.append("Option quotes are wider than stock quotes: you give up part of the gap going in and again "
+                       "coming out. That's why the order is a limit at one net price, never a market order.")
+            if self.american:
+                out.append(self.t("{root} options are American-style: the {right} you sold can be exercised early "
+                                  "(assignment), most often {usually}. You'd then {hold} {root} shares, still covered "
+                                  "by the {right} you own. If Robinhood reports an assignment, close everything that "
+                                  "day and note it on the trade's issue.",
+                                  usually=f"just before {self.root} pays a dividend" if call
+                                  else f"once {self.root} is far below the strike",
+                                  hold="be short" if call else "own"))
+        else:
+            out.append(self.t("Closing locks in the result. If {root} keeps moving your way after you close, that's "
+                              "the rule working as tested, not a mistake."))
+        tax = SECTION_1256_TAX if self.section_1256 else ORDINARY_OPTION_TAX
+        out.append(self.reg.register(tax.format(account=ACCOUNT_LABELS.get(self.account, self.account),
+                                                root=self.root)))
+        return [s for s in out if s]
+
+    def record_fill(self) -> str:
+        verb = "paid" if self.opening else "received"
+        how = (f"filled <contracts> @ <net price> (the number of spreads that filled and the net price per share you "
+               f"{verb}")
+        if self.contracts and self.limit is not None:
+            how += (f", for example filled {self.reg.fmt_num(self.contracts)} @ "
+                    f"{self.reg.fmt_num(self.limit, decimals=2)}")
+        how += "), or skipped"
+        if self.issue_url:
+            s = f"Open {self.reg.register(self.issue_url)} and add a comment: {how}. The GitHub mobile app works."
+        else:
+            s = ("There's no GitHub issue link this time. Note how many spreads filled and the net price per share "
+                 f"you {verb} (or that you skipped); the monthly review asks for it.")
+        if not self.live:
+            s += (" The paper broker records its own fill from the mid-morning option quotes either way; your note "
+                  "lets the system compare practice fills with its model.")
+        return s
+
+    def build(self) -> RenderedEmail:
+        email = super().build()
+        email.meta["order_type"] = SPREAD_ORDER_TYPE
+        return email
+
+
 def render(rec: Recommendation, ctx: dict) -> RenderedEmail:
     """Render one decision (NEW_TRADE, EXIT, REBALANCE, SWITCH_ON, SWITCH_OFF) as a text + HTML email.
 
+    A recommendation whose orders include a "spread_limit" order renders as an option spread (`_SpreadEmail`).
     See the module docstring for the ctx and rec.facts keys. Every number goes through the registry;
     check the result with `traderec.validator.validate` before sending.
     """
-    return _TradeEmail(rec, ctx or {}).build()
+    spread = any(o.order_type == SPREAD_ORDER_TYPE for o in rec.orders or [])
+    return (_SpreadEmail if spread else _TradeEmail)(rec, ctx or {}).build()
 
 
 # ---------------------------------------------------------------------------------------- monthly review
