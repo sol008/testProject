@@ -1,0 +1,5 @@
+"owner's loss tolerance (fall from start, at most 10% chance ever)",max Kelly multiple,median CAGR at Sharpe 0.4,median CAGR at Sharpe 0.5,median CAGR at Sharpe 0.75,median CAGR at Sharpe 1.0,median CAGR at Sharpe 2.0
+-20%,0.18,7% (35y to 10x),8% (29y to 10x),14% (18y to 10x),22% (11y to 10x),98% (3y to 10x)
+-30%,0.27,8% (30y to 10x),10% (24y to 10x),19% (14y to 10x),31% (8y to 10x),163% (2y to 10x)
+-50%,0.46,10% (24y to 10x),14% (18y to 10x),27% (10y to 10x),48% (6y to 10x),331% (2y to 10x)
+-80%,0.82,12% (20y to 10x),17% (14y to 10x),37% (7y to 10x),69% (4y to 10x),622% (1y to 10x)

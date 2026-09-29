@@ -1,0 +1,7 @@
+Sharpe of the best available strategy,"max P(+1000% in one year), all-or-nothing",max P(two such years in a row),max P(five in a row),P(+1000% in one year) at full Kelly,P(+1000% in one year) at half Kelly
+0.0,9.5%,0.9%,0.00%,0.00%,0.00%
+0.4,18.1%,3.3%,0.02%,0.00%,0.00%
+0.5,20.8%,4.3%,0.04%,0.00%,0.00%
+1.0,37.7%,14.2%,0.76%,3.15%,0.00%
+1.5,57.4%,33.0%,6.23%,20.54%,2.17%
+2.0,75.4%,56.8%,24.35%,42.88%,19.53%

@@ -1,0 +1,6 @@
+sequence,P(>= 11x),what happens otherwise
+"4 all-in double-or-nothing bets, fair coin (p = 50%)",6.2%,lose everything (93.8%)
+4 all-in double-or-nothing bets with a real edge (p = 60%),13.0%,lose everything (87.0%)
+"52 weekly bets, each must return +4.72% with no losing week",needs a 52-week winning streak,"at a 60% weekly hit rate, P(52 straight wins) = 3e-12"
+1 all-in bet on a fairly priced option that pays 11x,about 9% (1/11) or less,lose everything
+"All-in on BTC in a mania year (2011, 2013, 2017)","3 of 15 full calendar years, none since 2017","-58% to -74% in the following year (2014, 2018, 2022)"
