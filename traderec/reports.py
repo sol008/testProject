@@ -46,6 +46,7 @@ from . import emails as email_mod
 from . import feedback, validator
 from .ledger import RECORD_TYPES, LedgerError
 from .market_calendar import is_trading_day, today_et
+from .modules import edgar_screens
 
 if TYPE_CHECKING:  # pragma: no cover
     from traderec.config import Config
@@ -138,6 +139,7 @@ W10_RECORD_REFERENCE = {
     "60": {"win_rate": 0.75, "mean_pct": 3.72, "placebo_mean_pct": 1.78},
     "90": {"win_rate": 0.90, "mean_pct": 7.26, "placebo_mean_pct": 2.67},
 }
+EDGAR_BASE_SINCE = 2016              # track 16's sample (2016-26) behind each EDGAR setup's `base_rate`
 EVENT_LABELS = {"profit": "closes with a profit", "time_stop": "exits on the time stop",
                 "leg_up_next_month": "leg up over the next month"}
 ENTRY_KINDS = ("NEW_TRADE", "SWITCH_ON", "REBALANCE")
@@ -693,6 +695,9 @@ def shadow_activity(state: dict, cfg: "Config | None", inside: Callable[[Any], b
         enabled = _shadow_block(name, cfg).get("enabled", True) is not False
         if isinstance(book.get("events"), list):
             evs = [e for e in book["events"] if isinstance(e, dict)]
+            if any(e.get("setup") for e in evs):        # the EDGAR book: one row per setup (docs/phase-b/edgar.md)
+                rows.extend(_setup_activity(name, label, enabled, evs, cfg, inside))
+                continue
             signals = sum(1 for e in evs if inside(_event_day(e)))
             block = _shadow_block(name, cfg)
             scored = any(isinstance(e.get("scores"), dict) for e in evs) or bool(block.get("score_calendar_days"))
@@ -717,6 +722,84 @@ def shadow_activity(state: dict, cfg: "Config | None", inside: Callable[[Any], b
         rets = [r for r in (_first_num(t, RETURN_KEYS) for t in closed) if r is not None]
         rows.append({"book": name, "name": label, "enabled": enabled, "signals": signals, "closed": len(closed),
                      "mean_ret": _mean(rets)})
+    return rows
+
+
+def _setup_label(book: str, setup: str) -> str:
+    return f"{book} {setup} {edgar_screens.SETUPS.get(setup, '')}".strip()
+
+
+def _setup_activity(book: str, label: str, enabled: bool, events: list[dict], cfg: "Config | None",
+                    inside: Callable[[Any], bool]) -> list[dict]:
+    """The EDGAR book's rows, one per setup (SH1-SH4, CEF): signals dated in the period, events closed in it and
+    their mean net return on the setup's entry basis (`edgar_screens.primary_return`). Events without a setup are
+    skipped. A book with no activity in any setup is one quiet row, so the review names it once."""
+    block = _shadow_block(book, cfg)
+    known = list(edgar_screens.SETUPS)
+    setups = known + sorted({str(e["setup"]) for e in events if e.get("setup")} - set(known))
+    rows = []
+    for setup in setups:
+        mine = [e for e in events if e.get("setup") == setup]
+        if not mine:
+            continue
+        signals = sum(1 for e in mine if inside(_event_day(e)))
+        closed = [e for e in mine if e.get("status") == "closed" and inside(e.get("exit_date"))]
+        rets = [r for r in (edgar_screens.primary_return(e) for e in closed) if r is not None]
+        if signals or closed:
+            on = enabled and (block.get(setup) or {}).get("enabled", True) is not False
+            rows.append({"book": book, "setup": setup, "name": _setup_label(book, setup), "enabled": on,
+                         "signals": signals, "closed": len(closed), "mean_ret": _mean(rets)})
+    return rows or [{"book": book, "name": label, "enabled": enabled, "signals": 0, "closed": 0, "mean_ret": None}]
+
+
+def _setup_drift(run: "Run", ev: "Evidence", shadow_cfg: dict, kw: dict) -> list[dict]:
+    """Drift rows for a book kept per setup (EDGAR): each setup's closed events by the evidence date against its
+    `base_rate` (track 16 §2: `win_rate` and `mean`, the mean net excess as a fraction)."""
+    rows = []
+    for name, book in (run.state.get("shadow") or {}).items():
+        if not isinstance(book, dict) or not isinstance(book.get("events"), list):
+            continue
+        events = [e for e in book["events"] if isinstance(e, dict) and e.get("setup")]
+        block = shadow_cfg.get(name) or {}
+        for setup in dict.fromkeys(str(e["setup"]) for e in events):
+            br = (block.get(setup) or {}).get("base_rate") or {}
+            if br.get("win_rate") is None and br.get("mean") is None:
+                continue
+            mean = _num(br.get("mean"))
+            base = {"since": br.get("since", EDGAR_BASE_SINCE), "win_rate": _num(br.get("win_rate")),
+                    "mean_pct": 100.0 * mean if mean is not None else None}
+            rets = []
+            for e in events:
+                end = _day(e.get("exit_date"))
+                if e.get("setup") == setup and e.get("status") == "closed" and end and end <= ev.asof:
+                    r = edgar_screens.primary_return(e)
+                    if r is not None:
+                        rets.append(r)
+            rows.append({"family": f"{name}/{setup}", "label": _setup_label(name, setup), "kind": "shadow",
+                         "since": base["since"], **base_rate_drift(rets, base, **kw)})
+    return rows
+
+
+def edgar_review(run: "Run", asof: str) -> list[dict]:
+    """The EDGAR book's pre-registered promotion tests, one entry per setup with events (track 16 §10.2;
+    docs/phase-b/edgar.md): the closed events' statistics, each check against `shadow.EDGAR.<setup>.promotion`,
+    "passed" (None where no test is pre-registered: the CEF tender capture), "demote" (the last 30 closed events
+    average below zero) and, for SH1 and SH3, the 24-month split of the filing reaction against the follower's
+    return (track 16 P2). Promotion is the owner's decision; the review only reports."""
+    book = (run.state.get("shadow") or {}).get("EDGAR")
+    events = [e for e in (book.get("events") or []) if isinstance(e, dict)] if isinstance(book, dict) else []
+    block = _shadow_block("EDGAR", run.cfg)
+    rows = []
+    for setup in edgar_screens.SETUPS:
+        mine = [e for e in events if e.get("setup") == setup]
+        if not mine:
+            continue
+        rule = (block.get(setup) or {}).get("promotion") or None
+        row = {"label": _setup_label("EDGAR", setup), "enabled": (block.get(setup) or {}).get("enabled", True) is not False,
+               **edgar_screens.promotion_test(mine, setup, rule)}
+        if setup in ("SH1", "SH3"):
+            row["reaction"] = edgar_screens.reaction_split(mine, setup, asof)
+        rows.append(row)
     return rows
 
 
@@ -1055,6 +1138,7 @@ def drift_review(run: "Run", ev: Evidence, g: dict) -> list[dict]:
         rets = [u["return"] for u in _shadow_trade_units(run.state, name, ev)]
         rows.append({"family": name, "label": _shadow_label(name, run.cfg), "kind": "shadow",
                      "since": base.get("since"), **base_rate_drift(rets, base, **kw)})
+    rows.extend(_setup_drift(run, ev, shadow_cfg, kw))
     for h in ("60", "90"):
         rets = [u["return"] for u in _record_units(run.state, "W10", h, ev)]
         rows.append({"family": f"W10@{h}", "label": f"W10 record, {h}-day score", "kind": "record",
@@ -1384,7 +1468,7 @@ def quarterly_report(run: "Run", quarter: str) -> dict[str, Any]:
         "review": "quarterly", "quarter": quarter, "label": f"Q{quarter[-1]} {quarter[:4]}", "start": start,
         "end": end, **period_results(run, start, end),
         "trades": rows, "trades_opened": n_open, "trades_closed": n_close,
-        "shadow": shadow_activity(st, run.cfg, inside),
+        "shadow": shadow_activity(st, run.cfg, inside), "edgar": edgar_review(run, asof),
         "runs_expected": expected, "runs_on_time": on_time,
         **gate, "ledger_message": ledger_msg,
         "kappa": kappa, "calibration": calibration, "drift": drift, "costs": costs, "module_reviews": reviews,
@@ -1450,7 +1534,7 @@ def annual_report(run: "Run", year: str) -> dict[str, Any]:
         "retire_min_months": g["retire_min_months"], "retire_edge": g["retire_edge"],
         "w10": {**w10, "events": len(events), "events_year": sum(1 for e in events if inside(e.get("signal_date"))),
                 "record": record, "reference_since": W10_RECORD_REFERENCE["since"], "recommendation": w10_rec},
-        "m2": reviews["m2"], "paused": reviews["paused"],
+        "m2": reviews["m2"], "paused": reviews["paused"], "edgar": edgar_review(run, asof),
         "stage": gate["stage"], "go_live_ready": gate["go_live_ready"], "edge_p": edge["p_positive"],
         "edge_units": edge["units"], "edge_threshold": g["edge_go_live"],
         "ledger_ok": bool(ledger_ok), "ledger_message": ledger_msg,

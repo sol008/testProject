@@ -119,8 +119,11 @@ What each score holds:
 - `reaction_split(events, setup, asof)`: track 16 P2's rolling 24-month split of filing reaction against
   follower return.
 
-Today `facts.monthly_report` reads every book that has `events` the way it reads W10's (90-day scores). It would
-therefore show the EDGAR book with signals but no closed events until it uses `book_summary`.
+The reviews read the book per setup: `reports.shadow_activity` gives the monthly, quarterly and annual reviews
+one row per setup (signals in the period, events closed in it, mean net return on the setup's basis, from
+`primary_return`); `reports.drift_review` checks each setup's closed events against its `base_rate`; and
+`reports.edgar_review` puts `promotion_test` (and `reaction_split` for SH1 and SH3) under the `edgar` key of the
+quarterly and annual facts.
 
 ## Operations
 
@@ -272,8 +275,8 @@ Each test is pre-registered in its track. The table shows what each needs and wh
 
 - Add `SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}` to the env of the "Run the daily pipeline" step in
   `.github/workflows/daily.yml`. Add the Owner setup row to `docs/OPERATIONS.md` §2(c).
-- For the EDGAR book, monthly and quarterly reports should use `book_summary`, `promotion_test` and
-  `reaction_split` instead of the W10 reading of books that have `events`.
+- Done: the reviews read the EDGAR book per setup (`reports.shadow_activity`, `reports.drift_review`,
+  `reports.edgar_review`; see "Reports" above).
 - Optional: attach `EdgarClient` and `FinraClient` in `LiveProvider` instead of relying on the runner attaching
   them itself.
 - Owner decision: pre-register a CEF promotion test.

@@ -54,6 +54,10 @@ Default year: the one that just ended.
     negative;
   - a kill switch shows as "paused";
   - thesis invalidation is the owner's call.
+- **The EDGAR book, per setup.** `shadow_activity` gives one row per setup (SH1–SH4, CEF) with the mean net
+  return on the setup's entry basis; `drift_review` checks each setup against its `base_rate` (track 16, since
+  2016); `edgar_review` reports the pre-registered promotion tests and the SH1/SH3 filing-reaction split under
+  the quarterly and annual facts' `edgar` key (the email renderers do not print that key yet).
 - **W10's re-decision.** Its shadow record (every uptrend −3% day) is scored at 60 and 90 days against track 23's
   references (SPY 1993–2026, all events, exits priced at the open: 60 days +3.72%, 75% won; 90 days +7.26%,
   90% won; random entry days +1.78% and +2.67%). The recommendation:

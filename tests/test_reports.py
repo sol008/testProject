@@ -275,7 +275,13 @@ PHASE_B_STATE = {
             {"signal_date": "2025-10-09", "exit_date": "2025-10-30", "ret": -0.4}]},
         "M6": {"events": [{"date": "2025-10-11", "kind": "depeg", "venues": 2}, {"venue": "no date"}]},
         "MACRO": {"events": [{"event_date": "2025-10-15", "release": "CPI"}, 42]},
-        "EDGAR": {"events": [{"filed": "2025-10-03", "form": "13D"}], "seen": {"0001": True}},
+        "EDGAR": {"events": [                          # the EDGAR book: events per setup, scored on the entry basis
+            {"setup": "SH3", "signal_date": "2025-10-03", "status": "closed", "exit_date": "2025-10-31",
+             "scores": {"follow": {"exit_date": "2025-10-31", "return": 0.012, "basis": "close"}}},
+            {"setup": "SH3", "signal_date": "2025-09-02", "status": "closed", "exit_date": "2025-09-30",
+             "scores": {"follow": {"exit_date": "2025-09-30", "return": -0.02, "basis": "close"}}},
+            {"setup": "SH2", "signal_date": "2025-10-20", "status": "pending_entry", "scores": {}},
+            {"filed": "2025-10-03", "form": "13D"}], "seen": {"0001": True}},
         "ETH": {"on": True, "last_week_end": "2025-10-26", "open_trade": None, "trades": []},
         "BROKEN": ["not", "a", "dict"],
     },
@@ -291,12 +297,22 @@ def test_module_and_shadow_activity_are_generic():
     assert by["M4"]["closed"] == 1 and by["M4"]["pnl_usd"] == 640.0
     assert by["W8"]["opened"] == 1 and "W9" not in by and "ZZ" not in by       # W9 has not filled yet
     assert (opened, closed) == (4, 2)
-    shadow = {r["book"]: r for r in reports.shadow_activity(PHASE_B_STATE, None, inside)}
+    all_rows = reports.shadow_activity(PHASE_B_STATE, None, inside)
+    shadow = {r["book"]: r for r in all_rows if r["book"] != "EDGAR"}
     assert shadow["O1"]["signals"] == 3 and shadow["O1"]["closed"] == 2
     assert shadow["O1"]["mean_ret"] == pytest.approx((0.21 - 0.4) / 2)          # "ret" is read too
-    assert shadow["M6"]["signals"] == 1 and shadow["MACRO"]["signals"] == 1 and shadow["EDGAR"]["signals"] == 1
+    assert shadow["M6"]["signals"] == 1 and shadow["MACRO"]["signals"] == 1
     assert shadow["W10"]["signals"] == 1 and shadow["W10"]["name"].endswith("60-day score")
     assert "BROKEN" not in shadow
+    edgar = {r["setup"]: r for r in all_rows if r["book"] == "EDGAR"}         # one row per setup with activity
+    assert edgar["SH3"] == {"book": "EDGAR", "setup": "SH3", "name": "EDGAR SH3 activist Schedule 13D",
+                            "enabled": True, "signals": 1, "closed": 1, "mean_ret": pytest.approx(0.012)}
+    assert edgar["SH2"]["signals"] == 1 and edgar["SH2"]["closed"] == 0 and edgar["SH2"]["mean_ret"] is None
+    assert set(edgar) == {"SH2", "SH3"}
+    quiet = reports.shadow_activity(PHASE_B_STATE, None, reports.in_period("2024-01-01", "2024-01-31"))
+    assert [r for r in quiet if r["book"] == "EDGAR"] == [
+        {"book": "EDGAR", "name": reports.SHADOW_LABELS["EDGAR"], "enabled": True, "signals": 0, "closed": 0,
+         "mean_ret": None}]
     trades = reports.open_trades(PHASE_B_STATE)
     assert {t["module"] for t in trades} == {"W8", "W9"}
 
@@ -608,3 +624,49 @@ def test_workflow_plan_step(tmp_path, month, review, force, want):
     assert res.returncode == 0, res.stderr
     got = dict(line.split("=", 1) for line in out.read_text().splitlines())
     assert {k: got[k] for k in want} == want
+
+
+def test_edgar_setups_get_promotion_tests_and_drift_rows():
+    """The EDGAR book is reviewed per setup: promotion tests (track 16 §10.2) and base-rate drift (docs/phase-b/edgar.md)."""
+    from types import SimpleNamespace
+    rets = [0.01, 0.02, -0.005, 0.015, 0.01, 0.0, 0.02, 0.01, -0.01, 0.03, 0.01, 0.02]
+    sh2 = [{"setup": "SH2", "signal_date": f"2025-{m:02d}-10", "status": "closed", "exit_date": f"2025-{m:02d}-20",
+            "scores": {"dividend": {"exit_date": f"2025-{m:02d}-20", "return": r, "basis": "close"}}}
+           for m, r in zip(range(1, 13), rets)]
+    sh1 = [{"setup": "SH1", "signal_date": "2025-06-02", "status": "closed", "exit_date": "2025-07-01",
+            "filing_reaction": 0.03, "scores": {"follow": {"exit_date": "2025-07-01", "return": -0.004, "basis": "open",
+                                                           "close": {"excess": -0.002}}}},
+           {"setup": "SH1", "signal_date": "2026-01-05", "status": "closed", "exit_date": "2026-02-03",      # after asof
+            "scores": {"follow": {"exit_date": "2026-02-03", "return": 0.5, "basis": "open"}}}]
+    state = {"shadow": {"EDGAR": {"events": sh2 + sh1 + [{"setup": "CEF", "signal_date": "2025-11-03",
+                                                          "status": "open", "scores": {}}, "junk"]}}}
+    cfg = SimpleNamespace(constitution={"shadow": {"EDGAR": {
+        "SH2": {"promotion": {"min_trades": 30, "min_mean": 0.005, "min_t": 2.0},
+                "base_rate": {"win_rate": 0.52, "mean": 0.0038}},
+        "SH1": {"enabled": False, "promotion": {"min_trades": 60, "min_mean": 0.01, "min_t": 2.5,
+                                                "max_reaction_median": 0.01},
+                "base_rate": {"win_rate": 0.42, "mean": -0.0106}}}}}, risk={})
+    run = SimpleNamespace(state=state, cfg=cfg)
+    rows = {r["setup"]: r for r in reports.edgar_review(run, "2025-12-31")}
+    assert set(rows) == {"SH1", "SH2", "CEF"}
+    assert rows["SH2"]["label"] == "EDGAR SH2 special dividend" and rows["SH2"]["enabled"] is True
+    assert rows["SH2"]["stats"]["n"] == 12 and rows["SH2"]["passed"] is False and rows["SH2"]["demote"] is False
+    checks = {c["name"]: c for c in rows["SH2"]["checks"]}
+    assert checks["trades"] == {"name": "trades", "value": 12, "threshold": 30, "ok": False}
+    assert checks["mean net excess"]["ok"] is True and checks["median"]["ok"] is True
+    assert rows["SH1"]["enabled"] is False and rows["SH1"]["reaction"]["n"] == 1     # the 2026 event is after asof
+    assert rows["SH1"]["reaction"]["filing_reaction_median"] == pytest.approx(0.03)
+    assert rows["CEF"]["passed"] is None and rows["CEF"]["stats"]["n"] == 0 and "reaction" not in rows["CEF"]
+    ev = SimpleNamespace(asof="2025-12-31", closed={}, excess=lambda ret, s, e: ret)
+    drift = {r["family"]: r for r in reports.drift_review(run, ev, reports.gates())}
+    d = drift["EDGAR/SH2"]
+    assert d["kind"] == "shadow" and d["label"] == "EDGAR SH2 special dividend" and d["since"] == 2016
+    assert d["n"] == 12 and d["base_win_rate"] == 0.52 and d["base_mean_pct"] == pytest.approx(0.38)
+    assert d["win_rate"] == pytest.approx(9 / 12) and d["status"] in ("in line", "early sign")
+    assert drift["EDGAR/SH1"]["n"] == 1 and drift["EDGAR/SH1"]["status"] == "too few"    # 2026 not resolved yet
+    inside = reports.in_period("2025-01-01", "2025-12-31")
+    activity = {r["setup"]: r for r in reports.shadow_activity(state, cfg, inside) if r.get("setup")}
+    assert activity["SH2"]["closed"] == 12 and activity["SH2"]["mean_ret"] == pytest.approx(sum(rets) / 12)
+    assert activity["SH1"] == {"book": "EDGAR", "setup": "SH1", "name": "EDGAR SH1 insider cluster buy",
+                               "enabled": False, "signals": 1, "closed": 1, "mean_ret": pytest.approx(-0.004)}
+    assert activity["CEF"]["signals"] == 1 and activity["CEF"]["closed"] == 0
