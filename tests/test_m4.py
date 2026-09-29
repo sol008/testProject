@@ -179,6 +179,9 @@ def _cfg(**m4_overrides) -> Config:
     const = copy.deepcopy(base.constitution)
     const["modules"]["M2"]["enabled"] = False       # no ETF8 data in this market
     const["modules"]["M3"]["enabled"] = False       # no Bitcoin data in this market
+    for name, book in const["shadow"].items():      # the other Phase B shadow books need data this market lacks
+        if name not in ("ST1B", "W10", "M4_TWIN"):
+            book["enabled"] = False
     const["modules"]["M4"].update(m4_overrides)
     return Config(account=base.account, constitution=const, whitelist=base.whitelist,
                   constitution_sha256=base.constitution_sha256)
