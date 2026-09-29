@@ -1,0 +1,6 @@
+method,decay_per_cycle,next_cycle_log_g,next_cycle_cagr
+halving epoch: exponential decay of log growth per cycle (3 complete cycles),0.6830381887207209,0.337449156563159,0.401368356197126
+peak to peak: exponential decay of log growth per cycle (3 complete cycles),0.47095269063046613,0.07265213618215742,0.07535639426228112
+trough to trough: exponential decay of log growth per cycle (2 complete cycles),0.5498428206659047,0.22356285726118022,0.25052424233499654
+"rolling 4-year CAGR at year ends 2014-2025 + today: exponential trend, value mid-2026-2031",0.5397731057451804,0.1553364977581723,0.16805094150615285
+"latest peak-to-peak cycle (2021-11-08 to 2025-10-06), unshrunk",,0.15682531402725036,0.16979124992926575
