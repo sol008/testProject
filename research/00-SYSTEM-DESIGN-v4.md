@@ -446,3 +446,28 @@ modules:                          # status changes (the rest of the v3.3 block i
 | Never-list additions (3× cores, leveraged rotation, 2× crypto funds, options as leverage, single-stock momentum, LLM trades, margin, crypto premiums, Bitcoin > 50%) | §5 | Tracks 26–30, 35–37 |
 | Expected results restated three ways with drawdown probabilities and years to 2× and 10× | §6 | Track 38 Tables 4–5 |
 | The WSB box and the red team for a leveraged book | §13, §14 | Track 38 §11 |
+
+### B.1 Phase C4a: the G3 gems runner as built (interpretations)
+
+Where §3 G3, §4 and A.3 were silent the build took the conservative reading; `docs/phase-c/growth.md` §11 has the full table with the reasons.
+
+| Where | The design says | Built as |
+|---|---|---|
+| §3 G3a "NAV published the same evening" | — | a NAV print stamped the signal date; a carried or older print is "nav stale" (no trigger); the statistics' history keeps the reference script's 3-session carry |
+| §3 G3a "fund leverage ≤ 35%" | — | an owner-maintained figure per fund in the constitution with its date and source; null (or no date) is "leverage unknown" and fails closed |
+| §3 G3a "price ≥ $5, ADV ≥ $1m" | — | the close on the signal day; the mean of close × volume over the last 20 sessions |
+| §3 G3a "the discount back at its mean" | — | the first close at or above the trailing 252-session mean, with the same-evening NAV; otherwise only the time stop |
+| §3 G3a the 60-day cap for a live slot | entries in the Sunday email | sold at the next Sunday's Monday once the Monday after would be past the cap (never past it) |
+| §3 G3a shadow fills and scores | "extends track 24's shadow" | the next session's open with the fill model's slippage; the total-return basis; the baseline from every complete 60-session window in the trailing 252 sessions before the entry (≥ 100) |
+| §3 G3a "2 slots, widest first" | — | one slot per fund, no re-entry while in a slot, no cooldown after an exit |
+| §3 G3a crash mode | "≥ 10 triggers in a week: stagger over 3 weeks" | distinct funds per ISO week; the mode lasts three weeks; ⌈slots ÷ weeks⌉ = 1 entry a week; refused triggers are logged, not queued |
+| §3 G3a promotion "positive median in both halves" | — | the median excess over random entry in each half by entry date; live trades count in the record |
+| §3 G3b "S-1/S-3/19b-4" | — | S-1, S-1/A, S-3, S-3/A by the trust's own CIK (a 19b-4 is the exchange's filing; a dated decision covers it); an RW after the filing voids it; one EDGAR search per trust per week; an EDGAR error or no EDGAR source is no catalyst |
+| §3 G3b "at conversion", "on withdrawal" | — | the owner's `conversion_date` and `withdrawn_date` in the trust's entry, and the RW above |
+| §3 G3b NAV | track 35 §3.1's method | the coin's close on the trust's session × coins-per-share decayed at fee ÷ 365 a day from `as_of`, or a sponsor NAV series; a missing figure fails closed |
+| §4 "≤ 5% each, ≤ 2 open" | — | min(weight × G × NAV, 5% × NAV, the reserve's remainder); open plus the week's buys ≤ 2 across both rules |
+| §3a.3 ranking | "the largest buys, then the SGOV buy, then W10" | gems entries after the G1/G2 buys, before the sweep and W10; exits with the sells; a deferred entry waits; an entry not bought within 14 days is void |
+| §3a.9 "whitelisted per rule" | — | the universe names the candidates; a live order needs the ticker in `config/whitelist.yaml`, else it waits with an `order` alert |
+| §7.4 promotion | "on their own track 35 tests" | `status: live` by the owner's edit only; the reviews print the tests and never promote |
+| §8 "Quarterly: G3 promotion tests" | — | a `g3_shadow` snapshot at the first daily run of each quarter; the review recomputes the test on the events closed by its date |
+| G3c | shadow only, an owner decision | a state note only |
