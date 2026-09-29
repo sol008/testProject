@@ -19,6 +19,8 @@ from traderec import pipeline
 from traderec.config import load_config
 from traderec.ledger import Ledger
 from traderec.market_calendar import is_trading_day
+from traderec.options.chain import occ_symbol
+from traderec.types import OrderIntent
 
 START, END = "2023-01-03", "2026-03-31"
 SESSIONS = pd.DatetimeIndex([d for d in pd.date_range(START, END, freq="B") if is_trading_day(d)])
@@ -355,3 +357,38 @@ def test_w10_unconfirmed_by_the_second_source_is_shadow_only(cfg, tmp_path):
     assert st["modules"]["W10"]["open_trade"] is None and not any(k.endswith("|W10") for k in st["broker"]["lots"])
     assert any(a["kind"] == "data" and "W10" in a["message"] for a in st["alerts"])
     assert [e["signal_date"] for e in st["shadow"]["W10"]["events"]] == ["2025-10-07"]   # still recorded
+
+
+def test_admission_prices_pending_buys_at_their_ticker_stress(cfg, tmp_path):
+    """Tonight's pending buys count in the open stress as if filled, each at its ticker's stress. W10's SPY buy, with
+    no SPY lot in the book, is not priced at risk.MISSING_STRESS (100%) and leaves room for M3's IBIT switch-on."""
+    state_dir = tmp_path / "state"
+    pipeline.run_init(cfg, state_dir, created=LAUNCH)
+    provider = SynthProvider()
+    prev, day = "2025-10-07", "2025-10-08"
+    run = pipeline.Run(cfg, provider, state_dir, "daily", day)
+    try:
+        run.state["marks"] = [{"date": prev, "nav": 100_000.0, "drawdown": 0.0, "peak": 100_000.0}]
+        for t, dollars in (("IEF", 30_000.0), ("GLD", 20_000.0)):         # M2 holds IEF and GLD only
+            run.broker.queue(OrderIntent(intent_id=f"O-{prev}-M2-{t}", trade_id=f"T-{prev}-M2", module="M2",
+                                         account="ira", ticker=t, side="buy", created_date=prev, reason="rebalance",
+                                         dollars=dollars))
+        opens = {t: float(provider.frames[t].at[pd.Timestamp(day), "open"]) for t in ("IEF", "GLD")}
+        assert len(run.broker.fill_pending(day, opens)) == 2
+        run.broker.queue(OrderIntent(intent_id=f"O-{day}-W10-0001", trade_id=f"T-{day}-W10", module="W10",
+                                     account="ira", ticker="SPY", side="buy", created_date=day, reason="entry",
+                                     dollars=6_000.0))
+        legs = [{"occ": occ_symbol("XSP", "2025-12-19", "C", k), "root": "XSP", "right": "C", "strike": k,
+                 "expiry": "2025-12-19", "position": pos, "ratio": 1} for k, pos in ((670.0, "long"), (700.0, "short"))]
+        run.broker.queue(OrderIntent(intent_id=f"O-{day}-M4-0002", trade_id=f"T-{day}-M4", module="M4",
+                                     account="taxable", ticker="XSP", side="buy", created_date=day, reason="entry",
+                                     order_type="spread_limit", legs=legs, contracts=1, limit_price=8.0, max_price=8.5))
+        stress = run.stress()
+        assert "SPY" in stress and "XSP" not in stress          # a spread counts at its maximum debit, not by root
+        book = run.open_stress(stress)
+        assert book["by_module"]["M2"] == pytest.approx(0.045 * 100_000.0)          # the M2 sleeve at its cap
+        assert book["pending"] == pytest.approx(6_000.0 * 0.326 + 850.0)            # W10 at its 32.6% floor, not 100%
+        adm = run.admit("M3", "IBIT", 0.03 * 100_000.0)
+        assert adm["ok"] and adm["dollars"] == pytest.approx(3_000.0) and adm["binding"] is None
+    finally:
+        run.close()

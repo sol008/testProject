@@ -21,6 +21,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from traderec import market_calendar, pipeline, runners
 from traderec.broker import PaperBroker
@@ -591,6 +592,44 @@ def test_live_option_chain_never_uses_yahoo_after_hours():
     assert "option_chain:XSP" not in provider.sources
 
 
+def stale_cboe(now: str = "2026-09-29 14:18") -> tuple[LiveProvider, Session, list[str]]:
+    """A LiveProvider at `now` (UTC; 10:18 EDT) whose CBOE file parses but is stamped 14:12 UTC = 10:12 EDT (a CDN
+    copy made before the 10:15 ET window), and whose Yahoo fallback quotes LEGS (combo mid 13.50, width 0.20)."""
+    body = payload("xsp")
+    body["timestamp"] = "2026-09-29 14:12:00"
+    raw = json.dumps(body).encode()
+    provider, session, _ = live(lambda url: Resp(200, raw), now=now)
+    asked: list[str] = []
+
+    def expiries(symbol):
+        asked.append(symbol)
+        return ["2026-11-20"]
+
+    provider._yf_option_expiries = expiries  # type: ignore[method-assign]
+    provider._yf_option_frames = lambda symbol, expiry: (  # type: ignore[method-assign]
+        yahoo_frame(expiry, "C", [770.0, 805.0], [16.7, 3.2], [0.14, 0.12]), yahoo_frame(expiry, "C", [], [], []),
+        {"regularMarketPrice": 768.2})
+    return provider, session, asked
+
+
+def test_live_option_chain_check_rejects_a_source_and_its_memo():
+    provider, session, asked = stale_cboe()
+
+    def window(chain):                                          # the options job's check: 10:15 ET or later
+        return None if chain.asof[11:16] >= "10:15" else f"quotes stamped {chain.asof[11:16]} ET"
+
+    stale = provider.option_chain("XSP")                        # no check: the CBOE file, memoised
+    assert (stale.source, stale.asof, asked) == ("cboe", "2026-09-29T10:12:00", [])
+    chain = provider.option_chain("XSP", check=window)          # the memo fails: CBOE is asked again, then Yahoo
+    assert (chain.source, chain.asof, asked) == ("yahoo", "2026-09-29T10:18:00", ["^XSP"])
+    assert len(session.calls) == 2 and provider.sources["option_chain:XSP"] == "yahoo"
+    assert provider.option_chain("XSP", check=window).source == "yahoo"          # the memo holds Yahoo's now
+    assert provider.option_chain("XSP").source == "yahoo" and len(session.calls) == 2 and asked == ["^XSP"]
+    with pytest.raises(DataError, match=r"no option chain for XSP \(cboe: never; yahoo: never\)"):
+        provider.option_chain("XSP", check=lambda c: "never")
+    assert provider.option_chain("XSP").source == "cboe" and len(session.calls) == 4    # nothing rejected is kept
+
+
 # ============================================================================================ snapshots
 
 
@@ -824,6 +863,35 @@ def test_run_options_missing_quotes_are_retryable(cfg, tmp_path, hooks, xsp):
     assert third.status == "ok" and len(hooks["fill"]) == 1 and hooks["fill"][0][0].fill_time == "11:17"
     checks = [r["payload"] for r in records(state_dir, "signal") if r["payload"].get("check") == "option_chain"]
     assert [c["ok"] for c in checks] == [False, False]
+
+
+def test_run_options_falls_back_to_yahoo_when_the_cboe_file_is_stale(cfg, tmp_path, hooks):
+    """A CBOE file stamped before the window must not end the run as data_missing while Yahoo has market-hours
+    quotes: the job's window check reaches LiveProvider, which then tries its next source."""
+    state_dir = book(tmp_path, cfg, [spread_order()])
+    provider, session, asked = stale_cboe()
+    res = run_options(cfg, provider, state_dir, date=D1, services=Svc().make())
+    assert res.status == "ok" and asked == ["^XSP"] and len(session.calls) == 1
+    ((fill, intent),) = hooks["fill"]
+    assert intent.intent_id == spread_order().intent_id and fill.fill_time == "10:18"
+    assert fill.price == pytest.approx(LIMIT)
+    (snap,) = [r["payload"] for r in records(state_dir, "snapshot")]
+    assert (snap["source"], snap["asof"]) == ("yahoo", f"{D1}T10:18:00")
+
+
+def test_options_workflow_retries_in_every_slot_but_the_last(cfg):
+    """Exit code 3 (no usable quotes yet) is a warning in every slot but the last, and each season has a retry slot
+    inside the snapshot window: in winter the 14:17 UTC slot is 09:17 EST, too early, so 16:17 UTC is the retry."""
+    wf = yaml.safe_load((Path(__file__).parents[1] / ".github" / "workflows" / "options.yml").read_text())
+    triggers = wf.get("on", wf.get(True))                            # YAML 1.1 reads a bare `on` as True
+    crons = [s["cron"] for s in triggers["schedule"]]
+    assert crons == ["17 14 * * 1-5", "17 15 * * 1-5", "17 16 * * 1-5"]
+    early = wf["jobs"]["options"]["env"]["EARLY_SLOT"]
+    assert [f"'{c}'" in early for c in crons] == [True, True, False]
+    start, end = cfg.constitution["options"]["snapshot_window_et"]
+    for utc_offset in (4, 5):                                        # EDT (summer), EST (winter)
+        et = [f"{int(c.split()[1]) - utc_offset:02d}:{c.split()[0]}" for c in crons]
+        assert sum(start <= t <= end for t in et) >= 2, et
 
 
 def test_run_options_cancels_orders_whose_session_passed(cfg, tmp_path, hooks):

@@ -462,7 +462,15 @@ class Run:
         return values
 
     def stress(self, extra: tuple[str, ...] = ()) -> dict[str, float]:
-        tickers = {p["ticker"] for p in self.broker.positions()} | set(extra)
+        """The stress table for the held tickers, the pending buys' tickers and `extra`.
+
+        `open_stress` counts each pending ETF buy (M2's aside) at its ticker's stress, as if it filled tonight; a
+        ticker missing from the table would count at risk.MISSING_STRESS (100%), e.g. W10's SPY buy while no lot
+        holds SPY. Spread orders count at their stated maximum debit instead, and option roots have no bars.
+        """
+        pending = {o.ticker for o in self.broker.pending()
+                   if o.side == "buy" and o.order_type != "spread_limit" and o.module != "M2"}
+        tickers = {p["ticker"] for p in self.broker.positions()} | pending | set(extra)
         return risk.stress_table({t: self.bars(t)["close"] for t in sorted(tickers)}, self.cfg)
 
     def open_stress(self, stress: dict[str, float]) -> dict:

@@ -550,6 +550,19 @@ def test_stale_chain_is_refused(cfg, world):
     assert any("not 2025-10-15" in a["message"] for a in st["alerts"])
 
 
+def test_a_chain_stamped_before_the_close_does_not_price_the_entry(cfg, world):
+    """Tonight's orders are priced from the closing quotes: a chain of the right date but stamped before the 16:00 ET
+    close (a stale CBOE file) is refused, as the spread marks refuse it (options.job._closing_problem)."""
+    state_dir, provider, rec = world
+    run_until(cfg, provider, state_dir, rec, "2025-10-14")
+    daily(cfg, provider, state_dir, rec, SIGNAL, chain_time="15:40:00")
+    st = _state(state_dir)
+    assert st["modules"]["M4"]["open_trade"] is None and not _m4_emails(rec)
+    assert not [o for o in st["broker"]["pending"] if o["order_type"] == "spread_limit"]
+    assert any(a["kind"] == "data" and "M4 signal not traded" in a["message"]
+               and "quotes stamped 15:40 ET, before the 16:00 ET close" in a["message"] for a in st["alerts"])
+
+
 def test_too_small_an_account_skips_under_one_contract(tmp_path):
     cfg = _cfg()
     state_dir = tmp_path / "state"
@@ -662,6 +675,24 @@ def test_a_close_missed_on_the_last_session_raises_an_alert(cfg, world):
     assert st["modules"]["M4"]["open_trade"]["status"] == "open"
     assert not [o for o in st["broker"]["pending"] if o["module"] == "M4"]  # no order into expiry day
     assert any("safety net" in a["message"] for a in st["alerts"])
+
+
+def test_a_chain_stamped_before_the_close_does_not_price_the_exit(cfg, world):
+    state_dir, provider, rec = world
+    run_until(cfg, provider, state_dir, rec, SIGNAL)
+    iid = _state(state_dir)["modules"]["M4"]["open_trade"]["intent_id"]
+    options_run(cfg, provider, state_dir, rec, ENTRY, lambda run: fill_order(run, iid, 8.70))
+    daily(cfg, provider, state_dir, rec, "2026-01-06", chain_time="15:40:00")    # a stale file, not the close
+    st = _state(state_dir)
+    assert st["modules"]["M4"]["open_trade"]["status"] == "open"
+    assert [e.meta.get("kind") for e in _m4_emails(rec)] == ["NEW_TRADE"]
+    assert not [o for o in st["broker"]["pending"] if o["module"] == "M4"]
+    assert any(a["kind"] == "data" and f"T-{SIGNAL}-M4" in a["message"]
+               and "quotes stamped 15:40 ET, before the 16:00 ET close" in a["message"] for a in st["alerts"])
+    daily(cfg, provider, state_dir, rec, EXIT)                                   # tonight's closing quotes
+    assert [e.meta.get("kind") for e in _m4_emails(rec)] == ["NEW_TRADE", "EXIT"]
+    sell = [o for o in _state(state_dir)["broker"]["pending"] if o["module"] == "M4"][0]
+    assert sell["side"] == "sell" and sell["created_date"] == EXIT
 
 
 def test_cancelled_entry_is_skipped_and_its_forecast_voided(cfg, world):
@@ -800,6 +831,35 @@ def test_options_job_fills_and_closes_the_m4_spread(cfg, world):
 
 
 @needs_options_build
+def test_a_close_session_the_options_job_missed_gets_a_fresh_exit_that_evening(cfg, world):
+    """No options run decides the close on the planned-close day (an outage, no usable quotes, an error). That
+    evening the order can no longer fill: the daily run cancels it and sends a fresh EXIT for the last session
+    before expiry, instead of leaving the spread to ride into expiry (design §3a.4)."""
+    from traderec.options.job import run_options
+
+    state_dir, provider, rec = world
+    run_until(cfg, provider, state_dir, rec, SIGNAL)
+    provider.chain_asof = f"{ENTRY}T10:17:00"
+    assert run_options(cfg, provider, state_dir, date=ENTRY, services=rec.services()).status == "ok"
+    daily(cfg, provider, state_dir, rec, "2026-01-06")                   # the EXIT for the planned close
+    first = [o for o in _state(state_dir)["broker"]["pending"] if o["module"] == "M4"][0]
+    daily(cfg, provider, state_dir, rec, EXIT)                            # no options run on EXIT
+    st = _state(state_dir)
+    (resell,) = [o for o in st["broker"]["pending"] if o["module"] == "M4"]
+    ot = st["modules"]["M4"]["open_trade"]
+    assert resell["side"] == "sell" and resell["created_date"] == EXIT and resell["intent_id"] != first["intent_id"]
+    assert (ot["status"], ot["exit_intent_id"], ot["last_close_miss"]) == ("pending_exit", resell["intent_id"], EXIT)
+    (gone,) = [o for o in st["broker"]["cancelled"] if o["intent_id"] == first["intent_id"]]
+    assert gone["meta"]["cancel_reason"].startswith(f"its session {EXIT} passed without a fill decision")
+    assert [e.meta.get("kind") for e in _m4_emails(rec)] == ["NEW_TRADE", "EXIT", "EXIT"]
+    provider.chain_asof = f"{LAST}T10:17:00"
+    res = run_options(cfg, provider, state_dir, date=LAST, services=rec.services())
+    assert res.status == "ok" and [f["intent_id"] for f in res.fills] == [resell["intent_id"]]
+    hist = _state(state_dir)["modules"]["M4"]["history"][-1]
+    assert (hist["exit_date"], hist["exit_reason"]) == (LAST, "expiry_rule")
+
+
+@needs_options_build
 def test_open_m4_spread_counts_in_the_us_equity_reserve(cfg, world):
     state_dir, provider, rec = world
     run_until(cfg, provider, state_dir, rec, SIGNAL)
@@ -834,11 +894,24 @@ def test_rendered_spread_emails_carry_the_contract_values(cfg, world):
     assert not validator.validate(ex) and f"{sell['max_price']:.2f}" in ex.text and "10:00 ET" in ex.text
 
 
-def test_the_day_after_an_m4_order_needs_no_option_root_bars(cfg, world):
+def test_an_entry_session_the_options_job_missed_is_skipped_that_evening(cfg, world):
+    """No options run decides the entry on its session: that evening the order can no longer fill, so the daily run
+    cancels it and skips the trade, as for a no-fill. It asks for no option-root bars (the provider has no "XSP")."""
     state_dir, provider, rec = world
     run_until(cfg, provider, state_dir, rec, SIGNAL)
-    daily(cfg, provider, state_dir, rec, ENTRY)                          # the provider has no "XSP" bars
-    assert _state(state_dir)["modules"]["M4"]["open_trade"]["status"] == "pending_entry"
+    iid = _state(state_dir)["modules"]["M4"]["open_trade"]["intent_id"]
+    daily(cfg, provider, state_dir, rec, ENTRY)                          # no options run on ENTRY
+    st = _state(state_dir)
+    m = st["modules"]["M4"]
+    assert m["open_trade"] is None and (m["skipped"][0]["signal_date"], m["skipped"][0]["date"]) == (SIGNAL, ENTRY)
+    assert m["cooldown_until"] == "2026-01-13"
+    assert not [o for o in st["broker"]["pending"] if o["module"] == "M4"]
+    (gone,) = [o for o in st["broker"]["cancelled"] if o["intent_id"] == iid]
+    assert gone["meta"]["cancel_reason"].startswith(f"its session {ENTRY} passed without a fill decision")
+    (fill,) = [r["payload"] for r in _ledger(state_dir) if r["record_type"] == "fill"
+               and r["payload"].get("intent_id") == iid]
+    assert fill["type"] == "no_fill" and fill["cancelled"] and fill["fill_date"] == ENTRY
+    assert not [f for f in st["forecasts"]["open"] if f["trade_id"] == f"T-{SIGNAL}-M4"]
 
 
 def test_next_trading_day_helper_consistency():
