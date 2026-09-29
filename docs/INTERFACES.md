@@ -27,7 +27,8 @@ class DataProvider(Protocol):
     def tbill_rate(self) -> float
         # Annualised 3-month T-bill yield as a decimal: FRED DTB3, then yfinance ^IRX/100, then config fallback.
     def second_source_close(self, ticker: str, date: str) -> dict | None
-        # {"close": float, "source": "nasdaq" | "robinhood"} or None if unavailable.
+        # {"close": float, "source": "nasdaq" | "robinhood" | "yahoo-quote" | "fred:SP500" | "cboe-quote"} or None.
+        # ^GSPC uses FRED's SP500 series, then CBOE's delayed index quote (W10's two-source rule).
 
 class LiveProvider(DataProvider)     # network: yfinance, api.nasdaq.com, api.robinhood.com/quotes,
                                      # cdn.cboe.com, api.exchange.coinbase.com, fred.stlouisfed.org
@@ -124,6 +125,15 @@ def btc_weekly_switch(btc_daily_utc: pd.Series, asof_utc_date: str, weeks: int =
     # {"on": bool, "week_end": date, "weekly_close", "sma", "complete": bool}
     # weekly close = close of the last complete week ending Sunday (UTC candles)
 
+# w10_crashbuy.py (W10: policy module with a 90-day exception, design v3.3 §3)
+def w10_signal(spx: pd.DataFrame, date: str, cfg_w10: dict, *, close_override: float | None = None) -> dict
+    # {"signal", "ret", "close", "prev_close", "sma_prev", "prior_shock", "reasons"}; unrounded closes;
+    # close_override re-runs the test on a second source's close (the pipeline requires both to fire)
+def w10_exit_date(entry_date: str, max_calendar_days: int) -> str       # the last NYSE session <= entry + N days
+def w10_exit_check(date: str, open_trade: dict, cfg_w10: dict, sessions=None) -> dict
+    # {"exit", "reason": "calendar_stop", "exit_date", "days_held", "sessions_held"}; exit queued the evening before
+def w10_kill_check(history: list[dict], nav: float, cfg_w10: dict) -> str | None   # damage-limit kill switch
+
 # shadow.py
 def st1b_entry_check(...)  # as m1_entry_check without the VIX gate
 def w10_check(spx: pd.DataFrame, vix: pd.Series, date: str, last_trigger: str | None, cfg_w10: dict) -> dict
@@ -136,7 +146,9 @@ def open_stress(positions: list[dict], values: dict, stress: dict, cfg: Config) 
     # {"total", "us_equity", "by_module"}; M2 counted once as its sleeve stress
 def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stress: dict, cfg: Config,
           drawdown: float) -> dict
-    # {"ok": bool, "dollars": float (possibly scaled), "binding": str | None, "notes": [...]}
+    # {"ok": bool, "dollars": float (possibly scaled), "binding": str | None, "notes": [...], "cluster_overflow"}
+    # v3.3: M1 has priority in the 7% US-equity cluster (never cut; overflow reported); W10 is skipped when the
+    # reserve leaves less than cluster_min_fraction of its size
 ```
 
 ## 6. Emails, validator, notify — `traderec/emails.py`, `traderec/validator.py`, `traderec/notify.py`
@@ -184,10 +196,11 @@ python -m traderec status
   4. mark the book;
   5. snapshot and two-source checks;
   6. M1 exit or entry;
-  7. M2 monthly decision, or the next batch of deferred legs;
-  8. M3 catch-up (the weekly job normally decides);
-  9. shadow book;
-  10. dated forecasts;
-  11. drawdown alerts.
+  7. W10 exit (calendar-exact) or entry (two-source S&P close; admitted after M1);
+  8. M2 monthly decision, or the next batch of deferred legs;
+  9. M3 catch-up (the weekly job normally decides);
+  10. shadow book (ST-1b; every uptrend −3% day scored at 60 and 90 days);
+  11. dated forecasts;
+  12. drawdown alerts.
 - **Each decision:** pre-registered in the ledger, rendered, validated, GitHub issue opened, paper orders queued, and email sent after the state is saved. A validator failure blocks the orders and raises an alert.
 - **Owner feedback (`traderec/feedback.py`):** the monthly job reads the trade issues' comments (`filled <dollars> @ <price> [TICKER]` / `skipped`) to measure two go-live gates: emails handled, and practice fills vs the fill model (median gap ≤ 10 bp).

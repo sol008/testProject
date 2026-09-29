@@ -210,7 +210,14 @@ Every trade email links to that trade's GitHub issue: one issue per trade, label
 
 ## 5. Reading the emails
 
-Every email is labelled **PAPER** or **LIVE** and names its module (M1, M2 or M3). Kinds: new trade, exit, trend-book rebalance, Bitcoin switch on or off, and the monthly review.
+Every email is labelled **PAPER** or **LIVE** and names its module (M1, M2, M3 or W10). Kinds: new trade, exit, trend-book rebalance, Bitcoin switch on or off, and the monthly review.
+
+**W10, the crash-day buy** (design v3.3, decision 12), is the only rule that holds longer than 60 days.
+- It buys SPY in the IRA after the first S&P 500 drop of 3% or more in an uptrend, which happens about once every two years.
+- The new-trade email names the sell date: the last trading day within 90 calendar days of the purchase.
+- An exit email arrives the evening before that date.
+- Hold through the swings in between. There is no stop-loss and no early exit, which is how the rule was tested.
+- **Shared SPY position.** M1, M2 and W10 can all hold SPY in the same IRA, and Robinhood shows them as one position. An exit email then asks you to sell a number of *shares* (this trade's shares only), not "Sell all"
 
 From top to bottom:
 

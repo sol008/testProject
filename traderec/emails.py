@@ -17,7 +17,11 @@ Templates use `{key:spec}` placeholders filled from `rec.facts` (plus derived va
 facts are missing falls back to a variant without that number, or is left out. Specs: `money`/`money2`
 (whole dollars / cents), `pct0..2` (a fraction: 0.06 -> 6%), `ppct0..2` (percent units, for keys ending in
 `_pct`: 0.88 -> 0.88%), `num`/`num1..3`, `int`, `year`, `date` ("Fri 3 Oct"), `datel`, `dateiso`,
-`month`, `str`; prefix `s` shows a + sign, prefix `n` shows the value as a loss (−abs).
+`month`, `str`; prefix `s` shows a + sign, prefix `n` shows the value as a loss (−abs), prefix `a` shows the
+magnitude ("fell {spx_ret:apct2}" -> "fell 3.12%").
+
+The label tables (MODULE_NAMES, MODULE_STATUS, MODULE_CONFIDENCE) are fixed, reviewed text; like data-layer
+labels they are registered verbatim, so W10's "90-day exception" and "proven only after 1990" pass the validator.
 
 ctx keys (all optional)
 -----------------------
@@ -59,6 +63,11 @@ flat dict.
       skipped_band, prices {ticker: last close}, batch (2, 3, ... on a follow-up email with the same trade_id;
       labelled "part N" and said to finish the month's rebalance unless more legs are still deferred)
 - M3: weekly_close, sma, weeks, week_end, sleeve_pct_nav
+- W10: spx_close, spx_prev_close, spx_ret (fraction), sma200_prev, drop_pct (fraction), decluster_sessions,
+       max_calendar_days, sma_trend (shows "200-day" when present), exit_date (the planned sell session),
+       horizon_stress_usd / horizon_stress_pct (planning loss over the full hold, percent units), base_rates
+       (+ placebo_mean_pct, worst_interim_pct, optional edge_since and worst_interim_when, e.g. "March 2020");
+       EXIT: reason "calendar_stop", entry_date, days_held, sessions_held
 OrderIntent.meta may carry "ref_price", "qty" and "keep_qty" per order (REBALANCE).
 """
 from __future__ import annotations
@@ -89,14 +98,19 @@ LIVE_BANNER = "LIVE TRADE — real money. Place it exactly as shown below."
 PAPER_MONTHLY_BANNER = "PAPER PHASE — no real money. These results come from the paper broker."
 LIVE_MONTHLY_BANNER = "LIVE — these results are real money."
 
-MODULE_NAMES = {"M1": "Uptrend dip-buy", "M2": "Trend book", "M3": "Bitcoin trend switch"}
-MODULE_STATUS = {"M1": "policy module", "M2": "trend sleeve", "M3": "policy module, opt-in sleeve"}
+MODULE_NAMES = {"M1": "Uptrend dip-buy", "M2": "Trend book", "M3": "Bitcoin trend switch",
+                "W10": "Uptrend crash-day buy"}
+MODULE_STATUS = {"M1": "policy module", "M2": "trend sleeve", "M3": "policy module, opt-in sleeve",
+                 "W10": "policy module, 90-day exception"}
 MODULE_CONFIDENCE = {
     "M1": "Medium: a tested rule with a small, steady edge",
     "M2": "Low to medium: trend rules pay off over years, not months",
     "M3": "Low: a risk switch that follows Bitcoin's trend, not a prediction",
+    "W10": "Low to medium: a small timing edge on about three months of market exposure; proven only after 1990",
 }
-DEFAULT_TICKERS = {"M1": "SPY", "M3": "IBIT"}
+DEFAULT_TICKERS = {"M1": "SPY", "M3": "IBIT", "W10": "SPY"}
+# Modules whose exit-plan template already says when the sell email comes (no generic reminder appended).
+PLAN_NAMES_EXIT_EMAIL = {"W10"}
 TICKER_NAMES = {
     "SPY": "S&P 500 index fund", "VOO": "S&P 500 index fund", "QQQ": "Nasdaq tech-heavy index fund",
     "IEF": "medium-term US Treasury bond fund", "TLT": "long-term US Treasury bond fund", "GLD": "gold fund",
@@ -147,7 +161,7 @@ def _to_date(d: Any) -> date:
     return date.fromisoformat(str(d).strip()[:10])
 
 
-_SPEC = re.compile(r"^(?P<mod>[sn]?)(?P<kind>money|ppct|pct|num|int|year|dateiso|datel|date|month|str)?(?P<dec>\d)?$")
+_SPEC = re.compile(r"^(?P<mod>[sna]?)(?P<kind>money|ppct|pct|num|int|year|dateiso|datel|date|month|str)?(?P<dec>\d)?$")
 _DATE_STYLES = {"date": "short", "datel": "long", "dateiso": "iso", "month": "month"}
 
 
@@ -231,6 +245,8 @@ class NumberRegistry:
         v = float(value)
         if mod == "n":
             v = -abs(v)
+        elif mod == "a":
+            v = abs(v)
         signed = mod == "s"
         if kind == "money":
             return self.fmt_money(v, cents=bool(places), signed=signed)
@@ -360,7 +376,22 @@ ONE_SENTENCE: dict[str, dict[str, tuple]] = {
             "Bitcoin's weekly trend turned down, so sell all your {ticker} {when}.",
         ),
     },
+    "W10": {
+        "NEW_TRADE": (
+            "The S&P 500 fell {spx_ret:apct2} today while its trend was up, so buy {dollars:money} of {ticker} {when} "
+            "and hold it until {exit_date:date}.",
+            "The S&P 500 had a big one-day drop while its trend was up, so buy {dollars:money} of {ticker} {when} "
+            "and hold it until {exit_date:date}.",
+            "The S&P 500 had a big one-day drop while its trend was up, so buy {dollars:money} of {ticker} {when} "
+            "and hold it about three months.",
+        ),
+        "EXIT:calendar_stop": (
+            "The {max_calendar_days:int}-day holding limit is up, so sell all the {ticker} from this trade {when}.",
+            "The holding limit is up, so sell all the {ticker} from this trade {when}.",
+        ),
+    },
 }
+ONE_SENTENCE["W10"]["EXIT"] = ONE_SENTENCE["W10"]["EXIT:calendar_stop"]     # W10 has one exit rule
 # REBALANCE follow-up emails (facts["batch"] >= 2) carry the legs that didn't fit in the earlier email.
 FOLLOW_UP_SENTENCE = {
     "final": ("Part {batch:int} of this month's trend check: place {orders_phrase} {when} to finish this month's "
@@ -453,7 +484,41 @@ WHY: dict[str, dict[str, list[tuple]]] = {
              "above the average.",),
         ],
     },
+    "W10": {
+        "NEW_TRADE": [
+            ("The S&P 500 fell {spx_ret:apct2} today, closing at {spx_close:num2} (the day before: "
+             "{spx_prev_close:num2}).",
+             "The S&P 500 fell {spx_ret:apct2} today.",
+             "The S&P 500 had a big one-day drop today."),
+            ("It's the first drop of {drop_pct:apct0} or more in {decluster_sessions:int} trading sessions: a fresh "
+             "shock, not one more down day in a slide.",
+             "It's the first drop this big in {decluster_sessions:int} trading sessions: a fresh shock, not one more "
+             "down day in a slide.",
+             "It's the first drop this big in weeks: a fresh shock, not one more down day in a slide."),
+            ("The day before, the S&P closed above its {sma_trend:int}-day average of {sma200_prev:num2}, so the "
+             "trend was up.",
+             "The day before, the S&P closed above its long-term average of {sma200_prev:num2}, so the trend was up.",
+             "The day before, the S&P closed above its long-term average, so the trend was up."),
+            ("The bet, in plain words: buy the shock, hold about three months, and sell on a fixed date.",),
+            ("Since {since:year}, these trades averaged {mean_pct:sppct1}, against {placebo_mean_pct:sppct1} for "
+             "random entry days held just as long.",
+             "In testing, these trades averaged {mean_pct:sppct1}, against {placebo_mean_pct:sppct1} for random "
+             "entry days held just as long.", None),
+            ("The edge shows only after {edge_since:year}, not in older data, so this is a small, cheap bet.",
+             "The edge shows only in recent decades, not in older data, so this is a small, cheap bet."),
+        ],
+        "EXIT:calendar_stop": [
+            ("You bought on {entry_date:date} and have held it {days_held:int} calendar days ({sessions_held:int} "
+             "trading sessions). The next open is the last trading session within the {max_calendar_days:int}-day "
+             "limit, so the rule says sell.",
+             "The next open is the last trading session within the {max_calendar_days:int}-day limit, so the rule "
+             "says sell.",
+             "The holding limit is up: the next open is the last trading session inside it, so the rule says sell."),
+            ("The exit was decided when you bought: profit or loss doesn't change it.",),
+        ],
+    },
 }
+WHY["W10"]["EXIT"] = WHY["W10"]["EXIT:calendar_stop"]
 GENERIC_WHY = {
     "NEW_TRADE": [("The {module_name} rule's entry conditions all passed on the close of {created:date}.",)],
     "EXIT": [("The {module_name} rule's exit condition fired, so the plan says sell at the next open.",)],
@@ -495,6 +560,19 @@ EXIT_PLAN: dict[str, dict[str, list[tuple]]] = {
             ("No stop-loss: the weekly switch is the exit.",),
         ],
     },
+    "W10": {
+        "NEW_TRADE": [
+            ("Sell all at the open on {exit_date:date}: the last trading day within {max_calendar_days:int} calendar "
+             "days of the purchase. You'll get an EXIT email the evening before.",
+             "Sell all at the open on {exit_date:date}, a date fixed now. You'll get an EXIT email the evening before.",
+             "Sell all at the open of the last trading day within {max_calendar_days:int} calendar days of the "
+             "purchase. You'll get an EXIT email the evening before.",
+             "Sell all on a fixed date about three months after the purchase. You'll get an EXIT email the evening "
+             "before."),
+            ("No stop-loss, no profit target and no early exit. The rule was tested this way, and the sell date is "
+             "fixed now.",),
+        ],
+    },
 }
 
 RISKS: dict[str, list[tuple]] = {
@@ -513,7 +591,20 @@ RISKS: dict[str, list[tuple]] = {
          "Bitcoin can fall hard within days, before the weekly switch reacts. That's why the position is kept "
          "small."),
     ],
+    "W10": [
+        ("A crash can deepen after the first shock. In {worst_interim_when} this trade was down "
+         "{worst_interim_pct:appct0} at its worst before it recovered.",
+         "A crash can deepen after the first shock. Since {since:year}, the worst trade was down "
+         "{worst_interim_pct:appct0} at one point before it recovered.",
+         "A crash can deepen after the first shock, and this trade has no stop-loss."),
+        ("No stop-loss and no early exit: you hold through the swings until the sell date. The worst finished trade "
+         "since {since:year} returned {worst_pct:ppct1}.",
+         "No stop-loss and no early exit: you hold through the swings until the sell date."),
+    ],
 }
+# Shown after the stress line when facts carry a horizon-matched planning loss (W10: the worst full hold).
+HORIZON_RISK = ("Planning loss over the full hold: about {horizon_stress_usd:money} ({horizon_stress_frac:pct2} of "
+                "the portfolio), a bad-case drop over the whole holding period.", None)
 
 
 # ------------------------------------------------------------------------------------------- serialisation
@@ -729,17 +820,8 @@ class _TradeEmail:
         except (TypeError, ValueError):
             self.execute_date = None
 
-        stress_usd = abs(float(f["stress_usd"])) if _is_num(f.get("stress_usd")) else None
-        stress_frac = None
-        if _is_num(f.get("stress_pct")):
-            sp = abs(float(f["stress_pct"]))
-            stress_frac = sp / 100.0
-            if stress_usd is not None and self.nav:     # a fraction passed under a `_pct` key
-                implied = stress_usd / self.nav
-                if abs(stress_frac - implied) > 5e-4 and abs(sp - implied) <= 5e-4:
-                    stress_frac = sp
-        elif stress_usd is not None and self.nav:
-            stress_frac = stress_usd / self.nav
+        stress_usd, stress_frac = self._loss(f.get("stress_usd"), f.get("stress_pct"))
+        horizon_usd, horizon_frac = self._loss(f.get("horizon_stress_usd"), f.get("horizon_stress_pct"))
 
         if self.coinbase:
             when = "as soon as you can (Coinbase trades 24/7)"
@@ -757,6 +839,7 @@ class _TradeEmail:
             "module_name": self.module_name, "dollars": self.dollars, "nav": self.nav,
             "size_frac": (self.dollars / self.nav) if (self.dollars is not None and self.nav) else None,
             "stress_usd": stress_usd, "stress_frac": stress_frac, "execute_date": self.execute_date,
+            "horizon_stress_usd": horizon_usd, "horizon_stress_frac": horizon_frac,
             "when": when, "orders_phrase": orders_phrase, "n_orders": n, "holding": holding, "batch": self.batch,
             "created": rec.created_date or None,
             "account_label": ACCOUNT_LABELS.get(self.account, self.account),
@@ -769,6 +852,20 @@ class _TradeEmail:
         self.derived = {k: v for k, v in derived.items() if not _is_missing(v)}
 
     # -------------------------------------------------------------- helpers
+    def _loss(self, usd: Any, pct: Any) -> tuple[float | None, float | None]:
+        """A planning loss as (USD magnitude, fraction of NAV). `pct` is in percent units (the `_pct` convention);
+        a fraction passed instead is detected when it matches usd / nav. A missing pct is computed as usd / nav."""
+        usd_v = abs(float(usd)) if _is_num(usd) else None
+        if _is_num(pct):
+            p = abs(float(pct))
+            frac = p / 100.0
+            if usd_v is not None and self.nav:
+                implied = usd_v / self.nav
+                if abs(frac - implied) > 5e-4 and abs(p - implied) <= 5e-4:
+                    frac = p
+            return usd_v, frac
+        return usd_v, (usd_v / self.nav if usd_v is not None and self.nav else None)
+
     def t(self, *alternatives: str | None, **extra: Any) -> str | None:
         return self.filler.first(alternatives, {**self.derived, **extra})
 
@@ -825,8 +922,14 @@ class _TradeEmail:
                           "{dollars:money}") or "See the order below"
             stress = self.t("Planning loss {stress_usd:nmoney} ({stress_frac:npct2} of portfolio) if {ticker} "
                             "repeats its worst crash on record",
-                            "Planning loss {stress_usd:nmoney} if {ticker} repeats its worst crash on record",
-                            ) or "Not computed for this trade"
+                            "Planning loss {stress_usd:nmoney} if {ticker} repeats its worst crash on record")
+            horizon = self.t("{horizon_stress_usd:nmoney} ({horizon_stress_frac:npct2}) over the full hold",
+                             "{horizon_stress_usd:nmoney} over the full hold")
+            if stress and horizon:
+                stress += "; " + horizon
+            elif horizon:
+                stress = "Planning loss " + horizon
+            stress = stress or "Not computed for this trade"
         elif self.is_sell:
             what = self._sell_amount(self.facts.get("qty"), self.facts.get("keep_qty")) or "all"
             action = f"SELL {what} {self.ticker} ({self.ticker_name}) {where}"
@@ -1000,6 +1103,7 @@ class _TradeEmail:
                 out.append("If the switch turns back on, you'll get a new email.")
             return out
         given = self.facts.get("exit_plan")
+        from_template = False
         if isinstance(given, str) and given.strip():
             out = [self.reg.register(given.strip())]
         elif isinstance(given, (list, tuple)) and given:
@@ -1008,10 +1112,12 @@ class _TradeEmail:
             out = [self.reg.register(str(v)) for v in given.values() if isinstance(v, str) and v.strip()]
         else:
             out = self.lines(self.templates(EXIT_PLAN) or [])
+            from_template = True
         if self.kind == "REBALANCE":
             return out or ["Every ETF is re-decided at the next monthly check."]
-        out.append("You'll get an email telling you to sell when any of these fire. You don't need to watch the "
-                   "screen.")
+        if not (from_template and self.module in PLAN_NAMES_EXIT_EMAIL):
+            out.append("You'll get an email telling you to sell when any of these fire. You don't need to watch the "
+                       "screen.")
         return out
 
     def why_heading(self) -> str:
@@ -1078,7 +1184,7 @@ class _TradeEmail:
             if not self.is_sell:
                 blocks.append(("p", sentence[0].upper() + sentence[1:]))
             else:
-                blocks.append(("p", "For reference: " + sentence))
+                blocks.append(("p", "For reference: " + sentence[0].lower() + sentence[1:]))
         if not self.is_sell:
             for s in (self.t("For planning, the system assumes {planning_mean_pct:sppct2} per trade, about half the "
                              "tested average, because live results usually come in weaker than backtests.", None),
@@ -1119,6 +1225,9 @@ class _TradeEmail:
                                 "in the box above.", None)
             if stress:
                 out.append(stress)
+            horizon = self.t(*HORIZON_RISK)
+            if horizon:
+                out.append(horizon)
             if not self.coinbase:
                 out.append("A market order at the open fills at whatever price the market opens at, even after "
                            "overnight news.")

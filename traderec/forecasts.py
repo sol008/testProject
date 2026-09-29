@@ -27,9 +27,11 @@ def make_forecasts(rec: Recommendation, cfg: Config) -> list[dict]:
     """1-3 pre-registered forecasts for `rec`; an empty list for kinds that register none.
 
     M1 NEW_TRADE: profit on exit, and exit on the time stop. M2 REBALANCE: one per leg with a target above
-    $0 in `rec.facts["targets"]`, resolved by date. M3 SWITCH_ON: profit on exit. forecast_id = F-<trade_id>-<n>.
+    $0 in `rec.facts["targets"]`, resolved by date. M3 SWITCH_ON and W10 NEW_TRADE: profit on exit.
+    forecast_id = F-<trade_id>-<n>.
     """
-    builders = {("M1", "NEW_TRADE"): _m1_specs, ("M2", "REBALANCE"): _m2_specs, ("M3", "SWITCH_ON"): _m3_specs}
+    builders = {("M1", "NEW_TRADE"): _m1_specs, ("M2", "REBALANCE"): _m2_specs, ("M3", "SWITCH_ON"): _m3_specs,
+                ("W10", "NEW_TRADE"): _w10_specs}
     builder = builders.get((rec.module, rec.kind))
     if builder is None:
         return []
@@ -117,6 +119,12 @@ def _m3_specs(rec: Recommendation, cfg: Config) -> list[dict]:
     m3 = cfg.module("M3")
     return [_spec("profit", _order_ticker(rec, m3["ticker"]), "The Bitcoin position closes with a profit",
                   m3["forecasts"]["p_profit"])]
+
+
+def _w10_specs(rec: Recommendation, cfg: Config) -> list[dict]:
+    w10 = cfg.module("W10")
+    return [_spec("profit", _order_ticker(rec, w10["ticker"]),
+                  f"Trade closes with a profit at its {w10['max_calendar_days']}-day exit", w10["forecasts"]["p_profit"])]
 
 
 def _is_positive(x: Any) -> bool:

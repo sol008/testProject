@@ -36,7 +36,10 @@ def _sessions_since(index: pd.DatetimeIndex, last_trigger: pd.Timestamp, date: p
 
 
 def w10_check(spx: pd.DataFrame, vix: pd.Series, date: str, last_trigger: str | None, cfg_w10: dict) -> dict:
-    """W10 trigger on raw ^GSPC closes up to `date` (track 17; design §3 M5 "W10").
+    """The v3.2 W10 trigger, with its VIX void (kept for reference; v3.3 dropped the void). The pipeline uses
+    `traderec.modules.w10_crashbuy.w10_signal`.
+
+    W10 trigger on raw ^GSPC closes up to `date` (track 17; design §3 M5 "W10").
 
     Triggers when all hold:
     * ret = close[date] / close[prev] - 1 <= drop_pct (-3%), where prev is the session before `date`;

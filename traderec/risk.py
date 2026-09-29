@@ -27,6 +27,7 @@ STRESS_SESSIONS = 10                             # "worst 10-session loss" (desi
 US_EQUITY_TICKERS = frozenset({"SPY", "QQQ", "VOO"})
 CRYPTO_TICKERS = frozenset({"IBIT", "FBTC", "BTC-USD", "ETH-USD"})
 GOVERNOR_EXEMPT = frozenset({"M4"})              # "M4 is exempt" from G(D) (design §4)
+CLUSTER_PRIORITY = frozenset({"M1"})             # admitted first, never blocked by the US-equity reserve (v3.3 §4)
 MIN_TRADE_DOLLARS = 50.0
 MISSING_STRESS = 1.0                             # a ticker with no stress figure may lose 100% (fail closed)
 NAV_KEY = "__nav__"
@@ -173,14 +174,17 @@ def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stre
     1. "governor": x G(drawdown), unless the module is exempt (M4);
     2. "per_trade_stress": notional x unit stress <= per_trade_stress x nav;
     3. "us_equity_cluster" (US-equity tickers only): the trade's stress must fit in
-       us_equity_cluster x nav - positions_stress["us_equity"];
+       us_equity_cluster x nav - positions_stress["us_equity"]. M1 has priority (design v3.3 §4): it is never cut
+       by this step; any excess is reported as "cluster_overflow" (stress USD) so the pipeline can act on the open
+       W10. A module with `cluster_min_fraction` in its config (W10) is skipped when this step leaves less than
+       that fraction of its governed size;
     4. "total_open_stress": the trade's stress must fit in total_open_stress x nav - positions_stress["total"].
 
     `positions_stress` is `open_stress`'s output and must include "nav". `binding` names the last step that
     reduced the size, which is the tightest one; it is None when nothing did. ok is False when the final
     size is below $50. `dollars` is still reported then, so check `ok` before trading.
 
-    Returns {"ok", "dollars", "binding", "notes"}.
+    Returns {"ok", "dollars", "binding", "notes", "cluster_overflow"}.
     """
     nav = _finite(positions_stress.get("nav"))
     if nav is None or nav <= 0.0:
@@ -203,10 +207,19 @@ def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stre
             shown = f"{abs(d):.1%}" if d is not None else "unknown"
             notes.append(f"drawdown {shown}: governor G = {g:.3f}, size ${amount:,.2f}")
 
+    governed = amount
+    overflow = 0.0
     limits: list[tuple[str, float]] = [("per_trade_stress", float(caps["per_trade_stress"]) * nav)]
     if ticker in us_equity_tickers(cfg):
         room = float(caps["us_equity_cluster"]) * nav - float(positions_stress.get("us_equity", 0.0))
-        limits.append(("us_equity_cluster", max(room, 0.0)))
+        if module in CLUSTER_PRIORITY:
+            overflow = max(min(governed, float(caps["per_trade_stress"]) * nav / s if s > 0 else governed) * s
+                           - max(room, 0.0), 0.0)
+            if overflow > 0.0:
+                notes.append(f"us_equity_cluster: {module} has priority and is not cut; the reserve is exceeded "
+                             f"by ${overflow:,.2f} of stress")
+        else:
+            limits.append(("us_equity_cluster", max(room, 0.0)))
     room = float(caps["total_open_stress"]) * nav - float(positions_stress.get("total", 0.0))
     limits.append(("total_open_stress", max(room, 0.0)))
 
@@ -221,4 +234,9 @@ def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stre
     ok = amount >= MIN_TRADE_DOLLARS
     if not ok:
         notes.append(f"size ${amount:,.2f} is below the ${MIN_TRADE_DOLLARS:,.0f} minimum: no trade")
-    return {"ok": ok, "dollars": amount, "binding": binding, "notes": notes}
+    min_frac = _finite(((cfg.constitution.get("modules") or {}).get(module) or {}).get("cluster_min_fraction"))
+    if ok and min_frac and binding == "us_equity_cluster" and governed > 0 and amount < min_frac * governed:
+        ok = False
+        notes.append(f"us_equity_cluster: the reserve leaves {amount / governed:.0%} of the size, under "
+                     f"{min_frac:.0%}: skipped")
+    return {"ok": ok, "dollars": amount, "binding": binding, "notes": notes, "cluster_overflow": overflow}

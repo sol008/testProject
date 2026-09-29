@@ -1,6 +1,14 @@
-# Strategy constitution v3.2 (research/00-SYSTEM-DESIGN-v3.md). Changing anything here is a
+# Strategy constitution v3.3 (research/00-SYSTEM-DESIGN-v3.md). Changing anything here is a
 # rule change: see design section 8 (at most one change per parameter per quarter, with evidence).
-version: "3.2.0"
+# v3.3 (decision 12): W10 becomes a policy module with a 90-day exception; every other rule keeps 60 days.
+version: "3.3.0"
+
+holding:
+  max_calendar_days: 60          # every trade closes within 60 calendar days (decision 1)
+  exceptions:                    # decision 12: holds to the last session within 90 calendar days
+    W10: 90
+    M4: 90                       # Phase B
+  continuing: [M2, M3]           # re-decided monthly / weekly; may continue (decisions 5 and 11)
 
 modules:
   M1:                      # ST-1: VIX-gated uptrend dip-buy (policy module), track 13 §11.1
@@ -67,17 +75,43 @@ modules:
     forecasts:
       p_profit: 0.45
 
+  W10:                     # uptrend crash-day buy: policy module with a 90-day exception (design v3.3 §3, track 23)
+    enabled: true
+    name: Uptrend crash-day buy
+    ticker: SPY
+    index: "^GSPC"
+    account: ira
+    drop_pct: -0.03          # S&P close 3.00% or more below the prior close (unrounded)
+    sma_trend: 200           # prior close above its 200-day average, computed through the prior close
+    decluster_sessions: 20   # no other -3% close in the prior 20 sessions
+    notional_pct_nav: 0.06   # x G(D); 6.7% would breach the 2% per-trade stress cap
+    stress_loss: 0.326       # S&P 500 worst 10-session loss (as M1)
+    horizon_stress_loss: 0.481   # worst 90-day window: the planning worst case shown in emails
+    max_calendar_days: 90    # sell at the open of the last session within 90 calendar days of entry
+    cluster_min_fraction: 0.5    # skip when the US-equity reserve leaves less than half the size
+    kill_switch:
+      single_trade_loss: -0.15   # one trade losing 15% or more sends W10 back to shadow
+      cumulative_pnl_pct_nav: -0.015
+    base_rates:              # track 23, SPY 1993-2026, calendar-exact 90 days, one position at a time
+      since: 1993
+      trades_per_year: 0.5
+      win_rate: 0.88
+      mean_pct: 7.2
+      placebo_mean_pct: 2.7
+      planning_mean_pct: 3.6
+      worst_pct: -8.3
+      worst_interim_pct: -31
+      worst_interim_when: March 2020
+      edge_since: 1990       # no edge before 1990 (1928-89: p 0.44)
+    forecasts:
+      p_profit: 0.72         # shrunk from 0.88 (1928-2026: 0.72)
+
 shadow:                    # logged automatically, never emailed
   ST1B:
     enabled: true          # M1 without the VIX gate
   W10:
-    enabled: true          # uptrend crash day; shadow under the calendar-day reading
-    drop_pct: -0.03
-    decluster_sessions: 20
-    hold_sessions: 42
-    max_calendar_days: 60  # exit at the last session within 60 calendar days (42 sessions overrun 28% of the time, track 22 §1.1)
-    void_vix_above: 45
-    notional_pct_nav: 0.067
+    enabled: true          # every uptrend -3% day, scored at 60 and 90 calendar days (W10's annual-review record)
+    score_calendar_days: [60, 90]
 
 risk:
   governor:

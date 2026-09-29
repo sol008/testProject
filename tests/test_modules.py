@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from traderec.config import load_config
-from traderec.modules import (btc_weekly_switch, m1_entry_check, m1_exit_check, m2_orders, m2_signals,
+from traderec.modules import (w10_exit_check, w10_exit_date, w10_kill_check, w10_signal, btc_weekly_switch, m1_entry_check, m1_exit_check, m2_orders, m2_signals,
                               m2_targets, st1b_entry_check, w10_check)
 from traderec.modules.m3_btc import last_sunday_before
 
@@ -486,9 +486,75 @@ def test_modules_run_on_the_real_constitution():
     assert m1_entry_check(spy, vix_on(d, 25.0), d, cfg.module("M1"))["signal"] is True
     assert st1b_entry_check(spy, vix_on(d, 15.0), d, cfg.module("M1"))["signal"] is True
     spx = crash_frame()
-    assert w10_check(spx, vix_on(day(spx, -1), 30.0), day(spx, -1), None, cfg.shadow("W10"))["trigger"] is True
+    assert w10_signal(spx, day(spx, -1), cfg.module("W10"))["signal"] is True      # v3.3: W10 is a module
     adj = {t: log_path(UP, 300) for t in cfg.module("M2")["legs"]}
     date = adj["SPY"].index[-1].strftime("%Y-%m-%d")
     tg = m2_targets(m2_signals(adj, date, 0.04, cfg.module("M2")), 100_000, {"SPY": 0.3, "QQQ": 0.3}, cfg.module("M2"))
     assert len(m2_orders({}, tg["targets"], cfg.module("M2"))["orders"]) == cfg.module("M2")["max_orders_per_email"]
     assert btc_weekly_switch(btc_series(), "2026-09-28", cfg.module("M3")["weeks"])["on"] is True
+
+
+# ------------------------------------------------------------------------------ W10 (design v3.3)
+def w10_cfg() -> dict:
+    return load_config().module("W10")
+
+
+def spx_path(shock_day: int, shock: float = -0.031, n: int = 260, early_shock: int | None = None) -> pd.DataFrame:
+    idx = pd.bdate_range("2025-01-02", periods=n)
+    closes = 5_000.0 * np.exp(np.linspace(0.0, 0.15, n))              # a smooth uptrend
+    rets = np.diff(closes) / closes[:-1]
+    if early_shock is not None:
+        rets[early_shock - 1] = -0.035
+    rets[shock_day - 1] = shock
+    closes = np.concatenate([[closes[0]], closes[0] * np.cumprod(1 + rets)])
+    return pd.DataFrame({"close": closes}, index=idx)
+
+
+def test_w10_signal_fires_on_a_first_uptrend_shock():
+    spx = spx_path(250)
+    d = spx.index[250].strftime("%Y-%m-%d")
+    res = w10_signal(spx, d, w10_cfg())
+    assert res["signal"] is True and res["ret"] == pytest.approx(-0.031) and res["prior_shock"] is None
+
+
+def test_w10_signal_needs_an_unrounded_3pct_drop():
+    spx = spx_path(250, shock=-0.02997)                                 # 5 Aug 2024 was -2.997%: no signal
+    d = spx.index[250].strftime("%Y-%m-%d")
+    assert w10_signal(spx, d, w10_cfg())["signal"] is False
+
+
+def test_w10_signal_is_declustered_and_needs_the_uptrend():
+    spx = spx_path(250, early_shock=240)                                 # another -3% day 10 sessions earlier
+    d = spx.index[250].strftime("%Y-%m-%d")
+    res = w10_signal(spx, d, w10_cfg())
+    assert res["signal"] is False and res["prior_shock"] == spx.index[240].strftime("%Y-%m-%d")
+    down = spx_path(250)
+    down["close"] = down["close"].iloc[::-1].to_numpy()                 # a downtrend: prior close below its SMA
+    assert w10_signal(down, d, w10_cfg())["signal"] is False
+
+
+def test_w10_second_source_can_veto_the_signal():
+    spx = spx_path(250, shock=-0.0301)
+    d = spx.index[250].strftime("%Y-%m-%d")
+    prev = float(spx["close"].iloc[249])
+    assert w10_signal(spx, d, w10_cfg())["signal"] is True
+    assert w10_signal(spx, d, w10_cfg(), close_override=prev * 0.9705)["signal"] is False   # -2.95% elsewhere
+
+
+def test_w10_exit_is_calendar_exact():
+    assert w10_exit_date("2025-10-08", 90) == "2026-01-06"
+    assert w10_exit_date("2026-09-30", 90) == "2026-12-29"
+    assert w10_exit_date("2026-04-06", 90) == "2026-07-02"                # 5 Jul is a Sunday; 3 Jul a holiday
+    trade = {"fill_date": "2025-10-08"}
+    assert w10_exit_check("2026-01-02", trade, w10_cfg())["exit"] is False   # next session 5 Jan
+    last_eve = w10_exit_check("2026-01-05", trade, w10_cfg())
+    assert last_eve["exit"] is True and last_eve["exit_date"] == "2026-01-06" and last_eve["days_held"] == 89
+    assert w10_exit_check("2026-01-09", trade, w10_cfg())["exit"] is True    # missed: sell at the next open
+
+
+def test_w10_kill_switch_is_a_damage_limit():
+    cfg = w10_cfg()
+    assert w10_kill_check([{"return": 0.05, "pnl": 300}], 100_000, cfg) is None
+    assert "lost" in w10_kill_check([{"return": -0.16, "pnl": -960}], 100_000, cfg)
+    many = [{"return": -0.10, "pnl": -600}] * 3
+    assert "cumulative" in w10_kill_check(many, 100_000, cfg)

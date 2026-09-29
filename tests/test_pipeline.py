@@ -20,9 +20,10 @@ from traderec.config import load_config
 from traderec.ledger import Ledger
 from traderec.market_calendar import is_trading_day
 
-START, END = "2023-01-03", "2025-12-31"
+START, END = "2023-01-03", "2026-03-31"
 SESSIONS = pd.DatetimeIndex([d for d in pd.date_range(START, END, freq="B") if is_trading_day(d)])
 DIP_DAYS = [pd.Timestamp("2025-10-14"), pd.Timestamp("2025-10-15")]
+W10_DAY = pd.Timestamp("2025-10-07")        # a -3.1% S&P day inside the uptrend (design v3.3 W10)
 IEF_EX_DATE = pd.Timestamp("2025-11-03")
 LAUNCH = "2025-09-29"
 
@@ -46,15 +47,12 @@ class SynthProvider:
     def __init__(self, missing: set[tuple[str, str]] | None = None) -> None:
         rng = np.random.default_rng(20250929)
         n = len(SESSIONS)
-        spy = pd.Series(_walk(rng, n, 0.0006, 0.004, 400.0), index=SESSIONS)
-        # the M1 dip: two -2.5% days, then a steady recovery
-        i0 = SESSIONS.get_loc(DIP_DAYS[0])
-        path = spy.to_numpy().copy()
-        path[i0] = path[i0 - 1] * 0.975
-        path[i0 + 1] = path[i0] * 0.975
-        for k in range(i0 + 2, n):
-            path[k] = path[k - 1] * (1.006 if k < i0 + 8 else float(np.exp(rng.normal(0.0006, 0.004))))
-        spy = pd.Series(path, index=SESSIONS)
+        r = rng.normal(0.0006, 0.004, n)                                   # daily log returns
+        r[SESSIONS.get_loc(W10_DAY)] = np.log(0.969)                        # the W10 shock
+        i0 = SESSIONS.get_loc(DIP_DAYS[0])                                  # the M1 dip: two -2.5% days,
+        r[i0:i0 + 2] = np.log(0.975)                                        # then a steady recovery
+        r[i0 + 2:i0 + 8] = np.log(1.006)
+        spy = pd.Series(400.0 * np.exp(np.cumsum(r)), index=SESSIONS)
         vix = pd.Series(15.0, index=SESSIONS)
         vix.loc[DIP_DAYS] = 25.0
         self.frames: dict[str, pd.DataFrame] = {"SPY": _bars(spy), "^GSPC": _bars(spy * 10.0),
@@ -70,7 +68,8 @@ class SynthProvider:
         adj.loc[adj.index < IEF_EX_DATE] *= (1.0 - 0.30 / prev_close)   # a $0.30 distribution
         self.frames["IEF"] = _bars(ief, adj)
         days = pd.date_range("2023-01-01", END, freq="D")
-        self.btc = pd.Series(_walk(rng, len(days), 0.002, 0.02, 20_000.0), index=days)
+        # Bitcoin has its own generator, so edits to the other paths never move the switch (on at launch)
+        self.btc = pd.Series(_walk(np.random.default_rng(1234), len(days), 0.002, 0.02, 20_000.0), index=days)
         self.missing = missing or set()
         self.calls: list[str] = []
 
@@ -163,12 +162,14 @@ def test_full_cycle(cfg, world):
     assert statuses <= {"ok", "no_session"}, statuses
     st = _state(state_dir)
 
-    assert not [a for a in st["alerts"] if a["kind"] == "validator"], st["alerts"]
+    assert not [a for a in st["alerts"] if a["kind"] in ("validator", "fill", "cluster")], st["alerts"]
     kinds = _kinds(rec)
-    # M3 switches on at launch, M2 rebalances in October, M1 enters and exits around the dip
+    # M3 switches on at launch, M2 rebalances in October, W10 buys the 7 Oct shock, M1 buys and sells the dip
     assert "SWITCH_ON" in kinds
     assert "REBALANCE" in kinds
-    assert kinds.count("NEW_TRADE") == 1 and kinds.count("EXIT") == 1
+    new = [e.meta.get("trade_id") for e in rec.sent if e.meta.get("kind") == "NEW_TRADE"]
+    exits = [e.meta.get("trade_id") for e in rec.sent if e.meta.get("kind") == "EXIT"]
+    assert sorted(t[-3:] for t in new) == ["-M1", "W10"] and [t[-3:] for t in exits] == ["-M1"]
 
     # at most three orders per email (design §3a.3)
     for email in rec.sent:
@@ -181,8 +182,10 @@ def test_full_cycle(cfg, world):
     assert any(k.startswith("ira|IBIT|M3") for k in lots)
     assert any(k.endswith("|M2") for k in lots)
     assert not any(k.endswith("|M1") for k in lots)
+    assert lots["ira|SPY|W10"]["opened"] == "2025-10-08"                 # still held on 28 Nov
     resolved = st["forecasts"]["resolved"]
     assert {f["event"] for f in resolved} >= {"profit", "time_stop", "leg_up_next_month"}
+    assert all(f["trade_id"] != "T-2025-10-07-W10" for f in resolved)      # W10 resolves at its exit
     assert st["dividends"] and st["dividends"][0]["ticker"] == "IEF"
     ok, why = Ledger(state_dir / "ledger.jsonl").verify()
     assert ok, why
@@ -314,3 +317,41 @@ def test_monthly_review_renders_and_validates(cfg, world):
     assert report["emails_handled"] == len([i for i in october if i["url"] in rec.comments])
     again = pipeline.run_monthly(cfg, provider, state_dir, month="2025-10", services=rec.services())
     assert again.status == "already_done"
+
+
+def test_w10_buys_the_shock_and_sells_at_the_90_day_limit(cfg, world):
+    state_dir, provider, rec = world
+    _run_until(cfg, state_dir, provider, rec, "2026-01-09")
+    st = _state(state_dir)
+    w10 = [e for e in rec.sent if (e.meta.get("trade_id") or "").endswith("-W10")]
+    assert [e.meta.get("kind") for e in w10] == ["NEW_TRADE", "EXIT"]
+    hist = st["modules"]["W10"]["history"]
+    assert len(hist) == 1
+    assert hist[0]["entry_date"] == "2025-10-08" and hist[0]["exit_date"] == "2026-01-06"   # 8 Oct + 90 days
+    assert hist[0]["exit_reason"] == "calendar_stop"
+    assert (pd.Timestamp(hist[0]["exit_date"]) - pd.Timestamp(hist[0]["entry_date"])).days <= 90
+    assert any(f["trade_id"] == "T-2025-10-07-W10" and "outcome" in f for f in st["forecasts"]["resolved"])
+    events = st["shadow"]["W10"]["events"]
+    assert [e["signal_date"] for e in events] == ["2025-10-07"]
+    assert set(events[0]["scores"]) == {"60", "90"} and events[0]["scores"]["60"]["exit_date"] == "2025-12-05"
+    assert not [a for a in st["alerts"] if a["kind"] in ("validator", "cluster")]
+
+
+def test_w10_unconfirmed_by_the_second_source_is_shadow_only(cfg, tmp_path):
+    state_dir = tmp_path / "state"
+    pipeline.run_init(cfg, state_dir, created=LAUNCH)
+    provider, rec = SynthProvider(), Recorder()
+    real_second = provider.second_source_close
+
+    def disagree(ticker, date):                                          # the second source says -2.9%
+        if ticker == "^GSPC" and date == "2025-10-07":
+            prev = float(provider.frames["^GSPC"]["close"].loc[:"2025-10-06"].iloc[-1])
+            return {"close": prev * 0.971, "source": "fred:SP500"}
+        return real_second(ticker, date)
+
+    provider.second_source_close = disagree
+    _run_until(cfg, state_dir, provider, rec, "2025-10-10")
+    st = _state(state_dir)
+    assert st["modules"]["W10"]["open_trade"] is None and not any(k.endswith("|W10") for k in st["broker"]["lots"])
+    assert any(a["kind"] == "data" and "W10" in a["message"] for a in st["alerts"])
+    assert [e["signal_date"] for e in st["shadow"]["W10"]["events"]] == ["2025-10-07"]   # still recorded

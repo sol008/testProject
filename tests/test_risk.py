@@ -121,7 +121,8 @@ def test_open_stress_fails_loudly_without_values():
 # -------------------------------------------------------------------------------------------- admit
 def test_admit_m1_full_size_on_a_clean_book():
     res = admit("M1", "SPY", 6_000.0, book(), STRESS, CFG, 0.0)
-    assert res == {"ok": True, "dollars": 6_000.0, "binding": None, "notes": []}   # 1,956 stress < 2,000
+    assert res == {"ok": True, "dollars": 6_000.0, "binding": None, "notes": [],   # 1,956 stress < 2,000
+                   "cluster_overflow": 0.0}
 
 
 def test_admit_governor_scales():
@@ -139,11 +140,27 @@ def test_admit_per_trade_stress_cap():
 
 def test_admit_us_equity_cluster_cap_applies_to_us_equity_only():
     busy = book(total=6_500, us_equity=6_500)
-    res = admit("M1", "SPY", 6_000.0, busy, STRESS, CFG, 0.0)
-    assert res["dollars"] == pytest.approx(500 / 0.326) and res["binding"] == "us_equity_cluster"
-    assert res["dollars"] * 0.326 + 6_500 == pytest.approx(0.07 * NAV)
+    res = admit("M9", "SPY", 6_000.0, busy, STRESS, CFG, 0.0)          # no module floor: SPY's own 30%
+    assert res["dollars"] == pytest.approx(500 / 0.30) and res["binding"] == "us_equity_cluster"
+    assert res["dollars"] * 0.30 + 6_500 == pytest.approx(0.07 * NAV)
     gold = admit("M9", "GLD", 6_000.0, busy, STRESS, CFG, 0.0)
-    assert gold == {"ok": True, "dollars": 6_000.0, "binding": None, "notes": []}
+    assert gold == {"ok": True, "dollars": 6_000.0, "binding": None, "notes": [], "cluster_overflow": 0.0}
+
+
+def test_admit_m1_has_cluster_priority_and_w10_needs_half_its_size():
+    busy = book(total=6_500, us_equity=6_500)
+    m1 = admit("M1", "SPY", 6_000.0, busy, STRESS, CFG, 0.0)       # design v3.3 §4: M1 is never blocked
+    assert m1["ok"] and m1["dollars"] == 6_000.0 and m1["binding"] is None
+    assert m1["cluster_overflow"] == pytest.approx(6_000 * 0.326 - 500)
+    real = load_config()
+    w10 = admit("W10", "SPY", 6_000.0, busy, STRESS, real, 0.0)     # 500 of room = 26% of the size: skipped
+    assert w10["ok"] is False and w10["binding"] == "us_equity_cluster"
+    assert any("skipped" in n for n in w10["notes"])
+    roomy = book(total=5_000, us_equity=5_000)                       # 2,000 of room: 6,135 > 6,000 fits
+    assert admit("W10", "SPY", 6_000.0, roomy, STRESS, real, 0.0)["ok"] is True
+    half = book(total=5_900, us_equity=5_900)                        # 1,100 of room = 56% of the size: kept
+    kept = admit("W10", "SPY", 6_000.0, half, STRESS, real, 0.0)
+    assert kept["ok"] is True and kept["dollars"] == pytest.approx(1_100 / 0.326)
 
 
 def test_admit_total_open_stress_cap_and_minimum():
@@ -157,8 +174,8 @@ def test_admit_total_open_stress_cap_and_minimum():
 
 
 def test_admit_binding_is_the_tightest_step():
-    res = admit("M1", "SPY", 6_000.0, book(total=6_500, us_equity=6_500), STRESS, CFG, 0.10)
-    assert res["dollars"] == pytest.approx(500 / 0.326)             # governor 3,750, then cluster room
+    res = admit("M9", "SPY", 6_000.0, book(total=6_500, us_equity=6_500), STRESS, CFG, 0.10)
+    assert res["dollars"] == pytest.approx(500 / 0.30)              # governor 3,750, then cluster room
     assert res["binding"] == "us_equity_cluster" and len(res["notes"]) == 2
 
 

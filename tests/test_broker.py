@@ -16,7 +16,13 @@ D0, D1, D2, D3 = "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01"
 
 @pytest.fixture(scope="module")
 def cfg():
-    return load_config()
+    """The real config, with the accounts pinned at a $70k IRA / $30k taxable split so these tests don't depend
+    on the owner's paper split in account.yaml."""
+    real = load_config()
+    account = copy.deepcopy(real.account)
+    account["accounts"]["ira"]["start_cash"] = 70000
+    account["accounts"]["taxable"]["start_cash"] = 30000
+    return dataclasses.replace(real, account=account)
 
 
 @pytest.fixture

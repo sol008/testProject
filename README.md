@@ -11,9 +11,11 @@ A small, rule-based trade recommendation system for one person. Every weekday ev
   | **M1** | VIX-gated uptrend dip-buy in SPY (policy module) | Robinhood IRA |
   | **M2** | Slow multi-asset trend book, long-only (SPY, QQQ, IEF, GLD, USO, FXE, FXY, FXA), rebalanced monthly | Robinhood IRA |
   | **M3** | Weekly Bitcoin trend switch | IBIT in the Robinhood IRA |
-  | Shadow book | Near-miss variants, logged but never emailed | — |
+  | **W10** | Uptrend crash-day buy: SPY after the first −3% S&P day in an uptrend, sold at the last session within 90 calendar days (policy module, 90-day exception) | Robinhood IRA |
+  | Shadow book | Near-miss variants and every uptrend −3% day scored at 60 and 90 days, logged but never emailed | — |
 
-  - That is about 20 trades a year, including the 12 monthly rebalances.
+  - That is about 20 trades a year, including the 12 monthly rebalances. W10 fires about once every two years.
+  - Every trade closes within 60 calendar days. The exceptions are W10 (90 days) and the continuing trend positions (M2, M3), per decision 12. The research on 60 vs 90 vs 120 days is in `research/21`–`24`.
   - Option spreads (M4, W8) come in Phase B.
 - **Sized and capped by fixed rules:**
   - per-trade and total stress caps;
@@ -36,11 +38,13 @@ A small, rule-based trade recommendation system for one person. Every weekday ev
 Read this before anything else (design §0 and §6):
 
 - **The realistic result is T-bills (about 4.2%) plus roughly 0–2 points a year before tax.**
-  - The central estimates are about +0.25 points for the Lean book and about +0.85 points with the trend book, so about 4.45–5.05% a year in total. That is track 21's re-estimate.
+  - The central estimate for the book being built (M1, M2, M3 and W10) is about +0.8 points: **about 5.0% a year**. Without the trend book it is about 4.4% (track 23).
+  - SPY returned about 10% a year historically (10.3% over 1928–2026, 11.3% over 2008–2026), with −52% to −55% drawdowns. The forward-looking range at today's valuations is about 3–6%.
   - Drawdowns should stay around 10–15%.
 - **Short holding periods give up most of the stock market's return.** Over 2008–2026, holding SPY earned 11.3% a year with a −52% worst drawdown. The best short-horizon rule on its own earned about 4.7% with a −14% drawdown.
 - **"1000%" is not reachable with 1–60 day trades without risking ruin.**
-  - At 4.5–5% a year, 11× takes about 49–55 years before tax. Loosening the 60-day cap to 90 days would add only ≈+0.2 points (research tracks 21 and 22).
+  - At about 5% a year, 11× takes about 48–49 years before tax.
+  - Loosening the holding cap is not a lever: 90 days adds ≈+0.04 points now (W10 only), and 120 days adds nothing (research tracks 21–24).
   - The biggest lever for large long-run gains is a long-horizon core held *outside* this system.
 - **Reaching full size takes years of evidence:** about 4–5 years with the trend book, about 9 without. The paper phase exists to measure the true number.
 

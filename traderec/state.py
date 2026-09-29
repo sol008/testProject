@@ -61,10 +61,11 @@ def new_state(*, created: str, mode: str, constitution_version: str, broker_stat
             "M2": {"last_decision_month": m2_first_month, "month": None, "trade_id": None,
                    "targets": {}, "history": []},
             "M3": {"last_week_end": None, "on": None, "open_trade": None, "history": []},
+            "W10": {"open_trade": None, "history": [], "disabled": None},
         },
         "shadow": {
             "ST1B": {"open_trade": None, "trades": []},
-            "W10": {"last_trigger": None, "open_trade": None, "trades": []},
+            "W10": {"events": []},        # every uptrend -3% day, scored at 60 and 90 calendar days
         },
         "forecasts": {"open": [], "resolved": []},
         "runs": {},

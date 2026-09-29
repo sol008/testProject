@@ -12,13 +12,13 @@ accounts:
     broker: Robinhood
     name: Robinhood IRA
     kind: ira                  # no shorts, no futures, no spreads
-    start_cash: 70000
+    start_cash: 80000          # M2 up to 60% of NAV + M1 6% + W10 6% + M3 3% = 75%, plus a buffer (v3.3)
     options_level: 2
   taxable:
     broker: Robinhood
     name: Robinhood individual (margin)
     kind: taxable_margin
-    start_cash: 30000
+    start_cash: 20000          # Phase B option spreads: premium capped at 10% of NAV
     options_level: 3           # spreads + index options (XSP) - Phase B
   coinbase:
     broker: Coinbase

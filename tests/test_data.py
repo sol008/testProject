@@ -685,9 +685,9 @@ def second_sources(nasdaq: dict[str, Any], robinhood: Any = 404,
 
 
 def test_second_source_skips_index_tickers() -> None:
-    provider, session, _ = live()
-    assert provider.second_source_close("^GSPC", "2026-09-25") is None
+    provider, session, _ = live()                   # ^GSPC has its own sources (see the S&P 500 tests below)
     assert provider.second_source_close("^VIX", "2026-09-25") is None
+    assert provider.second_source_close("^IRX", "2026-09-25") is None
     assert session.calls == []
 
 
@@ -976,3 +976,46 @@ def test_live_verify_close_spy(live_provider: LiveProvider) -> None:
     if live_provider.sources["daily_bars:SPY"] == "yfinance+robinhood-close":
         assert res["source"] in ("nasdaq", "yahoo-quote")
     assert live_provider.second_source_close("^GSPC", day) is None
+
+
+# --- the S&P 500 second source (design v3.3 W10: two-source index closes) -----------------------------------
+
+FRED_SP500 = "observation_date,SP500\n2026-09-24,7704.13\n2026-09-25,7743.41\n2026-09-28,7683.69\n"
+CBOE_SPX = {"data": {"symbol": "^SPX", "close": 7683.6899, "current_price": 7683.6899,
+                     "last_trade_time": "2026-09-28T16:14:59"}}
+
+
+def index_sources(fred: Any, cboe: Any) -> Callable[[str, dict], FakeResponse]:
+    def handler(url: str, params: dict) -> FakeResponse:
+        answer = fred if url.startswith("https://fred.stlouisfed.org/") else \
+            cboe if url.startswith("https://cdn.cboe.com/api/global/delayed_quotes/") else None
+        if answer is None:
+            raise AssertionError(f"unexpected GET {url}")
+        if isinstance(answer, Exception):
+            raise answer
+        if isinstance(answer, int):
+            return FakeResponse(status_code=answer, text="error")
+        return FakeResponse(text=answer) if isinstance(answer, str) else FakeResponse(payload=answer)
+    return handler
+
+
+def test_parse_cboe_quote_needs_a_close_stamp_on_the_date() -> None:
+    from traderec.data.providers import parse_cboe_quote
+    assert parse_cboe_quote(CBOE_SPX, "2026-09-28") == pytest.approx(7683.6899)
+    assert parse_cboe_quote(CBOE_SPX, "2026-09-25") is None                          # another day
+    intraday = {"data": {**CBOE_SPX["data"], "last_trade_time": "2026-09-28T15:59:00"}}
+    assert parse_cboe_quote(intraday, "2026-09-28") is None                          # before the close
+    assert parse_cboe_quote({"oops": 1}, "2026-09-28") is None
+
+
+def test_sp500_second_source_is_fred_then_cboe() -> None:
+    provider, session, _ = live(index_sources(FRED_SP500, CBOE_SPX))
+    assert provider.second_source_close("^GSPC", "2026-09-28") == {"close": 7683.69, "source": "fred:SP500"}
+    assert len(session.calls) == 1
+    provider, session, _ = live(index_sources(404, CBOE_SPX))
+    got = provider.second_source_close("^GSPC", "2026-09-28")
+    assert got["source"] == "cboe-quote" and got["close"] == pytest.approx(7683.6899)
+    provider, _, _ = live(index_sources(FRED_SP500.replace("2026-09-28,7683.69\n", ""), 404))
+    assert provider.second_source_close("^GSPC", "2026-09-28") is None               # fail closed
+    provider, session, _ = live()
+    assert provider.second_source_close("^VIX", "2026-09-28") is None and session.calls == []

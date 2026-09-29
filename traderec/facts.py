@@ -129,8 +129,10 @@ def monthly_report(run: "Run", month: str) -> dict[str, Any]:
 
     # trades per module
     rows, n_opened, n_closed = [], 0, 0
-    for mod in ("M1", "M2", "M3"):
-        ms = st["modules"][mod]
+    for mod in ("M1", "M2", "M3", "W10"):
+        ms = st["modules"].get(mod)
+        if ms is None:
+            continue
         hist = ms.get("history", [])
         if mod == "M2":
             opened = sum(1 for h in hist if in_month(h.get("date")))
@@ -152,6 +154,13 @@ def monthly_report(run: "Run", month: str) -> dict[str, Any]:
 
     shadow = []
     for name, book in st.get("shadow", {}).items():
+        if "events" in book:          # W10's record: every uptrend -3% day, scored at 60 and 90 days
+            evs = book["events"]
+            scored = [e for e in evs if "90" in (e.get("scores") or {}) and in_month(e["scores"]["90"]["exit_date"])]
+            rets = [float(e["scores"]["90"]["return"]) for e in scored]
+            shadow.append({"name": f"{name} (90-day score)", "signals": sum(1 for e in evs if in_month(e["signal_date"])),
+                           "closed": len(scored), "mean_ret": sum(rets) / len(rets) if rets else None})
+            continue
         trades = book.get("trades", [])
         ot = book.get("open_trade")
         signals = sum(1 for t in trades if in_month(t.get("signal_date"))) + (1 if ot and in_month(ot.get("signal_date")) else 0)
@@ -286,6 +295,39 @@ def m1_exit(run: "Run", ot: dict, ex: dict, cfg_m1: dict) -> dict[str, Any]:
         "exit_sma": int(cfg_m1["exit_sma"]), "max_sessions": int(cfg_m1["max_sessions"]),
         "entry_date": ot.get("fill_date"), "entry_price": ot.get("entry_price"),
         "base_rates": {**dict(cfg_m1.get("base_rates") or {}), "since": BASE_RATES_SINCE},
+    }
+
+
+def w10_entry(run: "Run", sig: dict, adm: dict, cfg_w: dict) -> dict[str, Any]:
+    """Facts for a W10 NEW_TRADE email (design v3.3 §3 W10)."""
+    from .modules.w10_crashbuy import w10_exit_date
+    nav = run.current_nav()
+    dollars = float(adm["dollars"])
+    unit = risk.unit_stress("W10", cfg_w["ticker"], {cfg_w["ticker"]: adm.get("stress") or 0.0}, run.cfg)
+    horizon = float(cfg_w["horizon_stress_loss"])
+    common = _common(run, "W10", cfg_w, cfg_w["account"])
+    return {
+        **common, "ticker": cfg_w["ticker"], "dollars": dollars, "close": run.last_close(cfg_w["ticker"]),
+        **_stress(dollars, unit, nav),
+        "horizon_stress_usd": dollars * horizon, "horizon_stress_pct": 100.0 * dollars * horizon / nav if nav else None,
+        "spx_close": sig.get("close"), "spx_prev_close": sig.get("prev_close"), "spx_ret": sig.get("ret"),
+        "sma200_prev": sig.get("sma_prev"), "sma_trend": int(cfg_w["sma_trend"]), "drop_pct": float(cfg_w["drop_pct"]),
+        "decluster_sessions": int(cfg_w["decluster_sessions"]), "max_calendar_days": int(cfg_w["max_calendar_days"]),
+        "exit_date": w10_exit_date(common["execute_date"], int(cfg_w["max_calendar_days"])),
+        "base_rates": dict(cfg_w.get("base_rates") or {}), "admit_binding": adm.get("binding"),
+    }
+
+
+def w10_exit(run: "Run", ot: dict, ex: dict, cfg_w: dict) -> dict[str, Any]:
+    """Facts for a W10 EXIT email: the calendar-exact time stop."""
+    return {
+        **_common(run, "W10", cfg_w, cfg_w["account"]), "ticker": cfg_w["ticker"],
+        **_sell_facts(run, cfg_w["account"], cfg_w["ticker"], "W10", ot.get("entry_price")),
+        "reason": ex.get("reason") or "calendar_stop", "exit_date": ex.get("exit_date"),
+        "sessions_held": ex.get("sessions_held"), "days_held": ex.get("days_held"),
+        "max_calendar_days": int(cfg_w["max_calendar_days"]),
+        "entry_date": ot.get("fill_date"), "entry_price": ot.get("entry_price"),
+        "base_rates": dict(cfg_w.get("base_rates") or {}),
     }
 
 

@@ -41,7 +41,8 @@ from .market_calendar import is_trading_day, iso, latest_session, latest_sunday,
 from .modules.m1_dipbuy import m1_entry_check, m1_exit_check
 from .modules.m2_trend import m2_orders, m2_signals, m2_targets
 from .modules.m3_btc import btc_weekly_switch
-from .modules.shadow import st1b_entry_check, w10_check
+from .modules.shadow import st1b_entry_check
+from .modules.w10_crashbuy import w10_exit_check, w10_exit_date, w10_kill_check, w10_signal
 from .state import RETRYABLE, Paths, copy_tree, jsonable, load_state, new_state, save_state
 from .types import Fill, OrderIntent, Recommendation, RenderedEmail
 
@@ -337,7 +338,7 @@ class Run:
 
     def open_position_count(self) -> int:
         mods = self.state["modules"]
-        n = sum(1 for m in ("M1", "M3") if mods[m].get("open_trade"))
+        n = sum(1 for m in ("M1", "M3", "W10") if (mods.get(m) or {}).get("open_trade"))
         if self.broker.positions(module="M2") or any(o.module == "M2" for o in self.broker.pending()):
             n += 1
         return n
@@ -528,6 +529,7 @@ def _daily(run: Run) -> str:
 
     checks = _snapshot(run)
     _m1(run, checks)
+    _w10(run, checks)
     _m2(run)
     _m3(run, asof_utc=iso(pd.Timestamp(d) + timedelta(days=1)))
     _shadow(run, checks.get("vix_series"))
@@ -612,15 +614,19 @@ def _on_fill(run: Run, fill: Fill, intent: OrderIntent | None) -> None:
         run.alert("fill", f"{fill.intent_id} partly filled: ${fill.dollars:,.2f} of "
                           f"${meta.get('requested_dollars', 0):,.2f} (cash)")
     mod = run.state["modules"].get(fill.module)
-    if fill.module in ("M1", "M3") and mod is not None:
+    if fill.module in ("M1", "M3", "W10") and mod is not None:
         ot = mod.get("open_trade")
         if ot is None or ot.get("trade_id") != fill.trade_id:
             return
         if fill.side == "buy":
             ot.update(status="open", fill_date=fill.fill_date, entry_price=fill.price,
                       qty=fill.qty, dollars=fill.dollars)
+            if fill.module == "W10":
+                ot["exit_date"] = w10_exit_date(fill.fill_date, run.cfg.module("W10")["max_calendar_days"])
         else:
             _close_trade(run, fill.module, ot, fill, meta)
+            if fill.module == "W10":
+                _w10_kill_switch(run)
 
 
 def _close_trade(run: Run, module: str, ot: dict, fill: Fill, meta: dict) -> None:
@@ -796,6 +802,10 @@ def _m1(run: Run, checks: dict) -> None:
     nav = run.current_nav()
     adm = run.admit("M1", cfg_m1["ticker"], float(cfg_m1["notional_pct_nav"]) * nav)
     run.log("signal", {"module": "M1", "check": "admit", **adm})
+    if adm.get("ok") and float(adm.get("cluster_overflow") or 0.0) > 0.0:
+        run.alert("cluster", f"M1 admitted with priority; the US-equity reserve is exceeded by "
+                             f"${float(adm['cluster_overflow']):,.0f} of stress. Design §4 says trim the open W10 "
+                             "at the same open (not automated in Phase A)")
     if not adm.get("ok"):
         run.note(f"M1 signal not admitted: {adm.get('binding')} {adm.get('notes')}")
         return
@@ -809,6 +819,83 @@ def _m1(run: Run, checks: dict) -> None:
         st["open_trade"] = {"trade_id": trade_id, "status": "pending_entry", "signal_date": run.date,
                             "dollars": intent.dollars, "intent_id": intent.intent_id}
         run.count_trade()
+
+
+# --- W10: uptrend crash-day buy (policy module, 90-day exception; design v3.3 §3) ------------------------
+
+def _w10_state(run: Run) -> dict:
+    return run.state["modules"].setdefault("W10", {"open_trade": None, "history": [], "disabled": None})
+
+
+def _w10(run: Run, checks: dict) -> None:
+    cfg_w = run.cfg.constitution["modules"].get("W10") or {}
+    if not cfg_w.get("enabled", False):
+        return
+    st = _w10_state(run)
+    spy = run.bars(cfg_w["ticker"])
+    ot = st.get("open_trade")
+    if ot and ot.get("status") == "open":
+        ex = w10_exit_check(run.date, ot, cfg_w, spy.index)
+        if ex["exit"]:
+            run.log("signal", {"module": "W10", "check": "exit", "trade_id": ot["trade_id"], **ex})
+            intent = OrderIntent(intent_id=run.next_intent_id("W10"), trade_id=ot["trade_id"], module="W10",
+                                 account=cfg_w["account"], ticker=cfg_w["ticker"], side="sell",
+                                 created_date=run.date, reason="time_stop", close_all=True)
+            rec = Recommendation("EXIT", "W10", ot["trade_id"], run.date, [intent],
+                                 facts_mod.w10_exit(run, ot, ex, cfg_w))
+            if run.emit(rec):
+                ot.update(status="pending_exit", exit_reason="calendar_stop", exit_signal_date=run.date)
+        return
+    if ot:
+        return      # the entry or exit order is waiting for tomorrow's open
+    try:
+        spx = run.bars(cfg_w["index"])
+    except Exception as exc:  # noqa: BLE001 - no index data: no signal tonight
+        run.note(f"W10 not evaluated: {cfg_w['index']} unavailable ({type(exc).__name__})")
+        return
+    sig = w10_signal(spx, run.date, cfg_w)
+    if sig.get("ret") is not None and sig["ret"] <= float(cfg_w["drop_pct"]) / 2:
+        run.log("signal", {"module": "W10", "check": "entry", **sig})     # log the big down days only
+    if not sig.get("signal"):
+        return
+    # Two-source rule: the index close must match a second source, and the rule must hold on both.
+    chk = verify_close(run.provider, spx, cfg_w["index"], run.date, float(run.cfg.data["two_source_tolerance"]))
+    second = w10_signal(spx, run.date, cfg_w, close_override=chk["secondary"]) if chk.get("secondary") else {}
+    if not (chk.get("ok") and second.get("signal")):
+        run.alert("data", f"W10 signal not confirmed by a second source ({chk.get('reason')}); logged in the "
+                          "shadow ledger only")
+        run.log("shadow", {"book": "W10", "event": "unconfirmed_signal", "check": chk, **sig})
+        return
+    if st.get("disabled"):
+        run.note(f"W10 signal logged only: the module is in the shadow ledger ({st['disabled']['reason']})")
+        return
+    if not run.budget_ok():
+        return
+    adm = run.admit("W10", cfg_w["ticker"], float(cfg_w["notional_pct_nav"]) * run.current_nav())
+    run.log("signal", {"module": "W10", "check": "admit", **adm})
+    if not adm.get("ok"):
+        run.note(f"W10 signal not admitted: {adm.get('binding')} {adm.get('notes')}")
+        return
+    trade_id = f"T-{run.date}-W10"
+    intent = OrderIntent(intent_id=run.next_intent_id("W10"), trade_id=trade_id, module="W10",
+                         account=cfg_w["account"], ticker=cfg_w["ticker"], side="buy", created_date=run.date,
+                         reason="entry", dollars=round(float(adm["dollars"]), 2))
+    rec = Recommendation("NEW_TRADE", "W10", trade_id, run.date, [intent],
+                         facts_mod.w10_entry(run, sig, adm, cfg_w))
+    if run.emit(rec):
+        st["open_trade"] = {"trade_id": trade_id, "status": "pending_entry", "signal_date": run.date,
+                            "dollars": intent.dollars, "intent_id": intent.intent_id}
+        run.count_trade()
+
+
+def _w10_kill_switch(run: Run) -> None:
+    st = _w10_state(run)
+    if st.get("disabled"):
+        return
+    reason = w10_kill_check(st.get("history", []), run.current_nav(), run.cfg.module("W10"))
+    if reason:
+        st["disabled"] = {"date": run.date, "reason": reason}
+        run.alert("kill_switch", f"W10 goes back to the shadow ledger: {reason} (design v3.3 §3 W10)")
 
 
 # --- M2 ------------------------------------------------------------------------------------------------
@@ -1024,35 +1111,44 @@ def _shadow_fills(run: Run, book: dict, spy: pd.DataFrame, slip: float, name: st
 
 
 def _shadow_w10(run: Run, spy: pd.DataFrame, slip: float, vix: pd.Series | None) -> None:
-    cfg_w = run.cfg.shadow("W10")
-    book = run.state["shadow"]["W10"]
-    _shadow_fills(run, book, spy, slip, "W10")
+    """Every uptrend -3% day, entered at the next open and scored at 60 and 90 calendar days (no emails).
+
+    This is W10's record for the annual review (design v3.3 §3 W10): it includes signals that arrive while the
+    W10 module is open, is disabled or is unconfirmed by a second source.
+    """
+    cfg_w = run.cfg.constitution["modules"].get("W10") or {}
+    horizons = [int(h) for h in run.cfg.shadow("W10").get("score_calendar_days", [60, 90])]
+    book = run.state["shadow"].setdefault("W10", {})
+    events = book.setdefault("events", [])
+    for ev in events:
+        if ev.get("entry_date") is None:
+            after = spy.index[spy.index > pd.Timestamp(ev["signal_date"])]
+            if not len(after):
+                continue
+            day = after[0]
+            ev.update(entry_date=iso(day), entry_price=float(spy.at[day, "open"]) * (1 + slip))
+        for h in horizons:
+            key = str(h)
+            if key in ev.setdefault("scores", {}):
+                continue
+            exit_day = pd.Timestamp(w10_exit_date(ev["entry_date"], h))
+            if exit_day in spy.index and exit_day <= pd.Timestamp(run.date):
+                px = float(spy.at[exit_day, "open"]) * (1 - slip)
+                ev["scores"][key] = {"exit_date": iso(exit_day), "exit_price": px,
+                                     "return": px / float(ev["entry_price"]) - 1.0}
+                run.log("shadow", {"book": "W10", "event": f"scored_{h}d", "signal_date": ev["signal_date"],
+                                   **ev["scores"][key]})
+    if not cfg_w:
+        return
     try:
-        spx = run.bars("^GSPC")
+        spx = run.bars(cfg_w["index"])
     except Exception as exc:  # noqa: BLE001
         run.note(f"W10 shadow skipped: {type(exc).__name__}")
         return
-    if vix is None:
-        vix = pd.Series(dtype=float)
-    ot = book.get("open_trade")
-    if ot and ot["status"] == "open":
-        held = int(((spy.index >= pd.Timestamp(ot["fill_date"])) & (spy.index <= pd.Timestamp(run.date))).sum())
-        prior_high = float(spx["close"].loc[: pd.Timestamp(ot["signal_date"])].max())
-        new_high = float(spx["close"].iloc[-1]) > prior_high
-        # calendar-exact: the next open must be the last session within max_calendar_days of the entry
-        limit = pd.Timestamp(ot["fill_date"]) + pd.Timedelta(days=int(cfg_w.get("max_calendar_days", 10**6)))
-        calendar_stop = pd.Timestamp(next_trading_day(next_trading_day(run.date))) > limit
-        if held >= int(cfg_w["hold_sessions"]) or new_high or calendar_stop:
-            reason = "new_high" if new_high else ("time_stop" if held >= int(cfg_w["hold_sessions"])
-                                                  else "calendar_stop")
-            ot.update(status="pending_exit", exit_reason=reason, exit_signal_date=run.date)
-    chk = w10_check(spx, vix, run.date, book.get("last_trigger"), cfg_w)
-    if chk.get("trigger"):
-        book["last_trigger"] = run.date
-        run.log("shadow", {"book": "W10", "event": "signal", **chk})
-        if book.get("open_trade") is None:
-            book["open_trade"] = {"trade_id": f"S-{run.date}-W10", "status": "pending_entry",
-                                  "signal_date": run.date}
+    sig = w10_signal(spx, run.date, cfg_w)
+    if sig.get("signal") and not any(ev["signal_date"] == run.date for ev in events):
+        events.append({"signal_date": run.date, "ret": sig.get("ret"), "entry_date": None, "scores": {}})
+        run.log("shadow", {"book": "W10", "event": "signal", **sig})
 
 
 # --- dated forecasts (M2 legs) -------------------------------------------------------------------------

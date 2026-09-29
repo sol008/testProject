@@ -82,6 +82,11 @@ COINBASE_MAX_PAGES = 8
 NASDAQ_HISTORICAL_URL = "https://api.nasdaq.com/api/quote/{ticker}/historical"
 ROBINHOOD_QUOTES_URL = "https://api.robinhood.com/quotes/"
 YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+CBOE_QUOTE_URL = "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_{name}.json"
+# Index tickers with a second source for their official close (design v3.3 W10: two-source S&P 500 closes):
+# FRED's copy of S&P Dow Jones Indices' series first (published the same evening, checked 2026-09-28 22:15 ET),
+# then CBOE's delayed index quote once its last trade is stamped at or after 16:00 ET that day.
+INDEX_SECOND_SOURCES = {"^GSPC": {"fred": "SP500", "cboe": "SPX"}}
 
 CLOSE_ET = "16:00"              # end of the regular NYSE session (America/New_York)
 FILL_AFTER_ET = "16:15"         # earliest time a missing newest close may be filled from Robinhood
@@ -326,6 +331,21 @@ def _at_or_after_et(day: str, now: Any, hhmm: str = CLOSE_ET) -> bool:
     return bool(now_ts >= pd.Timestamp(f"{day} {hhmm}").tz_localize(NY_TZ))
 
 
+def parse_cboe_quote(payload: Any, date: str) -> float | None:
+    """The close on `date` from CBOE's delayed index quote JSON (``data.close``), or None.
+
+    Only a quote whose ``last_trade_time`` (ET, no zone) falls on `date` at or after 16:00 counts as the close.
+    """
+    try:
+        data = payload["data"]
+        stamp = pd.Timestamp(str(data["last_trade_time"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if stamp.strftime("%Y-%m-%d") != iso_date(date) or stamp.strftime("%H:%M") < CLOSE_ET:
+        return None
+    return _to_price(data.get("close"))
+
+
 def parse_robinhood_quote(payload: Any, date: str, now: Any = None) -> float | None:
     """The close on `date` from Robinhood's public ``/quotes/?symbols=T`` JSON, or None.
 
@@ -492,16 +512,20 @@ class LiveProvider(DataProvider):
         When daily_bars took that close from Robinhood, Robinhood cannot also be the second source. The
         fallback is then Yahoo's quote, source "yahoo-quote" (see `_yahoo_quote_close`).
 
-        Returns {"close", "source"}. Returns None for index tickers ("^...") and on any problem. Never raises.
+        Index tickers: those in INDEX_SECOND_SOURCES (the S&P 500) use FRED, then CBOE's delayed quote, with
+        source "fred:SP500" or "cboe-quote"; other index tickers ("^...") return None.
+
+        Returns {"close", "source"}. Returns None on any problem. Never raises.
         """
         try:
             symbol = str(ticker).strip().upper()
-            if not symbol or symbol.startswith("^"):
+            if not symbol or (symbol.startswith("^") and symbol not in INDEX_SECOND_SOURCES):
                 return None
             day = iso_date(date)
             key = ("second_source_close", symbol, day)
             if key not in self._cache:
-                found = self._fetch_second_source(symbol, day)
+                fetch = self._index_second_source if symbol.startswith("^") else self._fetch_second_source
+                found = fetch(symbol, day)
                 if found is None:
                     return None
                 self._cache[key] = found
@@ -554,6 +578,23 @@ class LiveProvider(DataProvider):
             raise DataError("no T-bill rate: FRED and ^IRX failed and data.fallback_tbill_rate is missing") from exc
         self.sources["tbill_rate"] = "config:fallback_tbill_rate"
         return rate
+
+    def _index_second_source(self, symbol: str, day: str) -> dict | None:
+        """FRED's copy of the index series, then CBOE's delayed quote (INDEX_SECOND_SOURCES)."""
+        spec = INDEX_SECOND_SOURCES[symbol]
+        try:
+            series = parse_fred_csv(self._get(FRED_CSV_URL, params={"id": spec["fred"]}).text, spec["fred"])
+            ts = pd.Timestamp(day)
+            if ts in series.index:
+                return {"close": float(series.loc[ts]), "source": f"fred:{spec['fred']}"}
+        except Exception as exc:  # noqa: BLE001 - fall through to CBOE
+            log.warning("FRED %s unavailable for %s (%s)", spec["fred"], day, exc)
+        try:
+            close = parse_cboe_quote(self._get_json(CBOE_QUOTE_URL.format(name=spec["cboe"])), day)
+        except Exception as exc:  # noqa: BLE001 - no second source
+            log.warning("CBOE quote unavailable for %s (%s)", spec["cboe"], exc)
+            return None
+        return {"close": close, "source": "cboe-quote"} if close is not None else None
 
     def _fetch_second_source(self, symbol: str, day: str) -> dict | None:
         """Nasdaq, then Robinhood. Nasdaq, then Yahoo's quote, when the primary close came from Robinhood."""
