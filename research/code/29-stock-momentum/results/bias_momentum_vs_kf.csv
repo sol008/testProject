@@ -1,0 +1,9 @@
+portfolio,months,cagr,one_way_turnover_month
+"PIT S&P 500 top quintile 12-1, EW monthly",320,0.1123,0.2477
+"PIT S&P 500 top decile 12-1, EW monthly",320,0.1120,0.2936
+"survivor S&P 500 top quintile 12-1, EW monthly",320,0.1886,0.2363
+"survivor S&P 500 top decile 12-1, EW monthly",320,0.2208,0.2746
+"KF BigWin EW (CRSP, bias-free)",320,0.0957,
+"KF BigWin VW (CRSP, bias-free)",320,0.0899,
+"KF TopDec VW (CRSP, bias-free)",320,0.1061,
+"KF Market (CRSP, bias-free)",320,0.0854,
