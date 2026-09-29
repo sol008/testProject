@@ -1,0 +1,3 @@
+kind,count,first,last,example
+circuit,1,2019-06-27,2019-06-27,daily loss -2.05% (circuit breaker applies to discretionary entries only; none exist in Phase A)
+data,1,2025-01-09,2025-01-09,no SPY bar for 2025-01-09 yet

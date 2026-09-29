@@ -1,0 +1,4 @@
+signal,status,pipe_entry,res_entry,pipe_exit,res_exit,same_entry,same_exit,pipe_ret,res_ret,ret_diff,res_ret_open_exit,ret_diff_vs_open_exit
+2020-02-24,matched,2020-02-25,2020-02-25,2020-05-22,2020-05-22,True,True,-0.08651,-0.0828,-0.00371,-0.0855,-0.00101
+2020-06-11,matched,2020-06-12,2020-06-12,2020-09-10,2020-09-10,True,True,0.11315,0.08755,0.0256,0.11338,-0.00022
+2020-10-28,matched,2020-10-29,2020-10-29,2021-01-27,2021-01-27,True,True,0.16767,0.14972,0.01795,0.16756,0.00011
