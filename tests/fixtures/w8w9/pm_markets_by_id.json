@@ -1,0 +1,55 @@
+{
+ "false": [
+  {
+   "id": "3128886",
+   "question": "US announces end of Iranian blockade by December 31, 2026?",
+   "outcomes": "[\"Yes\", \"No\"]",
+   "outcomePrices": "[\"0.5515\", \"0.4485\"]",
+   "bestBid": 0.548,
+   "bestAsk": 0.555,
+   "lastTradePrice": 0.555,
+   "oneDayPriceChange": -0.026,
+   "endDate": "2027-01-01T04:59:00Z",
+   "closed": false,
+   "active": true,
+   "acceptingOrders": true,
+   "archived": false,
+   "groupItemTitle": "December 31"
+  },
+  {
+   "id": "4641065",
+   "question": "US x Iran ceasefire continues through October 31?",
+   "outcomes": "[\"Yes\", \"No\"]",
+   "outcomePrices": "[\"0.56\", \"0.44\"]",
+   "bestBid": 0.55,
+   "bestAsk": 0.57,
+   "lastTradePrice": 0.57,
+   "oneDayPriceChange": 0.03,
+   "endDate": "2026-10-31T23:59:00Z",
+   "closed": false,
+   "active": true,
+   "acceptingOrders": true,
+   "archived": false,
+   "groupItemTitle": "October 31"
+  }
+ ],
+ "true": [
+  {
+   "id": "2910435",
+   "question": "US announces end of Iranian blockade by July 24, 2026?",
+   "outcomes": "[\"Yes\", \"No\"]",
+   "outcomePrices": "[\"0\", \"1\"]",
+   "bestAsk": 0.001,
+   "lastTradePrice": 0.001,
+   "oneDayPriceChange": -0.019,
+   "endDate": "2026-07-25T03:59:00Z",
+   "closed": true,
+   "active": true,
+   "acceptingOrders": false,
+   "archived": false,
+   "umaResolutionStatus": "resolved",
+   "closedTime": "2026-07-25 06:06:03+00",
+   "groupItemTitle": "July 24"
+  }
+ ]
+}

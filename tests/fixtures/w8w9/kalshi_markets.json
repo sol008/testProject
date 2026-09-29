@@ -1,0 +1,478 @@
+{
+ "KXFEDDECISION": {
+  "markets": [
+   {
+    "ticker": "KXFEDDECISION-28JAN-H26",
+    "event_ticker": "KXFEDDECISION-28JAN",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their January 2028 meeting?",
+    "status": "active",
+    "close_time": "2028-01-26T18:59:00Z",
+    "yes_bid_dollars": "0.0400",
+    "yes_ask_dollars": "0.2200",
+    "last_price_dollars": "0.1300",
+    "previous_price_dollars": "0.1300",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-28JAN-H25",
+    "event_ticker": "KXFEDDECISION-28JAN",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their January 2028 meeting?",
+    "status": "active",
+    "close_time": "2028-01-26T18:59:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.3000",
+    "last_price_dollars": "0.1900",
+    "previous_price_dollars": "0.1900",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27DEC-H26",
+    "event_ticker": "KXFEDDECISION-27DEC",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their December 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-12-08T18:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0800",
+    "last_price_dollars": "0.0100",
+    "previous_price_dollars": "0.1300",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27DEC-H25",
+    "event_ticker": "KXFEDDECISION-27DEC",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their December 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-12-08T18:59:00Z",
+    "yes_bid_dollars": "0.0300",
+    "yes_ask_dollars": "0.1400",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.2600",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27OCT-H26",
+    "event_ticker": "KXFEDDECISION-27OCT",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their October 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-10-27T17:59:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.2100",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.1900",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27OCT-H25",
+    "event_ticker": "KXFEDDECISION-27OCT",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their October 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-10-27T17:59:00Z",
+    "yes_bid_dollars": "0.0300",
+    "yes_ask_dollars": "0.1000",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.2500",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27SEP-H26",
+    "event_ticker": "KXFEDDECISION-27SEP",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their September 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-09-15T17:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.1000",
+    "last_price_dollars": "0.0100",
+    "previous_price_dollars": "0.1300",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27SEP-H25",
+    "event_ticker": "KXFEDDECISION-27SEP",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their September 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-09-15T17:59:00Z",
+    "yes_bid_dollars": "0.0600",
+    "yes_ask_dollars": "0.2400",
+    "last_price_dollars": "0.1100",
+    "previous_price_dollars": "0.2000",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JUL-H26",
+    "event_ticker": "KXFEDDECISION-27JUL",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their July 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-07-28T17:59:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.0600",
+    "last_price_dollars": "0.0100",
+    "previous_price_dollars": "0.0200",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JUL-H25",
+    "event_ticker": "KXFEDDECISION-27JUL",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their July 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-07-28T17:59:00Z",
+    "yes_bid_dollars": "0.0700",
+    "yes_ask_dollars": "0.2000",
+    "last_price_dollars": "0.1200",
+    "previous_price_dollars": "0.0600",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JUN-H26",
+    "event_ticker": "KXFEDDECISION-27JUN",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their June 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-06-09T17:59:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.0900",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.1400",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JUN-H25",
+    "event_ticker": "KXFEDDECISION-27JUN",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their June 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-06-09T17:59:00Z",
+    "yes_bid_dollars": "0.3000",
+    "yes_ask_dollars": "0.4200",
+    "last_price_dollars": "0.3500",
+    "previous_price_dollars": "0.2000",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27APR-H26",
+    "event_ticker": "KXFEDDECISION-27APR",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their April 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-04-28T17:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0700",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.0300",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27APR-H25",
+    "event_ticker": "KXFEDDECISION-27APR",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their April 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-04-28T17:59:00Z",
+    "yes_bid_dollars": "0.0500",
+    "yes_ask_dollars": "0.3800",
+    "last_price_dollars": "0.2000",
+    "previous_price_dollars": "0.2000",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27MAR-H26",
+    "event_ticker": "KXFEDDECISION-27MAR",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their March 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-03-17T17:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0100",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27MAR-H25",
+    "event_ticker": "KXFEDDECISION-27MAR",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their March 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-03-17T17:59:00Z",
+    "yes_bid_dollars": "0.4600",
+    "yes_ask_dollars": "0.6000",
+    "last_price_dollars": "0.4900",
+    "previous_price_dollars": "0.6500",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JAN-H26",
+    "event_ticker": "KXFEDDECISION-27JAN",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their January 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-01-27T18:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0200",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-27JAN-H25",
+    "event_ticker": "KXFEDDECISION-27JAN",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their January 2027 meeting?",
+    "status": "active",
+    "close_time": "2027-01-27T18:59:00Z",
+    "yes_bid_dollars": "0.4600",
+    "yes_ask_dollars": "0.5000",
+    "last_price_dollars": "0.5100",
+    "previous_price_dollars": "0.3600",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-26DEC-H26",
+    "event_ticker": "KXFEDDECISION-26DEC",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their December 2026 meeting?",
+    "status": "active",
+    "close_time": "2026-12-09T18:59:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.0400",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.0200",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-26DEC-H25",
+    "event_ticker": "KXFEDDECISION-26DEC",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their December 2026 meeting?",
+    "status": "active",
+    "close_time": "2026-12-09T18:59:00Z",
+    "yes_bid_dollars": "0.7400",
+    "yes_ask_dollars": "0.7700",
+    "last_price_dollars": "0.7400",
+    "previous_price_dollars": "0.6900",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-26OCT-H26",
+    "event_ticker": "KXFEDDECISION-26OCT",
+    "title": "Will the Federal Reserve Hike rates by >25bps at their October 2026 meeting?",
+    "status": "active",
+    "close_time": "2026-10-28T17:59:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0200",
+    "result": ""
+   },
+   {
+    "ticker": "KXFEDDECISION-26OCT-H25",
+    "event_ticker": "KXFEDDECISION-26OCT",
+    "title": "Will the Federal Reserve Hike rates by 25bps at their October 2026 meeting?",
+    "status": "active",
+    "close_time": "2026-10-28T17:59:00Z",
+    "yes_bid_dollars": "0.6900",
+    "yes_ask_dollars": "0.7000",
+    "last_price_dollars": "0.7000",
+    "previous_price_dollars": "0.6700",
+    "result": ""
+   }
+  ],
+  "cursor": ""
+ },
+ "KXCPI": {
+  "markets": [
+   {
+    "ticker": "KXCPI-26OCT-T1.0",
+    "event_ticker": "KXCPI-26OCT",
+    "title": "Will CPI rise more than 1.0% in October 2026?",
+    "status": "active",
+    "close_time": "2026-11-10T13:25:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0100",
+    "previous_price_dollars": "0.0100",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26OCT-T0.9",
+    "event_ticker": "KXCPI-26OCT",
+    "title": "Will CPI rise more than 0.9% in October 2026?",
+    "status": "active",
+    "close_time": "2026-11-10T13:25:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0200",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26DEC-T0.9",
+    "event_ticker": "KXCPI-26DEC",
+    "title": "Will CPI rise more than 0.9% in December 2026?",
+    "status": "active",
+    "close_time": "2027-01-13T13:25:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.0300",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0600",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26DEC-T0.8",
+    "event_ticker": "KXCPI-26DEC",
+    "title": "Will CPI rise more than 0.8% in December 2026?",
+    "status": "active",
+    "close_time": "2027-01-13T13:25:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0000",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26SEP-T0.9",
+    "event_ticker": "KXCPI-26SEP",
+    "title": "Will CPI rise more than 0.9% in September 2026?",
+    "status": "active",
+    "close_time": "2026-10-14T12:25:00Z",
+    "yes_bid_dollars": "0.0000",
+    "yes_ask_dollars": "0.0100",
+    "last_price_dollars": "0.0100",
+    "previous_price_dollars": "0.0100",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26SEP-T0.8",
+    "event_ticker": "KXCPI-26SEP",
+    "title": "Will CPI rise more than 0.8% in September 2026?",
+    "status": "active",
+    "close_time": "2026-10-14T12:25:00Z",
+    "yes_bid_dollars": "0.0100",
+    "yes_ask_dollars": "0.0200",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.0300",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26NOV-T0.5",
+    "event_ticker": "KXCPI-26NOV",
+    "title": "Will CPI rise more than 0.5% in November 2026?",
+    "status": "active",
+    "close_time": "2026-12-10T13:25:00Z",
+    "yes_bid_dollars": "0.0200",
+    "yes_ask_dollars": "0.0300",
+    "last_price_dollars": "0.0200",
+    "previous_price_dollars": "0.1300",
+    "result": ""
+   },
+   {
+    "ticker": "KXCPI-26NOV-T0.4",
+    "event_ticker": "KXCPI-26NOV",
+    "title": "Will CPI rise more than 0.4% in November 2026?",
+    "status": "active",
+    "close_time": "2026-12-10T13:25:00Z",
+    "yes_bid_dollars": "0.0500",
+    "yes_ask_dollars": "0.1500",
+    "last_price_dollars": "0.0300",
+    "previous_price_dollars": "0.1700",
+    "result": ""
+   }
+  ],
+  "cursor": ""
+ },
+ "KXPAYROLLS": {
+  "markets": [
+   {
+    "ticker": "KXPAYROLLS-26NOV-T90000",
+    "event_ticker": "KXPAYROLLS-26NOV",
+    "title": "Will above 90000 jobs be added in November 2026?",
+    "status": "active",
+    "close_time": "2026-12-04T13:29:00Z",
+    "yes_bid_dollars": "0.3000",
+    "yes_ask_dollars": "0.4000",
+    "last_price_dollars": "0.3700",
+    "previous_price_dollars": "0.3300",
+    "result": ""
+   },
+   {
+    "ticker": "KXPAYROLLS-26NOV-T80000",
+    "event_ticker": "KXPAYROLLS-26NOV",
+    "title": "Will above 80000 jobs be added in November 2026?",
+    "status": "active",
+    "close_time": "2026-12-04T13:29:00Z",
+    "yes_bid_dollars": "0.3700",
+    "yes_ask_dollars": "0.4700",
+    "last_price_dollars": "0.5600",
+    "previous_price_dollars": "0.5600",
+    "result": ""
+   },
+   {
+    "ticker": "KXPAYROLLS-26OCT-T90000",
+    "event_ticker": "KXPAYROLLS-26OCT",
+    "title": "Will above 90000 jobs be added in October 2026?",
+    "status": "active",
+    "close_time": "2026-11-06T13:29:00Z",
+    "yes_bid_dollars": "0.3000",
+    "yes_ask_dollars": "0.4000",
+    "last_price_dollars": "0.3600",
+    "previous_price_dollars": "0.3600",
+    "result": ""
+   },
+   {
+    "ticker": "KXPAYROLLS-26OCT-T80000",
+    "event_ticker": "KXPAYROLLS-26OCT",
+    "title": "Will above 80000 jobs be added in October 2026?",
+    "status": "active",
+    "close_time": "2026-11-06T13:29:00Z",
+    "yes_bid_dollars": "0.4200",
+    "yes_ask_dollars": "0.4700",
+    "last_price_dollars": "0.9500",
+    "previous_price_dollars": "0.9500",
+    "result": ""
+   },
+   {
+    "ticker": "KXPAYROLLS-26SEP-T90000",
+    "event_ticker": "KXPAYROLLS-26SEP",
+    "title": "Will above 90000 jobs be added in September 2026?",
+    "status": "active",
+    "close_time": "2026-10-02T12:29:00Z",
+    "yes_bid_dollars": "0.5800",
+    "yes_ask_dollars": "0.5900",
+    "last_price_dollars": "0.6000",
+    "previous_price_dollars": "0.5600",
+    "result": ""
+   },
+   {
+    "ticker": "KXPAYROLLS-26SEP-T80000",
+    "event_ticker": "KXPAYROLLS-26SEP",
+    "title": "Will above 80000 jobs be added in September 2026?",
+    "status": "active",
+    "close_time": "2026-10-02T12:29:00Z",
+    "yes_bid_dollars": "0.6000",
+    "yes_ask_dollars": "0.6500",
+    "last_price_dollars": "0.6500",
+    "previous_price_dollars": "0.6000",
+    "result": ""
+   }
+  ],
+  "cursor": ""
+ },
+ "KXHORMUZNORM": {
+  "markets": [
+   {
+    "ticker": "KXHORMUZNORM-26MAR17-B290101",
+    "event_ticker": "KXHORMUZNORM-26MAR17",
+    "title": "Will the 7-day moving average of transit calls through the Strait of Hormuz as reported by the IMF PortWatch be above 60 before January 1, 2029?",
+    "status": "active",
+    "close_time": "2029-01-01T14:59:00Z",
+    "yes_bid_dollars": "0.7100",
+    "yes_ask_dollars": "0.7400",
+    "last_price_dollars": "0.7400",
+    "previous_price_dollars": "0.7100",
+    "result": ""
+   },
+   {
+    "ticker": "KXHORMUZNORM-26MAR17-B280701",
+    "event_ticker": "KXHORMUZNORM-26MAR17",
+    "title": "Will the 7-day moving average of transit calls through the Strait of Hormuz as reported by the IMF PortWatch be above 60 before July 1, 2028?",
+    "status": "active",
+    "close_time": "2028-07-01T13:59:00Z",
+    "yes_bid_dollars": "0.6500",
+    "yes_ask_dollars": "0.6600",
+    "last_price_dollars": "0.6600",
+    "previous_price_dollars": "0.6600",
+    "result": ""
+   }
+  ],
+  "cursor": ""
+ }
+}

@@ -114,12 +114,115 @@ modules:
   # ----
 
   W8:                      # de-escalation confirmed: policy module, small (design v3.3 §3 M5)
-    enabled: false
+    enabled: true
+    name: De-escalation call spread
+    status: policy module, small
+    account: taxable                 # option spreads live in the taxable account (design §3a.1)
+    cluster: oil                     # "peace/oil-down" is one factor in 2026 (design §4; contract §7)
+    premium_pct_nav: 0.01            # premium <= 1% of NAV, at the stated maximum debit (design §3 M5)
+    # Trigger, all at the close (design §3 M5; track 17 §5.2 W8 (i)-(iii)). (i), the official announcement, is
+    # evidenced by the veto's allow-listed citations (docs/phase-b/w8w9.md).
+    oil_drop: -0.06                  # (ii) Brent (explicit front-safe month, BZZ26 in late Sep 2026) or BNO down >= 6%
+    oil_etf: BNO
+    pm_jump: 0.15                    # (iii) the blockade-end or Hormuz-normal market up >= 15 points on the day ...
+    pm_through: 0.75                 #       ... or through 75%
+    trigger_market_days: 90          # map rule: listed date nearest signal + 90 days, on or after the time stop
+                                     # (= "by Dec 31" on 28 Sep 2026, track 17's market)
+    markets:                         # the rolling, rule-based map (design §10); each pattern matches the whole name
+      trigger:
+        blockade_end: {venue: polymarket, query: "Iranian blockade",
+                       pattern: '^US announces end of Iranian blockade by (?P<date>[A-Z][a-z]+ \d{1,2}(?:, \d{4})?)\?$'}
+        hormuz_normal: {venue: polymarket, query: "Strait of Hormuz traffic returns to normal",
+                        pattern: '^Strait of Hormuz traffic returns to normal by (?P<date>[A-Z][a-z]+ \d{1,2}(?:, \d{4})?)\?$'}
+      invalidation: {venue: polymarket, query: "US x Iran ceasefire continues",
+                     pattern: '^US(?: x |-)Iran ceasefire continues through (?P<date>[A-Z][a-z]+ \d{1,2}(?:, \d{4})?)\?$'}
+    # Trade (design §3 M5): call debit spreads, 56-75 DTE; DAL legs expire before DAL's next earnings.
+    roots: [XSP, SPY, DAL]           # first root that passes every rule: XSP preferred (design §3a.4; 1256 tax, track 17 §6)
+    moneyness:                       # long / short strike as a multiple of spot (track 17 §4.5 and §5.2 examples)
+      XSP: [1.015, 1.04]             # SPY Dec 780/800 call spread at spot ~768
+      SPY: [1.015, 1.04]
+      DAL: [1.01, 1.13]              # DAL Dec 85/95 call spread at spot ~84
+    earnings_roots: [DAL]            # single-stock legs expire before the next earnings date (design §5; red team M5)
+    dte_min: 56                      # >= 2 x a 20-trading-day hold (design §4 "Option expiry"; red team M5)
+    dte_max: 75
+    # Exits (design §3 M5): the first of these, checked every evening; the order goes out for the next session.
+    time_stop_sessions: 20           # after 20 trading days
+    take_profit_frac_of_max: 0.80    # at 80% of maximum value
+    invalidation_below: 0.40         # "US x Iran ceasefire continues through <first listed date >= the time stop>" < 40%
+    expiry_close_sessions: 10        # close >= 10 trading days before expiry (design §4 "Option expiry")
+    release_ban:                     # never-list (design §5; red team M5): no entry <= 5 sessions before a release
+      sessions: 5
+      series: {FOMC: KXFEDDECISION, CPI: KXCPI, NFP: KXPAYROLLS}   # Kalshi release calendars (track 14 §7.5 veto 1)
+    circuit_breakers: {daily_loss: -0.02, weekly_loss: -0.04, weekly_sessions: 5, weekly_pause_sessions: 5}  # design §4
+    liquidity:                       # fallback when options.liquidity is absent (design §4 "Option liquidity"; track 17 R8)
+      max_leg_spread_frac_of_mid: 0.10
+      min_open_interest: 500
+      max_round_trip_frac_of_debit: 0.10
+      max_round_trip_frac_if_gain_2x_costs: 0.20
+    veto:                            # the frozen LLM veto (design §3 M5; red team M9); model: env TRADEREC_VETO_MODEL
+      prompt_sha256: "3b7f90295c962b8048a9528d25bb833a9b0f47f7fa0094e1dcde49cabb23f942"   # llm_veto refuses another
+      web_search_tool: web_search_20260318   # server-side web search type (API docs checked 2026-09-29)
+      max_searches: 5
+      max_tokens: 16000
+      max_continuations: 2
+      min_citations: 2               # PROCEED needs >= 2 allow-listed pages that the search returned
+      allowed_domains: [whitehouse.gov, state.gov, war.gov, defense.gov, centcom.mil, treasury.gov, un.org, iaea.org,
+                        mfa.ir, president.ir, fm.gov.om, mofa.gov.qa]
+    base_rates: {since: 1953, trades_per_year: 0.23}   # 17 de-escalations in 73 years (track 17 §3.4)
+    history: {events: 17, since: 1953, horizon_sessions: 20, spx_up_rate: 0.76, short_adverse_pct: 8.6}  # track 17 §3.4, §4.2
+    forecasts:                       # pre-registered, scored at the exit
+      p_profit: 0.50                 # track 17 §5.2: P(SPY call spread profitable) ~50-55% after 75% shrinkage
+      p_time_stop: 0.60              # the take-profit needs ~+4% in 20 days; the invalidation fires on failed deals
 
   # ----
 
   W9:                      # escalation that removes barrels: paper (design v3.3 §3 M5)
-    enabled: false
+    enabled: true
+    name: Barrel-loss oil call spread
+    status: paper module
+    paper_only: true                 # n = 5: paper unless the owner opts in as a hedge exception (design §3 M5)
+    account: taxable
+    cluster: oil                     # contract §7
+    premium_pct_nav: 0.0075          # <= 0.75% of NAV (design §3 M5)
+    oil_jump: 0.05                   # front Brent/WTI (explicit front-safe months) up >= 5% on the day
+    supply_input: inputs/w9_supply_loss.json   # the owner's ">= 1 mb/d physically offline" record, in the state dir
+    supply:                          # track 17 R2: per IEA/EIA/company statements; validated mechanically, fail closed
+      min_mbd_offline: 1.0
+      min_no_restoration_days: 14    # "no restoration or bypass path inside ~2 weeks"
+      min_citations: 2
+      source_domains: [iea.org, eia.gov, energy.gov, opec.org, aramco.com, adnoc.ae, qatarenergy.qa, kpc.com.kw,
+                       spa.gov.sa, wam.ae, ukmto.org, imo.org, centcom.mil]
+    contango_veto_roll_yield: -0.20  # R3: no long USO when the front WTI roll yield is below -20% a year (design §4)
+    roots: [USO]
+    moneyness: {USO: [1.10, 1.33]}   # USO Dec 165/200 call spread at spot ~150 (track 17 §4.5, §5.2 W9)
+    dte_min: 56
+    dte_max: 75
+    time_stop_sessions: 20           # 20-day time stop (design §3 M5); trading days (track 17 R6)
+    take_profit_multiple: 2.0        # +100% of the premium (track 17 §5.2 W9; the design is silent)
+    expiry_close_sessions: 10
+    release_ban:
+      sessions: 5
+      series: {FOMC: KXFEDDECISION, CPI: KXCPI, NFP: KXPAYROLLS}
+    circuit_breakers: {daily_loss: -0.02, weekly_loss: -0.04, weekly_sessions: 5, weekly_pause_sessions: 5}
+    liquidity:
+      max_leg_spread_frac_of_mid: 0.10
+      min_open_interest: 500
+      max_round_trip_frac_of_debit: 0.10
+      max_round_trip_frac_if_gain_2x_costs: 0.20
+    veto:
+      prompt_sha256: "0702d3bab41f5a6073531791024475e08706f8f7d26e3d5fa53810ec671df920"
+      web_search_tool: web_search_20260318
+      max_searches: 5
+      max_tokens: 16000
+      max_continuations: 2
+      min_citations: 2
+      allowed_domains: [iea.org, eia.gov, energy.gov, opec.org, aramco.com, adnoc.ae, qatarenergy.qa, kpc.com.kw,
+                        spa.gov.sa, wam.ae, ukmto.org, imo.org, centcom.mil]
+    base_rates: {since: 1990, trades_per_year: 0.14}   # 5 lasting supply losses in 36 years (track 17 §3.3)
+    history: {events: 5, since: 1990, horizon_sessions: 20, wti_mean_20d_pct: 16.7}   # track 17 §3.3
+    forecasts:
+      p_profit: 0.40                 # track 17 §5.2 W9: P(USO above breakeven) ~40-45% after shrinkage
+      p_time_stop: 0.45
 
 shadow:                    # logged automatically, never emailed
   ST1B:
