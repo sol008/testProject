@@ -10,30 +10,70 @@
 
 ---
 
+## Correction (replay, Phase B)
+
+*Found by the Phase B historical replay (`docs/phase-b/replay.md`, finding 3); details in `docs/phase-b/track23-fix.md`. Every number in this document now carries the fix.*
+
+- **The bug.** `common23.py` picked the close-exit rules (C42, C63, …) with `rule.startswith("C")`, and "CAL90" starts with "C" too.
+  - Every SPY CAL60/90/120 exit was therefore priced at the adjusted **close** of the exit session, with one more session of T-bills and interim marks. The labels above, the module docstring and design §3 W10 all say the **open**.
+  - The same test counted every calendar-exact hold one session too long (`rules_calendar_spans.csv`).
+  - A new `close_exit()` matches only C<H>. `run_all.py` was re-run.
+- **Unaffected:**
+  - the index samples, which enter and exit at the close by design;
+  - every F<H> and C<H> cell, and the reconciliation with tracks 17–22;
+  - sizing and stress, and the kill-switch power table;
+  - the daily streams and every drawdown, which already sold W10 at the open;
+  - M4.
+
+| SPY 1993–2026, CAL90 | Published | Corrected |
+|---|---|---|
+| One at a time (17 trades): win rate | 88% | 88% |
+| Mean / median | +7.19% / +7.66% | **+7.56% / +8.70%** |
+| Worst trade | −8.3% | **−8.6%** |
+| Edge vs era placebo (p_era) | +4.54 (0.020) | +4.91 (0.012) |
+| Edge vs uptrend placebo (p_up) | +4.03 (0.005) | +4.41 (0.002) |
+| All 20 events: mean vs placebo | +6.86% vs +2.67% | +7.26% vs +2.67% |
+| All 20 events: p_era / p_up / cluster-preserving p | 0.019 / 0.005 / 0.008 | 0.011 / 0.002 / 0.001 |
+| Deflated-Sharpe probability at N 24 / 120 | 0.62 / 0.42 | 0.64 / 0.45 |
+| CAL90 minus F63, per trade | −0.05 (t −0.2) | +0.34 (t 1.0) |
+| Sessions held at CAL60 / CAL90 / CAL120 | 38–45 / 59–64 / 79–86 | 37–44 / 58–63 / 78–85 |
+| CAL60, all events: mean (p_era) | +3.81% (0.17) | +3.72% (0.19) |
+| CAL120, one at a time: mean, worst (p_era) | +7.81%, −5.2% (0.086) | +8.06%, −3.4% (0.068) |
+| W10 contribution at 90 days, central (range) | +0.042 (−0.008 to +0.101) | +0.042 (−0.008 to +0.107) |
+| Phase A + M2 book at 60 / 90 / 120 days | 4.98 / 5.02 / 5.03% | unchanged |
+
+**Decision 12 still holds.**
+- The fix makes W10 at 90 days slightly stronger.
+- The planning central does not move: it rests on the 1928–2026 index edge.
+- 120 days still adds nothing over 90: +0.046 vs +0.042 central, and the SPY-based figures favour 90 by more than before.
+- W10 at 60 days is slightly weaker (p 0.41 one at a time), so its shadow status stands.
+
+---
+
 ## TL;DR
 
 1. **Verdict: loosen to 90 days only as a module-level exception for W10 (and, in Phase B, M4 at 90 DTE).** Do not loosen the global cap, and do not go to 120 days. The exception is worth doing because it is cheap and positive in every convention but one. The gain is small: **about half of what tracks 21 and 22 reported.**
-   - **Phase A** (M1, M2, M3 plus W10): **+0.04 points a year** (range −0.01 to +0.10), about $40 a year per $100k.
+   - **Phase A** (M1, M2, M3 plus W10): **+0.04 points a year** (range −0.01 to +0.11), about $40 a year per $100k.
    - **Phase B** adds M4 at 90 DTE: +0.05 to +0.08 more. The total is **≈ +0.1 points, not +0.18.**
    - **120 days** is worth nothing over 90. W10 fires less often, M4 is no better, and the 2000–02 drawdown is deeper.
    - A **global cap** adds only beta. No other module gains (tracks 21 and 22, confirmed).
 2. **W10 replicates exactly.** The 60 signal dates are the same, the per-event returns match track 21 to four decimals, and track 17's p = 0.005 headline reproduces (0.0054).
-   - SPY, 1993–2026, calendar-exact 90 days: **+6.9% per trade vs +2.7% for random entries in the same years**. 90% of trades won; p_era 0.019, p_up 0.005.
-   - With one position at a time (17 trades) the result holds: p_era 0.020.
-   - At 60 days: +3.8% vs +1.8%, p 0.17. **The cap is the whole story.**
+   - SPY, 1993–2026, calendar-exact 90 days: **+7.3% per trade vs +2.7% for random entries in the same years**. 90% of trades won; p_era 0.011, p_up 0.002.
+   - With one position at a time (17 trades) the result holds: p_era 0.012.
+   - At 60 days: +3.7% vs +1.8%, p 0.19. **The cap is the whole story.**
 3. **The effect belongs to the post-1990 era, and even there it is not proven.**
    - 1928–89 (next close): +1.8 points per trade over the placebo, p 0.44. Measured per independent episode it is −1.0 point.
-   - 2008–26 alone: +2.6 points, p 0.31 (10 trades).
-   - Deflated-Sharpe probability: 0.62 at N = 24 cells and 0.42 at N ≈ 120 W10 cells. It is robust to the −3% threshold (−2.5% to −3.5%), which argues against a fluke of that one number.
+   - 2008–26 alone: +3.2 points, p 0.21 (10 trades).
+   - Deflated-Sharpe probability: 0.64 at N = 24 cells and 0.45 at N ≈ 120 W10 cells. It is robust to the −3% threshold (−2.5% to −3.5%), which argues against a fluke of that one number.
 4. **Rule corrections the design needs** (track 21's recommendation got these wrong or left them open):
-   - **Exit.** Use the calendar-exact exit only. "63 sessions" sold at the next open (the only exit order Robinhood offers) runs past 90 calendar days 75% of the time, and in 18 of 20 W10 events (up to 95 days). Returns are identical: −0.05 points per trade.
+   - **Exit.** Use the calendar-exact exit only. "63 sessions" sold at the next open (the only exit order Robinhood offers) runs past 90 calendar days 75% of the time, and in 18 of 20 W10 events (up to 95 days). Returns are no worse: +0.34 points per trade (t 1.0).
    - **Size.** Use **6% of NAV, not 6.7%**. At 6.7%, the S&P's −32.5% worst 10-session loss gives a stress of 2.18%, above the 2% cap. It would force W10 to be cut in 10 of 17 trades, with 4 extra trim orders. At 6%, M1 and W10 fit the 4% reserve exactly, and W10 was never cut in Phase A.
    - **Drop the VIX > 45 void.** It never fired at entry (the highest VIX was 40.8). Read as an exit, it would have sold 1998, 2010 and 2020 near the lows: −1.1 points per trade.
-   - **Drop the all-time-high exit.** It is neutral (+0.1 points).
+   - **Drop the all-time-high exit.** It is neutral (−0.1 points).
    - **Fix §4.** "Cluster ≤6%" contradicts M2's 3% plus the 4% reserve (7%). Under a literal 6% cap, W10 would be cut to about 54% in 10 of 17 trades.
    - **Replace the kill switch.** "5 losers in a row" fires in <1% of 20-year paths even with no edge. "1990+ p > 0.10" fires in 27–29% of 10-year paths whether the edge is gone or as in 1928–2026. No rule can test an edge that trades 0.5 times a year.
 5. **Errors in track 21's arithmetic.**
-   - **W10.** Its +0.10 combines three things: 6.7% sizing; κ 0.5 on the post-1990 edge (n = 18; track 17's R9 rule gives κ 0.25 below n = 20); and a "design convention" that keeps all of history's drift. Corrected: **+0.04 (−0.01 to +0.10)**.
+   - **W10.** Its +0.10 combines three things: 6.7% sizing; κ 0.5 on the post-1990 edge (n = 18; track 17's R9 rule gives κ 0.25 below n = 20); and a "design convention" that keeps all of history's drift. Corrected: **+0.04 (−0.01 to +0.11)**.
    - **M4.** Its +0.13 at 90 DTE uses κ 0.5 on 12 crisis episodes. At κ 0.25 it is **+0.04**.
    - **Portfolio history.** Its 90- and 120-DTE O2 streams used a 60-day cool-down, so up to two spreads (4% premium) were open at once. That contradicts its own one-spread rule and inflates its historical "90-day" book.
    - Track 22's figures are close to this track's: +0.06 for W10.
@@ -41,9 +81,9 @@
    - Average extra SPY exposure is 0.7% of NAV.
    - Drawdowns inside crash windows get up to 1.7 points deeper. In 2020: Lean −1.0% → −2.7%; with M2 −7.3% → −8.9%.
    - The full-period maximum drawdown with M2 goes from −11.3% to −11.9%.
-   - Worst trade since 1993: −8.3% (−0.5% of NAV). Since 1928: −27% (August 1929, −1.6% of NAV).
+   - Worst trade since 1993: −8.6% (−0.5% of NAV). Since 1928: −27% (August 1929, −1.6% of NAV).
 7. **For the owner, in one paragraph.**
-   - Loosening from 60 to 90 days is worth doing only for the crash-day buy (W10), and only just. It adds about **+0.04 points a year now** (range −0.01 to +0.10), and about +0.1 once the crash call spread (M4) moves to 90 days in Phase B.
+   - Loosening from 60 to 90 days is worth doing only for the crash-day buy (W10), and only just. It adds about **+0.04 points a year now** (range −0.01 to +0.11), and about +0.1 once the crash call spread (M4) moves to 90 days in Phase B.
    - The book being built (M1, M2, M3, plus W10) should earn about **4.98% a year at 60 days, 5.02% at 90 and 5.03% at 120**, before tax: T-bills at 4.2% plus about 0.8 points. With Phase B it is **≈5.0–5.2% under every cap**. Without M2 it is ≈4.4–4.6%.
    - **SPY returned 10.3% a year over 1928–2026, 10.8% over 1993–2026 and 11.3% over 2008–2026** (total return, compounded). About **3–6% a year** is a fair forward range at CAPE ≈41.
    - So under any cap the system trails SPY's history by 5–6 points a year. It sits inside SPY's forward range, with a historical worst drawdown near 12% instead of 52–55%. In its own 2008–26 backtest it earned 5.3% (60 days) or 5.5% (90 days), against SPY's 11.3%.
@@ -83,7 +123,7 @@
 | 1928–89, S&P TR next close, 63 sessions (21) | +3.66%, edge +1.0, p 0.66 | +3.68%, edge +1.5, p 0.54 | ✓ (both insignificant; their placebo pool runs outside the sample) |
 | SPY next open → close of session 60, one at a time, 1993–2026 (22) | n 17, +7.50%, p 0.009 | n 17, +7.50%, p 0.011 | ✓ |
 | S&P TR next close, 60 sessions, one at a time, 1990–2026 / 1928–89 (22) | p 0.035 / 0.46 | p 0.033 / 0.39 | ✓ |
-| Calendar-exact exit returns the same as the session count (21) | yes | yes (−0.05 points at 90 days) | ✓ |
+| Calendar-exact exit returns the same as the session count (21) | yes | yes (+0.34 points at 90 days, t 1.0) | ✓ |
 | Share of 63-session holds over 90 days (22) | 34% | 32% with a close exit; **75% with the executable open exit** | ✗ understated |
 
 ### 1.2 SPY 1993–2026: every event (n = 20) and one position at a time
@@ -93,23 +133,23 @@
 | Exit | Longest hold | Mean | Median | Win | Worst | Worst interim | t | Edge vs era placebo (p_era) | Edge vs uptrend placebo (p_up) | Cluster-preserving p |
 |---|---|---|---|---|---|---|---|---|---|---|
 | F42 | 63 days | +4.04% | +5.45% | 75% | −12.9% | −30.8% | 2.4 | +2.25 (0.13) | +1.92 (0.08) | 0.15 |
-| **CAL60** | 60 days | +3.81% | +5.21% | 75% | −12.2% | −30.8% | 2.2 | **+2.04 (0.17)** | +1.73 (0.11) | 0.20 |
+| **CAL60** | 60 days | +3.72% | +5.12% | 75% | −12.9% | −30.8% | 2.1 | **+1.94 (0.19)** | +1.63 (0.13) | 0.22 |
 | F63 | 95 days | +6.92% | +6.84% | 85% | −6.8% | −30.8% | 4.6 | +4.20 (0.019) | +3.72 (0.006) | 0.007 |
-| **CAL90** | 90 days | **+6.86%** | +7.45% | **90%** | −8.3% | −30.8% | 4.6 | **+4.20 (0.019)** | **+3.72 (0.005)** | 0.008 |
+| **CAL90** | 90 days | **+7.26%** | +8.33% | **90%** | −8.6% | −30.8% | 4.7 | **+4.59 (0.011)** | **+4.11 (0.002)** | 0.001 |
 | F84 | 125 days | +8.85% | +8.48% | 80% | −3.4% | −30.8% | 5.1 | +5.21 (0.011) | +4.52 (0.002) | 0.008 |
-| **CAL120** | 120 days | +8.42% | +8.43% | 85% | −5.2% | −30.8% | 5.0 | **+4.85 (0.017)** | +4.14 (0.006) | 0.017 |
+| **CAL120** | 120 days | +8.58% | +8.61% | 85% | −3.4% | −30.8% | 5.2 | **+5.01 (0.015)** | +4.30 (0.005) | 0.012 |
 
 **One position at a time** (the trades a live module would have taken):
 
 | Exit | Trades (a year) | Mean | Median | Win | Worst | t | Edge (p_era) | Edge vs uptrend (p_up) | Skipped because W10 was open |
 |---|---|---|---|---|---|---|---|---|---|
-| CAL60 | 17 (0.51) | +3.09% | +3.80% | 71% | −12.2% | 1.6 | +1.36 (0.39) | +1.01 (0.38) | 2000-02-18, 2018-12-04, 2020-10-28 |
-| **CAL90** | **17 (0.51)** | **+7.19%** | +7.66% | **88%** | **−8.3%** | 4.1 | **+4.54 (0.020)** | **+4.03 (0.005)** | 2000-02-18, 2018-12-04, 2020-09-03 |
-| CAL120 | 14 (0.42) | +7.81% | +7.15% | 86% | −5.2% | 3.5 | +4.03 (0.086) | +3.52 (0.048) | six events |
+| CAL60 | 17 (0.51) | +3.04% | +3.80% | 71% | −12.9% | 1.6 | +1.30 (0.41) | +0.95 (0.41) | 2000-02-18, 2018-12-04, 2020-10-28 |
+| **CAL90** | **17 (0.51)** | **+7.56%** | +8.70% | **88%** | **−8.6%** | 4.1 | **+4.91 (0.012)** | **+4.41 (0.002)** | 2000-02-18, 2018-12-04, 2020-09-03 |
+| CAL120 | 14 (0.42) | +8.06% | +7.50% | 86% | −3.4% | 3.8 | +4.28 (0.068) | +3.76 (0.033) | six events |
 | F63 | 16 (0.48) | +7.71% | +7.76% | 88% | −6.8% | 4.3 | +4.91 (0.013) | +4.51 (0.003) | four events |
 
 - The worst interim drawdown is February–March 2020 in every version: −30.8% on the position, or −1.8% of NAV at 6%.
-- **The cluster-preserving placebo gives a p no larger than independent draws** (0.008 vs 0.019 at CAL90). Overlapping events do not inflate W10's significance. The honest sample size is still 17 trades in 13 independent episodes (§1.4), not 21.
+- **The cluster-preserving placebo gives a p no larger than independent draws** (0.001 vs 0.011 at CAL90). Overlapping events do not inflate W10's significance. The honest sample size is still 17 trades in 13 independent episodes (§1.4), not 21.
 
 ### 1.3 The index samples: 1990–2026 and the out-of-sample check 1928–1989
 
@@ -137,7 +177,7 @@ S&P 500 total return, entered at the next close. Each cell shows all events, the
 
 | Sample | Trades | Episodes | Edge per trade (t) | **Edge per episode (t)** |
 |---|---|---|---|---|
-| SPY 1993–2026 | 17 | 13 | +4.5 (2.4) | **+4.8 (2.4)** |
+| SPY 1993–2026 | 17 | 13 | +4.9 (2.5) | **+4.9 (2.5)** |
 | Index 1990–2026 | 18 | 14 | +3.8 (2.4) | +3.8 (2.1) |
 | Index 1928–1989 | 29 | 18 | +2.2 (1.0) | **−1.0 (−0.5)** |
 | Index 1928–2026 | 47 | 32 | +2.8 (1.9) | +1.1 (0.7) |
@@ -148,8 +188,8 @@ Before 1990 the positive per-trade edge comes from the long 1935–36 cluster, w
 
 | Period | Trades | Mean | Win | Worst | Edge vs era pool (t) |
 |---|---|---|---|---|---|
-| SPY 1993–2007 | 7 | +9.6% | 100% | +3.2% | +7.2 (3.9) |
-| SPY 2008–2026 | 10 | +5.5% | 80% | −8.3% | +2.7 (1.0) |
+| SPY 1993–2007 | 7 | +9.6% | 100% | +3.7% | +7.2 (3.5) |
+| SPY 2008–2026 | 10 | +6.1% | 80% | −8.6% | +3.3 (1.1) |
 | Index 1928–1949 | 21 | +4.9% | 71% | −27.1% | +3.1 (1.1) |
 | Index 1950–1989 | 8 | +3.8% | 50% | −2.0% | −0.3 (−0.1) |
 | Index 1990–2007 | 8 | +7.1% | 100% | +3.1% | +4.6 (2.8) |
@@ -159,11 +199,11 @@ Before 1990 the positive per-trade edge comes from the long 1935–36 cluster, w
 
 | Crash threshold | SPY 1993–2026: trades, edge (p_era) | Index 1928–2026: trades, edge (p_era) |
 |---|---|---|
-| −2.50% | 30, +3.5 (0.012) | 68, +1.9 (0.12) |
-| −2.75% | 21, +3.8 (0.036) | 55, +1.5 (0.33) |
-| **−3.00%** | **17, +4.5 (0.020)** | **47, +2.8 (0.099)** |
-| −3.25% | 14, +3.8 (0.071) | 40, +3.1 (0.10) |
-| −3.50% | 12, +5.9 (0.012) | 36, +3.5 (0.10) |
+| −2.50% | 30, +3.6 (0.011) | 68, +1.9 (0.12) |
+| −2.75% | 21, +4.2 (0.021) | 55, +1.5 (0.33) |
+| **−3.00%** | **17, +4.9 (0.010)** | **47, +2.8 (0.099)** |
+| −3.25% | 14, +4.3 (0.041) | 40, +3.1 (0.10) |
+| −3.50% | 12, +6.6 (0.005) | 36, +3.5 (0.10) |
 
 - The −3% threshold is not a knife-edge. The effect sits in a neighbourhood of thresholds.
 - **But a few events do sit within basis points of the line.** On 5 Aug 2024 the S&P closed −2.997% in an uptrend (0.3 bp short, and SPY then rose ≈10% over 90 days). 23 Jul 1946 cleared by 1.2 bp. Rounding the day's change to −3.00% would have created a 2024 signal, so the rule must use unrounded closes (§4.2).
@@ -181,23 +221,23 @@ Before 1990 the positive per-trade edge comes from the long 1935–36 cluster, w
 
 | Signal | Entry | Exit | Days | VIX | Net | Interim low | Edge vs era pool |
 |---|---|---|---|---|---|---|---|
-| 1996-03-08 | 03-11 | 06-07 | 88 | 20.7 | +7.4% | −0.1% | +2.2 |
-| 1997-10-27 | 10-28 | 1998-01-26 | 90 | 31.1 | +14.0% | 0.0% | +9.0 |
-| 1998-08-04 | 08-05 | 11-03 | 90 | 31.1 | +3.2% | −11.1% | −0.1 |
-| 2000-01-04 | 01-05 | 04-04 | 90 | 27.0 | +7.5% | −4.7% | +6.5 |
-| 2000-04-14 | 04-17 | 07-14 | 88 | 33.5 | +12.1% | 0.0% | +10.9 |
-| 2003-03-24 | 03-25 | 06-23 | 90 | 30.4 | +13.8% | −2.3% | +13.7 |
-| 2007-02-27 | 02-28 | 05-29 | 90 | 18.3 | +8.8% | −2.2% | +7.8 |
-| 2009-06-22 | 06-23 | 09-21 | 90 | 31.2 | +19.5% | −1.7% | +18.2 |
-| 2010-02-04 | 02-05 | 05-06 | 90 | 26.1 | +6.4% | −0.6% | +5.1 |
-| 2010-05-06 | 05-07 | 08-05 | 90 | 32.8 | +0.6% | −8.8% | −0.7 |
-| 2011-11-09 | 11-10 | 2012-02-08 | 90 | 36.2 | +9.0% | −6.8% | +4.6 |
-| 2016-06-24 | 06-27 | 09-23 | 88 | 25.8 | +7.7% | −1.0% | +4.7 |
-| 2018-02-05 | 02-06 | 05-07 | 90 | 37.3 | +3.1% | −0.9% | −0.4 |
-| 2018-10-10 | 10-11 | 2019-01-09 | 90 | 23.0 | **−6.4%** | −14.9% | −10.5 |
-| 2020-02-24 | 02-25 | 05-22 | 87 | 25.0 | **−8.3%** | **−30.8%** | −11.3 |
-| 2020-06-11 | 06-12 | 09-10 | 90 | 40.8 | +8.8% | −2.2% | +5.5 |
-| 2020-10-28 | 10-29 | 2021-01-27 | 90 | 40.3 | +15.0% | −0.1% | +11.9 |
+| 1996-03-08 | 03-11 | 06-07 | 88 | 20.7 | +5.1% | −0.1% | −0.1 |
+| 1997-10-27 | 10-28 | 1998-01-26 | 90 | 31.1 | +14.6% | 0.0% | +9.6 |
+| 1998-08-04 | 08-05 | 11-03 | 90 | 31.1 | +3.7% | −11.1% | +0.4 |
+| 2000-01-04 | 01-05 | 04-04 | 90 | 27.0 | +8.7% | −4.7% | +7.6 |
+| 2000-04-14 | 04-17 | 07-14 | 88 | 33.5 | +11.5% | 0.0% | +10.3 |
+| 2003-03-24 | 03-25 | 06-23 | 90 | 30.4 | +15.0% | −2.3% | +14.9 |
+| 2007-02-27 | 02-28 | 05-29 | 90 | 18.3 | +8.6% | −2.2% | +7.6 |
+| 2009-06-22 | 06-23 | 09-21 | 90 | 31.2 | +18.9% | −1.7% | +17.5 |
+| 2010-02-04 | 02-05 | 05-06 | 90 | 26.1 | +9.5% | −0.6% | +8.2 |
+| 2010-05-06 | 05-07 | 08-05 | 90 | 32.8 | +0.1% | −8.8% | −1.3 |
+| 2011-11-09 | 11-10 | 2012-02-08 | 90 | 36.2 | +8.7% | −6.8% | +4.4 |
+| 2016-06-24 | 06-27 | 09-23 | 88 | 25.8 | +8.0% | −1.0% | +5.1 |
+| 2018-02-05 | 02-06 | 05-07 | 90 | 37.3 | +3.0% | −0.9% | −0.4 |
+| 2018-10-10 | 10-11 | 2019-01-09 | 90 | 23.0 | **−6.5%** | −14.9% | −10.6 |
+| 2020-02-24 | 02-25 | 05-22 | 87 | 25.0 | **−8.6%** | **−30.8%** | −11.5 |
+| 2020-06-11 | 06-12 | 09-10 | 90 | 40.8 | +11.3% | −2.2% | +8.1 |
+| 2020-10-28 | 10-29 | 2021-01-27 | 90 | 40.3 | +16.8% | −0.1% | +13.7 |
 
 - Holds are 60–63 sessions.
 - There has been no signal since 2020: 2022 and April 2025 were below the 200-day average.
@@ -207,9 +247,9 @@ Before 1990 the positive per-trade edge comes from the long 1935–36 cluster, w
 
 | # | Where | Finding | Consequence |
 |---|---|---|---|
-| E1 | T21 §1, §8.3 (T22 §7.2 partly) | T21's return tables sell at the **close** of session 63, but Robinhood has no market-on-close order (§3a). T21's rule text, "hold 63 sessions (or to the open of the last session within 90 days)", leaves the session count as an option. With the executable open exit, 63 sessions run to 88–97 days: 75% of all start days, and 18 of 20 W10 events, break the 90-day cap. T22 flagged 34%, but on the close-exit convention | The rule must be calendar-exact only. Returns are unchanged (−0.05 points) |
+| E1 | T21 §1, §8.3 (T22 §7.2 partly) | T21's return tables sell at the **close** of session 63, but Robinhood has no market-on-close order (§3a). T21's rule text, "hold 63 sessions (or to the open of the last session within 90 days)", leaves the session count as an option. With the executable open exit, 63 sessions run to 88–97 days: 75% of all start days, and 18 of 20 W10 events, break the 90-day cap. T22 flagged 34%, but on the close-exit convention | The rule must be calendar-exact only. Returns are no worse (+0.34 points, t 1.0) |
 | E2 | T21 §1.5, §6; design §3 M5 | W10 is sized at **6.7%** of NAV. Under §4's own stress rule (S&P worst 10-session loss −32.5%) that is 2.18% stress, above the 2% per-trade cap. The 6.7% came from track 17's "−30% path" | 6.0% (1.95% stress). At 6.7% the 4% reserve forces 10 of 17 trades to be cut to ≈94%, with 4 extra trim orders, for no gain |
-| E3 | T21 §1.5, `summary21.py` | The W10 contribution uses κ 0.5 on the **post-1990** edge (n = 18). Track 17's R9, and track 22, use κ 0.25 below n = 20, or κ 0.5 on the full-history edge. Its "design convention" is era placebo + κ·edge, which keeps the full 1990–2026 drift (≈11% a year); it is not κ × the historical mean as its §0 states. Bills at 4.2% are then subtracted from historical returns | +0.10 → **+0.04** (range −0.01 to +0.10) at 6%. Details in §3.1 |
+| E3 | T21 §1.5, `summary21.py` | The W10 contribution uses κ 0.5 on the **post-1990** edge (n = 18). Track 17's R9, and track 22, use κ 0.25 below n = 20, or κ 0.5 on the full-history edge. Its "design convention" is era placebo + κ·edge, which keeps the full 1990–2026 drift (≈11% a year); it is not κ × the historical mean as its §0 states. Bills at 4.2% are then subtracted from historical returns | +0.10 → **+0.04** (range −0.01 to +0.11) at 6%. Details in §3.1 |
 | E4 | T21 §2.4 | M4 uses κ 0.5 on 26 trades in **12 episodes**, with an edge over a random-day spread of p 0.21 | At κ 0.25: +0.13 → +0.04 at 90 DTE, and the 60 → 90 gain is +0.08 → +0.05 (§3.2) |
 | E5 | T21 `portfolio_duration.py` | The 90- and 120-DTE O2 streams use a **60-day cool-down**, so two spreads (4% premium) can be open at once. That contradicts T21's own one-spread rule (the 3% factor budget) | T21's historical "Lean 90 days +2.37% vs +1.45%" gap is mostly O2 (+0.91% vs +0.19% a year), run at 0.80 spreads a year with up to 4% premium open, against 0.60 under its own rule. Its 60-vs-90 path comparison is not like-for-like |
 | E6 | T21 §8.3 | "Kill switch: 5 consecutive losers, or 1990+ p_era > 0.10 with new data" | Neither can tell an edge from no edge (§2.5) |
@@ -235,11 +275,11 @@ Figures are calendar spans for every SPY start day, 1993–2026 (`rules_calendar
 | **63 sessions, sell at the next open** | 91 | 97 | – / **75%** / 0 | 63 |
 | 63 sessions, sell at the close | 90 | 96 | – / 32% / 0 | 63 |
 | 84 sessions, sell at the next open | 121 | 130 | – / – / **69%** | 84 |
-| **CAL60 / CAL90 / CAL120** | 60 / 90 / 120 | 60 / 90 / 120 | **0** | 38–45 / 59–64 / 79–86 |
+| **CAL60 / CAL90 / CAL120** | 60 / 90 / 120 | 60 / 90 / 120 | **0** | 37–44 / 58–63 / 78–85 |
 
 - **The largest fixed count that always fits, with an open exit, is 37 sessions for 60 days, 58 for 90 and 78 for 120.** Track 22's 38/59/79 assume a close exit.
 - **Paired difference, CAL90 minus F63, per trade:**
-  - SPY: −0.05 points (t −0.2).
+  - SPY: +0.34 points (t 1.0); better in 11 of the 20 events, worse in 7.
   - Index 1990–2026: −0.13.
   - 1928–89: +0.19.
 - **Adopt the calendar-exact rule.** It costs nothing and is the only version that honours the cap.
@@ -252,11 +292,11 @@ Figures are paired against the plain exit, per trade (`rules_vix_void_and_ath_ex
 |---|---|---|---|---|
 | Skip entry if VIX > 45 at the signal | 1990–2026 | 0 (highest VIX 40.8, June 2020); VXO 1986–89 highest 28.2 | – | 0 |
 | Skip entry if VIX > 45 | 1928–85 | 3 of 36 by a realised-volatility proxy (not VIX) | – | not testable |
-| **Exit if VIX closes > 45 during the hold**, CAL90 | SPY 1993–2026 | 3 (1998, 2010, 2020) | +6.86% → +5.72% | **−1.14 (−1.6)**: sells at the panic lows (1998 +3.2% → −9.1%; 2010 +0.6% → −6.0%; 2020 −8.3% → −12.2%) |
-| Exit if VIX > 45, CAL120 | SPY 1993–2026 | 4 | +8.42% → +6.97% | −1.45 (−1.6) |
-| **New-all-time-high exit**, CAL90 | SPY 1993–2026 | 8 | +6.86% → +6.99% | +0.12 (+0.2) |
+| **Exit if VIX closes > 45 during the hold**, CAL90 | SPY 1993–2026 | 3 (1998, 2010, 2020) | +7.26% → +6.14% | **−1.12 (−1.6)**: sells at the panic lows (1998 +3.7% → −9.1%; 2010 +0.1% → −6.0%; 2020 −8.6% → −12.2%) |
+| Exit if VIX > 45, CAL120 | SPY 1993–2026 | 4 | +8.58% → +6.89% | −1.70 (−1.7) |
+| **New-all-time-high exit**, CAL90 | SPY 1993–2026 | 8 | +7.26% → +7.13% | −0.13 (−0.3) |
 | New-ATH exit, CAL90 | Index 1990–2026 / 1928–89 | 9 / 9 | +6.23% → +6.28% / +3.85% → +4.32% | +0.05 / +0.47 (+0.5) |
-| New-ATH exit, CAL120 | SPY 1993–2026 | 10 | +8.42% → +8.02% | −0.41 (−0.6) |
+| New-ATH exit, CAL120 | SPY 1993–2026 | 10 | +8.58% → +8.14% | −0.44 (−0.7) |
 
 - **Drop both.**
   - As an entry filter, the VIX void has never fired. As an exit it hurts.
@@ -294,15 +334,15 @@ Results are in `rules_cluster_summary.csv`:
 |---|---|---|---|---|---|---|
 | **Phase A, 6%** (with or without M2) | 17 | **0** | **0** | 100% | 100% | – |
 | Phase A, 6.7% | 17 | 10 (to 0.94) | 4 (4) | 96% | 97% | – |
-| Phase A, 6%, **literal 6% cluster cap** (3% left beside M2) | 17 | 10 (to 0.54) | 4 | 70% | 73% | – |
-| **Phase B, 6%, first come first served** | 17 | 1 (June 2009, to ≈0) | 0 | 94% | 85% | 0 of 20 |
-| Phase B, 6%, M4 before W10 | 17 | 1 | 0 | 94% | 85% | 0 |
-| Phase B, 6%, W10 and M4 share one slot | 17 | 2 (2003, 2009) | 0 | 88% | 73% | **5 of 20** skipped (1998, 2010, 2011, 2018, 2020) |
-| Phase B, 6.7%, first come first served | 17 | 11 | 3 | 90% | 81% | 4–5 |
+| Phase A, 6%, **literal 6% cluster cap** (3% left beside M2) | 17 | 10 (to 0.54) | 4 | 70% | 74% | – |
+| **Phase B, 6%, first come first served** | 17 | 1 (June 2009, to ≈0) | 0 | 94% | 86% | 0 of 20 |
+| Phase B, 6%, M4 before W10 | 17 | 1 | 0 | 94% | 86% | 0 |
+| Phase B, 6%, W10 and M4 share one slot | 17 | 2 (2003, 2009) | 0 | 88% | 74% | **5 of 20** skipped (1998, 2010, 2011, 2018, 2020) |
+| Phase B, 6.7%, first come first served | 17 | 11 | 3 | 90% | 82–83% | 4–5 |
 
 - **M1 was open at 10 of the 17 W10 entries**, and 9 of 20 SPY-era W10 events had an M1 signal on days 0–3. The two modules fire together, but at 6% each they fit: 3.90% of stress against the 4% reserve.
 - **In Phase A the reserve never binds.** Total stress with M2 and M3 on is 4.5 + 1.57 + 1.95 + 1.95 = 9.97%, just inside the 10% total cap.
-- **In Phase B it bound once in 33 years** (23 June 2009: M1 and the M4 spread bought on 16 June 2009 were open). W10 was skipped, and that was its best trade (+19.5%), which is why the "P&L kept" share is 85%. "One crash slot" is clearly worse.
+- **In Phase B it bound once in 33 years** (23 June 2009: M1 and the M4 spread bought on 16 June 2009 were open). W10 was skipped, and that was its best trade (+18.9%), which is why the "P&L kept" share is 86%. "One crash slot" is clearly worse.
 - M4 signals arrive in deep drawdowns, when M1's 200-day condition is off, so M1 + W10 + M4 together is rare.
 
 ### 2.5 Kill switch
@@ -341,9 +381,9 @@ The figures are % of NAV a year over T-bills, at 6% of NAV and one position at a
 
 | Cap | Trades a year | Design convention (κ 0.5 × SPY 1993–2026 mean) | Forward, κ 0.5 × SPY 1993–2026 edge (T21's basis) | **Forward, κ 0.5 × 1928–2026 edge (central)** | Forward, κ 0.25 × 1990–2026 edge | Edge gone, 3% S&P (low) | Track 21 (at 6.7%) |
 |---|---|---|---|---|---|---|---|
-| 60 (if W10 were run) | 0.51 | +0.041 | +0.022 | **+0.014** | +0.009 | −0.006 | 0 (shadow) |
-| **90** | 0.51 | **+0.101** | +0.071 | **+0.042** | +0.030 | **−0.008** | +0.10 (+0.03 to +0.13) |
-| 120 | 0.42 | +0.088 | +0.053 | **+0.046** | +0.022 | −0.010 | +0.10 (+0.03 to +0.13) |
+| 60 (if W10 were run) | 0.51 | +0.040 | +0.021 | **+0.014** | +0.009 | −0.006 | 0 (shadow) |
+| **90** | 0.51 | **+0.107** | +0.077 | **+0.042** | +0.030 | **−0.008** | +0.10 (+0.03 to +0.13) |
+| 120 | 0.42 | +0.091 | +0.056 | **+0.046** | +0.022 | −0.010 | +0.10 (+0.03 to +0.13) |
 
 **Why this central.**
 - The forward convention is the forward-looking one. At CAPE ≈41 the design convention keeps half of 1993–2026's ≈8-point equity premium over bills.
@@ -386,15 +426,15 @@ The figures are central (low to high), points over bills. The nominal return is 
 
 | Book | 60 days | 90 days | 120 days |
 |---|---|---|---|
-| **Phase A: M1 + M3 + W10** | +0.18 (−0.25 to +0.60) → **4.38%** | +0.22 (−0.26 to +0.70) → **4.42%** | +0.23 (−0.26 to +0.69) → 4.43% |
-| **Phase A + M2** (what is being built) | +0.78 (−0.25 to +1.80) → **4.98%** | +0.82 (−0.26 to +1.90) → **5.02%** | +0.83 (−0.26 to +1.89) → 5.03% |
+| **Phase A: M1 + M3 + W10** | +0.18 (−0.25 to +0.60) → **4.38%** | +0.22 (−0.26 to +0.71) → **4.42%** | +0.23 (−0.26 to +0.69) → 4.43% |
+| **Phase A + M2** (what is being built) | +0.78 (−0.25 to +1.80) → **4.98%** | +0.82 (−0.26 to +1.91) → **5.02%** | +0.83 (−0.26 to +1.89) → 5.03% |
 | Design Lean (M1, M3, M4, W8, W10), M4 at κ 0.25 | +0.19 → 4.39% | +0.28 → 4.48% | +0.28 → 4.48% |
 | Design Lean + M2, M4 at κ 0.25 | +0.79 (−0.50 to +2.06) → 4.99% | +0.88 (−0.44 to +2.20) → **5.08%** | +0.88 → 5.08% |
-| Design Lean + M2, M4 as track 21 | +0.85 (−0.49 to +2.14) → 5.05% | +0.97 (−0.43 to +2.31) → **5.17%** | +0.96 → 5.16% |
+| Design Lean + M2, M4 as track 21 | +0.85 (−0.49 to +2.14) → 5.05% | +0.97 (−0.43 to +2.32) → **5.17%** | +0.96 → 5.16% |
 | *Track 21: Lean / Lean + M2* | *4.45% / 5.05%* | *4.63% / 5.23%* | *4.60% / 5.20%* |
 
 **Value of the 90-day exception:**
-- **Phase A: +0.04** (−0.01 to +0.10).
+- **Phase A: +0.04** (−0.01 to +0.11).
 - **Phase B: +0.09 to +0.12** (W10 +0.04; M4 +0.05 to +0.08).
 - Years to 11× at Lean + M2 barely move: about 48–49 years before tax under every cap.
 
@@ -454,13 +494,13 @@ The streams are built as follows (`portfolio_history_paths.csv`, `portfolio_cris
 
 | Question | Answer | Central (range) | Why |
 |---|---|---|---|
-| **Loosen to 90 days?** | **Yes, but only as a module-level exception for W10 now (and M4 at 90 DTE in Phase B)** | +0.04 (−0.01 to +0.10) in Phase A; +0.09 to +0.12 with M4 | Positive in every convention except "edge gone". Cheap: one SPY buy and one sell, ≈0.5 times a year. It fits the existing M1 template and the 4% reserve at 6% sizing |
+| **Loosen to 90 days?** | **Yes, but only as a module-level exception for W10 now (and M4 at 90 DTE in Phase B)** | +0.04 (−0.01 to +0.11) in Phase A; +0.09 to +0.12 with M4 | Positive in every convention except "edge gone". Cheap: one SPY buy and one sell, ≈0.5 times a year. It fits the existing M1 template and the 4% reserve at 6% sizing |
 | Worth anything at 120 over 90? | **No** | W10 +0.046 vs +0.042; M4 +0.03 vs +0.04 (κ 0.25) | Fewer W10 trades (0.42 vs 0.51 a year); edge per trade the same or lower; deeper 2000–02 drawdown; longer exposure in crashes |
 | Global cap or module exception? | **Module exception** | Global adds ≈0 | M1's exit fires in ≈3 sessions; W8 is best at 20; M2 and M3 already continue; 260 new 3–4-month variants found nothing (track 22). A global cap only invites beta trades |
 | Keep 60 days instead? | **Defensible** | Costs ≈0.04 points now, ≈0.1 with M4 | The evidence is post-1990 only and fails a strict multiple-testing bar |
 
 **Risks and complexity it adds:**
-1. **Evidence.** The edge is post-1990 only: zero per episode in 1928–89. Deflated-Sharpe probability is 0.42–0.62, and paper trading can never confirm it (≈5 trades a decade). Treat it as a policy bet that costs little, not as a proven edge.
+1. **Evidence.** The edge is post-1990 only: zero per episode in 1928–89. Deflated-Sharpe probability is 0.45–0.64, and paper trading can never confirm it (≈5 trades a decade). Treat it as a policy bet that costs little, not as a proven edge.
 2. **Market risk.**
    - It adds 0.7% of NAV average SPY exposure.
    - It deepens crash-window drawdowns by up to ≈1.7 points: 2020 −7.3% → −8.9% with M2, and the full-period maximum −11.3% → −11.9%.
@@ -486,13 +526,13 @@ The streams are built as follows (`portfolio_history_paths.csv`, `portfolio_cris
   - Stress = notional × the S&P's worst 10-session loss (−32.5%) ≈ 1.95% of NAV.
   - The ledger and the email also show the horizon-matched stress: 6% × 48% ≈ 2.9% of NAV.
   - Exempt from circuit breakers (as §4); not exempt from G(D).
-- **Exit.** "Sell all" SPY market order, queued the evening before, for the open of the **last NYSE session dated on or before the entry date plus 90 calendar days**. That is 59–64 sessions in practice. No stop, no bracket, no profit target, no VIX void, no all-time-high exit.
+- **Exit.** "Sell all" SPY market order, queued the evening before, for the open of the **last NYSE session dated on or before the entry date plus 90 calendar days**. That is 58–63 sessions in practice. No stop, no bracket, no profit target, no VIX void, no all-time-high exit.
 - **Cluster.** As D below.
 - **Expected.**
   - About 0.5 trades a year (0–3; none in most years).
-  - 1993–2026: 88% winners, mean +7.2%, worst −8.3%, worst interim −31% (−1.8% of NAV).
+  - 1993–2026: 88% winners, mean +7.6%, worst −8.6%, worst interim −31% (−1.8% of NAV).
   - 1928–2026: 72% winners, worst −27% (1929).
-  - Planning contribution: **+0.04% of NAV a year (−0.01 to +0.10).**
+  - Planning contribution: **+0.04% of NAV a year (−0.01 to +0.11).**
 - **Kill switch.** Back to the shadow ledger if one W10 trade loses 15% or more, or if W10's cumulative realized P&L since go-live reaches −1.5% of NAV. Otherwise W10 is re-decided only at the annual review, against the shadow record of every uptrend −3% day at 60 and 90 days. These are damage limits; no rule can test W10's edge at 0.5 trades a year.
 - **Why a policy module.** Its forward Δg is ≈4–9 bp per trade, around the 6 bp hurdle, and its evidence is post-1990 only.
 
@@ -555,13 +595,13 @@ At 6% sizing this never bound in Phase A (1993–2026). In Phase B it bound once
 
 | Cell (one at a time) | n | Edge t | Bonferroni t at N 8 / 24 / 120 / 3,300 | Deflated-Sharpe probability at N 8 / 24 / 120 / 3,300 |
 |---|---|---|---|---|
-| SPY 1993–2026, CAL90 | 17 | 2.42 | 2.73 / 3.08 / 3.53 / 4.33 | **0.77 / 0.62 / 0.42 / 0.16** |
+| SPY 1993–2026, CAL90 | 17 | 2.51 | 2.73 / 3.08 / 3.53 / 4.33 | **0.79 / 0.64 / 0.45 / 0.18** |
 | SPY 1993–2026, F63 | 16 | 2.54 | same | 0.80 / 0.65 / 0.46 / 0.18 |
 | Index 1990–2026, CAL90 | 18 | 2.35 | same | 0.78 / 0.61 / 0.39 / 0.12 |
 | Index 1928–2026, CAL90 | 47 | 1.91 | same | 0.66 / 0.47 / 0.25 / 0.05 |
-| SPY 1993–2026, CAL60 | 17 | 0.69 | same | 0.22 / 0.10 / 0.03 / 0.00 |
+| SPY 1993–2026, CAL60 | 17 | 0.64 | same | 0.21 / 0.10 / 0.03 / 0.00 |
 
-- The Šidák-adjusted placebo p is 0.019 → 0.14 over track 17's 8 cells, and 0.37 over 24.
+- The Šidák-adjusted placebo p is 0.011 → 0.09 over track 17's 8 cells, and 0.24 over 24.
 - **W10 at 90 days fails even the smallest Bonferroni bar.**
 - The case for it is consistency and mechanism, as in tracks 17, 21 and 22:
   - positive in 1993–2007 and 2008–26;
@@ -586,6 +626,7 @@ Code is in `research/code/23-duration-verify/`. `python3 run_all.py` takes about
 | `s4_reconcile_mt.py` | Episodes, entry timing, deflated Sharpe, claims table, sub-periods, threshold robustness, borderline days, registry | `check_*.csv`, `variant_*.csv` |
 
 **Caveats:**
+- **Exit prices (corrected in Phase B).** SPY exits under F<H> and CAL<N> are at the open, and only the C<H> reconciliation cells sell at the close (`common23.close_exit`). Before the fix, CAL<N> exits were priced at the close; see "Correction (replay, Phase B)".
 - **Data before 1952.** Yahoo's ^GSPC has no Saturday sessions before 1952, so "20 sessions" and "200 days" are weekday counts there.
 - **Entries before 1990** are at the next close (a lower bound, §1.5).
 - **Costs** are 1–2 bp a side, with no taxes (the IRA).

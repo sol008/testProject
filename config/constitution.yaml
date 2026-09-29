@@ -92,19 +92,22 @@ modules:
     kill_switch:
       single_trade_loss: -0.15   # one trade losing 15% or more sends W10 back to shadow
       cumulative_pnl_pct_nav: -0.015
-    base_rates:              # track 23, SPY 1993-2026, calendar-exact 90 days, one position at a time
-      since: 1993
+    base_rates:              # track 23, SPY 1993-2026, calendar-exact 90 days sold at the open, one position at a time
+      since: 1993            # (re-run in Phase B: track 23 had priced these exits at the close; docs/phase-b/track23-fix.md)
       trades_per_year: 0.5
-      win_rate: 0.88
-      mean_pct: 7.2
-      placebo_mean_pct: 2.7
-      planning_mean_pct: 3.6
-      worst_pct: -8.3
+      win_rate: 0.88         # 15 of 17 trades (unchanged by the fix)
+      mean_pct: 7.6          # was 7.2 with the close exit
+      placebo_mean_pct: 2.7  # random entry days held just as long (2.65-2.67%, unchanged)
+      planning_mean_pct: 3.8 # half the mean (was 3.6)
+      worst_pct: -8.6        # Feb 2020 entry (was -8.3)
       worst_interim_pct: -31
       worst_interim_when: March 2020
       edge_since: 1990       # no edge before 1990 (1928-89: p 0.44)
     forecasts:
-      p_profit: 0.72         # shrunk from 0.88 (1928-2026: 0.72)
+      # Shrinkage: SPY 1993-2026's 0.88 is replaced by the full-history rate, CAL90 one at a time on the S&P 500
+      # total return 1928-2026 (34 of 47 trades won = 0.72), which includes the pre-1990 era where the edge is absent.
+      # Neither rate moved with the Phase B fix (the index samples exit at the close by design; SPY stays 15 of 17).
+      p_profit: 0.72
 
   # ---- Phase B (design v3.3 §10; docs/PHASE_B_CONTRACTS.md §10). Each block is completed by its build. ----
 

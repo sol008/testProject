@@ -163,15 +163,15 @@ Below these sizes the system uses SPY, IBIT and ETFs.
   - Notional = **6% of NAV × G(D)**. Stress = notional × the S&P's worst 10-session loss (−32.5%) ≈ 1.95% of NAV.
   - The ledger and the email also show the horizon-matched planning loss: 6% × 48% ≈ 2.9% of NAV.
   - 6.7% would breach the 2% per-trade cap, so it is not used.
-- **Exit.** "Sell all" SPY market order, queued the evening before, for the open of the **last NYSE session dated on or before entry + 90 calendar days**. That is 59–64 sessions in practice.
+- **Exit.** "Sell all" SPY market order, queued the evening before, for the open of the **last NYSE session dated on or before entry + 90 calendar days**. That is 58–63 sessions in practice.
   - No stop, no bracket, no profit target.
   - The VIX > 45 void and the all-time-high exit are dropped. The void never fired at entry and hurt as an exit; the all-time-high exit is noise (track 23 §2.2).
 - **Cluster.** Shares the 4% US-equity reserve. M1 goes first (§4, "Clusters").
 - **Expected.**
   - About 0.5 trades a year (0–3; none in most years).
-  - 1993–2026: 88% winners, mean +7.2%, worst −8.3%, worst interim −31% (−1.8% of NAV).
+  - 1993–2026: 88% winners, mean +7.6%, worst −8.6%, worst interim −31% (−1.8% of NAV).
   - 1928–2026: 72% winners, worst −27% (1929).
-  - **Planning contribution: +0.04% of NAV a year (−0.01 to +0.10).** The edge exists only after 1990 (deflated-Sharpe probability 0.42–0.62), so this is a cheap policy bet, not a proven edge.
+  - **Planning contribution: +0.04% of NAV a year (−0.01 to +0.11).** The edge exists only after 1990 (deflated-Sharpe probability 0.45–0.64), so this is a cheap policy bet, not a proven edge.
 - **Kill switch.** W10 goes back to the shadow ledger if one trade loses ≥15%, or if its cumulative realized P&L since go-live reaches −1.5% of NAV. Otherwise it is re-decided only at the annual review, against the shadow record of every uptrend −3% day at 60 and 90 days. At 0.5 trades a year no rule can test the edge itself (track 23 §2.5).
 - **Why a policy module.** Its forward Δg is ≈4–9 bp per trade, around the 6 bp hurdle, on post-1990 evidence only (your approval: decision 12).
 
@@ -354,7 +354,7 @@ Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk,
 | M2 trend (s = 0.5) | 12 rebalances | 0 to +1.2% ((a) or (c)); negative for (b) without a short rebate | Fails Bonferroni alone; live funds −0.01 to 0.60 |
 | M3 BTC switch (3%) | ≈5 | −0.3 to +0.5% | Alpha t ≤ 1.34 |
 | M4 O2 (2% debit; Phase B) | ≈0.6 at 90 DTE, one spread at a time (idle ≈60% of years) | **+0.04% at κ 0.25** (+0.13% at κ 0.5) at 90 DTE; −0.01% / +0.05% at 60 DTE | 12 episodes, mostly post-2008. Next-day entry keeps +0.21 of debit at 60 DTE; edge vs a plain call spread p 0.21–0.64 (tracks 21, 23) |
-| **W10 crash-day buy (6%, 90-day exception)** | **≈0.5** (0–3; none in most years) | **+0.04% (−0.01 to +0.10)** | Post-1990 only: +6.9% vs +2.7% random, p 0.019; 1928–89 p 0.44; deflated Sharpe 0.42–0.62 (track 23) |
+| **W10 crash-day buy (6%, 90-day exception)** | **≈0.5** (0–3; none in most years) | **+0.04% (−0.01 to +0.11)** | Post-1990 only: +7.3% vs +2.7% random, p 0.011; 1928–89 p 0.44; deflated Sharpe 0.45–0.64 (track 23) |
 | M5 W8 (and W9 on paper) | ≈0.4–2 | −0.1 to +0.2% (central +0.02%) | n = 5–17 |
 | M6 | ≈0.3 | 0 (shadow only since v3.2) | n ≈ 3 |
 | M7 O1 (paper; ≥$162k) | ≤9 | −0.2 to +0.3%; 0 at $100k | Real-price alpha ≈0 |
@@ -577,6 +577,24 @@ Beyond the window: 11 Dec (government funding) and 10 Jan (US–China truce).
 ---
 
 ## Appendix B — v3.3: the holding-cap decision and track 23's fixes
+
+**Correction (replay, Phase B).** Track 23 priced W10's calendar-exact exits at the close, not the open, because a `rule.startswith("C")` test also matched "CAL" (`docs/phase-b/replay.md` finding 3; `docs/phase-b/track23-fix.md`). Re-run at the open, SPY 1993–2026, CAL90:
+
+| | Before | After |
+|---|---|---|
+| Win rate, one at a time (17 trades) | 88% | 88% |
+| Mean / worst trade | +7.2% / −8.3% | +7.6% / −8.6% |
+| All 20 events vs random entries | +6.9% vs +2.7%, p 0.019 | +7.3% vs +2.7%, p 0.011 |
+| One at a time: p_era | 0.020 | 0.012 |
+| Deflated-Sharpe probability | 0.42–0.62 | 0.45–0.64 |
+| Sessions held | 59–64 | 58–63 |
+| Planning contribution | +0.04% (−0.01 to +0.10) | +0.04% (−0.01 to +0.11) |
+| Phase A book at 60 / 90 / 120 days | 4.98 / 5.02 / 5.03% | unchanged |
+
+- Unchanged: the 1928–2026 figures, the 2008–2026 backtests and drawdowns, and M4.
+- Decision 12's conclusion holds: 90 days for W10 (and M4 in Phase B), 120 days rejected.
+
+**The v3.3 changes:**
 
 | Change | Where | Source |
 |---|---|---|

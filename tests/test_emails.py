@@ -101,8 +101,8 @@ def m3_switch(on=True, account="ira", **facts_over) -> Recommendation:
                                       "profit", "p": 0.45}] if on else [])
 
 
-W10_BASE_RATES = {"since": 1993, "trades_per_year": 0.5, "win_rate": 0.88, "mean_pct": 7.2, "placebo_mean_pct": 2.7,
-                  "worst_pct": -8.3, "worst_interim_pct": -31, "planning_mean_pct": 3.6}
+W10_BASE_RATES = {"since": 1993, "trades_per_year": 0.5, "win_rate": 0.88, "mean_pct": 7.6, "placebo_mean_pct": 2.7,
+                  "worst_pct": -8.6, "worst_interim_pct": -31, "planning_mean_pct": 3.8}
 
 
 def w10_entry(**facts_over) -> Recommendation:
@@ -333,7 +333,7 @@ def test_w10_entry_explains_the_crash_day_buy():
     # headline box
     assert "−$1,950 (−1.95% of portfolio) if SPY repeats its worst crash on record; −$2,886 (−2.89%) over the " \
            "full hold" in f
-    assert "88% of past trades made money; average +7.2%, worst −8.3%" in f
+    assert "88% of past trades made money; average +7.6%, worst −8.6%" in f
     assert "CONFIDENCE Low to medium: a small timing edge on about three months of market exposure; proven only " \
            "after 1990" in f
     assert "STATUS PAPER · W10 policy module, 90-day exception · paper phase" in f
@@ -344,14 +344,14 @@ def test_w10_entry_explains_the_crash_day_buy():
     assert "It's the first drop of 3% or more in 20 trading sessions" in f
     assert "the S&P closed above its 200-day average of 7,212.40, so the trend was up." in f
     assert "buy the shock, hold about three months, and sell on a fixed date." in f
-    assert "Since 1993, these trades averaged +7.2%, against +2.7% for random entry days held just as long." in f
+    assert "Since 1993, these trades averaged +7.6%, against +2.7% for random entry days held just as long." in f
     assert "not in older data, so this is a small, cheap bet." in f
     assert "Sell all at the open on Thu 31 Dec: the last trading day within 90 calendar days of the purchase. " \
            "You'll get an EXIT email the evening before." in f
     assert "No stop-loss, no profit target and no early exit." in f
     assert "You'll get an email telling you to sell" not in f      # the plan already says when the email comes
     # odds and risks
-    assert "Since 1993 this rule fired 0.5 times a year; 88% of trades made money; average +7.2%; worst −8.3%." in f
+    assert "Since 1993 this rule fired 0.5 times a year; 88% of trades made money; average +7.6%; worst −8.6%." in f
     assert "80%: the trade closes with a profit" in f
     assert "A crash can deepen after the first shock. Since 1993, the worst trade was down 31% at one point" in f
     assert "Planning loss over the full hold: about $2,886 (2.89% of the portfolio)" in f

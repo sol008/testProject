@@ -27,7 +27,7 @@ def calendar_spans() -> pd.DataFrame:
         X = K.exit_positions(I, e, rule)
         ok = X > 0
         days = (I.dnum[X[ok]] - I.dnum[e[ok]]).astype(float)
-        if rule.startswith("C"):
+        if K.close_exit(rule):                                # C<H> only; CAL<N> sells at an open
             sess = (X[ok] - e[ok] + 1).astype(float)          # close of session H -> H sessions held
         else:
             sess = (X[ok] - e[ok]).astype(float)              # open of session H+1 -> H sessions held
