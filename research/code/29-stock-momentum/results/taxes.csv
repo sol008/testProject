@@ -1,0 +1,7 @@
+item,value
+book pre-tax CAGR,0.1214
+book after tax CAGR (taxable),0.0950
+SPY pre-tax CAGR,0.0828
+"SPY after dividend tax, gain deferred",0.0789
+"SPY after tax, liquidated at the end",0.0712
+share of closed trades held <= 365 days,0.8606
