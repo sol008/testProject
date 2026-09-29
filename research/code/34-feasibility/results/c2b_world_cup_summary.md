@@ -1,0 +1,3 @@
+| years | median winning return | lowest winning return | highest | winning returns >= +100% | winning returns >= +1000% | repeat winners |
+|---|---|---|---|---|---|---|
+| 42 | 252% | 2001: +53% | 1987: +11,376% | 37 of 42 | 3 of 42 | Andrea Unger (3), Chuck Hughes (2), Kurt Sakaeda (2), Michael Cook (2), Mike Lundgren (3), Ralph Casazzone (2), Stefan Seibert (2) |
