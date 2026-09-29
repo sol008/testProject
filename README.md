@@ -14,7 +14,7 @@ A small, rule-based trade recommendation system for one person. Once a week, on 
   |---|---|---|---|
   | **G1** | SSO (2x S&P 500) and QLD (2x Nasdaq-100) in the Robinhood IRA; SGOV when out | its index's Friday close is above its 200-day average (a 2% band) | 25% of the IRA each, × G |
   | **G2** | IBIT; SGOV when off | Bitcoin's Sunday close is above its 10-week and its 200-day average | 30% × G (ceiling 50%) |
-  | **G3 + cash** | SGOV: the gems reserve (two special-situation rules on paper until they prove themselves) and the cash sleeve | always | 15% + 5% |
+  | **G3 + cash** | SGOV: the gems reserve (two special-situation rules on paper until they prove themselves: the daily run screens closed-end funds at crash discounts and crypto trusts at a discount with a conversion filing, keeps their shadow trades and prints the promotion tests; a rule you set `live` takes its slots from the reserve) and the cash sleeve | always | 15% + 5% |
   | **W10** | SPY from the SGOV cash after an uptrend −3% day, held 90 days | bought at the next Sunday email | 6% × G |
 
   - **G, the governor:** full size until the book is 15% below its peak, linearly down to a quarter at 35%, re-set every Sunday; the **hard stop** sells everything to SGOV at −40% and pauses the book until a review.

@@ -306,3 +306,111 @@ Sunday, the Sunday order set sells the leg again and the second sell is cancelle
 The Rule E score compares one price with one price; the annual review reads `rule_e.scores` for the running value.
 The annual hurdle line reads the v4 `status` keys as lifecycle values, not labels, and names the growth book as a
 policy module (`reports.module_statuses`; settled at integration).
+
+## 11. G3, the gems runner (Phase C4a)
+
+Design v4 §3 G3 (the reserve, G3a the CEF crash-discount buy, G3b the crypto-trust discount with a filed catalyst,
+G3c the owner decision), §4 (single names ≤ 5% each, ≤ 2 open; a 60-calendar-day time stop for G3a), §8 (the
+quarterly promotion tests), A.2 "G3 gems runner", A.3 (the state keys and the `g3_shadow` record); track 35 §3.3
+(the CEF rule as tested, `research/code/35-gems/cef_crash_discounts.py`) and §6 (G1 and G2 with their promotion
+tests). Both rules run on paper from the first daily run; a rule trades the reserve only after the owner sets
+`status: live` in the constitution.
+
+| File | What |
+|---|---|
+| `traderec/modules/g3_gems.py` | The pure rules: `cef_discount`, `discount_stats`, `cef_crash_check`, `cef_exit_due`, `cef_exit_check`, `crash_mode_update`, `entry_capacity`, `rank_triggers`; `trust_nav`, `trust_nav_series`, `catalyst_status`, `crypto_trust_check`, `crypto_trust_exit_check`, `widened`; `random_entry_baseline`, `total_return_price`; `cef_promotion_test`, `trust_promotion_test`, `shadow_stats` |
+| `traderec/runners/g3.py` | `daily(run)`: the daily hook (after Rule E, while `growth.enabled`); `sunday_book(...)` and `record_orders(...)`: the Sunday job's view of the live rules; `rule_state`, `new_rule_state`, `promotion_test`, `rules_of`, `rule_label` |
+| `traderec/pipeline.py` | Two lines in `_daily` after Rule E: `runners.g3.daily(run)` while `growth.enabled`; `traderec/runners/__init__.py` exports `g3` |
+| `traderec/growth/weekly.py`, `orders.py` | `sleeve_targets(..., g3_held_usd, g3_buy_usd)` carves the slots out of the reserve; `build_order_set(..., g3=...)` ranks the exits with the sells and the entries after the G1/G2 buys; the Sunday job ties the orders to their slots, writes the facts' `g3` block and one sleeve row per live slot |
+| `traderec/growth/email.py`, `traderec/email_text/growth.py`, `traderec/validator.py` | The "Gems" section (the reserve line, the promoted rules' slots and orders, what waits, each rule's shadow tally and its promotion test) from numbered phrases without digits (`_gems_slots`); `growth_problems` rejects more single names, or a larger one, than the caps allow |
+| `traderec/reports.py`, `traderec/emails.py` | `g3_review(run, asof)` in the quarterly and annual reports; `_ReviewEmail.promotion_blocks` prints the gems rules' tests next to the EDGAR setups' (`edgar_review`, computed since Phase B but not printed until now) |
+| `config/constitution.yaml` | `growth.sleeves.G3.rules.cef_crash_discount.{label, nav_symbol, min_observations, horizon_sessions, baseline_min_windows, promotion, universe, funds}`, `crypto_trust_discount.{label, promotion, universe}` (`C4a:` keys) |
+| `tests/test_g3.py` | The z-score trigger, each filter failing closed, the exits, crash mode (pure and in the runner), the trust rule and its exits, the NAV rebuild, both promotion tests, the shadow runner end to end, the missing-series alerts, the trust runner with a fake EDGAR client (one search a week; an EDGAR error fails closed), a live rule's Sunday (the reserve, the caps, the 3-order budget, the email and its validation, the Monday fill, the exit, the ledger, the quarterly review), the slot table |
+
+**The CEF rule as implemented** (`cef_crash_check`, run at every close for every fund of `universe`). The discount
+history is price ÷ NAV − 1 with the reference script's cleaning (NAV prints ≤ 0 dropped, a NAV gap carried at most
+3 sessions, a discount outside ±60% blanked); its rolling 252-session mean and standard deviation need 200 prints.
+The fund triggers when all hold on the close of the run date: z ≤ −2.5; a NAV printed for that date (a carried or
+older NAV is "nav stale"); the close ≥ $5; the mean of close × volume over the last 20 sessions ≥ $1m; and the
+owner's leverage figure for the fund (`funds.<ticker>.leverage`, with its `as_of`) ≤ 35% (a null figure is
+"leverage unknown"). The triggers are ranked by z (the widest discount first) and enter up to the free slots (2;
+one slot per fund). Crash mode: the distinct funds triggering in the Monday–Sunday week are counted; from 10 the
+mode lasts that week and the next two, with at most ⌈2 ÷ 3⌉ = 1 new entry a week; the triggers that cannot enter
+are logged as `filtered` and re-tried at their next trigger. Exit at the last session within 60 calendar days of
+the entry, or on the first close where the discount is at or above its trailing mean (again with the same-evening
+NAV). The shadow book fills at the next session's open with the fill model's slippage (the pipeline's shadow books'
+mechanic) and scores each trade on the total-return basis (adj_close ÷ close at the entry and the exit) against the
+fund's unconditional mean 60-session return over the trailing 252 sessions before the entry (every complete window;
+at least 100); the excess feeds the promotion test.
+
+**The trust rule as implemented** (`crypto_trust_check`). NAV is the coin's close on the trust's session × the
+sponsor's coins-per-share figure decayed at fee ÷ 365 a day from its `as_of` (track 35 §3.1), or a sponsor NAV
+series when `nav_symbol` names one the provider serves. The trust triggers when the discount is ≤ −25% on each of
+the last 5 closes (each with its own NAV) and a catalyst is on file: a conversion filing (S-1, S-1/A, S-3 or S-3/A
+by the trust's own CIK, not withdrawn) found by one EDGAR search per trust per week (`EdgarClient.search`, forms
+"S-1,S-1/A,S-3,S-3/A,RW", the last 365 days, cached in the state with its date; any EDGAR error is a `data` alert
+and no catalyst until a later search works), or a dated decision (`decision_date`) within 120 days. A premium never
+triggers. Exit when the discount is ≥ −3% on 3 consecutive closes, on the trust's `conversion_date`, or when the
+filing is withdrawn (an RW after it on EDGAR, or the owner's `withdrawn_date`). Each episode tracks its lowest
+discount and the flag "widened by more than 15 points after entry"; the score is the trust's return less the coin's
+over the episode.
+
+**The daily runner** (`runners.g3.daily`), per rule with status `shadow` or `live` (the country rule gets a note):
+settle yesterday's pending entries and exits (the shadow book from the bars; a live slot from the Sunday order's
+paper fill in `state.fills`, or void when the order was cancelled); check every open slot's exit; screen the
+universe (one `data` alert per missing price or NAV series per run, the fund skipped); refresh `shadow_stats` and
+the promotion test; write one `promotion_test` record at the first run of each quarter. A live slot is never
+shadow-filled: one book per rule.
+
+**The Sunday job under a live rule** (`runners.g3.sunday_book`, called from `weekly.run`). Each pending entry is
+bought with `slot_weight` × G × the IRA's NAV, at most `caps.single_name` (5%) × NAV and what is left of the reserve
+(15% × G × NAV), while fewer than `caps.single_names_open` (2) single names are open across both rules, the widest
+discount first; a ticker off `config/whitelist.yaml` waits with an `order` alert. A pending exit (and every held
+slot under the hard stop) is "Sell all <ticker>" in Step 1. The entries rank after the G1/G2 buys and before the
+SGOV sweep and W10, so a switch week defers them ("the 3 orders are used") and they wait for the next Sunday; an
+entry not bought within 14 days of its signal is void. The SGOV residual shrinks by what the slots hold or buy
+(`sleeve_targets`), and `state.growth.sleeves.G3.reserve` becomes the reserve's part still in SGOV. The facts record
+gains `g3` (§4's shape, plus `sgov_usd`, `slots_usd`, `single_names_open`, `single_names_max`, `single_name_cap_usd`,
+`waiting`, and each slot's `order`: buy, sell, deferred or none) and one sleeve row per live slot ("G3 <rule>",
+state entry / open / exit). The email's "Gems" section follows the target table: the reserve line, the promoted
+rules' line, one line per slot with its order, what waits, and each rule's shadow tally ("<rule>: n shadow trades
+closed, mean excess x over random entry; k of m promotion checks pass"); a passed test adds "set status: live in
+the constitution to trade the reserve with it". When no rule is live the reserve line is the C1 one and the tally
+lines show the rules working on paper.
+
+**Promotion is the owner's decision.** The quarterly and annual reviews print "Promotion tests (rules on paper;
+you decide)": one row per gems rule (status, closed trades, mean excess, checks passed, verdict) and one per EDGAR
+setup, recomputed on the events closed by the review's as-of date; a passed gems test adds the line above. Nothing
+promotes a rule but the owner's edit of `status` (docs/OPERATIONS.md §1 "The gems rules").
+
+**Interpretations (C4a)**
+
+| Where | The design says | Built as | Why |
+|---|---|---|---|
+| §3 G3a "NAV published the same evening" | — | a NAV print stamped the signal date; a carried or older print is "nav stale" (no trigger); the history behind the statistics keeps the reference script's 3-session carry | a stale NAV is a guess |
+| §3 G3a "fund leverage ≤ 35%" | — | an owner-maintained figure per fund in the constitution (`funds.<ticker>.{leverage, as_of, source}`); null, or no `as_of`, is "leverage unknown" and fails closed; no age check | no provider serves leverage; the figure is reviewed data |
+| §3 G3a "price ≥ $5, ADV ≥ $1m" | — | the close on the signal day; the mean of close × volume over the last 20 sessions (20 needed) | the reference script's inputs |
+| §3 G3a "when the discount is back at its mean" | — | the first close where the discount ≥ its trailing 252-session mean, with the same-evening NAV; without it only the time stop applies | fail closed to holding |
+| §3 G3a "the last session within 60 calendar days" for a live slot | entries in the Sunday email | sold at the next Sunday email's Monday once the Monday after that would be past the cap (never later than the cap, at most a week early) | one Sunday email a week; no mid-week order kind for a gems exit |
+| §3 G3a shadow fills and scores | "extends track 24's shadow" | the next session's open with the fill model's slippage; the total-return basis; the baseline from every complete 60-session window in the trailing 252 sessions before the entry (≥ 100 windows), else the trade carries no excess and does not count in the test | the pipeline's shadow books; the reference script's adjusted closes |
+| §3 G3a "2 slots, widest first" | — | one slot per fund; a fund in a slot is not re-entered; after an exit it may re-enter on its next trigger | the reference's 40-session cooldown is shorter than the 60-session hold |
+| §3 G3a crash mode | "≥ 10 triggers in a week: stagger over 3 weeks" | distinct funds triggering in the ISO week; the mode lasts that week and the next two; ⌈slots ÷ weeks⌉ = 1 entry a week; refused triggers are logged, not queued | a crash keeps re-triggering; the widest each week wins |
+| §3 G3a promotion "positive median in both halves" | — | the median excess over random entry in each half of the closed trades by entry date; live trades count in the record too | the same quantity as the mean test |
+| §3 G3b "S-1/S-3/19b-4" | — | S-1, S-1/A, S-3, S-3/A by the trust's own CIK; a 19b-4 (the exchange's filing) is not searched, a dated decision covers it; an RW after the filing voids it; one search per trust per week, one retry a day on failure; no EDGAR source = no catalyst | one call a week; fail closed |
+| §3 G3b "at conversion" and "on withdrawal" | — | the owner's `conversion_date` and `withdrawn_date` in the trust's entry, and the RW above | NAV tracking cannot be told from the price alone |
+| §3 G3b NAV | track 35 §3.1's method | the coin's close on the trust's session × coins-per-share decayed at fee ÷ 365 a day from `as_of`, or a sponsor NAV series (`nav_symbol`); a missing figure fails closed | never a guessed figure |
+| §3 G3b time stop | §4: none for G3b | none; track 35's "60 days after a scheduled decision" is the owner's `withdrawn_date` | the design's table |
+| §4 "≤ 5% each, ≤ 2 open" | — | min(weight × G × NAV, 5% × NAV, the reserve's remainder); open plus this week's buys ≤ 2 across both rules; the rest wait | the caps are on names, not rules |
+| §3a.3 ranking | "the largest buys, then the SGOV buy, then W10" | gems entries after the G1/G2 buys, before the sweep and W10; exits with the sells; a deferred entry stays pending; an entry not bought within 14 days is void | a deferred switch matters more than a gem |
+| §3a.9 "the G3 universes are whitelisted per rule" | — | the universe names the candidates; a live order still needs the ticker in `config/whitelist.yaml` (`check_venues.py`), else it waits with an `order` alert | the broker's whitelist is the tradability record |
+| §7.4, A.3 promotion | "promoted and demoted on their own track 35 tests" | `status: live` by the owner's edit only; a rule set live keeps its open shadow slots on paper until they close; a demoted rule's live slots are still sold by the Sunday job | the reviews report, never promote |
+| Missing data | — | one `data` alert per missing series per run (deduplicated), the fund skipped; a rule's exception is a `data` alert and a `g3_shadow` error record, never a failed run | the EDGAR runner's manner |
+| §8 "Quarterly: G3 promotion tests" | — | a `g3_shadow` `promotion_test` record at the first daily run of each quarter; the review recomputes the test on the events closed by its as-of date | the ledger is the record |
+| G3c | "shadow only; an owner decision" | a state note only | decision 8 |
+
+**Owner setup and limits.** The leverage figures: on 29 Sep 2026 one fetch of each sponsor's fund page was tried
+from the build sandbox and only Virtus's NFJ page gave a figure (0.00%, as of 31 Aug 2026); the other 17 funds are
+`null` and fail closed until the owner fills them (docs/OPERATIONS.md §1). The trust universe is empty: BITW is an
+NYSE Arca ETF since 9 Dec 2025, GDOG and GSUI file as ETFs in 2026, and GXLM (still a trust, an S-1 filed 24 Sep
+2025) needs its venue, redemption terms, daily NAV, XLM per share and fee read from the sponsor before an entry is
+written. A live rule's tickers must be on the whitelist. `scripts/replay.py` does not run the gems runner.

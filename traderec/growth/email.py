@@ -140,9 +140,10 @@ def slot_specs(facts: dict) -> list[dict]:
         if s.get("name", "").startswith("G2") and (_num(why.get("vol_cut_factor")) or 1.0) < 1.0:
             _slot(out, "why_vol", P["why_vol"], {"vol": (why.get("vol60_pct"), "ppct0"),
                                                  "factor": (why.get("vol_cut_factor"), "num2")})
-        if s.get("name", "").startswith("G3"):
-            _slot(out, "gems", P["gems"], {"g3": (why.get("g3_reserve_usd"), "money"),
-                                           "cash": (why.get("cash_sleeve_usd"), "money")})
+        if s.get("name", "").startswith("G3") and s.get("state") == "reserve":
+            _slot(out, "gems", P["gems_promoted" if why.get("promoted_rules") else "gems"],
+                  {"g3": (why.get("g3_reserve_usd"), "money"), "cash": (why.get("cash_sleeve_usd"), "money")})
+    _gems_slots(out, facts)
     orders = facts.get("orders") or {}
     for o in orders.get("step1") or []:
         t = str(o.get("ticker") or "")
@@ -228,6 +229,48 @@ def slot_specs(facts: dict) -> list[dict]:
         _slot(out, "re_count", P["rule_e_count"], {"n": (re_facts.get("count_year"), "int"),
                                                    "max": (re_facts.get("max_per_year"), "int")})
     return out
+
+
+def _gems_slots(out: list[dict], facts: dict) -> None:
+    """The gems paragraph's phrases (design v4 §3 G3; Phase C4a) from `facts["g3"]`: the promoted rules' line, one
+    per live slot (a fund slot names its z, a trust slot has none), and one tally per rule with closed shadow trades.
+    A pending slot without a buy this week has no numbers of its own (the renderer's waiting line covers it)."""
+    P = text.PHRASES
+    g3 = facts.get("g3") or {}
+    if not isinstance(g3, dict):
+        return
+    if g3.get("promoted_rules"):
+        _slot(out, "gems_live", P["gems_live"], {"open": (g3.get("single_names_open"), "int"),
+                                                 "max": (g3.get("single_names_max"), "int"),
+                                                 "slots": (g3.get("slots_usd"), "money"), "sgov": (g3.get("sgov_usd"), "money")})
+    for slot in g3.get("slots") or []:
+        t, status = str(slot.get("ticker") or ""), str(slot.get("status") or "")
+        trust = slot.get("z") is None
+        fields = {"usd": (slot.get("usd"), "money"), "disc": (slot.get("discount"), "spct1")}
+        if not trust:
+            fields["z"] = (slot.get("z"), "snum2")
+        if status == "pending_entry":
+            if (_num(slot.get("usd")) or 0.0) <= 0:
+                continue
+            _slot(out, f"gems_slot_{t}", P["gems_slot_pending_trust" if trust else "gems_slot_pending"], fields,
+                  subs={"ticker": t, "when": _day_label(slot.get("signal_date"), "its signal day")})
+        else:
+            subs = {"ticker": t, "state": "open" if status == "open" else "selling next",
+                    "entry": _day_label(slot.get("entry"), "its entry day")}
+            if not trust:
+                subs["due"] = _day_label(slot.get("exit_due"), "the time stop")
+            _slot(out, f"gems_slot_{t}", P["gems_slot_trust" if trust else "gems_slot"], fields, subs=subs)
+    for name, sh in (g3.get("shadow") or {}).items():
+        if not isinstance(sh, dict) or int(_num(sh.get("n")) or 0) <= 0:
+            continue
+        prom = sh.get("promotion") or {}
+        label = str(sh.get("label") or name)
+        fields = {"n": (sh.get("n"), "int"), "k": (prom.get("checks_ok"), "int"), "m": (prom.get("checks_total"), "int")}
+        if _num(sh.get("mean_excess")) is not None:
+            _slot(out, f"gems_tally_{name}", P["gems_tally"], {**fields, "ex": (sh.get("mean_excess"), "spct2")},
+                  subs={"rule": label, "basis": str(sh.get("basis") or "random entry")})
+        else:
+            _slot(out, f"gems_tally_{name}", P["gems_tally_partial"], fields, subs={"rule": label})
 
 
 def rule_e_slot_specs(facts: dict) -> list[dict]:
@@ -348,7 +391,7 @@ class _GrowthEmail:
             cells = row.split(" ") if row else [t, str(s.get("state") or ""), "—", "—", "—", "—"]
             sleeve = str(s.get("name") or "").split(" ")[0]
             if sleeve == "G3":
-                sleeve = "G3 + cash"
+                sleeve = "G3 + cash" if s.get("state") == "reserve" else "G3 gems"
             rows.append([self.reg.register(sleeve), *cells])
         return ["Sleeve", "Fund", "State", "Target (% of IRA)", "Target $", "Now $", "Change"], rows
 
@@ -392,6 +435,34 @@ class _GrowthEmail:
         elif w10.get("state") in ("open", "pending_entry", "pending_exit") and w10.get("exit_due"):
             out.append(f"The crash-day buy (W10) holds SPY until {self.date_(w10['exit_due'])}; the daily run sends "
                        "its exit.")
+        return out
+
+    def gems_lines(self) -> list[str]:
+        """The gems paragraph (design v4 §3 G3): the promoted rules' slots and orders, what waits, and each rule's
+        shadow tally with its promotion test; a passed test says what the owner does next (no digits of its own)."""
+        g3 = self.f.get("g3") or {}
+        if not isinstance(g3, dict):
+            return []
+        out: list[str] = []
+        live = self.phrase("gems_live")
+        if live:
+            out.append(live + ".")
+        tails = {"buy": "gems_order_buy", "sell": "gems_order_sell", "deferred": "gems_order_deferred"}
+        for slot in g3.get("slots") or []:
+            phrase = self.phrase(f"gems_slot_{slot.get('ticker')}")
+            if phrase:
+                tail = text.STATIC.get(tails.get(str(slot.get("order") or ""), ""), "")
+                out.append(phrase + "." + (f" {tail}" if tail else ""))
+        for w in g3.get("waiting") or []:
+            out.append(f"{w.get('ticker')}: its entry waits ({self.reg.register(str(w.get('why') or ''))}).")
+        for name, sh in (g3.get("shadow") or {}).items():
+            if not isinstance(sh, dict):
+                continue
+            label = str(sh.get("label") or name)
+            phrase = self.phrase(f"gems_tally_{name}")
+            out.append((phrase + ".") if phrase else _lit(text.STATIC["gems_none"], {"rule": label}))
+            if (sh.get("promotion") or {}).get("passed") and str(sh.get("status")) != "live":
+                out.append(_lit(text.STATIC["gems_passed"], {"rule": label}))
         return out
 
     def step1_lines(self) -> list[str]:
@@ -559,8 +630,13 @@ class _GrowthEmail:
                                 "until the review with you. The daily run keeps marking the book."))
         blocks += [("h", "Target vs now"), ("table", self.target_table())]
         gems = self.phrase("gems")
-        if gems:
-            blocks.append(("p", f"The cash fund (SGOV) holds {gems}."))
+        gems_lines = self.gems_lines()
+        if gems or gems_lines:
+            blocks.append(("h", "Gems"))
+            if gems:
+                blocks.append(("p", f"The cash fund (SGOV) holds {gems}."))
+            if gems_lines:
+                blocks.append(("ul", gems_lines))
         blocks += [("h", "Why"), ("ul", self.why_lines())]
         # headings carry no dates: the text part upper-cases them, which would change a date's registered form
         blocks.append(("h", f"{self.step1_label}: the sells"))

@@ -10,6 +10,7 @@ Trading runners raise like Phase A modules; shadow runners are guarded (an excep
 from __future__ import annotations
 
 from . import crypto, edgar, m4, macro, macro_shadows, option_shadows
+from . import g3  # after edgar: the gems runner reads the EDGAR source through it (design v4 G3, Phase C4a)
 
 # Shadow books (no emails), run after the Phase A shadow book, each inside the pipeline's guard.
 SHADOW_RUNNERS = ("option_shadows", "crypto", "edgar", "macro_shadows")
@@ -18,5 +19,5 @@ SPREAD_MODULES = {"M4": m4, "W8": macro, "W9": macro}
 # Runners that do work at the 10:17 ET snapshot (options_job) or ask for roots to snapshot (roots_needed).
 OPTIONS_JOB_RUNNERS = ("m4", "macro", "option_shadows")
 
-__all__ = ["OPTIONS_JOB_RUNNERS", "SHADOW_RUNNERS", "SPREAD_MODULES", "crypto", "edgar", "m4", "macro",
+__all__ = ["OPTIONS_JOB_RUNNERS", "SHADOW_RUNNERS", "SPREAD_MODULES", "crypto", "edgar", "g3", "m4", "macro",
            "macro_shadows", "option_shadows"]

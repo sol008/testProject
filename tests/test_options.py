@@ -1002,12 +1002,18 @@ def market(chains: dict | None = None) -> FakeProvider:
 
 @pytest.fixture(scope="module")
 def daily_cfg(cfg):
-    """The real config with M2 and the Phase B shadow books off, so the synthetic market needs no trend-book
-    legs and no VIX3M, crypto, EDGAR or macro data."""
+    """The real config with M2 and the Phase B shadow books off, and the gems rules' universes empty, so the
+    synthetic market needs no trend-book legs and no VIX3M, crypto, EDGAR, macro, closed-end fund or trust data."""
     modules = {**cfg.constitution["modules"], "M2": {**cfg.constitution["modules"]["M2"], "enabled": False}}
     shadow = {name: ({**book, "enabled": False} if name not in ("ST1B", "W10") else book)
               for name, book in cfg.constitution["shadow"].items()}
-    return dataclasses.replace(cfg, constitution={**cfg.constitution, "modules": modules, "shadow": shadow})
+    growth = cfg.constitution["growth"]
+    g3 = growth["sleeves"]["G3"]
+    rules = {name: ({**rule, "universe": []} if isinstance(rule, dict) and "universe" in rule else rule)
+             for name, rule in g3["rules"].items()}
+    growth = {**growth, "sleeves": {**growth["sleeves"], "G3": {**g3, "rules": rules}}}
+    return dataclasses.replace(cfg, constitution={**cfg.constitution, "modules": modules, "shadow": shadow,
+                                                  "growth": growth})
 
 
 def test_daily_run_marks_spreads_and_nav_includes_them(daily_cfg, tmp_path, hooks, xsp):

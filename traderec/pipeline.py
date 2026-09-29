@@ -568,6 +568,8 @@ def _daily(run: Run) -> str:
     _m3(run, asof_utc=iso(pd.Timestamp(d) + timedelta(days=1)))
     runners.macro.daily(run, checks)           # Phase B: W8 / W9 macro-event spreads
     growth.rule_e.daily(run)                   # design v4 §3a.7: Rule E, the exit-only mid-week check (Phase C2)
+    if growth.enabled(run.cfg):                # design v4 §3 G3: the gems screens and shadow books (Phase C4a)
+        runners.g3.daily(run)
     _shadow(run, checks.get("vix_series"))
     for name in runners.SHADOW_RUNNERS:        # Phase B shadow books: guarded, never stop the run
         _shadow_guard(run, name, getattr(runners, name).daily, checks)
