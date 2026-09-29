@@ -562,8 +562,11 @@ def test_annual_hurdle_line_names_the_policy_modules_from_the_config(cfg, world)
     reports.run_annual(cfg, provider, state_dir, year="2025", services=rec.services())
     f = flat(rec.sent[-1].text)
     assert "every module so far is a policy module" not in f
-    assert ("Neither bound this year. The hurdle exempts the policy modules (M1, M3, W10, M4 and W8); M2 (trend "
-            "sleeve) and W9 (paper module) are not policy modules.") in f
+    # design v4 (Phase C1): the constitution's `status` keys name the v3.3 modules' new statuses, and
+    # reports.module_statuses reads them whether or not the growth book is on. (Under v4 W10 and the growth book are
+    # the policy modules; how the annual report should say so is for the integrator, docs/phase-c/replay.md.)
+    assert ("Neither bound this year. M1 (shadow), M2 (retired), M3 (superseded_by: G2), W10 (active), M4 (shadow), "
+            "W8 (shadow) and W9 (shadow) are not policy modules.") in f
     only_policy = render_annual({"year": "2026", "label": "2026", "hurdle_bp": 6, "budget": 100,
                                  "module_statuses": [{"module": "M1", "status": "policy module", "policy": True}]}, {})
     assert "Every enabled module is a policy module, which the hurdle exempts." in flat(only_policy.text)

@@ -226,9 +226,12 @@ def build_order_set(targets: dict[str, dict], held: dict[str, float], cash: floa
         else:
             deferred.append(dict(b, why="the 3 orders are used; the SGOV buy of idle cash may wait a week"))
     # the listing: Step 1 (exits and cuts, largest first, then the SGOV sale), Step 2 in sleeve order (the G1 legs,
-    # G2, the SGOV buy, W10 last); the size ranking above decided the three-order cut
+    # G2, W10), then the SGOV buy of the idle cash last; the size ranking above decided the three-order cut. The
+    # sweep goes last because it is sized at the cash left after every other buy: placed (and queued) before W10 it
+    # took W10's cash and the 90% cap cancelled W10's buy at Monday's open (the Phase C3 replay, docs/phase-c/replay.md).
     listing = {t: k for k, t in enumerate(targets)}
-    chosen.sort(key=lambda o: (o["sleeve"] == "W10", listing.get(o["ticker"], len(listing))))
+    chosen.sort(key=lambda o: (o["reason"] == "idle_cash_to_sgov", o["sleeve"] == "W10",
+                               listing.get(o["ticker"], len(listing))))
     orders = step1 + chosen
     for k, o in enumerate(orders, start=1):
         o["rank"] = k

@@ -1,0 +1,100 @@
+section,metric,value,note
+runtime,wall minutes,41.915,
+runtime,runs,3851.0,"daily: 3091, weekly: 618, monthly: 142"
+runtime,"seconds per daily run, mean",0.631,
+runtime,"seconds per daily run, last 20",1.252,
+runs,status ok,3737.0,
+runs,status no_session,114.0,
+data,data served after the as-of date,0.0,0 = no look-ahead
+data,"second-source echoes (SPY, ^GSPC, ^NDX)",4224.0,"SPY, ^GSPC, ^NDX"
+data,flag IBIT,,"before 2024-01-11: proxy = Coinbase hourly BTC-USD (open ~9:30 ET, close 16:00 ET) x 0.00057542, IBIT's first close / BTC at 16:00 ET that day; no premium, discount or fee drag; before 2015-07-21 (no hourly candles): the same proxy from Yahoo's BTC-USD UTC daily bars (open 00:00 UTC, close 23:59 UTC), 211 sessions"
+data,flag btc_daily_utc,,837 UTC days before Coinbase's first candle (2017-01-01) and 0 gaps filled from Yahoo BTC-USD
+ledger,ledger verifies,1.0,"ok: 18149 records, head=8c8910015c897b4c9771399301c23605f8e75f71deec23b8b7ecf1902a45412c (18149 records)"
+alerts,alerts: circuit,6.0,"first 2025-10-10, last 2026-06-23"
+alerts,alerts: data,330.0,"first 2025-08-25, last 2026-09-28"
+alerts,alerts: fill,3.0,"first 2025-08-25, last 2025-11-03"
+emails,daily/monthly emails captured,147.0,the Sunday GROWTH email is builder C2's renderer; the replay records its facts only
+emails,emails MONTHLY,142.0,
+emails,emails EXIT,5.0,
+emails,validator errors in sent emails,0.0,
+shadow,ST1 shadow trades,50.0,
+shadow,ST1B shadow trades,105.0,
+shadow,M2 monthly shadow records,142.0,
+shadow,recommendations blocked by a module status,0.0,
+shadow,M1 orders queued,0.0,
+shadow,M2 orders queued,0.0,
+shadow,M3 orders queued,0.0,
+shadow,M4 orders queued,0.0,
+shadow,W8 orders queued,0.0,
+shadow,W9 orders queued,0.0,
+fills,orders cancelled,0.0,
+fills,fills,268.0,
+book vs track 38,"pipeline book CAGR (IRA, from 2015-04-07)",0.3002,2015-04-07 -> 2026-09-28
+book vs track 38,pipeline book worst drawdown,-0.2451,2020-02-19 -> 2020-04-21
+book vs track 38,pipeline book worst day,-0.0892,2024-08-05
+book vs track 38,track 38 book CAGR,0.3587,"includes the 15% gems stream, an estimate (+3.7 points a year in history)"
+book vs track 38,track 38 book worst drawdown,-0.2192,
+book vs track 38,track 38 book worst day,-0.0742,2020-09-03
+book vs track 38,"CAGR difference, pipeline - track 38 (points)",-5.8485,"tolerance 1 point after the expected differences (gems, band, weekly rebalancing)"
+book vs track 38,worst drawdown difference (points),-2.5941,tolerance 3 points
+book vs reference,reference bandfree CAGR,0.3169,
+book vs reference,reference bandfree worst drawdown,-0.2215,
+book vs reference,"CAGR difference, pipeline - reference bandfree (points)",-1.6648,
+book vs reference,reference band CAGR,0.3144,
+book vs reference,reference band worst drawdown,-0.2215,
+book vs reference,"CAGR difference, pipeline - reference band (points)",-1.4137,
+book vs reference,reference band_volcut CAGR,0.3094,
+book vs reference,reference band_volcut worst drawdown,-0.2194,
+book vs reference,"CAGR difference, pipeline - reference band_volcut (points)",-0.9171,
+book vs reference,reference band_governor CAGR,0.3123,
+book vs reference,reference band_governor worst drawdown,-0.2163,
+book vs reference,"CAGR difference, pipeline - reference band_governor (points)",-1.2091,
+book vs reference,reference band_volcut_governor CAGR,0.308,
+book vs reference,reference band_volcut_governor worst drawdown,-0.2163,
+book vs reference,"CAGR difference, pipeline - reference band_volcut_governor (points)",-0.782,
+G2 vol cut,Sundays the rule's vol cut is in force on the same data,80.0,"2017-09-17..2018-08-26, 2019-08-18..2019-09-15, 2020-06-14..2020-07-05, 2021-04-11..2021-08-29"
+calendar years,years compared with track 38,12.0,
+calendar years,"mean difference, pipeline - track 38 (points)",-7.3323,
+calendar years,largest |difference| (points),40.6956,2017
+calendar years,years with the same sign,12.0,
+G2 vs the rule,Sundays decided,600.0,
+G2 vs the rule,weeks on (fraction),0.4867,track 38: 48%
+G2 vs the rule,"switches a year, pipeline",6.0043,track 38: 6.2
+G2 vs the rule,"switches a year, the rule on the same data (band-free, no two-source check)",6.0043,
+G2 vs the rule,switch events matched,71.0,within one week
+G2 vs the rule,switch events extra,0.0,
+G2 vs the rule,switch events missed,0.0,
+G2 vs the rule,switch events max_lag_days,0.0,
+G2 vs the rule,switch events mean_lag_days,0.0,
+G2 vs the rule,weeks in the same state,600.0,of 600
+G2 vs the rule,Sundays with no G2 signal (data or two-source),31.0,"2017-04-23, 2017-04-30, 2017-05-28, 2017-06-25, 2017-09-10, 2017-09-17, 2017-12-24, 2017-12-31"
+G2 vs the rule,Sundays the Bitcoin two-source check failed,13.0,"2017-04-23, 2017-04-30, 2017-05-28, 2017-06-25, 2017-09-10, 2017-09-17, 2017-12-24, 2017-12-31, 2018-01-28, 2018-12-09"
+G1,QLD switches a year (2% band),1.3531,track 26: about 1.1 a year per leg
+G1,QLD weeks in (fraction),0.8172,
+G1,QLD Sundays with no signal,0.0,
+G1,"QLD switches a year, band-free rule",2.0296,track 31/38's simulation: about 3
+G1,SSO switches a year (2% band),1.184,track 26: about 1.1 a year per leg
+G1,SSO weeks in (fraction),0.7977,
+G1,SSO Sundays with no signal,0.0,
+G1,"SSO switches a year, band-free rule",2.8753,track 31/38's simulation: about 3
+orders,Sundays with orders,127.0,of 618 Sundays
+orders,Sundays with orders a year,10.7402,design A.5: about 13
+orders,max orders in one email,3.0,must be <= 3
+orders,orders sent in all,263.0,
+orders,Sundays with a deferred order,7.0,
+orders,W10 buys dropped for the week,1.0,
+governor,hard stop fired,0.0,must be 0
+governor,Sundays with G < 1,28.0,
+governor,lowest G,0.7073,2020-03-22
+governor,deepest drawdown seen (IRA + taxable at Friday's close),0.2281,2020-03-22
+governor,Sundays with a governor cut,2.0,"2020-06-14, 2023-03-12"
+governor,Sundays with a governor restore,2.0,"2020-05-10, 2023-03-19"
+governor,2018: lowest G / deepest drawdown,1.0,drawdown 13.4% on 2018-04-08; cuts on 
+governor,2020: lowest G / deepest drawdown,0.7073,drawdown 22.8% on 2020-03-22; cuts on 2020-06-14
+governor,2022: lowest G / deepest drawdown,1.0,drawdown 13.8% on 2022-02-27; cuts on 
+governor,2025: lowest G / deepest drawdown,0.982,drawdown 15.5% on 2025-04-06; cuts on 
+G2 vol cut,Sundays with the vol cut in force,76.0,
+look-ahead,window,,2021-01-03 -> 2021-06-27
+look-ahead,identical decisions with and without the as-of cut,1.0,486 vs 486 decision records; first difference None
+look-ahead,provider calls that returned future rows without the cut,1347.0,
+look-ahead,Sundays in the window,26.0,

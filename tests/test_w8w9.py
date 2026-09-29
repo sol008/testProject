@@ -17,7 +17,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from traderec import emails, forecasts, pipeline, risk, validator
+from traderec import emails, forecasts, growth, pipeline, risk, validator
 from traderec.config import load_config
 from traderec.data import FakeProvider
 from traderec.data.macro_data import (MacroData, combine_earnings, contango, contract_symbol, day_move, domain_allowed,
@@ -433,7 +433,7 @@ class FakeVeto:
 
 class World:
     def __init__(self, tmp_path: Path, monkeypatch, *, cfg=None, veto: FakeVeto | None = None) -> None:
-        self.cfg = cfg or load_config()
+        self.cfg = growth.with_enabled(cfg or load_config(), False)  # the v3.3 book: W8/W9 trade (v4: shadow)
         self.state_dir = tmp_path / "state"
         pipeline.run_init(self.cfg, self.state_dir, created="2026-10-01")
         self.pm, self.md = FakePM(), FakeMD()
@@ -587,7 +587,7 @@ def test_w8_falls_back_to_spy_when_xsp_fails_liquidity(world: World) -> None:
 
 
 def test_w8_dal_legs_expire_before_earnings(world: World, tmp_path: Path) -> None:
-    cfg = load_config()
+    cfg = growth.with_enabled(load_config(), False)
     cfg.constitution["modules"]["W8"]["roots"] = ["DAL"]
     w = world
     w.cfg = cfg

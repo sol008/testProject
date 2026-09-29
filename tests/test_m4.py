@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from traderec import emails, forecasts, pipeline, validator
+from traderec import emails, forecasts, growth, pipeline, validator
 from traderec.broker import PaperBroker
 from traderec.config import Config, load_config
 from traderec.email_text import m4 as m4_text
@@ -175,7 +175,7 @@ class Recorder:
 
 
 def _cfg(**m4_overrides) -> Config:
-    base = load_config()
+    base = growth.with_enabled(load_config(), False)     # the v3.3 book: M4 trades (under v4 its status is shadow)
     const = copy.deepcopy(base.constitution)
     const["modules"]["M2"]["enabled"] = False       # no ETF8 data in this market
     const["modules"]["M3"]["enabled"] = False       # no Bitcoin data in this market

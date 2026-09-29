@@ -49,6 +49,7 @@ from .state import RETRYABLE, Paths, copy_tree, jsonable, load_state, new_state,
 from .types import Fill, OrderIntent, Recommendation, RenderedEmail
 
 CRUDE_MONTH_CODES = "FGHJKMNQUVXZ"
+EXIT_KINDS = ("EXIT", "SWITCH_OFF")      # recommendations that close a position: never blocked by a module's status
 # Run records and alerts older than this leave the state, or keep only what later reports read (see
 # _prune_history). The annual review reads a year of daily and options runs; the ledger keeps everything.
 STATE_KEEP_DAYS = 400
@@ -350,7 +351,20 @@ class Run:
         return n
 
     def emit(self, rec: Recommendation, *, ctx_extra: dict | None = None, forecasts: bool = True) -> bool:
-        """Pre-register, render, validate, open an issue and queue the orders. False = blocked."""
+        """Pre-register, render, validate, open an issue and queue the orders. False = blocked.
+
+        Design v4 §3 (Phase C3): a module whose status is shadow, retired or superseded while the growth book is on
+        places no orders and sends no emails. Its would-be entry is logged as a `shadow` record instead; an EXIT or
+        SWITCH_OFF of a position it still holds goes through, so nothing is stranded.
+        """
+        if not growth.module_trades(self.cfg, rec.module) and rec.kind not in EXIT_KINDS:
+            status = growth.module_status(self.cfg, rec.module)
+            self.log("shadow", {"book": rec.module, "event": "blocked_by_status", "status": status, "kind": rec.kind,
+                                "trade_id": rec.trade_id, "orders": [o.to_dict() for o in rec.orders],
+                                "facts": rec.facts})
+            self.note(f"{rec.module} {rec.kind} {rec.trade_id} logged in the shadow ledger only: module status "
+                      f"'{status}' under the growth book (design v4 §3)")
+            return False
         rec.forecasts = fc.make_forecasts(rec, self.cfg) if forecasts else []
         rec_record = self.log("recommendation", rec.to_dict())
         ctx = self.email_ctx(rec, rec_record["hash"], ctx_extra)
@@ -693,14 +707,23 @@ def _resolve_trade(run: Run, trade_id: str, result: dict) -> None:
 
 
 def _on_cancel(run: Run, intent: OrderIntent) -> None:
-    run.alert("fill", f"{intent.intent_id} {intent.side} {intent.ticker} cancelled (no open price)")
-    run.log("correction", {"cancelled_order": intent.to_dict()})
+    reason = _cancel_reason(run, intent.intent_id) or "no open price"
+    run.alert("fill", f"{intent.intent_id} {intent.side} {intent.ticker} cancelled ({reason})")
+    run.log("correction", {"cancelled_order": intent.to_dict(), "reason": reason})
     mod = run.state["modules"].get(intent.module)
     if mod and mod.get("open_trade") and mod["open_trade"].get("trade_id") == intent.trade_id:
         if intent.side == "buy":
             mod["open_trade"] = None
         else:
             mod["open_trade"]["status"] = "open"   # the exit will be re-signalled tonight
+
+
+def _cancel_reason(run: Run, intent_id: str) -> str | None:
+    """The broker's `meta["cancel_reason"]` for a cancelled order (the 90% queued-cash cap, no lot, no open), or None."""
+    for o in reversed(getattr(run.broker, "cancelled", None) or []):
+        if o.intent_id == intent_id:
+            return str(o.meta.get("cancel_reason") or "") or None
+    return None
 
 
 def _mark(run: Run) -> dict:
@@ -806,6 +829,8 @@ def _m1(run: Run, checks: dict) -> None:
     st = run.state["modules"]["M1"]
     spy = run.bars("SPY")
     ot = st.get("open_trade")
+    if ot is None and not growth.module_trades(run.cfg, "M1"):
+        return      # design v4 §3: M1 is shadow under the growth book; the ST-1 shadow book (`_shadow`) keeps logging
     if ot and ot.get("status") == "open":
         ex = m1_exit_check(spy, run.date, ot, cfg_m1)
         run.log("signal", {"module": "M1", "check": "exit", "trade_id": ot["trade_id"], **ex})
@@ -903,6 +928,16 @@ def _w10(run: Run, checks: dict) -> None:
     if st.get("disabled"):
         run.note(f"W10 signal logged only: the module is in the shadow ledger ({st['disabled']['reason']})")
         return
+    if growth.enabled(run.cfg):
+        # design v4 §3 W10: the entry is at the open after the next Sunday email. The confirmed signal is handed to
+        # the Sunday job (traderec/growth/weekly.py), which queues the buy from SGOV; the 90-day exit stays here.
+        st["fired"] = {"signal_date": run.date, "ret": sig.get("ret"), "close": sig.get("close"),
+                       "prev_close": sig.get("prev_close"), "sma_prev": sig.get("sma_prev"),
+                       "second_source": {"close": chk.get("secondary"), "source": chk.get("source")}}
+        run.log("signal", {"module": "W10", "check": "fired", "handoff": "sunday_email", "check_result": chk, **sig})
+        run.note("W10 signal confirmed: recorded for the Sunday email (a buy from SGOV at Monday's open, "
+                 "design v4 §3 W10)")
+        return
     if not run.budget_ok():
         return
     adm = run.admit("W10", cfg_w["ticker"], float(cfg_w["notional_pct_nav"]) * run.current_nav())
@@ -985,6 +1020,14 @@ def _m2_decide(run: Run, st: dict, cfg_m2: dict, month: str) -> None:
               targets=targets, deferred=[o["ticker"] for o in od.get("deferred", [])], batch=1)
     run.log("signal", {"module": "M2", "check": "monthly", "signals": sig, "targets": targets,
                        "scalers": tg.get("scalers"), "notes": notes, "orders": od, "veto": veto})
+    if not growth.module_trades(run.cfg, "M2"):
+        # design v4 §3: M2 is retired under the growth book; its monthly targets are kept as a shadow series
+        st["deferred"] = []
+        run.log("shadow", {"book": "M2", "event": "monthly_targets", "month": month, "targets": targets,
+                           "orders": od["orders"], "notes": notes})
+        run.note("M2 monthly decision logged in the shadow ledger only: the module is retired under the growth book "
+                 "(design v4 §3)")
+        return
     if not od["orders"]:
         run.note("M2 monthly decision: no orders outside the no-trade band")
         return
@@ -1052,6 +1095,8 @@ def _m3(run: Run, asof_utc: str) -> None:
     cfg_m3 = run.cfg.module("M3")
     if not cfg_m3.get("enabled", True):
         return
+    if growth.supersedes_m3(run.cfg):
+        return      # design v4 §3: G2 supersedes M3 (the Sunday job); the daily catch-up must not buy a 3% lot too
     st = run.state["modules"]["M3"]
     try:
         btc = run.provider.btc_daily_utc()
@@ -1104,21 +1149,33 @@ def _shadow(run: Run, vix: pd.Series | None) -> None:
     cfg_m1 = run.cfg.module("M1")
     slip = run.cfg.slippage_bps("SPY") / 1e4
     if run.cfg.shadow("ST1B").get("enabled", True):
-        book = run.state["shadow"]["ST1B"]
-        _shadow_fills(run, book, spy, slip, "ST1B")
-        ot = book.get("open_trade")
-        if ot and ot["status"] == "open":
-            ex = m1_exit_check(spy, run.date, ot, cfg_m1)
-            if ex.get("exit"):
-                ot.update(status="pending_exit", exit_reason=ex["reason"], exit_signal_date=run.date)
-        elif ot is None:
-            chk = st1b_entry_check(spy, vix, run.date, cfg_m1)
-            if chk.get("signal"):
-                book["open_trade"] = {"trade_id": f"S-{run.date}-ST1B", "status": "pending_entry",
-                                      "signal_date": run.date, "rsi2": chk.get("rsi2")}
-                run.log("shadow", {"book": "ST1B", "event": "signal", **chk})
+        _shadow_dip_book(run, "ST1B", st1b_entry_check, spy, vix, slip, cfg_m1)
+    st1_cfg = (run.cfg.constitution.get("shadow") or {}).get("ST1") or {}      # no block of its own in v3.3
+    if not growth.module_trades(run.cfg, "M1") and st1_cfg.get("enabled", True):
+        # design v4 §3: M1 is shadow under the growth book, and "ST-1 keeps logging": its own rule as a shadow book
+        if vix is not None and len(vix):
+            _shadow_dip_book(run, "ST1", m1_entry_check, spy, vix, slip, cfg_m1)
     if run.cfg.shadow("W10").get("enabled", True):
         _shadow_w10(run, spy, slip, vix)
+
+
+def _shadow_dip_book(run: Run, name: str, entry_check: Callable[..., dict], spy: pd.DataFrame,
+                     vix: pd.Series | None, slip: float, cfg_m1: dict) -> None:
+    """One SPY dip-buy shadow book (ST-1b without the VIX gate; ST-1 = M1's rule while M1 is shadow): fills at the
+    next open with slippage, M1's exit rule, `shadow` records for the signal, the entry and the exit."""
+    book = run.state["shadow"].setdefault(name, {"open_trade": None, "trades": []})
+    _shadow_fills(run, book, spy, slip, name)
+    ot = book.get("open_trade")
+    if ot and ot["status"] == "open":
+        ex = m1_exit_check(spy, run.date, ot, cfg_m1)
+        if ex.get("exit"):
+            ot.update(status="pending_exit", exit_reason=ex["reason"], exit_signal_date=run.date)
+    elif ot is None:
+        chk = entry_check(spy, vix, run.date, cfg_m1)
+        if chk.get("signal"):
+            book["open_trade"] = {"trade_id": f"S-{run.date}-{name}", "status": "pending_entry",
+                                  "signal_date": run.date, "rsi2": chk.get("rsi2")}
+            run.log("shadow", {"book": name, "event": "signal", **chk})
 
 
 def _shadow_fills(run: Run, book: dict, spy: pd.DataFrame, slip: float, name: str) -> None:
