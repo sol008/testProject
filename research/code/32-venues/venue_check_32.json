@@ -1,0 +1,717 @@
+{
+  "as_of_utc": "2026-09-29T04:15:23+00:00",
+  "robinhood": {
+    "SPY": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "c277b118-58d9-4060-8dc5-a3b5898955cb",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.2500",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "1993-01-29",
+      "simple_name": "SPDR S&P 500 ETF Trust",
+      "group": "index 1x",
+      "leverage": 1,
+      "use": "benchmark; M1/W10 today"
+    },
+    "VOO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "147f59d9-43fd-43b0-aef9-2494820e33d5",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.2500",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2010-09-09",
+      "simple_name": "Vanguard S&P 500 ETF",
+      "group": "index 1x",
+      "leverage": 1,
+      "use": "low-fee S&P 500"
+    },
+    "QQQ": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "a95fe906-11f0-4699-bfc2-520dd706e98d",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.2500",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "1999-03-10",
+      "simple_name": "Invesco QQQ",
+      "group": "index 1x",
+      "leverage": 1,
+      "use": "Nasdaq-100"
+    },
+    "SSO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "69324efa-46e5-4a56-a986-f93105c66bff",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.5000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2006-06-21",
+      "simple_name": "ProShares Ultra S&P 500 ETF",
+      "group": "index 2x",
+      "leverage": 2,
+      "use": "2x S&P 500 (ProShares)"
+    },
+    "UPRO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "d8705627-30af-44ee-9589-933111c985e1",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.7500",
+      "day_trade_ratio": "0.7500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2009-06-25",
+      "simple_name": "ProShares UltraPro S&P 500 ETF",
+      "group": "index 3x",
+      "leverage": 3,
+      "use": "3x S&P 500 (ProShares)"
+    },
+    "SPXL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "1f2564f7-8c98-48e1-b33d-cc6745f5215d",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.7500",
+      "day_trade_ratio": "0.7500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2008-11-05",
+      "simple_name": null,
+      "group": "index 3x",
+      "leverage": 3,
+      "use": "3x S&P 500 (Direxion)"
+    },
+    "QLD": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "8b4ddf30-e429-4c7e-ac3b-238643784ea9",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.5000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2006-06-21",
+      "simple_name": "ProShares Ultra QQQ",
+      "group": "index 2x",
+      "leverage": 2,
+      "use": "2x Nasdaq-100 (ProShares)"
+    },
+    "TQQQ": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "194da636-2162-477a-a95a-e24c50c52a06",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.7500",
+      "day_trade_ratio": "0.7500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2010-02-11",
+      "simple_name": "ProShares UltraPro QQQ",
+      "group": "index 3x",
+      "leverage": 3,
+      "use": "3x Nasdaq-100 (ProShares)"
+    },
+    "SOXL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "2f078275-934c-451d-8693-739505de53a3",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.9000",
+      "day_trade_ratio": "0.7500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2010-03-11",
+      "simple_name": null,
+      "group": "sector 3x",
+      "leverage": 3,
+      "use": "3x semiconductors (Direxion)"
+    },
+    "TECL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "e98bc005-06e2-41d9-a5ef-582111c73ff7",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.7500",
+      "day_trade_ratio": "0.7500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2008-12-17",
+      "simple_name": null,
+      "group": "sector 3x",
+      "leverage": 3,
+      "use": "3x technology (Direxion)"
+    },
+    "SH": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "6fab1064-8dc7-4132-80e3-fae4d41fb325",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.3000",
+      "day_trade_ratio": "0.3000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2006-06-21",
+      "simple_name": "",
+      "group": "inverse",
+      "leverage": -1,
+      "use": "-1x S&P 500"
+    },
+    "SDS": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "27b84b44-99db-4c73-afe6-81ed5cf10aef",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.6000",
+      "day_trade_ratio": "0.6000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2006-07-13",
+      "simple_name": "ProShares UltraShort S&P 500 ETF",
+      "group": "inverse",
+      "leverage": -2,
+      "use": "-2x S&P 500"
+    },
+    "SPXU": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "56c28942-98b5-43a4-9407-977e11bcb4c9",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.9000",
+      "day_trade_ratio": "0.9000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2009-06-25",
+      "simple_name": "ProShares UltraPro Short S&P 500 ETF",
+      "group": "inverse",
+      "leverage": -3,
+      "use": "-3x S&P 500"
+    },
+    "SQQQ": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "49e5d7fb-920e-4c46-8099-b6404433ebb7",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.9000",
+      "day_trade_ratio": "0.9000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2010-02-11",
+      "simple_name": "",
+      "group": "inverse",
+      "leverage": -3,
+      "use": "-3x Nasdaq-100"
+    },
+    "IBIT": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "f4b86825-a92b-4e23-8f93-1ee813d0ec15",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.3000",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2024-01-11",
+      "simple_name": "iShares Bitcoin Trust ETF",
+      "group": "crypto 1x",
+      "leverage": 1,
+      "use": "spot Bitcoin (iShares)"
+    },
+    "FBTC": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "85ee6810-c354-4bbc-9930-9f415c962a52",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.3000",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2024-01-11",
+      "simple_name": null,
+      "group": "crypto 1x",
+      "leverage": 1,
+      "use": "spot Bitcoin (Fidelity)"
+    },
+    "ETHA": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "4ae8fdf3-4b3e-409d-9dfb-a2367e9f5778",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.5000",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2024-07-23",
+      "simple_name": "iShares Ethereum Trust ETF",
+      "group": "crypto 1x",
+      "leverage": 1,
+      "use": "spot Ether (iShares)"
+    },
+    "BITX": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "stock",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "8524fb4f-930a-4b15-8805-d788540c567e",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.6000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2023-06-27",
+      "simple_name": null,
+      "group": "crypto 2x",
+      "leverage": 2,
+      "use": "2x Bitcoin (Volatility Shares)"
+    },
+    "BITU": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "e11c0dce-ba0c-4c73-a7cd-b4a1a4a0a809",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.6000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2024-04-02",
+      "simple_name": null,
+      "group": "crypto 2x",
+      "leverage": 2,
+      "use": "2x Bitcoin (ProShares)"
+    },
+    "ETHU": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "92b03016-b8cd-45a4-99a0-9754e1603305",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "1.0000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2024-06-04",
+      "simple_name": null,
+      "group": "crypto 2x",
+      "leverage": 2,
+      "use": "2x Ether (Volatility Shares)"
+    },
+    "NVDL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "54a7c3d2-8579-4092-94c8-87d1e9be2d0d",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.5000",
+      "day_trade_ratio": "0.5000",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2022-12-13",
+      "simple_name": "GraniteShares 2x Long NVDA Daily ETF",
+      "group": "single-stock 2x",
+      "leverage": 2,
+      "use": "2x NVDA (GraniteShares), for flag comparison"
+    },
+    "SGOV": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "5aaac3b7-c616-481c-a2ee-fe4896c08dec",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.2500",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2020-05-28",
+      "simple_name": "iShares 0-3 Month Treasury Bond",
+      "group": "cash",
+      "leverage": 0,
+      "use": "0-3 month T-bills (iShares)"
+    },
+    "BIL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "type": "etp",
+      "tax_security_type": "etf",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "6ba88585-a91e-44e3-9337-1de24f0fe239",
+      "margin_initial_ratio": "0.5000",
+      "maintenance_ratio": "0.2500",
+      "day_trade_ratio": "0.2500",
+      "is_high_investment_risk": false,
+      "car_required": false,
+      "account_type_tradabilities": [
+        {
+          "account_type": "individual",
+          "account_type_tradability": "tradable"
+        }
+      ],
+      "reserved_buying_power_percent_queued": "0.10000000",
+      "reserved_buying_power_percent_immediate": "0.05000000",
+      "default_collar_fraction": "0.05",
+      "list_date": "2007-05-30",
+      "simple_name": null,
+      "group": "cash",
+      "leverage": 0,
+      "use": "1-3 month T-bills (SPDR)"
+    }
+  },
+  "coinbase": {
+    "BTC-USD": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.01"
+    },
+    "ETH-USD": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.01"
+    }
+  }
+}
