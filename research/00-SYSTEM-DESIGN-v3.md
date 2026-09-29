@@ -1,395 +1,476 @@
-# System design v3 — the 1–60 day trade system (what will be built)
+# System design v3.1 — the 1–60 day trade system (what will be built)
 
-*28 September 2026. This design follows your decisions in `DECISIONS.md`: trades are realized within 1–60 days, the system paper-trades first, it may use US stocks and ETFs, listed options, futures, a Bitcoin ETF and crypto, and it runs on GitHub Actions with the Gmail API.*
+*29 September 2026. Revision 3.1 fixes the red-team findings in `19-red-team-v3.md`: 3 critical and 13 major, plus the minor ones. Appendix A maps each fix.*
 
-*It draws on the second research round (tracks `13`–`18`) and keeps the long-horizon findings in `00-SYNTHESIS.md` (rev. 2) as background. Nothing is built yet; §12 lists what I need from you first.*
+*It follows your decisions in `DECISIONS.md`: trades realized within 1–60 days; paper trading first; US stocks and ETFs, listed options, futures, a Bitcoin ETF and crypto; GitHub Actions with the Gmail API.*
+
+*The research behind it is tracks `13`–`18`. The long-horizon synthesis (`00-SYNTHESIS.md`, rev. 2) is background. Nothing is built yet; §12 lists what I need from you.*
 
 ---
 
 ## 0. The short version
 
 1. **Short horizons give up most of the stock market's return.** Most of what stocks pay comes from holding them for years; a book that must be flat within 60 days forfeits nearly all of it.
-   - Example: the best short-horizon rule, run alone on 2008–2026, earned about **4.7% a year** (T-bills + 3.3 points) with a −14% worst drawdown. Buying and holding SPY earned 11.3% with −52% (track 13).
-2. **Across tracks 13–17, about 2,900 rule variants and test cells were tried. A handful survived, and every survivor is small.** Each test used data before 2008 to design a rule and data after 2008 to test it, then corrected for how many variants were tried.
-   - **Uptrend dip-buy.** Buy the S&P 500 after a short, sharp dip while it is still above its 200-day average and the VIX is at least 20. About 4 trades a year.
-   - **Slow multi-asset trend.** Hold 8 markets in the direction of their 12-month trend, re-decided monthly. Sharpe about 0.3–0.6 since 2008.
-   - **Crash call spread.** An options bet on a rebound after a crash; it only ties with buying the index but caps the loss.
-   - **A few macro-event rules**, and a slow Bitcoin trend switch that controls losses rather than adding return.
-   - **Everything else failed** after publication or out of sample: fast trend, calendar effects, overnight trades, sector rotation, crypto timing rules, and every event-driven single-stock setup. The market now prices public filings within about one trading session (track 16).
-3. **Realistic expectation: T-bills (about 4.2%) plus roughly 0.5–3 points a year, before tax, with drawdowns around 10–15%.**
-   - The lower end is the lean book, the upper end the full book (§6).
-   - The paper phase exists to measure the real number. None of these edges is proven beyond doubt.
+   - The best short-horizon rule, run alone on 2008–2026, earned about 4.7% a year (T-bills + 3.3 points), with a −14% worst drawdown.
+   - Holding SPY earned 11.3%, with a −52% worst drawdown (track 13).
+2. **About 2,900 rule variants and test cells were tried in tracks 13–17. A handful survived, and all are small.**
+   - Each track designed its rules on an earlier period and tested them on a later one: 2008 for most, 2016 for events, 2021 for crypto. Track 17 used placebo tests.
+   - **None of the survivors clears a strict multiple-testing bar on post-2008 data alone.** They are kept because they also have pre-2008 or century-long evidence and a plausible mechanism, and, for the trend book, confirmation from live funds.
+3. **Realistic expectation: T-bills (about 4.2%) plus roughly 0–2 points a year before tax.**
+   - Central estimates are about +0.4 points (Lean) and about +1 point (with the trend book).
+   - Drawdowns should stay around 10–15%.
+   - The paper phase exists to measure the true number.
 4. **"1000%" is not reachable with 1–60 day trades without risking ruin.**
-   - At about 6–7% a year, 11× takes about 35–40 years.
-   - Faster means leverage or concentration of a kind every track showed ends in wipe-outs.
-   - If large long-run gains are the goal, the biggest lever is a long-horizon core held *outside* this system (rev. 2, §10). I'd recommend keeping one.
-5. **What makes the system worth having** at these horizons:
+   - At 5–6% a year, 11× takes about 40–50 years before tax, and 55–80 years in a taxable account.
+   - The biggest lever for large long-run gains is a long-horizon core held *outside* this system (rev. 2 §10).
+   - With this system's central excess of +0.4 to +1 point a year, that decision matters more than any other in this document.
+5. **What makes the system worth having:**
    - it takes the few trades with measured edges, pre-committed and correctly sized;
-   - it refuses the many trades that lose money (the never-list, §5);
-   - it keeps an honest, scored ledger, which tells you within a year or two whether any of it works.
-6. **Paper first, then live in stages** (track 18): at least 3 months and 30 paper trades; then live at 25% size, 50%, and full size, each stage gated by evidence.
+   - it refuses the many that lose money;
+   - it keeps an honest, scored ledger, so you learn whether any of it works.
+6. **Paper first, then live in stages.**
+   - Going live at 25% size is gated on operations: the system runs, fills are realistic, emails are handled.
+   - Growing to full size is gated on evidence. At 10–30 trades a year, that takes years: about 4–5 with the trend book, about 9 without.
+   - This is a slow, honest system, not a fast one.
 7. **Cadence.**
-   - Lean book: about 12 trades a year (about 24 emails).
-   - Full book: about 30 trades a year.
-   - Plus a monthly review email.
-8. **Today (28 Sep 2026)** the dip-buy and event rules are armed but not firing.
-   - The Bitcoin trend switch is on.
-   - The multi-asset trend book is long S&P 500, Nasdaq-100 and the Australian dollar, and short 10-year Treasuries, the euro and the yen.
-   - If paper trading started tomorrow, those two would open the first paper positions.
+   - Lean book (M1, M3, M4, M5, M6): about 10–17 trades a year on average, and 5–11 in calm years, mostly Bitcoin switches.
+   - Adding the trend book (M2) adds 12 monthly rebalances.
+   - A monthly review email on top.
+8. **Today (29 Sep 2026)** the dip-buy and event rules are armed but not firing. The Bitcoin switch is on. The trend book would open long SPY, QQQ and FXA, with small gold and crude longs, plus shorts in 10-year Treasuries, EUR and JPY where shorting is allowed (§11).
 
 ---
 
 ## 1. Your constraints and what they imply
 
-| Decision | Implication |
-|---|---|
-| Realized within 1–60 days | This document reads "60 days" as **60 calendar days (≈42 trading days)** unless you say otherwise (§12). That shortens track 17's 60-trading-day crash rule and rules out rev. 2's multi-year tranches and the 12–24-month credit-crisis module. |
-| Paper trading first | Every module runs on paper until it passes the go-live gates (§7). No real money until then. |
-| Instruments: stocks/ETFs, options, futures, Bitcoin ETF, crypto | Account size decides what is feasible: <br>• put credit spreads on XSP (mini-SPX options) need ≳$110k per contract at the 3% loss cap; <br>• a diversified micro-futures book needs ≳$250k; <br>• MES (micro S&P futures) for the dip-buy needs a sleeve ≳$80k. <br>Below those sizes the system uses the ETF versions. |
-| GitHub Actions + Gmail API | The daily run lands after 22:00 ET. **Entries are at the next open**, and every backtest here assumed that. Rules that need same-day action are excluded. |
+**"60 days".** This document reads it as **60 calendar days (≈42 trading days)** until you decide (§12.1). The two readings differ in what they allow:
+
+| Module | Calendar days | Trading days |
+|---|---|---|
+| W10 crash-day rule | Shadow only (p ≈ 0.18 at 42 sessions) | Paper at 60 sessions (p 0.006) |
+| M2 trend book | Continuing positions need your approval; forced 60-day round trips cost ≈0.2–1.4% a year in ETFs, plus wash sales | Same question |
+
+**Paper first.** Every module runs on paper until it passes the gates (§7).
+
+**Instruments and account size.** Feasibility thresholds, corrected:
+
+| Instrument | Needed for | Minimum portfolio |
+|---|---|---|
+| MES (micro S&P futures) | M1 | ≈$650k |
+| MES | W10 | ≈$580k |
+| MBT (micro Bitcoin futures) | M3 | ≈$280k |
+| Micro-futures trend book | M2 (at s = 0.5) | ≈$800k |
+| XSP put spread | O1 | ≈$162k (at its 2% target) |
+| One XSP call spread | O2 | ≈$100k |
+
+Below these sizes the system uses SPY, IBIT and ETFs.
+
+**GitHub Actions + Gmail API.**
+- Emails go out after about 22:17 ET, so **entries are at the next open**; options use the 10:00–10:30 ET market-hours snapshot.
+- Several modules were backtested at the signal-day close (O2, O1, W8–W10) or the next close (M2, M3). **Each must be re-run on the next-open basis before promotion.**
+- **O2 must be re-run with a next-day 10:00 entry before M4 ships.**
+- Checks so far: W10 is unaffected (first night −0.11%), and W8 keeps about 89% of its edge.
 
 ---
 
 ## 2. What the second research round found
 
-| Family (track) | Variants tested | Survivor | Verdict |
+| Family (track) | Tested | Survivor, with honest evidence | Verdict |
 |---|---|---|---|
-| Index/ETF short-term rules (13) | 533 | **ST-1** VIX-gated uptrend dip-buy. Since 2008: 3.8 trades a year, 82% winners, +0.88% per trade (+0.43% planning value after halving). Down 30–50% from pre-publication | **Include** (paper first) |
-| Options and volatility (14) | 840 | **O2** crash call debit spread (+28% / +40% of debit before / after 2008; ties with the index). **O1** trend-filtered SPX put spread: thin, and the real-price CBOE indices show about zero alpha after 2008 | O2 **include**; O1 **paper only** |
-| Futures and crypto (15) | ~300 | **R1** slow multi-asset trend: test-period Sharpe 0.42–0.58; live managed-futures funds 0.32–0.60; +17% in 2008 and +18% in 2022. **R2** slow crypto trend: cuts drawdowns, no significant alpha | R1 **include** (needs your §12 answer); R2 **include as a risk switch** |
-| Event-driven single stocks (16) | 951 cells | None. Even insider clusters now earn +0.1% for a follower after the filing day | **Shadow ledger only** |
-| Macro and geopolitical events (17) | 288 release tests + shock studies | **W10** uptrend crash day (+6.9% over 60 sessions, n = 21, p = 0.005). **W8** de-escalation equity call spreads. **W9** barrel-loss oil call spreads (as a hedge). "Buy the invasion", "sell the ceasefire" and release drifts failed | W8 and W9 **include (small)**; W10 **paper** (overlaps ST-1) |
-| Execution, sizing and tax (18) | Simulations | Caps, gap multiples, the drawdown governor, next-open fills, account placement, the paper protocol | **Adopted as the portfolio rules** (§4, §7) |
+| Index/ETF rules (13) | 533 variants | **ST-1** (VIX-gated uptrend dip-buy).<br>• Since 2008: 3.8 trades a year, 82% winners, +0.88% per trade.<br>• Positive in every 5-year block.<br>• Deflated Sharpe probability 0.64 (N = 533), 0.82 (N = 36 families).<br>• 30–50% weaker than before publication. | Include (paper first) |
+| Options and volatility (14) | 840 variants | **O2** (crash call spread): +35% of debit per trade, but the 26 trades are only 12 crisis episodes. Ties with the index.<br>**O1** (put spread): deflated Sharpe probability ≤0.10; real-price alpha ≈0 after 2008. | O2 include, pending the next-day re-run; O1 paper only |
+| Futures and crypto (15) | ≈300 | **R1** (slow multi-asset trend): test Sharpe 0.42–0.58. Live funds range −0.01 to 0.60 (median ≈0.3). Fails Bonferroni alone, but +17% in 2008 and +18% in 2022.<br>**R2** (Bitcoin switch): alpha t ≤ 1.34; a risk switch. | R1 include (vehicle choice, §12.2); R2 include as a risk switch |
+| Event-driven single stocks (16) | 951 cells | None. An insider-cluster follower earns +0.1% gross, −1.1% after costs. | Shadow ledger only |
+| Macro events (17) | 288 release tests + shocks | **W10** (crash day): p 0.006 at 60 sessions (best of 8 cells; 1928–89 p 0.28); p 0.18 at 42.<br>**W8** (de-escalation call spreads): κ 0.25, n = 17.<br>**W9** (barrel-loss oil): n = 5. | W8 include (small); W9 paper; W10 per §12.1 |
+| Execution and sizing (18) | Simulations | Portfolio rules, the fill model, the gates | Adopted (§4, §7) |
 
 ---
 
-## 3. The rule book v3
+## 3. The rule book
 
 **Status labels:**
-- **Live-eligible:** may go live after passing the paper gates.
-- **Paper:** runs on paper until its own promotion test passes.
+- **Policy module:** a pre-registered rule you approve. It is exempt from the per-trade growth hurdle and the "beat buy-and-hold" test (§4), but keeps its own caps and kill switches.
+- **Paper:** runs on paper until it passes its own promotion test.
 - **Shadow:** logged automatically, with no email and no LLM.
 
-### M1 — ST-1: VIX-gated uptrend dip-buy (live-eligible). Source: track 13, §11.1.
+### M1 — ST-1: VIX-gated uptrend dip-buy (policy module)
 
 - **Signal** (after the close, on two-source-checked data):
   - SPY closes above its 200-day average;
   - RSI(2) (Wilder smoothing) is below 10;
   - VIX closes at 20.00 or higher.
-- **Entry.** Market-on-open (MOO) buy of SPY. In a taxable account with a sleeve of ≳$80k, use MES.
-- **Exit.** A MOO sell the morning after the first close above SPY's 5-day average. Time stop at the close of session 20. No stop-loss.
-- **One position at a time.** Never hold the same dip in SPY and QQQ/IWM together.
-- **Size.** Notional = min(0.5 × the sleeve, **6% of the portfolio**) × G(D). A 33% gap would then cost 2% of the portfolio.
-- **Planning expectation.**
-  - 3–4 trades a year (range 0–8), about 80% winners;
-  - +0.43% per trade, held about 3 sessions;
-  - contribution about **+0.1% a year** on the whole portfolio at 6%.
-  - It is small because the cap binds. §12 asks whether you want the larger size its edge would support.
-- **Exceptions, with reasons.**
-  - It is exempt from the 5-day minimum hold: it was backtested on next-open fills.
-  - It is exempt from the "no new crash-correlated positions when VIX > 30" freeze: its best trades come at VIX > 25.
-  - It is sized by gap stress rather than a defined maximum loss, because the option version lost money.
+- **Entry.** Market-on-open (MOO) buy of SPY. Use MES only when 6% of NAV covers one contract (≈$650k).
+- **Exit.** MOO sell the morning after the first close above the 5-day average. Time stop at the close of session 20. **No stop and no bracket.**
+- **Size.** Notional = **6% of NAV × G(D)**. Stress = notional × the S&P's worst 10-session loss (−32.6%) ≈ 2% of NAV.
+- **Expected.**
+  - 3.8 trades a year (range 0–11), about 80% winners;
+  - +0.43% per trade (halved);
+  - **+0.05–0.10% a year** on the portfolio.
+- **Why exempt.** At 6% it adds 2.6 bp per trade, below the 6 bp hurdle. Clearing the hurdle needs 14% notional, a 4.6% stress, which breaks the 2% per-trade cap (§12.4).
+- **Minimum hold.** Exempt from the 5-day minimum hold, because its edge was measured on next-open fills.
+- **Shadow.** ST-1b (the same rule without the VIX gate, about 8 a year) runs in the shadow book as the wider evidence set for M1.
 
-### M2 — R1: slow multi-asset trend book (live-eligible; depends on your §12 answer). Source: track 15, R1.
+### M2 — R1: slow multi-asset trend book (vehicle per §12.2)
 
-- **Markets.**
-  - Portfolio ≥$250k (micro futures): MES, MNQ, micro 10-year yield, MGC, MCL, M6E, JPY, M6A.
-  - Below $250k (ETF8): SPY, QQQ, IEF, GLD, USO, FXE, FXY, FXA.
-  - Long-only if shorting isn't possible (test Sharpe 0.45).
-- **Signal.** Sign of the 252-day excess return, optionally averaged with the 126-day sign. Evaluated at the first close of each month; executed the next session. Never use lookbacks under 6 months.
-- **Size.** Per market, (3.5% ÷ 60-day EWMA volatility) × NAV × **0.5**, giving about 5% book volatility. Gross ≤3× NAV, one market ≤1× NAV, margin ≤25% of NAV.
-- **Planning expectation.**
-  - Sharpe about 0.3 forward;
-  - **+0.6% to +1.4% a year** of log growth;
-  - worst month about −4.5%, max drawdown about −11%;
-  - it tends to gain in crises;
-  - 12 rebalance emails a year.
-- **The 60-day question.** Each position is re-decided every month, but a continuing position is *not* closed, so a trend can be held for many months. With futures, P&L settles in cash daily; with ETFs it stays unrealized. §12 asks whether that meets your rule.
-- **Review / pause.** Review at a 20% book drawdown. Pause to shadow if the rolling 36-month Sharpe falls below −0.5.
+- **Signal.** Sign of the 252-day excess return only; the 6-month blend is a Tier-2 annual change. Decided at the first close of each month; executed at the next open.
+- **Vehicles below ≈$800k — choose one:**
+  - **(a) Long-only ETF8** (SPY, QQQ, IEF, GLD, USO, FXE, FXY, FXA) in the IRA. Test Sharpe 0.45; it keeps some stock and bond beta; max drawdown ≈−12% at s = 0.5.
+  - **(b) Long/short ETF8** in a taxable margin account, **only** at a broker that pays interest on short-sale proceeds, with that rate modelled in the paper fills. Without it, shorts cost up to ≈2.9% of NAV a year, more than the edge.
+  - **(c) One managed-futures ETF** (e.g., DBMF or KMLM; live Sharpe 0.32–0.60) sized to about 5% volatility. It is a continuing position, which needs your §12.1 approval.
+- **Size (a/b).** Per market, (3.5% ÷ 60-day EWMA volatility) × NAV × 0.5, giving about 5% book volatility.
+  - Gross above 1.0× is an invariant change that needs your approval (§12.4).
+  - Shorts have uncapped losses. They are allowed only inside M2, which is sized as a sleeve (below).
+- **Stress and caps.**
+  - M2 is **one sleeve**: its stress is the worst historical book month at the current s (≈4.5%), counted once.
+  - At most 3% of that stress may sit in the US-equity cluster.
+  - 4% of US-equity cluster room is reserved for M1, W10 and M4.
+- **Units.** One monthly rebalance = one trade for the budget and the emails. M2 counts as one position for the ≤8-open cap. Its legs count individually for stress and cluster caps.
+- **Expected.**
+  - **0 to +1.2% a year** via (a) or (c); negative for (b) without the short rebate.
+  - A 5-year result below zero has a 25–37% chance.
+  - It tends to gain in crises, which offsets M1, M3 and W10 exactly when they hurt.
+- **Kill / review.** Review at a 20% sleeve drawdown. Pause to shadow if the rolling 36-month Sharpe falls below −0.5.
 
-### M3 — R2: crypto trend switch for a ≤3% Bitcoin sleeve (live-eligible; risk control, not alpha). Source: track 15, R2.
+### M3 — R2: Bitcoin trend switch (policy module; opt-in sleeve)
 
-- **Signal.**
-  - BTC: close above its 50-day average, or weekly close above its 10-week average.
-  - ETH: 28-day momentum above 0.
-  - Never use 7–20-day rules, which lost 3–16% a year after 2021.
-- **Instrument.** IBIT (in an IRA) or CME micro Bitcoin futures (taxable, ≥$50k). Spot only on a US-regulated venue with fees ≤0.25% per side.
-- **Size.** The sleeve is ≤3% of the portfolio. Held only while the switch is on; T-bills otherwise.
-- **Holding.** Closed at 60 days and re-entered if still on. On futures, the monthly roll does this.
-- **Planning expectation.** About 5 switches a year; +0.3–0.5% a year; Bitcoin's worst month roughly halved.
+- **Rule.** BTC only: weekly close above its 10-week average. That is 5.3 trades a year; max drawdown −48%; alpha t 0.24, so a risk switch, not alpha.
+  - Alternative: the 50-day average (11.4 trades a year, alpha t 1.34).
+  - ETH moves to the shadow ledger.
+- **Instrument.** IBIT (IRA). MBT only when 3% of NAV covers one contract (≈$280k). Spot only on a US-regulated venue, at ≤0.25% per side.
+- **Size.** Sleeve ≤3% of NAV. Stress = sleeve × the worst 10-session loss.
+- **Holding.** Closed at 60 days and re-entered if still on. The forced re-entries are not new trades.
+- **Exemptions.** From the 5-day minimum hold and from the "lookbacks under 6 months" ban (pre-registered exception).
+- **Expected.** **−0.3 to +0.5% a year.** It is mostly Bitcoin beta: 2022 alone would have cost ≈1.6% of NAV.
 
-### M4 — O2: crash call debit spread (live-eligible). Source: track 14, §7.
+### M4 — O2: crash call debit spread (policy module; Phase B)
 
-- **Signal.** SPX is ≥15% below its 252-day high **and** VIX ≥30. First day only, then a 60-day cool-down.
-- **Trade.** Buy the at-the-money call and sell the 105% call, 60 DTE, on XSP/SPX (SPY if necessary). Limit at mid + ¼ of the natural width.
-- **Size.** Debit ≤2% of the portfolio (3% cap).
-- **Exit.** Hold to expiry. Optional take-profit when the spread is worth ≥80% of its width.
-- **Planning expectation.** About 0.7 a year, clustered in crises. +28–40% of the debit per trade on average; 1 in 4 lose the whole debit. Contribution about +0.3–0.6% a year (n = 26, wide).
+- **Signal.** SPX ≥15% below its 252-day high **and** VIX ≥30. First day only; 60-day cool-down.
+- **Trade.** Buy the at-the-money call and sell the 105% call, on the XSP/SPXW expiry nearest to, but not beyond, 60 calendar days; held to expiry. SPY fallback only if XSP fails liquidity, and then closed by 15:00 ET the business day before expiry.
+- **Order.** Limit ladder capped at **mid + 0.3 × the natural width**, the same as the fill model.
+- **Size.** Debit ≤2% of NAV, rounded to the nearest contract within the 3% cap. **Exempt from G(D)**: the premium is its maximum loss.
+- **Before shipping.** Re-run on a next-day 10:00 entry, and add the 10:17 ET options job (§7).
+- **Expected.** **+0.1 to +0.3% a year** (κ = 0.5; 12 crisis episodes; idle in about 60% of years). It must beat T-bills, not the index.
 
-### M5 — Macro-event rules. Source: track 17, §7.
+### M5 — Macro-event rules (track 17)
 
-- **W8 — De-escalation, confirmed** (live-eligible, small).
-  - Trade: the next morning, SPY/XSP or DAL call spreads, 45–75 DTE, premium ≤1% of NAV.
-  - Exit: at 80% of maximum value, or after 20 trading days.
-  - Invalidation: Polymarket ceasefire odds below 40%, or oil retracing more than half its day-0 fall.
-  - **Never an oil short after the fact.**
-- **W9 — Escalation that removes barrels** (live-eligible, as a hedge).
-  - Trade: USO call spread ≥45 DTE, premium ≤0.75% of NAV, 20-day time stop.
-  - Only when ≥1 mb/d is physically lost with no quick fix, per IEA/EIA/company statements. A fear-only spike means no trade.
-- **W10 — Uptrend crash day** (paper).
-  - Signal: the first S&P close of −3% or worse (declustered over 20 sessions) with the prior close above its 200-day average.
-  - Trade: buy SPY/MES at the next open, ≤6.7% of NAV. Hold **≤42 sessions** to fit your 60-day limit; the 42-session version must be re-tested before promotion.
-  - It overlaps ST-1, so it shares ST-1's slot and runs on paper as the longer-hold comparison.
-- **Scheduled releases (FOMC, CPI, payrolls).** Never trade into or after them for real money. They are logged for calibration only.
+- **W8 — de-escalation confirmed** (policy module, small).
+  - **Trigger:** all of track 17's mechanical conditions hold at the close:
+    - an official announcement;
+    - Brent (explicit December contract) or BNO down ≥6% on the day;
+    - the Polymarket blockade-end or Hormuz-normal market up ≥15 points, or through 75%.
+  - **LLM role:** it may only **veto** — pinned model version, hashed prompt, an enum answer with ≥2 allow-listed citations, logged before the open.
+  - **Trade:** SPY/XSP or DAL call spreads, **56–75 DTE**, premium ≤1% of NAV. DAL legs must expire before DAL's next earnings.
+  - **Exit:** at 80% of maximum value, or after 20 trading days.
+  - **Invalidation:** the Polymarket market "US × Iran ceasefire continues through <first listed date ≥ the time stop>" falls below 40%; re-mapped by rule when that market resolves.
+  - **Never** an oil short.
+- **W9 — escalation that removes barrels** (paper, n = 5, unless you opt in to it as a hedge exception).
+  - **Trigger:** ≥1 mb/d physically offline **and** front Brent/WTI up ≥5%. The LLM may only veto.
+  - **Trade:** USO call spread, 56–75 DTE, ≤0.75% of NAV; 20-day time stop. The contango veto (R3) applies.
+- **W10 — uptrend crash day** (per §12.1; its own paper slot, never blocking M1).
+  - **Signal:** the first S&P close of −3% or worse (declustered over 20 sessions) with the prior close above its 200-day average.
+  - **Trade:** buy SPY at the next open, ≤6.7% of NAV.
+  - **Exit:** at day 42 or 60, or at a new all-time high. Void if VIX > 45.
+- **Scheduled releases.** Never traded; logged for calibration only.
 
-### M6 — Crypto structural modules (live-eligible, rare). Source: track 05.
+### M6 — Crypto structural modules (Phase B)
 
-- **Stablecoin depeg buy.**
-  - Trigger: a regulated, fiat-backed coin trades ≤$0.97 on ≥2 venues, with attested reserves and redemptions not suspended for more than 72 hours.
-  - Size ≤5%. Exit at ≥$0.995, or a 30-day time stop.
-- **Cash-and-carry.** Only when the CME basis is ≥ T-bills + 6 points. Hold to expiry, ≤60 days. Currently off.
+- **Depeg buy.**
+  - Trigger: a regulated, fiat-backed coin ≤$0.97 on ≥2 venues, reserves attested, redemptions not suspended for more than 72 hours.
+  - **≤3%** of NAV, stress = 100% of the position.
+  - Needs an **hourly 24/7 crypto job**: the one US precedent bottomed on a Saturday. Otherwise, drop it.
+- **Cash-and-carry.**
+  - CME contracts with ≤60 days to expiry; basis from CME prices ≥ T-bills + 6 points.
+  - ≤15% notional; long IBIT and short MBT in the **same** taxable account.
+  - Awkward below about $280k. Off today.
 
-### M7 — O1: trend-filtered put credit spread (paper only). Source: track 14, §7.
+### M7 — O1: trend-filtered put credit spread (paper; Phase B)
 
-- **Filters.** SPX above its 200-day average; VIX < 30; VIX/VIX3M < 1.0.
 - **Trade.** Sell the 0.20-delta put and buy the put 5% lower, 40–50 DTE, on XSP/SPXW.
-- **Exits.** A GTC buy-back at 50% of the credit; otherwise close at 21 DTE. No stop, and never roll a loser.
-- **Size.** 2% of the portfolio at max loss (3% cap). Needs ≳$110k per XSP contract.
-- **Promotion.** ≥24 paper trades passing track 14's §7.6 test.
-- **Expected.** +0.2–0.3% a year after haircuts. It's a small harvest with rare −70% to −100% trades.
+- **Filters.** SPX above its 200-day average; VIX < 30; VIX/VIX3M < 1.0.
+- **Exits.** A GTC buy-back at 50% of the credit; otherwise close at 21 DTE. No stop; never roll.
+- **Size.** 2% of NAV at max loss (3% cap). **Needs ≈$162k**, so it is off at $100k.
+- **Expected.** −0.2 to +0.3% a year pre-tax. Promotion needs ≥24 paper trades passing track 14's test.
 
 ### Shadow ledger (automatic, no emails, no LLM)
 
-- **Index and options variants:**
-  - ST-1b (ST-1 without the VIX gate);
-  - ST-2 (VIX/VIX3M inversion in an uptrend);
-  - I1 (put spread after a volatility spike fades);
-  - I2 (IBIT put spreads).
-- **Event-driven single stocks:**
-  - insider clusters (≥$300m market cap, 20-day hold);
-  - special dividends (≥$1m daily volume);
-  - activist 13D filings;
-  - near-completion cash mergers.
-- **Macro:**
-  - W3 (cool-CPI TLT);
-  - the gold spike fade;
-  - every scheduled-release reaction.
-- **Promotion.** Each has a pre-registered test in its track, e.g. insider clusters need ≥60 trades averaging ≥+1.0% with t ≥ 2.5.
+- ST-1b and ST-2;
+- W10 (under the calendar reading);
+- I1 and I2 (put-spread variants), and O1-h (O1 held to expiry);
+- the ETH switch;
+- insider clusters (≥$300m cap), special dividends (≥$1m daily volume), activist 13D filings and near-completion cash mergers;
+- CEF tender capture;
+- W3 (cool-CPI TLT), W4 (BoJ) and the gold spike fade;
+- every scheduled-release reaction.
+
+Each has a pre-registered promotion test in its track.
 
 ---
 
-## 4. Portfolio rules (track 18 §8, adopted)
+## 4. Portfolio rules
 
 | Rule | Setting |
 |---|---|
-| Idle cash | T-bills / a T-bill ETF (earning about 4.2%). Every trade must beat holding bills **and** buy-and-hold over its horizon |
-| Growth hurdle | Δg per trade ≥ **6 bp** of expected log growth on the whole book, using the shrunk edge, after costs and T-bill drag. Rule-level Δg (trades per year × E ln(1 + f·r)) is reported for each module |
-| Sizing | G(D) · min(0.25 × joint Kelly(κ·s), Kelly(s − 0.05), stress cap, cluster room, total room). κ = 0.5 for rule-based modules, frozen through the pilot, then updated quarterly |
-| Stress (gap) multiples | ETFs and index futures 1.7×; large caps 2.1×; volatile stocks 2.6×; Bitcoin ETF 3.1×; spot crypto with 24/7 stops 1.5× |
-| Caps | Per-trade stress ≤2% (stop-based) or ≤3% (premium); **cluster** stress ≤6%; **total open stress ≤10%**; option premium ≤10% |
-| Clusters | US equity beta, duration, USD, oil ("peace/oil-down" is one factor in 2026), gold, crypto. ρ ≥0.5 within a cluster, ≥0.3 across long-risk clusters |
-| Drawdown governor | G = 1 up to a 5% drawdown, falling linearly to 0.25 at 15%. Human review at 15%; pause new trades at 20% |
-| Circuit breakers | A daily loss ≥2% or weekly loss ≥4% pauses new entries for 1 or 5 days pending a data/fill check |
-| Trade budget | **Lean ≈ 12 a year, Full ≈ 30** (§12). Hard cap 100; ≤8 open positions; minimum hold 5 days, except for modules backtested on next-open fills |
-| Option expiry (bought) | ≥ max(2 × planned hold, 45 DTE); close ≥10 trading days before expiry, unless it's a debit spread designed to be held to expiry (O2). Weeklies and 0DTE are banned |
-| Accounts and taxes | Each underlying lives in exactly one account family. IRA: stocks, ETFs, equity-option spreads, IBIT. Taxable: Section 1256 instruments (MES, MNQ, XSP/SPX, CME Bitcoin futures) and direct crypto. Cross-account wash-sale guard (±30 days). No §475(f) election |
+| Idle cash | Treasury bills or a T-bill ETF (about 4.2%) |
+| Admission, discretionary trades | Δg ≥ **6 bp** per trade on the whole book (shrunk edge, after costs and T-bill drag), **and** it beats buy-and-hold over its horizon. Rev. 2 gates 1 (≥10 analogs) and 5 (defined maximum loss) apply |
+| **Policy modules** | M1, M3, M4 and W8 are owner-approved exemptions from the per-trade hurdle and the buy-and-hold test. M4 must beat T-bills. Each keeps its caps, stress rules and kill switches, and reports its rule-level Δg |
+| Sizing | G(D) · min(0.25 × joint Kelly(κ·s), Kelly(s − 0.05), stress cap, cluster room, total room). κ = 0.5 for rule-based modules, frozen through the pilot. Realized κ after selection may be only 0.05–0.36, so it is re-estimated quarterly |
+| Stress | With a stop: R × the gap multiple (ETF/index 1.7×; large cap 2.1×; volatile 2.6×; Bitcoin ETF 3.1×; spot crypto 1.5×). **Without a stop: notional × the worst 10-session loss in the instrument's history.** Options: premium. M2: worst historical book month, counted once |
+| Caps | Per-trade stress ≤2% (≤3% for premium); cluster ≤6%; total open ≤10%; option premium ≤10%; **macro-factor budget** 3% premium / 2% stop-risk per factor, inside the cluster cap |
+| Clusters | US equity (4% of room reserved for M1, W10 and M4; M2 ≤3%), duration, USD, oil ("peace/oil-down" is one factor in 2026), gold, crypto |
+| Drawdown governor | G = 1 up to a 5% drawdown, falling linearly to 0.25 at 15%. Review at 15%; pause discretionary entries at 20%. **M4 is exempt.** M2 re-decisions continue during a pause but may not raise gross |
+| Circuit breakers | A daily loss ≥2% or weekly loss ≥4% pauses **discretionary** entries for 1 or 5 days. M1, M4 and W10 proceed once the nightly data/fill check passes |
+| Trade units and budget | See M2 (units); M3's forced re-entries are not trades. Budget: hard cap **100 a year** (an invariant change from rev. 2's 24 — §12.4); ≤8 open positions |
+| Minimum hold | 5 **trading** days *planned*. Rule exits, take-profits and invalidations are exempt; so are M1 and M3 |
+| Option expiry (debit structures) | Entry DTE ≥ max(2 × planned hold in calendar days, 45). Close ≥10 trading days before expiry. O2 is the held-to-expiry exception. No option with <40 DTE at entry |
+| Option liquidity | Track 17 R8, measured from the market-hours snapshot: each leg's bid-ask ≤10% of mid with open interest ≥500, and the whole structure's round trip ≤10% of the debit (≤20% if the expected gain is ≥2× costs). This replaces the email spec's 2%/5% gate |
+| Contango veto (R3) | No long position in USO/MCL (M2's crude leg, W9) when the front roll yield is below −20% a year, from explicit contract months |
+| Accounts | `account.yaml` defines the paper accounts (e.g., a $60k IRA and a $40k taxable margin account); the paper broker enforces their constraints: no shorts or futures in the IRA, T+1 settled cash. Each underlying lives in exactly one account family. Cross-account wash-sale guard (±30 days) |
 
 ---
 
-## 5. Never recommend (merged list)
-
-Phase-1 vetoes (rev. 2 §3.9) remain, plus the short-horizon additions from tracks 13–18:
+## 5. Never recommend (merged list; rev. 2 §3.9 still applies)
 
 - **Timing and fast rules:**
   - overnight buy-close/sell-open programmes;
-  - Donchian breakouts under 100 days, and trend lookbacks under 6 months;
+  - Donchian breakouts under 100 days;
+  - trend lookbacks under 6 months (**except M3's pre-registered crypto switch**);
   - sector or country rotation;
-  - calendar trades (turn of month, pre-holiday, FOMC day, CPI day, OpEx, midterm Q4).
+  - calendar trades.
 - **Options:**
-  - options bought into scheduled events (FOMC, CPI, payrolls, earnings);
-  - 0DTE, 1DTE and weeklies;
+  - options bought to play a scheduled release or earnings, i.e. entered ≤5 sessions before it, or with a thesis that depends on it;
+  - options with <40 DTE at entry, including 0DTE and 1DTE;
   - naked short options and short-VIX products;
   - short premium on single stocks or leveraged ETFs;
   - rolling a losing spread;
   - stops on defined-risk spreads;
   - iron butterflies and short straddles;
-  - any spread whose max loss is >3% of the portfolio (i.e., accounts below ≈$100k for XSP).
+  - any spread whose max loss exceeds 3% of NAV (XSP needs ≳$108k).
 - **Event and single-stock trades:**
   - chasing a filing after its first session;
   - post-earnings drift, earnings-gap or pre-earnings trades;
-  - S&P or Russell index trades, and IPO lock-up shorts;
-  - short-squeeze trades in either direction;
+  - index-inclusion or reconstitution trades, and IPO lock-up shorts;
+  - short-squeeze trades;
   - dividend capture;
   - FDA binary bets;
-  - spin-offs in their first 60 days;
+  - spin-offs in their first 60 sessions;
   - event trades under a $300m market cap or $1m daily volume.
 - **Crypto:**
-  - crypto calendar rules, crash-rebound buys, funding-rate and ETF-flow rules;
-  - altcoin momentum and alt baskets;
+  - calendar, crash-rebound, funding-rate and ETF-flow rules;
+  - altcoin momentum;
   - stops tighter than the weekend-gap distribution.
 - **Futures, FX and commodities:**
-  - FX carry books;
-  - standalone commodity carry;
-  - long energy futures/ETFs in steep contango (front roll yield < −20% a year);
-  - a diversified micro-futures book below ≈$250k;
-  - reading triggers off continuous futures across a roll.
-- **Macro:** oil shorts after a ceasefire headline; directional bets on scheduled releases when the system is within ±10 points of the prediction-market price.
+  - FX carry books; standalone commodity carry;
+  - long energy positions in steep contango;
+  - a micro-futures book below ≈$800k;
+  - triggers read off continuous futures across a roll.
+- **Macro:**
+  - oil shorts after a ceasefire headline;
+  - bets on scheduled releases when the system is within ±10 points of the prediction-market price.
 
 ---
 
 ## 6. Expected results, honestly
 
-All figures are pre-tax planning values on the whole portfolio, over T-bills. They are shrunk from backtests, and the paper phase will measure them.
+Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk, per track 19 §A.4.
 
-| Module | Trades a year | Contribution a year | Confidence |
+| Module | Trades a year | Contribution a year | Evidence |
 |---|---|---|---|
-| M1 ST-1 (6% cap) | 3–4 | +0.1% | Medium (it held in every 5-year block since 2008; post-publication decay) |
-| M2 R1 trend (s = 0.5) | 12 rebalances | +0.6% to +1.4% | Medium (live funds confirm the order of magnitude) |
-| M3 BTC switch (3% sleeve) | ~5 | +0.3% to +0.5% | Low-medium (a drawdown control; alpha not significant) |
-| M4 O2 crash spread (2% debit) | ~0.7 | +0.3% to +0.6% | Low (n = 26) |
-| M5 W8/W9 (small) | ~1–2 | ≈0 to +0.2% | Low (n = 5–17) |
-| M6 depeg / basis | ~0.3 | ≈0 to +0.1% | Low (n ≈ 3) |
-| M7 O1 (paper; ≥$110k) | ≤9 | +0.2% to +0.3% | Low (real-price alpha ≈0 after 2008) |
-| **Lean book** (M1, M3, M4, M5, M6) | **≈12** | **≈ +0.7% to +1.5%** | |
-| **Full book** (Lean + M2 + M7) | **≈30** | **≈ +1.5% to +3.2%** | |
+| M1 ST-1 (6%) | 3.8 (0–11) | +0.05 to +0.10% | Deflated Sharpe probability 0.64–0.82; every 5-year block > 0 |
+| M2 trend (s = 0.5) | 12 rebalances | 0 to +1.2% ((a) or (c)); negative for (b) without a short rebate | Fails Bonferroni alone; live funds −0.01 to 0.60 |
+| M3 BTC switch (3%) | ≈5 | −0.3 to +0.5% | Alpha t ≤ 1.34 |
+| M4 O2 (2% debit) | ≈0.7 (idle 60% of years) | +0.1 to +0.3% | 12 episodes; next-day entry untested |
+| M5 W8 (and W9/W10 on paper) | ≈0.4–2 | −0.1 to +0.2% | n = 5–17 |
+| M6 | ≈0.3 | 0 to +0.05% | n ≈ 3 |
+| M7 O1 (paper; ≥$162k) | ≤9 | −0.2 to +0.3%; 0 at $100k | Real-price alpha ≈0 |
+| **Lean** (M1, M3, M4, M5, M6) | **≈10–17** (calm years 5–11) | **≈ −0.3 to +1.2%, central ≈ +0.4%** → about 4.6% nominal | |
+| **Lean + M2 at $100k** | **≈22–29** | **≈ −0.3 to +2.4%, central ≈ +1.0%** → about 5.2% nominal | |
 
-- **With T-bills at about 4.2%,** that is roughly **5–7.5% a year nominal**, before tax. The worst drawdown should stay around 10–15% under the caps and governor.
-- **Short-term gains are taxed as ordinary income.** Hence the account-placement rules.
-- **Larger positions scale the edge and the risk together.** The ramp in §7 is the only sanctioned way to size up.
-- **P&L alone can't confirm these edges quickly.** At about 30 trades a year, a real edge of this size takes years to show up in profits. Track 18's go-live test (P(edge > 0) ≥ 0.7 under a sceptical prior) is designed to be passable in 3–12 months by a real edge, while failing most false ones.
+**Years to 11×** at those central rates: about 47–53 years before tax.
 
 ---
 
-## 7. Paper trading and go-live (track 18 §8E)
+## 7. Paper trading and go-live
 
 1. **Paper phase.**
-   - Minimum 3 months and 30 resolved trades; maximum 12 months (+6 by rule).
-   - The "wide" paper book includes every trigger with Δg ≥ 0.
+   - Minimum 3 months.
    - Fill model v1.0 is frozen and hashed:
-     - stocks/ETFs at the next open plus slippage, with limits filling only when price trades through;
-     - options at mid + 0.6 × half-spread, never beyond displayed size;
+     - ETFs at the next open plus slippage, with limits filling only when price trades through;
+     - options at mid + 0.6 × half-spread, and **only if that is ≤ the order's limit**, from a **10:17 ET market-hours snapshot job**;
      - futures with tick slippage;
      - crypto with fees plus spread.
-   - You may mirror trades in a broker practice account; its fills are compared with the model's.
-2. **Go-live test** at months 3, 6, 9 and 12:
-   - ≥95% of runs on time and 0 validator failures;
-   - practice-vs-model fills within 10 bp (options: 20% of the half-spread);
-   - **P(edge > 0) ≥ 0.7** under a N(0, 0.1²) prior;
-   - no gross calibration bias (±20 points);
-   - paper max drawdown < 15%.
-3. **Ramp.**
-   - Live at **25%** size.
-   - **50%** after ≥6 months and ≥30 live trades with P ≥ 0.8.
+   - A broker practice account runs in parallel for the fills comparison.
+2. **Going live at 25% is an operations gate:**
+   - ≥3 months of paper;
+   - ≥95% of runs on time;
+   - 0 validator failures;
+   - practice-vs-model fills within tolerance;
+   - ≥90% of emails handled;
+   - the ledger verifies.
+3. **Edge evidence.**
+   - P(edge > 0) ≥ 0.7 under a N(0, 0.1²) prior is computed on the **wide book of the same rules**: ST-1b signals for M1, every M3 switch, and M2 position-months.
+   - It stays **advisory until the selected book has ≥30 trades**.
+   - At 12–30 trades a year, the edge gate is unlikely to pass within 12 months even for a real edge (track 18: ≤14% at 25 a year).
+4. **Ramp.**
+   - **50%** after ≥6 months and ≥30 live trades with P ≥ 0.8, κ̂ ≥ 0.2 and implementation shortfall ≤20%.
    - **100%** after ≥100 resolved trades (paper at half weight) with P ≥ 0.9 and calibration verified.
-   - Demote on the kill switches in each module.
-4. **Honest limit.** Paper trading proves the machine works: data, signals, fills and emails. It cannot prove a small edge within a year. About 21% of go-lives will still have no edge, which is why the first live stage is small.
+   - **Expect about 4–5 years (with M2) to 9 years (Lean) before full size.**
+   - Modules are demoted on their kill switches.
 
 ---
 
-## 8. Calibration and self-improvement at short horizons (track 18 §8F)
+## 8. Calibration and self-improvement
 
 - **Evidence.**
   - Three pre-registered, mechanically resolved forecasts per trade.
   - A deterministic daily shadow book of every trigger and near-miss, with base-rate forecasts and paper fills. No LLM calls.
-  - Each module's realized results against its pre-registered range.
+  - Each module's results against its pre-registered range.
 - **Monthly:** operations, execution quality, evidence meters, and the review email (failures first). No rule changes.
 - **Quarterly:**
   - costs and slippage;
-  - κ̂ (realized vs claimed edge);
+  - κ̂;
   - calibration warnings and base-rate drift;
   - gated recalibration maps (≥150 forecasts per family);
   - go-live and ramp decisions.
   - At most one change per parameter per quarter, via a ≥3-month forward comparison.
-- **Annually, with you:** calibration slope, retiring rules, and the hurdle and budget.
-  - A rule's parameters change only if the change holds in **both** the pre-2008 and post-2008 samples, and clears the multiple-testing bar for the number of variants tried.
-  - Nothing is ever "improved" from a good or bad month.
+- **Annually, with you:** calibration slope, retirements, and the hurdle and budget.
+  - A parameter changes only if the change holds before **and** after 2008 and clears the multiple-testing bar for the number of variants tried.
+  - Nothing is changed because of one good or bad month.
 
 ---
 
 ## 9. Emails at short horizons (changes to `11-trade-email-spec.md`)
 
-- **Timing.** Evening emails (about 22:17 ET) carry orders for the next session: MOO entries for ST-1 and W10, and DAY limits at the ±1.5σ band edge for others.
-  - Stocks, ETFs and futures use an **OTOCO bracket**: a stop-market order (GTC, never stop-limit) plus a GTC take-profit.
-  - Options are entered after 10:00 ET with a limit ladder, and never with stop orders.
-- **Every email is labelled PAPER or LIVE** and shows the module's status and stage (25% / 50% / 100%).
-- **Exits.** Time-stop and invalidation exits arrive as EXIT emails the evening before; a gap never cancels a stop.
-- **Stress line.** The dollar downside uses the gap multiple (§4), not only the stop distance.
-- **Tax line.** It names the account the trade belongs in and whether it is a Section 1256 instrument.
+- **Timing.** Evening emails carry orders for the next session.
+  - M1 and W10: MOO.
+  - M2 and M3: a DAY limit at the band edge.
+  - Options: entered after 10:00 ET, with a limit ladder capped at mid + 0.3 × the natural width.
+- **Brackets.** **Rule-exit modules (M1, M2, M3, W10) get no bracket.** Exits come as EXIT emails, followed by an MOO or MOC order. OTOCO brackets are only for stop-based modules added later; the email spec's "defined stop always attached" for futures is removed.
+- **Labels.** Every email is labelled **PAPER** or **LIVE**, with the module, its status and its stage.
+- **Stress line.** Uses §4's stress definition.
+- **Tax line.** Names the account family and whether the instrument is Section 1256.
 
 ---
 
 ## 10. Architecture and build plan
 
 ```
- GitHub Actions (private repo; America/New_York)
-   22:17 Mon–Fri  daily run
-      ingest → snapshot (hashed; two-source checks; explicit futures months)
-      → deterministic modules M1–M7 + shadow book  (no LLM needed to decide)
-      → sizing + caps + governor + wash-sale/account checks
-      → paper broker (fill model v1.0) + ledger (hash chain)
-      → Claude API writes the plain-English email from structured data only
-         (numbers via {{placeholders}}; validator checks value AND slot)
-      → Gmail API send (+ one GitHub issue per trade for your fills) → healthchecks.io ping
-   08:47 Mon–Fri  pre-market: re-price open orders; EXIT/ADJUST email only if needed
-   1st of month   monthly review; quarterly and annual jobs on their dates
- Event classification for W8/W9 (barrel loss vs fear; ceasefire confirmed): Claude with
- web search, citations required, and your one-click confirmation before any live trade.
+ GitHub Actions (private repo). Cron runs in UTC with a DST table;
+ healthchecks.io alerts if no run by 23:30 ET.
+   22:17 ET Mon–Fri  daily run: ingest → snapshot (hashed; two-source checks; explicit futures months)
+        → modules + shadow book (deterministic) → sizing/caps/governor/account rules
+        → paper broker (fill model v1.0) + hash-chained ledger
+        → Claude writes the email from structured data only (placeholders; validator checks value AND slot)
+        → Gmail API → GitHub issue per trade → healthchecks ping
+   10:17 ET Mon–Fri  options snapshot + paper option fills (Phase B)
+   08:47 ET Mon–Fri  pre-market re-price; EXIT/ADJUST emails only if needed
+   hourly, 24/7      crypto prices (Phase B, for M6)
+   1st of month      monthly review; quarterly and annual jobs on their dates
 ```
 
-**Build phases:**
+**Phase A (≈3–4 weeks):**
+- data adapters, snapshots and ledger;
+- M1 plus the ST-1b shadow;
+- M2 in the vehicle you choose;
+- M3;
+- sizing, caps and the governor;
+- the ETF paper broker;
+- the email renderer and validator;
+- Gmail sender (a dry-run mode that writes `.eml` files until the OAuth credential exists);
+- GitHub Actions, healthchecks and tests.
 
-- **A (≈1–2 weeks):**
-  - repo scaffold; data adapters; snapshot and ledger;
-  - modules M1, M3, M4 and M6, plus the shadow book;
-  - sizing and caps; the paper broker;
-  - the email renderer and number validator; Gmail sender;
-  - GitHub Actions and healthchecks; tests.
-- **B:** M2 (trend book, ETF8 first); M5 event rules with LLM classification; M7 (O1) on option-chain snapshots; the monthly and quarterly reports.
-- **C (after ≥3 months of paper):** the go-live review with you.
+**Phase B:**
+- the 10:17 ET options job, with M4 (after the O2 re-run) and M7;
+- W8/W9 with the frozen LLM veto;
+- M6 with the 24/7 crypto job;
+- the EDGAR/FINRA shadow screens;
+- the monthly, quarterly and annual reports.
 
-**Cost.** About $5–15 a month for the Claude API (few emails; deterministic modules need no LLM), plus the free data stack. A paid data source (+$30–100 a month) is recommended before real money.
+**Phase C:** the go-live review with you.
+
+**Data dependencies:**
+
+| Data | Needed by |
+|---|---|
+| Two-source SPY / VIX / ^GSPC closes | M1, W10, M4, M7 |
+| VIX3M | M7, ST-2 |
+| Explicit futures months (CLZ26, BZZ26, CME BTC) | R3, W8/W9, M6 |
+| A rolling map of Polymarket / Kalshi market names, failing closed | W8/W9 |
+| Option chains in market hours | M4, M7, W8, W9 |
+| EDGAR / FINRA | Shadow ledger |
+
+**Cost:** about $5–15 a month for the Claude API, plus free data. A paid data source is recommended before real money.
 
 ---
 
-## 11. State of the rules on 28 Sep 2026 (tracks 13–17)
+## 11. State on 29 Sep 2026 (from the 28 Sep close)
 
-| Module | State | Distance to trigger / notes |
+| Module | State | Notes |
 |---|---|---|
-| M1 ST-1 | Not firing | Needs SPY RSI(2) < 10 (a close ≤ ≈$757.6, −1.05%) **and** VIX ≥ 20 (now 16.1) |
-| M2 R1 trend | Positions on | Long S&P 500, Nasdaq-100, AUD; small longs in gold and crude; short 10-year Treasuries, EUR, JPY (a monthly re-decision on the first trading day of October) |
-| M3 BTC switch | On | 50-day rule long since 18 Aug at $64.7k; BTC at about $83.5k |
-| M4 O2 | Armed | Needs SPX −15% from its 252-day high and VIX ≥ 30 |
-| M5 W8/W9/W10 | Armed | Ceasefire holds to 31 Oct: 55.5% (Polymarket); Fed hike 28 Oct: 69–70% (Kalshi); W10 armed while SPX is above its 200-day average |
-| M6 depeg / basis | Off | Basis 4.9–5.3% vs a ≈10% trigger |
-| M7 O1 (paper) | Filters pass | Would be a paper trade only (XSP needs ≳$110k) |
-| **Data trap** | n/a | Brent's November contract expires **30 Sep**: "front-month Brent" drops about 7% mechanically. WTI does the same around 20 Oct. Triggers use explicit contract months |
+| M1 ST-1 | Not firing | Needs SPY RSI(2) < 10 (close ≤ ≈$757.6) **and** VIX ≥ 20 (now 16.1) |
+| M2 trend (252-day sign) | Long SPY, QQQ, FXA; small GLD and USO; short IEF, FXE, FXY | Long-only (a): the longs only. The crude leg passes the contango veto (WTI backwardated). Monthly decision: first trading day of October |
+| M3 BTC switch | On | BTC $83,169; weekly 10-week rule long. A paper position would open at launch; its 60-day clock starts then |
+| M4 O2 | Armed | SPX −15% from its 252-day high and VIX ≥ 30 |
+| M5 | W8 armed | Ceasefire through 31 Oct: 55.5%; through 30 Nov: 39%. Fed hike 28 Oct: 69–70% |
+| M6 | Off | Basis below the trigger |
+| M7 O1 | Filters pass | Paper only; needs ≥$162k |
+| **Data traps** | n/a | Brent's November contract expires **30 Sep**: "front month" drops about 7% mechanically. WTI's November expiry around 20 Oct: about −3.8%. Triggers use explicit months |
 
-**Catalysts in the next 60 days:**
+**Catalysts to 27 Nov:**
 
 | Date | Event |
 |---|---|
 | 2 Oct | Payrolls |
 | 14 Oct | CPI |
 | 27–28 Oct | FOMC |
+| 29 Oct | GDP |
 | 29–30 Oct | BoJ and ECB |
 | 3 Nov | Midterms |
+| 6 Nov | Payrolls |
+| 10 Nov | CPI |
 | About 17–19 Nov | Nvidia results |
-| 11 Dec | Government funding expires |
+
+Beyond the window: 11 Dec (government funding) and 10 Jan (US–China truce).
 
 ---
 
-## 12. Decisions needed before building
+## 12. Decisions needed before Phase A
 
-1. **What "realized within 60 days" means.**
-   - Calendar days (default) or trading days?
-   - May a trend position that is re-decided monthly stay open longer (M2, and M3 on futures)? Or must every position be closed within 60 days?
-2. **Lean or Full book.** About 12 trades a year for +0.7–1.5 points over T-bills, or about 30 trades a year for +1.5–3.2 points.
-3. **Paper notional.** Use the size you'd actually trade; it decides which instruments are feasible (§1).
-   - Default: **$100,000**. That excludes O1 and the micro-futures book, and uses ETFs.
-4. **ST-1 size.** The default 6% cap limits a 33% gap to −2% of the portfolio, but uses only a fraction of its edge. Up to about 13% notional would clear the growth hurdle, at a −4% stress.
-5. **Go-ahead to build Phase A.**
-6. **Still open from before:**
-   - country / US state;
-   - account types (taxable, IRA);
-   - Claude GitHub App access to `sol008/testProject`, needed for GitHub Actions and for pushing from cloud sessions;
-   - a long-horizon core outside this system.
+1. **"60 days":** calendar or trading days, and whether a monthly re-decided position (M2 option (c); M3 on futures) may stay open longer. Consequences in §1.
+2. **M2 on or off, and its vehicle:** (a) long-only ETF8 in an IRA; (b) long/short ETF8 in a taxable margin account at a broker that pays interest on short proceeds; (c) one managed-futures ETF; or off.
+3. **Accounts:**
+   - types (IRA, taxable, margin);
+   - how the paper money is split between them;
+   - options and futures permissions;
+   - a broker with a paper/practice account.
+4. **Approvals:**
+   - the policy-module exemptions (M1, M3, M4, W8);
+   - the invariant changes: gross above 1.0× (only if M2 (b) or futures), and a trade cap of 100 a year instead of 24;
+   - ST-1 at 6% (default), or 14% with a 4.6% stress exception.
+5. **Owner actions:** Gmail OAuth set to "In production" (Phase A runs in dry-run mode until it exists). GitHub access is done.
+6. **Go-ahead** for Phase A.
+7. **Still worth deciding:**
+   - country / US state (the design assumes US);
+   - a long-horizon core outside this system: the biggest lever for your goal.
+
+---
+
+## Appendix A — Red-team v3 findings and fixes
+
+| Finding | Fix in v3.1 |
+|---|---|
+| C1 go-live gate unreachable; trade unit undefined | §7 operations gate plus wide-book evidence; M2 unit definitions; honest time-to-full-size |
+| C2 the admission tests rejected the core modules | §4 policy modules; M1 sizing facts; §12.4 |
+| C3 M2 infeasible as backtested at $100k in an IRA | M2 vehicle choice (a/b/c); short rebate; gross approval; Full row restated |
+| M1 stress undefined; cluster overflow | §4 stress without stops; M2 as one sleeve; US-equity reservation |
+| M2 next-open claim false | §1 re-run requirement; the O2 re-run before shipping |
+| M3 W10 weak at 42 sessions | §1 and §12.1 consequences; W10 to shadow under the calendar reading |
+| M4 expectations not shrunk | §0 and §6 revised ranges; years to 11× |
+| M5 option expiry and liquidity contradictions | §4 expiry and liquidity rules; never-list wording |
+| M6 brackets contradicted rule exits | §9: no brackets for rule-exit modules |
+| M7 paper option fills unimplementable | 10:17 ET job; limits capped at the fill model |
+| M8 wrong account thresholds | §1 table; module vehicles |
+| M9 W8/W9 moved to an LLM | Mechanical triggers; LLM veto only; named invalidation market; W9 paper |
+| M10 brakes vs crisis modules | §4: breakers pause discretionary entries only; M4 exempt from G(D) |
+| M11 M3 spec contradictions | M3: BTC 10-week rule; ETH to shadow; exemptions |
+| M12 build plan | Phase A/B re-scoped; data-dependency table |
+| M13 §12 decisions | §12 rewritten |
+| Minor m1–m16 | Pre-registered 252-day signal; ranges; gross vs net; test-split wording; today's figures; M6 sizes; W10 slot and exits; minimum-hold scope; gate applicability; shadow additions; restored ramp conditions; UTC cron; units; never-list wording; paper accounts |
