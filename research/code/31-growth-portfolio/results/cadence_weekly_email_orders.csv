@@ -1,0 +1,13 @@
+book,out_of_market_vehicle,start,end,cagr_weekly_band,cagr_daily_rebalanced,weeks,share_weeks_with_orders,orders_pa,emails_with_orders_pa,max_orders_one_week,share_weeks_over_3
+2x blend 200d + 20% BTC switch,T-bill ETF (SGOV),2014-11-24,2026-09-28,0.3059,0.3035,619,0.2504,28.0282,13.1250,6,0.0258
+2x blend 200d + 20% BTC switch,account cash,2014-11-24,2026-09-28,0.3059,0.3035,619,0.2504,14.9879,13.1250,3,0.0000
+3x blend 200d + 20% BTC switch,T-bill ETF (SGOV),2014-11-24,2026-09-28,0.3749,0.3749,619,0.2536,28.6210,13.2944,6,0.0258
+3x blend 200d + 20% BTC switch,account cash,2014-11-24,2026-09-28,0.3749,0.3749,619,0.2536,15.5806,13.2944,3,0.0000
+3x blend (S&P/NDX 50/50) 200d,T-bill ETF (SGOV),1986-07-01,2026-09-28,0.2264,0.2235,2098,0.1134,13.1177,5.9241,4,0.0138
+3x blend (S&P/NDX 50/50) 200d,account cash,1986-07-01,2026-09-28,0.2264,0.2235,2098,0.1134,6.7953,5.9241,2,0.0000
+S&P 3x 200d,T-bill ETF (SGOV),1986-07-01,2026-09-28,0.1600,0.1600,2101,0.0628,6.5622,3.2811,2,0.0000
+S&P 3x 200d,account cash,1986-07-01,2026-09-28,0.1600,0.1600,2101,0.0628,3.2811,3.2811,1,0.0000
+Half Kelly (history 2014-26 mix),T-bill ETF (SGOV),2014-11-24,2026-09-28,0.3345,0.3021,619,0.2423,23.6250,12.7016,4,0.0065
+Half Kelly (history 2014-26 mix),account cash,2014-11-24,2026-09-28,0.3345,0.3021,619,0.2423,13.4637,12.7016,2,0.0000
+Half Kelly (forward 2014-26 mix),T-bill ETF (SGOV),2014-11-24,2026-09-28,0.2923,0.2698,619,0.1922,18.4597,10.0766,3,0.0000
+Half Kelly (forward 2014-26 mix),account cash,2014-11-24,2026-09-28,0.2923,0.2698,619,0.1922,10.3306,10.0766,2,0.0000
