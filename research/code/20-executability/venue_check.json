@@ -1,0 +1,264 @@
+{
+  "as_of_utc": "2026-09-29T00:13:44+00:00",
+  "robinhood": {
+    "SPY": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "c277b118-58d9-4060-8dc5-a3b5898955cb",
+      "type": "etp",
+      "simple_name": "SPDR S&P 500 ETF Trust",
+      "use": "M1 dip-buy, W10, M2 leg, O2/W8 option fallback"
+    },
+    "VOO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "147f59d9-43fd-43b0-aef9-2494820e33d5",
+      "type": "etp",
+      "simple_name": "Vanguard S&P 500 ETF",
+      "use": "alternative S&P 500 ETF (core / low fee)"
+    },
+    "QQQ": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "a95fe906-11f0-4699-bfc2-520dd706e98d",
+      "type": "etp",
+      "simple_name": "Invesco QQQ",
+      "use": "M2 leg"
+    },
+    "IEF": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "389dd6c0-965d-4c4b-ac7e-55c8b7278ceb",
+      "type": "etp",
+      "simple_name": "iShares 7-10 Year Treasury Bond ETF",
+      "use": "M2 leg (7-10y Treasuries)"
+    },
+    "GLD": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "41b7cc0c-f457-49f9-b6d3-d05be2dd8a7c",
+      "type": "etp",
+      "simple_name": "SPDR Gold Trust",
+      "use": "M2 leg (gold)"
+    },
+    "USO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "5fc217c3-4894-45f7-94e4-db4b7b79a117",
+      "type": "etp",
+      "simple_name": "United States Oil Fund",
+      "use": "M2 leg (crude), W9 options"
+    },
+    "FXE": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "541fd3d3-42c1-4dde-acfa-5c755e2b23e7",
+      "type": "etp",
+      "simple_name": "Invesco CurrencyShares Euro Currency Trust",
+      "use": "M2 leg (euro)"
+    },
+    "FXY": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "d9b3f1ff-0613-42aa-8cf1-ddde927f93b7",
+      "type": "etp",
+      "simple_name": "Invesco CurrencyShares Japanese Yen Trust",
+      "use": "M2 leg (yen)"
+    },
+    "FXA": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "c89257d1-ca3c-48f5-af50-769891c7a7e4",
+      "type": "etp",
+      "simple_name": "Invesco CurrencyShares Australian Dollar Trust",
+      "use": "M2 leg (Australian dollar)"
+    },
+    "IBIT": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "f4b86825-a92b-4e23-8f93-1ee813d0ec15",
+      "type": "etp",
+      "simple_name": "iShares Bitcoin Trust ETF",
+      "use": "M3 Bitcoin switch (ETF route)"
+    },
+    "FBTC": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "85ee6810-c354-4bbc-9930-9f415c962a52",
+      "type": "etp",
+      "simple_name": null,
+      "use": "M3 alternative Bitcoin ETF"
+    },
+    "DAL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "9ebb93b1-e4f0-49f7-b769-cbeb817ee5bf",
+      "type": "stock",
+      "simple_name": "Delta Air Lines",
+      "use": "W8 de-escalation call spreads"
+    },
+    "TLT": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "644f21f0-a166-4c94-bd67-02568d3a5940",
+      "type": "etp",
+      "simple_name": "iShares 20+ Year Treasury Bond ETF",
+      "use": "W3 shadow / rates setups"
+    },
+    "BNO": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "2a30b892-eb13-463f-ac30-23b1e02e4601",
+      "type": "etp",
+      "simple_name": "United States Brent Oil Fund",
+      "use": "oil (Brent) alternative"
+    },
+    "SGOV": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "5aaac3b7-c616-481c-a2ee-fe4896c08dec",
+      "type": "etp",
+      "simple_name": "iShares 0-3 Month Treasury Bond",
+      "use": "idle cash (T-bill ETF)"
+    },
+    "BIL": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": true,
+      "all_day_tradability": "tradable",
+      "tradable_chain_id": "6ba88585-a91e-44e3-9337-1de24f0fe239",
+      "type": "etp",
+      "simple_name": null,
+      "use": "idle cash (T-bill ETF)"
+    },
+    "DBMF": {
+      "state": "active",
+      "tradeable": true,
+      "tradability": "tradable",
+      "fractional_tradability": "tradable",
+      "extended_hours_fractional_tradability": false,
+      "all_day_tradability": "untradable",
+      "tradable_chain_id": "14da4d08-d587-49e3-909c-34f59ca0eb4f",
+      "type": "etp",
+      "simple_name": null,
+      "use": "managed-futures ETF (M2 option c, not chosen)"
+    }
+  },
+  "coinbase": {
+    "BTC-USD": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.01"
+    },
+    "ETH-USD": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.01"
+    },
+    "USDT-USD": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.00001"
+    },
+    "USDC-USD": {
+      "http": 404
+    },
+    "USDT-USDC": {
+      "status": "online",
+      "trading_disabled": false,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": true,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "0.0001"
+    },
+    "BTC-USDC": {
+      "status": "delisted",
+      "trading_disabled": true,
+      "cancel_only": false,
+      "post_only": false,
+      "limit_only": false,
+      "auction_mode": false,
+      "min_market_funds": "1",
+      "quote_increment": "1"
+    }
+  }
+}

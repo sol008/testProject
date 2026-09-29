@@ -1,6 +1,6 @@
-# System design v3.1 — the 1–60 day trade system (what will be built)
+# System design v3.2 — the 1–60 day trade system (what will be built)
 
-*29 September 2026. Revision 3.1 fixes the red-team findings in `19-red-team-v3.md`: 3 critical and 13 major, plus the minor ones. Appendix A maps each fix.*
+*29 September 2026. Revision 3.2 makes every trade placeable by a typical retail trader in the Robinhood or Coinbase app (§3a, from `20-executability-check.md`) and records your decisions (§12). Revision 3.1 fixed the red-team findings in `19-red-team-v3.md`; Appendix A maps each fix.*
 
 *It follows your decisions in `DECISIONS.md`: trades realized within 1–60 days; paper trading first; US stocks and ETFs, listed options, futures, a Bitcoin ETF and crypto; GitHub Actions with the Gmail API.*
 
@@ -99,7 +99,8 @@ Below these sizes the system uses SPY, IBIT and ETFs.
   - RSI(2) (Wilder smoothing) is below 10;
   - VIX closes at 20.00 or higher.
 - **Entry.** Market-on-open (MOO) buy of SPY. Use MES only when 6% of NAV covers one contract (≈$650k).
-- **Exit.** MOO sell the morning after the first close above the 5-day average. Time stop at the close of session 20. **No stop and no bracket.**
+- **Exit.** MOO sell the morning after the first close above the 5-day average. Time stop: sell at the **open of session 21**, a market order queued the evening before (Robinhood has no market-on-close order). **No stop and no bracket.**
+- **Venue.** Robinhood IRA, as a market order in dollars.
 - **Size.** Notional = **6% of NAV × G(D)**. Stress = notional × the S&P's worst 10-session loss (−32.6%) ≈ 2% of NAV.
 - **Expected.**
   - 3.8 trades a year (range 0–11), about 80% winners;
@@ -124,6 +125,8 @@ Below these sizes the system uses SPY, IBIT and ETFs.
   - At most 3% of that stress may sit in the US-equity cluster.
   - 4% of US-equity cluster room is reserved for M1, W10 and M4.
 - **Units.** One monthly rebalance = one trade for the budget and the emails. M2 counts as one position for the ≤8-open cap. Its legs count individually for stress and cluster caps.
+- **Chosen vehicle: (a) long-only ETF8 in the Robinhood IRA** (owner decision, 29 Sep).
+- **No-trade band.** Skip any adjustment smaller than 25% of the leg's target or $300. That keeps a rebalance to ≤3 dollar market orders, and the paper backtest uses the same band.
 - **Expected.**
   - **0 to +1.2% a year** via (a) or (c); negative for (b) without the short rebate.
   - A 5-year result below zero has a 25–37% chance.
@@ -135,7 +138,9 @@ Below these sizes the system uses SPY, IBIT and ETFs.
 - **Rule.** BTC only: weekly close above its 10-week average. That is 5.3 trades a year; max drawdown −48%; alpha t 0.24, so a risk switch, not alpha.
   - Alternative: the 50-day average (11.4 trades a year, alpha t 1.34).
   - ETH moves to the shadow ledger.
-- **Instrument.** IBIT (IRA). MBT only when 3% of NAV covers one contract (≈$280k). Spot only on a US-regulated venue, at ≤0.25% per side.
+- **Instrument.** IBIT in the Robinhood IRA by default. Evaluated at Friday's close; traded at Monday's open with a dollar market order.
+  - Optional route: BTC on Coinbase, as a dollar market order, 24/7. It is taxable, so short-term gains are taxed as income.
+  - MBT only when 3% of NAV covers one contract (≈$280k).
 - **Size.** Sleeve ≤3% of NAV. Stress = sleeve × the worst 10-session loss.
 - **Holding.** Closed at 60 days and re-entered if still on. The forced re-entries are not new trades.
 - **Exemptions.** From the 5-day minimum hold and from the "lookbacks under 6 months" ban (pre-registered exception).
@@ -144,8 +149,8 @@ Below these sizes the system uses SPY, IBIT and ETFs.
 ### M4 — O2: crash call debit spread (policy module; Phase B)
 
 - **Signal.** SPX ≥15% below its 252-day high **and** VIX ≥30. First day only; 60-day cool-down.
-- **Trade.** Buy the at-the-money call and sell the 105% call, on the XSP/SPXW expiry nearest to, but not beyond, 60 calendar days; held to expiry. SPY fallback only if XSP fails liquidity, and then closed by 15:00 ET the business day before expiry.
-- **Order.** Limit ladder capped at **mid + 0.3 × the natural width**, the same as the fill model.
+- **Trade.** Buy the at-the-money call and sell the 105% call, on the XSP expiry nearest to, but not beyond, 60 calendar days, in the **Robinhood taxable account** (Robinhood IRAs don't allow spreads). **Sell to close ≥1 trading day before expiration.** SPY is the fallback only if XSP fails liquidity.
+- **Order.** One net-debit limit order placed after 10:00 ET at mid + 0.3 × the natural width, the same as the fill model. If it isn't filled by 11:00 ET, re-enter once at the stated maximum; otherwise skip.
 - **Size.** Debit ≤2% of NAV, rounded to the nearest contract within the 3% cap. **Exempt from G(D)**: the premium is its maximum loss.
 - **Before shipping.** Re-run on a next-day 10:00 entry, and add the 10:17 ET options job (§7).
 - **Expected.** **+0.1 to +0.3% a year** (κ = 0.5; 12 crisis episodes; idle in about 60% of years). It must beat T-bills, not the index.
@@ -171,7 +176,13 @@ Below these sizes the system uses SPY, IBIT and ETFs.
   - **Exit:** at day 42 or 60, or at a new all-time high. Void if VIX > 45.
 - **Scheduled releases.** Never traded; logged for calibration only.
 
-### M6 — Crypto structural modules (Phase B)
+### M6 — Crypto structural modules → **shadow ledger only** (track 20)
+
+Not executable on your venues:
+- Coinbase has no USDC-USD market, because USDC converts 1:1.
+- Cash-and-carry needs MBT futures, which only make sense above about $280k.
+
+The rules below stay as shadow definitions.
 
 - **Depeg buy.**
   - Trigger: a regulated, fiat-backed coin ≤$0.97 on ≥2 venues, reserves attested, redemptions not suspended for more than 72 hours.
@@ -182,7 +193,7 @@ Below these sizes the system uses SPY, IBIT and ETFs.
   - ≤15% notional; long IBIT and short MBT in the **same** taxable account.
   - Awkward below about $280k. Off today.
 
-### M7 — O1: trend-filtered put credit spread (paper; Phase B)
+### M7 — O1: trend-filtered put credit spread (shadow at the $100k paper size; paper from ≈$162k; Phase B)
 
 - **Trade.** Sell the 0.20-delta put and buy the put 5% lower, 40–50 DTE, on XSP/SPXW.
 - **Filters.** SPX above its 200-day average; VIX < 30; VIX/VIX3M < 1.0.
@@ -205,6 +216,35 @@ Each has a pre-registered promotion test in its track.
 
 ---
 
+## 3a. Execution standard: every trade must be easy in the Robinhood or Coinbase app (track 20)
+
+1. **Venues.**
+   - ETF and Bitcoin-ETF trades go in the **Robinhood IRA**.
+   - Option spreads go in the **Robinhood taxable account** (Level 3 plus index options). Robinhood IRAs allow Level 2 only, so no spreads.
+   - Crypto on **Coinbase** is optional.
+   - No futures and no short selling in v1.
+2. **Three order kinds only:**
+   - **(a) A market order in dollars,** placed any time after the email. Robinhood queues it for the 9:30 ET open; its overnight session takes limit orders only.
+   - **(b) A two-leg vertical spread at one net limit price,** placed after 10:00 ET, with one re-price at the stated maximum, otherwise skipped.
+   - **(c) A Coinbase market buy or sell in dollars.**
+   - No stop, stop-limit, trailing-stop, bracket/OCO, market-on-close or overnight-session orders.
+3. **At most 3 orders per email.** Monthly rebalances included, via M2's no-trade band.
+4. **Options.**
+   - Two-leg vertical spreads only.
+   - At least 1 whole contract, or skip.
+   - Closed **≥1 trading day before expiration.** That avoids Robinhood's 3:30 PM expiration-day closeouts and assignment.
+   - XSP preferred.
+5. **Every email carries:**
+   - a **Robinhood steps** block: ≤7 taps with exact values;
+   - a **what-if** block (outside the band → skip; not filled → the one allowed re-price, then skip);
+   - plain-English explanations of every term.
+6. **Instrument whitelist.**
+   - Only tickers verified tradable on your venues may appear in an email.
+   - `research/code/20-executability/check_venues.py` re-runs monthly, and a failed check blocks the email.
+   - Verified 29 Sep: SPY, VOO, QQQ, IEF, GLD, USO, FXE, FXY, FXA, IBIT, FBTC, DAL, TLT, BNO, SGOV and BIL are tradable with dollar orders and listed options. BTC-USD and ETH-USD are live on Coinbase.
+
+---
+
 ## 4. Portfolio rules
 
 | Rule | Setting |
@@ -223,7 +263,7 @@ Each has a pre-registered promotion test in its track.
 | Option expiry (debit structures) | Entry DTE ≥ max(2 × planned hold in calendar days, 45). Close ≥10 trading days before expiry. O2 is the held-to-expiry exception. No option with <40 DTE at entry |
 | Option liquidity | Track 17 R8, measured from the market-hours snapshot: each leg's bid-ask ≤10% of mid with open interest ≥500, and the whole structure's round trip ≤10% of the debit (≤20% if the expected gain is ≥2× costs). This replaces the email spec's 2%/5% gate |
 | Contango veto (R3) | No long position in USO/MCL (M2's crude leg, W9) when the front roll yield is below −20% a year, from explicit contract months |
-| Accounts | `account.yaml` defines the paper accounts (e.g., a $60k IRA and a $40k taxable margin account); the paper broker enforces their constraints: no shorts or futures in the IRA, T+1 settled cash. Each underlying lives in exactly one account family. Cross-account wash-sale guard (±30 days) |
+| Accounts | `account.yaml` defines the paper accounts:<br>• **Robinhood IRA $70k:** ETFs and IBIT;<br>• **Robinhood taxable margin $30k:** option spreads (Level 3, index options);<br>• **Coinbase:** optional, off by default.<br>The paper broker enforces their constraints: no spreads, shorts or futures in the IRA; T+1 settled cash. Each underlying lives in exactly one account family. Cross-account wash-sale guard (±30 days) |
 
 ---
 
@@ -432,24 +472,25 @@ Beyond the window: 11 Dec (government funding) and 10 Jan (US–China truce).
 
 ---
 
-## 12. Decisions needed before Phase A
+## 12. Decisions (answered 29 Sep 2026; see `DECISIONS.md`)
 
-1. **"60 days":** calendar or trading days, and whether a monthly re-decided position (M2 option (c); M3 on futures) may stay open longer. Consequences in §1.
-2. **M2 on or off, and its vehicle:** (a) long-only ETF8 in an IRA; (b) long/short ETF8 in a taxable margin account at a broker that pays interest on short proceeds; (c) one managed-futures ETF; or off.
+1. **"60 days" = calendar days.** Every trade closes within 60 calendar days, but a monthly re-decided trend position may continue. W10 stays in the shadow ledger.
+2. **M2 = long-only ETF8 in the Robinhood IRA,** with a no-trade band.
 3. **Accounts:**
-   - types (IRA, taxable, margin);
-   - how the paper money is split between them;
-   - options and futures permissions;
-   - a broker with a paper/practice account.
-4. **Approvals:**
+   - an IRA and a taxable margin account with options (spreads) at Robinhood;
+   - Coinbase for crypto.
+   - Paper split: $70k IRA / $30k taxable (default $100k notional).
+4. **Approved:**
    - the policy-module exemptions (M1, M3, M4, W8);
-   - the invariant changes: gross above 1.0× (only if M2 (b) or futures), and a trade cap of 100 a year instead of 24;
-   - ST-1 at 6% (default), or 14% with a 4.6% stress exception.
-5. **Owner actions:** Gmail OAuth set to "In production" (Phase A runs in dry-run mode until it exists). GitHub access is done.
-6. **Go-ahead** for Phase A.
-7. **Still worth deciding:**
+   - a trade cap of 100 a year;
+   - ST-1 at 6%.
+   - No gross above 1.0× (M2 is long-only).
+5. **Go-ahead for Phase A:** given, subject to the executability check (done, track 20).
+6. **Still open, not blocking:**
+   - Gmail OAuth "In production": Phase A runs in dry-run mode until the credential exists;
    - country / US state (the design assumes US);
-   - a long-horizon core outside this system: the biggest lever for your goal.
+   - a long-horizon core outside the system;
+   - the three in-app confirmations in track 20 §5.
 
 ---
 
