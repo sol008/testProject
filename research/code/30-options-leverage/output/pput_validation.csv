@@ -1,0 +1,11 @@
+series,cagr,maxdd,vol,corr_monthly
+"model replica (base surface, half-spread 0.0%)",0.0523,-0.5722,0.1318,0.9511
+"model replica (base surface, half-spread 0.4%)",0.0461,-0.5935,0.1318,0.9510
+"model replica (cheap surface, half-spread 0.0%)",0.0649,-0.5282,0.1349,0.9466
+"model replica (cheap surface, half-spread 0.4%)",0.0587,-0.5515,0.1350,0.9465
+"model replica (dear surface, half-spread 0.0%)",0.0457,-0.5865,0.1285,0.9549
+"model replica (dear surface, half-spread 0.4%)",0.0396,-0.6071,0.1286,0.9549
+"model replica (real surface, half-spread 0.0%)",0.0768,-0.4653,0.1327,0.9512
+"model replica (real surface, half-spread 0.4%)",0.0706,-0.4913,0.1327,0.9511
+CBOE PPUT (real prices),0.0762,-0.4196,0.1339,1.0000
+S&P 500 TR (SPY before fee),0.1092,-0.5525,0.1797,
