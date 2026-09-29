@@ -1052,16 +1052,24 @@ def _modules_cfg(cfg: "Config") -> dict:
     return (cfg.constitution or {}).get("modules") or {}
 
 
+# Lifecycle values design v4 puts in `modules.<name>.status` (Phase C); a label such as "policy module" is anything else.
+LIFECYCLE_STATUSES = ("active", "shadow", "retired", "superseded_by", "paper")
+
+
 def module_statuses(cfg: "Config") -> list[dict[str, Any]]:
-    """The enabled modules and their status, from the constitution: its `status` key, else the module's status label
-    (emails.MODULE_STATUS, the label every trade email shows). "policy" marks a policy module, which design §4 exempts
-    from the per-trade hurdle; M2, the trend sleeve, is not one."""
+    """The enabled modules and their status label, from the constitution's `status` key when it is a label, else the
+    module's status label (emails.MODULE_STATUS, the label every trade email shows). A design v4 lifecycle value in
+    that key (`shadow`, `retired`, `superseded_by: G2`, `active`) is reported as "lifecycle" and never as the label.
+    "policy" marks a policy module, which design §4 exempts from the per-trade hurdle; M2, the trend sleeve, is not one."""
     out = []
     for name, mod in _modules_cfg(cfg).items():
         if not (mod or {}).get("enabled"):
             continue
-        status = str((mod or {}).get("status") or email_mod.MODULE_STATUS.get(name) or "module")
-        out.append({"module": name, "status": status, "policy": "policy module" in status.lower()})
+        raw = str((mod or {}).get("status") or "")
+        lifecycle = raw.lower().startswith(LIFECYCLE_STATUSES)     # design v4: the book's lifecycle, not a label
+        status = (email_mod.MODULE_STATUS.get(name) or "module") if (not raw or lifecycle) else raw
+        out.append({"module": name, "status": status, "lifecycle": raw if lifecycle else "active",
+                    "policy": "policy module" in status.lower()})
     return out
 
 
