@@ -1,0 +1,4 @@
+rule,cagr,maxdd,spy,index_1x_bh,lag1_autocorr_index
+IXIC-spliced 1x 200d-W b2,0.1307,-0.2043,0.0893,0.0740,0.3097
+IXIC-spliced 2x 200d-W b2,0.1641,-0.3950,0.0893,0.0740,0.3097
+IXIC-spliced 3x 200d-W b2,0.1956,-0.5424,0.0893,0.0740,0.3097

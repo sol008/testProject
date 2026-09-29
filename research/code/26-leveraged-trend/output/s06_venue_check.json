@@ -1,0 +1,104 @@
+{
+ "as_of_utc": "2026-09-29T04:46:25+00:00",
+ "robinhood": {
+  "UPRO": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "ProShares UltraPro S&P 500 ETF",
+   "has_option_chain": true
+  },
+  "SSO": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "ProShares Ultra S&P 500 ETF",
+   "has_option_chain": true
+  },
+  "SPXL": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": false,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": null,
+   "has_option_chain": true
+  },
+  "TQQQ": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "ProShares UltraPro QQQ",
+   "has_option_chain": true
+  },
+  "QLD": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "ProShares Ultra QQQ",
+   "has_option_chain": true
+  },
+  "SGOV": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "iShares 0-3 Month Treasury Bond",
+   "has_option_chain": true
+  },
+  "BIL": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": null,
+   "has_option_chain": true
+  },
+  "SPY": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "SPDR S&P 500 ETF Trust",
+   "has_option_chain": true
+  },
+  "QQQ": {
+   "state": "active",
+   "tradeable": true,
+   "tradability": "tradable",
+   "fractional_tradability": "tradable",
+   "extended_hours_fractional_tradability": true,
+   "all_day_tradability": "tradable",
+   "type": "etp",
+   "simple_name": "Invesco QQQ",
+   "has_option_chain": true
+  }
+ }
+}

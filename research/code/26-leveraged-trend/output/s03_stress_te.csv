@@ -1,0 +1,4 @@
+L,worst_10_session,when,max_notional_at_2pct_stress,rule_te_vs_spy_is,rule_log_excess_is,rule_years_le_minus20,rule_share_losing_years,rule_years,rule_max_switches_in_a_year,rule_share_years_no_switch,spy_share_losing_years
+1,-0.3248,1929-10-29,0.0616,,,,,,,,0.2653
+2,-0.5653,1929-10-29,0.0354,0.1976,0.0336,7.0000,0.3367,98.0000,5.0000,0.3061,0.2653
+3,-0.7584,1987-10-19,0.0264,0.3119,0.0510,17.0000,0.3571,98.0000,5.0000,0.3061,0.2653
