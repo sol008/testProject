@@ -1070,6 +1070,9 @@ def module_statuses(cfg: "Config") -> list[dict[str, Any]]:
         status = (email_mod.MODULE_STATUS.get(name) or "module") if (not raw or lifecycle) else raw
         out.append({"module": name, "status": status, "lifecycle": raw if lifecycle else "active",
                     "policy": "policy module" in status.lower()})
+    if ((cfg.constitution or {}).get("growth") or {}).get("enabled"):     # design v4 §3: one policy module, three sleeves
+        out.append({"module": "GROWTH", "status": "policy module (the growth book)", "lifecycle": "active",
+                    "policy": True})
     return out
 
 

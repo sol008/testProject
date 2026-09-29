@@ -1288,10 +1288,23 @@ DECISION_RECORDS = ("recommendation", "order", "fill", "signal", "mark", "shadow
                     "growth_decision", "governor", "order_set")
 
 
+def _decision_payload(payload):
+    """A decision record's payload without the ledger record ids it cites (`ids`, `facts.ids`): those are hashes of
+    records that carry timestamps, so two replays of the same decisions never share them."""
+    if not isinstance(payload, dict):
+        return payload
+    out = {k: v for k, v in payload.items() if k != "ids"}
+    if isinstance(out.get("facts"), dict):
+        out["facts"] = {k: v for k, v in out["facts"].items() if k != "ids"}
+    return out
+
+
 def compare_runs(work_a: Path, work_b: Path, until: str | None = None) -> dict:
-    """Whether two replays made the same decisions (ledger payloads, run manifests aside), up to `until`."""
+    """Whether two replays made the same decisions (ledger payloads, run manifests and record ids aside), up to
+    `until`."""
     def decisions(w: Path) -> list:
-        return [(r["record_type"], r["as_of"], r["payload"]) for r in ledger_records(Path(w) / "state")
+        return [(r["record_type"], r["as_of"], _decision_payload(r["payload"]))
+                for r in ledger_records(Path(w) / "state")
                 if r["record_type"] in DECISION_RECORDS and (until is None or r["as_of"] <= until)]
 
     a, b = decisions(work_a), decisions(work_b)

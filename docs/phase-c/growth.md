@@ -304,6 +304,5 @@ email. No fill within two weeks: `event: unresolved` and a `fill` alert. Paused 
 **Known limits.** The Sunday job does not look at pending sells: if the daily run is down from a Rule E evening to
 Sunday, the Sunday order set sells the leg again and the second sell is cancelled with a `fill` alert (fail loud).
 The Rule E score compares one price with one price; the annual review reads `rule_e.scores` for the running value.
-`tests/test_reports.py::test_annual_hurdle_line_names_the_policy_modules_from_the_config` fails on the C1 merge
-already (the annual hurdle line reads the v4 `status` keys, so M1/M4/W8 are no longer "policy modules" there); it is
-the integrator's to settle.
+The annual hurdle line reads the v4 `status` keys as lifecycle values, not labels, and names the growth book as a
+policy module (`reports.module_statuses`; settled at integration).

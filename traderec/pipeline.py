@@ -751,7 +751,9 @@ def _drawdown_alerts(run: Run, mark: dict) -> None:
     gov = run.cfg.risk["governor"]
     dd = float(mark["drawdown"])
     if dd >= float(gov["pause_discretionary_at"]):
-        run.alert("drawdown", f"drawdown {dd:.1%}: discretionary entries paused; M2 may not raise gross")
+        book = ((run.cfg.constitution or {}).get("growth") or {}).get("enabled")
+        what = "the growth book's rules and governor keep running (design v4 §4)" if book else "M2 may not raise gross"
+        run.alert("drawdown", f"drawdown {dd:.1%}: discretionary entries paused; {what}")
     elif dd >= float(gov["review_at"]):
         run.alert("drawdown", f"drawdown {dd:.1%}: human review due (design §4)")
 

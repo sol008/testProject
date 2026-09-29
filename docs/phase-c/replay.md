@@ -235,8 +235,9 @@ Calendar years of the second replay (`calendar_years.csv`):
 
 Tests: `tests/test_growth_daily.py` (11) and the growth-book replay test in `tests/test_replay.py`. `tests/test_m4.py`
 and `tests/test_w8w9.py` now pin the v3.3 book (`growth.with_enabled(cfg, False)`) as `test_pipeline.py` does, since
-their modules are shadow under v4; `tests/test_reports.py`'s annual hurdle line is pinned to the v4 statuses (it had
-been failing since the C1 config change: `reports.module_statuses` reads the `status` keys).
+their modules are shadow under v4. `tests/test_reports.py`'s annual hurdle line names the policy modules by label
+again: `reports.module_statuses` treats a v4 `status` value (shadow, retired, superseded_by, active) as the module's
+lifecycle, not its label, and adds the growth book as a policy module while `growth.enabled` (fixed at integration).
 
 ## Interpretations (design Appendix B style)
 
@@ -291,9 +292,9 @@ python scripts/replay.py reconcile-growth --cache ... --work /tmp/traderec-repla
   time budget.
 - **A historical second source for ^NDX** (Nasdaq's index history) would let `--second-source history` cover the
   book; today it covers SPY and ^GSPC only, so the book's replay uses the echo for the index closes.
-- **The annual report's hurdle line** (`reports.module_statuses`, `emails.render_annual`) now names the v4 statuses
-  as "not policy modules", W10 and the growth book included; the integrator should decide how the report describes
-  the v4 book (C2's file).
+- **The annual report's hurdle line** (`reports.module_statuses`, `emails.render_annual`) names the policy modules
+  by their labels, the growth book among them ("M1, M3, W10, M4, W8 and GROWTH"); a v4 lifecycle status is reported
+  separately as `lifecycle` (fixed at integration). The review emails do not yet show each module's lifecycle.
 - **The governor's drawdown** is on IRA + taxable, and the paper taxable account is T-bill cash (C1's interpretation
   of the $20k VOO), so the governor sees roughly 80% of the book's drawdown. Track 38's governor was on the book
   alone. With VOO bars in the paper broker it would see more.

@@ -76,7 +76,8 @@ def test_shadow_and_retired_modules_place_no_orders_and_the_book_trades(tmp_path
     run_days(cfg, book_provider(), state_dir, rec, LAUNCH, "2025-10-24")
     st = state_of(state_dir)
     kinds = [(e.meta.get("kind"), e.meta.get("trade_id")) for e in rec.sent]
-    assert kinds == [], kinds                                          # no M1 / M2 / M3 / W10 entry emails
+    assert [k for k in kinds if k[0] != "GROWTH"] == [], kinds        # no M1 / M2 / M3 / W10 entry emails
+    assert [k[0] for k in kinds] == ["GROWTH"] * 3                    # only the Sunday emails (5, 12, 19 Oct)
     assert st["modules"]["M1"]["open_trade"] is None and st["modules"]["M3"]["open_trade"] is None
     modules_with_lots = {k.split("|")[2] for k in st["broker"]["lots"]}
     assert modules_with_lots >= {"G1", "G2"} and not modules_with_lots & {"M1", "M2", "M3"}
@@ -121,7 +122,8 @@ def test_w10_signal_is_handed_to_the_sunday_job_and_bought_from_cash_on_monday(t
     fired = st["modules"]["W10"]["fired"]
     assert fired["signal_date"] == "2025-10-07" and fired["ret"] < -0.03 and fired["close"] > 0
     assert fired["second_source"]["source"] == "nasdaq" and "handled" not in fired
-    assert st["modules"]["W10"]["open_trade"] is None and not [e for e in rec.sent]
+    assert st["modules"]["W10"]["open_trade"] is None
+    assert [e.meta.get("kind") for e in rec.sent] == ["GROWTH"]       # Sunday 5 Oct's email only; no W10 email
     sig = [r for r in records(state_dir, "signal") if r["payload"].get("module") == "W10" and r["payload"].get("check") == "fired"]
     assert [r["as_of"] for r in sig] == ["2025-10-07"] and sig[0]["payload"]["handoff"] == "sunday_email"
     assert [e["signal_date"] for e in st["shadow"]["W10"]["events"]] == ["2025-10-07"]   # the shadow record too
@@ -134,7 +136,8 @@ def test_w10_signal_is_handed_to_the_sunday_job_and_bought_from_cash_on_monday(t
     assert ot["trade_id"] == "T-2025-10-07-W10" and ot["status"] == "open" and ot["fill_date"] == "2025-10-13"
     assert ot["exit_date"] == "2026-01-09" and "ira|SPY|W10" in st["broker"]["lots"]
     assert st["modules"]["W10"]["fired"]["handled"] == "2025-10-12" and st["modules"]["W10"]["fired"]["sent"] is True
-    assert [e.meta.get("kind") for e in rec.sent] == []                 # the entry rides the Sunday email (C2)
+    assert [e.meta.get("kind") for e in rec.sent] == ["GROWTH", "GROWTH"]   # the entry rides Sunday 12 Oct's email
+    assert "SPY" in rec.sent[-1].text and "W10" in rec.sent[-1].text
 
 
 def test_w10_emits_its_own_order_when_growth_is_off(tmp_path):

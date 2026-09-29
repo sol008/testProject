@@ -562,11 +562,17 @@ def test_annual_hurdle_line_names_the_policy_modules_from_the_config(cfg, world)
     reports.run_annual(cfg, provider, state_dir, year="2025", services=rec.services())
     f = flat(rec.sent[-1].text)
     assert "every module so far is a policy module" not in f
-    # design v4 (Phase C1): the constitution's `status` keys name the v3.3 modules' new statuses, and
-    # reports.module_statuses reads them whether or not the growth book is on. (Under v4 W10 and the growth book are
-    # the policy modules; how the annual report should say so is for the integrator, docs/phase-c/replay.md.)
-    assert ("Neither bound this year. M1 (shadow), M2 (retired), M3 (superseded_by: G2), W10 (active), M4 (shadow), "
-            "W8 (shadow) and W9 (shadow) are not policy modules.") in f
+    # design v4: the constitution's `status` keys carry the modules' lifecycle (shadow, retired, superseded), which is
+    # not their label; the hurdle line names the policy modules by label, and the growth book is one (design v4 §3).
+    assert ("Neither bound this year. The hurdle exempts the policy modules (M1, M3, W10, M4 and W8); "
+            "M2 (trend sleeve) and W9 (paper module) are not policy modules.") in f
+    # with the growth book on (the production config) it is a policy module too, and the v4 statuses are lifecycles
+    rows = {r["module"]: r for r in reports.module_statuses(load_config())}
+    assert rows["GROWTH"] == {"module": "GROWTH", "status": "policy module (the growth book)", "lifecycle": "active",
+                              "policy": True}
+    assert rows["M1"] == {"module": "M1", "status": "policy module", "lifecycle": "shadow", "policy": True}
+    assert rows["M2"]["lifecycle"] == "retired" and rows["M3"]["lifecycle"] == "superseded_by: G2"
+    assert "GROWTH" not in {r["module"] for r in reports.module_statuses(cfg)}      # this fixture: the book is off
     only_policy = render_annual({"year": "2026", "label": "2026", "hurdle_bp": 6, "budget": 100,
                                  "module_statuses": [{"module": "M1", "status": "policy module", "policy": True}]}, {})
     assert "Every enabled module is a policy module, which the hurdle exempts." in flat(only_policy.text)
