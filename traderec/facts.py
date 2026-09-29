@@ -25,13 +25,40 @@ if TYPE_CHECKING:  # pragma: no cover
 # ----------------------------------------------------------------------------------------------------
 
 def holdings(run: "Run") -> dict[tuple[str, str], float]:
-    """Market value per (account, ticker) at the latest close, all modules combined."""
+    """Market value per (account, ticker) at the latest close, all modules combined.
+
+    Open option spreads are one row per (account, root), valued at their last mark (docs/PHASE_B_CONTRACTS.md §4).
+    """
     out: dict[tuple[str, str], float] = {}
     for p in run.broker.positions():
         px = run.last_close(p["ticker"])
         value = p["qty"] * px if px else float(p["cost"])
         out[(p["account"], p["ticker"])] = out.get((p["account"], p["ticker"]), 0.0) + value
+    for sp in _spreads(run):
+        key = (sp["account"], _spread_name(sp["root"]))
+        out[key] = out.get(key, 0.0) + _spread_value(run, sp)
     return out
+
+
+def _spreads(run: "Run") -> list[dict[str, Any]]:
+    spreads = getattr(run.broker, "spreads", None)
+    return list(spreads()) if callable(spreads) else []
+
+
+def _spread_name(root: str) -> str:
+    return f"{root} option spreads"
+
+
+def _multiplier(run: "Run") -> float:
+    return float((run.cfg.fills.get("options") or {}).get("multiplier", 100))
+
+
+def _spread_value(run: "Run", sp: dict[str, Any]) -> float:
+    """A spread at its last mark (combo mid x contracts x multiplier), else at its entry price, else its cost."""
+    per_share = sp.get("mark") if sp.get("mark") is not None else sp.get("entry_price")
+    if per_share is None:
+        return float(sp.get("cost") or 0.0)
+    return float(per_share) * int(sp.get("contracts") or 0) * _multiplier(run)
 
 
 def portfolio_after(run: "Run", orders: list[OrderIntent]) -> list[dict[str, Any]]:
@@ -43,6 +70,9 @@ def portfolio_after(run: "Run", orders: list[OrderIntent]) -> list[dict[str, Any
     cash = {a: run.broker.cash(a) for a in run._accounts()}
     queue = list(run.broker.pending()) + list(orders)
     for o in [o for o in queue if o.side == "sell"] + [o for o in queue if o.side == "buy"]:   # as the broker fills
+        if o.order_type == "spread_limit":
+            _spread_after(run, o, vals, cash)
+            continue
         key = (o.account, o.ticker)
         cur = vals.get(key, 0.0)
         if o.side == "buy":
@@ -64,6 +94,22 @@ def portfolio_after(run: "Run", orders: list[OrderIntent]) -> list[dict[str, Any
         rows.append({"name": f"Cash / T-bills ({_acct_label(run, acct)})", "value": value,
                      "pct": value / total if total else 0.0})
     return rows
+
+
+def _spread_after(run: "Run", o: OrderIntent, vals: dict[tuple[str, str], float], cash: dict[str, float]) -> None:
+    """A spread order in the portfolio-after table: an opening order at its first limit, a close at the mark."""
+    key = (o.account, _spread_name(o.ticker))
+    cur = vals.get(key, 0.0)
+    if o.side == "buy":
+        amt = min(float(o.limit_price or 0.0) * int(o.contracts or 0) * _multiplier(run),
+                  max(cash.get(o.account, 0.0), 0.0))
+        vals[key] = cur + amt
+        cash[o.account] = cash.get(o.account, 0.0) - amt
+        return
+    held = [sp for sp in _spreads(run) if sp.get("trade_id") == o.trade_id and sp.get("account") == o.account]
+    amt = sum(_spread_value(run, sp) for sp in held)
+    vals[key] = max(cur - amt, 0.0)
+    cash[o.account] = cash.get(o.account, 0.0) + amt
 
 
 def _module_value(run: "Run", o: OrderIntent) -> float:

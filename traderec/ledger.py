@@ -24,7 +24,7 @@ GENESIS = "GENESIS"
 
 RECORD_TYPES = frozenset({
     "run_manifest", "snapshot", "signal", "recommendation", "order", "fill", "mark",
-    "forecast", "resolution", "shadow", "monthly_report", "correction",
+    "forecast", "resolution", "shadow", "monthly_report", "quarterly_report", "annual_report", "correction",
 })
 
 ENVELOPE_KEYS = (

@@ -834,8 +834,6 @@ def test_rendered_spread_emails_carry_the_contract_values(cfg, world):
     assert not validator.validate(ex) and f"{sell['max_price']:.2f}" in ex.text and "10:00 ET" in ex.text
 
 
-@pytest.mark.xfail(strict=False, reason="pipeline._fill_pending asks run.bars() for every pending order's ticker, "
-                                        "spread roots included (integrator: skip order_type 'spread_limit')")
 def test_the_day_after_an_m4_order_needs_no_option_root_bars(cfg, world):
     state_dir, provider, rec = world
     run_until(cfg, provider, state_dir, rec, SIGNAL)

@@ -87,7 +87,8 @@ from typing import Any, Iterable
 from .types import OrderIntent, Recommendation, RenderedEmail
 
 __all__ = [
-    "DISCLAIMER", "GATE_DEFAULTS", "NumberRegistry", "PAPER_BANNER", "render", "render_monthly",
+    "DISCLAIMER", "GATE_DEFAULTS", "NumberRegistry", "PAPER_BANNER", "render", "render_annual", "render_monthly",
+    "render_quarterly",
 ]
 
 MINUS = "−"

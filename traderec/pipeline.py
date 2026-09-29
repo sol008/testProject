@@ -357,7 +357,8 @@ class Run:
             self.blocked = True
             return False
         if not self.dry_run and self.cfg.account.get("github_issues", False):
-            url = self.services.create_issue(_issue_title(email.subject), _issue_body(email.text),
+            spread = any(o.order_type == "spread_limit" for o in rec.orders)
+            url = self.services.create_issue(_issue_title(email.subject), _issue_body(email.text, spread=spread),
                                              labels=["traderec", self.cfg.mode, rec.module])
             if url:
                 ctx["issue_url"] = url
@@ -465,7 +466,10 @@ class Run:
         return risk.stress_table({t: self.bars(t)["close"] for t in sorted(tickers)}, self.cfg)
 
     def open_stress(self, stress: dict[str, float]) -> dict:
-        return risk.open_stress(self.broker.positions(), self.position_values(), stress, self.cfg)
+        """Open stress including open spreads and tonight's pending buys (design §4 "Clusters": a later signal
+        takes the room that is left in the US-equity reserve)."""
+        return risk.open_stress(self.broker.positions(), self.position_values(), stress, self.cfg,
+                                spreads=self.broker.spreads(), pending=self.broker.pending())
 
     def admit(self, module: str, ticker: str, dollars: float) -> dict:
         stress = self.stress((ticker,))
@@ -1302,8 +1306,10 @@ def _issue_title(subject: str) -> str:
     return subject[:240]
 
 
-def _issue_body(text: str) -> str:
-    return (text + "\n\n---\nRecord your fill as a comment: `filled <dollars> @ <price>` or `skipped`.")[:60000]
+def _issue_body(text: str, *, spread: bool = False) -> str:
+    how = ("`filled <contracts> @ <net price>` (for example `filled 2 @ 7.45`)" if spread
+           else "`filled <dollars> @ <price>`")
+    return (text + f"\n\n---\nRecord your fill as a comment: {how} or `skipped`.")[:60000]
 
 
 def status_text(cfg: Config, state_dir: Path | None = None) -> str:
