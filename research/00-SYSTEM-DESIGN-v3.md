@@ -528,7 +528,7 @@ Beyond the window: 11 Dec (government funding) and 10 Jan (US–China truce).
 
 ## 12. Decisions (answered 29 Sep 2026; see `DECISIONS.md`)
 
-1. **"60 days" = calendar days.** Every trade closes within 60 calendar days, but a monthly re-decided trend position may continue. W10 stays in the shadow ledger.
+1. **"60 days" = calendar days.** Every trade closes within 60 calendar days, but a monthly re-decided trend position may continue. (W10's shadow status under this reading is superseded by item 6.)
 2. **M2 = long-only ETF8 in the Robinhood IRA,** with a no-trade band.
 3. **Accounts:**
    - an IRA and a taxable margin account with options (spreads) at Robinhood;
