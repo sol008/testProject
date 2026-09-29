@@ -7,10 +7,14 @@ Labels (MODULE_NAMES, MODULE_STATUS, MODULE_CONFIDENCE) are fixed, reviewed text
 Facts read here, NEW_TRADE: spx_close, spx_high, spx_drawdown (a fraction), high_sessions, drop_from_high (a
 fraction), vix, vix_min, cooldown_days, root, contracts_label, long_strike, short_strike, short_strike_ratio,
 expiry, execute_date, limit_price, max_debit_usd, width_usd, max_multiple, exit_date, last_close_date,
-close_sessions_before, american_root (SPY only), fallback_from (only when SPY replaced XSP) and base_rates
-(since, signals, episodes, win_rate, mean_pct, is_mean_pct, oos_since, lost_all_share). EXIT: root,
-contracts_label, expiry, execute_date, limit_price, entry_date, entry_price, mid_price, retry_date (first attempt)
-or retry_of (the retry).
+close_sessions_before, fallback_from (only when SPY replaced XSP) and base_rates (since, signals, episodes,
+win_rate, mean_pct, is_mean_pct, oos_since, lost_all_share). EXIT: root, contracts_label, expiry, execute_date,
+limit_price, entry_date, entry_price, mid_price, retry_date (first attempt) or retry_of (the retry).
+
+The order's own numbers (contracts_label, the strikes, expiry, limit_price, max_debit_usd, width_usd, max_multiple) are
+re-derived from the OrderIntent by the spread renderer, which blocks the email when these facts disagree with it.
+What a close that misses on the last session before expiry leads to, and SPY's early-assignment risk, are the
+renderer's generic spread lines, so they are said once.
 """
 from __future__ import annotations
 
@@ -124,9 +128,7 @@ TEXT: dict = {
             ("The evidence is thin: {signals:int} signals in {episodes:int} crises since {since:year}, priced on a "
              "model, not on real quotes. The paper phase measures it on real prices.",
              "The evidence is thin: about a dozen crises, priced on a model, not on real quotes."),
-            ("{american_root} options are American-style: the call you sold can be assigned early, most often just "
-             "before {american_root} goes ex-dividend while that call is in the money. If that happens, note it on "
-             "the trade's issue.", None),
+            # SPY's early-assignment risk is the spread renderer's one American-style line (emails._SpreadEmail)
         ],
     },
 }

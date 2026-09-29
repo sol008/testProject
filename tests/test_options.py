@@ -34,7 +34,7 @@ from traderec.options import snapshots
 from traderec.options.chain import (CHAIN_COLUMNS, OptionChain, chain_root, expiries_between, expiry_on_or_before,
                                     liquidity_check, occ_symbol, parse_cboe_chain, parse_occ, parse_yahoo_chain,
                                     strike_by_delta, strike_nearest)
-from traderec.options.fillmodel import combo_quote, decide_fill, model_price, order_prices
+from traderec.options.fillmodel import at_price_floor, combo_quote, decide_fill, min_tick, model_price, order_prices
 from traderec.options.job import intrinsic_value, run_options
 from traderec.state import load_state, save_state
 from traderec.types import OrderIntent
@@ -272,6 +272,26 @@ def test_combo_quote_and_order_prices(xsp):
     assert order_prices(q, "sell", FILLS) == {"limit_price": pytest.approx(13.44), "max_price": pytest.approx(13.40)}
     assert model_price(q, "buy", 0.3) == pytest.approx(LIMIT)
     assert combo_quote(xsp, [leg("XSP260928C00770000", "long"), leg(LONG, "short")], "buy") is None   # bid 0
+
+
+def test_a_close_is_never_priced_below_one_tick(xsp):
+    """Both legs far out of the money: mid - 0.3 x natural width <= 0. A $0.00 limit can't be placed, so the close is
+    priced at one tick ($0.01 where the quotes are in pennies, else $0.05), and the model price still has to reach it."""
+    penny = {"mid": 0.0, "natural_width": 0.04, "legs": [{"occ": LONG, "bid": 0.01, "ask": 0.03, "mid": 0.02},
+                                                          {"occ": SHORT, "bid": 0.01, "ask": 0.03, "mid": 0.02}]}
+    assert model_price(penny, "sell", 0.3) == 0.0
+    assert order_prices(penny, "sell", FILLS) == {"limit_price": 0.01, "max_price": 0.01}
+    assert at_price_floor(penny, "sell", FILLS) == 0.01
+    nickel = {"mid": 0.0, "natural_width": 0.10, "legs": [{"occ": LONG, "bid": 0.05, "ask": 0.10},
+                                                           {"occ": SHORT, "bid": 0.05, "ask": 0.10}]}
+    assert min_tick(nickel) == 0.05 and order_prices(nickel, "sell", FILLS) == {"limit_price": 0.05, "max_price": 0.05}
+    assert min_tick({"mid": 0.01, "natural_width": 0.06}) == 0.05             # no leg quotes: the larger tick
+    close = spread_order(2, side="sell", created=D1, limit=0.01, maximum=0.01)
+    assert decide_fill(close, penny, FILLS)["filled"] is False               # the model's 0.00 doesn't reach 0.01
+    q = combo_quote(xsp, LEGS, "sell")                                       # a normal close is untouched
+    assert min_tick(q) == 0.01 and at_price_floor(q, "sell", FILLS) is None
+    assert order_prices(q, "sell", FILLS) == {"limit_price": pytest.approx(13.44), "max_price": pytest.approx(13.40)}
+    assert at_price_floor(penny, "buy", FILLS) is None and order_prices(penny, "buy", FILLS)["limit_price"] > 0
 
 
 @pytest.mark.parametrize("shift, filled, attempt, price", [

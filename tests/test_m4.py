@@ -695,6 +695,73 @@ def test_a_chain_stamped_before_the_close_does_not_price_the_exit(cfg, world):
     assert sell["side"] == "sell" and sell["created_date"] == EXIT
 
 
+def _flat(text: str) -> str:
+    return " ".join(text.replace("│", " ").split())
+
+
+@pytest.mark.parametrize("spy", [False, True])
+def test_the_last_session_close_promises_no_email_that_never_comes(cfg, world, spy):
+    """The retry EXIT executes on the last session before expiry. It must not promise tomorrow's EXIT email (none comes:
+    the runner only alerts, and the safety net settles at expiry); it states what happens instead."""
+    state_dir, provider, rec = world
+    if spy:
+        provider.chain_kwargs["XSP"] = {"oi": 100}                     # XSP fails the liquidity check: SPY
+    run_until(cfg, provider, state_dir, rec, SIGNAL)
+    iid = _state(state_dir)["modules"]["M4"]["open_trade"]["intent_id"]
+    options_run(cfg, provider, state_dir, rec, ENTRY, lambda run: fill_order(run, iid, 8.70))
+    daily(cfg, provider, state_dir, rec, "2026-01-06")
+    first = _flat([e for e in _m4_emails(rec) if e.meta.get("kind") == "EXIT"][-1].text)
+    assert "you'll get a new EXIT email tomorrow evening with fresh prices" in first      # a session is left
+    sell = [o for o in _state(state_dir)["broker"]["pending"] if o["module"] == "M4"][0]
+    options_run(cfg, provider, state_dir, rec, EXIT, lambda run: cancel_order(run, sell["intent_id"]))
+    daily(cfg, provider, state_dir, rec, EXIT)
+    retry = [e for e in _m4_emails(rec) if e.meta.get("kind") == "EXIT"][-1]
+    assert retry.meta["execute_date"] == LAST and not validator.validate(retry)
+    f = _flat(retry.text)
+    assert "EXIT email tomorrow" not in f and "tomorrow's email" not in f
+    assert "Today is the last trading day before the options expire on Fri 9 Jan, so no new EXIT email follows." in f
+    if spy:
+        assert ("SPY options settle in shares, Robinhood may close at-risk positions from 3:30 PM ET that day, and a "
+                "call you sold that ends in the money can be assigned (exercised against you). The paper book settles "
+                "it at intrinsic value at expiry.") in f
+    else:
+        assert "XSP options settle in cash at expiry, at their intrinsic value" in f and "The paper book settles it " \
+               "the same way." in f
+    resell = [o for o in _state(state_dir)["broker"]["pending"] if o["module"] == "M4"][0]
+    options_run(cfg, provider, state_dir, rec, LAST, lambda run: cancel_order(run, resell["intent_id"]))
+    n_before = len(rec.sent)
+    daily(cfg, provider, state_dir, rec, LAST)
+    assert not [e for e in rec.sent[n_before:] if (e.meta.get("trade_id") or "").endswith("-M4")]   # as promised
+    assert any("safety net" in a["message"] for a in _state(state_dir)["alerts"])
+
+
+def test_a_worthless_close_is_priced_at_one_tick_never_zero(cfg, world, monkeypatch):
+    """Both legs far out of the money: the model's close price is 0. The EXIT asks for one tick, not $0.00, and says
+    why (options.fillmodel.order_prices)."""
+    state_dir, provider, rec = world
+    run_until(cfg, provider, state_dir, rec, SIGNAL)
+    iid = _state(state_dir)["modules"]["M4"]["open_trade"]["intent_id"]
+    options_run(cfg, provider, state_dir, rec, ENTRY, lambda run: fill_order(run, iid, 8.70))
+
+    def worthless(chain, legs, side="buy"):
+        quotes = [{"occ": leg["occ"], "bid": 0.01, "ask": 0.03, "mid": 0.02} for leg in legs]
+        return {"mid": 0.0, "natural_width": 0.04, "legs": quotes}
+
+    monkeypatch.setattr(m4r, "combo_quote", worthless)
+    daily(cfg, provider, state_dir, rec, "2026-01-06")
+    sell = [o for o in _state(state_dir)["broker"]["pending"] if o["module"] == "M4"][0]
+    assert sell["limit_price"] == sell["max_price"] == 0.01
+    ex = [e for e in _m4_emails(rec) if e.meta.get("kind") == "EXIT"][-1]
+    assert not validator.validate(ex)
+    f = _flat(ex.text)
+    assert "Limit price: $0.01 (the net credit per share)" in f and "re-enter once at $0.01" in f
+    assert "Limit price: $0.00" not in f and "once more at $0.00" not in f            # (the mid itself is $0.00)
+    assert "Tonight the spread is worth almost nothing, so the limit is the smallest price step, $0.01 a share" in f
+    facts = [r["payload"]["facts"] for r in _ledger(state_dir) if r["record_type"] == "recommendation"
+             and r["payload"]["kind"] == "EXIT"][-1]
+    assert facts["price_floor"] == 0.01
+
+
 def test_cancelled_entry_is_skipped_and_its_forecast_voided(cfg, world):
     state_dir, provider, rec = world
     run_until(cfg, provider, state_dir, rec, SIGNAL)

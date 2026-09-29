@@ -38,7 +38,7 @@ from traderec.market_calendar import iso, next_trading_day
 from traderec.modules import m4_crashspread as m4
 from traderec.options import chain as chain_mod
 from traderec.options import job as job_mod
-from traderec.options.fillmodel import combo_quote, model_price, order_prices
+from traderec.options.fillmodel import at_price_floor, combo_quote, model_price, order_prices
 from traderec.types import OrderIntent, Recommendation
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -506,6 +506,10 @@ def _emit_exit(run: "Run", ot: dict, ex: dict, cfg_m4: dict) -> None:
                           f"session before expiry is left")
         return
     prices = {k: round(float(v), 2) for k, v in order_prices(quote, "sell", _opts(run)).items()}
+    if not (prices["limit_price"] > 0 and 0 < prices["max_price"] <= prices["limit_price"]):   # never a $0.00 order
+        run.alert("data", f"M4 close of {ot['trade_id']} not emailed: unusable prices {prices} from tonight's "
+                          f"{ot['root']} chain; retried tomorrow evening while a session before expiry is left")
+        return
     intent = OrderIntent(intent_id=run.next_intent_id(MODULE), trade_id=ot["trade_id"], module=MODULE,
                          account=str(ot["account"]), ticker=str(ot["root"]), side="sell", created_date=run.date,
                          reason="expiry_rule", close_all=True, order_type="spread_limit",
@@ -863,6 +867,7 @@ def exit_facts(run: "Run", ot: dict, ex: dict, chain: Any, quote: dict, prices: 
         "retry_of": ot.get("last_close_miss") if attempt > 1 else None,
         "long_strike": terms["long_strike"], "short_strike": terms["short_strike"],
         "days_held": ex.get("days_held"), "spot": _f(getattr(chain, "spot", None)),
+        "price_floor": at_price_floor(quote, "sell", _opts(run)),       # the one-tick floor, when it binds
         "base_rates": dict(cfg_m4.get("base_rates") or {}),
     }
 
