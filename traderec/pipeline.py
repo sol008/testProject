@@ -32,8 +32,9 @@ from . import emails as email_mod
 from . import facts as facts_mod
 from . import feedback
 from . import forecasts as fc
-from . import notify, risk, runners, validator
+from . import growth, notify, risk, runners, validator
 from .broker import PaperBroker
+from .growth import weekly as growth_weekly
 from .config import STATE_DIR, Config
 from .data import verify_close
 from .ledger import Ledger
@@ -1228,7 +1229,10 @@ def run_weekly(cfg: Config, provider: Any, state_dir: Path | None = None, *, dat
         if not dry_run:
             run.services.healthcheck("start")
         run.retry_unsent()
-        _m3(run, asof_utc=iso(pd.Timestamp(day) + timedelta(days=1)))
+        if growth.enabled(cfg):                    # design v4: the growth book's Sunday job (Phase C1)
+            growth_weekly.run(run)
+        if not growth.supersedes_m3(cfg):          # modules.M3.status "superseded_by: G2" retires M3 here
+            _m3(run, asof_utc=iso(pd.Timestamp(day) + timedelta(days=1)))
         result = run.finish("ok")
         if not dry_run:
             run.services.healthcheck("fail" if run.blocked or _email_failed(result) else "success")

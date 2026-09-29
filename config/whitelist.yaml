@@ -17,6 +17,8 @@ robinhood:
   TLT: {fractional: true, options: true}
   BNO: {fractional: true, options: true}
   SGOV: {fractional: true, options: true}
+  SSO: {fractional: true, options: true}      # design v4 G1 (track 32 §1.1 venue table)
+  QLD: {fractional: true, options: true}      # design v4 G1 (track 32 §1.1 venue table)
   BIL: {fractional: true, options: true}
 coinbase:
   BTC-USD: {status: online}

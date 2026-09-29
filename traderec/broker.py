@@ -23,6 +23,20 @@ Two-leg vertical spreads (Phase B, order kind (b); docs/PHASE_B_CONTRACTS.md §2
 
 Open spreads are keyed by "account|trade_id". Their `cost` is the debit paid, contracts x price x 100. They are
 valued at their last mark (the combo mid, per share) x contracts x 100, or at cost before their first mark.
+
+Design v4 (the growth book; research/00-SYSTEM-DESIGN-v4.md §3a, Appendix A.2 "Paper broker"), Phase C1:
+
+- the cash vehicle (constitution `growth.sleeves.cash.vehicle`, SGOV) is a par instrument: its orders fill at 1.0 per
+  dollar with no slippage and need no open price, its lots are valued at par (qty = dollars) and never at a bar close,
+  and `accrue_interest` grows them at the T-bill rate (the simple accrual that stands in for SGOV's distributions, so
+  `apply_dividend` ignores the vehicle);
+- limited margin (account.yaml `limited_margin`, default true): sells fill before buys in one pass, so Monday's sells
+  fund Monday's buys. With `limited_margin: false` a buy that the pass's settled cash (the balance before its sells)
+  cannot pay waits one session and fills at the next open;
+- a buy whose `meta["max_cash_frac"]` is set (the growth book's queued buys, 0.90) is cancelled, not partly filled,
+  when it asks for more than that fraction of the cash available to it (Robinhood's reserve on queued orders).
+Phase A/B orders carry no `max_cash_frac`, live in limited-margin accounts and never trade the vehicle, so their
+behaviour is unchanged.
 """
 from __future__ import annotations
 
@@ -72,6 +86,13 @@ class PaperBroker:
     def __init__(self, cfg: Config, cash: dict[str, float]) -> None:
         self.cfg = cfg
         self._cash: dict[str, float] = {a: float(c) for a, c in cash.items()}
+        # design v4: the par-valued cash vehicle (SGOV) and each account's limited-margin flag
+        growth = cfg.constitution.get("growth") or {}
+        self.cash_vehicle: str | None = ((growth.get("sleeves") or {}).get("cash") or {}).get("vehicle")
+        accounts = cfg.account.get("accounts") or {}
+        self._limited_margin: dict[str, bool] = {
+            a: (accounts.get(a) or {}).get("limited_margin", True) is not False for a in self._cash}
+        self._settled: dict[str, float] = {}     # settled cash per account during one fill_pending() pass
         self._lots: dict[str, dict[str, Any]] = {}
         self._pending: list[OrderIntent] = []
         self._last_close: dict[str, float] = {}
@@ -211,6 +232,7 @@ class PaperBroker:
         catch up by calling this once per session in date order.
         """
         self.last_fill_meta = {}
+        self._settled = dict(self._cash)         # the cash before this pass's sells (no limited margin: buys use this)
         fills: list[Fill] = []
         keep: set[str] = set()
         sells = [o for o in self._pending if o.side == "sell"]
@@ -223,6 +245,33 @@ class PaperBroker:
                 fills.append(fill)
         self._pending = [o for o in self._pending if o.intent_id in keep]
         return fills
+
+    def valuation(self, closes: dict[str, float]) -> dict:
+        """Value every account at `closes` without changing anything (no peak update, no history entry).
+
+        Returns {"nav", "by_account": {acct: {"cash", "positions_value", "equity"}}}. A missing close falls back to
+        the last close marked for that ticker, else to the lot's cost; the cash vehicle counts at par.
+        """
+        prices = dict(self._last_close)
+        for ticker, close in closes.items():
+            if _is_positive_number(close):
+                prices[ticker] = float(close)
+        by_account: dict[str, dict[str, float]] = {}
+        for account, cash in self._cash.items():
+            value = sum((self._lot_value(lot, prices) for lot in self._lots.values() if lot["account"] == account), 0.0)
+            value += sum((self._spread_value(s) for s in self._spreads.values() if s["account"] == account), 0.0)
+            by_account[account] = {"cash": cash, "positions_value": value, "equity": cash + value}
+        return {"nav": sum(a["equity"] for a in by_account.values()), "by_account": by_account}
+
+    def holdings_value(self, account: str, ticker: str, price: float | None = None,
+                       module: str | None = None) -> float:
+        """Market value of `ticker` in `account` (all modules, or one) at `price`, the last marked close, or cost."""
+        prices = dict(self._last_close)
+        if _is_positive_number(price):
+            prices[ticker] = float(price)
+        return sum(self._lot_value(lot, prices) for lot in self._lots.values()
+                   if lot["account"] == account and lot["ticker"] == ticker
+                   and (module is None or lot["module"] == module))
 
     def fill_spreads(self, date: str, time_et: str, chains: dict[str, OptionChain]) -> list[Fill]:
         """Fill or cancel the pending spread orders at one market-hours snapshot (contract §3-§4).
@@ -348,6 +397,12 @@ class PaperBroker:
                 interest = cash * rate * days / 365.0
                 self._cash[account] = cash + interest
                 total += interest
+        for lot in self._lots.values():      # design v4: the cash vehicle accrues at the T-bill rate, at par
+            if self._is_vehicle(lot["ticker"]) and lot["qty"] > 0:
+                interest = lot["qty"] * rate * days / 365.0
+                lot["qty"] += interest
+                lot["dividends"] = lot.get("dividends", 0.0) + interest
+                total += interest
         return total
 
     def apply_dividend(self, date: str, ticker: str, per_share: float) -> float:
@@ -358,8 +413,8 @@ class PaperBroker:
         lots opened on or after `date` (bought at the ex-date open or later) are skipped. Call it before
         `fill_pending(date, ...)` so shares sold at the ex-date open still collect it.
         """
-        if not _is_positive_number(per_share):
-            return 0.0
+        if not _is_positive_number(per_share) or self._is_vehicle(ticker):
+            return 0.0                       # the cash vehicle's income is the accrual in accrue_interest
         total = 0.0
         for lot in self._lots.values():
             if lot["ticker"] != ticker or _day(lot["opened"]) >= _day(date):
@@ -471,7 +526,7 @@ class PaperBroker:
         key = lot_key(intent.account, intent.ticker, intent.module)
         if intent.side == "sell" and key not in self._lots:
             return self._cancel(intent, date, "no position to sell")
-        ref = opens.get(intent.ticker)
+        ref = 1.0 if self._is_vehicle(intent.ticker) else opens.get(intent.ticker)   # the vehicle fills at par
         if not _is_positive_number(ref):
             missed = int(intent.meta.get("missed_opens", 0)) + 1
             intent.meta["missed_opens"] = missed
@@ -482,6 +537,16 @@ class PaperBroker:
             return "filled", self._fill_sell(intent, date, float(ref))
         if self._cash[intent.account] <= 0:
             return self._cancel(intent, date, "no cash in the account")
+        requested = float(intent.dollars)
+        if not self._limited_margin.get(intent.account, True):
+            settled = self._settled.get(intent.account, self._cash[intent.account])
+            if requested > settled + 1e-9 and not intent.meta.get("waited_settlement"):
+                intent.meta["waited_settlement"] = date      # design v4 §3a.4: without limited margin, Step 2 is Tuesday
+                return "pending", None
+        cap = intent.meta.get("max_cash_frac")
+        if cap is not None and requested > float(cap) * self._cash[intent.account] + 1e-9:
+            return self._cancel(intent, date, f"buy of ${requested:,.2f} exceeds {float(cap):.0%} of the "
+                                              f"${self._cash[intent.account]:,.2f} available (design v4 §3a.4)")
         return "filled", self._fill_buy(intent, date, float(ref))
 
     def _cancel(self, intent: OrderIntent, date: str, reason: str) -> tuple[str, None]:
@@ -490,8 +555,14 @@ class PaperBroker:
         self.cancelled.append(intent)
         return "cancelled", None
 
+    def _is_vehicle(self, ticker: str) -> bool:
+        """True for the growth book's cash vehicle (SGOV), the par instrument."""
+        return self.cash_vehicle is not None and ticker == self.cash_vehicle
+
     def _fill_price(self, ticker: str, side: str, ref: float) -> tuple[float, float]:
-        """(fill price, slippage bps) under fill model v1.0."""
+        """(fill price, slippage bps) under fill model v1.0; the cash vehicle fills at par with no slippage."""
+        if self._is_vehicle(ticker):
+            return 1.0, 0.0
         bps = self.cfg.slippage_bps(ticker)
         sign = 1.0 if side == "buy" else -1.0
         return ref * (1.0 + sign * bps / 1e4), bps
@@ -503,6 +574,7 @@ class PaperBroker:
         price, bps = self._fill_price(intent.ticker, "buy", ref)
         qty = dollars / price
         self._cash[intent.account] -= dollars
+        self._settled[intent.account] = self._settled.get(intent.account, dollars) - dollars
         key = lot_key(intent.account, intent.ticker, intent.module)
         lot = self._lots.get(key)
         if lot is None:  # `opened` and `trade_id` stay those of the first fill when a lot is added to
@@ -557,7 +629,7 @@ class PaperBroker:
 
         Tickers no longer held are dropped, so a stale close never outlives its holding period.
         """
-        held = {lot["ticker"] for lot in self._lots.values()}
+        held = {lot["ticker"] for lot in self._lots.values() if not self._is_vehicle(lot["ticker"])}
         prices: dict[str, float] = {}
         for ticker in held:
             close = closes.get(ticker)
@@ -568,9 +640,10 @@ class PaperBroker:
         self._last_close = prices
         return prices
 
-    @staticmethod
-    def _lot_value(lot: dict[str, Any], prices: dict[str, float]) -> float:
-        """qty * mark price, or the cost basis when the ticker has never had a close."""
+    def _lot_value(self, lot: dict[str, Any], prices: dict[str, float]) -> float:
+        """qty * mark price, or the cost basis when the ticker has never had a close; the cash vehicle at par."""
+        if self._is_vehicle(lot["ticker"]):
+            return float(lot["qty"])
         price = prices.get(lot["ticker"])
         return lot["qty"] * price if price is not None else lot["cost"]
 

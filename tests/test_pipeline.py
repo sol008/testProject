@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from traderec import pipeline
+from traderec import growth, pipeline
 from traderec.config import load_config
 from traderec.ledger import Ledger
 from traderec.market_calendar import is_trading_day
@@ -129,7 +129,8 @@ class Recorder:
 
 @pytest.fixture()
 def cfg():
-    return load_config()
+    """The v3.3 book: these tests pin the weekly job's M3 switch, so the v4 growth book is off (tests/test_growth.py)."""
+    return growth.with_enabled(load_config(), False)
 
 
 @pytest.fixture()

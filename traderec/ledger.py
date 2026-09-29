@@ -25,6 +25,8 @@ GENESIS = "GENESIS"
 RECORD_TYPES = frozenset({
     "run_manifest", "snapshot", "signal", "recommendation", "order", "fill", "mark",
     "forecast", "resolution", "shadow", "monthly_report", "quarterly_report", "annual_report", "correction",
+    # design v4 Appendix A.3 (the growth book): the Sunday decision, the governor, the order set, Rule E, G3's shadow
+    "growth_decision", "governor", "order_set", "rule_e", "g3_shadow",
 })
 
 ENVELOPE_KEYS = (

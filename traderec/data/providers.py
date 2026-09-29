@@ -103,7 +103,8 @@ MARKET_OPEN_ET = "09:30"        # Yahoo option quotes are used only between thes
 # Index tickers with a second source for their official close (design v3.3 W10: two-source S&P 500 closes):
 # FRED's copy of S&P Dow Jones Indices' series first (published the same evening, checked 2026-09-28 22:15 ET),
 # then CBOE's delayed index quote once its last trade is stamped at or after 16:00 ET that day.
-INDEX_SECOND_SOURCES = {"^GSPC": {"fred": "SP500", "cboe": "SPX"}}
+INDEX_SECOND_SOURCES = {"^GSPC": {"fred": "SP500", "cboe": "SPX"},
+                        "^NDX": {"fred": None, "cboe": "NDX"}}   # design v4 G1's QLD leg: no FRED series; CBOE only
 
 CLOSE_ET = "16:00"              # end of the regular NYSE session (America/New_York)
 FILL_AFTER_ET = "16:15"         # earliest time a missing newest close may be filled from Robinhood
@@ -710,13 +711,14 @@ class LiveProvider(DataProvider):
     def _index_second_source(self, symbol: str, day: str) -> dict | None:
         """FRED's copy of the index series, then CBOE's delayed quote (INDEX_SECOND_SOURCES)."""
         spec = INDEX_SECOND_SOURCES[symbol]
-        try:
-            series = parse_fred_csv(self._get(FRED_CSV_URL, params={"id": spec["fred"]}).text, spec["fred"])
-            ts = pd.Timestamp(day)
-            if ts in series.index:
-                return {"close": float(series.loc[ts]), "source": f"fred:{spec['fred']}"}
-        except Exception as exc:  # noqa: BLE001 - fall through to CBOE
-            log.warning("FRED %s unavailable for %s (%s)", spec["fred"], day, exc)
+        if spec.get("fred"):
+            try:
+                series = parse_fred_csv(self._get(FRED_CSV_URL, params={"id": spec["fred"]}).text, spec["fred"])
+                ts = pd.Timestamp(day)
+                if ts in series.index:
+                    return {"close": float(series.loc[ts]), "source": f"fred:{spec['fred']}"}
+            except Exception as exc:  # noqa: BLE001 - fall through to CBOE
+                log.warning("FRED %s unavailable for %s (%s)", spec["fred"], day, exc)
         try:
             close = parse_cboe_quote(self._get_json(CBOE_QUOTE_URL.format(name=spec["cboe"])), day)
         except Exception as exc:  # noqa: BLE001 - no second source
