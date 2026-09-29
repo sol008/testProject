@@ -969,6 +969,19 @@ def _modules_cfg(cfg: "Config") -> dict:
     return (cfg.constitution or {}).get("modules") or {}
 
 
+def module_statuses(cfg: "Config") -> list[dict[str, Any]]:
+    """The enabled modules and their status, from the constitution: its `status` key, else the module's status label
+    (emails.MODULE_STATUS, the label every trade email shows). "policy" marks a policy module, which design §4 exempts
+    from the per-trade hurdle; M2, the trend sleeve, is not one."""
+    out = []
+    for name, mod in _modules_cfg(cfg).items():
+        if not (mod or {}).get("enabled"):
+            continue
+        status = str((mod or {}).get("status") or email_mod.MODULE_STATUS.get(name) or "module")
+        out.append({"module": name, "status": status, "policy": "policy module" in status.lower()})
+    return out
+
+
 def kappa_review(cfg: "Config", ev: Evidence, g: dict) -> dict[str, Any]:
     """κ̂ per module with a claimed per-trade edge (base_rates.mean_pct) and pooled (track 18 §6.1-6.2)."""
     rows, obs = [], []
@@ -1064,7 +1077,8 @@ def drift_review(run: "Run", ev: Evidence, g: dict) -> list[dict]:
 
 def cost_review(run: "Run", ev: Evidence, start: str, end: str, fb: dict, g: dict) -> dict[str, Any]:
     """Costs and slippage in a period: the fill model's cost on each paper fill (|price − reference| × quantity ×
-    multiplier), and practice-account fills against the model (the owner's issue comments)."""
+    multiplier), and practice-account fills against the model (the owner's issue comments): ETFs in bp, option spreads
+    in half-spreads (track 18 §5.4(3); feedback.py), each with its count, median and average."""
     by: dict[str, dict] = {}
     for f in ev.fills:
         day = _day(f.get("fill_date"))
@@ -1106,6 +1120,12 @@ def cost_review(run: "Run", ev: Evidence, start: str, end: str, fb: dict, g: dic
             "cost_bps": 1e4 * cost / dollars if dollars else None, "by_ticker": rows,
             "practice_fills": len(gaps), "median_gap_bps": fb.get("median_gap_bps"), "mean_gap_bps": mean_gap,
             "practice_by_ticker": prac_rows, "tolerance_bps": tol, "cut_min_fills": int(g["cost_cut_min_fills"]),
+            "spread_practice_fills": fb.get("spread_n") or 0, "spread_measured": fb.get("spread_measured") or 0,
+            "spread_median_gap_bps": fb.get("spread_median_gap_bps"),
+            "spread_mean_gap_half_spread": fb.get("spread_mean_gap_half_spread"),
+            "spread_median_gap_half_spread": fb.get("spread_median_gap_half_spread"),
+            "spread_tolerance_half_spread": feedback.SPREAD_FILL_TOLERANCE_HALF_SPREAD,
+            "rejected_comments": len(fb.get("rejected") or []),
             "advice": advice, "model_version": str((run.cfg.fills or {}).get("model_version", ""))}
 
 
@@ -1173,7 +1193,18 @@ def gate_status(run: "Run", ev: Evidence, g: dict, *, fetch: Callable[[str], lis
         "on_time_rate_to_date": on_time_rate, "validator_failures_to_date": vf,
         "emails_measured_to_date": fb.get("measured"), "emails_handled_to_date": fb.get("handled"),
         "emails_handled_rate_to_date": handled_rate, "fills_ok_to_date": fb.get("fills_ok"),
-        "median_fill_gap_bps_to_date": fb.get("median_gap_bps"), "fill_gaps_to_date": fb.get("fills") or [],
+        # the fills gate as track 18 §5.4(3) pre-registers it (feedback.py): ETFs on the average gap in bp, option
+        # spreads on the average gap in half-spreads; medians and counts shown beside them
+        "etf_fills_ok_to_date": fb.get("etf_fills_ok"), "fill_n_to_date": fb.get("n"),
+        "mean_fill_gap_bps_to_date": fb.get("mean_gap_bps"), "median_fill_gap_bps_to_date": fb.get("median_gap_bps"),
+        "fill_tolerance_bps": feedback.FILL_TOLERANCE_BPS,
+        "spread_fills_ok_to_date": fb.get("spread_fills_ok"), "spread_fill_n_to_date": fb.get("spread_n"),
+        "spread_fill_measured_to_date": fb.get("spread_measured"),
+        "spread_mean_fill_gap_half_spread_to_date": fb.get("spread_mean_gap_half_spread"),
+        "spread_median_fill_gap_bps_to_date": fb.get("spread_median_gap_bps"),
+        "spread_fill_tolerance_half_spread": feedback.SPREAD_FILL_TOLERANCE_HALF_SPREAD,
+        "fill_comments_rejected_to_date": fb.get("rejected") or [],
+        "fill_gaps_to_date": fb.get("fills") or [], "spread_fill_gaps_to_date": fb.get("spread_fills") or [],
         "ledger_ok": bool(ledger_ok), "trades_to_date": trades,
         "edge_p": edge["p_positive"], "edge_units": edge["units"], "edge_threshold": g["edge_go_live"],
         "edge_binding": binding, "edge_ok": edge_ok, "edge_families": edge["families"],
@@ -1183,9 +1214,42 @@ def gate_status(run: "Run", ev: Evidence, g: dict, *, fetch: Callable[[str], lis
     }
 
 
+SHORTFALL_FAMILIES = {"etfs": "ETF orders", "spreads": "option spreads"}
+
+
+def shortfall_by_family(closed: dict[str, list[dict]], etf_gaps: list[float],
+                        spread_gaps: list[float]) -> dict[str, dict[str, Any]]:
+    """Implementation shortfall per module family (design §7.4: at most 20% of the paper edge).
+
+    The families are ETF orders (every module but the spread modules) and option spreads (feedback.SPREAD_MODULES).
+    Within a family the units agree: an ETF trade's return and an ETF fill gap are both fractions of the dollars
+    traded, while a spread's return and its fill gap are both fractions of its net price (the debit). Mixing them
+    would let one spread, at +118% or −100% of its debit, swamp thirty ETF trades at +0.3%, so no family is pooled
+    with another. For each family: paper edge = the mean closed-trade return; cost = 2 × the mean practice gap (in and
+    out); shortfall = cost / edge, measured only with practice fills and a positive paper edge (None otherwise).
+    """
+    rets: dict[str, list[float]] = {"etfs": [], "spreads": []}
+    for module, rows in closed.items():
+        fam = "spreads" if module in feedback.SPREAD_MODULES else "etfs"
+        rets[fam] += [float(t["return"]) for t in rows if _num(t.get("return")) is not None]
+    out = {}
+    for fam, gaps in (("etfs", etf_gaps), ("spreads", spread_gaps)):
+        edge = 1e4 * _mean(rets[fam]) if rets[fam] else None
+        cost = 2.0 * _mean(gaps) if gaps else None
+        out[fam] = {"label": SHORTFALL_FAMILIES[fam], "trades": len(rets[fam]), "paper_edge_bps": edge,
+                    "fills": len(gaps), "cost_bps": cost,
+                    "shortfall": cost / edge if cost is not None and edge is not None and edge > 0 else None}
+    return out
+
+
 def ramp_review(run: "Run", ev: Evidence, g: dict, gate: dict, kappa: dict, calibration: dict) -> dict[str, Any]:
     """The ramp after go-live (design §7.4): 50% and 100% of the target size. Paper-era evidence counts at half
-    weight; live trades are the ones whose entry email was labelled LIVE."""
+    weight; live trades are the ones whose entry email was labelled LIVE.
+
+    The implementation shortfall is measured per module family (`shortfall_by_family`), never on a pooled average
+    of ETF returns and option returns on the debit; the check passes when every measured family is within
+    `ramp_half_shortfall`, and "shortfall" reports the worst family. κ̂ must rest on data: on the prior alone (no
+    module with enough closed trades) the κ̂ check is not measured, so the ramp cannot pass on it."""
     live = live_record(run.state, ev.asof)
     since = live["since"]
     w = float(g["ramp_full_paper_weight"])
@@ -1198,16 +1262,23 @@ def ramp_review(run: "Run", ev: Evidence, g: dict, gate: dict, kappa: dict, cali
     resolved = [(t["trade_id"], t["return"]) for rows in ev.closed.values() for t in rows]
     resolved += [(m.get("trade_id") or "", None) for m in _m2_resolved(run.state, ev.asof)]
     resolved_w = sum(1.0 if tid in live["trade_ids"] else w for tid, _ in resolved)
-    rets = [r for _, r in resolved if r is not None]
-    paper_edge_bps = 1e4 * _mean(rets) if rets else None
-    gaps = [float(x["gap_bps"]) for x in gate.get("fill_gaps_to_date") or [] if _num(x.get("gap_bps")) is not None]
-    shortfall = (2.0 * _mean(gaps) / paper_edge_bps) if (gaps and paper_edge_bps and paper_edge_bps > 0) else None
+
+    def gaps(key: str) -> list[float]:
+        return [float(x["gap_bps"]) for x in gate.get(key) or [] if _num(x.get("gap_bps")) is not None]
+
+    families = shortfall_by_family(ev.closed, gaps("fill_gaps_to_date"), gaps("spread_fill_gaps_to_date"))
+    measured = [f for f in families.values() if f["shortfall"] is not None]
+    worst = max(measured, key=lambda f: f["shortfall"], default=None)
+    shortfall = worst["shortfall"] if worst else None
+    fallback = families["etfs"] if families["etfs"]["trades"] else families["spreads"]
+    paper_edge_bps = (worst or fallback)["paper_edge_bps"]       # the edge of the family the check reports
     p = edge_w["p_positive"]
+    kappa_prior_only = bool(kappa.get("prior_only"))
     half = {
         "live_months": live_months >= g["ramp_half_live_months"],
         "live_trades": len(live["trade_ids"]) >= g["ramp_half_live_trades"],
         "edge": None if p is None else p >= g["ramp_half_edge"],
-        "kappa": kappa["kappa"] >= g["ramp_half_kappa"],
+        "kappa": None if kappa_prior_only else kappa["kappa"] >= g["ramp_half_kappa"],
         "shortfall": None if shortfall is None else shortfall <= g["ramp_half_shortfall"],
     }
     full = {
@@ -1216,7 +1287,9 @@ def ramp_review(run: "Run", ev: Evidence, g: dict, gate: dict, kappa: dict, cali
         "calibration": bool(calibration.get("verified")),
     }
     return {"live_since": since, "live_months": live_months, "live_trades": len(live["trade_ids"]),
-            "edge_p_weighted": p, "kappa": kappa["kappa"], "shortfall": shortfall, "paper_edge_bps": paper_edge_bps,
+            "edge_p_weighted": p, "kappa": kappa["kappa"], "kappa_prior_only": kappa_prior_only,
+            "shortfall": shortfall, "shortfall_family": next((k for k, f in families.items() if f is worst), None),
+            "shortfall_by_family": families, "paper_edge_bps": paper_edge_bps,
             "resolved_weighted": resolved_w, "half": half, "full": full,
             "half_ok": all(v is True for v in half.values()), "full_ok": all(v is True for v in full.values()),
             "thresholds": {k: g[k] for k in ("ramp_half_live_months", "ramp_half_live_trades", "ramp_half_edge",
@@ -1268,7 +1341,11 @@ def _m2_resolved(state: dict, asof: str) -> list[dict]:
 
 
 def period_results(run: "Run", start: str, end: str) -> dict[str, Any]:
-    """NAV and returns over a period against SPY and T-bills (the monthly report's conventions)."""
+    """NAV and returns over a period against SPY and T-bills (the monthly report's conventions).
+
+    T-bills accrue over the same span as the portfolio's return: from the mark before the period (or from the start
+    of the paper phase, when the period holds it) to the last mark. So a period that starts before the paper phase
+    shows the same T-bill return as "since start", not one day more."""
     st = run.state
     marks = [m for m in st.get("marks") or [] if isinstance(m, dict) and _day(m.get("date"))]
     inside = [m for m in marks if start <= m["date"][:10] <= end]
@@ -1292,7 +1369,8 @@ def period_results(run: "Run", start: str, end: str) -> dict[str, Any]:
         rf = float(run.cfg.data.get("fallback_tbill_rate", 0.0))
     created = str(st.get("created") or start)[:10]
     asof = last["date"][:10] if last else end
-    days_in = _days_between(max(start, created), asof) + 1 if asof >= start else 0
+    since = prev["date"][:10] if prev else created        # where ret_period's NAV (nav_prev) was measured
+    days_in = _days_between(since, asof) if asof >= since else 0
     return {
         "asof": last["date"][:10] if last else None, "nav": nav, "nav_prev": nav_prev, "nav_start": initial,
         "ret_period": nav / nav_prev - 1.0 if nav_prev else None,
@@ -1325,7 +1403,8 @@ def monthly_gate(run: "Run", asof: str, *, fetch: Callable[[str], list[str] | No
     g = gates(run.cfg)
     ev = collect(run, asof)
     gate = gate_status(run, ev, g, fetch=fetch, ledger_ok=ledger_ok)
-    gate.pop("fill_gaps_to_date", None)
+    for key in ("fill_gaps_to_date", "spread_fill_gaps_to_date"):
+        gate.pop(key, None)
     month = asof[:7]
     quarter = quarter_of(month)
     return {**gate, "open_trades": open_trades(run.state), "paused_modules": paused_modules(run.state, asof),
@@ -1362,8 +1441,17 @@ def quarterly_report(run: "Run", quarter: str) -> dict[str, Any]:
     if not ledger_ok:
         problems.append({"kind": "ledger"})
     if gate["fills_ok_to_date"] is False:
-        problems.append({"kind": "fills", "median_gap_bps": gate["median_fill_gap_bps_to_date"],
-                         "tolerance_bps": g["cost_tolerance_bps"]})
+        problems.append({"kind": "fills", "etf_ok": gate["etf_fills_ok_to_date"],
+                         "mean_gap_bps": gate["mean_fill_gap_bps_to_date"], "n": gate["fill_n_to_date"],
+                         "tolerance_bps": gate["fill_tolerance_bps"], "spread_ok": gate["spread_fills_ok_to_date"],
+                         "spread_mean_half_spread": gate["spread_mean_fill_gap_half_spread_to_date"],
+                         "spread_n": gate["spread_fill_measured_to_date"],
+                         "spread_median_gap_bps": gate["spread_median_fill_gap_bps_to_date"],
+                         "spread_tolerance": gate["spread_fill_tolerance_half_spread"]})
+    rejected = (fb_q or {}).get("rejected") or []
+    if rejected:
+        problems.append({"kind": "fill_comments", "n": len(rejected),
+                         "examples": [f"\"{r['line']}\" ({r['reason']})" for r in rejected[:3]]})
     for row in calibration["families"]:
         if row["gross_bias"] or row["warning"]:
             problems.append({"kind": "calibration_gross" if row["gross_bias"] else "calibration_warning",
@@ -1428,6 +1516,7 @@ def annual_report(run: "Run", year: str) -> dict[str, Any]:
              and 100.0 * record["90"]["mean_ret"] < ref90["placebo_mean_pct"])
     w10_rec = "back_to_shadow" if w10["disabled"] else ("consider_shadow" if below else "keep")
     budget = int(run.cfg.risk.get("trade_budget_per_year", 0) or 0)
+    statuses = module_statuses(run.cfg)
     problems, messages = _alert_problems(alerts)
     if not ledger_ok:
         problems.append({"kind": "ledger"})
@@ -1445,7 +1534,7 @@ def annual_report(run: "Run", year: str) -> dict[str, Any]:
         "budget_hits": cap_hits.get("budget", 0), "positions_hits": cap_hits.get("positions", 0),
         "hurdle_bp": g["hurdle_bp"], "trades_target_low": g["trades_target_low"],
         "trades_target_high": g["trades_target_high"], "rules_hold_since": g["rules_hold_since"],
-        "change_forward_months": g["change_forward_months"],
+        "change_forward_months": g["change_forward_months"], "module_statuses": statuses,
         "calibration": calibration, "retirement": retire, "retire_min_trades": g["retire_min_trades"],
         "retire_min_months": g["retire_min_months"], "retire_edge": g["retire_edge"],
         "w10": {**w10, "events": len(events), "events_year": sum(1 for e in events if inside(e.get("signal_date"))),

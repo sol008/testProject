@@ -11,6 +11,7 @@ import shutil
 import subprocess
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -398,6 +399,158 @@ def test_quarterly_gate_counts_recorded_fills(cfg, world):
     assert report["gate_checks"]["emails_handled"] is True
     assert report["fills_ok_to_date"] is None and report["ops_ok"] is None       # fills not measured: fail closed
     assert "Emails handled (fill or skip recorded) at least 90% 100% yes" in flat(rec.sent[-1].text)
+
+
+def _practice_fills(state_dir: Path, rec, worse: list[float]) -> int:
+    """Comment a practice fill on every single-order issue that has a paper fill: the i-th at `worse[i]` (a fraction,
+    worse for the owner; 0 after the list ends). Other issues get "skipped". Returns the number of fills commented."""
+    st = _state(state_dir)
+    by_key: dict[tuple, list[dict]] = {}
+    for f in st.get("fills", []):
+        by_key.setdefault((f["trade_id"], f["ticker"]), []).append(f)
+    n = 0
+    for i in st["issues"]:
+        ms = [f for f in by_key.get((i["trade_id"], i["tickers"][0]), []) if f["fill_date"] > i["date"]]
+        if len(i["tickers"]) == 1 and ms:
+            f, w = ms[0], (worse[n] if n < len(worse) else 0.0)
+            px = f["price"] * (1 + w if f["side"] == "buy" else 1 - w)
+            rec.comments[i["url"]] = [f"filled {abs(f['dollars']):.0f} @ {px:.4f}"]
+            n += 1
+        else:
+            rec.comments[i["url"]] = ["skipped"]
+    return n
+
+
+def test_quarterly_fills_gate_is_the_average_gap(cfg, world):
+    """Track 18 §5.4(3): ETF practice fills at 0, 0, +60 and 0 bp have a median |gap| of 0 bp (the old gate passed
+    them) but average +15 bp to date, beyond the 10 bp the rule allows; the quarter's three average +20 bp."""
+    state_dir, provider, rec = world
+    assert _practice_fills(state_dir, rec, [0.0, 0.0, 0.0060]) == 4          # the first one is Q3's (30 Sep)
+    reports.run_quarterly(cfg, provider, state_dir, quarter="2025-Q4", services=rec.services())
+    report = _review_records(state_dir, "quarterly")[-1]
+    assert report["median_fill_gap_bps_to_date"] == pytest.approx(0.0, abs=0.01)
+    assert report["mean_fill_gap_bps_to_date"] == pytest.approx(15.0, abs=0.01) and report["fill_n_to_date"] == 4
+    assert report["fills_ok_to_date"] is False and report["go_live_ready"] is False
+    assert report["costs"]["mean_gap_bps"] == pytest.approx(20.0, abs=0.01)
+    email = rec.sent[-1]
+    assert validate(email) == []
+    f = flat(email.text)
+    assert "Practice fills match the fill model yes no no" in f
+    assert ("Practice fills differ from the fill model by more than the pre-registered rule allows: ETF fills average "
+            "+15.0 bp against the model over 4 fills (above zero is worse for you; the rule allows at most 10 bp).") in f
+    assert "3 ETF fills measured, a median gap of 0.0 bp and an average of +20.0 bp (above zero means worse for you; " \
+           "the go-live rule allows an average of at most 10 bp)." in f
+
+
+def test_quarterly_spread_fills_are_held_to_the_half_spread_rule(cfg, world):
+    """An M4 fill typed as the email's own total ("filled 2 @ 1490") reads as $7.45 a share, not $14.90; the spread
+    statistic (count, median, average in half-spreads) is shown beside the ETF one."""
+    state_dir, provider, rec = world
+    _practice_fills(state_dir, rec, [])
+    st = _state(state_dir)
+    url = "https://github.com/example/repo/issues/999"
+    st["issues"].append({"url": url, "trade_id": "T-2025-11-20-M4", "kind": "NEW_TRADE", "module": "M4",
+                         "date": "2025-11-20", "tickers": ["XSP"], "intents": ["O-2025-11-20-M4-0001"]})
+    st["fills"].append({"intent_id": "O-2025-11-20-M4-0001", "trade_id": "T-2025-11-20-M4", "module": "M4",
+                        "ticker": "XSP", "side": "buy", "price": 7.45, "dollars": 1490.0, "fill_date": "2025-11-21",
+                        "qty": 2.0, "order_type": "spread_limit", "ref_price": 7.30, "multiplier": 100,
+                        "natural_width": 0.5, "fill_time": "10:17", "attempt": "limit", "reason": "x"})
+    (state_dir / "state.json").write_text(json.dumps(st))
+    rec.comments[url] = ["filled 2 @ 1490"]
+    reports.run_quarterly(cfg, provider, state_dir, quarter="2025-Q4", services=rec.services())
+    report = _review_records(state_dir, "quarterly")[-1]
+    assert report["spread_fill_n_to_date"] == 1 and report["spread_mean_fill_gap_half_spread_to_date"] == 0.0
+    assert report["spread_fills_ok_to_date"] is True and report["fills_ok_to_date"] is True
+    assert report["costs"]["spread_practice_fills"] == 1
+    email = rec.sent[-1]
+    assert validate(email) == []
+    f = flat(email.text)
+    assert "Practice fills match the fill model yes yes yes" in f and "PROBLEMS FIRST None this quarter" in f
+    assert ("Option spread fills against the model: 1 measured, a median gap of 0 bp of the net price and an average "
+            "of 0% of the half-spread over the 1 with a stored quote width (the go-live rule allows an average of at "
+            "most 20%).") in f
+    rec.comments[url] = ["filled 2 @ 0"]                     # a typo is set aside with its reason, never measured
+    reports.run_quarterly(cfg, provider, state_dir, quarter="2025-Q4", dry_run=True, force=True,
+                          services=rec.services())
+    f = flat(rec.sent[-1].text)
+    assert ('1 fill comment was set aside as a typo, so it doesn\'t count: "filled 2 @ 0" (the price must be above '
+            "zero). Correct it on the trade's issue.") in f
+    assert validate(rec.sent[-1]) == []
+
+
+def test_implementation_shortfall_is_per_module_family():
+    """One option trade can't flip the ramp's shortfall: ETF returns and returns on a spread's debit are not pooled."""
+    g = reports.gates(None)
+    state = {"runs": {"daily:2026-01-05": {"emails": [{"subject": "[LIVE][TRADE T-1] BUY", "kind": "NEW_TRADE",
+                                                       "trade_id": "T-1"}]}}, "modules": {}}
+    run = SimpleNamespace(state=state)
+    gate = {"fill_gaps_to_date": [{"gap_bps": 6.0}] * 30}            # ETF practice fills 6 bp worse on average
+    m1 = [{"trade_id": f"T-M1-{i}", "entry": "2026-02-01", "exit": "2026-02-10", "return": 0.003, "pnl": 18.0}
+          for i in range(30)]
+    m4_win = [{"trade_id": "T-M4", "entry": "2026-03-01", "exit": "2026-05-28", "return": 1.18, "pnl": 2059.0}]
+    m4_loss = [dict(m4_win[0], **{"return": -1.0, "pnl": -1678.0})]
+    results = []
+    for closed in ({"M1": m1}, {"M1": m1, "M4": m4_win}, {"M1": m1, "M4": m4_loss}):
+        ev = reports.Evidence(asof="2027-06-30", default_rate=0.04, closed=closed)
+        results.append(reports.ramp_review(run, ev, g, gate, {"kappa": 0.3, "prior_only": False}, {"verified": False}))
+    for r in results:                                    # 2 x 6 bp against a 30 bp edge: 40%, whatever M4 did
+        assert r["shortfall"] == pytest.approx(0.40) and r["half"]["shortfall"] is False
+        assert r["paper_edge_bps"] == pytest.approx(30.0) and r["shortfall_family"] == "etfs"
+    assert results[1]["shortfall_by_family"]["spreads"] == {
+        "label": "option spreads", "trades": 1, "paper_edge_bps": pytest.approx(11800.0), "fills": 0,
+        "cost_bps": None, "shortfall": None}                         # no spread practice fills: not measured
+    with_spread_fills = dict(gate, fill_gaps_to_date=[{"gap_bps": 1.0}] * 30,
+                             spread_fill_gaps_to_date=[{"gap_bps": 100.0}] * 4)
+    ev = reports.Evidence(asof="2027-06-30", default_rate=0.04, closed={"M1": m1, "M4": m4_win})
+    r = reports.ramp_review(run, ev, g, with_spread_fills, {"kappa": 0.3, "prior_only": False}, {"verified": False})
+    fams = r["shortfall_by_family"]
+    assert fams["etfs"]["shortfall"] == pytest.approx(2 / 30) and fams["spreads"]["shortfall"] == pytest.approx(
+        200 / 11800)
+    assert r["half"]["shortfall"] is True and r["shortfall_family"] == "etfs"   # the worst family is reported
+
+
+def test_kappa_ramp_check_needs_data():
+    """κ̂ on the prior alone (0.35 >= 0.2) is not evidence: the check is not measured, so the ramp cannot pass on it."""
+    g = reports.gates(None)
+    run = SimpleNamespace(state={"runs": {}, "modules": {}})
+    ev = reports.Evidence(asof="2027-06-30", default_rate=0.04, closed={})
+    prior = reports.ramp_review(run, ev, g, {}, reports.kappa_posterior([]), {"verified": False})
+    assert prior["kappa"] == pytest.approx(0.35) and prior["kappa_prior_only"] and prior["half"]["kappa"] is None
+    data = reports.ramp_review(run, ev, g, {}, reports.kappa_posterior([(0.3, 0.05)]), {"verified": False})
+    assert data["half"]["kappa"] is True and not data["kappa_prior_only"]
+    email = render_quarterly({"quarter": "2027-Q2", "label": "Q2 2027", "stage": "live", "ramp": prior}, {})
+    assert "κ̂ (realised over claimed edge) at least 0.2 0.35 (the starting view only) not measured" in flat(email.text)
+    assert validate(email) == []
+
+
+def test_tbill_returns_cover_the_same_span_as_the_portfolio(cfg, world):
+    """The first year starts at the paper phase's start: "this year" and "since start" are one span, one T-bill
+    return (not +1.03% against +1.02%)."""
+    state_dir, provider, rec = world
+    reports.run_annual(cfg, provider, state_dir, year="2025", services=rec.services())
+    annual = _review_records(state_dir, "annual")[-1]
+    assert annual["tbill_ret_period"] == pytest.approx(annual["tbill_ret_since_start"])
+    reports.run_quarterly(cfg, provider, state_dir, quarter="2025-Q4", services=rec.services())
+    q = _review_records(state_dir, "quarterly")[-1]
+    marks = _state(state_dir)["marks"]
+    prev = [m["date"] for m in marks if m["date"] < "2025-10-01"][-1]            # the NAV the quarter starts from
+    days = (date.fromisoformat(q["asof"]) - date.fromisoformat(prev)).days
+    created = date.fromisoformat(_state(state_dir)["created"][:10])
+    assert q["tbill_ret_period"] == pytest.approx(q["tbill_ret_since_start"] * days
+                                                  / (date.fromisoformat(q["asof"]) - created).days)
+
+
+def test_annual_hurdle_line_names_the_policy_modules_from_the_config(cfg, world):
+    state_dir, provider, rec = world
+    reports.run_annual(cfg, provider, state_dir, year="2025", services=rec.services())
+    f = flat(rec.sent[-1].text)
+    assert "every module so far is a policy module" not in f
+    assert ("Neither bound this year. The hurdle exempts the policy modules (M1, M3, W10, M4 and W8); M2 (trend "
+            "sleeve) and W9 (paper module) are not policy modules.") in f
+    only_policy = render_annual({"year": "2026", "label": "2026", "hurdle_bp": 6, "budget": 100,
+                                 "module_statuses": [{"module": "M1", "status": "policy module", "policy": True}]}, {})
+    assert "Every enabled module is a policy module, which the hurdle exempts." in flat(only_policy.text)
+    assert validate(only_policy) == []
 
 
 def test_quarterly_dry_run_and_force(cfg, world):

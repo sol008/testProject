@@ -1335,6 +1335,15 @@ class _TradeEmail:
 # re-price at the stated maximum (the stated minimum credit when closing), otherwise skipped (contract §2, §8).
 # Module text (M4, W8, W9) comes from the shared tables above (MODULE_*, ONE_SENTENCE, WHY, EXIT_PLAN, RISKS, merged
 # from traderec/email_text/). The SPREAD_* tables below are the generic fallbacks, with no digits either.
+#
+# Value AND slot (design §10). What the owner places (the legs, the contracts, the limit and the stated maximum or
+# minimum) is rendered from the OrderIntent itself, never from facts, and so are the numbers derived from it (totals,
+# breakeven, max loss, max value). Facts that disagree with the order block the email: they are listed in
+# RenderedEmail.meta["order_problems"], which `validator.validate` reports. meta["order"] carries the order's numbers
+# and meta["slots"] the phrases that show them ("Limit price: {limit_price}"), so the validator recomputes every value
+# from the order and checks the number in each slot, not only that the number was registered somewhere.
+
+from .market_calendar import next_trading_day as _next_session  # noqa: E402
 
 SPREAD_ORDER_TYPE = "spread_limit"
 CONTRACT_MULTIPLIER = 100                                # one contract = 100 x the per-share price (contract §2)
@@ -1352,6 +1361,14 @@ SECTION_1256_TAX = ("Tax: this is your {account}, and {root} options are Section
                     "contracts still open at year end are taxed as if sold.")
 ORDINARY_OPTION_TAX = ("Tax: this is your {account}, and {root} options are not Section 1256 contracts: gains are "
                        "short-term, taxed as ordinary income.")
+# Robinhood may close at-risk expiring equity and ETF options from this time on expiration day (design §3a.4; track 20,
+# "Expiration-day handling"). Fixed text with digits, registered verbatim.
+EXPIRY_DAY_CLOSEOUT = "3:30 PM ET"
+# The app's quotes, in plain English (what-if lines).
+MID_NATURAL = ("The app may show the mid price (halfway between the best buy and sell quotes) or the natural price "
+               "(the price that would fill right away); both move all day.")
+PRICE_TOLERANCE = 0.005     # facts vs the order: half a cent per share ...
+DOLLAR_TOLERANCE = 0.5      # ... and half a dollar for totals (the email shows whole dollars)
 
 SPREAD_ONE_SENTENCE: dict[str, tuple] = {
     "NEW_TRADE": (
@@ -1394,42 +1411,54 @@ class _SpreadEmail(_TradeEmail):
     """A two-leg vertical spread at one net limit price (order kind (b), design §3a; contract §8).
 
     The order's side decides the email: "buy" opens a debit spread (NEW_TRADE), "sell" with close_all closes it
-    (EXIT). Facts come first; the order's own fields (ticker, legs, contracts, limit_price, max_price) fill the gaps,
-    and a sentence whose numbers are still missing falls back to a variant without them.
+    (EXIT). What the owner places comes from the OrderIntent alone (value AND slot, design §10): the root, the account,
+    the legs and their expiry, the contracts, the limit and the stated maximum (minimum), and every number derived from
+    them (totals, breakeven, max loss, max value, width). Facts never override the order: a fact that disagrees with it
+    is listed in meta["order_problems"], and the validator blocks the email. A sentence whose numbers are missing falls
+    back to a variant without them.
 
     rec.facts keys (all optional):
-    - NEW_TRADE: root, underlying_name, strategy_label ("call debit spread"), legs, expiry, contracts, limit_price,
-      max_price (the stated maximum), debit_usd, max_debit_usd, max_value_usd, breakeven, spot, exit_date (the planned
-      close session), stress_usd (default max_debit_usd), stress_pct, section_1256 (default: an index root),
-      settlement (SETTLEMENT_CASH | SETTLEMENT_SHARES; default by root), base_rates, exit_plan, multiplier (100)
-    - EXIT: contracts, limit_price, max_price (the stated minimum), credit_usd, min_credit_usd, entry_price,
-      pnl_usd / pnl_pct (at tonight's mid; pnl_pct in percent units), reason ("time_stop" | "take_profit" |
-      "invalidation" | "expiry_rule"), exit_date
+    - checked against the order when present: root, ticker, account, legs, expiry, contracts, contracts_label,
+      limit_price, max_price, multiplier, long_strike, short_strike, width, strategy_label ("call debit spread");
+      NEW_TRADE: debit_usd, max_debit_usd, max_value_usd, breakeven, stress_usd (the max loss), width_usd,
+      max_multiple; EXIT: credit_usd, min_credit_usd
+    - NEW_TRADE: underlying_name, spot, exit_date (the planned close session), stress_pct, section_1256 (default: an
+      index root), settlement (SETTLEMENT_CASH | SETTLEMENT_SHARES; default by root), base_rates, exit_plan
+    - EXIT: entry_price, pnl_usd / pnl_pct (at tonight's mid; pnl_pct in percent units), reason ("time_stop" |
+      "take_profit" | "invalidation" | "expiry_rule"), exit_date, price_floor (the one-tick floor the close's limit sits
+      at, when the spread is worth nearly nothing; options.fillmodel.at_price_floor)
     - both: execute_date (the session of the 10:00 ET window), labels and base_rates as for ETF emails.
     Derived keys module text may use too: root, underlying_name, strategy_label, right ("call" | "put"), direction
-    ("rises" | "falls"), long_strike, short_strike, strikes ("770/810"), width, spreads_phrase ("2 XSP 770/810 call
-    spreads"), per_spread_usd, max_per_spread_usd, debit_frac, when ("after 10:00 ET on Wed 30 Sep").
+    ("rises" | "falls"), long_strike, short_strike, strikes ("770/810"), width, width_usd, max_multiple, contracts,
+    contracts_label ("2 contracts"), spreads_phrase ("2 XSP 770/810 call spreads"), per_spread_usd,
+    max_per_spread_usd, debit_frac, when ("after 10:00 ET on Wed 30 Sep").
+
+    A close whose execute date is the last session before expiry says what happens if it misses (no EXIT email
+    follows; cash settlement at intrinsic value, or for American-style roots Robinhood's expiration-day closeouts and
+    assignment) instead of promising tomorrow's email.
     """
 
     def __init__(self, rec: Recommendation, ctx: dict) -> None:
         super().__init__(rec, ctx)
         f, reg = self.facts, self.reg
         o = next((x for x in self.orders if x.order_type == SPREAD_ORDER_TYPE), None)
+        self.order = o
         self.opening = o.side == "buy" if o is not None else self.kind not in SELL_KINDS
         self.is_buy, self.is_sell = self.opening, not self.opening
         self.spread_kind = "NEW_TRADE" if self.opening else "EXIT"
+        self.order_problems: list[str] = []
 
-        def pick(key: str, attr: str | None = None) -> Any:
-            """facts[key], else the order's field."""
-            value = f.get(key)
-            if _is_missing(value) and o is not None:
-                value = getattr(o, attr or key, None)
-            return None if _is_missing(value) else value
-
-        legs = [leg for leg in (pick("legs") or []) if isinstance(leg, dict)]
+        # the order is what the owner places: every number of it comes from the OrderIntent, never from facts
+        legs = [leg for leg in ((o.legs if o is not None else None) or []) if isinstance(leg, dict)]
         self.long_leg = next((leg for leg in legs if leg.get("position") == "long"), {})
         self.short_leg = next((leg for leg in legs if leg.get("position") == "short"), {})
-        self.root = reg.register(str(pick("root", "ticker") or self.long_leg.get("root") or self.ticker))
+        if o is not None and o.account:
+            self.account = str(o.account).lower()
+            self.coinbase = self.account == "coinbase"
+            self.venue = "Coinbase" if self.coinbase else "Robinhood"
+            self.derived["account_label"] = ACCOUNT_LABELS.get(self.account, self.account)
+        root = (o.ticker if o is not None else None) or self.long_leg.get("root") or self.ticker
+        self.root = reg.register(str(root))
         label = str(f.get("strategy_label") or "").strip()
         right = str(self.long_leg.get("right") or self.short_leg.get("right") or "").upper()[:1]
         self.right = RIGHT_WORDS.get(right) or ("put" if "put" in label.lower() else "call")
@@ -1439,49 +1468,44 @@ class _SpreadEmail(_TradeEmail):
         self.long_strike, self.short_strike = _float(self.long_leg.get("strike")), _float(self.short_leg.get("strike"))
         self.width = (abs(self.short_strike - self.long_strike)
                       if self.long_strike is not None and self.short_strike is not None else None)
+        leg_expiries = sorted({str(leg["expiry"])[:10] for leg in (self.long_leg, self.short_leg) if leg.get("expiry")})
         try:
-            expiry = pick("expiry") or self.long_leg.get("expiry") or self.short_leg.get("expiry")
-            self.expiry: date | None = _to_date(expiry) if expiry else None
+            self.expiry: date | None = _to_date(leg_expiries[0]) if leg_expiries else None
         except (TypeError, ValueError):
             self.expiry = None
-        contracts = _float(pick("contracts"))
-        self.contracts = int(contracts) if contracts is not None and contracts >= 1 else None
-        self.limit, self.max_price = _float(pick("limit_price")), _float(pick("max_price"))
-        mult = _float(f.get("multiplier"))
-        self.multiplier = int(mult) if mult and mult > 0 else CONTRACT_MULTIPLIER
+        contracts = _float(o.contracts) if o is not None else None
+        self.contracts = int(contracts) if contracts is not None and contracts >= 1 and contracts.is_integer() else None
+        self.limit = _float(o.limit_price) if o is not None else None
+        self.max_price = _float(o.max_price) if o is not None else None
+        mult = _float(((o.meta or {}) if o is not None else {}).get("multiplier"))
+        self.multiplier = int(mult) if mult and mult > 1 else CONTRACT_MULTIPLIER
         section_1256 = f.get("section_1256")
         self.section_1256 = section_1256 if isinstance(section_1256, bool) else self.root in INDEX_OPTION_ROOTS
         self.settlement = (str(f.get("settlement") or "").strip()
                            or (SETTLEMENT_CASH if self.root in INDEX_OPTION_ROOTS else SETTLEMENT_SHARES))
         self.american = "american" in self.settlement.lower()
 
-        n, m = self.contracts, self.multiplier
-
-        def total(key: str, per_share: float | None) -> float | None:
-            """facts[key], else contracts x the price per share x the multiplier."""
-            given = _float(f.get(key))
-            if given is not None:
-                return given
-            return n * per_share * m if n and per_share is not None else None
-
+        n, m, lim, mx, width = self.contracts, self.multiplier, self.limit, self.max_price, self.width
         values: dict[str, Any] = {
-            "per_spread_usd": self.limit * m if self.limit is not None else None,
-            "max_per_spread_usd": self.width * m if self.width is not None else None,
+            "per_spread_usd": lim * m if lim is not None else None,
+            "max_per_spread_usd": width * m if width is not None else None,
+            "width_usd": width * m if width is not None else None,
         }
         if self.opening:
-            values["debit_usd"] = total("debit_usd", self.limit)
-            values["max_debit_usd"] = total("max_debit_usd", self.max_price)
-            values["max_value_usd"] = total("max_value_usd", self.width)
-            breakeven = _float(f.get("breakeven"))
-            if breakeven is None and self.long_strike is not None and self.limit is not None:
-                breakeven = self.long_strike + (self.limit if self.right == "call" else -self.limit)
-            values["breakeven"] = breakeven
-            stress = f.get("stress_usd") if _is_num(f.get("stress_usd")) else values["max_debit_usd"]
-            values["stress_usd"], values["stress_frac"] = self._loss(stress, f.get("stress_pct"))
+            values["debit_usd"] = n * lim * m if n and lim is not None else None
+            values["max_debit_usd"] = n * mx * m if n and mx is not None else None
+            values["max_value_usd"] = n * width * m if n and width is not None else None
+            values["breakeven"] = (self.long_strike + (lim if self.right == "call" else -lim)
+                                   if self.long_strike is not None and lim is not None else None)
+            values["max_multiple"] = width / lim if width is not None and lim else None
+            max_loss = values["max_debit_usd"]
+            values["stress_usd"], values["stress_frac"] = self._loss(max_loss, f.get("stress_pct"))
+            if max_loss is not None and self.nav:
+                values["stress_frac"] = max_loss / self.nav
             values["debit_frac"] = values["debit_usd"] / self.nav if values["debit_usd"] and self.nav else None
         else:
-            values["credit_usd"] = total("credit_usd", self.limit)
-            values["min_credit_usd"] = total("min_credit_usd", self.max_price)
+            values["credit_usd"] = n * lim * m if n and lim is not None else None
+            values["min_credit_usd"] = n * mx * m if n and mx is not None else None
 
         self.strikes = None
         if self.long_strike is not None and self.short_strike is not None:
@@ -1489,25 +1513,120 @@ class _SpreadEmail(_TradeEmail):
         count = f"{reg.fmt_num(n)} " if n else ""
         noun = f"{self.right} spread" + ("" if n == 1 else "s")
         self.spreads_phrase = reg.register(" ".join(p for p in (f"{count}{self.root}", self.strikes, noun) if p))
-        self.contracts_phrase = f"{reg.fmt_num(n)} contract{'' if n == 1 else 's'}" if n else None
+        self.contracts_label = f"{reg.fmt_num(n)} contract{'' if n == 1 else 's'}" if n else None
         # "2 × $745" for the size line; left out for a single contract
         self.times = (f"{reg.fmt_num(n)} × {reg.fmt_money(values['per_spread_usd'])}"
                       if n and n > 1 and values["per_spread_usd"] is not None else None)
+        # the width as dollars per share: "$40", "$2.50"
+        self.width_ps = (reg.fmt_money(width, cents=not float(width).is_integer()) if width is not None else None)
         # what the owner can't place the order without: then the email says to place nothing
         gaps = [what for what, known in (("both strikes", self.strikes), ("the expiration", self.expiry),
                                          ("the limit price", self.limit)) if known is None]
         self.missing = (", ".join(gaps[:-1]) + " and " + gaps[-1]) if len(gaps) > 1 else (gaps[0] if gaps else None)
+        # a close placed on the last session before expiry: nothing follows it but the expiry itself
+        self.last_session = bool(not self.opening and self.execute_date and self.expiry
+                                 and _next_session(self.execute_date) >= self.expiry)
         when = (f"after 10:00 ET on {reg.fmt_date(self.execute_date)}" if self.execute_date
                 else "after 10:00 ET on the next trading day")
         values.update({
             "root": self.root, "ticker": self.root, "ticker_name": self.underlying_name,
             "underlying_name": self.underlying_name, "strategy_label": self.strategy_label, "right": self.right,
             "direction": "rises" if self.right == "call" else "falls", "long_strike": self.long_strike,
-            "short_strike": self.short_strike, "strikes": self.strikes, "width": self.width, "expiry": self.expiry,
-            "contracts": n, "limit_price": self.limit, "max_price": self.max_price, "multiplier": m,
-            "spreads_phrase": self.spreads_phrase, "when": when,
+            "short_strike": self.short_strike, "strikes": self.strikes, "width": width, "expiry": self.expiry,
+            "contracts": n, "contracts_label": self.contracts_label, "limit_price": lim, "max_price": mx,
+            "multiplier": m, "spreads_phrase": self.spreads_phrase, "when": when, "width_ps": self.width_ps,
         })
+        self.values = values
         self.derived.update({k: v for k, v in values.items() if not _is_missing(v)})
+        self._check_order(o, legs)
+        self._check_facts(o)
+
+    # -------------------------------------------------------------- the order is the source of truth
+    def _problem(self, what: str) -> None:
+        self.order_problems.append(what)
+
+    def _check_order(self, o: OrderIntent | None, legs: list[dict]) -> None:
+        """An order the owner could not place as a vertical spread blocks the email (its prices never read $0.00)."""
+        if o is None:
+            return
+        if legs and not (len(legs) == 2 and self.long_leg and self.short_leg):
+            self._problem("the order is not one long and one short leg")
+        rights = {str(leg.get("right") or "").upper()[:1] for leg in legs if leg.get("right")}
+        expiries = {str(leg.get("expiry"))[:10] for leg in legs if leg.get("expiry")}
+        if len(rights) > 1 or len(expiries) > 1:
+            self._problem("the order's legs differ in right or expiry: not a vertical spread")
+        if o.contracts is not None and self.contracts is None:
+            self._problem(f"the order's contracts {o.contracts!r} is not a whole number of at least one")
+        for name, v in (("limit price", self.limit), ("stated price", self.max_price)):
+            if v is not None and v <= 0:
+                self._problem(f"the order's {name} {v!r} is not above zero: it cannot be placed")
+        if self.limit is not None and self.max_price is not None and (
+                self.max_price < self.limit - 1e-9 if self.opening else self.max_price > self.limit + 1e-9):
+            self._problem(f"the order's stated {'maximum' if self.opening else 'minimum'} {self.max_price!r} is on "
+                          f"the wrong side of its limit {self.limit!r}")
+
+    def _check_facts(self, o: OrderIntent | None) -> None:
+        """Every fact that restates the order must agree with it (tolerances: half a cent per share, half a dollar for
+        totals); a disagreement blocks the email instead of reaching the owner."""
+        if o is None:
+            return
+        f, v = self.facts, self.values
+
+        def same(got: Any, want: Any, tol: float | None) -> bool:
+            if want is None:
+                return False
+            if tol is None:
+                return str(got).strip().upper() == str(want).strip().upper()
+            return _is_num(got) and abs(float(got) - float(want)) <= tol
+
+        def check(key: str, want: Any, tol: float | None = 1e-6) -> None:
+            got = f.get(key)
+            if not _is_missing(got) and not same(got, want, tol):
+                self._problem(f'facts["{key}"] is {got!r} but the order gives {want!r}')
+
+        check("root", self.root, None)
+        check("ticker", self.root, None)
+        check("account", self.account, None)
+        check("contracts", self.contracts, 0.0)
+        check("contracts_label", self.contracts_label, None)
+        check("multiplier", self.multiplier, 0.0)
+        check("limit_price", self.limit, PRICE_TOLERANCE)
+        check("max_price", self.max_price, PRICE_TOLERANCE)
+        check("long_strike", self.long_strike)
+        check("short_strike", self.short_strike)
+        check("width", self.width)
+        fact_expiry = f.get("expiry")
+        if not _is_missing(fact_expiry):
+            want = self.expiry.isoformat() if self.expiry else None
+            if want is None or str(fact_expiry).strip()[:10] != want:
+                self._problem(f'facts["expiry"] is {fact_expiry!r} but the order\'s legs expire on {want!r}')
+        label = str(f.get("strategy_label") or "").lower()
+        if ("call" in label and self.right == "put") or ("put" in label and self.right == "call"):
+            self._problem(f'facts["strategy_label"] is {f["strategy_label"]!r} but the order\'s legs are {self.right}s')
+        totals = (("debit_usd", "max_debit_usd", "max_value_usd", "width_usd") if self.opening
+                  else ("credit_usd", "min_credit_usd"))
+        for key in totals:
+            check(key, v.get(key), DOLLAR_TOLERANCE)
+        if self.opening:
+            check("stress_usd", v.get("max_debit_usd"), DOLLAR_TOLERANCE)     # the stress line is the max loss
+            check("breakeven", v.get("breakeven"), PRICE_TOLERANCE)
+            check("max_multiple", v.get("max_multiple"), 0.05)
+        fact_legs = f.get("legs")
+        if isinstance(fact_legs, list) and fact_legs:
+            for position, mine in (("long", self.long_leg), ("short", self.short_leg)):
+                theirs = next((x for x in fact_legs if isinstance(x, dict) and x.get("position") == position), None)
+                if theirs is None or not mine:
+                    self._problem(f"facts' legs and the order's legs differ: no {position} leg in "
+                                  f"{'the facts' if theirs is None else 'the order'}")
+                    continue
+                for key in ("strike", "right", "expiry", "occ", "root"):
+                    a, b = theirs.get(key), mine.get(key)
+                    if _is_missing(a) or _is_missing(b):
+                        continue
+                    ok = (same(a, b, 1e-6) if key == "strike" else
+                          same(str(a)[:10], str(b)[:10], None) if key == "expiry" else same(a, b, None))
+                    if not ok:
+                        self._problem(f"facts' {position} leg has {key} {a!r} but the order's has {b!r}")
 
     # -------------------------------------------------------------- helpers
     def _generic(self, table: dict) -> Any:
@@ -1516,6 +1635,28 @@ class _SpreadEmail(_TradeEmail):
             if key in table:
                 return table[key]
         return None
+
+    def _after_last_session(self) -> str:
+        """What a close that misses on the last session before expiry leads to. Plain facts, no new trading rule: the
+        design closes every spread at least one trading day before expiry (§3a.4), so no EXIT email follows it."""
+        head = self.t("Today is the last trading day before the options expire on {expiry:date}, so no new EXIT email "
+                      "follows.",
+                      "Today is the last trading day before the options expire, so no new EXIT email follows.")
+        if self.american:
+            tail = self.t("If that doesn't fill by the close, the spread stays open into expiration day: {root} options "
+                          "settle in shares, Robinhood may close at-risk positions from {closeout} that day, and a "
+                          "{right} you sold that ends in the money can be assigned (exercised against you). The paper "
+                          "book settles it at intrinsic value at expiry.",
+                          closeout=self.reg.register(EXPIRY_DAY_CLOSEOUT))
+        else:
+            tail = self.t("If that doesn't fill by the close, the spread stays open: {root} options settle in cash at "
+                          "expiry, at their intrinsic value (what the spread is worth at the index's settlement value, "
+                          "from zero up to {max_per_spread_usd:money} per spread), with nothing for you to do. The paper "
+                          "book settles it the same way.",
+                          "If that doesn't fill by the close, the spread stays open: {root} options settle in cash at "
+                          "expiry, at their intrinsic value, with nothing for you to do. The paper book settles it the "
+                          "same way.")
+        return " ".join(s for s in (head, tail) if s)
 
     def _legs_phrase(self) -> str | None:
         if self.long_strike is None or self.short_strike is None:
@@ -1566,17 +1707,23 @@ class _SpreadEmail(_TradeEmail):
                           "The whole position: about {credit_usd:money} back at the limit",
                           ) or "The whole position this trade opened"
             stress = "None once closed: this ends the trade"
-            stated, otherwise = "the stated minimum", "otherwise wait for tomorrow's email"
+            stated = "the stated minimum"
+            otherwise = ("otherwise it stays open into expiry (see What if)" if self.last_session
+                         else "otherwise wait for tomorrow's email")
         window = self.t("Place after 10:00 ET on {execute_date:date}. Not filled by 11:00 ET: re-enter once at "
                         "{max_price:money2}, {stated}; {otherwise}",
+                        "Place after 10:00 ET. Not filled by 11:00 ET: re-enter once at {max_price:money2}, {stated}; "
+                        "{otherwise}",
                         "Place after 10:00 ET on {execute_date:date}. Not filled by 11:00 ET: re-enter once at "
                         "{stated}; {otherwise}",
                         "Place after 10:00 ET. Not filled by 11:00 ET: re-enter once at {stated}; {otherwise}",
                         stated=stated, otherwise=otherwise)
         rows = [("ACTION", action), ("SIZE", size), ("STRESS", stress), ("WINDOW", window), ("ODDS", self.odds_line())]
         if not self.opening:
-            result = self.t("{pnl_usd:smoney} ({pnl_pct:sppct2}) so far at tonight's mid prices, before closing",
-                            "{pnl_usd:smoney} so far at tonight's mid prices, before closing")
+            result = self.t("{pnl_usd:smoney} ({pnl_pct:sppct2}) so far at tonight's mid prices (halfway between the "
+                            "buy and sell quotes), before closing",
+                            "{pnl_usd:smoney} so far at tonight's mid prices (halfway between the buy and sell quotes), "
+                            "before closing")
             if result:
                 rows.append(("RESULT", result))
         confidence = self.reg.register(self.facts.get("confidence") or
@@ -1613,9 +1760,9 @@ class _SpreadEmail(_TradeEmail):
                        "Closing sells the {right} you own and buys back the one you sold, in one order at one net "
                        "price. That price is a credit, so money comes back to you."),
                 self.t("You paid {entry_price:money2} per share to open it. Until expiry the spread is worth between "
-                       "zero and the width between the strikes: {width:num} per share, {max_per_spread_usd:money} per "
+                       "zero and the width between the strikes: {width_ps} per share, {max_per_spread_usd:money} per "
                        "spread.",
-                       "Until expiry the spread is worth between zero and the width between the strikes: {width:num} "
+                       "Until expiry the spread is worth between zero and the width between the strikes: {width_ps} "
                        "per share, {max_per_spread_usd:money} per spread.", None),
             ]
             return [("h", "What you're closing"), ("ul", [s for s in items if s])]
@@ -1638,10 +1785,10 @@ class _SpreadEmail(_TradeEmail):
                    "Most you can lose: what you pay, {debit_usd:money} in all. That happens if {root} ends at or "
                    "{below} {long_strike:num} at expiry.",
                    "Most you can lose: what you pay for the spread, and no more.", **way),
-            self.t("Most it can be worth: the width between the strikes, {width:num} × {multiplier:int} = "
+            self.t("Most it can be worth: the width between the strikes, {width_ps} per share × {multiplier:int} = "
                    "{max_per_spread_usd:money} per spread, {max_value_usd:money} in all. That happens if {root} ends "
                    "at or {above} {short_strike:num} at expiry.",
-                   "Most it can be worth: the width between the strikes, {width:num} × {multiplier:int} = "
+                   "Most it can be worth: the width between the strikes, {width_ps} per share × {multiplier:int} = "
                    "{max_per_spread_usd:money} per spread. That happens if {root} ends at or {above} "
                    "{short_strike:num} at expiry.",
                    "Most it can be worth: the width between the two strikes, times the contract size.", **way),
@@ -1672,32 +1819,33 @@ class _SpreadEmail(_TradeEmail):
         if self.missing:        # never guess an order: the email says to place nothing (see What if)
             return [f"This email doesn't show {self.missing}, so don't place anything",
                     "Record skipped (link below)" if self.issue_url else "Note that you skipped it"]
+        submit = "Tap Review, then swipe up to submit"      # Robinhood's placing-an-options-trade article (the app)
         if not self.opening:
             return [first,
-                    self.t("Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel} ({held})",
-                           "Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel}",
-                           held=self.contracts_phrase),
+                    self.t("Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel} "
+                           "({contracts_label})",
+                           "Search {root}, then tap your {strikes} {right} spread expiring {expiry:datel}"),
                     "Tap Trade → Close position, so both legs close together in one order",
-                    self.t("Limit price: {limit_price:money2} (the net credit, per share) · Contracts: "
-                           "{contracts:int}, all of them · Time in force: Good for day",
-                           "Limit price: {limit_price:money2} (the net credit, per share) · Contracts: all of them · "
+                    self.t("Quantity: {contracts_label}, all of them · Limit price: {limit_price:money2} (the net "
+                           "credit per share) · Time in force: Good for day",
+                           "Quantity: all of them · Limit price: {limit_price:money2} (the net credit per share) · "
                            "Time in force: Good for day"),
-                    self.t("Review → Submit. You should get back about {credit_usd:money}") or "Review → Submit",
+                    self.t(submit + ". You should get back about {credit_usd:money}") or submit,
                     record]
-        cap = self.right.capitalize()
-        label = f"{cap} Debit Spread"           # Robinhood's name for the structure, whatever the module calls it
+        # Robinhood's documented flow (support articles "Placing an options trade" and "About the options strategy
+        # builder"): Trade → Trade options → Strategy builder (top left) → the strategy and its strikes (the first
+        # leg's strike and the strike width) → the spread's price → quantity and limit → Review → swipe up to submit.
+        strategy = f"{self.right.capitalize()} Debit Spread"   # the builder's name for it, whatever the module says
         return [first,
-                self.t("Search {root}, then tap Trade → Trade Options"),
-                self.t("At the top choose Buy and {cap}, then the expiration {expiry:datel}", cap=cap),
-                self.t("Tap Select, then the {long_strike:num} and {short_strike:num} {right}s: set the "
-                       "{long_strike:num} to Buy and the {short_strike:num} to Sell. Robinhood shows one {label}; tap "
-                       "Continue", label=label),
-                self.t("Limit price: {limit_price:money2} (the net debit, per share) · Contracts: {contracts:int} · "
+                self.t("Search {root}, then tap Trade → Trade options → Strategy builder (top left)"),
+                self.t("Choose {strategy} and the expiration {expiry:datel}", strategy=strategy),
+                self.t("Set the first leg's strike to {long_strike:num} and the strike width to {width:num}: buy the "
+                       "{long_strike:num} {right}, sell the {short_strike:num} {right}. Then tap the spread's price"),
+                self.t("Quantity: {contracts_label} · Limit price: {limit_price:money2} (the net debit per share) · "
                        "Time in force: Good for day",
-                       "Limit price: {limit_price:money2} (the net debit, per share) · Time in force: Good for day"),
-                self.t("Review → Submit. The total should be about {debit_usd:money} ({times})",
-                       "Review → Submit. The total should be about {debit_usd:money}", times=self.times)
-                or "Review → Submit",
+                       "Limit price: {limit_price:money2} (the net debit per share) · Time in force: Good for day"),
+                self.t(submit + ". The total should be about {debit_usd:money} ({times})",
+                       submit + ". The total should be about {debit_usd:money}", times=self.times) or submit,
                 record]
 
     def what_if(self) -> list[str]:
@@ -1709,24 +1857,29 @@ class _SpreadEmail(_TradeEmail):
                     "Never leg in or out, meaning trade one option now and the other later: in between you'd hold a "
                     "different, riskier position."]
         if not self.opening:
+            then = self._after_last_session() if self.last_session else (
+                "If that doesn't fill by the close, keep the spread: you'll get a new EXIT email tomorrow evening with "
+                "fresh prices. The paper book does the same.")
             items = [
                 self.t("Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated "
-                       "minimum ({min_credit_usd:money} in all). If that doesn't fill by the close, keep the spread: "
-                       "you'll get a new EXIT email tomorrow evening with fresh prices. The paper book does the same.",
+                       "minimum ({min_credit_usd:money} in all). {then}",
                        "Not filled by 11:00 ET: cancel it and place it once more at {max_price:money2}, the stated "
-                       "minimum. If that doesn't fill by the close, keep the spread: you'll get a new EXIT email "
-                       "tomorrow evening with fresh prices. The paper book does the same.",
-                       "Not filled by 11:00 ET: cancel it and place it once more at the stated minimum. If that "
-                       "doesn't fill by the close, keep the spread: you'll get a new EXIT email tomorrow evening with "
-                       "fresh prices. The paper book does the same."),
+                       "minimum. {then}",
+                       "Not filled by 11:00 ET: cancel it and place it once more at the stated minimum. {then}",
+                       then=then),
+                self.t("Tonight the spread is worth almost nothing, so the limit is the smallest price step, "
+                       "{price_floor:money2} a share: a lower limit can't be placed. It may not fill. Options that are "
+                       "still out of the money at expiry expire worthless, and nothing more is owed.", None),
                 self.t("{root} moved a lot: close it anyway at these prices. The exit was decided in advance, and a "
                        "limit order sells at {limit_price:money2} or better."),
-                self.t("Robinhood shows a different price for the spread (its mid and natural prices move all day): "
-                       "type {limit_price:money2} yourself."),
+                self.t("Robinhood shows a different price for the spread: type {limit_price:money2} yourself. "
+                       + MID_NATURAL),
                 "Robinhood offers to close only one leg: don't. Never close one leg alone (legging out): close both "
-                "together, or wait for tomorrow's email.",
-                "Don't hold it into expiration day: the rule closes every spread at least one trading day before it "
-                "expires.",
+                + ("together, in one order." if self.last_session else "together, or wait for tomorrow's email."),
+                ("Today is the last chance the rule allows: it closes every spread at least one trading day before it "
+                 "expires." if self.last_session else
+                 "Don't hold it into expiration day: the rule closes every spread at least one trading day before it "
+                 "expires."),
             ]
             return [s for s in items if s]
         items = [
@@ -1740,8 +1893,8 @@ class _SpreadEmail(_TradeEmail):
             self.t("{root} moved a lot before you place it: place it anyway at these prices, and don't chase. If the "
                    "spread now costs more than {max_price:money2}, it won't fill, and skipping is the rule working.",
                    "{root} moved a lot before you place it: place it anyway at these prices, and don't chase."),
-            self.t("Robinhood shows a different price for the spread (its mid and natural prices move all day): type "
-                   "{limit_price:money2} yourself."),
+            self.t("Robinhood shows a different price for the spread: type {limit_price:money2} yourself. "
+                   + MID_NATURAL),
             "Robinhood offers only one leg, or won't take both strikes as one order: skip the trade. Never leg in, "
             "meaning buy one option now and sell the other later: in between you'd hold a different, riskier "
             "position.",
@@ -1754,6 +1907,8 @@ class _SpreadEmail(_TradeEmail):
         if not self.opening:
             return ["This email is the exit. Once both legs are closed in one order, this trade is done; nothing "
                     "else to do.",
+                    "Today is the last trading day before expiry: if it doesn't fill, even at the stated minimum, no "
+                    "new EXIT email follows, and What if says what happens at expiry." if self.last_session else
                     "If it doesn't fill today, even at the stated minimum, you'll get a new EXIT email tomorrow "
                     "evening with fresh prices."]
         close = self.t("Planned close: sell to close the whole spread (both legs, one order) by {exit_date:date}, at "
@@ -1814,14 +1969,21 @@ class _SpreadEmail(_TradeEmail):
                               move="rise" if call else "fall", below="below" if call else "above"))
             out.append("Option quotes are wider than stock quotes: you give up part of the gap going in and again "
                        "coming out. That's why the order is a limit at one net price, never a market order.")
-            if self.american:
-                out.append(self.t("{root} options are American-style: the {right} you sold can be exercised early "
-                                  "(assignment), most often {usually}. You'd then {hold} {root} shares, still covered "
-                                  "by the {right} you own. If Robinhood reports an assignment, close everything that "
-                                  "day and note it on the trade's issue.",
-                                  usually=f"just before {self.root} pays a dividend" if call
-                                  else f"once {self.root} is far below the strike",
-                                  hold="be short" if call else "own"))
+            if self.american:          # the one assignment line (module text does not repeat it)
+                if call:
+                    line = self.t("{root} options are American-style: the call you sold can be exercised early "
+                                  "(assignment), most often the day before {root} goes ex-dividend while that call is "
+                                  "in the money ({root} above its strike). You'd then be short {root} shares: you'd owe "
+                                  "{multiplier:int} shares per contract that you don't own, still covered by the call "
+                                  "you own. If Robinhood reports an assignment, close everything that day (buy back the "
+                                  "shares and sell the call you own) and note it on the trade's issue.")
+                else:
+                    line = self.t("{root} options are American-style: the put you sold can be exercised early "
+                                  "(assignment), most often once {root} is far below its strike. You'd then own {root} "
+                                  "shares, {multiplier:int} per contract, still covered by the put you own. If Robinhood "
+                                  "reports an assignment, close everything that day (sell the shares and the put you "
+                                  "own) and note it on the trade's issue.")
+                out.append(line)
         else:
             out.append(self.t("Closing locks in the result. If {root} keeps moving your way after you close, that's "
                               "the rule working as tested, not a mistake."))
@@ -1851,7 +2013,79 @@ class _SpreadEmail(_TradeEmail):
     def build(self) -> RenderedEmail:
         email = super().build()
         email.meta["order_type"] = SPREAD_ORDER_TYPE
+        email.meta.update(self._slot_meta())
         return email
+
+    def _slot_meta(self) -> dict[str, Any]:
+        """The validator's inputs for the slot check (design §10: value AND slot; see validator.check_slots).
+
+        "order": the order's own numbers; the validator derives every order value from them (totals, breakeven, max
+        loss, max value, width, max multiple). "slots": phrases with {field} placeholders; wherever a phrase occurs, the
+        number in each placeholder must be that field's value. "slot_values": the renderings of fields that are facts,
+        not order values (the base rates). "slots_required": phrases the text must show (the order in the steps).
+        "order_problems": facts that disagree with the order, or an order that cannot be placed."""
+        r, root = self.right, self.root
+        below, above, plus = ("below", "above", "plus") if r == "call" else ("above", "below", "minus")
+        order = {"side": "buy" if self.opening else "sell", "root": root, "right": r,
+                 "long_strike": self.long_strike, "short_strike": self.short_strike,
+                 "expiry": self.expiry.isoformat() if self.expiry else None, "contracts": self.contracts,
+                 "limit_price": self.limit, "max_price": self.max_price, "multiplier": self.multiplier,
+                 "long_occ": self.long_leg.get("occ"), "short_occ": self.short_leg.get("occ")}
+        slots = [
+            # the spreads phrase, the subject and the headline
+            f"{{contracts}} {root} ", f"{root} {{strikes}} {r}", f"{r} spreads, {{expiry}}", f"{r} spread, {{expiry}}",
+            "limit {limit_price}", "net limit of {limit_price}", "expiring {expiry}", "expires on {expiry}",
+            "expire on {expiry}", "re-enter once at {max_price}",
+            # the steps
+            "Limit price: {limit_price}", "Quantity: {contracts} contract", "the expiration {expiry}",
+            "first leg's strike to {long_strike}", "strike width to {width}", "should be about {total_usd}",
+            "about {total_usd} ({contracts} × {per_spread_usd})", "get back about {total_usd}",
+            f"your {{strikes}} {r} spread expiring {{expiry}}", "spread expiring {expiry} ({contracts} contract",
+            # what if, the explainer, risks, the fill comment
+            "place it once more at {max_price}", "costs more than {max_price}", "type {limit_price} yourself",
+            "sells at {limit_price} or better", "the stated maximum ({stated_total_usd} in all)",
+            "the stated minimum ({stated_total_usd} in all)", "net debit ({contracts} × {per_spread_usd})",
+            "{total_usd} net debit", "Max loss {max_loss_usd}", "for about {total_usd}",
+            "what you pay, {total_usd} in all", "({stated_total_usd} if the re-price", "each spread costs {per_spread_usd}",
+            "one contract is {multiplier} times that",
+            "the width between the strikes, {width_money} per share × {multiplier} = {max_per_spread_usd} per spread",
+            "per spread, {max_value_usd} in all", f"ends at or {below} {{long_strike}} at expiry",
+            f"ends at or {above} {{short_strike}} at expiry", f"Breakeven at expiry: {root} at {{breakeven}}",
+            f"the {{long_strike}} strike {plus} the {{limit_price}} you pay",
+            "Exact contracts, for reference: {long_occ} (buy) and {short_occ} (sell)",
+            "the debit: {total_usd} at the limit", "at the limit, up to {stated_total_usd}",
+            f"is still at or {below} {{long_strike}}", "about {total_usd} back at the limit",
+            "at least {stated_total_usd} at the stated minimum", "{per_spread_usd} per spread at the limit, {total_usd} in all",
+            "the width between the strikes: {width_money} per share, {max_per_spread_usd} per spread",
+            "from zero up to {max_per_spread_usd} per spread", "{multiplier} shares per contract",
+            "for example filled {contracts} @ {limit_plain}",
+            # module text (M4): the sentence, why and risks
+            "buy {contracts} contract", "close all {contracts} contract", "with strikes {long_strike} and {short_strike}",
+            "at a net price of {limit_price}", "the gap between the strikes ({max_per_spread_usd})",
+            "up to about {max_multiple} times the debit", "lose the whole debit, up to {stated_total_usd}",
+            # base rates (facts; their renderings are in slot_values)
+            "{win_rate} of past trades made money", "{win_rate} of trades made money", "average {mean_pct}",
+            "worst {worst_pct}",
+        ]
+        legs = ([f"buy the {{long_strike}} {r}", f"sell the {{short_strike}} {r}"] if self.opening else
+                [f"sell the {{long_strike}} {r}", f"buy back the {{short_strike}} {r}", f"You own the {{long_strike}} {r}",
+                 f"you sold the {{short_strike}} {r}"])
+        required: list[str] = []
+        if not self.missing:
+            required = ["Limit price: {limit_price}", legs[0], legs[1]]
+            required.append("the expiration {expiry}" if self.opening else f"your {{strikes}} {r} spread expiring {{expiry}}")
+            if self.contracts:
+                required.append("Quantity: {contracts} contract")
+            if self.max_price is not None:
+                required.append("re-enter once at {max_price}")
+        values: dict[str, list[str]] = {}
+        scratch = NumberRegistry()                      # renderings only: nothing is registered for this email
+        for key, spec in (("win_rate", "pct0"), ("mean_pct", "sppct2"), ("worst_pct", "ppct1")):
+            v = lookup(self.facts, key)
+            if _is_num(v):
+                values[key] = [scratch.fmt(v, spec)]
+        return {"order": order, "slots": slots + legs, "slot_values": values, "slots_required": required,
+                "order_problems": list(self.order_problems)}
 
 
 def render(rec: Recommendation, ctx: dict) -> RenderedEmail:
@@ -2059,6 +2293,12 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
         t("Data problems: {data_problems:int}.", None),
         t("Trade emails: {emails_sent:int} sent, {emails_handled:int} handled (a fill or skip recorded).", None),
         t("Practice fills against the fill model: a median gap of {median_fill_gap_bps:num1} bp this month.", None),
+        # the go-live rule to date (track 18 §5.4(3)): the average gap, in bp for ETFs, in half-spreads for spreads
+        t("ETF practice fills to date average {mean_fill_gap_bps_to_date:snum1} bp against the model over "
+          "{fill_n_to_date:int} fills (the go-live rule allows at most {fill_tolerance_bps:num} bp).", None),
+        t("Option spread practice fills to date average {spread_mean_fill_gap_half_spread_to_date:spct0} of the "
+          "half-spread over {spread_fill_measured_to_date:int} fills (the go-live rule allows at most "
+          "{spread_fill_tolerance_half_spread:pct0}).", None),
         None if ledger_ok is None else f"Ledger verified: {_yes_no(ledger_ok)}.",
     ) if s]
     blocks.append(("ul", ops) if ops else ("p", "No operations data in this report."))
@@ -2263,6 +2503,21 @@ class _ReviewEmail:
                 notes = [self.label(x) for x in p.get("notes") or [] if str(x).strip()]
                 s = (self.t("{n:int} " + ("data problem" if n == 1 else "data problems"), **p) or "Data problems") \
                     + (": " + "; ".join(notes) if notes else "") + "."
+            elif kind == "fills":
+                parts = [self.t(*FILLS_PROBLEM_PARTS[group], **p) for group, ok in (("etf", p.get("etf_ok")),
+                                                                                    ("spread", p.get("spread_ok")))
+                         if ok is False]
+                parts = [x for x in parts if x]
+                s = (("Practice fills differ from the fill model by more than the pre-registered rule allows: "
+                      + "; ".join(parts) + ".") if parts else self.t(*PROBLEM_TEXT["fills"]))
+            elif kind == "fill_comments":        # the owner's typos (feedback.match_fills), quoted as registered text
+                examples = "; ".join(self.label(x) for x in p.get("examples") or [] if str(x).strip())
+                one = n == 1
+                s = self.t("{n:int} " + ("fill comment was set aside as a typo, so it doesn't count" if one else
+                                         "fill comments were set aside as typos, so they don't count")
+                           + (": {examples}" if examples else "") + ". Correct "
+                           + ("it on the trade's issue." if one else "them on the trades' issues."),
+                           **{**p, "examples": examples or None})
             else:
                 s = self.t(*PROBLEM_TEXT.get(str(kind), (None,)), **p)
             if s:
@@ -2318,9 +2573,8 @@ class _ReviewEmail:
 PROBLEM_TEXT: dict[str, tuple] = {
     "late_runs": ("{late:int} of {expected:int} scheduled runs were late or missing.",),
     "ledger": ("The ledger failed verification. Don't trust this review until it's fixed.",),
-    "fills": ("Practice fills differ from the fill model: a median gap of {median_gap_bps:num1} bp, against a "
-              "tolerance of {tolerance_bps:num} bp.",
-              "Practice fills differ from the fill model by more than the tolerance."),
+    # "fills" and "fill_comments" are composed in _ReviewEmail.problems (FILLS_PROBLEM_PARTS; singular or plural)
+    "fills": ("Practice fills differ from the fill model by more than the pre-registered rule allows.",),
     "calibration_gross": ("Gross calibration bias in {family}: the forecasts said {mean_p:pct0} and {hit_rate:pct0} came "
                           "true ({n:int} scored). That fails the go-live rule until the forecasts are fixed.",),
     "calibration_warning": ("Calibration warning for {family}: the forecasts said {mean_p:pct0} and {hit_rate:pct0} came "
@@ -2334,6 +2588,16 @@ PROBLEM_TEXT: dict[str, tuple] = {
                   "review trigger: review it with the owner.",),
     "m2_pause": ("The trend book's (M2) Sharpe over the last {window:int} months is {sharpe:num2}, below "
                  "{pause_sharpe:num1}: the design says pause it to the shadow ledger. You decide.",),
+}
+# Track 18 §5.4(3), as feedback.py measures it: the average gap, in bp for ETFs and in half-spreads for option spreads.
+FILLS_PROBLEM_PARTS = {
+    "etf": ("ETF fills average {mean_gap_bps:snum1} bp against the model over {n:int} fills (above zero is worse for "
+            "you; the rule allows at most {tolerance_bps:num} bp)",),
+    "spread": ("option spread fills average {spread_mean_half_spread:spct0} of the half-spread against the model over "
+               "{spread_n:int} fills (the rule allows at most {spread_tolerance:pct0}; the median gap is "
+               "{spread_median_gap_bps:num0} bp of the net price)",
+               "option spread fills average {spread_mean_half_spread:spct0} of the half-spread against the model over "
+               "{spread_n:int} fills (the rule allows at most {spread_tolerance:pct0})"),
 }
 COST_ADVICE = {
     "keep": ("The fill model stands.",),
@@ -2463,9 +2727,10 @@ class _QuarterlyEmail(_ReviewEmail):
             row("Chance of a real edge (paper at half weight)", f"at least {self.pct(th.get('ramp_half_edge'))}",
                 self.pct(ramp.get("edge_p_weighted")), half.get("edge")),
             row("κ̂ (realised over claimed edge)", f"at least {self.n(th.get('ramp_half_kappa'), 1)}",
-                self.n(ramp.get("kappa"), 2), half.get("kappa")),
+                self.n(ramp.get("kappa"), 2) + (" (the starting view only)" if ramp.get("kappa_prior_only") else ""),
+                half.get("kappa")),
             row("Implementation shortfall (share of the paper edge)",
-                f"at most {self.pct(th.get('ramp_half_shortfall'))}", self.pct(ramp.get("shortfall")),
+                f"at most {self.pct(th.get('ramp_half_shortfall'))} in each family", self._shortfall_now(ramp),
                 half.get("shortfall")),
         ]
         full_rows = [
@@ -2481,6 +2746,15 @@ class _QuarterlyEmail(_ReviewEmail):
                    ("p", "Ramp to full size:"), ("table", (["Check", "Needed", "Now", "Pass?"], full_rows)),
                    ("p", "Every ramp step is yours to take at the review; kill switches demote modules on their own.")]
         return blocks
+
+    def _shortfall_now(self, ramp: dict) -> str:
+        """The shortfall per module family (reports.shortfall_by_family): "ETF orders 40%; option spreads not
+        measured"."""
+        fams = ramp.get("shortfall_by_family") if isinstance(ramp.get("shortfall_by_family"), dict) else {}
+        parts = [f"{self.label(f.get('label', ''))} " + (self.pct(f.get("shortfall")) if _is_num(f.get("shortfall"))
+                                                        else "not measured")
+                 for f in fams.values() if isinstance(f, dict) and (f.get("trades") or f.get("fills"))]
+        return "; ".join(parts) or self.pct(ramp.get("shortfall"))
 
     def edge_blocks(self) -> list[tuple[str, Any]]:
         rows = []
@@ -2537,9 +2811,20 @@ class _QuarterlyEmail(_ReviewEmail):
         if rows:
             blocks.append(("table", (["Ticker", "Fills", "Traded", "Model cost"], rows)))
         blocks.append(("p", self.t(
-            "Your practice fills against the model: {costs.practice_fills:int} measured, a median gap of "
+            "Your practice fills against the model: {costs.practice_fills:int} ETF fills measured, a median gap of "
             "{costs.median_gap_bps:num1} bp and an average of {costs.mean_gap_bps:snum1} bp (above zero means worse "
-            "for you).", "No practice fills were recorded this quarter.")))
+            "for you; the go-live rule allows an average of at most {costs.tolerance_bps:num} bp).",
+            "No practice fills were recorded this quarter.")))
+        if (self.num("costs.spread_practice_fills") or 0) > 0:      # track 18 §5.4(3): options in half-spreads
+            blocks.append(("p", self.t(
+                "Option spread fills against the model: {costs.spread_practice_fills:int} measured, a median gap of "
+                "{costs.spread_median_gap_bps:num0} bp of the net price and an average of "
+                "{costs.spread_mean_gap_half_spread:spct0} of the half-spread over the {costs.spread_measured:int} "
+                "with a stored quote width (the go-live rule allows an average of at most "
+                "{costs.spread_tolerance_half_spread:pct0}).",
+                "Option spread fills against the model: {costs.spread_practice_fills:int} measured, a median gap of "
+                "{costs.spread_median_gap_bps:num0} bp of the net price; none has a stored quote width, so the "
+                "half-spread rule is not measured yet.")))
         prac = [[self.label(x.get("ticker", "")), self.n(x.get("fills")),
                  f"{self.n(x.get('median_gap_bps'), 1)} bp", f"{self.n(x.get('mean_gap_bps'), 1, signed=True)} bp"]
                 for x in self.rows("costs.practice_by_ticker")]
@@ -2732,9 +3017,27 @@ class _AnnualEmail(_ReviewEmail):
                               "with the evidence below.") or "Trade budget: review the caps that bound this year.")
         else:
             out.append(self.t("Hurdle and budget: keep the {hurdle_bp:int} bp hurdle and the budget of {budget:int} "
-                              "trades a year. Neither bound this year, and every module so far is a policy module, "
-                              "which the hurdle exempts.", "Hurdle and budget: keep both.") or "")
+                              "trades a year. Neither bound this year." + self._hurdle_modules(),
+                              "Hurdle and budget: keep both.") or "")
         return [s for s in out if s]
+
+    def _hurdle_modules(self) -> str:
+        """Which enabled modules the hurdle exempts, from the constitution (reports.module_statuses): design §4
+        exempts policy modules; the others (M2, the trend sleeve) are named as they are, not called policy modules."""
+        rows = [x for x in self.rows("module_statuses") if x.get("module")]
+        policy = [self.label(x["module"]) for x in rows if x.get("policy")]
+        others = [f"{self.label(x['module'])} ({self.label(x.get('status') or 'module')})" for x in rows
+                  if not x.get("policy")]
+
+        def names(xs: list[str]) -> str:
+            return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+        if not rows:
+            return ""
+        if not others:
+            return " Every enabled module is a policy module, which the hurdle exempts."
+        tail = f" {names(others)} " + ("is not a policy module." if len(others) == 1 else "are not policy modules.")
+        return (f" The hurdle exempts the policy modules ({names(policy)});" + tail) if policy else tail
 
     def calibration_blocks(self) -> list[tuple[str, Any]]:
         slope = lookup(self.r, "calibration.slope")

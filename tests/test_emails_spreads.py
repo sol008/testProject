@@ -212,14 +212,16 @@ def test_m4_new_trade_headline_box(m4_text):
 
 
 def test_m4_new_trade_has_seven_exact_robinhood_steps(m4_text):
+    """Robinhood's documented flow: Trade → Trade options → Strategy builder (top left) → the strategy and strikes
+    (first leg and width) → the spread's price → quantity and limit → Review → swipe up to submit."""
     assert steps_of(render(m4_entry(), ctx()).text) == [
         "After 10:00 ET on Wed 30 Sep, open Robinhood and switch to your individual account (Account → Individual)",
-        "Search XSP, then tap Trade → Trade Options",
-        "At the top choose Buy and Call, then the expiration Fri 18 Dec 2026",
-        "Tap Select, then the 770 and 810 calls: set the 770 to Buy and the 810 to Sell. Robinhood shows one Call "
-        "Debit Spread; tap Continue",
-        "Limit price: $7.45 (the net debit, per share) · Contracts: 2 · Time in force: Good for day",
-        "Review → Submit. The total should be about $1,490 (2 × $745)",
+        "Search XSP, then tap Trade → Trade options → Strategy builder (top left)",
+        "Choose Call Debit Spread and the expiration Fri 18 Dec 2026",
+        "Set the first leg's strike to 770 and the strike width to 40: buy the 770 call, sell the 810 call. Then tap "
+        "the spread's price",
+        "Quantity: 2 contracts · Limit price: $7.45 (the net debit per share) · Time in force: Good for day",
+        "Tap Review, then swipe up to submit. The total should be about $1,490 (2 × $745)",
         "Record the fill (link below)",
     ]
 
@@ -231,8 +233,9 @@ def test_m4_new_trade_what_if_exit_plan_explainer_and_tax(m4_text):
             "If that doesn't fill by the close, skip the trade and comment skipped.") in f
     assert "XSP moved a lot before you place it: place it anyway at these prices, and don't chase." in f
     assert "If the spread now costs more than $8.20, it won't fill" in f
-    assert "Robinhood shows a different price for the spread (its mid and natural prices move all day): type $7.45 " \
-           "yourself." in f
+    assert ("Robinhood shows a different price for the spread: type $7.45 yourself. The app may show the mid price "
+            "(halfway between the best buy and sell quotes) or the natural price (the price that would fill right "
+            "away); both move all day.") in f
     assert "Robinhood offers only one leg, or won't take both strikes as one order: skip the trade. Never leg in" in f
     # how you get out: the planned close from facts.exit_date, then the module's EXIT_PLAN text
     assert ("Planned close: sell to close the whole spread (both legs, one order) by Thu 17 Dec, at least one trading "
@@ -246,8 +249,8 @@ def test_m4_new_trade_what_if_exit_plan_explainer_and_tax(m4_text):
            "$745." in f
     assert "Most you can lose: what you pay, $1,490 in all ($1,640 if the re-price at the stated maximum fills). " \
            "That happens if XSP ends at or below 770 at expiry." in f
-    assert "Most it can be worth: the width between the strikes, 40 × 100 = $4,000 per spread, $8,000 in all. That " \
-           "happens if XSP ends at or above 810 at expiry." in f
+    assert "Most it can be worth: the width between the strikes, $40 per share × 100 = $4,000 per spread, $8,000 in " \
+           "all. That happens if XSP ends at or above 810 at expiry." in f
     assert "Breakeven at expiry: XSP at 777.45, the 770 strike plus the $7.45 you pay. XSP is at 768.12 now." in f
     assert "XSP options are cash-settled and European-style: they can't be exercised early" in f
     assert "Exact contracts, for reference: XSP261218C00770000 (buy) and XSP261218C00810000 (sell)." in f
@@ -281,7 +284,7 @@ def test_generic_text_when_a_module_has_none(no_text):
     email = render(m4_entry(strategy_label="crash call debit spread"), ctx())
     f = flat(email.text)
     assert "WHAT YOU'RE BUYING: A CRASH CALL DEBIT SPREAD" in email.text
-    assert "Robinhood shows one Call Debit Spread; tap Continue" in f        # the app's name, not the module's label
+    assert "Choose Call Debit Spread and the expiration" in f                # the app's name, not the module's label
     assert "— M4 (M4) —" in email.subject
     assert ("Buy 2 XSP 770/810 call spreads after 10:00 ET on Wed 30 Sep for about $1,490, as the M4 rule says: a bet "
             "that XSP rises, where the most you can lose is what you pay.") in f
@@ -305,23 +308,29 @@ def test_m4_exit_closes_the_whole_spread(m4_text):
                               "individual (taxable) account")
     assert rows["SIZE"] == "The whole position: about $2,460 back at the limit, at least $2,360 at the stated minimum"
     assert rows["STRESS"] == "None once closed: this ends the trade"
+    # 17 Dec is the last session before the 18 Dec expiry: no EXIT email follows it
     assert rows["WINDOW"] == ("Place after 10:00 ET on Thu 17 Dec. Not filled by 11:00 ET: re-enter once at $11.80, "
-                              "the stated minimum; otherwise wait for tomorrow's email")
-    assert rows["RESULT"] == "+$1,010 (+67.79%) so far at tonight's mid prices, before closing"
+                              "the stated minimum; otherwise it stays open into expiry (see What if)")
+    assert rows["RESULT"] == ("+$1,010 (+67.79%) so far at tonight's mid prices (halfway between the buy and sell "
+                              "quotes), before closing")
     assert steps_of(email.text) == [
         "After 10:00 ET on Thu 17 Dec, open Robinhood and switch to your individual account (Account → Individual)",
         "Search XSP, then tap your 770/810 call spread expiring Fri 18 Dec 2026 (2 contracts)",
         "Tap Trade → Close position, so both legs close together in one order",
-        "Limit price: $12.30 (the net credit, per share) · Contracts: 2, all of them · Time in force: Good for day",
-        "Review → Submit. You should get back about $2,460",
+        "Quantity: 2 contracts, all of them · Limit price: $12.30 (the net credit per share) · Time in force: Good for "
+        "day",
+        "Tap Review, then swipe up to submit. You should get back about $2,460",
         "Record the fill (link below)",
     ]
     f = flat(email.text)
     assert ("Not filled by 11:00 ET: cancel it and place it once more at $11.80, the stated minimum ($2,360 in all). "
-            "If that doesn't fill by the close, keep the spread: you'll get a new EXIT email tomorrow evening with "
-            "fresh prices.") in f
-    assert "Never close one leg alone (legging out)" in f
-    assert "This email is the exit." in f and "you'll get a new EXIT email tomorrow evening" in f
+            "Today is the last trading day before the options expire on Fri 18 Dec, so no new EXIT email follows. If "
+            "that doesn't fill by the close, the spread stays open: XSP options settle in cash at expiry, at their "
+            "intrinsic value (what the spread is worth at the index's settlement value, from zero up to $4,000 per "
+            "spread), with nothing for you to do. The paper book settles it the same way.") in f
+    assert "Never close one leg alone (legging out): close both together, in one order." in f
+    assert "This email is the exit." in f and "EXIT email tomorrow" not in f and "tomorrow's email" not in f
+    assert "no new EXIT email follows, and What if says what happens at expiry" in f
     assert "The planned holding time is up, so sell to close your 2 XSP 770/810 call spreads after 10:00 ET on Thu " \
            "17 Dec." in f
     assert "The planned close date is Thu 17 Dec: the rule closes the spread then, whatever the result." in f
@@ -330,7 +339,51 @@ def test_m4_exit_closes_the_whole_spread(m4_text):
             "is a credit, so money comes back to you: $1,230 per spread at the limit, $2,460 in all.") in f
     assert "An exit needs no odds" in f and "Section 1256" in f
     assert "the net price per share you received, for example filled 2 @ 12.30" in f
+    assert "Until expiry the spread is worth between zero and the width between the strikes: $40 per share" in f
     assert validate(email) == []
+
+
+def test_an_earlier_close_promises_tomorrows_email(m4_text):
+    """Two sessions before expiry, a missed close is re-issued the next evening (runners.m4.on_spread_cancel)."""
+    email = render(m4_exit(execute_date="2026-12-16"), ctx())
+    f = flat(email.text)
+    assert "re-enter once at $11.80, the stated minimum; otherwise wait for tomorrow's email" in f
+    assert ("If that doesn't fill by the close, keep the spread: you'll get a new EXIT email tomorrow evening with "
+            "fresh prices. The paper book does the same.") in f
+    assert "close both together, or wait for tomorrow's email." in f
+    assert "Don't hold it into expiration day" in f and "last trading day" not in f
+    assert validate(email) == []
+
+
+def test_a_spy_close_on_the_last_session_states_the_expiry_day_facts(no_text):
+    """SPY is American-style and settles in shares: Robinhood's 3:30 PM ET closeouts and assignment, stated as facts."""
+    email = render(bare("W8", "SPY", SPY_LEGS, 1, 9.80, 9.50, side="sell", kind="EXIT",
+                        facts={"execute_date": "2026-12-17"}), ctx())
+    f = flat(email.text)
+    assert ("Today is the last trading day before the options expire on Fri 18 Dec, so no new EXIT email follows. If "
+            "that doesn't fill by the close, the spread stays open into expiration day: SPY options settle in shares, "
+            "Robinhood may close at-risk positions from 3:30 PM ET that day, and a call you sold that ends in the "
+            "money can be assigned (exercised against you). The paper book settles it at intrinsic value at "
+            "expiry.") in f
+    assert "tomorrow" not in f and "3:30 PM ET" in email.numbers_registered
+    assert validate(email) == []
+
+
+def test_a_close_at_the_one_tick_floor_says_so_and_a_zero_price_is_never_sent(m4_text):
+    """A spread worth nearly nothing is priced at one tick (options.fillmodel.order_prices), never $0.00."""
+    rec = m4_exit("expiry_rule", limit_price=0.01, max_price=0.01, credit_usd=2.0, min_credit_usd=2.0,
+                  price_floor=0.01, execute_date="2026-12-16")
+    rec.orders[0] = dataclasses.replace(rec.orders[0], limit_price=0.01, max_price=0.01)
+    email = render(rec, ctx())
+    f = flat(email.text)
+    assert "Limit price: $0.01 (the net credit per share)" in f
+    assert ("Tonight the spread is worth almost nothing, so the limit is the smallest price step, $0.01 a share: a "
+            "lower limit can't be placed. It may not fill. Options that are still out of the money at expiry expire "
+            "worthless, and nothing more is owed.") in f
+    assert validate(email) == []
+    zero = m4_exit("expiry_rule", limit_price=0.0, max_price=0.0, credit_usd=0.0, min_credit_usd=0.0)
+    zero.orders[0] = dataclasses.replace(zero.orders[0], limit_price=0.0, max_price=0.0)
+    assert any(p.startswith("order:") and "not above zero" in p for p in validate(render(zero, ctx())))
 
 
 @pytest.mark.parametrize("reason, sentence", [
@@ -361,16 +414,20 @@ def test_w8_dal_call_spread_is_not_section_1256(monkeypatch):
             "are short-term, taxed as ordinary income.") in f
     assert "Two options on DAL (Delta Air Lines stock) in one order: buy the 52.5 call and sell the 57.5 call" in f
     assert "DAL options are American-style and settle in shares" in f
-    assert ("the call you sold can be exercised early (assignment), most often just before DAL pays a dividend. "
-            "You'd then be short DAL shares, still covered by the call you own.") in f
+    assert ("DAL options are American-style: the call you sold can be exercised early (assignment), most often the day "
+            "before DAL goes ex-dividend while that call is in the money (DAL above its strike). You'd then be short "
+            "DAL shares: you'd owe 100 shares per contract that you don't own, still covered by the call you own. If "
+            "Robinhood reports an assignment, close everything that day (buy back the shares and sell the call you "
+            "own) and note it on the trade's issue.") in f
     assert "Planned close: sell to close the whole spread (both legs, one order) by Thu 29 Oct" in f
     assert "Take the profit once the spread is worth 80% of its maximum value." in f
     assert "Breakeven at expiry: DAL at 53.95, the 52.5 strike plus the $1.45 you pay. DAL is at 51.80 now." in f
+    assert "the width between the strikes, $5 per share × 100 = $500 per spread" in f
     steps = steps_of(email.text)
     assert len(steps) == 7
-    assert steps[3] == ("Tap Select, then the 52.5 and 57.5 calls: set the 52.5 to Buy and the 57.5 to Sell. "
-                        "Robinhood shows one Call Debit Spread; tap Continue")
-    assert steps[4] == "Limit price: $1.45 (the net debit, per share) · Contracts: 4 · Time in force: Good for day"
+    assert steps[3] == ("Set the first leg's strike to 52.5 and the strike width to 5: buy the 52.5 call, sell the "
+                        "57.5 call. Then tap the spread's price")
+    assert steps[4] == "Quantity: 4 contracts · Limit price: $1.45 (the net debit per share) · Time in force: Good for day"
     assert "SIZE $580 net debit (4 × $145) = 0.58% of your $100,000 portfolio" in f
     assert validate(email) == []
 
@@ -388,7 +445,7 @@ def test_missing_optional_facts_fall_back_gracefully(no_text):
     assert rows["ODDS"] == "No base rate on file yet; the paper phase is measuring it"
     f = flat(email.text)
     assert "Two options on SPY (S&P 500 index fund)" in f and "WHAT YOU'RE BUYING: A CALL DEBIT SPREAD" in f
-    assert "Most it can be worth: the width between the strikes, 35 × 100 = $3,500 per spread" in f
+    assert "Most it can be worth: the width between the strikes, $35 per share × 100 = $3,500 per spread" in f
     assert "Breakeven at expiry: SPY at 754.80, the 745 strike plus the $9.80 you pay." in f
     assert "SPY options are American-style" in f and "SPY options are not Section 1256 contracts" in f
     assert "Planned close: sell to close the whole spread (both legs, one order) at least one trading day before it " \
@@ -415,10 +472,12 @@ def test_put_debit_spread_reads_the_other_way(no_text):
     email = render(bare("W9", "USO", USO_LEGS, 3, 1.20, 1.35), ctx())
     f = flat(email.text)
     assert "BUY 3 USO 80/75 put spreads" in email.subject
-    assert "a bet that USO falls" in f and "At the top choose Buy and Put" in f
+    assert "a bet that USO falls" in f and "Choose Put Debit Spread and the expiration" in f
+    assert "Set the first leg's strike to 80 and the strike width to 5: buy the 80 put, sell the 75 put." in f
     assert "That happens if USO ends at or above 80 at expiry." in f
     assert "Breakeven at expiry: USO at 78.80, the 80 strike minus the $1.20 you pay." in f
-    assert "You'd then own USO shares, still covered by the put you own." in f
+    assert ("You'd then own USO shares, 100 per contract, still covered by the put you own. If Robinhood reports an "
+            "assignment, close everything that day (sell the shares and the put you own)") in f
     assert validate(email) == []
 
 
@@ -453,8 +512,8 @@ def test_html_part_carries_the_explainer_and_the_steps(m4_text):
     email = render(m4_entry(), ctx())
     visible, text = flat(html_to_text(email.html)).lower(), flat(email.text).lower()     # the text part's headings
     for phrase in ("What you're buying: a call debit spread", "Most it can be worth: the width between the strikes",
-                   "Tap Select, then the 770 and 810 calls", "Never leg in", "Section 1256 contracts",
-                   "Planned close: sell to close the whole spread"):
+                   "Trade options → Strategy builder (top left)", "buy the 770 call, sell the 810 call", "Never leg in",
+                   "Section 1256 contracts", "Planned close: sell to close the whole spread"):
         assert phrase.lower() in visible and phrase.lower() in text, phrase
     assert "<ol " in email.html and email.html.count("<li ") >= 7
 
@@ -468,6 +527,96 @@ def test_validator_blocks_a_changed_spread_number(m4_text):
     assert any(p.startswith("subject:") and "775/810" in p for p in validate(strikes))
     later = dataclasses.replace(email, text=email.text.replace("Not filled by 11:00 ET", "Not filled by 11:30 ET"))
     assert any('"11:30"' in p for p in validate(later))
+
+
+# The reviewer's tampering cases (validator_probe.py): each swaps in a number that IS registered elsewhere in the email,
+# so the value check alone passed them. Design §10 promises value AND slot.
+TAMPERING = {
+    "limit -> the stated maximum in the steps": ("Limit price: $7.45", "Limit price: $8.20"),
+    "contracts 2 -> 100, the multiplier": ("Quantity: 2 contracts", "Quantity: 100 contracts"),
+    "stated maximum -> the limit in the box": ("re-enter once at $8.20", "re-enter once at $7.45"),
+    "total $1,490 -> $1,640, the max debit": ("The total should be about $1,490", "The total should be about $1,640"),
+    "legs swapped in the steps": ("buy the 770 call, sell the 810 call. Then", "buy the 810 call, sell the 770 call. Then"),
+    "expiry -> another date": ("the expiration Fri 18 Dec 2026", "the expiration Thu 17 Dec 2026"),
+    "breakeven 777.45 -> 810, the short strike": ("XSP at 777.45", "XSP at 810"),
+    "win rate 77% -> 60%, which the tax line shows": ("77% of past trades", "60% of past trades"),
+    "limit 7.45 -> 7.55, unregistered": ("Limit price: $7.45", "Limit price: $7.55"),
+    "max value $8,000 -> $4,000, the per-spread value": ("per spread, $8,000 in all", "per spread, $4,000 in all"),
+    "max loss $1,640 -> $1,490, the debit at the limit": ("($1,640 if the re-price", "($1,490 if the re-price"),
+}
+
+
+@pytest.mark.parametrize("old, new", list(TAMPERING.values()), ids=list(TAMPERING))
+def test_validator_checks_value_and_slot(m4_text, old, new):
+    email = render(m4_entry(), ctx())
+    assert validate(email) == []
+    pat = r"\s+".join(map(re.escape, old.split()))
+    assert re.search(pat, email.text), old
+    changed = dataclasses.replace(email, text=re.sub(pat, new, email.text, count=1))
+    assert validate(changed), f"not caught: {old!r} -> {new!r}"
+
+
+def test_slots_are_checked_in_the_html_part_and_cannot_be_reworded_away(m4_text):
+    email = render(m4_entry(), ctx())
+    html_only = dataclasses.replace(email, html=email.html.replace("Limit price: $7.45", "Limit price: $8.20"))
+    assert any(p.startswith("html:") and "limit_price slot" in p and '"$8.20"' in p for p in validate(html_only))
+    reworded = dataclasses.replace(email, text=email.text.replace("Limit price: $7.45", "Limit $8.20"))
+    assert any(p.startswith("text:") and "Limit price: {limit_price}" in p for p in validate(reworded))
+    exit_email = render(m4_exit(), ctx())
+    pat = r"\s+".join(map(re.escape, "You own the 770 call and you sold the 810 call".split()))
+    swapped = dataclasses.replace(exit_email, text=re.sub(pat, "You own the 810 call and you sold the 770 call",
+                                                          exit_email.text, count=1))
+    assert swapped.text != exit_email.text
+    assert any("long_strike slot" in p for p in validate(swapped))
+
+
+@pytest.mark.parametrize("facts, fragment", [
+    ({"limit_price": 8.20, "max_price": 7.45}, 'facts["limit_price"]'),          # the limit and the maximum swapped
+    ({"contracts": 100}, 'facts["contracts"]'),                                  # the multiplier as the count
+    ({"legs": [dict(XSP_LEGS[0], position="short"), dict(XSP_LEGS[1], position="long")]}, "long leg has strike"),
+    ({"breakeven": 810.0}, 'facts["breakeven"]'),
+    ({"debit_usd": 1640.0}, 'facts["debit_usd"]'),
+    ({"stress_usd": 1490.0}, 'facts["stress_usd"]'),                             # the max loss is the max debit
+    ({"max_value_usd": 4000.0}, 'facts["max_value_usd"]'),
+    ({"expiry": "2026-12-17"}, 'facts["expiry"]'),
+    ({"root": "SPY"}, 'facts["root"]'),
+    ({"account": "ira"}, 'facts["account"]'),
+])
+def test_facts_that_disagree_with_the_order_block_the_email(m4_text, facts, fragment):
+    problems = validate(render(m4_entry(**facts), ctx()))
+    assert any(p.startswith("order:") and fragment in p for p in problems), problems
+
+
+def test_the_email_shows_the_order_not_the_facts(m4_text):
+    email = render(m4_entry(limit_price=8.20, max_price=7.45, contracts=100, breakeven=810.0), ctx())
+    f = flat(email.text)
+    assert "Quantity: 2 contracts · Limit price: $7.45" in f and "re-enter once at $8.20" in f
+    assert "Breakeven at expiry: XSP at 777.45" in f and "XSP at 810" not in f
+    assert validate(email)                                                        # and it is blocked
+
+
+def test_the_validator_recomputes_the_order_values_itself():
+    from traderec import validator
+    call = validator.order_values({"side": "buy", "right": "call", "long_strike": 770.0, "short_strike": 810.0,
+                                   "expiry": "2026-12-18", "contracts": 2, "limit_price": 7.45, "max_price": 8.20,
+                                   "multiplier": 100})
+    assert call["breakeven"] == ["777.45"] and call["max_loss_usd"] == ["−$1,640"] and call["max_value_usd"] == ["$8,000"]
+    assert call["total_usd"] == ["$1,490"] and call["stated_total_usd"] == ["$1,640"]
+    assert call["strikes"] == ["770/810"] and call["width_money"] == ["$40"] and call["max_multiple"] == ["5.4"]
+    assert call["expiry"][:2] == ["Fri 18 Dec 2026", "Fri 18 Dec"] and call["limit_plain"] == ["7.45"]
+    put = validator.order_values({"right": "put", "long_strike": 80.0, "short_strike": 75.0, "limit_price": 1.2,
+                                  "contracts": 3})
+    assert put["breakeven"] == ["78.80"] and put["width_money"] == ["$5"] and put["multiplier"] == ["100"]
+
+
+def test_spy_emails_carry_one_assignment_line():
+    """M4's own text no longer repeats the American-style risk: one instruction, the spread renderer's."""
+    email = render(bare("M4", "SPY", SPY_LEGS, 2, 9.80, 10.40,
+                        facts={"settlement": "shares, American-style", "american_root": "SPY"}), ctx())
+    f = flat(email.text)
+    assert f.count("can be exercised early (assignment)") == 1 and "can be assigned early" not in f
+    assert "You'd then be short SPY shares: you'd owe 100 shares per contract that you don't own" in f
+    assert validate(email) == []
 
 
 def test_live_mode_labels_the_spread_live(m4_text):

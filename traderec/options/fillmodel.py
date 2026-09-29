@@ -7,9 +7,16 @@ Muravyev & Pearson 2020). The quotes come from the 10:17 ET market-hours snapsho
 A paper order fills at P when P is within its limit. Otherwise it fills at P when P is within its stated
 maximum (a debit) or minimum (a credit): the one re-price. Otherwise it does not fill.
 
+The email's prices for a close are never below one tick (`min_tick`: $0.01 when the legs' quotes show penny
+increments, else $0.05). A spread worth nearly nothing (both legs far out of the money) prices at mid - 0.3 x natural
+width <= 0, and a $0.00 limit cannot be placed. One tick is the lowest order the owner can enter, and it keeps the
+design's rule of closing at least one trading day before expiry. The model price P is not raised to the tick (it
+stays floored at zero), so the paper broker fills such a close only when P reaches the tick; otherwise the spread is
+settled at intrinsic value at expiry, which is where the owner's unfilled one-tick order leads as well.
+
 Known limits, deliberately kept (design §7 names neither):
 - no check against the displayed size (bid_size / ask_size);
-- no rounding to the $0.05 tick.
+- no rounding to the $0.05 tick (only the one-tick floor above).
 """
 from __future__ import annotations
 
@@ -18,6 +25,8 @@ from typing import Any
 
 from traderec.options.chain import OptionChain
 
+PENNY, NICKEL = 0.01, 0.05          # option price increments: pennies where quoted, else nickels
+
 
 def _num(x: Any) -> float | None:
     try:
@@ -25,6 +34,17 @@ def _num(x: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return v if math.isfinite(v) else None
+
+
+def min_tick(quote: dict[str, Any] | None) -> float:
+    """The smallest price step for an order on these legs: $0.01 when any leg's bid or ask is off the $0.05 grid (the
+    chain quotes in pennies), else $0.05 (also when the quote carries no leg quotes)."""
+    for leg in (quote or {}).get("legs") or []:
+        for key in ("bid", "ask"):
+            v = _num(leg.get(key))
+            if v is not None and abs(v * 100.0 - 5.0 * round(v * 20.0)) > 1e-6:
+                return PENNY
+    return NICKEL
 
 
 def combo_quote(chain: OptionChain, legs: list[dict], side: str = "buy") -> dict[str, Any] | None:
@@ -52,9 +72,23 @@ def model_price(quote: dict[str, Any], side: str, concession: float) -> float:
 
 
 def order_prices(quote: dict[str, Any], side: str, cfg_options_fills: dict) -> dict[str, float]:
-    """The email's prices from tonight's quote: {"limit_price", "max_price"} (contract §2)."""
-    return {"limit_price": model_price(quote, side, float(cfg_options_fills["concession"])),
-            "max_price": model_price(quote, side, float(cfg_options_fills["max_concession"]))}
+    """The email's prices from tonight's quote: {"limit_price", "max_price"} (contract §2). A close (sell) is priced at
+    least one tick (`min_tick`), so the owner never gets a $0.00 limit (see the module docstring)."""
+    prices = {"limit_price": model_price(quote, side, float(cfg_options_fills["concession"])),
+              "max_price": model_price(quote, side, float(cfg_options_fills["max_concession"]))}
+    if side == "sell":
+        tick = min_tick(quote)
+        prices = {k: max(v, tick) for k, v in prices.items()}
+    return prices
+
+
+def at_price_floor(quote: dict[str, Any], side: str, cfg_options_fills: dict) -> float | None:
+    """The tick a close's limit was raised to when the model price is below it (the spread is worth nearly nothing),
+    else None."""
+    if side != "sell":
+        return None
+    tick = min_tick(quote)
+    return tick if model_price(quote, side, float(cfg_options_fills["concession"])) < tick - 1e-9 else None
 
 
 def decide_fill(intent: Any, quote: dict[str, Any] | None, cfg_options_fills: dict) -> dict[str, Any]:
