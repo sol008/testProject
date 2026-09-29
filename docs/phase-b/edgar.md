@@ -177,7 +177,7 @@ Add one Actions secret (**Settings → Secrets and variables → Actions → New
 |---|---|---|
 | `SEC_USER_AGENT` | A name and a contact of your choosing, for example `Your Name <your contact address>`. The SEC's fair-access policy asks automated tools to say who is asking. The value is sent only to *.sec.gov; nothing writes it to the repository, the state or the ledger | www.sec.gov refuses the filing documents (HTTP 403, "Undeclared Automated Tool"). SH3 still runs, because it needs only EFTS and data.sec.gov. SH1, SH2, SH4 and CEF raise a data alert on each evening they need a document; those dates are retried (up to 7 days back) once the secret is set |
 
-- The daily workflow must pass the secret to the pipeline (an integrator action below).
+- The daily workflow passes the secret to the pipeline (`.github/workflows/daily.yml`, done at integration).
 - No other keys are needed: EFTS, data.sec.gov and FINRA are open.
 
 ## Promotion tests
@@ -273,8 +273,8 @@ Each test is pre-registered in its track. The table shows what each needs and wh
 
 ## Integrator actions
 
-- Add `SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}` to the env of the "Run the daily pipeline" step in
-  `.github/workflows/daily.yml`. Add the Owner setup row to `docs/OPERATIONS.md` §2(c).
+- Done: `.github/workflows/daily.yml` passes `SEC_USER_AGENT` to the daily run, and the owner-setup row is in
+  `docs/OPERATIONS.md` §2(e) and §2(f).
 - Done: the reviews read the EDGAR book per setup (`reports.shadow_activity`, `reports.drift_review`,
   `reports.edgar_review`; see "Reports" above).
 - Optional: attach `EdgarClient` and `FinraClient` in `LiveProvider` instead of relying on the runner attaching
