@@ -451,7 +451,7 @@ Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk,
         → Claude writes the email from structured data only (placeholders; validator checks value AND slot)
         → Gmail API → GitHub issue per trade → healthchecks ping
    10:17 ET Mon–Fri  options snapshot + paper option fills (Phase B)
-   08:47 ET Mon–Fri  pre-market re-price; EXIT/ADJUST emails only if needed
+   08:47 ET Mon–Fri  pre-market re-price; EXIT/ADJUST emails only if needed (not built: Appendix C)
    hourly, 24/7      crypto prices (Phase B, for M6)
    1st of month      monthly review; quarterly and annual jobs on their dates
 ```
