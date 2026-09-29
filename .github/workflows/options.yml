@@ -4,16 +4,18 @@ name: options
 
 on:
   schedule:
-    # Target: 10:17 America/New_York, Monday to Friday mornings. These crons are UTC, so two slots cover
-    # both clock settings: 14:17 UTC = 10:17 EDT (summer), 15:17 UTC = 10:17 EST (winter).
+    # Target: 10:17 America/New_York, Monday to Friday mornings. These crons are UTC, so the slots cover
+    # both clock settings: 14:17 UTC = 10:17 EDT (summer), 15:17 UTC = 10:17 EST (winter), and each season
+    # keeps at least one retry an hour later.
     # - Winter: the 14:17 UTC slot is 09:17 EST, before the snapshot window. The CLI says "too_early" and
-    #   exits 0 without touching the state; the 15:17 UTC slot does the run.
-    # - Summer: the 15:17 UTC slot (11:17 EDT) is a no-op when the first run succeeded, and a retry when the
-    #   first run's option quotes were missing (exit code 3).
-    # Days 1-5 (Mon-Fri UTC) are the same weekdays in New York at these hours. The CLI is idempotent per ET
-    # date. If you change these, update EARLY_SLOT below to the first one.
+    #   exits 0 without touching the state; the 15:17 UTC slot does the run, and 16:17 UTC (11:17 EST) retries.
+    # - Summer: the 14:17 UTC slot does the run; 15:17 UTC (11:17 EDT) and 16:17 UTC (12:17 EDT) retry.
+    # A later slot is a no-op when an earlier run succeeded, and a retry when its option quotes were missing
+    # (exit code 3). Days 1-5 (Mon-Fri UTC) are the same weekdays in New York at these hours. The CLI is
+    # idempotent per ET date. If you change these, update EARLY_SLOT below to every slot but the last.
     - cron: "17 14 * * 1-5"
     - cron: "17 15 * * 1-5"
+    - cron: "17 16 * * 1-5"
   workflow_dispatch:
     inputs:
       date:
@@ -55,8 +57,8 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
       FORCE: ${{ inputs.force && 'true' || 'false' }}
       RUN_DATE: ${{ inputs.date }}
-      # The first slot of the morning; the later slot follows it and can retry.
-      EARLY_SLOT: ${{ github.event.schedule == '17 14 * * 1-5' }}
+      # Every slot of the morning but the last; a later slot follows it and can retry.
+      EARLY_SLOT: ${{ github.event.schedule == '17 14 * * 1-5' || github.event.schedule == '17 15 * * 1-5' }}
     steps:
       - name: Check out the branch head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -98,10 +100,10 @@ jobs:
           echo "python -m traderec options ${args[*]}"
           status=0
           python -m traderec options "${args[@]}" || status=$?
-          # Exit code 3 = no usable market-hours quotes for today's spread orders: they stay pending. In the
-          # early slot the state is not committed, and the 15:17 UTC slot retries from the committed state.
+          # Exit code 3 = no usable market-hours quotes for today's spread orders: they stay pending. In an
+          # early slot the state is not committed, and the next slot retries from the committed state.
           if [ "${status}" -eq 3 ] && [ "${EARLY_SLOT}" = "true" ]; then
-            echo "::warning::Option quotes not usable yet (exit code 3); the 15:17 UTC slot will retry."
+            echo "::warning::Option quotes not usable yet (exit code 3); the next slot, an hour later, will retry."
             echo "retry=true" >> "${GITHUB_OUTPUT}"
             exit 0
           fi

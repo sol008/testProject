@@ -581,7 +581,8 @@ class LiveProvider(DataProvider):
             log.warning("second-source close for %s on %s failed: %s", ticker, date, exc)
             return None
 
-    def option_chain(self, underlying: str) -> OptionChain:
+    def option_chain(self, underlying: str,
+                     check: Callable[[OptionChain], str | None] | None = None) -> OptionChain:
         """A snapshot of an option root's chain now: CBOE's delayed quotes, else yfinance in market hours.
 
         * CBOE: ``CBOE_OPTIONS_URL`` for `cboe_option_symbol(root)`, parsed by `parse_cboe_chain`. `asof` is
@@ -591,11 +592,18 @@ class LiveProvider(DataProvider):
           YAHOO_OPTION_MAX_DTE days out. `asof` is the fetch time, and `raw_sha256` hashes the frames' CSV.
         * "SPXW" is served from the SPX chain.
         * The memo cache gives one snapshot per root per provider, so one run sees one set of quotes.
+        * `check` is the caller's test of a snapshot: it returns why the chain cannot be used, or None (the
+          options job passes its market-hours window). A chain it rejects counts as a failed source, so the next
+          source is tried: a stale CBOE file falls back to Yahoo in market hours. A memoised chain it rejects is
+          dropped, and the sources are asked again.
 
         Raises DataError when both sources fail.
         """
         root = chain_root(underlying)
-        return self._memo(("option_chain", root), lambda: self._fetch_option_chain(root))
+        key = ("option_chain", root)
+        if check is not None and key in self._cache and check(_copy(self._cache[key])):
+            del self._cache[key]
+        return self._memo(key, lambda: self._fetch_option_chain(root, check))
 
     # --- fetch chains ----------------------------------------------------------------------------------
 
@@ -642,7 +650,8 @@ class LiveProvider(DataProvider):
         self.sources["tbill_rate"] = "config:fallback_tbill_rate"
         return rate
 
-    def _fetch_option_chain(self, root: str) -> OptionChain:
+    def _fetch_option_chain(self, root: str,
+                            check: Callable[[OptionChain], str | None] | None = None) -> OptionChain:
         problems: list[str] = []
         for source, fetch in (("cboe", self._cboe_option_chain), ("yahoo", self._yahoo_option_chain)):
             try:
@@ -650,6 +659,11 @@ class LiveProvider(DataProvider):
             except Exception as exc:  # noqa: BLE001 - fall through to the next source
                 log.warning("%s option chain for %s unavailable: %s", source, root, exc)
                 problems.append(f"{source}: {exc}")
+                continue
+            problem = check(_copy(chain)) if check is not None else None
+            if problem:                 # e.g. a CBOE file stamped before the window: the next source may do
+                log.warning("%s option chain for %s not usable: %s", source, root, problem)
+                problems.append(f"{source}: {problem}")
                 continue
             self.sources[f"option_chain:{root}"] = chain.source
             return chain

@@ -37,6 +37,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import pandas as pd
 
 from traderec import market_calendar
+from traderec.data import LiveProvider
 from traderec.options import snapshots
 from traderec.options.chain import OptionChain, chain_root, parse_occ
 from traderec.types import Fill, OrderIntent
@@ -231,9 +232,16 @@ def book_legs(run: "Run") -> set[str]:
 
 
 def _fetch(run: "Run", root: str, check: Callable[[OptionChain], str | None]) -> tuple[OptionChain | None, str | None]:
-    """(chain, None), or (None, why) when the provider fails or `check` finds a problem."""
+    """(chain, None), or (None, why) when the provider fails or `check` finds a problem.
+
+    LiveProvider applies `check` to each of its sources in turn, so a CBOE file stamped outside the window falls
+    back to Yahoo (market hours only) instead of failing the run. Other providers serve one chain, checked here.
+    """
     try:
-        chain = run.provider.option_chain(root)
+        if isinstance(run.provider, LiveProvider):
+            chain = run.provider.option_chain(root, check=check)
+        else:
+            chain = run.provider.option_chain(root)
     except Exception as exc:  # noqa: BLE001 - every source failed: fail closed, the caller decides
         return None, f"{type(exc).__name__}: {exc}"
     problem = check(chain)

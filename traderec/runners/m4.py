@@ -37,6 +37,7 @@ from traderec.data import verify_close
 from traderec.market_calendar import iso, next_trading_day
 from traderec.modules import m4_crashspread as m4
 from traderec.options import chain as chain_mod
+from traderec.options import job as job_mod
 from traderec.options.fillmodel import combo_quote, model_price, order_prices
 from traderec.types import OrderIntent, Recommendation
 
@@ -114,11 +115,22 @@ def _guard(run: "Run", name: str, fn: Callable[..., None], *args: Any) -> None:
 
 
 def _stale(run: "Run", chain: Any) -> str | None:
-    """Why `chain` is not a snapshot of the run's date, or None."""
+    """Why `chain` cannot price this run's orders, or None.
+
+    The options job hands its hooks chains it has already checked against its market-hours window, so a chain of the
+    run date will do there. Every other run (the 22:17 ET run) prices from tonight's closing quotes, so its chains
+    must also pass the rule the spread marks use: stamped at or after `options.close_after_et`
+    (`options.job._closing_problem`).
+    """
+    root = getattr(chain, "underlying", "?")
     asof = str(getattr(chain, "asof", "") or "")[:10]
     if asof != run.date:
-        return f"the {getattr(chain, 'underlying', '?')} chain is from {asof or 'an unknown date'}, not {run.date}"
-    return None
+        return f"the {root} chain is from {asof or 'an unknown date'}, not {run.date}"
+    if run.kind == "options":
+        return None
+    close_after = job_mod.options_config(run.cfg).get("close_after_et") or job_mod.OPTIONS_DEFAULTS["close_after_et"]
+    problem = job_mod._closing_problem(chain, run.date, str(close_after))
+    return f"the {root} chain: {problem}" if problem else None
 
 
 def _evening_chain(run: "Run", root: str) -> tuple[Any, str | None]:
@@ -422,15 +434,11 @@ def _manage_open(run: "Run", st: dict, cfg_m4: dict) -> None:
     ot = st.get("open_trade")
     if not ot:
         return
-    status = ot.get("status")
-    if status in ("pending_entry", "pending_exit"):
-        iid = ot.get("intent_id") if status == "pending_entry" else ot.get("exit_intent_id")
-        since = ot.get("signal_date") if status == "pending_entry" else ot.get("exit_signal_date")
-        if since and run.date >= iso(next_trading_day(since)) and any(o.intent_id == iid for o in run.broker.pending()):
-            run.alert("fill", f"M4 {ot['trade_id']}: order {iid} is still pending after its 10:17 ET session; "
-                              "check the options job")
-        return
-    if status != "open":
+    if ot.get("status") in ("pending_entry", "pending_exit") and _cancel_missed_order(run, ot):
+        ot = st.get("open_trade")            # a missed entry is skipped; a missed close is open again
+        if not ot:
+            return
+    if ot.get("status") != "open":
         return
     if _reconcile_expired(run, st, ot):
         return
@@ -443,6 +451,28 @@ def _manage_open(run: "Run", st: dict, cfg_m4: dict) -> None:
     if ex["exit"]:
         run.log("signal", {"module": MODULE, "check": "exit", "trade_id": ot["trade_id"], **ex})
         _emit_exit(run, ot, ex, cfg_m4)
+
+
+def _cancel_missed_order(run: "Run", ot: dict) -> bool:
+    """Cancel the trade's pending order once its 10:17 ET session has passed with no fill decision (that day's
+    options job failed, found no usable quotes or did not run): a day order cannot fill later. Waiting for the next
+    job to cancel it would leave no EXIT for the last session before expiry (design §3a.4). `on_spread_cancel` then
+    acts as for a no-fill: an entry is skipped; a close is open again, so tonight's exit check sends a fresh EXIT.
+    True when an order was cancelled."""
+    iid = ot.get("intent_id") if ot.get("status") == "pending_entry" else ot.get("exit_intent_id")
+    order = next((o for o in run.broker.pending() if o.intent_id == iid), None)
+    if order is None:
+        return False
+    session = iso(next_trading_day(order.created_date))
+    if run.date < session:
+        return False
+    reason = (f"its session {session} passed without a fill decision (no options run with usable quotes that day); "
+              "a day order cannot fill later")
+    run.broker.cancel_pending(order.intent_id, run.date, reason)
+    run.log("fill", {"type": "no_fill", "filled": False, "cancelled": True, "reason": reason,
+                     **job_mod._intent_fields(order), "fill_date": run.date})
+    on_spread_cancel(run, order, reason)
+    return True
 
 
 def _reconcile_expired(run: "Run", st: dict, ot: dict) -> bool:
