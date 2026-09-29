@@ -98,7 +98,7 @@ Follow **[docs/OWNER_SETUP.md](docs/OWNER_SETUP.md)**, the short to-do list with
 - the Robinhood checklist, placing option spreads and recording fills;
 - going live, pausing jobs, and troubleshooting.
 
-**The schedule** (GitHub Actions, UTC cron; the evening jobs and the options job each have two slots an hour apart):
+**The schedule** (GitHub Actions, UTC cron; the evening jobs have two slots an hour apart and the options job three):
 
 | Workflow | Runs | Purpose |
 |---|---|---|

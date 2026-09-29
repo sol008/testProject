@@ -46,7 +46,7 @@ How to set up, run and look after `traderec`, step by step. The design is `resea
 | The options job | Weekdays at 10:17 ET | Takes a snapshot of the option quotes, fills or cancels the paper spread orders from the evening before, values open spreads, and runs the option shadow books | `options` |
 | The hourly crypto job | Every hour at 41 minutes past, every day of the week | Watches stablecoin prices for a depeg (the M6 shadow book). It saves something only when a depeg starts, changes or ends | `hourly` |
 
-The hourly job is the only one that uses many GitHub Actions minutes: about 730 a month. §7 shows how to halve it or switch it off.
+The hourly job is the only one that uses many GitHub Actions minutes: about 730 a month, because GitHub bills each run as a whole minute. It checks out only the latest commit and installs only `requirements-hourly.txt` (keep its versions in step with `requirements.txt`). §7 shows how to halve it or switch it off.
 
 **Two runs a night.** The GitHub cron clock is UTC, so each evening job is scheduled twice, one hour apart:
 - `daily` at 02:17 and 03:17 UTC;
@@ -54,9 +54,11 @@ The hourly job is the only one that uses many GitHub Actions minutes: about 730 
 
 The first slot does the work. The second slot finds the date already done and stops, unless the first failed, in which case it is the retry.
 
-**Two slots each morning.** The options job is scheduled at 14:17 and 15:17 UTC:
-- in summer (EDT) the first slot is 10:17 ET and does the work; the second, at 11:17 ET, is the retry;
-- in winter (EST) the first slot is 09:17 ET, too early for option quotes, so it stops at once and changes nothing. The second, at 10:17 ET, does the work. There is no later retry slot in winter.
+**Three slots each morning.** The options job is scheduled at 14:17, 15:17 and 16:17 UTC:
+- in summer (EDT) the first slot is 10:17 ET and does the work; the later two, at 11:17 and 12:17 ET, are retries;
+- in winter (EST) the first slot is 09:17 ET, too early for option quotes, so it stops at once and changes nothing. The second, at 10:17 ET, does the work, and the third, at 11:17 ET, is the retry.
+
+A later slot is a no-op once an earlier run succeeded, and a retry when the earlier run could not read usable option quotes (exit code 3).
 
 **Shadow books: recorded, never emailed.** A shadow book follows a rule on paper to collect evidence. It never sends an email, never places an order and never asks the AI. There is nothing for you to do. Results appear in the monthly and quarterly reviews, in `state/state.json` under `shadow`, and as `shadow` records in the ledger (§8).
 
@@ -145,7 +147,7 @@ A scheduled run that GitHub drops produces no error anywhere. healthchecks.io no
    | `traderec daily` | Cron `17 21 * * 1-5` | `America/New_York` | 2 hours 15 minutes | `HC_PING_URL_DAILY` |
    | `traderec weekly` | Cron `17 20 * * 0` | `America/New_York` | 2 hours 15 minutes | `HC_PING_URL_WEEKLY` |
    | `traderec monthly` | Cron `13 12 1 * *` | `UTC` | 3 hours | `HC_PING_URL_MONTHLY` |
-   | `traderec options` | Cron `17 10 * * 1-5` | `America/New_York` | 1 hour 30 minutes | `HC_PING_URL_OPTIONS` |
+   | `traderec options` | Cron `17 10 * * 1-5` | `America/New_York` | 2 hours 30 minutes | `HC_PING_URL_OPTIONS` |
    | `traderec hourly` (optional) | Simple: period 1 hour | — | 3 hours | `HC_PING_URL_HOURLY` |
 
 3. Copy each check's ping URL (`https://hc-ping.com/…`) into a repository secret with the name in the last column.
@@ -156,7 +158,7 @@ Why these times:
   - `weekly` works an hour earlier than `daily`;
   - `options` works at 10:17 ET in both seasons (§1).
 - The grace time covers the later slot and GitHub's delays.
-- You get an alert if no run has succeeded by about **23:30 ET** on a weekday (the design's target), 22:30 ET on a Sunday, 15:15 UTC on the 1st, or about 11:45 ET on a weekday for the options job.
+- You get an alert if no run has succeeded by about **23:30 ET** on a weekday (the design's target), 22:30 ET on a Sunday, 15:15 UTC on the 1st, or about 12:45 ET on a weekday for the options job (its last retry slot is 12:17 EDT in summer).
 - The hourly check alerts after about 4 hours without a ping: its 1-hour period plus 3 hours of grace.
 
 Who pings:
@@ -584,8 +586,8 @@ python scripts/replay.py reconcile --cache /tmp/traderec-replay-cache --work /tm
 **The options run says "too early" or "too late".** Nothing is wrong. Paper spread fills use only quotes from 10:15–16:00 ET. In winter the 14:17 UTC slot is 09:17 ET, so it stops at once and the 15:17 UTC slot does the work. A manual run with **date** empty works only inside that window on a trading day.
 
 **The options run fails with "no usable market-hours option quotes" (exit code 3).** The option quotes for today's spread orders couldn't be read, so nothing was filled and the orders stay pending.
-- In summer the 15:17 UTC slot (11:17 ET) retries on its own.
-- In winter there is no later slot: run **Actions → options → Run workflow** yourself before 16:00 ET, with **date** empty.
+- The later slots retry on their own: 11:17 and 12:17 ET in summer, 11:17 ET in winter.
+- If the last slot also fails, run **Actions → options → Run workflow** yourself before 16:00 ET, with **date** empty.
 - If no run succeeds that day, the next options run cancels those orders, because a day order can't fill a day late. An opening order is then skipped. A closing order goes out again as a new exit email that evening, if it is still due.
 - Your real orders are unaffected: place them as the email says.
 

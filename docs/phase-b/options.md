@@ -149,9 +149,9 @@ This build covers option chains, fill model v1.0 for two-leg spreads, spreads in
 
    | Check | Cron expression | Time zone | Grace time | Its ping URL goes in |
    |---|---|---|---|---|
-   | `traderec options` | `17 10 * * 1-5` | `America/New_York` | 1 hour 30 minutes | `HC_PING_URL_OPTIONS` |
+   | `traderec options` | `17 10 * * 1-5` | `America/New_York` | 2 hours 30 minutes | `HC_PING_URL_OPTIONS` |
 
-   The job works at 10:17 ET in both seasons, because the clock check turns away the winter 09:17 EST slot. The grace time covers GitHub's cron delay and the summer 11:17 EDT retry.
+   The job works at 10:17 ET in both seasons, because the clock check turns away the winter 09:17 EST slot. The grace time covers GitHub's cron delay and the retry slots (11:17 and 12:17 EDT in summer, 11:17 EST in winter), which run when an earlier slot could not read usable option quotes (exit code 3).
 2. No API key is needed. CBOE's delayed quotes are public.
 3. Paper mode needs nothing else.
    - In Robinhood you place the spread yourself after 10:00 ET, as the spread emails say.

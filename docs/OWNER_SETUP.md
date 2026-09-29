@@ -72,7 +72,7 @@ GitHub sometimes silently skips a scheduled run. healthchecks.io emails you when
    | traderec daily | Cron `17 21 * * 1-5` | America/New_York | 2 h 15 min | `HC_PING_URL_DAILY` |
    | traderec weekly | Cron `17 20 * * 0` | America/New_York | 2 h 15 min | `HC_PING_URL_WEEKLY` |
    | traderec monthly | Cron `13 12 1 * *` | UTC | 3 h | `HC_PING_URL_MONTHLY` |
-   | traderec options (Phase B) | Cron `17 10 * * 1-5` | America/New_York | 1 h 30 min | `HC_PING_URL_OPTIONS` |
+   | traderec options (Phase B) | Cron `17 10 * * 1-5` | America/New_York | 2 h 30 min | `HC_PING_URL_OPTIONS` |
    | traderec hourly (Phase B, optional) | Simple: period 1 hour | — | 3 h | `HC_PING_URL_HOURLY` |
 
 3. Copy each check's ping URL (`https://hc-ping.com/…`). Add it as a secret at **https://github.com/sol008/testProject/settings/secrets/actions/new**, under the name in the last column.
