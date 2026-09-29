@@ -1,0 +1,137 @@
+# Hourly, 24/7: the M6 stablecoin depeg monitor (shadow only: no emails, no orders).
+# It commits state/ only when a depeg event starts, updates or ends, which is rare.
+# Owner's guide: docs/phase-b/crypto.md (cost in Actions minutes, and how to switch it off).
+name: hourly
+
+on:
+  schedule:
+    # Every hour at minute 41 (UTC). This keeps clear of the other state writers: daily, weekly and options at :17,
+    # monthly at 12:13 UTC. The CLI is idempotent per UTC hour.
+    - cron: "41 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: fetch and evaluate the quotes, but write and commit nothing."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # commit state/ back to the branch (only when a shadow event changed it)
+
+# Every workflow that writes state/ shares this group, so runs never overlap.
+concurrency:
+  group: traderec-state
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  hourly:
+    runs-on: ubuntu-latest
+    # A normal run takes well under a minute. The cap keeps a hung venue from holding the state lock.
+    timeout-minutes: 10
+    env:
+      DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+    steps:
+      - name: Check out the branch head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # An explicit ref checks out the branch as it is when this job starts, so a run that waited in the
+          # concurrency queue sees the state that the run before it committed.
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install --quiet --disable-pip-version-check -r requirements.txt
+
+      - name: Initialise state if missing
+        run: python -m traderec init --if-missing
+
+      - name: Run the hourly crypto job
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL_HOURLY }}   # one healthchecks.io check per workflow
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${DRY_RUN}" = "true" ]; then args+=(--dry-run); fi
+          echo "python -m traderec hourly ${args[*]}"
+          status=0
+          python -m traderec hourly "${args[@]}" || status=$?
+          # Exit code 3 = no venue returned a usable quote this hour. Nothing was written; the next hour retries.
+          # healthchecks.io gets no ping for such an hour, so a lasting outage shows up there as missed pings.
+          if [ "${status}" -eq 3 ]; then
+            echo "::warning::No usable stablecoin quotes this hour (exit code 3); the next hour retries."
+            exit 0
+          fi
+          exit "${status}"
+
+      - name: Commit state changes
+        if: env.DRY_RUN != 'true'
+        env:
+          RUN_KIND: hourly
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != refs/heads/* ]]; then
+            echo "::error::State can only be committed to a branch (this run is on ${GITHUB_REF})."
+            exit 1
+          fi
+          branch="${GITHUB_REF_NAME}"
+          if [ ! -d state ]; then
+            echo "No state/ folder; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all state/
+          if git diff --cached --quiet; then
+            echo "State unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit --quiet -m "state: ${RUN_KIND} run $(date -u +%Y-%m-%dT%HZ) [skip ci]"
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash --quiet origin "${branch}" && git push --quiet origin "HEAD:${branch}"; then
+              echo "State committed and pushed to ${branch} (attempt ${attempt})."
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "::warning::Push attempt ${attempt} of 3 failed."
+            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 15)); fi
+          done
+          echo "::error::Could not push the state commit after 3 attempts. The run's state/ folder is attached to this run as an artifact; see docs/OPERATIONS.md, Troubleshooting."
+          exit 1
+
+      - name: Upload state/ (failures)
+        if: always() && failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-hourly-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # The pipeline reports each hour to healthchecks.io itself (success or fail). This adds a fail signal for
+      # what happens outside it: setup, the state commit, a timeout.
+      - name: Tell healthchecks.io the job failed
+        if: always() && env.DRY_RUN != 'true' && job.status != 'success'
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL_HOURLY }}
+        run: |
+          if [ -z "${HC_PING_URL}" ]; then
+            echo "HC_PING_URL_HOURLY is not set; no ping."
+            exit 0
+          fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "${HC_PING_URL}/fail" \
+            || echo "::warning::Could not reach healthchecks.io."

@@ -160,13 +160,48 @@ shadow:                    # logged automatically, never emailed
 
   # ----
 
-  ETH:                     # ETH weekly trend switch (M3's rule on ETH)
-    enabled: false
+  ETH:                     # ETH weekly trend switch: M3's rule on ETH (design v3.3 §3 M3, "Shadow ledger"; track 15 R2)
+    enabled: true
+    weeks: 10              # weekly close (the Sunday UTC candle) above its 10-week average, as M3
+    cost_per_side: 0.0025  # track 15 §1.2 crypto base case; fills at the next UTC daily close (track 15's lag)
+    max_catchup_weeks: 12  # the daily run replays missed weeks, oldest first, up to this many
+    promotion:             # track 15 R2: an alpha source only if 24 months of shadow trades show timing alpha t >= 2
+      min_months: 24
+      min_t: 2.0
+      nw_lags: 4           # Newey-West lags of the weekly regression
 
   # ----
 
-  M6:                      # crypto structural: depeg buy and cash-and-carry (hourly 24/7 job)
-    enabled: false
+  M6:                      # crypto structural: depeg buy and cash-and-carry (design v3.3 §3 M6; shadow only, track 20)
+    enabled: true
+    depeg:                 # the hourly 24/7 job (.github/workflows/hourly.yml); docs/phase-b/crypto.md
+      enabled: true
+      trigger_price: 0.97  # a regulated, fiat-backed coin <= $0.97 ...
+      min_venues: 2        # ... on >= 2 venues, each a two-sided book no wider than max_spread
+      max_spread: 0.02
+      exit_price: 0.995    # track 05 §11: exit at >= $0.995 ...
+      time_stop_days: 30   # ... or after 30 calendar days
+      size_pct_nav: 0.03   # <= 3% of NAV; stress = 100% of the position (design §3 M6; red team m7)
+      stress_pct: 1.0
+      fee_per_side: 0.0025 # track 15 §1.2 crypto base case
+      update_step: 0.005   # an open event records a new low only when the median falls half a cent further
+      # "Reserves attested" and "redemptions not suspended > 72 h" can't be read mechanically: every event records
+      # both as "unverified". Venue symbols checked on 29 Sep 2026 (Coinbase Exchange, Kraken, Gemini public APIs).
+      coins:               # regulated, fiat-backed coins -> their USD books
+        # Circle. Coinbase has no USDC-USD book (USDC converts 1:1 there): its price is implied via USDT.
+        USDC: {coinbase: "USDT-USD/USDT-USDC", kraken: USDCUSD, gemini: usdcusd}
+        RLUSD: {kraken: RLUSDUSD, gemini: rlusdusd}   # Standard Custody & Trust (NYDFS)
+        PYUSD: {kraken: PYUSDUSD}                     # Paxos Trust (NYDFS); one venue today: can't confirm alone
+        USDP: {coinbase: PAX-USD}                     # Paxos Trust (NYDFS); one venue today: can't confirm alone
+      watch_only:          # scored like a depeg, never counted: the issuer is not regulated (docs/phase-b/crypto.md)
+        USDT: {coinbase: USDT-USD, kraken: USDTZUSD, gemini: usdtusd}
+    carry:                 # checked by the 22:17 ET daily run; off today (basis ~5.3% vs T-bills + 6 ~ 10%, design §11)
+      enabled: true
+      max_days_to_expiry: 60   # CME contracts with <= 60 days to expiry; the month with the most days left is used
+      excess_over_tbill: 0.06  # annualised basis >= T-bills + 6 points
+      notional_pct_nav: 0.15   # <= 15% notional: long IBIT, short MBT in the same taxable account
+      cost_round_trip: 0.0015  # IBIT ~0.05% + MBT ~0.10% round trip (track 15 §4.7)
+      ibit_fee_annual: 0.0025  # IBIT's expense ratio over the days held
 
   # ----
 
