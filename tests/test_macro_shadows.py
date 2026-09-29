@@ -962,7 +962,7 @@ def test_inside_the_daily_pipeline(tmp_path: Path) -> None:
     run = pipeline.Run(cfg, provider, state_dir, "daily", "2026-10-30")
     report = facts_mod.monthly_report(run, "2026-10")
     run.close()
-    assert any(row["name"].startswith("MACRO") for row in report["shadow"])
+    assert any(row.get("book") == "MACRO" for row in report["shadow"])       # rows carry the book key and a label
     email = email_mod.render_monthly(report, {"mode": "paper", "nav": report["nav"], "ledger_head": "x",
                                              "data_asof": report["asof"], "sources": ["fake"],
                                              "constitution_version": cfg.version})
