@@ -1,0 +1,11 @@
+module,trades_per_yr,note
+M1 ST-1,3.7134,1993-2026 (first signal 1996)
+W10 (CAL60),0.505022,"SPY 1993-2026, one at a time"
+W10 (CAL90),0.505022,"SPY 1993-2026, one at a time"
+W10 (CAL120),0.415901,"SPY 1993-2026, one at a time"
+M3 BTC switch,3.62137,round trips (switch-ons) 2011-2026
+M2 ETF8,9.10667,rebalances with any order after the 25% band
+M4 O2 60 DTE (Phase B),0.710976,"1990-2026, one spread at a time"
+M4 O2 90 DTE (Phase B),0.601595,"1990-2026, one spread at a time"
+M4 O2 120 DTE (Phase B),0.519559,"1990-2026, one spread at a time"
+W8 (Phase B),0.4,design v3.2

@@ -1,0 +1,9 @@
+family,kind,cells
+W10 cluster,diagnostic,50
+W10 contribution,diagnostic,9
+W10 exit rule,decision,9
+W10 exit variant,decision,20
+W10 reconciliation,diagnostic,23
+W10 replication,decision,60
+W10 size,diagnostic,7
+W10 threshold (diagnostic),diagnostic,10

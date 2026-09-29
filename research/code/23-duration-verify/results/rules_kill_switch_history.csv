@@ -1,0 +1,5 @@
+sample,trades,losers,longest_losing_streak,worst_trade,worst_cum_drawdown_nav_at_6pct,trades_below_minus15
+SPY 1993-2026,17,2,2,-0.0827997,-0.00879117,0
+Index 1990-2026,18,3,3,-0.0503536,-0.00612937,0
+Index 1928-1989,29,10,2,-0.270675,-0.0162405,1
+Index 1928-2026,47,13,3,-0.270675,-0.0162405,1

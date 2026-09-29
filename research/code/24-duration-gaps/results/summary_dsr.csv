@@ -1,0 +1,27 @@
+candidate,N,n,sr,dsr
+"CEF z<=-2 (3y) H42, 2008-26, signal-month means",family,146,0.290092,0.92395
+"CEF z<=-2 (3y) H42, 2008-26, signal-month means",track,146,0.290092,0.694053
+"CEF z<=-2 (3y) H63, 2008-26, signal-month means",family,139,0.238602,0.765672
+"CEF z<=-2 (3y) H63, 2008-26, signal-month means",track,139,0.238602,0.439388
+"CEF z<=-2 (3y) H84, 2008-26, signal-month means",family,135,0.259567,0.816276
+"CEF z<=-2 (3y) H84, 2008-26, signal-month means",track,135,0.259567,0.512935
+"Spin-off from session 61, H42, 2016-26",family,102,0.167545,0.251457
+"Spin-off from session 61, H42, 2016-26",track,102,0.167545,0.0781955
+"Spin-off from session 61, H63, 2016-26",family,101,0.164197,0.259191
+"Spin-off from session 61, H63, 2016-26",track,101,0.164197,0.0934246
+"Spin-off from session 61, H84, 2016-26",family,99,0.229697,0.492992
+"Spin-off from session 61, H84, 2016-26",track,99,0.229697,0.241523
+"S&P 500 deletion, open of E, H42, 2008-26",family,130,0.226078,0.768882
+"S&P 500 deletion, open of E, H42, 2008-26",track,130,0.226078,0.297186
+"S&P 500 deletion, open of E, H63, 2008-26",family,129,0.127398,0.246268
+"S&P 500 deletion, open of E, H63, 2008-26",track,129,0.127398,0.0335009
+"S&P 500 deletion, open of E, H84, 2008-26",family,126,0.164083,0.419411
+"S&P 500 deletion, open of E, H84, 2008-26",track,126,0.164083,0.0989552
+"MNA after a 21-session loss <= -2%, H63, 2010-26",family,20,0.354269,0.452476
+"MNA after a 21-session loss <= -2%, H63, 2010-26",track,20,0.354269,0.079139
+"Turn of year: IWM from 1 Nov, 90-day cap, 2008-26",family,18,0.232782,0.0692831
+"Turn of year: IWM from 1 Nov, 90-day cap, 2008-26",track,18,0.232782,0.0188454
+"Turn of year: KF small quintile from 15 Dec, 60-day cap, 2008-26",family,18,0.238684,0.0526534
+"Turn of year: KF small quintile from 15 Dec, 60-day cap, 2008-26",track,18,0.238684,0.0111911
+"VIX carry VPD, VIX/VIX3M < 0.90, H84, 2017-26",family,12,0.557258,0.318577
+"VIX carry VPD, VIX/VIX3M < 0.90, H84, 2017-26",track,12,0.557258,0.165383

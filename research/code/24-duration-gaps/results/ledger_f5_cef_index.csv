@@ -1,0 +1,49 @@
+family,variant,sample,n,stat,stat_kind,edge,mean
+f5_cef_index,CEF z-2 w756 H21,design,36,1.60979,t,0.012739,
+f5_cef_index,CEF z-2 w756 H21,test,151,3.49387,t,0.0191559,
+f5_cef_index,CEF z-2 w756 H42,design,35,1.74763,t,0.0274216,
+f5_cef_index,CEF z-2 w756 H42,test,146,2.81402,t,0.0387638,
+f5_cef_index,CEF z-2 w756 H63,design,31,2.6731,t,0.0271696,
+f5_cef_index,CEF z-2 w756 H63,test,139,1.93329,t,0.0554777,
+f5_cef_index,CEF z-2 w756 H84,design,31,1.92952,t,0.0236551,
+f5_cef_index,CEF z-2 w756 H84,test,135,1.94528,t,0.0654997,
+f5_cef_index,CEF z-1.5 w756 H21,design,53,3.58253,t,0.0117551,
+f5_cef_index,CEF z-1.5 w756 H21,test,188,3.42215,t,0.0111582,
+f5_cef_index,CEF z-1.5 w756 H42,design,52,2.72748,t,0.0222272,
+f5_cef_index,CEF z-1.5 w756 H42,test,183,3.10093,t,0.0245956,
+f5_cef_index,CEF z-1.5 w756 H63,design,50,1.93143,t,0.0219179,
+f5_cef_index,CEF z-1.5 w756 H63,test,176,2.23396,t,0.0327421,
+f5_cef_index,CEF z-1.5 w756 H84,design,50,1.91243,t,0.0190671,
+f5_cef_index,CEF z-1.5 w756 H84,test,172,1.56257,t,0.0413461,
+f5_cef_index,CEF z-2 w252 H21,design,77,2.52938,t,0.000734137,
+f5_cef_index,CEF z-2 w252 H21,test,188,3.7229,t,0.00740582,
+f5_cef_index,CEF z-2 w252 H42,design,76,2.89143,t,0.00993522,
+f5_cef_index,CEF z-2 w252 H42,test,184,2.54714,t,0.0167051,
+f5_cef_index,CEF z-2 w252 H63,design,72,1.56281,t,0.0137607,
+f5_cef_index,CEF z-2 w252 H63,test,174,2.00972,t,0.017798,
+f5_cef_index,CEF z-2 w252 H84,design,71,2.26993,t,0.0165202,
+f5_cef_index,CEF z-2 w252 H84,test,167,0.85755,t,0.0195895,
+f5_cef_index,S&P add open E -> +20,1997-2007,41,-1.5218,t,,-0.0180122
+f5_cef_index,S&P add open E -> +42,1997-2007,41,-1.35395,t,,-0.0264776
+f5_cef_index,S&P add open E -> +63,1997-2007,41,-1.74481,t,,-0.0333441
+f5_cef_index,S&P add open E -> +84,1997-2007,41,-1.24929,t,,-0.032901
+f5_cef_index,S&P add open E -> +20,2008-2026,332,-1.52212,t,,-0.014634
+f5_cef_index,S&P add open E -> +42,2008-2026,329,-0.441812,t,,-0.00875026
+f5_cef_index,S&P add open E -> +63,2008-2026,329,-0.617695,t,,-0.00626307
+f5_cef_index,S&P add open E -> +84,2008-2026,324,-1.14856,t,,-0.00938118
+f5_cef_index,S&P del open E -> +20,2008-2026,130,1.2835,t,,0.0137629
+f5_cef_index,S&P del open E -> +42,2008-2026,130,2.59286,t,,0.0546141
+f5_cef_index,S&P del open E -> +63,2008-2026,129,1.68778,t,,0.0363415
+f5_cef_index,S&P del open E -> +84,2008-2026,126,1.81078,t,,0.0523075
+f5_cef_index,Russell recon long IWM H42,2001-2007,7,-1.49223,t,-0.0456368,
+f5_cef_index,Russell recon long IWM H42,2008-2025,18,0.0975781,t,0.00254654,
+f5_cef_index,Russell recon long IWM H63,2001-2007,7,-1.7764,t,-0.0712395,
+f5_cef_index,Russell recon long IWM H63,2008-2025,18,-0.405958,t,-0.0095588,
+f5_cef_index,Russell recon long IWM H84,2001-2007,7,-1.19992,t,-0.0526255,
+f5_cef_index,Russell recon long IWM H84,2008-2025,18,-0.842836,t,-0.0259441,
+f5_cef_index,Russell recon long IWC H42,2001-2007,2,-1.32315,t,-0.0396369,
+f5_cef_index,Russell recon long IWC H42,2008-2025,18,-0.262345,t,-0.00490438,
+f5_cef_index,Russell recon long IWC H63,2001-2007,2,-1.37735,t,-0.0286624,
+f5_cef_index,Russell recon long IWC H63,2008-2025,18,-0.609926,t,-0.0159234,
+f5_cef_index,Russell recon long IWC H84,2001-2007,2,0.138939,t,0.00965993,
+f5_cef_index,Russell recon long IWC H84,2008-2025,18,-1.04193,t,-0.0340896,

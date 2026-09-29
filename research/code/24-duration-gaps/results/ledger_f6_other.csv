@@ -1,0 +1,155 @@
+family,variant,sample,n,stat,stat_kind,edge
+f6_other,TOY KF small quintile Nov1 cap60,1927-1982,56,-1.24651,t,-0.0184286
+f6_other,TOY KF small quintile Nov1 cap60,1983-2007,25,-0.618918,t,-0.0089708
+f6_other,TOY KF small quintile Nov1 cap60,2008-2026,18,0.774326,t,0.0235059
+f6_other,TOY KF small quintile Nov1 cap90,1927-1982,56,2.08883,t,0.0366637
+f6_other,TOY KF small quintile Nov1 cap90,1983-2007,25,1.89992,t,0.0374915
+f6_other,TOY KF small quintile Nov1 cap90,2008-2026,18,1.04937,t,0.0407516
+f6_other,TOY KF small quintile Nov1 cap120,1927-1982,56,2.01789,t,0.0502146
+f6_other,TOY KF small quintile Nov1 cap120,1983-2007,25,2.10443,t,0.0534801
+f6_other,TOY KF small quintile Nov1 cap120,2008-2026,18,1.10963,t,0.0544385
+f6_other,TOY KF small quintile Dec1 cap60,1927-1982,56,3.62154,t,0.0422972
+f6_other,TOY KF small quintile Dec1 cap60,1983-2007,25,2.31434,t,0.0364154
+f6_other,TOY KF small quintile Dec1 cap60,2008-2026,18,1.24889,t,0.0295032
+f6_other,TOY KF small quintile Dec1 cap90,1927-1982,56,2.63046,t,0.051481
+f6_other,TOY KF small quintile Dec1 cap90,1983-2007,25,1.89346,t,0.0449028
+f6_other,TOY KF small quintile Dec1 cap90,2008-2026,18,0.756498,t,0.0229551
+f6_other,TOY KF small quintile Dec1 cap120,1927-1982,56,2.32347,t,0.0550996
+f6_other,TOY KF small quintile Dec1 cap120,1983-2007,25,1.83271,t,0.0503054
+f6_other,TOY KF small quintile Dec1 cap120,2008-2026,18,0.0259728,t,0.00188757
+f6_other,TOY KF small quintile Dec15 cap60,1927-1982,56,4.5567,t,0.0658783
+f6_other,TOY KF small quintile Dec15 cap60,1983-2007,25,3.1871,t,0.0553523
+f6_other,TOY KF small quintile Dec15 cap60,2008-2026,18,1.01265,t,0.0240177
+f6_other,TOY KF small quintile Dec15 cap90,1927-1982,56,3.24011,t,0.0730633
+f6_other,TOY KF small quintile Dec15 cap90,1983-2007,25,2.34342,t,0.0643737
+f6_other,TOY KF small quintile Dec15 cap90,2008-2026,18,0.116074,t,0.00420718
+f6_other,TOY KF small quintile Dec15 cap120,1927-1982,56,2.5906,t,0.0651407
+f6_other,TOY KF small quintile Dec15 cap120,1983-2007,25,2.2651,t,0.0536579
+f6_other,TOY KF small quintile Dec15 cap120,2008-2026,18,-0.00754378,t,-0.000210793
+f6_other,TOY KF small decile Nov1 cap60,1927-1982,56,-1.38277,t,-0.0241818
+f6_other,TOY KF small decile Nov1 cap60,1983-2007,25,-1.13927,t,-0.0163206
+f6_other,TOY KF small decile Nov1 cap60,2008-2026,18,0.471608,t,0.0143204
+f6_other,TOY KF small decile Nov1 cap90,1927-1982,56,1.7639,t,0.038229
+f6_other,TOY KF small decile Nov1 cap90,1983-2007,25,1.78974,t,0.0384955
+f6_other,TOY KF small decile Nov1 cap90,2008-2026,18,1.12561,t,0.0475627
+f6_other,TOY KF small decile Nov1 cap120,1927-1982,56,1.91014,t,0.0564023
+f6_other,TOY KF small decile Nov1 cap120,1983-2007,25,2.11001,t,0.0598179
+f6_other,TOY KF small decile Nov1 cap120,2008-2026,18,1.08065,t,0.0624549
+f6_other,TOY KF small decile Dec1 cap60,1927-1982,56,3.40924,t,0.0488871
+f6_other,TOY KF small decile Dec1 cap60,1983-2007,25,2.58256,t,0.04188
+f6_other,TOY KF small decile Dec1 cap60,2008-2026,18,1.59558,t,0.0372164
+f6_other,TOY KF small decile Dec1 cap90,1927-1982,56,2.71151,t,0.0594665
+f6_other,TOY KF small decile Dec1 cap90,1983-2007,25,2.19039,t,0.0547818
+f6_other,TOY KF small decile Dec1 cap90,2008-2026,18,0.971941,t,0.0336891
+f6_other,TOY KF small decile Dec1 cap120,1927-1982,56,2.14798,t,0.06226
+f6_other,TOY KF small decile Dec1 cap120,1983-2007,25,2.15564,t,0.0625026
+f6_other,TOY KF small decile Dec1 cap120,2008-2026,18,0.305662,t,0.0125071
+f6_other,TOY KF small decile Dec15 cap60,1927-1982,56,4.69034,t,0.0789833
+f6_other,TOY KF small decile Dec15 cap60,1983-2007,25,3.69978,t,0.0654994
+f6_other,TOY KF small decile Dec15 cap60,2008-2026,18,1.38294,t,0.0404405
+f6_other,TOY KF small decile Dec15 cap90,1927-1982,56,3.17271,t,0.0840399
+f6_other,TOY KF small decile Dec15 cap90,1983-2007,25,2.61833,t,0.0786574
+f6_other,TOY KF small decile Dec15 cap90,2008-2026,18,0.41423,t,0.0159557
+f6_other,TOY KF small decile Dec15 cap120,1927-1982,56,2.48748,t,0.0734751
+f6_other,TOY KF small decile Dec15 cap120,1983-2007,25,2.80954,t,0.0672976
+f6_other,TOY KF small decile Dec15 cap120,2008-2026,18,0.347455,t,0.0115573
+f6_other,TOY IWM Nov1 cap60,2000-2007,8,1.61665,t,0.0366094
+f6_other,TOY IWM Nov1 cap60,2008-2026,18,1.16709,t,0.0290709
+f6_other,TOY IWM Nov1 cap90,2000-2007,8,0.772268,t,0.0209644
+f6_other,TOY IWM Nov1 cap90,2008-2026,18,0.987609,t,0.0294867
+f6_other,TOY IWM Nov1 cap120,2000-2007,8,0.313925,t,0.00987244
+f6_other,TOY IWM Nov1 cap120,2008-2026,18,0.681759,t,0.0233223
+f6_other,TOY IWM Dec1 cap60,2000-2007,8,0.125994,t,0.00424238
+f6_other,TOY IWM Dec1 cap60,2008-2026,18,0.233317,t,0.00388374
+f6_other,TOY IWM Dec1 cap90,2000-2007,8,-0.800988,t,-0.0187709
+f6_other,TOY IWM Dec1 cap90,2008-2026,18,-0.113969,t,-0.00203078
+f6_other,TOY IWM Dec1 cap120,2000-2007,8,-0.860701,t,-0.0251923
+f6_other,TOY IWM Dec1 cap120,2008-2026,18,-0.682955,t,-0.020847
+f6_other,TOY IWM Dec15 cap60,2000-2007,8,-0.0351861,t,-0.000284219
+f6_other,TOY IWM Dec15 cap60,2008-2026,18,0.632664,t,0.0111604
+f6_other,TOY IWM Dec15 cap90,2000-2007,8,-1.41307,t,-0.0276246
+f6_other,TOY IWM Dec15 cap90,2008-2026,18,-0.436236,t,-0.0129115
+f6_other,TOY IWM Dec15 cap120,2000-2007,8,-0.546397,t,-0.0126422
+f6_other,TOY IWM Dec15 cap120,2008-2026,18,-0.418188,t,-0.011555
+f6_other,TOY IWC Nov1 cap60,2000-2007,3,0.224505,t,0.00840916
+f6_other,TOY IWC Nov1 cap60,2008-2026,18,1.18227,t,0.033758
+f6_other,TOY IWC Nov1 cap90,2000-2007,3,0.117787,t,0.0098777
+f6_other,TOY IWC Nov1 cap90,2008-2026,18,1.06278,t,0.0384744
+f6_other,TOY IWC Nov1 cap120,2000-2007,3,0.198147,t,0.0191194
+f6_other,TOY IWC Nov1 cap120,2008-2026,18,0.728049,t,0.0303822
+f6_other,TOY IWC Dec1 cap60,2000-2007,3,0.112536,t,0.00582677
+f6_other,TOY IWC Dec1 cap60,2008-2026,18,0.731246,t,0.0166458
+f6_other,TOY IWC Dec1 cap90,2000-2007,3,0.0519059,t,0.00220693
+f6_other,TOY IWC Dec1 cap90,2008-2026,18,0.228354,t,0.00710515
+f6_other,TOY IWC Dec1 cap120,2000-2007,3,0.158637,t,0.012686
+f6_other,TOY IWC Dec1 cap120,2008-2026,18,-0.482226,t,-0.017239
+f6_other,TOY IWC Dec15 cap60,2000-2007,3,0.0527246,t,0.00190478
+f6_other,TOY IWC Dec15 cap60,2008-2026,18,0.775232,t,0.0172832
+f6_other,TOY IWC Dec15 cap90,2000-2007,3,-0.372459,t,-0.0208011
+f6_other,TOY IWC Dec15 cap90,2008-2026,18,-0.150394,t,-0.00504866
+f6_other,TOY IWC Dec15 cap120,2000-2007,3,-0.0169859,t,0.000682257
+f6_other,TOY IWC Dec15 cap120,2008-2026,18,-0.345253,t,-0.0115947
+f6_other,volcarry VPD ts<0.90 H21,design,9,4.84389,t,0.039464
+f6_other,volcarry VPD ts<0.90 H21,test,15,1.37495,t,0.0110891
+f6_other,volcarry VPD ts<0.90 H42,design,9,3.43799,t,0.0428863
+f6_other,volcarry VPD ts<0.90 H42,test,14,0.789928,t,0.00867639
+f6_other,volcarry VPD ts<0.90 H63,design,9,0.635863,t,0.0200446
+f6_other,volcarry VPD ts<0.90 H63,test,13,0.939136,t,0.0169923
+f6_other,volcarry VPD ts<0.90 H84,design,8,0.489645,t,0.0155958
+f6_other,volcarry VPD ts<0.90 H84,test,12,1.9304,t,0.0306933
+f6_other,volcarry VPD ts<0.85 H21,design,20,2.9206,t,0.0188447
+f6_other,volcarry VPD ts<0.85 H21,test,18,-0.528831,t,-0.00340941
+f6_other,volcarry VPD ts<0.85 H42,design,18,0.0658577,t,0.000968996
+f6_other,volcarry VPD ts<0.85 H42,test,17,0.0526599,t,0.00107099
+f6_other,volcarry VPD ts<0.85 H63,design,15,0.815742,t,0.0180816
+f6_other,volcarry VPD ts<0.85 H63,test,15,1.34686,t,0.0164452
+f6_other,volcarry VPD ts<0.85 H84,design,13,0.329092,t,0.00962098
+f6_other,volcarry VPD ts<0.85 H84,test,14,1.05846,t,0.0179819
+f6_other,volcarry VPD ts<0.95 H21,design,3,1.68901,t,0.0261769
+f6_other,volcarry VPD ts<0.95 H21,test,5,0.605087,t,0.0133039
+f6_other,volcarry VPD ts<0.95 H42,design,3,0.543319,t,0.0237948
+f6_other,volcarry VPD ts<0.95 H42,test,4,-0.145279,t,-0.00591848
+f6_other,volcarry VPD ts<0.95 H63,design,3,1.53384,t,0.0783501
+f6_other,volcarry VPD ts<0.95 H63,test,4,0.90135,t,0.0351084
+f6_other,volcarry VPD ts<0.95 H84,design,3,3.29063,t,0.130737
+f6_other,volcarry VPD ts<0.95 H84,test,4,1.57671,t,0.0632938
+f6_other,volcarry VPD ts<0.90 & VIX<20 H21,design,11,4.71663,t,0.0304318
+f6_other,volcarry VPD ts<0.90 & VIX<20 H21,test,15,0.216619,t,0.00146282
+f6_other,volcarry VPD ts<0.90 & VIX<20 H42,design,11,3.77953,t,0.0398229
+f6_other,volcarry VPD ts<0.90 & VIX<20 H42,test,13,0.305026,t,0.00438921
+f6_other,volcarry VPD ts<0.90 & VIX<20 H63,design,10,2.05245,t,0.036383
+f6_other,volcarry VPD ts<0.90 & VIX<20 H63,test,12,0.505417,t,0.0092524
+f6_other,volcarry VPD ts<0.90 & VIX<20 H84,design,10,1.40194,t,0.0302564
+f6_other,volcarry VPD ts<0.90 & VIX<20 H84,test,11,0.996957,t,0.015608
+f6_other,volcarry SVXY ts<0.90 H21,design,5,4.69453,t,0.172622
+f6_other,volcarry SVXY ts<0.90 H21,test,15,1.4318,t,0.0211091
+f6_other,volcarry SVXY ts<0.90 H42,design,5,2.29376,t,0.143893
+f6_other,volcarry SVXY ts<0.90 H42,test,14,0.332728,t,0.00879755
+f6_other,volcarry SVXY ts<0.90 H63,design,5,1.15801,t,0.160611
+f6_other,volcarry SVXY ts<0.90 H63,test,13,0.415238,t,0.0195146
+f6_other,volcarry SVXY ts<0.90 H84,design,5,0.689419,t,0.140583
+f6_other,volcarry SVXY ts<0.90 H84,test,12,0.646964,t,0.0261353
+f6_other,volcarry SVXY ts<0.85 H21,design,14,0.705161,t,0.023152
+f6_other,volcarry SVXY ts<0.85 H21,test,18,-1.45611,t,-0.0213323
+f6_other,volcarry SVXY ts<0.85 H42,design,13,0.480996,t,0.0304575
+f6_other,volcarry SVXY ts<0.85 H42,test,17,-0.787782,t,-0.017447
+f6_other,volcarry SVXY ts<0.85 H63,design,10,0.993923,t,0.0965298
+f6_other,volcarry SVXY ts<0.85 H63,test,15,0.753607,t,0.0210012
+f6_other,volcarry SVXY ts<0.85 H84,design,9,0.140786,t,0.0183869
+f6_other,volcarry SVXY ts<0.85 H84,test,14,0.586744,t,0.0239811
+f6_other,volcarry SVXY ts<0.95 H21,design,1,,t,-0.019353
+f6_other,volcarry SVXY ts<0.95 H21,test,5,0.550835,t,0.0220879
+f6_other,volcarry SVXY ts<0.95 H42,design,1,,t,-0.22649
+f6_other,volcarry SVXY ts<0.95 H42,test,5,0.276197,t,0.0166024
+f6_other,volcarry SVXY ts<0.95 H63,design,1,,t,0.0662205
+f6_other,volcarry SVXY ts<0.95 H63,test,4,0.863448,t,0.0425699
+f6_other,volcarry SVXY ts<0.95 H84,design,1,,t,0.250567
+f6_other,volcarry SVXY ts<0.95 H84,test,4,2.19185,t,0.110547
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H21,design,7,4.54462,t,0.14449
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H21,test,16,0.390731,t,0.0069626
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H42,design,7,3.4879,t,0.174953
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H42,test,13,0.344245,t,0.0117302
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H63,design,7,2.07071,t,0.173177
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H63,test,12,0.458399,t,0.0215162
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H84,design,7,0.706849,t,0.0817557
+f6_other,volcarry SVXY ts<0.90 & VIX<20 H84,test,11,0.411028,t,0.016674

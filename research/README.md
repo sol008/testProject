@@ -1,6 +1,6 @@
 # Research dossier — few-trade, high-return recommendation system
 
-Research and design for a system that emails one person a small number of trades, each with a plain-English execution plan, and recalibrates itself every month. **Phase A is built** (the `traderec` package at the repository root; see `../README.md` and `../docs/OPERATIONS.md`) and runs in paper mode.
+Research and design for a system that emails one person a small number of trades, each with a plain-English execution plan, and recalibrates itself every month. **Phase A is built on design v3.3** (the `traderec` package at the repository root; see `../README.md` and `../docs/OPERATIONS.md`) and runs in paper mode. The first build was reverted so the holding-cap research (tracks 21–24) could come first.
 
 Research date: 2026-09-28.
 
@@ -40,6 +40,8 @@ Research date: 2026-09-28.
 | 20 | `20-executability-check.md` | Can a typical Robinhood/Coinbase user place every trade? Three order kinds only; the depeg and cash-and-carry modules moved to shadow. |
 | 21 | `21-duration-cap-existing-modules.md` | What a 90- or 120-day cap does to the existing modules: ≈+0.2 points a year at 90 days (W10 at 63 sessions, M4 at 90 DTE), nothing more at 120. Also re-prices M4 with a next-day entry (≈0 at 60 days). |
 | 22 | `22-duration-cap-new-strategies.md` | Which new strategies a longer cap would allow: only the uptrend-shock buy (W10), ≈+0.07 points; everything else is drift or too few episodes. Don't loosen globally. |
+| 23 | `23-duration-cap-verification.md` | Independent replication and red-team of tracks 21–22. W10 replicates exactly, but it is worth only +0.04 points a year now (≈+0.1 with M4). It fixes the exit (calendar-exact), size (6%), cluster (7%) and kill switch. Verdict: a 90-day exception for W10 only. |
+| 24 | `24-duration-cap-gap-search.md` | Families tracks 21–22 skipped (merger arb, longer-dated option premium, sector momentum, earnings drift, CEF and index effects, and others). 380 variants; none gains from 90 or 120 days. Two new shadow candidates. |
 
 ## Reproducing the numbers
 

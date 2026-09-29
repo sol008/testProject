@@ -1,0 +1,105 @@
+family,variant,sample,n,stat,stat_kind,mean
+f4_single_stock,PEAD ear_dec top all H20,2011-15 (IS),2450,-1.70266,t,-0.00503267
+f4_single_stock,PEAD ear_dec top all H42,2011-15 (IS),2450,-0.942761,t,-0.00408222
+f4_single_stock,PEAD ear_dec top all H63,2011-15 (IS),2450,-0.335447,t,-0.00790177
+f4_single_stock,PEAD ear_dec top all H84,2011-15 (IS),2450,0.604544,t,-0.0030667
+f4_single_stock,PEAD sue_dec top all H20,2011-15 (IS),7370,-2.7087,t,-0.00598753
+f4_single_stock,PEAD sue_dec top all H42,2011-15 (IS),7370,-1.87553,t,-0.00538568
+f4_single_stock,PEAD sue_dec top all H63,2011-15 (IS),7370,-1.22277,t,-0.00470276
+f4_single_stock,PEAD sue_dec top all H84,2011-15 (IS),7370,-0.839809,t,-0.00315681
+f4_single_stock,PEAD both all H20,2011-15 (IS),1644,-1.70627,t,-0.00558331
+f4_single_stock,PEAD both all H42,2011-15 (IS),1644,-0.112979,t,-4.57449e-05
+f4_single_stock,PEAD both all H63,2011-15 (IS),1644,0.0215035,t,-0.0050484
+f4_single_stock,PEAD both all H84,2011-15 (IS),1644,1.10429,t,0.0033883
+f4_single_stock,PEAD ear_dec top >=$2bn H20,2011-15 (IS),902,0.0238005,t,0.00135687
+f4_single_stock,PEAD ear_dec top >=$2bn H42,2011-15 (IS),902,0.526117,t,0.00181402
+f4_single_stock,PEAD ear_dec top >=$2bn H63,2011-15 (IS),902,-0.368925,t,-0.00689344
+f4_single_stock,PEAD ear_dec top >=$2bn H84,2011-15 (IS),902,-0.276412,t,-0.00214421
+f4_single_stock,PEAD sue_dec top >=$2bn H20,2011-15 (IS),3098,-1.42883,t,-0.00220199
+f4_single_stock,PEAD sue_dec top >=$2bn H42,2011-15 (IS),3098,-0.918843,t,-0.00372369
+f4_single_stock,PEAD sue_dec top >=$2bn H63,2011-15 (IS),3098,-0.691513,t,-0.0027995
+f4_single_stock,PEAD sue_dec top >=$2bn H84,2011-15 (IS),3098,-0.764568,t,-0.00186381
+f4_single_stock,PEAD both >=$2bn H20,2011-15 (IS),599,-0.099208,t,0.00193083
+f4_single_stock,PEAD both >=$2bn H42,2011-15 (IS),599,0.651536,t,0.0065967
+f4_single_stock,PEAD both >=$2bn H63,2011-15 (IS),599,0.449792,t,-0.000175388
+f4_single_stock,PEAD both >=$2bn H84,2011-15 (IS),599,0.965872,t,0.0104635
+f4_single_stock,PEAD ear_dec top $0.3-2bn H20,2011-15 (IS),1236,-1.71392,t,-0.00553994
+f4_single_stock,PEAD ear_dec top $0.3-2bn H42,2011-15 (IS),1236,-1.36721,t,-0.00470084
+f4_single_stock,PEAD ear_dec top $0.3-2bn H63,2011-15 (IS),1236,0.15665,t,-0.00318984
+f4_single_stock,PEAD ear_dec top $0.3-2bn H84,2011-15 (IS),1236,1.3568,t,0.00530199
+f4_single_stock,PEAD sue_dec top $0.3-2bn H20,2011-15 (IS),2966,0.542211,t,-0.00177315
+f4_single_stock,PEAD sue_dec top $0.3-2bn H42,2011-15 (IS),2966,0.75502,t,0.00246012
+f4_single_stock,PEAD sue_dec top $0.3-2bn H63,2011-15 (IS),2966,2.1659,t,0.00502234
+f4_single_stock,PEAD sue_dec top $0.3-2bn H84,2011-15 (IS),2966,2.58213,t,0.00853647
+f4_single_stock,PEAD both $0.3-2bn H20,2011-15 (IS),782,-1.07386,t,-0.00453022
+f4_single_stock,PEAD both $0.3-2bn H42,2011-15 (IS),782,-0.0978446,t,0.00294693
+f4_single_stock,PEAD both $0.3-2bn H63,2011-15 (IS),782,0.406921,t,0.000865268
+f4_single_stock,PEAD both $0.3-2bn H84,2011-15 (IS),782,1.67545,t,0.0112387
+f4_single_stock,PEAD ear_dec top all H20,2016-26 (OOS),8721,-2.83236,t,-0.00605636
+f4_single_stock,PEAD ear_dec top all H42,2016-26 (OOS),8518,-1.62697,t,-0.00596785
+f4_single_stock,PEAD ear_dec top all H63,2016-26 (OOS),8493,-0.85119,t,-0.00423755
+f4_single_stock,PEAD ear_dec top all H84,2016-26 (OOS),8462,-0.0270176,t,-0.00444359
+f4_single_stock,PEAD sue_dec top all H20,2016-26 (OOS),31338,-3.15061,t,-0.00802506
+f4_single_stock,PEAD sue_dec top all H42,2016-26 (OOS),30862,-2.07599,t,-0.0130834
+f4_single_stock,PEAD sue_dec top all H63,2016-26 (OOS),30734,-1.48016,t,-0.0147257
+f4_single_stock,PEAD sue_dec top all H84,2016-26 (OOS),30659,-0.834867,t,-0.0165322
+f4_single_stock,PEAD both all H20,2016-26 (OOS),6962,-2.37037,t,-0.00910515
+f4_single_stock,PEAD both all H42,2016-26 (OOS),6866,-1.46659,t,-0.0125057
+f4_single_stock,PEAD both all H63,2016-26 (OOS),6831,0.0268009,t,-0.0108555
+f4_single_stock,PEAD both all H84,2016-26 (OOS),6802,0.512487,t,-0.00975328
+f4_single_stock,PEAD ear_dec top >=$2bn H20,2016-26 (OOS),3544,-1.22372,t,-0.00387517
+f4_single_stock,PEAD ear_dec top >=$2bn H42,2016-26 (OOS),3464,-1.47553,t,-0.00651774
+f4_single_stock,PEAD ear_dec top >=$2bn H63,2016-26 (OOS),3448,-1.23828,t,-0.00979389
+f4_single_stock,PEAD ear_dec top >=$2bn H84,2016-26 (OOS),3430,-1.12661,t,-0.0147475
+f4_single_stock,PEAD sue_dec top >=$2bn H20,2016-26 (OOS),15568,-1.20911,t,-0.00516895
+f4_single_stock,PEAD sue_dec top >=$2bn H42,2016-26 (OOS),15316,-1.06466,t,-0.0131178
+f4_single_stock,PEAD sue_dec top >=$2bn H63,2016-26 (OOS),15241,-1.43928,t,-0.0176442
+f4_single_stock,PEAD sue_dec top >=$2bn H84,2016-26 (OOS),15197,-1.43274,t,-0.0221924
+f4_single_stock,PEAD both >=$2bn H20,2016-26 (OOS),3071,-1.01696,t,-0.00846737
+f4_single_stock,PEAD both >=$2bn H42,2016-26 (OOS),3024,-0.918056,t,-0.0140811
+f4_single_stock,PEAD both >=$2bn H63,2016-26 (OOS),2998,-0.345165,t,-0.0157353
+f4_single_stock,PEAD both >=$2bn H84,2016-26 (OOS),2983,-0.24983,t,-0.0173162
+f4_single_stock,PEAD ear_dec top $0.3-2bn H20,2016-26 (OOS),3587,-3.08598,t,-0.00559188
+f4_single_stock,PEAD ear_dec top $0.3-2bn H42,2016-26 (OOS),3511,-1.42839,t,-0.0041311
+f4_single_stock,PEAD ear_dec top $0.3-2bn H63,2016-26 (OOS),3504,-0.251405,t,0.00221497
+f4_single_stock,PEAD ear_dec top $0.3-2bn H84,2016-26 (OOS),3496,0.510659,t,0.00684068
+f4_single_stock,PEAD sue_dec top $0.3-2bn H20,2016-26 (OOS),9933,-1.083,t,-0.00531118
+f4_single_stock,PEAD sue_dec top $0.3-2bn H42,2016-26 (OOS),9820,-0.707445,t,-0.00753962
+f4_single_stock,PEAD sue_dec top $0.3-2bn H63,2016-26 (OOS),9783,-0.21139,t,-0.00680037
+f4_single_stock,PEAD sue_dec top $0.3-2bn H84,2016-26 (OOS),9764,-0.229381,t,-0.00423815
+f4_single_stock,PEAD both $0.3-2bn H20,2016-26 (OOS),2530,-1.02168,t,-0.00628642
+f4_single_stock,PEAD both $0.3-2bn H42,2016-26 (OOS),2507,-0.506198,t,-0.0110579
+f4_single_stock,PEAD both $0.3-2bn H63,2016-26 (OOS),2502,0.86962,t,-0.0030644
+f4_single_stock,PEAD both $0.3-2bn H84,2016-26 (OOS),2493,1.02497,t,0.00108075
+f4_single_stock,spinco from session 20 H20,2011-15,47,0.692575,t,0.00366853
+f4_single_stock,spinco from session 20 H42,2011-15,47,1.52707,t,0.0233255
+f4_single_stock,spinco from session 20 H63,2011-15,47,2.11286,t,0.0419179
+f4_single_stock,spinco from session 20 H84,2011-15,47,2.2287,t,0.0420948
+f4_single_stock,spinco from session 20 H20,2016-26,108,-1.08081,t,-0.0308997
+f4_single_stock,spinco from session 20 H42,2016-26,107,0.207883,t,-0.00215429
+f4_single_stock,spinco from session 20 H63,2016-26,104,0.847228,t,0.0275485
+f4_single_stock,spinco from session 20 H84,2016-26,102,1.2346,t,0.0428522
+f4_single_stock,spinco from session 61 (after the 60-session ban) H20,2011-15,47,1.05132,t,0.0122426
+f4_single_stock,spinco from session 61 (after the 60-session ban) H42,2011-15,47,1.27252,t,0.0124745
+f4_single_stock,spinco from session 61 (after the 60-session ban) H63,2011-15,47,1.30749,t,0.0203998
+f4_single_stock,spinco from session 61 (after the 60-session ban) H84,2011-15,47,1.37192,t,0.0498111
+f4_single_stock,spinco from session 61 (after the 60-session ban) H20,2016-26,104,0.564461,t,0.0155325
+f4_single_stock,spinco from session 61 (after the 60-session ban) H42,2016-26,102,1.49137,t,0.0336875
+f4_single_stock,spinco from session 61 (after the 60-session ban) H63,2016-26,101,0.976239,t,0.0333734
+f4_single_stock,spinco from session 61 (after the 60-session ban) H84,2016-26,99,1.4985,t,0.0611331
+f4_single_stock,insider all liquid H20,2009-15 (IS),2032,-3.8036,t,-0.00824686
+f4_single_stock,insider all liquid H42,2009-15 (IS),2032,-2.26025,t,-0.00575618
+f4_single_stock,insider all liquid H63,2009-15 (IS),2032,-1.60447,t,-0.00326061
+f4_single_stock,insider all liquid H84,2009-15 (IS),2032,-1.8538,t,-0.00633703
+f4_single_stock,insider >=$300m H20,2009-15 (IS),1330,-1.51725,t,-0.00740247
+f4_single_stock,insider >=$300m H42,2009-15 (IS),1330,-1.02616,t,-0.00784702
+f4_single_stock,insider >=$300m H63,2009-15 (IS),1330,0.135296,t,-0.00258875
+f4_single_stock,insider >=$300m H84,2009-15 (IS),1330,0.504821,t,-0.00131232
+f4_single_stock,insider all liquid H20,2016-26 (OOS),4789,-2.3671,t,-0.00952961
+f4_single_stock,insider all liquid H42,2016-26 (OOS),4789,-2.83517,t,-0.0133023
+f4_single_stock,insider all liquid H63,2016-26 (OOS),4789,-1.4226,t,-0.00490767
+f4_single_stock,insider all liquid H84,2016-26 (OOS),4739,-1.95468,t,-0.0122293
+f4_single_stock,insider >=$300m H20,2016-26 (OOS),3946,-2.00763,t,-0.00737428
+f4_single_stock,insider >=$300m H42,2016-26 (OOS),3946,-2.28869,t,-0.0111131
+f4_single_stock,insider >=$300m H63,2016-26 (OOS),3946,-1.72477,t,-0.00491363
+f4_single_stock,insider >=$300m H84,2016-26 (OOS),3909,-2.27034,t,-0.0127106

@@ -1,0 +1,9 @@
+family,variants,cells,bonferroni_t_family,bonferroni_t_track,noise_max_t_family,best_design,best_design_t,best_test,best_test_t,test_clears_track_bar,share_test_cells_positive
+f1_merger_arb,12,60,2.86526,3.82348,1.66481,r21_3_H42 [ARBFX design],2.82023,r21_2_H42 [ARBFX test],2.96969,False,0.888889
+f2_option_premium,30,30,3.14398,3.82348,2.07339,,,PCS20d5% DTE120 cap120 M7 [2008-2026 model],6.35799,True,1
+f3_sector_momentum,192,384,3.65179,3.82348,2.75215,KF49 L252s21 k5 H21 abs0 [design],5.8454,KF12 L252s21 k1 H63 abs0 [test],1.5779,False,0.4375
+f4_single_stock,52,104,3.30155,3.82348,2.29129,PEAD sue_dec top $0.3-2bn H84 [2011-15 (IS)],2.58213,spinco from session 61 (after the 60-session ban) H84 [2016-26],1.4985,False,0.230769
+f5_cef_index,26,48,3.10186,3.82348,2.01374,CEF z-1.5 w756 H21 [design],3.58253,CEF z-2 w252 H21 [test],3.7229,False,0.653846
+f6_other,68,154,3.37607,3.82348,2.3918,volcarry VPD ts<0.90 H21 [design],4.84389,volcarry SVXY ts<0.95 H84 [test],2.19185,False,0.823529
+TOTAL (this track),380,780,3.82348,3.82348,2.96905,,,,6.35799,True,0.571782
+"CUMULATIVE (tracks 13-17, 21, 22, 24)",3578,,4.34426,4.34426,3.60156,,,,,,

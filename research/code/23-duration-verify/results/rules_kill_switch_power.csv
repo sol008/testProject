@@ -1,0 +1,11 @@
+rule,years,edge as 1928-2026,edge as 1990-2026,edge gone (random uptrend entries)
+K1: 5 losers in a row,10,0.0026,0.0002,0.0024
+K1: 5 losers in a row,20,0.0092,0.001,0.0056
+K2: 3 losers in a row,10,0.0582,0.0132,0.0506
+K2: 3 losers in a row,20,0.1326,0.0304,0.123
+K3: cumulative W10 P&L <= -1.5% of NAV (6% size),10,0.0474,0,0.0222
+K3: cumulative W10 P&L <= -1.5% of NAV (6% size),20,0.0626,0,0.0366
+K4: 1990+ edge p > 0.10 with the new trades,10,0.2738,0.0608,0.288
+K4: 1990+ edge p > 0.10 with the new trades,20,0.4012,0.0826,0.4986
+K5: any trade <= -15%,10,0.1062,0,0.095
+K5: any trade <= -15%,20,0.1968,0,0.1804

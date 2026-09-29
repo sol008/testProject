@@ -1,0 +1,15 @@
+family,candidate,status,central_60,central_90,central_120,d90,d120,live_d90,live_d120
+1 Merger arb,MNA after a spread blow-out (design pick on MERFX: dd5),shadow,6.81489e-05,0.000311491,0.000251982,0.000243342,0.000183833,0,0
+1 Merger arb,"Single cash deals held to completion (1.5 open, 2% stress at a 30% break loss)",shadow,0.00100645,0.00100645,0.00100645,2.1684e-19,0,0,0
+2 Option premium,"Best put spread feasible under the cap (DTE 60, hold); M7 today = DTE 45 tp21",paper (M7 off at $100k),0.00221767,0.00221767,0.00221767,0,0,0,0
+3 Sector momentum,"Top-1 sector SPDR, design-selected lookback, re-decided every H sessions",never,-0.000849755,-0.000463675,-0.000327305,0.00038608,0.00052245,0,0
+4 Single stocks,"Insider cluster (>= 2 insiders), >= $300m, buy at D+1",shadow (unchanged),-0.00155587,-0.000350118,-0.000823896,0.00120575,0.000731973,0,0
+4 Single stocks,"PEAD: top SUE decile, >= $2bn, buy at D+2",never,-0.00186429,-0.00165582,-0.00155327,0.000208463,0.000311017,0,0
+4 Single stocks,Spin-off bought at session 61 (after the never-list's 60-session ban),shadow,0.00533656,0.00357678,0.00485642,-0.00175979,-0.000480148,0,0
+5 CEF / index,"CEF discount unusually wide (z <= -1.5/-2 vs own 1-3y), buy next open",shadow (new; not cap-dependent),0.00207095,0.00138463,0.00110688,-0.000686323,-0.000964073,0,0
+5 CEF / index,Russell reconstitution: long IWM after recon day,never,6.62772e-05,-9.5611e-05,-0.00031989,-0.000161888,-0.000386168,0,0
+5 CEF / index,"S&P 500 deletion, buy at the open of the effective day",never-list (unchanged),0.00834211,0.00378415,0.00407306,-0.00455796,-0.00426905,0,0
+6 Other,Turn of year: IWM from 1 Nov to the cap,never (calendar),0.000451548,0.000471493,0.000395514,1.99447e-05,-5.60336e-05,0,0
+6 Other,VIX carry: short VIX futures (VPD) when VIX/VIX3M < 0.90,never (short-VIX product),0.000119575,0.000217454,0.000362575,9.78796e-05,0.000243,0,0
+TOTAL live,live and policy modules (none from these families),,,,,0,0,0,0
+TOTAL if promoted,MNA after a spread blow-out (design pick; Spin-off bought at session 61 (after the; CEF discount unusually wide (z <= -1.5/-,,0.00747567,0.0052729,0.00621528,-0.00220277,-0.00126039,,
