@@ -1,0 +1,128 @@
+episode,rule,entry,exit,ret,contains_peak
+"US stocks 1920s (S&P comp., monthly)",A_trend,1924-01-31,1926-03-31,0.33481220951302393,False
+"US stocks 1920s (S&P comp., monthly)",A_trend,1926-06-30,1929-11-30,0.6960248208092485,True
+"US stocks 1920s (S&P comp., monthly)",A_trend,1930-04-30,1930-05-31,-0.06158114925373126,False
+"US stocks 1920s (S&P comp., monthly)",A_trend,1932-08-31,1933-02-28,-0.17164591633466142,False
+"US stocks 1920s (S&P comp., monthly)",A_trend,1933-04-30,1934-05-31,0.42095643105950686,False
+"US stocks 1920s (S&P comp., monthly)",A_trend,1935-05-31,1935-12-31,0.334762363076923,False
+Gold 1970s (monthly London avg),A_trend,1970-09-30,1973-11-30,1.6336137499999999,False
+Gold 1970s (monthly London avg),A_trend,1973-12-31,1975-05-31,0.5576277289719629,False
+Gold 1970s (monthly London avg),A_trend,1976-11-30,1980-12-31,3.130188753846154,True
+Gold 1970s (monthly London avg),A_trend,1982-08-31,1983-06-30,0.13234728846153843,False
+Gold 1970s (monthly London avg),A_trend,1985-08-31,1985-12-31,-0.026192963636363698,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1980-01-04,1980-03-28,-0.01481295945068406,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1980-04-04,1981-03-13,0.037970935275332574,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1981-03-20,1981-09-25,0.01764330448113416,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1981-10-09,1981-10-16,-0.03981208703600225,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1981-11-06,1982-02-26,-0.0004125866267365996,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1982-05-14,1982-05-21,-0.012374465958095549,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1982-10-08,1982-10-29,-0.01588398138576419,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1982-11-05,1984-06-01,0.3140438404773036,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1984-06-08,1984-07-20,-0.04110856009912167,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1984-08-03,1987-10-23,1.2626268502727775,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1988-02-19,1990-02-23,0.40558861097321675,True
+"Nikkei 225 1980s (JPY, daily)",A_trend,1991-03-08,1991-06-21,-0.0894846977440964,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1991-10-04,1991-10-11,-0.019818403224796666,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1991-10-18,1991-11-08,-0.01836841935430733,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1992-12-11,1993-01-01,-0.03152928986091408,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1993-02-05,1993-02-12,-0.02971667571439307,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1993-03-12,1993-11-05,0.028594710939197743,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1994-02-04,1994-02-18,-0.06796221942986291,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1994-02-25,1994-04-01,-0.028518113717961313,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1994-04-08,1994-09-16,-0.008944209339458165,False
+"Nikkei 225 1980s (JPY, daily)",A_trend,1995-08-18,1995-12-29,0.09959487392756095,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1980-01-25,1980-02-15,-0.008055107689994734,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1980-04-25,1981-05-15,0.1934740918341158,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1981-06-19,1981-07-17,-0.018866358271373174,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1981-08-21,1981-08-28,-0.04332002139351865,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1981-11-20,1982-02-05,-0.046595211149556004,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1982-11-19,1984-06-22,0.40965899819195317,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1984-06-29,1984-07-06,-0.010399373980720883,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1984-10-26,1988-09-02,3.376103929860056,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1988-09-09,1988-09-23,-0.017324645687701312,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1988-09-30,1988-10-07,-0.02139552775804532,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1988-10-14,1989-06-09,0.06963867832800474,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1989-06-23,1989-06-30,-0.0567785676375383,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1989-07-07,1989-07-14,-0.01077789986763611,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1989-07-28,1989-08-18,-0.03506377584609488,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1989-09-29,1990-02-23,-0.07156756077811632,True
+"Nikkei 225 1980s (USD, daily)",A_trend,1991-02-08,1991-06-07,-0.06259731887748055,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1991-10-04,1991-11-22,-0.058408351662241675,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1992-01-03,1992-01-10,-0.0380777180840941,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1992-09-04,1992-09-11,-0.03399190406046626,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1992-09-25,1992-10-02,-0.051032358085516316,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1992-10-16,1992-10-23,-0.031994593179480724,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1992-11-27,1993-01-01,-0.034644008561032114,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1993-02-05,1993-11-05,0.23097071586572349,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1994-02-04,1994-11-11,0.055078991413083145,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1995-04-21,1995-05-12,-0.07949051875854307,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1995-07-28,1995-08-04,-0.030260935135902556,False
+"Nikkei 225 1980s (USD, daily)",A_trend,1995-12-01,1995-12-29,0.031646424737677536,False
+Nasdaq Composite 1990s (daily),A_trend,1990-01-05,1990-01-12,-0.0422919127929815,False
+Nasdaq Composite 1990s (daily),A_trend,1990-05-18,1990-07-27,-0.01473252305324435,False
+Nasdaq Composite 1990s (daily),A_trend,1991-02-01,1992-06-12,0.3607736108597286,False
+Nasdaq Composite 1990s (daily),A_trend,1992-09-18,1992-09-25,-0.022192121808799592,False
+Nasdaq Composite 1990s (daily),A_trend,1992-10-23,1994-04-01,0.24221299758915138,False
+Nasdaq Composite 1990s (daily),A_trend,1994-08-26,1994-10-07,-0.018978124151309506,False
+Nasdaq Composite 1990s (daily),A_trend,1994-10-14,1994-11-25,-0.03395251796422816,False
+Nasdaq Composite 1990s (daily),A_trend,1994-12-23,1996-07-12,0.48383045243131795,False
+Nasdaq Composite 1990s (daily),A_trend,1996-08-02,1997-04-04,0.09719604658997971,False
+Nasdaq Composite 1990s (daily),A_trend,1997-05-02,1998-01-09,0.14929945930914035,False
+Nasdaq Composite 1990s (daily),A_trend,1998-01-16,1998-08-28,0.0470428181818181,False
+Nasdaq Composite 1990s (daily),A_trend,1998-11-06,2000-04-14,0.7853722698377643,True
+Nasdaq Composite 1990s (daily),A_trend,2000-04-21,2000-05-12,-0.03344637884343071,False
+Nasdaq Composite 1990s (daily),A_trend,2000-06-02,2000-07-28,-0.04135500186186536,False
+Nasdaq Composite 1990s (daily),A_trend,2000-08-25,2000-09-08,-0.01786508988839086,False
+Nasdaq Composite 1990s (daily),A_trend,2001-11-30,2002-01-18,-0.0021230664670721655,False
+Nasdaq Composite 1990s (daily),A_trend,2002-01-25,2002-02-01,-0.015627067533673933,False
+Nasdaq Composite 1990s (daily),A_trend,2002-03-08,2002-03-15,-0.033738790414941544,False
+Nasdaq Composite 1990s (daily),A_trend,2003-01-10,2003-01-17,-0.051308957401983823,False
+Nasdaq Composite 1990s (daily),A_trend,2003-03-21,2004-04-30,0.343559537493074,False
+Nasdaq Composite 1990s (daily),A_trend,2004-05-28,2004-07-09,-0.02735996894731285,False
+Nasdaq Composite 1990s (daily),A_trend,2004-10-29,2004-12-31,0.09929229790530592,False
+"Shanghai Composite 2005-08 (CNY, daily)",A_trend,2005-09-09,2005-09-23,-0.03358018494248782,False
+"Shanghai Composite 2005-08 (CNY, daily)",A_trend,2005-12-23,2008-02-01,2.7664767323995023,True
+"Shanghai Composite 2005-08 (CNY, daily)",A_trend,2009-03-20,2009-12-25,0.3743770319819526,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2013-06-07,2013-06-14,-0.024053056633742798,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2013-09-13,2013-09-20,-0.021799081305676205,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2013-10-11,2013-10-18,-0.017391738756515895,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2013-11-22,2013-12-20,-0.052701079312042154,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2014-04-11,2014-04-18,-0.017360532575200316,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2014-07-25,2015-08-21,0.646152942625839,True
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2016-08-19,2016-09-16,-0.035795357830223584,False
+"Shanghai Composite 2014-16 (CNY, daily)",A_trend,2016-09-23,2016-12-30,0.020942311994169405,False
+Bitcoin 2011 cycle (daily),A_trend,2011-04-22,2011-09-09,2.508079326322924,True
+Bitcoin 2011 cycle (daily),A_trend,2012-05-18,2012-12-28,1.5974487000997066,False
+Bitcoin 2013 cycle (daily),A_trend,2012-06-01,2014-04-11,78.1531891840242,True
+Bitcoin 2013 cycle (daily),A_trend,2014-04-18,2014-05-02,-0.0749261510557595,False
+Bitcoin 2013 cycle (daily),A_trend,2014-05-23,2014-07-25,0.13496658474828038,False
+Bitcoin 2016-18 cycle (daily),A_trend,2015-07-10,2015-08-14,-0.07840599996598518,False
+Bitcoin 2016-18 cycle (daily),A_trend,2015-10-16,2018-03-30,24.692612393290492,True
+Bitcoin 2016-18 cycle (daily),A_trend,2018-04-20,2018-05-11,-0.05888075906917145,False
+Bitcoin 2016-18 cycle (daily),A_trend,2019-04-19,2019-06-28,1.308216815702529,False
+Bitcoin 2020-22 cycle (daily),A_trend,2019-06-07,2019-11-22,-0.10387578568570288,False
+Bitcoin 2020-22 cycle (daily),A_trend,2020-01-17,2020-01-24,-0.0661908130995903,False
+Bitcoin 2020-22 cycle (daily),A_trend,2020-01-31,2020-02-28,-0.07602455765125271,False
+Bitcoin 2020-22 cycle (daily),A_trend,2020-05-01,2021-06-25,2.535014073705208,False
+Bitcoin 2020-22 cycle (daily),A_trend,2021-07-30,2021-09-24,0.012001575134590103,False
+Bitcoin 2020-22 cycle (daily),A_trend,2021-10-01,2021-12-10,-0.025134953255924075,True
+Bitcoin 2020-22 cycle (daily),A_trend,2021-12-24,2021-12-31,-0.09812787418220481,False
+Bitcoin 2020-22 cycle (daily),A_trend,2022-04-01,2022-04-08,-0.09801900932495433,False
+Bitcoin 2020-22 cycle (daily),A_trend,2023-01-20,2023-03-10,-0.11749259654973832,False
+Bitcoin 2020-22 cycle (daily),A_trend,2023-03-17,2023-06-30,0.09723487341871939,False
+"Bitcoin 2023-26 (daily, to date)",A_trend,2023-01-20,2023-03-10,-0.11749259654973832,False
+"Bitcoin 2023-26 (daily, to date)",A_trend,2023-03-17,2024-09-06,0.9378363094107343,False
+"Bitcoin 2023-26 (daily, to date)",A_trend,2024-09-13,2025-11-07,0.6880792512381555,True
+"Bitcoin 2023-26 (daily, to date)",A_trend,2026-08-21,2026-09-25,0.05994531979919615,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2023-01-13,2023-10-27,0.15674324100720982,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2023-11-03,2024-08-02,0.30841222908304355,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2024-08-16,2024-09-06,-0.11982747826413609,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2024-09-13,2024-11-01,-0.009759749142948748,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2024-11-08,2024-11-15,-0.08891867392022745,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2025-01-17,2025-01-31,-0.0524333305922845,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2025-05-16,2025-05-23,-0.05149405044463251,False
+"Semiconductors 2023-26 (SOXX, daily, to date)",A_trend,2025-06-06,2026-09-25,1.6494725455350685,True
+"Nvidia 2023-26 (daily, to date)",A_trend,2023-01-13,2025-01-31,6.0961086375543445,False
+"Nvidia 2023-26 (daily, to date)",A_trend,2025-02-07,2025-02-28,-0.039815826404329124,False
+"Nvidia 2023-26 (daily, to date)",A_trend,2025-05-16,2026-03-20,0.27323024835978016,False
+"Nvidia 2023-26 (daily, to date)",A_trend,2026-04-10,2026-09-25,0.19351910919303172,True
