@@ -328,7 +328,7 @@ def test_monthly_report_handles_phase_b_modules_and_books(cfg, tmp_path):
     assert report["edge_threshold"] == 0.7 and report["edge_binding"] is False
     assert {"module": "W10", "date": "2025-10-30", "reason": "one W10 trade lost -16.0%"} in report["paused_modules"]
     f = flat(email.text)
-    assert "O1 put credit spread (M7) 3 2 −9.5%" in f
+    assert "Trend-filtered put credit spread (M7) 3 2 −9.5%" in f        # the book's name from its config block
     assert re.search(r"\bM4\b[^$]{0,60}? 1 1 \+\$640", f)                     # a closed spread trade in the table
     assert "Chance of a real edge (the same rules run wide) at least 70%" in f
     assert "W8 T-2025-10-20-W8 (open); W9 T-2025-10-30-W9 (entry order waiting)." in f
