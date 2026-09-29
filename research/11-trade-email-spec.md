@@ -145,3 +145,34 @@ Probabilities are Laplace-smoothed from the raw counts shown in `base_rate`.
 ## 8. Worked example
 
 A full example email is in `00-SYNTHESIS.md` §7: a replay of the 20 March 2020 crash-tranche setup, using pre-2020 base rates rather than hindsight.
+
+## 9. The Sunday email and the Rule E email (design v4 §9; built in Phase C2)
+
+The growth book (design v4) replaces the per-trade emails of §2–§5 with **one Sunday email a week**, plus the exit-only **Rule E** email. Both are rendered by `traderec/growth/email.py` from structured facts (no LLM), with their text in `traderec/email_text/growth.py`.
+
+**Timing.** Sunday about 21:17 ET (20:17 in winter; the existing `weekly` job), after Bitcoin's 00:00 UTC weekly close and Friday's index closes. Orders queue for Monday's open (Tuesday after a Monday holiday, stated in the email).
+
+**Subject.** `[PAPER][GROWTH G-2026-09-27] week 39: 3 orders — buys on Mon 28 Sep from 9:35 ET`; with sells and buys, `… — Step 1 tonight, Step 2 Mon 28 Sep from 9:35 ET`; on a quiet week `… week 41: no change`. The label is PAPER or LIVE; the module is GROWTH; the week is the ISO week number.
+
+**Body, in this order (plain English):**
+
+1. The headline box: STATUS (the label, GROWTH, the stage, the week, the decision date and the closes it used), THIS WEEK, BOOK (NAV: IRA and taxable), SIZE (G and the drawdown from peak), WINDOW (Step 1's deadline, Step 2's time).
+2. *One line:* "This week: no change." or "This week: 1 recommendation, N orders." A Monday holiday adds "Monday is an NYSE holiday: Step 1 by 9:20 ET on Tue …, Step 2 that day from 9:35 ET."
+3. *Target vs now:* a table per sleeve (G1 SSO, G1 QLD, G2 IBIT, G3 + cash SGOV): state, target as % of the IRA and in dollars, now, change; then what SGOV holds (the gems reserve and the cash sleeve).
+4. *Why:* one sentence per sleeve that changed, with the numbers ("On Fri 25 Sep the S&P 500 closed 7,743, 7.5% above its 200-day average of 7,205: SSO switches in"; "On Sun 27 Sep Bitcoin's weekly close was $90,000: above its 10-week average of $55,000 and above its 200-day average of $43,750: IBIT switches on"); the volatility cut when it applies; always the book's size line ("The book is 17% below its peak of $100,000, so the size is 0.93 (full size until 15% below, then down to 0.25 at 35%, and everything is sold at −40%)"); W10's line when it fired or is open.
+5. *Step 1: the sells* ("Place these tonight, or before 9:20 ET on Mon …"): "Sell all X, market ($… at Friday's close): the sleeve switched off", or a dollar sell (a governor cut; the SGOV sale that funds the buys).
+6. *Step 2: the buys* ("Place these on Mon … from 9:35 ET, once every Step 1 sell shows Filled"): "Buy $X of Y, market, in dollars: the sleeve switched on"; then the cash rule (each buy at most 95% of the cash it needs; a queued buy at most 90%).
+7. *Deferred:* what waits until next Sunday ("Deferred to next Sunday: buy $16,000 of SGOV (the 3 orders are used; the SGOV buy of idle cash may wait a week)"), W10's dropped buy, and changes inside the bands.
+8. *Rule E* (when a score was resolved this week, or Rule E has fired this year): each exit's score against waiting for Sunday, and the count against the annual cap.
+9. *Risks and tax:* the risk box for every leveraged fund bought or held (track 32 §6, with the fund's own numbers from `growth.email.risk_box.funds`): for a 2x fund RESET (the daily reset arithmetic), ONE DAY (the wipe-out level; a 1987-style day), HISTORY (its worst drawdown bought and held, and with this rule), COST (fee plus built-in borrowing); for IBIT GAP (the Monday gap), SWITCH (the switched sleeve's worst drawdown, history and forward), FEE. Then "a 1987-style day costs this book about 29.5% before any rule can act", "the hard stop sells everything at −40%", the Monday-gap line, "IRA gains can't be withdrawn before 59½ without a 10% extra tax", and the tax line naming the account.
+10. *Do this in Robinhood:* at most 7 taps with exact values (the IRA; Step 1's sells; the Filled check; Step 2's buys; the amount; record). Without limited margin the buys are placed on Tuesday, and the steps say so.
+11. *What if:* the open gaps; a sell still queued after the open; less buying power than a buy needs; a dollar order refused; a missed day; a Monday holiday.
+12. *Sources:* each index and Bitcoin close on both sources, and whether they agree.
+13. *Record your fills:* one GitHub issue per order (`filled <dollars> @ <price>` or `skipped`).
+14. *Footer:* the week, the decision date and the closes used, the constitution version, the data date and sources, the ledger head and the `growth_decision` / `order_set` record ids, the disclaimer.
+
+**Validator (gate 1 for the growth book).** Every number in the email is checked against the facts record the Sunday job wrote (`state.growth.last_facts`), value **and** slot: each numbered phrase is a template whose fields the validator rebuilds from the facts with its own formatter (`traderec/validator.py`, `growth_slots`), so a target, an order amount, a "why" figure or a risk-box number in the wrong place fails, and every phrase is required in both the text and the HTML. The risk box is mandatory whenever SSO, QLD or IBIT is bought or held (`growth_problems`). A failed check blocks the email with a `validator` alert and a `correction` record.
+
+**The Rule E email** (design §3a.7; at most 10 lines): `[PAPER][EXIT G-2026-09-30-SSO] Rule E: Sell all SSO — before 9:30 ET Thu 1 Oct`; the trigger with its numbers ("the S&P 500 closed 6,156, 14.6% below its 200-day average of 7,205, so the SSO leg is out"; the weekly rule checked daily, without the 2% band); "Sell all SSO, market, queued for the next open: about $15,800 at tonight's close"; "Buy the cash fund with the proceeds any time this week"; the score line ("this exit is scored against waiting for Sunday … Rule E has fired 1 of at most 6 times this year (and at most 1 a week)"); the Robinhood taps; the issue link; the footer. Its numbers are checked the same way (kind RULE_E).
+
+**No email is sent on a week the validator blocks; a no-change week still gets its short email** (`growth.email.send_no_change`, default on), because the design's owner routine is "read the Sunday email, place what it says", and three weeks in four it says nothing to place.

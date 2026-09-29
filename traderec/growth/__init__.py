@@ -1,9 +1,12 @@
-"""The growth book (design v4.0, research/00-SYSTEM-DESIGN-v4.md §3, §3a, §4, Appendix A): Phase C1.
+"""The growth book (design v4.0, research/00-SYSTEM-DESIGN-v4.md §3, §3a, §4, §9, Appendix A): Phases C1 and C2.
 
 * `governor`  - peak, drawdown, G and the hard stop (pure functions plus the Sunday state update);
 * `orders`    - sleeve targets -> per-ticker deltas -> netting -> bands -> ranking -> the <= 3 orders and the deferred list;
 * `weekly`    - the Sunday job (`weekly.run(run)`), called from `pipeline.run_weekly`: ingest -> G1/G2 signals -> NAV,
-                peak, drawdown, G -> targets -> order set -> paper broker -> ledger -> the facts record.
+                peak, drawdown, G -> targets -> order set -> paper broker -> ledger -> the facts record -> the email;
+* `email`     - the Sunday email and the Rule E email from the facts record, and the validator's slot table (C2);
+* `send`      - render -> validate -> one GitHub issue per order -> the run's outgoing queue (C2);
+* `rule_e`    - the exit-only mid-week check in the daily run (`growth.rule_e.daily(run)`) and its Sunday score (C2).
 
 The signals live in `traderec.modules.g1_lev_trend` and `traderec.modules.g2_btc_switch`. This package touches no
 network: every input comes through `run.bars()` / `run.provider`, and every function here is deterministic.
@@ -14,6 +17,9 @@ import dataclasses
 from typing import Any
 
 from traderec.config import Config
+
+__all__ = ["GROWTH_MODULES", "cfg_growth", "enabled", "module_status", "new_growth_state", "rule_e", "state_growth",
+           "supersedes_m3", "with_enabled"]
 
 GROWTH_MODULES = ("G1", "G2", "G3", "GROWTH")     # the lot / order `module` names the book uses ("GROWTH" = the SGOV sleeve)
 
@@ -67,3 +73,6 @@ def state_growth(state: dict[str, Any]) -> dict[str, Any]:
     for key, value in new_growth_state().items():
         st.setdefault(key, value)
     return st
+
+
+from traderec.growth import rule_e  # noqa: E402  - the daily run's one-line hook: growth.rule_e.daily(run)

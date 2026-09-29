@@ -2,7 +2,7 @@
 
 Every component builds against these contracts, and this file records them as built. Phase B's original build contracts are in `docs/PHASE_B_CONTRACTS.md`, and each Phase B build's notes are in `docs/phase-b/`. Where the two differ, this file and the code are current. Shared types are in `traderec/types.py`, config loading in `traderec/config.py` (`load_config()` → `Config`) and indicators in `traderec/indicators.py`. The design is `research/00-SYSTEM-DESIGN-v3.md` (v3.3; Appendix C lists Phase B's interpretations); the rule parameters are in `config/constitution.yaml` (version 3.3.0).
 
-**Contents:** 1 data layer · 2 ledger · 3 paper broker · 4 forecasts · 5 modules and risk · 6 emails, validator, notify, feedback · 7 pipeline, CLI, runs and the order of work · 8 options (`traderec/options/`) · 9 runners and hooks · 10 the LLM veto · 11 reviews (`traderec/reports.py`).
+**Contents:** 1 data layer · 2 ledger · 3 paper broker · 4 forecasts · 5 modules and risk · 6 emails, validator, notify, feedback · 7 pipeline, CLI, runs and the order of work · 8 options (`traderec/options/`) · 9 runners and hooks · 10 the LLM veto · 11 reviews (`traderec/reports.py`) · 12 the growth book (`traderec/growth/`, design v4).
 
 ## Conventions
 
@@ -176,7 +176,7 @@ class Ledger:
 
 - **Record envelope:** `seq`, `record_type`, `created_at` (UTC ISO), `as_of`, `constitution_version`, `payload`, `prev_hash`, `hash`.
 - **Hash:** `hash = sha256(canonical_json(record without "hash"))`, where canonical JSON uses `sort_keys` and `separators=(",", ":")`.
-- **Record types:** `run_manifest`, `snapshot`, `signal`, `recommendation`, `order`, `fill`, `mark`, `forecast`, `resolution`, `shadow`, `monthly_report`, `quarterly_report`, `annual_report`, `correction`. Phase B added `quarterly_report` and `annual_report`; the review's payload also says `"review": "quarterly" | "annual"`.
+- **Record types:** `run_manifest`, `snapshot`, `signal`, `recommendation`, `order`, `fill`, `mark`, `forecast`, `resolution`, `shadow`, `monthly_report`, `quarterly_report`, `annual_report`, `correction`. Phase B added `quarterly_report` and `annual_report`; the review's payload also says `"review": "quarterly" | "annual"`. Phase C (design v4 A.3) added `growth_decision`, `governor`, `order_set`, `rule_e` and `g3_shadow` (§12); a Sunday email's `recommendation` record has `"kind": "GROWTH"` and carries the facts record it was rendered from.
 - **Phase B payload conventions** (no other new types):
   - `snapshot` with `"kind": "option_chain"`: `root`, `source`, `asof`, `spot`, `raw_sha256` (what the fills saw), `needed_for`, `budget`, `path`, `bytes`, `file_sha256`, `rows`, `rows_total`, `level`, `surface`, `legs_kept`, `legs_missing`.
   - `fill` for a spread: the `Fill` fields plus the broker's decision meta and `"order_type": "spread_limit"`; a no-fill or cancellation is `{"type": "no_fill", "filled": false, ...}` with the model price and reason.
@@ -439,7 +439,9 @@ def render_annual(report: dict, ctx: dict) -> RenderedEmail        # Phase B (§
 
 def validate(email: RenderedEmail) -> list[str]
     # every numeric token in subject/text must be in numbers_registered or a template-allowed literal
-    # (ALLOWED_LITERALS; Phase B added "11:00", the spread re-price time)
+    # (ALLOWED_LITERALS; Phase B added "11:00", the spread re-price time; Phase C "9:20" and "9:35", the Sunday
+    # email's Step 1 deadline and Step 2 time), then check_slots (value AND slot). For meta["kind"] GROWTH or RULE_E
+    # the slots and their values are rebuilt from meta["facts"] (growth_slots, growth_problems; §12)
 
 def send(email: RenderedEmail, *, dry_run: bool, outbox: Path) -> dict
     # Gmail API via HTTPS (refresh-token flow; env GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN,
@@ -557,6 +559,7 @@ def compare_runs(work_a, work_b, until=None) -> {"records_a", "records_b", "iden
   11. M2 monthly decision, or the next batch of deferred legs;
   12. M3 catch-up (the weekly job normally decides);
   13. W8/W9 (`runners.macro.daily`): exits first, then W8, then W9;
+  13a. Rule E (`growth.rule_e.daily`, design v4 §3a.7): while the growth book is enabled and not paused, each held G1 leg whose index closed below its 200-day average (no band, two sources) is sold at the next open with a short exit-only email (§12);
   14. the Phase A shadow book (ST-1b; every uptrend −3% day scored at 60 and 90 days);
   15. the Phase B shadow runners, each inside `pipeline._shadow_guard`: `option_shadows` → `crypto` → `edgar` → `macro_shadows`;
   16. dated forecasts;
@@ -760,3 +763,49 @@ live_record, collect -> Evidence
 - **Labels and references:** `SHADOW_LABELS` (or a book's `name` in its config block), `WIDE_BOOK_LABELS`, `SHADOW_EVIDENCE`, `SHADOW_BASE_RATES` (ST-1b), `W10_RECORD_REFERENCE` (track 23: SPY 1993–2026 at 60 and 90 days, and random entry days).
 - **The wide book** for the edge evidence: `ST1B` (the ST-1b shadow trades), `M3` (every closed switch), `M2` (position-months: a leg with a positive target, from one monthly decision to the next, on adjusted closes), `W10` (the W10 shadow record at 90 days). Each family is standardised by its own standard deviation and joins the pooled estimate from 5 units with some variation; excess returns are net of the T-bill rate in the last snapshot before entry.
 - **Workflow:** `monthly.yml`'s "Plan the reviews" step runs `quarterly --quarter YYYY-Qn` after a March, June, September or December review, and `annual --year YYYY` after December's; a manual run can pick one review (`review` input), which `--force` requires. Each review is its own run, so one failing doesn't stop the others; state is committed if any succeeded.
+
+## 12. The growth book — `traderec/growth/` (design v4; Phases C1 and C2)
+
+The build notes are `docs/phase-c/growth.md` (C1: config, signals, governor, order set, the Sunday job, the paper broker; C2 §10: the emails and Rule E). The design is `research/00-SYSTEM-DESIGN-v4.md`; its rule parameters are the `growth` block of `config/constitution.yaml` (A.1, plus the `C1:`/`C2:` keys: `rebalance.queued_cash_frac` 0.90 and `market_hours_cash_frac` 0.95; `email.send_no_change`, `email.risk_box.crash_day`, `email.risk_box.funds.<ticker>` and `email.ira_withdrawal`, the numbers the risk box prints).
+
+```python
+# growth/__init__.py
+cfg_growth(cfg) -> dict;  enabled(cfg) -> bool;  module_status(cfg, name) -> str;  supersedes_m3(cfg) -> bool
+new_growth_state() -> dict;  state_growth(state) -> dict          # state["growth"], created for older states
+# growth/governor.py (pure, plus the Sunday state update)
+peak_nav(prev, nav);  drawdown(nav, peak);  G(dd, cfg_gov);  hard_stop(dd, cfg);  update(st, nav, date, cfg) -> record
+restart(st, nav, date);  paused_blocks(st, side)
+# growth/orders.py (pure)
+sleeve_targets(g1_in, g2_on, nav_ira, G, cfg, *, vol_factor, w10_held_usd, w10_buy_usd) -> {ticker: target}
+build_order_set(targets, held, cash, *, G, G_last_order, cfg_growth, paused, w10, modules) -> {"orders", "deferred",
+    "skipped", "dropped", "sgov_sell_usd", "sgov_buy_usd", "cash_after_usd", "g_step", "max_orders", "queued_cash_frac"}
+holiday_shift(sunday) -> str | None
+# growth/weekly.py: the Sunday job, called from pipeline.run_weekly while growth.enabled
+run(run) -> facts               # signals -> governor -> Rule E scores -> targets -> order set -> broker -> ledger
+                                # -> the facts record (state.growth.last_facts) -> send.send_sunday
+# growth/email.py: the renderers and the validator's slot table, from the facts record alone
+render_growth(facts, ctx) -> RenderedEmail       # meta: kind "GROWTH", trade_id "G-<date>", facts, slots, slots_required
+render_rule_e(facts, ctx) -> RenderedEmail       # meta: kind "RULE_E", trade_id "G-<date>-<ticker>" (or -RULE-E)
+slot_specs(facts) -> [{"key", "template", "fields": {field: (value, spec)}, "literals"}];  rule_e_slot_specs(facts)
+fill_slot(slot, fmt) -> str                      # the phrase with its fields formatted by fmt(value, spec)
+# growth/send.py
+send_sunday(run, facts, intents) -> {"blocked", "errors", "subject", "issue_urls"}   # the recommendation record, then:
+dispatch(run, render, facts, intents, *, kind, trade_id, module, expires, ctx)        # render -> validate -> one issue
+                                                 # per order -> run.outgoing (Run.finish sends; dry runs -> the outbox)
+order_line(intent) -> "Sell all SSO" | "Buy $20,000 of SSO"
+# growth/rule_e.py
+daily(run) -> dict | None       # the daily hook (pipeline._daily, after W8/W9); None when nothing fired
+score_pending(run, st, closes, g1, friday) -> {"scored", "count_week", "count_year", "max_per_year", "running_pct"}
+rule_e_state(st, date) -> dict  # state.growth.rule_e with its counters reset by ISO week and by year
+week_key(date) -> "2026-W40"
+# validator.py (Phase C2)
+growth_slots(kind, facts) -> (templates, {field: [rendering]});  growth_problems(kind, facts) -> [str]
+```
+
+**The GROWTH email kind.** `render_growth` renders design v4 §9's body from the facts record (`docs/phase-c/growth.md` §4, plus the C2 keys in §10 there): the banner, the headline box (STATUS, THIS WEEK, BOOK, SIZE, WINDOW), the one line, the target-vs-now table, the why lines (one per changed sleeve, then the book's size line), Step 1 (the sells: "Sell all X, market (…at Friday's close)"), Step 2 (the buys: "Buy $X of Y, market, in dollars", with the 95%/90% cash rule), the deferred, dropped and skipped lines, Rule E's scores when any, the risk box per leveraged fund bought or held (a box per fund: RESET, ONE DAY, HISTORY, COST for the 2x funds; GAP, SWITCH, FEE for IBIT), the 1987-day line, the hard-stop line, the Monday-gap line, the IRA withdrawal line and the tax line, the Robinhood steps (at most 7; the Tuesday variant when `facts.limited_margin` is false), the what-if block, the sources with their two-source checks, the fill links (one issue per order) and the footer with the `growth_decision` and `order_set` ids. A Monday holiday adds its line after the summary. A no-change week is the short version (no orders, no steps) and is sent unless `growth.email.send_no_change` is false. Text lives in `traderec/email_text/growth.py` (`TEXT` for the shared label tables, `PHRASES` for the numbered sentences, `STATIC` for the rest; no digits).
+
+**Value and slot for GROWTH and RULE_E.** Every numbered phrase is one entry of `slot_specs(facts)`: a template with `{field}` placeholders (field names suffixed per phrase, `{c__why_SSO}`) and the field's (value, spec) from the facts. The renderer fills the template through the number registry; `validator.check_slots` calls `growth_slots` to rebuild the same table from `meta["facts"]`, formats each value with its own formatter (`_fmt_spec`, mirroring `NumberRegistry.fmt`) and requires each phrase, wherever it occurs in the subject, text or HTML, to show exactly those values; every phrase is required in the text and the HTML. `growth_problems` blocks an email whose facts carry more orders than `orders.max_orders`, a Step 1 sell ranked after a Step 2 buy, or a fund in `risk.required_for` bought or held without its numbers in `risk.funds` (so the risk box is mandatory whenever SSO, QLD or IBIT is bought or held). A phrase that recurs per fund or per index names the ticker or the index in its literal text.
+
+**The `rule_e` record** (`payload.event`): `exit` (the trigger: `date`, `week`, `execute_date`, `trade_id`, `legs[]` with `ticker`, `index`, `close`, `sma200`, `pct_vs_sma` (percent units), `sma_days`, `band_pct`, `held_usd`, `check` (the two-source check), `intent_id`, `trade_id`; `count_week`, `count_year`, `max_per_week`, `max_per_year`, `orders[]`), `capped` (the same facts plus `reason`: "the weekly cap" | "the annual cap"; logged, not sent), `score` (`ticker`, `trigger_date`, `exit_date`, `exit_price`, `alt_price` (the leg's Friday close), `alt_date`, `alt_action` ("exit" | "hold" | None), `edge_pct` (exit / alternative − 1, in percent; positive when Rule E sold higher), `resolved`, `trigger_record`, `intent_id`) and `unresolved` (no paper fill within two weeks). The exit's orders are ordinary `order` records (`module` G1, `reason` "rule_e", `close_all`), filled by the daily run like any queued order.
+
+**State keys** (`state.growth`; A.3 and `docs/phase-c/growth.md` §6): `peak_nav`, `drawdown`, `G`, `G_date`, `G_at_last_order`, `hard_stop_hit_on`, `paused`, `first_run`, `last_run`, `sleeves.G1.<leg>.{in, since, last_close, sma200, band_state, last_signal, rule_e_exit}`, `sleeves.G2.{on, since, weekly_close, ma10w, sma200, week_end, vol60, vol_cut_factor, vol_high_since}`, `sleeves.G3.{reserve, rules}`, `W10.{open, entry, exit_due, state}`, `targets`, `order_set`, `deferred`, `weeks_with_orders.<year>`, `last_facts` (the facts record, plus `email: {record, subject, blocked, issue_urls}` after the send), and `rule_e.{count_week, count_year, week, year, last, pending, scores, capped, running_pct}`. The Sunday email's per-order issues are `state.issues` entries with the order's own `trade_id` (`G-<date>-<ticker>`), so `feedback.review` matches the owner's fill comments to the paper fills; `email` names the Sunday email's id.

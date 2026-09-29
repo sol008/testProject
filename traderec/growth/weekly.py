@@ -1,11 +1,12 @@
 """The Sunday growth job (design v4 §10 "Sunday 21:17 ET"; Appendix A.2 "Weekly job"): `run(run)`.
 
 Ingest (Friday's index closes, the Sunday Bitcoin close; two sources each) -> G1/G2 signals -> NAV, peak, drawdown,
-G -> targets -> the order set -> the <= 3 orders queued with the paper broker for Monday's open -> the ledger records
-(`growth_decision`, `governor`, `order_set`, one `order` each) -> the facts record, written to
-`state.growth.last_facts` and returned (builder C2's email renderer reads it; docs/phase-c/growth.md documents it).
-Under `run.dry_run` nothing is saved, as for every run. Every data problem fails closed: the leg keeps its state, a
-`data` alert is raised and the event is in the `growth_decision` record.
+G -> Rule E's scores (`rule_e.score_pending`) -> targets -> the order set -> the <= 3 orders queued with the paper
+broker for Monday's open -> the ledger records (`growth_decision`, `governor`, `order_set`, one `order` each) -> the
+facts record, written to `state.growth.last_facts` and returned (docs/phase-c/growth.md documents it) -> the Sunday
+email (`send.send_sunday`: the `recommendation` record, render, validate, one issue per order, the notifier).
+Under `run.dry_run` nothing is saved and the email goes to the outbox, as for every run. Every data problem fails
+closed: the leg keeps its state, a `data` alert is raised and the event is in the `growth_decision` record.
 """
 from __future__ import annotations
 
@@ -15,8 +16,9 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from traderec import growth
-from traderec.growth import governor
+from traderec.growth import governor, rule_e
 from traderec.growth import orders as orders_mod
+from traderec.growth import send as growth_send
 from traderec.market_calendar import iso, next_trading_day
 from traderec.modules.g1_lev_trend import last_session_before, leg_check
 from traderec.modules.g2_btc_switch import g2_signal, two_source_check, vol_cut
@@ -182,6 +184,7 @@ def run(run: "Run") -> dict[str, Any]:
     if paused:
         g1_in = {leg: False for leg in legs}
         g2_on = False
+    rule_e_info = rule_e.score_pending(run, st, closes, g1, friday)      # Rule E exits scored against "waiting for Sunday"
 
     # 3. targets and holdings
     w10_info, w10_buy = _w10(run, cfg, st, nav_ira, G, closes, acct)
@@ -214,6 +217,7 @@ def run(run: "Run") -> dict[str, Any]:
             continue
         o["queued"] = True
         o["intent_id"] = intent.intent_id
+        o["trade_id"] = intent.trade_id
         intents.append(intent)
         run.log("order", intent.to_dict())
     sent = [o for o in os["orders"] if o.get("queued")]
@@ -270,11 +274,12 @@ def run(run: "Run") -> dict[str, Any]:
         year = date[:4]
         st["weeks_with_orders"][year] = int(st["weeks_with_orders"].get(year, 0)) + 1
 
-    # 7. the facts record (docs/phase-c/growth.md)
+    # 7. the facts record (docs/phase-c/growth.md), then the Sunday email (design v4 §9)
     facts = _facts(run, cfg, st, date, friday, g1, g2, g1_in, g2_on, targets, held, os, sent, w10_info,
                    {"ira": nav_ira, "taxable": nav_taxable, "total": nav_total}, gov, sources,
                    {"growth_decision": decision["hash"], "governor": gov_rec["hash"], "order_set": order_rec["hash"]},
-                   vehicle)
+                   vehicle, rule_e_info)
+    growth_send.send_sunday(run, facts, intents)
     st["last_facts"] = facts
     run.result.nav = nav_total
     run.note(f"growth: G {G:.2f}, drawdown {gov['drawdown']:.1%}, {len(sent)} orders, {len(os['deferred'])} deferred")
@@ -290,21 +295,25 @@ def _sleeve_row(name: str, ticker: str, state: str, changed: bool, tg: dict, hel
 
 def _facts(run: "Run", cfg: dict, st: dict, date: str, friday: str, g1: dict, g2: dict, g1_in: dict, g2_on: Any,
            targets: dict, held: dict, os: dict, sent: list[dict], w10_info: dict, nav: dict, gov: dict,
-           sources: list[dict], ids: dict, vehicle: str) -> dict[str, Any]:
+           sources: list[dict], ids: dict, vehicle: str, rule_e_info: dict | None = None) -> dict[str, Any]:
     sl = cfg.get("sleeves") or {}
+    sig1 = (sl.get("G1") or {}).get("signal") or {}
     sleeves: list[dict] = []
     for leg, spec in ((sl.get("G1") or {}).get("legs") or {}).items():
         res = g1[leg]
         pct = res.get("pct_vs_sma")
         why = {"index": spec.get("index"), "close": res.get("close"), "sma200": res.get("sma200"),
                "pct_vs_sma": None if pct is None else round(100.0 * float(pct), 2), "band_pct": 2.0 if res.get("band") is None else round(100.0 * float(res["band"]), 2),
+               "sma_days": int(sig1.get("sma_days", 200)),
                "session": res.get("date"), "signal": bool(res["signal"]), "reason": res.get("reason")}
         sleeves.append(_sleeve_row(f"G1 {leg}", leg, "in" if g1_in.get(leg) else "out", res.get("changed"), targets[leg],
                                    held.get(leg, 0.0), why))
     g2_cfg = sl.get("G2") or {}
+    sig2 = g2_cfg.get("signal") or {}
     ibit = str(g2_cfg.get("instrument") or "IBIT")
     vc = g2.get("vol_cut") or {}
     why2 = {"weekly_close": g2.get("weekly_close"), "ma10w": g2.get("ma10w"), "sma200": g2.get("sma200"),
+            "ma_weeks": int(sig2.get("weekly_ma_weeks", 10)), "sma_days": int(sig2.get("sma_days", 200)),
             "week_end": g2.get("week_end"), "above_ma10w": g2.get("above_ma10w"), "above_sma200": g2.get("above_sma200"),
             "vol60_pct": None if vc.get("vol60") is None else round(100.0 * float(vc["vol60"]), 1),
             "vol_cut_factor": float(st["sleeves"]["G2"].get("vol_cut_factor") or 1.0), "signal": bool(g2.get("signal")),
@@ -317,15 +326,23 @@ def _facts(run: "Run", cfg: dict, st: dict, date: str, friday: str, g1: dict, g2
                                 "promoted_rules": [], "reason": "held in SGOV until a G3 rule is promoted"}))
     step1 = [{"action": "sell_all" if o["action"] == "sell_all" else "sell", "ticker": o["ticker"],
               "held_usd": o["held_usd"], "usd": None if o["action"] == "sell_all" else o["usd"], "rank": o["rank"],
-              "reason": o["reason"], "sleeve": o["sleeve"]} for o in sent if o["action"] != "buy"]
+              "reason": o["reason"], "sleeve": o["sleeve"], "intent_id": o.get("intent_id"), "trade_id": o.get("trade_id")}
+             for o in sent if o["action"] != "buy"]
     step2 = [{"action": "buy", "ticker": o["ticker"], "usd": o["usd"], "cash_cap_usd": o.get("cash_cap_usd"),
-              "rank": o["rank"], "reason": o["reason"], "sleeve": o["sleeve"]} for o in sent if o["action"] == "buy"]
-    deferred = [{"action": o["action"], "ticker": o["ticker"], "usd": o["usd"], "sleeve": o["sleeve"], "why": o.get("why")}
-                for o in os["deferred"]]
+              "rank": o["rank"], "reason": o["reason"], "sleeve": o["sleeve"], "intent_id": o.get("intent_id"),
+              "trade_id": o.get("trade_id")} for o in sent if o["action"] == "buy"]
+    deferred = [{"action": o["action"], "ticker": o["ticker"], "usd": o["usd"], "held_usd": o.get("held_usd"),
+                 "sleeve": o["sleeve"], "why": o.get("why")} for o in os["deferred"]]
     changes = sum(1 for s in sleeves if s["changed"])
-    required = list(((cfg.get("email") or {}).get("risk_box") or {}).get("required_for") or [])
+    email_cfg = cfg.get("email") or {}
+    risk_box = email_cfg.get("risk_box") or {}
+    required = list(risk_box.get("required_for") or [])
     bought = {o["ticker"] for o in step2}
     lev_held = [t for t in required if held.get(t, 0.0) > 0 or t in bought]
+    fund_numbers = risk_box.get("funds") or {}
+    crash_day = risk_box.get("crash_day") or {}
+    acct = str((cfg.get("accounts") or {}).get("switching") or "ira")
+    account_cfg = (run.cfg.account.get("accounts") or {}).get(acct) or {}
     nav_ira = float(nav["ira"]) or 1.0
     crash = 0.0
     for leg in ((sl.get("G1") or {}).get("legs") or {}):
@@ -346,11 +363,19 @@ def _facts(run: "Run", cfg: dict, st: dict, date: str, friday: str, g1: dict, g2
         "sleeves": sleeves,
         "orders": {"step1": step1, "step2": step2, "deferred": deferred, "dropped": os["dropped"], "skipped": os["skipped"],
                    "sgov_sell_usd": os["sgov_sell_usd"], "sgov_buy_usd": os["sgov_buy_usd"], "max_orders": os["max_orders"],
-                   "queued_cash_frac": os["queued_cash_frac"]},
+                   "queued_cash_frac": os["queued_cash_frac"],
+                   "market_hours_cash_frac": float((cfg.get("rebalance") or {}).get("market_hours_cash_frac", 0.95))},
         "w10": w10_info,
         "holiday": holiday,
-        "risk": {"leveraged_held": lev_held, "crash_day_loss_pct": round(100.0 * crash, 1),
-                 "hard_stop_pct": round(100.0 * float(gov["hard_stop_at"]), 1), "drawdown_limit_pct": round(100.0 * float(cfg.get("drawdown_limit", 0.40)), 1)},
-        "sources": sources, "ids": ids, "account": (cfg.get("accounts") or {}).get("switching", "ira"),
+        "risk": {"leveraged_held": lev_held, "required_for": required, "crash_day_loss_pct": round(100.0 * crash, 1),
+                 "hard_stop_pct": round(100.0 * float(gov["hard_stop_at"]), 1), "drawdown_limit_pct": round(100.0 * float(cfg.get("drawdown_limit", 0.40)), 1),
+                 # the risk box's numbers (track 32 §6), copied from the constitution so the validator checks them here
+                 "funds": {t: dict(fund_numbers[t]) for t in lev_held if t in fund_numbers},
+                 "crash_day_year": crash_day.get("year"), "crash_day_index_pct": crash_day.get("index_pct"),
+                 "ira": dict(email_cfg.get("ira_withdrawal") or {})},
+        "rule_e": rule_e_info or {},
+        "limited_margin": bool(account_cfg.get("limited_margin", True)),
+        "vehicle": vehicle,
+        "sources": sources, "ids": ids, "account": acct,
         "constitution_version": run.cfg.version,
     })

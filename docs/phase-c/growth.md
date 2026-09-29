@@ -235,3 +235,73 @@ order, the daily `fill`s as before. `rule_e` and `g3_shadow` are registered for 
   automated; the hard stop's restart is `governor.restart` by hand after the owner's review.
 - Every provider the daily run sees must serve SSO, QLD, ^NDX, SGOV and BTC-USD bars once the book holds them (the
   dividend and mark steps read every held ticker).
+
+## 10. Emails and Rule E (Phase C2)
+
+Builder C2: the Sunday email and the Rule E exit, the validator's slots for both, the send path, and the owner docs
+(`docs/OPERATIONS.md` §1 "The growth book", `docs/OWNER_SETUP.md` steps 6–7 and Part 3, `docs/INTERFACES.md` §12,
+`README.md`, `research/11-trade-email-spec.md` §9).
+
+| File | What |
+|---|---|
+| `traderec/growth/email.py` | `render_growth(facts, ctx)`, `render_rule_e(facts, ctx)`; `slot_specs` / `rule_e_slot_specs`, the numbered phrases both the renderer and the validator build from the facts record |
+| `traderec/email_text/growth.py` | The text: `TEXT` (GROWTH, G1, G2 labels; SSO and QLD names, merged into `emails.py`'s tables), `PHRASES` (the numbered sentences, `{field}` placeholders, no digits), `STATIC` (the rest) |
+| `traderec/validator.py` | `ALLOWED_LITERALS` += "9:20", "9:35"; `growth_slots`, `growth_problems`, `_fmt_spec` (its own formatter, mirroring the registry); `check_slots` handles kinds GROWTH and RULE_E from `meta["facts"]` |
+| `traderec/growth/send.py` | `send_sunday(run, facts, intents)` (the `recommendation` record, kind GROWTH, with the facts and the ids), `dispatch` (render → validate → one issue per order → `run.outgoing`) |
+| `traderec/growth/rule_e.py` | `daily(run)` (the daily hook), `score_pending` (the Sunday score), `rule_e_state`, `week_key` |
+| `traderec/growth/weekly.py` | Calls `rule_e.score_pending` after the governor and `send.send_sunday` after the facts; the facts gain the keys below |
+| `traderec/pipeline.py` | One line in `_daily`, after `runners.macro.daily`: `growth.rule_e.daily(run)` |
+| `config/constitution.yaml` | `growth.email.send_no_change`, `growth.email.risk_box.crash_day`, `growth.email.risk_box.funds.<ticker>` (the risk box's numbers, with their sources), `growth.email.ira_withdrawal`; nothing existing changed |
+| `tests/test_growth_email.py` | A.4 group 4 (the validator rejects a foreign number and a right number in the wrong slot; the risk box whenever a leveraged fund is bought or held, and its absence blocks the email; Step 1 before Step 2; the deferred line; the Tuesday and holiday variants), the §11 first Sunday end to end (renders, validates, 3 orders, the SGOV deferral, 3 issues, the dry run to the outbox), the no-change week, A.4 group 6 (Rule E fires on a weekday close below the average, exit-only, once a week, 6 a year, scored at the next Sunday, moot when paused, fails closed without a second source) and the Rule E email end to end; a formatter-parity test |
+
+**The facts record, C2 keys** (added by `weekly._facts`; §4 stands): `orders.step1[].intent_id` / `trade_id`,
+`orders.step2[].intent_id` / `trade_id`, `orders.deferred[].held_usd`, `orders.market_hours_cash_frac` (0.95);
+`sleeves[].why.sma_days` (G1), `sleeves[].why.ma_weeks` and `sma_days` (G2); `risk.required_for`, `risk.funds`
+(the constitution's numbers for the funds bought or held), `risk.crash_day_year`, `risk.crash_day_index_pct`,
+`risk.ira`; `rule_e` (`score_pending`'s result: `scored`, `count_week`, `count_year`, `max_per_year`, `max_per_week`,
+`running_pct`, `pending`); `limited_margin` (from `account.yaml`); `vehicle`. After the send, `email` (`record`, the
+`recommendation` hash; `subject`; `blocked`; `issue_urls` by intent id) sits next to the facts in `last_facts`;
+`ids` keeps the Sunday job's three record ids.
+
+**The Sunday send.** `send_sunday` logs the `recommendation` record first (pre-registration, as `Run.emit`), renders
+with that hash as the ledger head, validates (a failure: `correction` record, `validator` alert, `run.blocked`, no
+email), opens one issue per order when `account.github_issues` is on and the run is not a dry run (the first issue
+carries the whole email, the others the order and a link to the first; each is a `state.issues` entry with the
+order's own trade id, so `feedback.review` matches the fill comments), re-renders with the links, and queues the
+email on `run.outgoing`; `Run.finish` sends it, or writes it to the outbox on a dry run or without Gmail credentials.
+A no-change week sends the short email unless `growth.email.send_no_change` is false.
+
+**Rule E.** In the daily run, after the modules: for every G1 leg that is in and held (no pending sell), the index's
+close on the run date against its 200-day average, no band (`below_sma_today`), confirmed on the second source's
+close (`verify_close` and the average re-run on it; a disagreement is a `data` alert and no exit). A leg below: the
+facts, then the caps (`rule_e.max_per_week` 1, `max_per_year` 6 on `state.growth.rule_e.count_week` / `count_year`,
+reset by ISO week and by year); over a cap the trigger is a `rule_e` record (`event: capped`), a note, and Sunday
+decides. Otherwise the `rule_e` record (`event: exit`) is logged, the email rendered and validated (a failure keeps
+the state and queues nothing), then "Sell all <leg>" is queued for the next open (`module` G1, `reason` rule_e,
+`close_all`; `order` records), the leg's state becomes out (`since`, `band_state` "below", `rule_e_exit`), the
+counters move and `rule_e.last` / `rule_e.pending` are set. On the Sunday run, each pending exit whose paper fill is
+in `state.fills` is scored: `edge_pct` = the fill price against the leg's Friday close (the price the Sunday decision
+would have exited at), `alt_action` from the Sunday signal (exit when the close is beyond the band, else hold); a
+`rule_e` record (`event: score`), `rule_e.scores` and `running_pct` for the reviews, and the score lines in the Sunday
+email. No fill within two weeks: `event: unresolved` and a `fill` alert. Paused (the hard stop): nothing.
+
+**Interpretations (C2)**
+
+| Where | The design says | Built as | Why |
+|---|---|---|---|
+| §9 item 1 / the brief | "This week: no change" as the email's first line; the existing weekly job sends nothing on no change | the short no-change email is sent every Sunday (`growth.email.send_no_change`, default true) | design v4 §0 ("three weeks in four it says no change") and §1 ("a no-change note does not count") describe a note that is sent; the design wins over the M3 convention |
+| §3a.7 "at most one a week" | per week | one Rule E *event* a week: every leg that crosses on the same day goes in that email; a second leg later in the week is logged and waits for Sunday | one email a week is the cap's point; an index crash usually trips both legs at once |
+| §3a.7 "scored against waiting for Sunday" | resolved at the next Sunday run | the paper fill price against the leg's Friday close (the last price the Sunday decision sees), with whether that decision would have exited | Monday's open is not known on Sunday night; Friday's close is the price the alternative decides on |
+| §3a.7 "buy SGOV any time this week" | the owner's instruction | the paper broker queues only the sell (exit-only); the Sunday job's SGOV sweep of idle cash follows | the email is exit-only by rule; a week of idle cash costs about 0.08% |
+| Rule E and the G1 state | — | a Rule E exit sets the leg out, so the Sunday rule asks for +2% to re-enter | otherwise the next Sunday would re-buy inside the band |
+| §9 "the fund's own numbers" | the risk box with the fund's numbers | `growth.email.risk_box.funds` in the constitution (fees, the reset arithmetic, the real funds' 2016–2026 drawdowns, IBIT's Monday gap, the switched sleeve's drawdowns), copied into `facts.risk.funds` and checked by the validator | the facts record carries every number the email prints; reviewed data, not template digits |
+| §9 "≤ 7 taps" | seven | six steps with limited margin (seven with the Tuesday line); the sells and buys are "for each" steps with exact values | one email may carry three orders |
+| Step 2 "each at most 95% of its cash" | per order | one cash-rule line under the buys (95% during market hours, 90% queued) rather than a cash figure per order | the figure the owner needs is the rule; the paper broker enforces 90% |
+| A.4 group 8 (C1's whipsaw test) | — | `cfg_for(rule_e=False)` in that test only | it runs Mondays only; Rule E's Monday sell would fill at the next run, a week later, and the Sunday would sell again |
+
+**Known limits.** The Sunday job does not look at pending sells: if the daily run is down from a Rule E evening to
+Sunday, the Sunday order set sells the leg again and the second sell is cancelled with a `fill` alert (fail loud).
+The Rule E score compares one price with one price; the annual review reads `rule_e.scores` for the running value.
+`tests/test_reports.py::test_annual_hurdle_line_names_the_policy_modules_from_the_config` fails on the C1 merge
+already (the annual hurdle line reads the v4 `status` keys, so M1/M4/W8 are no longer "policy modules" there); it is
+the integrator's to settle.
