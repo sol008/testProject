@@ -1,5 +1,7 @@
 # First of the month: the monthly review email, then the venue re-check that keeps
-# config/whitelist.yaml honest (design section 3a.6). Owner's guide: docs/OPERATIONS.md.
+# config/whitelist.yaml honest (design section 3a.6). After the March, June, September and December
+# reviews the quarterly review follows, and after December's the annual review (design section 8).
+# Owner's guide: docs/OPERATIONS.md.
 name: monthly
 
 on:
@@ -14,13 +16,19 @@ on:
         required: false
         type: string
         default: ""
+      review:
+        description: "Which review. auto: the monthly review, plus the quarterly after a March, June, September or December review and the annual after December's. Pick one to run (or force) only that review."
+        required: false
+        type: choice
+        options: [auto, monthly, quarterly, annual]
+        default: auto
       dry_run:
         description: "Dry run: send, commit and open nothing; the would-be email is attached to the run as an artifact."
         required: false
         type: boolean
         default: false
       force:
-        description: "Force: redo the most recent run (only that one) from its pre-run snapshot; its email goes out again."
+        description: "Force: redo the most recent run (only that one) from its pre-run snapshot; its email goes out again. Choose the review to redo."
         required: false
         type: boolean
         default: false
@@ -73,8 +81,85 @@ jobs:
       - name: Initialise state if missing
         run: python -m traderec init --if-missing
 
+      # Which reviews run: the monthly review; the quarterly review of the quarter that just ended after a
+      # March, June, September or December review; the annual review after December's. A manual run may
+      # pick one (and must, to force it: --force redoes only the most recent run).
+      - name: Plan the reviews
+        id: plan
+        env:
+          REVIEW: ${{ inputs.review || 'auto' }}
+        run: |
+          set -euo pipefail
+          month="${RUN_MONTH}"
+          if [ -z "${month}" ]; then
+            month="$(TZ=America/New_York date -d "$(TZ=America/New_York date +%Y-%m-01) -1 day" +%Y-%m)"
+          fi
+          if ! [[ "${month}" =~ ^[0-9]{4}-(0[1-9]|1[0-2])$ ]]; then
+            echo "::error::month must look like YYYY-MM (got '${month}')."
+            exit 1
+          fi
+          year="${month%-*}"
+          case "${month#*-}" in
+            03) quarter="${year}-Q1" ;;
+            06) quarter="${year}-Q2" ;;
+            09) quarter="${year}-Q3" ;;
+            12) quarter="${year}-Q4" ;;
+            *) quarter="" ;;
+          esac
+          annual=""
+          if [ "${month#*-}" = "12" ]; then annual="${year}"; fi
+          monthly=true
+          case "${REVIEW}" in
+            auto)
+              if [ "${FORCE}" = "true" ]; then
+                echo "::error::force redoes one run: choose the review to redo (monthly, quarterly or annual)."
+                exit 1
+              fi
+              ;;
+            monthly)
+              quarter=""
+              annual=""
+              ;;
+            quarterly)
+              monthly=false
+              annual=""
+              if [ -z "${RUN_MONTH}" ]; then
+                quarter="latest"
+              elif [ -z "${quarter}" ]; then
+                echo "::error::${month} does not end a quarter: use a March, June, September or December month, or leave month empty for the quarter that just ended."
+                exit 1
+              fi
+              ;;
+            annual)
+              monthly=false
+              quarter=""
+              if [ -z "${RUN_MONTH}" ]; then
+                annual="latest"
+              elif [ -z "${annual}" ]; then
+                echo "::error::the annual review follows December's review: use YYYY-12, or leave month empty for the year that just ended."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::unknown review '${REVIEW}'."
+              exit 1
+              ;;
+          esac
+          kinds=""
+          if [ "${monthly}" = "true" ]; then kinds="monthly"; fi
+          if [ -n "${quarter}" ]; then kinds="${kinds:+${kinds}+}quarterly"; fi
+          if [ -n "${annual}" ]; then kinds="${kinds:+${kinds}+}annual"; fi
+          {
+            echo "monthly=${monthly}"
+            echo "quarter=${quarter}"
+            echo "year=${annual}"
+            echo "kinds=${kinds}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Reviews for ${month}: ${kinds}"
+
       - name: Run the monthly review
         id: review
+        if: ${{ steps.plan.outputs.monthly == 'true' }}
         env:
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
@@ -109,16 +194,81 @@ jobs:
           fi
           exit "${status}"
 
-      # Runs even if the review failed: the two checks are independent.
+      # After the March, June, September and December reviews: costs, kappa, calibration, drift, recalibration
+      # maps and the go-live and ramp recommendations (design section 8). It runs even if the monthly review
+      # failed: the reviews are independent runs over the same state.
+      - name: Run the quarterly review
+        id: quarterly
+        if: ${{ !cancelled() && steps.plan.outputs.quarter != '' }}
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL_MONTHLY }}   # this workflow's check covers all its reviews
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          QUARTER: ${{ steps.plan.outputs.quarter }}
+        run: |
+          set -euo pipefail
+          eml_count() { if [ -d state/outbox ]; then find state/outbox -maxdepth 1 -name '*.eml' | wc -l; else echo 0; fi; }
+          eml_before="$(eml_count)"
+          args=()
+          if [ "${QUARTER}" != "latest" ]; then args+=(--quarter "${QUARTER}"); fi
+          if [ "${DRY_RUN}" = "true" ]; then args+=(--dry-run); fi
+          if [ "${FORCE}" = "true" ]; then args+=(--force); fi
+          echo "python -m traderec quarterly ${args[*]}"
+          status=0
+          python -m traderec quarterly "${args[@]}" || status=$?
+          if [ "${DRY_RUN}" != "true" ] && [ -n "${GMAIL_CLIENT_ID}" ] && [ -n "${GMAIL_CLIENT_SECRET}" ] \
+            && [ -n "${GMAIL_REFRESH_TOKEN}" ] && [ -n "${ALERT_TO_EMAIL}" ]; then
+            unsent=$(( $(eml_count) - eml_before ))
+            if [ "${unsent}" -gt 0 ]; then echo "unsent=${unsent}" >> "${GITHUB_OUTPUT}"; fi
+          fi
+          exit "${status}"
+
+      # After December's reviews: the annual review with you (calibration slope, retirements, the hurdle and
+      # the budget, W10's re-decision on its shadow record, M2's triggers).
+      - name: Run the annual review
+        id: annual
+        if: ${{ !cancelled() && steps.plan.outputs.year != '' }}
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL_MONTHLY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          YEAR: ${{ steps.plan.outputs.year }}
+        run: |
+          set -euo pipefail
+          eml_count() { if [ -d state/outbox ]; then find state/outbox -maxdepth 1 -name '*.eml' | wc -l; else echo 0; fi; }
+          eml_before="$(eml_count)"
+          args=()
+          if [ "${YEAR}" != "latest" ]; then args+=(--year "${YEAR}"); fi
+          if [ "${DRY_RUN}" = "true" ]; then args+=(--dry-run); fi
+          if [ "${FORCE}" = "true" ]; then args+=(--force); fi
+          echo "python -m traderec annual ${args[*]}"
+          status=0
+          python -m traderec annual "${args[@]}" || status=$?
+          if [ "${DRY_RUN}" != "true" ] && [ -n "${GMAIL_CLIENT_ID}" ] && [ -n "${GMAIL_CLIENT_SECRET}" ] \
+            && [ -n "${GMAIL_REFRESH_TOKEN}" ] && [ -n "${ALERT_TO_EMAIL}" ]; then
+            unsent=$(( $(eml_count) - eml_before ))
+            if [ "${unsent}" -gt 0 ]; then echo "unsent=${unsent}" >> "${GITHUB_OUTPUT}"; fi
+          fi
+          exit "${status}"
+
+      # Runs with every monthly review, even if the review failed: the two checks are independent.
       - name: Re-check the venues (Robinhood and Coinbase public APIs)
         id: venue_check
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.plan.outputs.monthly == 'true' }}
         continue-on-error: true   # the next step judges the result, including a crash here
         run: python research/code/20-executability/check_venues.py
 
       - name: Compare the venue check with config/whitelist.yaml
         id: venue_compare
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.plan.outputs.monthly == 'true' }}
         shell: python
         run: |
           import json
@@ -215,10 +365,11 @@ jobs:
               shutil.copyfile(RESULT, Path("state") / "venue_check.json")
           subprocess.run(["git", "checkout", "--", str(RESULT)], check=False)
 
+      # Commits when any review completed: each is its own run over the state, so one failing never undoes another.
       - name: Commit state changes
-        if: ${{ !cancelled() && steps.review.outcome == 'success' && env.DRY_RUN != 'true' }}
+        if: ${{ !cancelled() && env.DRY_RUN != 'true' && (steps.review.outcome == 'success' || steps.quarterly.outcome == 'success' || steps.annual.outcome == 'success') }}
         env:
-          RUN_KIND: monthly
+          RUN_KIND: ${{ steps.plan.outputs.kinds || 'monthly' }}
         run: |
           set -euo pipefail
           if [[ "${GITHUB_REF}" != refs/heads/* ]]; then
@@ -251,10 +402,13 @@ jobs:
           exit 1
 
       - name: Fail if Gmail refused an email
-        if: ${{ !cancelled() && steps.review.outputs.unsent != '' }}
+        if: ${{ !cancelled() && (steps.review.outputs.unsent != '' || steps.quarterly.outputs.unsent != '' || steps.annual.outputs.unsent != '') }}
         env:
-          UNSENT: ${{ steps.review.outputs.unsent }}
+          UNSENT_MONTHLY: ${{ steps.review.outputs.unsent }}
+          UNSENT_QUARTERLY: ${{ steps.quarterly.outputs.unsent }}
+          UNSENT_ANNUAL: ${{ steps.annual.outputs.unsent }}
         run: |
+          UNSENT=$(( ${UNSENT_MONTHLY:-0} + ${UNSENT_QUARTERLY:-0} + ${UNSENT_ANNUAL:-0} ))
           echo "::error::${UNSENT} email(s) could not be sent through Gmail. A copy is in state/outbox/ and the next run retries it. The pipeline log says why ('email not sent: ...'); an expired refresh token is the usual cause. See docs/OPERATIONS.md, Troubleshooting."
           exit 1
 

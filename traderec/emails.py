@@ -1890,7 +1890,12 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
       months_elapsed, trades_to_date             paper phase so far
       on_time_rate_to_date, validator_failures_to_date, emails_handled_rate_to_date   gate inputs (default:
                               this month's values)
+      fills_ok_to_date        bool | None: the fills gate to date (default: fills_ok)
       gate_months, gate_trades, gate_on_time, gate_emails_handled   thresholds (default GATE_DEFAULTS, design §7)
+      edge_p, edge_units, edge_threshold, edge_binding   the evidence meter: P(edge > 0) on the wide book, its
+                              resolved units, the go-live threshold, and whether it binds (30 selected trades)
+      stage, next_quarterly, quarterly_this_month   "paper" | "live"; the next quarterly review ("YYYY-Qn")
+      open_trades             [{"module", "trade_id", "status"}]; paused_modules [{"module", "date", "reason"}]
       changes                 [str] rule changes this month (design §8); empty = none
       failures                [str] extra problems to show first
     ctx: mode, ledger_head, data_asof, sources, constitution_version (as for `render`).
@@ -1964,35 +1969,10 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
     handled_td = num("emails_handled_rate_to_date")
     handled_td = handled_td if handled_td is not None else handled_rate
     ledger_ok = r.get("ledger_ok")
-
-    def yes_no(ok: bool | None) -> str:
-        return "not measured" if ok is None else "yes" if ok else "no"
-
-    gate_rows: list[list[str]] = []
-    checks: list[bool | None] = []
-
-    def gate(label: str, needed: str, now: str, ok: bool | None) -> None:
-        gate_rows.append([label, needed, now, yes_no(ok)])
-        checks.append(ok)
-
-    gm, gt, gon, geh = num("gate_months"), num("gate_trades"), num("gate_on_time"), num("gate_emails_handled")
-    gate("Months of paper trading", f"at least {reg.fmt_num(gm)}" if gm is not None else "—",
-         reg.fmt_num(months, decimals=1, strip=True) if months is not None else "—",
-         None if months is None or gm is None else months >= gm)
-    gate("Runs on time", f"at least {reg.fmt_pct(gon, decimals=0)}" if gon is not None else "—",
-         reg.fmt_pct(on_time_td, decimals=1) if on_time_td is not None else "—",
-         None if on_time_td is None or gon is None else on_time_td >= gon)
-    gate("Validator failures", "none", reg.fmt_num(vf_td) if vf_td is not None else "—",
-         None if vf_td is None else vf_td == 0)
-    gate("Emails handled (fill or skip recorded)", f"at least {reg.fmt_pct(geh, decimals=0)}" if geh is not None
-         else "—", reg.fmt_pct(handled_td, decimals=1) if handled_td is not None else "—",
-         None if handled_td is None or geh is None else handled_td >= geh)
-    gate("Practice fills match the fill model", "yes", yes_no(r.get("fills_ok")), r.get("fills_ok"))
-    gate("Ledger verifies", "yes", yes_no(ledger_ok), ledger_ok)
+    gate_rows, checks = _gate_rows(reg, r, months=months, on_time=on_time_td, vf=vf_td, handled=handled_td,
+                                   fills_ok=r.get("fills_ok_to_date", r.get("fills_ok")), ledger_ok=ledger_ok,
+                                   trades=trades_to_date)
     passed = sum(1 for c in checks if c)
-    trades_row = ["Paper trades (edge evidence; advisory)", reg.fmt_num(gt) if gt is not None else "—",
-                  reg.fmt_num(trades_to_date) if trades_to_date is not None else "—",
-                  "advisory" if trades_to_date is None or gt is None or trades_to_date < gt else "yes"]
 
     # subject
     problems = (f" — {reg.fmt_num(len(failures))} problem{'s' if len(failures) != 1 else ''}"
@@ -2050,6 +2030,8 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
                            reg.fmt_money(row["pnl_usd"], signed=True) if _is_num(row.get("pnl_usd")) else "—"])
     if trade_rows:
         blocks.append(("table", (["Module", "Opened", "Closed", "Result"], trade_rows)))
+    blocks += [("p", s) for s in (_open_trades_line(reg, r.get("open_trades")),
+                                  _paused_line(reg, r.get("paused_modules"))) if s]
 
     # forecasts
     blocks.append(("h", "Forecast scores"))
@@ -2066,17 +2048,7 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
 
     # shadow book
     blocks.append(("h", "Shadow book (rules tracked on paper only, never emailed)"))
-    shadow_rows = []
-    for row in r.get("shadow") or []:
-        if not isinstance(row, dict):
-            continue
-        shadow_rows.append([reg.register(str(row.get("name", ""))),
-                            reg.fmt_num(row["signals"]) if _is_num(row.get("signals")) else "—",
-                            reg.fmt_num(row["closed"]) if _is_num(row.get("closed")) else "—",
-                            reg.fmt_pct(row["mean_ret"], decimals=2, signed=True) if _is_num(row.get("mean_ret"))
-                            else "—"])
-    blocks.append(("table", (["Rule", "Signals", "Closed", "Average result"], shadow_rows)) if shadow_rows
-                  else ("p", "No shadow-book activity this month."))
+    blocks += _shadow_blocks(reg, r.get("shadow"), "this month")
 
     # operations
     blocks.append(("h", "Operations"))
@@ -2085,16 +2057,29 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
         t("Validator failures: {validator_failures:int}.", None),
         t("Data problems: {data_problems:int}.", None),
         t("Trade emails: {emails_sent:int} sent, {emails_handled:int} handled (a fill or skip recorded).", None),
-        None if ledger_ok is None else f"Ledger verified: {yes_no(ledger_ok)}.",
+        t("Practice fills against the fill model: a median gap of {median_fill_gap_bps:num1} bp this month.", None),
+        None if ledger_ok is None else f"Ledger verified: {_yes_no(ledger_ok)}.",
     ) if s]
     blocks.append(("ul", ops) if ops else ("p", "No operations data in this report."))
 
     # gate
     blocks.append(("h", "Paper-phase gate (going live at quarter size)"))
-    blocks.append(("table", (["Check", "Needed", "Now", "Pass?"], gate_rows + [trades_row])))
+    blocks.append(("table", (["Check", "Needed", "Now", "Pass?"], gate_rows)))
     blocks.append(("p", "All checks pass: the go-live review with you can happen." if passed == len(checks)
                    else f"Not yet: {reg.fmt_num(passed)} of {reg.fmt_num(len(checks))} checks pass. Going live is "
                         "an operations gate; the edge evidence stays advisory until there are enough trades."))
+    edge_note = t("The edge evidence scores {edge_units:int} resolved results of the same rules run wide: the dip-buy "
+                  "without its VIX gate, every Bitcoin switch, the trend book's positions month by month and every "
+                  "crash day, against a sceptical starting view that most edges are small.", None) \
+        if num("edge_p") is not None else None
+    stage = str(r.get("stage") or "").lower()
+    next_q = _quarter_label(r.get("next_quarterly"), reg)
+    stage_note = None
+    if stage in ("paper", "live") and next_q:
+        when = "right after this review" if r.get("quarterly_this_month") else "after its last monthly review"
+        stage_note = (f"Stage: {stage}. The next quarterly review ({next_q}) comes {when}; it recommends the "
+                      "go-live and ramp decisions, and you decide.")
+    blocks += [("p", s) for s in (edge_note, stage_note) if s]
 
     # rule changes
     blocks.append(("h", "Rule changes"))
@@ -2122,3 +2107,747 @@ def render_monthly(report: dict, ctx: dict) -> RenderedEmail:
             "failures": len(failures)}
     return RenderedEmail(subject=subject, text=_to_text(blocks), html=_to_html(blocks, subject, preheader, live),
                          numbers_registered=list(reg.numbers), meta=meta)
+
+
+# ----------------------------------------------------------------------------- review helpers (gate, open trades)
+# Shared by render_monthly and the quarterly and annual reviews (design §7 gate, §8 reviews). Same rules as the
+# trade emails: no digits in templates; every number goes through the registry.
+
+TRADE_STATUS = {"open": "open", "pending_entry": "entry order waiting", "pending_exit": "exit order waiting"}
+
+
+def _yes_no(ok: bool | None) -> str:
+    return "not measured" if ok is None else "yes" if ok else "no"
+
+
+def _fnum(r: dict, key: str) -> float | None:
+    v = lookup(r, key)
+    return float(v) if _is_num(v) else None
+
+
+def _quarter_label(key: Any, reg: NumberRegistry) -> str | None:
+    """"2026-Q3" -> "Q3 2026" (registered), or None."""
+    m = re.match(r"^(\d{4})-Q([1-4])$", str(key or ""))
+    return reg.register(f"Q{m.group(2)} {m.group(1)}") if m else None
+
+
+def _gate_rows(reg: NumberRegistry, r: dict, *, months: float | None, on_time: float | None, vf: float | None,
+               handled: float | None, fills_ok: bool | None, ledger_ok: bool | None,
+               trades: float | None) -> tuple[list[list[str]], list[bool | None]]:
+    """The go-live gate table (design §7): the operations checks, the trade count that makes the edge evidence
+    binding, and the edge evidence itself when the report carries it. Returns (rows, checks); the edge counts as a
+    check only once it binds."""
+    rows: list[list[str]] = []
+    checks: list[bool | None] = []
+
+    def gate(label: str, needed: str, now: str, ok: bool | None) -> None:
+        rows.append([label, needed, now, _yes_no(ok)])
+        checks.append(ok)
+
+    gm, gt, gon, geh = (_fnum(r, k) for k in ("gate_months", "gate_trades", "gate_on_time", "gate_emails_handled"))
+    gate("Months of paper trading", f"at least {reg.fmt_num(gm)}" if gm is not None else "—",
+         reg.fmt_num(months, decimals=1, strip=True) if months is not None else "—",
+         None if months is None or gm is None else months >= gm)
+    gate("Runs on time", f"at least {reg.fmt_pct(gon, decimals=0)}" if gon is not None else "—",
+         reg.fmt_pct(on_time, decimals=1) if on_time is not None else "—",
+         None if on_time is None or gon is None else on_time >= gon)
+    gate("Validator failures", "none", reg.fmt_num(vf) if vf is not None else "—", None if vf is None else vf == 0)
+    gate("Emails handled (fill or skip recorded)", f"at least {reg.fmt_pct(geh, decimals=0)}" if geh is not None
+         else "—", reg.fmt_pct(handled, decimals=1) if handled is not None else "—",
+         None if handled is None or geh is None else handled >= geh)
+    gate("Practice fills match the fill model", "yes", _yes_no(fills_ok), fills_ok)
+    gate("Ledger verifies", "yes", _yes_no(ledger_ok), ledger_ok)
+    rows.append(["Paper trades (edge evidence; advisory)", reg.fmt_num(gt) if gt is not None else "—",
+                 reg.fmt_num(trades) if trades is not None else "—",
+                 "advisory" if trades is None or gt is None or trades < gt else "yes"])
+    edge_p, thr = _fnum(r, "edge_p"), _fnum(r, "edge_threshold")
+    if edge_p is not None or "edge_units" in r:
+        binding = r.get("edge_binding") is True
+        ok = None if edge_p is None or thr is None else edge_p >= thr
+        rows.append(["Chance of a real edge (the same rules run wide)",
+                     f"at least {reg.fmt_pct(thr, decimals=0)}" if thr is not None else "—",
+                     reg.fmt_pct(edge_p, decimals=0) if edge_p is not None else "too few results",
+                     _yes_no(ok) if binding else "advisory"])
+        if binding:
+            checks.append(ok)
+    return rows, checks
+
+
+def _shadow_blocks(reg: NumberRegistry, rows: Any, period: str) -> list[tuple[str, Any]]:
+    """The shadow-book table: books with signals or closed trades in the period; enabled books without any are
+    named in one line, and disabled idle books (Phase B books not switched on yet) are left out."""
+    table, quiet = [], []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        name = reg.register(str(row.get("name", "")))
+        if not (row.get("signals") or row.get("closed")):
+            if row.get("enabled", True) is not False:
+                quiet.append(name)
+            continue
+        table.append([name, reg.fmt_num(row["signals"]) if _is_num(row.get("signals")) else "—",
+                      reg.fmt_num(row["closed"]) if _is_num(row.get("closed")) else "—",
+                      reg.fmt_pct(row["mean_ret"], decimals=2, signed=True) if _is_num(row.get("mean_ret")) else "—"])
+    blocks: list[tuple[str, Any]] = []
+    if table:
+        blocks.append(("table", (["Rule", "Signals", "Closed", "Average result"], table)))
+    if quiet:
+        blocks.append(("p", f"No activity {period}: " + "; ".join(quiet) + "."))
+    return blocks or [("p", f"No shadow-book activity {period}.")]
+
+
+def _open_trades_line(reg: NumberRegistry, rows: Any) -> str | None:
+    items = [f"{reg.register(str(o.get('module', '')))} {reg.register(str(o.get('trade_id', '')))} "
+             f"({TRADE_STATUS.get(str(o.get('status')), 'open')})" for o in rows or [] if isinstance(o, dict)]
+    return ("Open now: " + "; ".join(items) + ".") if items else None
+
+
+def _paused_line(reg: NumberRegistry, rows: Any) -> str | None:
+    items = []
+    for p in rows or []:
+        if not isinstance(p, dict):
+            continue
+        when = f" since {reg.fmt_date(p['date'], 'long')}" if p.get("date") else ""
+        items.append(f"{reg.register(str(p.get('module', '')))}{when} ({reg.register(str(p.get('reason', '')))})")
+    return ("Back in the shadow ledger by a kill switch: " + "; ".join(items) + ".") if items else None
+
+
+class _ReviewEmail:
+    """Plumbing shared by the quarterly and annual review emails: the registry, templates, tables and footer."""
+
+    KIND = "REVIEW"
+    TITLE = "Review"
+    PERIOD = "this period"
+
+    def __init__(self, report: dict, ctx: dict) -> None:
+        self.r: dict[str, Any] = {k: v for k, v in (report or {}).items() if v is not None}
+        self.ctx = ctx or {}
+        self.reg = NumberRegistry()
+        self.filler = _Filler(self.reg, self.r)
+        self.live = str(self.ctx.get("mode", "paper")).lower() == "live"
+        self.MODE = "LIVE" if self.live else "PAPER"
+
+    # --- formatting -------------------------------------------------------------------------------
+    def t(self, *alternatives: str | None, **extra: Any) -> str | None:
+        return self.filler.first(alternatives, extra)
+
+    def num(self, key: str) -> float | None:
+        return _fnum(self.r, key)
+
+    def pct(self, v: Any, decimals: int = 0, *, signed: bool = False, points: bool = False) -> str:
+        return self.reg.fmt_pct(v, decimals=decimals, signed=signed, points=points) if _is_num(v) else "—"
+
+    def n(self, v: Any, decimals: int | None = None, *, signed: bool = False) -> str:
+        return self.reg.fmt_num(v, decimals=decimals, signed=signed) if _is_num(v) else "—"
+
+    def money(self, v: Any, *, signed: bool = False) -> str:
+        return self.reg.fmt_money(v, signed=signed) if _is_num(v) else "—"
+
+    def label(self, s: Any) -> str:
+        return self.reg.register(str(s))
+
+    def rows(self, key: str) -> list[dict]:
+        v = lookup(self.r, key)
+        return [x for x in v if isinstance(x, dict)] if isinstance(v, list) else []
+
+    # --- shared sections --------------------------------------------------------------------------
+    def problems(self) -> list[str]:
+        """The review's problems (structured, rendered here) and its alert messages (verbatim), failures first."""
+        out: list[str] = []
+        for p in self.rows("problems"):
+            kind, n = p.get("kind"), _fnum(p, "n")
+            if kind == "validator":
+                s = self.t("The validator blocked {n:int} " + ("email." if n == 1 else "emails."), **p)
+            elif kind == "data":
+                notes = [self.label(x) for x in p.get("notes") or [] if str(x).strip()]
+                s = (self.t("{n:int} " + ("data problem" if n == 1 else "data problems"), **p) or "Data problems") \
+                    + (": " + "; ".join(notes) if notes else "") + "."
+            else:
+                s = self.t(*PROBLEM_TEXT.get(str(kind), (None,)), **p)
+            if s:
+                out.append(s)
+        out += [self.label(m) for m in self.r.get("failures") or [] if str(m).strip()]
+        return out
+
+    def results_table(self) -> tuple[str, Any]:
+        def cell(key: str) -> str:
+            return self.pct(self.num(key), 2, signed=True)
+
+        return ("table", (["", self.PERIOD.capitalize(), "Since start"],
+                          [["Your portfolio", cell("ret_period"), cell("ret_since_start")],
+                           ["SPY (buy and hold)", cell("spy_ret_period"), cell("spy_ret_since_start")],
+                           ["T-bills (the no-risk rate)", cell("tbill_ret_period"), cell("tbill_ret_since_start")]]))
+
+    def trades_blocks(self) -> list[tuple[str, Any]]:
+        blocks: list[tuple[str, Any]] = [("p", self.t("{trades_opened:int} trades opened and {trades_closed:int} "
+                                                      f"closed {self.PERIOD}.") or "No trade counts in this review.")]
+        rows = [[self.label(f"{row.get('module', '')} {MODULE_NAMES.get(str(row.get('module')), '')}".strip()),
+                 self.n(row.get("opened")), self.n(row.get("closed")), self.money(row.get("pnl_usd"), signed=True)]
+                for row in self.rows("trades")]
+        if rows:
+            blocks.append(("table", (["Module", "Opened", "Closed", "Result"], rows)))
+        return blocks
+
+    def shadow_blocks(self) -> list[tuple[str, Any]]:
+        return [("h", "Shadow books (rules tracked on paper only, never emailed)"),
+                *_shadow_blocks(self.reg, self.rows("shadow"), self.PERIOD)]
+
+    def footer(self) -> list[str]:
+        head = str(self.ctx.get("ledger_head") or "")
+        sources = self.ctx.get("sources")
+        if isinstance(sources, (list, tuple)):
+            sources = ", ".join(str(s) for s in sources)
+        return [f"{self.TITLE} for {self.period_label()} · constitution "
+                f"v{self.label(self.ctx.get('constitution_version') or 'unknown')}",
+                f"Data as of {self.label(self.ctx.get('data_asof') or 'unknown')} · sources: "
+                f"{self.label(sources or 'not recorded')}",
+                f"Ledger head: {self.label(head[:12]) if head else 'not recorded'}",
+                DISCLAIMER]
+
+    def period_label(self) -> str:
+        return self.label(self.r.get("label") or "this period")
+
+    def email(self, subject: str, blocks: list[tuple[str, Any]], preheader: str, meta: dict) -> RenderedEmail:
+        return RenderedEmail(subject=subject, text=_to_text(blocks), html=_to_html(blocks, subject, preheader, self.live),
+                             numbers_registered=list(self.reg.numbers),
+                             meta={"kind": self.KIND, "mode": self.MODE.lower(), **meta})
+
+
+# Problems the reviews compute (reports.quarterly_report / annual_report "problems"), failures first.
+PROBLEM_TEXT: dict[str, tuple] = {
+    "late_runs": ("{late:int} of {expected:int} scheduled runs were late or missing.",),
+    "ledger": ("The ledger failed verification. Don't trust this review until it's fixed.",),
+    "fills": ("Practice fills differ from the fill model: a median gap of {median_gap_bps:num1} bp, against a "
+              "tolerance of {tolerance_bps:num} bp.",
+              "Practice fills differ from the fill model by more than the tolerance."),
+    "calibration_gross": ("Gross calibration bias in {family}: the forecasts said {mean_p:pct0} and {hit_rate:pct0} came "
+                          "true ({n:int} scored). That fails the go-live rule until the forecasts are fixed.",),
+    "calibration_warning": ("Calibration warning for {family}: the forecasts said {mean_p:pct0} and {hit_rate:pct0} came "
+                            "true ({n:int} scored).",),
+    "drift": ("Base-rate drift in {family}: {win_rate:pct0} won against a base rate of {base_win_rate:pct0}; the average "
+              "was {mean_pct:sppct2} against {base_mean_pct:sppct2} ({n:int} resolved).",
+              "Base-rate drift in {family} ({n:int} resolved)."),
+    "kill_switch": ("{module} went back to the shadow ledger on {date:date}: {reason}.",
+                    "{module} went back to the shadow ledger: {reason}."),
+    "m2_review": ("The trend book (M2) is {drawdown:pct1} below its peak, at or past the {review_drawdown:pct0} "
+                  "review trigger: review it with the owner.",),
+    "m2_pause": ("The trend book's (M2) Sharpe over the last {window:int} months is {sharpe:num2}, below "
+                 "{pause_sharpe:num1}: the design says pause it to the shadow ledger. You decide.",),
+}
+COST_ADVICE = {
+    "keep": ("The fill model stands.",),
+    "more_conservative": ("Practice fills are worse than the model by more than {costs.tolerance_bps:num} bp on "
+                          "average: the recommendation is a more conservative fill model at the next change window. "
+                          "You decide; past fills are never re-priced.",),
+    "cut_supported": ("Practice fills beat the model on {costs.practice_fills:int} fills (a cheaper model needs at least "
+                      "{costs.cut_min_fills:int}): a cheaper fill model is supported. You decide.",),
+    "no_practice_fills": ("Without practice fills the model can only become more conservative; a cheaper model needs "
+                          "{costs.cut_min_fills:int} practice fills.",),
+}
+CALIBRATION_STATUS = {"gross": "gross bias", "warning": "warning", "ok": "ok", "few": "too few"}
+DRIFT_STATUS = {"too few": "too few", "in line": "in line", "early sign": "early sign", "drift": "drift"}
+RETIRE_STATUS = {"keep": "keep", "too early": "too early to judge", "candidate": "retirement candidate",
+                 "killed": "paused by its kill switch"}
+
+
+class _QuarterlyEmail(_ReviewEmail):
+    KIND = "QUARTERLY"
+    TITLE = "Quarterly review"
+    PERIOD = "this quarter"
+
+    def build(self) -> RenderedEmail:
+        r = self.r
+        failures = self.problems()
+        live = str(r.get("stage") or "").lower() == "live"
+        gate_rows, checks = _gate_rows(
+            self.reg, r, months=self.num("months_elapsed"), on_time=self.num("on_time_rate_to_date"),
+            vf=self.num("validator_failures_to_date"), handled=self.num("emails_handled_rate_to_date"),
+            fills_ok=r.get("fills_ok_to_date"), ledger_ok=r.get("ledger_ok"), trades=self.num("trades_to_date"))
+        passed, total = sum(1 for c in checks if c), len(checks)
+        ramp = r.get("ramp") if isinstance(r.get("ramp"), dict) else {}
+        if live:
+            decision = ("Full size: all checks pass" if ramp.get("full_ok") else
+                        "Half size: all checks pass" if ramp.get("half_ok") else "Stay at the current size")
+            short = ("full-size checks pass" if ramp.get("full_ok") else
+                     "half-size checks pass" if ramp.get("half_ok") else "ramp: not yet")
+        elif r.get("go_live_ready"):
+            decision = self.t("All go-live checks pass: hold the go-live review with you ({pilot_size:pct0} size)",
+                              "All go-live checks pass: hold the go-live review with you") or ""
+            short = "go-live checks pass"
+        else:
+            decision = f"Stay on paper: {self.n(passed)} of {self.n(total)} go-live checks pass"
+            short = f"go-live: {self.n(passed)} of {self.n(total)} checks pass"
+        label = self.period_label()
+        problems = f" — {self.n(len(failures))} problem{'s' if len(failures) != 1 else ''}" if failures else ""
+        subject = f"[{self.MODE}][QUARTERLY] {label} review{problems} — {short}"
+
+        maps = self.rows("calibration.maps")
+        ready_maps = [m for m in maps if m.get("status") == "recommend map"]
+        box = [
+            ("PROBLEMS", f"{self.n(len(failures))}, listed first below" if failures else "None this quarter"),
+            ("DECISION", decision),
+            ("EDGE", self.t("{edge_p:pct0} chance of a real edge from {edge_units:int} results (needs "
+                            "{edge_threshold:pct0}; " + ("binding" if r.get("edge_binding") else "advisory") + ")")
+             or "Too few results yet"),
+            ("KAPPA", self.t("κ̂ {kappa.kappa:num2}" + (" (the starting view only)" if lookup(r, "kappa.prior_only")
+                                                      else "") + "; sizing stays at κ {kappa.sizing_kappa:num1}")
+             or "Not computed"),
+            ("CALIBRATION", self.t("{calibration.pooled.n:int} scored: said {calibration.pooled.mean_p:pct0}, "
+                                   "{calibration.pooled.hit_rate:pct0} came true") or "No scored forecasts yet"),
+            ("COSTS", self.t("Fill model {costs.cost_usd:money} on {costs.fills:int} fills ({costs.cost_bps:num1} bp)",
+                             "No paper fills this quarter")),
+            ("MAPS", f"{self.n(len(ready_maps))} recommended" if ready_maps else "Identity maps (none due)"),
+            ("STATUS", f"{self.MODE} · stage {self.label(r.get('stage') or 'paper')} · constitution "
+                       f"v{self.label(self.ctx.get('constitution_version') or 'unknown')}"),
+        ]
+        blocks: list[tuple[str, Any]] = [("banner", LIVE_MONTHLY_BANNER if self.live else PAPER_MONTHLY_BANNER),
+                                         ("box", box), ("h", "Problems first")]
+        blocks.append(("ul", failures) if failures else
+                      ("p", "None this quarter: runs on time, no validator failures, no calibration or drift flags."))
+        blocks += self.gate_blocks(gate_rows, passed, total, live, ramp)
+        blocks += [("h", "Results this quarter"), self.results_table()]
+        blocks += [("p", s) for s in (
+            self.t("Portfolio value: {nav:money}. The deepest drop from the peak this quarter was "
+                   "{max_drawdown_period:pct1}.", "Portfolio value: {nav:money}.", None),) if s]
+        blocks += self.trades_blocks()
+        blocks += self.edge_blocks()
+        blocks += self.kappa_blocks()
+        blocks += self.cost_blocks()
+        blocks += self.calibration_blocks()
+        blocks += self.drift_blocks()
+        blocks += self.map_blocks(maps)
+        blocks += self.module_review_blocks()
+        blocks += self.shadow_blocks()
+        blocks += [("h", "Rule changes"),
+                   ("p", self.t("No rule changes (design §8). Reviews only recommend: a change needs a forward "
+                                "comparison of at least {change_forward_months:int} months, at most one change per "
+                                "parameter per quarter, and your decision at the annual review.",
+                                "No rule changes (design §8). Reviews only recommend; you decide.")),
+                   ("footer", self.footer())]
+        quarter = str(r.get("quarter", ""))
+        return self.email(subject, blocks, failures[0] if failures else f"{label} review: {short}.",
+                          {"quarter": quarter, "slug": f"quarterly-{quarter}".rstrip("-"), "failures": len(failures)})
+
+    def gate_blocks(self, rows: list[list[str]], passed: int, total: int, live: bool,
+                    ramp: dict) -> list[tuple[str, Any]]:
+        r = self.r
+        blocks: list[tuple[str, Any]] = [("h", "Go-live and ramp (you decide)"),
+                                         ("table", (["Check", "Needed", "Now", "Pass?"], rows))]
+        if not live:
+            if r.get("go_live_ready"):
+                s = self.t("All go-live checks pass. The recommendation: hold the go-live review with you and start "
+                           "at {pilot_size:pct0} of the target size. Nothing changes until you decide.",
+                           "All go-live checks pass: hold the go-live review with you. Nothing changes until you "
+                           "decide.")
+            else:
+                s = (f"Not yet: {self.n(passed)} of {self.n(total)} checks pass, so the recommendation is to stay on "
+                     "paper. Going live is an operations gate; the next quarterly review looks again.")
+            blocks.append(("p", s))
+            if not r.get("edge_binding"):
+                blocks.append(("p", self.t("The edge evidence is advisory until the paper book has {gate_trades:int} "
+                                           "trades ({trades_to_date:int} so far).",
+                                           "The edge evidence is advisory until the paper book has enough trades.")))
+            return blocks
+        th = ramp.get("thresholds") if isinstance(ramp.get("thresholds"), dict) else {}
+        half, full = ramp.get("half") or {}, ramp.get("full") or {}
+
+        def row(label: str, needed: str, now: str, ok: Any) -> list[str]:
+            return [label, needed, now, _yes_no(ok if isinstance(ok, bool) else None)]
+
+        half_rows = [
+            row("Months live", f"at least {self.n(th.get('ramp_half_live_months'))}", self.n(ramp.get("live_months")),
+                half.get("live_months")),
+            row("Live trades", f"at least {self.n(th.get('ramp_half_live_trades'))}", self.n(ramp.get("live_trades")),
+                half.get("live_trades")),
+            row("Chance of a real edge (paper at half weight)", f"at least {self.pct(th.get('ramp_half_edge'))}",
+                self.pct(ramp.get("edge_p_weighted")), half.get("edge")),
+            row("κ̂ (realised over claimed edge)", f"at least {self.n(th.get('ramp_half_kappa'), 1)}",
+                self.n(ramp.get("kappa"), 2), half.get("kappa")),
+            row("Implementation shortfall (share of the paper edge)",
+                f"at most {self.pct(th.get('ramp_half_shortfall'))}", self.pct(ramp.get("shortfall")),
+                half.get("shortfall")),
+        ]
+        full_rows = [
+            row("Resolved trades (paper at half weight)", f"at least {self.n(th.get('ramp_full_resolved'))}",
+                self.n(ramp.get("resolved_weighted"), 1), full.get("resolved")),
+            row("Chance of a real edge (paper at half weight)", f"at least {self.pct(th.get('ramp_full_edge'))}",
+                self.pct(ramp.get("edge_p_weighted")), full.get("edge")),
+            row("Calibration verified", "yes", _yes_no(full.get("calibration")), full.get("calibration")),
+        ]
+        blocks += [("p", self.t("Ramp to half size ({ramp.thresholds.half_size:pct0} of the target):",
+                                "Ramp to half size:")),
+                   ("table", (["Check", "Needed", "Now", "Pass?"], half_rows)),
+                   ("p", "Ramp to full size:"), ("table", (["Check", "Needed", "Now", "Pass?"], full_rows)),
+                   ("p", "Every ramp step is yours to take at the review; kill switches demote modules on their own.")]
+        return blocks
+
+    def edge_blocks(self) -> list[tuple[str, Any]]:
+        rows = []
+        for f in self.rows("edge_families"):
+            rows.append([self.label(f.get("label") or f.get("family", "")), self.n(f.get("units")),
+                         self.pct(f.get("mean_excess"), 2, signed=True), self.n(f.get("sharpe"), 2, signed=True),
+                         self.pct(f.get("p_positive")) if f.get("usable") else "too few"])
+        blocks: list[tuple[str, Any]] = [("h", "Edge evidence: the same rules run wide")]
+        if rows:
+            blocks.append(("table", (["Family", "Results", "Average after T-bills", "Sharpe per result",
+                                      "Chance of an edge"], rows)))
+        blocks.append(("p", self.t(
+            "All families together: a {edge_p:pct0} chance that the edge is real, from {edge_units:int} results. Each "
+            "family joins once it has {edge_min_units:int} results. The starting view is sceptical (most edges are "
+            "small), so a few good results move it little.",
+            "Not enough resolved results for the edge evidence yet: each family joins once it has "
+            "{edge_min_units:int}.",
+            "Not enough resolved results for the edge evidence yet.")))
+        return blocks
+
+    def kappa_blocks(self) -> list[tuple[str, Any]]:
+        rows = [[self.label(m.get("module", "")), self.n(m.get("trades")),
+                 self.pct(m.get("claimed_mean_pct"), 2, signed=True, points=True),
+                 self.pct(m.get("realized_mean_pct"), 2, signed=True, points=True),
+                 self.n(m.get("kappa_obs"), 2) if m.get("used") else "too few"]
+                for m in self.rows("kappa.modules")]
+        blocks: list[tuple[str, Any]] = [("h", "Claimed vs realised edge")]
+        if rows:
+            blocks.append(("table", (["Module", "Closed trades", "Backtest average", "Realised average", "Ratio"],
+                                     rows)))
+        interval = self.pct(0.8)
+        if lookup(self.r, "kappa.prior_only"):
+            s = self.t("κ̂ is the share of the backtested edge that shows up in real trades. It stays at the starting "
+                       "view of {kappa.prior_mean:num2} until a module has {kappa.min_trades:int} closed trades. "
+                       "Sizing keeps κ at {kappa.sizing_kappa:num1} through the pilot; the ramp to half size needs "
+                       "κ̂ of at least {ramp_half_kappa:num1}.",
+                       "κ̂ stays at its starting view until modules have enough closed trades.")
+        else:
+            s = self.t("κ̂ is the share of the backtested edge that shows up in real trades: {kappa.kappa:num2} "
+                       "(" + interval + " range {kappa.lo80:num2} to {kappa.hi80:num2}), from a starting view of "
+                       "{kappa.prior_mean:num2}. Sizing keeps κ at {kappa.sizing_kappa:num1} through the pilot; the "
+                       "ramp to half size needs κ̂ of at least {ramp_half_kappa:num1}.",
+                       "κ̂ is {kappa.kappa:num2}; sizing keeps κ at {kappa.sizing_kappa:num1} through the pilot.")
+        blocks.append(("p", s or "κ̂ was not computed."))
+        return blocks
+
+    def cost_blocks(self) -> list[tuple[str, Any]]:
+        blocks: list[tuple[str, Any]] = [("h", "Costs and slippage"), ("p", self.t(
+            "The fill model charged {costs.cost_usd:money} on {costs.fills:int} paper fills worth {costs.dollars:money} "
+            "this quarter ({costs.cost_bps:num1} bp of what was traded).", "No paper fills this quarter."))]
+        rows = [[self.label(x.get("ticker", "")), self.n(x.get("fills")), self.money(x.get("dollars")),
+                 f"{self.n(x.get('cost_bps'), 1)} bp" if _is_num(x.get("cost_bps")) else "—"]
+                for x in self.rows("costs.by_ticker")]
+        if rows:
+            blocks.append(("table", (["Ticker", "Fills", "Traded", "Model cost"], rows)))
+        blocks.append(("p", self.t(
+            "Your practice fills against the model: {costs.practice_fills:int} measured, a median gap of "
+            "{costs.median_gap_bps:num1} bp and an average of {costs.mean_gap_bps:snum1} bp (above zero means worse "
+            "for you).", "No practice fills were recorded this quarter.")))
+        prac = [[self.label(x.get("ticker", "")), self.n(x.get("fills")),
+                 f"{self.n(x.get('median_gap_bps'), 1)} bp", f"{self.n(x.get('mean_gap_bps'), 1, signed=True)} bp"]
+                for x in self.rows("costs.practice_by_ticker")]
+        if prac:
+            blocks.append(("table", (["Ticker", "Practice fills", "Median gap", "Average gap"], prac)))
+        advice = self.t(*COST_ADVICE.get(str(lookup(self.r, "costs.advice")), (None,)))
+        if advice:
+            blocks.append(("p", advice))
+        return blocks
+
+    def calibration_blocks(self) -> list[tuple[str, Any]]:
+        rows = []
+        for f in self.rows("calibration.families"):
+            status = ("gross" if f.get("gross_bias") else "warning" if f.get("warning") else
+                      "ok" if f.get("enough") else "few")
+            gap = (f"{self.pct(f.get('diff'), signed=True)} ({self.pct(f.get('lo90'), signed=True)} to "
+                   f"{self.pct(f.get('hi90'), signed=True)})") if _is_num(f.get("diff")) else "—"
+            rows.append([self.label(f.get("label") or f.get("family", "")), self.n(f.get("n")),
+                         self.pct(f.get("mean_p")), self.pct(f.get("hit_rate")), gap, CALIBRATION_STATUS[status]])
+        blocks: list[tuple[str, Any]] = [("h", "Calibration: are the stated odds honest?")]
+        if rows:
+            blocks.append(("table", (["Forecast family", "Scored", "Said", "Came true",
+                                      f"Gap ({self.pct(0.9)} range)", "Status"], rows)))
+        blocks.append(("p", self.t(
+            "All forecasts: {calibration.pooled.n:int} scored; they said {calibration.pooled.mean_p:pct0} on average and "
+            "{calibration.pooled.hit_rate:pct0} came true. A warning needs {calibration.min_forecasts:int} scored "
+            "forecasts in a family; a gap wholly beyond {calibration.gross_tolerance:pct0} is a gross bias, which would "
+            "fail the go-live rule.", "No forecasts have been scored yet.")))
+        return blocks
+
+    def drift_blocks(self) -> list[tuple[str, Any]]:
+        rows = []
+        for d in self.rows("drift"):
+            won = f"{self.pct(d.get('win_rate'))} ({self.pct(d.get('base_win_rate'))})"
+            avg = (f"{self.pct(d.get('mean_pct'), 2, signed=True, points=True)} "
+                   f"({self.pct(d.get('base_mean_pct'), 2, signed=True, points=True)})")
+            rows.append([self.label(d.get("label") or d.get("family", "")), self.n(d.get("n")), won, avg,
+                         DRIFT_STATUS.get(str(d.get("status")), "—")])
+        blocks: list[tuple[str, Any]] = [("h", "Base-rate drift")]
+        if rows:
+            blocks.append(("table", (["Rule", "Resolved", "Won (base rate)", "Average (base rate)", "Status"], rows)))
+        blocks.append(("p", self.t("Drift is actionable from {drift_min_signals:int} resolved results; before that a "
+                                   "difference is only an early sign.", "No rule has a base rate to compare yet.")))
+        return blocks
+
+    def map_blocks(self, maps: list[dict]) -> list[tuple[str, Any]]:
+        blocks: list[tuple[str, Any]] = [("h", "Recalibration maps")]
+        due = [m for m in maps if m.get("status") != "identity"]
+        if not due:
+            largest = max(maps, key=lambda m: m.get("n") or 0, default=None)
+            blocks.append(("p", self.t(
+                "Every family keeps the identity map (the stated odds as they are): a map needs "
+                "{calibration.map_min_forecasts:int} scored forecasts in a family, and the largest, {big}, has "
+                "{big_n:int}.", "Every family keeps the identity map (the stated odds as they are).",
+                big=self.label(largest.get("label")) if largest else None, big_n=largest.get("n") if largest else None)))
+            return blocks
+        rows, lines = [], []
+        for m in due:
+            rec = "adopt the map" if m.get("status") == "recommend map" else "keep the identity map"
+            rows.append([self.label(m.get("label") or m.get("family", "")), self.n(m.get("n")),
+                         self.n(m.get("lr_p"), 3), self.n(m.get("oos_gain"), 4, signed=True), rec])
+            if m.get("status") == "recommend map":
+                for x in m.get("mapped") or []:
+                    lines.append(f"{self.label(m.get('label', ''))}: {self.pct(x.get('stated'))} becomes "
+                                 f"{self.pct(x.get('recalibrated'))}.")
+        blocks.append(("table", (["Family", "Scored", "Test p-value", "Out-of-sample gain", "Recommendation"], rows)))
+        if lines:
+            blocks.append(("ul", lines))
+        blocks.append(("p", "A map is recommended only when the test rejects the stated odds and the map scores better "
+                            "on the newer half of the forecasts. Nothing is applied until you decide."))
+        return blocks
+
+    def module_review_blocks(self) -> list[tuple[str, Any]]:
+        w = "module_reviews.w10"
+        m = "module_reviews.m2"
+        items = [
+            self.t("W10: back in the shadow ledger since {" + w + ".disabled.date:date}: {" + w + ".disabled.reason}.",
+                   None) if lookup(self.r, w + ".disabled") else
+            self.t("W10: active. Its worst trade so far returned {" + w + ".worst_return:spct1} (the kill switch fires "
+                   "at {" + w + ".single_trade_limit:pct0}); its realized result is {" + w + ".cum_pnl:smoney} (the "
+                   "limit is {" + w + ".cum_limit_usd:money}).",
+                   "W10: active, with no closed trades yet; its kill switch fires at one trade down "
+                   "{" + w + ".single_trade_limit:apct0}.", "W10: active."),
+            self.t("M2 (trend book): {" + m + ".drawdown:pct1} below its peak (review at {" + m + ".review_drawdown:pct0}"
+                   "); Sharpe {" + m + ".sharpe:num2} over {" + m + ".months:int} months (pause below "
+                   "{" + m + ".pause_sharpe:num1} once {" + m + ".window:int} months exist).",
+                   "M2 (trend book): {" + m + ".drawdown:pct1} below its peak (review at {" + m + ".review_drawdown:pct0}"
+                   "); too few months for a Sharpe yet.", None),
+        ]
+        paused = _paused_line(self.reg, [p for p in self.rows("module_reviews.paused") if p.get("module") != "W10"])
+        items = [s for s in items + [paused] if s]
+        return [("h", "Kill switches and module reviews"), ("ul", items) if items else ("p", "Nothing to review.")]
+
+
+def render_quarterly(report: dict, ctx: dict) -> RenderedEmail:
+    """Render the quarterly review (design §7, §8): failures first, then the go-live and ramp gates (the owner
+    decides), results, the edge evidence on the wide book, κ̂, costs and slippage, calibration, base-rate drift,
+    recalibration maps, kill switches and module reviews, the shadow books and rule changes (none: reviews only
+    recommend).
+
+    report: `traderec.reports.quarterly_report` (quarter, label, the gate keys shared with render_monthly, kappa,
+    costs, calibration, drift, module_reviews, ramp, problems, failures, ...). Every key is optional except the
+    period label. ctx: mode, ledger_head, data_asof, sources, constitution_version (as for `render_monthly`).
+    """
+    return _QuarterlyEmail(report, ctx).build()
+
+
+class _AnnualEmail(_ReviewEmail):
+    KIND = "ANNUAL"
+    TITLE = "Annual review"
+    PERIOD = "this year"
+
+    def build(self) -> RenderedEmail:
+        r = self.r
+        failures = self.problems()
+        decisions = self.decisions()
+        label = self.period_label()
+        problems = f" — {self.n(len(failures))} problem{'s' if len(failures) != 1 else ''}" if failures else ""
+        subject = (f"[{self.MODE}][ANNUAL] {label} review with you{problems} — {self.n(len(decisions))} "
+                   f"decision{'s' if len(decisions) != 1 else ''}")
+        slope = lookup(r, "calibration.slope")
+        candidates = [x for x in self.rows("retirement") if x.get("status") == "candidate"]
+        box = [
+            ("PROBLEMS", f"{self.n(len(failures))}, listed first below" if failures else "None this year"),
+            ("RESULT", self.t("{nav:money}: {ret_period:spct2} this year; SPY {spy_ret_period:spct2}; T-bills "
+                              "{tbill_ret_period:spct2}", "{nav:money}: {ret_period:spct2} this year", "{nav:money}")
+             or "Not available"),
+            ("TRADES", self.t("{trades_year:int} of the {budget:int} allowed", "{trades_year:int}") or "Not available"),
+            ("CALIBRATION", self.t("slope {calibration.slope.b:num2}") if isinstance(slope, dict)
+             else "Too few scored forecasts for a slope"),
+            ("RETIREMENTS", ", ".join(f"{self.label(x.get('module'))}: candidate" for x in candidates) if candidates
+             else "None recommended"),
+            ("W10", W10_ADVICE_SHORT.get(str(lookup(r, "w10.recommendation")), "Keep")),
+            ("M2", M2_STATUS_SHORT.get(str(lookup(r, "m2.status")), "No trigger")),
+            ("STATUS", f"{self.MODE} · stage {self.label(r.get('stage') or 'paper')} · constitution "
+                       f"v{self.label(self.ctx.get('constitution_version') or 'unknown')}"),
+        ]
+        blocks: list[tuple[str, Any]] = [("banner", LIVE_MONTHLY_BANNER if self.live else PAPER_MONTHLY_BANNER),
+                                         ("box", box), ("h", "Problems first")]
+        blocks.append(("ul", failures) if failures else ("p", "None this year."))
+        blocks += [("h", "Decisions for you"), ("ol", decisions),
+                   ("p", "These are recommendations. Nothing changes until you decide.")]
+        blocks += [("h", "The year's results"), self.results_table()]
+        blocks += [("p", s) for s in (
+            self.t("Portfolio value: {nav:money}. The deepest drop from the peak this year was "
+                   "{max_drawdown_period:pct1}.", "Portfolio value: {nav:money}.", None),) if s]
+        blocks += self.trades_blocks()
+        blocks += self.calibration_blocks()
+        blocks += self.retirement_blocks()
+        blocks += self.w10_blocks()
+        blocks += self.m2_blocks()
+        blocks += self.budget_blocks()
+        blocks += [("h", "Rule changes"), ("p", self.t(
+            "Nothing changes automatically. A parameter changes only if the change holds before and after "
+            "{rules_hold_since:year} and clears the multiple-testing bar for the number of variants tried, after a "
+            "forward comparison of at least {change_forward_months:int} months (design §8). Nothing changes because "
+            "of one good or bad month.",
+            "Nothing changes automatically (design §8). Nothing changes because of one good or bad month.")),
+            ("footer", self.footer())]
+        year = str(r.get("year", ""))
+        return self.email(subject, blocks, failures[0] if failures else f"{label} review with you.",
+                          {"year": year, "slug": f"annual-{year}".rstrip("-"), "failures": len(failures),
+                           "decisions": len(decisions)})
+
+    def decisions(self) -> list[str]:
+        r = self.r
+        out = [self.t(*W10_ADVICE.get(str(lookup(r, "w10.recommendation")), W10_ADVICE["keep"])) or
+               W10_ADVICE["keep"][-1]]
+        out.append(self.t(*M2_ADVICE.get(str(lookup(r, "m2.status")), M2_ADVICE["ok"])) or M2_ADVICE["ok"][-1])
+        candidates = [x for x in self.rows("retirement") if x.get("status") == "candidate"]
+        if candidates:
+            out += [f"Retire {self.label(x.get('module'))}? Its chance of a real edge is {self.pct(x.get('p_positive'))} "
+                    f"after {self.n(x.get('trades'))} trades, and its shadow evidence is negative too. Retiring needs "
+                    "your decision (or a documented thesis invalidation)." for x in candidates]
+        else:
+            out.append("Keep every module: no retirement test fires. Retirement also follows a documented thesis "
+                       "invalidation, which is your call.")
+        slope = lookup(r, "calibration.slope")
+        if isinstance(slope, dict) and _is_num(slope.get("b_hi90")) and float(slope["b_hi90"]) < 1.0:
+            out.append("Calibration: the forecasts are over-confident (the slope is below one). Consider shrinking the "
+                       "frozen forecast probabilities toward the base rates at a quarterly review.")
+        elif isinstance(slope, dict) and _is_num(slope.get("b_lo90")) and float(slope["b_lo90"]) > 1.0:
+            out.append("Calibration: the forecasts are timid (the slope is above one). Consider bolder frozen "
+                       "probabilities at a quarterly review.")
+        else:
+            out.append("Calibration: no change; the slope gives no reason to move the frozen forecast probabilities.")
+        if (self.num("budget_hits") or 0) > 0 or (self.num("positions_hits") or 0) > 0:
+            out.append(self.t("Trade budget: the budget of {budget:int} bound {budget_hits:int} times and the open-position "
+                              "cap of {max_open_positions:int} bound {positions_hits:int} times this year. Review both "
+                              "with the evidence below.") or "Trade budget: review the caps that bound this year.")
+        else:
+            out.append(self.t("Hurdle and budget: keep the {hurdle_bp:int} bp hurdle and the budget of {budget:int} "
+                              "trades a year. Neither bound this year, and every module so far is a policy module, "
+                              "which the hurdle exempts.", "Hurdle and budget: keep both.") or "")
+        return [s for s in out if s]
+
+    def calibration_blocks(self) -> list[tuple[str, Any]]:
+        slope = lookup(self.r, "calibration.slope")
+        if isinstance(slope, dict):
+            b_lo, b_hi = _fnum(slope, "b_lo90"), _fnum(slope, "b_hi90")
+            verdict = ("over-confident: the stated odds are too extreme" if b_hi is not None and b_hi < 1.0 else
+                       "timid: the stated odds could be bolder" if b_lo is not None and b_lo > 1.0 else
+                       "consistent with honest odds")
+            s = self.t("Calibration slope {calibration.slope.b:num2} (" + self.pct(0.9) + " range "
+                       "{calibration.slope.b_lo90:num2} to {calibration.slope.b_hi90:num2}) on "
+                       "{calibration.slope.n:int} scored forecasts: " + verdict + ". A slope of one means the stated "
+                       "odds are right; below one, too extreme.")
+        else:
+            s = self.t("Too few scored forecasts for a calibration slope yet ({calibration.pooled.n:int} of the "
+                       "{calibration.min_slope_forecasts:int} needed, with at least two different stated odds).",
+                       "Too few scored forecasts for a calibration slope yet.")
+        blocks: list[tuple[str, Any]] = [("h", "Calibration slope"), ("p", s or "")]
+        citl = self.t("Overall the forecasts said {calibration.pooled.mean_p:pct0} and {calibration.pooled.hit_rate:pct0} "
+                      "came true.", None)
+        if citl:
+            blocks.append(("p", citl + (" Calibration counts as verified for the full-size ramp."
+                                        if lookup(self.r, "calibration.verified") else "")))
+        return blocks
+
+    def retirement_blocks(self) -> list[tuple[str, Any]]:
+        rows = [[self.label(x.get("module", "")), self.n(x.get("trades")), self.n(x.get("months")),
+                 self.pct(x.get("p_positive")), self.pct(x.get("shadow_p_positive")),
+                 RETIRE_STATUS.get(str(x.get("status")), "—")] for x in self.rows("retirement")]
+        blocks: list[tuple[str, Any]] = [("h", "Retirements")]
+        if rows:
+            blocks.append(("table", (["Module", "Trades", "Months", "Chance of an edge", "Shadow evidence", "Status"],
+                                     rows)))
+        blocks.append(("p", self.t(
+            "A module becomes a retirement candidate when its chance of a real edge falls below {retire_edge:pct0} after "
+            "at least {retire_min_trades:int} trades and {retire_min_months:int} months, and its shadow evidence is "
+            "negative too. Never on a losing streak alone.",
+            "A module becomes a retirement candidate only on the pre-registered tests, never on a losing streak.")))
+        return blocks
+
+    def w10_blocks(self) -> list[tuple[str, Any]]:
+        w = self.r.get("w10") if isinstance(self.r.get("w10"), dict) else {}
+        rec = w.get("record") if isinstance(w.get("record"), dict) else {}
+        rows = []
+        for h in ("60", "90"):
+            x = rec.get(h) if isinstance(rec.get(h), dict) else {}
+            ref = x.get("reference") if isinstance(x.get("reference"), dict) else {}
+            rows.append([f"{self.n(float(h))} days", self.n(x.get("scored")), self.pct(x.get("mean_ret"), 2, signed=True),
+                         self.pct(x.get("win_rate")),
+                         f"{self.pct(ref.get('mean_pct'), 2, signed=True, points=True)}; {self.pct(ref.get('win_rate'))}"
+                         f" won; random days {self.pct(ref.get('placebo_mean_pct'), 2, signed=True, points=True)}"])
+        since = self.reg.fmt(w.get("reference_since"), "year") if _is_num(w.get("reference_since")) else None
+        head = ["Held", "Scored", "Average", "Won", f"Reference since {since}" if since else "Reference"]
+        blocks: list[tuple[str, Any]] = [
+            ("h", "W10: the annual re-decision"),
+            ("p", self.t("The shadow record holds every uptrend crash day: {w10.events:int} so far, {w10.events_year:int} "
+                         "this year, each scored at both horizons (including days when W10 was already open).",
+                         "The shadow record holds every uptrend crash day, scored at both horizons.")),
+            ("table", (head, rows)),
+            ("p", self.t("W10's own trades: {w10.trades:int} closed; realized result {w10.cum_pnl:smoney}. The "
+                         "recommendation is the first decision above.",
+                         "W10 has no closed trades yet. The recommendation is the first decision above.")),
+        ]
+        return [b for b in blocks if b[1]]
+
+    def m2_blocks(self) -> list[tuple[str, Any]]:
+        return [("h", "M2: review and pause triggers"), ("p", self.t(
+            "The trend book is {m2.drawdown:pct1} below its peak (the deepest drop so far: {m2.max_drawdown:pct1}); the "
+            "design reviews it at {m2.review_drawdown:pct0}. Its Sharpe over the last {m2.months:int} months is "
+            "{m2.sharpe:num2}; it pauses to the shadow ledger below {m2.pause_sharpe:num1} once {m2.window:int} months "
+            "exist.",
+            "The trend book is {m2.drawdown:pct1} below its peak; the design reviews it at {m2.review_drawdown:pct0}. "
+            "Too few months for a Sharpe yet.", "No trend-book months to review yet.") or "")]
+
+    def budget_blocks(self) -> list[tuple[str, Any]]:
+        return [("h", "Hurdle and trade budget"), ("p", self.t(
+            "{trades_year:int} trades this year against a budget of {budget:int} (the design's target is "
+            "{trades_target_low:int} to {trades_target_high:int} a year); at most {max_open_positions:int} open at once. "
+            "The budget bound {budget_hits:int} times and the open-position cap {positions_hits:int} times. The "
+            "{hurdle_bp:int} bp hurdle applies to discretionary trades only.",
+            "{trades_year:int} trades this year against a budget of {budget:int}.", None) or
+            "No trade counts in this review.")]
+
+
+W10_ADVICE = {
+    "keep": ("Keep W10 as a policy module (the default). It trades too rarely for any rule to test its edge, so the "
+             "shadow record above is the evidence; its damage limits stay in force.",),
+    "consider_shadow": ("Consider moving W10 back to the shadow ledger: at {w10.record.90.scored:int} scored crash days, "
+                        "its record averages {w10.record.90.mean_ret:spct2} at ninety days, below random entry days "
+                        "({w10.record.90.reference.placebo_mean_pct:sppct2} since {w10.reference_since:year}).",
+                        "Consider moving W10 back to the shadow ledger: its record is below random entry days.",),
+    "back_to_shadow": ("W10's kill switch fired on {w10.disabled.date:date} ({w10.disabled.reason}). It stays in the "
+                       "shadow ledger unless you bring it back.",
+                       "W10's kill switch fired. It stays in the shadow ledger unless you bring it back.",),
+}
+W10_ADVICE_SHORT = {"keep": "Keep as a policy module", "consider_shadow": "Consider the shadow ledger",
+                    "back_to_shadow": "In the shadow ledger (kill switch)"}
+M2_ADVICE = {
+    "ok": ("Trend book (M2): no trigger; keep it.",),
+    "review": ("Trend book (M2): review it. It is {m2.drawdown:pct1} below its peak, at or past the "
+               "{m2.review_drawdown:pct0} review trigger.", "Trend book (M2): review it (drawdown trigger)."),
+    "pause": ("Trend book (M2): pause it to the shadow ledger, as the design says: its Sharpe over {m2.window:int} "
+              "months is {m2.sharpe:num2}, below {m2.pause_sharpe:num1}.",
+              "Trend book (M2): pause it to the shadow ledger (Sharpe trigger)."),
+}
+M2_STATUS_SHORT = {"ok": "No trigger", "review": "Review due", "pause": "Pause recommended"}
+
+
+def render_annual(report: dict, ctx: dict) -> RenderedEmail:
+    """Render the annual review with the owner (design §3, §8): failures first, the decisions to take (W10's
+    re-decision against its shadow record, M2's triggers, retirements, calibration, the hurdle and the budget), then
+    the year's results, the calibration slope, retirement tests, W10's record at 60 and 90 days, M2, the budget and
+    the rule-change bar.
+
+    report: `traderec.reports.annual_report`. Every key is optional except the year label. ctx: as for
+    `render_monthly`.
+    """
+    return _AnnualEmail(report, ctx).build()

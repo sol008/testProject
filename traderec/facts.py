@@ -85,15 +85,18 @@ def _acct_label(run: "Run", acct: str) -> str:
 def monthly_report(run: "Run", month: str) -> dict[str, Any]:
     """The monthly review's facts, in `emails.render_monthly`'s keys (design §7 gate, §8 evidence).
 
-    Operations come first in the email; this dict is also written to the ledger as the month's record.
+    Operations come first in the email; this dict is also written to the ledger as the month's record. Trades and
+    shadow books are summarised generically over every module and shadow book in the state (Phase B included);
+    the gate status (to-date operations checks, the edge evidence on the wide book, the stage) comes from
+    `traderec.reports`.
     """
+    from . import reports    # generic summaries and the go-live gate (Phase B reports build)
+
     st = run.state
     start = pd.Timestamp(month + "-01")
     end = start + pd.offsets.MonthEnd(0)
     today = today_et().isoformat()
-
-    def in_month(d: Any) -> bool:
-        return bool(d) and start <= pd.Timestamp(str(d)[:10]) <= end
+    in_month = reports.in_period(start.date(), end.date())
 
     all_marks = st.get("marks", [])
     marks = [m for m in all_marks if in_month(m["date"])]
@@ -116,68 +119,49 @@ def monthly_report(run: "Run", month: str) -> dict[str, Any]:
     asof = pd.Timestamp(last["date"]) if last else end
     month_days = (asof - max(start, created)).days + 1 if asof >= start else 0
 
-    # operations: every NYSE session from the later of the month start and launch, up to today
+    # operations: every NYSE session from the later of the month start and launch, up to today (the daily run),
+    # plus the 10:17 ET options job's sessions from its first run (Phase B)
     sessions = [d for d in _days(start, end) if is_trading_day(d) and str(st["created"]) <= d <= today]
     daily = {k.split(":", 1)[1]: v for k, v in st.get("runs", {}).items() if k.startswith("daily:")}
     on_time = [d for d in sessions if daily.get(d, {}).get("status") == "ok"]
+    opt_expected, opt_on_time = reports.run_punctuality(st, start.date().isoformat(), end.date().isoformat(), today,
+                                                        kinds=("options",))
     alerts = [a for a in st.get("alerts", []) if str(a.get("date", ""))[:7] == month]
     counts: dict[str, int] = {}
     for a in alerts:
         counts[a["kind"]] = counts.get(a["kind"], 0) + 1
     emails_sent = sum(1 for k, v in st.get("runs", {}).items() if k.split(":", 1)[1][:7] == month
-                      for e in v.get("emails", []) if e.get("kind") not in (None, "MONTHLY"))
+                      for e in v.get("emails", []) if e.get("kind") not in (None, *reports.REVIEW_KINDS))
 
-    # trades per module
-    rows, n_opened, n_closed = [], 0, 0
-    for mod in ("M1", "M2", "M3", "W10"):
-        ms = st["modules"].get(mod)
-        if ms is None:
-            continue
-        hist = ms.get("history", [])
-        if mod == "M2":
-            opened = sum(1 for h in hist if in_month(h.get("date")))
-            closed, pnl = 0, None
-        else:
-            opened = sum(1 for h in hist if in_month(h.get("entry_date")))
-            ot = ms.get("open_trade")
-            opened += 1 if (ot and in_month(ot.get("fill_date"))) else 0
-            done = [h for h in hist if in_month(h.get("exit_date"))]
-            closed = len(done)
-            pnl = sum(float(h.get("pnl") or 0.0) for h in done) if done else None
-        n_opened += opened
-        n_closed += closed
-        if opened or closed:
-            rows.append({"module": mod, "opened": opened, "closed": closed, "pnl_usd": pnl})
+    # trades per module and the shadow books: every module and book in the state, whatever its shape
+    rows, n_opened, n_closed = reports.module_activity(st, in_month)
 
     resolved = [f for f in st["forecasts"]["resolved"] if in_month(f.get("resolved_date"))]
     fsum = fc.summarize(resolved)
 
-    shadow = []
-    for name, book in st.get("shadow", {}).items():
-        if "events" in book:          # W10's record: every uptrend -3% day, scored at 60 and 90 days
-            evs = book["events"]
-            scored = [e for e in evs if "90" in (e.get("scores") or {}) and in_month(e["scores"]["90"]["exit_date"])]
-            rets = [float(e["scores"]["90"]["return"]) for e in scored]
-            shadow.append({"name": f"{name} (90-day score)", "signals": sum(1 for e in evs if in_month(e["signal_date"])),
-                           "closed": len(scored), "mean_ret": sum(rets) / len(rets) if rets else None})
-            continue
-        trades = book.get("trades", [])
-        ot = book.get("open_trade")
-        signals = sum(1 for t in trades if in_month(t.get("signal_date"))) + (1 if ot and in_month(ot.get("signal_date")) else 0)
-        closed = [t for t in trades if in_month(t.get("exit_date"))]
-        rets = [float(t["return"]) for t in closed if t.get("return") is not None]
-        shadow.append({"name": name, "signals": signals, "closed": len(closed),
-                       "mean_ret": sum(rets) / len(rets) if rets else None})
+    shadow = reports.shadow_activity(st, run.cfg, in_month)
 
     ok_ledger, why = run.ledger.verify()
+    fetch = reports.memo_fetch(run.services.fetch_comments)
     issues = [i for i in st.get("issues", []) if in_month(i.get("date"))]
-    fb = feedback.review(issues, st.get("fills", []), fetch=run.services.fetch_comments) if issues else {}
+    fb = feedback.review(issues, st.get("fills", []), fetch=fetch) if issues else {}
     horizon = min(end, pd.Timestamp(today))
     all_sessions = [d for d in _days(created, horizon) if is_trading_day(d)]
     all_on_time = [d for d in all_sessions if daily.get(d, {}).get("status") == "ok"]
+    opt_all_expected, opt_all_on_time = reports.run_punctuality(st, created.date().isoformat(),
+                                                                horizon.date().isoformat(), today, kinds=("options",))
+    all_expected = len(all_sessions) + opt_all_expected
     vf_to_date = sum(1 for a in st.get("alerts", []) if a["kind"] == "validator")
     months_elapsed = (asof.year - created.year) * 12 + (asof.month - created.month) + (asof.day >= created.day) - 1
+    # the go-live gate to date and the evidence meter (design §7; track 18 §6.3); a failure here must not cost
+    # the month's review, so it degrades to a note
+    try:
+        gate = reports.monthly_gate(run, horizon.date().isoformat(), fetch=fetch, ledger_ok=ok_ledger)
+    except Exception as exc:  # noqa: BLE001
+        gate = {"review_notes": [f"gate status unavailable: {type(exc).__name__}: {exc}"]}
     return {
+        **gate,                      # first, so this report's own figures below win on any shared key
+        "review": "monthly",
         "month": month, "asof": last["date"] if last else None,
         "nav": nav, "nav_prev": nav_prev, "nav_start": initial_nav,
         "spy_ret_month": spy_ret(prev_mark or first, last), "spy_ret_since_start": spy_ret(first, last),
@@ -189,7 +173,7 @@ def monthly_report(run: "Run", month: str) -> dict[str, Any]:
         "forecast_mean_brier": fsum["mean_brier"], "forecast_hit_rate": fsum["hit_rate"],
         "forecast_mean_p": fsum["mean_p"],
         "shadow": shadow,
-        "runs_expected": len(sessions), "runs_on_time": len(on_time),
+        "runs_expected": len(sessions) + opt_expected, "runs_on_time": len(on_time) + opt_on_time,
         "validator_failures": counts.get("validator", 0), "data_problems": counts.get("data", 0),
         "data_notes": [a["message"] for a in alerts if a["kind"] == "data"][:5],
         "emails_sent": fb.get("measured") if fb.get("handled") is not None else emails_sent,
@@ -198,10 +182,10 @@ def monthly_report(run: "Run", month: str) -> dict[str, Any]:
         "fill_gaps": fb.get("fills", []), "median_fill_gap_bps": fb.get("median_gap_bps"),
         "months_elapsed": max(months_elapsed, 0),
         "trades_to_date": sum(int(v) for v in st["counters"]["trades"].values()),
-        "on_time_rate_to_date": len(all_on_time) / len(all_sessions) if all_sessions else None,
+        "on_time_rate_to_date": (len(all_on_time) + opt_all_on_time) / all_expected if all_expected else None,
         "validator_failures_to_date": vf_to_date,
         "changes": [],
-        "failures": [a["message"] for a in alerts if a["kind"] in ("email", "fill", "drawdown", "budget")][:5],
+        "failures": [a["message"] for a in alerts if a["kind"] in reports.PROBLEM_ALERTS][:5],
         "ledger_message": why,
     }
 
