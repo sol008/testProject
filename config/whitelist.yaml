@@ -1,0 +1,23 @@
+# Instruments verified tradable on the owner's venues (research/code/20-executability/check_venues.py).
+# An email may only contain tickers listed here. Re-verified monthly; a failed check blocks the ticker.
+verified_utc: "2026-09-29"
+robinhood:
+  SPY: {fractional: true, options: true}
+  VOO: {fractional: true, options: true}
+  QQQ: {fractional: true, options: true}
+  IEF: {fractional: true, options: true}
+  GLD: {fractional: true, options: true}
+  USO: {fractional: true, options: true}
+  FXE: {fractional: true, options: true}
+  FXY: {fractional: true, options: true}
+  FXA: {fractional: true, options: true}
+  IBIT: {fractional: true, options: true}
+  FBTC: {fractional: true, options: true}
+  DAL: {fractional: true, options: true}
+  TLT: {fractional: true, options: true}
+  BNO: {fractional: true, options: true}
+  SGOV: {fractional: true, options: true}
+  BIL: {fractional: true, options: true}
+coinbase:
+  BTC-USD: {status: online}
+  ETH-USD: {status: online}

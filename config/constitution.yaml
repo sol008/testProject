@@ -1,0 +1,114 @@
+# Strategy constitution v3.2 (research/00-SYSTEM-DESIGN-v3.md). Changing anything here is a
+# rule change: see design section 8 (at most one change per parameter per quarter, with evidence).
+version: "3.2.0"
+
+modules:
+  M1:                      # ST-1: VIX-gated uptrend dip-buy (policy module), track 13 §11.1
+    enabled: true
+    name: Uptrend dip-buy
+    ticker: SPY
+    account: ira
+    notional_pct_nav: 0.06
+    sma_trend: 200
+    rsi_period: 2
+    rsi_below: 10
+    vix_min: 20.0
+    exit_sma: 5
+    max_sessions: 20       # time stop: sell at the open of session 21
+    stress_loss: 0.326     # S&P 500 worst 10-session loss (track 13 §3.4)
+    base_rates:            # track 13, out-of-sample 2008-2026
+      trades_per_year: 3.8
+      win_rate: 0.82
+      mean_pct: 0.88
+      planning_mean_pct: 0.43
+      median_hold_sessions: 3
+      worst_pct: -9.4
+      max_drawdown_pct: -14
+    forecasts:             # pre-registered, scored monthly
+      p_profit: 0.75       # shrunk from 0.82
+      p_time_stop: 0.10
+
+  M2:                      # R1: slow multi-asset trend, long-only ETF8 in the IRA, track 15 R1
+    enabled: true
+    name: Trend book
+    account: ira
+    legs:
+      SPY: us_equity
+      QQQ: us_equity
+      IEF: duration
+      GLD: gold
+      USO: oil
+      FXE: usd
+      FXY: usd
+      FXA: usd
+    lookback_sessions: 252
+    vol_target_per_leg: 0.035
+    ewma_span: 60
+    scale: 0.5
+    long_only: true
+    gross_cap_pct_nav: 0.60
+    single_leg_cap_pct_nav: 0.25
+    us_equity_stress_cap_pct_nav: 0.03
+    sleeve_stress_pct_nav: 0.045     # worst historical book month at s = 0.5 (track 15)
+    band_rel: 0.25
+    band_abs_usd: 300
+    max_orders_per_email: 3
+    contango_veto_roll_yield: -0.20  # R3: no long crude leg in steep contango (checked when data is available)
+    forecasts:
+      p_leg_up_next_month: 0.54
+
+  M3:                      # R2: Bitcoin weekly trend switch (policy module, opt-in sleeve), track 15 R2
+    enabled: true
+    name: Bitcoin trend switch
+    ticker: IBIT
+    account: ira
+    sleeve_pct_nav: 0.03
+    weeks: 10
+    forecasts:
+      p_profit: 0.45
+
+shadow:                    # logged automatically, never emailed
+  ST1B:
+    enabled: true          # M1 without the VIX gate
+  W10:
+    enabled: true          # uptrend crash day; shadow under the calendar-day reading
+    drop_pct: -0.03
+    decluster_sessions: 20
+    hold_sessions: 42
+    max_calendar_days: 60  # exit at the last session within 60 calendar days (42 sessions overrun 28% of the time, track 22 §1.1)
+    void_vix_above: 45
+    notional_pct_nav: 0.067
+
+risk:
+  governor:
+    full_until: 0.05
+    floor_at: 0.15
+    floor: 0.25
+    review_at: 0.15
+    pause_discretionary_at: 0.20
+  caps:
+    per_trade_stress: 0.02
+    us_equity_cluster: 0.07          # 3% M2 legs + 4% reserved for M1 / W10 / M4
+    total_open_stress: 0.10
+  trade_budget_per_year: 100
+  max_open_positions: 8
+  stress_floor: 0.15                 # minimum 10-session stress assumed for any ETF
+  crypto_stress: 0.45                # IBIT stress (BTC worst 10-session loss scale)
+
+fills:                                # fill model v1.0 (frozen for the paper phase)
+  model_version: "1.0"
+  slippage_bps:
+    default: 3
+    SPY: 1
+    QQQ: 1
+    IEF: 2
+    GLD: 2
+    IBIT: 3
+    USO: 8
+    FXE: 8
+    FXY: 8
+    FXA: 8
+
+data:
+  two_source_tolerance: 0.001         # 0.1% close mismatch blocks new signals
+  fallback_tbill_rate: 0.04
