@@ -60,3 +60,73 @@ def test_latest_comment_per_order_wins():
     fills = [{"trade_id": "T-1", "ticker": "SPY", "side": "buy", "price": 700.0, "fill_date": "2026-10-02"}]
     out = feedback.review([issue], fills, fetch=lambda url: ["filled 6000 @ 770.00", "filled 6000 @ 700.07"])
     assert len(out["fills"]) == 1 and out["fills"][0]["owner"] == 700.07
+
+
+# ------------------------------------------------------------------ option spreads (PHASE_B_CONTRACTS §8)
+
+SPREAD_ISSUE = {"url": "u-m4", "trade_id": "T-2026-09-29-M4", "date": "2026-09-29", "tickers": ["XSP"]}
+SPREAD_FILL = {"trade_id": "T-2026-09-29-M4", "module": "M4", "ticker": "XSP", "side": "buy", "price": 7.45,
+               "dollars": 1490.0, "fill_date": "2026-09-30", "multiplier": 100}
+
+
+def test_parse_spread_fill_comments():
+    assert feedback.parse_comment("filled 2 @ 7.45") == [
+        {"status": "filled", "ticker": None, "dollars": 2.0, "price": 7.45}]
+    assert feedback.parse_comment("filled 2 @ 7.45 XSP")[0]["ticker"] == "XSP"
+    assert feedback.parse_comment("XSP filled 2 contracts @ $7.50") == [
+        {"status": "filled", "ticker": "XSP", "dollars": 2.0, "price": 7.5}]
+    assert feedback.parse_comment("filled 1 spread @ 1.45 DAL") == [
+        {"status": "filled", "ticker": "DAL", "dollars": 1.0, "price": 1.45}]
+    assert feedback.parse_comment("Filled 3x @ 1.20")[0]["price"] == 1.20
+    assert feedback.parse_comment("skipped XSP")[0] == {"status": "skipped", "ticker": "XSP", "dollars": None,
+                                                        "price": None}
+
+
+def test_spread_fills_are_measured_apart_in_bp_of_the_net_price():
+    etf_issue = {"url": "u-m1", "trade_id": "T-1", "date": "2026-10-01", "tickers": ["SPY"]}
+    etf_fill = {"trade_id": "T-1", "module": "M1", "ticker": "SPY", "side": "buy", "price": 700.0,
+                "fill_date": "2026-10-02"}
+    comments = {"u-m1": ["filled 6000 @ 700.35"], "u-m4": ["filled 2 contracts @ 7.50 XSP"]}
+    out = feedback.review([etf_issue, SPREAD_ISSUE], [etf_fill, SPREAD_FILL], fetch=comments.get)
+    assert out["measured"] == 2 and out["handled"] == 2                 # a spread comment counts as handled
+    assert [f["ticker"] for f in out["fills"]] == ["SPY"] and out["median_gap_bps"] == pytest.approx(5.0)
+    (row,) = out["spread_fills"]
+    assert row["spread"] is True and row["contracts"] == 2 and row["owner"] == 7.50 and row["model"] == 7.45
+    assert row["gap_bps"] == pytest.approx(67.11, abs=0.01)             # (7.50 / 7.45 - 1) x 10,000: bp of the debit
+    assert row["gap_usd"] == pytest.approx(5.0)                         # $0.05 per share = $5 per contract
+    assert out["spread_median_gap_bps"] == pytest.approx(67.11, abs=0.01)
+    assert out["spread_fills_ok"] is True and out["fills_ok"] is True
+
+
+def test_spread_gate_has_its_own_tolerance():
+    too_dear = feedback.review([SPREAD_ISSUE], [SPREAD_FILL], fetch=lambda url: ["filled 2 @ 7.80"])
+    assert too_dear["spread_median_gap_bps"] > feedback.SPREAD_FILL_TOLERANCE_BPS
+    assert too_dear["spread_fills_ok"] is False and too_dear["fills_ok"] is False
+    assert too_dear["median_gap_bps"] is None                           # no ETF fill measured
+    skipped = feedback.review([SPREAD_ISSUE], [SPREAD_FILL], fetch=lambda url: ["skipped"])
+    assert skipped["handled"] == 1 and skipped["spread_fills"] == [] and skipped["fills_ok"] is None
+
+
+def test_spread_price_per_contract_and_closing_gap_sign():
+    per_contract = feedback.review([SPREAD_ISSUE], [SPREAD_FILL], fetch=lambda url: ["filled 2 @ 745"])
+    assert per_contract["spread_fills"][0]["owner"] == pytest.approx(7.45)
+    assert per_contract["spread_fills"][0]["gap_bps"] == pytest.approx(0.0)
+    close_issue = dict(SPREAD_ISSUE, url="u-exit", date="2026-12-16")
+    close_fill = dict(SPREAD_FILL, side="sell", price=12.30, fill_date="2026-12-17")
+    out = feedback.review([close_issue], [SPREAD_FILL, close_fill], fetch=lambda url: ["filled 2 @ 12.20"])
+    (row,) = out["spread_fills"]
+    assert row["model"] == 12.30                                        # the close, not the opening fill
+    assert row["gap_bps"] == pytest.approx(81.30, abs=0.01)             # received less: worse, so positive
+    assert row["gap_usd"] == pytest.approx(10.0)
+
+
+def test_spread_fills_are_recognised_without_the_spread_keys():
+    base = {"trade_id": "T", "ticker": "SPY", "side": "buy", "price": 9.8, "fill_date": "2026-10-02"}
+    assert feedback.is_spread_fill({**base, "module": "W8"})           # Phase A keys only: a spread-only module
+    assert feedback.is_spread_fill({**base, "module": "X1", "multiplier": 100})
+    assert feedback.is_spread_fill({**base, "module": "X1", "order_type": "spread_limit"})
+    assert not feedback.is_spread_fill({**base, "module": "M1"})
+    assert not feedback.is_spread_fill({**base, "module": "M1", "multiplier": 1})
+    etf_only = feedback.review([{"url": "u", "trade_id": "T", "date": "2026-10-01", "tickers": ["SPY"]}],
+                               [dict(base, module="M1", price=700.0)], fetch=lambda url: ["filled 6000 @ 700.07"])
+    assert etf_only["spread_fills"] == [] and etf_only["spread_fills_ok"] is None and etf_only["fills_ok"] is True
