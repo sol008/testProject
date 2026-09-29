@@ -1,0 +1,306 @@
+# First of the month: the monthly review email, then the venue re-check that keeps
+# config/whitelist.yaml honest (design section 3a.6). Owner's guide: docs/OPERATIONS.md.
+name: monthly
+
+on:
+  schedule:
+    # 12:13 UTC on the 1st = 08:13 EDT / 07:13 EST. GitHub cron can't say "last day of the month",
+    # so the review runs on the 1st and covers the month that just ended.
+    - cron: "13 12 1 * *"
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Month to review (YYYY-MM). Leave empty for the month that just ended."
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry run: send, commit and open nothing; the would-be email is attached to the run as an artifact."
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: "Force: redo the most recent run (only that one) from its pre-run snapshot; its email goes out again."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # commit state/ back to the branch
+  issues: write     # open an issue when the venue check fails
+
+# Every workflow that writes state/ shares this group, so runs never overlap.
+concurrency:
+  group: traderec-state
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  monthly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+      FORCE: ${{ inputs.force && 'true' || 'false' }}
+      RUN_MONTH: ${{ inputs.month }}
+    steps:
+      - name: Check out the branch head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # An explicit ref checks out the branch as it is when this job starts, not the commit that
+          # triggered it. A run that waited in the concurrency queue therefore sees the state that the
+          # run before it committed.
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        id: install
+        run: pip install -r requirements.txt
+
+      - name: Initialise state if missing
+        run: python -m traderec init --if-missing
+
+      - name: Run the monthly review
+        id: review
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL_MONTHLY }}   # one healthchecks.io check per workflow
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          eml_count() { if [ -d state/outbox ]; then find state/outbox -maxdepth 1 -name '*.eml' | wc -l; else echo 0; fi; }
+          eml_before="$(eml_count)"
+          args=()
+          if [ -n "${RUN_MONTH}" ]; then
+            if ! [[ "${RUN_MONTH}" =~ ^[0-9]{4}-[0-9]{2}$ ]]; then
+              echo "::error::month must look like YYYY-MM (got '${RUN_MONTH}')."
+              exit 1
+            fi
+            args+=(--month "${RUN_MONTH}")
+          fi
+          if [ "${DRY_RUN}" = "true" ]; then args+=(--dry-run); fi
+          if [ "${FORCE}" = "true" ]; then args+=(--force); fi
+          echo "python -m traderec monthly ${args[*]}"
+          status=0
+          python -m traderec monthly "${args[@]}" || status=$?
+          # With all four Gmail secrets set, a new .eml in state/outbox/ means a send failed: the pipeline keeps
+          # a copy there and retries at the next run. A later step fails the job once the state is saved.
+          if [ "${DRY_RUN}" != "true" ] && [ -n "${GMAIL_CLIENT_ID}" ] && [ -n "${GMAIL_CLIENT_SECRET}" ] \
+            && [ -n "${GMAIL_REFRESH_TOKEN}" ] && [ -n "${ALERT_TO_EMAIL}" ]; then
+            unsent=$(( $(eml_count) - eml_before ))
+            if [ "${unsent}" -gt 0 ]; then echo "unsent=${unsent}" >> "${GITHUB_OUTPUT}"; fi
+          fi
+          exit "${status}"
+
+      # Runs even if the review failed: the two checks are independent.
+      - name: Re-check the venues (Robinhood and Coinbase public APIs)
+        id: venue_check
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        continue-on-error: true   # the next step judges the result, including a crash here
+        run: python research/code/20-executability/check_venues.py
+
+      - name: Compare the venue check with config/whitelist.yaml
+        id: venue_compare
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        shell: python
+        run: |
+          import json
+          import os
+          import shutil
+          import subprocess
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          import yaml
+
+          RESULT = Path("research/code/20-executability/venue_check.json")
+          REPORT = Path(os.environ["RUNNER_TEMP"]) / "venue_report.md"
+          today = datetime.now(timezone.utc).date().isoformat()
+          whitelist = yaml.safe_load(Path("config/whitelist.yaml").read_text()) or {}
+          problems = []  # (venue, instrument, problem)
+
+          try:
+              result = json.loads(RESULT.read_text())
+              age = datetime.now(timezone.utc) - datetime.fromisoformat(result["as_of_utc"])
+              if age > timedelta(hours=6):
+                  raise ValueError(f"the newest result is from {result['as_of_utc']}, so check_venues.py did not finish")
+          except Exception as exc:  # missing, unreadable or stale output
+              problems.append(("all venues", "all", f"no fresh result from check_venues.py: {exc}"))
+              result = None
+
+          if result is not None:
+              robinhood = result.get("robinhood") or {}
+              for symbol, want in (whitelist.get("robinhood") or {}).items():
+                  want, got = want or {}, robinhood.get(symbol)
+                  if got is None:
+                      problems.append(("Robinhood", symbol, "not checked: add it to TICKERS in check_venues.py"))
+                      continue
+                  if got.get("found") is False:
+                      problems.append(("Robinhood", symbol, "not found, or the lookup failed (see the log)"))
+                      continue
+                  if got.get("state") != "active" or got.get("tradeable") is not True or got.get("tradability") != "tradable":
+                      problems.append(("Robinhood", symbol, f"not tradable (state {got.get('state')}, tradability {got.get('tradability')})"))
+                  if want.get("fractional") and got.get("fractional_tradability") != "tradable":
+                      problems.append(("Robinhood", symbol, f"no dollar orders (fractional_tradability {got.get('fractional_tradability')})"))
+                  if want.get("options") and not got.get("tradable_chain_id"):
+                      problems.append(("Robinhood", symbol, "no tradable option chain"))
+              coinbase = result.get("coinbase") or {}
+              for product, want in (whitelist.get("coinbase") or {}).items():
+                  want, got = want or {}, coinbase.get(product)
+                  if got is None:
+                      problems.append(("Coinbase", product, "not checked: add it to check_venues.py"))
+                      continue
+                  expected = want.get("status", "online")
+                  if got.get("status") != expected:
+                      if "status" in got:
+                          seen = f"status {got['status']!r}"
+                      elif "http" in got:
+                          seen = f"HTTP {got['http']}"
+                      else:
+                          seen = f"lookup failed ({got.get('error')})"
+                      problems.append(("Coinbase", product, f"{seen}; expected status {expected!r}"))
+                  blocked = [f for f in ("trading_disabled", "cancel_only", "post_only", "limit_only") if got.get(f) is True]
+                  if blocked:
+                      problems.append(("Coinbase", product, "market orders blocked: " + ", ".join(blocked)))
+
+          checked = result["as_of_utc"] if result else "n/a"
+          symbols = sorted({s for _, s, _ in problems if s != "all"})
+          if not problems:
+              title = ""
+              report = f"Venue check passed: every instrument in `config/whitelist.yaml` is still tradable (checked {checked}).\n"
+          else:
+              shown = ", ".join(symbols) if len(symbols) <= 6 else f"{len(symbols)} instruments"
+              title = f"Venue check failed {today}: {shown}" if symbols else f"Venue check could not run {today}"
+              rows = "\n".join(f"| {v} | {s} | {p} |" for v, s, p in problems)
+              report = (
+                  "The monthly venue check could not confirm that these instruments in `config/whitelist.yaml` "
+                  "are still tradable on your venues.\n\n"
+                  f"| Venue | Instrument | Problem |\n|---|---|---|\n{rows}\n\n"
+                  f"Checked: {checked}\n\n"
+                  "**What to do** (docs/OPERATIONS.md, Troubleshooting):\n"
+                  "1. Look the instrument up in the Robinhood (or Coinbase) app.\n"
+                  "2. If it really can't be traded as listed any more, remove it from `config/whitelist.yaml`, "
+                  "so no email can contain it, and close this issue.\n"
+                  "3. If it trades normally, the lookup failed (for example, the API refused the request). "
+                  "Run the monthly workflow again with dry_run ticked to re-check, then close this issue.\n"
+              )
+
+          REPORT.write_text(report)
+          print(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write("## Venue check\n\n" + report)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"ok={'false' if problems else 'true'}\ntitle={title}\n")
+
+          # Keep this check with the committed state; leave the research snapshot as it was.
+          if result is not None:
+              Path("state").mkdir(exist_ok=True)
+              shutil.copyfile(RESULT, Path("state") / "venue_check.json")
+          subprocess.run(["git", "checkout", "--", str(RESULT)], check=False)
+
+      - name: Commit state changes
+        if: ${{ !cancelled() && steps.review.outcome == 'success' && env.DRY_RUN != 'true' }}
+        env:
+          RUN_KIND: monthly
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != refs/heads/* ]]; then
+            echo "::error::State can only be committed to a branch (this run is on ${GITHUB_REF})."
+            exit 1
+          fi
+          branch="${GITHUB_REF_NAME}"
+          if [ ! -d state ]; then
+            echo "No state/ folder; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all state/
+          if git diff --cached --quiet; then
+            echo "State unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit --quiet -m "state: ${RUN_KIND} run $(date -u +%Y-%m-%d) [skip ci]"
+          for attempt in 1 2 3; do
+            if git pull --rebase --autostash --quiet origin "${branch}" && git push --quiet origin "HEAD:${branch}"; then
+              echo "State committed and pushed to ${branch} (attempt ${attempt})."
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "::warning::Push attempt ${attempt} of 3 failed."
+            if [ "${attempt}" -lt 3 ]; then sleep $((attempt * 15)); fi
+          done
+          echo "::error::Could not push the state commit after 3 attempts. The run's state/ folder is attached to this run as an artifact; see docs/OPERATIONS.md, Troubleshooting."
+          exit 1
+
+      - name: Fail if Gmail refused an email
+        if: ${{ !cancelled() && steps.review.outputs.unsent != '' }}
+        env:
+          UNSENT: ${{ steps.review.outputs.unsent }}
+        run: |
+          echo "::error::${UNSENT} email(s) could not be sent through Gmail. A copy is in state/outbox/ and the next run retries it. The pipeline log says why ('email not sent: ...'); an expired refresh token is the usual cause. See docs/OPERATIONS.md, Troubleshooting."
+          exit 1
+
+      - name: Open an issue about the failed venue check
+        if: ${{ !cancelled() && steps.venue_compare.outcome != 'skipped' && steps.venue_compare.outputs.ok != 'true' && env.DRY_RUN != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_TITLE: ${{ steps.venue_compare.outputs.title }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          body="${RUNNER_TEMP}/venue_issue.md"
+          if [ -s "${RUNNER_TEMP}/venue_report.md" ]; then
+            cp "${RUNNER_TEMP}/venue_report.md" "${body}"
+          else
+            echo "The comparison step failed before writing its report; see the run log." > "${body}"
+          fi
+          printf '\nWorkflow run: %s\n' "${RUN_URL}" >> "${body}"
+          gh issue create --title "${ISSUE_TITLE:-Venue check could not run}" --body-file "${body}"
+
+      - name: Fail the job if the venue check failed
+        if: ${{ !cancelled() && steps.venue_compare.outcome != 'skipped' && steps.venue_compare.outputs.ok != 'true' }}
+        run: |
+          echo "::error::The venue check failed; see the job summary (and the issue opened for it)."
+          exit 1
+
+      - name: Upload state/ (dry runs and failures)
+        if: always() && (env.DRY_RUN == 'true' || failure())
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-monthly-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # The pipeline reports each run to healthchecks.io itself (start, then success or fail).
+      # This adds a fail signal for what happens outside it: setup, the state commit, the venue check.
+      - name: Tell healthchecks.io the job failed
+        if: always() && env.DRY_RUN != 'true' && job.status != 'success'
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL_MONTHLY }}
+        run: |
+          if [ -z "${HC_PING_URL}" ]; then
+            echo "HC_PING_URL_MONTHLY is not set; no ping."
+            exit 0
+          fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "${HC_PING_URL}/fail" \
+            || echo "::warning::Could not reach healthchecks.io."
