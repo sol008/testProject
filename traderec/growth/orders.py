@@ -40,12 +40,15 @@ def holiday_shift(sunday: str) -> str | None:
 
 
 def sleeve_targets(g1_in: dict[str, bool | None], g2_on: bool | None, nav_ira: float, G: float, cfg_growth: dict,
-                   *, vol_factor: float = 1.0, w10_held_usd: float = 0.0, w10_buy_usd: float = 0.0) -> dict[str, dict]:
+                   *, vol_factor: float = 1.0, w10_held_usd: float = 0.0, w10_buy_usd: float = 0.0,
+                   g3_held_usd: float = 0.0, g3_buy_usd: float = 0.0) -> dict[str, dict]:
     """Per-ticker dollar targets (design v4 §4 "Sleeve weights", all x G) on the IRA's NAV.
 
     Returns {ticker: {"sleeve", "state", "weight", "target_pct" (percent of the IRA), "target_usd"}} for the G1 legs,
     G2's instrument and the cash vehicle (the residual: the G3 reserve, the 5% cash sleeve and every sleeve that is
-    out, less W10's holding or its buy). G2's weight is `weight x vol_factor`, capped at `max_weight`.
+    out, less W10's holding or its buy, less what the promoted G3 rules' slots hold or buy: `g3_held_usd`,
+    `g3_buy_usd`). G2's weight is `weight x vol_factor`, capped at `max_weight`. The vehicle's `g3_reserve_usd` is
+    the reserve's part still in SGOV (the reserve less the slots) and `g3_slots_usd` the slots.
     """
     sl = cfg_growth.get("sleeves") or {}
     vehicle = ((sl.get("cash") or {}).get("vehicle")) or "SGOV"
@@ -65,11 +68,12 @@ def sleeve_targets(g1_in: dict[str, bool | None], g2_on: bool | None, nav_ira: f
         out[g2["instrument"]] = {"sleeve": "G2", "state": "on" if g2_on else "off", "weight": w,
                                  "target_pct": 100.0 * w if g2_on else 0.0, "target_usd": _r2(usd)}
         risk_total += usd
-    residual = max(nav_ira - risk_total - float(w10_held_usd) - float(w10_buy_usd), 0.0)
+    slots = float(g3_held_usd) + float(g3_buy_usd)
+    residual = max(nav_ira - risk_total - float(w10_held_usd) - float(w10_buy_usd) - slots, 0.0)
     reserve_w = float((sl.get("G3") or {}).get("reserve_weight", 0.0)) * float(G)
     out[vehicle] = {"sleeve": "SGOV", "state": "reserve", "weight": residual / nav_ira if nav_ira else 0.0,
                     "target_pct": 100.0 * residual / nav_ira if nav_ira else 0.0, "target_usd": _r2(residual),
-                    "g3_reserve_usd": _r2(reserve_w * nav_ira),
+                    "g3_reserve_usd": _r2(max(reserve_w * nav_ira - slots, 0.0)), "g3_slots_usd": _r2(slots),
                     "cash_sleeve_usd": _r2(float((sl.get("cash") or {}).get("weight", 0.0)) * float(G) * nav_ira)}
     return out
 
@@ -83,15 +87,19 @@ def _order(action: str, ticker: str, usd: float, *, sleeve: str, module: str, re
 
 def build_order_set(targets: dict[str, dict], held: dict[str, float], cash: float, *, G: float,
                     G_last_order: float | None, cfg_growth: dict, paused: bool = False,
-                    w10: dict | None = None, modules: dict[str, str] | None = None) -> dict[str, Any]:
+                    w10: dict | None = None, modules: dict[str, str] | None = None,
+                    g3: dict | None = None) -> dict[str, Any]:
     """Targets and holdings -> the ranked orders to send, the deferred list and what was skipped or dropped.
 
     `targets` is `sleeve_targets`' output; `held` maps ticker -> the book's holding at Friday's close (the cash
     vehicle included); `cash` is the IRA's settled cash. `w10` is {"buy_usd", "trade_id", ...} when the W10 signal
-    fired this week (funded from SGOV, ranked last). `modules` maps ticker -> the lot/order module name.
+    fired this week (funded from SGOV, ranked last). `modules` maps ticker -> the lot/order module name. `g3` is
+    the promoted gems rules' week ({"buys": [{"ticker", "usd", "rule", "slot_id"}], "sells": [{"ticker",
+    "held_usd", "rule", "slot_id", "reason"}]}, design v4 §3 G3): an exit is a "Sell all" in Step 1 with the other
+    sells, an entry a buy ranked after the G1/G2 buys and before the SGOV sweep and W10, from the reserve's cash.
     Returns {"orders", "deferred", "skipped", "dropped", "sgov_sell_usd", "sgov_buy_usd", "cash_after_usd",
     "g_step"}; each order is {"action": "sell_all" | "sell" | "buy", "ticker", "usd", "held_usd", "sleeve",
-    "module", "reason", "step", "rank", "cash_cap_usd"}.
+    "module", "reason", "step", "rank", "cash_cap_usd"} (a G3 order also carries "rule" and "slot_id").
     """
     reb = cfg_growth.get("rebalance") or {}
     min_usd = float(reb.get("min_order_usd", 300))
@@ -143,9 +151,31 @@ def build_order_set(targets: dict[str, dict], held: dict[str, float], cash: floa
             buys.append(_order("buy", ticker, delta, sleeve=tg["sleeve"], module=module, held_usd=have,
                                reason="governor_restore" if g_step >= min_step else "rebalance"))
 
-    # ranking: exits and cuts first (largest first), then the largest buys, then the SGOV buy, then W10
+    # the promoted gems rules (design v4 §3 G3): exits with the sells, entries after the G1/G2 buys
+    g3 = g3 or {}
+    g3_buys: list[dict] = []
+    for s in g3.get("sells") or []:
+        t = str(s["ticker"])
+        o = _order("sell_all", t, float(s.get("held_usd") or 0.0), sleeve="G3", module=modules.get(t, "G3"),
+                   held_usd=float(s.get("held_usd") or 0.0), reason=str(s.get("reason") or "g3_exit"))
+        o.update(rule=s.get("rule"), slot_id=s.get("slot_id"))
+        sells.append(o)
+    for b in g3.get("buys") or []:
+        t, usd = str(b["ticker"]), float(b.get("usd") or 0.0)
+        if paused:
+            skipped.append({"ticker": t, "usd": usd, "reason": "paused: buys blocked after the hard stop"})
+        elif usd < min_usd:
+            skipped.append({"ticker": t, "usd": usd, "reason": f"below the ${min_usd:,.0f} minimum"})
+        else:
+            o = _order("buy", t, usd, sleeve="G3", module=modules.get(t, "G3"), reason="g3_entry")
+            o.update(rule=b.get("rule"), slot_id=b.get("slot_id"))
+            g3_buys.append(o)
+
+    # ranking: exits and cuts first (largest first), then the largest buys, then the gems entries (the widest
+    # discount first, as given), then the SGOV buy, then W10
     sells.sort(key=lambda o: -o["usd"])
     buys.sort(key=lambda o: -o["usd"])
+    buys += g3_buys
     w10_order = None
     if w10 and float(w10.get("buy_usd") or 0.0) >= min_usd and not paused:
         w10_order = _order("buy", w10.get("ticker", "SPY"), float(w10["buy_usd"]), sleeve="W10",
@@ -226,9 +256,10 @@ def build_order_set(targets: dict[str, dict], held: dict[str, float], cash: floa
         else:
             deferred.append(dict(b, why="the 3 orders are used; the SGOV buy of idle cash may wait a week"))
     # the listing: Step 1 (exits and cuts, largest first, then the SGOV sale), Step 2 in sleeve order (the G1 legs,
-    # G2, W10), then the SGOV buy of the idle cash last; the size ranking above decided the three-order cut. The
-    # sweep goes last because it is sized at the cash left after every other buy: placed (and queued) before W10 it
-    # took W10's cash and the 90% cap cancelled W10's buy at Monday's open (the Phase C3 replay, docs/phase-c/replay.md).
+    # G2, the gems entries, W10), then the SGOV buy of the idle cash last; the size ranking above decided the
+    # three-order cut. The sweep goes last because it is sized at the cash left after every other buy: placed (and
+    # queued) before W10 it took W10's cash and the 90% cap cancelled W10's buy at Monday's open (the Phase C3
+    # replay, docs/phase-c/replay.md). A gems ticker is not in `targets`, so it lists after the sleeves' buys.
     listing = {t: k for k, t in enumerate(targets)}
     chosen.sort(key=lambda o: (o["reason"] == "idle_cash_to_sgov", o["sleeve"] == "W10",
                                listing.get(o["ticker"], len(listing))))

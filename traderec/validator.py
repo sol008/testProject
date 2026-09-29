@@ -295,8 +295,9 @@ def growth_slots(kind: str, facts: dict[str, Any]) -> tuple[list[str], dict[str,
 
 
 def growth_problems(kind: str, facts: dict[str, Any]) -> list[str]:
-    """What the facts record itself rules out (design v4 §3a.8, §9): more orders than an email may carry, a sell
-    listed after a buy, and a leveraged fund bought or held without its risk-box numbers in the facts."""
+    """What the facts record itself rules out (design v4 §3a.8, §4, §9): more orders than an email may carry, a sell
+    listed after a buy, a leveraged fund bought or held without its risk-box numbers in the facts, and more gems
+    single names (or a larger one) than the caps in the facts' `g3` block allow."""
     problems: list[str] = []
     if kind != "GROWTH":
         return problems
@@ -317,6 +318,19 @@ def growth_problems(kind: str, facts: dict[str, Any]) -> list[str]:
     for t in required:
         if (t in bought or t in held) and t not in funds:
             problems.append(f"risk box: {t} is bought or held but the facts carry no risk-box numbers for it")
+    g3 = facts.get("g3") or {}                            # design v4 §4 "Single names": <= 5% each, <= 2 open (Phase C4a)
+    if isinstance(g3, dict):
+        slots = [s for s in (g3.get("slots") or []) if isinstance(s, dict)]
+        g3_buys = [o for o in step2 if o.get("sleeve") == "G3"]
+        n_open = sum(1 for s in slots if s.get("status") in ("open", "pending_exit")) + len(g3_buys)
+        max_open = int(g3.get("single_names_max") or 0)
+        if max_open and n_open > max_open:
+            problems.append(f"gems: {n_open} single names open or bought, more than the {max_open} the caps allow")
+        cap = g3.get("single_name_cap_usd")
+        for o in g3_buys:
+            if cap and float(o.get("usd") or 0.0) > float(cap) + 0.01:
+                problems.append(f"gems: the {o.get('ticker')} buy of ${float(o.get('usd') or 0.0):,.0f} is above the "
+                                f"single-name cap of ${float(cap):,.0f}")
     return problems
 
 

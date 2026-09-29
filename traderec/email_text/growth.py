@@ -32,7 +32,8 @@ REASON_WORDS = {"switch_off": "the sleeve switched off", "switch_on": "the sleev
                 "governor_cut": "the governor cut the size", "governor_restore": "the governor restored the size",
                 "rebalance": "a rebalance back to target", "hard_stop": "the hard stop: everything to the cash fund",
                 "fund_buys": "it funds the buys below", "idle_cash_to_sgov": "idle cash goes to the cash fund",
-                "w10_entry": "the crash-day buy", "rule_e": "Rule E, the emergency exit"}
+                "w10_entry": "the crash-day buy", "rule_e": "Rule E, the emergency exit",
+                "g3_entry": "a promoted gems rule's entry, from the reserve", "g3_exit": "the gems rule's exit"}
 
 # The numbered sentences. {placeholders} are fields of the slot table (growth.email.slot_specs); a placeholder in
 # angle brackets is literal text substituted before the template is used (a ticker, an index name, "above"/"below").
@@ -48,6 +49,18 @@ PHRASES: dict[str, str] = {
     "governor": "full size until the book is {full} below its peak, then down to {floor} of full size at {floor_at}, "
                 "and everything is sold to the cash fund at {hs}",
     "gems": "the gems reserve ({g3}, on paper until a rule is promoted) and the cash sleeve ({cash})",
+    # the gems paragraph (design v4 §3 G3; Phase C4a): the promoted rules' slots and the shadow tally
+    "gems_promoted": "the gems reserve's cash part ({g3}; the promoted rules' slots hold the rest) and the cash sleeve "
+                     "({cash})",
+    "gems_live": "{open} of at most {max} single names are open: the promoted gems rules hold {slots} and {sgov} of the "
+                 "reserve stays in the cash fund",
+    "gems_slot": "<ticker> (<state>): {usd} since <entry>, out by <due> at the latest; discount {disc} at the signal "
+                 "(z {z})",
+    "gems_slot_trust": "<ticker> (<state>): {usd} since <entry>; discount {disc} at the signal",
+    "gems_slot_pending": "<ticker>: buy {usd} this week; discount {disc} at the signal of <when> (z {z})",
+    "gems_slot_pending_trust": "<ticker>: buy {usd} this week; discount {disc} at the signal of <when>",
+    "gems_tally": "<rule>: {n} shadow trades closed, mean excess {ex} over <basis>; {k} of {m} promotion checks pass",
+    "gems_tally_partial": "<rule>: {n} shadow trades closed, no scored excess yet; {k} of {m} promotion checks pass",
     # the why
     "why_g1": "the <index> closed {c}, {p} <ab> its {n}-day average of {s}",
     "why_g1_band": "it needs {band} beyond the average to switch",
@@ -99,6 +112,11 @@ STATIC: dict[str, str] = {
     "why_none": "No sleeve changed its state this week.",
     "why_data": "<index>: no signal this week (<reason>), so <ticker> keeps its state.",
     "deferred_none": "Nothing is deferred.",
+    "gems_none": "<rule>: no shadow trades closed yet.",
+    "gems_passed": "<rule>: its promotion test passed; set status: live in the constitution to trade the reserve with it.",
+    "gems_order_buy": "This week's Step 2 buys it.",
+    "gems_order_sell": "This week's Step 1 sells it.",
+    "gems_order_deferred": "Its buy is deferred to next Sunday.",
     "step1_none": "Nothing to sell: Step 1 is empty this week.",
     "step2_none": "Nothing to buy this week.",
     "tax_ira":"Tax: no tax on trades inside the IRA. Every switch happens in the IRA; nothing in the taxable "
