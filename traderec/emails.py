@@ -2548,6 +2548,41 @@ class _ReviewEmail:
         return [("h", "Shadow books (rules tracked on paper only, never emailed)"),
                 *_shadow_blocks(self.reg, self.rows("shadow"), self.PERIOD)]
 
+    def promotion_blocks(self) -> list[tuple[str, Any]]:
+        """The pre-registered promotion tests of the rules on paper (design v4 §3 G3 and §8; track 16 §10.2): the
+        gems rules (`reports.g3_review`) and the EDGAR setups (`reports.edgar_review`), one row each with the closed
+        trades, the mean excess, the checks and the verdict. A passed gems test says what the owner does next; the
+        reviews never promote."""
+        rows: list[list[str]] = []
+        notes: list[str] = []
+        for x in self.rows("g3"):
+            label = self.label(x.get("label") or x.get("rule") or "")
+            checks = x.get("checks") or []
+            rows.append([label, self.label(x.get("status") or "shadow"), self.n(x.get("n")),
+                         self.pct(x.get("mean_excess"), 2, signed=True),
+                         f"{self.n(x.get('checks_ok'))} of {self.n(x.get('checks_total'))}" if checks else "—",
+                         _yes_no(bool(x.get("passed"))) if checks else "no test"])
+            if x.get("passed") and str(x.get("status")) != "live":
+                notes.append(f"{label}: its promotion test passed; set status: live in the constitution to trade the "
+                             "gems reserve with it. Nothing changes until you do.")
+        for x in self.rows("edgar"):
+            stats = x.get("stats") if isinstance(x.get("stats"), dict) else {}
+            checks = x.get("checks") or []
+            ok = sum(1 for c in checks if isinstance(c, dict) and c.get("ok"))
+            rows.append([self.label(x.get("label") or x.get("setup") or ""), "shadow" + ("" if x.get("enabled", True) else ", off"),
+                         self.n(stats.get("n")), self.pct(stats.get("mean"), 2, signed=True),
+                         f"{self.n(ok)} of {self.n(len(checks))}" if checks else "—",
+                         "no test pre-registered" if x.get("passed") is None else _yes_no(bool(x.get("passed")))])
+        if not rows:
+            return []
+        blocks: list[tuple[str, Any]] = [("h", "Promotion tests (rules on paper; you decide)"),
+                                         ("table", (["Rule", "Status", "Closed", "Mean excess", "Checks", "Passed?"], rows))]
+        if notes:
+            blocks.append(("ul", notes))
+        blocks.append(("p", "A rule on paper is promoted only by your edit of its status in the constitution after its "
+                            "pre-registered test passes; the reviews report and never promote."))
+        return blocks
+
     def footer(self) -> list[str]:
         head = str(self.ctx.get("ledger_head") or "")
         sources = self.ctx.get("sources")
@@ -2683,6 +2718,7 @@ class _QuarterlyEmail(_ReviewEmail):
         blocks += self.map_blocks(maps)
         blocks += self.module_review_blocks()
         blocks += self.shadow_blocks()
+        blocks += self.promotion_blocks()
         blocks += [("h", "Rule changes"),
                    ("p", self.t("No rule changes (design §8). Reviews only recommend: a change needs a forward "
                                 "comparison of at least {change_forward_months:int} months, at most one change per "
@@ -2976,6 +3012,7 @@ class _AnnualEmail(_ReviewEmail):
         blocks += self.retirement_blocks()
         blocks += self.w10_blocks()
         blocks += self.m2_blocks()
+        blocks += self.promotion_blocks()
         blocks += self.budget_blocks()
         blocks += [("h", "Rule changes"), ("p", self.t(
             "Nothing changes automatically. A parameter changes only if the change holds before and after "

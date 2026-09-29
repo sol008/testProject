@@ -803,6 +803,36 @@ def edgar_review(run: "Run", asof: str) -> list[dict]:
     return rows
 
 
+def g3_review(run: "Run", asof: str) -> list[dict]:
+    """The gems rules' pre-registered promotion tests (design v4 §3 G3, §8 "Quarterly: G3 promotion tests"; track
+    35 §6), one entry per rule in `state.growth.sleeves.G3.rules` other than the owner-decision rule, recomputed
+    from the events closed by `asof`: the closed trades' statistics, each check, "passed" and the status the
+    constitution gives the rule. A passed test is the owner's cue to set `status: live`; the review never promotes."""
+    from .modules import g3_gems
+    from .runners import g3 as g3_runner
+
+    g3 = (((run.state.get("growth") or {}).get("sleeves") or {}).get("G3") or {})
+    rules = g3.get("rules") if isinstance(g3.get("rules"), dict) else {}
+    cfg_rules = g3_runner.rules_of(((run.cfg.constitution if run.cfg is not None else {}) or {}).get("growth") or {})
+    rows = []
+    for name, rs in rules.items():
+        if not isinstance(rs, dict) or name in g3_runner.OWNER_DECISION_RULES:
+            continue
+        cfg_rule = cfg_rules.get(name) or {}
+        events = [e for e in (rs.get("events") or []) if isinstance(e, dict) and e.get("status") == "closed"
+                  and (_day(e.get("exit_date")) or "") <= asof]
+        test = g3_runner.promotion_test(name, events, cfg_rule)
+        stats = g3_gems.shadow_stats(events)
+        rows.append({"rule": name, "label": g3_runner.rule_label(name, cfg_rule),
+                     "status": str(cfg_rule.get("status") or rs.get("status") or "shadow"), "n": int(test.get("n") or 0),
+                     "closed": stats["n"], "mean_excess": stats.get("mean_excess"), "median_excess": stats.get("median_excess"),
+                     "win_rate": stats.get("win_rate"), "basis": test.get("basis"), "checks": list(test.get("checks") or []),
+                     "passed": bool(test.get("passed")), "checks_ok": test.get("checks_ok"),
+                     "checks_total": test.get("checks_total"), "reason": test.get("reason"),
+                     "open": sum(1 for s in rs.get("open_slots") or [] if isinstance(s, dict))})
+    return rows
+
+
 def run_punctuality(state: dict, start: str, end: str, today: str, *,
                     kinds: tuple[str, ...] = RUN_KINDS) -> tuple[int, int]:
     """(scheduled runs, runs completed "ok") over the NYSE sessions from max(start, launch) to min(end, today).
@@ -1567,7 +1597,7 @@ def quarterly_report(run: "Run", quarter: str) -> dict[str, Any]:
         "review": "quarterly", "quarter": quarter, "label": f"Q{quarter[-1]} {quarter[:4]}", "start": start,
         "end": end, **period_results(run, start, end),
         "trades": rows, "trades_opened": n_open, "trades_closed": n_close,
-        "shadow": shadow_activity(st, run.cfg, inside), "edgar": edgar_review(run, asof),
+        "shadow": shadow_activity(st, run.cfg, inside), "edgar": edgar_review(run, asof), "g3": g3_review(run, asof),
         "runs_expected": expected, "runs_on_time": on_time,
         **gate, "ledger_message": ledger_msg,
         "kappa": kappa, "calibration": calibration, "drift": drift, "costs": costs, "module_reviews": reviews,
@@ -1634,7 +1664,7 @@ def annual_report(run: "Run", year: str) -> dict[str, Any]:
         "retire_min_months": g["retire_min_months"], "retire_edge": g["retire_edge"],
         "w10": {**w10, "events": len(events), "events_year": sum(1 for e in events if inside(e.get("signal_date"))),
                 "record": record, "reference_since": W10_RECORD_REFERENCE["since"], "recommendation": w10_rec},
-        "m2": reviews["m2"], "paused": reviews["paused"], "edgar": edgar_review(run, asof),
+        "m2": reviews["m2"], "paused": reviews["paused"], "edgar": edgar_review(run, asof), "g3": g3_review(run, asof),
         "stage": gate["stage"], "go_live_ready": gate["go_live_ready"], "edge_p": edge["p_positive"],
         "edge_units": edge["units"], "edge_threshold": g["edge_go_live"],
         "ledger_ok": bool(ledger_ok), "ledger_message": ledger_msg,

@@ -715,11 +715,79 @@ growth:
       reserve_weight: 0.15
       out: SGOV
       rules:
-        cef_crash_discount: {status: shadow, slots: 2, slot_weight: 0.05, z: 2.5, lookback: 252, hold_days: 60,
-                             leverage_max: 0.35, price_min: 5, adv_min_usd: 1000000, crash_mode_triggers: 10, crash_mode_weeks: 3}
-        crypto_trust_discount: {status: shadow, weight: 0.05, discount_le: -0.25, closes: 5, catalyst_days: 120,
-                                exit_discount_ge: -0.03, exit_closes: 3}
-        country_devaluation: {status: shadow}                      # decision 8
+        # Phase C4a (docs/phase-c/growth.md §11): each rule's universe, the owner-maintained figures and its promotion
+        # test (track 35 §6). A rule trades the reserve only after the owner sets `status: live`; until then it runs on
+        # paper (the daily run's shadow book) and the Sunday email shows its tally. Keys beyond A.1 are marked "C4a:".
+        cef_crash_discount:
+          status: shadow             # shadow | live: the owner's edit, after the promotion test passes (never automatic)
+          slots: 2
+          slot_weight: 0.05
+          z: 2.5
+          lookback: 252
+          hold_days: 60
+          leverage_max: 0.35
+          price_min: 5
+          adv_min_usd: 1000000
+          crash_mode_triggers: 10
+          crash_mode_weeks: 3
+          label: "CEF crash-discount rule"   # C4a: the name the emails and reviews use
+          nav_symbol: "X{ticker}X"   # C4a: Yahoo's NAV series, as the EDGAR CEF screen reads it
+          min_observations: 200      # C4a: the rolling statistics need 200 discount prints in the 252 sessions (the reference script)
+          horizon_sessions: 60       # C4a: the scoring horizon of the random-entry baseline
+          baseline_min_windows: 100  # C4a: the baseline needs this many complete 60-session windows before the entry
+          promotion: {min_trades: 30, min_mean_excess: 0.015}   # C4a: track 35 §6 G2, plus a positive median excess in both halves
+          # C4a: track 35 §3.3's 20 funds less ADX and TY (no Yahoo NAV symbol). A ticker off config/whitelist.yaml is
+          # screened on paper but never bought: run check_venues.py and list it before setting the rule live.
+          universe: [PCN, PTY, PDI, PHK, GAB, CII, UTG, BST, ETV, NFJ, EOS, RQI, RNP, USA, GAM, BDJ, EVT, PEO]
+          # C4a: each fund's leverage (a fraction of its total managed assets: effective or total leverage as the
+          # sponsor's fund page states it), the date it was read and its source. A fund with `null` fails closed
+          # ("leverage unknown") until the owner fills it (docs/OPERATIONS.md §1). On 29 Sep 2026 one fetch of each
+          # sponsor's fund page was attempted from the build sandbox; only Virtus's NFJ page gave a figure (the PIMCO,
+          # Gabelli and BlackRock pages were not found at the addresses tried; the Eaton Vance, Cohen & Steers and
+          # Grayscale sites refused the request; the others render their figures in scripts).
+          funds:
+            PCN: {leverage: null, as_of: null, source: "unverified; owner to fill (PIMCO fund page, effective leverage)"}
+            PTY: {leverage: null, as_of: null, source: "unverified; owner to fill (PIMCO fund page, effective leverage)"}
+            PDI: {leverage: null, as_of: null, source: "unverified; owner to fill (PIMCO fund page, effective leverage)"}
+            PHK: {leverage: null, as_of: null, source: "unverified; owner to fill (PIMCO fund page, effective leverage)"}
+            GAB: {leverage: null, as_of: null, source: "unverified; owner to fill (Gabelli fund page, preferred stock as a share of assets)"}
+            CII: {leverage: null, as_of: null, source: "unverified; owner to fill (BlackRock fund page, effective leverage)"}
+            UTG: {leverage: null, as_of: null, source: "unverified; owner to fill (Reaves fund page, leverage ratio)"}
+            BST: {leverage: null, as_of: null, source: "unverified; owner to fill (BlackRock fund page, effective leverage)"}
+            ETV: {leverage: null, as_of: null, source: "unverified; owner to fill (Eaton Vance fund page, leverage)"}
+            NFJ: {leverage: 0.0, as_of: "2026-08-31", source: "Virtus fund page, leverage section: total effective leverage 0.00% as of 08/31/2026 (read 2026-09-29)"}
+            EOS: {leverage: null, as_of: null, source: "unverified; owner to fill (Eaton Vance fund page, leverage)"}
+            RQI: {leverage: null, as_of: null, source: "unverified; owner to fill (Cohen & Steers fund page, leverage)"}
+            RNP: {leverage: null, as_of: null, source: "unverified; owner to fill (Cohen & Steers fund page, leverage)"}
+            USA: {leverage: null, as_of: null, source: "unverified; owner to fill (Liberty All-Star fund page, leverage)"}
+            GAM: {leverage: null, as_of: null, source: "unverified; owner to fill (General American Investors site, preferred stock as a share of assets)"}
+            BDJ: {leverage: null, as_of: null, source: "unverified; owner to fill (BlackRock fund page, effective leverage)"}
+            EVT: {leverage: null, as_of: null, source: "unverified; owner to fill (Eaton Vance fund page, leverage)"}
+            PEO: {leverage: null, as_of: null, source: "unverified; owner to fill (Adams Funds fund page, leverage)"}
+        crypto_trust_discount:
+          status: shadow             # shadow | live: the owner's edit, after the promotion test passes
+          weight: 0.05
+          discount_le: -0.25
+          closes: 5
+          catalyst_days: 120
+          exit_discount_ge: -0.03
+          exit_closes: 3
+          label: "crypto-trust discount rule"   # C4a
+          promotion: {min_episodes: 3, min_mean_excess: 0.10, max_widening: 0.15}   # C4a: track 35 §6 G1
+          # C4a: the universe is a list of trusts, each {ticker, coin (a Yahoo symbol, e.g. XLM-USD), cik, coins_per_share,
+          # as_of (the date of that figure), fee_annual (a fraction), decision_date (optional, a dated court or SEC
+          # decision), conversion_date (optional: NAV tracking begins), withdrawn_date (optional: the owner's record of a
+          # withdrawn or denied filing), nav_symbol (optional: a sponsor NAV series the provider serves; without it the NAV
+          # is rebuilt from the coin)}. A trust with a missing figure fails closed; a figure is never guessed here.
+          # Empty on 29 Sep 2026. Track 35 §6 named BITW, GXLM, GDOG and GSUI as the live candidates; one fetch each on
+          # 29 Sep 2026 found: BITW is the Bitwise 10 Crypto Index ETF on NYSE Arca since 9 Dec 2025 (an ETF, out);
+          # EDGAR styles GDOG (CIK 2055510) "Grayscale Dogecoin Trust ETF" and GSUI (CIK 2034012) "Grayscale Sui Staking
+          # ETF" in their 2026 filings (converted, out); GXLM (Grayscale Stellar Lumens Trust, CIK 1761325) still files
+          # as a trust, with an S-1 filed 2025-09-24, but its quotation venue, redemption terms, daily NAV publication,
+          # XLM per share (with its date) and sponsor fee could not be read from the sponsor's page (refused), so it
+          # stays out until the owner verifies those and fills the entry.
+          universe: []
+        country_devaluation: {status: shadow}                      # decision 8: an owner decision; the runner writes only a state note
     W10: {weight: 0.06, funded_from: sgov, entry: next_sunday_email, priority: last}
     cash: {weight: 0.05, vehicle: SGOV}
   caps: {equity_exposure: 1.0, gross_exposure: 1.5, crypto: 0.30, single_name: 0.05, single_names_open: 2}
