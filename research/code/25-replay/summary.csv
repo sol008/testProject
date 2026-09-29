@@ -1,0 +1,116 @@
+section,metric,value,note
+cross-check replay,second-source mode of the cross-check,,history
+cross-check replay,same decisions as the main replay,1.0,6533 vs 6533 decision records; first difference: None
+cross-check replay,second-source calls without a close (fail closed),0.0,
+cross-check replay,days the SPY two-source check failed,1.0,2026-04-20
+cross-check replay,W10 signals unconfirmed by the second source,0.0,
+runtime,wall minutes [2019-01-02..2026-09-28],17.3583,
+runtime,runs [2019-01-02..2026-09-28],2515.0,
+runtime,seconds per calendar day replayed [2019-01-02..2026-09-28],0.3684,2827 days
+runtime,"seconds per daily run, mean [2019-01-02..2026-09-28]",0.4145,
+runtime,"seconds per daily run, last 20 [2019-01-02..2026-09-28]",0.8007,grows with the ledger: every run re-verifies the whole hash chain
+data,second-source echoes [2019-01-02..2026-09-28],1948.0,second source = the primary close echoed as 'replay-echo' (flagged): every two-source check passed by construction
+data,data served after the as-of date [2019-01-02..2026-09-28],0.0,0 = no look-ahead
+ledger,ledger verifies [2019-01-02..2026-09-28],1.0,"ok: 11086 records, head=9a7c7b9b9401c9df7116a4e1ac5d595a511fa2107a458ea5da6ebcecdbf1af1a"
+data,flag IBIT [2019-01-02..2026-09-28],,"before 2024-01-11: proxy = Coinbase hourly BTC-USD (open ~9:30 ET, close 16:00 ET) x 0.00057542, IBIT's first close / BTC at 16:00 ET that day; no premium, discount or fee drag"
+runs,status ok,2441.0,
+runs,status no_session,73.0,
+runs,status data_missing,1.0,
+alerts,alerts: circuit,1.0,
+alerts,alerts: data,1.0,
+validator,validator alerts (blocked emails),0.0,
+validator,validator errors in sent emails (re-validated),0.0,
+emails,emails captured,310.0,
+emails,emails MONTHLY,92.0,
+emails,emails REBALANCE,67.0,
+emails,emails NEW_TRADE,42.0,
+emails,emails EXIT,42.0,
+emails,emails SWITCH_ON,34.0,
+emails,emails SWITCH_OFF,33.0,
+admission,M1 admissions logged,40.0,
+admission,M1 not admitted,1.0,total_open_stress: 1
+admission,M1 admitted but cut,1.0,total_open_stress: 1
+admission,M3 admissions logged,34.0,
+admission,M3 not admitted,0.0,
+admission,M3 admitted but cut,0.0,
+admission,W10 admissions logged,3.0,
+admission,W10 not admitted,0.0,
+admission,W10 admitted but cut,0.0,
+book,NAV start [2019-01-02..2026-09-28],100000.0,
+book,NAV end [2019-01-02..2026-09-28],179302.4366,on 2026-09-28
+book,total return [2019-01-02..2026-09-28],0.793,
+book,CAGR [2019-01-02..2026-09-28],0.0784,
+book,SPY total return [2019-01-02..2026-09-28],2.4294,"SPY adj_close, same dates"
+book,SPY CAGR [2019-01-02..2026-09-28],0.1727,
+book,max drawdown [2019-01-02..2026-09-28],0.0669,"peak 2020-02-19, trough 2020-03-20"
+book,SPY max drawdown [2019-01-02..2026-09-28],0.3372,"peak 2020-02-19, trough 2020-03-23"
+M1 vs track 13 ST-1,trades matched,39.0,
+M1 vs track 13 ST-1,trades missed,1.0,
+M1 vs track 13 ST-1,trades extra,0.0,
+M1 vs track 13 ST-1,matched with the same entry and exit dates,39.0,
+M1 vs track 13 ST-1,mean return difference (pipeline - research),-0.0,
+M1 vs track 13 ST-1,max |return difference|,0.0001,
+M1 vs track 13 ST-1,"sum of returns, pipeline",0.3261,
+M1 vs track 13 ST-1,"sum of returns, research",0.3262,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)",trades,17.0,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","win rate, exit at the close (published)",0.8824,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","win rate, exit at the open (design)",0.8824,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","mean return, exit at the close (published)",0.0719,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","mean return, exit at the open (design)",0.0756,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","worst return, exit at the close (published)",-0.0828,
+"W10 research base rates (SPY 1993-2026, CAL90, one at a time)","worst return, exit at the open (design)",-0.0855,
+W10 vs track 23 CAL90,trades matched,3.0,
+W10 vs track 23 CAL90,trades missed,0.0,
+W10 vs track 23 CAL90,trades extra,0.0,
+W10 vs track 23 CAL90,matched with the same entry and exit dates,3.0,
+W10 vs track 23 CAL90,mean return difference (pipeline - research),0.0133,
+W10 vs track 23 CAL90,max |return difference|,0.0256,
+W10 vs track 23 CAL90,"sum of returns, pipeline",0.1943,
+W10 vs track 23 CAL90,"sum of returns, research",0.1545,
+W10 vs track 23 CAL90,mean return difference vs research re-priced at the open,-0.0004,"what is left: dividends vs adjusted prices, costs"
+shadow ST-1b vs track 13 ST-1b,trades matched,69.0,
+shadow ST-1b vs track 13 ST-1b,trades missed,0.0,
+shadow ST-1b vs track 13 ST-1b,trades extra,0.0,
+shadow ST-1b vs track 13 ST-1b,matched with the same entry and exit dates,69.0,
+shadow ST-1b vs track 13 ST-1b,mean return difference (pipeline - research),-0.0001,
+shadow ST-1b vs track 13 ST-1b,max |return difference|,0.0034,
+shadow ST-1b vs track 13 ST-1b,"sum of returns, pipeline",0.3732,
+shadow ST-1b vs track 13 ST-1b,"sum of returns, research",0.3795,
+shadow W10 vs track 23 events,events in both,4.0,
+shadow W10 vs track 23 events,research only,0.0,
+shadow W10 vs track 23 events,pipeline only,0.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",M1 signal days checked,40.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",M1 signal days the live check would block,0.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",M1 largest close difference,0.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",W10 signal days checked,4.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",W10 signal days the live check would block,0.0,
+"two-source rule on signal days (Nasdaq SPY, FRED SP500)",W10 largest close difference,0.0,
+M2 vs track 15 R1,decision months,92.0,
+M2 vs track 15 R1,leg-months compared,736.0,
+M2 vs track 15 R1,leg-months long in both,370.0,
+M2 vs track 15 R1,leg-months flat in both,352.0,
+M2 vs track 15 R1,leg-months long in the pipeline only,7.0,
+M2 vs track 15 R1,leg-months long in the research only,7.0,
+M2 vs track 15 R1,trend-sign disagreements,14.0,pipeline: 252-session return minus today's T-bill rate; research: compounded excess over daily T-bills
+M2 vs track 15 R1,median pipeline/research leg size before caps (long in both),1.0272,1.0 = the same size
+M2 vs track 15 R1,median pipeline/research volatility estimate,0.9638,pipeline EWMA span 60 on log returns; research EWMA com 60 on excess returns
+M2 vs track 15 R1,"mean gross target, pipeline (after its caps)",0.3907,
+M2 vs track 15 R1,"mean gross target, research at s = 0.5 (no caps)",0.6043,
+M2 vs track 15 R1,"M2 sleeve excess return, % of NAV a year [2019-01-02..2026-09-28]",0.0229,
+M2 vs track 15 R1,"R1 long-only excess at s = 0.5, a year [2019-01-02..2026-09-28]",0.0254,
+M2 vs track 15 R1,"M2 sleeve P&L (prices and distributions), USD [2019-01-02..2026-09-28]",35332.9298,"of which distributions 4,206"
+M3 vs track 15 R2,weeks compared,404.0,
+M3 vs track 15 R2,weeks with the same switch state,400.0,
+M3 vs track 15 R2,switch events matched,63.0,
+M3 vs track 15 R2,switch events missed,4.0,
+M3 vs track 15 R2,switch events extra,4.0,
+M3 vs track 15 R2,pipeline M3 trades (closed),33.0,
+M3 vs track 15 R2,"mean return, pipeline",0.1853,
+M3 vs track 15 R2,"mean return, research style (BTC, next UTC close)",0.1957,
+M3 vs track 15 R2,mean return difference,-0.0104,
+M3 sleeve size (pipeline vs research's constant 3%),"max weight, % of NAV [2019-01-02..2026-09-28]",0.1435,on 2021-04-15
+M3 sleeve size (pipeline vs research's constant 3%),"max stress (weight x 45%), % of NAV [2019-01-02..2026-09-28]",0.0646,per-trade stress cap 2%
+M3 sleeve size (pipeline vs research's constant 3%),days held above 1.25 x the 3% sleeve [2019-01-02..2026-09-28],415.0,of 1072 days held
+M3 sleeve size (pipeline vs research's constant 3%),days with M3 stress above the 2% per-trade cap [2019-01-02..2026-09-28],250.0,
+M3 sleeve size (pipeline vs research's constant 3%),"M3 P&L, % of NAV a year, as built [2019-01-02..2026-09-28]",0.023,
+M3 sleeve size (pipeline vs research's constant 3%),"M3 P&L, % of NAV a year, at a constant 3% [2019-01-02..2026-09-28]",0.014,
