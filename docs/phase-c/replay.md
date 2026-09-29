@@ -1,9 +1,11 @@
-# Historical replay of the growth book, 2014-11-24 → 2026-09-28 (Phase C3)
+# Historical replay of the growth book, 2014-11-24 → 2026-09-28 (Phase C3), and of the G1 legs alone, 1986–2026 (Phase C4b)
 
 Design v4 (`research/00-SYSTEM-DESIGN-v4.md`) Appendix A.5: the growth book run through the **real pipeline** day by
 day with the production config (`growth.enabled: true`, the $80k IRA with limited margin on, the v4 module statuses),
 reconciled against track 38's real path (`research/code/38-growth-book/results/`). `scripts/replay.py` is the Phase A
-harness (`docs/phase-b/replay.md`) extended for the book; the CSVs are in `research/code/39-growth-replay/`.
+harness (`docs/phase-b/replay.md`) extended for the book; the CSVs are in `research/code/39-growth-replay/`. Phase C4b
+(the section "The 1986–2026 G1-only replay" below) adds A.5's second item: the G1 legs alone from 1986 on proxy fund
+bars, with and without the governor, through 1987, 2000–02 and 2008.
 
 Two full replays were run: the first with the code as merged from Phase C1, which found the two bugs below; the
 second with the fixes. Both are reported.
@@ -175,6 +177,26 @@ Calendar years of the second replay (`calendar_years.csv`):
 - Against track 38's published book the gap is −5.8 points, of which about 4 is the gems estimate, 1 the vol cut and
   the rest the items above; the worst drawdown is 2.6 points deeper and the worst day is a different day.
 
+**Correction (Phase C4b).** The reference books above were built by a helper that put the Sunday decision on
+Tuesday's session, not Monday's (`states.reindex(sessions, ffill).shift(1)` on a Sunday-indexed series: the forward
+fill alone lands on Monday). Fixed in `scripts/replay.py` (`_sleeve_returns`, `_governed`) while building the 1986
+replay, where it mattered (the reference took Black Monday in full although its Friday signal had said exit). Re-run
+on the second replay's work directory, the references switch at Monday's open and come out about 1.5 points a year
+lower, so the pipeline (30.0%) is **above** its like-for-like reference, not below it:
+
+| Reference (from 2015-04-07, no gems) | As published (Tuesday switch) | Corrected (Monday switch) | Pipeline − corrected |
+|---|---|---|---|
+| Band-free (track 38's simulation) | 31.7% | **30.1%**, worst drawdown −22.6% (2020-02-19 → 2020-03-16) | −0.1 points |
+| The 2% band | 31.4% | 30.0%, −24.1% | +0.0 |
+| The band and the vol cut | 30.9% | 29.6%, −24.1% | +0.4 |
+| The band and the D40 governor | 31.2% | 29.6%, −23.1% | +0.5 |
+| The band, the vol cut and the governor (the pipeline's rules) | 30.8% | **29.2%**, −23.1% | **+0.8** |
+
+By calendar year the corrected band-free reference makes 2017 +155.7% (was +182.9%), 2018 −6.6% (was −11.5%),
+2019 +32.4%, 2020 +59.1% and 2022 −12.2%; the pipeline's own rows and track 38's are unchanged. The root CSVs in
+`research/code/39-growth-replay/` stay as published (the record of the C3 run); the corrected references are in
+`research/code/39-growth-replay/g1-1986/c3_reference_corrected.csv`.
+
 ## What the replay found and what was fixed
 
 ### 1. The SGOV sweep took W10's cash (fixed: `traderec/growth/orders.py`)
@@ -286,10 +308,78 @@ python scripts/replay.py reconcile-growth --cache ... --work /tmp/traderec-repla
                                           --lookahead /tmp/traderec-replay-la-cut /tmp/traderec-replay-la-nocut
 ```
 
+## The 1986–2026 G1-only replay (Phase C4b)
+
+Design v4 Appendix A.5, second item, and red-team item 3 (§13: "the bootstrap understates long bears"; the 2014–2026
+replay never met one): the G1 legs alone through the real pipeline from 1986-07-01 to 2026-09-28 on proxy fund bars,
+once without the governor and once with the production governor and hard stop, reconciled against track 38's
+`real_path.csv`, `episodes.csv` and `calendar_years.csv` and against reference books rebuilt from the same bars. The
+CSVs are in `research/code/39-growth-replay/g1-1986/`; the commands are at the end of this section.
+
+RESULTS-PLACEHOLDER
+
+### Interpretations (design Appendix B style)
+
+| Where | The design says | Built as | Why |
+|---|---|---|---|
+| A.5 "G1 alone" | the legs alone | `--book g1-only`: G2's weight 0 with its instrument kept, the Sunday job's G2 leg replaced by a stub that returns "no signal" without an alert; W10's weight 0 and the module off; every v3.3 module and shadow book off | the Sunday job has no switch for a sleeve without data (Bitcoin has none before 2014, so the real leg alerts every Sunday); SPY starts in 1993 and ^VIX in 1990, so the modules would alert daily; the facts and records keep their shape |
+| A.5 "proxy fund bars (track 04's model …, financing at T-bills + 0.4%, 0.9% fee)" | track 31's constants | track 26's calibrated model: 2 × the index's total return − (T-bill + 0.70%)/252 − 0.89%/252, the T-bill the prior DTB3 print | the 0.70% spread reproduces the real SSO's 2006–2026 CAGR within 0.1 points (15.8% model vs 15.7%; QLD 25.2% vs 25.4%); the 0.4% pair is 0.3 points a year richer than the real funds |
+| A.5 the index's total return | — | dividends from track 26's loaders on its cached inputs: Shiller's monthly yield before 1988, then ^SP500TR's return less ^GSPC's; QQQ's implied yield for the Nasdaq-100, 0.6% a year before 1999; a constant (2.3%, 0.6%) when the cache is absent, said in the flag | `spx_panel` / `ndx_panel`, so the proxy is track 26's series; the harness never downloads |
+| §3a "filled at Monday's open" | the fund's open | the proxy's open is the prior close moved by 2 × the index's overnight move where Yahoo's index open differs from the prior close (26% of 1986's sessions, 22% of the S&P proxy's, 40% of the Nasdaq-100's), else the prior close | Yahoo's index opens are mostly the prior close before about 2000; the alternative (every open = the prior close) hides even the real gaps. Black Monday's open is the prior close in both indices: the fills that morning are at Friday's level, and the record says so |
+| A.5 the replay's start | 1986-07-01 | proxies from 1985-10-01 (^NDX's first Yahoo session); SSO's first decision 1986-07-06 (band-free), QLD's 1986-07-20 (the 200th ^NDX close is 1986-07-16) | track 38's blend starts 1986-07-22 for the same reason; the reconciliation window is 1986-07-22 → 2026-09-28 |
+| the daily run needs SPY | — | SPY before 1993-01-29 is ^GSPC scaled to SPY's first close (adj_close from the index's total return), flagged | the daily run takes its session calendar, its SPY marks and its SPY two-source check (an echo) from SPY's bars; no module trades it here |
+| §3a.7 Rule E | decision 5: on | kept as in production (band-free mid-week exits, one a week, six a year) in both runs | the replay is the pipeline as built; its cost and benefit are reported (the switch counts, the scores against "waiting for Sunday") rather than switched off |
+| "without the governor" | — | the production config with `governor.full_until = floor_at = 1.0`, `floor = 1.0` and `hard_stop.at = 1.0`: G = 1 on every Sunday, the hard stop unreachable | a threshold, not a code path, so the Sunday job runs unchanged |
+| the cash vehicle before 2020 | SGOV at par | SGOV at par with the T-bill accrual from 1986 (the pipeline's rule; its bars are never read) | the book's "out" leg is T-bills throughout, as in track 38 |
+| the reference books | track 38's simulation | daily-rebalanced, switched at Monday's open, from the same proxy/real bars: band-free at 100% and at the book's 50%, the 2% band at 50%, the band and the D40 governor at 50%; no costs | the C3 helper switched on Tuesday (the correction above); track 31's own sleeves charge 0.05% a switch and use the model after 2006 too |
+| the look-ahead comparison | identical decisions | the Rule E scores' `record` and `trigger_record` hashes are dropped from the compared payloads, as `ids` are | they are hashes of timestamped records that two replays never share |
+
+### Method
+
+- **Data** (`--fund-proxies`): the cache of the 2014 replay plus `period="max"` bars for ^GSPC (from 1927) and ^NDX
+  (from 1985), FRED DTB3 from 1954 and the real SSO/QLD bars from 2006-06-21. `splice_fund_proxies` builds the proxy
+  bars from 1985-10-01: the close compounds the model's daily return and is spliced to the real fund's first close by
+  ratio (SSO × 0.243596, QLD × 0.095797; 5,226 sessions each from 1985-10-03), the open from the index's real open
+  where Yahoo has one, high and low likewise, adj_close = close (no distributions), volume 0. SPY before 1993-01-29 is
+  ^GSPC × 0.100136 (1,854 sessions). Every proxy is in `History.flags`, `segment.json` and `summary.csv`. The 200-day
+  average is on the index closes (^GSPC, ^NDX), never on the proxies. Track 26's Yahoo files match the replay cache's
+  ^GSPC exactly; its ^SP500TR series has two self-cancelling one-day glitches (June 1989, January 1990) that the proxy
+  inherits.
+- **Runs**: `run_init` on 1986-07-01, then daily Monday–Friday, weekly on Sundays, monthly on the 1st: the same
+  schedule as the 2014 replay, in eight resumable chunks with mid-month boundaries (a month-end boundary would skip
+  that month's monthly run). Run 1 with `--no-governor`, run 2 with the production governor; the two are identical
+  until the first Sunday with G < 1.
+- **Look-ahead**: 1987-06-01 → 1987-12-31 with and without the as-of cut (`--no-cut`), compared with `compare_runs`.
+- **Reconciliation** (`reconcile-g1`): `reference_g1` rebuilds the four reference books from the spliced bars with the
+  weekly rule (`g1_signal`, band-free or the 2% band) switched at Monday's open, the residual at the prior DTB3 print;
+  CAGR with track 38's 252-session convention; the episodes from the close before each window's first date, as
+  track 38 computes them; the governor's path from the `governor` records; the 1987 record from the `growth_decision`,
+  `rule_e`, `fill` and `mark` records and the captured Sunday email.
+- **Expected differences** from track 38's sleeves, in order of size: Rule E (mid-week, band-free exits; not in track
+  31/38); the 2% entry band against band-free re-entries; weekly band rebalancing (the 25% band, the $300 minimum, the
+  three-order cut) against daily rebalancing; the real SSO/QLD bars after 2006 against the model (track 26: the model
+  at 0.70% matches them; track 31's 0.40% is richer); the Nasdaq-100 yield (QQQ-implied, about 0.2% a year in
+  1999–2006, against a flat 0.8%); track 31's 0.05% a switch against the pipeline's 3 bp slippage; the T-bill accrual
+  (calendar days / 365) against rf/252.
+
+### How to run
+
+```
+python scripts/replay.py run --book g1-only --fund-proxies --no-governor --start 1986-07-01 --end 1991-07-15 --work /tmp/traderec-replay-g1-nogov --cache /tmp/traderec-replay-cache
+python scripts/replay.py run --book g1-only --fund-proxies --no-governor --start 1986-07-01 --end 1996-07-15 --work /tmp/traderec-replay-g1-nogov --resume --cache ...   # ... to 2026-09-28
+python scripts/replay.py run --book g1-only --fund-proxies --start 1986-07-01 --end 1991-07-15 --work /tmp/traderec-replay-g1-gov --cache ...                          # the same chunks with the governor
+python scripts/replay.py run --book g1-only --fund-proxies --start 1987-06-01 --end 1987-12-31 --work /tmp/traderec-replay-g1-la-cut --cache ...
+python scripts/replay.py run --book g1-only --fund-proxies --start 1987-06-01 --end 1987-12-31 --work /tmp/traderec-replay-g1-la-nocut --no-cut --cache ...
+python scripts/replay.py reconcile-g1 --work /tmp/traderec-replay-g1-nogov --work-governor /tmp/traderec-replay-g1-gov --out research/code/39-growth-replay/g1-1986 \
+                                      --lookahead /tmp/traderec-replay-g1-la-cut /tmp/traderec-replay-g1-la-nocut --cache ...
+```
+
+`--start` before the first real fund bar without `--fund-proxies` is refused; `--no-governor` needs `--book g1-only`.
+Each run re-verifies the whole ledger, so a run's time grows with the ledger (0.03 s at the start, several seconds at
+the end): budget most of a day for the two full runs, or run them in parallel.
+
 ## What remains
 
-- **The 1986–2026 G1-only replay with proxy fund bars** (A.5's second item) was not run: the main replay took the
-  time budget.
 - **A historical second source for ^NDX** (Nasdaq's index history) would let `--second-source history` cover the
   book; today it covers SPY and ^GSPC only, so the book's replay uses the echo for the index closes.
 - **The annual report's hurdle line** (`reports.module_statuses`, `emails.render_annual`) names the policy modules
@@ -311,3 +401,4 @@ python scripts/replay.py reconcile-growth --cache ... --work /tmp/traderec-repla
 | `g2_switches.csv`, `sundays.csv` | G2's state per Sunday vs the rule on the same data; every Sunday's decision, governor and order set |
 | `orders_and_governor_by_year.csv` | Sundays with orders, orders, deferred, lowest G and deepest drawdown per year |
 | `alerts_by_kind.csv`, `nav_monthly.csv` | alerts; month-end IRA, total NAV and SPY |
+| `g1-1986/` | the 1986–2026 G1-only replay (Phase C4b, the section above): `summary.csv`, `book_vs_track38.csv`, `calendar_years.csv`, `episodes.csv`, `sundays.csv`, `g1_switches.csv`, `governor_path.csv`, `nav_monthly.csv`, `orders_and_governor_by_year_{nogov,gov}.csv`, `c3_reference_corrected.csv` |
