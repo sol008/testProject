@@ -55,8 +55,8 @@ Default year: the one that just ended.
   - a kill switch shows as "paused";
   - thesis invalidation is the owner's call.
 - **W10's re-decision.** Its shadow record (every uptrend −3% day) is scored at 60 and 90 days against track 23's
-  references (SPY 1993–2026, all events: 60 days +3.81%, 75% won; 90 days +6.86%, 90% won; random entry days
-  +1.77% and +2.66%). The recommendation:
+  references (SPY 1993–2026, all events, exits priced at the open: 60 days +3.72%, 75% won; 90 days +7.26%,
+  90% won; random entry days +1.78% and +2.67%). The recommendation:
   - "keep" by default;
   - "consider the shadow ledger" when ≥5 scored events average below random entry days;
   - "back to shadow" if its kill switch fired.

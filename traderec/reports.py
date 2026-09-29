@@ -135,8 +135,8 @@ SHADOW_BASE_RATES = {"ST1B": {"since": 2008, "trades_per_year": 8.0, "win_rate":
 # W10's shadow record: every uptrend -3% day entered at the next open (track 23 §1.2, SPY 1993-2026, all 20 events).
 W10_RECORD_REFERENCE = {
     "since": 1993,
-    "60": {"win_rate": 0.75, "mean_pct": 3.81, "placebo_mean_pct": 1.77},
-    "90": {"win_rate": 0.90, "mean_pct": 6.86, "placebo_mean_pct": 2.66},
+    "60": {"win_rate": 0.75, "mean_pct": 3.72, "placebo_mean_pct": 1.78},
+    "90": {"win_rate": 0.90, "mean_pct": 7.26, "placebo_mean_pct": 2.67},
 }
 EVENT_LABELS = {"profit": "closes with a profit", "time_stop": "exits on the time stop",
                 "leg_up_next_month": "leg up over the next month"}
