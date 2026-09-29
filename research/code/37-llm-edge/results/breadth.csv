@@ -1,0 +1,11 @@
+period,published_sharpe,breadth,implied_IC,our_gross_sharpe_1_name_a_week,gross_points_per_year,cost_points_per_year_large,cost_points_per_year_small
+2021Q4,6.54,100 names/day,0.0412,0.291,0.583,0.38,2.0
+2021Q4,6.54,300 names/day,0.0238,0.168,0.336,0.38,2.0
+2022,3.68,100 names/day,0.0232,0.164,0.328,0.38,2.0
+2022,3.68,300 names/day,0.0134,0.095,0.189,0.38,2.0
+2023,2.33,100 names/day,0.0147,0.104,0.208,0.38,2.0
+2023,2.33,300 names/day,0.0085,0.06,0.12,0.38,2.0
+2024 (Jan-May),1.22,100 names/day,0.0077,0.054,0.109,0.38,2.0
+2024 (Jan-May),1.22,300 names/day,0.0044,0.031,0.063,0.38,2.0
+overall (Oct 2021-May 2024),2.97,100 names/day,0.0187,0.132,0.265,0.38,2.0
+overall (Oct 2021-May 2024),2.97,300 names/day,0.0108,0.076,0.153,0.38,2.0

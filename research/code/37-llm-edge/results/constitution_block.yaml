@@ -1,0 +1,42 @@
+# Proposed `shadow.LLM` block for config/constitution.yaml (track 37). Not enabled.
+  LLM:                     # track 37: does a pinned LLM reading anonymized 8-Ks predict a next-open follower's
+                           # return? Shadow only: no emails, no orders, no web tools. Model: env TRADEREC_SHADOW_LLM_MODEL
+    enabled: false         # off until the owner pre-registers the test (track 37 §3) and sets the model's cutoff date
+    prompt_sha256: "96db8ce445c227a7ad5180687533f7758500727626aa749fc4e860359fb3221e"
+    model_cutoff: null     # ISO date of the pinned model's published training cutoff; null = the book cannot start
+    max_words: 1500
+    max_tokens: 200
+    max_filings_per_run: 20
+    max_filings_per_week: 60
+    max_spend_per_month_usd: 10       # hard stop; the run notes the month's spend from the API's usage fields
+    universe:              # frozen on the first run, hashed into the state, re-frozen every 12 months
+      large: 100           # the 100 largest US common stocks by market cap in the provider's data
+      small: 200           # the 200 highest 20-day dollar-volume names in the small band below
+      small_cap_band: [3.0e+8, 2.0e+9]
+      min_dollar_volume: 1.0e+6
+      min_price: 5.0
+      refreeze_months: 12
+    forms: ["8-K"]
+    items: ["1.01", "1.02", "2.01", "2.02", "2.05", "2.06", "3.01", "4.01", "4.02", "5.02", "7.01", "8.01"]
+    exhibit_first: true    # score EX-99.1 when present, else the 8-K body
+    horizons: {day1: 1, week: 5}     # sessions after the s1 open; exits at those sessions' closes
+    large_cap_min: 2.0e+9  # benchmark SPY at or above, IWM below (the EDGAR book's convention)
+    costs: shadow.EDGAR.costs         # the same round-trip cost table by market cap
+    baseline: loughran_mcdonald       # the deterministic dictionary tone of the same text, logged beside each score
+    cells: 8               # {large, small} x {day1, week} x {long-only GOOD, long-short GOOD-BAD}; the primary
+                           # cell is small x week x long-only; the other seven are diagnostics and cannot promote
+    promotion:             # all must hold, in the primary cell, at a monthly review; promotion = an owner decision
+      min_good_events: 300            # about 25 weeks of flow (power.py)
+      min_mean_net_excess: 0.010      # +1.0% per trade, net of the cost table, vs the size-matched ETF
+      min_t_clustered: 2.5            # clustered by filing date
+      min_dsr: 0.95                   # deflated-Sharpe probability at trials = cells (8): observed t >= 3.1
+      hit_rate_min: 0.56              # sign of the score vs the sign of the day-1 excess, all scored filings
+      hit_rate_min_n: 450             # 56% is then 2.5 standard errors above a coin
+    kill:                  # stop the spend, keep the book
+      after_weeks: 52
+      hit_rate_max: 0.52
+    memorization_check:    # a one-off placebo before the live series counts (Lopez-Lira, Tang & Zhu 2025)
+      placebo_filings: 500
+      placebo_before_cutoff: true     # filings dated at least 12 months before model_cutoff, same anonymizer
+      max_identification_rate: 0.05   # the model asked to name the company or date must fail 95% of the time
+      max_hit_rate_gap: 0.05          # placebo hit rate minus live hit rate; larger = memorization, series void
