@@ -136,27 +136,134 @@ shadow:                    # logged automatically, never emailed
   # ----
 
   O1:                      # M7: trend-filtered put credit spread (shadow at the $100k paper size)
-    enabled: false
+    enabled: true          # design v3.3 §3 M7, §6; track 14 §3.2-§3.3, §7.1-§7.6. Paper only from ≈$162k
+    name: Trend-filtered put credit spread (M7)
+    root: XSP              # XSP/SPXW (design §3 M7); XSP is the size that fits below ≈$1.1M (track 14 §6.1)
+    index: "^GSPC"         # the trend filter and the settlement use the S&P 500's official close
+    settle_scale: 0.1      # XSP settles on the S&P 500 close / 10
+    signal: o1_filters
+    filters:               # design §3 M7 "Filters" (track 14 §7.2), at the close before the entry
+      sma_trend: 200       # S&P 500 close above its 200-day average
+      vix_below: 30.0      # VIX < 30
+      vix_ratio_below: 1.0 # VIX/VIX3M < 1.0
+    entry_window_dte: [40, 45]   # one entry per monthly (third-Friday) cycle, from 45 DTE (the tested entry,
+                                 # track 14 §3.2) down to 40 (design: 40-50 DTE; never below 40)
+    expiry_dte: [40, 50]   # when the monthly is not listed, the listed expiry nearest it in this range
+    target_dte: 45
+    short_delta: 0.20      # sell the 0.20-delta put (0.15-0.25, track 14 §7.1)
+    delta_tolerance: 0.05
+    width_pct_spot: 0.05   # buy the put 5% of spot lower (4-6%)
+    width_tolerance: 0.01
+    take_profit_at: 0.5    # buy back when that costs <= 50% of the credit, checked at each 10:17 ET snapshot
+    exit_dte: 21           # otherwise close at the first 10:17 ET snapshot with <= 21 days to expiry; no stop
+    hold_to_expiry: false
+    max_open: 1
+    liquidity:             # track 14 §7.2: natural combo spread <= 10% of the mid credit; the spread test
+      max_natural_frac_of_credit: 0.10   # governs for index options (market-maker quoted strikes)
+      min_open_interest: 0
+    size:                  # design §3 M7: 2% of NAV at max loss (3% cap): one XSP spread needs ≈$162k
+      max_loss_pct_nav: 0.02
+    promotion:             # track 14 §7.6: >= 24 paper trades (or 30 months), mean R >= model - 2 SE
+      min_trades: 24
+      max_months: 30
+      model_mean_r: 0.02
+      model_sd_r: 0.084
 
   # ----
 
   O1H:                     # O1 held to expiry
-    enabled: false
+    enabled: true          # evidence book: track 14 §7.1 "O1-h: same, short 0.10 delta, held to expiry"
+    name: Put credit spread held to expiry (O1-h)
+    root: XSP              # cash-settled XSP/SPXW only
+    index: "^GSPC"
+    settle_scale: 0.1
+    signal: o1_filters     # "same filters" as O1
+    filters:
+      sma_trend: 200
+      vix_below: 30.0
+      vix_ratio_below: 1.0
+    entry_window_dte: [40, 45]
+    expiry_dte: [40, 50]
+    target_dte: 45
+    short_delta: 0.10
+    delta_tolerance: 0.05
+    width_pct_spot: 0.05
+    width_tolerance: 0.01
+    take_profit_at: null
+    exit_dte: null
+    hold_to_expiry: true   # settled at intrinsic value from the S&P 500's official close on the expiry date
+    max_open: 2            # the next cycle opens before the last one expires (track 14 §7.4)
+    liquidity:
+      max_natural_frac_of_credit: 0.10
+      min_open_interest: 0
 
   # ----
 
   I1:                      # put-spread variant I1 (track 14)
-    enabled: false
+    enabled: true          # incubator: track 14 §4.4, §7.1 (review after >= 20 trades)
+    name: Put credit spread after a VIX spike fades (I1)
+    root: XSP
+    index: "^GSPC"
+    settle_scale: 0.1
+    signal: vix_fade       # no trend, VIX or term-structure filter (track 14 §7.2 "except I1", §7.5.9)
+    trigger:
+      vix_peak: 30.0       # VIX closed >= 30 in the last 10 sessions, today included,
+      lookback_sessions: 10
+      fade_ratio: 0.8      # and today's close is <= 0.8 x that peak
+      cooldown_days: 30    # a new signal only more than 30 calendar days after the last
+    target_dte: 45         # the last listed expiry at most 45 days out
+    expiry_dte: [40, 50]
+    short_delta: 0.20
+    delta_tolerance: 0.05
+    width_pct_spot: 0.05
+    width_tolerance: 0.01
+    take_profit_at: null
+    exit_dte: null
+    hold_to_expiry: true
+    max_open: 2
+    liquidity:
+      max_natural_frac_of_credit: 0.10
+      min_open_interest: 0
 
   # ----
 
   I2:                      # put-spread variant I2 (track 14)
-    enabled: false
+    enabled: true          # incubator: track 14 §7.1 "IBIT put credit spreads (O1 logic)"
+    name: IBIT put credit spread (I2)
+    root: IBIT
+    index: IBIT            # the expiry safety net settles on IBIT's close (the 21-DTE close comes first)
+    settle_scale: 1.0
+    signal: btc_trend
+    filters:               # "O1 filters on BTC": price above its 200-day average, DVOL not in backwardation
+      btc_sma_days: 200    # BTC-USD above the average of its last 200 UTC daily closes
+      iv_ratio_below: 1.0  # DVOL stand-in, at 10:17 ET: IBIT's ~30-day ATM IV / its ~90-day ATM IV < 1.0
+      iv_near_dte: 30
+      iv_far_dte: 90
+    entry_window_dte: [40, 45]
+    expiry_dte: [40, 50]
+    target_dte: 45
+    short_delta: 0.20
+    delta_tolerance: 0.05
+    width_pct_spot: 0.05
+    width_tolerance: 0.01
+    take_profit_at: 0.5
+    exit_dte: 21
+    hold_to_expiry: false  # American-style, share-settled: never held into expiry (track 14 §6.3)
+    max_open: 1
+    liquidity:
+      max_natural_frac_of_credit: 0.10
+      min_open_interest: 500   # ETF options (track 14 §7.2)
 
   # ----
 
   ST2:                     # VIX/VIX3M inversion in an uptrend, hold 20 sessions (track 13 §11.3)
-    enabled: false
+    enabled: true          # incubator: promote only if the next >= 15 signals average >= +1.0% excess
+    name: VIX/VIX3M inversion in an uptrend (ST-2)
+    ticker: SPY
+    sma_trend: 200         # SPY's raw close above its 200-day average
+    ratio_at_least: 1.0    # VIX/VIX3M closes >= 1.00 ...
+    quiet_sessions: 20     # ... for the first time in 20 sessions
+    hold_sessions: 20      # bought at the next open, sold at the close of session 20 (track 13 run_rule, hold=20)
 
   # ----
 
