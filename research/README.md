@@ -43,6 +43,12 @@ Research date: 2026-09-28.
 | 23 | `23-duration-cap-verification.md` | Independent replication and red-team of tracks 21–22. W10 replicates exactly, but it is worth only +0.04 points a year now (≈+0.1 with M4). It fixes the exit (calendar-exact), size (6%), cluster (7%) and kill switch. Verdict: a 90-day exception for W10 only. |
 | 24 | `24-duration-cap-gap-search.md` | Families tracks 21–22 skipped (merger arb, longer-dated option premium, sector momentum, earnings drift, CEF and index effects, and others). 380 variants; none gains from 90 or 120 days. Two new shadow candidates. |
 
+## Phase 3 — the "gems" question (29 Sep 2026)
+
+| # | File | Question it answers |
+|---|---|---|
+| 35 | `35-gems-census.md` | A census of 63 documented, episodic or structural mispricings across markets and history (crypto-trust discounts, SPAC floors, CEF crashes, claims, airdrops, prediction markets, foreign discounts, "free money"), with four empirical checks. Five are worth building; combined they add about +3 points a year (+10 in a crash year), not "SPY by a large margin". |
+
 ## Reproducing the numbers
 
 Code for each track lives in `code/<track>/` and runs with Python 3.11 plus `pandas numpy scipy statsmodels yfinance matplotlib requests xlrd openpyxl`. The scripts behind the phase-1 synthesis's own numbers are in `code/00-synthesis/`.
