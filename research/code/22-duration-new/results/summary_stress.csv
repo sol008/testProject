@@ -1,0 +1,18 @@
+instrument,s10,s42,s63,s84,source
+SPY (S&P 500 TR 1928-),-0.3248,-0.4301,-0.4806,-0.4843,"S&P 500 total return, 1928-2026"
+SPY,-0.2677,-0.3636,-0.4147,-0.3954,own history
+HYG,-0.2028,-0.2697,-0.2936,-0.3021,own history
+JNK,-0.2735,-0.3227,-0.3426,-0.3474,own history
+VWEHX,-0.1675,-0.2438,-0.2696,-0.2632,own history
+EFA,-0.291,-0.4041,-0.4353,-0.4648,own history
+EEM,-0.3597,-0.5205,-0.5632,-0.5702,own history
+EWJ,-0.2712,-0.3103,-0.3543,-0.3735,own history
+EWG,-0.3352,-0.4396,-0.4768,-0.5062,own history
+EWZ,-0.4484,-0.6061,-0.6349,-0.6729,own history
+EWY,-0.4323,-0.5394,-0.591,-0.6291,own history
+IEF,-0.05121,-0.09737,-0.1034,-0.1129,own history
+TLT,-0.1063,-0.1723,-0.2085,-0.2079,own history
+GLD,-0.2141,-0.238,-0.2493,-0.2588,own history
+Long bond synthetic 1962-,-0.1283,-0.1889,-0.2116,-0.2426,FRED yields
+10y synthetic 1962-,-0.09267,-0.1513,-0.1407,-0.1294,FRED yields
+"BTC (daily, 7-day weeks)",-0.5228,-0.6905,-0.7978,-0.8402,Coin Metrics + Yahoo (10/42/63/84 calendar days)

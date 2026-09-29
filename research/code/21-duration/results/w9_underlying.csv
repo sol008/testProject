@@ -1,0 +1,7 @@
+series,H,n,mean,median,placebo,p_era,events
+WTI spot,20,5,0.144527,0.153846,0.00775446,0.0244,Iraq invades Kuwait: +15.4%; Libya civil war shut-ins: +9.5%; Russia invades Ukraine: +26.7%; US/EU discuss Russian oil ban: -17.5%; US/Israel-Iran war begins: +38.1%
+WTI spot,40,5,0.230411,0.151603,0.0191391,0.024,Iraq invades Kuwait: +55.9%; Libya civil war shut-ins: +15.2%; Russia invades Ukraine: +8.6%; US/EU discuss Russian oil ban: -12.8%; US/Israel-Iran war begins: +48.3%
+WTI spot,60,5,0.177614,0.203316,0.0259402,0.1234,Iraq invades Kuwait: +48.3%; Libya civil war shut-ins: +1.2%; Russia invades Ukraine: +20.3%; US/EU discuss Russian oil ban: -5.5%; US/Israel-Iran war begins: +24.4%
+USO,20,4,0.142854,0.142546,0.00741591,0.0304,Libya civil war shut-ins: +5.8%; Russia invades Ukraine: +22.7%; US/EU discuss Russian oil ban: -12.4%; US/Israel-Iran war begins: +41.1%
+USO,40,4,0.213631,0.122777,0.0115099,0.0256,Libya civil war shut-ins: +11.1%; Russia invades Ukraine: +13.4%; US/EU discuss Russian oil ban: -6.1%; US/Israel-Iran war begins: +67.0%
+USO,60,4,0.174649,0.133524,0.022171,0.1334,Libya civil war shut-ins: -1.8%; Russia invades Ukraine: +24.6%; US/EU discuss Russian oil ban: +2.1%; US/Israel-Iran war begins: +45.0%

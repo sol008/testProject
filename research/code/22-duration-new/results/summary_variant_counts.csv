@@ -1,0 +1,11 @@
+family,variants,bonferroni_t,expected_max_t_noise
+a_index_fear,55,3.32,2.31
+b_credit,16,2.96,1.8
+d_intl,12,2.87,1.66
+e_btc,15,2.94,1.77
+f_seasonal,12,2.87,1.66
+g_bonds,24,3.08,1.98
+h_gold,27,3.11,2.03
+i_macro,27,3.11,2.03
+c_trend,72,3.39,2.41
+TOTAL,260,3.73,2.85

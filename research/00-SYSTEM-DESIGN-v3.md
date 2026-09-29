@@ -17,13 +17,14 @@
    - Each track designed its rules on an earlier period and tested them on a later one: 2008 for most, 2016 for events, 2021 for crypto. Track 17 used placebo tests.
    - **None of the survivors clears a strict multiple-testing bar on post-2008 data alone.** They are kept because they also have pre-2008 or century-long evidence and a plausible mechanism, and, for the trend book, confirmation from live funds.
 3. **Realistic expectation: T-bills (about 4.2%) plus roughly 0–2 points a year before tax.**
-   - Central estimates are about +0.4 points (Lean) and about +1 point (with the trend book).
+   - Central estimates are about +0.25 points (Lean) and about +0.85 points (with the trend book), so about 4.45–5.05% a year in total (track 21's re-estimate, after the crash call spread's next-day re-run; v3.2 said +0.4 and +1).
    - Drawdowns should stay around 10–15%.
    - The paper phase exists to measure the true number.
 4. **"1000%" is not reachable with 1–60 day trades without risking ruin.**
    - At 5–6% a year, 11× takes about 40–50 years before tax, and 55–80 years in a taxable account.
    - The biggest lever for large long-run gains is a long-horizon core held *outside* this system (rev. 2 §10).
-   - With this system's central excess of +0.4 to +1 point a year, that decision matters more than any other in this document.
+   - With this system's central excess of +0.25 to +0.85 points a year, that decision matters more than any other in this document.
+   - Loosening the 60-day cap to 90 days would add ≈+0.2 points; 120 days adds nothing more (track 21).
 5. **What makes the system worth having:**
    - it takes the few trades with measured edges, pre-committed and correctly sized;
    - it refuses the many that lose money;
@@ -138,11 +139,11 @@ Below these sizes the system uses SPY, IBIT and ETFs.
 - **Rule.** BTC only: weekly close above its 10-week average. That is 5.3 trades a year; max drawdown −48%; alpha t 0.24, so a risk switch, not alpha.
   - Alternative: the 50-day average (11.4 trades a year, alpha t 1.34).
   - ETH moves to the shadow ledger.
-- **Instrument.** IBIT in the Robinhood IRA by default. Evaluated at Friday's close; traded at Monday's open with a dollar market order.
+- **Instrument.** IBIT in the Robinhood IRA by default. Evaluated on the weekly close (the Sunday UTC daily candle) by the Sunday-night job; traded at Monday's open with a dollar market order.
   - Optional route: BTC on Coinbase, as a dollar market order, 24/7. It is taxable, so short-term gains are taxed as income.
   - MBT only when 3% of NAV covers one contract (≈$280k).
 - **Size.** Sleeve ≤3% of NAV. Stress = sleeve × the worst 10-session loss.
-- **Holding.** Closed at 60 days and re-entered if still on. The forced re-entries are not new trades.
+- **Holding.** Continues while the switch stays on, re-decided every week. Decision 1 (§12) lets a re-decided trend position continue past 60 days, so there is no forced close and re-entry (clarified at build time, 29 Sep).
 - **Exemptions.** From the 5-day minimum hold and from the "lookbacks under 6 months" ban (pre-registered exception).
 - **Expected.** **−0.3 to +0.5% a year.** It is mostly Bitcoin beta: 2022 alone would have cost ≈1.6% of NAV.
 
@@ -317,14 +318,16 @@ Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk,
 | M1 ST-1 (6%) | 3.8 (0–11) | +0.05 to +0.10% | Deflated Sharpe probability 0.64–0.82; every 5-year block > 0 |
 | M2 trend (s = 0.5) | 12 rebalances | 0 to +1.2% ((a) or (c)); negative for (b) without a short rebate | Fails Bonferroni alone; live funds −0.01 to 0.60 |
 | M3 BTC switch (3%) | ≈5 | −0.3 to +0.5% | Alpha t ≤ 1.34 |
-| M4 O2 (2% debit) | ≈0.7 (idle 60% of years) | +0.1 to +0.3% | 12 episodes; next-day entry untested |
+| M4 O2 (2% debit) | ≈0.7 (idle 60% of years) | **+0.05% (−0.14 to +0.14)** after the next-day re-run (track 21 §2); +0.13% at 90 DTE if the cap is loosened | 12 episodes; next-day entry keeps +0.21 of debit; edge vs a plain call spread +0.09 (p 0.64) |
 | M5 W8 (and W9/W10 on paper) | ≈0.4–2 | −0.1 to +0.2% | n = 5–17 |
-| M6 | ≈0.3 | 0 to +0.05% | n ≈ 3 |
+| M6 | ≈0.3 | 0 (shadow only since v3.2) | n ≈ 3 |
 | M7 O1 (paper; ≥$162k) | ≤9 | −0.2 to +0.3%; 0 at $100k | Real-price alpha ≈0 |
-| **Lean** (M1, M3, M4, M5, M6) | **≈10–17** (calm years 5–11) | **≈ −0.3 to +1.2%, central ≈ +0.4%** → about 4.6% nominal | |
-| **Lean + M2 at $100k** | **≈22–29** | **≈ −0.3 to +2.4%, central ≈ +1.0%** → about 5.2% nominal | |
+| **Lean** (M1, M3, M4, M5, M6) | **≈10–17** (calm years 5–11) | **≈ −0.5 to +0.9%, central ≈ +0.25%** → about 4.45% nominal (track 21 re-estimate; v3.2 said +0.4%) | |
+| **Lean + M2 at $100k** | **≈22–29** | **≈ −0.5 to +2.1%, central ≈ +0.85%** → about 5.05% nominal (v3.2 said +1.0%) | |
 
-**Years to 11×** at those central rates: about 47–53 years before tax.
+**Years to 11×** at those central rates: about 49–55 years before tax.
+
+**If the cap were loosened to 90 days** (track 21; owner decision pending): W10 at 63 sessions and M4 at 90 DTE add ≈+0.2 points (Lean ≈4.63%, Lean + M2 ≈5.23%); 120 days adds nothing more. New strategies that longer holds would allow are assessed in track 22.
 
 ---
 
@@ -380,10 +383,9 @@ Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk,
 ## 9. Emails at short horizons (changes to `11-trade-email-spec.md`)
 
 - **Timing.** Evening emails carry orders for the next session.
-  - M1 and W10: MOO.
-  - M2 and M3: a DAY limit at the band edge.
-  - Options: entered after 10:00 ET, with a limit ladder capped at mid + 0.3 × the natural width.
-- **Brackets.** **Rule-exit modules (M1, M2, M3, W10) get no bracket.** Exits come as EXIT emails, followed by an MOO or MOC order. OTOCO brackets are only for stop-based modules added later; the email spec's "defined stop always attached" for futures is removed.
+  - M1, M2, M3 and W10: dollar market orders, queued by Robinhood for the 9:30 ET open (§3a).
+  - Options: entered after 10:00 ET at one net limit price, with one re-price at the stated maximum (§3a).
+- **Brackets.** **Rule-exit modules (M1, M2, M3, W10) get no bracket.** Exits come as EXIT emails with a dollar market sell ("Sell all") queued for the next open; Robinhood has no market-on-close order (§3a). OTOCO brackets are only for stop-based modules added later; the email spec's "defined stop always attached" for futures is removed.
 - **Labels.** Every email is labelled **PAPER** or **LIVE**, with the module, its status and its stage.
 - **Stress line.** Uses §4's stress definition.
 - **Tax line.** Names the account family and whether the instrument is Section 1256.
@@ -438,6 +440,8 @@ Planning ranges, pre-tax, on the whole portfolio, over T-bills. They are shrunk,
 | EDGAR / FINRA | Shadow ledger |
 
 **Cost:** about $5–15 a month for the Claude API, plus free data. A paid data source is recommended before real money.
+
+**As built (Phase A, 29 Sep 2026):** the emails come from deterministic templates filled with structured facts, with no LLM call at run time, so the Phase A cost is $0 beyond GitHub Actions minutes. The validator still checks every number against the facts. An LLM enters only with Phase B's W8/W9 veto. Package: `traderec/`; operations: `docs/OPERATIONS.md`; contracts: `docs/INTERFACES.md`.
 
 ---
 

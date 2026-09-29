@@ -1,0 +1,43 @@
+family,variant,hist_pre_vs_base,hist_post_vs_base,edge_pre_vs_base,edge_post_vs_base,robust_hist,robust_edge
+SPY,"SMA5 exit, cap 20",0,0,0,0,False,False
+SPY,"SMA5 exit, cap 40",0,0,0,0,False,False
+SPY,"SMA5 exit, cap 60",0,0,0,0,False,False
+SPY,"SMA10 exit, cap 20",0.000176873,-0.000402741,0.000131456,-0.00049467,False,False
+SPY,"SMA10 exit, cap 40",0.000176873,-0.000262332,0.000131456,-0.000355686,False,False
+SPY,"SMA10 exit, cap 60",0.000176873,-0.000262332,0.000131456,-0.000355686,False,False
+SPY,"SMA20 exit, cap 40",8.16121e-05,0.000118826,2.08591e-05,-6.78816e-05,True,False
+SPY,"SMA20 exit, cap 60",8.16121e-05,0.000118826,2.08591e-05,-6.78816e-05,True,False
+SPY,"RSI2>70 exit, cap 20",6.97741e-05,5.81442e-05,3.61535e-05,1.46741e-05,True,True
+SPY,"RSI2>90 exit, cap 40",-0.000223777,0.000284274,-0.000411935,-3.78323e-05,False,False
+SPY,time exit 10,-0.000185886,8.49766e-05,-0.000356938,-0.000202211,False,False
+SPY,time exit 20,-0.000403103,0.000338856,-0.000668529,-0.000247633,False,False
+SPY,time exit 40,-0.000175388,0.00113426,-0.000594171,0.000134451,False,False
+SPY,time exit 60,-0.000128933,0.00144326,-0.000665683,0.000115645,False,False
+S&P gated,"SMA5 exit, cap 20",0,0,0,0,False,False
+S&P gated,"SMA5 exit, cap 40",0,0,0,0,False,False
+S&P gated,"SMA5 exit, cap 60",0,0,0,0,False,False
+S&P gated,"SMA10 exit, cap 20",-0.000159925,-0.000263825,-0.000226662,-0.000359416,False,False
+S&P gated,"SMA10 exit, cap 40",-0.000159925,-0.000170096,-0.000226662,-0.000267124,False,False
+S&P gated,"SMA10 exit, cap 60",-0.000159925,-0.000170096,-0.000226662,-0.000267124,False,False
+S&P gated,"SMA20 exit, cap 40",-0.000345768,0.000142964,-0.000458439,-4.53425e-05,False,False
+S&P gated,"SMA20 exit, cap 60",-0.000345768,0.000142964,-0.000458439,-4.53425e-05,False,False
+S&P gated,"RSI2>70 exit, cap 20",2.96096e-05,0.000171451,-1.19921e-05,0.00012114,True,False
+S&P gated,"RSI2>90 exit, cap 40",7.19894e-05,0.000507529,-0.000128652,0.000181226,True,False
+S&P gated,time exit 10,-0.000282187,0.0002671,-0.000468962,-8.89203e-06,False,False
+S&P gated,time exit 20,-0.000334216,0.000354363,-0.00065533,-0.000216307,False,False
+S&P gated,time exit 40,-1.32844e-05,0.00119668,-0.000559741,0.000237892,False,False
+S&P gated,time exit 60,5.28584e-05,0.00181998,-0.000571601,0.00051621,True,False
+S&P ungated,"SMA5 exit, cap 20",0,0,0,0,False,False
+S&P ungated,"SMA5 exit, cap 40",-1.37673e-06,0,-1.48686e-06,0,False,False
+S&P ungated,"SMA5 exit, cap 60",-1.37673e-06,0,-1.48686e-06,0,False,False
+S&P ungated,"SMA10 exit, cap 20",0.000127619,-0.00017982,9.34474e-06,-0.00036094,False,False
+S&P ungated,"SMA10 exit, cap 40",0.000164874,-8.60912e-05,3.91107e-05,-0.000268648,False,False
+S&P ungated,"SMA10 exit, cap 60",0.000164874,-8.60912e-05,3.91107e-05,-0.000268648,False,False
+S&P ungated,"SMA20 exit, cap 40",9.65928e-05,0.000210085,-9.07301e-05,-4.57827e-05,True,False
+S&P ungated,"SMA20 exit, cap 60",4.47439e-05,0.000210085,-0.000147535,-4.57827e-05,True,False
+S&P ungated,"RSI2>70 exit, cap 20",5.88824e-05,0.000120569,-1.34698e-05,2.69755e-06,True,False
+S&P ungated,"RSI2>90 exit, cap 40",0.00046663,0.000474886,0.000134052,-0.000174845,True,False
+S&P ungated,time exit 10,0.000168803,7.29657e-05,-0.000130627,-0.000442363,True,False
+S&P ungated,time exit 20,0.000474111,0.000324567,-8.30119e-05,-0.000665122,True,False
+S&P ungated,time exit 40,0.000724045,0.00147899,-0.000106188,-1.88386e-05,True,False
+S&P ungated,time exit 60,0.00091911,0.00131557,-7.41085e-05,-0.000400756,True,False

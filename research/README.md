@@ -1,6 +1,6 @@
 # Research dossier — few-trade, high-return recommendation system
 
-Research and design for a system that emails one person a small number of trades, each with a plain-English execution plan, and recalibrates itself every month. **Nothing has been built yet.** Building starts after the owner answers the open questions in `00-SYSTEM-DESIGN-v3.md` §12.
+Research and design for a system that emails one person a small number of trades, each with a plain-English execution plan, and recalibrates itself every month. **Phase A is built** (the `traderec` package at the repository root; see `../README.md` and `../docs/OPERATIONS.md`) and runs in paper mode.
 
 Research date: 2026-09-28.
 
@@ -37,6 +37,9 @@ Research date: 2026-09-28.
 | 17 | `17-short-horizon-macro-events.md` | Macro and geopolitical event trades, and the 60-day watch list from 28 Sep 2026. |
 | 18 | `18-short-horizon-execution-sizing-paper.md` | Sizing, execution, taxes, the paper-trading protocol and the go-live gates for short-horizon trades. |
 | 19 | `19-red-team-v3.md` | Adversarial review of the v3 design. |
+| 20 | `20-executability-check.md` | Can a typical Robinhood/Coinbase user place every trade? Three order kinds only; the depeg and cash-and-carry modules moved to shadow. |
+| 21 | `21-duration-cap-existing-modules.md` | What a 90- or 120-day cap does to the existing modules: ≈+0.2 points a year at 90 days (W10 at 63 sessions, M4 at 90 DTE), nothing more at 120. Also re-prices M4 with a next-day entry (≈0 at 60 days). |
+| 22 | `22-duration-cap-new-strategies.md` | Which new strategies a longer cap would allow: only the uptrend-shock buy (W10), ≈+0.07 points; everything else is drift or too few episodes. Don't loosen globally. |
 
 ## Reproducing the numbers
 

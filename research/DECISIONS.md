@@ -14,6 +14,7 @@ The system is built to these decisions. Update this file whenever a decision cha
 | 8 | Approvals | **Policy-module exemptions (M1, M3, M4, W8); trade cap 100 a year; ST-1 at 6%** | 2026-09-29 | As in v3.2 §4 |
 | 9 | Go-ahead | **Start Phase A after a check that every trade is easy for a typical r/wallstreetbets trader on Robinhood/Coinbase** | 2026-09-29 | Check done (`20-executability-check.md`): the depeg and cash-and-carry modules moved to shadow; three order kinds only; ≤3 orders per email; spreads closed ≥1 trading day before expiry |
 | 10 | GitHub access | Claude GitHub App granted on `sol008/testProject` | 2026-09-29 | Pushes from cloud sessions work |
+| 11 | Build-time reading of #5 for M3 | The weekly re-decided Bitcoin switch is a trend position, so it **continues while on** (no forced 60-day close and re-entry) | 2026-09-29 | Design §3 M3 "Holding" updated; fewer orders, same exposure. Revert by restoring the forced close if you read #5 differently |
 
 ## Still open (not blocking)
 
