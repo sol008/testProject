@@ -1,0 +1,73 @@
+{
+ "SPY": {
+  "SPY": 1.0
+ },
+ "QQQ": {
+  "QQQ": 1.0
+ },
+ "Phase A (current design)": {
+  "PhaseA": 1.0
+ },
+ "S&P 1x 200d": {
+  "SPX1_200d_w": 1.0
+ },
+ "S&P 2x 200d": {
+  "SPX2_200d_w": 1.0
+ },
+ "S&P 3x 200d": {
+  "SPX3_200d_w": 1.0
+ },
+ "S&P 3x, no filter": {
+  "SPX3_hold": 1.0
+ },
+ "NDX 1x 200d": {
+  "NDX1_200d_w": 1.0
+ },
+ "NDX 2x 200d": {
+  "NDX2_200d_w": 1.0
+ },
+ "NDX 3x 200d": {
+  "NDX3_200d_w": 1.0
+ },
+ "BTC 10-wk switch": {
+  "BTC_10wk": 1.0
+ },
+ "2x blend (S&P/NDX 50/50) 200d": {
+  "SPX2_200d_w": 0.5,
+  "NDX2_200d_w": 0.5
+ },
+ "3x blend (S&P/NDX 50/50) 200d": {
+  "SPX3_200d_w": 0.5,
+  "NDX3_200d_w": 0.5
+ },
+ "2x blend 200d + 20% BTC switch": {
+  "SPX2_200d_w": 0.4,
+  "NDX2_200d_w": 0.4,
+  "BTC_10wk": 0.2
+ },
+ "3x blend 200d + 20% BTC switch": {
+  "SPX3_200d_w": 0.4,
+  "NDX3_200d_w": 0.4,
+  "BTC_10wk": 0.2
+ },
+ "SPY 80% + BTC switch 20%": {
+  "SPY": 0.8,
+  "BTC_10wk": 0.2
+ },
+ "Full Kelly (history 2014-26 mix)": {
+  "NDX3_200d_w": 0.1072,
+  "BTC_10wk": 0.8928
+ },
+ "Half Kelly (history 2014-26 mix)": {
+  "NDX3_200d_w": 0.0536,
+  "BTC_10wk": 0.4464
+ },
+ "Full Kelly (forward 2014-26 mix)": {
+  "QQQ": 0.2066,
+  "BTC_10wk": 0.7934
+ },
+ "Half Kelly (forward 2014-26 mix)": {
+  "QQQ": 0.1033,
+  "BTC_10wk": 0.3967
+ }
+}

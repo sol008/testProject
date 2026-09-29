@@ -1,0 +1,5 @@
+module,clock,trades,trades_pa,win_rate,mean_ret,mean_excess,mean_sessions,contribution_pa_at_6pct,contribution_pa_at_6pct_halved,mean_delay_sessions
+"M1 ST-1 (SPY, 1993-2026)",daily,125,3.7143,0.8320,0.0107,0.0104,3.2560,0.0023,0.0012,
+"M1 ST-1 (SPY, 1993-2026)",weekly,34,1.0103,0.6765,0.0102,0.0093,8.2941,0.0006,0.0003,
+"W10 crash-day buy (^GSPC, 1962-2026)",daily,25,0.3877,0.8800,0.0685,0.0609,,0.0014,,0.0000
+"W10 crash-day buy (^GSPC, 1962-2026)",weekly,25,0.3877,0.9200,0.0686,0.0611,,0.0014,,2.0000

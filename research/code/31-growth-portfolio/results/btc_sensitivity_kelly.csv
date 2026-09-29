@@ -1,0 +1,7 @@
+btc_buy_hold_cagr,switch_edge,btc_switch_cagr,btc_switch_maxdd,full_kelly_cagr,full_kelly_btc_weight,full_kelly_equity_exposure,half_kelly_cagr
+0.0000,out-of-sample kappa (0.26),0.0907,-0.7755,0.1136,0.5990,0.6318,0.0898
+0.0000,no switch edge (kappa 0),0.0239,-0.8386,0.0813,0.3325,0.8399,0.0684
+0.0750,out-of-sample kappa (0.26),0.1202,-0.7660,0.1337,0.7056,0.5337,0.1034
+0.0750,no switch edge (kappa 0),0.0625,-0.8243,0.0985,0.4886,0.7003,0.0798
+0.1500,out-of-sample kappa (0.26),0.1635,-0.7341,0.1680,0.8584,0.4132,0.1269
+0.1500,no switch edge (kappa 0),0.1010,-0.8028,0.1209,0.6333,0.5875,0.0948
