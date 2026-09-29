@@ -176,7 +176,62 @@ shadow:                    # logged automatically, never emailed
   # ----
 
   MACRO:                   # W3 cool-CPI TLT, W4 BoJ, gold spike fade, scheduled-release reactions (track 17)
-    enabled: false
+    # Design v3.3 §3 M5 ("Scheduled releases. Never traded; logged for calibration only") and §3 "Shadow
+    # ledger"; track 17 §2, §3.1, §5.2 (W3, W4), §7 (R1, R2, R6, R9, R12). No emails, no orders, no LLM.
+    # Runner: traderec/runners/macro_shadows.py. Notes: docs/phase-b/macro-shadows.md.
+    enabled: true
+    calendar: econ_calendar.yaml   # config/: the official release dates and the owner's list of war onsets
+    reverify_days: 60              # alert monthly once the calendar's `verified` date is older than this
+    pending_sessions: 3            # a missing input is retried this many sessions, then alerted (fail closed)
+    baseline_years: 3              # random-day baseline: the 3 years before entry (track 17 §0.1, §1)
+    state_keep_days: 400           # a completed release record leaves state.json 400 days on (the ledger keeps it)
+    releases:                      # R1: every scheduled release, logged, never traded
+      kinds: [CPI, NFP, FOMC, GDP, PCE, BOJ, ECB]
+      assets:                      # the first ticker with data is used; moves on total-return closes
+        SPY: [SPY]
+        TLT: [TLT]
+        GLD: [GLD]
+        USO: [USO]
+        USD: [UUP, DX-Y.NYB]       # UUP, else the ICE dollar index
+        BTC: [BTC-USD]             # the provider's BTC-USD close per UTC day (M3's source)
+      yields: [2Y, 10Y]            # Treasury par yield curve (FRED DGS2 / DGS10 as fallback); changes in bp
+      forward_sessions: [1, 5, 20] # from the day-0 close (track 17 §0.1; R1 "forward moves at 1, 5 and 20 days")
+      buckets_bp:                  # the 2-year's day-0 move, track 17's surprise proxy (§2.1-2.2)
+        FOMC: {hawkish: 5, dovish: -7}
+        CPI: {hawkish: 4, dovish: -6}
+        NFP: {hawkish: 8, dovish: -6}
+    W3:                            # cool CPI -> TLT (§5.2 W3). Paper only: it fails BH-FDR (§2.3)
+      enabled: true
+      ticker: TLT                  # the track's TLT call spread needs option chains we lack: shares instead
+      d2y_max_bp: -6               # the 2-year falls 6bp or more on the CPI day ...
+      core_cpi_mm_max: 0.1         # ... and core CPI m/m, as published (one decimal), is 0.1% or less
+      hold_sessions: 20            # R6; the time stop sells at the open of session 21
+      invalidation: true           # exit at the open after the 10-year closes above its pre-CPI close
+      yield_tolerance_bp: 2        # Treasury vs FRED on a trigger input: a larger gap fails closed
+      forecast_p_profit: 0.55      # R9 shrink, kappa 0.25: 0.51 + 0.25 x (0.67 - 0.51) (TLT up over 20 days)
+      base_rates: {n: 43, mean_f20_pct: 1.39, up_pct: 67, baseline_f20_pct: 0.33}   # §5.2 W3 "History"
+      promotion: {min_instances: 24, min_t: 2.0, fdr_q: 0.10}   # R1: >= 24 paper instances, t >= 2 net of costs,
+                                                                # and BH-FDR 10% with the rules tested alongside
+    W4:                            # BoJ hikes and the Fed holds (§5.2 W4, the BoJ sub-setup; paper; no edge claimed)
+      enabled: true
+      ticker: FXY                  # "FXY outright"; FXY options fail liquidity (§4.5)
+      fed_pair_max_days: 10        # the Fed decision paired with a BoJ decision: the nearest within 10 days
+      boj_window_days: 10          # the BoJ's rate file changes on the effective date, 1-4 business days later
+      max_wait_days: 14            # a decision still unconfirmed this long after the pair is alerted
+      stop_usdjpy: 0.015           # stop at USDJPY +1.5% from entry: FXY closes at or below entry / 1.015
+      target_usdjpy: -0.04         # target at USDJPY -4%: FXY closes at or above entry / 0.96
+      hold_sessions: 20            # "20-day time stop"
+      forecast_p_profit: 0.5       # n = 1 analog: the base rate
+      base_rates: {n: 1, analog: "2024-07-31", usdjpy_f20_pct: -5.7, all_hikes_n: 7, all_hikes_usdjpy_f20_pct: -1.4}
+      promotion: {min_instances: 24, min_t: 2.0, fdr_q: 0.10}   # R1, as W3
+    GOLD_FADE:                     # fade gold's day-0 war spike (§3.1: reversed the next day in 8 of 8 war onsets)
+      enabled: true
+      ticker: GLD
+      hold_sessions: 1             # short at the open after day 0, cover at the next open
+      near_miss_move: 0.02         # a GLD day of +2% or more with no onset listed is logged for review
+      forecast_p_profit: 0.6       # R9 shrink, kappa 0.25: 0.47 + 0.25 x (1.00 - 0.47) (GLD down the next day)
+      base_rates: {n: 8, day0_pct: 1.54, mean_f1_pct: -1.24, up: 0}   # §3.1 "War subset / gold"
+      promotion: {min_instances: 10}   # R2: "paper only until n >= 10"
 
 risk:
   governor:
