@@ -1,7 +1,11 @@
-# Strategy constitution v3.3 (research/00-SYSTEM-DESIGN-v3.md). Changing anything here is a
-# rule change: see design section 8 (at most one change per parameter per quarter, with evidence).
+# Strategy constitution v4.0 (research/00-SYSTEM-DESIGN-v4.md on top of v3's rules, research/00-SYSTEM-DESIGN-v3.md).
+# Changing anything here is a rule change: see design section 8 (at most one change per parameter per quarter, with
+# evidence).
 # v3.3 (decision 12): W10 becomes a policy module with a 90-day exception; every other rule keeps 60 days.
-version: "3.3.0"
+# v4.0 (2026-09-29): the growth book (`growth:` block; design v4 §3-§4): G1 leveraged index trend, G2 Bitcoin switch,
+# G3 gems reserve, W10 in the Sunday email, the book-level governor and hard stop; M1/M4/W8/W9 to shadow, M2 retired,
+# M3 superseded by G2 (the `status` keys). Paper mode until the design v4 §7 gates pass.
+version: "4.0.0"
 
 holding:
   max_calendar_days: 60          # every trade closes within 60 calendar days (decision 1)

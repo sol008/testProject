@@ -156,7 +156,7 @@ fractions; dollars are rounded to cents.
  "sources": [{"ticker": "^GSPC", "a": 7743.0, "b": 7743.0, "b_source": "nasdaq", "agree": true, "date": "2026-09-25"},
              {"ticker": "^NDX", ...}, {"ticker": "BTC-USD", ..., "date": "2026-09-27"}],
  "ids": {"growth_decision": "<hash>", "governor": "<hash>", "order_set": "<hash>"},
- "account": "ira", "constitution_version": "3.3.0"}
+ "account": "ira", "constitution_version": "4.0.0"}
 ```
 
 `crash_day_loss_pct` = Σ(held or bought 2× leg ÷ IRA NAV × 41%) + IBIT ÷ IRA NAV × 30% (design §6: "about 30%").

@@ -102,8 +102,7 @@ The SEC asks automated tools to identify themselves in each request ([SEC: Acces
 ### 6. Robinhood checks in the app (10 minutes, nothing is submitted)
 
 - **IRA: turn limited margin on** (design v4 decision 10). In the IRA's settings, enable **limited margin** for the retirement account. It lets Monday's buys use Monday's sale proceeds and never borrows; without it every switch takes Monday plus Tuesday. If you leave it off, set `accounts.ira.limited_margin: false` in `config/account.yaml` so the paper broker waits a day too.
-- **IRA: SSO, QLD, IBIT and SGOV are buyable with dollar orders.** For each one, search it in the IRA, go to **Trade → Buy**, check the amount can be entered in **Dollars**, then back out. Accept Robinhood's leveraged-product acknowledgement for SSO and QLD if it asks. Do these checks before the paper phase ends.
-- **IRA: dollar orders work.** Switch to the IRA and go to **Search SPY → Trade → Buy**. Check that you can enter the amount in **Dollars**, then back out without submitting.
+- **IRA: SSO, QLD, IBIT, SGOV and SPY are buyable with dollar orders.** For each one, search it in the IRA, go to **Trade → Buy**, check the amount can be entered in **Dollars**, then back out without submitting. Accept Robinhood's leveraged-product acknowledgement for SSO and QLD if it asks. Do these checks before the paper phase ends.
 - **Taxable (individual) account: options Level 3.** Needed for Phase B spreads, which can't go in an IRA.
   - Enable options in the individual account and request **Level 3**. See [Advanced options strategies (Level 3)](https://robinhood.com/us/en/support/articles/advanced-options-strategies/).
   - Why not the IRA: IRAs allow Level 2 only ([Options in Robinhood Retirement](https://robinhood.com/us/en/support/articles/options-in-robinhood-retirement/)).
@@ -136,7 +135,7 @@ Also tell Claude your country and US state (the tax lines assume the US), and wh
 
 ---
 
-## Part 2 — when Claude says "Phase B is ready to merge"
+## Part 2 — now: the build is ready to merge (Phases A, B and C, all on paper)
 
 ### 8. Merge the build into `master` (2 minutes)
 
@@ -154,9 +153,9 @@ Scheduled jobs run only from the default branch (`master`).
    - Before about 6 pm ET, type the previous trading day in **date**.
 2. After a few minutes the run should be green. The end of its log shows a line like `daily 2026-10-01: ok (dry run)`.
    - The emails it *would* have sent are under **Artifacts** in the run (`.eml` files; most nights there are none).
-3. Repeat for **https://github.com/sol008/testProject/actions/workflows/weekly.yml**.
+3. Repeat for **https://github.com/sol008/testProject/actions/workflows/weekly.yml** (the Sunday growth email). On a weekday, type the most recent Sunday in **date** (for example `2026-09-27`); its artifact holds the email the book would have sent, with that week's orders.
 
-A dry run sends nothing and saves nothing. After that the schedule runs by itself.
+A dry run sends nothing and saves nothing. After that the schedule runs by itself: the first real Sunday email arrives the Sunday after the merge.
 
 ---
 

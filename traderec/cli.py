@@ -34,7 +34,8 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--date", default=None, help="creation date (ET, YYYY-MM-DD)")
     s.add_argument("--if-missing", action="store_true", help="do nothing if the state already exists")
 
-    for name, helptext in (("daily", "after-close run (22:17 ET)"), ("weekly", "Bitcoin switch (Sunday night ET)")):
+    for name, helptext in (("daily", "after-close run (22:17 ET)"),
+                           ("weekly", "Sunday night ET: the growth book's email (the Bitcoin switch when the book is off)")):
         s = sub.add_parser(name, help=helptext)
         s.add_argument("--date", default=None, help="ET date to run for (default: see above)")
         s.add_argument("--dry-run", action="store_true", help="work on a copy of the state; write emails to state/outbox")
