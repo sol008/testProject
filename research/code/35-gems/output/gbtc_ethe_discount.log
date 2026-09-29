@@ -1,0 +1,48 @@
+GBTC implied coins/share 2021-02-01: 0.000857 (x1/0.9 = 0.000952)
+GBTC implied coins/share 2022-12-30: 0.000825 (x1/0.9 = 0.000916)
+GBTC implied coins/share 2024-01-11: 0.000807 (x1/0.9 = 0.000897)
+ETHE implied coins/share 2021-02-01: 0.009230 (x1/0.9 = 0.010256)
+ETHE implied coins/share 2022-12-30: 0.008800 (x1/0.9 = 0.009778)
+ETHE implied coins/share 2024-07-23: 0.008463 (x1/0.9 = 0.009403)
+trust  year   mean    min   min_date    max   max_date  days_le_m30  days_le_m40
+ GBTC  2015  0.273 -0.012 2015-10-28  1.142 2015-05-13            0            0
+ GBTC  2016  0.528  0.146 2016-02-05  0.967 2016-07-11            0            0
+ GBTC  2017  0.479  0.026 2017-03-01  1.312 2017-08-31            0            0
+ GBTC  2018  0.443  0.049 2018-11-01  0.822 2018-02-15            0            0
+ GBTC  2019  0.251  0.118 2019-10-16  0.425 2019-05-30            0            0
+ GBTC  2020  0.182  0.019 2020-04-01  0.422 2020-12-21            0            0
+ GBTC  2021 -0.095 -0.213 2021-10-18  0.256 2021-01-06            0            0
+ GBTC  2022 -0.316 -0.490 2022-12-13 -0.189 2022-01-04          143           32
+ GBTC  2023 -0.291 -0.477 2023-02-13 -0.063 2023-12-22          123           66
+ GBTC  2024 -0.003 -0.084 2024-01-02  0.041 2024-03-19            0            0
+ GBTC  2025 -0.004 -0.025 2025-11-19  0.051 2025-04-02            0            0
+ GBTC  2026 -0.002 -0.043 2026-04-07  0.018 2026-06-03            0            0
+ ETHE  2019  1.372  0.250 2019-09-30 19.228 2019-06-21            0            0
+ ETHE  2020  2.541  0.130 2020-09-30  9.321 2020-06-04            0            0
+ ETHE  2021 -0.040 -0.165 2021-12-20  0.215 2021-01-12            0            0
+ ETHE  2022 -0.295 -0.602 2022-12-29 -0.123 2022-01-04          106           33
+ ETHE  2023 -0.396 -0.599 2023-01-03 -0.098 2023-12-27          179          137
+ ETHE  2024 -0.075 -0.284 2024-04-30  0.053 2024-08-27            0            0
+ ETHE  2025  0.000 -0.059 2025-02-03  0.067 2025-04-02            0            0
+ ETHE  2026  0.002 -0.064 2026-08-19  0.033 2026-07-27            0            0
+trust                                                                rule      entry  entry_discount       exit  days  trust_return  coin_return  excess_from_discount  max_drawdown_on_path  widest_discount_on_path
+ GBTC               first close with discount <= -20%, hold to conversion 2021-05-13         -0.2072 2024-01-11   973        0.0943      -0.0673                0.1734               -0.8542                  -0.4899
+ GBTC               first close with discount <= -30%, hold to conversion 2022-01-27         -0.3020 2024-01-11   714        0.6877       0.2485                0.3517               -0.7627                  -0.4899
+ GBTC               first close with discount <= -40%, hold to conversion 2022-11-10         -0.4007 2024-01-11   427        3.2166       1.6366                0.5993               -0.2602                  -0.4899
+ GBTC                      HINDSIGHT: widest discount, hold to conversion 2022-12-13         -0.4899 2024-01-11   394        3.9083       1.6077                0.8822                   NaN                  -0.4899
+ GBTC     event window: BlackRock files (15-Jun-2023), prior close -> +1d 2023-06-14         -0.4167 2023-06-16     2        0.1403       0.0479                0.0882                   NaN                  -0.3652
+ GBTC    event window: BlackRock files (15-Jun-2023), prior close -> +60d 2023-06-14         -0.4167 2023-08-14    61        0.5173       0.1705                0.2963                   NaN                  -0.2413
+ GBTC   event window: DC Circuit ruling (29-Aug-2023), prior close -> +1d 2023-08-28         -0.2527 2023-08-30     2        0.1212       0.0456                0.0722                   NaN                  -0.1986
+ GBTC  event window: DC Circuit ruling (29-Aug-2023), prior close -> +60d 2023-08-28         -0.2527 2023-10-28    61        0.4261       0.3058                0.0921                   NaN                  -0.1768
+ GBTC        event window: SEC approval (10-Jan-2024), prior close -> +1d 2024-01-09         -0.0550 2024-01-11     2        0.0433       0.0050                0.0382                   NaN                  -0.0176
+ GBTC       event window: SEC approval (10-Jan-2024), prior close -> +60d 2024-01-09         -0.0550 2024-03-10    61        0.5872       0.4959                0.0610                   NaN                   0.0170
+ GBTC                                      last 60 days before conversion 2023-11-12         -0.1049 2024-01-11    60        0.3576       0.2514                0.0849                   NaN                  -0.1401
+ ETHE               first close with discount <= -20%, hold to conversion 2022-01-18         -0.2102 2024-07-23   917        0.3034       0.1005                0.1844               -0.8375                  -0.6021
+ ETHE               first close with discount <= -30%, hold to conversion 2022-05-10         -0.3033 2024-07-23   805        1.0103       0.4858                0.3530               -0.7124                  -0.6021
+ ETHE               first close with discount <= -40%, hold to conversion 2022-11-11         -0.4380 2024-07-23   620        3.5946       1.7050                0.6985               -0.4144                  -0.6021
+ ETHE                      HINDSIGHT: widest discount, hold to conversion 2022-12-29         -0.6021 2024-07-23   572        5.9745       1.8978                1.4068                   NaN                  -0.6021
+ ETHE  event window: SEC 19b-4 approval (23-May-2024), prior close -> +1d 2024-05-22         -0.0819 2024-05-24     2        0.0669      -0.0028                0.0698                   NaN                  -0.0176
+ ETHE event window: SEC 19b-4 approval (23-May-2024), prior close -> +60d 2024-05-22         -0.0819 2024-07-22    61       -0.0963      -0.0794               -0.0184                   NaN                  -0.0950
+ ETHE          event window: ETF launch (23-Jul-2024), prior close -> +1d 2024-07-22         -0.0950 2024-07-24     2        0.0792      -0.0303                0.1129                   NaN                   0.0073
+ ETHE         event window: ETF launch (23-Jul-2024), prior close -> +60d 2024-07-22         -0.0950 2024-09-21    61       -0.1857      -0.2397                0.0710                   NaN                  -0.0059
+ ETHE                                      last 60 days before conversion 2024-05-24         -0.0176 2024-07-23    60       -0.0566      -0.0657                0.0097                   NaN                  -0.1179
