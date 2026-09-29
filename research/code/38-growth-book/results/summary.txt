@@ -1,0 +1,181 @@
+track 38 run: paths 2000, seed 38, 324s
+
+== forward-central: best feasible book by D (ungoverned grid, 10y) ==
+  D=30%: SPY 40% + BTC 20% + gems 15%: E[g] 0.089, median 9.3%, P(+5) 47%, P(dd>30/40/50) 7%/1%/0%
+  D=40%: SPY 40% + BTC 30% + gems 15%: E[g] 0.102, median 10.5%, P(+5) 57%, P(dd>30/40/50) 31%/6%/1%
+  D=50%: SPY 40% + BTC 40% + gems 15%: E[g] 0.113, median 11.6%, P(+5) 61%, P(dd>30/40/50) 67%/24%/6%
+== forward-central: best feasible governed book by D (shortlist, 20y paths) ==
+  D=30%: 2x 40% + BTC 30% + gems 15% | D30 10-25: E[g] 0.095, median 9.8%, P(+5) 48%, P(dd>30/40/50) 0%/0%/0%
+  D=40%: 2x 40% + BTC 30% + gems 15% | wide 20-50: E[g] 0.100, median 10.4%, P(+5) 50%, P(dd>30/40/50) 38%/3%/0%
+  D=50%: 2x 40% + BTC 30% + gems 15% | none: E[g] 0.101, median 10.6%, P(+5) 51%, P(dd>30/40/50) 41%/11%/2%
+== blend: best feasible book by D (ungoverned grid, 10y) ==
+  D=30%: 1x 40% + BTC 30% + gems 15%: E[g] 0.178, median 18.8%, P(+5) 74%, P(dd>30/40/50) 10%/1%/0%
+  D=40%: 1x 40% + BTC 40% + gems 15%: E[g] 0.208, median 22.4%, P(+5) 78%, P(dd>30/40/50) 33%/9%/2%
+  D=50%: 3x 40% + BTC 40% + gems 15%: E[g] 0.240, median 25.7%, P(+5) 78%, P(dd>30/40/50) 67%/30%/10%
+== blend: best feasible governed book by D (shortlist, 20y paths) ==
+  D=30%: 3x 50% + BTC 30% + gems 15% | D30 10-25: E[g] 0.197, median 18.6%, P(+5) 69%, P(dd>30/40/50) 7%/0%/0%
+  D=40%: 3x 50% + BTC 30% + gems 15% | D40 15-35: E[g] 0.211, median 20.7%, P(+5) 72%, P(dd>30/40/50) 57%/0%/0%
+  D=50%: 3x 50% + BTC 30% + gems 15% | none: E[g] 0.223, median 23.0%, P(+5) 75%, P(dd>30/40/50) 71%/30%/10%
+== historical-repeat: best feasible book by D (ungoverned grid, 10y) ==
+  D=30%: 1x 40% + BTC 40% + gems 15%: E[g] 0.307, median 35.5%, P(+5) 97%, P(dd>30/40/50) 10%/1%/0%
+  D=40%: 3x 40% + BTC 40% + gems 15%: E[g] 0.372, median 45.1%, P(+5) 100%, P(dd>30/40/50) 46%/9%/1%
+  D=50%: 3x 50% + BTC 50%: E[g] 0.405, median 49.8%, P(+5) 100%, P(dd>30/40/50) 87%/39%/10%
+== historical-repeat: best feasible governed book by D (shortlist, 20y paths) ==
+  D=30%: 3x 50% + BTC 30% + gems 15% | D30 10-25: E[g] 0.310, median 37.0%, P(+5) 98%, P(dd>30/40/50) 5%/0%/0%
+  D=40%: 3x 50% + BTC 30% + gems 15% | wide 20-50: E[g] 0.343, median 41.5%, P(+5) 100%, P(dd>30/40/50) 52%/6%/0%
+  D=50%: 3x 50% + BTC 30% + gems 15% | none: E[g] 0.348, median 41.9%, P(+5) 100%, P(dd>30/40/50) 55%/13%/1%
+
+== finalists (50y paths) ==
+  forward-central    SPY                                           none       med   4.9% p10  -2.2% P(+5)   0% dd>30/40/50  83%/ 50%/ 22% t2x  10.5 t10x  44.1 below  18%
+  forward-central    SPY                                           wide 20-50 med   4.5% p10  -1.8% P(+5)   0% dd>30/40/50  82%/ 37%/  2% t2x  11.1 t10x  47.0 below  20%
+  forward-central    SPY                                           D40 15-35  med   4.2% p10  -1.2% P(+5)   1% dd>30/40/50  75%/  3%/  0% t2x  12.3 t10x  48.2 below  17%
+  forward-central    Phase A (design v3.3)                         none       med   4.9% p10   2.9% P(+5)  15% dd>30/40/50   0%/  0%/  0% t2x  14.3 t10x  48.0 below   0%
+  forward-central    Phase A (design v3.3)                         wide 20-50 med   4.9% p10   2.9% P(+5)  15% dd>30/40/50   0%/  0%/  0% t2x  14.3 t10x  48.0 below   0%
+  forward-central    Phase A (design v3.3)                         D40 15-35  med   4.9% p10   2.9% P(+5)  15% dd>30/40/50   0%/  0%/  0% t2x  14.3 t10x  48.0 below   0%
+  forward-central    SPY 80% + BTC 20%                             none       med   8.0% p10   0.4% P(+5)  29% dd>30/40/50  71%/ 31%/ 10% t2x   7.4 t10x  27.4 below   8%
+  forward-central    SPY 80% + BTC 20%                             wide 20-50 med   7.6% p10   0.2% P(+5)  27% dd>30/40/50  70%/ 19%/  0% t2x   7.5 t10x  28.6 below   9%
+  forward-central    SPY 80% + BTC 20%                             D40 15-35  med   7.4% p10   0.6% P(+5)  24% dd>30/40/50  56%/  0%/  0% t2x   7.9 t10x  29.8 below   8%
+  forward-central    track 31 C: 2x 80% + BTC 20% (10w rule)       none       med   7.2% p10  -0.9% P(+5)  35% dd>30/40/50  86%/ 51%/ 21% t2x   7.0 t10x  28.8 below  14%
+  forward-central    track 31 C: 2x 80% + BTC 20% (10w rule)       wide 20-50 med   6.7% p10  -0.9% P(+5)  33% dd>30/40/50  85%/ 35%/  2% t2x   7.4 t10x  30.8 below  14%
+  forward-central    track 31 C: 2x 80% + BTC 20% (10w rule)       D40 15-35  med   6.3% p10  -0.7% P(+5)  30% dd>30/40/50  76%/  2%/  0% t2x   8.1 t10x  33.1 below  12%
+  forward-central    2x 80% + BTC 20%                              none       med   7.3% p10  -1.4% P(+5)  32% dd>30/40/50  84%/ 47%/ 19% t2x   7.4 t10x  29.9 below  13%
+  forward-central    2x 80% + BTC 20%                              wide 20-50 med   6.8% p10  -1.2% P(+5)  29% dd>30/40/50  83%/ 32%/  2% t2x   7.9 t10x  32.3 below  14%
+  forward-central    2x 80% + BTC 20%                              D40 15-35  med   6.2% p10  -0.8% P(+5)  27% dd>30/40/50  74%/  1%/  0% t2x   8.6 t10x  34.7 below  14%
+  forward-central    BTC 30% + gems 15%                            none       med   9.4% p10   3.3% P(+5)  49% dd>30/40/50  12%/  1%/  0% t2x   6.9 t10x  24.0 below   2%
+  forward-central    BTC 30% + gems 15%                            wide 20-50 med   9.4% p10   3.3% P(+5)  49% dd>30/40/50  10%/  0%/  0% t2x   6.9 t10x  24.1 below   2%
+  forward-central    BTC 30% + gems 15%                            D40 15-35  med   9.3% p10   3.2% P(+5)  49% dd>30/40/50   2%/  0%/  0% t2x   6.9 t10x  24.3 below   2%
+  forward-central    BTC 40% + gems 15%                            none       med  10.4% p10   2.2% P(+5)  54% dd>30/40/50  51%/ 14%/  3% t2x   5.9 t10x  21.3 below   4%
+  forward-central    BTC 40% + gems 15%                            wide 20-50 med  10.3% p10   2.3% P(+5)  54% dd>30/40/50  48%/  5%/  0% t2x   5.9 t10x  21.6 below   4%
+  forward-central    BTC 40% + gems 15%                            D40 15-35  med  10.2% p10   2.5% P(+5)  52% dd>30/40/50  26%/  0%/  0% t2x   6.0 t10x  22.2 below   4%
+  forward-central    SPY 40% + BTC 30% + gems 15%                  none       med  10.1% p10   3.3% P(+5)  54% dd>30/40/50  32%/  6%/  1% t2x   6.3 t10x  22.1 below   3%
+  forward-central    SPY 40% + BTC 30% + gems 15%                  wide 20-50 med  10.0% p10   3.1% P(+5)  54% dd>30/40/50  29%/  2%/  0% t2x   6.3 t10x  22.3 below   3%
+  forward-central    SPY 40% + BTC 30% + gems 15%                  D40 15-35  med   9.9% p10   3.0% P(+5)  52% dd>30/40/50  14%/  0%/  0% t2x   6.4 t10x  22.7 below   3%
+  forward-central    2x 40% + BTC 30% + gems 15%                   none       med  10.0% p10   2.5% P(+5)  50% dd>30/40/50  42%/ 10%/  2% t2x   6.2 t10x  22.5 below   5%
+  forward-central    2x 40% + BTC 30% + gems 15%                   wide 20-50 med   9.8% p10   2.4% P(+5)  49% dd>30/40/50  41%/  4%/  0% t2x   6.3 t10x  22.8 below   4%
+  forward-central    2x 40% + BTC 30% + gems 15%                   D40 15-35  med   9.6% p10   2.3% P(+5)  48% dd>30/40/50  23%/  0%/  0% t2x   6.5 t10x  23.1 below   4%
+  forward-central    2x 50% + BTC 30% + gems 15%                   none       med  10.1% p10   1.9% P(+5)  50% dd>30/40/50  58%/ 19%/  5% t2x   6.1 t10x  22.3 below   6%
+  forward-central    2x 50% + BTC 30% + gems 15%                   wide 20-50 med   9.8% p10   1.7% P(+5)  49% dd>30/40/50  56%/  8%/  0% t2x   6.2 t10x  22.9 below   6%
+  forward-central    2x 50% + BTC 30% + gems 15%                   D40 15-35  med   9.5% p10   1.7% P(+5)  47% dd>30/40/50  38%/  0%/  0% t2x   6.4 t10x  23.6 below   5%
+  forward-central    2x 60% + BTC 20% + gems 15%                   none       med   8.7% p10   1.5% P(+5)  41% dd>30/40/50  50%/ 15%/  3% t2x   7.1 t10x  25.8 below   6%
+  forward-central    2x 60% + BTC 20% + gems 15%                   wide 20-50 med   8.4% p10   1.4% P(+5)  39% dd>30/40/50  46%/  6%/  0% t2x   7.2 t10x  26.5 below   6%
+  forward-central    2x 60% + BTC 20% + gems 15%                   D40 15-35  med   8.1% p10   1.2% P(+5)  37% dd>30/40/50  31%/  0%/  0% t2x   7.5 t10x  27.5 below   5%
+  forward-central    2x 50% + BTC 20% + gems 15%                   none       med   8.7% p10   2.4% P(+5)  42% dd>30/40/50  30%/  6%/  2% t2x   7.4 t10x  26.1 below   4%
+  forward-central    2x 50% + BTC 20% + gems 15%                   wide 20-50 med   8.6% p10   2.2% P(+5)  41% dd>30/40/50  28%/  2%/  0% t2x   7.4 t10x  26.3 below   4%
+  forward-central    2x 50% + BTC 20% + gems 15%                   D40 15-35  med   8.5% p10   2.1% P(+5)  40% dd>30/40/50  14%/  0%/  0% t2x   7.5 t10x  26.7 below   4%
+  forward-central    2xS 60% + BTC 20% + gems 15%                  none       med   7.9% p10   1.0% P(+5)  36% dd>30/40/50  49%/ 16%/  4% t2x   7.9 t10x  28.3 below   8%
+  forward-central    2xS 60% + BTC 20% + gems 15%                  wide 20-50 med   7.7% p10   0.8% P(+5)  36% dd>30/40/50  46%/  7%/  0% t2x   8.0 t10x  28.9 below   8%
+  forward-central    2xS 60% + BTC 20% + gems 15%                  D40 15-35  med   7.5% p10   1.0% P(+5)  35% dd>30/40/50  32%/  0%/  0% t2x   8.1 t10x  29.9 below   6%
+  forward-central    2x 40% + BTC 20% + gems 15%                   none       med   8.9% p10   3.0% P(+5)  41% dd>30/40/50  13%/  2%/  0% t2x   7.5 t10x  26.0 below   3%
+  forward-central    2x 40% + BTC 20% + gems 15%                   wide 20-50 med   8.8% p10   2.9% P(+5)  41% dd>30/40/50  12%/  0%/  0% t2x   7.5 t10x  26.0 below   3%
+  forward-central    2x 40% + BTC 20% + gems 15%                   D40 15-35  med   8.7% p10   2.8% P(+5)  40% dd>30/40/50   5%/  0%/  0% t2x   7.6 t10x  26.5 below   3%
+  forward-central    2x 60% + BTC 30%                              none       med   8.7% p10  -0.2% P(+5)  43% dd>30/40/50  77%/ 37%/ 13% t2x   6.5 t10x  25.0 below  10%
+  forward-central    2x 60% + BTC 30%                              wide 20-50 med   8.3% p10   0.1% P(+5)  41% dd>30/40/50  74%/ 21%/  0% t2x   6.7 t10x  25.9 below  10%
+  forward-central    2x 60% + BTC 30%                              D40 15-35  med   8.0% p10   0.3% P(+5)  37% dd>30/40/50  60%/  0%/  0% t2x   7.2 t10x  27.6 below   9%
+  forward-central    3x 50% + BTC 20% + gems 15%                   none       med   8.6% p10   0.4% P(+5)  40% dd>30/40/50  74%/ 33%/ 11% t2x   6.8 t10x  25.3 below   9%
+  forward-central    3x 50% + BTC 20% + gems 15%                   wide 20-50 med   8.1% p10   0.2% P(+5)  38% dd>30/40/50  74%/ 21%/  0% t2x   7.0 t10x  27.0 below  10%
+  forward-central    3x 50% + BTC 20% + gems 15%                   D40 15-35  med   7.7% p10   0.2% P(+5)  35% dd>30/40/50  61%/  1%/  0% t2x   7.5 t10x  28.8 below   9%
+  forward-central    1x 80% + BTC 20%                              none       med   7.8% p10   1.8% P(+5)  34% dd>30/40/50  20%/  4%/  0% t2x   8.2 t10x  29.2 below   4%
+  forward-central    1x 80% + BTC 20%                              wide 20-50 med   7.7% p10   1.8% P(+5)  34% dd>30/40/50  16%/  1%/  0% t2x   8.2 t10x  29.5 below   4%
+  forward-central    1x 80% + BTC 20%                              D40 15-35  med   7.7% p10   1.7% P(+5)  33% dd>30/40/50   7%/  0%/  0% t2x   8.2 t10x  29.9 below   4%
+  historical-repeat  SPY                                           none       med  11.8% p10   4.2% P(+5)   0% dd>30/40/50  72%/ 31%/  9% t2x   5.4 t10x  19.7 below   2%
+  historical-repeat  SPY                                           wide 20-50 med  11.3% p10   3.1% P(+5)   0% dd>30/40/50  72%/ 20%/  1% t2x   5.5 t10x  20.9 below   3%
+  historical-repeat  SPY                                           D40 15-35  med  10.5% p10   2.5% P(+5)   0% dd>30/40/50  65%/  2%/  0% t2x   5.8 t10x  22.5 below   4%
+  historical-repeat  Phase A (design v3.3)                         none       med   5.4% p10   3.4% P(+5)   2% dd>30/40/50   0%/  0%/  0% t2x  13.0 t10x  43.9 below   0%
+  historical-repeat  Phase A (design v3.3)                         wide 20-50 med   5.4% p10   3.4% P(+5)   2% dd>30/40/50   0%/  0%/  0% t2x  13.0 t10x  43.9 below   0%
+  historical-repeat  Phase A (design v3.3)                         D40 15-35  med   5.4% p10   3.4% P(+5)   2% dd>30/40/50   0%/  0%/  0% t2x  13.0 t10x  43.9 below   0%
+  historical-repeat  SPY 80% + BTC 20%                             none       med  22.5% p10  13.6% P(+5)  91% dd>30/40/50  44%/  9%/  2% t2x   3.1 t10x  10.9 below   0%
+  historical-repeat  SPY 80% + BTC 20%                             wide 20-50 med  22.2% p10  13.0% P(+5)  90% dd>30/40/50  42%/  4%/  0% t2x   3.1 t10x  11.1 below   0%
+  historical-repeat  SPY 80% + BTC 20%                             D40 15-35  med  21.6% p10  12.0% P(+5)  88% dd>30/40/50  30%/  0%/  0% t2x   3.1 t10x  11.3 below   0%
+  historical-repeat  track 31 C: 2x 80% + BTC 20% (10w rule)       none       med  29.2% p10  16.7% P(+5)  94% dd>30/40/50  71%/ 22%/  6% t2x   2.4 t10x   8.6 below   0%
+  historical-repeat  track 31 C: 2x 80% + BTC 20% (10w rule)       wide 20-50 med  28.5% p10  15.6% P(+5)  93% dd>30/40/50  67%/ 14%/  0% t2x   2.4 t10x   8.8 below   0%
+  historical-repeat  track 31 C: 2x 80% + BTC 20% (10w rule)       D40 15-35  med  27.2% p10  14.1% P(+5)  90% dd>30/40/50  52%/  1%/  0% t2x   2.4 t10x   9.2 below   0%
+  historical-repeat  2x 80% + BTC 20%                              none       med  29.5% p10  17.6% P(+5)  96% dd>30/40/50  67%/ 21%/  5% t2x   2.3 t10x   8.6 below   0%
+  historical-repeat  2x 80% + BTC 20%                              wide 20-50 med  28.7% p10  16.4% P(+5)  94% dd>30/40/50  63%/ 12%/  0% t2x   2.3 t10x   8.7 below   0%
+  historical-repeat  2x 80% + BTC 20%                              D40 15-35  med  27.5% p10  15.0% P(+5)  91% dd>30/40/50  49%/  0%/  0% t2x   2.3 t10x   9.0 below   0%
+  historical-repeat  BTC 30% + gems 15%                            none       med  23.7% p10  15.4% P(+5)  80% dd>30/40/50   0%/  0%/  0% t2x   3.1 t10x  10.6 below   0%
+  historical-repeat  BTC 30% + gems 15%                            wide 20-50 med  23.7% p10  15.4% P(+5)  80% dd>30/40/50   0%/  0%/  0% t2x   3.1 t10x  10.6 below   0%
+  historical-repeat  BTC 30% + gems 15%                            D40 15-35  med  23.6% p10  15.2% P(+5)  80% dd>30/40/50   0%/  0%/  0% t2x   3.1 t10x  10.6 below   0%
+  historical-repeat  BTC 40% + gems 15%                            none       med  29.9% p10  18.6% P(+5)  91% dd>30/40/50  10%/  0%/  0% t2x   2.6 t10x   8.6 below   0%
+  historical-repeat  BTC 40% + gems 15%                            wide 20-50 med  29.9% p10  18.5% P(+5)  91% dd>30/40/50   9%/  0%/  0% t2x   2.6 t10x   8.6 below   0%
+  historical-repeat  BTC 40% + gems 15%                            D40 15-35  med  29.5% p10  18.2% P(+5)  90% dd>30/40/50   3%/  0%/  0% t2x   2.6 t10x   8.7 below   0%
+  historical-repeat  SPY 40% + BTC 30% + gems 15%                  none       med  28.9% p10  19.7% P(+5)  96% dd>30/40/50   3%/  0%/  0% t2x   2.6 t10x   9.0 below   0%
+  historical-repeat  SPY 40% + BTC 30% + gems 15%                  wide 20-50 med  28.9% p10  19.7% P(+5)  96% dd>30/40/50   3%/  0%/  0% t2x   2.6 t10x   9.0 below   0%
+  historical-repeat  SPY 40% + BTC 30% + gems 15%                  D40 15-35  med  28.8% p10  19.5% P(+5)  96% dd>30/40/50   1%/  0%/  0% t2x   2.6 t10x   9.0 below   0%
+  historical-repeat  2x 40% + BTC 30% + gems 15%                   none       med  32.9% p10  22.4% P(+5)  98% dd>30/40/50   7%/  1%/  0% t2x   2.3 t10x   8.0 below   0%
+  historical-repeat  2x 40% + BTC 30% + gems 15%                   wide 20-50 med  32.8% p10  22.3% P(+5)  98% dd>30/40/50   6%/  0%/  0% t2x   2.3 t10x   8.0 below   0%
+  historical-repeat  2x 40% + BTC 30% + gems 15%                   D40 15-35  med  32.6% p10  21.9% P(+5)  98% dd>30/40/50   2%/  0%/  0% t2x   2.3 t10x   8.0 below   0%
+  historical-repeat  2x 50% + BTC 30% + gems 15%                   none       med  34.9% p10  23.4% P(+5)  99% dd>30/40/50  16%/  2%/  0% t2x   2.1 t10x   7.5 below   0%
+  historical-repeat  2x 50% + BTC 30% + gems 15%                   wide 20-50 med  34.8% p10  23.1% P(+5)  99% dd>30/40/50  14%/  0%/  0% t2x   2.1 t10x   7.5 below   0%
+  historical-repeat  2x 50% + BTC 30% + gems 15%                   D40 15-35  med  34.5% p10  22.5% P(+5)  99% dd>30/40/50   8%/  0%/  0% t2x   2.1 t10x   7.6 below   0%
+  historical-repeat  2x 60% + BTC 20% + gems 15%                   none       med  30.2% p10  20.9% P(+5)  98% dd>30/40/50  21%/  3%/  0% t2x   2.4 t10x   8.5 below   0%
+  historical-repeat  2x 60% + BTC 20% + gems 15%                   wide 20-50 med  30.0% p10  20.4% P(+5)  98% dd>30/40/50  18%/  0%/  0% t2x   2.4 t10x   8.5 below   0%
+  historical-repeat  2x 60% + BTC 20% + gems 15%                   D40 15-35  med  29.7% p10  19.5% P(+5)  98% dd>30/40/50  10%/  0%/  0% t2x   2.4 t10x   8.6 below   0%
+  historical-repeat  2x 50% + BTC 20% + gems 15%                   none       med  28.3% p10  19.4% P(+5)  97% dd>30/40/50   8%/  0%/  0% t2x   2.6 t10x   9.0 below   0%
+  historical-repeat  2x 50% + BTC 20% + gems 15%                   wide 20-50 med  28.2% p10  19.4% P(+5)  97% dd>30/40/50   7%/  0%/  0% t2x   2.6 t10x   9.0 below   0%
+  historical-repeat  2x 50% + BTC 20% + gems 15%                   D40 15-35  med  28.1% p10  19.0% P(+5)  96% dd>30/40/50   4%/  0%/  0% t2x   2.6 t10x   9.1 below   0%
+  historical-repeat  2xS 60% + BTC 20% + gems 15%                  none       med  27.4% p10  18.5% P(+5)  95% dd>30/40/50   9%/  0%/  0% t2x   2.6 t10x   9.2 below   0%
+  historical-repeat  2xS 60% + BTC 20% + gems 15%                  wide 20-50 med  27.4% p10  18.2% P(+5)  95% dd>30/40/50   8%/  0%/  0% t2x   2.6 t10x   9.3 below   0%
+  historical-repeat  2xS 60% + BTC 20% + gems 15%                  D40 15-35  med  27.2% p10  17.8% P(+5)  95% dd>30/40/50   4%/  0%/  0% t2x   2.7 t10x   9.3 below   0%
+  historical-repeat  2x 40% + BTC 20% + gems 15%                   none       med  26.1% p10  18.3% P(+5)  95% dd>30/40/50   2%/  0%/  0% t2x   2.8 t10x   9.7 below   0%
+  historical-repeat  2x 40% + BTC 20% + gems 15%                   wide 20-50 med  26.1% p10  18.3% P(+5)  95% dd>30/40/50   2%/  0%/  0% t2x   2.8 t10x   9.7 below   0%
+  historical-repeat  2x 40% + BTC 20% + gems 15%                   D40 15-35  med  26.1% p10  18.1% P(+5)  94% dd>30/40/50   0%/  0%/  0% t2x   2.8 t10x   9.7 below   0%
+  historical-repeat  2x 60% + BTC 30%                              none       med  31.9% p10  19.8% P(+5)  97% dd>30/40/50  39%/  8%/  1% t2x   2.2 t10x   8.0 below   0%
+  historical-repeat  2x 60% + BTC 30%                              wide 20-50 med  31.6% p10  19.3% P(+5)  96% dd>30/40/50  36%/  4%/  0% t2x   2.2 t10x   8.0 below   0%
+  historical-repeat  2x 60% + BTC 30%                              D40 15-35  med  30.9% p10  18.3% P(+5)  95% dd>30/40/50  24%/  0%/  0% t2x   2.3 t10x   8.1 below   0%
+  historical-repeat  3x 50% + BTC 20% + gems 15%                   none       med  33.3% p10  22.2% P(+5)  99% dd>30/40/50  47%/ 10%/  2% t2x   2.1 t10x   7.7 below   0%
+  historical-repeat  3x 50% + BTC 20% + gems 15%                   wide 20-50 med  33.0% p10  21.5% P(+5)  99% dd>30/40/50  45%/  6%/  0% t2x   2.1 t10x   7.8 below   0%
+  historical-repeat  3x 50% + BTC 20% + gems 15%                   D40 15-35  med  32.0% p10  20.1% P(+5)  98% dd>30/40/50  31%/  0%/  0% t2x   2.2 t10x   8.0 below   0%
+  historical-repeat  1x 80% + BTC 20%                              none       med  21.8% p10  14.2% P(+5)  81% dd>30/40/50   5%/  0%/  0% t2x   3.2 t10x  11.3 below   0%
+  historical-repeat  1x 80% + BTC 20%                              wide 20-50 med  21.8% p10  14.1% P(+5)  81% dd>30/40/50   4%/  0%/  0% t2x   3.2 t10x  11.3 below   0%
+  historical-repeat  1x 80% + BTC 20%                              D40 15-35  med  21.7% p10  14.0% P(+5)  80% dd>30/40/50   2%/  0%/  0% t2x   3.2 t10x  11.3 below   0%
+  blend              2x 80% + BTC 20%                              wide 20-50 med  15.8% p10   1.4% P(+5)  62% dd>30/40/50  73%/ 22%/  1% t2x   3.7 t10x  14.9 below   7%
+  blend              2xS 60% + BTC 20% + gems 15%                  D40 15-35  med  16.4% p10   2.9% P(+5)  65% dd>30/40/50  18%/  0%/  0% t2x   4.0 t10x  14.7 below   3%
+  blend              3x 50% + BTC 20% + gems 15%                   none       med  19.5% p10   3.1% P(+5)  70% dd>30/40/50  61%/ 22%/  7% t2x   3.4 t10x  12.5 below   4%
+  blend              1x 80% + BTC 20%                              wide 20-50 med  14.1% p10   3.8% P(+5)  57% dd>30/40/50  10%/  0%/  0% t2x   4.7 t10x  17.1 below   2%
+  blend              2x 60% + BTC 20% + gems 15%                   wide 20-50 med  18.1% p10   3.7% P(+5)  69% dd>30/40/50  32%/  3%/  0% t2x   3.7 t10x  13.5 below   3%
+  blend              2xS 60% + BTC 20% + gems 15%                  wide 20-50 med  16.6% p10   3.0% P(+5)  65% dd>30/40/50  27%/  3%/  0% t2x   4.0 t10x  14.5 below   4%
+  blend              2x 50% + BTC 20% + gems 15%                   none       med  17.5% p10   4.5% P(+5)  69% dd>30/40/50  19%/  3%/  1% t2x   3.9 t10x  13.9 below   2%
+  blend              SPY                                           none       med   8.1% p10   0.1% P(+5)   0% dd>30/40/50  77%/ 41%/ 15% t2x   7.2 t10x  27.3 below  10%
+  blend              track 31 C: 2x 80% + BTC 20% (10w rule)       none       med  16.6% p10   1.7% P(+5)  65% dd>30/40/50  79%/ 37%/ 14% t2x   3.7 t10x  14.0 below   7%
+  blend              SPY 40% + BTC 30% + gems 15%                  none       med  19.1% p10   5.4% P(+5)  75% dd>30/40/50  18%/  3%/  0% t2x   3.6 t10x  12.8 below   1%
+  blend              2x 50% + BTC 30% + gems 15%                   none       med  21.3% p10   4.4% P(+5)  74% dd>30/40/50  37%/ 11%/  2% t2x   3.2 t10x  11.5 below   3%
+  blend              2x 40% + BTC 30% + gems 15%                   D40 15-35  med  19.9% p10   4.4% P(+5)  73% dd>30/40/50  13%/  0%/  0% t2x   3.4 t10x  12.4 below   2%
+  blend              BTC 30% + gems 15%                            none       med  16.0% p10   5.4% P(+5)  65% dd>30/40/50   6%/  0%/  0% t2x   4.2 t10x  14.6 below   1%
+  blend              BTC 40% + gems 15%                            D40 15-35  med  18.9% p10   4.6% P(+5)  71% dd>30/40/50  14%/  0%/  0% t2x   3.5 t10x  12.5 below   2%
+  blend              SPY 80% + BTC 20%                             D40 15-35  med  13.5% p10   2.6% P(+5)  56% dd>30/40/50  43%/  0%/  0% t2x   4.5 t10x  17.2 below   4%
+  blend              2x 80% + BTC 20%                              none       med  16.6% p10   1.6% P(+5)  64% dd>30/40/50  75%/ 34%/ 12% t2x   3.7 t10x  14.3 below   7%
+  blend              2x 40% + BTC 30% + gems 15%                   wide 20-50 med  20.3% p10   4.5% P(+5)  74% dd>30/40/50  24%/  2%/  0% t2x   3.4 t10x  12.2 below   2%
+  blend              BTC 40% + gems 15%                            wide 20-50 med  19.2% p10   4.8% P(+5)  72% dd>30/40/50  28%/  2%/  0% t2x   3.5 t10x  12.4 below   2%
+  blend              SPY 80% + BTC 20%                             wide 20-50 med  14.1% p10   2.7% P(+5)  58% dd>30/40/50  56%/ 12%/  0% t2x   4.4 t10x  16.5 below   4%
+  blend              2x 60% + BTC 20% + gems 15%                   none       med  18.3% p10   3.9% P(+5)  70% dd>30/40/50  35%/  9%/  2% t2x   3.7 t10x  13.2 below   3%
+  blend              2x 60% + BTC 30%                              D40 15-35  med  17.6% p10   2.5% P(+5)  66% dd>30/40/50  42%/  0%/  0% t2x   3.5 t10x  13.6 below   4%
+  blend              1x 80% + BTC 20%                              none       med  14.1% p10   3.9% P(+5)  58% dd>30/40/50  12%/  2%/  0% t2x   4.7 t10x  17.1 below   2%
+  blend              Phase A (design v3.3)                         D40 15-35  med   5.1% p10   3.1% P(+5)   8% dd>30/40/50   0%/  0%/  0% t2x  13.6 t10x  45.9 below   0%
+  blend              2x 40% + BTC 20% + gems 15%                   D40 15-35  med  16.7% p10   4.6% P(+5)  67% dd>30/40/50   3%/  0%/  0% t2x   4.2 t10x  14.7 below   1%
+  blend              2xS 60% + BTC 20% + gems 15%                  none       med  16.8% p10   3.3% P(+5)  66% dd>30/40/50  29%/  8%/  2% t2x   4.0 t10x  14.4 below   4%
+  blend              2x 60% + BTC 30%                              wide 20-50 med  18.4% p10   2.5% P(+5)  69% dd>30/40/50  55%/ 13%/  0% t2x   3.4 t10x  13.0 below   5%
+  blend              3x 50% + BTC 20% + gems 15%                   D40 15-35  med  17.9% p10   2.6% P(+5)  66% dd>30/40/50  46%/  0%/  0% t2x   3.5 t10x  13.5 below   4%
+  blend              Phase A (design v3.3)                         wide 20-50 med   5.1% p10   3.1% P(+5)   8% dd>30/40/50   0%/  0%/  0% t2x  13.6 t10x  45.9 below   0%
+  blend              2x 40% + BTC 20% + gems 15%                   wide 20-50 med  16.7% p10   4.8% P(+5)  68% dd>30/40/50   7%/  0%/  0% t2x   4.1 t10x  14.6 below   1%
+  blend              3x 50% + BTC 20% + gems 15%                   wide 20-50 med  18.9% p10   2.8% P(+5)  68% dd>30/40/50  59%/ 13%/  0% t2x   3.4 t10x  12.8 below   5%
+  blend              2x 50% + BTC 20% + gems 15%                   D40 15-35  med  17.1% p10   4.2% P(+5)  68% dd>30/40/50   9%/  0%/  0% t2x   3.9 t10x  14.2 below   2%
+  blend              SPY 80% + BTC 20%                             none       med  14.6% p10   3.0% P(+5)  60% dd>30/40/50  58%/ 20%/  6% t2x   4.4 t10x  16.0 below   4%
+  blend              track 31 C: 2x 80% + BTC 20% (10w rule)       D40 15-35  med  14.7% p10   1.4% P(+5)  60% dd>30/40/50  64%/  2%/  0% t2x   3.9 t10x  15.6 below   6%
+  blend              2x 40% + BTC 30% + gems 15%                   none       med  20.4% p10   4.8% P(+5)  74% dd>30/40/50  25%/  6%/  1% t2x   3.4 t10x  12.2 below   2%
+  blend              SPY                                           D40 15-35  med   6.9% p10  -0.1% P(+5)   1% dd>30/40/50  70%/  3%/  0% t2x   8.1 t10x  32.1 below  11%
+  blend              BTC 40% + gems 15%                            none       med  19.3% p10   5.1% P(+5)  72% dd>30/40/50  30%/  7%/  1% t2x   3.5 t10x  12.3 below   2%
+  blend              2x 50% + BTC 30% + gems 15%                   D40 15-35  med  20.6% p10   3.8% P(+5)  73% dd>30/40/50  23%/  0%/  0% t2x   3.3 t10x  11.9 below   3%
+  blend              BTC 30% + gems 15%                            D40 15-35  med  15.9% p10   5.3% P(+5)  65% dd>30/40/50   1%/  0%/  0% t2x   4.3 t10x  14.8 below   1%
+  blend              SPY 40% + BTC 30% + gems 15%                  D40 15-35  med  18.8% p10   5.2% P(+5)  74% dd>30/40/50   7%/  0%/  0% t2x   3.7 t10x  13.0 below   1%
+  blend              2x 50% + BTC 20% + gems 15%                   wide 20-50 med  17.4% p10   4.2% P(+5)  69% dd>30/40/50  18%/  1%/  0% t2x   3.9 t10x  14.0 below   2%
+  blend              track 31 C: 2x 80% + BTC 20% (10w rule)       wide 20-50 med  15.9% p10   1.6% P(+5)  63% dd>30/40/50  76%/ 24%/  1% t2x   3.7 t10x  14.7 below   7%
+  blend              2x 60% + BTC 30%                              none       med  18.9% p10   2.9% P(+5)  70% dd>30/40/50  58%/ 22%/  7% t2x   3.4 t10x  12.7 below   5%
+  blend              SPY                                           wide 20-50 med   7.5% p10  -0.3% P(+5)   0% dd>30/40/50  77%/ 28%/  1% t2x   7.5 t10x  29.5 below  11%
+  blend              Phase A (design v3.3)                         none       med   5.1% p10   3.1% P(+5)   8% dd>30/40/50   0%/  0%/  0% t2x  13.6 t10x  45.9 below   0%
+  blend              2x 80% + BTC 20%                              D40 15-35  med  14.7% p10   1.3% P(+5)  59% dd>30/40/50  61%/  1%/  0% t2x   3.9 t10x  15.9 below   7%
+  blend              2x 50% + BTC 30% + gems 15%                   wide 20-50 med  21.0% p10   4.1% P(+5)  74% dd>30/40/50  35%/  4%/  0% t2x   3.2 t10x  11.6 below   3%
+  blend              2x 40% + BTC 20% + gems 15%                   none       med  16.8% p10   4.8% P(+5)  68% dd>30/40/50   8%/  1%/  0% t2x   4.1 t10x  14.6 below   1%
+  blend              BTC 30% + gems 15%                            wide 20-50 med  16.0% p10   5.4% P(+5)  65% dd>30/40/50   5%/  0%/  0% t2x   4.3 t10x  14.7 below   1%
+  blend              SPY 40% + BTC 30% + gems 15%                  wide 20-50 med  19.0% p10   5.2% P(+5)  75% dd>30/40/50  16%/  1%/  0% t2x   3.6 t10x  12.9 below   1%
+  blend              1x 80% + BTC 20%                              D40 15-35  med  13.9% p10   3.7% P(+5)  57% dd>30/40/50   4%/  0%/  0% t2x   4.7 t10x  17.3 below   2%
+  blend              2x 60% + BTC 20% + gems 15%                   D40 15-35  med  17.4% p10   3.5% P(+5)  68% dd>30/40/50  21%/  0%/  0% t2x   3.7 t10x  13.9 below   3%
