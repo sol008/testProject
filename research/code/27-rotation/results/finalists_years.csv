@@ -1,0 +1,256 @@
+pick,year,strategy,spy
+IS-selected: sectors9 12-1 k2 mkt M,2012,0,0
+IS-selected: sectors9 12-1 k2 mkt M,2013,0.3029,0.32308
+IS-selected: sectors9 12-1 k2 mkt M,2014,0.13106,0.13464
+IS-selected: sectors9 12-1 k2 mkt M,2015,-0.052495,0.012343
+IS-selected: sectors9 12-1 k2 mkt M,2016,-0.0083676,0.11998
+IS-selected: sectors9 12-1 k2 mkt M,2017,0.14339,0.21705
+IS-selected: sectors9 12-1 k2 mkt M,2018,-0.091479,-0.04569
+IS-selected: sectors9 12-1 k2 mkt M,2019,0.041505,0.31224
+IS-selected: sectors9 12-1 k2 mkt M,2020,0.16399,0.18332
+IS-selected: sectors9 12-1 k2 mkt M,2021,0.20897,0.28729
+IS-selected: sectors9 12-1 k2 mkt M,2022,0.045722,-0.18175
+IS-selected: sectors9 12-1 k2 mkt M,2023,-0.023303,0.26176
+IS-selected: sectors9 12-1 k2 mkt M,2024,0.11167,0.24886
+IS-selected: sectors9 12-1 k2 mkt M,2025,0.029903,0.17719
+IS-selected: sectors9 12-1 k2 mkt M,2026,0.12382,0.1315
+IS-selected: us4 3m k1 mkt voladj M,2012,0,0
+IS-selected: us4 3m k1 mkt voladj M,2013,0.37509,0.32308
+IS-selected: us4 3m k1 mkt voladj M,2014,0.093368,0.13464
+IS-selected: us4 3m k1 mkt voladj M,2015,-0.041686,0.012343
+IS-selected: us4 3m k1 mkt voladj M,2016,0.11684,0.11998
+IS-selected: us4 3m k1 mkt voladj M,2017,0.21725,0.21705
+IS-selected: us4 3m k1 mkt voladj M,2018,-0.075586,-0.04569
+IS-selected: us4 3m k1 mkt voladj M,2019,0.056251,0.31224
+IS-selected: us4 3m k1 mkt voladj M,2020,0.47668,0.18332
+IS-selected: us4 3m k1 mkt voladj M,2021,0.3294,0.28729
+IS-selected: us4 3m k1 mkt voladj M,2022,-0.19344,-0.18175
+IS-selected: us4 3m k1 mkt voladj M,2023,0.13392,0.26176
+IS-selected: us4 3m k1 mkt voladj M,2024,0.21107,0.24886
+IS-selected: us4 3m k1 mkt voladj M,2025,0.054605,0.17719
+IS-selected: us4 3m k1 mkt voladj M,2026,0.016936,0.1315
+IS-selected: us13 3m k2 mkt voladj M,2012,0,0
+IS-selected: us13 3m k2 mkt voladj M,2013,0.28333,0.32308
+IS-selected: us13 3m k2 mkt voladj M,2014,0.10947,0.13464
+IS-selected: us13 3m k2 mkt voladj M,2015,-0.12507,0.012343
+IS-selected: us13 3m k2 mkt voladj M,2016,0.03026,0.11998
+IS-selected: us13 3m k2 mkt voladj M,2017,0.18676,0.21705
+IS-selected: us13 3m k2 mkt voladj M,2018,-0.023286,-0.04569
+IS-selected: us13 3m k2 mkt voladj M,2019,0.036242,0.31224
+IS-selected: us13 3m k2 mkt voladj M,2020,0.24115,0.18332
+IS-selected: us13 3m k2 mkt voladj M,2021,0.28271,0.28729
+IS-selected: us13 3m k2 mkt voladj M,2022,-0.037559,-0.18175
+IS-selected: us13 3m k2 mkt voladj M,2023,0.1038,0.26176
+IS-selected: us13 3m k2 mkt voladj M,2024,0.0885,0.24886
+IS-selected: us13 3m k2 mkt voladj M,2025,0.080061,0.17719
+IS-selected: us13 3m k2 mkt voladj M,2026,-0.095864,0.1315
+IS-selected: us14_smh 6m k3 mkt M,2012,0,0
+IS-selected: us14_smh 6m k3 mkt M,2013,0.36866,0.32308
+IS-selected: us14_smh 6m k3 mkt M,2014,0.093556,0.13464
+IS-selected: us14_smh 6m k3 mkt M,2015,-0.085377,0.012343
+IS-selected: us14_smh 6m k3 mkt M,2016,0.07439,0.11998
+IS-selected: us14_smh 6m k3 mkt M,2017,0.18145,0.21705
+IS-selected: us14_smh 6m k3 mkt M,2018,-0.033547,-0.04569
+IS-selected: us14_smh 6m k3 mkt M,2019,0.033223,0.31224
+IS-selected: us14_smh 6m k3 mkt M,2020,0.34299,0.18332
+IS-selected: us14_smh 6m k3 mkt M,2021,0.2251,0.28729
+IS-selected: us14_smh 6m k3 mkt M,2022,-0.092728,-0.18175
+IS-selected: us14_smh 6m k3 mkt M,2023,0.067979,0.26176
+IS-selected: us14_smh 6m k3 mkt M,2024,0.14988,0.24886
+IS-selected: us14_smh 6m k3 mkt M,2025,0.15732,0.17719
+IS-selected: us14_smh 6m k3 mkt M,2026,0.14495,0.1315
+IS-selected: global4 3m k2 abs voladj M,2012,0,0
+IS-selected: global4 3m k2 abs voladj M,2013,0.24249,0.32308
+IS-selected: global4 3m k2 abs voladj M,2014,0.11416,0.13464
+IS-selected: global4 3m k2 abs voladj M,2015,-0.030876,0.012343
+IS-selected: global4 3m k2 abs voladj M,2016,-0.030468,0.11998
+IS-selected: global4 3m k2 abs voladj M,2017,0.30644,0.21705
+IS-selected: global4 3m k2 abs voladj M,2018,0.0020697,-0.04569
+IS-selected: global4 3m k2 abs voladj M,2019,0.033779,0.31224
+IS-selected: global4 3m k2 abs voladj M,2020,0.09353,0.18332
+IS-selected: global4 3m k2 abs voladj M,2021,0.25557,0.28729
+IS-selected: global4 3m k2 abs voladj M,2022,-0.096825,-0.18175
+IS-selected: global4 3m k2 abs voladj M,2023,0.20904,0.26176
+IS-selected: global4 3m k2 abs voladj M,2024,0.17467,0.24886
+IS-selected: global4 3m k2 abs voladj M,2025,0.23207,0.17719
+IS-selected: global4 3m k2 abs voladj M,2026,0.16607,0.1315
+IS-selected: countries 3m k3 mkt voladj M,2012,0,0
+IS-selected: countries 3m k3 mkt voladj M,2013,0.11277,0.32308
+IS-selected: countries 3m k3 mkt voladj M,2014,0.0085962,0.13464
+IS-selected: countries 3m k3 mkt voladj M,2015,-0.083325,0.012343
+IS-selected: countries 3m k3 mkt voladj M,2016,-0.013663,0.11998
+IS-selected: countries 3m k3 mkt voladj M,2017,0.17364,0.21705
+IS-selected: countries 3m k3 mkt voladj M,2018,-0.18498,-0.04569
+IS-selected: countries 3m k3 mkt voladj M,2019,0.006276,0.31224
+IS-selected: countries 3m k3 mkt voladj M,2020,0.17227,0.18332
+IS-selected: countries 3m k3 mkt voladj M,2021,0.17484,0.28729
+IS-selected: countries 3m k3 mkt voladj M,2022,-0.18681,-0.18175
+IS-selected: countries 3m k3 mkt voladj M,2023,-0.071041,0.26176
+IS-selected: countries 3m k3 mkt voladj M,2024,0.078092,0.24886
+IS-selected: countries 3m k3 mkt voladj M,2025,0.25692,0.17719
+IS-selected: countries 3m k3 mkt voladj M,2026,0.15482,0.1315
+IS-selected: cross9 1m k3 mkt voladj M,2012,0,0
+IS-selected: cross9 1m k3 mkt voladj M,2013,0.070883,0.32308
+IS-selected: cross9 1m k3 mkt voladj M,2014,0.024495,0.13464
+IS-selected: cross9 1m k3 mkt voladj M,2015,-0.20042,0.012343
+IS-selected: cross9 1m k3 mkt voladj M,2016,0.018531,0.11998
+IS-selected: cross9 1m k3 mkt voladj M,2017,0.16143,0.21705
+IS-selected: cross9 1m k3 mkt voladj M,2018,-0.036056,-0.04569
+IS-selected: cross9 1m k3 mkt voladj M,2019,0.051253,0.31224
+IS-selected: cross9 1m k3 mkt voladj M,2020,0.22331,0.18332
+IS-selected: cross9 1m k3 mkt voladj M,2021,0.18467,0.28729
+IS-selected: cross9 1m k3 mkt voladj M,2022,-0.076976,-0.18175
+IS-selected: cross9 1m k3 mkt voladj M,2023,0.11112,0.26176
+IS-selected: cross9 1m k3 mkt voladj M,2024,0.14495,0.24886
+IS-selected: cross9 1m k3 mkt voladj M,2025,0.28249,0.17719
+IS-selected: cross9 1m k3 mkt voladj M,2026,0.16281,0.1315
+IS-selected: cross9_btc 1m k3 mkt voladj M,2012,0,0
+IS-selected: cross9_btc 1m k3 mkt voladj M,2013,3.9908,0.32308
+IS-selected: cross9_btc 1m k3 mkt voladj M,2014,0.058405,0.13464
+IS-selected: cross9_btc 1m k3 mkt voladj M,2015,-0.088699,0.012343
+IS-selected: cross9_btc 1m k3 mkt voladj M,2016,0.42969,0.11998
+IS-selected: cross9_btc 1m k3 mkt voladj M,2017,0.90003,0.21705
+IS-selected: cross9_btc 1m k3 mkt voladj M,2018,-0.37621,-0.04569
+IS-selected: cross9_btc 1m k3 mkt voladj M,2019,0.26083,0.31224
+IS-selected: cross9_btc 1m k3 mkt voladj M,2020,0.61157,0.18332
+IS-selected: cross9_btc 1m k3 mkt voladj M,2021,0.85638,0.28729
+IS-selected: cross9_btc 1m k3 mkt voladj M,2022,-0.077541,-0.18175
+IS-selected: cross9_btc 1m k3 mkt voladj M,2023,0.27954,0.26176
+IS-selected: cross9_btc 1m k3 mkt voladj M,2024,0.27732,0.24886
+IS-selected: cross9_btc 1m k3 mkt voladj M,2025,0.2871,0.17719
+IS-selected: cross9_btc 1m k3 mkt voladj M,2026,0.26808,0.1315
+IS-selected: kitchen_sink 6m k3 mkt M,2012,0,0
+IS-selected: kitchen_sink 6m k3 mkt M,2013,4.2438,0.32308
+IS-selected: kitchen_sink 6m k3 mkt M,2014,-0.041067,0.13464
+IS-selected: kitchen_sink 6m k3 mkt M,2015,-0.057477,0.012343
+IS-selected: kitchen_sink 6m k3 mkt M,2016,0.48561,0.11998
+IS-selected: kitchen_sink 6m k3 mkt M,2017,7.3578,0.21705
+IS-selected: kitchen_sink 6m k3 mkt M,2018,-0.5037,-0.04569
+IS-selected: kitchen_sink 6m k3 mkt M,2019,-0.19499,0.31224
+IS-selected: kitchen_sink 6m k3 mkt M,2020,0.78835,0.18332
+IS-selected: kitchen_sink 6m k3 mkt M,2021,0.19492,0.28729
+IS-selected: kitchen_sink 6m k3 mkt M,2022,-0.07463,-0.18175
+IS-selected: kitchen_sink 6m k3 mkt M,2023,0.12862,0.26176
+IS-selected: kitchen_sink 6m k3 mkt M,2024,0.41928,0.24886
+IS-selected: kitchen_sink 6m k3 mkt M,2025,0.073877,0.17719
+IS-selected: kitchen_sink 6m k3 mkt M,2026,0.1259,0.1315
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2012,0,0
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2013,0.33186,0.32308
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2014,0.10962,0.13464
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2015,-0.070299,0.012343
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2016,-0.036778,0.11998
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2017,0.021995,0.21705
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2018,0.015618,-0.04569
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2019,0.25593,0.31224
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2020,0.43619,0.18332
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2021,0.22439,0.28729
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2022,0.64325,-0.18175
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2023,0.048668,0.26176
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2024,0.12294,0.24886
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2025,0.12704,0.17719
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",2026,0.0091592,0.1315
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2012,0,0
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2013,0.32408,0.32308
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2014,0.15568,0.13464
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2015,-0.070299,0.012343
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2016,-0.036778,0.11998
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2017,0.021995,0.21705
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2018,0.015618,-0.04569
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2019,0.25593,0.31224
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2020,0.443,0.18332
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2021,0.077973,0.28729
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2022,0.64325,-0.18175
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2023,0.048668,0.26176
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2024,0.11183,0.24886
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2025,0.12704,0.17719
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",2026,0.0091592,0.1315
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2012,0,0
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2013,0.32408,0.32308
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2014,0.10444,0.13464
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2015,-0.20356,0.012343
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2016,0.11131,0.11998
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2017,0.31284,0.21705
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2018,-0.02968,-0.04569
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2019,0.28041,0.31224
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2020,0.44249,0.18332
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2021,0.3116,0.28729
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2022,0.64325,-0.18175
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2023,0.076468,0.26176
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2024,0.391,0.24886
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2025,0.13268,0.17719
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",2026,0.66609,0.1315
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2012,0,0
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2013,0.39994,0.32308
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2014,0.16934,0.13464
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2015,-0.044957,0.012343
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2016,0.15174,0.11998
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2017,0.36197,0.21705
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2018,-0.077126,-0.04569
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2019,0.47521,0.31224
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2020,0.31821,0.18332
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2021,0.44279,0.28729
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2022,0.63127,-0.18175
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2023,0.25243,0.26176
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2024,0.40669,0.24886
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2025,0.26346,0.17719
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",2026,0.66609,0.1315
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2012,0,0
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2013,48.33,0.32308
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2014,-0.30684,0.13464
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2015,0.14377,0.012343
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2016,1.1563,0.11998
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2017,14.21,0.21705
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2018,-0.56506,-0.04569
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2019,0.47342,0.31224
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2020,2.3364,0.18332
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2021,-0.046558,0.28729
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2022,0.077549,-0.18175
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2023,0.13669,0.26176
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2024,0.81977,0.24886
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2025,0.29467,0.17719
+Test-best overall (hindsight): cross9_btc adm k1 abs W,2026,0.13172,0.1315
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2012,0,0
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2013,0.16458,0.32308
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2014,0.13464,0.13464
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2015,-0.076618,0.012343
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2016,0.065603,0.11998
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2017,0.19615,0.21705
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2018,-0.074351,-0.04569
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2019,0.14873,0.31224
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2020,0.026194,0.18332
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2021,0.28729,0.28729
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2022,-0.17242,-0.18175
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2023,0.078156,0.26176
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2024,0.24886,0.24886
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2025,0.1362,0.17719
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",2026,0.10176,0.1315
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2012,0,0
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2013,0.13773,0.32308
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2014,0.13464,0.13464
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2015,-0.066844,0.012343
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2016,0.083359,0.11998
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2017,0.22263,0.21705
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2018,0.094898,-0.04569
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2019,0.098844,0.31224
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2020,0.2164,0.18332
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2021,0.25814,0.28729
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2022,-0.29799,-0.18175
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2023,0.21818,0.26176
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2024,0.24886,0.24886
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2025,0.18619,0.17719
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",2026,0.12462,0.1315
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2012,0,0
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2013,0.23052,0.32308
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2014,0.14448,0.13464
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2015,-0.024917,0.012343
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2016,0.013063,0.11998
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2017,0.27365,0.21705
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2018,0.081915,-0.04569
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2019,0.11196,0.31224
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2020,0.20218,0.18332
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2021,0.21751,0.28729
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2022,-0.29385,-0.18175
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2023,0.15921,0.26176
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2024,0.17123,0.24886
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2025,0.20777,0.17719
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",2026,0.083818,0.1315

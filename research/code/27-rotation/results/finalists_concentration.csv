@@ -1,0 +1,18 @@
+pick,top1,top2,top3,top4,top5,top6,semis_share,tech_share,btc_share,cash_share
+IS-selected: sectors9 12-1 k2 mkt M,XLK 34%,XLF 24%,XLV 18%,XLE 12%,XLU 6%,CASH 3%,0,0.33514,0,0.033745
+IS-selected: us4 3m k1 mkt voladj M,QQQ 50%,IWM 29%,SPY 14%,MDY 4%,CASH 2%,,0,0.50475,0,0.024998
+IS-selected: us13 3m k2 mkt voladj M,XLF 30%,QQQ 28%,XLY 11%,MDY 11%,IWM 9%,XLV 9%,0,0.35882,0,0.04034
+IS-selected: us14_smh 6m k3 mkt M,SMH 53%,QQQ 16%,XLK 14%,XLF 8%,MDY 5%,IWM 4%,0.52816,0.82394,0,0.026265
+IS-selected: global4 3m k2 abs voladj M,EEM 28%,QQQ 28%,SPY 26%,EFA 16%,CASH 2%,,0,0.2765,0,0.022019
+IS-selected: countries 3m k3 mkt voladj M,EWT 27%,EWY 25%,EWJ 22%,EWO 22%,SPY 16%,EWG 15%,0,0,0,0.061871
+IS-selected: cross9 1m k3 mkt voladj M,QQQ 24%,IWM 19%,SPY 18%,DBC 18%,GLD 10%,EEM 8%,0,0.23513,0,0.044875
+IS-selected: cross9_btc 1m k3 mkt voladj M,BTC 86%,QQQ 4%,DBC 3%,GLD 2%,SPY 2%,IWM 2%,0,0.036984,0.8563,0.0081956
+IS-selected: kitchen_sink 6m k3 mkt M,BTC 90%,SMH 9%,GLD 2%,XLF 1%,IWM 1%,CASH 1%,0.087915,0.098092,0.90117,0.0071961
+"Simple family (top-1 12m, no filter): sectors9 12m k1 none M",XLK 47%,XLE 25%,XLF 13%,XLV 8%,XLU 6%,XLB 5%,0,0.47419,0,0
+"Simple family (top-1 12m, no filter): us13 12m k1 none M",XLK 33%,XLE 27%,QQQ 17%,XLF 14%,XLV 8%,XLU 7%,0,0.50383,0,0
+"Simple family (top-1 12m, no filter): us14_smh 12m k1 none M",SMH 72%,XLE 16%,XLU 6%,XLF 4%,XLV 2%,XLK 1%,0.71956,0.72748,0,0
+"Test-best, no BTC (hindsight): us14_smh 12-1 k1 none W",SMH 62%,XLE 15%,XLU 6%,QQQ 5%,XLF 5%,XLV 3%,0.62408,0.69303,0,0
+Test-best overall (hindsight): cross9_btc adm k1 abs W,BTC 96%,GLD 3%,DBC 1%,EFA 1%,IEF 0%,CASH 0%,0,-0.0028336,0.96485,0.00058084
+"GEM (SPY/EFA, 12m, else IEF): gem 12m k1 mkt_abs M",SPY 85%,EFA 17%,IEF -2%,,,,0,0,0,0
+"Accelerating dual momentum (SPY/EFA, 1+3+6m, else TLT): adm adm k1 abs0 M",SPY 58%,EFA 28%,TLT 14%,,,,0,0,0,0
+"Accelerating dual momentum (SPY/SCZ, 1+3+6m, else TLT): adm_scz adm k1 abs0 M",SCZ 46%,SPY 41%,TLT 13%,,,,0,0,0,0
