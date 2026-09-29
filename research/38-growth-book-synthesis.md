@@ -246,9 +246,17 @@ Ranked by forward-central expected growth among books that meet D = 40% at a 10%
 
 ---
 
-## 10. Track 33, the strategy zoo (placeholder)
+## 10. Track 33, the strategy zoo
 
-Track 33 simulates every system type it can and ranks them by annual return against the 100% and 1000% targets. It was still running when this synthesis was written. **Its rows are to be added here when it lands**, in the format of §9, with the same two questions asked of each: is it feasible at D = 40% at a 10% tolerance, and what is its forward-central median? The design in v4 does not depend on it: the zoo's aggressive systems (3× Nasdaq trend, Bitcoin at full weight, 2× Bitcoin, concentrated momentum, rolling calls) are the ones track 34 §3 already priced at 0–0.1% odds of 100% a year for a decade with 31–100% odds of an 80% drawdown; if it finds a system that meets D = 40% with a higher forward median than 9.5%, that is a candidate sleeve for a v4.1, subject to the same reality-check and shrinkage rules.
+Track 33 (`33-strategy-zoo.md`) simulated 3,651 systems in 8 families (buy-and-hold, trend filters, momentum rotation, dip-buying, volatility regimes, seasonality, combinations, option overlays), at most one decision a week, with costs, on data from 1928 (S&P 500), 1985 (Nasdaq-100), 1998 (sectors) and 2014 (Bitcoin). Its agent was stopped by the owner before the final polish; the report and its outputs were committed as left. What it found, against the two questions of §9:
+
+| System (track 33 §5) | Record | Worst drawdown | Feasible at D = 40%? | Forward-central median |
+|---|---|---|---|---|
+| 3× Nasdaq-100 (TQQQ) held only while the index's 21-day realised volatility is below 25%, T-bills otherwise; about 3 switches a year, invested 73% of the time | +32.7% a year 1985–99, +19.2% 2000–12 (index −2.0%), +48.8% 2013–26; +46.3% a year out of sample over 13.3 years; deflated Sharpe 0.18 after the zoo's search | **−72%** | **No** (the drawdown alone breaches D; a −33% index day is ruin for a 3× fund, track 26 §4) | The zoo plans on 20–25% a year on a Nasdaq-100 that returned 15–20% a year; at this design's forward equity view (about 4.5% a year at CAPE ≈ 41) the 3× trend variants' forward median is below SPY's (track 26: −4.3% a year for TQQQ) |
+| 50% 3× Nasdaq-100 above its 200-day average + 50% Bitcoin above its 200-day average, rebalanced quarterly (the owner's own example, tested as specified) | +57% a year since 2015; +34% out of sample 2021–26 (291st of 3,256); bootstrap median +32% on the last five years | **−58%** | **No** | Bitcoin's half carries it: its trend rule made +114% a year in 2016–21 and +17% in 2021–26 |
+| The "+100% club": 14 systems averaging ≥ +100% a year over a decade, 13 of them with a synthetic 2× crypto fund that did not exist before June 2023 | The top 10 of Jan 2016–May 2021 (+328% to +405% a year) averaged **−4.7% a year** from May 2021 to Sep 2026; White's reality check p = 0.47 | −80% or worse for most | No | Luck and hindsight, by the zoo's own tests |
+
+The zoo's verdict agrees with tracks 26, 28, 34 and 36: "100% a year is not a credible baseline"; without crypto, no system averaged more than +33% a year over 20+ years; the highest credible expected return it found is 20–30% a year before tax, and only with a 3× fund and drawdowns of 58–72%. Neither of its two credible systems fits D = 40%, so neither becomes a v4 sleeve; both are recorded here as the "WSB mode" alternatives for an owner who would accept D of 60% or more (design v4 §12 decision 12 covers D = 50%; anything beyond it is a new decision). The zoo's volatility-regime filter (leverage only while 21-day volatility is low) is the one mechanism v4 does not use; it is published (Moreira and Muir 2017) and worth a pre-registered shadow series on the 2× legs at the first annual review.
 
 ---
 

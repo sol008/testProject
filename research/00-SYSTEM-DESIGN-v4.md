@@ -49,7 +49,7 @@
 | 36 | The century view | Decade winners were never the momentum leader; no new module | — |
 | 37 | An LLM reading the world | −2.0 to +0.8 points for a weekly pick; veto-only stays | — |
 | **38** | **The synthesis** | **The frontier by D and belief; the book; the governor; the sensitivities** | **This design** |
-| 33 | The strategy zoo | Still running; its rows go into track 38 §10 when it lands | — |
+| 33 | The strategy zoo | 3,651 systems: nothing without crypto above +33% a year over 20+ years; the credible top is 3× Nasdaq-100 under a volatility filter at 20–30% a year with a −72% drawdown, which breaches D = 40% (track 38 §10) | Never-list confirmed; a volatility-filter shadow series on the 2× legs at the first annual review |
 
 ---
 
