@@ -57,9 +57,22 @@ def _observed(d: date, *, saturday_to_friday: bool = True) -> date | None:
     return d
 
 
+# Unscheduled full-day NYSE closures (national days of mourning, 9/11, Hurricane Sandy). A future one must be added
+# here when it is announced; until then the daily run treats the day as missing data and retries (replay finding 2).
+UNSCHEDULED_CLOSURES = frozenset({
+    date(1994, 4, 27),                                                   # President Nixon, day of mourning
+    date(2001, 9, 11), date(2001, 9, 12), date(2001, 9, 13), date(2001, 9, 14),   # September 11
+    date(2004, 6, 11),                                                   # President Reagan, day of mourning
+    date(2007, 1, 2),                                                    # President Ford, day of mourning
+    date(2012, 10, 29), date(2012, 10, 30),                              # Hurricane Sandy
+    date(2018, 12, 5),                                                   # President G. H. W. Bush, day of mourning
+    date(2025, 1, 9),                                                    # President Carter, day of mourning
+})
+
+
 @lru_cache(maxsize=None)
 def nyse_holidays(year: int) -> frozenset[date]:
-    """Full-day NYSE holidays for a year (rules in force since 2022)."""
+    """Full-day NYSE closures for a year: the holiday rules in force since 2022, plus UNSCHEDULED_CLOSURES."""
     days = [
         # New Year's Day: a Saturday holiday is not moved to Friday 31 Dec (NYSE rule 7.2).
         _observed(date(year, 1, 1), saturday_to_friday=False),
@@ -73,6 +86,7 @@ def nyse_holidays(year: int) -> frozenset[date]:
         _nth_weekday(year, 11, 3, 4),                # Thanksgiving
         _observed(date(year, 12, 25)),               # Christmas
     ]
+    days += [d for d in UNSCHEDULED_CLOSURES if d.year == year]
     return frozenset(d for d in days if d is not None)
 
 

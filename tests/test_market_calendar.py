@@ -42,3 +42,12 @@ def test_latest_sunday():
     assert latest_sunday(datetime(2026, 9, 27, 21, 17, tzinfo=ET)) == date(2026, 9, 27)
     assert latest_sunday(datetime(2026, 9, 28, 0, 30, tzinfo=ET)) == date(2026, 9, 27)
     assert latest_sunday(datetime(2026, 10, 3, 12, 0, tzinfo=ET)) == date(2026, 9, 27)
+
+
+def test_unscheduled_closures_are_not_trading_days():
+    from traderec.market_calendar import is_trading_day, next_trading_day
+    for d in ("2025-01-09", "2018-12-05", "2012-10-29", "2012-10-30", "2001-09-11", "2007-01-02"):
+        assert not is_trading_day(d), d
+    assert is_trading_day("2025-01-08") and is_trading_day("2025-01-10")
+    assert next_trading_day("2025-01-08").isoformat() == "2025-01-10"
+
