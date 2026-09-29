@@ -1,0 +1,33 @@
+{
+ "hits": {
+  "total": {
+   "value": 1,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001104659-26-072432:tm2614353-2_defm14a.htm",
+    "_source": {
+     "ciks": [
+      "0001606498"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "AVANOS MEDICAL, INC.  (AVNS)  (CIK 0001606498)"
+     ],
+     "root_forms": [
+      "DEFM14A"
+     ],
+     "file_date": "2026-06-10",
+     "form": "DEFM14A",
+     "adsh": "0001104659-26-072432",
+     "file_type": "DEFM14A",
+     "items": [],
+     "sics": [
+      "3842"
+     ]
+    }
+   }
+  ]
+ }
+}

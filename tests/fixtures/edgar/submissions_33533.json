@@ -1,0 +1,13 @@
+{
+ "cik": "0000033533",
+ "entityType": "operating",
+ "sic": "3679",
+ "sicDescription": "Electronic Components, NEC",
+ "name": "ESPEY MFG & ELECTRONICS CORP",
+ "tickers": [
+  "ESP"
+ ],
+ "exchanges": [
+  "NYSE"
+ ]
+}

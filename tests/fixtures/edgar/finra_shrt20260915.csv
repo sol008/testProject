@@ -1,0 +1,4 @@
+"accountingYearMonthNumber"|"symbolCode"|"issueName"|"issuerServicesGroupExchangeCode"|"marketClassCode"|"currentShortPositionQuantity"|"previousShortPositionQuantity"|"stockSplitFlag"|"averageDailyVolumeQuantity"|"daysToCoverQuantity"|"revisionFlag"|"changePercent"|"changePreviousNumber"|"settlementDate"
+"20260915"|"AAPL"|"Apple Inc. Common Stock"|"R"|"NNM"|"128753092"|"139749097"||"45135477"|"2.85"||"-7.87"|"-10996005"|"2026-09-15"
+"20260915"|"BILL"|"BILL Holdings, Inc."|"A"|"NYSE"|"10943117"|"11285945"||"1715163"|"6.38"||"-3.04"|"-342828"|"2026-09-15"
+"20260915"|"CME"|"CME Group Inc. Class A Common"|"R"|"NNM"|"5801564"|"5629176"||"1736223"|"3.34"||"3.06"|"172388"|"2026-09-15"

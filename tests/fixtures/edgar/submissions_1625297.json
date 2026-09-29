@@ -1,0 +1,13 @@
+{
+ "cik": "0001625297",
+ "entityType": "operating",
+ "sic": "2834",
+ "sicDescription": "Pharmaceutical Preparations",
+ "name": "Indivior Pharmaceuticals, Inc.",
+ "tickers": [
+  "INDV"
+ ],
+ "exchanges": [
+  "Nasdaq"
+ ]
+}

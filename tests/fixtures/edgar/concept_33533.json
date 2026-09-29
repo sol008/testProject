@@ -1,0 +1,90 @@
+{
+ "cik": 33533,
+ "taxonomy": "dei",
+ "tag": "EntityCommonStockSharesOutstanding",
+ "label": "Entity Common Stock, Shares Outstanding",
+ "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument.",
+ "entityName": "ESPEY MFG. & ELECTRONICS CORP.",
+ "units": {
+  "shares": [
+   {
+    "end": "2024-11-07",
+    "val": 2790998,
+    "accn": "0001174947-24-001258",
+    "fy": 2025,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2024-11-13"
+   },
+   {
+    "end": "2025-02-10",
+    "val": 2796758,
+    "accn": "0001174947-25-000162",
+    "fy": 2025,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2025-02-12",
+    "frame": "CY2024Q4I"
+   },
+   {
+    "end": "2025-05-08",
+    "val": 2831399,
+    "accn": "0001174947-25-000741",
+    "fy": 2025,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2025-05-12",
+    "frame": "CY2025Q1I"
+   },
+   {
+    "end": "2025-09-14",
+    "val": 2924418,
+    "accn": "0001174947-25-001227",
+    "fy": 2025,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2025-09-16",
+    "frame": "CY2025Q3I"
+   },
+   {
+    "end": "2025-11-10",
+    "val": 2935093,
+    "accn": "0001174947-25-001381",
+    "fy": 2026,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2025-11-12"
+   },
+   {
+    "end": "2026-02-08",
+    "val": 2958843,
+    "accn": "0001174947-26-000152",
+    "fy": 2026,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2026-02-10",
+    "frame": "CY2025Q4I"
+   },
+   {
+    "end": "2026-05-06",
+    "val": 2995922,
+    "accn": "0001174947-26-000585",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2026-05-12",
+    "frame": "CY2026Q1I"
+   },
+   {
+    "end": "2026-09-15",
+    "val": 3036872,
+    "accn": "0001174947-26-000891",
+    "fy": 2026,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2026-09-23",
+    "frame": "CY2026Q3I"
+   }
+  ]
+ }
+}

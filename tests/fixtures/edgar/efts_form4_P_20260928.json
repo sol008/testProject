@@ -1,0 +1,212 @@
+{
+ "hits": {
+  "total": {
+   "value": 8,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001510281-26-000313:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001510281",
+      "0000065433"
+     ],
+     "period_ending": "2026-09-24",
+     "display_names": [
+      "Saba Capital Management, L.P.  (CIK 0001510281)",
+      "MEXICO FUND INC  (CIK 0000065433)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001510281-26-000313",
+     "file_type": "4",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001628280-26-063748:wk-form4_1790629927.xml",
+    "_source": {
+     "ciks": [
+      "0001304065",
+      "0000919864"
+     ],
+     "period_ending": "2026-09-25",
+     "display_names": [
+      "Puntillo Anthony  (CIK 0001304065)",
+      "Finward Bancorp  (CIK 0000919864)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001628280-26-063748",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "6035"
+     ]
+    }
+   },
+   {
+    "_id": "0001628280-26-063744:wk-form4_1790629729.xml",
+    "_source": {
+     "ciks": [
+      "0001307952",
+      "0000919864"
+     ],
+     "period_ending": "2026-09-25",
+     "display_names": [
+      "Lowry Robert T  (CIK 0001307952)",
+      "Finward Bancorp  (CIK 0000919864)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001628280-26-063744",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "6035"
+     ]
+    }
+   },
+   {
+    "_id": "0001628280-26-063746:wk-form4_1790629824.xml",
+    "_source": {
+     "ciks": [
+      "0001583893",
+      "0000919864"
+     ],
+     "period_ending": "2026-09-25",
+     "display_names": [
+      "Bochnowski Benjamin J  (CIK 0001583893)",
+      "Finward Bancorp  (CIK 0000919864)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001628280-26-063746",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "6035"
+     ]
+    }
+   },
+   {
+    "_id": "0001700575-26-000005:primarydocument.xml",
+    "_source": {
+     "ciks": [
+      "0001700575",
+      "0001318008"
+     ],
+     "period_ending": "2026-09-18",
+     "display_names": [
+      "ELLIS ADAM CHRISTOPHER  (CIK 0001700575)",
+      "Zumiez Inc  (CIK 0001318008)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001700575-26-000005",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "5600"
+     ]
+    }
+   },
+   {
+    "_id": "0001628280-26-063755:wk-form4_1790632504.xml",
+    "_source": {
+     "ciks": [
+      "0001674222",
+      "0000919864"
+     ],
+     "period_ending": "2026-09-25",
+     "display_names": [
+      "Scheub Todd M.  (CIK 0001674222)",
+      "Finward Bancorp  (CIK 0000919864)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001628280-26-063755",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "6035"
+     ]
+    }
+   },
+   {
+    "_id": "0001212852-26-000005:wk-form4_1790626530.xml",
+    "_source": {
+     "ciks": [
+      "0001212852",
+      "0001156375"
+     ],
+     "period_ending": "2026-09-25",
+     "display_names": [
+      "SHEPARD WILLIAM R  (CIK 0001212852)",
+      "CME GROUP INC.  (CIK 0001156375)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001212852-26-000005",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "6200"
+     ]
+    }
+   },
+   {
+    "_id": "0001493152-26-044626:ownership.xml",
+    "_source": {
+     "ciks": [
+      "0001278951",
+      "0001435627",
+      "0001435626",
+      "0001254699"
+     ],
+     "period_ending": "2026-09-24",
+     "display_names": [
+      "GOLDENTREE ASSET MANAGEMENT LP  (CIK 0001278951)",
+      "GoldenTree Asset Management LLC  (CIK 0001435627)",
+      "Tananbaum Steven A.  (CIK 0001435626)",
+      "QVC Group, Inc.  (CIK 0001254699)"
+     ],
+     "root_forms": [
+      "4"
+     ],
+     "file_date": "2026-09-28",
+     "form": "4",
+     "adsh": "0001493152-26-044626",
+     "file_type": "4",
+     "items": [],
+     "sics": [
+      "5961"
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,13 @@
+{
+ "cik": "0000919864",
+ "entityType": "operating",
+ "sic": "6035",
+ "sicDescription": "Savings Institution, Federally Chartered",
+ "name": "Finward Bancorp",
+ "tickers": [
+  "FNWD"
+ ],
+ "exchanges": [
+  "Nasdaq"
+ ]
+}

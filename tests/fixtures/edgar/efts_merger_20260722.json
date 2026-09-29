@@ -1,0 +1,89 @@
+{
+ "hits": {
+  "total": {
+   "value": 3,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001193125-26-312514:d127180d8k.htm",
+    "_source": {
+     "ciks": [
+      "0001562476"
+     ],
+     "period_ending": "2026-07-22",
+     "display_names": [
+      "Taylor Morrison Home Corp  (TMHC)  (CIK 0001562476)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-07-22",
+     "form": "8-K",
+     "adsh": "0001193125-26-312514",
+     "file_type": "8-K",
+     "items": [
+      "5.07"
+     ],
+     "sics": [
+      "1531"
+     ]
+    }
+   },
+   {
+    "_id": "0001606498-26-000096:avns-20260722.htm",
+    "_source": {
+     "ciks": [
+      "0001606498"
+     ],
+     "period_ending": "2026-07-22",
+     "display_names": [
+      "AVANOS MEDICAL, INC.  (AVNS)  (CIK 0001606498)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-07-22",
+     "form": "8-K",
+     "adsh": "0001606498-26-000096",
+     "file_type": "8-K",
+     "items": [
+      "5.07",
+      "7.01",
+      "9.01"
+     ],
+     "sics": [
+      "3842"
+     ]
+    }
+   },
+   {
+    "_id": "0001606498-26-000096:avnsform8k_07222026xex991.htm",
+    "_source": {
+     "ciks": [
+      "0001606498"
+     ],
+     "period_ending": "2026-07-22",
+     "display_names": [
+      "AVANOS MEDICAL, INC.  (AVNS)  (CIK 0001606498)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-07-22",
+     "form": "8-K",
+     "adsh": "0001606498-26-000096",
+     "file_type": "EX-99.1",
+     "items": [
+      "5.07",
+      "7.01",
+      "9.01"
+     ],
+     "sics": [
+      "3842"
+     ]
+    }
+   }
+  ]
+ }
+}

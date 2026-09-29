@@ -1,0 +1,50 @@
+[
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 1.24,
+  "averageDailyVolumeQuantity": 4845209,
+  "currentShortPositionQuantity": 6011422,
+  "settlementDate": "2026-06-30",
+  "marketClassCode": "NNM"
+ },
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 1.88,
+  "averageDailyVolumeQuantity": 3110735,
+  "currentShortPositionQuantity": 5837310,
+  "settlementDate": "2026-07-15",
+  "marketClassCode": "NNM"
+ },
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 2.26,
+  "averageDailyVolumeQuantity": 2755420,
+  "currentShortPositionQuantity": 6213476,
+  "settlementDate": "2026-07-31",
+  "marketClassCode": "NNM"
+ },
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 3.1,
+  "averageDailyVolumeQuantity": 1677148,
+  "currentShortPositionQuantity": 5199595,
+  "settlementDate": "2026-08-14",
+  "marketClassCode": "NNM"
+ },
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 2.83,
+  "averageDailyVolumeQuantity": 1987880,
+  "currentShortPositionQuantity": 5629176,
+  "settlementDate": "2026-08-31",
+  "marketClassCode": "NNM"
+ },
+ {
+  "symbolCode": "CME",
+  "daysToCoverQuantity": 3.34,
+  "averageDailyVolumeQuantity": 1736223,
+  "currentShortPositionQuantity": 5801564,
+  "settlementDate": "2026-09-15",
+  "marketClassCode": "NNM"
+ }
+]

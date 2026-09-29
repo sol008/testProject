@@ -1,0 +1,87 @@
+{
+ "hits": {
+  "total": {
+   "value": 3,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001174947-26-000848:ex99-1.htm",
+    "_source": {
+     "ciks": [
+      "0000033533"
+     ],
+     "period_ending": "2026-09-08",
+     "display_names": [
+      "ESPEY MFG & ELECTRONICS CORP  (ESP)  (CIK 0000033533)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-08",
+     "form": "8-K",
+     "adsh": "0001174947-26-000848",
+     "file_type": "EX-99.1",
+     "items": [
+      "8.01",
+      "9.01"
+     ],
+     "sics": [
+      "3679"
+     ]
+    }
+   },
+   {
+    "_id": "0001174947-26-000848:form8k-36314_esp.htm",
+    "_source": {
+     "ciks": [
+      "0000033533"
+     ],
+     "period_ending": "2026-09-08",
+     "display_names": [
+      "ESPEY MFG & ELECTRONICS CORP  (ESP)  (CIK 0000033533)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-08",
+     "form": "8-K",
+     "adsh": "0001174947-26-000848",
+     "file_type": "8-K",
+     "items": [
+      "8.01",
+      "9.01"
+     ],
+     "sics": [
+      "3679"
+     ]
+    }
+   },
+   {
+    "_id": "0002007587-26-000106:q2investordeck982026pdfv.htm",
+    "_source": {
+     "ciks": [
+      "0002007587"
+     ],
+     "period_ending": "2026-09-08",
+     "display_names": [
+      "American Integrity Insurance Group, Inc.  (AII)  (CIK 0002007587)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-08",
+     "form": "8-K",
+     "adsh": "0002007587-26-000106",
+     "file_type": "EX-99.1",
+     "items": [
+      "7.01"
+     ],
+     "sics": [
+      "6331"
+     ]
+    }
+   }
+  ]
+ }
+}

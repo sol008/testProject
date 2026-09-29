@@ -1,0 +1,90 @@
+{
+ "cik": 1606498,
+ "taxonomy": "dei",
+ "tag": "EntityCommonStockSharesOutstanding",
+ "label": "Entity Common Stock, Shares Outstanding",
+ "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument.",
+ "entityName": "AVANOS MEDICAL, INC.",
+ "units": {
+  "shares": [
+   {
+    "end": "2024-07-24",
+    "val": 45948994,
+    "accn": "0001606498-24-000077",
+    "fy": 2024,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2024-07-31",
+    "frame": "CY2024Q2I"
+   },
+   {
+    "end": "2024-10-23",
+    "val": 45956997,
+    "accn": "0001606498-24-000084",
+    "fy": 2024,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2024-10-30",
+    "frame": "CY2024Q3I"
+   },
+   {
+    "end": "2025-02-19",
+    "val": 46003150,
+    "accn": "0001606498-25-000024",
+    "fy": 2024,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2025-02-26"
+   },
+   {
+    "end": "2025-04-29",
+    "val": 46243980,
+    "accn": "0001606498-25-000091",
+    "fy": 2025,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2025-05-06",
+    "frame": "CY2025Q1I"
+   },
+   {
+    "end": "2025-07-29",
+    "val": 46402481,
+    "accn": "0001606498-25-000109",
+    "fy": 2025,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2025-08-05",
+    "frame": "CY2025Q2I"
+   },
+   {
+    "end": "2025-10-29",
+    "val": 46418907,
+    "accn": "0001606498-25-000131",
+    "fy": 2025,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2025-11-05",
+    "frame": "CY2025Q3I"
+   },
+   {
+    "end": "2026-02-17",
+    "val": 46503458,
+    "accn": "0001606498-26-000004",
+    "fy": 2025,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2026-02-24"
+   },
+   {
+    "end": "2026-04-28",
+    "val": 46824793,
+    "accn": "0001606498-26-000063",
+    "fy": 2026,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2026-05-05",
+    "frame": "CY2026Q1I"
+   }
+  ]
+ }
+}

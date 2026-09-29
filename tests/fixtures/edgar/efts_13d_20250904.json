@@ -1,0 +1,158 @@
+{
+ "hits": {
+  "total": {
+   "value": 6,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001213900-25-084532:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001776067",
+      "0001842841"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Oriental Culture Holding LTD  (OCG)  (CIK 0001776067)",
+      "Kong Aimin  (CIK 0001842841)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D",
+     "adsh": "0001213900-25-084532",
+     "file_type": "SCHEDULE 13D",
+     "items": [],
+     "sics": [
+      "7380"
+     ]
+    }
+   },
+   {
+    "_id": "0001213900-25-084514:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001831096",
+      "0001016345"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Great Elm Group, Inc.  (GEG, GEGGL)  (CIK 0001831096)",
+      "SMITH RANDALL D  (CIK 0001016345)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D",
+     "adsh": "0001213900-25-084514",
+     "file_type": "SCHEDULE 13D",
+     "items": [],
+     "sics": [
+      "7372"
+     ]
+    }
+   },
+   {
+    "_id": "0001104659-25-087551:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001901637",
+      "0001874961"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "USCB FINANCIAL HOLDINGS, INC.  (USCB)  (CIK 0001901637)",
+      "Priam Capital Fund II, L.P.  (CIK 0001874961)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D/A",
+     "adsh": "0001104659-25-087551",
+     "file_type": "SCHEDULE 13D/A",
+     "items": [],
+     "sics": [
+      "6022"
+     ]
+    }
+   },
+   {
+    "_id": "0001062993-25-015311:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001137391",
+      "0001510281"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "BLACKROCK CALIFORNIA MUNICIPAL INCOME TRUST  (BFZ)  (CIK 0001137391)",
+      "Saba Capital Management, L.P.  (CIK 0001510281)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D/A",
+     "adsh": "0001062993-25-015311",
+     "file_type": "SCHEDULE 13D/A",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0000927089-25-000150:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001901637",
+      "0001583223"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "USCB FINANCIAL HOLDINGS, INC.  (USCB)  (CIK 0001901637)",
+      "Patriot Financial Partners II, L.P.  (CIK 0001583223)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D/A",
+     "adsh": "0000927089-25-000150",
+     "file_type": "SCHEDULE 13D/A",
+     "items": [],
+     "sics": [
+      "6022"
+     ]
+    }
+   },
+   {
+    "_id": "0000921895-25-002532:primary_doc.xml",
+    "_source": {
+     "ciks": [
+      "0001786352",
+      "0001517137"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "BILL Holdings, Inc.  (BILL)  (CIK 0001786352)",
+      "Starboard Value LP  (CIK 0001517137)"
+     ],
+     "root_forms": [
+      "SCHEDULE 13D"
+     ],
+     "file_date": "2025-09-04",
+     "form": "SCHEDULE 13D",
+     "adsh": "0000921895-25-002532",
+     "file_type": "SCHEDULE 13D",
+     "items": [],
+     "sics": [
+      "7372"
+     ]
+    }
+   }
+  ]
+ }
+}
