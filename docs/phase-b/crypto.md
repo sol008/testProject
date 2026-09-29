@@ -59,6 +59,7 @@ The spot is Coinbase BTC-USD at the future's last-trade minute, from one-minute 
 **Freshness and look-ahead.** The quote must be stamped between 00:00 ET on the run date and 06:00 ET the next day.
 - An older quote is stale: a data alert, no signal.
 - A later quote means a catch-up run for an earlier date. That run can't see that date's quotes: it gets a note, no signal.
+- A target month that had already expired when the run was made is a catch-up run too: Yahoo answers 404 for an expired month, so no explicit month can be quoted. That is a note, no signal, no alert (a replay of 2026 otherwise alerted on 165 of 185 evenings). "Today" comes from the source's or the provider's clock (`_clock`, which `LiveProvider` and `LiveCryptoData` carry and `FakeCryptoData(clock=...)` takes), else the wall clock. A missing month for a contract that has not expired is still a data alert.
 
 **Result.** At expiry the future settles to spot, so the hedged position earns the basis locked at entry, less costs:
 - a 0.15% round trip (IBIT ~0.05% + MBT ~0.10%, track 15 §4.7);
@@ -178,6 +179,7 @@ Every event carries `signal_date`, as the monthly report's shadow table needs.
 ### The hourly job (`.github/workflows/hourly.yml`, `python -m traderec hourly [--dry-run]`)
 
 - **Schedule.** Every hour at minute 41 UTC. That keeps clear of the other state writers: daily, weekly and options at :17, monthly at 12:13 UTC. The job uses the shared `traderec-state` concurrency group and a 10-minute timeout.
+- **Checkout and install.** The job checks out a shallow clone (`fetch-depth: 1`: it needs no history, and the commit step's `git pull --rebase` still works, fetching what the branch gained since checkout and replaying the one state commit on top) and installs `requirements-hourly.txt`: pandas, numpy, requests and PyYAML, what `python -m traderec hourly` (and `init --if-missing`) imports. yfinance is imported lazily by the daily bars, which this job never fetches, and pytest is for the test suite. Keep that file's versions in step with `requirements.txt`. GitHub bills a minimum of one minute per job whatever the run takes, so this trims seconds, not the estimate below; it keeps a quiet hour well clear of the second billed minute.
 - **What it does.** It fetches the stablecoin books and plans the monitor's step on a copy of the state.
 - **A quiet hour writes nothing.** There is no ledger record, no run entry and no `pre_run.json`, so the commit step finds nothing to commit. With today's markets that is every hour.
 - **A recorded hour.** When an event starts, updates or ends, the hour becomes one `Run` transaction keyed `hourly:<YYYY-MM-DDTHHZ>`, like the other runs:
@@ -255,7 +257,7 @@ A provider without crypto feeds, such as a test `FakeProvider`, only adds a note
 - **Yahoo's explicit-month coverage is patchy.** Deferred months trade rarely. BTCF27 had last traded a week earlier on 29 Sep, but it is never the target: the target always has ≤60 days. A missing month fails closed.
 - **ETH weekly records ignore the one-day fill lag.** `eth_promotion`'s weekly series does; the trade list is the exact record.
 - **Scheduled runs can start late.** GitHub may start a scheduled job 5–30 minutes late.
-- **Queued runs can be cancelled.** The concurrency group keeps one pending run, so a new queued run cancels an older pending one. The 10-minute timeout and minute 41 make an overlap with the daily slots unlikely.
+- **Queued runs can be cancelled.** GitHub keeps only one pending run per concurrency group, so a long-delayed scheduled run (they can start 5-30 minutes late, more under load) can be cancelled by the next queued one; every state-writing workflow shares `traderec-state`. The 10-minute timeout and minute 41 make an overlap with the daily slots unlikely, but an hourly run that is still queued when the options or daily job arrives is the one that gets cancelled, and the reverse can happen too. In winter (EST) the options job has a single usable cron slot, so an options run cancelled this way is not retried that day; the daily job has a second slot.
 - **Recorded hours affect `--force`.** A recorded hourly run becomes the state's "most recent run", so `--force` can then re-run only that hour, not an earlier daily run. It happens only on the rare event hours.
 
 ## 8. Deviations and notes for the integrator

@@ -12,7 +12,11 @@ no order and calls no LLM. Each evening it:
    the dollar index) and BTC, the 2- and 10-year yield changes and the 2-year bucket. The forward moves over
    1, 5 and 20 sessions are filled in as they mature (track 17 R1);
 3. evaluates W3 on CPI days and W4 at BoJ meetings once their inputs are published, and opens the gold fade
-   for each listed war onset. A trigger becomes a hypothetical trade at the next open;
+   for each listed war onset. A trigger becomes a hypothetical trade at the first open after the evening it
+   was evaluated (its `signal_date` is that run date), never at an earlier open: a late input (FRED's core
+   CPI a day late, the BoJ's rate file 1-4 business days after the meeting, an onset listed late) means a
+   late entry, as a live run's would be. The track's timing (`research_signal_date`, `research_entry_date`,
+   `research_entry_open`, `entry_lag_sessions`) is recorded next to it for the promotion review;
 4. walks every open hypothetical trade forward. It exits by the track's rules at the next open, then scores
    the trade against the random-day baseline and resolves its base-rate forecast;
 5. logs a near-miss when GLD jumps with no war onset listed.
@@ -39,6 +43,8 @@ if TYPE_CHECKING:  # pragma: no cover
 BOOK = "MACRO"
 RULES = ("W3", "W4", "GOLD_FADE")
 FRED_YIELDS = {"2Y": "DGS2", "10Y": "DGS10"}
+# How far back the Treasury curve is read: the prior year's file is requested only while a window can reach it.
+TREASURY_LOOKBACK_DAYS = 60
 # What track 17 R1 asks the release log to record, and why this build cannot.
 UNAVAILABLE = {
     "market_implied_probability": "no prediction-market adapter here (Kalshi and Polymarket belong to the W8/W9 "
@@ -212,10 +218,13 @@ class _Day:
         return None if s is None else s.loc[:self.asof]
 
     def treasury(self, tenor: str) -> pd.Series | None:
+        """Treasury's par yield curve for the years the book still reads. Nothing looks further back than a
+        release's 20-session forward window plus the pending sessions (about 35 calendar days), so the prior
+        year's file (a second ~15 KB request that takes 17-19 s) is fetched only until early March."""
         if self.md is None:
             return None
-        years = sorted({self.asof.year, (self.asof - pd.Timedelta(days=150)).year})
-        s = self._memo(("treasury", tenor), lambda: self.md.treasury_yields(tenor, years))
+        years = sorted({self.asof.year, (self.asof - pd.Timedelta(days=TREASURY_LOOKBACK_DAYS)).year})
+        s = self._memo(("treasury", tenor), lambda: self.md.treasury_yields(tenor, years, asof=self.run.date))
         return None if s is None else s.loc[:self.asof]
 
     def yields(self, tenor: str) -> tuple[pd.Series | None, str | None]:
@@ -427,8 +436,10 @@ def _w3(day: _Day) -> None:
             result["blocked"] = "the 10-year's pre-CPI close is unavailable, so the invalidation cannot be checked"
             day.alert(f"w3_blocked:{rec['id']}", f"W3 fired on {rec['id']} but {result['blocked']}; no trade")
             continue
-        trade = ms.new_trade("W3", f"W3:{s0}", s0, c3["ticker"], "long", int(c3["hold_sessions"]),
-                             release_id=rec["id"], pre_release_10y=pre, d2y_bp=d2y,
+        # Entered at the first open after tonight, the evening the inputs allowed the evaluation; the track's
+        # timing (the open after the CPI day) is kept as research_entry_date. Same evening: the two coincide.
+        trade = ms.new_trade("W3", f"W3:{s0}", day.run.date, c3["ticker"], "long", int(c3["hold_sessions"]),
+                             research_signal_date=s0, release_id=rec["id"], pre_release_10y=pre, d2y_bp=d2y,
                              core_cpi_mm=core["rounded"], counted=True,
                              forecast={"question": f"{c3['ticker']} total return from entry to exit above 0",
                                        "p": float(c3["forecast_p_profit"])})
@@ -469,8 +480,11 @@ def _w4(day: _Day) -> None:
         rec["w4"] = result
         day.log("W4", "signal" if chk["trigger"] else "no_signal", {"release_id": rec["id"], **result})
         if chk["trigger"]:
-            trade = ms.new_trade("W4", f"W4:{rec['release_date']}", at, c4["ticker"], "long",
-                                 int(c4["hold_sessions"]), release_id=rec["id"], fomc=pair, counted=True,
+            # The BoJ file confirms a decision 1-4 business days after the meeting, so the entry (the first
+            # open after tonight) is later than the track's (the open after both decisions were public, `at`).
+            trade = ms.new_trade("W4", f"W4:{rec['release_date']}", day.run.date, c4["ticker"], "long",
+                                 int(c4["hold_sessions"]), research_signal_date=at, release_id=rec["id"],
+                                 fomc=pair, counted=True,
                                  boj_change_bp=boj["change_bp"], fed_change_bp=fed["change_bp"],
                                  forecast={"question": f"{c4['ticker']} total return from entry to exit above 0",
                                            "p": float(c4["forecast_p_profit"])})
@@ -509,7 +523,10 @@ def _gold(day: _Day) -> None:
                 day.log("GOLD_FADE", "unavailable", dict(rec))
             continue
         counted = first <= s0
-        trade = ms.new_trade("GOLD_FADE", onset.id, s0, cg["ticker"], "short", int(cg["hold_sessions"]),
+        # Shorted at the first open after tonight. An onset listed after its day-0 evening is therefore a
+        # later, uncounted trade; the track's own measure (research_f1) is still taken from day 0.
+        trade = ms.new_trade("GOLD_FADE", onset.id, day.run.date, cg["ticker"], "short",
+                             int(cg["hold_sessions"]), research_signal_date=s0,
                              label=onset.label, first_seen=first, counted=counted, day0_move=round(d0, 6),
                              forecast={"question": f"a short {cg['ticker']} over one session earns above 0",
                                        "p": float(cg["forecast_p_profit"])})
@@ -577,5 +594,6 @@ def _score(day: _Day, trade: dict, bars: pd.DataFrame) -> None:
         fc.update(outcome=outcome, brier=brier(float(fc["p"]), outcome))
     if trade["rule"] == "GOLD_FADE":                      # the track's measure: day-0 close to day-1 close
         closes = ms.total_return_closes(bars)
-        f1 = ms.window_move(closes, trade["signal_date"], ms.session_after(day.sessions, trade["signal_date"], 1))
+        day0 = trade.get("research_signal_date") or trade["signal_date"]
+        f1 = ms.window_move(closes, day0, ms.session_after(day.sessions, day0, 1))
         trade["research_f1"] = None if f1 is None else round(f1, 6)

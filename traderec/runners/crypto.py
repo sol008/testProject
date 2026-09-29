@@ -24,6 +24,7 @@ import pandas as pd
 
 from traderec.config import STATE_DIR
 from traderec.data import crypto_data
+from traderec.market_calendar import today_et
 from traderec.modules import crypto_shadows as rules
 from traderec.state import RETRYABLE, Paths, load_state
 
@@ -152,11 +153,24 @@ def _carry(run: "Run", src: Any, cfg: dict) -> None:
         run.log("shadow", {"book": "M6", "event": "carry_open", **ev})
 
 
+def _today_et(run: "Run", src: Any) -> str:
+    """Today's date in New York: from the source's or the provider's clock (the live adapters and the test
+    seams), else the wall clock. It tells a catch-up run for an earlier date from tonight's run."""
+    for owner in (src, run.provider):
+        clock = getattr(owner, "_clock", None)
+        if callable(clock):
+            return _utc(clock()).tz_convert("America/New_York").strftime("%Y-%m-%d")
+    return today_et().isoformat()
+
+
 def _carry_quote(run: "Run", src: Any, target: dict) -> tuple[dict | None, float | None, str | None, bool]:
     """The target month's futures quote and BTC-USD at the quote's time.
 
-    Returns (quote, spot, problem, is_data_problem). A quote stamped after the run's window is not a data problem:
-    it means a catch-up run for an earlier date, which can't see that date's quotes.
+    Returns (quote, spot, problem, is_data_problem). Two cases are not data problems, only notes: a quote stamped
+    after the run's window (a catch-up run for an earlier date, which can't see that date's quotes), and a target
+    month that had already expired when the run was made (Yahoo answers 404 for an expired month, so a catch-up
+    run for a date before that expiry can't be quoted either; a replay of a whole year would otherwise alert
+    almost every evening).
     """
     name = f"{target['label']} ({target['code']})"
     try:
@@ -164,6 +178,9 @@ def _carry_quote(run: "Run", src: Any, target: dict) -> tuple[dict | None, float
     except Exception as exc:  # noqa: BLE001 - fail closed
         return None, None, f"no quote for {name}: {type(exc).__name__}", True
     if not quote or quote.get("time") is None:
+        if str(target["expiry"]) < _today_et(run, src):
+            return None, None, (f"no quote for {name}: it expired on {target['expiry']}, before this catch-up "
+                                f"run for {run.date}"), False
         return None, None, f"no explicit-month quote for {name}", True
     when = _utc(quote["time"])
     start, end = rules.quote_window(run.date)

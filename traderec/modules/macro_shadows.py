@@ -19,8 +19,12 @@ cut at the run date and records the results in the shadow ledger. Nothing here i
   following open. The track's own measure, day-0 close to day-1 close, is recorded next to it.
 
 Every rule decides on closes and acts at the next open, as the execution standard requires (§3a): stops and
-targets are checked on closes, never as resting orders. Closed trades are scored against the random-day
-baseline (§1) for the promotion tests: R1 for W3 and W4, R2 for the fade.
+targets are checked on closes, never as resting orders. A hypothetical trade is entered at the first open after
+the evening the rule was *evaluated* (its `signal_date`), never earlier: when an input arrives late (FRED's core
+CPI a day late, the BoJ's rate file 1-4 business days after the meeting) the entry is late too, as a live run's
+would be. The track's own timing is kept next to it (`research_signal_date`, `research_entry_date`,
+`research_entry_open`, `entry_lag_sessions`) for the promotion review. Closed trades are scored against the
+random-day baseline (§1) for the promotion tests: R1 for W3 and W4, R2 for the fade.
 """
 from __future__ import annotations
 
@@ -268,11 +272,22 @@ def w4_check(boj_change_bp: float | None, fed_change_bp: float | None) -> dict:
 
 def new_trade(rule: str, trade_id: str, signal_date: str, ticker: str, side: str, max_sessions: int,
               **extra: Any) -> dict:
-    """A hypothetical trade, entered at the first open after `signal_date` (the evening the rule fired)."""
+    """A hypothetical trade, entered at the first open after `signal_date`: the evening the rule was evaluated
+    and fired, which is the run date, never an earlier session (no look-ahead). Pass `research_signal_date`
+    (the session the track's rule keys on, e.g. the CPI day) when it differs, and `advance_trade` records the
+    research timing next to the entry."""
     if side not in ("long", "short"):
         raise ValueError(f"side must be long or short, not {side!r}")
     return {"rule": rule, "id": trade_id, "signal_date": signal_date, "ticker": ticker, "side": side,
             "max_sessions": int(max_sessions), "status": "pending_entry", **extra}
+
+
+def _adj_factor(bars: pd.DataFrame, day: pd.Timestamp) -> float:
+    """adj_close / close on `day`: the total-return scale of that session's prices (1.0 without adj_close)."""
+    if "adj_close" not in bars.columns or day not in bars.index:
+        return 1.0
+    f = as_float(bars.at[day, "adj_close"] / bars.at[day, "close"])
+    return f if f and f > 0 else 1.0
 
 
 def _open_at(bars: pd.DataFrame, after: str) -> tuple[pd.Timestamp, float, float] | None:
@@ -284,11 +299,7 @@ def _open_at(bars: pd.DataFrame, after: str) -> tuple[pd.Timestamp, float, float
     raw = as_float(bars.at[day, "open"])
     if raw is None or raw <= 0:
         return None
-    factor = 1.0
-    if "adj_close" in bars.columns:
-        f = as_float(bars.at[day, "adj_close"] / bars.at[day, "close"])
-        factor = f if f and f > 0 else 1.0
-    return day, raw, factor
+    return day, raw, _adj_factor(bars, day)
 
 
 def advance_trade(trade: dict, bars: pd.DataFrame, asof: str, slip: float,
@@ -297,14 +308,19 @@ def advance_trade(trade: dict, bars: pd.DataFrame, asof: str, slip: float,
     ("entry", "exit_signal", "exit"), in order.
 
     * pending_entry: filled at the first open after `signal_date`, open x (1 + slip) for a long and x (1 - slip)
-      for a short.
+      for a short. When the trade carries a `research_signal_date` (the session the track keys on, at or before
+      `signal_date`), the entry the research would have taken is recorded next to it: `research_entry_date`
+      and `research_entry_open` (the first open after that session) and `entry_lag_sessions` (how many
+      sessions later this book entered; 0 when the rule was evaluated the same evening).
     * open: from the entry session on, each close is checked with exit_check(session, sessions_held, trade),
       where sessions_held counts the entry session as 1. It returns a reason (exit at the next open), None
       (hold), or WAIT (data missing for that session: stop and try again next run).
     * pending_exit: filled at the first open after the exit signal, with slippage against the trade.
 
     `return` is the total return (distributions included, slippage deducted) from the trade's side; `held` is
-    the number of open-to-open sessions.
+    the number of open-to-open sessions. Both adj factors come from the exit run's `bars`: a back-adjusted
+    series (yfinance) is rescaled at every later ex-date, so a factor kept from the entry run would not
+    match the exit day's and the distribution would be lost.
     """
     b = bars.loc[:pd.Timestamp(asof)]
     sign = 1.0 if trade["side"] == "long" else -1.0
@@ -313,10 +329,15 @@ def advance_trade(trade: dict, bars: pd.DataFrame, asof: str, slip: float,
         got = _open_at(b, trade["signal_date"])
         if got is None:
             return done
-        day, raw, factor = got
+        day, raw, _ = got
         price = raw * (1.0 + sign * slip)
         trade.update(status="open", entry_date=iso(day), entry_open=raw, entry_price=price,
-                     entry_adj=price * factor, sessions_held=0, checked=None)
+                     sessions_held=0, checked=None)
+        if trade.get("research_signal_date"):
+            ref = _open_at(b, trade["research_signal_date"])
+            if ref is not None:
+                trade.update(research_entry_date=iso(ref[0]), research_entry_open=ref[1],
+                             entry_lag_sessions=int(((b.index > ref[0]) & (b.index <= day)).sum()))
         done.append("entry")
     if trade["status"] == "open":
         entry = pd.Timestamp(trade["entry_date"])
@@ -339,10 +360,12 @@ def advance_trade(trade: dict, bars: pd.DataFrame, asof: str, slip: float,
             return done
         day, raw, factor = got
         price = raw * (1.0 - sign * slip)
-        held = int(((b.index > pd.Timestamp(trade["entry_date"])) & (b.index <= day)).sum())
+        entry = pd.Timestamp(trade["entry_date"])
+        entry_adj = float(trade["entry_price"]) * _adj_factor(b, entry)
+        held = int(((b.index > entry) & (b.index <= day)).sum())
         trade.update(status="closed", exit_date=iso(day), exit_open=raw, exit_price=price, held=held,
                      price_return=sign * (price / float(trade["entry_price"]) - 1.0),
-                     **{"return": sign * (price * factor / float(trade["entry_adj"]) - 1.0)})
+                     **{"return": sign * (price * factor / entry_adj - 1.0)})
         done.append("exit")
     return done
 

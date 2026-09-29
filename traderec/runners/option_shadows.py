@@ -71,7 +71,11 @@ def roots_needed(run: "Run") -> set[str]:
 
 
 def options_job(run: "Run", chains: dict[str, Any]) -> None:
-    """10:17 ET: mark the open spreads and apply the take-profit and 21-DTE close, then fill yesterday's entries."""
+    """10:17 ET: mark the open spreads and apply the take-profit and 21-DTE close, then fill yesterday's entries.
+
+    A pending entry, or a managed spread whose 21-DTE close is due, that has no usable chain or quote raises the
+    run's one merged `data` alert (contract §0.6): the entry is skipped and the spread stays open, but never in
+    silence, so a chain missing for a whole entry window or for weeks before a due close is seen that day."""
     problems: list[str] = []
     for name in OPTION_BOOKS:
         cfg = _cfg(run, name)
@@ -342,7 +346,7 @@ def _book_options(run: "Run", name: str, cfg: dict, chains: dict[str, Any], prob
     chain, why = _usable_chain(run, chains.get(str(cfg["root"])))
     concession = float(run.cfg.fills["options"]["concession"])
     for trade in _open_trades(book):
-        _manage(run, name, cfg, book, trade, chain, why, concession)
+        _manage(run, name, cfg, book, trade, chain, why, concession, problems)
     ot = book.get("open_trade")
     if ot and ot.get("status") == "pending_entry":
         _enter(run, name, cfg, book, ot, chain, why, concession, problems)
@@ -356,15 +360,28 @@ def _usable_chain(run: "Run", chain: "OptionChain | None") -> tuple["OptionChain
     return chain, None
 
 
+def _exit_due(cfg: dict, trade: dict, day: str) -> bool:
+    """True once a managed book's time stop has arrived: `exit_dte` or fewer days to expiry."""
+    if cfg.get("hold_to_expiry") or cfg.get("exit_dte") is None:
+        return False
+    return rules.days_to_expiry(str(trade["expiry"]), day) <= int(cfg["exit_dte"])
+
+
 def _manage(run: "Run", name: str, cfg: dict, book: dict, trade: dict, chain: "OptionChain | None",
-            why: str | None, concession: float) -> None:
-    """Mark an open spread at the snapshot; close it on the take-profit or the 21-DTE rule (managed books only)."""
+            why: str | None, concession: float, problems: list[str]) -> None:
+    """Mark an open spread at the snapshot; close it on the take-profit or the 21-DTE rule (managed books only).
+    A due close that cannot be quoted keeps the spread open and is reported through `problems` (the run's data
+    alert), so it is not left to the expiry safety net in silence."""
     if str(trade["expiry"]) < run.date:
         return                                     # past expiry: tonight's daily run settles it
     quote = rules.credit_quote(chain, trade["legs"]) if chain is not None else None
     if quote is None:
-        _log(run, name, "no_quote", {"trade_id": trade["trade_id"],
-                                     "reason": why or "a leg has no two-sided quote"})
+        reason = why or "a leg has no two-sided quote"
+        _log(run, name, "no_quote", {"trade_id": trade["trade_id"], "reason": reason})
+        if _exit_due(cfg, trade, run.date):
+            problems.append(f"{name}: {trade['trade_id']} is due to close "
+                            f"({rules.days_to_expiry(str(trade['expiry']), run.date)} days to expiry) but has no "
+                            f"usable quote ({reason}); it stays open")
         return
     credit, cost = float(trade["credit"]), rules.buy_to_close_price(quote, concession)
     res = rules.result_on_max_loss(credit, float(trade["width"]), cost)
@@ -397,7 +414,8 @@ def _enter(run: "Run", name: str, cfg: dict, book: dict, ot: dict, chain: "Optio
         _log(run, name, "skip", {"trade_id": ot["trade_id"], "signal_date": signal_date, "reason": reason,
                                  **(detail or {})})
 
-    if chain is None:
+    if chain is None:                              # fail closed, and say so: the cycle may have no other day
+        problems.append(f"{name}: entry {ot['trade_id']} skipped, {why}")
         return skip(str(why))
     lo, hi = cfg["expiry_dte"]
     expiry = rules.pick_expiry(chain.expiries(), run.date, target=ot.get("target_expiry"),
@@ -423,6 +441,7 @@ def _enter(run: "Run", name: str, cfg: dict, book: dict, ot: dict, chain: "Optio
         return skip("; ".join(sel["reasons"]), detail)
     quote = rules.credit_quote(chain, sel["legs"])
     if quote is None:
+        problems.append(f"{name}: entry {ot['trade_id']} skipped, a leg has no two-sided quote")
         return skip("a leg has no two-sided quote", detail)
     credit = rules.sell_to_open_price(quote, concession)
     liq = rules.credit_liquidity(chain, quote, sel["legs"], cfg.get("liquidity") or {})
@@ -476,9 +495,22 @@ def _size_at_nav(run: "Run", cfg_size: dict, max_loss: float) -> dict:
 
 # ------------------------------------------------------------------------------------------ ST-2 (ETF)
 
+def _adj_factor(bars: pd.DataFrame, day: Any) -> float:
+    """adj_close / close on `day`: the total-return scale of that session's prices (1.0 when unavailable)."""
+    ts = pd.Timestamp(day)
+    if "adj_close" not in bars.columns or ts not in bars.index:
+        return 1.0
+    close, adj = value_on(bars["close"], ts), value_on(bars["adj_close"], ts)
+    return adj / close if close and adj and close > 0 and adj > 0 else 1.0
+
+
 def _st2_daily(run: "Run", name: str, cfg: dict, inputs: _Inputs) -> None:
     """ST-2 (track 13 §11.3): signal at the close, SPY bought at the next open, sold at the close of session 20
-    (research/code/13-short-index `run_rule(mode="open", hold=20)`), with fill model v1.0's ETF slippage."""
+    (research/code/13-short-index `run_rule(mode="open", hold=20)`), with fill model v1.0's ETF slippage.
+
+    `return` is the total return the research measures: both prices are scaled by their day's adj_close / close
+    from tonight's bars (as `modules.macro_shadows.adjusted_opens` does), so a dividend whose ex-date falls in
+    the 20 sessions counts; `price_return` is the same on raw prices."""
     book = _book(run, name)
     ticker = str(cfg["ticker"])
     spy = inputs.bars(ticker)
@@ -509,9 +541,12 @@ def _st2_daily(run: "Run", name: str, cfg: dict, inputs: _Inputs) -> None:
             inputs.problems.append(f"{name}: no {ticker} close on {iso(last)} for the exit")
         if px is not None:
             exit_px = px * (1 - slip)
-            ret = exit_px / float(ot["entry_price"]) - 1.0
+            entry_px = float(ot["entry_price"])
+            # both factors from tonight's bars: a back-adjusted series is rescaled at each later ex-date
+            ret = exit_px * _adj_factor(spy, last) / (entry_px * _adj_factor(spy, ot["fill_date"])) - 1.0
             trade = {**ot, "status": "closed", "exit_date": iso(last), "exit_price": exit_px,
-                     "exit_reason": "time_stop", "sessions": hold, "return": ret, "return_basis": "notional",
+                     "exit_reason": "time_stop", "sessions": hold, "return": ret,
+                     "price_return": exit_px / entry_px - 1.0, "return_basis": "notional",
                      "excess_return": ret - float(ot.get("tbill_rate") or 0.0) * hold / 252.0}
             book["trades"].append(trade)
             book["open_trade"] = None

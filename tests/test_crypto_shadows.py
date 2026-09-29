@@ -687,7 +687,8 @@ def test_daily_hook_decides_eth_and_checks_the_basis(cfg: Config, tmp_path: Path
 
 def test_daily_hook_fails_closed_on_missing_or_stale_quotes(cfg: Config, tmp_path: Path) -> None:
     state_dir = new_state(cfg, tmp_path)
-    src = FakeCryptoData(eth=eth_series(), futures={}, spot=82997.79)          # no explicit month
+    src = FakeCryptoData(eth=eth_series(), futures={}, spot=82997.79,          # no explicit month, tonight
+                         clock=lambda: pd.Timestamp("2026-09-29T02:30:00Z"))
     daily_run(cfg, state_dir, provider_with(src), "2026-09-28")
     alerts = state(state_dir)["alerts"]
     assert [a["kind"] for a in alerts] == ["data"] and "no explicit-month quote for Nov-2026" in alerts[0]["message"]
@@ -709,6 +710,27 @@ def test_daily_hook_catch_up_run_does_not_use_later_quotes(cfg: Config, tmp_path
     assert state(state_dir)["alerts"] == []                                    # not a data problem: a note
     assert any("after the run date" in n for n in run.result.notes)
     assert state(state_dir)["shadow"]["M6"]["carry_last"]["basis_annual"] is None
+
+
+def test_catch_up_run_for_an_expired_month_is_a_note_not_an_alert(cfg: Config, tmp_path: Path) -> None:
+    """Yahoo answers 404 for an expired month, so a catch-up run for a date before that expiry can't quote its
+    target: a note, like a quote stamped after the run date, not a data alert every replayed evening."""
+    state_dir = new_state(cfg, tmp_path)
+    src = FakeCryptoData(eth=eth_series(), futures={}, spot=82997.79,          # Nov-26 expired on 27 Nov
+                         clock=lambda: pd.Timestamp("2026-12-15T03:00:00Z"))
+    run = daily_run(cfg, state_dir, provider_with(src), "2026-09-28")        # made in December for 28 Sep
+    assert state(state_dir)["alerts"] == []
+    assert any("Nov-2026 (X26): it expired on 2026-11-27, before this catch-up run for 2026-09-28" in n
+               for n in run.result.notes)
+    assert state(state_dir)["shadow"]["M6"]["carry_last"]["basis_annual"] is None
+    check = [r["payload"] for r in ledger(state_dir) if r["payload"].get("event") == "carry_check"][-1]
+    assert check["basis_annual"] is None and "expired" in check["problem"]
+    # the provider's clock serves too, when the source has none (a LiveProvider carries one)
+    src = FakeCryptoData(eth=eth_series(), futures={}, spot=82997.79)
+    prov = provider_with(src)
+    prov._clock = lambda: pd.Timestamp("2026-12-15T03:00:00Z")
+    daily_run(cfg, state_dir, prov, "2026-09-29")
+    assert state(state_dir)["alerts"] == []
 
 
 def test_carry_opens_and_closes_at_expiry(cfg: Config, tmp_path: Path) -> None:

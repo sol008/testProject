@@ -45,17 +45,22 @@ jobs:
           # An explicit ref checks out the branch as it is when this job starts, so a run that waited in the
           # concurrency queue sees the state that the run before it committed.
           ref: ${{ github.ref }}
-          fetch-depth: 0
+          # A shallow clone: this job runs 24 times a day and needs no history. The commit step below still
+          # works from it: `git pull --rebase` fetches whatever the branch gained since checkout (descendants of
+          # this commit, which is the shallow boundary) and replays the one state commit on top.
+          fetch-depth: 1
 
       - name: Set up Python 3.11
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: requirements-hourly.txt
 
       - name: Install dependencies
-        run: pip install --quiet --disable-pip-version-check -r requirements.txt
+        # Only what `python -m traderec hourly` imports (pandas, numpy, requests, PyYAML): yfinance is imported
+        # lazily by the daily bars this job never fetches, and pytest is for the test suite.
+        run: pip install --quiet --disable-pip-version-check -r requirements-hourly.txt
 
       - name: Initialise state if missing
         run: python -m traderec init --if-missing
