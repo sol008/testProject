@@ -1,0 +1,91 @@
+{
+ "cik": 1786352,
+ "taxonomy": "dei",
+ "tag": "EntityCommonStockSharesOutstanding",
+ "label": "Entity Common Stock, Shares Outstanding",
+ "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument.",
+ "entityName": "BILL Holdings, Inc.",
+ "units": {
+  "shares": [
+   {
+    "end": "2024-11-01",
+    "val": 103496676,
+    "accn": "0001786352-24-000045",
+    "fy": 2024,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2024-11-08",
+    "frame": "CY2024Q3I"
+   },
+   {
+    "end": "2025-01-30",
+    "val": 101946895,
+    "accn": "0001786352-25-000015",
+    "fy": 2025,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2025-02-07",
+    "frame": "CY2024Q4I"
+   },
+   {
+    "end": "2025-05-01",
+    "val": 103027139,
+    "accn": "0001786352-25-000021",
+    "fy": 2025,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2025-05-09",
+    "frame": "CY2025Q1I"
+   },
+   {
+    "end": "2025-08-21",
+    "val": 101628611,
+    "accn": "0001786352-25-000037",
+    "fy": 2025,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2025-08-28"
+   },
+   {
+    "end": "2025-10-30",
+    "val": 100156683,
+    "accn": "0001628280-25-050328",
+    "fy": 2026,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2025-11-07",
+    "frame": "CY2025Q3I"
+   },
+   {
+    "end": "2026-01-29",
+    "val": 98960440,
+    "accn": "0001628280-26-005879",
+    "fy": 2026,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2026-02-06",
+    "frame": "CY2025Q4I"
+   },
+   {
+    "end": "2026-04-30",
+    "val": 99596727,
+    "accn": "0001628280-26-032387",
+    "fy": 2026,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2026-05-08",
+    "frame": "CY2026Q1I"
+   },
+   {
+    "end": "2026-08-13",
+    "val": 85276782,
+    "accn": "0001628280-26-058238",
+    "fy": 2026,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2026-08-20",
+    "frame": "CY2026Q2I"
+   }
+  ]
+ }
+}

@@ -1,0 +1,13 @@
+{
+ "cik": "0001156375",
+ "entityType": "operating",
+ "sic": "6200",
+ "sicDescription": "Security & Commodity Brokers, Dealers, Exchanges & Services",
+ "name": "CME GROUP INC.",
+ "tickers": [
+  "CME"
+ ],
+ "exchanges": [
+  "Nasdaq"
+ ]
+}

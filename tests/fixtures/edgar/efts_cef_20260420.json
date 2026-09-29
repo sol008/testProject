@@ -1,0 +1,33 @@
+{
+ "hits": {
+  "total": {
+   "value": 1,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001193125-26-163126:d31950dsctoc.htm",
+    "_source": {
+     "ciks": [
+      "0001260563"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Virtus Dividend, Interest & Premium Strategy Fund  (NFJ)  (CIK 0001260563)"
+     ],
+     "root_forms": [
+      "SC TO-C"
+     ],
+     "file_date": "2026-04-20",
+     "form": "SC TO-C",
+     "adsh": "0001193125-26-163126",
+     "file_type": "SC TO-C",
+     "items": [],
+     "sics": [
+      "6163"
+     ]
+    }
+   }
+  ]
+ }
+}

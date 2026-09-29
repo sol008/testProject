@@ -171,7 +171,89 @@ shadow:                    # logged automatically, never emailed
   # ----
 
   EDGAR:                   # insider clusters, special dividends, activist 13D, cash mergers, CEF tenders (track 16)
-    enabled: false
+    # Design v3.3 §3 "Shadow ledger", §5 never-list, §10 data table; track 16 §10.2 (SH-1..SH-4) and §10.4 P1;
+    # track 05 §3.7 / §11 A (CEF tender capture). No emails, no orders, no LLM. Notes: docs/phase-b/edgar.md.
+    enabled: true
+    # operations (track 16 P1: screened every night after 22:00 ET; capped so the daily job stays under 2 minutes)
+    filings_final_et: "22:00"          # EDGAR accepts filings (Form 4s included) until 22:00 ET
+    final_margin_minutes: 5            # a day's filings are final (screened for good) from 22:05 ET
+    provisional_before_final: true     # a run before then also screens the day, without marking it done
+                                       # (in winter daily.yml's first slot, 02:17 UTC, is 21:17 EST)
+    overlap_days: 1                    # the last screened date is searched again, for filings indexed late
+    max_catchup_days: 7                # older unscreened dates are dropped, with a data alert
+    max_seconds: 90                    # wall-clock budget per run; the rest carries over to the next run
+    max_documents: 150                 # filing documents fetched per run
+    max_price_lookups: 40              # daily-bar fetches per run (universe checks, entries, exits)
+    max_requests_per_second: 8         # SEC fair access: at most 10 a second to *.sec.gov
+    seen_keep_days: 7
+    void_after_days: 10                # an event with no prices this long after they were due is void (kept)
+    short_interest_lag_days: 12        # FINRA short interest counts from settlement + 12 days (track 16 finra_si.py)
+    large_cap_min: 2.0e+9              # benchmark SPY at or above, IWM below (track 16 conventions)
+    costs:                             # round trip by market cap at the event, track 16 §1.3: [min cap, cost, bucket]
+      - [1.0e+10, 0.0015, large]
+      - [2.0e+9, 0.003, mid]
+      - [3.0e+8, 0.008, small]
+      - [5.0e+7, 0.020, micro]
+      - [0, 0.040, nano]
+    SH1:                               # insider cluster buys (track 16 §3, §10.2): a monitor of a rejected setup
+      enabled: true
+      prefilter_query: "P"             # EFTS pre-filter for purchase Form 4s (traderec/data/edgar.py)
+      prefilter_check_min_filings: 150 # a day this busy with no purchase candidates raises a data alert
+      window_days: 30                  # >= 2 directors/officers with open-market purchases within 30 calendar days
+      min_insiders: 2
+      lockout_days: 90                 # one event per issuer per 90 days
+      max_filing_lag_days: 14          # trade to filing (track 16 §3.1)
+      warmup_days: 30                  # clusters count once a full window of purchases has been collected
+      ticker_tolerance: 0.25           # the close near the trade date within 25% of the insiders' price (§1.5)
+      entry: open                      # next session's open after the cluster-completing Form 4
+      hold_sessions: 20                # exit at the close of session 20
+      universe: {min_price: 5.0, min_mcap: 3.0e+8, min_dvol20: 1.0e+6}
+      promotion: {min_trades: 60, min_mean: 0.01, min_t: 2.5, max_reaction_median: 0.01}
+      base_rate: {win_rate: 0.42, mean: -0.0106}    # track 16 §2 row 1 (2016-26, 20 sessions, net excess)
+    SH2:                               # special dividends (track 16 §4.3, §10.2): incubate, shadow only
+      enabled: true
+      query: '"special dividend" OR "special cash dividend"'
+      min_multiple_of_regular: 1.5     # >= 1.5x the median regular dividend of the prior 2 years (or the first one)
+      min_yield: 0.01                  # >= 1% of the price
+      ex_date_days: [3, 75]            # ex-date 3-75 calendar days after the 8-K
+      regular_lookback_days: 730
+      entry: close                     # close of the session after the 8-K; exit at the close before the ex-date
+      universe: {min_price: 5.0, min_dvol20: 1.0e+6}
+      promotion: {min_trades: 30, min_mean: 0.005, min_t: 2.0}   # and median > 0
+      base_rate: {win_rate: 0.52, mean: 0.0038}     # track 16 §2 row 11 (ADV >= $1m, 2016-26)
+    SH3:                               # activist Schedule 13D (track 16 §6.5, §10.2): a monitor of a rejected setup
+      enabled: true
+      forms: "SCHEDULE 13D,SC 13D"     # originals only ("SC 13D" before Dec 2024)
+      lockout_days: 90                 # one event per company per 90 days
+      entry: close                     # close of the session after the filing
+      hold_sessions: 20                # exit at the close of session 20
+      universe: {min_mcap: 3.0e+8, min_price: 2.0, min_dvol20: 1.0e+5, min_history: 60}
+      promotion: {min_trades: 60, min_mean: 0.01, min_t: 2.5, max_reaction_median: 0.01}   # as SH-1
+      base_rate: {win_rate: 0.42, mean: -0.0107}    # track 16 §2 row 5 (known activists, 2016-26)
+    SH4:                               # near-completion cash mergers (track 16 §4.1, §10.2): cash substitute, shadow
+      enabled: true
+      query: '"merger"'
+      max_days_to_close: 30            # expected close <= 30 days after the last approval 8-K
+      watch_days: 180                  # a definitive proxy stays on the watchlist this long
+      lookup_days: 365                 # a vote 8-K looks back this far for the target's proxy
+      max_hold_days: 60                # design §1: every trade closes within 60 calendar days
+      entry: close                     # close after the last approval 8-K; exit at the deal's close (cash)
+      universe: {min_mcap: 3.0e+8}
+      promotion: {min_trades: 30, min_excess_annualized: 0.03, max_break_loss_book: 0.02, position_weight: 0.05}
+      base_rate: {win_rate: 0.95}      # track 16 §4.1: about 95% of near-close deals complete [unverified there]
+    CEF:                               # CEF tender capture (track 05 §3.7, §11 A; red-team v3 m11)
+      enabled: true
+      query: '"net asset value"'
+      min_pct_nav: 0.98                # a self-tender at >= 98% of NAV
+      min_discount: 0.08               # while the fund trades >= 8% below NAV
+      lockout_days: 120                # one event per fund per offer
+      nav_symbol: "X{ticker}X"         # Yahoo's NAV series for a closed-end fund (track 24 §2)
+      remainder_sell_sessions: 3       # the shares not accepted are sold at the close 3 sessions after expiry
+      max_hold_days: 60                # design §1
+      entry: open                      # next open (track 05 gives no timing)
+      universe: {min_mcap: 3.0e+8, min_dvol20: 1.0e+6}   # design §5: no event trades under $300m or $1m a day
+      promotion: null                  # track 05 pre-registered none; see docs/phase-b/edgar.md
+      base_rate: null                  # track 05 §11 A gives +2-6% per event, but no win rate
 
   # ----
 

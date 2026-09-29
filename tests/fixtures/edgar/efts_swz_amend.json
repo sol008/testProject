@@ -1,0 +1,52 @@
+{
+ "hits": {
+  "total": {
+   "value": 2,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001999371-26-001460:swz-sctoia_012226.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2026-01-22",
+     "form": "SC TO-I/A",
+     "adsh": "0001999371-26-001460",
+     "file_type": "SC TO-I/A",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-26-001383:swz-sctoia_012126.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2026-01-21",
+     "form": "SC TO-I/A",
+     "adsh": "0001999371-26-001383",
+     "file_type": "SC TO-I/A",
+     "items": [],
+     "sics": []
+    }
+   }
+  ]
+ }
+}

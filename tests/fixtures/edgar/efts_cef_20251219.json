@@ -1,0 +1,262 @@
+{
+ "hits": {
+  "total": {
+   "value": 12,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001580642-25-007922:ex99_a1ii.htm",
+    "_source": {
+     "ciks": [
+      "0001620515"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Princeton Everest Fund  (CIK 0001620515)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001580642-25-007922",
+     "file_type": "EX-99.(A)(1)(II)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001580642-25-007922:pef_sctoi.htm",
+    "_source": {
+     "ciks": [
+      "0001620515"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Princeton Everest Fund  (CIK 0001620515)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001580642-25-007922",
+     "file_type": "SC TO-I",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a1iv.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(1)(IV)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001580642-25-007922:ex99_a1v.htm",
+    "_source": {
+     "ciks": [
+      "0001620515"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Princeton Everest Fund  (CIK 0001620515)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001580642-25-007922",
+     "file_type": "EX-99.(A)(1)(V)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a1iii.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(1)(III)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex107.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-FILING FEES",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a5ii.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(5)(II)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001580642-25-007922:ex99_a1i.htm",
+    "_source": {
+     "ciks": [
+      "0001620515"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Princeton Everest Fund  (CIK 0001620515)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001580642-25-007922",
+     "file_type": "EX-99.(A)(1)(I)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a1v.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(1)(V)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:swz_sctoi-121925.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "SC TO-I",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a1i.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(1)(I)",
+     "items": [],
+     "sics": []
+    }
+   },
+   {
+    "_id": "0001999371-25-020802:ex99-a1ii.htm",
+    "_source": {
+     "ciks": [
+      "0000813623"
+     ],
+     "period_ending": null,
+     "display_names": [
+      "Total Return Securities Fund  (SWZ)  (CIK 0000813623)"
+     ],
+     "root_forms": [
+      "SC TO-I"
+     ],
+     "file_date": "2025-12-19",
+     "form": "SC TO-I",
+     "adsh": "0001999371-25-020802",
+     "file_type": "EX-99.(A)(1)(II)",
+     "items": [],
+     "sics": []
+    }
+   }
+  ]
+ }
+}

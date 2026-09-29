@@ -1,0 +1,116 @@
+{
+ "hits": {
+  "total": {
+   "value": 4,
+   "relation": "eq"
+  },
+  "hits": [
+   {
+    "_id": "0001104659-26-108417:tm2623753d7_ex99-1.htm",
+    "_source": {
+     "ciks": [
+      "0001625297"
+     ],
+     "period_ending": "2026-09-16",
+     "display_names": [
+      "Indivior Pharmaceuticals, Inc.  (INDV)  (CIK 0001625297)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-17",
+     "form": "8-K",
+     "adsh": "0001104659-26-108417",
+     "file_type": "EX-99.1",
+     "items": [
+      "7.01",
+      "8.01",
+      "9.01"
+     ],
+     "sics": [
+      "2834"
+     ]
+    }
+   },
+   {
+    "_id": "0001104659-26-108417:tm2623753d7_8k.htm",
+    "_source": {
+     "ciks": [
+      "0001625297"
+     ],
+     "period_ending": "2026-09-16",
+     "display_names": [
+      "Indivior Pharmaceuticals, Inc.  (INDV)  (CIK 0001625297)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-17",
+     "form": "8-K",
+     "adsh": "0001104659-26-108417",
+     "file_type": "8-K",
+     "items": [
+      "7.01",
+      "8.01",
+      "9.01"
+     ],
+     "sics": [
+      "2834"
+     ]
+    }
+   },
+   {
+    "_id": "0001104659-26-108614:tm2625565d1_8k.htm",
+    "_source": {
+     "ciks": [
+      "0000067347"
+     ],
+     "period_ending": "2026-09-17",
+     "display_names": [
+      "MODINE MANUFACTURING CO  (MOD)  (CIK 0000067347)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-17",
+     "form": "8-K",
+     "adsh": "0001104659-26-108614",
+     "file_type": "8-K",
+     "items": [
+      "7.01",
+      "9.01"
+     ],
+     "sics": [
+      "3714"
+     ]
+    }
+   },
+   {
+    "_id": "0001104659-26-108614:tm2625565d1_ex99-1.htm",
+    "_source": {
+     "ciks": [
+      "0000067347"
+     ],
+     "period_ending": "2026-09-17",
+     "display_names": [
+      "MODINE MANUFACTURING CO  (MOD)  (CIK 0000067347)"
+     ],
+     "root_forms": [
+      "8-K"
+     ],
+     "file_date": "2026-09-17",
+     "form": "8-K",
+     "adsh": "0001104659-26-108614",
+     "file_type": "EX-99.1",
+     "items": [
+      "7.01",
+      "9.01"
+     ],
+     "sics": [
+      "3714"
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,91 @@
+{
+ "cik": 1625297,
+ "taxonomy": "dei",
+ "tag": "EntityCommonStockSharesOutstanding",
+ "label": "Entity Common Stock, Shares Outstanding",
+ "description": "Indicate number of shares or other units outstanding of each of registrant's classes of capital or common stock or other ownership interests, if and as stated on cover of related periodic report. Where multiple classes or units exist define each class/interest by adding class of stock items such as Common Class A [Member], Common Class B [Member] or Partnership Interest [Member] onto the Instrument [Domain] of the Entity Listings, Instrument.",
+ "entityName": "Indivior Pharmaceuticals, Inc.",
+ "units": {
+  "shares": [
+   {
+    "end": "2023-12-31",
+    "val": 136526357,
+    "accn": "0001625297-24-000017",
+    "fy": 2023,
+    "fp": "FY",
+    "form": "20-F",
+    "filed": "2024-03-06",
+    "frame": "CY2023Q4I"
+   },
+   {
+    "end": "2025-03-01",
+    "val": 124655858,
+    "accn": "0001625297-25-000016",
+    "fy": 2024,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2025-03-03",
+    "frame": "CY2025Q1I"
+   },
+   {
+    "end": "2025-05-01",
+    "val": 124769533,
+    "accn": "0001625297-25-000030",
+    "fy": 2025,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2025-05-01"
+   },
+   {
+    "end": "2025-07-01",
+    "val": 124769820,
+    "accn": "0001625297-25-000050",
+    "fy": 2025,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2025-07-31",
+    "frame": "CY2025Q2I"
+   },
+   {
+    "end": "2025-10-01",
+    "val": 124853897,
+    "accn": "0001628280-25-047530",
+    "fy": 2025,
+    "fp": "Q3",
+    "form": "10-Q",
+    "filed": "2025-10-30",
+    "frame": "CY2025Q3I"
+   },
+   {
+    "end": "2026-01-31",
+    "val": 125065242,
+    "accn": "0001628280-26-012237",
+    "fy": 2025,
+    "fp": "FY",
+    "form": "10-K",
+    "filed": "2026-02-26",
+    "frame": "CY2025Q4I"
+   },
+   {
+    "end": "2026-04-01",
+    "val": 121922058,
+    "accn": "0001628280-26-028850",
+    "fy": 2026,
+    "fp": "Q1",
+    "form": "10-Q",
+    "filed": "2026-04-30",
+    "frame": "CY2026Q1I"
+   },
+   {
+    "end": "2026-07-28",
+    "val": 118013649,
+    "accn": "0001628280-26-051895",
+    "fy": 2026,
+    "fp": "Q2",
+    "form": "10-Q",
+    "filed": "2026-08-03",
+    "frame": "CY2026Q2I"
+   }
+  ]
+ }
+}

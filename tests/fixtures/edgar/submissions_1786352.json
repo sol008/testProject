@@ -1,0 +1,13 @@
+{
+ "cik": "0001786352",
+ "entityType": "operating",
+ "sic": "7372",
+ "sicDescription": "Services-Prepackaged Software",
+ "name": "BILL Holdings, Inc.",
+ "tickers": [
+  "BILL"
+ ],
+ "exchanges": [
+  "NYSE"
+ ]
+}
