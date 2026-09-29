@@ -30,14 +30,49 @@ How to set up, run and look after `traderec`, step by step. The design is `resea
 |---|---|---|
 | Orders for the next morning's open: a new trade, an exit, or the monthly trend-book rebalance | Weekday evenings, from about 22:17 in summer (EDT) and 21:17 in winter (EST), only when there is something to do | `daily` |
 | Option-spread orders (M4, W8, W9): open a spread or close one, after 10:00 ET the next trading day | The same weekday evenings, from the same run, only when there is something to do | `daily` |
-| The Bitcoin switch (M3): an IBIT order for Monday's open | Sunday evening, from about 21:17 in summer and 20:17 in winter, only when there is an order | `weekly` |
+| **The Sunday growth email (GROWTH):** the target portfolio, at most 3 dollar market orders (Step 1 the sells, Step 2 the buys), or "This week: no change" | Every Sunday evening, from about 21:17 in summer and 20:17 in winter | `weekly` |
+| **Rule E, the emergency exit:** "Sell all SSO" (or QLD) queued for the next open, when its index closes below its 200-day average mid-week | Weekday evenings, from the daily run; at most one a week and six a year | `daily` |
 | The monthly review: results, operations, evidence, failures first | The 1st of each month, about 08:13 in summer and 07:13 in winter | `monthly` |
 | The quarterly review: go-live and ramp, costs, calibration, evidence | 1 January, 1 April, 1 July and 1 October, right after the monthly review | `monthly` |
 | The annual review: the decisions for you, each with a recommendation | 1 January, right after the quarterly review | `monthly` |
 
 **Most evenings nothing arrives. No email means nothing to do.** You'll know the system is alive from:
+- the Sunday email, which comes every week (three weeks in four it says "no change");
 - healthchecks.io, which emails you if a run is missed or fails (§2c);
 - the monthly review.
+
+### The growth book: the Sunday job (design v4)
+
+The book that trades is the **growth book** (`research/00-SYSTEM-DESIGN-v4.md`): three sleeves in the Robinhood IRA, re-decided every Sunday from Friday's index closes and the Sunday 00:00 UTC Bitcoin close, each checked against two sources.
+
+| Sleeve | Holds | While | Otherwise |
+|---|---|---|---|
+| G1 | SSO (2x S&P 500), 25% of the IRA; QLD (2x Nasdaq-100), 25% | its index's Friday close is above its 200-day average (a 2% band: in at +2%, out at −2%) | SGOV |
+| G2 | IBIT, 30% (ceiling 50%) | Bitcoin's Sunday close is above its 10-week and its 200-day average | SGOV |
+| G3 + cash | SGOV: the 15% gems reserve (rules on paper until promoted) and the 5% cash sleeve | always | — |
+| W10 | SPY, 6%, from the SGOV cash, after an uptrend −3% day, held 90 days | the daily run's signal, bought at the next Sunday email | — |
+
+Every target is multiplied by **G, the governor**: full size until the book (IRA plus taxable) is 15% below its peak, linearly down to a quarter at 35%, re-set on Sundays only. At a 40% drawdown the **hard stop** sells everything to SGOV and the book pauses until a review with you (`growth.paused` in the state; buys are blocked, sells allowed). The v3.3 modules keep their paper and shadow books; M3 is retired by the IBIT sleeve.
+
+**What the Sunday email says, in this order:** one line ("This week: no change", or "1 recommendation, N orders"); target vs now per sleeve, as % of the IRA and in dollars, with G and the drawdown from peak; one sentence per sleeve that changed, with its numbers; **Step 1**, the sells; **Step 2**, the buys; what is deferred to next Sunday; the risk box for every leveraged fund bought or held, with the fund's own numbers, then the 1987-day line, the hard-stop line, the IRA line and the tax line; the Robinhood taps (at most 7); what if; the sources with their two-source checks; one GitHub issue link per order. Every number in it is checked against the Sunday job's facts record before it is sent, value and slot; a failed check blocks the email and raises a `validator` alert.
+
+**The two-step order routine** (design §3a.4; the email states the dates):
+
+1. **Step 1, Sunday night or before 9:20 ET Monday: the sells.** An exit is always "Sell all": in the IRA, search the ticker, **Trade → Sell → Order type: Market → Sell all → Review → Submit**. Robinhood queues it for the 9:30 ET open. A dollar sell (a governor cut, or the one SGOV sale that funds the buys) is a market order in dollars.
+2. **Step 2, Monday from about 9:35 ET, once every Step 1 sell shows Filled: the buys.** Search the ticker, **Trade → Buy → Order type: Market · Buy in: Dollars**, the amount in the email, **Review → Submit**. Each buy is at most 95% of the cash it needs (Robinhood holds back part of your buying power on market orders; a queued buy may use at most 90%). If the app shows less buying power than the amount, enter 95% of what it shows and record the dollars you entered.
+3. **Record each fill** on that order's issue (§4).
+
+At most 3 orders a week; what does not fit is deferred to the next Sunday, and the email says so (the SGOV buy of idle cash may always wait a week). The paper broker fills every order at Monday's open regardless of what you do; your fills measure the human side (§4).
+
+**Limited margin.** Step 2 the same day needs **limited margin on in the IRA** (Robinhood: the IRA's settings, "limited margin" for retirement accounts; it lets you buy with the day's unsettled sale proceeds and never borrows). Without it the proceeds settle overnight, and the email says to place Step 2 on **Tuesday**. `config/account.yaml` (`accounts.ira.limited_margin`) mirrors your setting for the paper broker: with `false` it waits a day too. A **Monday holiday** moves both steps to Tuesday, and the email says so.
+
+**Rule E, the one mid-week email** (design §3a.7; exit-only; your decision 5, default on). Every weekday evening the daily run checks each held G1 leg: if its index closed below its 200-day average, with no band and confirmed by the second source, you get a short EXIT email: "Sell all SSO (or QLD), market, queued for the next open" and "buy SGOV any time this week". Place the sell that evening as in Step 1; buy SGOV with the proceeds during the week (a market order in dollars). The leg is then out, and re-enters only through a Sunday email once its index is back 2% above its average. At most **one Rule E a week and six a year**: a seventh trigger in a year, or a second leg later in the same week, is logged in the ledger and waits for Sunday. Each Rule E exit is scored at the next Sunday run against "waiting for Sunday" (the paper fill against the leg's Friday close), and the Sunday email reports the score; the annual review drops the rule if its running value is negative. Under the hard stop there is no Rule E. The Bitcoin sleeve has no mid-week exit.
+
+**What you do.**
+- **Sunday evening (about 10 minutes):** read the email. If it says "no change", nothing to place. Otherwise place Step 1 tonight and note the buys for the morning.
+- **Monday morning (about 5 minutes):** from 9:35 ET, check the sells show Filled, place Step 2, then comment each fill on its issue. If you can't, place them later that day or on Tuesday, and record the prices.
+- **A Rule E evening:** place the sell that night; buy SGOV in the week; record both.
+- **A hard-stop Sunday:** the email sells everything; the book stays paused until you review it with Claude (`governor.restart` sets the peak again).
 
 **Two jobs never email.** They keep the paper book and the shadow books up to date:
 
@@ -271,6 +306,8 @@ A dry run sends nothing, opens no issues and commits nothing. After that, there 
 
 ## 3. Robinhood checklist
 
+- [ ] **IRA: limited margin on** (design v4 decision 10). It lets Monday's buys use Monday's sale proceeds; without it every switch takes Monday plus Tuesday. Set `accounts.ira.limited_margin` in `config/account.yaml` to match.
+- [ ] **IRA: SSO, QLD, IBIT and SGOV are buyable with dollar orders.** For each, search it in the IRA and go to **Trade → Buy**; check the amount can be entered in **Dollars**, then back out without submitting. Robinhood may ask you to acknowledge the leveraged-product risk for SSO and QLD once; do that before the paper phase ends.
 - [ ] **IRA: dollar orders work.** In the app, switch to the IRA and go to **Search SPY → Trade → Buy**. Check that you can enter the order in **dollars** (fractional shares). Don't submit. The system's ETF orders are all dollar amounts.
 - [ ] **Taxable (individual, margin) account: options Level 3 and index options.** The option-spread modules (M4, W8, W9) need it. IRAs allow Level 2 only, so spreads can't go there.
 - [ ] **XSP shows an options chain** in the individual account (index options).
@@ -281,6 +318,7 @@ A dry run sends nothing, opens no issues and commits nothing. After that, there 
 
 | Trade | Account | Order |
 |---|---|---|
+| **The growth book** (SSO, QLD, IBIT, SGOV; W10's SPY) | Robinhood IRA, limited margin on | At most 3 market orders in dollars per Sunday email: the sells queued Sunday night ("Sell all"), the buys Monday from 9:35 ET once the sells show Filled; a Rule E exit queued for the next open |
 | M1 dip-buy (SPY) | Robinhood IRA | Market order in dollars, queued for the open |
 | M2 trend book (SPY, QQQ, IEF, GLD, USO, FXE, FXY, FXA) | Robinhood IRA | At most 3 market orders in dollars per rebalance |
 | M3 Bitcoin switch (IBIT) | Robinhood IRA | Market order in dollars. Coinbase is optional and off by default |
@@ -300,11 +338,12 @@ A dry run sends nothing, opens no issues and commits nothing. After that, there 
 
 ## 4. Recording fills
 
-Every trade email links to that trade's GitHub issue: one issue per trade, labelled `traderec`, `paper` or `live`, and the module. After you act on an email, comment on its issue. The GitHub mobile app works well for this: tap the link in the email and write in the comment box.
+Every trade email links to that trade's GitHub issue: one issue per trade, labelled `traderec`, `paper` or `live`, and the module. **The Sunday email and a Rule E email open one issue per order**, titled with the order ("Buy $20,000 of SSO (1 of 3)"), and list the links in "Record your fills". After you act on an email, comment on its issue. The GitHub mobile app works well for this: tap the link in the email and write in the comment box.
 
 | You… | Comment |
 |---|---|
 | Placed an ETF order | `filled <dollars> @ <price>`, for example `filled 6000 @ 766.10` ($6,000 at an average price of $766.10). Both numbers are on the filled order's detail screen in the account's order history. |
+| Placed a Sunday-email or Rule E order | The same, on that order's own issue: `filled 20000 @ 101.20`, or `skipped` |
 | Placed an option-spread order | `filled <contracts> @ <net price>`, for example `filled 2 @ 7.45` (2 spreads at a net $7.45 a share). Write the net price per share, as Robinhood shows it, not the price per contract, which is 100 times that. For a close, it's the net credit you received. If only some spreads filled, write the number that did. |
 | Didn't place it: you chose not to, an email told you to skip it, or a spread order didn't fill even at the stated maximum | `skipped` |
 
@@ -321,7 +360,9 @@ Every trade email links to that trade's GitHub issue: one issue per trade, label
 
 ## 5. Reading the emails
 
-Every email is labelled **PAPER** or **LIVE** and names its module: M1, M2, M3, W10, M4, W8 or W9. Kinds: new trade, exit, trend-book rebalance, Bitcoin switch on or off, and the monthly, quarterly and annual reviews.
+Every email is labelled **PAPER** or **LIVE** and names its module: GROWTH (the Sunday email and Rule E), M1, M2, M3, W10, M4, W8 or W9. Kinds: the Sunday growth email, a Rule E exit, new trade, exit, trend-book rebalance, Bitcoin switch on or off, and the monthly, quarterly and annual reviews.
+
+**The Sunday growth email** (`[PAPER][GROWTH G-<date>] week N: …`) is described in §1: its headline box (STATUS, THIS WEEK, BOOK, SIZE = G and the drawdown, WINDOW), the one line, target vs now, why, Step 1, Step 2, deferred, Rule E's scores when there are any, risks and tax, the Robinhood taps, what if, the sources and the fill links. A **Rule E email** (`[PAPER][EXIT G-<date>-<ticker>] Rule E: Sell all …`) is ten lines: the trigger with its numbers, the sell, "buy SGOV any time this week", the score line, the taps and the issue link.
 
 **W10, the crash-day buy** (design v3.3, decision 12), holds up to 90 days, like M4 below.
 - It buys SPY in the IRA after the first S&P 500 drop of 3% or more in an uptrend, which happens about once every two years.
@@ -496,7 +537,7 @@ Everything the system knows is in `state/`, committed by the workflows after eac
 
 | Path | Contents |
 |---|---|
-| `state/state.json` | The paper book (cash, ETF positions, option spreads, pending orders), module memory, the shadow books, open forecasts, the run log (which job ran for which date, and its status), counters, alerts, and emails waiting to be retried |
+| `state/state.json` | The paper book (cash, ETF positions, option spreads, pending orders), module memory, the growth book (`growth`: the peak, drawdown and G, each sleeve's state, the last order set, what is deferred, Rule E's counters and scores, and `last_facts`, the facts record the last Sunday email was rendered from), the shadow books, open forecasts, the run log (which job ran for which date, and its status), counters, alerts, and emails waiting to be retried |
 | `state/ledger.jsonl` | The append-only ledger, one JSON record per line: run manifests, data snapshots, signals, recommendations, orders, fills, marks, forecasts, resolutions, shadow records, the monthly, quarterly and annual reviews, and corrections. Each record carries the hash of the one before it, so any edit, deletion or reordering is detectable |
 | `state/options/<date>/<root>-<HHMM>.csv.gz` | Option-quote snapshots from the options job and the evening marks: every option the book holds or has ordered, plus a sample of the chain for the modules. At most about 100 KB a day in all |
 | `state/inputs/w9_supply_loss.json` | Your W9 record of oil exports taken offline (§2d), once you have added one |

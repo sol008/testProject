@@ -101,6 +101,8 @@ The SEC asks automated tools to identify themselves in each request ([SEC: Acces
 
 ### 6. Robinhood checks in the app (10 minutes, nothing is submitted)
 
+- **IRA: turn limited margin on** (design v4 decision 10). In the IRA's settings, enable **limited margin** for the retirement account. It lets Monday's buys use Monday's sale proceeds and never borrows; without it every switch takes Monday plus Tuesday. If you leave it off, set `accounts.ira.limited_margin: false` in `config/account.yaml` so the paper broker waits a day too.
+- **IRA: SSO, QLD, IBIT and SGOV are buyable with dollar orders.** For each one, search it in the IRA, go to **Trade → Buy**, check the amount can be entered in **Dollars**, then back out. Accept Robinhood's leveraged-product acknowledgement for SSO and QLD if it asks. Do these checks before the paper phase ends.
 - **IRA: dollar orders work.** Switch to the IRA and go to **Search SPY → Trade → Buy**. Check that you can enter the amount in **Dollars**, then back out without submitting.
 - **Taxable (individual) account: options Level 3.** Needed for Phase B spreads, which can't go in an IRA.
   - Enable options in the individual account and request **Level 3**. See [Advanced options strategies (Level 3)](https://robinhood.com/us/en/support/articles/advanced-options-strategies/).
@@ -109,13 +111,28 @@ The SEC asks automated tools to identify themselves in each request ([SEC: Acces
 - **The spread screens.** The spread emails use the labels "Trade Options", "Select", "Call Debit Spread", "Continue", "Close position" and "Good for day". They come from Robinhood's help pages, so look for them once without submitting anything, and tell Claude if the wording differs.
 - **Tell Claude** if your IRA is **not** at Robinhood. The emails use Robinhood's wording.
 
-### 7. Three decisions to send Claude in chat
+### 7. The growth-book decisions to send Claude in chat (design v4 §12)
 
-1. **Two proposed shadow rules** (recorded only, never emailed): yes or no?
-   - buying closed-end funds at unusually wide discounts;
-   - buying spin-offs after their first 60 sessions.
-2. **Your country and US state.** The tax lines assume the US.
-3. Whether your IRA is at Robinhood (step 6).
+The defaults apply until you answer; each is one config value.
+
+| # | Decision | Options | Default |
+|---|---|---|---|
+| 1 | The drawdown limit D (the governor and the hard stop scale with it) | 30% / 40% / 50% | **40%** |
+| 2 | Bitcoin weight | 20% / 30% / 40% (50% ceiling) | **30%** |
+| 3 | Equity leverage | none (SPY 40%) / 2x (SSO + QLD, 25% each) / 3x | **2x** |
+| 4 | Nasdaq-100 leg | SSO only / SSO + QLD 50/50 | **50/50** |
+| 5 | Rule E, the exit-only mid-week email | outside the weekly cap, at most 6 a year / only when the week's slot is unused / none | **outside the cap, at most 6 a year** |
+| 6 | M4 (the crash call spread) in the Sunday email | shadow / re-admit as a Monday 10:00 order in the taxable account | **shadow** |
+| 7 | The gems reserve | 15%, shadow-first / 0% / live now | **15%, shadow-first** |
+| 8 | G3c, the post-devaluation country ETF (12-month holds) | shadow / a monthly trend slot | **shadow** |
+| 9 | Promotion basis for the growth book | risk-control evidence / the v3.3 edge gate | **risk-control evidence** |
+| 10 | IRA facts: size and type; limited margin; the in-app checks (step 6) | — | **limited margin on; do the checks before the paper phase ends** |
+| 11 | The taxable $20k | VOO held / SGOV / the M4 account | **VOO held, never sold** |
+| 12 | A "WSB mode" variant (D = 50%: Bitcoin 40%, a wide governor) | on / off | **off** |
+| 13 | 24-hour-market limit orders for IBIT on Sunday night | allow / keep the ban | **keep the ban** |
+| 14 | The LLM shadow test of track 37 | run / do not run | **do not run** |
+
+Also tell Claude your country and US state (the tax lines assume the US), and whether your IRA is at Robinhood (step 6).
 
 ---
 
@@ -145,6 +162,8 @@ A dry run sends nothing and saves nothing. After that the schedule runs by itsel
 
 ## Part 3 — ongoing
 
+- **Every Sunday evening:** the growth email arrives (about 21:17 ET in summer, 20:17 in winter). "This week: no change" means nothing to place. Otherwise: **Step 1 tonight** (the sells, "Sell all", queued for the open) and **Step 2 Monday from 9:35 ET** once the sells show Filled (the buys, market orders in dollars, each at most 95% of the cash it needs). Then comment each fill on its own issue. Details: `docs/OPERATIONS.md` §1 "The growth book".
+- **A Rule E email** (rare, weekday evenings, at most six a year): place the "Sell all" that night; buy SGOV with the proceeds during the week; record both.
 - **When a trade email arrives:** it links to a GitHub issue. Comment on it once you've acted:
   - `filled <dollars> @ <price>` for an ETF order;
   - `filled <contracts> @ <net price>` for an option spread;

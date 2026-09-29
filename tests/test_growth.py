@@ -53,8 +53,11 @@ def levered(index: pd.Series, mult: float = 2.0, start: float = 100.0) -> pd.Ser
     return start * (1.0 + mult * r).cumprod()
 
 
-def cfg_for(*, taxable: bool = True, limited_margin: bool = True, enabled: bool = True):
-    """The real config with every v3.3 module and shadow book off, so the book is alone in the paper IRA."""
+def cfg_for(*, taxable: bool = True, limited_margin: bool = True, enabled: bool = True, rule_e: bool = True):
+    """The real config with every v3.3 module and shadow book off, so the book is alone in the paper IRA.
+
+    `rule_e=False` keeps the mid-week exit out of a test that pins the Sunday job alone (tests/test_growth_email.py
+    covers Rule E)."""
     real = load_config()
     const = copy.deepcopy(real.constitution)
     acct = copy.deepcopy(real.account)
@@ -65,6 +68,7 @@ def cfg_for(*, taxable: bool = True, limited_margin: bool = True, enabled: bool 
             book["enabled"] = False
     const["options"]["enabled"] = False
     const["growth"]["enabled"] = enabled
+    const["growth"]["rule_e"]["enabled"] = rule_e
     acct["accounts"]["ira"]["limited_margin"] = limited_margin
     acct["accounts"]["taxable"]["enabled"] = taxable
     acct["github_issues"] = False
@@ -576,7 +580,9 @@ def test_a_1987_day_costs_the_book_29_5_pct_and_the_next_sunday_cuts_first(tmp_p
 
 # ==================================================================================== 8. a whipsaw sequence
 def test_whipsaw_switches_out_and_in_twice_with_at_most_3_orders_and_a_verified_ledger(tmp_path):
-    cfg = cfg_for()
+    # Rule E off: this path crosses the average on a Monday close, and only the Mondays run here (the Rule E sell
+    # would otherwise fill only when the next daily run happens); tests/test_growth_email.py covers Rule E
+    cfg = cfg_for(rule_e=False)
     days = trading_days()
     index = path(days, [(HIST_START, 7_000.0), ("2026-09-18", 7_000.0), ("2026-09-21", 7_210.0), ("2026-09-25", 7_210.0),
                         ("2026-09-28", 6_790.0), ("2026-10-02", 6_790.0), ("2026-10-05", 7_210.0), ("2026-10-09", 7_210.0),

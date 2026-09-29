@@ -718,6 +718,30 @@ growth:
   caps: {equity_exposure: 1.0, gross_exposure: 1.5, crypto: 0.30, single_name: 0.05, single_names_open: 2}
   rebalance: {band_rel: 0.25, min_order_usd: 300, max_orders_per_email: 3, sgov_buy_may_wait: true,
               queued_cash_frac: 0.90, market_hours_cash_frac: 0.95}   # C1: §3a.4's 90% (queued) / 95% (market hours)
-  email: {day: sunday, time_et: "21:17", risk_box: {required_for: [SSO, QLD, IBIT]}}
+  email:
+    day: sunday
+    time_et: "21:17"
+    send_no_change: true           # C2: design v4 §0/§9: the Sunday email goes out every week ("This week: no change")
+    risk_box:
+      required_for: [SSO, QLD, IBIT]
+      # C2: the numbers the risk box prints (track 32 §6 "with the fund's own numbers"); the email's validator checks
+      # them against the facts record, which copies them from here. Percent units. Sources: fees from the 28 Sep 2026
+      # summary prospectuses (track 32 §5); the daily-reset arithmetic (index +10% then -9.1% = -1.8% for a 2x fund)
+      # and the 50% one-day wipe-out from the prospectus risk (track 32 §6); the real funds' 2016-2026 drawdowns from
+      # track 26 §3.3 (buy and hold, and with this rule); IBIT's Monday gap from track 15 §1 and track 18 §5; the
+      # switched Bitcoin sleeve's drawdowns from design v4 §3 G2 (track 38).
+      crash_day: {year: 1987, index_pct: -20.5}     # the S&P 500's worst day (track 26 §4.1); a 2x fund loses 41%
+      funds:
+        SSO: {name: "2x S&P 500 fund", index: "S&P 500", multiple: 2, fee_pct: 0.84, borrow_pct: 4.0,
+              chop_up_pct: 10, chop_down_pct: 9.1, chop_fund_pct: -1.8, wipeout_index_day_pct: 50,
+              worst_drawdown_pct: -59, worst_drawdown_when: "2016 to 2026, buy and hold", rule_drawdown_pct: -33}
+        QLD: {name: "2x Nasdaq-100 fund", index: "Nasdaq-100", multiple: 2, fee_pct: 0.89, borrow_pct: 4.0,
+              chop_up_pct: 10, chop_down_pct: 9.1, chop_fund_pct: -1.8, wipeout_index_day_pct: 50,
+              worst_drawdown_pct: -64, worst_drawdown_when: "2016 to 2026, buy and hold", rule_drawdown_pct: -53}
+        IBIT: {name: "iShares Bitcoin ETF", index: "Bitcoin", multiple: 1, fee_pct: 0.25,
+               weekend_gap_worst_pct: -22.8, weekend_gap_when: "5 Aug 2024", gap_threshold_pct: 5,
+               gap_over_5pct_odds_pct: 7.5,
+               switch_drawdown_pct: -44, switch_drawdown_when: "2014 to 2026", forward_drawdown_pct: -70}
+    ira_withdrawal: {age: "59½", penalty_pct: 10}   # C2: track 32 §6 "every email": the IRA withdrawal line
   rule_e: {enabled: true, trigger: index_close_below_sma200, max_per_week: 1, max_per_year: 6, exit_only: true}  # decision 5
   accounts: {switching: ira, ira_limited_margin_required: true, taxable_holds: [VOO], taxable_never_holds: [SSO, QLD, IBIT, FBTC, UPRO, TQQQ, SPY]}
