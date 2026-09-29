@@ -1,6 +1,6 @@
 # traderec — component interfaces (Phase A)
 
-Every component builds against these contracts. Shared types are in `traderec/types.py`, config loading in `traderec/config.py` (`load_config()` → `Config`) and indicators in `traderec/indicators.py`. The design is `research/00-SYSTEM-DESIGN-v3.md` (v3.2); the rule parameters are in `config/constitution.yaml`.
+Every component builds against these contracts. Phase B adds `docs/PHASE_B_CONTRACTS.md` (options, spreads, runners, reports). Shared types are in `traderec/types.py`, config loading in `traderec/config.py` (`load_config()` → `Config`) and indicators in `traderec/indicators.py`. The design is `research/00-SYSTEM-DESIGN-v3.md` (v3.2); the rule parameters are in `config/constitution.yaml`.
 
 ## Conventions
 

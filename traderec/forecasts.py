@@ -22,6 +22,11 @@ from traderec.types import Recommendation
 
 M2_HORIZON_DAYS = 31  # "next month": due = created_date + 31 calendar days
 
+# Phase B modules register their builders here at import: EXTRA_SPECS[(module, kind)] = builder(rec, cfg) -> specs
+# (docs/PHASE_B_CONTRACTS.md §9). A builder returns `_spec(...)` dicts; "on_exit" forecasts resolve from the
+# trade result's "profit" / "exit_reason" (extend `_exit_outcome` for a new event).
+EXTRA_SPECS: dict[tuple[str, str], Any] = {}
+
 
 def make_forecasts(rec: Recommendation, cfg: Config) -> list[dict]:
     """1-3 pre-registered forecasts for `rec`; an empty list for kinds that register none.
@@ -31,7 +36,7 @@ def make_forecasts(rec: Recommendation, cfg: Config) -> list[dict]:
     forecast_id = F-<trade_id>-<n>.
     """
     builders = {("M1", "NEW_TRADE"): _m1_specs, ("M2", "REBALANCE"): _m2_specs, ("M3", "SWITCH_ON"): _m3_specs,
-                ("W10", "NEW_TRADE"): _w10_specs}
+                ("W10", "NEW_TRADE"): _w10_specs, **EXTRA_SPECS}
     builder = builders.get((rec.module, rec.kind))
     if builder is None:
         return []

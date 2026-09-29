@@ -106,12 +106,77 @@ modules:
     forecasts:
       p_profit: 0.72         # shrunk from 0.88 (1928-2026: 0.72)
 
+  # ---- Phase B (design v3.3 §10; docs/PHASE_B_CONTRACTS.md §10). Each block is completed by its build. ----
+
+  M4:                      # O2 crash call debit spread: policy module, 90-day exception (design v3.3 §3 M4)
+    enabled: false
+
+  # ----
+
+  W8:                      # de-escalation confirmed: policy module, small (design v3.3 §3 M5)
+    enabled: false
+
+  # ----
+
+  W9:                      # escalation that removes barrels: paper (design v3.3 §3 M5)
+    enabled: false
+
 shadow:                    # logged automatically, never emailed
   ST1B:
     enabled: true          # M1 without the VIX gate
   W10:
     enabled: true          # every uptrend -3% day, scored at 60 and 90 calendar days (W10's annual-review record)
     score_calendar_days: [60, 90]
+
+  # ---- Phase B shadow books (design v3.3 §3 "Shadow ledger"). Each block is completed by its build. ----
+
+  M4_TWIN:                 # M4's 60-DTE paper twin
+    enabled: false
+
+  # ----
+
+  O1:                      # M7: trend-filtered put credit spread (shadow at the $100k paper size)
+    enabled: false
+
+  # ----
+
+  O1H:                     # O1 held to expiry
+    enabled: false
+
+  # ----
+
+  I1:                      # put-spread variant I1 (track 14)
+    enabled: false
+
+  # ----
+
+  I2:                      # put-spread variant I2 (track 14)
+    enabled: false
+
+  # ----
+
+  ST2:                     # VIX/VIX3M inversion in an uptrend, hold 20 sessions (track 13 §11.3)
+    enabled: false
+
+  # ----
+
+  ETH:                     # ETH weekly trend switch (M3's rule on ETH)
+    enabled: false
+
+  # ----
+
+  M6:                      # crypto structural: depeg buy and cash-and-carry (hourly 24/7 job)
+    enabled: false
+
+  # ----
+
+  EDGAR:                   # insider clusters, special dividends, activist 13D, cash mergers, CEF tenders (track 16)
+    enabled: false
+
+  # ----
+
+  MACRO:                   # W3 cool-CPI TLT, W4 BoJ, gold spike fade, scheduled-release reactions (track 17)
+    enabled: false
 
 risk:
   governor:
@@ -142,6 +207,14 @@ fills:                                # fill model v1.0 (frozen for the paper ph
     FXE: 8
     FXY: 8
     FXA: 8
+  options:                            # two-leg spreads (Phase B): model price = mid +/- concession x natural width
+    concession: 0.3                   # = mid + 0.6 x half-spread per leg; fills only within the order's limit
+    max_concession: 0.5               # the stated maximum for the one re-price: the natural price
+    multiplier: 100
+
+# ---- Phase B options settings (docs/PHASE_B_CONTRACTS.md §1, §5). Completed by the options build. ----
+options:
+  enabled: false
 
 data:
   two_source_tolerance: 0.001         # 0.1% close mismatch blocks new signals

@@ -607,6 +607,12 @@ HORIZON_RISK = ("Planning loss over the full hold: about {horizon_stress_usd:mon
                 "the portfolio), a bad-case drop over the whole holding period.", None)
 
 
+# Phase B module text (M4, W8, W9) lives in traderec/email_text/<module>.py and is merged into the tables above.
+from .email_text import merge_module_text as _merge_module_text  # noqa: E402
+
+_merge_module_text(globals())
+
+
 # ------------------------------------------------------------------------------------------- serialisation
 # An email is a list of blocks: ("banner", str), ("box", [(label, value)]), ("h", str), ("p", str),
 # ("ol", [str]), ("ul", [str]), ("table", (headers, rows)), ("footer", [str]). Both parts are built from the

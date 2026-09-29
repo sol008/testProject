@@ -32,7 +32,7 @@ from . import emails as email_mod
 from . import facts as facts_mod
 from . import feedback
 from . import forecasts as fc
-from . import notify, risk, validator
+from . import notify, risk, runners, validator
 from .broker import PaperBroker
 from .config import STATE_DIR, Config
 from .data import verify_close
@@ -43,6 +43,7 @@ from .modules.m2_trend import m2_orders, m2_signals, m2_targets
 from .modules.m3_btc import btc_weekly_switch
 from .modules.shadow import st1b_entry_check
 from .modules.w10_crashbuy import w10_exit_check, w10_exit_date, w10_kill_check, w10_signal
+from .options import job as options_job
 from .state import RETRYABLE, Paths, copy_tree, jsonable, load_state, new_state, save_state
 from .types import Fill, OrderIntent, Recommendation, RenderedEmail
 
@@ -338,7 +339,7 @@ class Run:
 
     def open_position_count(self) -> int:
         mods = self.state["modules"]
-        n = sum(1 for m in ("M1", "M3", "W10") if (mods.get(m) or {}).get("open_trade"))
+        n = sum(1 for m in ("M1", "M3", "W10", "M4", "W8", "W9") if (mods.get(m) or {}).get("open_trade"))
         if self.broker.positions(module="M2") or any(o.module == "M2" for o in self.broker.pending()):
             n += 1
         return n
@@ -524,20 +525,34 @@ def _daily(run: Run) -> str:
     rate = run.get_tbill()
     interest = run.broker.accrue_interest(run.state.get("last_accrual") or d, d, rate)
     run.state["last_accrual"] = d
+    options_job.mark_spreads(run)              # Phase B: open spreads at tonight's closing quotes
     mark = _mark(run)
     run.result.nav = mark["nav"]
 
     checks = _snapshot(run)
     _m1(run, checks)
     _w10(run, checks)
+    runners.m4.daily(run, checks)              # Phase B: M4 crash call spread (after M1 and W10 in the reserve)
     _m2(run)
     _m3(run, asof_utc=iso(pd.Timestamp(d) + timedelta(days=1)))
+    runners.macro.daily(run, checks)           # Phase B: W8 / W9 macro-event spreads
     _shadow(run, checks.get("vix_series"))
+    for name in runners.SHADOW_RUNNERS:        # Phase B shadow books: guarded, never stop the run
+        _shadow_guard(run, name, getattr(runners, name).daily, checks)
     _resolve_dated_forecasts(run)
     _drawdown_alerts(run, mark)
     run.state["last_daily"] = d
     run.note(f"interest credited ${interest:,.2f} at {rate:.4f}")
     return "ok"
+
+
+def _shadow_guard(run: Run, name: str, fn: Callable[..., None], *args: Any) -> None:
+    """Run a shadow book; an exception becomes an alert and a ledger record instead of a failed run."""
+    try:
+        fn(run, *args)
+    except Exception as exc:  # noqa: BLE001 - a shadow book (no emails, no orders) must never stop the run
+        run.alert("shadow", f"{name} failed: {type(exc).__name__}: {exc}")
+        run.log("shadow", {"book": name, "event": "error", "error": f"{type(exc).__name__}: {exc}"})
 
 
 def _email_failed(result: RunResult) -> bool:

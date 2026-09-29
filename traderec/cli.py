@@ -45,6 +45,22 @@ def _parser() -> argparse.ArgumentParser:
     s.add_argument("--dry-run", action="store_true")
     s.add_argument("--force", action="store_true")
 
+    # Phase B (docs/PHASE_B_CONTRACTS.md)
+    s = sub.add_parser("options", help="10:17 ET options job: chain snapshots and paper spread fills")
+    s.add_argument("--date", default=None, help="ET date to run for (default: today in New York)")
+    s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--force", action="store_true")
+    s = sub.add_parser("hourly", help="hourly 24/7 crypto job (shadow books)")
+    s.add_argument("--dry-run", action="store_true")
+    s = sub.add_parser("quarterly", help="quarterly review email")
+    s.add_argument("--quarter", default=None, help="YYYY-Qn (default: the quarter that just ended)")
+    s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--force", action="store_true")
+    s = sub.add_parser("annual", help="annual review email")
+    s.add_argument("--year", default=None, help="YYYY (default: the year that just ended)")
+    s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--force", action="store_true")
+
     sub.add_parser("verify-ledger", help="recompute the ledger's hash chain")
     sub.add_parser("status", help="print the paper book")
     return p
@@ -75,6 +91,19 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "weekly":
         res = pipeline.run_weekly(cfg, provider, args.state_dir, date=args.date, dry_run=args.dry_run,
                                   force=args.force)
+    elif args.command == "options":
+        from .options.job import run_options
+        res = run_options(cfg, provider, args.state_dir, date=args.date, dry_run=args.dry_run, force=args.force)
+    elif args.command == "hourly":
+        from .runners.crypto import run_hourly
+        res = run_hourly(cfg, provider, args.state_dir, dry_run=args.dry_run)
+    elif args.command == "quarterly":
+        from .reports import run_quarterly
+        res = run_quarterly(cfg, provider, args.state_dir, quarter=args.quarter, dry_run=args.dry_run,
+                            force=args.force)
+    elif args.command == "annual":
+        from .reports import run_annual
+        res = run_annual(cfg, provider, args.state_dir, year=args.year, dry_run=args.dry_run, force=args.force)
     else:
         res = pipeline.run_monthly(cfg, provider, args.state_dir, month=args.month, dry_run=args.dry_run,
                                    force=args.force)

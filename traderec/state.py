@@ -62,10 +62,25 @@ def new_state(*, created: str, mode: str, constitution_version: str, broker_stat
                    "targets": {}, "history": []},
             "M3": {"last_week_end": None, "on": None, "open_trade": None, "history": []},
             "W10": {"open_trade": None, "history": [], "disabled": None},
+            # Phase B (docs/PHASE_B_CONTRACTS.md §6); runners also setdefault these for older states
+            "M4": {"open_trade": None, "history": [], "cooldown_until": None},
+            "W8": {"open_trade": None, "history": []},
+            "W9": {"open_trade": None, "history": []},
         },
         "shadow": {
             "ST1B": {"open_trade": None, "trades": []},
             "W10": {"events": []},        # every uptrend -3% day, scored at 60 and 90 calendar days
+            # Phase B shadow books (docs/PHASE_B_CONTRACTS.md §6)
+            "M4_TWIN": {"open_trade": None, "trades": []},
+            "O1": {"open_trade": None, "trades": []},
+            "O1H": {"open_trade": None, "trades": []},
+            "I1": {"open_trade": None, "trades": []},
+            "I2": {"open_trade": None, "trades": []},
+            "ST2": {"open_trade": None, "trades": []},
+            "ETH": {"on": None, "last_week_end": None, "open_trade": None, "trades": []},
+            "M6": {"events": []},
+            "EDGAR": {"events": [], "seen": {}},
+            "MACRO": {"events": []},
         },
         "forecasts": {"open": [], "resolved": []},
         "runs": {},
