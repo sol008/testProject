@@ -15,7 +15,7 @@ Every component builds against these contracts, and this file records them as bu
 - **Money.** Floats in USD. Percentages are fractions (0.06 = 6%) unless a key ends in `_pct`.
 - **Option prices.** Per share of the combo; a contract is ×100 (`fills.options.multiplier`).
 - **Network.** Only the data adapters in `traderec/data/`, `notify.py`, `feedback.fetch_comments` and `llm_veto.py` touch the network. Adapters are injected through the provider (the veto through `run.services`), so every test runs offline with fakes or recorded fixtures under `tests/fixtures/`. Live smoke tests run only with `RUN_NETWORK_TESTS=1`.
-- **No model identifiers and no personal data in the repository.** The veto's model comes from the environment variable `TRADEREC_VETO_MODEL`, with no default. SEC requests are to take their User-Agent from `SEC_USER_AGENT`.
+- **No model identifiers and no personal data in the repository.** The veto's model comes from the environment variable `TRADEREC_VETO_MODEL`, with no default. SEC requests take their User-Agent from `SEC_USER_AGENT` (`data/edgar.py`; without it, a generic product string that names no one).
 - **Fail closed** for new entries on missing, stale or disagreeing data: log a `shadow` or `signal` record and raise `run.alert("data", ...)`.
 - **Look-ahead.** Signals use data up to and including the run date (`run.bars()` is cut at `run.asof`). Shadow books use no LLM.
 - **Git.** No component writes to git. The workflows commit `state/` in CI.
@@ -65,6 +65,7 @@ Each is reached through the provider, so tests inject fakes:
 | W8/W9 macro data (explicit crude months, day moves, contango, DAL earnings, W9's input file) | `data/macro_data.py` | `provider.macro_data`; the macro runner attaches a `MacroData()` to a `LiveProvider` on first use | W8, W9 |
 | Crypto data (stablecoin books, ETH-USD, CME Bitcoin futures, BTC-USD at a minute) | `data/crypto_data.py` | `crypto_source(provider)`: `provider.crypto`, else a provider implementing the methods, else `LiveCryptoData` around a `LiveProvider`, else None | crypto shadows, hourly job |
 | Release calendar and macro series (Treasury yields, FRED, BoJ) | `data/econ_calendar.py` | `load_calendar()`; `macro_data_for(provider)`: `provider.macro_data`, else a `LiveMacroData` attached to a `LiveProvider`, else None | macro shadows |
+| SEC EDGAR and FINRA (full-text search, data.sec.gov, filing documents, short interest) | `data/edgar.py` | `provider.edgar`, `provider.finra`; `runners.edgar.sources(run, cfg)` attaches an `EdgarClient()` and a `FinraClient()` to a `LiveProvider` on first use; any other provider without `edgar` skips the book with a note | EDGAR screens |
 
 > **Known issue (code; found at integration, not fixed here).** Both W8/W9 and the macro shadow books use the attribute `provider.macro_data`, for two different adapters. In a live daily run `runners.macro` runs first and attaches W8/W9's `MacroData` (only `next_earnings`), so `macro_data_for` then returns it to the macro shadow books, which need `treasury_yields`, `fred_series` and `boj_basic_loan_rate`. Their yield and CPI inputs then fail closed as unavailable, and the BoJ lookup raises an `AttributeError` that `_shadow_guard` turns into a `shadow` alert. The tests inject each adapter separately and don't see it.
 
@@ -125,7 +126,41 @@ class LiveMacroData / FakeMacroData                          # network (20 s, 3 
 def macro_data_for(provider) -> MacroData | None
 ```
 
-> **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`). The SEC EDGAR / FINRA adapter (User-Agent from `SEC_USER_AGENT`, default a generic product string) goes here.
+```python
+# data/edgar.py (the EDGAR/FINRA shadow screens; with providers.py the only traderec code on the network)
+SEC_USER_AGENT_ENV = "SEC_USER_AGENT";  DEFAULT_USER_AGENT = "traderec/<version> (paper-trading shadow screens)"
+def sec_user_agent() -> str                     # the environment variable, stripped, else the generic default
+class EdgarClient:
+    def __init__(self, *, user_agent=None, session=None, sleep=time.sleep, clock=time.monotonic, max_rate=8.0,
+                 workers=4, timeout=20.0, max_document_bytes=8_000_000)   # user_agent defaults to sec_user_agent()
+    def start(self, *, seconds=None, documents=None) -> None    # the run's work budget; past it, BudgetExhausted
+    def search(self, forms, start, end, *, q="", ciks=None, max_hits=2000) -> list[hit]   # EFTS, 100 hits a page
+    def search_total(self, forms, start, end, *, q="") -> int
+    def document(self, ciks, adsh, filename) -> str             # www.sec.gov/Archives, tried under each CIK in turn
+    def documents(self, [(ciks, adsh, filename), ...]) -> {(adsh, filename): text | Exception}   # worker threads
+    def company(self, cik) -> {"cik", "name", "tickers", "exchanges", "sic", "entity_type"} | None   # data.sec.gov
+    def shares_outstanding(self, cik, asof) -> {"shares", "end", "filed", "form", "source"} | None
+        # XBRL facts filed by `asof` (dei EntityCommonStockSharesOutstanding, else us-gaap), at most 400 days old
+    def public_float(self, cik, asof) -> {"value", "end", "filed", "form", "source"} | None   # dei EntityPublicFloat,
+                                                                                            # at most 550 days old
+    stats: {"requests", "documents", "bytes", "retries"}
+class FinraClient:                              # always the generic User-Agent; the secret goes to *.sec.gov only
+    def short_interest(self, symbol, asof, *, lag_days=12) -> {"settlement_date", "short_qty", "avg_daily_volume",
+                                                               "days_to_cover"} | None
+        # api.finra.org, then cdn.finra.org's twice-monthly file; a settlement counts from settlement + lag_days
+class RateLimiter(per_second=8.0)               # one limiter for every *.sec.gov host, across threads; capped at 10
+class EdgarAccessDenied(DataError)              # HTTP 403: an undeclared User-Agent, or the SEC's rate threshold
+class BudgetExhausted(DataError)                # the run's seconds or documents are used up; the rest carries over
+# hit: {"adsh", "filename", "form", "file_type", "file_date", "period", "ciks", "entities", "items", "sics"}
+# pure parsers (on recorded fixtures, tests/fixtures/edgar/): parse_efts, group_filings, display_name, yahoo_symbol,
+# html_to_text, parse_long_date, parse_form4, parse_submissions, parse_concept_value, parse_shares_outstanding,
+# parse_finra_si_rows, parse_finra_si_file, parse_special_dividend, parse_merger_terms, parse_merger_update,
+# parse_cef_tender, parse_cef_tender_result
+```
+
+- **Hosts.** EDGAR full-text search (`efts.sec.gov/LATEST/search-index`: one hit per document, with the filers' CIKs, display names with tickers, and 8-K items), `data.sec.gov` (submissions and XBRL company concepts, point in time by filing date), `www.sec.gov/Archives` (the filing documents), and FINRA's consolidated short interest. EFTS and data.sec.gov answer the generic User-Agent; www.sec.gov answers HTTP 403 ("Undeclared Automated Tool") unless the User-Agent names who is asking, which is why the owner sets `SEC_USER_AGENT`.
+- **Fair access.** Every request goes through one `RateLimiter` (8 a second by default, never above the SEC's 10), with a 20 s timeout; 429, 5xx and connection errors are retried 1, 2 and 4 s apart; 403 raises `EdgarAccessDenied` at once; 404 is a `DataError` ("not found"); everything else a `DataError`. `document` counts against the budget from `start`; `company` and the concept lookups are memoised per client.
+- **Tests** pass a fake `session` (anything with a requests-style `get`, and `post` for FINRA) serving recorded payloads; no test touches the network.
 
 ## 2. Ledger — `traderec/ledger.py`
 
@@ -329,6 +364,31 @@ window_move, bucket, cpi_mm, fed_decision, boj_decision, nearest_fomc, w3_check,
 advance_trade, w3_exit_check, w4_exit_check, time_exit_check, baseline_mean, score_trade, t_stats,
 promotion_summary, bh_fdr
 
+# edgar_screens.py (SH1-SH4, CEF; Phase B): pure, no I/O; see docs/phase-b/edgar.md
+SETUPS = {"SH1": "insider cluster buy", "SH2": "special dividend", "SH3": "activist Schedule 13D",
+          "SH4": "near-completion cash merger", "CEF": "CEF tender capture"};  KNOWN_ACTIVISTS (track 16's list)
+first_session_after(d); nth_session_after(d, n); anchor_session(d)          # NYSE sessions around a filing date D
+market_features(bars, d) -> {"price", "dvol20", "hist", "last_bar", "stale"}   # before the filing's first session
+market_cap(shares, price, public_float) -> (mcap, basis);  cost_for(mcap, costs) -> (bucket, round_trip)
+benchmark_for(mcap) -> "SPY" | "IWM";  universe_check(features, mcap, rules) -> [reasons]
+form4_purchase(doc, filing_date, adsh, max_lag_days=14) -> purchase | None
+insider_cluster(purchases, window_days, min_insiders, *, not_before) -> cluster | None
+ticker_check(bars, trade_date, vwap, tolerance) -> {"ok", "close", "ratio"}
+infer_dividends(bars) -> pd.Series;  special_dividend_ex_date(parsed, price) -> (ex_date, basis)
+special_dividend_check(parsed, bars, d, price, cfg) -> {"ok", "reasons", "amount", "yield", "regular_median",
+                                                       "prior_dividends", "ex_date", "ex_basis", "exit_due"}
+activist_match(filer_names) -> str | None
+merger_apply(deal, update, d) -> deal;  merger_trigger(deal, d, cfg) -> {"ok", "reasons", "days_to_close"}
+cef_tender_check(terms, price, nav, entry_day, cfg) -> {"ok", "reasons", "discount", "days_to_expiry"}
+entry_day(bars, d);  window_returns(bars, bench, start, end, cost) -> {"open": {...}, "close": {...}}   # each
+    {"raw", "bench", "excess", "net"};  filing_reaction(bars, bench, d);  follow_exit(bars, start, hold_sessions)
+observed_ex_date(bars, expected, amount);  score_merger(entry, start, exit_date, exit_price, cost)
+score_cef(bars, bench, start, sell_day, accepted, tender_price, cost)
+primary_return(event); t_stat(values); clustered_t(values, dates); setup_stats(events, setup)
+promotion_test(events, setup, rule, *, tbill=None) -> {"setup", "stats", "checks", "passed", "demote"}
+reaction_split(events, setup, asof, months=24);  book_summary(events, month=None) -> [{"name", "signals", "closed",
+    "mean_ret"}]                                       # built for the reviews; nothing calls them yet (§9)
+
 # risk.py
 def governor(drawdown: float, cfg_risk: dict) -> float     # G(D)
 def stress_table(closes: dict[str, pd.Series], cfg: Config) -> dict[str, float]
@@ -413,7 +473,56 @@ python -m traderec verify-ledger
 python -m traderec status     # the paper book, open spreads and pending spread orders, open trades, recent runs
 ```
 
-> **Placeholder: replay build pending** (`docs/phase-b/replay.md`). Its command, run kind and interfaces go here.
+**The historical replay harness** (`scripts/replay.py`; method and results in `docs/phase-b/replay.md`) is a script, not a CLI command, and adds no run kind: it drives the real `run_init`, `run_daily`, `run_weekly` and `run_monthly` day by day over past years, so its runs are ordinary `daily:<date>`, `weekly:<date>` and `monthly:YYYY-MM` runs in a state directory of its own (`--work/state`), with `dry_run=False` and stub services. The workflows never run it, and only `fetch` (and track 15's research code, when its cache is missing) touches the network.
+
+```
+python scripts/replay.py fetch     [--cache DIR] [--refresh]                            # every series, once, as pickles
+python scripts/replay.py run       [--start 2019-01-02] [--end 2026-09-28] [--cache DIR] [--work DIR] [--resume]
+                                   [--no-cut] [--second-source echo|history]
+python scripts/replay.py reconcile [--cache DIR] [--work DIR ...] [--out research/code/25-replay] [--compare DIR]
+python scripts/replay.py all       [...]                                               # fetch if needed, run, reconcile
+# defaults: --cache /tmp/traderec-replay-cache (env TRADEREC_REPLAY_CACHE), --work /tmp/traderec-replay-work
+# (TRADEREC_REPLAY_WORK); --config-dir on every command
+```
+
+```python
+@dataclass
+class History: bars, vix, btc, tbill, flags, sources, proxy_before, second     # the full histories from the cache
+def replay_tickers(cfg) -> list[str]           # SPY, ^VIX, W10's index, M1's, W10's and M3's tickers, M2's legs
+def fetch_history(cfg, cache, *, refresh=False) -> manifest
+    # LiveProvider downloads: bars for replay_tickers, CBOE VIX, FRED DTB3, Coinbase daily BTC (from 2017) and hourly
+    # BTC (for the IBIT proxy), Yahoo BTC-USD (gap fill), FRED SP500 and Nasdaq SPY history (the second sources)
+def load_history(cfg, cache) -> History        # splices the flagged IBIT proxy before IBIT's first session (ibit_proxy),
+                                               # fills BTC gaps from Yahoo (flagged)
+class AsOfProvider(history, *, cut=True, second_source="echo")   # a DataProvider served as of set_asof(date):
+    # daily_bars / vix: rows <= the date; btc_daily_utc: UTC days <= the date; tbill_rate: the last DTB3 print before
+    # it; second_source_close: "echo" = the primary close as "replay-echo" (counted in .echoes), "history" = Nasdaq SPY
+    # / FRED SP500, None when absent (fail closed); cut=False is the look-ahead diagnostic; .served_after_asof, .calls,
+    # .second_calls, .sources
+class CaptureServices(email_dir=None, *, first_n=1)   # .services() -> pipeline.Services: send re-validates each email
+    # and writes it as text (.emails); create_issue -> None (.issue_calls); healthcheck recorded (.pings);
+    # fetch_comments -> None
+def schedule(start, end) -> [(kind, date_or_month, asof)]   # monthly on the 1st for the month just ended (as of its
+                                                             # last day), daily Monday-Friday, weekly on Sundays
+def replay(cfg, provider, state_dir, start, end, capture, *, resume=False, progress_every=21) -> [run rows]
+    # run_init at `start` (unless resuming after _last_done), then every scheduled run; an exception is recorded and
+    # the loop goes on; rows {"kind", "date", "asof", "status", "seconds", "notes", "emails", "fills", "alerts", "nav",
+    # "error"}
+def run_segment(cfg, history, work, start, end, *, resume=False, cut=True, second_source="echo") -> None
+    # refuses a non-empty work/state without --resume; writes runs.csv, emails.csv, emails/, segment.json
+def reconcile(cfg, works, out, *, history=None, compare=None) -> {"summary", "segments"}
+    # summary.csv and the CSVs listed in docs/phase-b/replay.md; the research lists: tracks 13 and 23 from their
+    # results/ (research_st1, research_w10), track 15's R1 and R2 recomputed with its own code (research_r1,
+    # research_r2); a W10 re-pricing at the open (w10_reprice_open); the two-source rules on every signal day with the
+    # real historical second sources (second_source_check)
+def compare_runs(work_a, work_b, until=None) -> {"records_a", "records_b", "identical", "first_difference",
+                                                  "spy_check_failures", "w10_unconfirmed"}    # DECISION_RECORDS only
+# pure helpers, also used by tests/test_replay.py: match_trades, match_switches, event_summary, max_drawdown,
+# sleeve_pnl, admissions, ibit_proxy, parse_candles_ohlc, parse_nasdaq_rows, pipeline_trades, m2_decisions, m3_weeks,
+# m1_checks, fills_frame
+```
+
+`tests/test_replay.py` loads the script with `importlib` and drives it offline through a synthetic market: the as-of rules, both second sources, production order, an end-to-end replay, identical decisions with and without the cut, resume, and the reconciliation helpers. The 2019–2026 reconciliation (M1 39 of 40 track-13 trades, W10 3 of 3, M2 722 of 736 leg-months, M3 400 of 404 weeks; 17.4 minutes) and its four findings are in `docs/phase-b/replay.md`. Findings 2 and 3 were fixed afterwards (`market_calendar`'s unscheduled closures; track 23's W10 exit pricing); findings 1 and 4 (M3 never re-sized; M2's excess and EWMA definitions) stand, and are listed in design Appendix C.
 
 - **Exit codes:** 0 done or nothing to do; 3 a `data_missing` result, the data isn't available yet (retry; from `daily`, `options` or `hourly`); 1 error.
 - **Run kinds and keys** (one run per key; `state["runs"][key]` holds its status and ledger range):
@@ -431,7 +540,7 @@ python -m traderec status     # the paper book, open spreads and pending spread 
 
   Any run may also return `already_done` without running (and the hourly job returns it for an hour already recorded).
 - **State:** `state/state.json` holds `{"broker", "modules", "shadow", "forecasts", "runs", "counters", "marks", "dividends", "issues", "fills", "outbox", "alerts"}` (plus `version`, `created`, `mode`, `constitution_version`, `last_accrual`, `last_daily`). `state/pre_run.json` is the state before the most recent run, which is what `--force` restores. `state/outbox/` holds `.eml` copies of emails that were not sent (dry runs, no Gmail credentials, failed sends). Phase B adds `state/options/<date>/<root>-<HHMM>.csv.gz` (§8.3) and reads the owner's `state/inputs/w9_supply_loss.json` (from the real state directory, also in dry runs).
-- **Phase B state keys** (created by `new_state`; runners `setdefault` them for older states): `modules.M4` `{"open_trade", "history", "cooldown_until"}` (+ `last_signal`, `armed`, `liquidity_probe`, `skipped`); `modules.W8` / `W9` `{"open_trade", "history"}` (+ `events`, the last 60 candidate outcomes; `pm_map` (W8); `data_flags`; `veto_model_sha256`; `processed_events` (W9)); `shadow.M4_TWIN`, `O1`, `O1H`, `I1`, `I2`, `ST2` `{"open_trade", "trades"}` (+ `held`, `last_cycle`, `last_signal`); `shadow.ETH` `{"on", "last_week_end", "open_trade", "trades"}` (+ `weeks`); `shadow.M6` `{"events"}` (+ `watch`, `carry_last`); `shadow.MACRO` `{"events"}` (+ `meta`); `shadow.EDGAR` `{"events", "seen"}` (placeholder). A spread module's `open_trade` is `{"trade_id", "status": "pending_entry" | "open" | "pending_exit", "signal_date", "intent_id", "root", "account", "legs", "contracts", "expiry", "exit_date", "limit_price", "max_price", "entry_price", "fill_date", "cost", ...}`. Shadow trades and events carry `signal_date`, and closed ones `exit_date` and `return`, which the review tables read.
+- **Phase B state keys** (created by `new_state`; runners `setdefault` them for older states): `modules.M4` `{"open_trade", "history", "cooldown_until"}` (+ `last_signal`, `armed`, `liquidity_probe`, `skipped`); `modules.W8` / `W9` `{"open_trade", "history"}` (+ `events`, the last 60 candidate outcomes; `pm_map` (W8); `data_flags`; `veto_model_sha256`; `processed_events` (W9)); `shadow.M4_TWIN`, `O1`, `O1H`, `I1`, `I2`, `ST2` `{"open_trade", "trades"}` (+ `held`, `last_cycle`, `last_signal`); `shadow.ETH` `{"on", "last_week_end", "open_trade", "trades"}` (+ `weeks`); `shadow.M6` `{"events"}` (+ `watch`, `carry_last`); `shadow.MACRO` `{"events"}` (+ `meta`); `shadow.EDGAR` `{"events", "seen"}` (+ `cursor`, `started`, `insiders`, `lockout`, `deals`, `last_run`; §9). A spread module's `open_trade` is `{"trade_id", "status": "pending_entry" | "open" | "pending_exit", "signal_date", "intent_id", "root", "account", "legs", "contracts", "expiry", "exit_date", "limit_price", "max_price", "entry_price", "fill_date", "cost", ...}`. Shadow trades and events carry `signal_date`, and closed ones `exit_date` and `return`, which the review tables read.
 - **Idempotency:** one run per key. `data_missing` and `error` runs may be retried. `--force` re-runs only the most recent run (of any kind, a recorded hourly hour included), from `pre_run.json`, and records a `correction` in the ledger.
 - **Ledger integrity:** each run verifies the hash chain and that the record the state last committed (`counters.ledger_head`) is still there. Records written by a run that crashed before saving the state are marked with a `correction`. A quiet hourly check reads the state and writes nothing.
 - **Daily order of work** (`pipeline._daily`):
@@ -449,7 +558,7 @@ python -m traderec status     # the paper book, open spreads and pending spread 
   12. M3 catch-up (the weekly job normally decides);
   13. W8/W9 (`runners.macro.daily`): exits first, then W8, then W9;
   14. the Phase A shadow book (ST-1b; every uptrend −3% day scored at 60 and 90 days);
-  15. the Phase B shadow runners, each inside `pipeline._shadow_guard`: `option_shadows` → `crypto` → `edgar` (skeleton) → `macro_shadows`;
+  15. the Phase B shadow runners, each inside `pipeline._shadow_guard`: `option_shadows` → `crypto` → `edgar` → `macro_shadows`;
   16. dated forecasts;
   17. drawdown alerts.
 - **Each decision:** pre-registered in the ledger, rendered, validated, GitHub issue opened, paper orders queued, and email sent after the state is saved. A validator failure blocks the orders and raises an alert.
@@ -572,7 +681,7 @@ def options_job(run, chains) -> None               # m4, macro (no-op), option_s
 | `macro` (W8, W9) | Exits first (expiry rule, invalidation, take-profit, time stop; sell-to-close at `order_prices` rounded down); then W8 (roll the market map, condition (iii), condition (ii), then the gates: one at a time, the pause, the budget, the release ban, the invalidation market, the structure, `admit_premium(cluster "oil")`, the veto) and W9 (the owner's supply record and crude months, the same gates plus the contango veto) | Hooks: buy fill → `open`, `exit_date` reset from the fill date; sell fill → history, forecasts resolved; cancelled entry → forecasts voided, `shadow` `entry_not_filled`; cancelled close → `open` again with an alert, re-issued that evening if still due. `roots_needed`: roots of W8/W9 trades pending or open. `options_job`: no-op |
 | `option_shadows` (O1, O1H, I1, I2, ST2) | Settle held spreads at or past expiry at intrinsic value; drop entries no options job took (`expired`); signals at the close (O1/O1-h filters on two-source closes, I1's VIX fade, I2's BTC trend); ST-2 (buy SPY at the next open, sell at the close of session 20); one `data` alert per run listing the books that failed closed | `roots_needed`: roots of books with a pending entry or an open spread. `options_job`: marks, the 50%-of-credit take-profit and 21-DTE close (managed books), then entries on the snapshot (I2's IV term structure checked here); each book guarded |
 | `crypto` (ETH, M6 carry) | The ETH weekly switch (replays up to 12 missed weeks); the M6 cash-and-carry check. Each sub-book guarded; a provider without crypto feeds only adds a note | — (the hourly job: `run_hourly`) |
-| `edgar` | Skeleton: a no-op. **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`) | — |
+| `edgar` (EDGAR: SH1–SH4, CEF) | `config(run)` merges `shadow.EDGAR` over `DEFAULTS` (equal but for `enabled`, which only the constitution switches on; a test checks this); `sources(run, cfg)` (§1.1), or a note and nothing else. Then, cheapest screen first (SH3 → SH2 → CEF → SH4 → SH1), each filing date not yet screened: weekdays only, the run date final from 22:05 ET and screened provisionally before that, the last final date searched again, at most 7 days back (older dates dropped with a `data` alert). A hit passes the universe and data checks into a `pending_entry` event (`signal`), else a near-miss (`filtered`); then the entries (once the stock's bars show the session after the filing) and exits (SH1/SH3 at session 20, SH2 at the close before the ex-date, SH4 at the deal's cash, a break or the 60-day cap, CEF at the tender plus the remainder 3 sessions after expiry) of open events; then pruning (`seen` 7 days, insider purchases, past lockouts, stale deals). Budget per run: 90 s, 150 documents, 40 price lookups (`BudgetExhausted`: the rest carries over, and a date counts as screened only when all of it was). A failing source (`EdgarAccessDenied`, `DataError`) records `data_missing` for that screen and date with one `data` alert, and the date is retried next run. `last_run` and a run note record the counts | — |
 | `macro_shadows` (MACRO) | Calendar checks, new and maturing release records, W3, W4, the gold fade, walking the hypothetical trades, the promotion summary, pruning | — |
 
 **The hourly job** (`runners.crypto.run_hourly(cfg, provider, state_dir=None, *, now=None, dry_run=False, services=None) -> RunResult`, run kind `hourly`, date the UTC hour `YYYY-MM-DDTHHZ`):
@@ -587,7 +696,12 @@ def options_job(run, chains) -> None               # m4, macro (no-op), option_s
 - M4 twin: `signal`, `signal_while_open`, `entry`, `entry_waiting`, `entry_missed`, `exit_unpriced`, `exit`; M4 itself: `unconfirmed_signal`, `signal_while_open`;
 - ETH: `weekly`, `signal_on`, `entry`, `signal_off`, `exit`, `exit_cancelled`, `entry_cancelled`, `data_missing`; M6: the hourly events above, and `carry_check`, `carry_open`, `carry_close` in the daily run;
 - MACRO (with `rule`): `release`, `complete`, `void`, `signal`, `no_signal`, `unavailable`, `trade`, `entry`, `exit_signal`, `exit`, `near_miss`, `data_problem`;
+- EDGAR (with `setup`): `signal` (the event's fields but its status and scores), `filtered` (a near-miss, with `reasons`), `entry`, `scored` (with the `score`), `void` (with the `reason`), `watch` (SH4 added a deal), `data_missing`;
 - W8/W9: `blocked` (with `stage`), `entry_not_filled`.
+
+**EDGAR events** (`state.shadow.EDGAR.events`; `docs/phase-b/edgar.md` has the full list): `id`, `setup`, `signal_date` (the filing date), `detected`, `late`, `ticker`, `cik`, `name`, `adsh`, `entry_due`, `entry_basis` (`open` for SH1 and CEF, `close` for SH2, SH3 and SH4: the basis the setup's promotion test uses), `exit_due`, `price`, `dvol20`, `mcap`, `mcap_basis`, `bucket`, `cost`, `bench` (SPY from a $2bn cap, IWM below), `short_interest`, `tbill` (SH4), `details`, `forecast` (`{"p", "question"}`, with `outcome` and `brier` at the exit; none for CEF), `status` (`pending_entry` → `open` → `closed`, or `void` with `void_reason`), `entry_date`, `entry_open`, `entry_close`, `filing_reaction` (SH1, SH3), `time_stop` (SH4, CEF), `exit_date`, `scores[label]` with the label `"20"` (SH1, SH3), `"ex-1"` (SH2), `"deal"` (SH4) or `"tender"` (CEF); every score holds `return` (net, on the setup's basis), `basis` and `exit_date`.
+
+> **Known issue (code; found at integration, not fixed here).** The reviews read the EDGAR book through `reports.shadow_activity`, which treats a book with `events` like W10's record: signals are counted by `signal_date`, and, because every EDGAR event carries a `scores` dict, closed events are taken from the longest numeric score label, `"20"` (SH1 and SH3), once one exists, so SH2's `"ex-1"`, SH4's `"deal"` and CEF's `"tender"` scores are then not counted; before any `"20"` score, the closed count is the events with an `exit_date` (voided ones included) and the mean return is unavailable, because an EDGAR event's return sits inside `scores[label]`. `edgar_screens.book_summary`, `promotion_test` and `reaction_split` were built for the reviews and are tested, but nothing calls them yet.
 
 ## 10. The LLM veto — `traderec/llm_veto.py`
 

@@ -71,11 +71,12 @@ The first slot does the work. The second slot finds the date already done and st
 | ETH | M3's Bitcoin switch, applied to ETH |
 | M6 | Crypto: a stablecoin depeg buy (the hourly job) and Bitcoin cash-and-carry (the evening run) |
 | MACRO | W3 (cool CPI → TLT), W4 (BoJ hike → yen), the gold spike fade, and the market's reaction to every scheduled release (CPI, payrolls, FOMC, GDP, PCE, BoJ, ECB) |
-| EDGAR | *Placeholder: EDGAR build pending.* Insider clusters, special dividends, activist 13D filings, near-completion cash mergers and CEF tenders. Off until it is built |
+| EDGAR | Five screens of the day's SEC filings, run every evening: insider purchase clusters (SH1), special dividends (SH2), activist 13D filings (SH3), near-completion cash mergers (SH4) and closed-end fund tender offers (CEF). A hit becomes a shadow event that is entered and scored from prices; a near-miss (the trigger held, but a size, liquidity or data check failed) is logged too. Needs your SEC contact (§2e) |
 
-Two of them need a little help from you, both in `config/econ_calendar.yaml` (§9, "Macro shadow book alerts"):
-- the gold spike fade trades only the war onsets you list;
-- the release log needs the official release dates kept current.
+Three of them need a little help from you:
+- the gold spike fade trades only the war onsets you list in `config/econ_calendar.yaml` (§9, "Macro shadow book alerts");
+- the release log needs the official release dates in the same file kept current;
+- the EDGAR screens send your SEC contact with every request to sec.gov: the `SEC_USER_AGENT` secret (§2e). Without it, four of the five screens can't read filing documents.
 
 ---
 
@@ -207,12 +208,17 @@ W8 and W9 are the macro-event spread modules (§5). Before a W8 or W9 trade is e
 
 ### (e) Your contact for SEC requests
 
-The SEC asks automated tools to identify themselves in each request. The EDGAR shadow screens will send this contact.
-- Add the repository secret `SEC_USER_AGENT`: your name and a contact email address of your choice, on one line. It is sent only to sec.gov.
-- The daily workflow already passes it to the run. Nothing reads it yet: the EDGAR screens are still being built.
-- Without it, the screens will use a generic identity, which the SEC may throttle.
+The SEC asks automated tools to identify themselves in each request. The EDGAR shadow screens send this contact as the User-Agent of every request to sec.gov.
+- Add the repository secret `SEC_USER_AGENT`: your name and a contact email address of your choice, on one line. It is sent only to sec.gov. Nothing writes it to the repository, the state or the ledger.
+- The daily workflow passes it to the run, and the screens' SEC client (`traderec/data/edgar.py`) reads it.
+- Without it, the screens use a generic identity, which the SEC may throttle. In practice www.sec.gov refuses the filing documents outright (HTTP 403, "Undeclared Automated Tool"), while the SEC's search index and data.sec.gov still answer. So SH3, which needs no documents, still runs; SH1, SH2, SH4 and CEF raise a `data` alert on each evening they need a document, and those dates are screened once the secret exists, up to 7 days back.
 
-> **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`). What the EDGAR/FINRA screens fetch, when, and what they need from you goes here.
+**What the screens fetch, and when.** They run inside the evening `daily` run, after the trading modules, as one of the shadow books (§1). No other key is needed: the SEC's full-text search, data.sec.gov and FINRA are open.
+- From the SEC: the day's filings from EDGAR full-text search (efts.sec.gov); tickers, exchanges and shares outstanding from data.sec.gov; the filing documents themselves from www.sec.gov (Form 4s, 8-K exhibits, merger proxies and tender-offer documents). At most 8 requests a second, under the SEC's limit of 10.
+- From FINRA: the latest published short interest, recorded on each event as a note. Prices, including a closed-end fund's NAV series, come from the same market data as everything else.
+- EDGAR accepts filings until 22:00 ET, so a date is screened for good only by a run that starts after 22:05 ET. In winter the first `daily` slot runs at 21:17 ET (§1): it screens that date provisionally, so events are still recorded before their entry, and the next evening screens it again for good, without duplicates.
+- Each run does at most 90 seconds of SEC work, 150 documents and 40 price lookups. Anything left carries over to the next run. A normal evening is well inside this.
+- A missed evening is caught up at the next run, up to 7 days back; older filings are dropped with a `data` alert. A new install starts with its first run: there is no backfill, and the insider-cluster screen starts counting clusters after 30 days of collected purchases.
 
 ### (f) Check the secrets
 
@@ -231,7 +237,7 @@ The SEC asks automated tools to identify themselves in each request. The EDGAR s
 | `HC_PING_URL_HOURLY` | (c), optional | No alarm for the hourly crypto job |
 | `ANTHROPIC_API_KEY` | (d) | W8 and W9 never trade: their candidates are logged in the shadow ledger, with a `veto` alert |
 | `TRADEREC_VETO_MODEL` | (d) | (same) |
-| `SEC_USER_AGENT` | (e) | The EDGAR screens, once built, use a generic identity |
+| `SEC_USER_AGENT` | (e) | The EDGAR screens send a generic identity. www.sec.gov then refuses the filing documents, so SH1, SH2, SH4 and CEF raise a `data` alert on the evenings they need one; SH3 still runs |
 
 Don't create `GITHUB_TOKEN`: GitHub provides one to every run.
 
@@ -474,7 +480,7 @@ Before pausing, look at the open positions (`python -m traderec status`, or `sta
 - **Keep the job but stop the monitor:** set `shadow.M6.depeg.enabled: false` in `config/constitution.yaml`. That is a rule change (below), and the job still bills its minute every hour.
 - **For good:** delete the `schedule:` block in `hourly.yml`. The **Run workflow** button still works for manual runs.
 
-**When you enable a job again,** the next run processes its own date. Days in between aren't replayed, and signals on those days are simply missed.
+**When you enable a job again,** the next run processes its own date. Days in between aren't replayed, and signals on those days are simply missed. Two shadow books catch up on their own, within limits: the ETH switch up to 12 missed weeks, the EDGAR screens up to 7 days of filings (§2e).
 
 **Stop for good.** Disable all five scheduled workflows: `daily`, `weekly`, `monthly`, `options` and `hourly`. The repository keeps the complete record.
 
@@ -551,7 +557,16 @@ Every run that records anything verifies the ledger first. It stops if the chain
   - **Only the most recent run can be forced.** That includes options runs, reviews and the rare hours the hourly job records: after the hourly job records a depeg event, an earlier run can no longer be forced.
 - Tick **dry_run** first if you want to see what would happen.
 
-> **Placeholder: replay build pending** (`docs/phase-b/replay.md`). How to replay past dates goes here.
+**Replaying past years, on your own computer.** `scripts/replay.py` runs the real pipeline day by day over past years, on real market data served as of each date, and then compares its trades with the research backtests. It is a check of the code, not a way to back-fill the repository: it writes into scratch directories of its own, never touches `state/`, and the workflows never run it. It covers Phase A (M1, M2, M3, W10, ST-1b and the W10 record); the Phase B modules and shadow books are not replayed.
+
+```bash
+python scripts/replay.py fetch     --cache /tmp/traderec-replay-cache                                # about 1 minute of downloads
+python scripts/replay.py run       --cache /tmp/traderec-replay-cache --work /tmp/replay-echo         # 2019-01-02 to 2026-09-28: about 17 minutes
+python scripts/replay.py reconcile --cache /tmp/traderec-replay-cache --work /tmp/replay-echo --out research/code/25-replay
+```
+
+- `--start` and `--end` pick another window; `--resume` continues an interrupted run; `all` does the three steps in one go. `--work` holds the replayed state, ledger and every email it would have sent, as text files; `--out` receives the reconciliation tables.
+- The 2019–September 2026 replay is written up in `docs/phase-b/replay.md`, with its tables in `research/code/25-replay/`: 2,515 runs in 17.4 minutes, no exceptions, no look-ahead, the ledger verifying; M1 matched track 13 on 39 of 40 trades, W10 track 23 on 3 of 3, M2 track 15 on 722 of 736 leg-months and M3 on 400 of 404 weeks; NAV $100,000 to $179,302 (7.8% a year, against SPY's 17.3%), with a worst drawdown of 6.7% against SPY's 33.7%. Of its four findings, two were fixed afterwards (unscheduled NYSE closures counted as missing data; track 23 priced W10's exits at the close) and two stand as documented differences (the Bitcoin sleeve is sized once at switch-on and never trimmed; M2's trend sign and volatility are defined slightly differently from the research), listed in the design's Appendix C.
 
 **"Could not push the state commit".** The run finished, but its state couldn't be saved; its emails may already have gone out.
 - Usual causes: branch protection on `master` (see §2g step 4), or someone changed `state/` at the same moment.
@@ -606,4 +621,12 @@ Every run that records anything verifies the ledger first. It stops if the chain
 - A release is postponed, for example by a government shutdown: mark its line `status: postponed` and add the new date as a line of its own.
 - A note in the daily run's log about GLD up 2% or more "with no war onset listed": decide whether it was the start of a war. If so, add it under `geopolitical_onsets` as `{date, label, during_session}`, where `during_session: false` means the news came after the close or on a closed day. List onsets the evening they happen: one first seen by a later run is recorded but doesn't count toward the gold fade's evidence.
 
-> **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`). The EDGAR screens' alerts and what to do about them go here.
+**EDGAR screen alerts.** All are `data` alerts; `<screen>` is SH1, SH2, SH3, SH4 or CEF, or `scoring` for the entries and exits. The screens fail closed: when a source fails, nothing is recorded for that screen and date, and the date is tried again at the next run.
+- "`EDGAR <screen> <date>: www.sec.gov refused the filing documents: set the SEC_USER_AGENT secret …`": add the secret (§2e). The dates are screened once it exists, up to 7 days back. Until then SH1, SH2, SH4 and CEF repeat this alert on the evenings they need a document; SH3 keeps running.
+- "`EDGAR <screen> <date>: source unavailable (…)`": the SEC's search index, data.sec.gov or the price data didn't answer. Nothing to do unless it lasts: after 7 days the dates are dropped (next item).
+- "`EDGAR <screen>: filings of <first> to <last> were not screened (more than 7 days behind)`": the daily run was off, or that screen's source was failing, for more than a week. Those filings are lost, because there is no backfill. Nothing to do beyond keeping the daily job running.
+- "`EDGAR SH1: the purchase pre-filter found no Form 4 among <N> filed <date>; check EFTS`": on a busy day the search for purchase Form 4s returned nothing, so the SEC's search may have changed. Tell Claude.
+- "`EDGAR CEF <date>: no NAV series X<ticker>X for <ticker>'s tender offer; not screened`": the market data has no NAV series for that fund, so the offer is logged as a near-miss. Nothing to do.
+- "`edgar failed: …`" (a `shadow` alert): the screens raised an error; the other books and the trading modules still ran. Tell Claude.
+
+Two things are not alerts: a stock with no usable price data is logged as a near-miss, and an event whose prices never arrive is voided after 10 days and kept in the record. Each run's log has a line `EDGAR shadow: screened N setup-days; …`; "work cap reached, the rest carries over" on a busy evening is normal.
