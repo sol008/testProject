@@ -1,0 +1,6 @@
+check,value
+"Coin Metrics vs Coinbase daily close, BTC (4088 days)","median |diff| 0.10%, 99th pct 1.30%"
+"Coin Metrics vs Coinbase daily close, ETH (3783 days)","median |diff| 0.13%, 99th pct 1.64%"
+BTC price at Mon 00:00 UTC from hourly candles vs Sunday daily close,"median |diff| 0.000%, max 0.19%"
+yfinance BTC-USD close vs ours (4394 days),"median |diff| 0.11%, 99th pct 2.33%"
+IBIT Monday-open to Monday-open vs BTC price at 09:30 ET (141 weeks),"corr 0.9949, tracking error 5.44%/yr, IBIT minus proxy -0.79%/yr (fee 0.25%)"
