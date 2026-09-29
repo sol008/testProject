@@ -1,0 +1,9 @@
+design,sample,test,best,best_excess_ann,p_value,N,T
+A,in-sample,best mean weekly return > S&P 500 buy-and-hold,"risk-mix top1 3m mom, every 1w +abs filter, 2x",2.8875,0.0440,3256,280
+A,in-sample,best log growth > +100%/yr hurdle,"risk-mix top2 blend mom, every 1w +abs filter, 3x",0.9271,0.4730,3256,280
+A,out-of-sample,best mean weekly return > S&P 500 buy-and-hold,"NDX calls K=1.05S 182d, 100% of equity, SMA200 uptrend, roll 13w",1.1500,0.0710,3256,279
+A,out-of-sample,best log growth > +100%/yr hurdle,"growth top1 1m mom, every 4w +abs filter, 3x",0.0900,1.0000,3256,279
+B,in-sample,best mean weekly return > S&P 500 buy-and-hold,XLE 3x 12m momentum>0 (off=cash),0.3380,0.5370,2052,698
+B,in-sample,best log growth > +100%/yr hurdle,"NDX buy 3x on RSI2<20 in uptrend, hold 2w, else cash",-0.4844,1.0000,2052,698
+B,out-of-sample,best mean weekly return > S&P 500 buy-and-hold,"growth top1 1m mom, every 1w, 3x",1.1276,0.0180,2052,696
+B,out-of-sample,best log growth > +100%/yr hurdle,"growth top1 1m mom, every 1w, 3x",-0.0351,1.0000,2052,696

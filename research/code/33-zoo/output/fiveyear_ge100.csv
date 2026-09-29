@@ -1,0 +1,989 @@
+,family,name,start,years,cagr,max5y_cagr,max5y_from,exante_rank,exante_pctile,exante_pool,maxdd
+864,2 trend filter,ETH 2x SMA20 (off=cash),2016-06-20,10.2500,1.7237,7.3542,2016-11-07,,,2751,-0.9448
+865,2 trend filter,ETH 2x SMA20 (off=1x),2016-06-20,10.2500,1.0215,5.5275,2016-12-05,,,2751,-0.9861
+840,2 trend filter,BTC 2x Donchian 20/10 (off=cash),2014-10-20,11.9200,1.2964,5.1073,2016-02-22,,,2751,-0.7738
+1587,3 momentum rotation,"risk-mix top2 blend mom, every 1w, 3x",2000-12-11,25.7800,0.2247,5.0804,2013-01-07,106.0000,0.0385,2751,-0.9935
+1590,3 momentum rotation,"risk-mix top2 blend mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.4600,5.0135,2016-05-09,49.0000,0.0178,2751,-0.9542
+1589,3 momentum rotation,"risk-mix top2 blend mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.4466,4.9916,2016-05-09,162.0000,0.0589,2751,-0.9528
+1586,3 momentum rotation,"risk-mix top2 blend mom, every 1w, 2x",2000-12-11,25.7800,0.3077,4.9337,2016-05-09,119.0000,0.0433,2751,-0.9759
+1575,3 momentum rotation,"risk-mix top1 blend mom, every 1w, 3x",2000-12-11,25.7800,0.0898,4.6994,2012-12-17,2636.0000,0.9582,2751,-0.9973
+1578,3 momentum rotation,"risk-mix top1 blend mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.2652,4.6543,2012-12-17,2636.0000,0.9582,2751,-0.9964
+1515,3 momentum rotation,"risk-mix top2 6m mom, every 1w, 3x",2000-12-11,25.7800,0.1493,4.5354,2013-01-07,1848.0000,0.6718,2751,-0.9935
+1482,3 momentum rotation,"risk-mix top2 3m mom, every 1w +abs filter, 3x",2000-09-11,26.0300,0.4201,4.5006,2016-05-09,703.0000,0.2555,2751,-0.9312
+870,2 trend filter,ETH 2x SMA100 (off=cash),2016-10-17,9.9300,1.0901,4.4822,2016-11-07,,,2751,-0.9668
+1479,3 momentum rotation,"risk-mix top2 3m mom, every 1w, 3x",2000-09-11,26.0300,0.1666,4.4479,2016-05-09,477.0000,0.1734,2751,-0.9987
+1574,3 momentum rotation,"risk-mix top1 blend mom, every 1w, 2x",2000-12-11,25.7800,0.1841,4.3766,2012-12-17,2486.0000,0.9037,2751,-0.9974
+1518,3 momentum rotation,"risk-mix top2 6m mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.3536,4.3457,2013-01-07,1848.0000,0.6718,2751,-0.9890
+1577,3 momentum rotation,"risk-mix top1 blend mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.2805,4.3446,2012-12-17,2486.0000,0.9037,2751,-0.9968
+841,2 trend filter,BTC 2x Donchian 20/10 (off=1x),2014-10-20,11.9200,1.0529,4.3239,2016-04-11,,,2751,-0.8817
+1659,3 momentum rotation,"growth top1 6m mom, every 1w, 3x",1999-06-28,27.2300,-0.0097,4.3131,2012-12-17,2082.0000,0.7568,2751,-0.9999
+882,2 trend filter,ETH 2x SMA100 band2% (off=cash),2016-10-17,9.9300,1.1740,4.3019,2016-11-07,,,2751,-0.9743
+1481,3 momentum rotation,"risk-mix top2 3m mom, every 1w +abs filter, 2x",2000-09-11,26.0300,0.4187,4.2128,2016-05-09,1449.0000,0.5267,2751,-0.9366
+1514,3 momentum rotation,"risk-mix top2 6m mom, every 1w, 2x",2000-12-11,25.7800,0.2535,4.1859,2013-01-07,1499.0000,0.5449,2751,-0.9823
+1478,3 momentum rotation,"risk-mix top2 3m mom, every 1w, 2x",2000-09-11,26.0300,0.2693,4.1707,2016-05-09,1089.0000,0.3959,2751,-0.9752
+891,2 trend filter,ETH 2x SMA10>SMA50 (off=cash),2016-08-01,10.1400,1.0281,4.1640,2016-11-07,,,2751,-0.9727
+1521,3 momentum rotation,"risk-mix top2 6m mom, every 4w, 3x",2000-12-11,25.7800,0.1612,4.1602,2013-01-07,2216.0000,0.8055,2751,-0.9935
+1707,3 momentum rotation,"growth top1 blend mom, every 1w, 3x",1999-06-28,27.2300,0.0133,4.1244,2012-12-17,618.0000,0.2246,2751,-0.9999
+1662,3 momentum rotation,"growth top1 6m mom, every 1w +abs filter, 3x",1999-06-28,27.2300,0.1458,4.0908,2012-12-17,2670.0000,0.9706,2751,-0.9884
+879,2 trend filter,ETH 2x SMA50 band2% (off=cash),2016-08-01,10.1400,1.0036,4.0880,2016-11-07,,,2751,-0.9668
+1491,3 momentum rotation,"risk-mix top3 3m mom, every 1w, 3x",2000-09-11,26.0300,0.2958,4.0612,2016-05-09,1028.0000,0.3737,2751,-0.9773
+1596,3 momentum rotation,"risk-mix top2 blend mom, every 4w +abs filter, 3x",2000-12-11,25.7800,0.4257,4.0562,2016-05-09,405.0000,0.1472,2751,-0.9650
+1517,3 momentum rotation,"risk-mix top2 6m mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.3617,4.0337,2013-01-07,1499.0000,0.5449,2751,-0.9837
+1595,3 momentum rotation,"risk-mix top2 blend mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.4153,4.0330,2016-05-09,577.0000,0.2097,2751,-0.9626
+801,2 trend filter,BTC 2x SMA20 (off=cash),2014-10-20,11.9200,0.9806,4.0140,2016-04-11,,,2751,-0.9121
+1713,3 momentum rotation,"growth top1 blend mom, every 4w, 3x",1999-06-28,27.2300,0.0303,4.0096,2012-12-17,432.0000,0.1570,2751,-0.9999
+1593,3 momentum rotation,"risk-mix top2 blend mom, every 4w, 3x",2000-12-11,25.7800,0.1777,3.9732,2013-01-07,99.0000,0.0360,2751,-0.9935
+1581,3 momentum rotation,"risk-mix top1 blend mom, every 4w, 3x",2000-12-11,25.7800,-0.0447,3.9664,2012-12-17,2039.0000,0.7412,2751,-0.9996
+1592,3 momentum rotation,"risk-mix top2 blend mom, every 4w, 2x",2000-12-11,25.7800,0.2637,3.9476,2016-05-09,470.0000,0.1708,2751,-0.9739
+1469,3 momentum rotation,"risk-mix top1 3m mom, every 1w +abs filter, 2x",2000-09-11,26.0300,0.3107,3.9458,2016-05-09,2679.0000,0.9738,2751,-0.9848
+1466,3 momentum rotation,"risk-mix top1 3m mom, every 1w, 2x",2000-09-11,26.0300,0.2201,3.9381,2016-05-09,2679.0000,0.9738,2751,-0.9849
+1710,3 momentum rotation,"growth top1 blend mom, every 1w +abs filter, 3x",1999-06-28,27.2300,0.2263,3.9249,2012-12-17,2603.0000,0.9462,2751,-0.9780
+1443,3 momentum rotation,"risk-mix top2 1m mom, every 1w, 3x",2000-07-10,26.2000,0.1316,3.9211,2016-11-14,810.0000,0.2944,2751,-0.9993
+1580,3 momentum rotation,"risk-mix top1 blend mom, every 4w, 2x",2000-12-11,25.7800,0.0712,3.9168,2012-12-17,1550.0000,0.5634,2751,-0.9994
+1494,3 momentum rotation,"risk-mix top3 3m mom, every 1w +abs filter, 3x",2000-09-11,26.0300,0.4086,3.9156,2016-05-09,1768.0000,0.6427,2751,-0.9031
+1524,3 momentum rotation,"risk-mix top2 6m mom, every 4w +abs filter, 3x",2000-12-11,25.7800,0.3769,3.9070,2013-01-07,2216.0000,0.8055,2751,-0.9916
+1584,3 momentum rotation,"risk-mix top1 blend mom, every 4w +abs filter, 3x",2000-12-11,25.7800,0.1456,3.8800,2012-12-17,2039.0000,0.7412,2751,-0.9995
+871,2 trend filter,ETH 2x SMA100 (off=1x),2016-10-17,9.9300,0.7801,3.8740,2016-12-05,,,2751,-0.9932
+1583,3 momentum rotation,"risk-mix top1 blend mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.1826,3.8587,2012-12-17,1550.0000,0.5634,2751,-0.9993
+1434,3 momentum rotation,"risk-mix top1 1m mom, every 1w +abs filter, 3x",2000-07-10,26.2000,0.1288,3.8582,2013-01-07,358.0000,0.1301,2751,-0.9942
+1520,3 momentum rotation,"risk-mix top2 6m mom, every 4w, 2x",2000-12-11,25.7800,0.2778,3.8562,2013-01-07,1920.0000,0.6979,2751,-0.9838
+894,2 trend filter,ETH 2x SMA20>SMA100 (off=cash),2016-10-17,9.9300,1.1512,3.8432,2016-11-07,,,2751,-0.9819
+1442,3 momentum rotation,"risk-mix top2 1m mom, every 1w, 2x",2000-07-10,26.2000,0.2506,3.8428,2016-11-07,982.0000,0.3570,2751,-0.9816
+2782,6 seasonality,BTC 2x halving cycle (-12m/+18m),2014-09-22,12.0000,1.3180,3.8312,2016-04-04,,,2751,-0.9535
+1470,3 momentum rotation,"risk-mix top1 3m mom, every 1w +abs filter, 3x",2000-09-11,26.0300,0.2409,3.8312,2016-05-09,2684.0000,0.9756,2751,-0.9872
+1467,3 momentum rotation,"risk-mix top1 3m mom, every 1w, 3x",2000-09-11,26.0300,0.0802,3.8200,2016-05-09,2684.0000,0.9756,2751,-0.9974
+1658,3 momentum rotation,"growth top1 6m mom, every 1w, 2x",1999-06-28,27.2300,0.1455,3.8156,2012-12-17,1512.0000,0.5496,2751,-0.9942
+883,2 trend filter,ETH 2x SMA100 band2% (off=1x),2016-10-17,9.9300,0.8214,3.8140,2016-12-05,,,2751,-0.9934
+1599,3 momentum rotation,"risk-mix top3 blend mom, every 1w, 3x",2000-12-11,25.7800,0.3557,3.7974,2016-05-09,573.0000,0.2083,2751,-0.9463
+1431,3 momentum rotation,"risk-mix top1 1m mom, every 1w, 3x",2000-07-10,26.2000,-0.0223,3.7883,2013-01-07,471.0000,0.1712,2751,-0.9992
+867,2 trend filter,ETH 2x SMA50 (off=cash),2016-08-01,10.1400,1.1637,3.7681,2016-11-07,,,2751,-0.9625
+1490,3 momentum rotation,"risk-mix top3 3m mom, every 1w, 2x",2000-09-11,26.0300,0.3272,3.7347,2016-05-09,1339.0000,0.4867,2751,-0.9284
+892,2 trend filter,ETH 2x SMA10>SMA50 (off=1x),2016-08-01,10.1400,0.7328,3.7120,2016-12-05,,,2751,-0.9941
+802,2 trend filter,BTC 2x SMA20 (off=1x),2014-10-20,11.9200,0.8060,3.7065,2016-04-11,,,2751,-0.9595
+834,2 trend filter,BTC 2x SMA50>SMA150 (off=cash),2015-04-27,11.4000,0.6196,3.6987,2016-04-04,,,2751,-0.9203
+880,2 trend filter,ETH 2x SMA50 band2% (off=1x),2016-08-01,10.1400,0.7229,3.6985,2016-12-05,,,2751,-0.9936
+1665,3 momentum rotation,"growth top1 6m mom, every 4w, 3x",1999-06-28,27.2300,0.0025,3.6874,2012-12-17,1837.0000,0.6678,2751,-0.9999
+1376,3 momentum rotation,"crypto top2 3m mom, every 1w +abs filter, 2x",2016-08-22,10.0800,0.8011,3.6755,2016-11-07,,,2751,-0.9871
+1523,3 momentum rotation,"risk-mix top2 6m mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.3953,3.6705,2013-01-07,1920.0000,0.6979,2751,-0.9856
+1602,3 momentum rotation,"risk-mix top3 blend mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.4474,3.6670,2016-05-09,341.0000,0.1240,2751,-0.8265
+1433,3 momentum rotation,"risk-mix top1 1m mom, every 1w +abs filter, 2x",2000-07-10,26.2000,0.1840,3.6458,2013-01-07,559.0000,0.2032,2751,-0.9932
+1706,3 momentum rotation,"growth top1 blend mom, every 1w, 2x",1999-06-28,27.2300,0.1588,3.6254,2012-12-17,623.0000,0.2265,2751,-0.9940
+1661,3 momentum rotation,"growth top1 6m mom, every 1w +abs filter, 2x",1999-06-28,27.2300,0.2127,3.6220,2012-12-17,2602.0000,0.9458,2751,-0.9718
+1493,3 momentum rotation,"risk-mix top3 3m mom, every 1w +abs filter, 2x",2000-09-11,26.0300,0.3845,3.6171,2016-05-09,2053.0000,0.7463,2751,-0.8714
+906,2 trend filter,ETH 2x Donchian 50/25 (off=cash),2016-08-08,10.1200,0.8024,3.6078,2016-11-07,,,2751,-0.9866
+1430,3 momentum rotation,"risk-mix top1 1m mom, every 1w, 2x",2000-07-10,26.2000,0.1050,3.6044,2013-01-07,644.0000,0.2341,2751,-0.9939
+895,2 trend filter,ETH 2x SMA20>SMA100 (off=1x),2016-10-17,9.9300,0.8305,3.5927,2016-12-05,,,2751,-0.9948
+1598,3 momentum rotation,"risk-mix top3 blend mom, every 1w, 2x",2000-12-11,25.7800,0.3746,3.5617,2016-05-09,832.0000,0.3024,2751,-0.8752
+835,2 trend filter,BTC 2x SMA50>SMA150 (off=1x),2015-04-27,11.4000,0.7868,3.5582,2016-04-04,,,2751,-0.9536
+1712,3 momentum rotation,"growth top1 blend mom, every 4w, 2x",1999-06-28,27.2300,0.1785,3.5555,2012-12-17,472.0000,0.1716,2751,-0.9920
+904,2 trend filter,ETH 2x Donchian 20/10 (off=1x),2016-06-20,10.2500,0.6573,3.5521,2016-12-05,,,2751,-0.9932
+1445,3 momentum rotation,"risk-mix top2 1m mom, every 1w +abs filter, 2x",2000-07-10,26.2000,0.3305,3.5357,2016-11-07,918.0000,0.3337,2751,-0.9364
+1446,3 momentum rotation,"risk-mix top2 1m mom, every 1w +abs filter, 3x",2000-07-10,26.2000,0.2980,3.5277,2016-11-14,724.0000,0.2632,2751,-0.9491
+907,2 trend filter,ETH 2x Donchian 50/25 (off=1x),2016-08-08,10.1200,0.6785,3.5261,2016-12-05,,,2751,-0.9955
+1716,3 momentum rotation,"growth top1 blend mom, every 4w +abs filter, 3x",1999-06-28,27.2300,0.2141,3.5063,2012-12-17,2552.0000,0.9277,2751,-0.9896
+868,2 trend filter,ETH 2x SMA50 (off=1x),2016-08-01,10.1400,0.7765,3.5062,2016-12-05,,,2751,-0.9933
+1601,3 momentum rotation,"risk-mix top3 blend mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.4215,3.5058,2016-05-09,604.0000,0.2196,2751,-0.8082
+1709,3 momentum rotation,"growth top1 blend mom, every 1w +abs filter, 2x",1999-06-28,27.2300,0.2679,3.4965,2012-12-17,2429.0000,0.8830,2751,-0.9662
+1668,3 momentum rotation,"growth top1 6m mom, every 4w +abs filter, 3x",1999-06-28,27.2300,0.2458,3.4937,2012-12-17,2589.0000,0.9411,2751,-0.9876
+822,2 trend filter,BTC 2x SMA200 band2% (off=cash),2015-07-13,11.1900,1.1101,3.4692,2016-04-04,,,2751,-0.9190
+1472,3 momentum rotation,"risk-mix top1 3m mom, every 4w, 2x",2000-09-11,26.0300,0.2001,3.4417,2012-12-17,635.0000,0.2308,2751,-0.9942
+1475,3 momentum rotation,"risk-mix top1 3m mom, every 4w +abs filter, 2x",2000-09-11,26.0300,0.3173,3.4417,2012-12-17,635.0000,0.2308,2751,-0.9938
+1360,3 momentum rotation,"crypto top2 1m mom, every 1w +abs filter, 2x",2016-06-27,10.2300,0.5699,3.4061,2016-09-06,,,2751,-0.9738
+823,2 trend filter,BTC 2x SMA200 band2% (off=1x),2015-07-13,11.1900,0.9836,3.3850,2016-04-04,,,2751,-0.9587
+903,2 trend filter,ETH 2x Donchian 20/10 (off=cash),2016-06-20,10.2500,0.8006,3.3831,2016-11-07,,,2751,-0.9643
+831,2 trend filter,BTC 2x SMA20>SMA100 (off=cash),2015-02-17,11.5900,0.7929,3.3800,2016-04-04,,,2751,-0.9378
+1527,3 momentum rotation,"risk-mix top3 6m mom, every 1w, 3x",2000-12-11,25.7800,0.3522,3.3790,2013-01-07,118.0000,0.0429,2751,-0.9463
+1473,3 momentum rotation,"risk-mix top1 3m mom, every 4w, 3x",2000-09-11,26.0300,0.0621,3.3663,2012-12-17,569.0000,0.2068,2751,-0.9984
+1476,3 momentum rotation,"risk-mix top1 3m mom, every 4w +abs filter, 3x",2000-09-11,26.0300,0.2555,3.3663,2012-12-17,569.0000,0.2068,2751,-0.9938
+1503,3 momentum rotation,"risk-mix top1 6m mom, every 1w, 3x",2000-12-11,25.7800,-0.1142,3.3625,2012-12-17,2695.0000,0.9796,2751,-0.9993
+1689,3 momentum rotation,"growth top1 12m mom, every 4w, 3x",1999-12-27,26.7400,0.0090,3.3531,2012-12-17,445.0000,0.1618,2751,-0.9999
+1692,3 momentum rotation,"growth top1 12m mom, every 4w +abs filter, 3x",1999-12-27,26.7400,0.1869,3.3531,2012-12-17,445.0000,0.1618,2751,-0.9910
+1358,3 momentum rotation,"crypto top2 1m mom, every 1w, 2x",2016-06-27,10.2300,0.3526,3.3499,2016-11-07,,,2751,-0.9968
+1664,3 momentum rotation,"growth top1 6m mom, every 4w, 2x",1999-06-28,27.2300,0.1572,3.3496,2012-12-17,1319.0000,0.4795,2751,-0.9941
+1506,3 momentum rotation,"risk-mix top1 6m mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.0281,3.3346,2012-12-17,2695.0000,0.9796,2751,-0.9994
+1530,3 momentum rotation,"risk-mix top3 6m mom, every 1w +abs filter, 3x",2000-12-11,25.7800,0.4357,3.2743,2013-01-07,869.0000,0.3159,2751,-0.9405
+859,2 trend filter,BTC 2x 6m momentum>0 (off=1x),2015-03-23,11.5000,0.8046,3.2626,2016-04-04,,,2751,-0.9659
+1715,3 momentum rotation,"growth top1 blend mom, every 4w +abs filter, 2x",1999-06-28,27.2300,0.2673,3.2368,2012-12-17,2346.0000,0.8528,2751,-0.9813
+1611,3 momentum rotation,"growth top1 1m mom, every 1w, 3x",1999-02-01,27.6400,0.0419,3.2354,2012-12-17,1035.0000,0.3762,2751,-1.0000
+838,2 trend filter,BTC 2x SMA50>SMA200 (off=1x),2015-07-13,11.1900,0.9276,3.2354,2016-04-04,,,2751,-0.9614
+1424,3 momentum rotation,"crypto top2 blend mom, every 1w +abs filter, 2x",2016-11-21,9.8300,0.8963,3.2022,2016-11-28,,,2751,-0.9899
+832,2 trend filter,BTC 2x SMA20>SMA100 (off=1x),2015-02-17,11.5900,0.8269,3.1916,2016-04-04,,,2751,-0.9652
+1667,3 momentum rotation,"growth top1 6m mom, every 4w +abs filter, 2x",1999-06-28,27.2300,0.2852,3.1889,2012-12-17,2392.0000,0.8695,2751,-0.9752
+1488,3 momentum rotation,"risk-mix top2 3m mom, every 4w +abs filter, 3x",2000-09-11,26.0300,0.4056,3.1876,2016-05-09,2611.0000,0.9491,2751,-0.9767
+826,2 trend filter,BTC 2x 10-month SMA (off=1x),2015-07-06,11.2100,0.9463,3.1867,2016-04-04,,,2751,-0.9678
+858,2 trend filter,BTC 2x 6m momentum>0 (off=cash),2015-03-23,11.5000,0.7489,3.1742,2016-04-04,,,2751,-0.9549
+1683,3 momentum rotation,"growth top1 12m mom, every 1w, 3x",1999-12-27,26.7400,-0.0122,3.1417,2012-12-17,276.0000,0.1003,2751,-0.9999
+1686,3 momentum rotation,"growth top1 12m mom, every 1w +abs filter, 3x",1999-12-27,26.7400,0.1596,3.1417,2012-12-17,276.0000,0.1003,2751,-0.9962
+1497,3 momentum rotation,"risk-mix top3 3m mom, every 4w, 3x",2000-09-11,26.0300,0.2589,3.1402,2016-05-09,1727.0000,0.6278,2751,-0.9773
+919,2 trend filter,ETH 2x 3m momentum>0 (off=1x),2016-08-22,10.0800,0.5522,3.1370,2016-12-05,,,2751,-0.9946
+1688,3 momentum rotation,"growth top1 12m mom, every 4w, 2x",1999-12-27,26.7400,0.1529,3.1369,2012-12-17,470.0000,0.1708,2751,-0.9945
+1691,3 momentum rotation,"growth top1 12m mom, every 4w +abs filter, 2x",1999-12-27,26.7400,0.2416,3.1369,2012-12-17,470.0000,0.1708,2751,-0.9904
+1502,3 momentum rotation,"risk-mix top1 6m mom, every 1w, 2x",2000-12-11,25.7800,0.0111,3.1310,2012-12-17,2649.0000,0.9629,2751,-0.9992
+1485,3 momentum rotation,"risk-mix top2 3m mom, every 4w, 3x",2000-09-11,26.0300,0.1188,3.1220,2016-05-09,2442.0000,0.8877,2751,-0.9986
+1505,3 momentum rotation,"risk-mix top1 6m mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.0900,3.1111,2012-12-17,2649.0000,0.9629,2751,-0.9993
+898,2 trend filter,ETH 2x SMA50>SMA150 (off=1x),2016-12-27,9.7300,0.6305,3.0857,2016-12-27,,,2751,-0.9958
+1487,3 momentum rotation,"risk-mix top2 3m mom, every 4w +abs filter, 2x",2000-09-11,26.0300,0.3866,3.0569,2016-05-09,2569.0000,0.9338,2751,-0.9777
+1500,3 momentum rotation,"risk-mix top3 3m mom, every 4w +abs filter, 3x",2000-09-11,26.0300,0.4038,3.0484,2016-05-09,2561.0000,0.9309,2751,-0.8791
+825,2 trend filter,BTC 2x 10-month SMA (off=cash),2015-07-06,11.2100,0.9958,3.0452,2016-04-04,,,2751,-0.9508
+837,2 trend filter,BTC 2x SMA50>SMA200 (off=cash),2015-07-13,11.1900,0.9342,3.0384,2016-04-04,,,2751,-0.9493
+1455,3 momentum rotation,"risk-mix top3 1m mom, every 1w, 3x",2000-07-10,26.2000,0.2790,3.0280,2016-11-14,308.0000,0.1120,2751,-0.9842
+1484,3 momentum rotation,"risk-mix top2 3m mom, every 4w, 2x",2000-09-11,26.0300,0.2152,3.0172,2016-05-09,2398.0000,0.8717,2751,-0.9788
+863,2 trend filter,ETH 1x SMA20 (off=cash),2016-06-20,10.2500,1.0238,3.0167,2016-11-07,,,2751,-0.7015
+918,2 trend filter,ETH 2x 3m momentum>0 (off=cash),2016-08-22,10.0800,0.6241,3.0075,2016-11-07,,,2751,-0.9804
+1682,3 momentum rotation,"growth top1 12m mom, every 1w, 2x",1999-12-27,26.7400,0.1378,2.9989,2012-12-17,357.0000,0.1298,2751,-0.9945
+1685,3 momentum rotation,"growth top1 12m mom, every 1w +abs filter, 2x",1999-12-27,26.7400,0.2241,2.9989,2012-12-17,357.0000,0.1298,2751,-0.9957
+897,2 trend filter,ETH 2x SMA50>SMA150 (off=cash),2016-12-27,9.7300,0.5642,2.9778,2016-12-27,,,2751,-0.9867
+855,2 trend filter,BTC 2x 3m momentum>0 (off=cash),2014-12-22,11.7500,0.5326,2.9583,2016-04-11,,,2751,-0.9370
+1380,3 momentum rotation,"crypto top2 3m mom, every 4w +abs filter, 2x",2016-08-22,10.0800,0.8033,2.9317,2016-11-07,,,2751,-0.9930
+1526,3 momentum rotation,"risk-mix top3 6m mom, every 1w, 2x",2000-12-11,25.7800,0.3681,2.9292,2013-01-07,294.0000,0.1069,2751,-0.9091
+846,2 trend filter,BTC 2x Donchian 100/50 (off=cash),2015-02-17,11.5900,0.6886,2.9216,2016-04-04,,,2751,-0.9836
+847,2 trend filter,BTC 2x Donchian 100/50 (off=1x),2015-02-17,11.5900,0.7812,2.9135,2016-04-04,,,2751,-0.9838
+1496,3 momentum rotation,"risk-mix top3 3m mom, every 4w, 2x",2000-09-11,26.0300,0.2896,2.9090,2016-05-09,1652.0000,0.6005,2751,-0.9142
+1605,3 momentum rotation,"risk-mix top3 blend mom, every 4w, 3x",2000-12-11,25.7800,0.3171,2.8937,2016-05-09,203.0000,0.0738,2751,-0.9463
+856,2 trend filter,BTC 2x 3m momentum>0 (off=1x),2014-12-22,11.7500,0.5916,2.8891,2016-04-11,,,2751,-0.9705
+2343,4 mean reversion / dip,"BTC buy 2x on 5-day low in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.7548,2.8873,2016-04-04,,,2751,-0.9200
+1533,3 momentum rotation,"risk-mix top3 6m mom, every 4w, 3x",2000-12-11,25.7800,0.3405,2.8807,2016-05-09,350.0000,0.1272,2751,-0.9463
+1532,3 momentum rotation,"risk-mix top3 6m mom, every 4w, 2x",2000-12-11,25.7800,0.3654,2.8711,2016-05-09,554.0000,0.2014,2751,-0.9097
+1608,3 momentum rotation,"risk-mix top3 blend mom, every 4w +abs filter, 3x",2000-12-11,25.7800,0.4441,2.8702,2016-05-09,258.0000,0.0938,2751,-0.8981
+1536,3 momentum rotation,"risk-mix top3 6m mom, every 4w +abs filter, 3x",2000-12-11,25.7800,0.4633,2.8649,2013-01-07,363.0000,0.1320,2751,-0.9466
+1392,3 momentum rotation,"crypto top2 6m mom, every 1w +abs filter, 2x",2016-11-21,9.8300,0.9329,2.8613,2016-11-28,,,2751,-0.9892
+869,2 trend filter,ETH 1x SMA100 (off=cash),2016-10-17,9.9300,0.9614,2.8608,2016-11-07,,,2751,-0.6086
+910,2 trend filter,ETH 2x Donchian 100/50 (off=1x),2016-10-17,9.9300,0.6458,2.8581,2016-12-05,,,2751,-0.9969
+1499,3 momentum rotation,"risk-mix top3 3m mom, every 4w +abs filter, 2x",2000-09-11,26.0300,0.3689,2.8480,2016-05-09,2534.0000,0.9211,2751,-0.8553
+1529,3 momentum rotation,"risk-mix top3 6m mom, every 1w +abs filter, 2x",2000-12-11,25.7800,0.3989,2.8470,2013-01-07,990.0000,0.3599,2751,-0.9122
+922,2 trend filter,ETH 2x 6m momentum>0 (off=1x),2016-11-21,9.8300,0.4770,2.8461,2016-12-05,,,2751,-0.9980
+1362,3 momentum rotation,"crypto top2 1m mom, every 4w, 2x",2016-06-27,10.2300,0.2785,2.8451,2016-11-07,,,2751,-0.9978
+805,2 trend filter,BTC 2x SMA50 (off=1x),2014-12-01,11.8100,0.6242,2.8309,2016-04-04,,,2751,-0.9560
+1454,3 momentum rotation,"risk-mix top3 1m mom, every 1w, 2x",2000-07-10,26.2000,0.3215,2.8274,2016-11-14,726.0000,0.2639,2751,-0.9114
+817,2 trend filter,BTC 2x SMA50 band2% (off=1x),2014-12-01,11.8100,0.6492,2.8222,2016-04-04,,,2751,-0.9553
+1614,3 momentum rotation,"growth top1 1m mom, every 1w +abs filter, 3x",1999-02-01,27.6400,0.1817,2.8184,2012-12-17,2498.0000,0.9080,2751,-0.9957
+881,2 trend filter,ETH 1x SMA100 band2% (off=cash),2016-10-17,9.9300,1.0103,2.8109,2016-11-07,,,2751,-0.6317
+1604,3 momentum rotation,"risk-mix top3 blend mom, every 4w, 2x",2000-12-11,25.7800,0.3407,2.7852,2016-05-09,438.0000,0.1592,2751,-0.8917
+1607,3 momentum rotation,"risk-mix top3 blend mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.4058,2.7646,2016-05-09,506.0000,0.1839,2751,-0.8797
+1641,3 momentum rotation,"growth top1 3m mom, every 4w, 3x",1999-03-29,27.4800,0.0026,2.7575,2012-12-17,1632.0000,0.5932,2751,-0.9999
+1509,3 momentum rotation,"risk-mix top1 6m mom, every 4w, 3x",2000-12-11,25.7800,-0.2016,2.7527,2012-12-17,2674.0000,0.9720,2751,-0.9996
+829,2 trend filter,BTC 2x SMA10>SMA50 (off=1x),2014-12-01,11.8100,0.6124,2.7508,2016-04-04,,,2751,-0.9672
+1535,3 momentum rotation,"risk-mix top3 6m mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.4230,2.7502,2016-05-09,287.0000,0.1043,2751,-0.9171
+3000,7 combination,"25% NDX 3x hold + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9986,2.7205,2016-04-11,,,2751,-0.9217
+804,2 trend filter,BTC 2x SMA50 (off=cash),2014-12-01,11.8100,0.6106,2.7045,2016-04-04,,,2751,-0.9058
+853,2 trend filter,BTC 2x 1m momentum>0 (off=1x),2014-10-20,11.9200,0.6439,2.7044,2016-04-11,,,2751,-0.9700
+1508,3 momentum rotation,"risk-mix top1 6m mom, every 4w, 2x",2000-12-11,25.7800,-0.0582,2.6984,2012-12-17,2598.0000,0.9444,2751,-0.9994
+1512,3 momentum rotation,"risk-mix top1 6m mom, every 4w +abs filter, 3x",2000-12-11,25.7800,-0.0265,2.6965,2012-12-17,2674.0000,0.9720,2751,-0.9996
+1635,3 momentum rotation,"growth top1 3m mom, every 1w, 3x",1999-03-29,27.4800,0.0043,2.6948,2012-12-17,586.0000,0.2130,2751,-0.9999
+1610,3 momentum rotation,"growth top1 1m mom, every 1w, 2x",1999-02-01,27.6400,0.1953,2.6911,2012-12-17,914.0000,0.3322,2751,-0.9978
+808,2 trend filter,BTC 2x SMA100 (off=1x),2015-02-17,11.5900,0.7092,2.6747,2016-04-04,,,2751,-0.9809
+811,2 trend filter,BTC 2x SMA150 (off=1x),2015-04-27,11.4000,0.7566,2.6634,2016-04-04,,,2751,-0.9812
+890,2 trend filter,ETH 1x SMA10>SMA50 (off=cash),2016-08-01,10.1400,0.9099,2.6610,2016-11-07,,,2751,-0.7243
+1511,3 momentum rotation,"risk-mix top1 6m mom, every 4w +abs filter, 2x",2000-12-11,25.7800,0.0484,2.6597,2012-12-17,2598.0000,0.9444,2751,-0.9994
+893,2 trend filter,ETH 1x SMA20>SMA100 (off=cash),2016-10-17,9.9300,0.9929,2.6593,2016-11-07,,,2751,-0.6762
+878,2 trend filter,ETH 1x SMA50 band2% (off=cash),2016-08-01,10.1400,0.8965,2.6570,2016-11-07,,,2751,-0.6317
+59,1 buy-and-hold,ETH 1x buy-and-hold,2016-05-23,10.3300,0.6725,2.6469,2016-12-05,,,2751,-0.9232
+3172,7 combination,"75% BTC 2x SMA200 + 25% TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.8681,2.6460,2016-04-04,,,2751,-0.8604
+874,2 trend filter,ETH 2x SMA150 (off=1x),2016-12-27,9.7300,0.6449,2.6347,2016-12-27,,,2751,-0.9977
+1370,3 momentum rotation,"crypto top1 3m mom, every 4w, 2x",2016-08-22,10.0800,0.6236,2.6106,2016-11-14,,,2751,-0.9992
+816,2 trend filter,BTC 2x SMA50 band2% (off=cash),2014-12-01,11.8100,0.6301,2.6062,2016-04-04,,,2751,-0.9130
+2946,7 combination,"25% SMH 3x SMA200 + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,1.0803,2.6042,2016-04-04,,,2751,-0.9302
+1640,3 momentum rotation,"growth top1 3m mom, every 4w, 2x",1999-03-29,27.4800,0.1492,2.5510,2012-12-17,1247.0000,0.4533,2751,-0.9943
+2325,4 mean reversion / dip,"BTC buy 2x on RSI2<20 in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.6840,2.5502,2016-04-04,,,2751,-0.9068
+3178,7 combination,"75% BTC 2x SMA200 + 25% GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.9217,2.5485,2016-04-04,,,2751,-0.8904
+905,2 trend filter,ETH 1x Donchian 50/25 (off=cash),2016-08-08,10.1200,0.7989,2.5457,2016-11-07,,,2751,-0.7274
+2776,6 seasonality,BTC 2x presidential years 3-4,2014-09-22,12.0000,0.8634,2.5380,2020-03-16,3268.0000,0.9177,3561,-0.9309
+3090,7 combination,"25% BTC 1x hold + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8578,2.5365,2016-04-11,,,2751,-0.9522
+828,2 trend filter,BTC 2x SMA10>SMA50 (off=cash),2014-12-01,11.8100,0.5762,2.5269,2016-04-04,,,2751,-0.9515
+3002,7 combination,"50% NDX 3x hold + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,1.0084,2.5260,2016-02-08,,,2751,-0.8056
+2886,7 combination,"25% SPX 3x SMA200 + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9092,2.5248,2016-04-11,,,2751,-0.9142
+2820,7 combination,"25% NDX 3x SMA200 + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9436,2.5207,2016-04-11,,,2751,-0.9266
+820,2 trend filter,BTC 2x SMA100 band2% (off=1x),2015-02-17,11.5900,0.7670,2.5164,2016-04-04,,,2751,-0.9846
+814,2 trend filter,BTC 2x SMA200 (off=1x),2015-07-13,11.1900,0.7467,2.5152,2016-04-04,,,2751,-0.9847
+866,2 trend filter,ETH 1x SMA50 (off=cash),2016-08-01,10.1400,0.9590,2.5129,2016-11-07,,,2751,-0.6388
+810,2 trend filter,BTC 2x SMA150 (off=cash),2015-04-27,11.4000,0.6874,2.4918,2016-04-04,,,2751,-0.9764
+1554,3 momentum rotation,"risk-mix top2 12m mom, every 1w +abs filter, 3x",2001-06-11,25.2800,0.2426,2.4914,2013-01-07,1164.0000,0.4231,2751,-0.9949
+1551,3 momentum rotation,"risk-mix top2 12m mom, every 1w, 3x",2001-06-11,25.2800,0.1321,2.4809,2013-01-07,1164.0000,0.4231,2751,-0.9952
+916,2 trend filter,ETH 2x 1m momentum>0 (off=1x),2016-06-27,10.2300,0.4097,2.4772,2016-12-05,,,2751,-0.9982
+850,2 trend filter,BTC 2x Donchian 250/125 (off=1x),2015-09-21,11.0000,0.7210,2.4692,2016-04-04,,,2751,-0.9776
+3092,7 combination,"50% BTC 1x hold + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8698,2.4668,2016-04-11,,,2751,-0.9051
+58,1 buy-and-hold,BTC 2x buy-and-hold,2014-09-22,12.0000,0.4120,2.4629,2016-04-04,,,2751,-0.9912
+1372,3 momentum rotation,"crypto top1 3m mom, every 4w +abs filter, 2x",2016-08-22,10.0800,0.6738,2.4499,2016-11-14,,,2751,-0.9980
+3048,7 combination,"25% SPX 3x hold + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9105,2.4408,2016-04-11,,,2751,-0.9382
+921,2 trend filter,ETH 2x 6m momentum>0 (off=cash),2016-11-21,9.8300,0.4268,2.4342,2016-11-28,,,2751,-0.9969
+1613,3 momentum rotation,"growth top1 1m mom, every 1w +abs filter, 2x",1999-02-01,27.6400,0.2720,2.4303,2012-12-17,2301.0000,0.8364,2751,-0.9649
+1357,3 momentum rotation,"crypto top2 1m mom, every 1w, 1x",2016-06-27,10.2300,0.6097,2.4140,2016-11-07,,,2751,-0.8489
+2379,4 mean reversion / dip,"BTC buy 2x on 20-day low in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.6194,2.4127,2016-04-11,,,2751,-0.8927
+896,2 trend filter,ETH 1x SMA50>SMA150 (off=cash),2016-12-27,9.7300,0.7393,2.4091,2016-12-27,,,2751,-0.7225
+1468,3 momentum rotation,"risk-mix top1 3m mom, every 1w +abs filter, 1x",2000-09-11,26.0300,0.3058,2.3995,2016-05-09,2580.0000,0.9378,2751,-0.7717
+807,2 trend filter,BTC 2x SMA100 (off=cash),2015-02-17,11.5900,0.6154,2.3989,2016-04-04,,,2751,-0.9794
+1465,3 momentum rotation,"risk-mix top1 3m mom, every 1w, 1x",2000-09-11,26.0300,0.2737,2.3970,2016-05-09,2580.0000,0.9378,2751,-0.7726
+1719,3 momentum rotation,"growth top2 blend mom, every 1w, 3x",1999-06-28,27.2300,0.1350,2.3923,2012-12-17,293.0000,0.1065,2751,-0.9997
+1677,3 momentum rotation,"growth top2 6m mom, every 4w, 3x",1999-06-28,27.2300,0.1289,2.3918,2012-12-17,439.0000,0.1596,2751,-0.9998
+1436,3 momentum rotation,"risk-mix top1 1m mom, every 4w, 2x",2000-07-10,26.2000,0.0094,2.3863,2012-12-17,96.0000,0.0349,2751,-0.9991
+1671,3 momentum rotation,"growth top2 6m mom, every 1w, 3x",1999-06-28,27.2300,0.1206,2.3847,2012-12-17,534.0000,0.1941,2751,-0.9998
+862,2 trend filter,BTC 2x 12m momentum>0 (off=1x),2015-09-21,11.0000,0.7573,2.3790,2016-04-04,,,2751,-0.9909
+1439,3 momentum rotation,"risk-mix top1 1m mom, every 4w +abs filter, 2x",2000-07-10,26.2000,0.1071,2.3749,2012-12-17,96.0000,0.0349,2751,-0.9991
+1634,3 momentum rotation,"growth top1 3m mom, every 1w, 2x",1999-03-29,27.4800,0.1497,2.3709,2012-12-17,597.0000,0.2170,2751,-0.9940
+1369,3 momentum rotation,"crypto top1 3m mom, every 4w, 1x",2016-08-22,10.0800,0.9154,2.3692,2016-11-14,,,2751,-0.8982
+1725,3 momentum rotation,"growth top2 blend mom, every 4w, 3x",1999-06-28,27.2300,0.1601,2.3664,2016-04-11,16.0000,0.0058,2751,-0.9997
+844,2 trend filter,BTC 2x Donchian 50/25 (off=1x),2014-12-01,11.8100,0.8156,2.3659,2016-04-11,,,2751,-0.9732
+1638,3 momentum rotation,"growth top1 3m mom, every 1w +abs filter, 3x",1999-03-29,27.4800,0.1582,2.3621,2012-12-17,2424.0000,0.8811,2751,-0.9887
+3089,7 combination,"25% BTC 1x hold + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8058,2.3497,2016-04-04,,,2751,-0.9556
+1620,3 momentum rotation,"growth top1 1m mom, every 4w +abs filter, 3x",1999-02-01,27.6400,0.1827,2.3496,2019-03-11,3227.0000,0.9911,3256,-0.9959
+3126,7 combination,"25% BTC 1x SMA200 + 75% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8030,2.3447,2016-04-11,,,2751,-0.9568
+2999,7 combination,"25% NDX 3x hold + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8803,2.3440,2016-04-11,,,2751,-0.9332
+1416,3 momentum rotation,"crypto top1 blend mom, every 1w +abs filter, 2x",2016-11-21,9.8300,0.5494,2.3433,2016-11-28,,,2751,-0.9878
+2948,7 combination,"50% SMH 3x SMA200 + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,1.1549,2.3412,2016-04-04,,,2751,-0.8433
+60,1 buy-and-hold,ETH 2x buy-and-hold,2016-05-23,10.3300,0.0210,2.3381,2016-12-05,,,2751,-0.9996
+1437,3 momentum rotation,"risk-mix top1 1m mom, every 4w, 3x",2000-07-10,26.2000,-0.1125,2.3106,2012-12-17,14.0000,0.0051,2751,-0.9997
+900,2 trend filter,ETH 2x SMA50>SMA200 (off=cash),2017-03-13,9.5200,0.4532,2.3054,2017-03-13,,,2751,-0.9841
+917,2 trend filter,ETH 1x 3m momentum>0 (off=cash),2016-08-22,10.0800,0.7192,2.2964,2016-11-07,,,2751,-0.7575
+1440,3 momentum rotation,"risk-mix top1 1m mom, every 4w +abs filter, 3x",2000-07-10,26.2000,0.0475,2.2953,2012-12-17,14.0000,0.0051,2751,-0.9991
+852,2 trend filter,BTC 2x 1m momentum>0 (off=cash),2014-10-20,11.9200,0.6654,2.2855,2016-04-11,,,2751,-0.9529
+1457,3 momentum rotation,"risk-mix top3 1m mom, every 1w +abs filter, 2x",2000-07-10,26.2000,0.2968,2.2829,2016-11-07,1094.0000,0.3977,2751,-0.8260
+902,2 trend filter,ETH 1x Donchian 20/10 (off=cash),2016-06-20,10.2500,0.7568,2.2811,2016-11-07,,,2751,-0.6298
+1458,3 momentum rotation,"risk-mix top3 1m mom, every 1w +abs filter, 3x",2000-07-10,26.2000,0.2877,2.2796,2016-11-07,698.0000,0.2537,2751,-0.8428
+2945,7 combination,"25% SMH 3x SMA200 + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.9485,2.2753,2016-04-04,,,2751,-0.9437
+1361,3 momentum rotation,"crypto top2 1m mom, every 4w, 1x",2016-06-27,10.2300,0.6182,2.2684,2016-11-07,,,2751,-0.8908
+813,2 trend filter,BTC 2x SMA200 (off=cash),2015-07-13,11.1900,0.7404,2.2643,2016-04-04,,,2751,-0.9832
+1390,3 momentum rotation,"crypto top2 6m mom, every 1w, 2x",2016-11-21,9.8300,0.4141,2.2579,2016-12-05,,,2751,-0.9988
+3091,7 combination,"50% BTC 1x hold + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8100,2.2569,2016-04-11,,,2751,-0.9101
+2547,5 volatility regime,BTC 2x when VIX<25 (off=cash),1990-01-29,36.6400,0.0853,2.2525,2012-12-17,,,2751,-0.9923
+1553,3 momentum rotation,"risk-mix top2 12m mom, every 1w +abs filter, 2x",2001-06-11,25.2800,0.2159,2.2458,2013-01-07,1148.0000,0.4173,2751,-0.9941
+1647,3 momentum rotation,"growth top2 3m mom, every 1w, 3x",1999-03-29,27.4800,0.1215,2.2443,2016-02-08,189.0000,0.0687,2751,-0.9998
+3125,7 combination,"25% BTC 1x SMA200 + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7755,2.2435,2016-04-04,,,2751,-0.9590
+1728,3 momentum rotation,"growth top2 blend mom, every 4w +abs filter, 3x",1999-06-28,27.2300,0.3205,2.2404,2016-04-11,347.0000,0.1261,2751,-0.9110
+1550,3 momentum rotation,"risk-mix top2 12m mom, every 1w, 2x",2001-06-11,25.2800,0.1653,2.2394,2013-01-07,1148.0000,0.4173,2751,-0.9943
+2885,7 combination,"25% SPX 3x SMA200 + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8126,2.2355,2016-04-11,,,2751,-0.9251
+1368,3 momentum rotation,"crypto top1 3m mom, every 1w +abs filter, 2x",2016-08-22,10.0800,0.5033,2.2302,2016-11-07,,,2751,-0.9951
+1375,3 momentum rotation,"crypto top2 3m mom, every 1w +abs filter, 1x",2016-08-22,10.0800,0.7193,2.2295,2016-11-07,,,2751,-0.8249
+873,2 trend filter,ETH 2x SMA150 (off=cash),2016-12-27,9.7300,0.5978,2.2228,2016-12-27,,,2751,-0.9959
+1653,3 momentum rotation,"growth top2 3m mom, every 4w, 3x",1999-03-29,27.4800,0.1034,2.2185,2016-11-07,136.0000,0.0494,2751,-0.9998
+3171,7 combination,"75% BTC 2x SMA200 + 25% TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.7456,2.2123,2016-04-04,,,2751,-0.8884
+1637,3 momentum rotation,"growth top1 3m mom, every 1w +abs filter, 2x",1999-03-29,27.4800,0.2170,2.2119,2016-04-11,2579.0000,0.9375,2751,-0.9700
+2544,5 volatility regime,BTC 2x when VIX<20 (off=cash),1990-01-08,36.7000,0.0162,2.2107,2012-12-17,,,2751,-0.9978
+1724,3 momentum rotation,"growth top2 blend mom, every 4w, 2x",1999-06-28,27.2300,0.2634,2.2095,2016-04-11,75.0000,0.0273,2751,-0.9855
+1374,3 momentum rotation,"crypto top2 3m mom, every 1w, 2x",2016-08-22,10.0800,0.3230,2.2067,2016-11-07,,,2751,-0.9990
+1422,3 momentum rotation,"crypto top2 blend mom, every 1w, 2x",2016-11-21,9.8300,0.4653,2.2039,2016-12-05,,,2751,-0.9989
+2819,7 combination,"25% NDX 3x SMA200 + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8416,2.2033,2016-04-11,,,2751,-0.9373
+1541,3 momentum rotation,"risk-mix top1 12m mom, every 1w +abs filter, 2x",2001-06-11,25.2800,0.3005,2.2019,2016-05-09,2497.0000,0.9077,2751,-0.9926
+2822,7 combination,"50% NDX 3x SMA200 + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9274,2.1971,2016-04-11,,,2751,-0.8256
+1542,3 momentum rotation,"risk-mix top1 12m mom, every 1w +abs filter, 3x",2001-06-11,25.2800,0.2828,2.1967,2016-05-09,2596.0000,0.9437,2751,-0.9936
+920,2 trend filter,ETH 1x 6m momentum>0 (off=cash),2016-11-21,9.8300,0.6632,2.1952,2016-11-28,,,2751,-0.8457
+1644,3 momentum rotation,"growth top1 3m mom, every 4w +abs filter, 3x",1999-03-29,27.4800,0.1978,2.1938,2012-12-17,2411.0000,0.8764,2751,-0.9878
+1538,3 momentum rotation,"risk-mix top1 12m mom, every 1w, 2x",2001-06-11,25.2800,0.2373,2.1920,2016-05-09,2497.0000,0.9077,2751,-0.9928
+3128,7 combination,"50% BTC 1x SMA200 + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.7940,2.1918,2016-04-11,,,2751,-0.9127
+1617,3 momentum rotation,"growth top1 1m mom, every 4w, 3x",1999-02-01,27.6400,0.0561,2.1846,2012-12-17,100.0000,0.0364,2751,-0.9999
+1539,3 momentum rotation,"risk-mix top1 12m mom, every 1w, 3x",2001-06-11,25.2800,0.1575,2.1824,2016-05-09,2596.0000,0.9437,2751,-0.9937
+1415,3 momentum rotation,"crypto top1 blend mom, every 1w +abs filter, 1x",2016-11-21,9.8300,0.8035,2.1780,2016-11-28,,,2751,-0.7605
+1474,3 momentum rotation,"risk-mix top1 3m mom, every 4w +abs filter, 1x",2000-09-11,26.0300,0.3189,2.1727,2016-05-09,2408.0000,0.8753,2751,-0.8124
+909,2 trend filter,ETH 2x Donchian 100/50 (off=cash),2016-10-17,9.9300,0.6339,2.1712,2016-11-07,,,2751,-0.9947
+1674,3 momentum rotation,"growth top2 6m mom, every 1w +abs filter, 3x",1999-06-28,27.2300,0.2616,2.1667,2012-12-17,2629.0000,0.9557,2751,-0.9464
+3094,7 combination,"75% BTC 1x hold + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8014,2.1654,2016-04-11,,,2751,-0.8431
+2424,4 mean reversion / dip,"BTC buy 2x on week<-20%, hold 4w, else 1x",2015-07-13,11.1900,0.7511,2.1633,2016-04-11,,,2751,-0.7966
+1722,3 momentum rotation,"growth top2 blend mom, every 1w +abs filter, 3x",1999-06-28,27.2300,0.2828,2.1615,2016-04-11,81.0000,0.0294,2751,-0.9412
+1423,3 momentum rotation,"crypto top2 blend mom, every 1w +abs filter, 1x",2016-11-21,9.8300,0.8058,2.1608,2016-11-28,,,2751,-0.7590
+3047,7 combination,"25% SPX 3x hold + 75% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8187,2.1511,2016-04-11,,,2751,-0.9439
+1471,3 momentum rotation,"risk-mix top1 3m mom, every 4w, 1x",2000-09-11,26.0300,0.2710,2.1495,2016-05-09,2408.0000,0.8753,2751,-0.8156
+2888,7 combination,"50% SPX 3x SMA200 + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8492,2.1431,2016-04-11,,,2751,-0.7745
+3190,7 combination,"75% BTC 2x SMA200 + 25% sectors top1 3m 3x, rebalance 13w",2015-07-13,11.1900,0.8038,2.1422,2016-03-14,,,2751,-0.9450
+2376,4 mean reversion / dip,"BTC buy 2x on 20-day low in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.7056,2.1335,2016-04-11,,,2751,-0.8191
+1576,3 momentum rotation,"risk-mix top1 blend mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.3013,2.1285,2016-05-09,1037.0000,0.3770,2751,-0.8524
+2548,5 volatility regime,BTC 2x when VIX<25 (off=1x),2014-09-22,12.0000,0.3891,2.1276,2016-04-04,,,2751,-0.9894
+1718,3 momentum rotation,"growth top2 blend mom, every 1w, 2x",1999-06-28,27.2300,0.2412,2.1275,2016-04-11,49.0000,0.0178,2751,-0.9857
+3177,7 combination,"75% BTC 2x SMA200 + 25% GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.8053,2.1226,2016-04-04,,,2751,-0.9139
+861,2 trend filter,BTC 2x 12m momentum>0 (off=cash),2015-09-21,11.0000,0.6521,2.1135,2016-04-04,,,2751,-0.9931
+1643,3 momentum rotation,"growth top1 3m mom, every 4w +abs filter, 2x",1999-03-29,27.4800,0.2468,2.1113,2012-12-17,2172.0000,0.7895,2751,-0.9890
+1695,3 momentum rotation,"growth top2 12m mom, every 1w, 3x",1999-12-27,26.7400,0.0615,2.1099,2016-02-08,178.0000,0.0647,2751,-0.9999
+3324,7 combination,"1/3 each SMH 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,1.0118,2.1018,2016-04-04,,,2751,-0.7928
+1727,3 momentum rotation,"growth top2 blend mom, every 4w +abs filter, 2x",1999-06-28,27.2300,0.3242,2.1006,2016-04-11,664.0000,0.2414,2751,-0.7643
+819,2 trend filter,BTC 2x SMA100 band2% (off=cash),2015-02-17,11.5900,0.6892,2.0987,2016-04-04,,,2751,-0.9870
+1588,3 momentum rotation,"risk-mix top2 blend mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.3039,2.0950,2016-05-09,696.0000,0.2530,2751,-0.6748
+3170,7 combination,"50% BTC 2x SMA200 + 50% TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.6967,2.0872,2016-04-04,,,2751,-0.8134
+3050,7 combination,"50% SPX 3x hold + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8744,2.0838,2016-04-11,,,2751,-0.8699
+1389,3 momentum rotation,"crypto top2 6m mom, every 1w, 1x",2016-11-21,9.8300,0.7258,2.0820,2016-12-05,,,2751,-0.9186
+1585,3 momentum rotation,"risk-mix top2 blend mom, every 1w, 1x",2000-12-11,25.7800,0.2546,2.0804,2016-05-09,644.0000,0.2341,2751,-0.7960
+1560,3 momentum rotation,"risk-mix top2 12m mom, every 4w +abs filter, 3x",2001-06-11,25.2800,0.1940,2.0729,2013-01-07,2054.0000,0.7466,2751,-0.9940
+1573,3 momentum rotation,"risk-mix top1 blend mom, every 1w, 1x",2000-12-11,25.7800,0.2652,2.0715,2016-05-09,991.0000,0.3602,2751,-0.8653
+3001,7 combination,"50% NDX 3x hold + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8542,2.0712,2016-02-08,,,2751,-0.8214
+1371,3 momentum rotation,"crypto top1 3m mom, every 4w +abs filter, 1x",2016-08-22,10.0800,0.8324,2.0708,2016-11-14,,,2751,-0.8684
+3127,7 combination,"50% BTC 1x SMA200 + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7574,2.0606,2016-04-11,,,2751,-0.9161
+2724,5 volatility regime,"BTC vol target 100% (63d), max 2x + SMA200",2015-07-13,11.1900,0.8330,2.0541,2016-04-04,,,2751,-0.9010
+1619,3 momentum rotation,"growth top1 1m mom, every 4w +abs filter, 2x",1999-02-01,27.6400,0.2321,2.0534,2019-03-11,3230.0000,0.9920,3256,-0.9958
+1557,3 momentum rotation,"risk-mix top2 12m mom, every 4w, 3x",2001-06-11,25.2800,0.0941,2.0518,2013-01-07,2054.0000,0.7466,2751,-0.9931
+2542,5 volatility regime,BTC 2x when 21d vol<80% (off=1x),2014-10-20,11.9200,0.3681,2.0513,2016-04-04,,,2751,-0.9699
+2723,5 volatility regime,"BTC vol target 100% (63d), max 2x",2014-12-22,11.7500,0.6038,2.0486,2016-04-04,,,2751,-0.9271
+1670,3 momentum rotation,"growth top2 6m mom, every 1w, 2x",1999-06-28,27.2300,0.2267,2.0453,2016-04-11,33.0000,0.0120,2751,-0.9881
+3176,7 combination,"50% BTC 2x SMA200 + 50% GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.8454,2.0449,2016-04-04,,,2751,-0.7026
+872,2 trend filter,ETH 1x SMA150 (off=cash),2016-12-27,9.7300,0.7361,2.0402,2016-12-27,,,2751,-0.8367
+843,2 trend filter,BTC 2x Donchian 50/25 (off=cash),2014-12-01,11.8100,0.8858,2.0393,2020-03-16,2142.0000,0.6015,3561,-0.9607
+1413,3 momentum rotation,"crypto top1 blend mom, every 1w, 1x",2016-11-21,9.8300,0.7294,2.0332,2016-11-28,,,2751,-0.8955
+1373,3 momentum rotation,"crypto top2 3m mom, every 1w, 1x",2016-08-22,10.0800,0.6440,2.0321,2016-11-07,,,2751,-0.9152
+1680,3 momentum rotation,"growth top2 6m mom, every 4w +abs filter, 3x",1999-06-28,27.2300,0.3141,2.0287,2012-12-17,2130.0000,0.7743,2751,-0.8878
+3182,7 combination,"50% BTC 2x SMA200 + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.7076,2.0261,2016-10-24,,,2751,-0.9581
+3093,7 combination,"75% BTC 1x hold + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7601,2.0258,2016-04-11,,,2751,-0.8402
+1701,3 momentum rotation,"growth top2 12m mom, every 4w, 3x",1999-12-27,26.7400,0.0692,2.0234,2012-12-17,339.0000,0.1232,2751,-0.9999
+1480,3 momentum rotation,"risk-mix top2 3m mom, every 1w +abs filter, 1x",2000-09-11,26.0300,0.3007,2.0213,2016-05-09,1651.0000,0.6001,2751,-0.6255
+1676,3 momentum rotation,"growth top2 6m mom, every 4w, 2x",1999-06-28,27.2300,0.2268,2.0205,2016-04-11,62.0000,0.0225,2751,-0.9885
+1421,3 momentum rotation,"crypto top2 blend mom, every 1w, 1x",2016-11-21,9.8300,0.7338,2.0147,2016-12-05,,,2751,-0.9096
+1477,3 momentum rotation,"risk-mix top2 3m mom, every 1w, 1x",2000-09-11,26.0300,0.2487,2.0112,2016-05-09,1466.0000,0.5329,2751,-0.7702
+1378,3 momentum rotation,"crypto top2 3m mom, every 4w, 2x",2016-08-22,10.0800,0.4121,2.0101,2016-11-07,,,2751,-0.9990
+1623,3 momentum rotation,"growth top2 1m mom, every 1w, 3x",1999-02-01,27.6400,0.0955,2.0022,2012-12-17,461.0000,0.1676,2751,-0.9999
+1698,3 momentum rotation,"growth top2 12m mom, every 1w +abs filter, 3x",1999-12-27,26.7400,0.2485,2.0008,2012-12-17,359.0000,0.1305,2751,-0.9473
+2340,4 mean reversion / dip,"BTC buy 2x on 5-day low in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.7144,1.9973,2016-04-11,,,2751,-0.8409
+1721,3 momentum rotation,"growth top2 blend mom, every 1w +abs filter, 2x",1999-06-28,27.2300,0.2945,1.9933,2016-04-11,284.0000,0.1032,2751,-0.8171
+2342,4 mean reversion / dip,"BTC buy 2x on 5-day low in uptrend, hold 4w, else cash",2015-07-13,11.1900,0.5076,1.9894,2016-02-08,,,2751,-0.8571
+2421,4 mean reversion / dip,"BTC buy 2x on week<-20%, hold 2w, else 1x",2015-07-13,11.1900,0.6975,1.9889,2016-04-11,,,2751,-0.7925
+3386,8 option overlay,"SPX calls K=1.00S 182d, 100% of equity, always, roll 13w",1990-01-02,36.7200,-0.4338,1.9848,1995-01-03,1337.0000,0.9674,1382,-1.0000
+3274,7 combination,"1/3 each NDX 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8368,1.9806,2016-04-11,,,2751,-0.7875
+3181,7 combination,"50% BTC 2x SMA200 + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.6948,1.9752,2016-10-24,,,2751,-0.9434
+1646,3 momentum rotation,"growth top2 3m mom, every 1w, 2x",1999-03-29,27.4800,0.2209,1.9720,2016-04-11,410.0000,0.1490,2751,-0.9885
+2373,4 mean reversion / dip,"BTC buy 2x on 20-day low in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6891,1.9680,2016-04-11,,,2751,-0.8192
+1379,3 momentum rotation,"crypto top2 3m mom, every 4w +abs filter, 1x",2016-08-22,10.0800,0.7506,1.9663,2016-11-07,,,2751,-0.8114
+1419,3 momentum rotation,"crypto top1 blend mom, every 4w +abs filter, 1x",2016-11-21,9.8300,0.9568,1.9532,2016-11-28,,,2751,-0.8479
+1367,3 momentum rotation,"crypto top1 3m mom, every 1w +abs filter, 1x",2016-08-22,10.0800,0.6900,1.9440,2016-11-07,,,2751,-0.8782
+1377,3 momentum rotation,"crypto top2 3m mom, every 4w, 1x",2016-08-22,10.0800,0.7140,1.9406,2016-12-05,,,2751,-0.9128
+1563,3 momentum rotation,"risk-mix top3 12m mom, every 1w, 3x",2001-06-11,25.2800,0.3026,1.9334,2016-05-09,245.0000,0.0891,2751,-0.9166
+2708,5 volatility regime,"BTC vol target 100% (21d), max 2x + SMA200",2015-07-13,11.1900,0.7367,1.9325,2016-04-04,,,2751,-0.9223
+1650,3 momentum rotation,"growth top2 3m mom, every 1w +abs filter, 3x",1999-03-29,27.4800,0.2320,1.9279,2016-04-11,1661.0000,0.6038,2751,-0.9685
+2720,5 volatility regime,"BTC vol target 80% (63d), max 2x + SMA200",2015-07-13,11.1900,0.8176,1.9278,2016-04-04,,,2751,-0.7993
+839,2 trend filter,BTC 1x Donchian 20/10 (off=cash),2014-10-20,11.9200,0.6903,1.9277,2016-02-22,,,2751,-0.4880
+1420,3 momentum rotation,"crypto top1 blend mom, every 4w +abs filter, 2x",2016-11-21,9.8300,0.7660,1.9240,2016-11-28,,,2751,-0.9976
+2707,5 volatility regime,"BTC vol target 100% (21d), max 2x",2014-10-20,11.9200,0.4366,1.9208,2016-04-04,,,2751,-0.9463
+2430,4 mean reversion / dip,"BTC buy 2x on week<-20% in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.6877,1.9200,2016-04-11,,,2751,-0.7814
+2334,4 mean reversion / dip,"BTC buy 2x on 5-day low, hold 4w, else 1x",2015-07-13,11.1900,0.4640,1.9178,2016-04-04,,,2751,-0.9832
+1704,3 momentum rotation,"growth top2 12m mom, every 4w +abs filter, 3x",1999-12-27,26.7400,0.2549,1.9158,2012-12-17,339.0000,0.1232,2751,-0.9615
+2947,7 combination,"50% SMH 3x SMA200 + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.9756,1.9155,2016-04-04,,,2751,-0.8697
+1566,3 momentum rotation,"risk-mix top3 12m mom, every 1w +abs filter, 3x",2001-06-11,25.2800,0.3486,1.9148,2016-05-09,591.0000,0.2148,2751,-0.9192
+1559,3 momentum rotation,"risk-mix top2 12m mom, every 4w +abs filter, 2x",2001-06-11,25.2800,0.1789,1.9117,2013-01-07,1773.0000,0.6445,2751,-0.9932
+2433,4 mean reversion / dip,"BTC buy 2x on week<-20% in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.6818,1.9116,2016-04-11,,,2751,-0.8040
+2781,6 seasonality,BTC 1x halving cycle (-12m/+18m),2014-09-22,12.0000,0.8236,1.9113,2016-04-11,,,2751,-0.6080
+3304,7 combination,"1/3 each SPX 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.7730,1.9063,2016-04-11,,,2751,-0.7644
+3184,7 combination,"75% BTC 2x SMA200 + 25% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.7312,1.8990,2016-10-17,,,2751,-0.9713
+2536,5 volatility regime,BTC 2x when 21d vol<40% (off=1x),2014-10-20,11.9200,0.6558,1.8987,2016-04-04,,,2751,-0.9097
+1556,3 momentum rotation,"risk-mix top2 12m mom, every 4w, 2x",2001-06-11,25.2800,0.1343,1.8984,2013-01-07,1773.0000,0.6445,2751,-0.9925
+1694,3 momentum rotation,"growth top2 12m mom, every 1w, 2x",1999-12-27,26.7400,0.1854,1.8983,2016-04-11,330.0000,0.1200,2751,-0.9924
+3334,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.8749,1.8975,2016-04-04,,,2751,-0.6527
+1349,3 momentum rotation,"crypto top1 1m mom, every 1w, 1x",2016-06-27,10.2300,0.4078,1.8966,2016-10-24,,,2751,-0.9281
+1616,3 momentum rotation,"growth top1 1m mom, every 4w, 2x",1999-02-01,27.6400,0.1679,1.8884,2012-12-17,186.0000,0.0676,2751,-0.9975
+1652,3 momentum rotation,"growth top2 3m mom, every 4w, 2x",1999-03-29,27.4800,0.2082,1.8867,2016-11-07,282.0000,0.1025,2751,-0.9890
+3346,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.6787,1.8812,2016-04-04,,,2751,-0.7439
+3398,8 option overlay,"SPX calls K=1.05S 182d, 100% of equity, always, roll 13w",1990-01-02,36.7200,-0.4361,1.8787,1995-01-03,1357.0000,0.9819,1382,-1.0000
+2418,4 mean reversion / dip,"BTC buy 2x on week<-20%, hold 1w, else 1x",2015-07-13,11.1900,0.6970,1.8762,2016-04-11,,,2751,-0.7969
+1391,3 momentum rotation,"crypto top2 6m mom, every 1w +abs filter, 1x",2016-11-21,9.8300,0.7916,1.8750,2016-11-28,,,2751,-0.8179
+3004,7 combination,"75% NDX 3x hold + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.8058,1.8727,2016-02-08,,,2751,-0.7597
+3130,7 combination,"75% BTC 1x SMA200 + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.7258,1.8712,2016-04-11,,,2751,-0.8444
+1656,3 momentum rotation,"growth top2 3m mom, every 4w +abs filter, 3x",1999-03-29,27.4800,0.2563,1.8708,2016-11-07,1766.0000,0.6419,2751,-0.9268
+3296,7 combination,"1/3 each SPX 3x SMA200 + SMH 3x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9461,1.8676,2016-04-11,,,2751,-0.6762
+3626,8 option overlay,"NDX calls K=1.00S 182d, 100% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,-0.1881,1.8668,2016-11-07,2699.0000,0.9811,2751,-1.0000
+1448,3 momentum rotation,"risk-mix top2 1m mom, every 4w, 2x",2000-07-10,26.2000,0.1419,1.8665,2013-01-07,461.0000,0.1676,2751,-0.9909
+908,2 trend filter,ETH 1x Donchian 100/50 (off=cash),2016-10-17,9.9300,0.6903,1.8661,2016-11-07,,,2751,-0.8407
+3183,7 combination,"75% BTC 2x SMA200 + 25% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.7228,1.8613,2016-10-17,,,2751,-0.9645
+3638,8 option overlay,"NDX calls K=1.05S 182d, 100% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,-0.3435,1.8610,2016-11-07,2723.0000,0.9898,2751,-1.0000
+1449,3 momentum rotation,"risk-mix top2 1m mom, every 4w, 3x",2000-07-10,26.2000,0.0387,1.8542,2013-01-07,286.0000,0.1040,2751,-0.9990
+3266,7 combination,"1/3 each NDX 3x SMA200 + SMH 3x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9735,1.8510,2016-04-11,,,2751,-0.7545
+915,2 trend filter,ETH 2x 1m momentum>0 (off=cash),2016-06-27,10.2300,0.4984,1.8472,2016-11-07,,,2751,-0.9967
+899,2 trend filter,ETH 1x SMA50>SMA200 (off=cash),2017-03-13,9.5200,0.6082,1.8468,2017-03-13,,,2751,-0.7637
+2719,5 volatility regime,"BTC vol target 80% (63d), max 2x",2014-12-22,11.7500,0.6217,1.8417,2016-04-04,,,2751,-0.8899
+3348,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.7664,1.8393,2016-04-04,,,2751,-0.7137
+3180,7 combination,"25% BTC 2x SMA200 + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5846,1.8386,2016-10-24,,,2751,-0.9469
+1594,3 momentum rotation,"risk-mix top2 blend mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.2929,1.8355,2016-05-09,1082.0000,0.3933,2751,-0.7172
+2364,4 mean reversion / dip,"BTC buy 2x on 20-day low, hold 1w, else 1x",2015-07-13,11.1900,0.6053,1.8310,2016-04-11,,,2751,-0.8461
+1451,3 momentum rotation,"risk-mix top2 1m mom, every 4w +abs filter, 2x",2000-07-10,26.2000,0.2368,1.8289,2013-01-07,387.0000,0.1407,2751,-0.9906
+1350,3 momentum rotation,"crypto top1 1m mom, every 1w, 2x",2016-06-27,10.2300,-0.0263,1.8287,2016-09-06,,,2751,-0.9998
+3189,7 combination,"75% BTC 2x SMA200 + 25% sectors top1 3m 3x, rebalance 4w",2015-07-13,11.1900,0.7038,1.8286,2016-03-14,,,2751,-0.9542
+3323,7 combination,"1/3 each SMH 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8840,1.8246,2016-04-04,,,2751,-0.8099
+2337,4 mean reversion / dip,"BTC buy 2x on 5-day low in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6675,1.8246,2016-04-11,,,2751,-0.8492
+2545,5 volatility regime,BTC 2x when VIX<20 (off=1x),2014-09-22,12.0000,0.2642,1.8237,2016-04-04,,,2751,-0.9905
+1359,3 momentum rotation,"crypto top2 1m mom, every 1w +abs filter, 1x",2016-06-27,10.2300,0.5079,1.8176,2016-11-07,,,2751,-0.7614
+901,2 trend filter,ETH 2x SMA50>SMA200 (off=1x),2017-03-13,9.5200,0.4366,1.8146,2017-03-13,,,2751,-0.9909
+1591,3 momentum rotation,"risk-mix top2 blend mom, every 4w, 1x",2000-12-11,25.7800,0.2370,1.8131,2016-05-09,988.0000,0.3591,2751,-0.7899
+3336,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.9680,1.8126,2016-04-04,,,2751,-0.6152
+2361,4 mean reversion / dip,"BTC buy 2x on 10-day low in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.4922,1.8093,2016-04-04,,,2751,-0.9200
+214,2 trend filter,NDX 3x 10-month SMA (off=1x),1986-08-04,40.1300,0.2288,1.8064,1995-03-06,841.0000,0.6085,1382,-0.9515
+2503,5 volatility regime,NDX 3x when VIX<30 (off=1x),1990-01-08,36.7000,0.1446,1.8063,1995-03-06,205.0000,0.1483,1382,-0.9991
+2427,4 mean reversion / dip,"BTC buy 2x on week<-20% in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6811,1.8055,2016-04-11,,,2751,-0.7795
+1673,3 momentum rotation,"growth top2 6m mom, every 1w +abs filter, 2x",1999-06-28,27.2300,0.2777,1.8035,2012-12-17,2488.0000,0.9044,2751,-0.8097
+213,2 trend filter,NDX 3x 10-month SMA (off=cash),1986-08-04,40.1300,0.2155,1.8021,1995-03-06,1139.0000,0.8242,1382,-0.8517
+1452,3 momentum rotation,"risk-mix top2 1m mom, every 4w +abs filter, 3x",2000-07-10,26.2000,0.2081,1.8007,2013-01-07,217.0000,0.0789,2751,-0.9914
+2821,7 combination,"50% NDX 3x SMA200 + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7920,1.7918,2016-04-11,,,2751,-0.8398
+3179,7 combination,"25% BTC 2x SMA200 + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5690,1.7851,2016-10-24,,,2751,-0.9314
+1417,3 momentum rotation,"crypto top1 blend mom, every 4w, 1x",2016-11-21,9.8300,0.7939,1.7831,2016-11-28,,,2751,-0.9277
+5,1 buy-and-hold,NDX 3x buy-and-hold,1985-10-07,40.9600,0.1692,1.7831,1995-03-06,205.0000,0.1483,1382,-0.9998
+253,2 trend filter,NDX 3x Donchian 250/125 (off=cash),1986-10-06,39.9600,0.1376,1.7831,1995-03-06,1279.0000,0.9255,1382,-0.9307
+273,2 trend filter,NDX 3x 12m momentum>0 (off=cash),1986-10-06,39.9600,0.2476,1.7831,1995-03-06,946.0000,0.6845,1382,-0.9152
+274,2 trend filter,NDX 3x 12m momentum>0 (off=1x),1986-10-06,39.9600,0.2465,1.7831,1995-03-06,719.0000,0.5203,1382,-0.9732
+254,2 trend filter,NDX 3x Donchian 250/125 (off=1x),1986-10-06,39.9600,0.1771,1.7831,1995-03-06,1230.0000,0.8900,1382,-0.9754
+1569,3 momentum rotation,"risk-mix top3 12m mom, every 4w, 3x",2001-06-11,25.2800,0.2972,1.7777,2016-05-09,94.0000,0.0342,2751,-0.9005
+3129,7 combination,"75% BTC 1x SMA200 + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.6972,1.7740,2016-04-11,,,2751,-0.8453
+1548,3 momentum rotation,"risk-mix top1 12m mom, every 4w +abs filter, 3x",2001-06-11,25.2800,0.1551,1.7731,2016-05-09,2567.0000,0.9331,2751,-0.9936
+2502,5 volatility regime,NDX 3x when VIX<30 (off=cash),1990-01-08,36.7000,0.1138,1.7681,1995-03-06,205.0000,0.1483,1382,-0.9992
+830,2 trend filter,BTC 1x SMA20>SMA100 (off=cash),2015-02-17,11.5900,0.5926,1.7663,2016-04-11,,,2751,-0.6381
+1700,3 momentum rotation,"growth top2 12m mom, every 4w, 2x",1999-12-27,26.7400,0.1889,1.7654,2016-04-11,394.0000,0.1432,2751,-0.9911
+3284,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.7035,1.7630,2016-04-11,,,2751,-0.6438
+1519,3 momentum rotation,"risk-mix top2 6m mom, every 4w, 1x",2000-12-11,25.7800,0.2498,1.7616,2016-05-09,878.0000,0.3192,2751,-0.7811
+2887,7 combination,"50% SPX 3x SMA200 + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7151,1.7555,2016-04-11,,,2751,-0.7928
+1545,3 momentum rotation,"risk-mix top1 12m mom, every 4w, 3x",2001-06-11,25.2800,0.0456,1.7542,2016-05-09,2567.0000,0.9331,2751,-0.9939
+1649,3 momentum rotation,"growth top2 3m mom, every 1w +abs filter, 2x",1999-03-29,27.4800,0.2481,1.7541,2016-04-11,2140.0000,0.7779,2751,-0.8789
+1547,3 momentum rotation,"risk-mix top1 12m mom, every 4w +abs filter, 2x",2001-06-11,25.2800,0.1854,1.7533,2016-05-09,2458.0000,0.8935,2751,-0.9926
+1579,3 momentum rotation,"risk-mix top1 blend mom, every 4w, 1x",2000-12-11,25.7800,0.2078,1.7457,2012-12-17,1408.0000,0.5118,2751,-0.9385
+3256,7 combination,"1/3 each NDX 3x SMA200 + SPX 3x SMA200 + BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.7755,1.7455,2016-04-11,,,2751,-0.6707
+1365,3 momentum rotation,"crypto top1 3m mom, every 1w, 1x",2016-08-22,10.0800,0.6107,1.7449,2016-11-07,,,2751,-0.9390
+833,2 trend filter,BTC 1x SMA50>SMA150 (off=cash),2015-04-27,11.4000,0.4975,1.7427,2016-04-11,,,2751,-0.6504
+1544,3 momentum rotation,"risk-mix top1 12m mom, every 4w, 2x",2001-06-11,25.2800,0.1307,1.7409,2016-05-09,2458.0000,0.8935,2751,-0.9928
+1562,3 momentum rotation,"risk-mix top3 12m mom, every 1w, 2x",2001-06-11,25.2800,0.2876,1.7397,2016-05-09,659.0000,0.2395,2751,-0.9105
+2795,7 combination,"25% NDX 3x SMA200 + 75% NDX 3x hold, rebalance 4w",1986-07-21,40.1700,0.1905,1.7390,1995-03-06,785.0000,0.5680,1382,-0.9976
+2796,7 combination,"25% NDX 3x SMA200 + 75% NDX 3x hold, rebalance 13w",1986-07-21,40.1700,0.2117,1.7364,1995-03-06,764.0000,0.5528,1382,-0.9945
+1522,3 momentum rotation,"risk-mix top2 6m mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.2892,1.7300,2016-05-09,1085.0000,0.3944,2751,-0.7933
+1582,3 momentum rotation,"risk-mix top1 blend mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.2544,1.7289,2012-12-17,1408.0000,0.5118,2751,-0.9348
+2934,7 combination,"25% SMH 3x SMA200 + 75% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.7081,1.7282,2016-04-04,,,2751,-0.7062
+1626,3 momentum rotation,"growth top2 1m mom, every 1w +abs filter, 3x",1999-02-01,27.6400,0.1809,1.7259,2016-02-22,23.0000,0.0084,2751,-0.9791
+1565,3 momentum rotation,"risk-mix top3 12m mom, every 1w +abs filter, 2x",2001-06-11,25.2800,0.3025,1.7251,2016-05-09,1047.0000,0.3806,2751,-0.9128
+1679,3 momentum rotation,"growth top2 6m mom, every 4w +abs filter, 2x",1999-06-28,27.2300,0.3090,1.7209,2016-04-11,304.0000,0.1105,2751,-0.7993
+3273,7 combination,"1/3 each NDX 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7489,1.7208,2016-04-11,,,2751,-0.7895
+2358,4 mean reversion / dip,"BTC buy 2x on 10-day low in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.5962,1.7168,2016-04-11,,,2751,-0.8317
+3049,7 combination,"50% SPX 3x hold + 50% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7509,1.7106,2016-04-11,,,2751,-0.8715
+1285,3 momentum rotation,"broad top1 12m mom, every 4w, 3x",1986-10-06,39.9600,0.0635,1.7091,1995-03-27,237.0000,0.1715,1382,-0.9936
+1288,3 momentum rotation,"broad top1 12m mom, every 4w +abs filter, 3x",1986-10-06,39.9600,0.0804,1.7091,1995-03-27,237.0000,0.1715,1382,-0.9820
+1513,3 momentum rotation,"risk-mix top2 6m mom, every 1w, 1x",2000-12-11,25.7800,0.2342,1.7069,2016-05-09,668.0000,0.2428,2751,-0.7807
+1629,3 momentum rotation,"growth top2 1m mom, every 4w, 3x",1999-02-01,27.6400,0.0670,1.6969,2012-12-17,218.0000,0.0792,2751,-0.9999
+1572,3 momentum rotation,"risk-mix top3 12m mom, every 4w +abs filter, 3x",2001-06-11,25.2800,0.3060,1.6956,2016-05-09,627.0000,0.2279,2751,-0.9144
+2797,7 combination,"50% NDX 3x SMA200 + 50% NDX 3x hold, rebalance 4w",1986-07-21,40.1700,0.2092,1.6928,1995-03-06,1188.0000,0.8596,1382,-0.9851
+57,1 buy-and-hold,BTC 1x buy-and-hold,2014-09-22,12.0000,0.5637,1.6911,2016-04-11,,,2751,-0.8209
+1697,3 momentum rotation,"growth top2 12m mom, every 1w +abs filter, 2x",1999-12-27,26.7400,0.2761,1.6906,2012-12-17,423.0000,0.1538,2751,-0.8974
+821,2 trend filter,BTC 1x SMA200 band2% (off=cash),2015-07-13,11.1900,0.7288,1.6905,2016-04-11,,,2751,-0.6373
+2798,7 combination,"50% NDX 3x SMA200 + 50% NDX 3x hold, rebalance 13w",1986-07-21,40.1700,0.2280,1.6892,1995-03-06,1182.0000,0.8553,1382,-0.9695
+2539,5 volatility regime,BTC 2x when 21d vol<60% (off=1x),2014-10-20,11.9200,0.3854,1.6857,2016-04-04,,,2751,-0.9458
+1516,3 momentum rotation,"risk-mix top2 6m mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.2695,1.6834,2016-05-09,854.0000,0.3104,2751,-0.7895
+3286,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.7867,1.6829,2016-04-11,,,2751,-0.6072
+1486,3 momentum rotation,"risk-mix top2 3m mom, every 4w +abs filter, 1x",2000-09-11,26.0300,0.2918,1.6816,2016-05-09,2402.0000,0.8731,2751,-0.7076
+1393,3 momentum rotation,"crypto top2 6m mom, every 4w, 1x",2016-11-21,9.8300,0.6256,1.6781,2016-12-05,,,2751,-0.9212
+845,2 trend filter,BTC 1x Donchian 100/50 (off=cash),2015-02-17,11.5900,0.5543,1.6776,2016-04-11,,,2751,-0.7420
+1483,3 momentum rotation,"risk-mix top2 3m mom, every 4w, 1x",2000-09-11,26.0300,0.2264,1.6698,2016-05-09,2081.0000,0.7565,2751,-0.7702
+2950,7 combination,"75% SMH 3x SMA200 + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.9858,1.6658,2016-02-16,,,2751,-0.7785
+1540,3 momentum rotation,"risk-mix top1 12m mom, every 1w +abs filter, 1x",2001-06-11,25.2800,0.3045,1.6655,2016-05-09,2025.0000,0.7361,2751,-0.8063
+2988,7 combination,"25% NDX 3x hold + 75% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.6187,1.6619,2016-04-11,,,2751,-0.7561
+1537,3 momentum rotation,"risk-mix top1 12m mom, every 1w, 1x",2001-06-11,25.2800,0.2848,1.6615,2016-05-09,2025.0000,0.7361,2751,-0.8078
+194,2 trend filter,NDX 3x SMA200 (off=1x),1986-07-21,40.1700,0.2156,1.6581,1995-03-06,1237.0000,0.8951,1382,-0.9640
+1622,3 momentum rotation,"growth top2 1m mom, every 1w, 2x",1999-02-01,27.6400,0.2044,1.6561,2016-04-11,35.0000,0.0127,2751,-0.9932
+2721,5 volatility regime,"BTC vol target 100% (63d), max 1x",2014-12-22,11.7500,0.5951,1.6540,2016-04-11,,,2751,-0.8127
+3087,7 combination,"75% BTC 1x hold + 25% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6656,1.6527,2016-04-11,,,2751,-0.7756
+3303,7 combination,"1/3 each SPX 3x SMA200 + BTC 1x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.6825,1.6509,2016-04-11,,,2751,-0.7719
+3088,7 combination,"75% BTC 1x hold + 25% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6700,1.6493,2016-04-11,,,2751,-0.7767
+2933,7 combination,"25% SMH 3x SMA200 + 75% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.6862,1.6488,2016-04-04,,,2751,-0.7071
+234,2 trend filter,NDX 3x SMA50>SMA200 (off=1x),1986-07-21,40.1700,0.2275,1.6475,1995-03-06,932.0000,0.6744,1382,-0.9402
+1414,3 momentum rotation,"crypto top1 blend mom, every 1w, 2x",2016-11-21,9.8300,0.2582,1.6457,2016-11-28,,,2751,-0.9982
+1703,3 momentum rotation,"growth top2 12m mom, every 4w +abs filter, 2x",1999-12-27,26.7400,0.2792,1.6448,2016-04-11,645.0000,0.2345,2751,-0.8946
+2799,7 combination,"75% NDX 3x SMA200 + 25% NDX 3x hold, rebalance 4w",1986-07-21,40.1700,0.2095,1.6442,1995-03-06,1254.0000,0.9074,1382,-0.9541
+2322,4 mean reversion / dip,"BTC buy 2x on RSI2<20 in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.5855,1.6438,2016-04-11,,,2751,-0.8574
+2704,5 volatility regime,"BTC vol target 80% (21d), max 2x + SMA200",2015-07-13,11.1900,0.7060,1.6425,2016-04-04,,,2751,-0.8998
+3115,7 combination,"50% BTC 1x hold + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5758,1.6414,2016-10-24,,,2751,-0.8629
+2800,7 combination,"75% NDX 3x SMA200 + 25% NDX 3x hold, rebalance 13w",1986-07-21,40.1700,0.2196,1.6414,1995-03-06,1253.0000,0.9067,1382,-0.9342
+2400,4 mean reversion / dip,"BTC buy 2x on week<-15%, hold 1w, else 1x",2015-07-13,11.1900,0.6223,1.6413,2016-04-11,,,2751,-0.8678
+3118,7 combination,"75% BTC 1x hold + 25% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.6243,1.6407,2016-10-24,,,2751,-0.8442
+3116,7 combination,"50% BTC 1x hold + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5775,1.6402,2016-10-24,,,2751,-0.8669
+849,2 trend filter,BTC 2x Donchian 250/125 (off=cash),2015-09-21,11.0000,0.4201,1.6385,2016-04-04,,,2751,-0.9813
+2409,4 mean reversion / dip,"BTC buy 2x on week<-15% in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6408,1.6384,2016-04-11,,,2751,-0.8384
+3117,7 combination,"75% BTC 1x hold + 25% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.6209,1.6352,2016-10-24,,,2751,-0.8408
+2370,4 mean reversion / dip,"BTC buy 2x on 20-day low, hold 4w, else 1x",2015-07-13,11.1900,0.3482,1.6322,2016-04-11,,,2751,-0.9410
+914,2 trend filter,ETH 1x 1m momentum>0 (off=cash),2016-06-27,10.2300,0.5956,1.6319,2016-11-07,,,2751,-0.8577
+3164,7 combination,"50% BTC 2x SMA200 + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.8398,1.6313,2017-03-13,,,2751,-0.9177
+2703,5 volatility regime,"BTC vol target 80% (21d), max 2x",2014-10-20,11.9200,0.4543,1.6296,2016-04-04,,,2751,-0.9165
+2286,4 mean reversion / dip,"BTC buy 2x on RSI2<5 in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.6049,1.6275,2016-04-11,,,2751,-0.8030
+1441,3 momentum rotation,"risk-mix top2 1m mom, every 1w, 1x",2000-07-10,26.2000,0.1993,1.6268,2016-11-07,1385.0000,0.5035,2751,-0.7838
+1213,3 momentum rotation,"broad top1 3m mom, every 4w, 3x",1986-01-06,40.7100,0.1557,1.6254,1995-03-06,78.0000,0.0564,1382,-0.9706
+3314,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.6232,1.6243,2016-04-11,,,2751,-0.6836
+854,2 trend filter,BTC 1x 3m momentum>0 (off=cash),2014-12-22,11.7500,0.4587,1.6225,2016-04-11,,,2751,-0.6563
+209,2 trend filter,NDX 3x SMA200 band2% (off=1x),1986-07-21,40.1700,0.2068,1.6205,1995-03-06,911.0000,0.6592,1382,-0.9715
+1655,3 momentum rotation,"growth top2 3m mom, every 4w +abs filter, 2x",1999-03-29,27.4800,0.2618,1.6195,2016-11-07,1887.0000,0.6859,2751,-0.8032
+3282,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.9127,1.6167,2017-03-13,,,2751,-0.8055
+3188,7 combination,"50% BTC 2x SMA200 + 50% sectors top1 3m 3x, rebalance 13w",2015-07-13,11.1900,0.6588,1.6099,2016-03-14,,,2751,-0.9030
+1396,3 momentum rotation,"crypto top2 6m mom, every 4w +abs filter, 2x",2016-11-21,9.8300,0.6637,1.6090,2016-11-28,,,2751,-0.9931
+2705,5 volatility regime,"BTC vol target 100% (21d), max 1x",2014-10-20,11.9200,0.5492,1.6012,2016-04-11,,,2751,-0.7985
+2987,7 combination,"25% NDX 3x hold + 75% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.6083,1.6001,2016-04-11,,,2751,-0.7485
+857,2 trend filter,BTC 1x 6m momentum>0 (off=cash),2015-03-23,11.5000,0.5592,1.5949,2016-04-11,,,2751,-0.6670
+3085,7 combination,"50% BTC 1x hold + 50% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6559,1.5932,2016-04-11,,,2751,-0.7259
+193,2 trend filter,NDX 3x SMA200 (off=cash),1986-07-21,40.1700,0.1928,1.5929,1995-03-06,1281.0000,0.9269,1382,-0.9063
+2355,4 mean reversion / dip,"BTC buy 2x on 10-day low in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.5856,1.5914,2016-04-11,,,2751,-0.8316
+800,2 trend filter,BTC 1x SMA20 (off=cash),2014-10-20,11.9200,0.5288,1.5895,2016-04-11,,,2751,-0.6754
+3086,7 combination,"50% BTC 1x hold + 50% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6618,1.5894,2016-04-11,,,2751,-0.7274
+1388,3 momentum rotation,"crypto top1 6m mom, every 4w +abs filter, 2x",2016-11-21,9.8300,0.2793,1.5894,2020-03-16,3538.0000,0.9935,3561,-0.9995
+2283,4 mean reversion / dip,"BTC buy 2x on RSI2<5 in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6297,1.5870,2016-04-11,,,2751,-0.8144
+3162,7 combination,"25% BTC 2x SMA200 + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7456,1.5829,2017-03-13,,,2751,-0.9116
+3316,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.7121,1.5817,2016-04-11,,,2751,-0.5999
+3332,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,1.0315,1.5808,2017-03-13,,,2751,-0.8299
+229,2 trend filter,NDX 3x SMA50>SMA150 (off=1x),1986-05-12,40.3600,0.2013,1.5805,1995-03-06,684.0000,0.4949,1382,-0.9568
+233,2 trend filter,NDX 3x SMA50>SMA200 (off=cash),1986-07-21,40.1700,0.2176,1.5790,1995-03-06,1185.0000,0.8575,1382,-0.8910
+2717,5 volatility regime,"BTC vol target 80% (63d), max 1x",2014-12-22,11.7500,0.5693,1.5739,2016-04-04,,,2751,-0.7760
+1625,3 momentum rotation,"growth top2 1m mom, every 1w +abs filter, 2x",1999-02-01,27.6400,0.2161,1.5738,2016-08-22,105.0000,0.0382,2751,-0.8775
+2808,7 combination,"25% NDX 3x SMA200 + 75% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.6031,1.5723,2016-04-11,,,2751,-0.6972
+1568,3 momentum rotation,"risk-mix top3 12m mom, every 4w, 2x",2001-06-11,25.2800,0.2681,1.5703,2016-05-09,343.0000,0.1247,2751,-0.8998
+1632,3 momentum rotation,"growth top2 1m mom, every 4w +abs filter, 3x",1999-02-01,27.6400,0.1368,1.5663,2019-03-11,1718.0000,0.5276,3256,-0.9922
+2316,4 mean reversion / dip,"BTC buy 2x on RSI2<20, hold 4w, else 1x",2015-07-13,11.1900,0.4034,1.5631,2016-04-04,,,2751,-0.9845
+1425,3 momentum rotation,"crypto top2 blend mom, every 4w, 1x",2016-11-21,9.8300,0.5822,1.5614,2016-12-05,,,2751,-0.9319
+824,2 trend filter,BTC 1x 10-month SMA (off=cash),2015-07-06,11.2100,0.6920,1.5592,2016-04-11,,,2751,-0.7075
+3169,7 combination,"50% BTC 2x SMA200 + 50% TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.5385,1.5570,2016-04-04,,,2751,-0.7994
+3312,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.8486,1.5563,2017-03-13,,,2751,-0.7796
+1428,3 momentum rotation,"crypto top2 blend mom, every 4w +abs filter, 2x",2016-11-21,9.8300,0.4983,1.5528,2016-11-28,,,2751,-0.9941
+2328,4 mean reversion / dip,"BTC buy 2x on 5-day low, hold 1w, else 1x",2015-07-13,11.1900,0.5392,1.5482,2016-04-11,,,2751,-0.9091
+2715,5 volatility regime,"BTC vol target 60% (63d), max 2x",2014-12-22,11.7500,0.5847,1.5463,2016-04-04,,,2751,-0.7743
+2716,5 volatility regime,"BTC vol target 60% (63d), max 2x + SMA200",2015-07-13,11.1900,0.7030,1.5460,2016-04-04,,,2751,-0.6612
+836,2 trend filter,BTC 1x SMA50>SMA200 (off=cash),2015-07-13,11.1900,0.6520,1.5445,2016-04-11,,,2751,-0.6468
+2936,7 combination,"50% SMH 3x SMA200 + 50% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.7469,1.5436,2016-04-04,,,2751,-0.6141
+1444,3 momentum rotation,"risk-mix top2 1m mom, every 1w +abs filter, 1x",2000-07-10,26.2000,0.2217,1.5410,2016-11-07,1350.0000,0.4907,2751,-0.7256
+1279,3 momentum rotation,"broad top1 12m mom, every 1w, 3x",1986-10-06,39.9600,0.0882,1.5393,1995-03-27,115.0000,0.0832,1382,-0.9852
+1282,3 momentum rotation,"broad top1 12m mom, every 1w +abs filter, 3x",1986-10-06,39.9600,0.1280,1.5393,1995-03-27,115.0000,0.0832,1382,-0.9056
+1429,3 momentum rotation,"risk-mix top1 1m mom, every 1w, 1x",2000-07-10,26.2000,0.1908,1.5392,2016-10-24,1211.0000,0.4402,2751,-0.8474
+3113,7 combination,"25% BTC 1x hold + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4881,1.5390,2016-10-24,,,2751,-0.8997
+208,2 trend filter,NDX 3x SMA200 band2% (off=cash),1986-07-21,40.1700,0.1798,1.5348,1995-03-06,1165.0000,0.8430,1382,-0.9175
+3114,7 combination,"25% BTC 1x hold + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.4883,1.5343,2016-10-24,,,2751,-0.9012
+2319,4 mean reversion / dip,"BTC buy 2x on RSI2<20 in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.5348,1.5319,2016-04-11,,,2751,-0.8477
+3578,8 option overlay,"NDX calls K=1.00S 182d, 100% of equity, SMA200 uptrend, roll 13w",2001-01-29,25.6400,-0.1708,1.5280,2016-11-14,2616.0000,0.9509,2751,-1.0000
+3175,7 combination,"50% BTC 2x SMA200 + 50% GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.6864,1.5276,2016-04-04,,,2751,-0.7396
+3024,7 combination,"25% NDX 3x hold + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5565,1.5263,2016-11-07,,,2751,-0.8399
+3345,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.5672,1.5252,2016-04-04,,,2751,-0.7459
+2403,4 mean reversion / dip,"BTC buy 2x on week<-15%, hold 2w, else 1x",2015-07-13,11.1900,0.5763,1.5244,2016-04-11,,,2751,-0.8974
+2700,5 volatility regime,"BTC vol target 60% (21d), max 2x + SMA200",2015-07-13,11.1900,0.6851,1.5231,2016-04-04,,,2751,-0.7680
+2701,5 volatility regime,"BTC vol target 80% (21d), max 1x",2014-10-20,11.9200,0.5349,1.5213,2016-04-11,,,2751,-0.7528
+3003,7 combination,"75% NDX 3x hold + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.6808,1.5210,2016-02-08,,,2751,-0.7555
+2304,4 mean reversion / dip,"BTC buy 2x on RSI2<10 in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.6077,1.5205,2016-04-11,,,2751,-0.8317
+2986,7 combination,"75% NDX 3x hold + 25% SPX 3x hold, rebalance 13w",1985-10-07,40.9600,0.1926,1.5204,1995-01-03,669.0000,0.4841,1382,-0.9989
+1705,3 momentum rotation,"growth top1 blend mom, every 1w, 1x",1999-06-28,27.2300,0.2097,1.5203,2016-04-11,422.0000,0.1534,2751,-0.8285
+2985,7 combination,"75% NDX 3x hold + 25% SPX 3x hold, rebalance 4w",1985-10-07,40.9600,0.1875,1.5196,1995-01-03,636.0000,0.4602,1382,-0.9990
+3036,7 combination,"25% SPX 3x hold + 75% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.5716,1.5187,2016-04-11,,,2751,-0.7144
+1571,3 momentum rotation,"risk-mix top3 12m mom, every 4w +abs filter, 2x",2001-06-11,25.2800,0.2591,1.5182,2016-05-09,974.0000,0.3541,2751,-0.9095
+3083,7 combination,"25% BTC 1x hold + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6345,1.5158,2016-04-11,,,2751,-0.7133
+1687,3 momentum rotation,"growth top1 12m mom, every 4w, 1x",1999-12-27,26.7400,0.2204,1.5156,2016-04-11,1335.0000,0.4853,2751,-0.8377
+3084,7 combination,"25% BTC 1x hold + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6392,1.5136,2016-04-11,,,2751,-0.7166
+2301,4 mean reversion / dip,"BTC buy 2x on RSI2<10 in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.6279,1.5127,2016-04-11,,,2751,-0.8316
+1657,3 momentum rotation,"growth top1 6m mom, every 1w, 1x",1999-06-28,27.2300,0.1945,1.5123,2012-12-17,1328.0000,0.4827,2751,-0.8382
+3358,7 combination,"1/3 each BTC 2x SMA200 + ETH 1x SMA200 + GLD 1x hold, rebalance 13w",2017-03-13,9.5200,0.8216,1.5122,2017-03-13,,,2751,-0.7567
+2807,7 combination,"25% NDX 3x SMA200 + 75% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5883,1.5118,2016-04-11,,,2751,-0.6890
+1432,3 momentum rotation,"risk-mix top1 1m mom, every 1w +abs filter, 1x",2000-07-10,26.2000,0.2197,1.5103,2013-01-07,892.0000,0.3242,2751,-0.8396
+887,2 trend filter,ETH 1x 10-month SMA (off=cash),2017-03-06,9.5400,0.5422,1.5029,2017-03-06,,,2751,-0.9275
+1394,3 momentum rotation,"crypto top2 6m mom, every 4w, 2x",2016-11-21,9.8300,0.2412,1.5027,2016-12-05,,,2751,-0.9992
+269,2 trend filter,NDX 3x 6m momentum>0 (off=1x),1986-04-07,40.4600,0.1834,1.5021,1995-03-06,881.0000,0.6375,1382,-0.9695
+2874,7 combination,"25% SPX 3x SMA200 + 75% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.5519,1.5012,2016-04-11,,,2751,-0.7262
+249,2 trend filter,NDX 3x Donchian 100/50 (off=1x),1986-03-03,40.5500,0.1867,1.5007,1995-03-06,1195.0000,0.8647,1382,-0.9448
+239,2 trend filter,NDX 3x Donchian 20/10 (off=1x),1985-11-04,40.8800,0.1717,1.5004,1995-01-03,1194.0000,0.8640,1382,-0.9878
+3098,7 combination,"50% BTC 1x hold + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7066,1.4963,2017-03-13,,,2751,-0.7902
+3347,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.6594,1.4941,2016-04-04,,,2751,-0.7348
+2990,7 combination,"50% NDX 3x hold + 50% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.6103,1.4915,2016-02-08,,,2751,-0.7639
+1708,3 momentum rotation,"growth top1 blend mom, every 1w +abs filter, 1x",1999-06-28,27.2300,0.2405,1.4905,2016-04-11,549.0000,0.1996,2751,-0.7706
+3360,7 combination,"1/3 each BTC 2x SMA200 + TLT 3x hold + GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.5951,1.4879,2016-04-04,,,2751,-0.6631
+2699,5 volatility regime,"BTC vol target 60% (21d), max 2x",2014-10-20,11.9200,0.5067,1.4867,2016-04-04,,,2751,-0.8310
+2970,7 combination,"25% SMH 3x SMA200 + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.6874,1.4849,2016-11-07,,,2751,-0.8417
+1177,3 momentum rotation,"broad top1 1m mom, every 4w, 3x",1985-11-04,40.8800,0.0519,1.4833,1995-01-03,1192.0000,0.8625,1382,-0.9933
+809,2 trend filter,BTC 1x SMA150 (off=cash),2015-04-27,11.4000,0.5526,1.4818,2016-04-11,,,2751,-0.6997
+3295,7 combination,"1/3 each SPX 3x SMA200 + SMH 3x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.7738,1.4814,2016-04-11,,,2751,-0.6984
+3265,7 combination,"1/3 each NDX 3x SMA200 + SMH 3x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8094,1.4751,2016-04-11,,,2751,-0.7602
+1546,3 momentum rotation,"risk-mix top1 12m mom, every 4w +abs filter, 1x",2001-06-11,25.2800,0.2491,1.4731,2016-05-09,1976.0000,0.7183,2751,-0.8032
+1461,3 momentum rotation,"risk-mix top3 1m mom, every 4w, 3x",2000-07-10,26.2000,0.1928,1.4727,2016-05-09,614.0000,0.2232,2751,-0.9841
+2862,7 combination,"25% SPX 3x SMA200 + 75% NDX 3x hold, rebalance 13w",1985-10-07,40.9600,0.2217,1.4726,1995-01-03,933.0000,0.6751,1382,-0.9937
+3026,7 combination,"50% NDX 3x hold + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.6407,1.4717,2016-11-07,,,2751,-0.7307
+228,2 trend filter,NDX 3x SMA50>SMA150 (off=cash),1986-05-12,40.3600,0.1809,1.4711,1995-03-06,1039.0000,0.7518,1382,-0.8792
+1690,3 momentum rotation,"growth top1 12m mom, every 4w +abs filter, 1x",1999-12-27,26.7400,0.2439,1.4685,2016-04-11,1335.0000,0.4853,2751,-0.7748
+1543,3 momentum rotation,"risk-mix top1 12m mom, every 4w, 1x",2001-06-11,25.2800,0.2320,1.4678,2016-05-09,1976.0000,0.7183,2751,-0.8053
+2324,4 mean reversion / dip,"BTC buy 2x on RSI2<20 in uptrend, hold 4w, else cash",2015-07-13,11.1900,0.3591,1.4672,2016-02-08,,,2751,-0.8010
+2824,7 combination,"75% NDX 3x SMA200 + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.7262,1.4671,2016-04-11,,,2751,-0.7223
+803,2 trend filter,BTC 1x SMA50 (off=cash),2014-12-01,11.8100,0.4621,1.4616,2016-04-11,,,2751,-0.6371
+1489,3 momentum rotation,"risk-mix top3 3m mom, every 1w, 1x",2000-09-11,26.0300,0.2186,1.4595,2016-05-09,1597.0000,0.5805,2751,-0.6907
+3035,7 combination,"25% SPX 3x hold + 75% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5585,1.4592,2016-04-11,,,2751,-0.7048
+1663,3 momentum rotation,"growth top1 6m mom, every 4w, 1x",1999-06-28,27.2300,0.2024,1.4587,2016-04-11,513.0000,0.1865,2751,-0.8510
+1660,3 momentum rotation,"growth top1 6m mom, every 1w +abs filter, 1x",1999-06-28,27.2300,0.2044,1.4585,2012-12-17,2335.0000,0.8488,2751,-0.7572
+2412,4 mean reversion / dip,"BTC buy 2x on week<-15% in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.5613,1.4556,2016-04-11,,,2751,-0.8934
+3356,7 combination,"1/3 each BTC 2x SMA200 + ETH 1x SMA200 + TLT 3x hold, rebalance 13w",2017-03-13,9.5200,0.6605,1.4541,2017-03-13,,,2751,-0.7580
+2861,7 combination,"25% SPX 3x SMA200 + 75% NDX 3x hold, rebalance 4w",1985-10-07,40.9600,0.2063,1.4513,1995-01-03,904.0000,0.6541,1382,-0.9960
+1427,3 momentum rotation,"crypto top2 blend mom, every 4w +abs filter, 1x",2016-11-21,9.8300,0.6310,1.4507,2016-11-28,,,2751,-0.8181
+1711,3 momentum rotation,"growth top1 blend mom, every 4w, 1x",1999-06-28,27.2300,0.2135,1.4469,2012-12-17,798.0000,0.2901,2751,-0.8324
+1501,3 momentum rotation,"risk-mix top1 6m mom, every 1w, 1x",2000-12-11,25.7800,0.1697,1.4468,2012-12-17,2442.0000,0.8877,2751,-0.9201
+3333,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.6814,1.4456,2016-02-16,,,2751,-0.6429
+1464,3 momentum rotation,"risk-mix top3 1m mom, every 4w +abs filter, 3x",2000-07-10,26.2000,0.2657,1.4451,2016-05-09,2251.0000,0.8182,2751,-0.9459
+1504,3 momentum rotation,"risk-mix top1 6m mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.1994,1.4399,2012-12-17,2442.0000,0.8877,2751,-0.9248
+3023,7 combination,"25% NDX 3x hold + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5159,1.4399,2016-11-07,,,2751,-0.8548
+806,2 trend filter,BTC 1x SMA100 (off=cash),2015-02-17,11.5900,0.5124,1.4397,2016-04-11,,,2751,-0.7538
+860,2 trend filter,BTC 1x 12m momentum>0 (off=cash),2015-09-21,11.0000,0.5918,1.4397,2016-04-11,,,2751,-0.8049
+2722,5 volatility regime,"BTC vol target 100% (63d), max 1x + SMA200",2015-07-13,11.1900,0.6071,1.4390,2016-04-11,,,2751,-0.7136
+3149,7 combination,"25% BTC 1x SMA200 + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4716,1.4385,2016-10-24,,,2751,-0.8960
+2935,7 combination,"50% SMH 3x SMA200 + 50% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.7206,1.4383,2016-04-04,,,2751,-0.6360
+1381,3 momentum rotation,"crypto top1 6m mom, every 1w, 1x",2016-11-21,9.8300,0.5618,1.4380,2016-11-28,,,2751,-0.8821
+3151,7 combination,"50% BTC 1x SMA200 + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5436,1.4355,2016-10-24,,,2751,-0.8461
+3344,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7840,1.4345,2017-03-20,,,2751,-0.8661
+2406,4 mean reversion / dip,"BTC buy 2x on week<-15%, hold 4w, else 1x",2015-07-13,11.1900,0.4383,1.4334,2016-04-11,,,2751,-0.9343
+3100,7 combination,"75% BTC 1x hold + 25% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6978,1.4334,2017-03-27,,,2751,-0.7498
+2873,7 combination,"25% SPX 3x SMA200 + 75% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5317,1.4317,2016-04-11,,,2751,-0.7166
+815,2 trend filter,BTC 1x SMA50 band2% (off=cash),2014-12-01,11.8100,0.4810,1.4313,2016-04-11,,,2751,-0.6534
+2277,4 mean reversion / dip,"BTC buy 2x on RSI2<5, hold 2w, else 1x",2015-07-13,11.1900,0.5587,1.4294,2016-04-11,,,2751,-0.8669
+2989,7 combination,"50% NDX 3x hold + 50% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5939,1.4292,2016-02-08,,,2751,-0.7545
+3150,7 combination,"25% BTC 1x SMA200 + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.4730,1.4288,2016-09-06,,,2751,-0.9010
+3518,8 option overlay,"NDX calls K=0.90S 182d, 100% of equity, always, roll 13w",2001-01-29,25.6400,-0.3253,1.4279,2009-03-09,2727.0000,0.9985,2731,-1.0000
+3152,7 combination,"50% BTC 1x SMA200 + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5476,1.4269,2016-09-06,,,2751,-0.8557
+3112,7 combination,"75% BTC 1x hold + 25% GLD 1x hold, rebalance 13w",2014-09-22,12.0000,0.5419,1.4257,2016-04-04,,,2751,-0.6910
+812,2 trend filter,BTC 1x SMA200 (off=cash),2015-07-13,11.1900,0.6023,1.4228,2016-04-11,,,2751,-0.7337
+2706,5 volatility regime,"BTC vol target 100% (21d), max 1x + SMA200",2015-07-13,11.1900,0.6058,1.4227,2016-04-11,,,2751,-0.6990
+1492,3 momentum rotation,"risk-mix top3 3m mom, every 1w +abs filter, 1x",2000-09-11,26.0300,0.2323,1.4220,2016-05-09,1984.0000,0.7212,2751,-0.5994
+827,2 trend filter,BTC 1x SMA10>SMA50 (off=cash),2014-12-01,11.8100,0.4612,1.4197,2016-04-11,,,2751,-0.6566
+2397,4 mean reversion / dip,"BTC buy 2x on week<-10% in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.4921,1.4194,2016-04-11,,,2751,-0.9448
+3106,7 combination,"75% BTC 1x hold + 25% TLT 3x hold, rebalance 13w",2014-09-22,12.0000,0.4739,1.4185,2016-04-04,,,2751,-0.7582
+1639,3 momentum rotation,"growth top1 3m mom, every 4w, 1x",1999-03-29,27.4800,0.2076,1.4178,2016-11-07,1217.0000,0.4424,2751,-0.8327
+3590,8 option overlay,"NDX calls K=1.05S 182d, 100% of equity, SMA200 uptrend, roll 13w",2001-01-29,25.6400,-0.3776,1.4162,2016-12-05,2719.0000,0.9884,2751,-1.0000
+2969,7 combination,"25% SMH 3x SMA200 + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.6064,1.4157,2016-11-07,,,2751,-0.8673
+189,2 trend filter,NDX 3x SMA150 (off=1x),1986-05-12,40.3600,0.2007,1.4132,1995-03-06,1068.0000,0.7728,1382,-0.9663
+1681,3 momentum rotation,"growth top1 12m mom, every 1w, 1x",1999-12-27,26.7400,0.2107,1.4130,2016-04-11,1607.0000,0.5842,2751,-0.8300
+2718,5 volatility regime,"BTC vol target 80% (63d), max 1x + SMA200",2015-07-13,11.1900,0.5960,1.4113,2016-04-04,,,2751,-0.6401
+2346,4 mean reversion / dip,"BTC buy 2x on 10-day low, hold 1w, else 1x",2015-07-13,11.1900,0.5369,1.4078,2016-04-11,,,2751,-0.8819
+1249,3 momentum rotation,"broad top1 6m mom, every 4w, 3x",1986-04-07,40.4600,0.0457,1.4066,1995-03-06,587.0000,0.4247,1382,-0.9902
+2806,7 combination,"75% NDX 3x SMA200 + 25% SPX 3x hold, rebalance 13w",1986-07-21,40.1700,0.2058,1.4045,1995-01-03,1256.0000,0.9088,1382,-0.8850
+1633,3 momentum rotation,"growth top1 3m mom, every 1w, 1x",1999-03-29,27.4800,0.2010,1.4041,2016-05-02,1799.0000,0.6539,2751,-0.8306
+2844,7 combination,"25% NDX 3x SMA200 + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5280,1.4034,2016-11-07,,,2751,-0.8510
+2994,7 combination,"25% NDX 3x hold + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6509,1.4028,2016-04-11,,,2751,-0.5978
+1597,3 momentum rotation,"risk-mix top3 blend mom, every 1w, 1x",2000-12-11,25.7800,0.2386,1.4017,2016-05-09,1350.0000,0.4907,2751,-0.6067
+2274,4 mean reversion / dip,"BTC buy 2x on RSI2<5, hold 1w, else 1x",2015-07-13,11.1900,0.5689,1.3989,2016-04-11,,,2751,-0.8750
+3072,7 combination,"25% SPX 3x hold + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.4967,1.3975,2016-11-07,,,2751,-0.8670
+2076,4 mean reversion / dip,"NDX buy 3x on RSI2<20, hold 4w, else 1x",1986-07-21,40.1700,0.1483,1.3967,1995-02-27,27.0000,0.0195,1382,-0.9949
+2940,7 combination,"25% SMH 3x SMA200 + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.7447,1.3963,2016-04-04,,,2751,-0.6267
+1321,3 momentum rotation,"broad top1 blend mom, every 4w, 3x",1986-04-07,40.4600,0.1117,1.3951,1995-03-06,203.0000,0.1469,1382,-0.9655
+1315,3 momentum rotation,"broad top1 blend mom, every 1w, 3x",1986-04-07,40.4600,0.1452,1.3949,1995-03-06,707.0000,0.5116,1382,-0.9664
+3096,7 combination,"25% BTC 1x hold + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6315,1.3921,2017-03-13,,,2751,-0.8558
+2805,7 combination,"75% NDX 3x SMA200 + 25% SPX 3x hold, rebalance 4w",1986-07-21,40.1700,0.2052,1.3902,1995-01-03,1259.0000,0.9110,1382,-0.8888
+1366,3 momentum rotation,"crypto top1 3m mom, every 1w, 2x",2016-08-22,10.0800,0.1909,1.3893,2016-11-07,,,2751,-0.9996
+3255,7 combination,"1/3 each NDX 3x SMA200 + SPX 3x SMA200 + BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.6482,1.3892,2016-04-11,,,2751,-0.6655
+2713,5 volatility regime,"BTC vol target 60% (63d), max 1x",2014-12-22,11.7500,0.5391,1.3878,2016-04-04,,,2751,-0.7396
+2367,4 mean reversion / dip,"BTC buy 2x on 20-day low, hold 2w, else 1x",2015-07-13,11.1900,0.4413,1.3873,2016-04-11,,,2751,-0.8881
+1600,3 momentum rotation,"risk-mix top3 blend mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.2507,1.3868,2016-05-09,1238.0000,0.4500,2751,-0.4874
+3025,7 combination,"50% NDX 3x hold + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5958,1.3837,2016-11-07,,,2751,-0.7176
+1408,3 momentum rotation,"crypto top2 12m mom, every 1w +abs filter, 2x",2017-05-22,9.3300,0.1647,1.3796,2020-03-16,,,3561,-0.9973
+3166,7 combination,"75% BTC 2x SMA200 + 25% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7795,1.3782,2017-03-20,,,2751,-0.9489
+3335,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.7751,1.3766,2016-04-04,,,2751,-0.6322
+3052,7 combination,"75% SPX 3x hold + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.6656,1.3758,2016-02-08,,,2751,-0.7822
+2972,7 combination,"50% SMH 3x SMA200 + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.8538,1.3730,2016-11-07,,,2751,-0.7325
+224,2 trend filter,NDX 3x SMA20>SMA100 (off=1x),1986-03-03,40.5500,0.2074,1.3721,1995-03-06,274.0000,0.1983,1382,-0.9564
+1460,3 momentum rotation,"risk-mix top3 1m mom, every 4w, 2x",2000-07-10,26.2000,0.2298,1.3700,2016-05-09,867.0000,0.3152,2751,-0.9434
+2993,7 combination,"25% NDX 3x hold + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6308,1.3687,2016-04-11,,,2751,-0.5880
+2890,7 combination,"75% SPX 3x SMA200 + 25% BTC 2x SMA200, rebalance 13w",2015-07-13,11.1900,0.6115,1.3636,2016-04-11,,,2751,-0.6088
+268,2 trend filter,NDX 3x 6m momentum>0 (off=cash),1986-04-07,40.4600,0.1512,1.3636,1995-03-06,1154.0000,0.8350,1382,-0.9097
+2788,7 combination,"75% NDX 3x SMA200 + 25% SPX 3x SMA200, rebalance 13w",1986-07-21,40.1700,0.1991,1.3623,1995-01-03,1264.0000,0.9146,1382,-0.8445
+1463,3 momentum rotation,"risk-mix top3 1m mom, every 4w +abs filter, 2x",2000-07-10,26.2000,0.2661,1.3586,2016-05-09,1918.0000,0.6972,2751,-0.9412
+2843,7 combination,"25% NDX 3x SMA200 + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4925,1.3583,2016-11-07,,,2751,-0.8618
+1714,3 momentum rotation,"growth top1 blend mom, every 4w +abs filter, 1x",1999-06-28,27.2300,0.2338,1.3568,2012-12-17,1979.0000,0.7194,2751,-0.7814
+1666,3 momentum rotation,"growth top1 6m mom, every 4w +abs filter, 1x",1999-06-28,27.2300,0.2414,1.3523,2016-04-11,729.0000,0.2650,2751,-0.7376
+1636,3 momentum rotation,"growth top1 3m mom, every 1w +abs filter, 1x",1999-03-29,27.4800,0.2096,1.3505,2016-05-02,2473.0000,0.8989,2751,-0.7372
+1684,3 momentum rotation,"growth top1 12m mom, every 1w +abs filter, 1x",1999-12-27,26.7400,0.2333,1.3490,2016-04-11,1607.0000,0.5842,2751,-0.8514
+1628,3 momentum rotation,"growth top2 1m mom, every 4w, 2x",1999-02-01,27.6400,0.1610,1.3483,2012-12-17,304.0000,0.1105,2751,-0.9922
+1351,3 momentum rotation,"crypto top1 1m mom, every 1w +abs filter, 1x",2016-06-27,10.2300,0.3672,1.3477,2016-10-24,,,2751,-0.9351
+2949,7 combination,"75% SMH 3x SMA200 + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.8364,1.3450,2016-02-16,,,2751,-0.7774
+2939,7 combination,"25% SMH 3x SMA200 + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6942,1.3447,2016-04-04,,,2751,-0.6383
+2702,5 volatility regime,"BTC vol target 80% (21d), max 1x + SMA200",2015-07-13,11.1900,0.5812,1.3442,2016-04-11,,,2751,-0.6564
+248,2 trend filter,NDX 3x Donchian 100/50 (off=cash),1986-03-03,40.5500,0.1424,1.3441,1995-03-06,1263.0000,0.9139,1382,-0.8156
+2289,4 mean reversion / dip,"BTC buy 2x on RSI2<5 in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.4171,1.3352,2016-04-11,,,2751,-0.8832
+3154,7 combination,"75% BTC 1x SMA200 + 25% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5807,1.3315,2016-10-24,,,2751,-0.7987
+3153,7 combination,"75% BTC 1x SMA200 + 25% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5750,1.3311,2016-10-24,,,2751,-0.7888
+1395,3 momentum rotation,"crypto top2 6m mom, every 4w +abs filter, 1x",2016-11-21,9.8300,0.6698,1.3309,2016-11-28,,,2751,-0.8556
+3111,7 combination,"75% BTC 1x hold + 25% GLD 1x hold, rebalance 4w",2014-09-22,12.0000,0.5177,1.3302,2016-04-04,,,2751,-0.6729
+2787,7 combination,"75% NDX 3x SMA200 + 25% SPX 3x SMA200, rebalance 4w",1986-07-21,40.1700,0.1988,1.3299,1995-01-03,1266.0000,0.9161,1382,-0.8420
+2910,7 combination,"25% SPX 3x SMA200 + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.4780,1.3295,2016-11-07,,,2751,-0.8502
+61,1 buy-and-hold,LTC 1x buy-and-hold,2016-08-22,10.0800,0.3121,1.3264,2016-11-14,,,2751,-0.9333
+3105,7 combination,"75% BTC 1x hold + 25% TLT 3x hold, rebalance 4w",2014-09-22,12.0000,0.4576,1.3235,2016-04-04,,,2751,-0.7405
+818,2 trend filter,BTC 1x SMA100 band2% (off=cash),2015-02-17,11.5900,0.5461,1.3226,2016-04-11,,,2751,-0.7844
+244,2 trend filter,NDX 3x Donchian 50/25 (off=1x),1985-12-16,40.7600,0.1913,1.3208,1995-03-06,95.0000,0.0687,1382,-0.9743
+1243,3 momentum rotation,"broad top1 6m mom, every 1w, 3x",1986-04-07,40.4600,0.0274,1.3203,1995-03-06,1227.0000,0.8878,1382,-0.9870
+3283,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.5559,1.3197,2016-02-08,,,2751,-0.6360
+2971,7 combination,"50% SMH 3x SMA200 + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.7657,1.3144,2016-11-07,,,2751,-0.7703
+2814,7 combination,"25% NDX 3x SMA200 + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6140,1.3096,2016-04-11,,,2751,-0.6228
+2810,7 combination,"50% NDX 3x SMA200 + 50% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.5795,1.3073,2016-04-11,,,2751,-0.5946
+3071,7 combination,"25% SPX 3x hold + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4594,1.3071,2016-11-07,,,2751,-0.8762
+3374,8 option overlay,"SPX calls K=0.90S 182d, 100% of equity, always, roll 13w",1990-01-02,36.7200,-0.1578,1.3071,1994-07-11,1283.0000,0.9284,1382,-1.0000
+3124,7 combination,"75% BTC 1x hold + 25% sectors top1 3m 3x, rebalance 13w",2014-09-22,12.0000,0.4977,1.3056,2016-03-14,,,2751,-0.7469
+2498,5 volatility regime,NDX 3x when VIX<25 (off=1x),1990-01-08,36.7000,0.1643,1.3037,1995-01-03,915.0000,0.6621,1382,-0.9974
+2996,7 combination,"50% NDX 3x hold + 50% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6284,1.3030,2016-02-08,,,2751,-0.6299
+2909,7 combination,"25% SPX 3x SMA200 + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4512,1.3011,2016-11-07,,,2751,-0.8510
+1426,3 momentum rotation,"crypto top2 blend mom, every 4w, 2x",2016-11-21,9.8300,0.1739,1.3009,2016-12-05,,,2751,-0.9995
+2655,5 volatility regime,"NDX vol target 60% (21d), max 3x",1985-11-04,40.8800,0.2778,1.3004,1995-01-03,782.0000,0.5658,1382,-0.9571
+3568,8 option overlay,"NDX calls K=1.00S 30d, 25% of equity, SMA200 uptrend, roll 4w",2001-01-29,25.6400,-0.0430,1.3003,2017-01-03,2661.0000,0.9673,2751,-0.9972
+3434,8 option overlay,"SPX calls K=1.00S 182d, 100% of equity, SMA200 uptrend, roll 13w",1990-01-02,36.7200,-0.2404,1.2989,1994-07-18,1332.0000,0.9638,1382,-1.0000
+2691,5 volatility regime,"NDX vol target 60% (63d), max 3x",1986-01-06,40.7100,0.2532,1.2986,1995-01-03,629.0000,0.4551,1382,-0.9170
+1418,3 momentum rotation,"crypto top1 blend mom, every 4w, 2x",2016-11-21,9.8300,0.3200,1.2983,2020-03-16,3553.0000,0.9978,3561,-0.9997
+1631,3 momentum rotation,"growth top2 1m mom, every 4w +abs filter, 2x",1999-02-01,27.6400,0.1743,1.2981,2019-03-11,2009.0000,0.6170,3256,-0.9366
+1507,3 momentum rotation,"risk-mix top1 6m mom, every 4w, 1x",2000-12-11,25.7800,0.1302,1.2965,2012-12-17,2311.0000,0.8401,2751,-0.9354
+2091,4 mean reversion / dip,"NDX buy 3x on RSI2<20 in uptrend, hold 4w, else 1x",1986-07-21,40.1700,0.1992,1.2946,1995-02-27,1034.0000,0.7482,1382,-0.8522
+2697,5 volatility regime,"BTC vol target 60% (21d), max 1x",2014-10-20,11.9200,0.4606,1.2911,2016-04-11,,,2751,-0.7507
+2772,6 seasonality,BTC 2x Nov-Apr only (sell in May),2014-09-22,12.0000,0.1274,1.2900,2020-03-16,3517.0000,0.9876,3561,-0.9876
+2778,6 seasonality,BTC 2x Q4 only,2014-09-22,12.0000,0.5155,1.2841,2016-10-17,,,2751,-0.8873
+1510,3 momentum rotation,"risk-mix top1 6m mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.1772,1.2837,2012-12-17,2311.0000,0.8401,2751,-0.9354
+1327,3 momentum rotation,"broad top2 blend mom, every 1w, 3x",1986-04-07,40.4600,0.1902,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9513
+1255,3 momentum rotation,"broad top2 6m mom, every 1w, 3x",1986-04-07,40.4600,0.1933,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9627
+1261,3 momentum rotation,"broad top2 6m mom, every 4w, 3x",1986-04-07,40.4600,0.1577,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9578
+1333,3 momentum rotation,"broad top2 blend mom, every 4w, 3x",1986-04-07,40.4600,0.1530,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9568
+1183,3 momentum rotation,"broad top2 1m mom, every 1w, 3x",1985-11-04,40.8800,0.1627,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9616
+1189,3 momentum rotation,"broad top2 1m mom, every 4w, 3x",1985-11-04,40.8800,0.1814,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9559
+1225,3 momentum rotation,"broad top2 3m mom, every 4w, 3x",1986-01-06,40.7100,0.2487,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9348
+1219,3 momentum rotation,"broad top2 3m mom, every 1w, 3x",1986-01-06,40.7100,0.2080,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9455
+1297,3 momentum rotation,"broad top2 12m mom, every 4w, 3x",1986-10-06,39.9600,0.2020,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9827
+1291,3 momentum rotation,"broad top2 12m mom, every 1w, 3x",1986-10-06,39.9600,0.2026,1.2811,1995-01-03,381.0000,0.2757,1382,-0.9813
+1400,3 momentum rotation,"crypto top1 12m mom, every 1w +abs filter, 2x",2017-05-22,9.3300,0.1144,1.2794,2020-03-16,,,3561,-0.9961
+2394,4 mean reversion / dip,"BTC buy 2x on week<-10% in uptrend, hold 2w, else 1x",2015-07-13,11.1900,0.4559,1.2742,2016-04-11,,,2751,-0.9248
+1207,3 momentum rotation,"broad top1 3m mom, every 1w, 3x",1986-01-06,40.7100,0.0919,1.2728,1995-03-06,195.0000,0.1411,1382,-0.9732
+2310,4 mean reversion / dip,"BTC buy 2x on RSI2<20, hold 1w, else 1x",2015-07-13,11.1900,0.4216,1.2723,2016-04-11,,,2751,-0.9129
+2846,7 combination,"50% NDX 3x SMA200 + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5980,1.2721,2016-11-07,,,2751,-0.7313
+3285,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.6447,1.2720,2016-04-11,,,2751,-0.5994
+1642,3 momentum rotation,"growth top1 3m mom, every 4w +abs filter, 1x",1999-03-29,27.4800,0.2330,1.2708,2016-11-07,2270.0000,0.8252,2751,-0.8097
+3614,8 option overlay,"NDX calls K=0.90S 182d, 100% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,-0.0491,1.2693,2016-11-07,2662.0000,0.9676,2751,-0.9974
+2984,7 combination,"50% NDX 3x hold + 50% SPX 3x hold, rebalance 13w",1985-10-07,40.9600,0.1987,1.2685,1995-01-03,501.0000,0.3625,1382,-0.9962
+3222,7 combination,"25% TLT 3x hold + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.3457,1.2684,2016-09-12,,,2751,-0.8213
+3123,7 combination,"75% BTC 1x hold + 25% sectors top1 3m 3x, rebalance 4w",2014-09-22,12.0000,0.4734,1.2675,2016-03-14,,,2751,-0.7287
+1387,3 momentum rotation,"crypto top1 6m mom, every 4w +abs filter, 1x",2016-11-21,9.8300,0.6428,1.2674,2020-03-16,1122.0000,0.3151,3561,-0.9308
+2983,7 combination,"50% NDX 3x hold + 50% SPX 3x hold, rebalance 4w",1985-10-07,40.9600,0.1930,1.2668,1995-01-03,433.0000,0.3133,1382,-0.9969
+2813,7 combination,"25% NDX 3x SMA200 + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.5953,1.2667,2016-04-11,,,2751,-0.6136
+3161,7 combination,"25% BTC 2x SMA200 + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6229,1.2646,2017-03-13,,,2751,-0.9189
+3042,7 combination,"25% SPX 3x hold + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.5905,1.2638,2016-04-11,,,2751,-0.6518
+2995,7 combination,"50% NDX 3x hold + 50% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.6022,1.2598,2016-02-08,,,2751,-0.6353
+2714,5 volatility regime,"BTC vol target 60% (63d), max 1x + SMA200",2015-07-13,11.1900,0.5650,1.2583,2016-04-04,,,2751,-0.6005
+3132,7 combination,"25% BTC 1x SMA200 + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5936,1.2582,2017-03-13,,,2751,-0.8726
+3234,7 combination,"25% GLD 1x hold + 75% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.4438,1.2577,2016-09-06,,,2751,-0.8313
+1294,3 momentum rotation,"broad top2 12m mom, every 1w +abs filter, 3x",1986-10-06,39.9600,0.2295,1.2573,1995-03-27,171.0000,0.1237,1382,-0.8011
+1300,3 momentum rotation,"broad top2 12m mom, every 4w +abs filter, 3x",1986-10-06,39.9600,0.2055,1.2573,1995-03-27,104.0000,0.0753,1382,-0.8054
+3134,7 combination,"50% BTC 1x SMA200 + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6446,1.2572,2017-03-13,,,2751,-0.8152
+2391,4 mean reversion / dip,"BTC buy 2x on week<-10% in uptrend, hold 1w, else 1x",2015-07-13,11.1900,0.4779,1.2560,2016-04-11,,,2751,-0.8558
+2533,5 volatility regime,NDX 3x when 21d vol<30% (off=1x),1985-11-04,40.8800,0.2970,1.2546,1995-01-03,948.0000,0.6860,1382,-0.8864
+1246,3 momentum rotation,"broad top1 6m mom, every 1w +abs filter, 3x",1986-04-07,40.4600,0.0256,1.2542,1995-03-06,1252.0000,0.9059,1382,-0.9737
+1531,3 momentum rotation,"risk-mix top3 6m mom, every 4w, 1x",2000-12-11,25.7800,0.2406,1.2524,2016-05-09,1163.0000,0.4228,2751,-0.6068
+1495,3 momentum rotation,"risk-mix top3 3m mom, every 4w, 1x",2000-09-11,26.0300,0.2043,1.2523,2016-05-09,1770.0000,0.6434,2751,-0.6576
+2280,4 mean reversion / dip,"BTC buy 2x on RSI2<5, hold 4w, else 1x",2015-07-13,11.1900,0.3856,1.2512,2016-04-11,,,2751,-0.9076
+3074,7 combination,"50% SPX 3x hold + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5405,1.2508,2016-11-07,,,2751,-0.7812
+238,2 trend filter,NDX 3x Donchian 20/10 (off=cash),1985-11-04,40.8800,0.1088,1.2497,1995-01-03,1243.0000,0.8994,1382,-0.9777
+2942,7 combination,"50% SMH 3x SMA200 + 50% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.7798,1.2484,2016-02-16,,,2751,-0.6134
+3331,7 combination,"1/3 each SMH 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.8870,1.2452,2017-03-13,,,2751,-0.8301
+2415,4 mean reversion / dip,"BTC buy 2x on week<-15% in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.4388,1.2451,2016-04-11,,,2751,-0.9372
+842,2 trend filter,BTC 1x Donchian 50/25 (off=cash),2014-12-01,11.8100,0.6060,1.2447,2016-10-24,,,2751,-0.6592
+1525,3 momentum rotation,"risk-mix top3 6m mom, every 1w, 1x",2000-12-11,25.7800,0.2397,1.2419,2016-05-09,578.0000,0.2101,2751,-0.6117
+2880,7 combination,"25% SPX 3x SMA200 + 75% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.5624,1.2416,2016-04-11,,,2751,-0.6122
+889,2 trend filter,ETH 2x 10-month SMA (off=1x),2017-03-06,9.5400,0.3047,1.2406,2017-03-06,,,2751,-0.9988
+1386,3 momentum rotation,"crypto top1 6m mom, every 4w, 2x",2016-11-21,9.8300,-0.0543,1.2404,2020-03-16,3557.0000,0.9989,3561,-0.9998
+1435,3 momentum rotation,"risk-mix top1 1m mom, every 4w, 1x",2000-07-10,26.2000,0.1604,1.2403,2012-12-17,390.0000,0.1418,2751,-0.9387
+3041,7 combination,"25% SPX 3x hold + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.5786,1.2388,2016-04-11,,,2751,-0.6488
+3097,7 combination,"50% BTC 1x hold + 50% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6094,1.2386,2017-03-13,,,2751,-0.8024
+1385,3 momentum rotation,"crypto top1 6m mom, every 4w, 1x",2016-11-21,9.8300,0.5011,1.2380,2020-03-16,1872.0000,0.5257,3561,-0.9501
+2352,4 mean reversion / dip,"BTC buy 2x on 10-day low, hold 4w, else 1x",2015-07-13,11.1900,0.2574,1.2375,2016-04-04,,,2751,-0.9757
+1438,3 momentum rotation,"risk-mix top1 1m mom, every 4w +abs filter, 1x",2000-07-10,26.2000,0.2038,1.2359,2012-12-17,390.0000,0.1418,2751,-0.9387
+2809,7 combination,"50% NDX 3x SMA200 + 50% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5573,1.2351,2016-11-07,,,2751,-0.6025
+2074,4 mean reversion / dip,"NDX buy 3x on RSI2<20, hold 4w, else cash",1986-07-21,40.1700,0.1159,1.2329,1995-07-17,49.0000,0.0355,1382,-0.9892
+2845,7 combination,"50% NDX 3x SMA200 + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5577,1.2328,2016-11-07,,,2751,-0.7414
+1498,3 momentum rotation,"risk-mix top3 3m mom, every 4w +abs filter, 1x",2000-09-11,26.0300,0.2293,1.2324,2016-05-09,2389.0000,0.8684,2751,-0.5712
+3038,7 combination,"50% SPX 3x hold + 50% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.5276,1.2298,2016-04-11,,,2751,-0.6647
+3163,7 combination,"50% BTC 2x SMA200 + 50% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6800,1.2295,2017-03-13,,,2751,-0.9294
+188,2 trend filter,NDX 3x SMA150 (off=cash),1986-05-12,40.3600,0.1746,1.2290,1995-03-06,1216.0000,0.8799,1382,-0.9057
+2292,4 mean reversion / dip,"BTC buy 2x on RSI2<10, hold 1w, else 1x",2015-07-13,11.1900,0.5251,1.2283,2016-04-11,,,2751,-0.8943
+3187,7 combination,"50% BTC 2x SMA200 + 50% sectors top1 3m 3x, rebalance 4w",2015-07-13,11.1900,0.5267,1.2269,2016-03-14,,,2751,-0.9136
+3095,7 combination,"25% BTC 1x hold + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5676,1.2213,2017-03-13,,,2751,-0.8637
+2656,5 volatility regime,"NDX vol target 60% (21d), max 3x + SMA200",1986-07-21,40.1700,0.2001,1.2174,1995-01-03,1279.0000,0.9255,1382,-0.8187
+1171,3 momentum rotation,"broad top1 1m mom, every 1w, 3x",1985-11-04,40.8800,0.0226,1.2169,1995-04-03,19.0000,0.0137,1382,-0.9968
+1534,3 momentum rotation,"risk-mix top3 6m mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.2561,1.2142,2016-05-09,920.0000,0.3344,2751,-0.6247
+204,2 trend filter,NDX 3x SMA100 band2% (off=1x),1986-03-03,40.5500,0.2190,1.2139,1995-03-06,233.0000,0.1686,1382,-0.9681
+3028,7 combination,"75% NDX 3x hold + 25% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.6178,1.2131,2016-11-07,,,2751,-0.7614
+2804,7 combination,"50% NDX 3x SMA200 + 50% SPX 3x hold, rebalance 13w",1986-07-21,40.1700,0.2046,1.2112,1995-01-03,1196.0000,0.8654,1382,-0.8928
+2992,7 combination,"75% NDX 3x hold + 25% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.5366,1.2105,2016-02-08,,,2751,-0.7763
+2196,4 mean reversion / dip,"NDX buy 3x on week<-3%, hold 4w, else 1x",1986-07-21,40.1700,0.0407,1.2095,1995-03-27,96.0000,0.0695,1382,-0.9994
+1383,3 momentum rotation,"crypto top1 6m mom, every 1w +abs filter, 1x",2016-11-21,9.8300,0.5367,1.2058,2016-11-28,,,2751,-0.8800
+2692,5 volatility regime,"NDX vol target 60% (63d), max 3x + SMA200",1986-07-21,40.1700,0.1920,1.2050,1995-01-03,1276.0000,0.9233,1382,-0.8187
+1216,3 momentum rotation,"broad top1 3m mom, every 4w +abs filter, 3x",1986-01-06,40.7100,0.1266,1.2047,1995-03-06,381.0000,0.2757,1382,-0.9288
+212,2 trend filter,NDX 2x 10-month SMA (off=1x),1986-08-04,40.1300,0.2075,1.2007,1995-03-27,323.0000,0.2337,1382,-0.9024
+3313,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.4791,1.2005,2016-04-11,,,2751,-0.6688
+3099,7 combination,"75% BTC 1x hold + 25% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6087,1.2003,2017-03-27,,,2751,-0.7572
+1603,3 momentum rotation,"risk-mix top3 blend mom, every 4w, 1x",2000-12-11,25.7800,0.2263,1.2003,2016-05-09,1046.0000,0.3802,2751,-0.6142
+1528,3 momentum rotation,"risk-mix top3 6m mom, every 1w +abs filter, 1x",2000-12-11,25.7800,0.2438,1.2001,2016-05-09,677.0000,0.2461,2751,-0.6193
+1384,3 momentum rotation,"crypto top1 6m mom, every 1w +abs filter, 2x",2016-11-21,9.8300,0.1552,1.1997,2020-05-11,3543.0000,0.9949,3561,-0.9984
+2876,7 combination,"50% SPX 3x SMA200 + 50% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.4865,1.1986,2016-04-11,,,2751,-0.6076
+211,2 trend filter,NDX 2x 10-month SMA (off=cash),1986-08-04,40.1300,0.1943,1.1973,1995-03-27,726.0000,0.5253,1382,-0.6669
+1180,3 momentum rotation,"broad top1 1m mom, every 4w +abs filter, 3x",1985-11-04,40.8800,0.0520,1.1973,1995-01-03,1272.0000,0.9204,1382,-0.9757
+271,2 trend filter,NDX 2x 12m momentum>0 (off=cash),1986-10-06,39.9600,0.2204,1.1965,1995-03-27,483.0000,0.3495,1382,-0.7075
+272,2 trend filter,NDX 2x 12m momentum>0 (off=1x),1986-10-06,39.9600,0.2193,1.1965,1995-03-27,269.0000,0.1946,1382,-0.9180
+4,1 buy-and-hold,NDX 2x buy-and-hold,1985-10-07,40.9600,0.1963,1.1965,1995-03-27,145.0000,0.1049,1382,-0.9879
+251,2 trend filter,NDX 2x Donchian 250/125 (off=cash),1986-10-06,39.9600,0.1438,1.1965,1995-03-27,1235.0000,0.8936,1382,-0.7493
+252,2 trend filter,NDX 2x Donchian 250/125 (off=1x),1986-10-06,39.9600,0.1835,1.1965,1995-03-27,778.0000,0.5630,1382,-0.9180
+3006,7 combination,"25% NDX 3x hold + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5949,1.1957,2017-03-13,,,2751,-0.8492
+1412,3 momentum rotation,"crypto top2 12m mom, every 4w +abs filter, 2x",2017-05-22,9.3300,0.0492,1.1956,2020-03-16,,,3561,-0.9984
+3142,7 combination,"75% BTC 1x SMA200 + 25% TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.4900,1.1954,2016-04-04,,,2751,-0.6253
+3637,8 option overlay,"NDX calls K=1.05S 182d, 50% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,0.0982,1.1953,2016-11-07,2605.0000,0.9469,2751,-0.9745
+2879,7 combination,"25% SPX 3x SMA200 + 75% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.5387,1.1936,2016-04-11,,,2751,-0.6142
+1252,3 momentum rotation,"broad top1 6m mom, every 4w +abs filter, 3x",1986-04-07,40.4600,0.0447,1.1922,1995-03-06,908.0000,0.6570,1382,-0.9747
+3281,7 combination,"1/3 each NDX 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.7337,1.1921,2017-03-13,,,2751,-0.8147
+1606,3 momentum rotation,"risk-mix top3 blend mom, every 4w +abs filter, 1x",2000-12-11,25.7800,0.2456,1.1921,2016-05-09,1165.0000,0.4235,2751,-0.5776
+2501,5 volatility regime,NDX 2x when VIX<30 (off=1x),1990-01-08,36.7000,0.1728,1.1912,1995-03-27,145.0000,0.1049,1382,-0.9826
+3208,7 combination,"75% ETH 1x SMA200 + 25% crypto top1 1m, rebalance 13w",2017-03-13,9.5200,0.5321,1.1910,2017-03-13,,,2751,-0.8955
+1382,3 momentum rotation,"crypto top1 6m mom, every 1w, 2x",2016-11-21,9.8300,0.0516,1.1905,2020-03-16,3549.0000,0.9966,3561,-0.9991
+2803,7 combination,"50% NDX 3x SMA200 + 50% SPX 3x hold, rebalance 4w",1986-07-21,40.1700,0.2027,1.1888,1995-01-03,1203.0000,0.8705,1382,-0.9130
+2333,4 mean reversion / dip,"BTC buy 2x on 5-day low, hold 4w, else cash",2015-07-13,11.1900,0.2437,1.1881,2016-11-07,,,2751,-0.9793
+1399,3 momentum rotation,"crypto top1 12m mom, every 1w +abs filter, 1x",2017-05-22,9.3300,0.4672,1.1846,2019-11-25,,,3429,-0.8582
+3250,7 combination,"75% crypto top1 1m + 25% sectors top1 3m 3x, rebalance 13w",2016-06-27,10.2300,0.4041,1.1835,2016-09-06,,,2751,-0.8866
+1324,3 momentum rotation,"broad top1 blend mom, every 4w +abs filter, 3x",1986-04-07,40.4600,0.0996,1.1818,1995-03-06,897.0000,0.6491,1382,-0.9014
+313,2 trend filter,SMH 3x SMA200 band2% (off=cash),2001-03-26,25.4900,0.1991,1.1817,2021-06-21,854.0000,0.2381,3586,-0.8626
+2938,7 combination,"75% SMH 3x SMA200 + 25% BTC 1x hold, rebalance 13w",2014-09-22,12.0000,0.6795,1.1812,2016-02-16,,,2751,-0.6781
+2541,5 volatility regime,BTC 2x when 21d vol<80% (off=cash),2014-10-20,11.9200,0.1841,1.1799,2016-04-04,,,2751,-0.9509
+3315,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.5690,1.1781,2016-04-11,,,2751,-0.5837
+1612,3 momentum rotation,"growth top1 1m mom, every 1w +abs filter, 1x",1999-02-01,27.6400,0.2025,1.1765,2016-04-11,509.0000,0.1850,2751,-0.7864
+3148,7 combination,"75% BTC 1x SMA200 + 25% GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.5489,1.1763,2016-04-04,,,2751,-0.5597
+264,2 trend filter,NDX 3x 3m momentum>0 (off=1x),1986-01-06,40.7100,0.1785,1.1758,1995-03-06,376.0000,0.2721,1382,-0.9761
+308,2 trend filter,SMH 3x SMA100 band2% (off=cash),2000-10-30,25.8900,0.1243,1.1754,2019-07-08,1022.0000,0.3052,3349,-0.9591
+2331,4 mean reversion / dip,"BTC buy 2x on 5-day low, hold 2w, else 1x",2015-07-13,11.1900,0.3535,1.1752,2016-04-11,,,2751,-0.9589
+1352,3 momentum rotation,"crypto top1 1m mom, every 1w +abs filter, 2x",2016-06-27,10.2300,0.0285,1.1750,2016-09-06,,,2751,-0.9995
+3221,7 combination,"25% TLT 3x hold + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.3062,1.1745,2016-11-07,,,2751,-0.8241
+3233,7 combination,"25% GLD 1x hold + 75% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4057,1.1732,2016-10-24,,,2751,-0.8335
+888,2 trend filter,ETH 2x 10-month SMA (off=cash),2017-03-06,9.5400,0.2251,1.1727,2017-03-06,,,2751,-0.9991
+2941,7 combination,"50% SMH 3x SMA200 + 50% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.7163,1.1724,2016-04-04,,,2751,-0.6112
+2864,7 combination,"50% SPX 3x SMA200 + 50% NDX 3x hold, rebalance 13w",1985-10-07,40.9600,0.2323,1.1719,1995-01-03,985.0000,0.7127,1382,-0.9560
+1318,3 momentum rotation,"broad top1 blend mom, every 1w +abs filter, 3x",1986-04-07,40.4600,0.1740,1.1717,1995-03-06,1214.0000,0.8784,1382,-0.8528
+3621,8 option overlay,"NDX calls K=1.00S 91d, 50% of equity, SMA100 uptrend, roll 6w",2001-01-29,25.6400,-0.0465,1.1645,2016-11-07,2670.0000,0.9706,2751,-0.9969
+2698,5 volatility regime,"BTC vol target 60% (21d), max 1x + SMA200",2015-07-13,11.1900,0.5188,1.1622,2016-04-11,,,2751,-0.6306
+2823,7 combination,"75% NDX 3x SMA200 + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.6135,1.1619,2016-04-11,,,2751,-0.7234
+2500,5 volatility regime,NDX 2x when VIX<30 (off=cash),1990-01-08,36.7000,0.1412,1.1614,1995-03-27,145.0000,0.1049,1382,-0.9836
+3027,7 combination,"75% NDX 3x hold + 25% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.5884,1.1606,2016-11-07,,,2751,-0.7509
+2991,7 combination,"75% NDX 3x hold + 25% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5204,1.1574,2016-02-08,,,2751,-0.7702
+2912,7 combination,"50% SPX 3x SMA200 + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.5108,1.1550,2016-11-07,,,2751,-0.7143
+2307,4 mean reversion / dip,"BTC buy 2x on RSI2<10 in uptrend, hold 4w, else 1x",2015-07-13,11.1900,0.3724,1.1527,2016-04-11,,,2751,-0.9200
+851,2 trend filter,BTC 1x 1m momentum>0 (off=cash),2014-10-20,11.9200,0.4237,1.1520,2016-04-11,,,2751,-0.7565
+309,2 trend filter,SMH 3x SMA100 band2% (off=1x),2000-10-30,25.8900,0.1392,1.1520,2019-06-17,715.0000,0.2191,3264,-0.9819
+3311,7 combination,"1/3 each SPX 3x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6789,1.1516,2017-03-13,,,2751,-0.8009
+32,1 buy-and-hold,XLY 3x buy-and-hold,1998-12-28,27.7300,0.0574,1.1506,2009-03-09,2676.0000,0.9799,2731,-0.9876
+3276,7 combination,"1/3 each NDX 3x SMA200 + BTC 1x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6757,1.1503,2017-03-13,,,2751,-0.7001
+1284,3 momentum rotation,"broad top1 12m mom, every 4w, 2x",1986-10-06,39.9600,0.1078,1.1500,1995-03-27,343.0000,0.2482,1382,-0.9212
+1287,3 momentum rotation,"broad top1 12m mom, every 4w +abs filter, 2x",1986-10-06,39.9600,0.1144,1.1500,1995-03-27,343.0000,0.2482,1382,-0.8485
+223,2 trend filter,NDX 3x SMA20>SMA100 (off=cash),1986-03-03,40.5500,0.1798,1.1494,1995-03-06,537.0000,0.3886,1382,-0.8592
+3174,7 combination,"25% BTC 2x SMA200 + 75% GLD 1x hold, rebalance 13w",2015-07-13,11.1900,0.5785,1.1460,2016-04-04,,,2751,-0.5219
+3206,7 combination,"50% ETH 1x SMA200 + 50% crypto top1 1m, rebalance 13w",2017-03-13,9.5200,0.5152,1.1456,2017-03-13,,,2751,-0.8818
+3037,7 combination,"50% SPX 3x hold + 50% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.5056,1.1447,2016-02-08,,,2751,-0.6517
+2826,7 combination,"25% NDX 3x SMA200 + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5784,1.1441,2017-03-13,,,2751,-0.8554
+192,2 trend filter,NDX 2x SMA200 (off=1x),1986-07-21,40.1700,0.1977,1.1440,1995-03-27,810.0000,0.5861,1382,-0.9125
+2748,6 seasonality,NDX 3x turn-of-month weeks,1985-10-07,40.9600,0.2071,1.1432,1995-08-07,708.0000,0.5123,1382,-0.9421
+2226,4 mean reversion / dip,"NDX buy 3x on week<-5%, hold 4w, else 1x",1986-07-21,40.1700,0.0716,1.1423,1995-03-27,354.0000,0.2562,1382,-0.9987
+3073,7 combination,"50% SPX 3x hold + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4914,1.1423,2016-11-07,,,2751,-0.7934
+3207,7 combination,"75% ETH 1x SMA200 + 25% crypto top1 1m, rebalance 4w",2017-03-13,9.5200,0.5114,1.1421,2017-03-13,,,2751,-0.8990
+3326,7 combination,"1/3 each SMH 3x SMA200 + BTC 1x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7942,1.1421,2017-03-13,,,2751,-0.7353
+3008,7 combination,"50% NDX 3x hold + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6409,1.1421,2017-03-13,,,2751,-0.7522
+2863,7 combination,"50% SPX 3x SMA200 + 50% NDX 3x hold, rebalance 4w",1985-10-07,40.9600,0.2163,1.1417,1995-01-03,945.0000,0.6838,1382,-0.9667
+232,2 trend filter,NDX 2x SMA50>SMA200 (off=1x),1986-07-21,40.1700,0.2074,1.1412,1995-03-27,359.0000,0.2598,1382,-0.8908
+3249,7 combination,"75% crypto top1 1m + 25% sectors top1 3m 3x, rebalance 4w",2016-06-27,10.2300,0.3753,1.1402,2016-09-06,,,2751,-0.8900
+3573,8 option overlay,"NDX calls K=1.00S 91d, 50% of equity, SMA200 uptrend, roll 6w",2001-01-29,25.6400,-0.0351,1.1392,2016-11-14,2517.0000,0.9149,2751,-0.9975
+1453,3 momentum rotation,"risk-mix top3 1m mom, every 1w, 1x",2000-07-10,26.2000,0.1987,1.1378,2016-11-14,1266.0000,0.4602,2751,-0.6325
+3649,8 option overlay,"NDX calls K=1.10S 182d, 50% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,0.0271,1.1373,2016-11-07,2681.0000,0.9746,2751,-0.9910
+3446,8 option overlay,"SPX calls K=1.05S 182d, 100% of equity, SMA200 uptrend, roll 13w",1990-01-02,36.7200,-0.4318,1.1345,1994-07-18,1349.0000,0.9761,1382,-1.0000
+314,2 trend filter,SMH 3x SMA200 band2% (off=1x),2001-03-26,25.4900,0.2071,1.1338,2021-06-21,472.0000,0.1316,3586,-0.9391
+1609,3 momentum rotation,"growth top1 1m mom, every 1w, 1x",1999-02-01,27.6400,0.2059,1.1320,2016-10-24,170.0000,0.0618,2751,-0.8952
+2952,7 combination,"25% SMH 3x SMA200 + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6618,1.1308,2017-03-13,,,2751,-0.8710
+207,2 trend filter,NDX 2x SMA200 band2% (off=1x),1986-07-21,40.1700,0.1944,1.1285,1995-03-27,350.0000,0.2533,1382,-0.9184
+2546,5 volatility regime,BTC 1x when VIX<25 (off=cash),1990-01-29,36.6400,0.1104,1.1262,2012-12-17,,,2751,-0.8603
+3168,7 combination,"25% BTC 2x SMA200 + 75% TLT 3x hold, rebalance 13w",2015-07-13,11.1900,0.3535,1.1240,2016-05-02,,,2751,-0.8236
+2786,7 combination,"50% NDX 3x SMA200 + 50% SPX 3x SMA200, rebalance 13w",1986-07-21,40.1700,0.1948,1.1230,1995-01-03,1235.0000,0.8936,1382,-0.7931
+1866,4 mean reversion / dip,"SPX buy 3x on 10-day low, hold 4w, else 1x",1928-10-22,97.9100,0.0879,1.1217,1932-07-05,487.0000,0.9799,497,-0.9980
+41,1 buy-and-hold,SMH 3x buy-and-hold,2000-06-12,26.2800,-0.0998,1.1217,2016-02-16,308.0000,0.1120,2751,-1.0000
+2911,7 combination,"50% SPX 3x SMA200 + 50% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.4746,1.1210,2016-11-07,,,2751,-0.7169
+3054,7 combination,"25% SPX 3x hold + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5473,1.1196,2017-03-13,,,2751,-0.8695
+2937,7 combination,"75% SMH 3x SMA200 + 25% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.6581,1.1185,2016-02-16,,,2751,-0.6950
+884,2 trend filter,ETH 1x SMA200 band2% (off=cash),2017-03-13,9.5200,0.5010,1.1183,2017-03-13,,,2751,-0.9193
+875,2 trend filter,ETH 1x SMA200 (off=cash),2017-03-13,9.5200,0.4877,1.1183,2017-03-13,,,2751,-0.9193
+1864,4 mean reversion / dip,"SPX buy 3x on 10-day low, hold 4w, else cash",1928-10-22,97.9100,0.0578,1.1177,1932-07-05,484.0000,0.9738,497,-0.9974
+3343,7 combination,"1/3 each BTC 1x SMA200 + BTC 2x SMA200 + ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6516,1.1164,2017-03-20,,,2751,-0.8828
+2695,5 volatility regime,"BTC vol target 40% (21d), max 2x",2014-10-20,11.9200,0.4739,1.1128,2016-04-04,,,2751,-0.7299
+219,2 trend filter,NDX 3x SMA10>SMA50 (off=1x),1985-12-16,40.7600,0.1558,1.1121,1995-03-06,1107.0000,0.8010,1382,-0.9618
+2951,7 combination,"25% SMH 3x SMA200 + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6549,1.1117,2017-03-13,,,2751,-0.8590
+2892,7 combination,"25% SPX 3x SMA200 + 75% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5379,1.1114,2017-03-13,,,2751,-0.8454
+227,2 trend filter,NDX 2x SMA50>SMA150 (off=1x),1986-05-12,40.3600,0.1923,1.1109,1995-03-27,270.0000,0.1954,1382,-0.9050
+3131,7 combination,"25% BTC 1x SMA200 + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5350,1.1094,2017-03-13,,,2751,-0.8746
+324,2 trend filter,SMH 3x SMA10>SMA50 (off=1x),2000-08-21,26.0800,0.0836,1.1063,2016-02-16,2468.0000,0.8971,2751,-0.9840
+3005,7 combination,"25% NDX 3x hold + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5668,1.1062,2017-03-13,,,2751,-0.8427
+259,2 trend filter,NDX 3x 1m momentum>0 (off=1x),1985-11-04,40.8800,0.2164,1.1039,1995-01-03,1184.0000,0.8567,1382,-0.9626
+2696,5 volatility regime,"BTC vol target 40% (21d), max 2x + SMA200",2015-07-13,11.1900,0.5489,1.1036,2016-04-04,,,2751,-0.5869
+2191,4 mean reversion / dip,"NDX buy 3x on week<-3%, hold 2w, else 1x",1986-07-21,40.1700,0.0426,1.1028,1995-03-27,91.0000,0.0658,1382,-0.9990
+2998,7 combination,"75% NDX 3x hold + 25% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.5400,1.1006,2016-02-08,,,2751,-0.7145
+3051,7 combination,"75% SPX 3x hold + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.5600,1.1006,2016-02-08,,,2751,-0.7754
+3397,8 option overlay,"SPX calls K=1.05S 182d, 50% of equity, always, roll 13w",1990-01-02,36.7200,-0.1579,1.1005,1995-01-03,1322.0000,0.9566,1382,-0.9998
+2875,7 combination,"50% SPX 3x SMA200 + 50% BTC 1x hold, rebalance 4w",2014-09-22,12.0000,0.4551,1.0998,2016-04-11,,,2751,-0.5872
+3136,7 combination,"75% BTC 1x SMA200 + 25% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6282,1.0988,2017-03-20,,,2751,-0.7470
+3357,7 combination,"1/3 each BTC 2x SMA200 + ETH 1x SMA200 + GLD 1x hold, rebalance 4w",2017-03-13,9.5200,0.6443,1.0978,2017-03-13,,,2751,-0.7687
+2816,7 combination,"50% NDX 3x SMA200 + 50% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.5704,1.0968,2016-04-11,,,2751,-0.5795
+3306,7 combination,"1/3 each SPX 3x SMA200 + BTC 1x SMA200 + ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6157,1.0964,2017-03-13,,,2751,-0.6747
+3141,7 combination,"75% BTC 1x SMA200 + 25% TLT 3x hold, rebalance 4w",2015-07-13,11.1900,0.4513,1.0944,2016-04-04,,,2751,-0.6279
+3160,7 combination,"75% BTC 1x SMA200 + 25% sectors top1 3m 3x, rebalance 13w",2015-07-13,11.1900,0.4980,1.0928,2016-03-14,,,2751,-0.7048
+191,2 trend filter,NDX 2x SMA200 (off=cash),1986-07-21,40.1700,0.1752,1.0914,1995-03-27,1243.0000,0.8994,1382,-0.7577
+199,2 trend filter,NDX 3x SMA50 band2% (off=1x),1985-12-16,40.7600,0.1784,1.0911,1995-03-06,737.0000,0.5333,1382,-0.9760
+2211,4 mean reversion / dip,"NDX buy 3x on week<-3% in uptrend, hold 4w, else 1x",1986-07-21,40.1700,0.1286,1.0888,1995-03-27,341.0000,0.2467,1382,-0.9485
+3566,8 option overlay,"NDX calls K=0.90S 182d, 100% of equity, SMA200 uptrend, roll 13w",2001-01-29,25.6400,0.0196,1.0865,2016-11-14,2144.0000,0.7794,2751,-0.9956
+231,2 trend filter,NDX 2x SMA50>SMA200 (off=cash),1986-07-21,40.1700,0.1977,1.0858,1995-03-27,803.0000,0.5810,1382,-0.7093
+3202,7 combination,"75% ETH 1x SMA200 + 25% GLD 1x hold, rebalance 13w",2017-03-13,9.5200,0.5222,1.0858,2017-03-13,,,2751,-0.8244
+3355,7 combination,"1/3 each BTC 2x SMA200 + ETH 1x SMA200 + TLT 3x hold, rebalance 4w",2017-03-13,9.5200,0.5149,1.0856,2017-03-13,,,2751,-0.7473
+1212,3 momentum rotation,"broad top1 3m mom, every 4w, 2x",1986-01-06,40.7100,0.1625,1.0854,1995-03-27,102.0000,0.0738,1382,-0.8793
+1403,3 momentum rotation,"crypto top1 12m mom, every 4w +abs filter, 1x",2017-05-22,9.3300,0.4528,1.0849,2019-11-25,,,3429,-0.8323
+2775,6 seasonality,BTC 1x presidential years 3-4,2014-09-22,12.0000,0.5536,1.0839,2020-03-16,1460.0000,0.4100,3561,-0.5902
+3147,7 combination,"75% BTC 1x SMA200 + 25% GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.5161,1.0821,2016-04-04,,,2751,-0.5724
+1552,3 momentum rotation,"risk-mix top2 12m mom, every 1w +abs filter, 1x",2001-06-11,25.2800,0.2117,1.0805,2016-05-09,1283.0000,0.4664,2751,-0.8365
+2653,5 volatility regime,"NDX vol target 60% (21d), max 2x",1985-11-04,40.8800,0.2190,1.0795,1995-01-03,556.0000,0.4023,1382,-0.9474
+267,2 trend filter,NDX 2x 6m momentum>0 (off=1x),1986-04-07,40.4600,0.1830,1.0779,1995-03-27,339.0000,0.2453,1382,-0.9168
+3196,7 combination,"75% ETH 1x SMA200 + 25% TLT 3x hold, rebalance 13w",2017-03-13,9.5200,0.4272,1.0778,2017-03-13,,,2751,-0.7939
+1549,3 momentum rotation,"risk-mix top2 12m mom, every 1w, 1x",2001-06-11,25.2800,0.1984,1.0746,2016-05-09,1301.0000,0.4729,2751,-0.8388
+247,2 trend filter,NDX 2x Donchian 100/50 (off=1x),1986-03-03,40.5500,0.1823,1.0745,1995-03-27,662.0000,0.4790,1382,-0.8997
+2785,7 combination,"50% NDX 3x SMA200 + 50% SPX 3x SMA200, rebalance 4w",1986-07-21,40.1700,0.1934,1.0739,1995-01-03,1238.0000,0.8958,1382,-0.7946
+2543,5 volatility regime,BTC 1x when VIX<20 (off=cash),1990-01-08,36.7000,0.0575,1.0731,2012-12-17,,,2751,-0.8853
+2382,4 mean reversion / dip,"BTC buy 2x on week<-10%, hold 1w, else 1x",2015-07-13,11.1900,0.3991,1.0723,2016-04-11,,,2751,-0.9224
+3205,7 combination,"50% ETH 1x SMA200 + 50% crypto top1 1m, rebalance 4w",2017-03-13,9.5200,0.4849,1.0717,2017-03-13,,,2751,-0.8895
+913,2 trend filter,ETH 2x Donchian 250/125 (off=1x),2017-05-22,9.3300,0.0106,1.0707,2019-03-11,,,3256,-0.9910
+3585,8 option overlay,"NDX calls K=1.05S 91d, 50% of equity, SMA200 uptrend, roll 6w",2001-01-29,25.6400,-0.2760,1.0696,2019-10-14,3339.0000,0.9838,3394,-1.0000
+3165,7 combination,"75% BTC 2x SMA200 + 25% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.6489,1.0657,2017-03-20,,,2751,-0.9588
+2997,7 combination,"75% NDX 3x hold + 25% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.5199,1.0652,2016-02-08,,,2751,-0.7184
+2760,6 seasonality,NDX 3x presidential years 3-4,1985-10-07,40.9600,0.1457,1.0650,1995-03-06,155.0000,0.1122,1382,-0.9867
+2825,7 combination,"25% NDX 3x SMA200 + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5437,1.0643,2017-03-13,,,2751,-0.8493
+2889,7 combination,"75% SPX 3x SMA200 + 25% BTC 2x SMA200, rebalance 4w",2015-07-13,11.1900,0.4964,1.0640,2016-04-11,,,2751,-0.5611
+2089,4 mean reversion / dip,"NDX buy 3x on RSI2<20 in uptrend, hold 4w, else cash",1986-07-21,40.1700,0.1479,1.0638,1996-07-15,1250.0000,0.9045,1382,-0.9027
+3625,8 option overlay,"NDX calls K=1.00S 182d, 50% of equity, SMA100 uptrend, roll 13w",2001-01-29,25.6400,0.1209,1.0632,2016-11-07,2489.0000,0.9048,2751,-0.9471
+2974,7 combination,"75% SMH 3x SMA200 + 25% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.8661,1.0627,2016-11-14,,,2751,-0.7056
+2828,7 combination,"50% NDX 3x SMA200 + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6182,1.0621,2017-03-13,,,2751,-0.7713
+184,2 trend filter,NDX 3x SMA100 (off=1x),1986-03-03,40.5500,0.2029,1.0596,1995-03-06,79.0000,0.0572,1382,-0.9743
+206,2 trend filter,NDX 2x SMA200 band2% (off=cash),1986-07-21,40.1700,0.1677,1.0589,1995-03-27,776.0000,0.5615,1382,-0.7727
+1281,3 momentum rotation,"broad top1 12m mom, every 1w +abs filter, 2x",1986-10-06,39.9600,0.1436,1.0575,1995-03-27,241.0000,0.1744,1382,-0.7378
+1278,3 momentum rotation,"broad top1 12m mom, every 1w, 2x",1986-10-06,39.9600,0.1220,1.0575,1995-03-27,241.0000,0.1744,1382,-0.9118
+924,2 trend filter,ETH 2x 12m momentum>0 (off=cash),2017-05-22,9.3300,-0.0379,1.0532,2020-03-16,,,3561,-0.9973
+179,2 trend filter,NDX 3x SMA50 (off=1x),1985-12-16,40.7600,0.1851,1.0530,1995-03-06,925.0000,0.6693,1382,-0.9853
+329,2 trend filter,SMH 3x SMA20>SMA100 (off=1x),2000-10-30,25.8900,0.1517,1.0527,2021-06-21,802.0000,0.2236,3586,-0.9758
+2689,5 volatility regime,"NDX vol target 60% (63d), max 2x",1986-01-06,40.7100,0.2180,1.0514,1995-01-03,554.0000,0.4009,1382,-0.9130
+328,2 trend filter,SMH 3x SMA20>SMA100 (off=cash),2000-10-30,25.8900,0.1447,1.0493,2021-06-21,1562.0000,0.4356,3586,-0.9466
+3352,7 combination,"1/3 each BTC 1x SMA200 + ETH 1x SMA200 + GLD 1x hold, rebalance 13w",2017-03-13,9.5200,0.5851,1.0484,2017-03-13,,,2751,-0.6338
+284,2 trend filter,SMH 3x SMA50 (off=1x),2000-08-21,26.0800,0.0719,1.0479,2016-02-16,937.0000,0.3406,2751,-0.9947
+2206,4 mean reversion / dip,"NDX buy 3x on week<-3% in uptrend, hold 2w, else 1x",1986-07-21,40.1700,0.1287,1.0464,1995-03-27,114.0000,0.0825,1382,-0.9339
+3159,7 combination,"75% BTC 1x SMA200 + 25% sectors top1 3m 3x, rebalance 4w",2015-07-13,11.1900,0.4861,1.0459,2016-03-14,,,2751,-0.6930
+3359,7 combination,"1/3 each BTC 2x SMA200 + TLT 3x hold + GLD 1x hold, rebalance 4w",2015-07-13,11.1900,0.4459,1.0449,2016-02-08,,,2751,-0.6407
+3633,8 option overlay,"NDX calls K=1.05S 91d, 50% of equity, SMA100 uptrend, roll 6w",2001-01-29,25.6400,-0.2332,1.0444,2016-11-07,2721.0000,0.9891,2751,-1.0000
+3110,7 combination,"50% BTC 1x hold + 50% GLD 1x hold, rebalance 13w",2014-09-22,12.0000,0.4597,1.0439,2016-04-04,,,2751,-0.5172
+2497,5 volatility regime,NDX 3x when VIX<25 (off=cash),1990-01-08,36.7000,0.1204,1.0411,1995-01-03,915.0000,0.6621,1382,-0.9977
+2754,6 seasonality,NDX 3x Nov-Apr only (sell in May),1985-10-07,40.9600,0.1522,1.0405,1995-03-06,1221.0000,0.8835,1382,-0.9956
+2815,7 combination,"50% NDX 3x SMA200 + 50% BTC 1x SMA200, rebalance 4w",2015-07-13,11.1900,0.5453,1.0399,2016-04-11,,,2751,-0.5713
+2954,7 combination,"50% SMH 3x SMA200 + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.7619,1.0396,2017-03-13,,,2751,-0.8143
+1555,3 momentum rotation,"risk-mix top2 12m mom, every 4w, 1x",2001-06-11,25.2800,0.1851,1.0395,2016-05-09,1523.0000,0.5536,2751,-0.8112
+3133,7 combination,"50% BTC 1x SMA200 + 50% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5554,1.0382,2017-03-13,,,2751,-0.8172
+187,2 trend filter,NDX 2x SMA150 (off=1x),1986-05-12,40.3600,0.1885,1.0375,1995-03-27,452.0000,0.3271,1382,-0.9131
+338,2 trend filter,SMH 3x SMA50>SMA200 (off=cash),2001-03-26,25.4900,0.2298,1.0363,2019-06-17,815.0000,0.2497,3264,-0.8236
+289,2 trend filter,SMH 3x SMA100 (off=1x),2000-10-30,25.8900,0.0862,1.0351,2016-02-16,753.0000,0.2737,2751,-0.9904
+1264,3 momentum rotation,"broad top2 6m mom, every 4w +abs filter, 3x",1986-04-07,40.4600,0.1239,1.0346,1995-01-03,1107.0000,0.8010,1382,-0.8815
+2349,4 mean reversion / dip,"BTC buy 2x on 10-day low, hold 2w, else 1x",2015-07-13,11.1900,0.3431,1.0341,2016-04-11,,,2751,-0.9483
+243,2 trend filter,NDX 3x Donchian 50/25 (off=cash),1985-12-16,40.7600,0.1422,1.0339,1995-03-06,118.0000,0.0854,1382,-0.9319
+2973,7 combination,"75% SMH 3x SMA200 + 25% crypto top1 1m, rebalance 4w",2016-06-27,10.2300,0.8105,1.0329,2016-11-14,,,2751,-0.7177
+848,2 trend filter,BTC 1x Donchian 250/125 (off=cash),2015-09-21,11.0000,0.4030,1.0307,2016-04-11,,,2751,-0.7859
+3044,7 combination,"50% SPX 3x hold + 50% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.5304,1.0302,2016-02-08,,,2751,-0.6160
+339,2 trend filter,SMH 3x SMA50>SMA200 (off=1x),2001-03-26,25.4900,0.2235,1.0298,2019-06-17,745.0000,0.2282,3264,-0.8796
+299,2 trend filter,SMH 3x SMA200 (off=1x),2001-03-26,25.4900,0.1831,1.0259,2021-06-21,762.0000,0.2125,3586,-0.9487
+3381,8 option overlay,"SPX calls K=1.00S 91d, 50% of equity, always, roll 6w",1990-01-02,36.7200,-0.2358,1.0257,1995-01-03,1321.0000,0.9559,1382,-1.0000
+2241,4 mean reversion / dip,"NDX buy 3x on week<-5% in uptrend, hold 4w, else 1x",1986-07-21,40.1700,0.1531,1.0253,1995-03-27,385.0000,0.2786,1382,-0.9285
+3104,7 combination,"50% BTC 1x hold + 50% TLT 3x hold, rebalance 13w",2014-09-22,12.0000,0.3275,1.0246,2016-03-14,,,2751,-0.7511
+298,2 trend filter,SMH 3x SMA200 (off=cash),2001-03-26,25.4900,0.1654,1.0245,2021-06-21,1421.0000,0.3963,3586,-0.8962
+3053,7 combination,"25% SPX 3x hold + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.5140,1.0240,2017-03-13,,,2751,-0.8667
+3385,8 option overlay,"SPX calls K=1.00S 182d, 50% of equity, always, roll 13w",1990-01-02,36.7200,0.0078,1.0234,1995-01-03,1304.0000,0.9436,1382,-0.9979
+3350,7 combination,"1/3 each BTC 1x SMA200 + ETH 1x SMA200 + TLT 3x hold, rebalance 13w",2017-03-13,9.5200,0.4524,1.0228,2017-03-13,,,2751,-0.6720
+226,2 trend filter,NDX 2x SMA50>SMA150 (off=cash),1986-05-12,40.3600,0.1720,1.0214,1995-03-27,609.0000,0.4407,1382,-0.6962
+2891,7 combination,"25% SPX 3x SMA200 + 75% ETH 1x SMA200, rebalance 4w",2017-03-13,9.5200,0.4998,1.0193,2017-03-13,,,2751,-0.8467
+1558,3 momentum rotation,"risk-mix top2 12m mom, every 4w +abs filter, 1x",2001-06-11,25.2800,0.1957,1.0182,2016-05-09,1480.0000,0.5380,2751,-0.8209
+2944,7 combination,"75% SMH 3x SMA200 + 25% BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.7169,1.0179,2016-02-16,,,2751,-0.6890
+237,2 trend filter,NDX 2x Donchian 20/10 (off=1x),1985-11-04,40.8800,0.1717,1.0163,1995-01-03,1020.0000,0.7381,1382,-0.9420
+3264,7 combination,"1/3 each NDX 3x SMA200 + SMH 3x SMA200 + BTC 1x SMA200, rebalance 13w",2015-07-13,11.1900,0.6571,1.0153,2016-02-16,,,2751,-0.6348
+222,2 trend filter,NDX 2x SMA20>SMA100 (off=1x),1986-03-03,40.5500,0.1940,1.0139,1995-03-27,184.0000,0.1331,1382,-0.9088
+1258,3 momentum rotation,"broad top2 6m mom, every 1w +abs filter, 3x",1986-04-07,40.4600,0.1745,1.0138,1995-01-03,1140.0000,0.8249,1382,-0.8102
+1401,3 momentum rotation,"crypto top1 12m mom, every 4w, 1x",2017-05-22,9.3300,0.4199,1.0120,2017-05-22,,,2751,-0.8746
+1353,3 momentum rotation,"crypto top1 1m mom, every 4w, 1x",2016-06-27,10.2300,0.1846,1.0102,2016-08-29,,,2751,-0.9446
+3010,7 combination,"75% NDX 3x hold + 25% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.6071,1.0081,2017-04-03,,,2751,-0.7488
+3482,8 option overlay,"SPX calls K=1.00S 182d, 100% of equity, SMA100 uptrend, roll 13w",1990-01-02,36.7200,-0.2514,1.0077,2016-11-07,2728.0000,0.9916,2751,-1.0000
+3056,7 combination,"50% SPX 3x hold + 50% ETH 1x SMA200, rebalance 13w",2017-03-13,9.5200,0.5541,1.0068,2017-03-13,,,2751,-0.8145
+2982,7 combination,"25% NDX 3x hold + 75% SPX 3x hold, rebalance 13w",1985-10-07,40.9600,0.1906,1.0065,1995-01-03,264.0000,0.1910,1382,-0.9905
+2981,7 combination,"25% NDX 3x hold + 75% SPX 3x hold, rebalance 4w",1985-10-07,40.9600,0.1869,1.0045,1995-01-03,211.0000,0.1527,1382,-0.9916
+3224,7 combination,"50% TLT 3x hold + 50% crypto top1 1m, rebalance 13w",2016-06-27,10.2300,0.2401,1.0023,2016-11-14,,,2751,-0.8194

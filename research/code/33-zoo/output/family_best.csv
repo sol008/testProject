@@ -1,0 +1,9 @@
+family,variants,best_longest,longest_from,longest_cagr,longest_maxdd,median_variant_cagr_longest,best_w2010,w2010_cagr,w2010_maxdd,best_w2016,w2016_cagr,w2016_maxdd
+1 buy-and-hold,65,ETH 1x buy-and-hold,2016-05-23,0.6725,-0.9232,0.0754,SMH 3x buy-and-hold,0.4912,-0.8896,SMH 3x buy-and-hold,0.6756,-0.8896
+2 trend filter,924,ETH 2x SMA20 (off=cash),2016-06-20,1.7237,-0.9448,0.0967,SMH 3x SMA200 band2% (off=1x),0.4731,-0.7502,BTC 2x Donchian 20/10 (off=cash),1.4128,-0.7738
+3 momentum rotation,743,"crypto top1 3m mom, every 4w, 1x",2016-08-22,0.9154,-0.8982,0.1382,"risk-mix top2 blend mom, every 1w +abs filter, 3x",0.8163,-0.9542,"risk-mix top2 1m mom, every 1w, 3x",1.2111,-0.9438
+4 mean reversion / dip,702,"BTC buy 2x on 5-day low in uptrend, hold 4w, else 1x",2015-07-13,0.7548,-0.9200,0.0663,"NDX buy 3x on 10-day low, hold 4w, else 1x",0.3712,-0.7811,"BTC buy 2x on 5-day low in uptrend, hold 4w, else 1x",0.7366,-0.9200
+5 volatility regime,291,"BTC vol target 100% (63d), max 2x + SMA200",2015-07-13,0.8330,-0.9010,0.1354,NDX 3x when 21d vol<25% (off=1x),0.4725,-0.4816,"BTC vol target 80% (63d), max 2x + SMA200",0.7837,-0.7993
+6 seasonality,58,BTC 2x halving cycle (-12m/+18m),2014-09-22,1.3180,-0.9535,0.1036,NDX 3x presidential years 3-4,0.2702,-0.6888,BTC 2x halving cycle (-12m/+18m),1.4261,-0.9535
+7 combination,580,"50% SMH 3x SMA200 + 50% BTC 2x SMA200, rebalance 13w",2015-07-13,1.1549,-0.8433,0.3666,"25% SMH 3x SMA200 + 75% NDX 3x hold, rebalance 4w",0.4481,-0.7230,"50% SMH 3x SMA200 + 50% BTC 2x SMA200, rebalance 13w",1.1594,-0.8433
+8 option overlay,288,"NDX calls K=1.05S 182d, 25% of equity, SMA100 uptrend, roll 13w",2001-01-29,0.1389,-0.7727,-0.1626,"NDX calls K=1.00S 182d, 50% of equity, always, roll 13w",0.3233,-0.8500,"NDX calls K=1.05S 182d, 50% of equity, SMA100 uptrend, roll 13w",0.5475,-0.6423

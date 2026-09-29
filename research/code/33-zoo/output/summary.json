@@ -1,0 +1,88 @@
+{
+ "n_variants": 3651,
+ "families": {
+  "1 buy-and-hold": 65,
+  "2 trend filter": 924,
+  "3 momentum rotation": 743,
+  "4 mean reversion / dip": 702,
+  "5 volatility regime": 291,
+  "6 seasonality": 58,
+  "7 combination": 580,
+  "8 option overlay": 288
+ },
+ "end": "2026-09-21",
+ "n_ge100_cagr_longest_10y": 14,
+ "n_ge100_cagr_2016": 39,
+ "n_ge100_cagr_2010": 0,
+ "best_cagr_longest_10y": {
+  "name": "ETH 2x SMA20 (off=cash)",
+  "cagr": 1.723742640350082,
+  "start": "2016-06-20"
+ },
+ "best_cagr_2016": {
+  "name": "BTC 2x halving cycle (-12m/+18m)",
+  "cagr": 1.4261315787514954
+ },
+ "best_cagr_2010": {
+  "name": "risk-mix top2 blend mom, every 1w +abs filter, 3x",
+  "cagr": 0.81634378005769
+ },
+ "n_5y_window_ge100": 988,
+ "designs": {
+  "A": {
+   "window": "IS 2016-01-01..2021-05-15, OOS 2021-05-15..2026-09-25",
+   "n": 3256,
+   "spearman_is_oos": 0.40378062147084953,
+   "is_top10_mean_oos_cagr": -0.0465752632034908,
+   "all_median_oos_cagr": 0.11502121175529578,
+   "oos_best_cagr": 1.188253515386032,
+   "oos_best_id": 1620,
+   "is_best_oos_rank": 3065,
+   "ka": 4591,
+   "km": 4871,
+   "kb": 5149,
+   "n_is_ge100": 488,
+   "n_oos_ge100": 1
+  },
+  "B": {
+   "window": "IS 2000-01-01..2013-05-14, OOS 2013-05-14..2026-09-25",
+   "n": 2052,
+   "spearman_is_oos": -0.20307234307936028,
+   "is_top10_mean_oos_cagr": 0.13796540961509998,
+   "all_median_oos_cagr": 0.11904933471724377,
+   "oos_best_cagr": 0.931066371885279,
+   "oos_best_id": 1611,
+   "is_best_oos_rank": 1732,
+   "ka": 3756,
+   "km": 4454,
+   "kb": 5149,
+   "n_is_ge100": 0,
+   "n_oos_ge100": 0
+  },
+  "C": {
+   "window": "IS 1929-02-01..1977-11-15, OOS 1977-11-15..2026-09-25",
+   "n": 491,
+   "spearman_is_oos": 0.6661303133792511,
+   "is_top10_mean_oos_cagr": 0.14446889395900225,
+   "all_median_oos_cagr": 0.10853717351590686,
+   "oos_best_cagr": 0.1952104179824834,
+   "oos_best_id": 169,
+   "is_best_oos_rank": 26,
+   "ka": 57,
+   "km": 2602,
+   "kb": 5149,
+   "n_is_ge100": 0,
+   "n_oos_ge100": 0
+  }
+ },
+ "five_by_family": {
+  "3 momentum rotation": 371,
+  "7 combination": 279,
+  "2 trend filter": 183,
+  "4 mean reversion / dip": 64,
+  "5 volatility regime": 49,
+  "8 option overlay": 24,
+  "6 seasonality": 9,
+  "1 buy-and-hold": 9
+ }
+}

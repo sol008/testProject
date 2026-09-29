@@ -1,0 +1,11 @@
+id,is_cagr,is_maxdd,is_sharpe,oos_cagr,oos_maxdd,oos_sharpe,is_rank,oos_rank,family,name,sr_ann,dsr_N,dsr_Neff
+1590,4.0542,-0.9542,1.7910,-0.0763,-0.8717,0.2884,1,3065,3 momentum rotation,"risk-mix top2 blend mom, every 1w +abs filter, 3x",1.7904,0.0000,0.7939
+1587,3.9947,-0.9597,1.7820,-0.2827,-0.9668,0.0099,2,3247,3 momentum rotation,"risk-mix top2 blend mom, every 1w, 3x",1.7814,0.0000,0.7870
+1589,3.9915,-0.9528,1.7804,-0.0939,-0.8395,0.2150,3,3102,3 momentum rotation,"risk-mix top2 blend mom, every 1w +abs filter, 2x",1.7799,0.0000,0.7879
+1586,3.9466,-0.9570,1.7735,-0.2563,-0.9441,-0.0278,4,3240,3 momentum rotation,"risk-mix top2 blend mom, every 1w, 2x",1.7730,0.0000,0.7827
+840,3.8722,-0.7092,1.8226,0.1918,-0.7738,0.5201,5,926,2 trend filter,BTC 2x Donchian 20/10 (off=cash),1.8223,0.0000,0.8461
+1482,3.4403,-0.9303,1.7542,0.0343,-0.8854,0.3988,6,2428,3 momentum rotation,"risk-mix top2 3m mom, every 1w +abs filter, 3x",1.7538,0.0000,0.7583
+1479,3.4006,-0.9336,1.7476,-0.0543,-0.9317,0.3078,7,3009,3 momentum rotation,"risk-mix top2 3m mom, every 1w, 3x",1.7472,0.0000,0.7531
+1596,3.3524,-0.9650,1.6868,-0.0079,-0.8752,0.3716,8,2824,3 momentum rotation,"risk-mix top2 blend mom, every 4w +abs filter, 3x",1.6863,0.0000,0.7096
+841,3.2875,-0.8589,1.6851,0.1107,-0.8817,0.4754,9,1671,2 trend filter,BTC 2x Donchian 20/10 (off=1x),1.6848,0.0000,0.7141
+1595,3.2795,-0.9626,1.6731,-0.0313,-0.8507,0.2950,10,2929,3 momentum rotation,"risk-mix top2 blend mom, every 4w +abs filter, 2x",1.6726,0.0000,0.6986

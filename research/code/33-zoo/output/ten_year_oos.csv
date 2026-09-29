@@ -1,0 +1,3 @@
+design,oos_years,is_winner,is_winner_oos_cagr,best_of_is_top10,best_of_is_top10_oos_cagr,best_any_oos_cagr_hindsight,best_any_oos_hindsight
+B,13.3000,"NDX buy 3x on RSI2<20 in uptrend, hold 2w, else cash",0.0277,NDX 3x when 21d vol<25% (off=cash),0.4633,0.9311,"growth top1 1m mom, every 1w, 3x"
+C,48.8000,SPX 3x turn-of-month weeks,0.1649,SPX 3x SMA100 (off=1x),0.1737,0.1952,SPX 3x 12m momentum>0 (off=1x)

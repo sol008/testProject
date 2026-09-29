@@ -1,0 +1,11 @@
+id,is_cagr,is_maxdd,is_sharpe,oos_cagr,oos_maxdd,oos_sharpe,is_rank,oos_rank,family,name,sr_ann,dsr_N,dsr_Neff
+2084,0.2321,-0.3661,0.7956,0.0277,-0.8157,0.2110,1,1732,4 mean reversion / dip,"NDX buy 3x on RSI2<20 in uptrend, hold 2w, else cash",0.7957,0.0000,0.3701
+2527,0.2197,-0.6174,0.6324,0.4633,-0.4529,1.0260,2,96,5 volatility regime,NDX 3x when 21d vol<25% (off=cash),0.6320,0.0000,0.1826
+588,0.2140,-0.7694,0.5976,-0.0836,-0.9405,0.0873,3,2017,2 trend filter,XLE 3x 12m momentum>0 (off=cash),0.5976,0.0000,0.1525
+586,0.1982,-0.5893,0.6010,-0.0206,-0.8285,0.0779,4,1965,2 trend filter,XLE 2x 12m momentum>0 (off=cash),0.6010,0.0000,0.1570
+589,0.1808,-0.8029,0.5559,-0.0424,-0.9571,0.1955,5,1994,2 trend filter,XLE 3x 12m momentum>0 (off=1x),0.5559,0.0000,0.1193
+2532,0.1755,-0.6881,0.5374,0.3788,-0.6095,0.8555,6,148,5 volatility regime,NDX 3x when 21d vol<30% (off=cash),0.5371,0.0000,0.1053
+2525,0.1712,-0.4478,0.6261,0.3252,-0.3113,1.0180,7,208,5 volatility regime,NDX 2x when 21d vol<25% (off=cash),0.6256,0.0000,0.1777
+1306,0.1711,-0.5588,0.5385,0.1970,-0.5231,0.6134,8,551,3 momentum rotation,"broad top3 12m mom, every 1w +abs filter, 3x",0.5384,0.0000,0.1075
+1225,0.1685,-0.9348,0.5252,0.1108,-0.7689,0.4214,9,1085,3 momentum rotation,"broad top2 3m mom, every 4w, 3x",0.5250,0.0000,0.0960
+587,0.1655,-0.6890,0.5239,0.0234,-0.8879,0.2260,10,1753,2 trend filter,XLE 2x 12m momentum>0 (off=1x),0.5239,0.0000,0.0985
