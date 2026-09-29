@@ -13,12 +13,15 @@ accounts:
     name: Robinhood IRA
     kind: ira                  # no shorts, no futures, no spreads
     start_cash: 80000          # M2 up to 60% of NAV + M1 6% + W10 6% + M3 3% = 75%, plus a buffer (v3.3)
+    nav: 80000                 # design v4 §4 "Accounts": the whole growth book lives here (sleeve targets are % of it)
+    limited_margin: true       # design v4 §3a.1: Monday's sells fund Monday's buys; false = the paper broker waits a day
     options_level: 2
   taxable:
     broker: Robinhood
     name: Robinhood individual (margin)
     kind: taxable_margin
     start_cash: 20000          # Phase B option spreads: premium capped at 10% of NAV
+    holdings: {VOO: 20000}     # design v4 §4: VOO held, never sold (recorded here; the paper broker starts it in cash)
     options_level: 3           # spreads + index options (XSP) - Phase B
   coinbase:
     broker: Coinbase

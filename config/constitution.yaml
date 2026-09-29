@@ -13,6 +13,7 @@ holding:
 modules:
   M1:                      # ST-1: VIX-gated uptrend dip-buy (policy module), track 13 §11.1
     enabled: true
+    status: shadow           # design v4 §3 table (Phase C1 records it; the daily job still runs the v3.3 rule)
     name: Uptrend dip-buy
     ticker: SPY
     account: ira
@@ -38,6 +39,8 @@ modules:
 
   M2:                      # R1: slow multi-asset trend, long-only ETF8 in the IRA, track 15 R1
     enabled: true
+    status: retired          # design v4 §3 table (Phase C1 records it; the daily job still runs the v3.3 rule)
+    shadow_series: true
     name: Trend book
     account: ira
     legs:
@@ -67,6 +70,7 @@ modules:
 
   M3:                      # R2: Bitcoin weekly trend switch (policy module, opt-in sleeve), track 15 R2
     enabled: true
+    status: "superseded_by: G2"   # design v4 §3 table: the weekly job runs G2 instead of M3 while growth.enabled
     name: Bitcoin trend switch
     ticker: IBIT
     account: ira
@@ -77,6 +81,7 @@ modules:
 
   W10:                     # uptrend crash-day buy: policy module with a 90-day exception (design v3.3 §3, track 23)
     enabled: true
+    status: active           # design v4 §3 table: policy module, folded into the Sunday email (growth.sleeves.W10)
     name: Uptrend crash-day buy
     ticker: SPY
     index: "^GSPC"
@@ -113,6 +118,7 @@ modules:
 
   M4:                      # O2 crash call debit spread: policy module, 90-day exception (design v3.3 §3 M4)
     enabled: true
+    status: shadow           # design v4 §3 table, decision 6 (Phase C1 records it; the options job still runs M4)
     name: Crash call spread
     index: "^GSPC"           # the S&P 500 close, two-source checked and the rule re-run on it (as W10's)
     root: XSP                # XSP preferred (design §3a.4): cash-settled, European-style, Section 1256
@@ -156,7 +162,7 @@ modules:
   W8:                      # de-escalation confirmed: policy module, small (design v3.3 §3 M5)
     enabled: true
     name: De-escalation call spread
-    status: policy module, small
+    status: shadow                   # design v4 §3 table (was "policy module, small"; the email label is in email_text)
     account: taxable                 # option spreads live in the taxable account (design §3a.1)
     cluster: oil                     # "peace/oil-down" is one factor in 2026 (design §4; contract §7)
     premium_pct_nav: 0.01            # premium <= 1% of NAV, at the stated maximum debit (design §3 M5)
@@ -219,7 +225,7 @@ modules:
   W9:                      # escalation that removes barrels: paper (design v3.3 §3 M5)
     enabled: true
     name: Barrel-loss oil call spread
-    status: paper module
+    status: shadow                   # design v4 §3 table (was "paper module"; the email label is in email_text)
     paper_only: true                 # n = 5: paper unless the owner opts in as a hedge exception (design §3 M5)
     account: taxable
     cluster: oil                     # contract §7
@@ -664,3 +670,54 @@ options:
 data:
   two_source_tolerance: 0.001         # 0.1% close mismatch blocks new signals
   fallback_tbill_rate: 0.04
+
+# ---- Design v4.0 (research/00-SYSTEM-DESIGN-v4.md Appendix A.1): the growth book. Phase C1 build. ----
+# Paper mode until the §7 gates pass; account.yaml sets paper/live. The module status changes are the `status` keys
+# on the module blocks above (active | shadow | retired | "superseded_by: G2"); Phase C1 enforces only M3's, in the
+# weekly job. Keys beyond A.1 are marked "C1:".
+growth:
+  enabled: true                    # paper mode until the s7 gates pass; account.yaml sets paper/live
+  drawdown_limit: 0.40             # D: 0.30 / 0.40 / 0.50 (decision 1)
+  governor:                        # derived from D unless overridden: full_until = D - 0.25, floor_at = D - 0.05
+    full_until: 0.15
+    floor: 0.25
+    floor_at: 0.35
+    reset: weekly                  # re-set on the Sunday run only
+    min_step: 0.10                 # re-size only when G moved >= 0.10 since the last order
+  hard_stop:
+    at: 0.40                       # = drawdown_limit
+    action: all_to_sgov_and_pause  # paper mode + owner review before restart
+  sleeves:
+    G1:
+      legs:
+        SSO: {weight: 0.25, index: "^GSPC"}
+        QLD: {weight: 0.25, index: "^NDX"}
+      signal: {sma_days: 200, band: 0.02, decision: friday_close, execution: monday_open}
+      out: SGOV
+      kill: {tracking_20d_max_pts: 3.0}
+    G2:
+      instrument: IBIT
+      backup: FBTC
+      weight: 0.30
+      max_weight: 0.50             # decision 2 ceiling
+      signal: {weekly_ma_weeks: 10, sma_days: 200, decision: sunday_utc_close, execution: monday_open,
+               two_source_tolerance: 0.005}   # C1: Bitcoin venue closes differ by more than the 0.1% ETF tolerance
+      out: SGOV
+      vol_cut: {realized_60d_vol_gt: 0.70, quarters: 1, factor: 0.667, restore_below: 0.60}
+    G3:
+      reserve_weight: 0.15
+      out: SGOV
+      rules:
+        cef_crash_discount: {status: shadow, slots: 2, slot_weight: 0.05, z: 2.5, lookback: 252, hold_days: 60,
+                             leverage_max: 0.35, price_min: 5, adv_min_usd: 1000000, crash_mode_triggers: 10, crash_mode_weeks: 3}
+        crypto_trust_discount: {status: shadow, weight: 0.05, discount_le: -0.25, closes: 5, catalyst_days: 120,
+                                exit_discount_ge: -0.03, exit_closes: 3}
+        country_devaluation: {status: shadow}                      # decision 8
+    W10: {weight: 0.06, funded_from: sgov, entry: next_sunday_email, priority: last}
+    cash: {weight: 0.05, vehicle: SGOV}
+  caps: {equity_exposure: 1.0, gross_exposure: 1.5, crypto: 0.30, single_name: 0.05, single_names_open: 2}
+  rebalance: {band_rel: 0.25, min_order_usd: 300, max_orders_per_email: 3, sgov_buy_may_wait: true,
+              queued_cash_frac: 0.90, market_hours_cash_frac: 0.95}   # C1: §3a.4's 90% (queued) / 95% (market hours)
+  email: {day: sunday, time_et: "21:17", risk_box: {required_for: [SSO, QLD, IBIT]}}
+  rule_e: {enabled: true, trigger: index_close_below_sma200, max_per_week: 1, max_per_year: 6, exit_only: true}  # decision 5
+  accounts: {switching: ira, ira_limited_margin_required: true, taxable_holds: [VOO], taxable_never_holds: [SSO, QLD, IBIT, FBTC, UPRO, TQQQ, SPY]}

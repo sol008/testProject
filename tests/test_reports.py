@@ -19,7 +19,7 @@ import yaml
 
 from test_pipeline import LAUNCH, Recorder, SynthProvider, _run_until
 
-from traderec import pipeline, reports
+from traderec import growth, pipeline, reports
 from traderec.config import Config, load_config
 from traderec.emails import render_annual, render_monthly, render_quarterly
 from traderec.ledger import Ledger
@@ -58,7 +58,8 @@ def _live(cfg: Config) -> Config:
 
 @pytest.fixture(scope="module")
 def cfg():
-    return load_config()
+    """The v3.3 book (test_pipeline's synthetic market has no SSO/QLD/SGOV bars): the v4 growth book is off."""
+    return growth.with_enabled(load_config(), False)
 
 
 @pytest.fixture(scope="module")

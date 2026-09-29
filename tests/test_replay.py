@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from traderec import growth
 from traderec.config import load_config
 from traderec.data.providers import DataError
 from traderec.market_calendar import is_trading_day
@@ -77,7 +78,8 @@ def synthetic_history() -> "R.History":
 
 @pytest.fixture(scope="module")
 def cfg():
-    return load_config()
+    """The v3.3 book: the replay pins the weekly job's M3 switch, so the v4 growth book is off (tests/test_growth.py)."""
+    return growth.with_enabled(load_config(), False)
 
 
 @pytest.fixture(scope="module")
