@@ -1,0 +1,11 @@
+strategy,tax_treatment,rate,pre_tax_cagr,after_tax_cagr
+"Trend 2x, deep ITM calls d0.80 6m, roll 6w",XSP (Section 1256),0.3060,0.0850,0.0608
+"Trend 2x, deep ITM calls d0.80 6m, roll 6w",SPY options (short-term),0.4080,0.0850,0.0524
+"Trend 3x, deep ITM calls d0.80 6m, roll 6w",XSP (Section 1256),0.3060,0.0936,0.0679
+"Trend 2x, deep ITM calls d0.90 12m, roll 8w [real-price surface]",XSP (Section 1256),0.3060,0.1190,0.0852
+"Trend 3x, deep ITM calls d0.90 12m, roll 8w [real-price surface]",XSP (Section 1256),0.3060,0.1458,0.1055
+"Trend 3x, deep ITM calls d0.90 12m, roll 8w [real-price surface]",SPY options (short-term),0.4080,0.1458,0.0914
+"Trend 2x, Robinhood margin ($100k tier)","ETF, spell-based LT/ST mix",0.3360,0.1187,0.0813
+Trend 2x LETF (SSO/QLD),"ETF, spell-based LT/ST mix",0.3360,0.1213,0.0832
+Trend 3x LETF (UPRO/TQQQ),"ETF, spell-based LT/ST mix",0.3360,0.1500,0.1045
+Buy and hold 1x (SPY),"held, taxed only at the end (LT, 23.8%)",0.2380,0.1079,0.1000

@@ -1,0 +1,49 @@
+shock,L,vehicle,book_change,note
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",2.0000,margin (index ETF),-0.4100,no call
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",2.0000,LETF (daily reset),-0.4100,fund loses L x the day (before any intraday reset)
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",2.0000,calls d0.80 6m,-0.2283,"premium 35% of book, strike 90% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",2.0000,calls d0.90 12m,-0.2883,"premium 66% of book, strike 74% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",2.0000,calls d0.70 6m,-0.1663,"premium 26% of book, strike 95% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",3.0000,margin (index ETF),-0.6150,3x not allowed under Reg T
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",3.0000,LETF (daily reset),-0.6150,fund loses L x the day (before any intraday reset)
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",3.0000,calls d0.80 6m,-0.3425,"premium 52% of book, strike 90% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",3.0000,calls d0.90 12m,-0.4324,"premium 99% of book, strike 74% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",3.0000,calls d0.70 6m,-0.2495,"premium 39% of book, strike 95% of spot"
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",,barbell 90%/10% ATM 6m,-0.0434,loss capped at the premium
+"-20.5% day (19 Oct 1987), VIX to 80, VIX1Y to 45",,barbell 80%/20% ATM 12m,-0.0867,loss capped at the premium
+"-20.5% day, implied vols unchanged",2.0000,margin (index ETF),-0.4100,no call
+"-20.5% day, implied vols unchanged",2.0000,LETF (daily reset),-0.4100,fund loses L x the day (before any intraday reset)
+"-20.5% day, implied vols unchanged",2.0000,calls d0.80 6m,-0.3293,"premium 35% of book, strike 90% of spot"
+"-20.5% day, implied vols unchanged",2.0000,calls d0.90 12m,-0.4143,"premium 66% of book, strike 74% of spot"
+"-20.5% day, implied vols unchanged",2.0000,calls d0.70 6m,-0.2565,"premium 26% of book, strike 95% of spot"
+"-20.5% day, implied vols unchanged",3.0000,margin (index ETF),-0.6150,3x not allowed under Reg T
+"-20.5% day, implied vols unchanged",3.0000,LETF (daily reset),-0.6150,fund loses L x the day (before any intraday reset)
+"-20.5% day, implied vols unchanged",3.0000,calls d0.80 6m,-0.4939,"premium 52% of book, strike 90% of spot"
+"-20.5% day, implied vols unchanged",3.0000,calls d0.90 12m,-0.6215,"premium 99% of book, strike 74% of spot"
+"-20.5% day, implied vols unchanged",3.0000,calls d0.70 6m,-0.3848,"premium 39% of book, strike 95% of spot"
+"-20.5% day, implied vols unchanged",,barbell 90%/10% ATM 6m,-0.0987,loss capped at the premium
+"-20.5% day, implied vols unchanged",,barbell 80%/20% ATM 12m,-0.1924,loss capped at the premium
+"-30% day, VIX to 100, VIX1Y to 50",2.0000,margin (index ETF),-0.6000,margin call
+"-30% day, VIX to 100, VIX1Y to 50",2.0000,LETF (daily reset),-0.6000,fund loses L x the day (before any intraday reset)
+"-30% day, VIX to 100, VIX1Y to 50",2.0000,calls d0.80 6m,-0.2653,"premium 35% of book, strike 90% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",2.0000,calls d0.90 12m,-0.4344,"premium 66% of book, strike 74% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",2.0000,calls d0.70 6m,-0.1959,"premium 26% of book, strike 95% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",3.0000,margin (index ETF),-0.9000,3x not allowed under Reg T
+"-30% day, VIX to 100, VIX1Y to 50",3.0000,LETF (daily reset),-0.9000,fund loses L x the day (before any intraday reset)
+"-30% day, VIX to 100, VIX1Y to 50",3.0000,calls d0.80 6m,-0.3980,"premium 52% of book, strike 90% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",3.0000,calls d0.90 12m,-0.6516,"premium 99% of book, strike 74% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",3.0000,calls d0.70 6m,-0.2939,"premium 39% of book, strike 95% of spot"
+"-30% day, VIX to 100, VIX1Y to 50",,barbell 90%/10% ATM 6m,-0.0653,loss capped at the premium
+"-30% day, VIX to 100, VIX1Y to 50",,barbell 80%/20% ATM 12m,-0.1299,loss capped at the premium
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",2.0000,margin (index ETF),-0.2400,no call
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",2.0000,LETF (daily reset),-0.2400,fund loses L x the day (before any intraday reset)
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",2.0000,calls d0.80 6m,-0.1183,"premium 35% of book, strike 90% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",2.0000,calls d0.90 12m,-0.1501,"premium 66% of book, strike 74% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",2.0000,calls d0.70 6m,-0.0904,"premium 26% of book, strike 95% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",3.0000,margin (index ETF),-0.3600,3x not allowed under Reg T
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",3.0000,LETF (daily reset),-0.3600,fund loses L x the day (before any intraday reset)
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",3.0000,calls d0.80 6m,-0.1774,"premium 52% of book, strike 90% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",3.0000,calls d0.90 12m,-0.2251,"premium 99% of book, strike 74% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",3.0000,calls d0.70 6m,-0.1355,"premium 39% of book, strike 95% of spot"
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",,barbell 90%/10% ATM 6m,-0.0173,loss capped at the premium
+"-12% day (16 Mar 2020), VIX to 80, VIX1Y to 40",,barbell 80%/20% ATM 12m,-0.0350,loss capped at the premium
