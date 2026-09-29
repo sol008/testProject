@@ -72,8 +72,8 @@ GitHub sometimes silently skips a scheduled run. healthchecks.io emails you when
    | traderec daily | Cron `17 21 * * 1-5` | America/New_York | 2 h 15 min | `HC_PING_URL_DAILY` |
    | traderec weekly | Cron `17 20 * * 0` | America/New_York | 2 h 15 min | `HC_PING_URL_WEEKLY` |
    | traderec monthly | Cron `13 12 1 * *` | UTC | 3 h | `HC_PING_URL_MONTHLY` |
-   | traderec options (Phase B) | Cron `17 10 * * 1-5` | America/New_York | 1 h 15 min | `HC_PING_URL_OPTIONS` |
-   | traderec hourly (Phase B) | Simple: period 1 hour | — | 2 h | `HC_PING_URL_HOURLY` |
+   | traderec options (Phase B) | Cron `17 10 * * 1-5` | America/New_York | 1 h 30 min | `HC_PING_URL_OPTIONS` |
+   | traderec hourly (Phase B, optional) | Simple: period 1 hour | — | 3 h | `HC_PING_URL_HOURLY` |
 
 3. Copy each check's ping URL (`https://hc-ping.com/…`). Add it as a secret at **https://github.com/sol008/testProject/settings/secrets/actions/new**, under the name in the last column.
 
@@ -82,19 +82,22 @@ GitHub sometimes silently skips a scheduled run. healthchecks.io emails you when
 W8/W9 trades need an AI check that can only **block** a trade, never start one. Without these two secrets, W8/W9 never trade; they are logged in the shadow ledger instead.
 
 1. Create an API key at **https://platform.claude.com/settings/keys** (**Create Key**), and add a few dollars of credit at **https://platform.claude.com/settings/billing**. A veto check costs cents, and W8/W9 fire a few times a year at most.
+   - Web search must be allowed for your organisation in the Console's settings. If your organisation keeps its own list of allowed domains, it must include the veto's (`veto.allowed_domains` in `config/constitution.yaml`).
 2. Add two secrets at **https://github.com/sol008/testProject/settings/secrets/actions/new**:
 
    | Name | Value |
    |---|---|
    | `ANTHROPIC_API_KEY` | The key you just created |
-   | `TRADEREC_VETO_MODEL` | The model ID the veto is pinned to (Claude will suggest one in chat) |
+   | `TRADEREC_VETO_MODEL` | The model ID the veto is pinned to (Claude will suggest one in chat). Keep it unchanged: a change raises an alert |
+
+W9 also needs a file from you, but only on the day official sources report oil exports physically offline. There is nothing to do now: see Part 3.
 
 ### 5. Your contact for SEC requests (1 minute)
 
-The SEC asks automated tools to identify themselves in each request ([SEC: Accessing EDGAR data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data)). The SEC-filings shadow screens use this secret.
+The SEC asks automated tools to identify themselves in each request ([SEC: Accessing EDGAR data](https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data)). The SEC-filings shadow screens will use this secret. They are still being built, so nothing reads it yet.
 
-- Add the secret `SEC_USER_AGENT` at **https://github.com/sol008/testProject/settings/secrets/actions/new**. The value is a name and contact email of your choice, e.g. `Jane Doe jane@example.com`. It is sent only to sec.gov.
-- Without it, the screens use a generic identity, which the SEC may throttle.
+- Add the secret `SEC_USER_AGENT` at **https://github.com/sol008/testProject/settings/secrets/actions/new**. The value is your name followed by a contact email address of your choice, on one line. It is sent only to sec.gov.
+- Without it, the screens will use a generic identity, which the SEC may throttle.
 
 ### 6. Robinhood checks in the app (10 minutes, nothing is submitted)
 
@@ -103,6 +106,7 @@ The SEC asks automated tools to identify themselves in each request ([SEC: Acces
   - Enable options in the individual account and request **Level 3**. See [Advanced options strategies (Level 3)](https://robinhood.com/us/en/support/articles/advanced-options-strategies/).
   - Why not the IRA: IRAs allow Level 2 only ([Options in Robinhood Retirement](https://robinhood.com/us/en/support/articles/options-in-robinhood-retirement/)).
 - **Index options (XSP).** Check that **XSP** shows an options chain in the individual account ([Index options](https://robinhood.com/us/en/support/articles/index-options/)). How a spread is entered: [Placing an options trade](https://robinhood.com/us/en/support/articles/placing-an-options-trade/).
+- **The spread screens.** The spread emails use the labels "Trade Options", "Select", "Call Debit Spread", "Continue", "Close position" and "Good for day". They come from Robinhood's help pages, so look for them once without submitting anything, and tell Claude if the wording differs.
 - **Tell Claude** if your IRA is **not** at Robinhood. The emails use Robinhood's wording.
 
 ### 7. Three decisions to send Claude in chat
@@ -148,5 +152,7 @@ A dry run sends nothing and saves nothing. After that the schedule runs by itsel
 
   The GitHub mobile app works. These comments feed two of the go-live checks.
 - **Watch the repository** (**https://github.com/sol008/testProject** → **Watch → All activity**). GitHub then emails you when a trade issue opens, which is your backup if Gmail fails.
-- **Read the monthly review** on the 1st of each month.
+- **Read the monthly review** on the 1st of each month, and the quarterly review that follows it on 1 January, 1 April, 1 July and 1 October. The annual review on 1 January brings the year's decisions to you.
+- **When official sources report oil exports physically offline** (at least 1 million barrels a day, no fix expected for at least 2 weeks): add the file `state/inputs/w9_supply_loss.json` for W9 the same day, or at the latest before the next trading day's evening run. The format and the rules are in `docs/OPERATIONS.md` §2(d). When the barrels come back, set `restored_on` in the file.
+- **When a war starts:** add it to `geopolitical_onsets` in `config/econ_calendar.yaml` that evening (a shadow book fades gold's first-day spike). The same file needs the 2027 CPI, payrolls, GDP and PCE dates once BLS and BEA publish them; an alert will remind you (`docs/OPERATIONS.md` §9).
 - **Go-live** is a decision you make with Claude after at least 3 months of paper trading (design §7). No real money moves before then.

@@ -1,6 +1,8 @@
-# traderec — component interfaces (Phase A)
+# traderec — component interfaces (Phases A and B)
 
-Every component builds against these contracts. Phase B adds `docs/PHASE_B_CONTRACTS.md` (options, spreads, runners, reports). Shared types are in `traderec/types.py`, config loading in `traderec/config.py` (`load_config()` → `Config`) and indicators in `traderec/indicators.py`. The design is `research/00-SYSTEM-DESIGN-v3.md` (v3.2); the rule parameters are in `config/constitution.yaml`.
+Every component builds against these contracts, and this file records them as built. Phase B's original build contracts are in `docs/PHASE_B_CONTRACTS.md`, and each Phase B build's notes are in `docs/phase-b/`. Where the two differ, this file and the code are current. Shared types are in `traderec/types.py`, config loading in `traderec/config.py` (`load_config()` → `Config`) and indicators in `traderec/indicators.py`. The design is `research/00-SYSTEM-DESIGN-v3.md` (v3.3; Appendix C lists Phase B's interpretations); the rule parameters are in `config/constitution.yaml` (version 3.3.0).
+
+**Contents:** 1 data layer · 2 ledger · 3 paper broker · 4 forecasts · 5 modules and risk · 6 emails, validator, notify, feedback · 7 pipeline, CLI, runs and the order of work · 8 options (`traderec/options/`) · 9 runners and hooks · 10 the LLM veto · 11 reviews (`traderec/reports.py`).
 
 ## Conventions
 
@@ -11,8 +13,12 @@ Every component builds against these contracts. Phase B adds `docs/PHASE_B_CONTR
   - `adj_close` — total-return adjusted;
   - `volume`.
 - **Money.** Floats in USD. Percentages are fractions (0.06 = 6%) unless a key ends in `_pct`.
-- **No component other than the pipeline touches the network.** Data providers are injected, so every test runs offline with a fake provider.
-- **Git.** No component writes to git. The pipeline commits `state/` in CI.
+- **Option prices.** Per share of the combo; a contract is ×100 (`fills.options.multiplier`).
+- **Network.** Only the data adapters in `traderec/data/`, `notify.py`, `feedback.fetch_comments` and `llm_veto.py` touch the network. Adapters are injected through the provider (the veto through `run.services`), so every test runs offline with fakes or recorded fixtures under `tests/fixtures/`. Live smoke tests run only with `RUN_NETWORK_TESTS=1`.
+- **No model identifiers and no personal data in the repository.** The veto's model comes from the environment variable `TRADEREC_VETO_MODEL`, with no default. SEC requests are to take their User-Agent from `SEC_USER_AGENT`.
+- **Fail closed** for new entries on missing, stale or disagreeing data: log a `shadow` or `signal` record and raise `run.alert("data", ...)`.
+- **Look-ahead.** Signals use data up to and including the run date (`run.bars()` is cut at `run.asof`). Shadow books use no LLM.
+- **Git.** No component writes to git. The workflows commit `state/` in CI.
 
 ## 1. Data layer — `traderec/data/`
 
@@ -29,10 +35,12 @@ class DataProvider(Protocol):
     def second_source_close(self, ticker: str, date: str) -> dict | None
         # {"close": float, "source": "nasdaq" | "robinhood" | "yahoo-quote" | "fred:SP500" | "cboe-quote"} or None.
         # ^GSPC uses FRED's SP500 series, then CBOE's delayed index quote (W10's two-source rule).
+    def option_chain(self, underlying: str) -> OptionChain                    # Phase B (§8.1)
+        # A live snapshot of an option root's chain "now". There are no historical chains.
 
 class LiveProvider(DataProvider)     # network: yfinance, api.nasdaq.com, api.robinhood.com/quotes,
-                                     # cdn.cboe.com, api.exchange.coinbase.com, fred.stlouisfed.org
-                                     # retries with backoff, User-Agent header, in-run memo cache
+                                     # cdn.cboe.com (index and option quotes), api.exchange.coinbase.com,
+                                     # fred.stlouisfed.org; retries with backoff, User-Agent header, in-run memo cache
 class FakeProvider(DataProvider)     # built from in-memory frames/series for tests
 
 def verify_close(provider, bars: pd.DataFrame, ticker: str, date: str, tolerance: float) -> dict
@@ -40,6 +48,84 @@ def verify_close(provider, bars: pd.DataFrame, ticker: str, date: str, tolerance
     # ok=False on a mismatch above tolerance OR when no second source is available
     # (fail closed for new entries; the pipeline decides).
 ```
+
+**Option chains** (`LiveProvider.option_chain`):
+- CBOE's delayed quotes first: `https://cdn.cboe.com/api/global/delayed_quotes/options/{sym}.json`, following the redirect to `cdn-api.cboe.com`. `sym` is `_XSP` or `_SPX` for index roots and the ticker for equities (`cboe_option_symbol`). `asof` is CBOE's file time in ET; the quotes lag it by about 15 minutes; `raw_sha256` hashes the raw body.
+- yfinance as the fallback, **only 09:30–16:00 ET on trading days** by the provider's clock (track 14 §6.7: never Yahoo's after-hours quotes). It fetches every expiry up to 200 days out; its chains have no greeks.
+- `"SPXW"` is served from the SPX chain (`chain_root`). The memo cache gives one snapshot per root per provider, so one run sees one set of quotes. `sources["option_chain:<root>"]` records the source. Raises `DataError` when both sources fail.
+- `FakeProvider(..., chains={"XSP": chain | [chain_or_exception, ...]})` serves the next item on each call and then the last one repeatedly; an exception in the list is raised; a root without a chain raises `DataError`; `chain_calls` lists the roots asked for.
+
+### 1.1 Phase B adapters
+
+Each is reached through the provider, so tests inject fakes:
+
+| Adapter | Module | Reached as | Used by |
+|---|---|---|---|
+| Prediction markets (Polymarket gamma, Kalshi) | `data/prediction_markets.py` | `provider.prediction_markets`; the macro runner attaches a `PredictionMarkets()` to a `LiveProvider` on first use | W8, W9 |
+| W8/W9 macro data (explicit crude months, day moves, contango, DAL earnings, W9's input file) | `data/macro_data.py` | `provider.macro_data`; the macro runner attaches a `MacroData()` to a `LiveProvider` on first use | W8, W9 |
+| Crypto data (stablecoin books, ETH-USD, CME Bitcoin futures, BTC-USD at a minute) | `data/crypto_data.py` | `crypto_source(provider)`: `provider.crypto`, else a provider implementing the methods, else `LiveCryptoData` around a `LiveProvider`, else None | crypto shadows, hourly job |
+| Release calendar and macro series (Treasury yields, FRED, BoJ) | `data/econ_calendar.py` | `load_calendar()`; `macro_data_for(provider)`: `provider.macro_data`, else a `LiveMacroData` attached to a `LiveProvider`, else None | macro shadows |
+
+> **Known issue (code; found at integration, not fixed here).** Both W8/W9 and the macro shadow books use the attribute `provider.macro_data`, for two different adapters. In a live daily run `runners.macro` runs first and attaches W8/W9's `MacroData` (only `next_earnings`), so `macro_data_for` then returns it to the macro shadow books, which need `treasury_yields`, `fred_series` and `boj_basic_loan_rate`. Their yield and CPI inputs then fail closed as unavailable, and the BoJ lookup raises an `AttributeError` that `_shadow_guard` turns into a `shadow` alert. The tests inject each adapter separately and don't see it.
+
+```python
+# data/prediction_markets.py: a "family" is a ladder of dated yes/no markets named by one rule
+class PredictionMarkets:
+    def family(self, spec: dict) -> {"quotes": [quote, ...], "incomplete": bool}
+        # spec {"venue": "polymarket" | "kalshi", "query" | "series", "pattern"} (constitution W8 `markets`)
+    def refresh(self, ids, venue="polymarket") -> {id: quote}          # resolved markets included
+    def release_dates(self, series_by_kind: dict) -> {kind: [date, ...]}
+        # Kalshi release calendars (FOMC, CPI, payrolls); a series with no open event raises DataError
+    payload_sha256: list[str]
+# quote: {"venue", "id", "question", "yes", "bid", "ask", "one_day_change", "end", "listed", "resolved",
+#         "outcome", "closed_time", "event_id", "event_closed", "problem"} (+ "date" from family_quotes)
+def family_quotes(quotes, pattern) -> list[dict]              # name matches the pattern; its date parsed
+def pick_on_or_after(quotes, target, *, incomplete=False) -> dict
+    # "the first listed date on or after target" (W8's invalidation market)
+def pick_nearest(quotes, target, not_before, *, incomplete=False) -> dict
+    # "the listed date nearest target, on or after not_before", ties to the earlier (W8's trigger markets)
+    # both: {"status": "ok" | "missing" | "ambiguous", "market", "date", "reason", "listed"}; duplicates, flawed
+    # markets that could be the pick, a missing price or an incomplete listing are "ambiguous" (fail closed)
+
+# data/macro_data.py (W8/W9)
+def front_month(root: "CL" | "BZ", date) -> pd.Period         # front-safe month: CL +1/+2, BZ +2/+3 (days 1-15 / after)
+def front_contracts(root, date, n=2) -> ["BZZ26.NYM", ...]    # explicit months, never a continuous future
+def day_move(bars, date) -> {"ok", "ret", "close", "prev_close", "prev_date", "reason"}   # dated exactly on date
+def contango(front, second, date, threshold, max_stale_days=5) -> {"ok", "veto", "roll_yield", "prices", "reason"}
+def load_supply_input(path) -> {"ok", "events", "reason"}    # state/inputs/w9_supply_loss.json; missing = no events
+def supply_loss_check(events, date, prev_session, cfg) -> {"ok", "event", "reasons"}   # cfg: modules.W9.supply
+class MacroData:
+    def next_earnings(self, ticker, asof) -> {"ok", "date", "sources", "reason"}   # Nasdaq, Yahoo may only move
+                                                                                    # it earlier (<= 7 days); never raises
+
+# data/crypto_data.py
+class CryptoSource(Protocol):                 # LiveCryptoData and FakeCryptoData implement it
+    sources: dict[str, str]
+    def stablecoin_quotes(self, markets: {coin: {venue: symbol}}) -> {"quotes": {coin: {venue: quote | None}},
+                                                                     "errors", "fetched_at"}
+    def eth_daily_utc(self) -> pd.Series      # ETH-USD per complete UTC day; Coinbase, then yfinance
+    def btc_future_quote(self, year, month) -> dict | None   # {"ticker", "price", "time", "month", "name"};
+                                                             # explicit months only (BTCX26.CME, then MBTX26.CME)
+    def btc_spot_at(self, when) -> float | None               # Coinbase one-minute candle containing `when`
+def crypto_source(provider) -> CryptoSource | None
+# LiveCryptoData: 10 s timeout, one retry 2 s later; one GET per Coinbase product, one for all Kraken pairs,
+# one per Gemini symbol; a venue failing never loses the others. A Coinbase symbol may be a cross,
+# "USDT-USD/USDT-USDC" (USDC's USD book implied from two books).
+
+# data/econ_calendar.py (config/econ_calendar.yaml: release dates with sources, and the owner's war onsets)
+def load_calendar(path=None) -> EconCalendar
+    # .of_kind(kind), .active(kinds=None), .postponed(), .covers(kind, day), .coverage_gaps(day, kinds),
+    # .onsets, .verified, .sha256; raises CalendarError on an invalid file
+def reaction_session(sessions, day, *, during_session=True) -> str | None   # first NYSE session on or after day
+class MacroData(Protocol):                    # raises DataError when it has nothing
+    def treasury_yields(self, tenor: "2Y" | "10Y", years=None) -> pd.Series   # Treasury par yield curve, percent
+    def fred_series(self, series_id) -> pd.Series            # DGS2, DGS10, CPILFESL, CPIAUCSL, DFEDTARU
+    def boj_basic_loan_rate(self) -> pd.Series               # BoJ cdab0101.csv, by effective date
+class LiveMacroData / FakeMacroData                          # network (20 s, 3 retries) / in-memory
+def macro_data_for(provider) -> MacroData | None
+```
+
+> **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`). The SEC EDGAR / FINRA adapter (User-Agent from `SEC_USER_AGENT`, default a generic product string) goes here.
 
 ## 2. Ledger — `traderec/ledger.py`
 
@@ -55,7 +141,14 @@ class Ledger:
 
 - **Record envelope:** `seq`, `record_type`, `created_at` (UTC ISO), `as_of`, `constitution_version`, `payload`, `prev_hash`, `hash`.
 - **Hash:** `hash = sha256(canonical_json(record without "hash"))`, where canonical JSON uses `sort_keys` and `separators=(",", ":")`.
-- **Record types:** `run_manifest`, `snapshot`, `signal`, `recommendation`, `order`, `fill`, `mark`, `forecast`, `resolution`, `shadow`, `monthly_report`, `correction`.
+- **Record types:** `run_manifest`, `snapshot`, `signal`, `recommendation`, `order`, `fill`, `mark`, `forecast`, `resolution`, `shadow`, `monthly_report`, `quarterly_report`, `annual_report`, `correction`. Phase B added `quarterly_report` and `annual_report`; the review's payload also says `"review": "quarterly" | "annual"`.
+- **Phase B payload conventions** (no other new types):
+  - `snapshot` with `"kind": "option_chain"`: `root`, `source`, `asof`, `spot`, `raw_sha256` (what the fills saw), `needed_for`, `budget`, `path`, `bytes`, `file_sha256`, `rows`, `rows_total`, `level`, `surface`, `legs_kept`, `legs_missing`.
+  - `fill` for a spread: the `Fill` fields plus the broker's decision meta and `"order_type": "spread_limit"`; a no-fill or cancellation is `{"type": "no_fill", "filled": false, ...}` with the model price and reason.
+  - `mark` with `"kind": "spreads"`: `marks` per spread key (and `kept` in the daily run).
+  - `signal` with `check`: `option_chain` (a chain not usable), `roots_needed` (a runner's request failed); M4's `entry`, `structure`, `size`, `admit`, `exit`, `liquidity_probe`, `entry_cancelled`; W8/W9's `trigger`, `pm_remap`, `veto` (request hash, sanitised response, verdict, before any email), `exit`, `invalidation_remap`.
+  - `shadow`: `{"book", "event", ...}` for every shadow book, and for blocked W8/W9 candidates (`"event": "blocked"`, with `stage` and `reason`) and unconfirmed M4 or W10 signals.
+  - `correction`: also for voided forecasts of an entry that never filled, and for spread orders cancelled by the expiry safety net.
 
 ## 3. Paper broker — `traderec/broker.py`
 
@@ -65,25 +158,43 @@ class PaperBroker:
     def new(cls, cfg: Config) -> "PaperBroker"            # accounts from account.yaml start_cash
     @classmethod
     def from_state(cls, state: dict, cfg: Config) -> "PaperBroker"
-    def to_state(self) -> dict                           # JSON-serialisable
+    def to_state(self) -> dict                           # JSON-serialisable; spreads round-trip, older states load
     def cash(self, account: str) -> float
     def positions(self, account: str | None = None, module: str | None = None) -> list[dict]
         # [{"account", "ticker", "module", "qty", "cost", "opened", "trade_id"}]; lots keyed by (account, ticker, module)
     def position(self, account: str, ticker: str, module: str) -> dict | None
     def queue(self, intent: OrderIntent) -> None
-    def pending(self) -> list[OrderIntent]
+    def pending(self) -> list[OrderIntent]               # ETF orders and spread orders
     def fill_pending(self, date: str, opens: dict[str, float]) -> list[Fill]
         # Fill model v1.0: price = open * (1 + side * slippage_bps / 1e4), side +1 buy / -1 sell.
         # Buys: dollars capped by available cash (a partial fill is recorded in meta).
         # close_all sells the module's whole lot.
         # A missing open keeps the order pending once, then cancels it (recorded in meta).
+        # Never touches spread orders.
     def accrue_interest(self, from_date: str, to_date: str, annual_rate: float) -> float
         # simple daily accrual on positive cash per calendar day; returns the interest added
     def mark(self, date: str, closes: dict[str, float]) -> dict
         # {"date", "nav", "by_account": {acct: {"cash", "positions_value", "equity"}}, "peak", "drawdown"}
-        # updates the NAV peak
+        # updates the NAV peak; open spreads count at their last mark x contracts x 100, or at cost before a mark
     def market_value(self, account: str, ticker: str, module: str, price: float) -> float
+
+    # Phase B: two-leg vertical spreads (order_type "spread_limit"; docs/PHASE_B_CONTRACTS.md §2-§4)
+    def fill_spreads(self, date: str, time_et: str, chains: dict[str, OptionChain]) -> list[Fill]
+    def spreads(self, account: str | None = None, module: str | None = None) -> list[dict]
+    def mark_spreads(self, date: str, chains: dict[str, OptionChain]) -> dict[str, float]
+    def settle_spread(self, key: str, date: str, value_per_share: float, reason: str) -> Fill
+    def cancel_pending(self, intent_id: str, date: str, reason: str) -> OrderIntent | None
 ```
+
+- **`queue` for a spread** (`OrderIntent` with `order_type="spread_limit"`, `ticker` = the option root, `legs` = position legs, `contracts` ≥ 1): the account needs `options_level` ≥ 3 (the taxable account; the IRA is level 2); the root must be whitelisted or an index root (XSP, SPX, SPXW); exactly one long and one short leg with valid OCC symbols on one root, one right, one expiry, two strikes, ratio 1. An opening order (`side="buy"`) must be a **debit** vertical with positive `limit_price` and `max_price` and no `close_all`; a closing order (`side="sell"`) must set `close_all`. Raises `ValueError` otherwise.
+- **`fill_spreads`**: eligible orders are `spread_limit` orders created before `date` whose root's chain (SPXW uses the SPX chain) is in `chains` and dated `date`; closes go first, then opens, in queue order. Orders without such a chain stay pending, untouched. Each decision is `options.fillmodel.decide_fill` on the combo quote of the legs (a close uses the open spread's legs):
+  - filled open: cash is debited contracts × P × 100 and the spread opens; filled close: cash is credited and the spread is removed;
+  - no fill: the order moves to `cancelled` with `cancel_reason` and `cancel_date`. So does a close with no open spread, an open whose trade already holds a spread, and an open the account's cash can't pay;
+  - `last_fill_meta[intent_id]` = `{"attempt", "reason", "quote", "cancelled", "model_price", "limit_price", "max_price", "time_et"}`, plus `"realized_pnl"` (0.0 for opens), and `"entry_price"` and `"cost"` for closes;
+  - the `Fill`: `qty` = contracts, `price` = P, `ref_price` = combo mid, `multiplier` 100, `dollars` = contracts × P × 100, `slippage_bps` 0.0, `model_version` "1.0", `legs` = the leg quotes used, `fill_time` = `time_et`.
+- **`spreads()`** rows: `{"key": "account|trade_id", "account", "module", "trade_id", "root", "legs", "contracts", "entry_price", "cost", "opened", "expiry", "mark", "mark_date", "width", "multiplier", "intent_id", "fill_time"}`. `mark` is None until the first mark.
+- **`mark_spreads`** returns `{key: mark per share}` for the spreads it marked, at the combo mid clamped to [0, width]; a spread without a same-day chain or a two-sided quote keeps its last mark.
+- **`settle_spread`**: closes the spread at `value_per_share` clamped to [0, width], cancels the trade's pending spread orders, and returns a sell `Fill` whose `intent_id` is `SETTLE-<date>-<trade_id>`; `last_fill_meta` has `"settled": True`, `"realized_pnl"`, `"cancelled_orders"`, … Raises `KeyError` for an unknown key and `ValueError` for a value that isn't a finite number ≥ 0.
 
 ## 4. Forecasts — `traderec/forecasts.py`
 
@@ -96,7 +207,19 @@ def resolve_trade_forecasts(forecasts: list[dict], trade_result: dict) -> list[d
 def brier(p: float, outcome: int) -> float
 def summarize(resolved: list[dict]) -> dict
     # counts, mean Brier, mean p vs hit rate, per module
+EXTRA_SPECS: dict[tuple[str, str], Callable[[Recommendation, Config], list[dict]]]
+    # Phase B runners register builders at import: EXTRA_SPECS[(module, kind)] = builder, returning _spec(...) dicts
 ```
+
+Phase B registrations, all on `NEW_TRADE` and resolved on exit (the existing `profit` and `time_stop` events):
+
+| Module | Forecasts (p) | Source |
+|---|---|---|
+| M4 | "The spread closes worth more than its debit" (0.60) | `runners/m4.py`; `modules.M4.forecasts.p_profit` |
+| W8 | profit (0.50); exits on the 20-trading-day time stop (0.60) | `runners/macro.py`; `modules.W8.forecasts` |
+| W9 | profit (0.40); exits on the time stop (0.45) | `runners/macro.py`; `modules.W9.forecasts` |
+
+An entry that never fills voids its open forecasts with a `correction` record.
 
 ## 5. Modules and risk — `traderec/modules/`, `traderec/risk.py`
 
@@ -138,20 +261,109 @@ def w10_kill_check(history: list[dict], nav: float, cfg_w10: dict) -> str | None
 def st1b_entry_check(...)  # as m1_entry_check without the VIX gate
 def w10_check(spx: pd.DataFrame, vix: pd.Series, date: str, last_trigger: str | None, cfg_w10: dict) -> dict
 
+# m4_crashspread.py (M4, O2; Phase B): pure, on closes up to the run date
+def crash_condition(closes, vix, cfg_m4) -> pd.Series      # close <= (1 + drop_from_high) x its 252-session high
+                                                           # (today included) and VIX >= vix_min
+def signal_chain(condition, cooldown_days) -> list[pd.Timestamp]   # a signal needs (day - last).days > cool-down
+def m4_signal(spx, vix, date, cfg_m4, *, cooldown_until=None, close_override=None, vix_override=None) -> dict
+    # {"signal", "condition", "first_day", "close", "high", "drawdown", "vix", "last_signal", "cooldown_until",
+    #  "reasons"}; fail closed without today's close, 252 closes or a VIX history covering the window
+def cooldown_end(signal_date, cooldown_days) -> str;  entry_session(signal_date) -> str   # the next session
+def choose_expiry(expiries, entry_date, max_calendar_days, min_dte) -> str | None   # latest in [entry + min_dte,
+                                                                                   #  entry + max_calendar_days]
+def choose_strikes(chain, expiry, spot, short_ratio, tolerance) -> {"ok", "long_strike", "short_strike", "legs",
+                                                                    "reasons"}      # each within 1% of its target
+def size_contracts(nav, per_contract_usd, target_frac, cap_frac) -> {"contracts", "target_usd", "cap_usd",
+                                                                     "per_contract_usd", "reason"}
+def spread_terms(legs, price, contracts, multiplier=100) -> {"long_strike", "short_strike", "width", "width_usd",
+                                                             "max_value_usd", "breakeven", "max_multiple"}
+def intrinsic_value(legs, underlying) -> float
+def last_close_date(expiry) -> str;  planned_exit_date(expiry, sessions_before=2) -> str
+def m4_exit_check(date, open_trade, sessions_before=2) -> {"exit", "reason": "expiry_rule" | None, "exit_date",
+                                     "last_close_date", "expiry", "next_session", "too_late", "days_held"}
+def liquidity_fallback(...)         # used only if options.chain.liquidity_check were missing
+
+# w8w9_macro.py (W8, W9; Phase B): pure
+def move_leg(moves, threshold) -> {"fired", "disagree", "by", "rets", "reason"}   # disagreement fails closed
+def pm_leg(prev, today, prev_session, jump, through) -> {"fired", "up", "through", "prev", "price", "market_id",
+                                                         "question", "reason"}   # needs last session's snapshot
+def release_ban(entry_date, releases, sessions) -> {"banned", "hits", "window"}  # entry day .. + `sessions`
+def discretionary_pause(marks, cfg, pause_at) -> {"paused", "reason"}   # cfg: circuit_breakers; 20% DD, -2% day, -4% week
+def expiry_candidates(expiries, entry_date, dte_min, dte_max, before=None) -> list[str]   # latest first
+def call_spread(chain, expiry, spot, moneyness) -> {"ok", "long", "short", "legs", "reason"}
+def no_oil_short(module, root, legs) -> None          # ValueError: W8 on an oil root, or not a bull call spread
+def round_price(price, side) -> float                 # to the cent: buys up, sells down
+def contracts_for(budget_usd, max_price, multiplier=100) -> int
+def sessions_after(date, n) -> str;  sessions_held(fill_date, date) -> int
+def time_stop_date(entry_date, sessions) -> str       # entry session = 1: the exit order goes out on the evening
+                                                      # of session `sessions` and fills in the next one
+def exit_check(module, date, ot, value, cfg, invalidated=None) -> {"exit", "reason", "sessions_held", "value",
+                                                                   "detail"}
+    # in order: "expiry_rule" (<= expiry_close_sessions to expiry), "invalidation" (sticky), "take_profit"
+    # (W8: value >= 0.8 x width; W9: value >= 2 x entry price), "time_stop"
+
+# option_shadows.py (O1/M7, O1-h, I1, I2, ST-2; Phase B): pure; see docs/phase-b/option-shadows.md
+monthly_expiry(year, month); cycle_expiry(entry_date, window); days_to_expiry(expiry, day); nth_session(sessions,
+    start, n)
+o1_filters(index, vix, vix3m, date, cfg_filters); vix_fade_signal(vix, date, last_signal, cfg_trigger)
+btc_trend(btc, date, sma_days); st2_signal(spy, vix, vix3m, date, cfg)
+pick_expiry(expiries, day, *, target=None, target_dte=45, dte_range=(40, 50)); pick_put_spread(chain, expiry, day,
+    cfg, *, rate=0.0)   # Black-Scholes put delta when the chain has none
+atm_iv(chain, expiry); iv_term_ratio(chain, day, near_dte, far_dte)
+credit_quote(chain, legs); sell_to_open_price(quote, concession); buy_to_close_price(quote, concession)
+credit_liquidity(chain, quote, legs, cfg_liquidity)
+spread_intrinsic(legs, spot); managed_exit(credit, cost_to_close, days_left, cfg)
+result_on_max_loss(credit, width, cost) -> {"pnl", "max_loss", "return"}   # per share; R = P&L / max loss
+o1_promotion_check(trades, cfg_promotion, *, months=None)       # track 14 §7.6
+
+# crypto_shadows.py (M6, ETH; Phase B): pure; see docs/phase-b/crypto.md
+depeg_check(quotes, cfg) -> dict; depeg_step(book, quotes, now, cfg, nav, coins, *, markets) -> [changes]
+cme_btc_expiry(year, month); carry_contracts(asof, max_days=60, months_ahead=4); quote_window(run_date)
+carry_check(contract, quote, spot, tbill, cfg); carry_open(chk, run_date, nav, cfg); carry_close(ev, asof, cfg)
+eth_step(book, closes, asof_utc, cfg, *, tbill) -> {"changes", "notes", "problems"}
+eth_promotion(weeks, cfg=None) -> {"weeks", "months", "alpha_annual", "beta", "t", "passes", "rule"}
+m6_summary(events) -> {"depeg": {...}, "carry": {...}}; hour_label(when) -> "YYYY-MM-DDTHHZ"
+
+# macro_shadows.py (W3, W4, gold fade, release log; Phase B): pure; see docs/phase-b/macro-shadows.md
+window_move, bucket, cpi_mm, fed_decision, boj_decision, nearest_fomc, w3_check, w4_check, new_trade,
+advance_trade, w3_exit_check, w4_exit_check, time_exit_check, baseline_mean, score_trade, t_stats,
+promotion_summary, bh_fdr
+
 # risk.py
 def governor(drawdown: float, cfg_risk: dict) -> float     # G(D)
 def stress_table(closes: dict[str, pd.Series], cfg: Config) -> dict[str, float]
     # |worst 10-session loss| per ticker, floored at stress_floor; IBIT uses crypto_stress
-def open_stress(positions: list[dict], values: dict, stress: dict, cfg: Config) -> dict
-    # {"total", "us_equity", "by_module"}; M2 counted once as its sleeve stress
+def open_stress(positions: list[dict], values: dict, stress: dict, cfg: Config, *,
+                spreads: list[dict] | None = None, pending: list | None = None) -> dict
+    # {"total", "us_equity", "by_module", "nav"}; M2 counted once as its sleeve stress.
+    # With spreads or pending (Phase B; an empty list counts) also {"by_cluster", "premium",
+    # "premium_by_cluster", "pending"}:
+    # - each open spread counts at max(cost, mark x contracts x 100) in its module, its cluster
+    #   (spread_cluster) and the option premium; a spread with neither raises ValueError;
+    # - each pending buy counts as if filled tonight: a spread at max_price x contracts x 100, an ETF order at
+    #   dollars x unit stress; sells, M2's orders and shadow orders are left out
 def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stress: dict, cfg: Config,
           drawdown: float) -> dict
     # {"ok": bool, "dollars": float (possibly scaled), "binding": str | None, "notes": [...], "cluster_overflow"}
     # v3.3: M1 has priority in the 7% US-equity cluster (never cut; overflow reported); W10 is skipped when the
     # reserve leaves less than cluster_min_fraction of its size
+def admit_premium(module: str, root: str, premium_usd: float, cluster: str, positions_stress: dict, cfg: Config,
+                  drawdown: float, *, exempt_governor: bool = False, min_premium_usd: float = 0.0) -> dict
+    # Phase B: a defined-risk option trade whose stress is its premium. Scaled down in order by:
+    # "governor" (unless exempt_governor or M4), "per_trade_premium" 3%, "option_premium" 10% (open + pending),
+    # "factor_premium" 3% per cluster, the cluster ("us_equity_cluster" 7%, else "<cluster>_cluster" 6%),
+    # "total_open_stress" 10%. Needs open_stress(..., spreads=...) output ("nav", "premium"), else ValueError.
+    # ok is False when the allowed premium is 0 or below min_premium_usd (one contract). Returns {"ok",
+    # "premium_usd" (allowed), "binding", "notes", "cluster_overflow" (always 0.0)}
+def ticker_cluster(ticker, cfg) -> str      # "us_equity" for SPY/QQQ/VOO, S&P index options and M2's equity legs;
+                                            # "crypto"; M2's leg map; else "other"
+def spread_cluster(module, root, cfg) -> str   # SPREAD_CLUSTERS: M4 -> "us_equity"; W8, W9 -> "oil"; else the root's
+def premium_caps(cfg) -> dict               # risk.caps overrides PREMIUM_CAPS (0.03 / 0.10 / 0.03 / 0.06) key by key
 ```
 
-## 6. Emails, validator, notify — `traderec/emails.py`, `traderec/validator.py`, `traderec/notify.py`
+`pipeline.Run.open_stress(stress)` passes `spreads=broker.spreads()` and `pending=broker.pending()`, so every admission (M1, W10, M3, M4, W8, W9) sees open spreads and tonight's queued buys. M4 builds the same book itself (`runners.m4._book_stress`), counting every pending buy, so a W10 order queued the same evening takes the US-equity reserve first.
+
+## 6. Emails, validator, notify, feedback — `traderec/emails.py`, `traderec/validator.py`, `traderec/notify.py`, `traderec/feedback.py`
 
 ```python
 def render(rec: Recommendation, ctx: dict) -> RenderedEmail
@@ -160,47 +372,277 @@ def render(rec: Recommendation, ctx: dict) -> RenderedEmail
     # Sections (design §3a, spec 11): headline box, in one sentence, Robinhood steps (<= 7 taps, exact values),
     # what-if, how you get out, why, the odds (base rates), risks and tax, portfolio after, footer + disclaimer.
     # Every number goes through a registry (numbers_registered).
+    # A rec with any order_type "spread_limit" order renders as a vertical spread (_SpreadEmail, below).
 def render_monthly(report: dict, ctx: dict) -> RenderedEmail
+def render_quarterly(report: dict, ctx: dict) -> RenderedEmail     # Phase B (§11)
+def render_annual(report: dict, ctx: dict) -> RenderedEmail        # Phase B (§11)
 
 def validate(email: RenderedEmail) -> list[str]
     # every numeric token in subject/text must be in numbers_registered or a template-allowed literal
+    # (ALLOWED_LITERALS; Phase B added "11:00", the spread re-price time)
 
 def send(email: RenderedEmail, *, dry_run: bool, outbox: Path) -> dict
     # Gmail API via HTTPS (refresh-token flow; env GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN,
     # ALERT_TO_EMAIL); dry_run or missing credentials -> write .eml to outbox
-def create_issue(title: str, body: str) -> str | None
+def create_issue(title: str, body: str, labels: list[str] | None = None) -> str | None
     # GitHub REST (GITHUB_TOKEN, GITHUB_REPOSITORY); None when unavailable
 def healthcheck(status: str) -> None
     # HC_PING_URL; "start" | "success" | "fail"; silent on errors
 ```
 
-## 7. Pipeline and CLI (integration) — `traderec/pipeline.py`, `traderec/facts.py`, `traderec/cli.py`
+**Spread emails** (`_SpreadEmail`, a subclass of the ETF email). The order's side decides the email: `buy` opens a debit vertical (NEW_TRADE), `sell` with `close_all` closes it (EXIT). The subject reads `[PAPER][TRADE <trade_id>] BUY 2 XSP 770/810 call spreads, 18 Dec, limit $7.45 — <module name> (<module>) — after 10:00 ET <execute date>` (CLOSE for an exit). The email gives the headline box (ACTION, SIZE = the debit, STRESS = the debit at the stated maximum, WINDOW "after 10:00 ET … not filled by 11:00 ET: re-enter once at the stated maximum (minimum); otherwise skip (wait for tomorrow's email)", ODDS "of the debit", RESULT for an exit), an explainer, 7 opening or 6 closing Robinhood steps, the what-if, the planned close, why, odds, risks, the tax line (`SECTION_1256_TAX` for XSP/SPX/SPXW, else `ORDINARY_OPTION_TAX`), and `meta["order_type"] = "spread_limit"`. If the strikes, the expiration or the limit are missing from both the facts and the order, the email says to place nothing.
+
+**Facts keys** (all optional; facts win, the order's fields fill the gaps): NEW_TRADE `root`, `underlying_name`, `strategy_label`, `legs`, `expiry`, `contracts`, `limit_price`, `max_price`, `debit_usd`, `max_debit_usd`, `max_value_usd`, `breakeven`, `spot`, `exit_date`, `stress_usd`, `stress_pct`, `section_1256`, `settlement` ("cash-settled, European-style" | "shares, American-style"), `base_rates`, `exit_plan`, `multiplier`; EXIT `contracts`, `limit_price`, `max_price` (the stated minimum), `credit_usd`, `min_credit_usd`, `entry_price`, `pnl_usd`, `pnl_pct`, `reason` ("time_stop" | "take_profit" | "invalidation" | "expiry_rule"), `exit_date`; both `execute_date`, labels and `base_rates` as for ETF emails. Derived keys module text may use: `right`, `direction`, `long_strike`, `short_strike`, `strikes`, `width`, `spreads_phrase`, `per_spread_usd`, `max_per_spread_usd`, `debit_frac`, `when`. `runners.m4` and `runners.macro` build their facts (`entry_facts`, `exit_facts`) with every contract key plus their own.
+
+**Module text** lives in `traderec/email_text/<module>.py` as `TEXT = {table: entries}` (`m4.py`, `w8w9.py`), merged into `emails.py`'s tables at import by `email_text.merge_module_text`: `MODULE_NAMES`, `MODULE_STATUS`, `MODULE_CONFIDENCE`, `DEFAULT_TICKERS`, `TICKER_NAMES`, `PLAN_NAMES_EXIT_EMAIL`, `ONE_SENTENCE`, `WHY`, `EXIT_PLAN`, `RISKS`. A duplicate key raises. No digits in templates.
+
+**Owner feedback** (`traderec/feedback.py`): the monthly and quarterly jobs read the trade issues' comments: `filled <dollars> @ <price> [TICKER]`, `filled <contracts> @ <net price> [ROOT]` for spreads ("contracts", "spreads" or "x" after the count is fine), or `skipped`. `review(issues, model_fills, *, fetch)` returns `{"issues", "handled", "measured", "fills", "median_gap_bps", "spread_fills", "spread_median_gap_bps", "spread_fills_ok", "fills_ok"}`: `fills` and `median_gap_bps` are the ETF orders (gate: median |gap| ≤ `FILL_TOLERANCE_BPS` = 10 bp); spread gaps are in bp of the net price (gate: median ≤ `SPREAD_FILL_TOLERANCE_BPS` = 200 bp), each row with `gap_usd` per contract; `fills_ok` needs every measured group within tolerance. A spread price typed per contract (50–200 × the model's) is read as per share. A paper fill is a spread fill when it records `order_type`, a `multiplier` above 1 or `legs`, or else when its module is in `SPREAD_MODULES` (M4, W8, W9). The issue body asks for `filled <contracts> @ <net price>` on spread emails.
+
+## 7. Pipeline, CLI and runs — `traderec/pipeline.py`, `traderec/facts.py`, `traderec/cli.py`
 
 ```
-python -m traderec init [--nav 100000] [--date D] [--if-missing]   # create state/state.json and an empty ledger
-python -m traderec daily   [--date D] [--dry-run] [--force]          # default D: the latest session whose close is final
-python -m traderec weekly  [--date D] [--dry-run] [--force]          # Bitcoin switch; default D: the latest Sunday (ET)
-python -m traderec monthly [--month YYYY-MM] [--dry-run] [--force]   # default: the month that just ended
+python -m traderec init       [--nav 100000] [--date D] [--if-missing]   # create state/state.json and an empty ledger
+python -m traderec daily      [--date D] [--dry-run] [--force]   # default D: the latest session whose close is final
+python -m traderec weekly     [--date D] [--dry-run] [--force]   # Bitcoin switch; default D: the latest Sunday (ET)
+python -m traderec monthly    [--month YYYY-MM] [--dry-run] [--force]    # default: the month that just ended
+python -m traderec options    [--date D] [--dry-run] [--force]   # Phase B: the 10:17 ET job; default D: today (ET)
+python -m traderec hourly     [--dry-run]                        # Phase B: the hourly stablecoin depeg check
+python -m traderec quarterly  [--quarter YYYY-Qn] [--dry-run] [--force]  # Phase B; default: the quarter just ended
+python -m traderec annual     [--year YYYY] [--dry-run] [--force]        # Phase B; default: the year just ended
 python -m traderec verify-ledger
-python -m traderec status
+python -m traderec status     # the paper book, open spreads and pending spread orders, open trades, recent runs
 ```
 
-- **Exit codes:** 0 done or nothing to do; 3 the session's data isn't available yet (retry); 1 error.
-- **State:** `state/state.json` holds `{"broker", "modules", "shadow", "forecasts", "runs", "counters", "marks", "dividends", "issues", "fills", "outbox", "alerts"}`. `state/pre_run.json` is the state before the most recent run, which is what `--force` restores. `state/outbox/` holds `.eml` copies of emails that were not sent (dry runs, no Gmail credentials, failed sends).
-- **Idempotency:** one run per (kind, date). `data_missing` and `error` runs may be retried. `--force` re-runs only the most recent run, from `pre_run.json`, and records a `correction` in the ledger.
-- **Ledger integrity:** each run verifies the hash chain and that the record the state last committed (`counters.ledger_head`) is still there. Records written by a run that crashed before saving the state are marked with a `correction`.
-- **Daily order of work:**
-  1. credit dividends (ex-dates since the last run, on the holdings before today's fills);
-  2. fill queued orders at the first session after their creation date;
-  3. accrue T-bill interest;
-  4. mark the book;
-  5. snapshot and two-source checks;
-  6. M1 exit or entry;
-  7. W10 exit (calendar-exact) or entry (two-source S&P close; admitted after M1);
-  8. M2 monthly decision, or the next batch of deferred legs;
-  9. M3 catch-up (the weekly job normally decides);
-  10. shadow book (ST-1b; every uptrend −3% day scored at 60 and 90 days);
-  11. dated forecasts;
-  12. drawdown alerts.
+> **Placeholder: replay build pending** (`docs/phase-b/replay.md`). Its command, run kind and interfaces go here.
+
+- **Exit codes:** 0 done or nothing to do; 3 a `data_missing` result, the data isn't available yet (retry; from `daily`, `options` or `hourly`); 1 error.
+- **Run kinds and keys** (one run per key; `state["runs"][key]` holds its status and ledger range):
+
+  | Kind | Key | Statuses |
+  |---|---|---|
+  | `init` | `init:<date>` | `ok` |
+  | `daily` | `daily:<date>` | `ok`, `no_session`, `data_missing` |
+  | `weekly` | `weekly:<date>` | `ok` |
+  | `monthly` | `monthly:YYYY-MM` | `ok` |
+  | `options` | `options:<date>` (ET) | `ok`, `no_session`, `data_missing`; not recorded: `too_early`, `too_late` (scheduled runs outside `options.snapshot_window_et`), `disabled` (`options.enabled: false`) |
+  | `hourly` | `hourly:<YYYY-MM-DDTHHZ>` (UTC hour) | `ok`, recorded only in an hour with a depeg event; not recorded: `no_change`, `disabled`, `data_missing` (no venue answered) |
+  | `quarterly` | `quarterly:YYYY-Qn` | `ok` |
+  | `annual` | `annual:YYYY` | `ok` |
+
+  Any run may also return `already_done` without running (and the hourly job returns it for an hour already recorded).
+- **State:** `state/state.json` holds `{"broker", "modules", "shadow", "forecasts", "runs", "counters", "marks", "dividends", "issues", "fills", "outbox", "alerts"}` (plus `version`, `created`, `mode`, `constitution_version`, `last_accrual`, `last_daily`). `state/pre_run.json` is the state before the most recent run, which is what `--force` restores. `state/outbox/` holds `.eml` copies of emails that were not sent (dry runs, no Gmail credentials, failed sends). Phase B adds `state/options/<date>/<root>-<HHMM>.csv.gz` (§8.3) and reads the owner's `state/inputs/w9_supply_loss.json` (from the real state directory, also in dry runs).
+- **Phase B state keys** (created by `new_state`; runners `setdefault` them for older states): `modules.M4` `{"open_trade", "history", "cooldown_until"}` (+ `last_signal`, `armed`, `liquidity_probe`, `skipped`); `modules.W8` / `W9` `{"open_trade", "history"}` (+ `events`, the last 60 candidate outcomes; `pm_map` (W8); `data_flags`; `veto_model_sha256`; `processed_events` (W9)); `shadow.M4_TWIN`, `O1`, `O1H`, `I1`, `I2`, `ST2` `{"open_trade", "trades"}` (+ `held`, `last_cycle`, `last_signal`); `shadow.ETH` `{"on", "last_week_end", "open_trade", "trades"}` (+ `weeks`); `shadow.M6` `{"events"}` (+ `watch`, `carry_last`); `shadow.MACRO` `{"events"}` (+ `meta`); `shadow.EDGAR` `{"events", "seen"}` (placeholder). A spread module's `open_trade` is `{"trade_id", "status": "pending_entry" | "open" | "pending_exit", "signal_date", "intent_id", "root", "account", "legs", "contracts", "expiry", "exit_date", "limit_price", "max_price", "entry_price", "fill_date", "cost", ...}`. Shadow trades and events carry `signal_date`, and closed ones `exit_date` and `return`, which the review tables read.
+- **Idempotency:** one run per key. `data_missing` and `error` runs may be retried. `--force` re-runs only the most recent run (of any kind, a recorded hourly hour included), from `pre_run.json`, and records a `correction` in the ledger.
+- **Ledger integrity:** each run verifies the hash chain and that the record the state last committed (`counters.ledger_head`) is still there. Records written by a run that crashed before saving the state are marked with a `correction`. A quiet hourly check reads the state and writes nothing.
+- **Daily order of work** (`pipeline._daily`):
+  1. retry emails that failed to send earlier, while their orders are still current;
+  2. credit dividends (ex-dates since the last run, on the holdings before today's fills);
+  3. fill queued ETF orders at the first session after their creation date (spread orders are left to the options job);
+  4. accrue T-bill interest;
+  5. spread marks (`options.job.mark_spreads`, only with open spreads): settle any spread open on or after its expiry at intrinsic value from the official close (the safety net), then mark the rest at tonight's closing chains (§8.4);
+  6. mark the book (spreads at mark × contracts × 100, or cost before a first mark);
+  7. snapshot and two-source checks;
+  8. M1 exit or entry;
+  9. W10 exit (calendar-exact) or entry (two-source S&P close; admitted after M1);
+  10. M4 (`runners.m4.daily`): the twin's expiry settlement, the open spread's close, then the entry test; after M1 and W10 in the US-equity reserve;
+  11. M2 monthly decision, or the next batch of deferred legs;
+  12. M3 catch-up (the weekly job normally decides);
+  13. W8/W9 (`runners.macro.daily`): exits first, then W8, then W9;
+  14. the Phase A shadow book (ST-1b; every uptrend −3% day scored at 60 and 90 days);
+  15. the Phase B shadow runners, each inside `pipeline._shadow_guard`: `option_shadows` → `crypto` → `edgar` (skeleton) → `macro_shadows`;
+  16. dated forecasts;
+  17. drawdown alerts.
 - **Each decision:** pre-registered in the ledger, rendered, validated, GitHub issue opened, paper orders queued, and email sent after the state is saved. A validator failure blocks the orders and raises an alert.
-- **Owner feedback (`traderec/feedback.py`):** the monthly job reads the trade issues' comments (`filled <dollars> @ <price> [TICKER]` / `skipped`) to measure two go-live gates: emails handled, and practice fills vs the fill model (median gap ≤ 10 bp).
+- **Owner feedback:** see §6. The monthly job measures two go-live gates: emails handled, and practice fills vs the fill model (ETFs 10 bp; spreads 200 bp of the net price).
+- **Monthly report** (`facts.monthly_report`, `emails.render_monthly`): generic over every module and shadow book in the state, whatever its shape. History entries with `exit_date` are closed trades, and entries without one (M2's rebalances) count as opened on their `date`; shadow `events` count by the first of `signal_date`, `date`, `event_date`, `detected`, `filed`, `asof`, and scored records (the W10 record) at the longest configured horizon; `trades` count by `signal_date` and `exit_date`; returns come from `return` or `ret`; unknown shapes are skipped. It adds `stage`, `edge_p`, `edge_units`, `edge_threshold`, `edge_binding`, `edge_families`, `emails_handled_rate_to_date`, `fills_ok_to_date`, `open_trades`, `paused_modules`, `next_quarterly`, `quarterly_this_month`, `gate_checks` and `go_live_ready` from `reports.monthly_gate`; a failure there degrades to a note. "Runs on time" counts the daily run and, from its first run, the options job; the hourly job isn't counted.
+
+## 8. Options — `traderec/options/`
+
+### 8.1 Chains — `options/chain.py`
+
+```python
+CHAIN_COLUMNS = ["occ", "root", "right", "strike", "expiry", "bid", "ask", "mid", "iv", "delta", "gamma",
+                 "theta", "vega", "open_interest", "volume", "last_trade_time"]
+
+@dataclass
+class OptionChain:
+    underlying: str            # the chain root: "XSP", "SPX", "SPY", "USO", "DAL", "IBIT", ...
+    asof: str                  # "YYYY-MM-DDTHH:MM:SS" in ET, the quotes' time
+    spot: float
+    source: str                # "cboe" | "yahoo" | "fake"
+    frame: pd.DataFrame        # CHAIN_COLUMNS, one row per contract
+    raw_sha256: str | None = None
+    def expiries(self) -> list[str]
+    def quote(self, occ: str) -> dict | None
+    def select(self, right: str, expiry: str) -> pd.DataFrame
+
+def parse_occ(occ) -> {"root", "expiry", "right", "strike"};  occ_symbol(root, expiry, right, strike) -> str
+def chain_root(root) -> str                                    # "SPXW" -> "SPX"; others unchanged
+def parse_cboe_chain(payload, underlying, *, raw_sha256=None) -> OptionChain
+def parse_yahoo_chain(frames, underlying, spot, asof, *, raw_sha256=None) -> OptionChain     # no greeks
+def expiry_on_or_before(chain, limit, *, earliest=None) -> str | None;  expiries_between(chain, start, end)
+def strike_nearest(chain, expiry, right, target, *, root=None) -> float | None    # ties to the lower strike
+def strike_by_delta(chain, expiry, right, target_delta, *, root=None) -> float | None
+    # compares |delta|; ties to the strike further out of the money; None without greeks (fail closed)
+def liquidity_check(chain, legs, cfg_liquidity, *, expected_gain=None) -> dict
+    # design §4 "Option liquidity" on this snapshot: each leg (ask - bid) <= 10% of its mid with open interest
+    # >= 500; the round trip = natural width / |combo mid| <= 10%, or <= 20% when expected_gain (per share)
+    # >= 2 x the natural width. Missing keys fall back to LIQUIDITY_DEFAULTS (keys as in `options.liquidity`).
+    # {"ok", "reasons", "per_leg", "round_trip_frac", "round_trip_cap", "combo_mid", "natural_width"}
+```
+
+`mid` is NaN unless bid > 0, ask > 0 and ask ≥ bid. An SPX chain holds SPX and SPXW rows (`root` tells them apart). CBOE marks a contract it didn't model with IV 0; its IV and greeks are then NaN.
+
+### 8.2 Fill model v1.0 for spreads — `options/fillmodel.py`
+
+```python
+def combo_quote(chain, legs, side="buy") -> {"mid", "natural_width", "legs": [{"occ", "bid", "ask", "mid"}]} | None
+    # mid = long mids - short mids per share; natural width = sum of (ask - bid); None if a leg lacks a two-sided quote
+def model_price(quote, side, concession) -> float    # buy: mid + c x nw; sell: max(0, mid - c x nw)
+def order_prices(quote, side, cfg_options_fills) -> {"limit_price", "max_price"}   # c = 0.3 and max_concession 0.5
+def decide_fill(intent, quote, cfg_options_fills) -> {"filled", "price", "attempt": "limit" | "reprice" | None,
+                                                      "reason"}
+    # P = model_price(c = 0.3). Open: filled at P if P <= limit ("limit"), else if P <= max_price ("reprice"),
+    # else "model price above the stated maximum". Close: the same with >=, "below the stated minimum".
+    # No quote, or a model debit <= 0, is no fill.
+```
+
+Not modelled: the displayed size, rounding to the $0.05 tick, commissions, and track 14's staleness guard.
+
+### 8.3 Snapshots — `options/snapshots.py`
+
+```python
+def store(state_root, date, chain, keep_occ, cfg_snapshots, *, surface, budget) -> dict
+    # writes state/options/<date>/<root>-<HHMM>.csv.gz: a "#meta {json}" line, then CHAIN_COLUMNS rows, gzipped
+    # with mtime 0. Always keeps `keep_occ` (the book's legs); with `surface`, a sample: expiries 20-120 days out,
+    # at most one a week, up to 12; per expiry and right, the strikes nearest a 2.5% grid within +/-25% of spot,
+    # coarsened level by level to fit `budget`, else the legs only.
+    # {"path", "bytes", "file_sha256", "rows", "rows_total", "level", "surface", "legs_kept", "legs_missing"}
+def load_snapshot(path) -> OptionChain;  sample(...);  encode(...);  snapshot_config(cfg) -> dict
+def day_bytes(state_root, date, *, exclude=()) -> int;  snapshot_dir(state_root, date);  snapshot_name(chain)
+```
+
+The day's budget is `options.snapshots.max_bytes_per_day` (100 KB) across every root and run, shared equally among the surface roots still to store.
+
+### 8.4 The 10:17 ET job — `options/job.py`
+
+```python
+def run_options(cfg, provider, state_dir=None, *, date=None, dry_run=False, force=False, services=None) -> RunResult
+def mark_spreads(run) -> None          # the daily run's hook, before _mark (§7 step 5)
+def book_legs(run) -> set[str]         # legs of pending and open spreads and of every open_trade
+def intrinsic_value(legs, underlying) -> float
+def status_lines(broker) -> list[str]  # `status` lines for spreads and pending spread orders
+def options_config(cfg) -> dict       # the top-level `options` block with defaults
+```
+
+`run_options` (run kind `options`, one per ET date, on the pipeline's `Run`):
+1. With no `--date` it reads the clock: on a trading day, before `options.snapshot_window_et[0]` (10:15) it returns `too_early`, after `[1]` (16:00) `too_late`, touching nothing. `options.enabled: false` returns `disabled`. Then `begin()` (idempotent; `--force`; dry runs on a copy) and a *start* ping. A weekend or NYSE holiday records `no_session`.
+2. **Cancel missed orders:** a spread order whose session (the first trading day after its creation) is before today is cancelled with a `fill` alert, a `fill` record (`type: no_fill`) and `on_spread_cancel`, whose reason starts "its session … passed".
+3. **Roots:** those of spread orders due today, of open spreads, and each `OPTIONS_JOB_RUNNERS` runner's `roots_needed(run)` (a failing request is an alert, not a stop).
+4. **Snapshot:** a chain is usable only if its `asof` is on the run date inside the window, with a positive spot and at least one contract. Each usable chain is stored (§8.3; runner roots get the surface sample) with a `snapshot` record. A failure logs a `signal` record (`check: option_chain`, `ok: false`) and a note.
+5. **Fill**, root by root, with `broker.fill_spreads` at the chain's HH:MM: every decision gets a `fill` record; fills also go to `state["fills"]` with `order_type`, `ref_price` (mid), `natural_width`, `multiplier`, `qty` and `attempt`; the owning runner's `on_spread_fill` or `on_spread_cancel` runs (via `runners.SPREAD_MODULES`). A closing no-fill is a `fill` alert (the module re-issues the exit that evening); an opening no-fill is a note.
+6. **Mark** open spreads at the snapshot's mid (`mark` record, `kind: spreads`).
+7. A root with orders due today but no usable chain ends the run as `data_missing` (retryable, a `data` alert, a *fail* ping); its orders stay pending and step 8 is skipped.
+8. Each runner's `options_job(run, chains)` with only the usable chains of the run date, keyed by chain root; `option_shadows` inside `_shadow_guard`, `m4` and `macro` unguarded. Then `finish("ok")` and a *success* ping. No emails.
+
+`mark_spreads(run)` runs only with open spreads. It first settles any spread whose expiry is on or before the run date at intrinsic value from the underlying's official close on the expiry date (`SETTLEMENT_SOURCES`: XSP = ^GSPC × 0.1, SPX and SPXW = ^GSPC, other roots their own close): a `fill` with reason `expiry_settlement`, an `expiry` alert, a `correction` for each cancelled pending close, and the runner's `on_spread_fill` with a synthetic sell intent (reason `expiry_settlement`, `intent_id` `SETTLE-<date>-<trade_id>`). A missing close is a `data` alert, retried next run. It then marks the rest with chains stamped on the run date at or after `options.close_after_et` (16:00), storing a legs-only snapshot for each; a missing or earlier chain keeps the last mark, with a note.
+
+## 9. Runners and hooks — `traderec/runners/`
+
+```python
+SHADOW_RUNNERS = ("option_shadows", "crypto", "edgar", "macro_shadows")   # daily hooks, each in _shadow_guard
+SPREAD_MODULES = {"M4": m4, "W8": macro, "W9": macro}                     # who owns a spread order's hooks
+OPTIONS_JOB_RUNNERS = ("m4", "macro", "option_shadows")                  # roots_needed / options_job, in order
+
+def daily(run, checks) -> None                     # 22:17 ET; checks: {"spy_ok", "vix", "vix_ok", "vix_series"}
+def on_spread_fill(run, fill, intent) -> None      # m4, macro: an opening fill, a closing fill or an expiry settlement
+def on_spread_cancel(run, intent, reason) -> None  # m4, macro: no fill at the snapshot, or a missed session
+def roots_needed(run) -> set[str]                  # m4, macro, option_shadows
+def options_job(run, chains) -> None               # m4, macro (no-op), option_shadows
+```
+
+- **Guards.** Shadow runners run inside `pipeline._shadow_guard`: an exception becomes a `shadow` alert and a `shadow` record (`event: error`). Trading runners (`m4`, `macro`) raise, as Phase A modules do; M4 guards its own shadow work (the twin and the liquidity probe).
+- **Emitting a decision:** build `Recommendation(kind, module, trade_id, run.date, [intent], facts)`, check `run.budget_ok()`, call `run.emit(rec)` (pre-register, render, validate, open the issue, queue the order), then `run.count_trade()` for a new trade.
+- **`on_spread_fill` for a settlement:** `intent.reason == "expiry_settlement"`, `intent.side == "sell"`, `intent_id` starts `SETTLE-`. Match on `trade_id`.
+- **The run context** runners use: `run.cfg`, `run.provider`, `run.services`, `run.state`, `run.broker`, `run.date`, `run.bars()`, `run.close_on()`, `run.get_tbill()`, `run.current_nav()`, `run.current_drawdown()`, `run.stress()`, `run.open_stress()`, `run.log()`, `run.alert()`, `run.note()`, `run.next_intent_id()`, `run.order_deadline()`, `run.real` (the real state paths, also in dry runs).
+
+| Runner | `daily` (22:17 ET) | 10:17 ET options job |
+|---|---|---|
+| `m4` (M4 and `shadow.M4_TWIN`) | The twin's expiry settlement; the open spread's close (EXIT the evening before the planned close, two sessions before expiry, priced from tonight's chain; after the last session, an alert and the safety net); the entry test, two-source confirmation (the cool-down starts either way), one spread at a time, the budget, the structure (XSP, SPY only on a liquidity failure), prices, size, `admit_premium(..., exempt_governor=True, min_premium_usd=one contract)`, NEW_TRADE; the twin's pending entry | Hooks: buy fill → `open`; sell fill → history, forecasts resolved; cancelled entry → skipped (`skipped`), forecasts voided, cool-down stands; cancelled close → `open` again, re-issued that evening while a session before expiry is left. `roots_needed`: M4's spread root; XSP and SPY while flat and "armed" (last close ≥10% below its high); the twin's root while its entry or exit is due. `options_job`: the liquidity probe (armed and flat) into `modules.M4.liquidity_probe`, and the twin's entry and exit at model prices |
+| `macro` (W8, W9) | Exits first (expiry rule, invalidation, take-profit, time stop; sell-to-close at `order_prices` rounded down); then W8 (roll the market map, condition (iii), condition (ii), then the gates: one at a time, the pause, the budget, the release ban, the invalidation market, the structure, `admit_premium(cluster "oil")`, the veto) and W9 (the owner's supply record and crude months, the same gates plus the contango veto) | Hooks: buy fill → `open`, `exit_date` reset from the fill date; sell fill → history, forecasts resolved; cancelled entry → forecasts voided, `shadow` `entry_not_filled`; cancelled close → `open` again with an alert, re-issued that evening if still due. `roots_needed`: roots of W8/W9 trades pending or open. `options_job`: no-op |
+| `option_shadows` (O1, O1H, I1, I2, ST2) | Settle held spreads at or past expiry at intrinsic value; drop entries no options job took (`expired`); signals at the close (O1/O1-h filters on two-source closes, I1's VIX fade, I2's BTC trend); ST-2 (buy SPY at the next open, sell at the close of session 20); one `data` alert per run listing the books that failed closed | `roots_needed`: roots of books with a pending entry or an open spread. `options_job`: marks, the 50%-of-credit take-profit and 21-DTE close (managed books), then entries on the snapshot (I2's IV term structure checked here); each book guarded |
+| `crypto` (ETH, M6 carry) | The ETH weekly switch (replays up to 12 missed weeks); the M6 cash-and-carry check. Each sub-book guarded; a provider without crypto feeds only adds a note | — (the hourly job: `run_hourly`) |
+| `edgar` | Skeleton: a no-op. **Placeholder: EDGAR build pending** (`docs/phase-b/edgar.md`) | — |
+| `macro_shadows` (MACRO) | Calendar checks, new and maturing release records, W3, W4, the gold fade, walking the hypothetical trades, the promotion summary, pruning | — |
+
+**The hourly job** (`runners.crypto.run_hourly(cfg, provider, state_dir=None, *, now=None, dry_run=False, services=None) -> RunResult`, run kind `hourly`, date the UTC hour `YYYY-MM-DDTHHZ`):
+1. `disabled` when `shadow.M6.enabled` or `shadow.M6.depeg.enabled` is false; `already_done` for a recorded hour.
+2. Fetch the books of the configured coins, the watch-only coins and the coins of open events; no usable book anywhere → `data_missing` (exit code 3, no ping, nothing written).
+3. Plan `depeg_step` on a copy of the state. No change → `no_change`: no ledger record, no run entry, no state change, so the workflow commits nothing.
+4. Otherwise one `Run` transaction keyed `hourly:<hour>`: ledger check, pre-run snapshot, `shadow` records (`depeg_open`, `depeg_low`, `depeg_close`, `unconfirmed_start`, `unconfirmed_end`, each with `hour`; a `data` alert for an unconfirmed print), run manifest, state.
+5. Pings: *success* for `ok`, `no_change`, `already_done` and `disabled`; *fail* on an exception; none for `data_missing` or a dry run.
+
+**Shadow ledger events** (`record_type` `shadow`, `{"book", "event", ...}`):
+- option books: `signal`, `filters_failed`, `blocked`, `entry`, `skip`, `expired`, `mark`, `no_quote`, `exit`, `no_fill` (ST-2), `error`;
+- M4 twin: `signal`, `signal_while_open`, `entry`, `entry_waiting`, `entry_missed`, `exit_unpriced`, `exit`; M4 itself: `unconfirmed_signal`, `signal_while_open`;
+- ETH: `weekly`, `signal_on`, `entry`, `signal_off`, `exit`, `exit_cancelled`, `entry_cancelled`, `data_missing`; M6: the hourly events above, and `carry_check`, `carry_open`, `carry_close` in the daily run;
+- MACRO (with `rule`): `release`, `complete`, `void`, `signal`, `no_signal`, `unavailable`, `trade`, `entry`, `exit_signal`, `exit`, `near_miss`, `data_problem`;
+- W8/W9: `blocked` (with `stage`), `entry_not_filled`.
+
+## 10. The LLM veto — `traderec/llm_veto.py`
+
+```python
+def run_veto(module: "W8" | "W9", facts: dict, cfg_veto: dict, *, session=None, env=None, sleep=time.sleep) -> dict
+    # Never raises; fails closed. {"status": "proceed" | "veto" | "invalid" | "unavailable", "proceed": bool,
+    #  "verdict", "citations" (valid, normalised), "cited", "retrieved", "reason", "problems", "prompt_sha256",
+    #  "request_sha256", "model_sha256", "response_sha256", "response" (sanitised), "stop_reason", "usage",
+    #  "requests"}
+def prompt_sha256(module) -> str      # sha256 of the system prompt, the module template and its verdict set
+def build_request(module, facts, model, cfg_veto) -> dict;  render_prompt(module, facts) -> str
+def parse_answer(module, content, stop_reason, cfg_veto) -> dict
+PROMPTS, SYSTEM_PROMPT, VERDICTS                      # W8: PROCEED, VETO_NO_OFFICIAL_ANNOUNCEMENT, VETO_REVERSED,
+                                                      # VETO_OTHER_CAUSE, VETO_UNCERTAIN; W9: PROCEED,
+                                                      # VETO_NOT_CONFIRMED, VETO_RESTORED, VETO_OTHER_CAUSE,
+                                                      # VETO_UNCERTAIN
+```
+
+- **Transport:** the Messages API over `requests` (no SDK), `ANTHROPIC_API_KEY` from the environment, retries on 429, 5xx, 529 and connection errors, and up to `max_continuations` (2) `pause_turn` continuations.
+- **Frozen:** the model comes from `TRADEREC_VETO_MODEL` (no default) and is logged only as `model_sha256`; `runners.macro` alerts (`veto`) and re-pins when it changes. The prompt's SHA-256 must equal `veto.prompt_sha256` in the module's constitution block, else `unavailable`.
+- **Search:** the server-side web search tool (`veto.web_search_tool`, `max_uses` = `max_searches`) limited to `veto.allowed_domains`, with `allowed_callers ["direct"]` so every result is visible to the citation check.
+- **Answer:** exactly one JSON object `{"verdict", "citations", "reason"}` after the last search result. PROCEED counts only with ≥ `min_citations` (2) distinct allow-listed URLs that the search returned in this call. A refusal, truncation, parse failure or verdict outside the set is `invalid`; no key, no model, a prompt mismatch or an HTTP failure is `unavailable`.
+- **Wiring:** `runners.macro` calls `run.services.veto` when set (tests set the attribute on a `Services` instance), else `llm_veto.run_veto`, as the last gate, and logs the result as a `signal` record (`check: veto`) before any email. `veto`/`invalid`/`unavailable` block the candidate into the shadow ledger (`unavailable` and `invalid` with a `veto` alert).
+
+## 11. Reviews — `traderec/reports.py`
+
+```python
+def run_quarterly(cfg, provider, state_dir=None, *, quarter=None, dry_run=False, force=False, services=None)
+    -> RunResult                                   # default: the quarter that just ended; key quarterly:YYYY-Qn
+def run_annual(cfg, provider, state_dir=None, *, year=None, dry_run=False, force=False, services=None)
+    -> RunResult                                   # default: the year that just ended; key annual:YYYY
+def quarterly_report(run, quarter) -> dict         # emails.render_quarterly's keys; also the ledger payload
+def annual_report(run, year) -> dict               # emails.render_annual's keys
+def monthly_gate(run, asof, *, fetch, ledger_ok=None) -> dict   # used by facts.monthly_report
+
+# pure maths
+def edge_posterior(n, sharpe, *, prior_sd=0.1) -> float | None     # Φ(n·ŝ / √(n + 1/prior_sd²)) (track 18 §5.4)
+def edge_evidence({family: [excess | (excess, weight)]}, *, prior_sd, min_units=5) -> dict
+def kappa_observation(returns, claimed_mean) -> (κ_obs, se) | None
+def kappa_posterior([(κ_obs, se)], *, prior_mean=0.35, prior_sd=0.15, lo=0.1, hi=0.6) -> dict
+def calibration_in_the_large(forecasts, *, icc=0.4, tol=0.20, min_n=20) -> dict   # hit − mean p, 90% interval
+def calibration_slope(p, y) -> dict | None           # logit P(y) = a + b·logit p, Wald 90% interval
+def miscalibration_lr_test(p, y) -> float | None     # H0: a = 0, b = 1
+def fit_platt(p, y) -> (a, b)                        # MAP, shrunk toward the identity
+def recalibration_review(forecasts, *, min_n=150, isotonic_n=1000, alpha=0.05) -> dict
+def base_rate_drift(returns, base_rates, *, min_n=150) -> dict
+def sleeve_review(months, *, review_drawdown=0.2, pause_sharpe=-0.5, window=36) -> dict
+quarter_bounds, year_bounds, last_quarter, quarter_of, period_end, months_between
+# generic collectors (read the state and ledger, never change them)
+module_activity, open_trades, paused_modules, shadow_activity, run_punctuality, selected_trades, closed_trades,
+live_record, collect -> Evidence
+```
+
+- **A review run** is one `Run` keyed by its period: `begin()`, a *start* ping, the report, a `quarterly_report` or `annual_report` ledger record (`_record_type`; `monthly_report` only if the ledger lacked the type), render, validate, finish, then *success* or *fail*. It pings `HC_PING_URL`, which the monthly workflow sets to `HC_PING_URL_MONTHLY`. The reviews report and recommend; they never change a rule, a size or a module's state.
+- **Thresholds** are in `reports.GATES`, each with its design or track citation; an optional `reports:` block in `config/constitution.yaml` may override any key (none is set).
+- **Labels and references:** `SHADOW_LABELS` (or a book's `name` in its config block), `WIDE_BOOK_LABELS`, `SHADOW_EVIDENCE`, `SHADOW_BASE_RATES` (ST-1b), `W10_RECORD_REFERENCE` (track 23: SPY 1993–2026 at 60 and 90 days, and random entry days).
+- **The wide book** for the edge evidence: `ST1B` (the ST-1b shadow trades), `M3` (every closed switch), `M2` (position-months: a leg with a positive target, from one monthly decision to the next, on adjusted closes), `W10` (the W10 shadow record at 90 days). Each family is standardised by its own standard deviation and joins the pooled estimate from 5 units with some variation; excess returns are net of the T-bill rate in the last snapshot before entry.
+- **Workflow:** `monthly.yml`'s "Plan the reviews" step runs `quarterly --quarter YYYY-Qn` after a March, June, September or December review, and `annual --year YYYY` after December's; a manual run can pick one review (`review` input), which `--force` requires. Each review is its own run, so one failing doesn't stop the others; state is committed if any succeeded.
