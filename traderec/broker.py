@@ -26,6 +26,7 @@ from traderec.config import Config
 from traderec.types import Fill, OrderIntent
 
 DUST_QTY = 1e-9            # lots below this many shares are removed
+SPREAD_ROOTS = frozenset({"XSP", "SPX", "SPXW"})   # index option roots (not ETF tickers on the whitelist)
 MAX_MISSED_OPENS = 2       # the second missing open cancels the order
 STATE_SCHEMA = 1
 
@@ -245,6 +246,8 @@ class PaperBroker:
             return f"unknown or disabled account {intent.account!r}"
         if intent.side not in ("buy", "sell"):
             return f"side must be 'buy' or 'sell', not {intent.side!r}"
+        if intent.order_type == "spread_limit":
+            return self._spread_problem(intent)
         if not self.cfg.is_whitelisted(intent.ticker):
             return f"ticker {intent.ticker!r} is not on the whitelist"
         if intent.side == "buy" and intent.close_all:
@@ -255,8 +258,31 @@ class PaperBroker:
             return "an order with this intent_id is already pending"
         return None
 
+    def _spread_problem(self, intent: OrderIntent) -> str | None:
+        """Why a spread order (order kind (b), docs/PHASE_B_CONTRACTS.md §2) cannot be queued, or None."""
+        acct = (self.cfg.account.get("accounts") or {}).get(intent.account) or {}
+        if int(acct.get("options_level", 0) or 0) < 3:
+            return f"account {intent.account!r} does not allow spreads (options level below 3)"
+        if not self.cfg.is_whitelisted(intent.ticker) and intent.ticker not in SPREAD_ROOTS:
+            return f"option root {intent.ticker!r} is not allowed"
+        legs = intent.legs or []
+        if len(legs) != 2 or {leg.get("position") for leg in legs} != {"long", "short"}:
+            return "a spread needs exactly one long and one short leg"
+        if not isinstance(intent.contracts, int) or isinstance(intent.contracts, bool) or intent.contracts < 1:
+            return "contracts must be a whole number of at least 1"
+        if intent.side == "buy" and (intent.close_all or not _is_positive_number(intent.limit_price)
+                                     or not _is_positive_number(intent.max_price)):
+            return "an opening spread needs a positive limit_price and max_price (and no close_all)"
+        if intent.side == "sell" and not intent.close_all:
+            return "a closing spread order must set close_all"
+        if any(o.intent_id == intent.intent_id for o in self._pending):
+            return "an order with this intent_id is already pending"
+        return None
+
     def _process(self, intent: OrderIntent, date: str, opens: dict[str, float]) -> tuple[str, Fill | None]:
         """Fill, defer or cancel one order. Returns ("filled", fill), ("pending", None) or ("cancelled", None)."""
+        if intent.order_type == "spread_limit":
+            return "pending", None      # spreads fill in the 10:17 ET options job, never at the open
         if _day(date) <= _day(intent.created_date):
             return "pending", None
         key = lot_key(intent.account, intent.ticker, intent.module)

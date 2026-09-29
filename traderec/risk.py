@@ -240,3 +240,13 @@ def admit(module: str, ticker: str, dollars: float, positions_stress: dict, stre
         notes.append(f"us_equity_cluster: the reserve leaves {amount / governed:.0%} of the size, under "
                      f"{min_frac:.0%}: skipped")
     return {"ok": ok, "dollars": amount, "binding": binding, "notes": notes, "cluster_overflow": overflow}
+
+
+def admit_premium(module: str, root: str, premium_usd: float, cluster: str, positions_stress: dict, cfg: Config,
+                  drawdown: float, *, exempt_governor: bool = False, min_premium_usd: float = 0.0) -> dict:
+    """Admission for a defined-risk option trade whose stress is its premium (docs/PHASE_B_CONTRACTS.md §7).
+
+    Returns {"ok", "premium_usd", "binding", "notes", "cluster_overflow"}. Skeleton: built by the M4 build.
+    """
+    raise NotImplementedError("risk.admit_premium is not built yet (Phase B, M4 build)")
+
