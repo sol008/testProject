@@ -5,24 +5,24 @@ W10 replication,F63 | all events,SPY 1993-2026,decision,20,0.0691509,0.0419912,0
 W10 replication,F63 | one at a time,SPY 1993-2026,decision,16,0.0770871,0.0490839,0.01305,0.00255,4.25796,
 W10 replication,F84 | all events,SPY 1993-2026,decision,20,0.0885187,0.0520904,0.0109,0.00245,5.07827,
 W10 replication,F84 | one at a time,SPY 1993-2026,decision,14,0.0833434,0.0449498,0.05795,0.0262,3.71534,
-W10 replication,CAL60 | all events,SPY 1993-2026,decision,20,0.0381349,0.0204291,0.1697,0.10805,2.23939,
-W10 replication,CAL60 | one at a time,SPY 1993-2026,decision,17,0.0308873,0.0135648,0.39215,0.3836,1.63179,
-W10 replication,CAL90 | all events,SPY 1993-2026,decision,20,0.0686381,0.0419788,0.01905,0.00515,4.58696,
-W10 replication,CAL90 | one at a time,SPY 1993-2026,decision,17,0.0718984,0.0454276,0.01985,0.0052,4.10174,
-W10 replication,CAL120 | all events,SPY 1993-2026,decision,20,0.0842191,0.0484644,0.01705,0.006,4.98823,
-W10 replication,CAL120 | one at a time,SPY 1993-2026,decision,14,0.0780555,0.0403035,0.0861,0.0477,3.54293,
+W10 replication,CAL60 | all events,SPY 1993-2026,decision,20,0.0371932,0.0194346,0.18795,0.1262,2.13874,
+W10 replication,CAL60 | one at a time,SPY 1993-2026,decision,17,0.0303776,0.0129708,0.41095,0.40825,1.56673,
+W10 replication,CAL90 | all events,SPY 1993-2026,decision,20,0.0725927,0.0459194,0.0111,0.0021,4.65923,
+W10 replication,CAL90 | one at a time,SPY 1993-2026,decision,17,0.0756297,0.0491347,0.0121,0.00205,4.13317,
+W10 replication,CAL120 | all events,SPY 1993-2026,decision,20,0.0858423,0.0500588,0.0145,0.00455,5.18502,
+W10 replication,CAL120 | one at a time,SPY 1993-2026,decision,14,0.0805981,0.0428435,0.06785,0.0334,3.78973,
 W10 replication,F42 | all events,SPY 2008-2026,decision,12,0.0350198,0.0146854,0.44955,0.339,1.47448,
 W10 replication,F42 | one at a time,SPY 2008-2026,decision,10,0.0252249,0.00576944,0.7917,0.79545,0.963764,
 W10 replication,F63 | all events,SPY 2008-2026,decision,12,0.0556799,0.0251713,0.2776,0.17275,2.47824,
 W10 replication,F63 | one at a time,SPY 2008-2026,decision,9,0.0628695,0.0323777,0.21595,0.1219,2.13659,
 W10 replication,F84 | all events,SPY 2008-2026,decision,12,0.0780838,0.0366436,0.16955,0.06985,3.28537,
 W10 replication,F84 | one at a time,SPY 2008-2026,decision,8,0.0665133,0.0256064,0.41405,0.3309,2.25228,
-W10 replication,CAL60 | all events,SPY 2008-2026,decision,12,0.0302114,0.0103368,0.58955,0.5206,1.18179,
-W10 replication,CAL60 | one at a time,SPY 2008-2026,decision,10,0.0191213,0.000331604,0.9892,0.8991,0.674419,
-W10 replication,CAL90 | all events,SPY 2008-2026,decision,12,0.0554111,0.0249191,0.2805,0.16955,2.44954,
-W10 replication,CAL90 | one at a time,SPY 2008-2026,decision,10,0.0552931,0.026216,0.3086,0.20755,2.0199,
-W10 replication,CAL120 | all events,SPY 2008-2026,decision,12,0.0728767,0.0316035,0.23085,0.11415,3.15359,
-W10 replication,CAL120 | one at a time,SPY 2008-2026,decision,8,0.060924,0.0203239,0.52245,0.44355,2.06139,
+W10 replication,CAL60 | all events,SPY 2008-2026,decision,12,0.0297143,0.010035,0.597,0.53035,1.16919,
+W10 replication,CAL60 | one at a time,SPY 2008-2026,decision,10,0.0193565,0.000780086,0.9698,0.91885,0.686185,
+W10 replication,CAL90 | all events,SPY 2008-2026,decision,12,0.0609812,0.03063,0.18545,0.0876,2.56506,
+W10 replication,CAL90 | one at a time,SPY 2008-2026,decision,10,0.0612917,0.0323385,0.2091,0.1135,2.1293,
+W10 replication,CAL120 | all events,SPY 2008-2026,decision,12,0.0752203,0.0341677,0.1973,0.088,3.25939,
+W10 replication,CAL120 | one at a time,SPY 2008-2026,decision,8,0.0641338,0.0237727,0.45625,0.3674,2.21575,
 W10 replication,F42 | all events,Index 1990-2026,decision,21,0.0353024,0.0171859,0.23255,0.1604,2.38583,
 W10 replication,F42 | one at a time,Index 1990-2026,decision,18,0.0300943,0.012167,0.4253,0.39295,1.85151,
 W10 replication,F63 | all events,Index 1990-2026,decision,21,0.0635622,0.036238,0.03625,0.0107,5.02901,
@@ -82,21 +82,21 @@ W10 reconciliation,"T22: S&P TR next close, 84 sessions, net, one at a time, 192
 W10 reconciliation,"T22: SPY next open -> close of session 60, net, one at a time, 1993-2026",1993-2026,diagnostic,17,0.0749548,,0.0112,,,
 W10 reconciliation,"T22: S&P TR next close, 60 sessions, net, one at a time, 1990-2026",1990-2026,diagnostic,18,0.0651867,,0.03265,,,
 W10 reconciliation,"T22: S&P TR next close, 60 sessions, net, one at a time, 1928-89",1928-1989,diagnostic,29,0.0451741,,0.39425,,,
-W10 exit rule,CAL60 vs F42,SPY 1993-2026,decision,20,,,,,,-0.00224953
-W10 exit rule,CAL90 vs F63,SPY 1993-2026,decision,20,,,,,,-0.000512782
-W10 exit rule,CAL120 vs F84,SPY 1993-2026,decision,20,,,,,,-0.00429957
+W10 exit rule,CAL60 vs F42,SPY 1993-2026,decision,20,,,,,,-0.00319127
+W10 exit rule,CAL90 vs F63,SPY 1993-2026,decision,20,,,,,,0.00344176
+W10 exit rule,CAL120 vs F84,SPY 1993-2026,decision,20,,,,,,-0.00267642
 W10 exit rule,CAL60 vs F42,S&P TR 1990-2026,decision,21,,,,,,-0.00144977
 W10 exit rule,CAL90 vs F63,S&P TR 1990-2026,decision,21,,,,,,-0.00125616
 W10 exit rule,CAL120 vs F84,S&P TR 1990-2026,decision,21,,,,,,-0.00236458
 W10 exit rule,CAL60 vs F42,S&P TR 1928-1989,decision,39,,,,,,-0.00621005
 W10 exit rule,CAL90 vs F63,S&P TR 1928-1989,decision,39,,,,,,0.00186094
 W10 exit rule,CAL120 vs F84,S&P TR 1928-1989,decision,39,,,,,,0.00776388
-W10 exit variant,CAL60 ath,SPY 1993-2026,decision,20,,,,,,0.00234566
-W10 exit variant,CAL60 vix,SPY 1993-2026,decision,20,,,,,,-0.000204151
-W10 exit variant,CAL90 ath,SPY 1993-2026,decision,20,,,,,,0.0012158
-W10 exit variant,CAL90 vix,SPY 1993-2026,decision,20,,,,,,-0.0113957
-W10 exit variant,CAL120 ath,SPY 1993-2026,decision,20,,,,,,-0.00405799
-W10 exit variant,CAL120 vix,SPY 1993-2026,decision,20,,,,,,-0.0144904
+W10 exit variant,CAL60 ath,SPY 1993-2026,decision,20,,,,,,0.0021437
+W10 exit variant,CAL60 vix,SPY 1993-2026,decision,20,,,,,,0.000657025
+W10 exit variant,CAL90 ath,SPY 1993-2026,decision,20,,,,,,-0.0013266
+W10 exit variant,CAL90 vix,SPY 1993-2026,decision,20,,,,,,-0.0112401
+W10 exit variant,CAL120 ath,SPY 1993-2026,decision,20,,,,,,-0.00444594
+W10 exit variant,CAL120 vix,SPY 1993-2026,decision,20,,,,,,-0.0169598
 W10 exit variant,F63 ath,SPY 1993-2026,decision,20,,,,,,0.000427061
 W10 exit variant,F63 vix,SPY 1993-2026,decision,20,,,,,,-0.0121551
 W10 exit variant,CAL60 ath,S&P TR 1990-2026,decision,21,,,,,,0.000649906

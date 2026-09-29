@@ -274,6 +274,13 @@ def inst_index() -> Inst:
                 w["sig"].values, w["ath_prior"].values, w["C"].values, entry_at_open=False)
 
 
+def close_exit(rule: str) -> bool:
+    """True only for the C<H> rules (sell at the CLOSE of session H; reconciliation only).
+    CAL<N> also starts with "C" but sells at an OPEN, like F<H>.  (Before the Phase B replay caught it,
+    a bare rule.startswith("C") test priced every CAL<N> exit on SPY at the close.)"""
+    return rule[:1] == "C" and rule[1:].isdigit()
+
+
 def exit_positions(I: Inst, e: np.ndarray, rule: str) -> np.ndarray:
     """Exit position X for entry positions e (-1 where it does not exist)."""
     e = np.asarray(e, int)
@@ -287,7 +294,7 @@ def exit_positions(I: Inst, e: np.ndarray, rule: str) -> np.ndarray:
         H = int(rule[1:])
         X = e + H
         X = np.where(X < I.n, X, -1)
-    elif rule.startswith("C"):        # close of session H (entry day = session 1): SPY only
+    elif close_exit(rule):            # close of session H (entry day = session 1): SPY only
         H = int(rule[1:])
         X = e + H - 1
         X = np.where(X < I.n, X, -1)
@@ -308,10 +315,11 @@ def trade_returns(I: Inst, sig_pos: np.ndarray, rule: str, cost_bp: float = COST
     bills = np.full(len(sig_pos), np.nan)
     days = np.full(len(sig_pos), np.nan)
     if I.entry_at_open:
-        exit_px = I.mark if rule.startswith("C") else I.ex_open
+        at_close = close_exit(rule)        # C<H> only; F<H> and CAL<N> sell at the open of session X
+        exit_px = I.mark if at_close else I.ex_open
         gross[ok] = exit_px[X[ok]] / I.ent_px[e[ok]] - 1
         # bills over sessions e .. X-1 (open exit) or e .. X (close exit)
-        last = np.where(rule.startswith("C"), X, X - 1)
+        last = X if at_close else X - 1
         bills[ok] = I.rfc[last[ok] + 1] - I.rfc[e[ok]]
     else:
         gross[ok] = I.mark[X[ok]] / I.ent_px[e[ok]] - 1
@@ -326,9 +334,10 @@ def trade_returns(I: Inst, sig_pos: np.ndarray, rule: str, cost_bp: float = COST
 def mae(I: Inst, e: int, X: int, rule: str) -> float:
     """Worst mark (close) relative to the entry price while the trade is open (<= 0)."""
     if I.entry_at_open:
-        last = X if rule.startswith("C") else X - 1
+        at_close = close_exit(rule)
+        last = X if at_close else X - 1
         path = I.mark[e:last + 1]
-        if not rule.startswith("C"):
+        if not at_close:
             path = np.r_[path, I.ex_open[X]]
         return float(min(path.min() / I.ent_px[e] - 1, 0.0))
     path = I.mark[e + 1:X + 1]

@@ -514,7 +514,7 @@ Even at a 4% rate a deal adds only 1.9 / 3.0 / 4.1 bp. A deal needs an arb premi
 
 | Source | 90 days vs 60 | 120 days vs 60 |
 |---|---|---|
-| Existing modules (track 23's re-estimate of track 21): W10 now; M4 at 90 DTE in Phase B | **+0.04 now** (−0.01 to +0.10); ≈ +0.1 with M4 | ≈ the same as 90 (W10 fires less often; M4 no better) |
+| Existing modules (track 23's re-estimate of track 21): W10 now; M4 at 90 DTE in Phase B | **+0.04 now** (−0.01 to +0.11; +0.10 before track 23's Phase B exit-price fix); ≈ +0.1 with M4 | ≈ the same as 90 (W10 fires less often; M4 no better) |
 | New families of track 22 (live) | 0 (W10 counted once) | 0 |
 | **New families of this track (live)** | **0** | **0** |
 | Same, if this track's three new shadow candidates were promoted | −0.22 (range −0.24 to −0.02) | −0.13 (range −0.13 to +0.16) |
