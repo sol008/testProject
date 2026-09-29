@@ -104,7 +104,7 @@ MARKET_OPEN_ET = "09:30"        # Yahoo option quotes are used only between thes
 # FRED's copy of S&P Dow Jones Indices' series first (published the same evening, checked 2026-09-28 22:15 ET),
 # then CBOE's delayed index quote once its last trade is stamped at or after 16:00 ET that day.
 INDEX_SECOND_SOURCES = {"^GSPC": {"fred": "SP500", "cboe": "SPX"},
-                        "^NDX": {"fred": None, "cboe": "NDX"}}   # design v4 G1's QLD leg: no FRED series; CBOE only
+                        "^NDX": {"fred": "NASDAQ100", "cboe": "NDX"}}   # design v4 G1's QLD leg (FRED: Nasdaq OMX's series)
 
 CLOSE_ET = "16:00"              # end of the regular NYSE session (America/New_York)
 FILL_AFTER_ET = "16:15"         # earliest time a missing newest close may be filled from Robinhood
