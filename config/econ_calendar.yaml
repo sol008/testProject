@@ -1,0 +1,200 @@
+# Scheduled macro releases for the macro shadow books (traderec/runners/macro_shadows.py).
+# Design v3.3 §3 M5 "Scheduled releases. Never traded; logged for calibration only" and §3 "Shadow ledger";
+# research/17-short-horizon-macro-events.md R1. This file is data, not a rule: editing it is not a
+# constitution change. Read by traderec/data/econ_calendar.py.
+#
+# Every date was checked on 2026-09-29 against the official schedule cited on its kind (`source`).
+# - `date`: the release or decision date. The market reacts in the first NYSE session on or after it: every
+#   release here comes before the 16:00 ET close. The BoJ announces around noon Tokyo time, which is the
+#   evening before in New York, so its reaction session is the US session dated `date`.
+# - `covered`: the span in which every release of the kind is listed. Outside it the runner cannot tell a
+#   release day from an ordinary one, so it raises a data alert each month until the dates are added.
+#   On 2026-09-29 neither BLS nor BEA had published its 2027 schedule. Add those dates when they appear,
+#   then move `covered` and `verified` forward.
+# - A release that is postponed (a government shutdown, for example) gets `status: postponed`. The runner
+#   skips it and voids any record it already made. Add the new date as a separate line.
+# - `verified`: the date of the last full check. The runner alerts once this is older than
+#   shadow.MACRO.reverify_days (constitution.yaml).
+verified: "2026-09-29"
+
+kinds:
+  CPI:
+    name: Consumer Price Index
+    agency: BLS
+    time: "08:30 ET"
+    # Retrieved 2026-09-29: https://www.bls.gov/schedule/news_release/cpi.htm
+    # (the same dates are in the BLS calendar feed https://www.bls.gov/schedule/news_release/bls.ics)
+    source: https://www.bls.gov/schedule/news_release/cpi.htm
+    covered: ["2026-01-01", "2026-12-31"]
+    releases:                          # reference = the month the index measures
+      - {date: "2026-01-13", reference: "2025-12"}
+      - {date: "2026-02-13", reference: "2026-01"}
+      - {date: "2026-03-11", reference: "2026-02"}
+      - {date: "2026-04-10", reference: "2026-03"}
+      - {date: "2026-05-12", reference: "2026-04"}
+      - {date: "2026-06-10", reference: "2026-05"}
+      - {date: "2026-07-14", reference: "2026-06"}
+      - {date: "2026-08-12", reference: "2026-07"}
+      - {date: "2026-09-11", reference: "2026-08"}
+      - {date: "2026-10-14", reference: "2026-09"}
+      - {date: "2026-11-10", reference: "2026-10"}
+      - {date: "2026-12-10", reference: "2026-11"}
+
+  NFP:
+    name: Employment Situation (payrolls)
+    agency: BLS
+    time: "08:30 ET"
+    # Retrieved 2026-09-29: https://www.bls.gov/schedule/news_release/empsit.htm (and bls.ics)
+    source: https://www.bls.gov/schedule/news_release/empsit.htm
+    covered: ["2026-01-01", "2026-12-31"]
+    releases:
+      - {date: "2026-01-09", reference: "2025-12"}
+      - {date: "2026-02-11", reference: "2026-01"}
+      - {date: "2026-03-06", reference: "2026-02"}
+      - {date: "2026-04-03", reference: "2026-03", note: "Good Friday: NYSE closed, markets react on 6 Apr"}
+      - {date: "2026-05-08", reference: "2026-04"}
+      - {date: "2026-06-05", reference: "2026-05"}
+      - {date: "2026-07-02", reference: "2026-06"}
+      - {date: "2026-08-07", reference: "2026-07"}
+      - {date: "2026-09-04", reference: "2026-08"}
+      - {date: "2026-10-02", reference: "2026-09"}
+      - {date: "2026-11-06", reference: "2026-10"}
+      - {date: "2026-12-04", reference: "2026-11"}
+
+  FOMC:
+    name: FOMC decision
+    agency: Federal Reserve
+    time: "14:00 ET"
+    # Retrieved 2026-09-29 (page last updated 2026-09-16):
+    # https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    # `date` is the second day of the meeting, when the statement is released. SEP = Summary of Economic
+    # Projections. The Fed notes: "Each meeting date is tentative until confirmed at the meeting immediately
+    # preceding it" (the 2027 dates).
+    source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    covered: ["2026-01-01", "2027-12-31"]
+    releases:
+      - {date: "2026-01-28", reference: "Jan 27-28"}
+      - {date: "2026-03-18", reference: "Mar 17-18, SEP"}
+      - {date: "2026-04-29", reference: "Apr 28-29"}
+      - {date: "2026-06-17", reference: "Jun 16-17, SEP"}
+      - {date: "2026-07-29", reference: "Jul 28-29"}
+      - {date: "2026-09-16", reference: "Sep 15-16, SEP"}
+      - {date: "2026-10-28", reference: "Oct 27-28"}
+      - {date: "2026-12-09", reference: "Dec 8-9, SEP"}
+      - {date: "2027-01-27", reference: "Jan 26-27", status: tentative}
+      - {date: "2027-03-17", reference: "Mar 16-17, SEP", status: tentative}
+      - {date: "2027-04-28", reference: "Apr 27-28", status: tentative}
+      - {date: "2027-06-09", reference: "Jun 8-9, SEP", status: tentative}
+      - {date: "2027-07-28", reference: "Jul 27-28", status: tentative}
+      - {date: "2027-09-15", reference: "Sep 14-15, SEP", status: tentative}
+      - {date: "2027-10-27", reference: "Oct 26-27", status: tentative}
+      - {date: "2027-12-08", reference: "Dec 7-8, SEP", status: tentative}
+
+  GDP:
+    name: GDP (BEA)
+    agency: BEA
+    time: "08:30 ET"
+    # Retrieved 2026-09-29: https://www.bea.gov/news/schedule/full
+    # (and https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics)
+    source: https://www.bea.gov/news/schedule/full
+    covered: ["2026-01-01", "2026-12-31"]
+    releases:                          # reference = quarter and estimate
+      - {date: "2026-01-22", reference: "2025Q3 updated", note: "delayed by the 2025 shutdown"}
+      - {date: "2026-02-20", reference: "2025Q4 advance"}
+      - {date: "2026-03-13", reference: "2025Q4 second"}
+      - {date: "2026-04-09", reference: "2025Q4 third"}
+      - {date: "2026-04-30", reference: "2026Q1 advance"}
+      - {date: "2026-05-28", reference: "2026Q1 second"}
+      - {date: "2026-06-25", reference: "2026Q1 third"}
+      - {date: "2026-07-30", reference: "2026Q2 advance"}
+      - {date: "2026-08-26", reference: "2026Q2 second"}
+      - {date: "2026-09-30", reference: "2026Q2 third"}
+      - {date: "2026-10-29", reference: "2026Q3 advance"}
+      - {date: "2026-11-25", reference: "2026Q3 second"}
+      - {date: "2026-12-23", reference: "2026Q3 third"}
+
+  PCE:
+    name: Personal Income and Outlays (PCE prices)
+    agency: BEA
+    time: "08:30 ET"
+    # Retrieved 2026-09-29: https://www.bea.gov/news/schedule/full
+    source: https://www.bea.gov/news/schedule/full
+    covered: ["2026-01-01", "2026-12-31"]
+    releases:
+      - {date: "2026-01-22", reference: "2025-10 and 2025-11", time: "10:00 ET"}
+      - {date: "2026-02-20", reference: "2025-12"}
+      - {date: "2026-03-13", reference: "2026-01"}
+      - {date: "2026-04-09", reference: "2026-02"}
+      - {date: "2026-04-30", reference: "2026-03"}
+      - {date: "2026-05-28", reference: "2026-04"}
+      - {date: "2026-06-25", reference: "2026-05"}
+      - {date: "2026-07-30", reference: "2026-06"}
+      - {date: "2026-08-26", reference: "2026-07"}
+      - {date: "2026-09-30", reference: "2026-08"}
+      - {date: "2026-10-29", reference: "2026-09"}
+      - {date: "2026-11-25", reference: "2026-10"}
+      - {date: "2026-12-23", reference: "2026-11"}
+
+  BOJ:
+    name: Bank of Japan policy decision
+    agency: Bank of Japan
+    time: "about 12:00 JST (the evening before in New York)"
+    # Retrieved 2026-09-29: https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm
+    # `date` is the second day of the Monetary Policy Meeting. "Outlook" marks the meetings with an Outlook Report.
+    source: https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm
+    covered: ["2026-01-01", "2027-12-31"]
+    releases:
+      - {date: "2026-01-23", reference: "Jan 22-23, Outlook"}
+      - {date: "2026-03-19", reference: "Mar 18-19"}
+      - {date: "2026-04-28", reference: "Apr 27-28, Outlook"}
+      - {date: "2026-06-16", reference: "Jun 15-16"}
+      - {date: "2026-07-31", reference: "Jul 30-31, Outlook"}
+      - {date: "2026-09-18", reference: "Sep 17-18"}
+      - {date: "2026-10-30", reference: "Oct 29-30, Outlook"}
+      - {date: "2026-12-18", reference: "Dec 17-18"}
+      - {date: "2027-01-22", reference: "Jan 21-22, Outlook"}
+      - {date: "2027-03-18", reference: "Mar 17-18"}
+      - {date: "2027-04-28", reference: "Apr 27-28, Outlook"}
+      - {date: "2027-06-11", reference: "Jun 10-11"}
+      - {date: "2027-07-22", reference: "Jul 21-22, Outlook"}
+      - {date: "2027-09-22", reference: "Sep 21-22"}
+      - {date: "2027-10-29", reference: "Oct 28-29, Outlook"}
+      - {date: "2027-12-17", reference: "Dec 16-17"}
+
+  ECB:
+    name: ECB monetary policy decision
+    agency: European Central Bank
+    time: "14:15 CET"
+    # Retrieved 2026-09-29: meetings from 30 Sep 2026 at
+    # https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html (`date` = "Day 2, followed by press
+    # conference"), and the 2026 decisions already taken at
+    # https://www.ecb.europa.eu/press/govcdec/mopo/2026/html/index.en.html
+    source: https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html
+    covered: ["2026-01-01", "2027-12-31"]
+    releases:
+      - {date: "2026-02-05"}
+      - {date: "2026-03-19"}
+      - {date: "2026-04-30"}
+      - {date: "2026-06-11"}
+      - {date: "2026-07-23"}
+      - {date: "2026-09-10"}
+      - {date: "2026-10-29"}
+      - {date: "2026-12-17"}
+      - {date: "2027-02-04"}
+      - {date: "2027-03-18"}
+      - {date: "2027-04-29"}
+      - {date: "2027-06-10"}
+      - {date: "2027-07-22"}
+      - {date: "2027-09-09"}
+      - {date: "2027-10-28"}
+      - {date: "2027-12-16"}
+
+# War onsets for the gold spike fade (track 17 §3.1 and R2: "Gold's day-0 war spike reversed the next day in
+# 8 of 8 war onsets"). Which events count is a judgment the shadow book cannot make without an LLM, so the
+# owner lists them here, ideally the evening they happen. `date` is the news date in New York time;
+# `during_session: false` means the news broke after the close or on a non-trading day, so day 0 is the next
+# session. An onset the runner first sees after its day-0 evening is recorded but not counted toward the
+# promotion test, because its outcome may already have been known when it was added.
+# Example (track 17's last one):
+#   - {date: "2026-02-28", label: "US/Israel-Iran war begins", during_session: false}
+geopolitical_onsets: []
