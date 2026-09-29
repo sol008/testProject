@@ -88,6 +88,11 @@ jobs:
           HC_PING_URL: ${{ secrets.HC_PING_URL_DAILY }}   # one healthchecks.io check per workflow
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          # Phase B: W8/W9's veto (without both, W8/W9 fail closed to the shadow ledger) and the SEC contact
+          # for the EDGAR shadow screens (docs/OWNER_SETUP.md steps 4 and 5)
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TRADEREC_VETO_MODEL: ${{ secrets.TRADEREC_VETO_MODEL }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
         run: |
           set -euo pipefail
           eml_count() { if [ -d state/outbox ]; then find state/outbox -maxdepth 1 -name '*.eml' | wc -l; else echo 0; fi; }

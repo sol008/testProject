@@ -947,5 +947,6 @@ def test_real_liquidity_check_accepts_a_liquid_xsp_spread() -> None:
 def test_real_admit_premium_admits_one_w8_spread() -> None:
     cfg = load_config()
     adm = risk.admit_premium("W8", "XSP", 800.0, "oil", {"total": 0.0, "us_equity": 0.0, "by_module": {},
-                                                         "nav": 100000.0}, cfg, 0.0, min_premium_usd=800.0)
+                                                         "nav": 100000.0, "premium": 0.0},   # open_stress(spreads=)
+                             cfg, 0.0, min_premium_usd=800.0)
     assert adm["ok"] and adm["premium_usd"] == pytest.approx(800.0)
