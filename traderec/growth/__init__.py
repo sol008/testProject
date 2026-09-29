@@ -37,6 +37,26 @@ def supersedes_m3(cfg: Config) -> bool:
     return enabled(cfg) and module_status(cfg, "M3").replace(" ", "").lower().startswith("superseded_by")
 
 
+NON_TRADING_STATUSES = ("shadow", "retired")     # plus "superseded_by: <module>" (design v4 §3, the status table)
+
+
+def status_blocks_trading(status: str) -> bool:
+    """True for the v4 statuses under which a v3.3 module places no orders and sends no emails."""
+    s = str(status or "").replace(" ", "").lower()
+    return s in NON_TRADING_STATUSES or s.startswith("superseded")
+
+
+def module_trades(cfg: Config, name: str) -> bool:
+    """Whether module `name` may still place orders and send emails (Phase C3: the statuses are enforced).
+
+    True while the growth book is disabled (v3.3 behaviour) or the module's status is active/paper/absent. False
+    while `growth.enabled` and the status is `shadow`, `retired` or `superseded_by: ...`: the module's shadow books
+    keep logging, `Run.emit` turns its would-be recommendation into a `shadow` ledger record (exits of a position
+    it still holds are allowed, so nothing is stranded).
+    """
+    return not (enabled(cfg) and status_blocks_trading(module_status(cfg, name)))
+
+
 def with_enabled(cfg: Config, flag: bool) -> Config:
     """A copy of `cfg` with `growth.enabled` set to `flag` (tests that pin the v3.3 weekly job use False)."""
     constitution = dict(cfg.constitution)

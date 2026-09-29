@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import pandas as pd
 
 from traderec import forecasts as fc
-from traderec import llm_veto, risk
+from traderec import growth, llm_veto, risk
 from traderec.data import LiveProvider, verify_close
 from traderec.data.macro_data import (MacroData, contango, day_move, front_contracts, front_month, load_supply_input,
                                       supply_loss_check)
@@ -152,9 +152,10 @@ def daily(run: "Run", checks: dict) -> None:
     if ctx.pm is None or ctx.md is None:
         run.note("W8/W9 entries not evaluated: no prediction-market or macro-data adapter on this provider")
         return
-    if "W8" in enabled:
+    # design v4 §3: W8/W9 are shadow under the growth book: no entries (and no veto call); exits above still run
+    if "W8" in enabled and growth.module_trades(run.cfg, "W8"):
         _w8(run, ctx)
-    if "W9" in enabled:
+    if "W9" in enabled and growth.module_trades(run.cfg, "W9"):
         _w9(run, ctx)
 
 

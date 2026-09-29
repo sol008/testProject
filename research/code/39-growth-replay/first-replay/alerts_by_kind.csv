@@ -1,0 +1,4 @@
+kind,count,first,last,example
+circuit,6,2025-10-10,2026-06-23,daily loss -4.59% (circuit breaker applies to discretionary entries only; none exist in Phase A)
+data,330,2025-08-25,2026-09-28,option shadow books fail closed: ST2: no VIX/VIX3M ratio on 2025-08-25
+fill,3,2025-08-25,2025-11-03,"O-2025-08-24-GROWTH-0239 partly filled: $527,891.25 of $546,576.34 (cash)"

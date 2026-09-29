@@ -70,6 +70,12 @@ def synthetic_history() -> "R.History":
     bars["IEF"] = _bars(pd.Series(_walk(rng, n, 0.0003, 0.003, 95.0), index=SESSIONS))
     days = pd.date_range("2023-01-01", END, freq="D")
     btc = pd.Series(_walk(np.random.default_rng(1234), len(days), 0.002, 0.02, 20_000.0), index=days)
+    # the growth book's tickers (design v4): the Nasdaq-100, the 2x funds, the cash vehicle, Yahoo's BTC-USD
+    bars["^NDX"] = _bars(spy * 30.0)
+    bars["SSO"] = _bars(spy * 0.2)
+    bars["QLD"] = _bars(spy * 0.15)
+    bars["SGOV"] = _bars(pd.Series(100.0, index=SESSIONS))
+    bars["BTC-USD"] = _bars(btc)
     tbill = pd.Series(0.04, index=pd.bdate_range("2022-12-01", END))
     tbill.loc["2025-10-01":] = 0.038            # a later print, to check the as-of rule
     return R.History(bars=bars, vix={"VIX": vix}, btc=btc, tbill=tbill,
@@ -227,6 +233,46 @@ def test_resume_continues_after_the_last_run(cfg, history, tmp_path):
                     progress_every=0)
     assert [(r["kind"], r["date"]) for r in rows][0] == ("weekly", "2025-10-05")
     assert all(r["status"] in ("ok", "no_session") for r in rows)
+
+
+# ------------------------------------------------------------------------------------------------------
+# the growth book (design v4 Appendix A.4 test 9): the Sunday run in the loop, no look-ahead, the new CSVs
+# ------------------------------------------------------------------------------------------------------
+
+def test_growth_book_replay_runs_the_sunday_job_without_look_ahead(history, tmp_path):
+    cfg_on = load_config()                                             # production: the growth book on
+    a, b = tmp_path / "cut", tmp_path / "nocut"
+    R.run_segment(cfg_on, history, a, LAUNCH, UNTIL)
+    R.run_segment(cfg_on, history, b, LAUNCH, UNTIL, cut=False)
+    runs = pd.read_csv(a / "runs.csv")
+    assert set(runs["status"]) <= {"ok", "no_session"}, runs[runs["status"] == "exception"]["error"].tolist()
+    seg_a, seg_b = (json.loads((w / "segment.json").read_text()) for w in (a, b))
+    assert seg_a["served_after_asof"] == 0 and seg_b["served_after_asof"] > 0
+    recs = R.ledger_records(a / "state")
+    dec = R.growth_decisions(recs)
+    assert dec["sunday"].tolist() == [d for k, d, _ in R.schedule(LAUNCH, UNTIL) if k == "weekly"]
+    assert 0 < dec["orders_sent"].sum() and dec["orders_sent"].max() <= 3
+    assert dec["G"].min() > 0 and dec["hard_stop"].fillna(False).astype(bool).sum() == 0
+    assert {r["payload"]["module"] for r in recs if r["record_type"] == "order"} <= {"G1", "G2", "GROWTH", "W10"}
+    assert R.compare_runs(a, b)["identical"]                           # the Sunday decisions too
+    # the reconciliation helpers and CSVs
+    ira = R.ira_path(recs)
+    marks = json.loads((a / "state" / "state.json").read_text())["marks"]
+    assert len(ira) == len(marks) and ira.iloc[0] <= 80_000.0 * 1.01
+    stats = R.path_stats(ira)
+    assert stats["sessions"] == len(ira) and stats["maxdd"] <= 0.0 and stats["worst_day_date"] is not None
+    ev = R._events(pd.Series({pd.Timestamp("2025-10-05"): False, pd.Timestamp("2025-10-12"): True,
+                              pd.Timestamp("2025-10-19"): None, pd.Timestamp("2025-10-26"): False}))
+    assert ev == [("2025-10-12", "on"), ("2025-10-26", "off")]
+    assert R.match_events(ev, [("2025-10-19", "on"), ("2025-10-26", "off")]) == {
+        "matched": 2, "extra": 0, "missed": 0, "max_lag_days": 7, "mean_lag_days": 3.5}
+    out = tmp_path / "out"
+    summary = R.reconcile_growth(cfg_on, a, out, history=history, lookahead=(a, b)).set_index("metric")["value"]
+    assert summary["identical decisions with and without the as-of cut"] == 1
+    assert summary["max orders in one email"] <= 3 and summary["hard stop fired"] == 0
+    assert summary["M1 orders queued"] == 0 and summary["M3 orders queued"] == 0
+    for name in ("book_vs_track38.csv", "calendar_years.csv", "g2_switches.csv", "sundays.csv", "nav_monthly.csv"):
+        assert (out / name).stat().st_size > 0
 
 
 # ------------------------------------------------------------------------------------------------------

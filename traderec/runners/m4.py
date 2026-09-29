@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import pandas as pd
 
 from traderec import forecasts as fc
-from traderec import risk
+from traderec import growth, risk
 from traderec.data import verify_close
 from traderec.market_calendar import iso, next_trading_day
 from traderec.modules import m4_crashspread as m4
@@ -200,6 +200,9 @@ def daily(run: "Run", checks: dict) -> None:
         run.note("M4 not evaluated: modules.M4 lacks its signal parameters")
         return
     st = _state(run)
+    # design v4 §3: M4 is shadow under the growth book: no entries (the twin keeps running); an open spread is still
+    # managed to its exit
+    trades = growth.module_trades(run.cfg, MODULE)
     if twin_on:
         _guard(run, TWIN, _twin_evening)
     if on:
@@ -209,8 +212,12 @@ def daily(run: "Run", checks: dict) -> None:
         return
     if twin_on:
         _guard(run, TWIN, _twin_signal, sig)
-    if on:
+    if on and trades:
         _enter(run, st, sig, cfg_m4, checks)
+    elif on:
+        run.log("shadow", {"book": MODULE, "event": "signal_while_shadow", "signal_date": run.date,
+                           "drawdown": sig.get("drawdown"), "vix": sig.get("vix"),
+                           "status": growth.module_status(run.cfg, MODULE)})
 
 
 def _evaluate(run: "Run", checks: dict, cfg_m4: dict, st: dict) -> dict | None:

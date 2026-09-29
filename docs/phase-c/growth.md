@@ -65,8 +65,10 @@ sleeve that is out, less W10's holding or its buy). Percent figures in the facts
    (design §3 W10), not deferred;
 4. the SGOV buy of the idle cash (the cash after the sells and buys, less 0.5% of the sells' proceeds for their fills
    at Monday's open): lowest priority but W10; it always waits a week when no slot is left;
-5. the listing: Step 1 = exits and cuts, then the SGOV sale; Step 2 = the buys in sleeve order (the G1 legs, G2, SGOV,
-   W10 last). A Monday holiday: `holiday_shift(sunday)` gives Tuesday's date (the broker fills at the first session).
+5. the listing: Step 1 = exits and cuts, then the SGOV sale; Step 2 = the buys in sleeve order (the G1 legs, G2, W10),
+   then the SGOV buy of the idle cash last (Phase C3: listed before W10 it took W10's cash and the 90% cap cancelled
+   W10's buy at the open; `docs/phase-c/replay.md`). A Monday holiday: `holiday_shift(sunday)` gives Tuesday's date
+   (the broker fills at the first session).
 The `queued_cash_frac` (0.90) is the cap the paper broker enforces (§5); `market_hours_cash_frac` (0.95) is the figure
 the email quotes for Step 2 placed after the sells show "Filled" (C2).
 

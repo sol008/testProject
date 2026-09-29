@@ -701,7 +701,10 @@ growth:
       weight: 0.30
       max_weight: 0.50             # decision 2 ceiling
       signal: {weekly_ma_weeks: 10, sma_days: 200, decision: sunday_utc_close, execution: monday_open,
-               two_source_tolerance: 0.005}   # C1: Bitcoin venue closes differ by more than the 0.1% ETF tolerance
+               two_source_tolerance: 0.02}    # C1: Bitcoin venue closes differ by more than the 0.1% ETF tolerance.
+                                              # C3 replay: Coinbase vs Yahoo at 00:00 UTC on 509 Sundays 2017-2026:
+                                              # 0.5% failed 20% of them (68% in 2017), 2% fails 2.6% (none since 2020)
+                                              # and still catches a wrong print (docs/phase-c/replay.md)
       out: SGOV
       vol_cut: {realized_60d_vol_gt: 0.70, quarters: 1, factor: 0.667, restore_below: 0.60}
     G3:

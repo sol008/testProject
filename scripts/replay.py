@@ -54,10 +54,12 @@ if str(REPO) not in sys.path:
 from traderec import pipeline, validator  # noqa: E402
 from traderec.config import Config, load_config  # noqa: E402
 from traderec.data.providers import DataError  # noqa: E402
+from traderec.market_calendar import iso  # noqa: E402
 
 DEFAULT_CACHE = Path(os.environ.get("TRADEREC_REPLAY_CACHE", "/tmp/traderec-replay-cache"))
 DEFAULT_WORK = Path(os.environ.get("TRADEREC_REPLAY_WORK", "/tmp/traderec-replay-work"))
 DEFAULT_OUT = REPO / "research" / "code" / "25-replay"
+DEFAULT_GROWTH_OUT = REPO / "research" / "code" / "39-growth-replay"
 RESEARCH = REPO / "research" / "code"
 ECHO_SOURCE = "replay-echo"
 NY = "America/New_York"
@@ -88,11 +90,33 @@ class History:
 
 
 def replay_tickers(cfg: Config) -> list[str]:
-    """Every ticker the Phase A pipeline reads: M1/W10's SPY, the S&P index, Yahoo's ^VIX, M2's legs, M3's ETF."""
+    """Every ticker the pipeline reads: M1/W10's SPY, the S&P index, Yahoo's ^VIX, M2's legs, M3's ETF, and (design
+    v4, Phase C) the growth book's SSO, QLD, their indices, IBIT, the cash vehicle and Yahoo's BTC-USD (G2's second
+    source for the Sunday close, as live)."""
     mods = cfg.constitution["modules"]
     out = ["SPY", "^VIX", str(mods["W10"]["index"]), str(mods["M1"]["ticker"]), str(mods["W10"]["ticker"]),
            str(mods["M3"]["ticker"]), *list(mods["M2"]["legs"])]
+    out += growth_tickers(cfg)
     return list(dict.fromkeys(out))
+
+
+def growth_tickers(cfg: Config) -> list[str]:
+    """The growth book's tickers from the `growth` block: the G1 legs and their indices, G2's instrument, the cash
+    vehicle and BTC-USD; [] when the constitution has no growth block."""
+    sl = (cfg.constitution.get("growth") or {}).get("sleeves") or {}
+    out: list[str] = []
+    for leg, spec in ((sl.get("G1") or {}).get("legs") or {}).items():
+        out += [str(leg), str(spec["index"])]
+    if (sl.get("G2") or {}).get("instrument"):
+        out.append(str(sl["G2"]["instrument"]))
+    if (sl.get("cash") or {}).get("vehicle"):
+        out.append(str(sl["cash"]["vehicle"]))
+    out.append(BTC_TICKER)
+    return list(dict.fromkeys(out))
+
+
+BTC_TICKER = "BTC-USD"
+COINBASE_EARLY_START = "2015-01-01"     # Coinbase Exchange candles begin in 2015; Yahoo covers the days before
 
 
 def _safe(name: str) -> str:
@@ -194,10 +218,15 @@ def fetch_history(cfg: Config, cache: Path, *, btc_start: str = "2017-01-01", pr
         return daily[daily.index < today]
 
     keep("btc_coinbase_daily", "coinbase", btc_daily)
-    keep("bars_BTC-USD", "yfinance", lambda: lp.daily_bars("BTC-USD"))       # gap fill and cross-check only
+    keep("bars_BTC-USD", "yfinance", lambda: lp.daily_bars("BTC-USD"))       # G2's second source; gap fill before 2017
     first_ibit = lp.daily_bars(str(cfg.module("M3")["ticker"])).index[0]
     keep("btc_coinbase_hourly", "coinbase (hourly, for the IBIT proxy)",
          lambda: coinbase_candles(lp, pd.Timestamp(proxy_start), first_ibit + pd.Timedelta(days=3), 3_600))
+    # Phase C: the growth-book replay starts in 2014, so the proxy needs the hourly candles from Coinbase's first
+    # year too (a separate series, so a Phase A cache is extended, not refetched).
+    keep("btc_coinbase_hourly_early", "coinbase (hourly, 2015 to proxy_start, for the IBIT proxy)",
+         lambda: coinbase_candles(lp, pd.Timestamp(COINBASE_EARLY_START),
+                                  pd.Timestamp(proxy_start) - pd.Timedelta(hours=1), 3_600))
     fred_id = INDEX_SECOND_SOURCES["^GSPC"]["fred"]
     keep("second_fred_SP500", f"fred:{fred_id}",
          lambda: parse_fred_csv(lp._get(FRED_CSV_URL, params={"id": fred_id}).text, fred_id))
@@ -244,6 +273,25 @@ def ibit_proxy(hourly: pd.DataFrame, sessions: pd.DatetimeIndex, ratio: float) -
     return out.sort_index()
 
 
+def ibit_proxy_daily(yahoo: pd.DataFrame, sessions: pd.DatetimeIndex, ratio: float) -> pd.DataFrame:
+    """IBIT-like bars for sessions before the hourly candles exist, from Yahoo's BTC-USD UTC daily bars: the session's
+    UTC day (open 00:00 UTC = the evening before in New York, close 23:59 UTC) times `ratio`. Coarser than the
+    hourly proxy (the open is ~14 hours before 9:30 ET); flagged in every output."""
+    cols = ["open", "high", "low", "close", "adj_close", "volume"]
+    out = yahoo.reindex(sessions).dropna(subset=["open", "close"])
+    out = out.reindex(columns=cols)
+    for col in ("open", "high", "low", "close"):
+        out[col] = out[col].astype(float) * ratio
+    out["adj_close"] = out["close"]
+    out["volume"] = out["volume"].fillna(0.0)
+    out.index = pd.DatetimeIndex(out.index, name="date")
+    return out.sort_index()
+
+
+def _load_optional(cache: Path, name: str) -> Any:
+    return _load(cache, name) if (cache / f"{name}.pkl").exists() else None
+
+
 def load_history(cfg: Config, cache: Path) -> History:
     """Read the cache written by `fetch_history`, splice the IBIT proxy and fill BTC gaps (flagged)."""
     if not (cache / "manifest.json").exists():
@@ -258,26 +306,42 @@ def load_history(cfg: Config, cache: Path) -> History:
     real = bars[m3]
     first = real.index[0]
     hourly = _load(cache, "btc_coinbase_hourly")
+    early = _load_optional(cache, "btc_coinbase_hourly_early")
+    if early is not None and len(early):
+        hourly = pd.concat([early, hourly])
+        hourly = hourly[~hourly.index.duplicated(keep="last")].sort_index()
     et = hourly.index.tz_localize("UTC").tz_convert(NY)
     at_close = hourly[(et.tz_localize(None).normalize() == first) & (et.hour == 16)]
     ratio = float(real["close"].iloc[0]) / float(at_close["open"].iloc[0])
-    proxy = ibit_proxy(hourly, bars["SPY"].index[bars["SPY"].index < first], ratio)
-    bars[m3] = pd.concat([proxy, real])
-    bars[m3].index.name = "date"
+    before = bars["SPY"].index[bars["SPY"].index < first]
+    proxy = ibit_proxy(hourly, before, ratio)
     flags[m3] = (f"before {first.date()}: proxy = Coinbase hourly BTC-USD (open ~9:30 ET, close 16:00 ET) x "
                  f"{ratio:.8f}, IBIT's first close / BTC at 16:00 ET that day; no premium, discount or fee drag")
+    yahoo_bars = _load_optional(cache, "bars_BTC-USD")
+    if len(proxy) and yahoo_bars is not None:
+        earlier = before[before < proxy.index[0]]
+        coarse = ibit_proxy_daily(yahoo_bars, earlier, ratio)
+        if len(coarse):
+            proxy = pd.concat([coarse, proxy])
+            flags[m3] += (f"; before {proxy.index[len(coarse)].date()} (no hourly candles): the same proxy from "
+                          f"Yahoo's BTC-USD UTC daily bars (open 00:00 UTC, close 23:59 UTC), {len(coarse)} sessions")
+    bars[m3] = pd.concat([proxy, real])
+    bars[m3].index.name = "date"
     sources[f"daily_bars:{m3}"] = "yfinance+btc-proxy"
-    # BTC per UTC day: Coinbase, gaps filled from Yahoo BTC-USD (flagged when any).
+    # BTC per UTC day: Coinbase, the days before its first candle and any gaps filled from Yahoo BTC-USD (flagged).
     daily = _load(cache, "btc_coinbase_daily")["close"]
     yahoo = _load(cache, "bars_BTC-USD")["close"]
-    full = pd.date_range(daily.index[0], daily.index[-1], freq="D")
+    full = pd.date_range(min(daily.index[0], yahoo.index[0]), daily.index[-1], freq="D")
     missing = full.difference(daily.index)
     fill = yahoo.reindex(missing).dropna()
     btc = pd.concat([daily, fill]).sort_index()
     if len(fill):
-        flags["btc_daily_utc"] = (f"{len(fill)} UTC days missing from Coinbase filled from Yahoo BTC-USD "
-                                  f"({', '.join(d.strftime('%Y-%m-%d') for d in fill.index[:5])}"
-                                  f"{', ...' if len(fill) > 5 else ''})")
+        head = fill[fill.index < daily.index[0]]
+        gaps = fill[fill.index >= daily.index[0]]
+        flags["btc_daily_utc"] = (f"{len(head)} UTC days before Coinbase's first candle ({daily.index[0].date()}) and "
+                                  f"{len(gaps)} gaps filled from Yahoo BTC-USD"
+                                  + (f" ({', '.join(d.strftime('%Y-%m-%d') for d in gaps.index[:5])}"
+                                     f"{', ...' if len(gaps) > 5 else ''})" if len(gaps) else ""))
     sources["btc_daily_utc"] = "coinbase"
     sources["vix:VIX"] = manifest["series"]["vix_VIX"]["source"]
     sources["tbill_rate"] = "fred:DTB3"
@@ -368,8 +432,13 @@ class AsOfProvider:
 
     def second_source_close(self, ticker: str, date: str) -> dict | None:
         day = pd.Timestamp(date).normalize()
-        found = None if day > self._asof() else (
-            self._echo(ticker, day) if self.second_source == "echo" else self._historical(ticker, day))
+        if ticker == BTC_TICKER:
+            # G2's Sunday close comes from Coinbase (`btc_daily_utc`); the live fallbacks know today only, so the
+            # pipeline then reads Yahoo's BTC-USD bar for that UTC day (`daily_bars`), a real second source. No echo.
+            found = None
+        else:
+            found = None if day > self._asof() else (
+                self._echo(ticker, day) if self.second_source == "echo" else self._historical(ticker, day))
         self.second_calls.append((ticker, day.strftime("%Y-%m-%d"), found["source"] if found else None))
         return found
 
@@ -1215,7 +1284,8 @@ def _m3_sleeve(fills: pd.DataFrame, marks: pd.DataFrame, history: History, cfg: 
     _round(pd.DataFrame(rows), 4).to_csv(out / "m3_sleeve_weight_monthly.csv", index=False)
 
 
-DECISION_RECORDS = ("recommendation", "order", "fill", "signal", "mark", "shadow", "forecast", "resolution")
+DECISION_RECORDS = ("recommendation", "order", "fill", "signal", "mark", "shadow", "forecast", "resolution",
+                    "growth_decision", "governor", "order_set")
 
 
 def compare_runs(work_a: Path, work_b: Path, until: str | None = None) -> dict:
@@ -1421,6 +1491,479 @@ def _reconcile_m2(m2: pd.DataFrame, r1: dict, fills: pd.DataFrame, marks: pd.Dat
 
 
 # ======================================================================================================
+# 7b. The growth book (design v4, Phase C3): the replay vs track 38 and the reference books
+# ======================================================================================================
+
+TRACK38 = RESEARCH / "38-growth-book" / "results"
+TRACK38_BOOK = "2x 50% + BTC 30% + gems 15% (hist)"
+BOOK_START = "2015-04-07"          # track 38: the first date with all three sleeves
+TRADING_DAYS = 252
+
+
+def growth_decisions(records: list[dict]) -> pd.DataFrame:
+    """One row per Sunday from the `growth_decision`, `governor` and `order_set` records."""
+    gov = {r["as_of"]: r["payload"] for r in records if r["record_type"] == "governor"}
+    oset = {r["as_of"]: r["payload"] for r in records if r["record_type"] == "order_set"}
+    rows = []
+    for r in records:
+        if r["record_type"] != "growth_decision":
+            continue
+        p, d = r["payload"], r["as_of"]
+        g, o = gov.get(d, {}), oset.get(d, {})
+        row = {"sunday": d, "friday": p.get("friday"), "nav_ira": (p.get("nav") or {}).get("ira"),
+               "nav_total": (p.get("nav") or {}).get("total"), "peak": g.get("peak"), "drawdown": g.get("drawdown"),
+               "G": g.get("G"), "G_step": g.get("step"), "hard_stop": g.get("hard_stop"), "paused": g.get("paused"),
+               "g2_on": (p.get("state_after") or {}).get("G2"), "g2_signal": (p.get("G2") or {}).get("signal"),
+               "g2_agree": (p.get("G2") or {}).get("agree"), "g2_complete": (p.get("G2") or {}).get("complete"),
+               "g2_weekly_close": (p.get("G2") or {}).get("weekly_close"), "g2_ma10w": (p.get("G2") or {}).get("ma10w"),
+               "g2_sma200": (p.get("G2") or {}).get("sma200"), "vol_cut_factor": ((p.get("vol_cut") or {}).get("factor")),
+               "orders_sent": len(o.get("sent") or []), "orders_deferred": len(o.get("deferred") or []),
+               "w10_dropped": len(o.get("dropped") or []),
+               "sent": ";".join(f"{x['action']}:{x['ticker']}:{x['usd']:.0f}" for x in (o.get("sent") or [])),
+               "reasons": ";".join(sorted({x["reason"] for x in (o.get("sent") or [])})),
+               "sgov_sell_usd": (o.get("netting") or {}).get("sgov_sell_usd"),
+               "sgov_buy_usd": (o.get("netting") or {}).get("sgov_buy_usd")}
+        for leg, res in (p.get("G1") or {}).items():
+            row[f"{leg}_in"] = (p.get("state_after") or {}).get("G1", {}).get(leg)
+            row[f"{leg}_signal"] = res.get("signal")
+            row[f"{leg}_agree"] = res.get("agree")
+            row[f"{leg}_pct_vs_sma"] = res.get("pct_vs_sma")
+            row[f"{leg}_changed"] = res.get("changed")
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def ira_path(records: list[dict]) -> pd.Series:
+    """The IRA's equity per daily mark (the book is the whole IRA), from the `mark` records."""
+    out = {}
+    for r in records:
+        if r["record_type"] == "mark":
+            acct = (r["payload"].get("by_account") or {}).get("ira") or {}
+            if acct.get("equity") is not None:
+                out[pd.Timestamp(r["payload"]["date"])] = float(acct["equity"])
+    return pd.Series(out, dtype=float).sort_index()
+
+
+def path_stats(nav: pd.Series, start: str | None = None, end: str | None = None) -> dict:
+    """CAGR (track 38's convention: 252 sessions a year), volatility, worst drawdown, worst day, of a NAV path."""
+    s = nav.dropna()
+    if start:
+        s = s.loc[pd.Timestamp(start):]
+    if end:
+        s = s.loc[:pd.Timestamp(end)]
+    if len(s) < 2:
+        return {"start": None, "end": None, "cagr": None, "cagr_calendar": None, "vol": None, "maxdd": None,
+                "worst_day": None, "worst_day_date": None, "sessions": int(len(s))}
+    r = s.pct_change().dropna()
+    lw = float(np.log(s.iloc[-1] / s.iloc[0]))
+    yrs_cal = (s.index[-1] - s.index[0]).days / 365.25
+    dd, pk, tr = max_drawdown(s)
+    return {"start": str(s.index[0].date()), "end": str(s.index[-1].date()),
+            "cagr": float(np.expm1(lw / (len(r) / TRADING_DAYS))), "cagr_calendar": float(np.expm1(lw / yrs_cal)),
+            "vol": float(r.std() * np.sqrt(TRADING_DAYS)), "maxdd": -dd, "maxdd_peak": pk, "maxdd_trough": tr,
+            "worst_day": float(r.min()), "worst_day_date": str(r.idxmin().date()), "sessions": int(len(s))}
+
+
+def calendar_year_returns(nav: pd.Series) -> pd.Series:
+    """Calendar-year returns of a NAV path (the first year from its first mark)."""
+    s = nav.dropna()
+    ye = s.groupby(s.index.year).last()
+    prev = ye.shift(1)
+    prev.iloc[0] = s.iloc[0]
+    return (ye / prev - 1.0).rename("ret")
+
+
+def _weekly_index_states(closes: pd.Series, sundays: pd.DatetimeIndex, sma_days: int, band: float | None) -> pd.Series:
+    """The G1 rule per Sunday on an index's closes: band-free (band None) or with the 2% band and hysteresis."""
+    from traderec.modules.g1_lev_trend import g1_signal
+
+    cfg = {"sma_days": sma_days, "band": 0.0 if band is None else band}
+    state, out = None, {}
+    for s in sundays:
+        res = g1_signal(closes, iso(s), state, cfg)
+        if res["signal"]:
+            state = bool(res["in"])
+        out[s] = state
+    return pd.Series(out)
+
+
+def _weekly_btc_states(btc: pd.Series, sundays: pd.DatetimeIndex, cfg_sig: dict) -> pd.Series:
+    """G2's rule per Sunday (band-free, no two-source check) on the replay's BTC series."""
+    from traderec.modules.g2_btc_switch import g2_signal
+
+    out = {}
+    for s in sundays:
+        res = g2_signal(btc, iso(s + pd.Timedelta(days=1)), cfg_sig)
+        out[s] = bool(res["on"]) if res.get("complete") else None
+    return pd.Series(out)
+
+
+def reference_books(history: History, cfg: Config, start: str, end: str) -> dict[str, Any]:
+    """Track-38-style books rebuilt from the replay's own bars, so the differences are the rules, not the data.
+
+    Sleeves on the real SSO / QLD bars and the IBIT (proxy) bars the pipeline used, switched at Monday's open after
+    the Sunday decision (the fund's open-to-close return on a switch-in day, close-to-open on a switch-out day), the
+    residual at the T-bill rate (the prior DTB3 print, per calendar day), weights re-set every session (daily
+    rebalancing, no governor, no band rebalancing, no costs). Variants: `bandfree` (track 38's simulation note: the
+    weekly rule without the 2% band), `band` (the pre-registered 2% band with hysteresis) and `band_governor` (the
+    band plus the D40 governor on the book's own Friday drawdown, weekly).
+    """
+    from traderec.growth import governor as gov_mod
+
+    g = cfg.constitution["growth"]
+    sl = g["sleeves"]
+    sessions = history.bars["SPY"].index
+    sessions = sessions[(sessions >= pd.Timestamp(start)) & (sessions <= pd.Timestamp(end))]
+    sundays = pd.date_range(pd.Timestamp(start) - pd.Timedelta(days=(pd.Timestamp(start).weekday() + 1) % 7),
+                            end, freq="7D")
+    rf = history.tbill.reindex(history.tbill.index.union(sessions)).ffill().shift(1).reindex(sessions).fillna(0.0)
+    days = pd.Series(sessions, index=sessions).diff().dt.days.fillna(1.0)
+    r_cash = rf * days / 365.0
+
+    def fund_returns(bars: pd.DataFrame, states: pd.Series) -> pd.Series:
+        """The sleeve's daily return: in the fund while `in`, at the open on the Monday after a Sunday decision."""
+        b = bars.reindex(sessions)
+        prev_close = b["close"].shift(1)
+        pos = states.reindex(sessions, method="ffill").shift(1)          # Sunday's decision applies from Monday
+        pos_prev = pos.shift(1)
+        r_full = b["close"] / prev_close - 1.0
+        r_in_day = b["close"] / b["open"] - 1.0                          # switch in at the open
+        r_out_day = b["open"] / prev_close - 1.0                         # switch out at the open
+        out = pd.Series(0.0, index=sessions)
+        both = (pos == True) & (pos_prev == True)                        # noqa: E712 - pandas boolean compare
+        enter = (pos == True) & (pos_prev != True)                       # noqa: E712
+        leave = (pos != True) & (pos_prev == True)                       # noqa: E712
+        out[both] = r_full[both]
+        out[enter] = r_in_day[enter]
+        out[leave] = r_out_day[leave] + r_cash[leave] * 0.0
+        flat = ~(both | enter | leave)
+        out[flat] = r_cash[flat]
+        return out.fillna(r_cash)
+
+    legs = (sl.get("G1") or {}).get("legs") or {}
+    sig = (sl.get("G1") or {}).get("signal") or {}
+    g2 = sl.get("G2") or {}
+    btc_states = _weekly_btc_states(history.btc, sundays, g2.get("signal") or {})
+    ibit = history.bars[str(g2["instrument"])]
+    # G2's vol cut (design v4 §3 G2 "Kill / review"; not in track 38's simulation): the factor per Sunday
+    from traderec.modules.g2_btc_switch import realized_vol, vol_cut
+
+    vc_state: dict[str, Any] = {"vol_cut_factor": 1.0, "vol_high_since": None}
+    vol_factor = pd.Series({s: vol_cut(realized_vol(history.btc, iso(s)), vc_state, iso(s), g2.get("vol_cut") or {})["factor"]
+                            for s in sundays})
+    factor_daily = vol_factor.reindex(sessions, method="ffill").shift(1).fillna(1.0)
+    out: dict[str, Any] = {"states": {"G2": btc_states}, "books": {}, "vol_factor": vol_factor}
+    for variant, band, cut in (("bandfree", None, False), ("band", float(sig.get("band", 0.02)), False),
+                               ("band_volcut", float(sig.get("band", 0.02)), True)):
+        book = pd.Series(0.0, index=sessions)
+        w_risk = pd.Series(0.0, index=sessions)
+        for leg, spec in legs.items():
+            st = _weekly_index_states(history.bars[str(spec["index"])]["close"], sundays, int(sig.get("sma_days", 200)), band)
+            out["states"][f"G1_{leg}_{variant}"] = st
+            w = float(spec["weight"])
+            book += w * fund_returns(history.bars[str(leg)], st)
+            w_risk += w
+        wb = float(g2.get("weight", 0.30)) * (factor_daily if cut else 1.0)
+        book += wb * fund_returns(ibit, btc_states)
+        w_risk += wb
+        book += (1.0 - w_risk) * r_cash
+        out["books"][variant] = book
+
+    def with_governor(book: pd.Series) -> tuple[pd.Series, pd.Series]:
+        """G from the book's own drawdown at Friday's close (weekly), applied from Monday."""
+        nav = (1.0 + book).cumprod()
+        fridays = nav.groupby(nav.index.to_period("W-SUN")).last()
+        fridays.index = fridays.index.to_timestamp(how="end").normalize()   # the Sunday ending each week
+        peak, G_by_sunday = None, {}
+        for s, v in fridays.items():
+            peak = v if peak is None else max(peak, v)
+            G_by_sunday[s] = gov_mod.G(gov_mod.drawdown(v, peak), g)
+        Gs = pd.Series(G_by_sunday).reindex(sessions, method="ffill").shift(1).fillna(1.0)
+        return Gs * (book - r_cash) + r_cash, pd.Series(G_by_sunday)
+
+    out["books"]["band_governor"], out["G_reference"] = with_governor(out["books"]["band"])
+    out["books"]["band_volcut_governor"], _ = with_governor(out["books"]["band_volcut"])
+    return out
+
+
+REFERENCE_LABELS = {
+    "bandfree": "reference: daily-rebalanced, band-free weekly rules (track 38's simulation), no gems",
+    "band": "reference: daily-rebalanced, the 2% band, no gems",
+    "band_volcut": "reference: the 2% band and G2's vol cut, no gems",
+    "band_governor": "reference: the 2% band and the D40 governor, no gems",
+    "band_volcut_governor": "reference: the 2% band, the vol cut and the D40 governor (the pipeline's rules), no gems",
+}
+
+
+def _spans(sundays: pd.DatetimeIndex) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
+    """Runs of consecutive Sundays as (first, last)."""
+    out: list[tuple[pd.Timestamp, pd.Timestamp]] = []
+    for s in sundays:
+        if out and (s - out[-1][1]).days <= 7:
+            out[-1] = (out[-1][0], s)
+        else:
+            out.append((s, s))
+    return out
+
+
+def _events(states: pd.Series) -> list[tuple[str, str]]:
+    """(date, "on" | "off") whenever a weekly state series changes (None = unknown, carried)."""
+    out, prev = [], None
+    for d, v in states.items():
+        if v is None or (isinstance(v, float) and math.isnan(v)):
+            continue
+        v = bool(v)
+        if prev is not None and v != prev:
+            out.append((iso(d), "on" if v else "off"))
+        prev = v
+    return out
+
+
+def match_events(a: list[tuple[str, str]], b: list[tuple[str, str]], days: int = 7) -> dict:
+    """Events in `a` (the pipeline) matched to events in `b` (the reference) of the same direction within `days`."""
+    used, matched, lags = set(), 0, []
+    for d, kind in a:
+        for j, (d2, kind2) in enumerate(b):
+            if j in used or kind2 != kind:
+                continue
+            lag = abs((pd.Timestamp(d) - pd.Timestamp(d2)).days)
+            if lag <= days:
+                used.add(j)
+                matched += 1
+                lags.append(lag)
+                break
+    return {"matched": matched, "extra": len(a) - matched, "missed": len(b) - matched,
+            "max_lag_days": max(lags) if lags else 0, "mean_lag_days": float(np.mean(lags)) if lags else 0.0}
+
+
+def reconcile_growth(cfg: Config, work: Path, out: Path, *, history: History | None = None,
+                     lookahead: tuple[Path, Path] | None = None) -> pd.DataFrame:
+    """The growth-book replay vs track 38 (design v4 Appendix A.5) and the reference books; CSVs into `out`."""
+    out.mkdir(parents=True, exist_ok=True)
+    summary: list[dict] = []
+
+    def put(section: str, name: str, value: Any, note: str = "") -> None:
+        summary.append({"section": section, "metric": name, "value": _fmt(value), "note": note})
+
+    seg = json.loads((work / "segment.json").read_text())
+    state = json.loads((work / "state" / "state.json").read_text())
+    recs = ledger_records(work / "state")
+    runs = pd.read_csv(work / "runs.csv")
+    marks = pd.DataFrame(state.get("marks", []))
+    dec = growth_decisions(recs)
+    start, end = seg["start"], seg["end"]
+
+    # ---- operations ---------------------------------------------------------------------------------
+    daily = runs[runs["kind"] == "daily"]
+    put("runtime", "wall minutes", seg["wall_seconds"] / 60.0)
+    put("runtime", "runs", len(runs), ", ".join(f"{k}: {int(v)}" for k, v in runs["kind"].value_counts().items()))
+    put("runtime", "seconds per daily run, mean", daily["seconds"].mean())
+    put("runtime", "seconds per daily run, last 20", daily["seconds"].tail(20).mean())
+    for status, n in runs["status"].value_counts().items():
+        put("runs", f"status {status}", int(n))
+    exc = runs[runs["status"] == "exception"]
+    if len(exc):
+        exc[["kind", "date", "error"]].to_csv(out / "run_errors.csv", index=False)
+    put("data", "data served after the as-of date", seg["served_after_asof"], "0 = no look-ahead")
+    put("data", "second-source echoes (SPY, ^GSPC, ^NDX)", seg["echoes"], ", ".join(seg.get("echo_tickers") or []))
+    for k, v in (seg.get("flags") or {}).items():
+        put("data", f"flag {k}", None, v)
+    ok, why = pipeline.verify_ledger(work / "state")
+    put("ledger", "ledger verifies", int(bool(ok)), f"{why} ({len(recs)} records)")
+    alerts = pd.DataFrame(state.get("alerts", []))
+    if len(alerts):
+        g = alerts.groupby("kind").agg(count=("message", "size"), first=("date", "min"), last=("date", "max"),
+                                       example=("message", "first")).reset_index()
+        g["example"] = g["example"].str.slice(0, 160)
+        g.to_csv(out / "alerts_by_kind.csv", index=False)
+        for _, row in g.iterrows():
+            put("alerts", f"alerts: {row['kind']}", int(row["count"]), f"first {row['first']}, last {row['last']}")
+    emails = pd.read_csv(work / "emails.csv") if (work / "emails.csv").stat().st_size > 1 else pd.DataFrame()
+    put("emails", "daily/monthly emails captured", len(emails),
+        "the Sunday GROWTH email is builder C2's renderer; the replay records its facts only")
+    if len(emails):
+        for k, n in emails["kind"].value_counts().items():
+            put("emails", f"emails {k}", int(n))
+        put("emails", "validator errors in sent emails", int(emails["validator_errors"].sum()))
+    shadow_books = state.get("shadow") or {}
+    for name in ("ST1", "ST1B"):
+        put("shadow", f"{name} shadow trades", len((shadow_books.get(name) or {}).get("trades") or []))
+    put("shadow", "M2 monthly shadow records", sum(1 for r in recs if r["record_type"] == "shadow"
+                                                   and r["payload"].get("book") == "M2"))
+    put("shadow", "recommendations blocked by a module status",
+        sum(1 for r in recs if r["record_type"] == "shadow" and r["payload"].get("event") == "blocked_by_status"))
+    for mod in ("M1", "M2", "M3", "M4", "W8", "W9"):
+        put("shadow", f"{mod} orders queued", sum(1 for r in recs if r["record_type"] == "order"
+                                                  and r["payload"].get("module") == mod))
+    cancelled = state["broker"].get("cancelled") or []
+    put("fills", "orders cancelled", len(cancelled),
+        "; ".join(f"{o['intent_id']}: {str(o['meta'].get('cancel_reason'))[:60]}" for o in cancelled[:5]))
+    put("fills", "fills", sum(1 for r in recs if r["record_type"] == "fill" and r["payload"].get("type") != "dividend"))
+
+    # ---- the book path vs track 38 --------------------------------------------------------------------
+    ira = ira_path(recs)
+    total = marks.set_index(pd.DatetimeIndex(pd.to_datetime(marks["date"])))["nav"].astype(float)
+    spy = marks.set_index(pd.DatetimeIndex(pd.to_datetime(marks["date"])))["spy_adj"].astype(float)
+    t38 = pd.read_csv(TRACK38 / "real_path.csv") if (TRACK38 / "real_path.csv").exists() else pd.DataFrame()
+    rows = []
+    for label, s, a in (("pipeline: the IRA (the book), from track 38's start", ira, BOOK_START),
+                        ("pipeline: the IRA (the book), whole window", ira, None),
+                        ("pipeline: IRA + taxable (what the governor sees)", total, BOOK_START),
+                        ("SPY total return (replay marks)", spy, BOOK_START)):
+        rows.append({"book": label, **path_stats(s, a, end)})
+    refs = None
+    if history is not None:
+        refs = reference_books(history, cfg, start, end)
+        for variant, label in REFERENCE_LABELS.items():
+            nav = (1.0 + refs["books"][variant]).cumprod()
+            rows.append({"book": label, **path_stats(nav, BOOK_START, end)})
+    for _, r in t38.iterrows():
+        if r["book"] in (TRACK38_BOOK, "SPY") and str(r["start"]) >= "2014":
+            rows.append({"book": f"track 38: {r['book']}", "start": r["start"], "end": r["end"], "cagr": r["cagr"],
+                         "cagr_calendar": None, "vol": r["vol"], "maxdd": r["maxdd"], "worst_day": r["worst_day"],
+                         "worst_day_date": r["worst_day_date"]})
+    books = pd.DataFrame(rows)
+    _round(books).to_csv(out / "book_vs_track38.csv", index=False)
+    by = books.set_index("book")
+    mine = by.loc["pipeline: the IRA (the book), from track 38's start"]
+    put("book vs track 38", "pipeline book CAGR (IRA, from 2015-04-07)", mine["cagr"], f"{mine['start']} -> {mine['end']}")
+    put("book vs track 38", "pipeline book worst drawdown", mine["maxdd"], f"{mine['maxdd_peak']} -> {mine['maxdd_trough']}")
+    put("book vs track 38", "pipeline book worst day", mine["worst_day"], str(mine["worst_day_date"]))
+    key = f"track 38: {TRACK38_BOOK}"
+    if key in by.index:
+        t = by.loc[key]
+        put("book vs track 38", "track 38 book CAGR", t["cagr"], "includes the 15% gems stream, an estimate (+3.7 points a year in history)")
+        put("book vs track 38", "track 38 book worst drawdown", t["maxdd"])
+        put("book vs track 38", "track 38 book worst day", t["worst_day"], str(t["worst_day_date"]))
+        put("book vs track 38", "CAGR difference, pipeline - track 38 (points)", 100.0 * (mine["cagr"] - t["cagr"]),
+            "tolerance 1 point after the expected differences (gems, band, weekly rebalancing)")
+        put("book vs track 38", "worst drawdown difference (points)", 100.0 * (mine["maxdd"] - t["maxdd"]), "tolerance 3 points")
+    if refs is not None:
+        for variant, label in REFERENCE_LABELS.items():
+            put("book vs reference", f"reference {variant} CAGR", by.loc[label, "cagr"])
+            put("book vs reference", f"reference {variant} worst drawdown", by.loc[label, "maxdd"])
+            put("book vs reference", f"CAGR difference, pipeline - reference {variant} (points)",
+                100.0 * (mine["cagr"] - by.loc[label, "cagr"]))
+        vf = refs["vol_factor"]
+        put("G2 vol cut", "Sundays the rule's vol cut is in force on the same data", int((vf < 1.0).sum()),
+            ", ".join(f"{iso(a)}..{iso(b)}" for a, b in _spans(vf[vf < 1.0].index)[:6]))
+
+    # ---- calendar years -----------------------------------------------------------------------------
+    cy = pd.DataFrame({"pipeline_ira": calendar_year_returns(ira), "pipeline_total": calendar_year_returns(total),
+                       "spy_replay": calendar_year_returns(spy)})
+    if refs is not None:
+        for variant in REFERENCE_LABELS:
+            r = refs["books"][variant]
+            cy[f"ref_{variant}"] = r.groupby(r.index.year).apply(lambda x: float(np.expm1(np.log1p(x).sum())))
+    t38y = pd.read_csv(TRACK38 / "calendar_years.csv") if (TRACK38 / "calendar_years.csv").exists() else pd.DataFrame()
+    if len(t38y):
+        t38y = t38y.set_index("year")
+        cy["track38_book"] = t38y[TRACK38_BOOK].reindex(cy.index)
+        cy["track38_spy"] = t38y["SPY"].reindex(cy.index)
+    cy.index.name = "year"
+    _round(cy).to_csv(out / "calendar_years.csv")
+    if "track38_book" in cy:
+        d = (cy["pipeline_ira"] - cy["track38_book"]).dropna()
+        put("calendar years", "years compared with track 38", len(d))
+        put("calendar years", "mean difference, pipeline - track 38 (points)", 100.0 * d.mean())
+        put("calendar years", "largest |difference| (points)", 100.0 * d.abs().max(), str(d.abs().idxmax()))
+        put("calendar years", "years with the same sign", int(((cy["pipeline_ira"] > 0) == (cy["track38_book"] > 0))[d.index].sum()))
+
+    # ---- G2's switches -------------------------------------------------------------------------------
+    if len(dec):
+        d2 = dec.set_index(pd.DatetimeIndex(pd.to_datetime(dec["sunday"])))
+        pipe_states = d2["g2_on"]
+        pipe_ev = _events(pipe_states)
+        sundays = d2.index
+        ref_states = _weekly_btc_states(history.btc, sundays, cfg.constitution["growth"]["sleeves"]["G2"]["signal"]) \
+            if history is not None else pd.Series(dtype=object)
+        sw = pd.DataFrame({"sunday": [iso(s) for s in sundays], "pipe_on": pipe_states.values,
+                           "pipe_signal": d2["g2_signal"].values, "pipe_agree": d2["g2_agree"].values,
+                           "ref_on": ref_states.reindex(sundays).values if len(ref_states) else None})
+        sw["agree"] = [(None if (a is None or b is None or (isinstance(b, float) and math.isnan(b))) else bool(a) == bool(b))
+                       for a, b in zip(sw["pipe_on"], sw["ref_on"], strict=False)]
+        sw.to_csv(out / "g2_switches.csv", index=False)
+        ref_ev = _events(ref_states) if len(ref_states) else []
+        yrs = (sundays[-1] - sundays[0]).days / 365.25
+        known = pipe_states.dropna()
+        put("G2 vs the rule", "Sundays decided", int(len(known)))
+        put("G2 vs the rule", "weeks on (fraction)", float(known.astype(bool).mean()), "track 38: 48%")
+        put("G2 vs the rule", "switches a year, pipeline", len(pipe_ev) / yrs, "track 38: 6.2")
+        put("G2 vs the rule", "switches a year, the rule on the same data (band-free, no two-source check)", len(ref_ev) / yrs)
+        m = match_events(pipe_ev, ref_ev)
+        for k, v in m.items():
+            put("G2 vs the rule", f"switch events {k}", v, "within one week" if k == "matched" else "")
+        agree = sw["agree"].dropna()
+        put("G2 vs the rule", "weeks in the same state", int(agree.sum()), f"of {len(agree)}")
+        put("G2 vs the rule", "Sundays with no G2 signal (data or two-source)", int((d2["g2_signal"] != True).sum()),  # noqa: E712
+            ", ".join(iso(s) for s in d2.index[(d2["g2_signal"] != True) & (d2["g2_complete"] == True)][:8]))   # noqa: E712
+        put("G2 vs the rule", "Sundays the Bitcoin two-source check failed", int((d2["g2_agree"] == False).sum()),  # noqa: E712
+            ", ".join(iso(s) for s in d2.index[d2["g2_agree"] == False][:10]))   # noqa: E712
+        # G1 per leg
+        for leg in [c[:-3] for c in d2.columns if c.endswith("_in")]:
+            st = d2[f"{leg}_in"]
+            ev = _events(st)
+            put("G1", f"{leg} switches a year (2% band)", len(ev) / yrs, "track 26: about 1.1 a year per leg")
+            put("G1", f"{leg} weeks in (fraction)", float(st.dropna().astype(bool).mean()))
+            put("G1", f"{leg} Sundays with no signal", int((d2[f"{leg}_signal"] != True).sum()))   # noqa: E712
+            if refs is not None:
+                ref_st = refs["states"].get(f"G1_{leg}_bandfree")
+                if ref_st is not None:
+                    put("G1", f"{leg} switches a year, band-free rule", len(_events(ref_st)) / yrs, "track 31/38's simulation: about 3")
+        # orders per email
+        put("orders", "Sundays with orders", int((dec["orders_sent"] > 0).sum()), f"of {len(dec)} Sundays")
+        put("orders", "Sundays with orders a year", float((dec["orders_sent"] > 0).sum() / yrs), "design A.5: about 13")
+        put("orders", "max orders in one email", int(dec["orders_sent"].max()), "must be <= 3")
+        put("orders", "orders sent in all", int(dec["orders_sent"].sum()))
+        put("orders", "Sundays with a deferred order", int((dec["orders_deferred"] > 0).sum()))
+        put("orders", "W10 buys dropped for the week", int(dec["w10_dropped"].sum()))
+        per_year = dec.assign(year=dec["sunday"].str.slice(0, 4)).groupby("year").agg(
+            sundays=("sunday", "size"), with_orders=("orders_sent", lambda s: int((s > 0).sum())), orders=("orders_sent", "sum"),
+            deferred=("orders_deferred", "sum"), min_G=("G", "min"), max_drawdown=("drawdown", "max"))
+        per_year.to_csv(out / "orders_and_governor_by_year.csv")
+        dec.to_csv(out / "sundays.csv", index=False)
+        # the governor
+        put("governor", "hard stop fired", int(bool(dec["hard_stop"].fillna(False).astype(bool).any())), "must be 0")
+        put("governor", "Sundays with G < 1", int((dec["G"] < 1.0 - 1e-9).sum()))
+        put("governor", "lowest G", float(dec["G"].min()), str(dec.loc[dec["G"].idxmin(), "sunday"]))
+        put("governor", "deepest drawdown seen (IRA + taxable at Friday's close)", float(dec["drawdown"].max()),
+            str(dec.loc[dec["drawdown"].idxmax(), "sunday"]))
+        cuts = dec[dec["reasons"].str.contains("governor_cut", na=False)]
+        put("governor", "Sundays with a governor cut", len(cuts), ", ".join(cuts["sunday"].head(10)))
+        restores = dec[dec["reasons"].str.contains("governor_restore", na=False)]
+        put("governor", "Sundays with a governor restore", len(restores), ", ".join(restores["sunday"].head(10)))
+        for year in ("2018", "2020", "2022", "2025"):
+            y = dec[dec["sunday"].str.startswith(year)]
+            if len(y):
+                put("governor", f"{year}: lowest G / deepest drawdown", float(y["G"].min()),
+                    f"drawdown {float(y['drawdown'].max()):.1%} on {y.loc[y['drawdown'].idxmax(), 'sunday']}; "
+                    f"cuts on {', '.join(y[y['reasons'].str.contains('governor_cut', na=False)]['sunday'])}")
+        vc = dec["vol_cut_factor"].dropna()
+        put("G2 vol cut", "Sundays with the vol cut in force", int((vc < 1.0).sum()) if len(vc) else 0)
+
+    # ---- the look-ahead check --------------------------------------------------------------------------
+    if lookahead is not None:
+        a, b = lookahead
+        cmp_ = compare_runs(a, b)
+        seg_b = json.loads((Path(b) / "segment.json").read_text())
+        seg_a = json.loads((Path(a) / "segment.json").read_text())
+        put("look-ahead", "window", None, f"{seg_a['start']} -> {seg_a['end']}")
+        put("look-ahead", "identical decisions with and without the as-of cut", int(cmp_["identical"]),
+            f"{cmp_['records_a']} vs {cmp_['records_b']} decision records; first difference {cmp_['first_difference']}")
+        put("look-ahead", "provider calls that returned future rows without the cut", seg_b["served_after_asof"])
+        put("look-ahead", "Sundays in the window", sum(1 for r in ledger_records(Path(a) / "state") if r["record_type"] == "growth_decision"))
+
+    # ---- monthly NAV, for the record ------------------------------------------------------------------
+    mm = pd.DataFrame({"ira": ira, "total": total, "spy_adj": spy})
+    mm = mm.groupby(mm.index.to_period("M")).last()
+    mm.index = mm.index.astype(str)
+    _round(mm, 2).to_csv(out / "nav_monthly.csv", index_label="month")
+    s = pd.DataFrame(summary)
+    s.to_csv(out / "summary.csv", index=False)
+    return s
+
+
+# ======================================================================================================
 # 8. CLI
 # ======================================================================================================
 
@@ -1453,8 +1996,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=DEFAULT_OUT)
     p.add_argument("--compare", type=Path, default=None,
                    help="another replay of the first segment's window (e.g. --second-source history)")
+    p = sub.add_parser("reconcile-growth", help="the growth book (design v4) vs track 38 and the reference books")
+    common(p)
+    p.add_argument("--work", type=Path, default=DEFAULT_WORK)
+    p.add_argument("--out", type=Path, default=DEFAULT_GROWTH_OUT)
+    p.add_argument("--lookahead", type=Path, nargs=2, default=None, metavar=("CUT", "NOCUT"),
+                   help="two replays of one window, with and without the as-of cut, to compare")
     args = ap.parse_args(argv)
     cfg = load_config(args.config_dir)
+
+    if args.cmd == "reconcile-growth":
+        history = load_history(cfg, args.cache)
+        s = reconcile_growth(cfg, args.work, args.out, history=history,
+                             lookahead=tuple(args.lookahead) if args.lookahead else None)
+        with pd.option_context("display.max_rows", 400, "display.width", 200, "display.max_colwidth", 110):
+            print(s.to_string(index=False))
+        return 0
 
     if args.cmd == "fetch" or (args.cmd == "all" and not (args.cache / "manifest.json").exists()):
         LOG(f"fetching into {args.cache}")
