@@ -1,0 +1,398 @@
+{
+ "events": [
+  {
+   "id": "830253",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-october-31-20260810151043583",
+   "title": "Strait of Hormuz traffic returns to normal by October 31?",
+   "closed": false,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-11-01T03:59:00Z",
+   "markets": [
+    {
+     "id": "3501950",
+     "question": "Strait of Hormuz traffic returns to normal by October 31?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0.039\", \"0.961\"]",
+     "bestBid": 0.038,
+     "bestAsk": 0.04,
+     "lastTradePrice": 0.041,
+     "oneDayPriceChange": -0.006,
+     "endDate": "2026-11-01T03:59:00Z",
+     "closed": false,
+     "active": true,
+     "acceptingOrders": true,
+     "archived": false
+    }
+   ]
+  },
+  {
+   "id": "660109",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-september-30-20260702154339440",
+   "title": "Strait of Hormuz traffic returns to normal by September 30?",
+   "closed": false,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-10-01T03:59:00Z",
+   "markets": [
+    {
+     "id": "2774057",
+     "question": "Strait of Hormuz traffic returns to normal by September 30?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0.0025\", \"0.9975\"]",
+     "bestBid": 0.002,
+     "bestAsk": 0.003,
+     "lastTradePrice": 0.002,
+     "oneDayPriceChange": -0.001,
+     "endDate": "2026-10-01T03:59:00Z",
+     "closed": false,
+     "active": true,
+     "acceptingOrders": true,
+     "archived": false
+    }
+   ]
+  },
+  {
+   "id": "455875",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-december-31",
+   "title": "Strait of Hormuz traffic returns to normal by December 31?",
+   "closed": false,
+   "active": true,
+   "archived": false,
+   "endDate": "2027-01-01T04:59:00Z",
+   "markets": [
+    {
+     "id": "2176270",
+     "question": "Strait of Hormuz traffic returns to normal by December 31?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0.215\", \"0.785\"]",
+     "bestBid": 0.21,
+     "bestAsk": 0.22,
+     "lastTradePrice": 0.22,
+     "endDate": "2027-01-01T04:59:00Z",
+     "closed": false,
+     "active": true,
+     "acceptingOrders": true,
+     "archived": false,
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "830254",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-november-30-20260810151158765",
+   "title": "Strait of Hormuz traffic returns to normal by November 30?",
+   "closed": false,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-12-01T04:59:00Z",
+   "markets": [
+    {
+     "id": "3501951",
+     "question": "Strait of Hormuz traffic returns to normal by November 30?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0.125\", \"0.875\"]",
+     "bestBid": 0.12,
+     "bestAsk": 0.13,
+     "lastTradePrice": 0.12,
+     "oneDayPriceChange": -0.02,
+     "endDate": "2026-12-01T04:59:00Z",
+     "closed": false,
+     "active": true,
+     "acceptingOrders": true,
+     "archived": false
+    }
+   ]
+  },
+  {
+   "id": "375597",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-end-of-june",
+   "title": "Strait of Hormuz traffic returns to normal by end of June?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-06-30T00:00:00Z",
+   "markets": [
+    {
+     "id": "1971905",
+     "question": "Strait of Hormuz traffic returns to normal by end of June?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-06-30T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-07-07 15:27:17+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "256854",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-april-30",
+   "title": "Strait of Hormuz traffic returns to normal by end of April?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-04-30T00:00:00Z",
+   "markets": [
+    {
+     "id": "1540766",
+     "question": "Strait of Hormuz traffic returns to normal by end of April?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-04-30T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-05-12 15:25:37+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "329821",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-end-of-may",
+   "title": "Strait of Hormuz traffic returns to normal by end of May?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-05-31T00:00:00Z",
+   "markets": [
+    {
+     "id": "1809560",
+     "question": "Strait of Hormuz traffic returns to normal by end of May?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "oneDayPriceChange": -0.001,
+     "endDate": "2026-05-31T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-06-02 18:21:25+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "660108",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-august-31-20260702154212320",
+   "title": "Strait of Hormuz traffic returns to normal by...?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-09-01T03:59:00Z",
+   "markets": [
+    {
+     "id": "2774056",
+     "question": "Strait of Hormuz traffic returns to normal by August 31?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-09-01T03:59:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-09-09 14:37:01+00",
+     "groupItemTitle": "August 31"
+    },
+    {
+     "id": "3128885",
+     "question": "Strait of Hormuz traffic returns to normal by August 15?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-08-16T03:59:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-08-18 21:38:13+00",
+     "groupItemTitle": "August 15"
+    }
+   ]
+  },
+  {
+   "id": "455867",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-july-31",
+   "title": "Strait of Hormuz traffic returns to normal by July 31?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-07-31T00:00:00Z",
+   "markets": [
+    {
+     "id": "2176262",
+     "question": "Strait of Hormuz traffic returns to normal by July 31?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-07-31T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-08-04 18:19:27+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "407225",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-may-15",
+   "title": "Strait of Hormuz traffic returns to normal by May 15?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-05-15T00:00:00Z",
+   "markets": [
+    {
+     "id": "2054133",
+     "question": "Strait of Hormuz traffic returns to normal by May 15?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "oneDayPriceChange": -0.001,
+     "endDate": "2026-05-15T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-05-19 21:47:23+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "524097",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-june-15",
+   "title": "Strait of Hormuz traffic returns to normal by June 15?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-06-15T00:00:00Z",
+   "markets": [
+    {
+     "id": "2354976",
+     "question": "Strait of Hormuz traffic returns to normal by June 15?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-06-15T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-06-23 15:25:32+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "591973",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-july-15",
+   "title": "Strait of Hormuz traffic returns to normal by July 15?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-07-15T00:00:00Z",
+   "markets": [
+    {
+     "id": "2535468",
+     "question": "Strait of Hormuz traffic returns to normal by July 15?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-07-15T00:00:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-07-21 16:19:13+00",
+     "groupItemTitle": ""
+    }
+   ]
+  },
+  {
+   "id": "830255",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-september-15-20260810150912478",
+   "title": "Strait of Hormuz traffic returns to normal by September 15?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-09-16T03:59:00Z",
+   "markets": [
+    {
+     "id": "3501952",
+     "question": "Strait of Hormuz traffic returns to normal by September 15?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.002,
+     "endDate": "2026-09-16T03:59:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-09-23 23:32:46+00"
+    }
+   ]
+  },
+  {
+   "id": "633974",
+   "slug": "strait-of-hormuz-traffic-returns-to-normal-by-july-7-20260625174256255",
+   "title": "Strait of Hormuz traffic returns to normal by July 7?",
+   "closed": true,
+   "active": true,
+   "archived": false,
+   "endDate": "2026-07-07T23:59:00Z",
+   "markets": [
+    {
+     "id": "2683710",
+     "question": "Strait of Hormuz traffic returns to normal by July 7?",
+     "outcomes": "[\"Yes\", \"No\"]",
+     "outcomePrices": "[\"0\", \"1\"]",
+     "bestAsk": 0.001,
+     "lastTradePrice": 0.001,
+     "endDate": "2026-07-07T23:59:00Z",
+     "closed": true,
+     "active": true,
+     "acceptingOrders": false,
+     "archived": false,
+     "umaResolutionStatus": "resolved",
+     "closedTime": "2026-07-17 00:30:55+00"
+    }
+   ]
+  }
+ ],
+ "pagination": {
+  "hasMore": false,
+  "totalResults": 14
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "id": "msg_synthetic_w8",
+ "type": "message",
+ "role": "assistant",
+ "model": "test-model",
+ "content": [
+  {"type": "text", "text": "I'll check the official sources."},
+  {"type": "server_tool_use", "id": "srvtoolu_01", "name": "web_search",
+   "input": {"query": "United States ends naval blockade of Iran announcement"}},
+  {"type": "web_search_tool_result", "tool_use_id": "srvtoolu_01", "content": [
+   {"type": "web_search_result", "url": "https://www.whitehouse.gov/briefings-statements/2026/10/statement-on-the-strait-of-hormuz/",
+    "title": "Statement on the Strait of Hormuz", "encrypted_content": "EqgfCioIARgBIiQ3YTAw", "page_age": "October 15, 2026"},
+   {"type": "web_search_result", "url": "https://www.state.gov/releases/2026/10/joint-statement-on-hormuz-shipping/",
+    "title": "Joint Statement on Hormuz Shipping", "encrypted_content": "Eo8BCioIAhgBIiQyYjQ0", "page_age": "October 15, 2026"},
+   {"type": "web_search_result", "url": "https://www.centcom.mil/MEDIA/PRESS-RELEASES/2026/10/blockade-operations-end/",
+    "title": "Blockade operations end", "encrypted_content": "EpIBCioIAhgBIiQ5ZDdj", "page_age": "October 15, 2026"}
+  ]},
+  {"type": "text",
+   "text": "{\"verdict\": \"PROCEED\", \"citations\": [\"https://www.whitehouse.gov/briefings-statements/2026/10/statement-on-the-strait-of-hormuz/\", \"https://www.state.gov/releases/2026/10/joint-statement-on-hormuz-shipping/\"], \"reason\": \"Both pages announce the end of the US naval blockade of Iran.\"}",
+   "citations": [{"type": "web_search_result_location",
+                  "url": "https://www.state.gov/releases/2026/10/joint-statement-on-hormuz-shipping/",
+                  "title": "Joint Statement on Hormuz Shipping", "encrypted_index": "Eo8BCioIAhgBIiQy",
+                  "cited_text": "The United States will end its naval blockade of Iranian ports"}]}
+ ],
+ "stop_reason": "end_turn",
+ "usage": {"input_tokens": 6039, "output_tokens": 431, "server_tool_use": {"web_search_requests": 1}}
+}
