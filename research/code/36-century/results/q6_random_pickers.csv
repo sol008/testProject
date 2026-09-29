@@ -1,0 +1,3 @@
+universe,n_random_rules,random_excess_mean,random_excess_p50,random_excess_p95,random_excess_p99,n_variants_tested,expected_best_of_n_random,best_tested_1x_excess,best_tested_1x_rule,share_random_beating_best_tested
+"annual JST 1871-2020 (top-1, all assets)",2000,-0.04546897089650477,-0.04509398145759447,-0.02281626122397205,-0.015020574937001154,52,-0.015083827946527,0.0081203125477813,eq_only_L1_top3_exit_1x,0.0
+"monthly ETF era 1996-2026 (top-1, SMA filter)",2000,-0.036095587900734985,-0.037630072497093936,0.023366935430308978,0.05302168156265328,52,0.05629415651147892,0.3025334104571164,all_top1_Q_1x,0.0
