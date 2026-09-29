@@ -914,9 +914,12 @@ def market(chains: dict | None = None) -> FakeProvider:
 
 @pytest.fixture(scope="module")
 def daily_cfg(cfg):
-    """The real config with M2 off, so the synthetic market needs no trend-book legs."""
+    """The real config with M2 and the Phase B shadow books off, so the synthetic market needs no trend-book
+    legs and no VIX3M, crypto, EDGAR or macro data."""
     modules = {**cfg.constitution["modules"], "M2": {**cfg.constitution["modules"]["M2"], "enabled": False}}
-    return dataclasses.replace(cfg, constitution={**cfg.constitution, "modules": modules})
+    shadow = {name: ({**book, "enabled": False} if name not in ("ST1B", "W10") else book)
+              for name, book in cfg.constitution["shadow"].items()}
+    return dataclasses.replace(cfg, constitution={**cfg.constitution, "modules": modules, "shadow": shadow})
 
 
 def test_daily_run_marks_spreads_and_nav_includes_them(daily_cfg, tmp_path, hooks, xsp):
