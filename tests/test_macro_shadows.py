@@ -8,8 +8,9 @@ in October-November 2026:
 - payrolls on 2 Oct lift the 2-year 10bp (a hawkish bucket);
 - CPI on 14 Oct is cool: the 2-year falls 8bp and core CPI prints +0.1% m/m, so W3 buys TLT at the 15 Oct
   open; the 10-year closes above its pre-CPI close on 5 Nov, so W3 sells at the 6 Nov open (invalidation);
-- the Fed holds on 28 Oct and the BoJ hikes on 30 Oct (effective 2 Nov), so W4 buys FXY at the 2 Nov open;
-  the yen then rallies to the USDJPY -4% target, and W4 sells at the 11 Nov open;
+- the Fed holds on 28 Oct and the BoJ hikes on 30 Oct (effective 2 Nov, when the BoJ's rate file confirms it),
+  so W4 is evaluated on the 2 Nov evening and buys FXY at the 3 Nov open (the track's timing, the 2 Nov open,
+  is recorded next to it); the yen then rallies to the USDJPY -4% target, and W4 sells at the 12 Nov open;
 - a war onset listed for 4 Nov lifts GLD 2% that day and it gives back 1.5% the next: the fade shorts GLD at
   the 5 Nov open and covers at the 6 Nov open.
 Bond-market holidays (12 Oct, 11 Nov) have no Treasury curve, as in reality.
@@ -36,6 +37,7 @@ from traderec.data.econ_calendar import (
     BOJ_BASIC_LOAN_RATE_URL,
     KINDS,
     TREASURY_CSV_URL,
+    TREASURY_TIMEOUT_SECONDS,
     CalendarError,
     FakeMacroData,
     LiveMacroData,
@@ -218,7 +220,7 @@ def world(*, macro: bool = True, fred_overrides: dict[str, pd.Series] | None = N
         fred = {k: v.loc[:ts] for k, v in fred.items()}
     provider = FakeProvider(bars=bars, btc=btc, vix=vix)
     if macro:
-        provider.macro_data = FakeMacroData(yields=yields, fred=fred, boj=boj)
+        provider.econ_data = FakeMacroData(yields=yields, fred=fred, boj=boj)
     return provider
 
 
@@ -428,15 +430,23 @@ def test_live_macro_data_sources_and_memo() -> None:
 
     session = FakeSession(handler)
     md = LiveMacroData(session=session, sleep=lambda s: None)
-    two = md.treasury_yields("2Y", [2025, 2026])
+    two = md.treasury_yields("2Y", [2025, 2026], asof="2026-09-28")
     assert two.loc["2025-12-31"] == 3.47 and two.loc["2026-09-28"] == 4.92
     assert session.calls[0]["params"] == {"type": "daily_treasury_yield_curve", "field_tdr_date_value": "2025",
                                           "page": "", "_format": "csv"}
-    assert md.treasury_yields("10Y", [2026]).loc["2026-09-28"] == 5.24
+    assert md.treasury_yields("10Y", [2026], asof="2026-09-28").loc["2026-09-28"] == 5.24
     assert md.fred_series("DGS2").loc["2026-09-25"] == 4.81 and md.boj_basic_loan_rate().iloc[-1] == 1.5
     md.fred_series("DGS2")
     assert len(session.calls) == 4                                   # two years, FRED once, BoJ once: memoised
-    assert all(c["headers"]["User-Agent"].startswith("traderec/") and c["timeout"] == 20.0 for c in session.calls)
+    assert all(c["headers"]["User-Agent"].startswith("traderec/") for c in session.calls)
+    # Treasury builds a year's curve on request (17-19 s seen): its own, longer timeout; the others keep 20 s
+    assert [c["timeout"] for c in session.calls] == [TREASURY_TIMEOUT_SECONDS, TREASURY_TIMEOUT_SECONDS, 20.0, 20.0]
+    assert TREASURY_TIMEOUT_SECONDS == 60.0
+    # the curve is memoised per run date: the next evening (a long-lived process, e.g. a replay) fetches it again
+    md.treasury_yields("2Y", [2026], asof="2026-09-29")
+    assert len(session.calls) == 5 and session.calls[-1]["params"]["field_tdr_date_value"] == "2026"
+    md.treasury_yields("10Y", [2026], asof="2026-09-29")
+    assert len(session.calls) == 5
     assert md.sources == {"yield:2Y": "treasury", "yield:10Y": "treasury", "fred:DGS2": "fred",
                           "boj:basic_loan_rate": "boj"}
     with pytest.raises(ValueError):
@@ -485,17 +495,46 @@ def test_live_macro_sources() -> None:
     assert boj.index[-1] >= pd.Timestamp("2026-09-24") and 0.0 < boj.iloc[-1] < 10.0
 
 
+class W8W9Adapter:
+    """What `runners.macro` attaches to `provider.macro_data` in a live run (traderec.data.macro_data.MacroData):
+    a different adapter with a different interface, which this book must never take for its own."""
+
+    def next_earnings(self, ticker: str) -> None:
+        return None
+
+
 def test_macro_data_reached_through_the_provider() -> None:
     fake = FakeMacroData()
     provider = FakeProvider()
     assert macro_data_for(provider) is None                          # a fake without macro data: fail closed
-    provider.macro_data = fake
+    provider.macro_data = W8W9Adapter()                               # W8/W9's adapter is not this one
+    assert macro_data_for(provider) is None
+    provider.econ_data = W8W9Adapter()                                # nor is anything without treasury_yields
+    assert macro_data_for(provider) is None
+    provider.econ_data = fake
     assert macro_data_for(provider) is fake
     live = LiveProvider(load_config())
+    live.macro_data = W8W9Adapter()                                   # the daily job ran W8/W9 first
     md = macro_data_for(live)
     assert isinstance(md, LiveMacroData) and macro_data_for(live) is md   # one client per run
+    assert live.econ_data is md and isinstance(live.macro_data, W8W9Adapter)   # neither adapter displaces the other
     with pytest.raises(DataError):
         fake.treasury_yields("2Y")
+
+
+def test_the_w8w9_adapter_on_provider_macro_data_does_not_break_the_book(tmp_path: Path) -> None:
+    """The daily run attaches W8/W9's `MacroData` (next_earnings, no treasury_yields) to `provider.macro_data`
+    before this runner runs: the macro shadow book still gets its own adapter and evaluates W3."""
+    cfg = make_cfg(write_calendar(tmp_path / "cal.yaml"))
+    state_dir = new_state(tmp_path, cfg)
+    provider = world()
+    provider.macro_data = W8W9Adapter()
+    runs = run_days(cfg, provider, state_dir, CPI_DAY, "2026-10-15")
+    ev = events_of(state_dir)
+    assert ev["CPI:2026-10-14"]["w3"]["trigger"] is True and ev[f"W3:{CPI_DAY}"]["status"] == "open"
+    assert ev["CPI:2026-10-14"]["day0"]["UST2Y"] == -8.0             # the Treasury curve came through
+    assert not [n for r in runs for n in r.result.notes if "ALERT" in n or "AttributeError" in n]
+    assert isinstance(provider.macro_data, W8W9Adapter)               # untouched for W8/W9
 
 
 # ------------------------------------------------------------------------------------------ the pure rules
@@ -597,6 +636,35 @@ def test_advance_trade_long_time_stop_with_distributions() -> None:
     assert trade["return"] == pytest.approx(10.3896 / (10.01 * entry_factor) - 1.0)
     assert trade["return"] > trade["price_return"]                  # the distribution counts
     assert ms.advance_trade(trade, b, "2026-10-07", 0.001, ms.time_exit_check(2)) == []
+
+
+def test_advance_trade_counts_a_distribution_that_appears_after_the_entry_run() -> None:
+    """A back-adjusted series (yfinance) is rescaled at each later ex-date, so the entry run's bars show no
+    distribution yet. Both factors must come from the exit run's bars, or the distribution is lost."""
+    opens, closes = [10.0, 10.2, 10.4, 10.6, 10.8], [10.1, 10.3, 10.5, 10.7, 10.9]
+    at_entry = _frame(opens, closes)                                  # adj_close == close on every day
+    trade = ms.new_trade("W3", "W3:x", "2026-09-30", "TLT", "long", 3)
+    assert ms.advance_trade(trade, at_entry.iloc[:1], "2026-10-01", 0.0, ms.time_exit_check(3)) == ["entry"]
+    assert "entry_adj" not in trade
+    scale = 1.0 - 0.1 / 10.3                                          # a $0.10 distribution goes ex on day 3
+    at_exit = _frame(opens, closes, adj=[c * scale for c in closes[:2]] + closes[2:])
+    assert ms.advance_trade(trade, at_exit, "2026-10-06", 0.0, ms.time_exit_check(3)) == ["exit_signal", "exit"]
+    assert trade["exit_date"] == "2026-10-06" and trade["exit_open"] == 10.6         # the open after session 3
+    assert trade["price_return"] == pytest.approx(10.6 / 10.0 - 1.0)
+    assert trade["return"] == pytest.approx(10.6 / (10.0 * scale) - 1.0)
+    assert trade["return"] > trade["price_return"] + 0.009
+
+
+def test_advance_trade_records_the_research_timing_next_to_a_late_entry() -> None:
+    b = _frame([100.0, 101.0, 102.0, 103.0], [100.5, 101.5, 102.5, 103.5])     # 1, 2, 5, 6 Oct
+    late = ms.new_trade("W3", "W3:x", "2026-10-02", "TLT", "long", 5, research_signal_date="2026-10-01")
+    assert ms.advance_trade(late, b, "2026-10-06", 0.0, ms.time_exit_check(5)) == ["entry"]
+    assert late["entry_date"] == "2026-10-05" and late["entry_open"] == 102.0        # after the evaluation
+    assert late["research_entry_date"] == "2026-10-02" and late["research_entry_open"] == 101.0
+    assert late["entry_lag_sessions"] == 1
+    same = ms.new_trade("W3", "W3:y", "2026-10-01", "TLT", "long", 5, research_signal_date="2026-10-01")
+    ms.advance_trade(same, b, "2026-10-06", 0.0, ms.time_exit_check(5))
+    assert same["entry_date"] == same["research_entry_date"] == "2026-10-02" and same["entry_lag_sessions"] == 0
 
 
 def test_advance_trade_short_and_waiting() -> None:
@@ -726,6 +794,9 @@ def test_w3_buys_tlt_after_the_cool_cpi_and_exits_on_invalidation(scenario: dict
     trade = ev[f"W3:{CPI_DAY}"]
     tlt = market_bars()["TLT"]
     assert trade["status"] == "closed" and trade["exit_reason"] == "invalidation"
+    assert trade["signal_date"] == trade["research_signal_date"] == CPI_DAY      # evaluated the same evening
+    assert trade["entry_date"] == trade["research_entry_date"] == "2026-10-15" and trade["entry_lag_sessions"] == 0
+    assert trade["research_entry_open"] == trade["entry_open"]
     assert trade["entry_date"] == "2026-10-15" and trade["exit_signal_date"] == "2026-11-05"
     assert trade["exit_date"] == "2026-11-06" and trade["sessions_held"] == 16 and trade["held"] == 16
     assert trade["pre_release_10y"] == 5.20
@@ -751,10 +822,16 @@ def test_w4_waits_for_the_boj_file_then_buys_fxy(scenario: dict) -> None:
     assert w4["boj"]["change_bp"] == 25.0 and w4["fed"] == {"change_bp": 0.0, "before": 4.0, "after": 4.0,
                                                            "effective": "2026-10-29"}
     trade = ev[f"W4:{BOJ_DAY}"]
-    assert trade["entry_date"] == BOJ_EFFECTIVE and trade["entry_open"] == pytest.approx(60.0)
-    assert trade["exit_reason"] == "target" and trade["exit_signal_date"] == "2026-11-10"
-    assert trade["exit_date"] == "2026-11-11" and trade["target_level"] == pytest.approx(62.5)
-    assert trade["return"] == pytest.approx(60.0 * 1.006 ** 7 * (1 - 8e-4) / (60.0 * (1 + 8e-4)) - 1.0, abs=1e-6)
+    # The rule could only be evaluated on the 2 Nov evening (the BoJ file's effective date), so the book enters
+    # at the 3 Nov open. The track's timing, the open after both decisions were public (2 Nov), is kept next to
+    # it: every W4 trade enters 1-4 business days after the research's, and the review can see by how much.
+    assert trade["signal_date"] == BOJ_EFFECTIVE and trade["research_signal_date"] == BOJ_DAY
+    assert trade["entry_date"] == "2026-11-03" and trade["entry_open"] == pytest.approx(60.0 * 1.006)
+    assert trade["research_entry_date"] == BOJ_EFFECTIVE and trade["research_entry_open"] == pytest.approx(60.0)
+    assert trade["entry_lag_sessions"] == 1
+    assert trade["exit_reason"] == "target" and trade["exit_signal_date"] == "2026-11-11"
+    assert trade["exit_date"] == "2026-11-12" and trade["target_level"] == pytest.approx(60.0 * 1.006 / 0.96)
+    assert trade["return"] == pytest.approx(1.006 ** 7 * (1 - 8e-4) / (1 + 8e-4) - 1.0, abs=1e-6)
     pending = [r for r in scenario["runs"] if r.date == BOJ_DAY][0]
     assert not any("W4" in n for n in pending.result.notes)          # waiting is not a problem
     assert [p["event"] for p in scenario["ledger"] if p.get("rule") == "W4"][:3] == ["signal", "trade", "entry"]
@@ -764,9 +841,10 @@ def test_gold_fade_shorts_the_day_after_the_onset(scenario: dict) -> None:
     trade = scenario["events"]["ONSET:2026-11-04"]
     gld = market_bars()["GLD"]
     assert trade["rule"] == "GOLD_FADE" and trade["side"] == "short" and trade["counted"] is True
-    assert trade["first_seen"] == LAUNCH and trade["signal_date"] == ONSET_DAY
+    assert trade["first_seen"] == LAUNCH and trade["signal_date"] == trade["research_signal_date"] == ONSET_DAY
     assert trade["day0_move"] == pytest.approx(0.02, abs=1e-6)
     assert trade["entry_date"] == "2026-11-05" and trade["exit_date"] == "2026-11-06"
+    assert trade["research_entry_date"] == "2026-11-05" and trade["entry_lag_sessions"] == 0
     entry = float(gld.at[pd.Timestamp("2026-11-05"), "open"]) * (1 - 2e-4)
     exit_ = float(gld.at[pd.Timestamp("2026-11-06"), "open"]) * (1 + 2e-4)
     assert trade["return"] == pytest.approx(1.0 - exit_ / entry, abs=1e-6)
@@ -837,16 +915,25 @@ def test_disagreeing_yield_sources_block_w3(tmp_path: Path) -> None:
 
 
 def test_missing_core_cpi_waits_then_evaluates(tmp_path: Path) -> None:
-    """FRED publishes the core index a day late: W3 is evaluated then, and still enters at the next open."""
+    """FRED publishes the core index a day late: W3 is evaluated on the 15 Oct evening and enters at the 16 Oct
+    open, the first open a live run could take. The 15 Oct open the research would have used (TLT's first-day
+    drift, the part of the edge track 17 claims) is recorded next to it, never traded (no look-ahead)."""
     cfg = make_cfg(write_calendar(tmp_path / "cal.yaml"))
     state_dir = new_state(tmp_path, cfg)
     core = market_fred(market_yields())["CPILFESL"].drop(pd.Timestamp("2026-09-01"))
     run_days(cfg, world(fred_overrides={"CPILFESL": core}), state_dir, CPI_DAY, CPI_DAY)
     assert events_of(state_dir)["CPI:2026-10-14"]["w3"]["status"] == "pending"
-    run_days(cfg, world(), state_dir, "2026-10-15", "2026-10-15")
+    run_days(cfg, world(), state_dir, "2026-10-15", "2026-10-16")
     ev = events_of(state_dir)
     assert ev["CPI:2026-10-14"]["w3"]["evaluated"] == "2026-10-15"
-    assert ev[f"W3:{CPI_DAY}"]["entry_date"] == "2026-10-15"          # the first open after the CPI day
+    trade = ev[f"W3:{CPI_DAY}"]
+    tlt = market_bars()["TLT"]
+    assert trade["signal_date"] == "2026-10-15" and trade["research_signal_date"] == CPI_DAY
+    assert trade["entry_date"] == "2026-10-16"                        # the first open after the evaluation
+    assert trade["entry_price"] == pytest.approx(float(tlt.at[pd.Timestamp("2026-10-16"), "open"]) * 1.0003)
+    assert trade["research_entry_date"] == "2026-10-15" and trade["entry_lag_sessions"] == 1
+    assert trade["research_entry_open"] == pytest.approx(float(tlt.at[pd.Timestamp("2026-10-15"), "open"]))
+    assert trade["counted"] is True                                   # a real-time paper instance, entered late
     assert not state_of(state_dir)["alerts"]
 
 
@@ -862,9 +949,44 @@ def test_late_listed_onset_is_recorded_but_not_counted(tmp_path: Path) -> None:
     write_calendar(tmp_path / "cal.yaml", ONSET)                      # the owner lists it a day late
     run_days(cfg, world(), state_dir, "2026-11-06", "2026-11-06")
     trade = events_of(state_dir)["ONSET:2026-11-04"]
-    assert trade["counted"] is False and trade["first_seen"] == "2026-11-06" and trade["status"] == "closed"
+    assert trade["counted"] is False and trade["first_seen"] == "2026-11-06"
+    # the entry can only follow the evening it was seen (the 5 Nov open the track would have used is history)
+    assert trade["status"] == "pending_entry" and trade["signal_date"] == "2026-11-06"
+    assert trade["research_signal_date"] == ONSET_DAY
+    run_days(cfg, world(), state_dir, "2026-11-09", "2026-11-10")
+    trade = events_of(state_dir)["ONSET:2026-11-04"]
+    gld = market_bars()["GLD"]
+    assert trade["status"] == "closed" and trade["entry_date"] == "2026-11-09" and trade["exit_date"] == "2026-11-10"
+    assert trade["entry_price"] == pytest.approx(float(gld.at[pd.Timestamp("2026-11-09"), "open"]) * (1 - 2e-4))
+    assert trade["research_entry_date"] == "2026-11-05" and trade["entry_lag_sessions"] == 2
+    assert trade["research_f1"] == pytest.approx(-0.015, abs=1e-6)  # the track's measure still runs from day 0
     promo = state_of(state_dir)["shadow"]["MACRO"]["meta"]["promotion"]["GOLD_FADE"]
     assert promo["n"] == 0                                           # not counted toward R2's n >= 10
+
+
+class RecordingMacroData(FakeMacroData):
+    """A FakeMacroData that records the years and run date each Treasury request asks for."""
+
+    def __init__(self, **kw: Any) -> None:
+        super().__init__(**kw)
+        self.requests: list[tuple[tuple[int, ...], str | None]] = []
+
+    def treasury_yields(self, tenor: str, years: Any = None, *, asof: str | None = None) -> pd.Series:
+        self.requests.append((tuple(years or ()), asof))
+        return super().treasury_yields(tenor, years, asof=asof)
+
+
+def test_treasury_curve_requests_the_prior_year_only_while_a_window_can_reach_it(tmp_path: Path) -> None:
+    cfg = make_cfg(write_calendar(tmp_path / "cal.yaml"))
+    yields = market_yields()
+    for day, years in (("2027-01-05", (2026, 2027)), ("2027-02-26", (2026, 2027)), ("2027-03-02", (2027,)),
+                       ("2026-10-14", (2026,))):
+        provider = world()
+        md = RecordingMacroData(yields=yields, fred=market_fred(yields), boj=market_boj())
+        provider.econ_data = md
+        state_dir = new_state(tmp_path / day, cfg, created=min(day, LAUNCH))
+        run_days(cfg, provider, state_dir, day, day)
+        assert md.requests and all(r == (years, day) for r in md.requests), (day, md.requests)
 
 
 def test_postponed_release_is_voided(tmp_path: Path) -> None:

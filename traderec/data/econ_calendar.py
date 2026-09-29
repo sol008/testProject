@@ -12,7 +12,9 @@
   - The BoJ's basic loan rate by effective date (the policy rate + 0.25 point since 2024), for W4.
 
   `LiveMacroData` is the network client; `FakeMacroData` serves offline tests. The runner reaches it through
-  the provider (`macro_data_for`).
+  the provider (`macro_data_for`), under its own attribute ``provider.econ_data``: ``provider.macro_data`` is
+  the W8/W9 build's adapter (`traderec.data.macro_data.MacroData`, a different interface), and the two runs
+  share one provider in the daily job.
 
 Consensus forecasts, prediction-market odds and option-implied event moves have no free and reliable source
 here, so the release log records them as unavailable (docs/phase-b/macro-shadows.md).
@@ -48,8 +50,10 @@ from traderec.data.providers import (
 __all__ = [
     "BOJ_BASIC_LOAN_RATE_URL",
     "CALENDAR_FILE",
+    "ECON_DATA_ATTR",
     "KINDS",
     "TREASURY_CSV_URL",
+    "TREASURY_TIMEOUT_SECONDS",
     "CalendarError",
     "EconCalendar",
     "FakeMacroData",
@@ -74,7 +78,13 @@ CALENDAR_FILE = "econ_calendar.yaml"
 TREASURY_CSV_URL = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
                     "daily-treasury-rates.csv/{year}/all")
 TREASURY_TENORS = {"2Y": "2 Yr", "10Y": "10 Yr"}          # our names -> the CSV's column headers
+# home.treasury.gov builds a year's curve on request: five timings took 16.7-19.0 s against the 20 s policy
+# timeout, and a slow night then cost 4 x 20 s plus the backoff before the FRED fallback (a day late).
+TREASURY_TIMEOUT_SECONDS = 60.0
 BOJ_BASIC_LOAN_RATE_URL = "https://www.boj.or.jp/en/statistics/boj/other/discount/cdab0101.csv"
+# The provider attribute this adapter lives under. `provider.macro_data` belongs to the W8/W9 runner's adapter
+# (traderec.data.macro_data.MacroData: next_earnings, ...), which runs earlier in the same daily job.
+ECON_DATA_ATTR = "econ_data"
 
 
 class CalendarError(ValueError):
@@ -318,8 +328,10 @@ def parse_boj_rate_csv(raw: bytes | str) -> pd.Series:
 class MacroData(Protocol):
     """The macro inputs of W3, W4 and the release log. Every method raises DataError when it has nothing."""
 
-    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None) -> pd.Series:
-        """Treasury par yield ("2Y" or "10Y"), percent, per business day, covering at least `years`."""
+    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None, *,
+                        asof: str | None = None) -> pd.Series:
+        """Treasury par yield ("2Y" or "10Y"), percent, per business day, covering at least `years`. `asof` is
+        the run date the curve is fetched for: one fetch per year and run date, however many rules ask."""
         ...
 
     def fred_series(self, series_id: str) -> pd.Series:
@@ -332,9 +344,11 @@ class MacroData(Protocol):
 
 
 class LiveMacroData:
-    """Network-backed MacroData. Same policy as LiveProvider: 20 s timeouts, 3 retries 1/2/4 s apart on
-    connection errors, 429 and 5xx; a memo cache per instance (one run sees one snapshot); ``sources`` records
-    what served each call. ``session`` and ``sleep`` are test seams; ``clock`` names the current year."""
+    """Network-backed MacroData. Same policy as LiveProvider: 20 s timeouts (60 s for Treasury's curve, see
+    TREASURY_TIMEOUT_SECONDS), 3 retries 1/2/4 s apart on connection errors, 429 and 5xx; a memo cache per
+    instance (one run sees one snapshot; the Treasury curve is memoised per run date, so a long-lived process
+    such as a replay refetches it for each new date); ``sources`` records what served each call. ``session``
+    and ``sleep`` are test seams; ``clock`` names the current year."""
 
     def __init__(self, *, session: Any = None, sleep: Callable[[float], None] = time.sleep,
                  clock: Callable[[], pd.Timestamp] | None = None, user_agent: str = USER_AGENT) -> None:
@@ -345,14 +359,16 @@ class LiveMacroData:
         self.sources: dict[str, str] = {}
         self._cache: dict[tuple[Any, ...], Any] = {}
 
-    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None) -> pd.Series:
+    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None, *,
+                        asof: str | None = None) -> pd.Series:
         if tenor not in TREASURY_TENORS:
             raise ValueError(f"unknown tenor {tenor!r} (known: {', '.join(TREASURY_TENORS)})")
         wanted = sorted(set(years or [int(pd.Timestamp(self._clock()).year)]))
         column = TREASURY_TENORS[tenor]
+        day = None if asof is None else str(asof)[:10]
         parts = []
         for year in wanted:
-            frame = self._memo(("treasury", year), lambda y=year: self._treasury_year(y))
+            frame = self._memo(("treasury", year, day), lambda y=year: self._treasury_year(y))
             if column not in frame.columns:
                 raise DataError(f"Treasury {year} curve has no {column!r} column")
             parts.append(frame[column].dropna())
@@ -375,7 +391,7 @@ class LiveMacroData:
     def _treasury_year(self, year: int) -> pd.DataFrame:
         params = {"type": "daily_treasury_yield_curve", "field_tdr_date_value": str(year), "page": "",
                   "_format": "csv"}
-        text = self._get(TREASURY_CSV_URL.format(year=year), params=params).text
+        text = self._get(TREASURY_CSV_URL.format(year=year), params=params, timeout=TREASURY_TIMEOUT_SECONDS).text
         try:
             return parse_treasury_csv(text)
         except ValueError as exc:
@@ -389,7 +405,8 @@ class LiveMacroData:
                 raise DataError(f"{key[0]}: {exc}") from exc
         return self._cache[key]
 
-    def _get(self, url: str, *, params: Mapping[str, Any] | None = None) -> requests.Response:
+    def _get(self, url: str, *, params: Mapping[str, Any] | None = None,
+             timeout: float = TIMEOUT_SECONDS) -> requests.Response:
         """GET under the retry policy. Raises DataError when no 2xx/3xx answer arrives."""
         attempts = len(BACKOFF_SECONDS) + 1
         problem = "no attempt made"
@@ -398,7 +415,7 @@ class LiveMacroData:
                 self._sleep(BACKOFF_SECONDS[attempt - 1])
             try:
                 resp = self._session.get(url, params=params, headers={"User-Agent": self.user_agent},
-                                         timeout=TIMEOUT_SECONDS, allow_redirects=True)
+                                         timeout=timeout, allow_redirects=True)
             except requests.RequestException as exc:
                 problem = f"{type(exc).__name__}: {exc}"
                 continue
@@ -422,7 +439,8 @@ class FakeMacroData:
         self._boj = None if boj is None else _dated(boj)
         self.calls: list[str] = []
 
-    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None) -> pd.Series:
+    def treasury_yields(self, tenor: str, years: Iterable[int] | None = None, *,
+                        asof: str | None = None) -> pd.Series:
         self.calls.append(f"treasury:{tenor}")
         if tenor not in self._yields:
             raise DataError(f"FakeMacroData has no {tenor} yields")
@@ -444,16 +462,20 @@ class FakeMacroData:
 def macro_data_for(provider: Any) -> MacroData | None:
     """The macro-data adapter reached through the provider (docs/PHASE_B_CONTRACTS.md §0.3).
 
-    * ``provider.macro_data`` when the provider carries one (tests inject a FakeMacroData this way);
+    * ``provider.econ_data`` (ECON_DATA_ATTR) when the provider carries one (tests inject a FakeMacroData this
+      way). An object there without ``treasury_yields`` is not this adapter and counts as absent;
     * for a LiveProvider without one, a new LiveMacroData, attached to it so that the whole run shares one
       client and its cache;
     * otherwise None: the inputs are unavailable and the rules that need them fail closed.
+
+    ``provider.macro_data`` is never read or written: the W8/W9 runner attaches its own, different adapter
+    there earlier in the same daily run.
     """
-    md = getattr(provider, "macro_data", None)
-    if md is not None:
+    md = getattr(provider, ECON_DATA_ATTR, None)
+    if md is not None and callable(getattr(md, "treasury_yields", None)):
         return md
     if isinstance(provider, LiveProvider):
         md = LiveMacroData(user_agent=getattr(provider, "user_agent", USER_AGENT))
-        provider.macro_data = md
+        setattr(provider, ECON_DATA_ATTR, md)
         return md
     return None

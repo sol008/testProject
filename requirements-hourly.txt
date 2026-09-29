@@ -1,0 +1,7 @@
+# What `python -m traderec hourly` (and `init --if-missing`) imports: the hourly workflow installs only these.
+# yfinance is imported lazily by the daily bars, which the hourly job never fetches; pytest is for the tests.
+# Keep the versions in step with requirements.txt.
+pandas>=2.2
+numpy>=1.26
+requests>=2.31
+PyYAML>=6.0

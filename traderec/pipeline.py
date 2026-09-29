@@ -48,6 +48,9 @@ from .state import RETRYABLE, Paths, copy_tree, jsonable, load_state, new_state,
 from .types import Fill, OrderIntent, Recommendation, RenderedEmail
 
 CRUDE_MONTH_CODES = "FGHJKMNQUVXZ"
+# Run records and alerts older than this leave the state, or keep only what later reports read (see
+# _prune_history). The annual review reads a year of daily and options runs; the ledger keeps everything.
+STATE_KEEP_DAYS = 400
 
 
 class RunError(RuntimeError):
@@ -274,6 +277,7 @@ class Run:
             "status": status, "at": _utc_now(), "run_seq": self.state["counters"]["run_seq"],
             "ledger_seq": [self.first_seq, rec["seq"]], "notes": self.result.notes[-20:],
         }
+        _prune_history(self.state, self.asof)
         if not self.dry_run:
             save_state(self.paths.state, self.state)
         self._send_all()
@@ -1284,6 +1288,35 @@ def _month_asof(month: str) -> str:
     """The last day of `month` (YYYY-MM), or today in New York if the month is not over yet."""
     end = (pd.Timestamp(month + "-01") + pd.offsets.MonthEnd(0)).date()
     return min(end, today_et()).isoformat()
+
+
+def _prune_history(state: dict, asof: str, keep_days: int = STATE_KEEP_DAYS) -> None:
+    """Keep `state.json` small: the state says where the system is now, the ledger is the record.
+
+    The `runs` and `alerts` lists grow with every run (about 90 KB and 32 KB after nine months). Run records
+    whose period ended more than `keep_days` before `asof` keep only what later readers need: their status and
+    sequence number (the go-live gate counts runs on time since launch, `--force` and idempotency read the key
+    and status) and the emails they sent (the ramp review reads the [LIVE] entry emails); their notes, ledger
+    range and timestamp go, and the ledger's run manifest keeps them. Alerts older than `keep_days` are dropped,
+    except validator failures, which the go-live gate counts to date. The `init:` record stays whole.
+    """
+    from .reports import period_end   # module-level would be circular (reports reads Run for typing)
+
+    cutoff = (pd.Timestamp(str(asof)[:10]) - pd.Timedelta(days=int(keep_days))).strftime("%Y-%m-%d")
+    runs = state.get("runs") or {}
+    for key, rec in list(runs.items()):
+        kind, _, period = str(key).partition(":")
+        end = period_end(period)
+        if kind == "init" or not end or end >= cutoff or not isinstance(rec, dict) or "notes" not in rec:
+            continue
+        compact = {k: rec[k] for k in ("status", "run_seq") if k in rec}
+        if rec.get("emails"):
+            compact["emails"] = rec["emails"]
+        runs[key] = compact
+    alerts = state.get("alerts")
+    if isinstance(alerts, list):
+        state["alerts"] = [a for a in alerts if not isinstance(a, dict) or a.get("kind") == "validator"
+                           or (period_end(a.get("date")) or "9999-12-31") >= cutoff]
 
 
 def _utc_now() -> str:

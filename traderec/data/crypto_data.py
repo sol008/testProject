@@ -480,7 +480,7 @@ def _kraken_exact(payload: Any, pair: str) -> dict | None:
 # --------------------------------------------------------------------------------------------------------
 
 class FakeCryptoData:
-    """In-memory crypto data for offline tests: no network, no clock.
+    """In-memory crypto data for offline tests: no network, and no clock unless one is given.
 
         FakeCryptoData(
             quotes={"USDC": {"kraken": {"bid": 0.95, "ask": 0.951}, "gemini": None}},   # stablecoin_quotes()
@@ -489,6 +489,7 @@ class FakeCryptoData:
                                   "time": "2026-09-29T01:09:57Z", "month": "2026-11"}},   # missing -> None
             spot=82997.79,                                   # btc_spot_at(): a number, a callable(when) or None
             down={"gemini"},                                 # venues that fail: None quotes and an error each
+            clock=lambda: pd.Timestamp("2026-09-29T02:00Z"),   # "now", for the carry check's catch-up test
         )
 
     Change the attributes between calls to move the market. Attach it to any provider as `provider.crypto`.
@@ -496,12 +497,13 @@ class FakeCryptoData:
 
     def __init__(self, *, quotes: Mapping[str, Mapping[str, Any]] | None = None, eth: pd.Series | None = None,
                  futures: Mapping[tuple[int, int], Mapping[str, Any]] | None = None, spot: Any = None,
-                 down: Any = ()) -> None:
+                 down: Any = (), clock: Callable[[], pd.Timestamp] | None = None) -> None:
         self.quotes = {str(c): dict(v) for c, v in (quotes or {}).items()}
         self.eth = eth
         self.futures = dict(futures or {})
         self.spot = spot
         self.down = set(down)
+        self._clock = clock
         self.sources: dict[str, str] = {}
         self.calls: list[str] = []
 

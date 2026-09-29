@@ -85,6 +85,12 @@ Default year: the one that just ended.
   - `open_trades`, `paused_modules`, `next_quarterly`, `quarterly_this_month`, `gate_checks`, `go_live_ready`.
   - Every existing key is unchanged.
 - **Runs on time** now include the 10:17 ET options job, from its first run. The hourly crypto job is not counted.
+- **What the state keeps.** `runs` and `alerts` used to grow without bound (about 90 KB and 32 KB after nine
+  months). `Run.finish` now compacts them after 400 days (`pipeline.STATE_KEEP_DAYS`, `_prune_history`): a run
+  record older than that keeps its status, sequence number and the emails it sent (what the gate's runs-on-time
+  since launch and the [LIVE] record read) and loses its notes, timestamp and ledger range; alerts older than
+  that are dropped, except validator failures, which the gate counts to date. The quarterly and annual windows
+  lie inside 400 days, and the ledger's run manifests keep everything.
 - **Problems first** also lists kill-switch, shadow-book-error, cluster and open-position-cap alerts.
 - **If the gate computation fails,** the monthly review still goes out, with a note.
 

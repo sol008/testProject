@@ -63,7 +63,7 @@ All five books are shadow books:
 - **Signal:** the first VIX/VIX3M close ≥ 1.00 after 20 sessions below 1.00, while SPY's raw close is above its 200-day average.
 - **Entry:** SPY bought at the next open, with fill model v1.0's slippage (1 bp).
 - **Exit:** sold at the close of session 20, the entry session counting as 1. This is the research code's `run_rule(mode="open", hold=20)`.
-- **Recorded:** `return` on notional, and `excess_return` = return − T-bill × 20/252.
+- **Recorded:** `return`, the total return on notional (each price scaled by its day's adj_close / close from tonight's bars, as `modules.macro_shadows.adjusted_opens` does), `price_return` on raw prices, and `excess_return` = return − T-bill × 20/252. The research measures total return and the promotion bar is +1.0% excess: on the 36 research trades raw prices average 1.99% against 2.08% total return, up to −0.56% on a trade across an ex-dividend date, so the raw figure must not be the one tested.
 
 ### Fill model for credit spreads
 
@@ -135,7 +135,7 @@ The slippage criterion needs practice-account fills. Model fills concede 0.3 × 
 | Risk | `width`, `width_pct`, `max_loss`, `max_loss_usd`, `credit_over_max_loss` |
 | Checks | `quote`, `liquidity`, `planned_exit` |
 | Marks | `mark`, `min_return` |
-| Exit (closed trades) | `exit_date`, `exit_reason` (`take_profit` / `time_stop` / `expiry` / `expiry_settlement`), `exit_price` (the cost to close), `pnl`, `pnl_usd`, `return`, `return_basis`, `days_held` |
+| Exit (closed trades) | `exit_date`, `exit_reason` (`take_profit` / `time_stop` / `expiry` / `expiry_settlement`), `exit_price` (the cost to close), `pnl`, `pnl_usd`, `return`, `return_basis`, `days_held`; ST-2 adds `price_return` (raw prices) next to its total `return` |
 
 **Ledger events** (`record_type` "shadow"):
 
@@ -159,7 +159,11 @@ The slippage criterion needs practice-account fills. Model fills concede 0.3 × 
 - **Until the options job is live:**
   - each option-book signal expires the next evening, logged as `expired` with a run note;
   - ST-2 is unaffected.
-- **`data` alerts.** At most one per run. It lists the books that failed closed and why, for example: "option shadow books fail closed: O1: no VIX3M close; ST2: no VIX/VIX3M ratio on 2026-10-05".
+- **`data` alerts.** At most one per run. It lists the books that failed closed and why, for example: "option shadow books fail closed: O1: no VIX3M close; ST2: no VIX/VIX3M ratio on 2026-10-05". The 10:17 ET job raises the same merged alert (contract §0.6) when:
+  - a pending entry has no usable chain: none in the snapshot, or one stamped on another date. The entry is skipped as before, but no longer in silence, so a chain missing on all four days of O1's entry window (a whole monthly cycle) is seen on the first;
+  - a managed spread (O1, I2) whose 21-DTE close is due cannot be quoted. It stays open and is retried at the next snapshot; without the alert it would drift to the expiry safety net three weeks later and be scored as an expiry settlement.
+
+  A missing chain on a day with nothing pending and no due close only logs `no_quote` / nothing. Books held to expiry (O1-h, I1) have no due close, so a missed mark raises nothing.
 - **`shadow` alerts:**
   - a book raised an error (the other books still run);
   - a managed spread was still open at expiry and was settled by the safety net.
@@ -177,6 +181,7 @@ The slippage criterion needs practice-account fills. Model fills concede 0.3 × 
    - Entering whenever the book is flat would give about 15–20 a year.
    - So entries start at 45 DTE and may slip to 40 on filter or fill misses. Both bounds are inside the design's range.
    - A listed expiry within 40–50 DTE stands in when the monthly isn't listed.
+   - **For the promotion review:** the 45→40 DTE retry window adds 13 cycles over 2008–26, 172 entries against the research's 159, each taken right after a filter failure (e.g. 9 Aug 2024, after the 5 Aug volatility spike). The research never took those; before reading the O1 record against track 14's numbers, split the entries by whether the filters passed on the first day of the window, or compare only the 159.
 2. **O1-h uses the 0.10-delta short put,** per track 14 §7.1 ("Same, short 0.10Δ, held to expiry"). The design's "O1 held to expiry" is read as shorthand for that definition.
 3. **I2's "DVOL not in backwardation" is a proxy.** No provider serves Deribit's DVOL. The IBIT chain's ATM implied-volatility term structure (IV30 / IV90 < 1.0, the chain's analogue of VIX/VIX3M) is used instead, at 10:17 ET. A missing term structure fails closed. I2 has no analogue of O1's VIX < 30 crisis veto, because none is specified.
 4. **Liquidity.** Credit spreads use track 14 §7.2's rule: natural width ≤ 10% of the mid credit, with OI ≥ 500 only for ETF options. Design §4's per-leg "bid-ask ≤ 10% of mid" is written for debit structures, and it would reject most 5%-wide long legs.
@@ -188,7 +193,7 @@ The slippage criterion needs practice-account fills. Model fills concede 0.3 × 
 7. **Not applied:**
    - track 14 §7.2's "don't open on an FOMC or CPI day". It is "convenience only", and the design's M7 filters don't include it;
    - the drawdown governor, in the shadow's size information.
-8. **Quotes.** A spread whose leg has no two-sided quote can't be marked or closed on that snapshot. That is the fill model's `combo_quote` rule. The spread retries at the next snapshot, and the expiry safety net settles it at intrinsic value.
+8. **Quotes.** A spread whose leg has no two-sided quote can't be marked or closed on that snapshot. That is the fill model's `combo_quote` rule. The spread retries at the next snapshot, and the expiry safety net settles it at intrinsic value; once its 21-DTE close is due, every such snapshot raises the data alert (see Operations), so the safety net is never reached in silence.
 9. **I1's cool-down** counts from the signal date, even when the entry is then skipped. That matches the research, whose signal dates don't depend on trades.
 
 ## For the integrator

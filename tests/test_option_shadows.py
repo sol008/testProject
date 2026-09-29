@@ -46,13 +46,19 @@ def _bars(close: pd.Series) -> pd.DataFrame:
 
 
 def market(*, vix: dict | None = None, gspc: dict | None = None, vix3m: float | None = 17.0,
-           second: dict | None = None) -> FakeProvider:
+           second: dict | None = None, spy_dividend: tuple[str, float] | None = None) -> FakeProvider:
     """S&P 500 up 0.03% a session (6,800 on 5 Oct 2026), SPY = S&P / 10, VIX 15, VIX3M 17 (None: no VIX3M), BTC-USD
-    up. `vix` / `gspc` override closes by date; `second` overrides the S&P 500's second-source closes."""
+    up. `vix` / `gspc` override closes by date; `second` overrides the S&P 500's second-source closes;
+    `spy_dividend` = (ex-date, dollars) puts a distribution in SPY's adj_close, back-adjusted as yfinance does."""
     i = np.arange(len(SESSIONS)) - SESSIONS.get_loc(REF)
     spx = pd.Series(6800.0 * np.exp(0.0003 * i), index=SESSIONS)
     for d, v in (gspc or {}).items():
         spx.loc[pd.Timestamp(d)] = v
+    spy = _bars(spx / 10.0)
+    if spy_dividend:
+        ex, amount = pd.Timestamp(spy_dividend[0]), float(spy_dividend[1])
+        prev_close = float(spy["close"].shift(1).loc[ex])
+        spy.loc[spy.index < ex, "adj_close"] *= 1.0 - amount / prev_close
     vix_s = pd.Series(15.0, index=SESSIONS)
     for d, v in (vix or {}).items():
         vix_s.loc[pd.Timestamp(d)] = v
@@ -62,7 +68,7 @@ def market(*, vix: dict | None = None, gspc: dict | None = None, vix3m: float | 
     vixes = {"VIX": vix_s} if vix3m is None else {"VIX": vix_s, "VIX3M": pd.Series(vix3m, index=SESSIONS)}
     seconds = {("^GSPC", d.strftime("%Y-%m-%d")): float(v) for d, v in spx.items()}
     seconds.update({("^GSPC", d): v for d, v in (second or {}).items()})
-    return FakeProvider(bars={"SPY": _bars(spx / 10.0), "^GSPC": _bars(spx), "IBIT": _bars(ibit)}, vix=vixes,
+    return FakeProvider(bars={"SPY": spy, "^GSPC": _bars(spx), "IBIT": _bars(ibit)}, vix=vixes,
                         btc=btc, tbill_rate=0.04, second_source=seconds)
 
 
@@ -393,6 +399,56 @@ def test_m7_expiry_safety_net_settles_at_intrinsic_with_an_alert(sd):
     assert any("still open at expiry" in n for n in run.result.notes)
 
 
+def data_alerts(state_dir: Path) -> list[str]:
+    return [a["message"] for a in state(state_dir)["alerts"] if a["kind"] == "data"]
+
+
+def test_a_missing_chain_at_a_pending_entry_raises_the_data_alert(sd):
+    """Contract §0.6: with no XSP chain on the entry window's days, the cycle would be lost in silence."""
+    cfg, prov = config("O1"), market()
+    daily(cfg, prov, sd, "2026-10-05")
+    options(cfg, prov, sd, "2026-10-06", {})
+    assert events(sd, "O1")[-1]["event"] == "skip" and state(sd)["shadow"]["O1"]["open_trade"] is None
+    assert data_alerts(sd) == ["option shadow books fail closed: O1: entry S-2026-10-05-O1 skipped, no option "
+                               "chain in the snapshot"]
+    daily(cfg, prov, sd, "2026-10-06")                  # the window is still open: a new signal
+    stale = xsp("2026-10-07", 680.0, ["2026-11-20"], asof="2026-10-06T10:17:00")
+    options(cfg, prov, sd, "2026-10-07", stale)
+    assert data_alerts(sd)[-1].endswith("O1: entry S-2026-10-06-O1 skipped, the option chain is stale (quotes of "
+                                        "2026-10-06T10:17:00)")
+    options(cfg, prov, sd, "2026-10-08", {})            # nothing pending, no open spread: nothing to alert
+    assert len(data_alerts(sd)) == 2
+    wide = xsp("2026-10-09", 680.0, ["2026-11-20"], spread_pct=0.10, min_half=0.2)
+    daily(cfg, prov, sd, "2026-10-08")
+    options(cfg, prov, sd, "2026-10-09", wide)          # a rule outcome (liquidity), not a data problem
+    assert events(sd, "O1")[-1]["reason"].startswith("liquidity") and len(data_alerts(sd)) == 2
+
+
+def test_a_due_exit_without_a_quote_raises_the_data_alert_and_stays_open(sd):
+    """An O1 spread past 21 DTE with no chain must not drift to the expiry safety net in silence."""
+    cfg, prov = config("O1"), market()
+    _o1_entry(sd, cfg, prov)
+    options(cfg, prov, sd, "2026-10-28", {})            # 23 days to expiry: not due, a no_quote record only
+    assert kinds(sd, "O1")[-1] == "no_quote" and data_alerts(sd) == []
+    options(cfg, prov, sd, "2026-10-30", {})            # 21 days: the close is due
+    ot = state(sd)["shadow"]["O1"]["open_trade"]
+    assert ot["status"] == "open" and kinds(sd, "O1")[-1] == "no_quote"
+    assert data_alerts(sd) == ["option shadow books fail closed: O1: S-2026-10-05-O1 is due to close (21 days to "
+                               "expiry) but has no usable quote (no option chain in the snapshot); it stays open"]
+    options(cfg, prov, sd, "2026-11-02", xsp("2026-11-02", 650.0, ["2026-11-20"]))   # the next usable snapshot
+    trade = state(sd)["shadow"]["O1"]["trades"][0]
+    assert trade["exit_reason"] == "time_stop" and trade["exit_date"] == "2026-11-02"
+    assert len(data_alerts(sd)) == 1
+
+
+def test_o1h_held_to_expiry_has_no_due_exit_to_alert(sd):
+    cfg, prov = config("O1H"), market()
+    daily(cfg, prov, sd, "2026-10-05")
+    options(cfg, prov, sd, "2026-10-06", xsp("2026-10-06", 680.0, ["2026-11-20"]))
+    options(cfg, prov, sd, "2026-11-19", {})            # one day before expiry, no chain: held by rule anyway
+    assert kinds(sd, "O1H")[-1] == "no_quote" and data_alerts(sd) == []
+
+
 def test_a_failed_entry_keeps_the_cycle_open(sd):
     cfg, prov = config("O1"), market()
     daily(cfg, prov, sd, "2026-10-05")
@@ -550,9 +606,29 @@ def test_st2_buys_the_next_open_and_sells_at_the_close_of_session_20(sd):
     assert trade["signal_date"] == "2026-09-15" and trade["fill_date"] == "2026-09-16"
     assert trade["entry_price"] == pytest.approx(entry) and trade["exit_price"] == pytest.approx(exit_)
     assert trade["exit_date"] == "2026-10-13" and trade["sessions"] == 20 and trade["return_basis"] == "notional"
-    assert trade["return"] == pytest.approx(exit_ / entry - 1.0)
+    assert trade["return"] == pytest.approx(exit_ / entry - 1.0) and trade["price_return"] == trade["return"]
     assert trade["excess_return"] == pytest.approx(trade["return"] - 0.04 * 20 / 252)
     assert kinds(sd, "ST2") == ["signal", "entry", "exit"]         # the 25 Sep inversion came while it was open
+
+
+def test_st2_return_is_the_total_return_across_an_ex_dividend_date(sd):
+    """Track 13 measures total return and the promotion bar is +1.0% excess: SPY's quarterly dividend (about
+    0.3%) inside the 20 sessions must count. The fixture goes ex on 18 Sep, inside the 16 Sep - 13 Oct hold."""
+    cfg = config("ST2")
+    prov = market(vix={"2026-09-15": 18.0}, spy_dividend=("2026-09-18", 1.85))
+    spy = prov.daily_bars("SPY")
+    scale = float(spy.at[pd.Timestamp("2026-09-17"), "adj_close"] / spy.at[pd.Timestamp("2026-09-17"), "close"])
+    assert scale == pytest.approx(1.0 - 1.85 / float(spy.at[pd.Timestamp("2026-09-17"), "close"])) and scale < 1.0
+    assert float(spy.at[pd.Timestamp("2026-10-13"), "adj_close"]) == float(spy.at[pd.Timestamp("2026-10-13"), "close"])
+    for day in ("2026-09-15", "2026-09-16", "2026-10-13"):
+        daily(cfg, prov, sd, day)
+    trade = state(sd)["shadow"]["ST2"]["trades"][0]
+    entry = float(spy.at[pd.Timestamp("2026-09-16"), "open"]) * 1.0001
+    exit_ = float(spy.at[pd.Timestamp("2026-10-13"), "close"]) * 0.9999
+    assert trade["price_return"] == pytest.approx(exit_ / entry - 1.0)
+    assert trade["return"] == pytest.approx(exit_ / (entry * scale) - 1.0)          # the dividend is in
+    assert trade["return"] - trade["price_return"] == pytest.approx(1.85 / 680.0, abs=2e-4)
+    assert trade["excess_return"] == pytest.approx(trade["return"] - 0.04 * 20 / 252)
 
 
 def test_st2_fails_closed_on_an_unconfirmed_close(sd):

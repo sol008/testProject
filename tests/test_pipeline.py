@@ -19,6 +19,7 @@ from traderec import pipeline
 from traderec.config import load_config
 from traderec.ledger import Ledger
 from traderec.market_calendar import is_trading_day
+from traderec.reports import run_punctuality
 
 START, END = "2023-01-03", "2026-03-31"
 SESSIONS = pd.DatetimeIndex([d for d in pd.date_range(START, END, freq="B") if is_trading_day(d)])
@@ -242,6 +243,39 @@ def test_missing_data_is_retryable(cfg, tmp_path):
     assert "fail" in rec.pings
     ok = pipeline.run_daily(cfg, SynthProvider(), state_dir, date=LAUNCH, services=rec.services())
     assert ok.status == "ok"
+
+
+def test_old_run_records_and_alerts_are_compacted(cfg, world):
+    """`runs` and `alerts` never used to shrink (about 90 KB and 32 KB after nine months). Records older than
+    400 days keep only what the reports still read: the status and sequence number (runs on time since launch),
+    the emails sent (the [LIVE] record) and validator alerts (counted to date)."""
+    state_dir, provider, rec = world
+    st = _state(state_dir)
+    old = {"status": "ok", "at": "2024-06-04T02:30:00+00:00", "run_seq": 1, "ledger_seq": [1, 5],
+           "notes": ["interest credited $0.00 at 0.0400"]}
+    live = [{"subject": "[LIVE] NEW TRADE", "outcome": "sent", "trade_id": "T-2024-06-03-M1", "kind": "NEW_TRADE"}]
+    st["runs"].update({"daily:2024-06-03": {**old, "emails": live}, "options:2024-06-03": dict(old),
+                       "monthly:2024-05": {**old, "emails": []}, "hourly:2024-06-03T14Z": dict(old),
+                       "daily:2025-09-26": {**old, "notes": ["recent"]}})
+    st["alerts"] = [{"date": "2024-06-03", "run": "daily:2024-06-03", "kind": "data", "message": "old data"},
+                    {"date": "2024-06-03", "run": "daily:2024-06-03", "kind": "validator", "message": "kept"},
+                    {"date": "2024-05", "run": "monthly:2024-05", "kind": "email", "message": "old month"},
+                    {"date": "2025-09-26", "run": "daily:2025-09-26", "kind": "data", "message": "recent"}]
+    (state_dir / "state.json").write_text(json.dumps(st))
+    res = pipeline.run_daily(cfg, provider, state_dir, date=LAUNCH, services=rec.services())
+    assert res.status == "ok"
+    st = _state(state_dir)                                             # cutoff: 400 days before 29 Sep 2025
+    assert st["runs"]["daily:2024-06-03"] == {"status": "ok", "run_seq": 1, "emails": live}
+    assert st["runs"]["options:2024-06-03"] == {"status": "ok", "run_seq": 1}
+    assert st["runs"]["monthly:2024-05"] == {"status": "ok", "run_seq": 1}
+    assert st["runs"]["hourly:2024-06-03T14Z"] == {"status": "ok", "run_seq": 1}
+    assert st["runs"]["daily:2025-09-26"]["notes"] == ["recent"] and st["runs"]["daily:2025-09-26"]["at"]
+    assert st["runs"][f"init:{LAUNCH}"]["at"] and st["runs"][f"daily:{LAUNCH}"]["notes"]
+    mine = [a["message"] for a in st["alerts"] if a["message"] in ("old data", "kept", "old month", "recent")]
+    assert mine == ["kept", "recent"]
+    # the go-live gate's "runs on time since launch" still counts the compacted daily and options runs
+    since_2024 = dict(st, created="2024-06-03")
+    assert run_punctuality(since_2024, "2024-06-03", "2024-06-03", "2025-09-29") == (2, 2)
 
 
 def test_weekend_is_no_session(cfg, world):
