@@ -594,7 +594,8 @@ def _credit_dividends(run: Run, sessions: pd.DatetimeIndex) -> None:
 
 def _fill_pending(run: Run, sessions: pd.DatetimeIndex) -> None:
     """Fill queued orders at the first session after their creation date (catching up missed runs)."""
-    pending = run.broker.pending()
+    # Spread orders fill in the 10:17 ET options job, never at an open: no bars are fetched for option roots.
+    pending = [o for o in run.broker.pending() if o.order_type != "spread_limit"]
     if not pending:
         return
     by_session: dict[str, set[str]] = {}
@@ -1325,8 +1326,11 @@ def status_text(cfg: Config, state_dir: Path | None = None) -> str:
         lines.append(f"lot {p['account']} {p['ticker']} [{p['module']}]: {p['qty']:.4f} sh, cost "
                      f"${p['cost']:,.2f}, opened {p['opened']}, trade {p['trade_id']}")
     for o in broker.pending():
+        if o.order_type == "spread_limit":
+            continue                             # listed by options_job.status_lines below
         amount = "all" if o.close_all else f"${float(o.dollars or 0):,.2f}"
         lines.append(f"pending {o.side} {o.ticker} {amount} [{o.module}] from {o.created_date} ({o.intent_id})")
+    lines += options_job.status_lines(broker)   # Phase B: open spreads and pending spread orders
     for name, mod in state["modules"].items():
         ot = mod.get("open_trade")
         extra = f" on={mod.get('on')} week={mod.get('last_week_end')}" if name == "M3" else ""
