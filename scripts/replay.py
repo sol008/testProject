@@ -812,7 +812,7 @@ def replay(cfg: Config, provider: AsOfProvider, state_dir: Path, start: str, end
     """
     state_dir = Path(state_dir)
     rows: list[dict] = []
-    begin = start
+    begin, done = start, None
     if resume and (state_dir / "state.json").exists():
         done = _last_done(state_dir)
         if done:
@@ -826,7 +826,9 @@ def replay(cfg: Config, provider: AsOfProvider, state_dir: Path, start: str, end
         "weekly": lambda d: pipeline.run_weekly(cfg, provider, state_dir, date=d, services=services),
         "monthly": lambda m: pipeline.run_monthly(cfg, provider, state_dir, month=m, services=services),
     }
-    plan = [p for p in schedule(start, end) if p[2] >= begin]
+    # A month's review runs on the 1st with the month's last day as its as-of date: when the earlier segment ended on
+    # that last day, the review is still due (the Phase C4b chunks skipped five of them before this was added).
+    plan = [p for p in schedule(start, end) if p[2] >= begin or (p[0] == "monthly" and p[2] == done)]
     t_start = time.perf_counter()
     for i, (kind, when, asof) in enumerate(plan, start=1):
         provider.set_asof(asof)
@@ -2675,7 +2677,7 @@ def reconcile_g1(cfg: Config, work: Path, work_gov: Path, out: Path, *, history:
         em = w["emails"]
         hit = em[em["run"] == f"weekly:{sunday_before}"] if len(em) else pd.DataFrame()
         if len(hit):
-            put(sect, f"[{tag}] {sunday_before}: the email", None, f"{hit.iloc[0]['subject']} ({w['work'] / 'emails' / str(hit.iloc[0]['file'])})")
+            put(sect, f"[{tag}] {sunday_before}: the email", None, f"{hit.iloc[0]['subject']} (emails/{hit.iloc[0]['file']})")
         week_re = [r for r in w["rule_e"] if "1987-10-12" <= r["as_of"] <= "1987-10-16"]
         put(sect, f"[{tag}] Rule E in the week of 12-16 October 1987", len(week_re),
             "; ".join(f"{r['as_of']} {r['payload'].get('event')} " + ", ".join(f"{lg['ticker']} ({lg.get('pct_vs_sma')}% vs the average)" for lg in r["payload"].get("legs") or [])

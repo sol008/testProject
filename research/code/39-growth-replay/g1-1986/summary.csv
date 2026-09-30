@@ -1,0 +1,198 @@
+section,metric,value,note
+runtime [no governor],window,,"1986-07-01 -> 2026-09-28; book g1-only, governor False"
+runtime [no governor],wall minutes,474.3,
+runtime [no governor],runs,13080.0,"daily: 10500, weekly: 2100, monthly: 480"
+runtime [no governor],"seconds per daily run, mean",1.603,
+runtime [no governor],"seconds per daily run, last 20",5.5407,grows with the ledger: every run re-verifies the whole hash chain
+runs [no governor],status ok,12718.0,
+runs [no governor],status no_session,362.0,
+runs [no governor],exceptions,0.0,
+data [no governor],data served after the as-of date,0.0,0 = no look-ahead
+data [no governor],second-source echoes,10887.0,"SPY, ^GSPC, ^NDX"
+ledger [no governor],ledger verifies,1.0,"ok: 43497 records, head=110d22996c641ede9e118d17db8eafc0a94ef16d3cf547ef9583c9e1ecdc72b2 (43497 records)"
+ledger [no governor],records by type,43497.0,"run_manifest: 13082, mark: 10138, snapshot: 10138, growth_decision: 2101, governor: 2101, order_set: 2101, recommendation: 2101, fill: 519, monthly_report: 480, order: 466, rule_e: 246, correction: 24"
+alerts [no governor],alerts: circuit (the state keeps the last 400 days),6.0,daily loss -3.48% (circuit breaker applies to discretionary entries only; none exist in Phase A)
+emails [no governor],emails captured,2678.0,
+emails [no governor],emails GROWTH,2100.0,
+emails [no governor],emails MONTHLY,480.0,
+emails [no governor],emails RULE_E,98.0,
+emails [no governor],validator errors in sent emails,0.0,
+fills [no governor],orders cancelled,23.0,O-1992-04-26-G1-0082: no position to sell; O-1992-10-04-G1-0089: no position to sell; O-1993-04-25-G1-0096: no position to sell; O-1993-07-18-G1-0101: no position to sell; O-1994-03-27-G1-0106: no position to sell
+fills [no governor],fills,443.0,
+fills [no governor],dividends credited,76.0,
+runtime [governor],window,,"1986-07-01 -> 2026-09-28; book g1-only, governor True"
+runtime [governor],wall minutes,479.3,
+runtime [governor],runs,13079.0,"daily: 10500, weekly: 2100, monthly: 479"
+runtime [governor],"seconds per daily run, mean",1.6093,
+runtime [governor],"seconds per daily run, last 20",5.459,grows with the ledger: every run re-verifies the whole hash chain
+runs [governor],status ok,12717.0,
+runs [governor],status no_session,362.0,
+runs [governor],exceptions,0.0,
+data [governor],data served after the as-of date,0.0,0 = no look-ahead
+data [governor],second-source echoes,10900.0,"SPY, ^GSPC, ^NDX"
+ledger [governor],ledger verifies,1.0,"ok: 43509 records, head=39c0b53ff621ddd649f42e5452e345ad9e1417a080e382704c38238c3698060f (43509 records)"
+ledger [governor],records by type,43509.0,"run_manifest: 13082, mark: 10139, snapshot: 10139, growth_decision: 2101, governor: 2101, order_set: 2101, recommendation: 2101, fill: 524, monthly_report: 479, order: 471, rule_e: 246, correction: 25"
+alerts [governor],alerts: circuit (the state keeps the last 400 days),6.0,daily loss -3.47% (circuit breaker applies to discretionary entries only; none exist in Phase A)
+emails [governor],emails captured,2677.0,
+emails [governor],emails GROWTH,2100.0,
+emails [governor],emails MONTHLY,479.0,
+emails [governor],emails RULE_E,98.0,
+emails [governor],validator errors in sent emails,0.0,
+fills [governor],orders cancelled,23.0,O-1992-04-26-G1-0082: no position to sell; O-1992-10-04-G1-0089: no position to sell; O-1993-04-25-G1-0096: no position to sell; O-1993-07-18-G1-0101: no position to sell; O-1994-03-27-G1-0106: no position to sell
+fills [governor],fills,448.0,
+fills [governor],dividends credited,76.0,
+data,flag IBIT,,"before 2024-01-11: proxy = Coinbase hourly BTC-USD (open ~9:30 ET, close 16:00 ET) x 0.00057542, IBIT's first close / BTC at 16:00 ET that day; no premium, discount or fee drag; before 2015-07-21 (no hourly candles): the same proxy from Yahoo's BTC-USD UTC daily bars (open 00:00 UTC, close 23:59 UTC), 211 sessions"
+data,flag btc_daily_utc,,837 UTC days before Coinbase's first candle (2017-01-01) and 0 gaps filled from Yahoo BTC-USD
+data,flag SSO,,"before 2006-06-21: proxy = track 26's 2x model on ^GSPC (daily return 2 x the index's total return - 1 x (T-bill + 0.70%)/252 - 0.89%/252, the T-bill the prior DTB3 print; dividends: Shiller's monthly dividend yield before 1988-01-05, then ^SP500TR's daily return less ^GSPC's (track 26's loaders on its cached inputs)), 5226 sessions from 1985-10-03, spliced to the real bars by ratio at the first real close (x 0.243596); opens: the prior close moved by 2 x the index's overnight move where Yahoo's index open differs from the prior close (22% of the proxy sessions; in no year before the splice do 90% of the sessions have one), else the prior close; adj_close = close (no distributions)"
+data,flag QLD,,"before 2006-06-21: proxy = track 26's 2x model on ^NDX (daily return 2 x the index's total return - 1 x (T-bill + 0.70%)/252 - 0.89%/252, the T-bill the prior DTB3 print; dividends: QQQ's implied yield (adjusted less raw close return, 252-session mean) from 1999-06-04, 0.6% a year before it (track 26's ndx_panel)), 5226 sessions from 1985-10-03, spliced to the real bars by ratio at the first real close (x 0.095797); opens: the prior close moved by 2 x the index's overnight move where Yahoo's index open differs from the prior close (40% of the proxy sessions; 90% of every year's sessions from 2001), else the prior close; adj_close = close (no distributions)"
+data,flag SPY,,"before 1993-01-29: proxy = ^GSPC x 0.100136 (open, high, low, close; 1854 sessions from 1985-10-01), adj_close from the index's total return (Shiller's monthly dividend yield before 1988-01-05, then ^SP500TR's daily return less ^GSPC's (track 26's loaders on its cached inputs)); read for the daily run's session calendar, the marks' SPY column and the SPY two-source check (an echo) only: no module trades SPY here"
+data,windows agree,1.0,1986-07-01 -> 2026-09-28 with the governor
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",reference CAGR,0.1678,1986-07-22 -> 2026-09-28
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",reference worst drawdown,-0.6008,2000-03-27 -> 2003-03-31
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",reference worst day,-0.1559,2000-04-14
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",track 38 CAGR,0.1768,"1986-07-22 -> 2026-09-28: its sleeves use a 0.4% spread, a 0.9% fee, a flat 0.8% Nasdaq-100 yield, 0.05% a switch and the model after 2006 too"
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",track 38 worst drawdown,-0.6008,
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",track 38 worst day,-0.1558,2000-04-14
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)","CAGR difference, reference - track 38 (points)",-0.8991,tolerance 1 point
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",worst drawdown difference (points),0.0015,tolerance 3 points
+"reference vs track 38 (100% equity, band-free, 1986-07-22 on)",same worst day,1.0,
+pipeline vs reference [no governor],"pipeline CAGR (IRA, from 1986-07-22)",0.1081,1986-07-22 -> 2026-09-28
+pipeline vs reference [no governor],pipeline worst drawdown,-0.2786,2000-03-27 -> 2000-10-06
+pipeline vs reference [no governor],pipeline worst day,-0.069,1997-10-27
+pipeline vs reference [no governor],reference blend50 CAGR / worst drawdown,0.1082,"worst drawdown -0.3179 (2000-03-27 -> 2003-03-31), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [no governor],"CAGR difference, pipeline - reference blend50 (points)",-0.0096,tolerance 1 point at the same weight
+pipeline vs reference [no governor],"worst drawdown difference, pipeline - reference blend50 (points)",3.9309,tolerance 3 points
+pipeline vs reference [no governor],reference band50 CAGR / worst drawdown,0.1149,"worst drawdown -0.2616 (2000-03-27 -> 2003-01-17), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [no governor],"CAGR difference, pipeline - reference band50 (points)",-0.6734,
+pipeline vs reference [no governor],"worst drawdown difference, pipeline - reference band50 (points)",-1.7013,
+pipeline vs reference [no governor],reference band_gov50 CAGR / worst drawdown,0.1131,"worst drawdown -0.2631 (2000-03-27 -> 2000-10-06), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [no governor],"CAGR difference, pipeline - reference band_gov50 (points)",-0.4953,
+pipeline vs reference [no governor],"worst drawdown difference, pipeline - reference band_gov50 (points)",-1.5455,
+pipeline vs reference [governor],"pipeline CAGR (IRA, from 1986-07-22)",0.1071,1986-07-22 -> 2026-09-28
+pipeline vs reference [governor],pipeline worst drawdown,-0.2577,2000-03-27 -> 2000-10-06
+pipeline vs reference [governor],pipeline worst day,-0.069,1997-10-27
+pipeline vs reference [governor],reference blend50 CAGR / worst drawdown,0.1082,"worst drawdown -0.3179 (2000-03-27 -> 2003-03-31), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [governor],"CAGR difference, pipeline - reference blend50 (points)",-0.112,tolerance 1 point at the same weight
+pipeline vs reference [governor],"worst drawdown difference, pipeline - reference blend50 (points)",6.0159,tolerance 3 points
+pipeline vs reference [governor],reference band50 CAGR / worst drawdown,0.1149,"worst drawdown -0.2616 (2000-03-27 -> 2003-01-17), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [governor],"CAGR difference, pipeline - reference band50 (points)",-0.7758,
+pipeline vs reference [governor],"worst drawdown difference, pipeline - reference band50 (points)",0.3837,
+pipeline vs reference [governor],reference band_gov50 CAGR / worst drawdown,0.1131,"worst drawdown -0.2631 (2000-03-27 -> 2000-10-06), worst day -0.0779 on 2000-04-14"
+pipeline vs reference [governor],"CAGR difference, pipeline - reference band_gov50 (points)",-0.5977,
+pipeline vs reference [governor],"worst drawdown difference, pipeline - reference band_gov50 (points)",0.5395,
+pipeline vs pipeline,"CAGR difference, governor - no governor (points)",-0.1024,
+pipeline vs pipeline,"NAV at the end, no governor (IRA)",4822387.0545,2026-09-28
+pipeline vs pipeline,"NAV at the end, with the governor (IRA)",4646521.8562,2026-09-28
+calendar years,years compared with track 38 (50% blend),41.0,
+calendar years,"mean difference, pipeline (no governor) - track 38 (points)",-0.4876,
+calendar years,largest |difference| (points),13.362,1996
+calendar years,years with the same sign,40.0,
+calendar years,"mean difference, reference blend50 - track 38 (points)",-0.4729,largest 3.2 in 2020
+calendar years,years the governor changed the return by 1 point or more,7.0,"1998: -1.5, 1999: -1.3, 2000: +2.4, 2003: -3.8, 2004: +1.2, 2010: -1.0, 2012: -1.5"
+"episodes (no governor vs track 38, tolerance 3 points)",Aug 25 - Dec 31 1987,-0.1,"track 38 -12.7%; reference blend50 -12.7%, band50 -12.7%, band + governor -12.7%; with the governor -10.0%; SPY -25.0%"
+"episodes (no governor vs track 38, tolerance 3 points)",Aug 25 - Dec 31 1987: difference (points),2.7009,
+"episodes (no governor vs track 38, tolerance 3 points)",Mar 2000 - Oct 2002,-0.2494,"track 38 -28.0%; reference blend50 -28.0%, band50 -23.2%, band + governor -23.6%; with the governor -22.4%; SPY -47.2%"
+"episodes (no governor vs track 38, tolerance 3 points)",Mar 2000 - Oct 2002: difference (points),3.0522,
+"episodes (no governor vs track 38, tolerance 3 points)",Oct 2007 - Mar 2009,-0.0916,"track 38 -8.8%; reference blend50 -10.7%, band50 -16.6%, band + governor -16.6%; with the governor -9.2%; SPY -54.8%"
+"episodes (no governor vs track 38, tolerance 3 points)",Oct 2007 - Mar 2009: difference (points),-0.324,
+"episodes (no governor vs track 38, tolerance 3 points)",Feb 19 - Mar 23 2020,-0.1451,"track 38 -16.7%; reference blend50 -18.7%, band50 -18.7%, band + governor -18.7%; with the governor -14.5%; SPY -33.4%"
+"episodes (no governor vs track 38, tolerance 3 points)",Feb 19 - Mar 23 2020: difference (points),2.1604,
+"episodes (no governor vs track 38, tolerance 3 points)",Jan - Oct 2022,-0.092,"track 38 -11.7%; reference blend50 -11.9%, band50 -10.1%, band + governor -10.1%; with the governor -9.2%; SPY -24.1%"
+"episodes (no governor vs track 38, tolerance 3 points)",Jan - Oct 2022: difference (points),2.4558,
+"episodes (no governor vs track 38, tolerance 3 points)",Feb 19 - Apr 8 2025,-0.0857,"track 38 -9.0%; reference blend50 -9.0%, band50 -10.4%, band + governor -10.4%; with the governor -8.6%; SPY -18.6%"
+"episodes (no governor vs track 38, tolerance 3 points)",Feb 19 - Apr 8 2025: difference (points),0.4214,
+orders [no governor],Sundays,2101.0,
+orders [no governor],Sundays with orders,217.0,5.4 a year
+orders [no governor],max orders in one email,3.0,must be <= 3
+orders [no governor],orders sent in all,363.0,
+orders [no governor],Sundays with a deferred order,0.0,
+orders [governor],Sundays,2101.0,
+orders [governor],Sundays with orders,216.0,5.4 a year
+orders [governor],max orders in one email,3.0,must be <= 3
+orders [governor],orders sent in all,368.0,
+orders [governor],Sundays with a deferred order,6.0,
+G1 switches: SSO,"switches a year, pipeline (no governor; Rule E exits included)",2.1867,track 26: about 1.1 a year per leg with the band
+G1 switches: SSO,"switches a year, pipeline (governor)",2.1867,
+G1 switches: SSO,"switches a year, the 2% band rule on the same data",1.0933,
+G1 switches: SSO,"switches a year, the band-free rule on the same data",3.28,track 31/38's simulation: about 3
+G1 switches: SSO,events matched to the band rule within a week / extra / missed,37.0,"extra 51, missed 7"
+G1 switches: SSO,events matched to the band-free rule within a week / extra / missed,66.0,"extra 22, missed 66"
+G1 switches: SSO,weeks in (fraction),0.7168,
+G1 switches: SSO,Sundays with no signal,0.0,
+G1 switches: QLD,"switches a year, pipeline (no governor; Rule E exits included)",2.634,track 26: about 1.1 a year per leg with the band
+G1 switches: QLD,"switches a year, pipeline (governor)",2.634,
+G1 switches: QLD,"switches a year, the 2% band rule on the same data",1.64,
+G1 switches: QLD,"switches a year, the band-free rule on the same data",3.0315,track 31/38's simulation: about 3
+G1 switches: QLD,events matched to the band rule within a week / extra / missed,60.0,"extra 46, missed 6"
+G1 switches: QLD,events matched to the band-free rule within a week / extra / missed,81.0,"extra 25, missed 41"
+G1 switches: QLD,weeks in (fraction),0.7227,
+G1 switches: QLD,Sundays with no signal,2.0,
+Rule E [no governor],exits (legs sold mid-week),103.0,2.56 a year
+Rule E [no governor],triggers capped (weekly or annual cap: Sunday decided),46.0,
+Rule E [no governor],"exits scored against 'waiting for Sunday' (edge, % of the leg)",103.0,"mean -0.26%, median -0.26%, positive 49 (Rule E sold higher), worst -13.62%, best +16.88%"
+Rule E [no governor],exits of QLD,53.0,
+Rule E [no governor],exits of SSO,50.0,
+Rule E [governor],exits (legs sold mid-week),103.0,2.56 a year
+Rule E [governor],triggers capped (weekly or annual cap: Sunday decided),46.0,
+Rule E [governor],"exits scored against 'waiting for Sunday' (edge, % of the leg)",103.0,"mean -0.26%, median -0.26%, positive 49 (Rule E sold higher), worst -13.62%, best +16.88%"
+Rule E [governor],exits of QLD,53.0,
+Rule E [governor],exits of SSO,50.0,
+governor,hard stop fired,0.0,
+governor,Sundays paused after the hard stop,0.0,"a restart needs the owner's review: governor.restart(state.growth, nav, date) starts the peak again at that NAV"
+governor,Sundays with G < 1,230.0,of 2101
+governor,Sundays at the floor (G = 0.25),0.0,
+governor,lowest G,0.6644,2000-10-08
+governor,deepest drawdown seen (IRA + taxable at Friday's close),0.2395,2000-10-08
+governor,Sundays with a governor cut,1.0,2000-07-30
+governor,Sundays with a governor restore,5.0,"2000-04-16, 2000-07-16, 2003-05-11, 2003-06-08, 2010-10-31"
+governor through 1987 (1987-08-25 -> 1987-12-31),lowest G,1.0,on 1987-08-30
+governor through 1987 (1987-08-25 -> 1987-12-31),deepest Friday drawdown (IRA + taxable),0.0948,on 1987-10-18
+governor through 1987 (1987-08-25 -> 1987-12-31),Sundays with G < 1,0.0,first none; at the floor 0
+governor through 1987 (1987-08-25 -> 1987-12-31),governor cuts / restores (Sundays with such orders),0.0,restores 0; cuts on 
+governor through 1987 (1987-08-25 -> 1987-12-31),hard stop fired,0.0,
+governor through 1987 (1987-08-25 -> 1987-12-31),"IRA return over the window, no governor",-0.1,
+governor through 1987 (1987-08-25 -> 1987-12-31),"IRA return over the window, with the governor",-0.1,
+governor through 1987 (1987-08-25 -> 1987-12-31),IRA with vs without the governor at the window's end,0.0,
+governor through 2000-02 (2000-03-24 -> 2002-10-09),lowest G,0.6644,on 2000-10-08
+governor through 2000-02 (2000-03-24 -> 2002-10-09),deepest Friday drawdown (IRA + taxable),0.2395,on 2000-10-08
+governor through 2000-02 (2000-03-24 -> 2002-10-09),Sundays with G < 1,128.0,first 2000-04-16; at the floor 0
+governor through 2000-02 (2000-03-24 -> 2002-10-09),governor cuts / restores (Sundays with such orders),1.0,restores 2; cuts on 2000-07-30
+governor through 2000-02 (2000-03-24 -> 2002-10-09),hard stop fired,0.0,
+governor through 2000-02 (2000-03-24 -> 2002-10-09),"IRA return over the window, no governor",-0.2494,
+governor through 2000-02 (2000-03-24 -> 2002-10-09),"IRA return over the window, with the governor",-0.2241,
+governor through 2000-02 (2000-03-24 -> 2002-10-09),IRA with vs without the governor at the window's end,0.0156,
+governor through 2007-09 (2007-10-09 -> 2009-03-09),lowest G,1.0,on 2007-10-14
+governor through 2007-09 (2007-10-09 -> 2009-03-09),deepest Friday drawdown (IRA + taxable),0.0933,on 2008-08-24
+governor through 2007-09 (2007-10-09 -> 2009-03-09),Sundays with G < 1,0.0,first none; at the floor 0
+governor through 2007-09 (2007-10-09 -> 2009-03-09),governor cuts / restores (Sundays with such orders),0.0,restores 0; cuts on 
+governor through 2007-09 (2007-10-09 -> 2009-03-09),hard stop fired,0.0,
+governor through 2007-09 (2007-10-09 -> 2009-03-09),"IRA return over the window, no governor",-0.0916,
+governor through 2007-09 (2007-10-09 -> 2009-03-09),"IRA return over the window, with the governor",-0.0916,
+governor through 2007-09 (2007-10-09 -> 2009-03-09),IRA with vs without the governor at the window's end,-0.0028,
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] 1987-10-18: SSO Friday close vs its 200-day average,-0.0538,state after the decision: out; signal True
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] 1987-10-18: QLD Friday close vs its 200-day average,-0.0288,state after the decision: out; signal True
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] 1987-10-18: orders in the email,2.0,sell_all:QLD:19307;buy:SGOV:40201
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] 1987-10-18: the email,,"[PAPER][GROWTH G-1987-10-18] week 42: 2 orders — Step 1 tonight, Step 2 Mon 19 Oct from 9:35 ET (emails/0088_weekly_1987-10-18_GROWTH.txt)"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] Rule E in the week of 12-16 October 1987,2.0,1987-10-15 exit SSO (-0.17% vs the average); 1987-10-16 capped QLD (-2.88% vs the average) [the weekly cap]
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] the IRA on Black Monday (1987-10-19 close vs 1987-10-16 close),0.0005,"$91,825 -> $91,872"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] fills at Monday 1987-10-19's open,2.0,"sell QLD $19,302 at 0.2124 (open 0.2125); buy SGOV $40,201 at 1.0000 (open 1.0000)"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[no governor] the next Sunday (1987-10-25): G / drawdown,1.0,"drawdown 0.0938, peak $125,215, orders "
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] 1987-10-18: SSO Friday close vs its 200-day average,-0.0538,state after the decision: out; signal True
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] 1987-10-18: QLD Friday close vs its 200-day average,-0.0288,state after the decision: out; signal True
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] 1987-10-18: orders in the email,2.0,sell_all:QLD:19307;buy:SGOV:40201
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] 1987-10-18: the email,,"[PAPER][GROWTH G-1987-10-18] week 42: 2 orders — Step 1 tonight, Step 2 Mon 19 Oct from 9:35 ET (emails/0088_weekly_1987-10-18_GROWTH.txt)"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] Rule E in the week of 12-16 October 1987,2.0,1987-10-15 exit SSO (-0.17% vs the average); 1987-10-16 capped QLD (-2.88% vs the average) [the weekly cap]
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] the IRA on Black Monday (1987-10-19 close vs 1987-10-16 close),0.0005,"$91,825 -> $91,872"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] fills at Monday 1987-10-19's open,2.0,"sell QLD $19,302 at 0.2124 (open 0.2125); buy SGOV $40,201 at 1.0000 (open 1.0000)"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",[governor] the next Sunday (1987-10-25): G / drawdown,1.0,"drawdown 0.0938, peak $125,215, orders "
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",index moves on 1987-10-19,,"SSO's index -20.47%, QLD's index -15.08%"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",hypothetical: both legs in at 25% each and filled at Monday's close (no exit before it): IRA loss,-0.1777,"2 x the index moves at the target weights; track 38's shock_1987.csv: -29.5% for the full book (2x 50% + BTC 30% + gems 15%), G 0.456 after"
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)","hypothetical: the governor's drawdown after such a Monday (IRA + taxable, on the 1987-10-16 peak)",0.2251,G would be 0.718; the drawdown on Friday 16 October was 0.0948 (G 1.00)
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",track 38 shock_1987: 2x 50% + BTC 30% + gems 15%,-0.295,G after 0.456
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",track 38 shock_1987: 2x 80% + BTC 20%,-0.378,G after 0.250
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",track 38 shock_1987: 3x 50% + BTC 20% + gems 15%,-0.3725,G after 0.250
+"1987 (the Sunday 1987-10-18 email, Black Monday, the next Sunday's G)",track 38 shock_1987: SPY,-0.205,G after 0.794
+look-ahead,window,,"1987-06-01 -> 1987-12-31 (book g1-only, governor True)"
+look-ahead,identical decisions with and without the as-of cut,1.0,282 vs 282 decision records; first difference None
+look-ahead,provider calls that returned future rows without the cut,1150.0,
+look-ahead,Sundays in the window,30.0,

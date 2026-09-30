@@ -235,6 +235,20 @@ def test_resume_continues_after_the_last_run(cfg, history, tmp_path):
     assert all(r["status"] in ("ok", "no_session") for r in rows)
 
 
+def test_resume_after_a_month_end_still_runs_that_months_review(cfg, history, tmp_path):
+    """A segment ending on a month's last day: the next one must run the month's review (scheduled on the 1st with the
+    month-end as-of date), which the Phase C4b chunks skipped five times before this was fixed."""
+    provider, capture = R.AsOfProvider(history), R.CaptureServices()
+    R.replay(cfg, provider, tmp_path / "state", LAUNCH, "2025-09-30", capture, progress_every=0)
+    rows = R.replay(cfg, provider, tmp_path / "state", LAUNCH, "2025-10-03", capture, resume=True, progress_every=0)
+    assert [(r["kind"], r["date"]) for r in rows][:2] == [("monthly", "2025-09"), ("daily", "2025-10-01")]
+    assert rows[0]["status"] == "ok"
+    state = json.loads((tmp_path / "state" / "state.json").read_text())
+    assert state["runs"]["monthly:2025-09"]["status"] == "ok" and "monthly:2025-09" in state["runs"]
+    again = R.replay(cfg, provider, tmp_path / "state", LAUNCH, "2025-10-03", capture, resume=True, progress_every=0)
+    assert again == []                                                                 # nothing left to run
+
+
 # ------------------------------------------------------------------------------------------------------
 # the growth book (design v4 Appendix A.4 test 9): the Sunday run in the loop, no look-ahead, the new CSVs
 # ------------------------------------------------------------------------------------------------------
