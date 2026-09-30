@@ -147,6 +147,26 @@ def _w10(run: "Run", cfg: dict, st: dict, nav_ira: float, G: float, closes: dict
     return info, None
 
 
+def _pending_sells(run: "Run", acct: str, held: dict[str, float]) -> dict[str, dict[str, Any]]:
+    """The broker's queued sells of the book's tickers in the switching account, by ticker: a Rule E exit queued on
+    a Thursday or Friday night (it fills at Monday's open), or a Sunday sale the daily run has not filled yet. Each
+    is {"intent_id", "created_date", "reason", "close_all", "usd"}; a close-all sale wins over a partial one, and
+    partial sales of one ticker add up. The Sunday job treats them as done, so it never queues the same sale twice
+    (Phase C4b finding 1: live, the second "Sell all" would be a duplicate market order)."""
+    out: dict[str, dict[str, Any]] = {}
+    for o in run.broker.pending():
+        if o.side != "sell" or o.account != acct or o.ticker not in held or o.order_type != "market_on_open":
+            continue
+        entry = {"intent_id": o.intent_id, "created_date": o.created_date, "reason": o.reason,
+                 "close_all": bool(o.close_all), "usd": None if o.close_all else float(o.dollars or 0.0)}
+        cur = out.get(o.ticker)
+        if cur is None or (entry["close_all"] and not cur["close_all"]):
+            out[o.ticker] = entry
+        elif not entry["close_all"] and not cur["close_all"]:
+            cur["usd"] = float(cur["usd"] or 0.0) + float(entry["usd"] or 0.0)
+    return out
+
+
 def run(run: "Run") -> dict[str, Any]:
     """The Sunday growth job on `run` (kind "weekly"). Returns the facts record (also `state.growth.last_facts`)."""
     cfg = growth.cfg_growth(run.cfg)
@@ -200,8 +220,14 @@ def run(run: "Run") -> dict[str, Any]:
     held = {t: run.broker.holdings_value(acct, t, closes.get(t), module=modules[t]) for t in targets}
     held.update(g3_book["held"])
     cash = float(run.broker.cash(acct))
-    os = orders_mod.build_order_set(targets, held, cash, G=G, G_last_order=st.get("G_at_last_order"), cfg_growth=cfg,
-                                    paused=paused, w10=w10_buy, modules=modules,
+    # a sale the daily run already queued (a Rule E exit on a Thursday or Friday night fills at Monday's open) is
+    # done as far as the order set is concerned: the same sale is never queued twice (Phase C4b finding 1)
+    pending_sells = _pending_sells(run, acct, held)
+    held_after_pending = dict(held)
+    for t, p in pending_sells.items():
+        held_after_pending[t] = 0.0 if p["close_all"] else max(float(held.get(t) or 0.0) - float(p["usd"] or 0.0), 0.0)
+    os = orders_mod.build_order_set(targets, held_after_pending, cash, G=G, G_last_order=st.get("G_at_last_order"),
+                                    cfg_growth=cfg, paused=paused, w10=w10_buy, modules=modules,
                                     g3={"buys": g3_book["buys"], "sells": g3_book["sells"]})
     for d in os["dropped"]:
         run.note(f"W10 {d['ticker']} ${d['usd']:,.0f} dropped this week: {d.get('why')} (design v4 §3 W10)")
@@ -252,6 +278,7 @@ def run(run: "Run") -> dict[str, Any]:
     })
     gov_rec = run.log("governor", gov)
     order_rec = run.log("order_set", {"date": date, "targets": targets, "held": held, "cash": cash, "G": G,
+                                      "pending_sells": pending_sells, "held_after_pending": held_after_pending,
                                       "G_at_last_order": st.get("G_at_last_order"), "netting": {
                                           "sgov_sell_usd": os["sgov_sell_usd"], "sgov_buy_usd": os["sgov_buy_usd"]},
                                       "sent": sent, "deferred": os["deferred"], "skipped": os["skipped"],
@@ -290,6 +317,7 @@ def run(run: "Run") -> dict[str, Any]:
         st["weeks_with_orders"][year] = int(st["weeks_with_orders"].get(year, 0)) + 1
 
     # 7. the facts record (docs/phase-c/growth.md), then the Sunday email (design v4 §9)
+    rule_e_info = dict(rule_e_info, pending_sells=[{"ticker": t, **p} for t, p in pending_sells.items()])
     facts = _facts(run, cfg, st, date, friday, g1, g2, g1_in, g2_on, targets, held, os, sent, w10_info,
                    {"ira": nav_ira, "taxable": nav_taxable, "total": nav_total}, gov, sources,
                    {"growth_decision": decision["hash"], "governor": gov_rec["hash"], "order_set": order_rec["hash"]},

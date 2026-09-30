@@ -111,6 +111,10 @@ STATIC: dict[str, str] = {
     "summary_no_orders": "Nothing to place this week.",
     "why_none": "No sleeve changed its state this week.",
     "why_data": "<index>: no signal this week (<reason>), so <ticker> keeps its state.",
+    "rule_e_pending": "Rule E sold <ticker> on <when>: that sale fills at the next open, so this email carries no new "
+                      "order for it, and its shares still show in the account until then.",
+    "sale_pending": "A sale of <ticker> queued on <when> has not filled yet: it fills at the next open, so this email "
+                    "carries no new order for it.",
     "deferred_none": "Nothing is deferred.",
     "gems_none": "<rule>: no shadow trades closed yet.",
     "gems_passed": "<rule>: its promotion test passed; set status: live in the constitution to trade the reserve with it.",

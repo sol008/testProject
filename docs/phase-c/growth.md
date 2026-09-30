@@ -102,7 +102,8 @@ growth book and skips M3. `growth_weekly.run(run)`:
    `created_date` the Sunday, `close_all` for exits, `meta.max_cash_frac 0.90` on the risk-sleeve buys) and one
    `order` ledger record each; a rejected order (whitelist, account) is an `order` alert;
 5. the ledger: `growth_decision` (every signal with both sources, the states after, the NAV and closes), `governor`
-   (peak, drawdown, G, step), `order_set` (targets, holdings, netting, sent, deferred, skipped, dropped);
+   (peak, drawdown, G, step), `order_set` (targets, holdings, the pending sells and the holdings net of them, netting,
+   sent, deferred, skipped, dropped);
 6. the state (§6) and the facts record (§4) in `state.growth.last_facts`; `run.result.nav` is the total NAV.
 
 The fills happen in Monday's daily run (`_fill_pending`, the first session after the Sunday), sells before buys. The
@@ -301,9 +302,11 @@ email. No fill within two weeks: `event: unresolved` and a `fill` alert. Paused 
 | Step 2 "each at most 95% of its cash" | per order | one cash-rule line under the buys (95% during market hours, 90% queued) rather than a cash figure per order | the figure the owner needs is the rule; the paper broker enforces 90% |
 | A.4 group 8 (C1's whipsaw test) | — | `cfg_for(rule_e=False)` in that test only | it runs Mondays only; Rule E's Monday sell would fill at the next run, a week later, and the Sunday would sell again |
 
-**Known limits.** The Sunday job does not look at pending sells: if the daily run is down from a Rule E evening to
-Sunday, the Sunday order set sells the leg again and the second sell is cancelled with a `fill` alert (fail loud).
-The Rule E score compares one price with one price; the annual review reads `rule_e.scores` for the running value.
+**Known limits.** The Sunday job reads the broker's pending sells (`weekly._pending_sells`; Phase C4b finding 1): a
+sale the daily run queued (a Rule E exit on a Thursday or Friday night, which fills at Monday's open) counts as done
+when the order set is built, so the leg is never sold twice; the `order_set` record keeps `pending_sells` and
+`held_after_pending`, the facts keep `rule_e.pending_sells`, and the Sunday email's Rule E lines say the sale is
+pending (`rule_e_pending` / `sale_pending` in `email_text/growth.py`). The Rule E score compares one price with one price; the annual review reads `rule_e.scores` for the running value.
 The annual hurdle line reads the v4 `status` keys as lifecycle values, not labels, and names the growth book as a
 policy module (`reports.module_statuses`; settled at integration).
 

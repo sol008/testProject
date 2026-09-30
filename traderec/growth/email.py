@@ -590,7 +590,12 @@ class _GrowthEmail:
 
     def rule_e_lines(self) -> list[str]:
         out = []
-        for sc in (self.f.get("rule_e") or {}).get("scored") or []:
+        re_f = self.f.get("rule_e") or {}
+        for p in re_f.get("pending_sells") or []:          # a sale already queued: this email carries no order for it
+            key = "rule_e_pending" if str(p.get("reason") or "") == "rule_e" else "sale_pending"
+            out.append(_lit(text.STATIC[key], {"ticker": str(p.get("ticker") or ""),
+                                               "when": self.date_(p.get("created_date") or self.date)}))
+        for sc in re_f.get("scored") or []:
             phrase = self.phrase(f"re_{sc.get('ticker')}")
             if phrase:
                 out.append(phrase + " (positive: Rule E sold higher).")

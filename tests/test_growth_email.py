@@ -407,6 +407,60 @@ def test_rule_e_fires_on_a_weekday_close_below_the_sma_exit_only_once_a_week_and
     assert not [a for a in state_of(state_dir)["alerts"] if a["kind"] in ("fill", "order", "validator")]
 
 
+def test_a_friday_rule_e_exit_is_not_sold_again_by_the_sunday_job(tmp_path):
+    """Phase C4b finding 1: a Rule E sale queued on Friday night fills at Monday's open, so on Sunday the lot is still
+    there; the Sunday job must not queue a second "Sell all" (live, a duplicate market sell) and its email says the
+    sale is pending. Monday fills exactly one sale per leg; the next Sunday scores both."""
+    cfg = cfg_with_issues()
+    state_dir = tmp_path / "state"
+    pipeline.run_init(cfg, state_dir, created=LAUNCH)
+    provider = GrowthProvider(**crash_market("2026-10-02"))           # the drop lands on Friday 2 October
+    rec = IssueRecorder()
+    invested(cfg, provider, state_dir, rec)
+    for d in ("2026-09-30", "2026-10-01"):
+        assert daily(cfg, provider, state_dir, d, rec).emails == []
+    day = daily(cfg, provider, state_dir, "2026-10-02", rec)
+    assert [e["kind"] for e in day.emails] == ["RULE_E"]
+    st = state_of(state_dir)
+    assert [(o["ticker"], o["created_date"]) for o in st["broker"]["pending"]] == [("SSO", "2026-10-02"), ("QLD", "2026-10-02")]
+    # Sunday: the legs are out and their sales are queued: no second sell; the idle cash goes to SGOV as usual
+    res = pipeline.run_weekly(cfg, provider, state_dir, date="2026-10-04", services=rec.services())
+    assert res.status == "ok", res.summary()
+    facts = growth_state(state_dir)["last_facts"]
+    assert [(o["action"], o["ticker"]) for o in facts["orders"]["step1"]] == []
+    assert [(o["action"], o["ticker"]) for o in facts["orders"]["step2"]] == [("buy", "SGOV")]
+    assert not [o for o in facts["orders"]["deferred"] if o["ticker"] in ("SSO", "QLD")]
+    assert [(p["ticker"], p["created_date"], p["reason"], p["close_all"]) for p in facts["rule_e"]["pending_sells"]] == [
+        ("SSO", "2026-10-02", "rule_e", True), ("QLD", "2026-10-02", "rule_e", True)]
+    order_set = records(state_dir, "order_set")[-1]["payload"]
+    assert set(order_set["pending_sells"]) == {"SSO", "QLD"} and order_set["held_after_pending"]["SSO"] == 0.0
+    assert order_set["held"]["SSO"] > 0.0                             # the lot is still there at Friday's close
+    sunday = rec.sent[-1]
+    assert validate(sunday) == []
+    text = flat(sunday.text)
+    assert ("Rule E sold SSO on Fri 2 Oct: that sale fills at the next open, so this email carries no new order for it"
+            in text)
+    assert "Rule E sold QLD on Fri 2 Oct" in text
+    st = state_of(state_dir)
+    assert [(o["ticker"], o["created_date"]) for o in st["broker"]["pending"]] == [
+        ("SSO", "2026-10-02"), ("QLD", "2026-10-02"), ("SGOV", "2026-10-04")]
+    # Monday: exactly one sale per leg fills, nothing is cancelled, no alert
+    day = daily(cfg, provider, state_dir, "2026-10-05", rec)
+    assert [(f["ticker"], f["side"]) for f in day.fills][:2] == [("SSO", "sell"), ("QLD", "sell")]
+    assert sum(1 for f in day.fills if f["ticker"] in ("SSO", "QLD")) == 2
+    st = state_of(state_dir)
+    assert st["broker"]["cancelled"] == [] and st["broker"]["pending"] == []
+    lots = {k.split("|")[1] for k in st["broker"]["lots"]}
+    assert "IBIT" in lots and not lots & {"SSO", "QLD"}
+    assert not [a for a in st["alerts"] if a["kind"] in ("fill", "order", "validator")]
+    # the next Sunday scores both exits against waiting for Sunday
+    res = pipeline.run_weekly(cfg, provider, state_dir, date="2026-10-11", services=rec.services())
+    assert res.status == "ok", res.summary()
+    scored = growth_state(state_dir)["last_facts"]["rule_e"]["scored"]
+    assert [(s["ticker"], s["exit_date"]) for s in scored] == [("SSO", "2026-10-05"), ("QLD", "2026-10-05")]
+    assert growth_state(state_dir)["last_facts"]["rule_e"]["pending_sells"] == []
+
+
 def test_rule_e_weekly_cap_a_second_leg_later_in_the_week_waits_for_sunday(tmp_path):
     cfg = cfg_for()
     state_dir = tmp_path / "state"

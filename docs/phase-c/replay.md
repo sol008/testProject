@@ -566,7 +566,10 @@ In plain words:
    On paper the second order is cancelled at the open ("no position to sell": 23 times in 40 years, on 26 April 1992,
    4 October 1992, 25 April 1993, 16 April 2000, 6 January 2008, 1 March 2020 among others). Live it would be a second
    market sell of the whole position: rejected by the broker, or, after a partial first fill, a short sale in an
-   IRA. The fix is a check of the broker's pending sells in `weekly.run`, as Rule E's own `_triggers` does.
+   IRA. **Fixed at integration:** `weekly.run` now reads the broker's pending sells, treats a queued sale as done when
+   it builds the order set (a close-all sale zeroes the holding, a partial one reduces it), records them in the
+   `order_set` record (`pending_sells`, `held_after_pending`) and the facts (`rule_e.pending_sells`), and the Sunday
+   email says the sale is pending (`tests/test_growth_email.py`, the Friday Rule E test).
 2. **The G-step rule sends tiny resizes.** When G moved 0.10 or more since the last order, any delta above the $300
    minimum is an order: six orders under $1,000 in 40 years (a $431 QLD sell on 1 November 1998, $534 on 23 April
    2000). Cosmetic.
@@ -644,8 +647,6 @@ the end): budget most of a day for the two full runs, or run them in parallel.
 
 ## What remains
 
-- **The doubled Friday Rule E exit** (Phase C4b finding 1) needs a pending-sells check in the Sunday job before the
-  book goes live: on paper it is a cancelled order, live it is a second market sell.
 - **Crash-day opens.** The 1986 replay fills at Yahoo's index open, which is the prior close on 19 October 1987 and
   on most sessions before 2000; a real market order that morning filled far lower. The record states both the fill
   and the close-filled hypothetical (−17.8% of the IRA, G 0.72); intraday index data, or SPY's own opens from 1993,
