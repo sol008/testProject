@@ -22,6 +22,7 @@ G.Input = (() => {
   let gpPrev = {};
 
   window.addEventListener('keydown', (e) => {
+    if (e.metaKey && e.code !== 'MetaLeft') return; // ⌘-shortcuts (e.g. ⌘F fullscreen) are not game input
     const a = KEYMAP[e.code];
     if (a) {
       e.preventDefault();
