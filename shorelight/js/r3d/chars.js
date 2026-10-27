@@ -2660,11 +2660,11 @@ G.Char3D = (() => {
       }
     }
     if (fc.glasses) {
-      const gr = C._internal.clothRect(B, 'glasses', 0.03, 0.03, '#3a2a1a', { folds: false });
+      const gr = C._internal.clothRect(B, 'glasses', 0.03, 0.03, '#a8884a', { folds: false });
       for (const sg of [-1, 1]) {
-        const c0 = headPt(B, sg * 0.36, acos(clamp(F.eyeY, -1, 1)), 0.012 * s);
-        const pts = []; for (let i = 0; i <= 16; i++) { const a2 = i / 16 * TAU; pts.push(vadd(c0, [cos(a2) * 0.016 * s, sin(a2) * 0.014 * s, 0])); }
-        tube(B.G, pts, 4, gr, () => ({ rx: 0.0016 * s }), () => W, { nv: 16, up: [0, 0, 1] });
+        const c0 = headPt(B, sg * F.eyeX * 0.95, acos(clamp(F.eyeY, -1, 1)), 0.014 * s);
+        const pts = []; for (let i = 0; i <= 16; i++) { const a2 = i / 16 * TAU; pts.push(vadd(c0, [cos(a2) * 0.0135 * s, sin(a2) * 0.012 * s, 0])); }
+        tube(B.G, pts, 3, gr, () => ({ rx: 0.0009 * s }), () => W, { nv: 16, up: [0, 0, 1] });
       }
     }
     if (fc.mask === 'ghost' || fc.mask === 'facecloth') {
@@ -2882,10 +2882,11 @@ G.Char3D = (() => {
         hangLantern(B, bone, K.T([0, -0.15, g1 + 0.12]), look.lantern || { mat: 'paperBlue', cage: 'lacq', r: 0.075, h: 0.17, light: '#8cf3ff', cord: 0.05, tasselMat: 'tassel' });
         break;
       }
-      case 'cane': {
-        const L = 0.92 * s;
-        K.path([[0, 0, -0.06], [0, 0.02, -0.02], [0, 0.01, 0.04], [0, -0.03, 0.06]], 0.013, 'wood', 6);
-        K.cyl([0, -0.02, -0.055], [0, -L, -0.03], 0.013, 0.011, 'wood', 6);
+      case 'cane': { // shaft along the grip axis (+Z, pointing at the ground when held), crook over the fist
+        const L = 0.84 * s;
+        K.cyl([0, 0, -0.03], [0, 0, L], 0.012, 0.01, 'wood', 6);
+        K.path([[0, 0, -0.03], [0, 0, -0.07], [0.0, 0.05, -0.08], [0, 0.07, -0.04]], 0.012, 'wood', 6);
+        K.ball([0, 0, L], 0.012, 'dark');
         break;
       }
       case 'lantern': case 'oillamp': hangLantern(B, bone, o, look.lantern || (item === 'oillamp' ? { kind: 'oil', mat: 'lantern', r: 0.05, h: 0.12, light: '#ffcf8a' } : { mat: 'lantern', r: 0.07 * (P.kid ? 0.8 : 1), h: 0.15 * (P.kid ? 0.8 : 1), light: '#ffb060' })); break;
@@ -2927,7 +2928,11 @@ G.Char3D = (() => {
       }
       case 'book': K.box([0, 0, 0.05], 0.012, 0.08, 0.06, 'paper'); K.box([0.013, 0, 0.05], 0.003, 0.082, 0.062, 'blue'); break;
       case 'abacus': K.box([0, 0.02, 0.05], 0.014, 0.06, 0.12, 'wood'); for (let k = 0; k < 6; k++) K.ball([0.016, 0.02 + (k % 2) * 0.02 - 0.01, k * 0.035 - 0.04], 0.008, 'dark', 1, 1, 1, 4); break;
-      case 'tray': K.lathe((v) => [0.14 * (1 - v * 0.02), 0.02 + v * 0.012], 'red', 14, 2); K.lathe((v) => [0.14 * (1 - v), 0.02], 'red', 14, 2, { flip: true }); K.ball([0.04, 0.05, 0.02], 0.025, 'white', 1, 0.8, 1); break;
+      case 'tray': { // held flat on the palm (the hold pose turns hand +Z to world up)
+        const KT = kit(B, bone, vadd(o, [0, 0, 0]), [1, 0, 0], [0, 0, 1], [0, -1, 0]);
+        KT.lathe((v) => [0.14 * (1 - v * 0.02), 0.02 + v * 0.012], 'red', 14, 2); KT.lathe((v) => [0.14 * (1 - v), 0.02], 'red', 14, 2, { flip: true });
+        KT.ball([0.04, 0.05, 0.02], 0.025, 'white', 1, 0.8, 1); KT.ball([-0.05, 0.045, -0.03], 0.02, 'celadon', 1, 0.8, 1); break;
+      }
       case 'pipe': K.cyl([0, 0, -0.05], [0, 0, 0.35], 0.006, 0.006, 'bamboo', 5); K.ball([0, 0.012, 0.35], 0.014, 'bronze', 1, 1.2, 1); K.ball([0, 0, -0.055], 0.008, 'jade'); break;
       case 'incense': for (let k = -1; k <= 1; k++) { K.cyl([k * 0.008, 0, -0.04], [k * 0.008, 0, 0.26], 0.003, 0.002, 'red', 4); K.ball([k * 0.008, 0, 0.262], 0.004, 'ember', 1, 1, 1, 4); } break;
       case 'yueqin': K.lathe((v) => [0.14 * (1 - v * v * 0), (v - 0.5) * 0.04], 'wood', 18, 2); K.cyl([0, 0, 0.12], [0, 0, 0.42], 0.016, 0.014, 'dark', 6); K.box([0, 0.022, 0], 0.05, 0.004, 0.05, 'dark'); break;
@@ -3383,7 +3388,9 @@ G.Char3D = (() => {
         // held props constrain the arm that carries them
         const holds = S === 'R' ? hold : ctx.holdL || 'none';
         if (holds === 'pole') { ua = [-14 + fwd * 0.12, sg * -6, sg * 4]; fa = [-62, sg * -18, 0]; ha = [-18, 0, -sg * 6]; }
-        else if (holds === 'cane') { ua = [-10 + fwd * 0.25, 0, sg * 6]; fa = [-28, 0, 0]; ha = [-6, 0, 0]; }
+        else if (holds === 'cane') { ua = [-10 + fwd * 0.25, 0, sg * 6]; fa = [-28, 0, 0]; ha = [-6, 0, 0];
+          const cz = 0.17 + 0.12 * Math.sin(TAU * (p + 0.25)), cy = 0.83 + 0.03 * Math.max(0, Math.cos(TAU * (p + 0.25)));
+          pose.hR = [-0.22, cy, cz]; pose.hRd = [0.03, -1, 0.06 - 0.25 * Math.sin(TAU * (p + 0.25))]; pose.hRm = 'on'; }
         else if (holds === 'hang') { ua = [fwd * 0.35 - 8, 0, sg * 10]; fa = [-26 - 6 * max(0, sw), 0, 0]; ha = [10, 0, 0]; }
         else if (holds === 'front') { ua = [-16 + fwd * 0.1, sg * -6, sg * 6]; fa = [-88, sg * -26, 0]; ha = [-8, 0, -sg * 4]; }
         else if (holds === 'shoulder') { ua = [-38, sg * -18, sg * 16]; fa = [-118, sg * -10, 0]; ha = [-20, 0, 0]; }
@@ -3419,7 +3426,7 @@ G.Char3D = (() => {
   function holdArmKeys(hold) {
     switch (hold) {
       case 'pole': return { uaR: [-12, 6, -6], faR: [-64, -16, 0], haR: [-16, 0, 6] };
-      case 'cane': return { uaR: [-14, 0, -8], faR: [-24, 0, 0], haR: [-8, 0, 0] };
+      case 'cane': return { uaR: [-14, 0, -8], faR: [-24, 0, 0], haR: [-8, 0, 0], hR: [-0.22, 0.83, 0.17], hRd: [0.03, -1, 0.06], hRm: 'on' };
       case 'hang': return { uaR: [-6, 0, -10], faR: [-24, 0, 0], haR: [10, 0, 0] };
       case 'front': return { uaR: [-14, 6, -6], faR: [-86, -24, 0], haR: [-8, 0, 4] };
       case 'shoulder': return { uaR: [-38, 18, -16], faR: [-118, 10, 0], haR: [-20, 0, 0] };
@@ -3431,6 +3438,7 @@ G.Char3D = (() => {
     if (!hk) return keys;
     return keys.map((k) => {
       const o = Object.assign({}, k);
+      if (k.t === 0) for (const kk of ['hR', 'hRd', 'hRm']) if (hk[kk] != null) o[kk] = hk[kk];
       if ('ua' in o || 'uaR' in o || k.t === 0) { const ua = o.ua; if (ua) { o.uaL = ua; delete o.ua; } o.uaR = hk.uaR; }
       if ('fa' in o || 'faR' in o || k.t === 0) { const fa = o.fa; if (fa) { o.faL = fa; delete o.fa; } o.faR = hk.faR; }
       if ('ha' in o || 'haR' in o || k.t === 0) { const ha = o.ha; if (ha) { o.haL = ha; delete o.ha; } o.haR = hk.haR; }
