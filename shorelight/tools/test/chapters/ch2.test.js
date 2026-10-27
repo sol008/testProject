@@ -44,7 +44,7 @@ async function session(browser, query) {
   const page = await ctx.newPage();
   const errors = [];
   // the WebGL presentation layer is still in development: drive the 2D renderer (the game logic is identical)
-  await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
+  await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh', quality: 'low' })); } catch (e) { /* ignore */ } });
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch2.test.js */' }));
   page.on('console', (m) => {
     const t = m.text();
@@ -58,8 +58,16 @@ async function session(browser, query) {
   const s = {
     page, errors,
     ev: (fn, arg) => page.evaluate(fn, arg),
-    async idle(ms = 120000) {
-      const ok = await page.evaluate((t) => G.Debug.idle(t), ms);
+    async idle(ms = 300000) {
+      // stable idle: auto events start on the frame after a script ends, so require ~0.5 s of continuous idleness
+      const ok = await page.evaluate((t) => new Promise((res) => {
+        const t0 = Date.now(); let since = 0;
+        const iv = setInterval(() => {
+          const idle = !G.Script.busy() && G.Scenes.top() === G.mapScene && G.Render.fade.a < 0.05;
+          since = idle ? since || Date.now() : 0;
+          if ((since && Date.now() - since > 500) || Date.now() - t0 > t) { clearInterval(iv); res(!!since); }
+        }, 50);
+      }), ms);
       assert(ok, 'timed out waiting for the map to become idle; map=' + (await page.evaluate(() => G.mapScene && G.mapScene.def.id)) + ' stack = ' + JSON.stringify(await page.evaluate(() => G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'))));
     },
     async onMap(id, ms = 60000) {

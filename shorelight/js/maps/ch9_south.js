@@ -161,7 +161,7 @@
   });
   defE('c9_greed_big', {
     name: '大肚貪鬼', art: 'greed_ghost', variant: 1, scale: 1.6, lv: 31, elem: 'earth', weak: ['wood'], resist: ['earth', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8, atk: 2.0, mag: 1.7, def: 1.15, spd: 1.0, luk: 2, exp: 5, gold: 8 },
+    m: { hp: 7, atk: 1.9, mag: 1.7, def: 1.15, spd: 1.0, luk: 2, exp: 5, gold: 8 },
     skills: [['c9_es_devour', 2], ['c9_es_belly', 3], ['e_greed_grab', 3], ['c9_es_gorge', 1, 'hp<60']],
     drops: [['c9_mat_banpingshi', 1]],
     desc: '白拿了幾百年的貪鬼，肚子裡隱約有半座山的輪廓。從來沒有吃飽過。',
@@ -423,7 +423,7 @@
   }
 
   // ---- story party setup ------------------------------------------------------------------------------
-  // Chapter 9 party: 星河・紅纓・雲歸 (+糰子). When started standalone (debug), give them the gear they
+  // Chapter 9 party: 星河・紅纓・雲歸 (+ the silent cats 芋圓 / 麻糬 as followers). When started standalone (debug), give them the gear they
   // would have collected by the end of chapter 8.
   function prepareParty() {
     for (const id of ['xinghe', 'hongying', 'yungui']) {
@@ -448,6 +448,7 @@
         for (const slot of ['weapon', 'armor', 'head', 'feet']) { const it = best(id, slot); if (it) m.equip[slot] = it; }
         const st2 = G.Party.stats(id); m.hp = st2.mhp; m.mp = st2.mmp;
       }
+      G.state.flags.yuyuan_joined = true; G.state.flags.mochi_joined = true;
       if (!G.Inv.has('key_jianpu')) G.Inv.add('key_jianpu', 1);
       if (!G.Inv.has('key_oar')) G.Inv.add('key_oar', 1);
       for (const [iid, n] of [['shimuyu', 3], ['xumingsan', 5], ['huanhunxiang', 3], ['xiancao', 3]]) if (G.Inv.count(iid) < n) G.Inv.add(iid, n - G.Inv.count(iid));
@@ -841,7 +842,8 @@
       ] },
       { id: 'qh_kid', sprite: 'child_m', name: '阿全', x: 26, y: 18, dir: 'left', wander: 2, if: (s) => !qhNight(s), talk: async (S) => {
         await S.say('阿全', '你的貓好胖！牠會游泳嗎？');
-        await S.say('tuanzi:angry', '本大爺是石虎！石虎不游泳，石虎坐船！');
+        S.emote('yuyuan', '💢');
+        await S.say('', '芋圓瞇起眼睛，一臉「你再說一次」。');
         await S.say('阿全', '阿嬤說晚上不能在海邊叫人家名字，會被聽到。');
       } },
       { id: 'qh_xiu', sprite: 'child_f', name: '阿秀', x: 15, y: 25, dir: 'down', if: (s) => !!s.flags.ch9_qihou_night_done && !s.flags.ch9_banping_reward, talk: async (S) => {
@@ -945,13 +947,14 @@
   async function qihouTemple(S) {
     S.bgm('temple');
     S.hideFollowers(false);
-    S.setPos('player', 7, 8, 'up'); S.setPos('hongying', 6, 8, 'up'); S.setPos('yungui', 9, 8, 'up'); S.setPos('tuanzi', 8, 9, 'up'); S.setPos('chenbo', 8, 8, 'up');
+    S.setPos('player', 7, 8, 'up'); S.setPos('hongying', 6, 8, 'up'); S.setPos('yungui', 9, 8, 'up'); S.setPos('yuyuan', 8, 9, 'up'); S.setPos('mochi', 7, 9, 'up'); S.setPos('chenbo', 8, 8, 'up');
     await S.say('', '廟內香煙繚繞。一個老廟公正在擦拭供桌。');
     await S.say('阿標伯', '外地來的吼？先拜拜，媽祖婆會保佑你們平安。');
     S.sfx('bell');
-    await S.say('', '眾人上香，合掌。糰子也學著合起兩隻前掌——結果往前一倒。');
-    await S.jump('tuanzi', 12);
-    await S.say('tuanzi:surprise', '喵！');
+    await S.say('', '眾人上香，合掌。芋圓學著廟口的石獅子，端端正正坐好——結果往前一倒。');
+    await S.jump('yuyuan', 12);
+    S.emote('yuyuan', '💧');
+    await S.say('', '麻糬靜靜地望著神龕上的燭火，尾巴輕輕一擺。');
     await S.say('阿標伯', '哈哈，這隻貓仔有禮貌。');
     S.face('chenbo', 'qh_keeper');
     await S.say('chenbo:normal', '阿標，好久不見。');
@@ -979,14 +982,15 @@
   async function nightBeach(S) {
     S.bgm('night');
     S.hideFollowers(false);
-    S.setPos('player', 6, 15, 'left'); S.setPos('hongying', 6, 14, 'left'); S.setPos('yungui', 7, 15, 'left'); S.setPos('tuanzi', 7, 16, 'left');
+    S.setPos('player', 6, 15, 'left'); S.setPos('hongying', 6, 14, 'left'); S.setPos('yungui', 7, 15, 'left'); S.setPos('yuyuan', 7, 16, 'left'); S.setPos('mochi', 8, 16, 'left');
     await S.camera(4, 15, 0.8);
     const ghosts = [[1, 13], [1, 15], [2, 17], [1, 18]];
     ghosts.forEach(([x, y], i) => S.spawn({ id: 'qh_drowned' + i, sprite: i % 2 ? 'ghost_f' : 'ghost_m', x, y, dir: 'right', ghost: true, light: { r: 90, color: '#6ab8ff' } }));
     await S.say('', '海面上，一點一點藍色的光像燈籠一樣，緩緩往岸上漂。浪退時，光變成一個個濕淋淋的人影。');
     for (let i = 0; i < ghosts.length; i++) S.move('qh_drowned' + i, 'R', { wait: false, speed: 1 });
     await S.wait(0.8);
-    await S.say('tuanzi:cry', '喵嗚嗚嗚，又來了又來了！本大爺最怕濕的鬼！');
+    S.emote('yuyuan', '!');
+    await S.say('', '芋圓炸起了毛，一溜煙擋到星河腳前，弓背低吼。');
     await S.say('yungui:serious', '溺魂。從府城那邊的海，被逆潮推到這裡來的。');
     await S.say('xinghe:serious', '他們在找什麼？');
     await S.say('chenbo:sad', '找岸。他們以為自己終於到家了。');
@@ -1005,10 +1009,10 @@
     await S.fadeOut(0.8);
     S.cameraFollow();
     S.setPos('player', 7, 16, 'left'); S.setPos('hongying', 5, 16, 'right');
-    S.show('yungui', false); S.show('tuanzi', false);
+    S.show('yungui', false); S.show('mochi', false);
     S.setPos('chenbo', 9, 13, 'left');
     await S.fadeIn(0.8);
-    await S.say('', '沙灘上的篝火。陳伯與雲歸先回了客棧，糰子在雲歸懷裡睡著。只剩星河與紅纓。');
+    await S.say('', '沙灘上的篝火。陳伯與雲歸先回了客棧，麻糬也跟著去了。只剩星河與紅纓——還有趴在火堆旁打盹的芋圓。');
     await S.say('', '紅纓單手拿著劍譜，另一手持槍，一遍一遍練同一招，練到槍尖發抖。');
     for (let k = 0; k < 2; k++) { S.sfx('stab'); await S.jump('hongying', 10); await S.wait(0.3); }
     await S.say('xinghe:normal', '那是……洛家劍？用槍使？');
@@ -1049,12 +1053,13 @@
     await S.narrate(['隔天早上，星河吃了一碗「黑色的、會冒泡的粥」。'], { veil: 1 });
     S.flag('ch9_qihou_night_done');
     await S.warp('qihou', 31, 21, 'down', { fade: 0.01 });
-    S.show('yungui', true); S.show('tuanzi', true);
-    S.setPos('player', 31, 21, 'down'); S.setPos('hongying', 30, 21, 'right'); S.setPos('yungui', 29, 21, 'right'); S.setPos('tuanzi', 28, 21, 'right'); S.setPos('chenbo', 34, 21, 'left');
+    S.show('yungui', true); S.show('mochi', true);
+    S.setPos('player', 31, 21, 'down'); S.setPos('hongying', 30, 21, 'right'); S.setPos('yungui', 29, 21, 'right'); S.setPos('yuyuan', 28, 21, 'right'); S.setPos('mochi', 28, 22, 'right'); S.setPos('chenbo', 34, 21, 'left');
     S.emote('player', '💧');
     await S.say('', '客棧門口，星河趴在桌上，一動也不動。');
     await S.say('yungui:smug', '英勇。');
-    await S.say('tuanzi:sad', '本大爺聞了一下就飽了。');
+    S.emote('yuyuan', '…');
+    await S.say('', '連芋圓都只聞了一下，就默默把碗推開了。');
     days(S, 2);
     S.quest('q_ch9_main', 1);
     S.objective('沿沙洲往南，前往東港');
@@ -1111,7 +1116,8 @@
     await S.move('qh_xiu', 'D', { speed: 4 });
     S.emote('qh_xiu', '♥');
     await S.say('阿秀', '（衝過來抱住星河的腰）謝謝哥哥！謝謝姊姊！謝謝胖貓！');
-    await S.say('tuanzi:angry', '本大爺是石——……算了，胖貓就胖貓。');
+    S.emote('yuyuan', '♥');
+    await S.say('', '芋圓挺起圓圓的肚子，勉強接受了「胖貓」這個稱呼。');
     S.face('qh_jinwan', 'player');
     await S.say('金萬伯', '少年仔，我欠你一文錢。（掏出一大袋）這是一千文。');
     await S.say('xinghe:surprise', '欸？這、這不只一文吧？');
@@ -1220,7 +1226,9 @@
     if (!F('ch9_banping_open')) { await S.say('仙翁', '湯圓——一碗一文錢，兩碗不用錢喔——'); return; }
     await S.say('', '大榕樹下，一個白鬍子老人顧著一口熱騰騰的鍋。攤子周圍有淡淡的金光。');
     await S.say('仙翁', '湯圓——一碗一文錢，兩碗不用錢喔——');
-    await S.say('tuanzi:laugh', '兩碗不用錢！！本大爺要兩碗！不，四碗！不用錢的話，八碗！');
+    S.emote('yuyuan', '!');
+    await S.say('', '芋圓的鼻子動個不停，已經蹲到了攤子前面。');
+    await S.say('yungui:smug', '兩碗不用錢？為了研究，我覺得應該拿兩碗。');
     await S.say('yungui:think', '……這攤子，跟傳說裡的一模一樣。');
     await S.say('仙翁', '少年仔，吃不吃？');
     const c = await S.choice(['付一文錢，買一碗', '拿兩碗（不用錢）', '不吃']);
@@ -1230,17 +1238,18 @@
       await S.say('仙翁', '這碗，算你們的。');
       await S.say('', '一碗熱湯圓，白白圓圓，湯是薑糖湯。星河吃了一口。');
       await S.say('xinghe:surprise', '……好甜。好好吃。');
-      await S.say('tuanzi:cry', '本大爺的那碗呢？');
-      await S.say('仙翁', '（再推一碗給糰子）這碗，我請的。');
-      await S.say('tuanzi:surprise', '……請的？不是不用錢的？');
+      S.emote('yuyuan', '💧');
+      await S.say('', '芋圓眼巴巴地看著那碗湯圓。');
+      await S.say('仙翁', '（再推一碗到芋圓面前）這碗，我請的。');
+      await S.say('yungui:think', '……請的？跟不用錢，不一樣嗎？');
       await S.say('仙翁', '不一樣喔。不用錢，是你拿；我請，是我給。記住。');
       S.flag('ch9_tangyuan_paid');
     } else if (c === 1) {
-      await S.say('', '糰子撲上去捧起兩碗。湯圓一入口——喀。');
+      await S.say('', '雲歸捧起兩碗，說是「為了研究」。湯圓一入口——喀。');
       S.sfx('hit');
-      await S.say('tuanzi:cry', '喵嗚！是、是土！是泥巴！！');
+      await S.say('yungui:surprise', '……是、是土。是泥巴。研究結束。');
       await S.say('仙翁', '哈哈哈。不用錢的，本來就是山的。拿山的，就吃到山。');
-      await S.say('yungui:smug', '傳說誠不我欺。');
+      await S.say('hongying:smug', '……傳說誠不我欺。');
       S.flag('ch9_tangyuan_free');
     } else {
       await S.say('仙翁', '不吃也好。不貪，也不欠。');
@@ -1326,7 +1335,7 @@
       const id = ids[c];
       G.Inv.remove(id, 1);
       await S.say('', `星河把${D.items[id].name}放上石盤。石盤上的東西一下子就不見了。`);
-      if (D.items[id].icon === 'food' || D.items[id].icon === 'drink') await S.say('tuanzi:cry', '本大爺的……！');
+      if (D.items[id].icon === 'food' || D.items[id].icon === 'drink') { S.emote('yuyuan', '💢'); await S.say('', '芋圓盯著空空的石盤，喉嚨裡發出低低的抗議聲。'); }
     }
     S.sfx('earth'); S.shake(8, 0.6);
     await S.say('', '轟隆——山壁慢慢往兩邊讓開了。');
@@ -1714,7 +1723,8 @@
     await S.move('player', 'DDD');
     await S.say('', '傍晚的東港，街上人來人往，比旗後熱鬧，但大家都神色匆匆。');
     await S.say('', '王船廠的方向，傳來咳嗽聲與敲木頭的聲音。');
-    await S.say('tuanzi:laugh', '喵！有甜的味道！是糯米！是黑糖！');
+    S.emote('yuyuan', '!');
+    await S.say('', '芋圓的鼻子忽然動個不停——空氣裡有糯米和黑糖的甜香。');
     await S.say('yungui:normal', '雙糕潤。東港的古早點心。……我也想吃。');
     await S.say('hongying:surprise', '你也會想吃甜的？');
     await S.say('yungui:smug', '道士也是人。道士的胃，比道心誠實。');
@@ -1724,8 +1734,9 @@
     await S.say('xinghe:surprise', '好氣派……');
     S.cameraFollow();
     await S.say('chenbo:serious', '進去之前聽好。不要大聲、不要亂摸、不要拿神明開玩笑。');
-    await S.say('chenbo:serious', '——糰子，說你。');
-    await S.say('tuanzi:shy', '本大爺很乖的……');
+    await S.say('chenbo:serious', '——還有那隻貓，說你。');
+    S.emote('yuyuan', '…');
+    await S.say('', '芋圓若無其事地舔了舔爪子。');
     S.quest('q_ch9_main', 1);
     S.objective('到東隆宮參拜，向千歲爺請求借王船');
   }
@@ -1741,7 +1752,7 @@
   }
   async function jiaobeiScene(S) {
     S.bgm('temple');
-    S.setPos('player', 9, 9, 'up'); S.setPos('hongying', 8, 10, 'up'); S.setPos('yungui', 10, 10, 'up'); S.setPos('tuanzi', 9, 10, 'up'); S.setPos('chenbo', 11, 9, 'up');
+    S.setPos('player', 9, 9, 'up'); S.setPos('hongying', 8, 10, 'up'); S.setPos('yungui', 10, 10, 'up'); S.setPos('yuyuan', 9, 10, 'up'); S.setPos('mochi', 11, 10, 'up'); S.setPos('chenbo', 11, 9, 'up');
     await S.say('', '殿內燭火搖曳。添丁伯在供桌旁整理香枝。');
     S.face('dg_keeper', 'player');
     await S.say('添丁伯', '少年仔，要拜拜？……喔，陳渡！你這陣子跑哪去？');
@@ -1787,7 +1798,7 @@
     await S.say('hongying:surprise', '！');
     await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['sheng'], prompt: '第二擲——按 Z 擲筊' });
     await S.say('', '聖筊。');
-    await S.say('tuanzi:surprise', '喵……！再一個！再一個！');
+    await S.say('yungui:surprise', '……再一個。再一個就好。');
     await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['yin'], prompt: '第三擲——按 Z 擲筊' });
     S.bgm(null, { fade: 0.3 });
     S.sfx('push');
@@ -1865,7 +1876,7 @@
     const m = G.mapScene;
     const boat = { t: 'wang_boat', x: 43, y: 10, solid: false, z: -200, key: 'dg_launchboat' };
     m.objects.push(boat);
-    S.setPos('player', 44, 14, 'up'); S.setPos('hongying', 43, 14, 'up'); S.setPos('yungui', 46, 14, 'up'); S.setPos('tuanzi', 45, 15, 'up'); S.setPos('chenbo', 47, 14, 'up');
+    S.setPos('player', 44, 14, 'up'); S.setPos('hongying', 43, 14, 'up'); S.setPos('yungui', 46, 14, 'up'); S.setPos('yuyuan', 45, 15, 'up'); S.setPos('mochi', 44, 15, 'up'); S.setPos('chenbo', 47, 14, 'up');
     S.spawn({ id: 'dg_l_ashan', sprite: 'old_m', x: 42, y: 13, dir: 'up' });
     S.spawn({ id: 'dg_l_keeper', sprite: 'temple_keeper', x: 49, y: 13, dir: 'up' });
     S.spawn({ id: 'dg_l_app', sprite: 'villager_m2', x: 50, y: 12, dir: 'left' });
@@ -1888,15 +1899,16 @@
     await S.say('', '街上的人陸續來了，每人手上捧著東西：米、鹽、柴、油、茶葉、糖、清水。');
     await S.say('添丁伯', '添載！王船出巡，大家把東西添上船，讓千歲爺和船上的人路上不缺。');
     await S.say('雙糕潤阿嬸', '雙糕潤，一籠。路上餓了吃。');
-    await S.say('tuanzi:cry', '阿嬸妳是好人！');
-    S.face('dg_f2', 'tuanzi');
+    S.emote('yuyuan', '♥');
+    await S.say('', '芋圓繞著那籠雙糕潤轉了三圈。');
+    S.face('dg_f2', 'yuyuan');
     await S.say('細妹', '我把我的糖添給王船！……我可以先吃一顆嗎？');
     await S.say('hongying:shy', '（小聲）……好可愛。');
-    await S.say('細妹', '（把糖放到糰子面前）給王船的貓仔吃。');
-    await S.say('tuanzi:surprise', '本大爺是石虎！……謝謝。');
+    await S.say('細妹', '（把糖放到芋圓面前）給王船的貓仔吃。');
+    await S.say('', '芋圓嗅了嗅那顆糖，鄭重地用頭蹭了蹭細妹的手。');
     await S.say('轎班少年', '師傅！這隻貓仔要不要也添上去？');
-    S.emote('tuanzi', '💢');
-    await S.say('tuanzi:angry', '本大爺不是添載品！');
+    S.emote('yuyuan', '💢');
+    await S.say('', '芋圓瞪了轎班少年一眼，尾巴拍得啪啪響。');
     await S.say('yungui:smug', '可以考慮。');
     S.emote('dg_f3', '♪'); S.emote('hongying', '♪');
     // procession
@@ -1936,7 +1948,7 @@
     S.cameraFollow('player');
     S.setPos('player', 23, 22, 'right'); S.setPos('dg_l_keeper', 22, 20, 'right'); S.setPos('dg_l_ashan', 22, 21, 'right');
     S.hideFollowers(false); S.show('chenbo', true);
-    S.setPos('hongying', 22, 23, 'right'); S.setPos('yungui', 23, 24, 'right'); S.setPos('tuanzi', 24, 24, 'up'); S.setPos('chenbo', 21, 22, 'right');
+    S.setPos('hongying', 22, 23, 'right'); S.setPos('yungui', 23, 24, 'right'); S.setPos('yuyuan', 24, 24, 'up'); S.setPos('mochi', 25, 24, 'up'); S.setPos('chenbo', 21, 22, 'right');
     await S.camera(26, 22, 0.6);
     S.bgm('temple', { fade: 1 });
     await S.say('', '王船抵達海灘。浪一波一波打上船底。');
@@ -1951,7 +1963,7 @@
     await S.say('chenbo:serious', '……上船吧。');
     await S.fadeOut(0.6);
     boat.water = true; boat.x = 24; boat.y = 23;
-    S.setPos('player', 26, 24, 'right'); S.setPos('hongying', 27, 24, 'right'); S.setPos('yungui', 26, 25, 'right'); S.setPos('tuanzi', 27, 25, 'right'); S.setPos('chenbo', 24, 24, 'right');
+    S.setPos('player', 26, 24, 'right'); S.setPos('hongying', 27, 24, 'right'); S.setPos('yungui', 26, 25, 'right'); S.setPos('yuyuan', 27, 25, 'right'); S.setPos('mochi', 28, 25, 'right'); S.setPos('chenbo', 24, 24, 'right');
     await S.fadeIn(0.6);
     await S.say('', '眾人登船。陳伯走到船尾，把手放在舵上，停了很久。');
     await S.say('chenbo:sad', '三十年沒掌過舵了。');
@@ -1960,7 +1972,7 @@
     S.bgm('voyage');
     S.particles(['embers', { type: 'petals', density: 0.6 }]);
     S.sfx('gong');
-    const riders = ['player', 'hongying', 'yungui', 'tuanzi', 'chenbo'];
+    const riders = ['player', 'hongying', 'yungui', 'yuyuan', 'mochi', 'chenbo'].filter((id) => S.actor(id));
     for (const id of riders) S.move(id, 'DDDDD', { wait: false, speed: 1.1, ghost: true });
     await G.Tweens.to(boat, { y: 28 }, 4.5, 'inOutQuad');
     for (const id of riders) { const a = S.actor(id); if (a) a.queue = []; }
@@ -2254,7 +2266,7 @@
     S.sfx('item');
     await S.say('', '晾著的帆布裡，有一面繡著「代天巡狩」的大帆。帆被瘟鬼的綠火燒出了幾個洞。');
     await S.say('yungui:think', '破了。……算了，補帆跟補道心一樣，有破洞才透氣。');
-    await S.say('tuanzi:surprise', '這句話好像很有道理，又好像什麼都沒說。');
+    await S.say('hongying:think', '這句話好像很有道理，又好像什麼都沒說。');
     await S.give('c9_key_sail', 1);
     S.flag('ch9_part_sail');
     await yardPartsCheck(S);
@@ -2273,8 +2285,8 @@
     await S.give('c9_aicao', 3);
     await S.say('hongying:think', '艾草？端午掛在門口那個？');
     await S.say('yungui:normal', '端午前後，天熱，疫病多。艾草菖蒲驅瘴，是老祖宗的辦法。');
-    await S.say('tuanzi:sad', '艾草很苦，本大爺不吃。');
-    await S.say('yungui:smug', '沒人叫你吃。');
+    await S.say('yungui:think', '艾草很苦。不過泡成茶喝下去……說不定看得見瘴氣的形狀。');
+    await S.say('hongying:smug', '沒人叫你吃。');
     S.objective('取回王船舵、王船帆、龍目');
   }
   async function yardBoss(S) {
@@ -2303,7 +2315,7 @@
     S.particles([{ type: 'mist', color: '#8ad070', alpha: 0.25 }]);
     await S.say('', '瘟鬼頭散開成綠色的煙霧。煙霧繞著王船轉了一圈，被吸進船艙裡——艙門自己「喀」一聲關上。');
     S.sfx('gong');
-    await S.say('tuanzi:surprise', '牠們……自己上船了？');
+    await S.say('hongying:surprise', '牠們……自己上船了？');
     await S.say('chenbo:normal', '本來就是要載走的。王船出海，就把牠們一起帶出去，帶遠一點。');
     S.flag('ch9_shipyard_clear');
     relight(S);
@@ -2409,7 +2421,7 @@
       { t: 'cauldron', x: 21, y: 5, if: (s) => !s.flags.ch9_lighthouse_flame, interact: ['船頭燈座。燈芯是乾的，還沒點過火。', '陳伯說，要一盞「替陌生人守過夜」的火。'], label: '調查' },
       { t: 'brazier', x: 21, y: 5, if: (s) => !!s.flags.ch9_lighthouse_flame, interact: ['船頭燈靜靜地燒著，金色的光照在海面上，海底的珊瑚、魚群都看得清清楚楚。'], label: '調查', light: { r: 260, color: '#ffd27a', flicker: 0.2 } },
       { t: 'stairs_down', x: 9, y: 6 },
-      { t: 'crate', x: 7, y: 3, interact: [['tuanzi:smug', '本大爺檢查過了，船艙的米很香。鹽很鹹。柴不能吃。']], label: '調查' },
+      { t: 'crate', x: 7, y: 3, interact: ['芋圓蹲在米袋上，一副「這袋歸本貓管」的樣子。', '米很香，鹽很鹹，柴不能吃——牠都檢查過了。'], label: '調查' },
       { t: 'jar', x: 8, y: 3 }, { t: 'barrel', x: 15, y: 3 }, { t: 'crate', x: 16, y: 3 },
       { t: 'barrel', x: 6, y: 8 }, { t: 'jar', x: 15, y: 8 }, { t: 'basket', x: 16, y: 8 },
       { t: 'red_lantern', x: 5, y: 3, hang: true, light: { r: 120, color: '#ffb060', flicker: 0.2 } },
@@ -2456,6 +2468,7 @@
     await S.say('yungui:think', '替陌生人守夜……鵝鑾鼻。島最南端那座洋人蓋的燈塔。');
     await S.say('yungui:think', '聽說叫「東亞之光」。夜夜替不認識的船照路。');
     await S.say('chenbo:normal', '就是那裡。往南，繞過南岬。');
+    if (S.actor('mochi')) await S.say('', '麻糬跳上船頭的神位旁，端坐著望向北方。白芷不在的日子，牠每晚都這樣守著。');
     S.objective('往南，前往鵝鑾鼻（和陳伯說話出航）');
   }
 
@@ -2474,9 +2487,9 @@
     await S.say('chenbo:angry', '抓穩！');
     S.sfx('splash'); S.shake(12, 0.8);
     await S.say('', '震動。海浪拍上了甲板。');
-    await S.say('tuanzi:cry', '喵嗚嗚嗚嗚！本大爺要飛走了！');
-    await S.jump('tuanzi', 30);
-    await S.say('', '紅纓一把抓住糰子的尾巴。');
+    await S.say('', '芋圓整隻貓被風吹得往後滑，四爪在甲板上刮出長長的聲音。');
+    await S.jump('yuyuan', 30);
+    await S.say('', '紅纓一把撈住了芋圓。');
     await S.say('hongying:serious', '風裡……有聲音。');
     S.sfx('ghost');
     await S.say('', '風聲中，隱約有人在喊——不是一個人，是很多人。喊的像是名字，但聽不清楚。');
@@ -2499,7 +2512,7 @@
     await S.narrate(['黎明前，王船駛離鵝鑾鼻。'], { veil: 1 });
     await S.warp('wangboat_deck', 18, 6, 'right', { fade: 0.01, reload: true });
     S.setPos('player', 17, 6, 'right'); S.gather();
-    S.setPos('hongying', 15, 7, 'right'); S.setPos('yungui', 14, 4, 'right'); S.setPos('tuanzi', 19, 7, 'right');
+    S.setPos('hongying', 15, 7, 'right'); S.setPos('yungui', 14, 4, 'right'); S.setPos('yuyuan', 19, 7, 'right'); S.setPos('mochi', 20, 5, 'right');
     S.bgm('voyage');
     await S.say('', '黎明前。王船的船頭燈在海上亮著，像一顆落在海面上的星。');
     await S.say('', '王船繞過南岬。陸地在左手邊慢慢轉向——從往南，轉成往東，再轉成往北。');
@@ -2513,13 +2526,17 @@
     S.particles(['sparkles', 'wind']);
     S.sfx('splash');
     await S.say('', '一條銀色的東西從船頭飛過——一條飛魚，張著翅膀一樣的鰭，滑過浪尖。接著兩條、十條、一百條。');
-    await S.jump('tuanzi', 26);
-    await S.say('tuanzi:surprise', '喵！！魚會飛！！本大爺看到神蹟了！！');
-    await S.say('hongying:laugh', '哈哈哈！糰子，你口水流到甲板上了！');
+    await S.jump('yuyuan', 26);
+    S.emote('yuyuan', '!');
+    await S.say('', '芋圓瞪圓了眼睛，整隻貓撲到船舷邊，尾巴豎得筆直。');
+    await S.say('hongying:laugh', '哈哈哈！芋圓，你口水流到甲板上了！');
+    await S.say('yungui:think', '飛魚。魚想當鳥，鳥想當雲，雲想當海……這就是黑潮的道理。');
+    await S.say('hongying:smug', '你今天又偷吃了什麼蕈？');
     await S.say('yungui:smile', '（靠著船舷，拿出酒葫蘆喝了一口）……這倒是頭一回，看海看得高興。');
     await S.move('player', 'RR');
     S.bgm('love');
     await S.say('', '星河走到船頭燈旁。燈火映在他臉上。');
+    if (S.actor('mochi')) await S.say('', '麻糬蹲在燈座下，金色的燈火映在牠的眼睛裡。牠輕輕地，把頭靠上了星河的腳踝。');
     await S.say('xinghe:normal', '（白芷。我現在在妳來的那條潮上。）');
     await S.say('xinghe:normal', '（阿順伯說，十八年前，妳也是被這條潮送上岸的。）');
     await S.say('xinghe:smile', '（妳那時候，應該也覺得很暖吧。）');
@@ -2951,6 +2968,7 @@
         await S.say('', '咾咕石的石縫裡，卡著一點小小的金白色光——是一個名字。');
         await S.say('', '「阿財仔」——風裡，好像有個年輕的聲音笑了一下。');
         await gainName(S, 7);
+        S.flag('ch9_name_7');
       } });
       ev.push({ id: 'lp_pluck', trigger: 'action', x: 37, y: 18, label: '撥弦', if: (s) => lpCalm(s) && !s.flags.ch9_name_7 && (G.Inv.has('c9_ac_yueqin') || Object.values(s.members).some((m) => Object.values(m.equip).includes('c9_ac_yueqin'))), run: async (S) => {
         S.sfx('sing');
@@ -3280,12 +3298,12 @@
   }
   async function keeperMeet(S) {
     S.bgm('lighthouse');
-    S.setPos('player', 21, 21, 'up'); S.gather(); S.setPos('hongying', 20, 21, 'up'); S.setPos('yungui', 19, 20, 'up'); S.setPos('tuanzi', 20, 20, 'right'); S.setPos('chenbo', 18, 21, 'up');
+    S.setPos('player', 21, 21, 'up'); S.gather(); S.setPos('hongying', 20, 21, 'up'); S.setPos('yungui', 19, 20, 'up'); S.setPos('yuyuan', 20, 20, 'right'); S.setPos('mochi', 19, 21, 'up'); S.setPos('chenbo', 18, 21, 'up');
     await S.camera(22, 15, 0.8);
     await S.say('', '白色的燈塔立在岬角上。太陽沉入海裡——燈塔的光「轟」一聲亮起，光束掃過海面。');
     S.flash('#fff6d8', 0.6, 0.6);
     S.light({ ambient: 0.5, color: '#0a1030', playerR: 230 });
-    await S.say('tuanzi:surprise', '喵……好亮！比一百個燈籠還亮！');
+    await S.say('hongying:surprise', '好亮……比一百個燈籠還亮！');
     await S.say('xinghe:surprise', '這就是……東亞之光。');
     S.cameraFollow();
     await S.say('', '燈塔門口，一個高大的洋人背對著他們，正用抹布擦門上的銅把手。他穿著舊式制服，身體半透明，被燈光一照，透出後面的牆。');
@@ -3299,10 +3317,11 @@
     await S.say('湯姆', '晚上好！甲飽未？');
     await S.say('xinghe:surprise', '……甲、甲飽了。');
     await S.say('湯姆', 'Excellent！很好！你們看得到我？Splendid！很多人看不到我。');
-    await S.say('湯姆', '只有阿目看得到。還有狗。還有……（看著糰子）Oh. A cat. 好大的 cat。');
-    await S.say('tuanzi:angry', '本大爺是石虎！');
+    await S.say('湯姆', '只有阿目看得到。還有狗。還有……（看著芋圓）Oh. A cat. 好大的 cat。');
+    S.emote('yuyuan', '💢');
+    await S.say('', '芋圓不滿地甩了甩尾巴。');
     await S.say('湯姆', '石……虎？Stone tiger？Ah——Kitty 大人。');
-    await S.say('tuanzi:shy', '……「大人」可以。');
+    await S.say('', '芋圓想了想，接受了「大人」。');
     await S.say('湯姆', 'My name is Thomas Archer. Tom。這裡的人叫我「湯先生」。');
     await S.say('湯姆', 'I am the keeper. 守燈的。我守這個燈……嗯……很久了。');
     await S.say('chenbo:normal', '多久？');
@@ -3553,7 +3572,8 @@
     V().ch9_kingShow = 0.01;
     await G.Tweens.to(V(), { ch9_kingShow: 1 }, 0.6, 'linear');
     await S.say('', '水面忽然隆起。一條比王船還長的海鰻破水而出，身上長滿黑色的藤壺，眼睛混濁發白。');
-    await S.say('tuanzi:cry', '好、好大的鰻魚！本大爺可以吃一個月！……不，牠會先吃本大爺！');
+    S.emote('yuyuan', '!');
+    await S.say('yungui:surprise', '好、好大的鰻魚。……夠芋圓吃一個月。不，牠會先吃掉芋圓。');
     await S.say('hongying:serious', '牠要撲燈！護好火！');
     const r = await S.battle('t_c9_moray_king', { intro: morayIntro(), bgmAfter: 'night' });
     removeGuardLamp();
@@ -3574,7 +3594,7 @@
     await bowLamp(S);
   }
   async function bowLamp(S) {
-    S.setPos('player', 19, 6, 'right'); S.gather(); S.setPos('hongying', 18, 7, 'right'); S.setPos('yungui', 17, 5, 'right'); S.setPos('tuanzi', 17, 7, 'right');
+    S.setPos('player', 19, 6, 'right'); S.gather(); S.setPos('hongying', 18, 7, 'right'); S.setPos('yungui', 17, 5, 'right'); S.setPos('yuyuan', 17, 7, 'right'); S.setPos('mochi', 16, 6, 'right');
     S.setPos('chenbo', 4, 5, 'right');
     S.bgm('voyage');
     await S.say('chenbo:normal', '（從船尾喊）火呢？');
@@ -3685,7 +3705,8 @@
     const m = G.mapScene;
     const raft = m.objects.find((o) => o.key === 'qh_ferry');
     if (raft) raft.x = 45;
-    const seat = { player: [45, 10, 'left'], yungui: [46, 10, 'left'], tuanzi: [45, 9, 'left'], hongying: [47, 10, 'up'], chenbo: [46, 9, 'left'], qh_boatman: [47, 9, 'left'] };
+    const seat = { player: [45, 10, 'left'], yungui: [46, 10, 'left'], yuyuan: [45, 9, 'left'], mochi: [46, 9, 'left'], hongying: [47, 10, 'up'], chenbo: [46, 9, 'left'], qh_boatman: [47, 9, 'left'] };
+    for (const id of Object.keys(seat)) if (!S.actor(id)) delete seat[id];
     for (const id in seat) S.setPos(id, seat[id][0], seat[id][1], seat[id][2]);
     await S.camera(44, 9, 0.01);
     await S.fadeIn(1.0);
@@ -3694,14 +3715,14 @@
     if (raft) await G.Tweens.to(raft, { x: 43 }, 2.5, 'linear'); else await S.wait(2.5);
     for (const id in seat) { const a = S.actor(id); if (a) { a.queue = []; S.face(id, seat[id][2]); } }
     await S.say('船夫阿水', '坐好喔！打狗港的水看起來平，底下流仔真急。');
-    await S.say('tuanzi:sad', '喵嗚……又是船……本大爺這輩子坐的船，比吃的魚還多。');
-    await S.say('yungui:smug', '不可能。你吃的魚比整個打狗港的魚還多。');
-    S.emote('tuanzi', '💢');
-    await S.say('tuanzi:angry', '那是因為本大爺在幫大家試毒！');
+    await S.say('', '芋圓縮成一團，緊緊貼著星河的腳。牠不喜歡船。麻糬則端坐在筏頭，望著北方的海。');
+    await S.say('yungui:smug', '芋圓這輩子坐的船，大概還沒有牠吃過的魚多。');
+    S.emote('yuyuan', '💢');
+    await S.say('', '芋圓轉過身，用屁股對著雲歸。');
     await S.say('xinghe:smile', '陳伯，這裡為什麼叫打狗啊？');
     await S.say('chenbo:normal', '早年住這一帶的平埔人，管海邊的刺竹林叫 Takau。');
     await S.say('chenbo:normal', '唐山人聽了，寫成「打狗」。跟狗沒關係，別再問了。');
-    await S.say('tuanzi:smile', '沒有狗？好佳哉。');
+    S.emote('yuyuan', '♪');
     await S.camera(45, 10, 0.8);
     await S.say('', '筏尾，紅纓獨自坐著。懷裡抱著用布包好的洛家劍譜，望著北方。');
     await S.say('xinghe:think', '……');

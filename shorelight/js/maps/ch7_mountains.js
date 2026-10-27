@@ -1,5 +1,5 @@
 // 第七章 雲山入夢 — 阿里山・玉山・藤婆的雲霧林・靈境・日月潭・燈母祠
-// Screenplay: docs/story/ch7_mountains.md   (party: 星河 紅纓 雲歸 + 糰子; 白芷 absent)
+// Screenplay: docs/story/ch7_mountains.md   (party: 星河 紅纓 雲歸 + the silent cats 芋圓 & 麻糬; 白芷 absent)
 //
 // Maps: sugar_shrine, alishan_trail, tsou_hosa, tsou_house, alishan_forest, yushan_trail, bunun_home,
 //       bunun_house_in, cloud_forest, tengpo_hut, tengpo_hut_in, vision_hub, vision_hongying, vision_yungui,
@@ -796,8 +796,13 @@
   }
   C7.rest = rest;
   // place the party for a cutscene: leader + followers on given cells
+  // (followers not listed — usually the cats — sit right behind the leader)
   function stage(S, spots) {
     for (const [id, x, y, dir] of spots) S.setPos(id, x, y, dir);
+    const m = G.mapScene;
+    if (!m) return;
+    const listed = spots.map((s) => s[0]);
+    for (const f of m.followers) if (!listed.includes(f.id)) { f.setCell(m.player.x, m.player.y); f.dir = m.player.dir; f.queue = []; }
   }
   // spawn helper that is idempotent (re-running a scene never doubles an actor)
   function spawn(S, d) { S.remove(d.id); return S.spawn(d); }
@@ -822,7 +827,7 @@
   G.Story.ch7 = async (S) => {
     S.chapter(7);
     const st = G.state;
-    // party: 星河 紅纓 雲歸 (+ 糰子 follows 雲歸). 白芷 is away (taken across the strait).
+    // party: 星河 紅纓 雲歸 (+ the cats 芋圓 & 麻糬 follow). 白芷 is away (taken across the strait).
     if (st.party.includes('baizhi')) G.Party.leave('baizhi');
     const avg = G.Party.active().length ? Math.round(G.Party.active().reduce((a, m) => a + m.lv, 0) / G.Party.active().length) : 23;
     for (const id of ['xinghe', 'hongying', 'yungui']) {
@@ -831,13 +836,15 @@
     }
     st.party = ['xinghe', 'hongying', 'yungui'].concat(st.party.filter((p) => !['xinghe', 'hongying', 'yungui', 'baizhi'].includes(p)));
     for (const id of ['xinghe', 'hongying', 'yungui']) G.Story.ensureLevel(id, 23);
-    delete st.flags.tuanzi_hidden;
+    delete st.flags.yuyuan_hidden; delete st.flags.mochi_hidden;
     // started standalone (debug ?startch=7): bring starting gear up to the end of chapter 6
     const xm = st.members.xinghe;
     if (xm && xm.equip.weapon === 'sw_bamboo') {
       const kit = { xinghe: { weapon: 'sw_qixing', armor: 'ar_chain', head: 'hd_yuguan', feet: 'ft_lupi' }, hongying: { weapon: 'sp_qilin', armor: 'ar_chain', feet: 'ft_lupi' }, yungui: { weapon: 'fn_qixing', armor: 'ar_brocade', feet: 'ft_lupi' } };
       for (const id in kit) for (const slot in kit[id]) st.members[id].equip[slot] = kit[id][slot];
       for (const [it, n] of [['xumingsan', 6], ['wanguo', 3], ['fenglisu', 3], ['huanhunxiang', 3], ['xiangbao', 3]]) G.Inv.add(it, n);
+      st.flags.yuyuan_joined = true;   // the cats joined in earlier chapters
+      st.flags.mochi_joined = true;
     }
     st.flags.ch7_start = true;
     st.flags.ch7_flame = 80;
@@ -912,7 +919,8 @@
       npcs: [
         { id: 'ss_buffalo', sprite: 'buffalo', x: 18, y: 9, dir: 'left', wander: 1, name: '水牛', talk: async (S) => {
           await S.say('', '水牛慢慢嚼著草，對逃亡、燈火、命運都毫無興趣。');
-          await S.say('tuanzi:smile', '我喜歡牠。牠活得很有道理。');
+          S.emote('yuyuan', '…');
+          await S.say('', '芋圓蹲到水牛旁邊，跟牠一起面無表情地嚼著空氣。兩個都活得很有道理。');
         } },
         { id: 'ss_abo', sprite: 'old_m', x: 20, y: 9, dir: 'left', name: '阿伯', if: (st) => !!st.flags.ch7_cart, talk: async (S) => {
           if (!S.has('ch7_ganzhe')) {
@@ -961,7 +969,7 @@
     S.flag('ch7_intro');
     S.bgm('sad');
     S.light({ ambient: 0.55 });
-    stage(S, [['player', 10, 8, 'down'], ['hongying', 9, 8, 'right'], ['yungui', 11, 7, 'left'], ['tuanzi', 10, 9, 'up']]);
+    stage(S, [['player', 10, 8, 'down'], ['hongying', 9, 8, 'right'], ['yungui', 11, 7, 'left'], ['yuyuan', 10, 9, 'up'], ['mochi', 8, 7, 'left']]);
     await S.camera(10, 7, 0.4);
     await S.fadeIn(1.0);
     await S.wait(0.6);
@@ -973,12 +981,13 @@
       ['hongying:sad', '……是我太慢了。我要是再快一步，白芷就不會——'],
       ['yungui:normal', '洛姑娘。他倒下的時候，妳是第一個衝過去的。'],
       ['yungui:normal', '我們都慢了。慢的不只妳一個。'],
-      ['tuanzi:cry', '星河的手好冰……本大爺躺上去幫他暖！'],
+      ['', '廟前的石階上，麻糬一動不動地坐著，望著海的方向。牠脖子上還繫著白芷綁的那條紅繩。'],
+      ['', '芋圓一聲不吭地爬上星河的肚子，把自己攤成一片灰色的毛毯。'],
     ]);
-    await S.move('tuanzi', 'U');
-    S.emote('tuanzi', '♥');
+    await S.move('yuyuan', 'U');
+    S.emote('yuyuan', '♥');
     await S.lines([
-      ['xinghe:hurt', '……糰子……你好重……'],
+      ['xinghe:hurt', '……芋圓……你好重……'],
       ['hongying:surprise', '星河！'],
       ['xinghe:hurt', '我……做了一個夢。夢到我在一盞燈裡……燈油快沒了。'],
     ]);
@@ -989,7 +998,7 @@
     await S.say('yungui:think', '這是……他身體裡的火在熄？');
     S.sfx('bell');
     S.flash('#bfe0ff', 0.5, 0.6);
-    S.emote('hongying', '!'); S.emote('yungui', '!'); S.emote('tuanzi', '!');
+    S.emote('hongying', '!'); S.emote('yungui', '!'); S.emote('mochi', '!');
     await S.lines([
       ['hongying:surprise', '這是陳伯給的令牌——它在發光！'],
       ['chenbo:normal', '……聽得到嗎？喂，臭小子們，聽得到就吭一聲。'],
@@ -1031,13 +1040,13 @@
     await S.lines([
       ['hongying:angry', '你站都站不穩還逞強！'],
       ['yungui:smug', '洛姑娘力氣大，就讓她揹。我負責在旁邊說風涼話，分工明確。'],
-      ['tuanzi:normal', '本大爺負責……負責暖肚子！'],
+      ['', '芋圓又爬回星河肚子上攤平，顯然認為自己負責暖肚子。麻糬走過來，在星河手邊坐下，尾巴繞住他的手腕。'],
     ]);
     await S.fadeOut(1.0);
     S.flag('ch7_dawn');
     S.light({ ambient: 0.25, color: '#2a2040' });
     S.particles([{ type: 'mist', density: 0.4 }, { type: 'motes', density: 0.6 }]);
-    stage(S, [['player', 12, 8, 'right'], ['hongying', 11, 8, 'right'], ['yungui', 12, 9, 'right'], ['tuanzi', 11, 9, 'right']]);
+    stage(S, [['player', 12, 8, 'right'], ['hongying', 11, 8, 'right'], ['yungui', 12, 9, 'right'], ['yuyuan', 11, 9, 'right']]);
     spawn(S, { id: 'abo_cs', sprite: 'old_m', x: 17, y: 6, dir: 'down', name: '阿伯' });
     await S.fadeIn(1.0);
     await S.move('abo_cs', 'DDL');
@@ -1148,8 +1157,8 @@
             ['老吳', '喲，平地人？這時節上山的平地人可不多。'],
             ['yungui:normal', '我們要去阿里山，再往玉山走。'],
             ['老吳', '往玉山？那得經過鄒族的大社。你們有人帶路嗎？'],
-            ['xinghe:smile', '有……一隻石虎。'],
-            ['tuanzi:smug', '本大爺鼻子很靈！'],
+            ['xinghe:smile', '有……兩隻貓。'],
+            ['', '芋圓抬頭看了老吳一眼，又低頭舔起爪子。麻糬望著來時的路。'],
             ['老吳', '哈哈哈！好吧，那記得我的話：獵場是有主人的。'],
             ['老吳', '一家一家的獵場，界線清清楚楚。看到獵人，先打招呼，說明來意。'],
             ['老吳', '人家讓你過，你才過。這是山上的禮。'],
@@ -1203,7 +1212,7 @@
     const r = await S.battle('t_c7_bear', { bgmAfter: null });
     if (r !== 'win') return;
     S.flag('ch7_bear_freed');
-    stage(S, [['player', 23, 10, 'up'], ['hongying', 22, 10, 'up'], ['yungui', 24, 10, 'up'], ['tuanzi', 23, 11, 'up']]);
+    stage(S, [['player', 23, 10, 'up'], ['hongying', 22, 10, 'up'], ['yungui', 24, 10, 'up'], ['yuyuan', 23, 11, 'up']]);
     await S.camera(22, 8, 0.3);
     await S.say('', '黑熊精跪倒。雲歸擲出淨化符，符紙燃起青色火焰，貼在熊額上。');
     S.sfx('fire');
@@ -1318,11 +1327,13 @@
         } },
         { id: 'kid_f', sprite: 'child_f', name: '孩子', x: 21, y: 15, dir: 'down', wander: 2, talk: async (S) => {
           await S.say('孩子', '那隻胖貓是什麼？牠可以吃嗎？');
-          S.emote('tuanzi', '!');
-          await S.say('tuanzi:surprise', '！？');
+          S.emote('yuyuan', '!');
+          await S.say('', '芋圓僵住了。');
           await S.say('yungui:smug', '不行，牠太肥了，會膩。');
-          S.emote('tuanzi', '💢');
-          await S.say('tuanzi:angry', '……哼！');
+          S.emote('yuyuan', '💢');
+          await S.say('', '芋圓轉過身，用屁股對著雲歸。');
+          await S.say('孩子', '那隻花花的呢？');
+          await S.say('hongying:normal', '那隻在等人。……不可以吃，也不可以吵她。');
         } },
       ],
       events: [
@@ -1418,7 +1429,7 @@
   C7.scene73 = async (S) => {
     S.bgm('tribe');
     await S.fadeOut(0.4);
-    stage(S, [['player', 24, 14, 'up'], ['hongying', 23, 14, 'up'], ['yungui', 25, 14, 'up'], ['tuanzi', 24, 15, 'up']]);
+    stage(S, [['player', 24, 14, 'up'], ['hongying', 23, 14, 'up'], ['yungui', 25, 14, 'up'], ['yuyuan', 24, 15, 'up']]);
     spawn(S, { id: 'voyu_cs', sprite: 'tsou_m', x: 24, y: 13, dir: 'up', name: 'Voyu' });
     spawn(S, { id: 'kid_cs1', sprite: 'child_m', x: 20, y: 13, dir: 'right', name: '孩子' });
     spawn(S, { id: 'kid_cs2', sprite: 'child_f', x: 28, y: 13, dir: 'left', name: '孩子' });
@@ -1452,12 +1463,12 @@
     S.particles([{ type: 'mist', density: 0.5 }, { type: 'embers', density: 0.5 }, { type: 'fireflies', density: 0.4 }]);
     S.bgm('mountain');
     S.remove('voyu_cs');
-    stage(S, [['player', 24, 10, 'right'], ['hongying', 25, 11, 'up'], ['yungui', 26, 10, 'left'], ['tuanzi', 24, 11, 'right']]);
+    stage(S, [['player', 24, 10, 'right'], ['hongying', 25, 11, 'up'], ['yungui', 26, 10, 'left'], ['yuyuan', 24, 11, 'right']]);
     S.setPos('elder', 25, 8, 'down');
     S.setPos('kid_cs1', 22, 12, 'right'); S.setPos('kid_cs2', 23, 12, 'up');
     await S.camera(25, 9, 0.1);
     await S.fadeIn(1.0);
-    await S.say('', '夜，火堆旁。孩子們擠在後面偷看糰子。');
+    await S.say('', '夜，火堆旁。孩子們擠在後面偷看芋圓和麻糬。');
     await S.lines([
       ['長老', '你們要去找住在雲霧林的那個老婆婆。'],
       ['長老', '我小時候，我的祖父就說過她。說她從來不老，也從來不年輕。'],
@@ -1494,7 +1505,7 @@
       ['hongying:angry', '一小口！人家說一小口！'],
       ['yungui:hurt', '……我喝的就是一小口。我的一小口比較大。'],
       ['長老', '哈哈哈哈！'],
-      ['', '眾人笑。星河也笑，然後低頭咳了兩聲。糰子默默把頭靠在他腿上。'],
+      ['', '眾人笑。星河也笑，然後低頭咳了兩聲。芋圓默默把頭靠在他腿上。'],
       ['xinghe:smile', '很好吃。……真的，很好吃。'],
       ['', '火光中，Voyu 的母親看了一眼火塘旁那個空著的位置。星河注意到了。'],
     ]);
@@ -1572,7 +1583,7 @@
     S.flag('ch7_rest_tsou');
     await C7.flame(S, 8, { silent: true });
     S.light({ ambient: 0.75, color: '#100608', playerR: 120 });
-    stage(S, [['player', 7, 7, 'up'], ['hongying', 3, 7, 'up'], ['yungui', 10, 7, 'left'], ['tuanzi', 6, 7, 'up']]);
+    stage(S, [['player', 7, 7, 'up'], ['hongying', 3, 7, 'up'], ['yungui', 10, 7, 'left'], ['yuyuan', 6, 7, 'up']]);
     spawn(S, { id: 'voyu_n', sprite: 'tsou_m', x: 9, y: 4, dir: 'down', name: 'Voyu' });
     S.show('mother', false);
     await S.fadeIn(1.2);
@@ -1629,7 +1640,7 @@
     await S.warp('tsou_hosa', 42, 10, 'right', { fade: 0, stayDark: true, noAutosave: true });
     S.light({ ambient: 0.62, color: '#0a1030', playerR: 180 });
     S.bgm('mountain');
-    stage(S, [['player', 42, 10, 'right'], ['hongying', 40, 9, 'right'], ['yungui', 40, 11, 'right'], ['tuanzi', 41, 11, 'right']]);
+    stage(S, [['player', 42, 10, 'right'], ['hongying', 40, 9, 'right'], ['yungui', 40, 11, 'right'], ['yuyuan', 41, 11, 'right']]);
     C7.tasanSoul = 0;
     await S.camera(43, 9, 0.1);
     await S.fadeIn(1.2);
@@ -1793,10 +1804,9 @@
       ['Voyu', '它在這裡站了三千年。我們的祖先來之前，它就在這裡了。'],
       ['yungui:think', '三千年。它看過的朝代，大概比藤婆還多。'],
       ['yungui:think', '……喔，我還沒見過藤婆。先別這樣說她。'],
-      ['hongying:normal', '糰子，不准在神木上磨爪子。'],
-      ['tuanzi:shy', '本大爺只是……抱一下。'],
-      ['', '糰子抱住樹根，臉貼在樹皮上。'],
-      ['tuanzi:think', '它好慢喔。它的心跳要很久很久才跳一下。'],
+      ['hongying:normal', '芋圓，不准在神木上磨爪子。'],
+      ['', '芋圓停下爪子，假裝什麼都沒發生。然後牠抱住樹根，把臉貼在樹皮上。'],
+      ['yungui:think', '它好慢。它的心跳大概要很久很久才跳一下。……我要是吃一朵林下的蕈，說不定聽得見。'],
       ['xinghe:smile', '那它一定很不怕時間。'],
       ['Voyu', '往東邊的崖上走，天亮的時候能看見雲海。我在北邊的山徑口等你們。'],
     ]);
@@ -1807,7 +1817,7 @@
   // 7-4b 雲海
   C7.scene74b = async (S) => {
     S.flag('ch7_seaofclouds');
-    stage(S, [['player', 40, 12, 'right'], ['hongying', 40, 11, 'right'], ['yungui', 37, 13, 'right'], ['tuanzi', 38, 13, 'right']]);
+    stage(S, [['player', 40, 12, 'right'], ['hongying', 40, 11, 'right'], ['yungui', 37, 13, 'right'], ['yuyuan', 38, 13, 'right']]);
     await S.camera(41, 12, 1.0);
     await S.say('', '天光未亮。眾人站在崖邊，腳下是一片純白的雲海，遠方山頭如島。');
     S.bgm('mountain');
@@ -1834,9 +1844,9 @@
     S.sfx('hit');
     await S.lines([
       ['xinghe:smile', '遵命，洛大小姐。'],
-      ['', '雲歸站在幾步之外，背對他們看雲海，假裝什麼都沒聽到。糰子坐在他腳邊。'],
-      ['yungui:normal', '（小聲）別回頭。這種時候回頭的人沒有好下場。'],
-      ['tuanzi:cry', '（小聲）本大爺……鼻子好酸……'],
+      ['', '雲歸站在幾步之外，背對他們看雲海，假裝什麼都沒聽到。芋圓和麻糬坐在他腳邊。'],
+      ['yungui:normal', '（小聲，對芋圓）別回頭。這種時候回頭的人沒有好下場。'],
+      ['', '芋圓的鬍子垂了下來。麻糬沒有回頭，牠一直望著雲海的盡頭——海的方向。'],
     ]);
     S.sfx('wind');
     S.shake(2, 0.3);
@@ -1947,7 +1957,8 @@
       ['', '星河胸口的火光縮成米粒大小。'],
       ['yungui:serious', '燈芯……掉得太快了。高山的冷在吃他的火。'],
       ['yungui:serious', '得找地方過夜。生火。現在。'],
-      ['tuanzi:cry', '這裡都是石頭！沒有樹！沒有屋子！'],
+      ['hongying:sad', '這裡都是石頭……沒有樹，沒有屋子……'],
+      ['', '芋圓緊緊貼著星河，喵也不喵一聲。麻糬繞著他走了一圈，又一圈。'],
     ]);
     S.sfx('ok');
     await S.say('', '遠處傳來一聲短促的口哨。眾人回頭。');
@@ -2144,7 +2155,7 @@
   C7.scene76 = async (S) => {
     const m = G.mapScene;
     G.Music.stop(0.5);
-    stage(S, [['player', 6, 6, 'up'], ['hongying', 5, 7, 'up'], ['yungui', 8, 7, 'left'], ['tuanzi', 7, 7, 'up']]);
+    stage(S, [['player', 6, 6, 'up'], ['hongying', 5, 7, 'up'], ['yungui', 8, 7, 'left'], ['yuyuan', 7, 7, 'up']]);
     spawn(S, { id: 'biung_h', sprite: 'bunun_m', x: 10, y: 6, dir: 'left', name: 'Biung' });
     await S.camera(6, 5, 0.1);
     S.bgm('tribe');
@@ -2153,9 +2164,9 @@
     await S.lines([
       ['Abus', 'Mihumisang。……他還在發抖。再添柴。'],
       ['Ibu', '阿嬤，那隻貓好胖！'],
-      ['祖母', '那不是貓，那是山上的石虎，而且是會說話的那種。'],
-      ['tuanzi:surprise', '阿、阿嬤看得出來？'],
-      ['祖母', '活到我這個年紀，什麼東西會說話、什麼東西只是會叫，都看得出來。'],
+      ['祖母', '那隻是吃得很好的貓。旁邊那隻花的，是在等人的貓。'],
+      ['yungui:surprise', '阿、阿嬤看得出來？'],
+      ['祖母', '活到我這個年紀，什麼東西在等人、什麼東西只是在發呆，都看得出來。'],
       ['yungui:normal', '打擾了。……Uninang。謝謝你們。'],
       ['Biung', '你會說我們的話？'],
       ['yungui:shy', '只會這一句。剛才在路上問 Voyu 的。我想至少該用主人的話道謝。'],
@@ -2194,7 +2205,7 @@
     await G.Tweens.to(C7, { pasi: 1 }, 1.5, 'linear');
     await S.say('', '聲音一層一層地往上疊，越來越高、越來越亮，彷彿屋頂的石板之間有光滲進來。');
     await S.say('', '那聲音不像是一群人在唱。像是山本身，在很深的地方，輕輕地共鳴。');
-    await S.say('', '沒有人說話。糰子嘴裡的小米糕，停在半空中，一直沒有咬下去。');
+    await S.say('', '沒有人說話。芋圓嘴邊的小米糕，停在半空中，一直沒有咬下去。');
     await S.say('', '紅纓閉上眼睛。雲歸靠著石牆，手裡的扇子慢慢合起。');
     for (let i = 0; i < 3; i++) { S.flash('#ffcf80', 0.8, 0.12); await S.wait(1.0); }
     await S.say('', '星河在獸皮下，微微睜開眼。胸口的光，輕輕地，跟著那聲音的起伏一明一滅。');
@@ -2252,7 +2263,7 @@
     await S.warp('bunun_home', 13, 10, 'down', { fade: 0, stayDark: true });
     S.light({ ambient: 0.15, color: '#2a2440' });
     S.particles([{ type: 'mist', density: 0.5 }]);
-    stage(S, [['player', 13, 10, 'down'], ['hongying', 12, 10, 'down'], ['yungui', 14, 10, 'down'], ['tuanzi', 13, 9, 'down']]);
+    stage(S, [['player', 13, 10, 'down'], ['hongying', 12, 10, 'down'], ['yungui', 14, 10, 'down'], ['yuyuan', 13, 9, 'down']]);
     spawn(S, { id: 'grandma_o', sprite: 'old_f', x: 13, y: 12, dir: 'up', name: '祖母' });
     spawn(S, { id: 'abus_o', sprite: 'bunun_f', x: 11, y: 12, dir: 'up', name: 'Abus' });
     S.setPos('biung', 15, 12, 'up');
@@ -2365,10 +2376,10 @@
         { id: 'enter', trigger: 'auto', once: true, run: async (S) => {
           await S.lines([
             ['yungui:think', '這片霧不太對。它在動，但不是被風吹的。'],
-            ['tuanzi:surprise', '這裡有好多菇！星河，本大爺可以吃嗎？'],
-            ['yungui:serious', '不行。這一區的菇我一朵都不認識，這是我的人生第一次。'],
+            ['xinghe:surprise', '這裡好多菇……雲歸，你的眼睛在發光。'],
+            ['yungui:serious', '這一區的菇我一朵都不認識。這是我人生第一次。'],
             ['yungui:smile', '……真興奮。'],
-            ['hongying:angry', '你們兩個給我專心！'],
+            ['hongying:angry', '不准吃！給我專心！'],
           ]);
           S.quest('q_ch7_main', 3);
           S.objective('跟著藤婆的木牌，穿過雲霧林');
@@ -2380,13 +2391,21 @@
         { id: 'sb', trigger: 'action', x: 33, y: 11, label: '木牌', run: readSign('sb') },
         { id: 'loopA', trigger: 'touch', x: 4, y: 15, w: 3, h: 1, run: loopBack('sa') },
         { id: 'loopB', trigger: 'touch', x: 32, y: 12, w: 3, h: 1, run: loopBack('sb') },
-        { id: 'yunzhi', trigger: 'action', x: 8, y: 20, label: '調查', if: (st) => !st.flags.tuanzi_mush_ch7, run: async (S) => {
+        { id: 'yunzhi', trigger: 'action', x: 8, y: 20, label: '調查', if: (st) => !st.flags.mush_ch7, run: async (S) => {
+          S.emote('yuyuan', '?');
           await S.lines([
-            ['tuanzi:smile', '雲歸！這朵像一朵雲！'],
+            ['', '芋圓湊過去聞了聞發光的菇叢，打了一個噴嚏。菇叢裡有一朵，形狀像一朵小小的雲。'],
             ['yungui:think', '……雲芝。手札上沒有。'],
-            ['yungui:smile', '糰子，記一筆。不，你不會寫字。我記。'],
+            ['yungui:smile', '為了研究，我必須親自嚐一口。只是研究。'],
+            ['hongying:angry', '雲歸！'],
+            ['', '雲歸已經嚼完了。他的瞳孔慢慢放大。'],
+            ['yungui:think', '……星河。雲為什麼是白的？因為它把所有的顏色都還回去了。'],
+            ['yungui:think', '它什麼都不留，所以它很輕。所以它飄得起來。'],
+            ['xinghe:think', '……這段我好像聽懂了，又好像沒有。'],
+            ['', '芋圓面無表情地看著雲歸。麻糬打了個哈欠。'],
           ]);
-          S.flag('tuanzi_mush_ch7');
+          S.flag('mush_ch7');
+          G.state.vars.tuanzi_mush = (G.state.vars.tuanzi_mush || 0) + 1;
           await S.give('mat_yunzhi', 1);
         } },
       ],
@@ -2427,7 +2446,7 @@
       psychedelic: () => (C7.riteK || 0) * 0.55,
       tiles: g.rows(), objects: g.objs,
       onEnter: async (S) => {
-        if (F().tuanzi_hidden) { delete F().tuanzi_hidden; S.refresh(); }
+        if (F().yuyuan_hidden || F().mochi_hidden) { delete F().yuyuan_hidden; delete F().mochi_hidden; S.refresh(); }
         C7.leo = { x: 14, y: 8, a: F().ch7_dawn_after && !F().ch7_thao_met ? 0.7 : 0, dir: 'left' };
       },
       drawOver: (ctx, t, m) => {
@@ -2547,7 +2566,7 @@
   C7.talkTengpo = async (S) => {
     if (S.has('ch7_dawn_after')) {
       await S.say('tengpo:normal', U.pick(['夢裡看見的東西要醒著去做。不然就只是做了個好看的夢。', '睡不好的話來找我。不是給你更多藥，是給你一杯熱水，跟一個老太婆。', '孩子，要買藥就說，要聊天就坐，要哭就去外面，別把我的菸草弄濕。']));
-      if (U.hash(G.state.steps, 1, 3) < 0.3) await S.say('tengpo:smile', '你這隻石虎，一半住在夢裡，一半住在別人的碗裡。');
+      if (U.hash(G.state.steps, 1, 3) < 0.3) await S.say('tengpo:smile', '你這隻胖貓，一半住在夢裡，一半住在別人的碗裡。');
     } else if (S.has('ch7_dieta')) {
       await S.say('tengpo:serious', '三天，不吃鹽、不吃糖、不吃肉、不喝酒。尤其是你，戴髮冠的。');
     } else await S.say('tengpo:normal', '錢？好吧，拿來。這座山上錢沒什麼用，但可以拿來墊桌腳。');
@@ -2570,7 +2589,7 @@
   C7.scene78 = async (S) => {
     S.flag('ch7_tengpo_met');
     S.quest('q_ch7_main', 4);
-    stage(S, [['player', 8, 11, 'up'], ['hongying', 7, 11, 'up'], ['yungui', 9, 11, 'up'], ['tuanzi', 8, 12, 'up']]);
+    stage(S, [['player', 8, 11, 'up'], ['hongying', 7, 11, 'up'], ['yungui', 9, 11, 'up'], ['yuyuan', 8, 12, 'up']]);
     spawn(S, { id: 'tp', sprite: 'tengpo', x: 8, y: 7, dir: 'down', portrait: 'tengpo' });
     await S.camera(8, 8, 0.6);
     await S.lines([
@@ -2618,14 +2637,14 @@
       ['tengpo:serious', '第二，每個人都要自己想清楚：為什麼走進去。不是為了好奇，不是為了逞強。'],
       ['tengpo:serious', '第三，我會整夜坐在火邊。你們在裡面迷路了，就聽我的聲音。'],
       ['tengpo:normal', '不想去的人，就留在外面幫我顧火。這也很重要，一點都不丟臉。'],
-      ['tuanzi:smile', '那本大爺也要喝！'],
-      ['tengpo:think', '你？'],
-      ['tengpo:smile', '小東西，你是山裡的精怪。你本來就一半住在夢裡。'],
-      ['tengpo:smile', '你不用喝。到時候，你自然會在裡面等他們。'],
-      ['tuanzi:surprise', '本大爺……本來就住在夢裡？'],
-      ['yungui:smug', '難怪你吃飽就睡，睡飽就吃。原來是在通勤。'],
+      ['', '芋圓湊到陶壺邊，聞了聞。'],
+      ['tengpo:think', '你也想喝？'],
+      ['tengpo:smile', '小東西，貓本來就一半住在夢裡。你不用喝，到時候自然會在裡面等他們。'],
+      ['yungui:smug', '難怪牠吃飽就睡，睡飽就吃。原來是在通勤。'],
+      ['tengpo:normal', '花的那隻，就留在火邊陪我。她在等的人，不在夢裡。'],
+      ['', '麻糬在藤婆身邊坐下，尾巴繞著前腳，望著火。'],
     ]);
-    S.emote('tuanzi', '💢');
+    S.emote('yuyuan', '💢');
     await S.wait(0.6);
     await S.lines([
       ['hongying:serious', '我去。'],
@@ -2644,7 +2663,7 @@
     await S.fadeOut(0.8);
     S.flag('ch7_dieta');
     await S.narrate(['第一天。'], { veil: 1 });
-    stage(S, [['player', 9, 10, 'up'], ['hongying', 6, 9, 'right'], ['yungui', 7, 10, 'up'], ['tuanzi', 10, 10, 'left']]);
+    stage(S, [['player', 9, 10, 'up'], ['hongying', 6, 9, 'right'], ['yungui', 7, 10, 'up'], ['yuyuan', 10, 10, 'left']]);
     S.setPos('tp', 8, 7, 'down');
     await S.fadeIn(0.6);
     await S.say('', '雲歸對著一鍋清水煮山菜發呆。');
@@ -2660,7 +2679,7 @@
       ['', '紅纓端出一碗清煮地瓜葉與白粥。眾人戰戰兢兢地吃了一口。'],
       ['xinghe:surprise', '……能吃。'],
       ['yungui:surprise', '……能吃！'],
-      ['tuanzi:surprise', '好吃耶！'],
+      ['', '芋圓把自己那一小碗舔得乾乾淨淨。'],
       ['hongying:surprise', '真的？！'],
       ['tengpo:think', '嗯。孩子，妳的問題從來不是手藝。是調味。'],
       ['tengpo:smug', '不准放鹽、不准放糖，妳就沒機會毀掉它。'],
@@ -2670,7 +2689,7 @@
     await S.fadeOut(0.6);
     await S.narrate(['第三天。黃昏。'], { veil: 1 });
     S.light({ ambient: 0.5, color: '#2a1a30', playerR: 200 });
-    stage(S, [['player', 10, 5, 'up'], ['hongying', 3, 9, 'right'], ['yungui', 4, 11, 'up'], ['tuanzi', 5, 11, 'up']]);
+    stage(S, [['player', 10, 5, 'up'], ['hongying', 3, 9, 'right'], ['yungui', 4, 11, 'up'], ['yuyuan', 5, 11, 'up']]);
     S.setPos('tp', 11, 5, 'left');
     await S.camera(10, 4, 0.1);
     await S.fadeIn(0.8);
@@ -2696,7 +2715,7 @@
     await S.fadeOut(0.8);
     S.light({ ambient: 0.8, color: '#06060e', playerR: 90 });
     S.particles([{ type: 'embers', density: 0.9 }, { type: 'fireflies', density: 0.6 }]);
-    stage(S, [['player', 8, 10, 'up'], ['hongying', 6, 8, 'right'], ['yungui', 10, 8, 'left'], ['tuanzi', 9, 10, 'up']]);
+    stage(S, [['player', 8, 10, 'up'], ['hongying', 6, 8, 'right'], ['yungui', 10, 8, 'left'], ['yuyuan', 9, 10, 'up']]);
     S.setPos('tengpo', 8, 7, 'down');
     await S.camera(8, 8, 0.1);
     await S.fadeIn(1.2);
@@ -2817,7 +2836,7 @@
     g.addColorStop(0, 'rgba(255,220,150,0.25)'); g.addColorStop(1, 'rgba(255,200,120,0)');
     ctx.fillStyle = g; ctx.fillRect(x - 110, y - 160, 220, 220);
     ctx.restore();
-    G.Sprites.drawChar(ctx, 'tuanzi', C7.big.dir, mv > 6 ? Math.floor(t * 6) % 4 : 0, Math.round(x), Math.round(y), { scale: 2.2 });
+    G.Sprites.drawChar(ctx, 'yuyuan', C7.big.dir, mv > 6 ? Math.floor(t * 6) % 4 : 0, Math.round(x), Math.round(y), { scale: 2.2 });
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < 9; i++) {
@@ -2891,7 +2910,7 @@
     if (m._c7idle > 30) { m._c7idle = 0; G.UI.toast(U.pick(VOICE), { icon: 'vine' }); }
   }
   function enterVision(S) {
-    if (!F().tuanzi_hidden) { F().tuanzi_hidden = true; S.refresh(); }
+    if (!F().yuyuan_hidden || !F().mochi_hidden) { F().yuyuan_hidden = true; F().mochi_hidden = true; S.refresh(); }
     C7.big.ok = false;
   }
   function visionMap(d) {
@@ -3076,16 +3095,18 @@
     C7.bigFixed = [20, 23, 'up'];
     await S.wait(1.0);
     await S.lines([
-      ['', '地面上一團光滾過來，越滾越大，最後停在眾人面前——是糰子，但有一頭水牛那麼大，身上的斑點是一顆顆星星。'],
-      ['tuanzi:smile', '你們終於來啦。本大爺在這裡等好久了。'],
-      ['xinghe:surprise', '糰子？你……變好大！'],
-      ['tuanzi:think', '在這裡，本大爺就是這麼大。在外面，本大爺只是假裝很小，方便被抱。'],
-      ['yungui:surprise', '……你說話怎麼變得這麼有條理？'],
-      ['tuanzi:smug', '雲歸，本大爺一直都很有條理。只是外面的世界有太多零食。'],
+      ['', '地面上一團光滾過來，越滾越大，最後停在眾人面前——是芋圓，但有一頭水牛那麼大，身上的灰毛裡閃著一顆顆星星。'],
+      ['xinghe:surprise', '芋圓？你……變好大！'],
+      ['', '巨大的芋圓面無表情地看著他，緩緩眨了一下眼睛。'],
+      ['yungui:think', '在這裡，牠就是這麼大。在外面，牠只是假裝很小，方便被抱。'],
+      ['hongying:surprise', '……你怎麼知道？'],
+      ['yungui:smile', '我不知道。但是在這裡，我聽得見牠在想什麼。牠在想晚餐。'],
       ['', '平台中央，一隻有著雲狀大斑紋的豹子靜靜坐著。牠的身體像霧，又像夜空。'],
       ['yungui:surprise', '雲豹……這座島上的雲豹，早就……'],
-      ['tuanzi:normal', '早就沒有了。外面的人已經很久沒有看見牠們了。'],
-      ['tuanzi:normal', '但是沒有被看見，不等於沒有。被忘記的東西，會到這裡來。'],
+      ['yungui:think', '早就沒有了。外面的人已經很久沒有看見牠們了。'],
+      ['yungui:think', '但是沒有被看見，不等於沒有。被忘記的東西，會到這裡來。'],
+      ['hongying:think', '……麻糬呢？'],
+      ['yungui:normal', '她留在藤婆的火邊。她在等的人不在這裡。'],
     ]);
     C7.leo.dir = 'left';
     await S.wait(0.6);
@@ -3191,7 +3212,7 @@
       tiles: g.rows(), objects: g.objs,
       npcs: [
         { id: 'mask', sprite: 'qingfeng_mask', ghost: true, name: '鬼面', x: 22, y: 16, dir: 'left', if: (st) => !st.flags.ch7_trial_hongying, talk: async (S) => {
-          if (!S.has('ch7_hy_solved')) await S.say('tuanzi:normal', '先別過去。這裡的光是歪的。要先把月光送到正廳。');
+          if (!S.has('ch7_hy_solved')) await S.say('yungui:think', '先別過去。這裡的光是歪的。要先把月光送到正廳。');
         } },
       ],
       events: [
@@ -3204,7 +3225,7 @@
             ['hongying:serious', '沒事。我早就知道會是這裡。'],
             ['', '院子北側，正廳的祖先牌位前，站著一個戴鬼面的身影。牠一動不動。'],
             ['hongying:angry', '鬼面……！'],
-            ['tuanzi:normal', '先別過去。這裡的光是歪的。要先把月光送到正廳。'],
+            ['yungui:think', '先別過去。這裡的光是歪的。要先把月光送到正廳。'],
           ]);
           S.objective('轉動四座刀鏡槍架，把月光送進正廳');
           S.cameraFollow();
@@ -3293,8 +3314,8 @@
     await S.lines([
       ['', '紅纓拄著槍喘氣。鬼面毫髮無傷。'],
       ['hongying:hurt', '為什麼……為什麼打不到你……'],
-      ['tuanzi:normal', '（場外）紅纓。妳打的不是他。妳打的是妳自己的恨。'],
-      ['tuanzi:normal', '恨是打不死的。它只會跟著妳的槍尖一起變長。'],
+      ['yungui:serious', '（場外）洛姑娘。妳打的不是他。妳打的是妳自己的恨。'],
+      ['yungui:serious', '恨是打不死的。它只會跟著妳的槍尖一起變長。'],
     ]);
     await S.say('', '紅纓垂下槍尖。很久。');
     await S.say('hongying:sad', '……哥。');
@@ -3381,7 +3402,7 @@
             ['yungui:surprise', '……喂。這也太過分了吧。'],
             ['hongying:laugh', '噗——好可愛！'],
             ['yungui:angry', '洛姑娘，妳現在不准說話。'],
-            ['tuanzi:smile', '雲歸，你小時候比本大爺還矮。'],
+            ['', '巨大的芋圓低頭看著小小的雲歸，鬍子動了一下。看起來非常滿意。'],
             ['', '大殿深處傳來一個嚴厲的聲音。是清虛真人的聲音，但冰冷得不像他。'],
             ['幻聲・清虛', '雲歸。功課做完了嗎？'],
             ['幻聲・清虛', '又在看那些菇？不務正業。'],
@@ -3391,7 +3412,7 @@
             ['yungui:sad', '不。我師父從來沒有這樣說過我。'],
             ['yungui:sad', '這是我一直以為……他心裡在這樣想的聲音。'],
             ['', '大殿前是一片三乘三的燈陣，九盞燈有亮有暗。'],
-            ['tuanzi:normal', '九盞燈全亮，門才會開。每碰一盞，它和它旁邊的燈都會變。'],
+            ['hongying:think', '九盞燈全亮，門才會開……每碰一盞，它和它旁邊的燈都會變。'],
           ]);
           S.objective('讓九盞燈全部亮起');
           S.cameraFollow();
@@ -3466,7 +3487,7 @@
     if (after < before) { v.c7_scold = (v.c7_scold || 0) + 1; await S.say('幻聲・清虛', QX_SCOLD[(v.c7_scold - 1) % 3]); }
     if (v.c7_lamp_touches >= 15 && !S.has('ch7_yg_hint')) {
       S.flag('ch7_yg_hint');
-      await S.say('tuanzi:normal', '雲歸，你師父不是說直路不一定最近嗎？試試斜的。');
+      await S.say('hongying:normal', '雲歸，你師父不是說直路不一定最近嗎？試試斜的。');
     }
   };
   C7.ygSolved = async (S) => {
@@ -3516,9 +3537,9 @@
       ['', '記憶淡去。雲歸變回成年的樣子，站在原地，很久沒說話。'],
       ['yungui:sad', '……他說過的。我怎麼會忘了。'],
       ['yungui:smile', '我不是讓他失望。我只是……一直很怕讓他失望。'],
-      ['tuanzi:normal', '雲歸。你從來不是一個人在找他。'],
-      ['yungui:smug', '……你這隻胖石虎，在這裡講話真的很討厭。'],
-      ['', '他伸手揉糰子的頭，糰子大得他要踮腳。'],
+      ['xinghe:smile', '雲歸。你從來不是一個人在找他。'],
+      ['yungui:smug', '……星河，你在這裡講話真的很討厭。'],
+      ['', '巨大的芋圓把頭靠到雲歸肩上。雲歸伸手揉牠的頭，得踮起腳。'],
     ]);
     S.sfx('water');
     S.flash('#101830', 0.6, 0.8);
@@ -3599,7 +3620,7 @@
             ['', '海浪聲。遠處傳來一個女孩的哼唱聲。是渡魂謠的旋律。'],
             ['xinghe:surprise', '這首歌——白芷？！'],
             ['', '海面上五盞水燈靜靜漂著，各自發出不同顏色的微光。'],
-            ['tuanzi:normal', '星河。她在唱的時候，燈會回答。照她唱的順序，把燈點亮。'],
+            ['yungui:think', '星河。她在唱的時候，燈會回答。照她唱的順序，把燈點亮。'],
           ]);
           await C7.playMelody(S);
           S.objective('照著哼唱的順序，點亮海上的五盞水燈');
@@ -3895,7 +3916,7 @@
       '第二個光點：阿柑姨偷偷在他的芋圓裡多加了兩顆，眨眼。',
       '第三個：茶館裡阿炳伯拍醒木：「國姓爺一劍劈開黑水溝——」，小星河聽得張大嘴。',
       '第四個：霧林裡，紅纓一槍把他挑翻在地：「笨蛋。」然後向他伸出手。',
-      '第五個：太虛觀屋頂上，雲歸丟給他一壺米酒，糰子搶走了下酒菜。',
+      '第五個：太虛觀屋頂上，雲歸丟給他一壺米酒，芋圓搶走了下酒菜。',
       '第六個：鄒族的火邊，Voyu 的母親把最大塊的烤肉放進他碗裡。',
       '第七個：布農的火塘，祖母說：「火很小，可是大家都活下來了。」',
       '第八個：白芷第一次吃芋圓，眼睛亮起來：「星河，這是……幸福的味道嗎？」',
@@ -3910,7 +3931,7 @@
       ['', '光點一個接一個亮起，越來越多，像夜空中的星星，又像海上的水燈。'],
       ['xinghe:cry', '……這十八年，是大家給我的。'],
       ['xinghe:serious', '陳伯給了我一個家。阿柑姨給了我芋圓。紅纓給了我一個不准死的理由。'],
-      ['xinghe:serious', '雲歸給了我很多風涼話。糰子給了我很多毛。'],
+      ['xinghe:serious', '雲歸給了我很多風涼話。芋圓給了我很多毛，麻糬陪我等。'],
       ['xinghe:smile', '山上的人給了我火塘、小米，還有一隻帶著火飛過大水的小鳥。'],
       ['xinghe:serious', '我借來的光，是她的。'],
       ['xinghe:serious', '但是我自己的火——是用這十八年的每一個人點起來的！'],
@@ -3935,7 +3956,7 @@
     C7.big.ok = false;
     S.sfx('magic');
     await S.lines([
-      ['', '黑暗如潮水退去。紅纓與雲歸從光中衝出，站在他兩側；巨大的糰子躍到他身後。'],
+      ['', '黑暗如潮水退去。紅纓與雲歸從光中衝出，站在他兩側；巨大的芋圓躍到他身後。'],
       ['hongying:smile', '喂，笨蛋。打架怎麼可以不叫我？'],
       ['yungui:smug', '我們在外面看了很久。台詞說得不錯，就是長了點。'],
       ['xinghe:laugh', '哈！……那就速戰速決！'],
@@ -3988,12 +4009,12 @@
 
   // 7-11 天亮
   C7.scene711 = async (S) => {
-    delete F().tuanzi_hidden;
+    delete F().yuyuan_hidden; delete F().mochi_hidden;
     S.refresh();
     C7.leo = { x: 14, y: 8, a: 0, dir: 'left' };
     S.light({ ambient: 0.1, color: '#20302a' });
     S.particles([{ type: 'mist', density: 0.8 }, { type: 'fireflies', density: 0.3 }]);
-    stage(S, [['player', 8, 10, 'up'], ['hongying', 6, 9, 'right'], ['yungui', 10, 9, 'left'], ['tuanzi', 9, 11, 'up']]);
+    stage(S, [['player', 8, 10, 'up'], ['hongying', 6, 9, 'right'], ['yungui', 10, 9, 'left'], ['yuyuan', 9, 11, 'up']]);
     S.setPos('tengpo', 8, 7, 'down');
     await S.camera(8, 8, 0.1);
     S.bgm('forest');
@@ -4020,7 +4041,7 @@
       ['xinghe:serious', '會不一樣的。'],
       ['tengpo:smug', '每個傻孩子都這樣說。'],
       ['xinghe:smile', '但是這次的傻孩子，有幫手。'],
-      ['', '紅纓、雲歸、糰子一起看向他。'],
+      ['', '紅纓、雲歸、芋圓和麻糬一起看向他。'],
       ['tengpo:laugh', '哈哈哈！好，好。這個回答我沒聽過。'],
       ['', '藤婆起身，從屋裡拿出一個用夢藤細枝編成的小結，放到星河手裡。'],
       ['tengpo:normal', '帶著。這不是護身符，只是一個提醒：你走進去過，也走出來了。'],
@@ -4029,10 +4050,10 @@
     await S.give('c7_ac_tengxin', 1);
     await S.give('c7_yunwu', 3);
     await S.lines([
-      ['tuanzi:think', '婆婆……本大爺在夢裡變得好大好聰明。現在又變回來了。'],
-      ['tengpo:smile', '小東西，你在外面也很聰明，只是比較愛吃。'],
-      ['tuanzi:smile', '……那本大爺可以兩個都要嗎？'],
-      ['tengpo:smile', '可以。這座島上的事，很多都是兩個都要的。'],
+      ['', '芋圓蹭著藤婆的腳。在夢裡牠有水牛那麼大，現在又變回一顆胖胖的毛球。'],
+      ['tengpo:smile', '小東西，你在夢裡很大，在外面也不小。只是比較愛吃。'],
+      ['', '麻糬陪藤婆顧了一整夜的火。現在牠走過來，用頭頂了頂星河的手掌，又回頭望向西邊。'],
+      ['tengpo:smile', '花的那隻很會等。等人的貓，比誰都知道路怎麼走回去。'],
     ]);
     await G.Tweens.to(C7.leo, { a: 0.7 }, 1.2, 'linear');
     S.face('player', 'right');
@@ -4115,8 +4136,9 @@
         { id: 'thao_kid', sprite: 'child_m', name: '邵族的孩子', x: 21, y: 20, dir: 'up', wander: 2, talk: async (S) => {
           await S.say('邵族的孩子', '我阿公說，Lalu 上面住著祖先。我們不能隨便去吵他們。');
           await S.say('邵族的孩子', '你們的貓會游泳嗎？');
-          await S.say('tuanzi:smug', '本大爺是石虎，石虎會游泳！');
-          if (S.has('ch7_white_deer')) await S.say('tuanzi:sad', '……但本大爺不會往那個島游。本大爺懂規矩。');
+          S.emote('yuyuan', '!');
+          await S.say('', '芋圓往後退了三步。');
+          if (S.has('ch7_white_deer')) await S.say('xinghe:smile', '牠不會往那個島游的。我們都不會。');
         } },
         { id: 'acai', sprite: 'boatman', name: '阿財', x: 43, y: 18, dir: 'down', talk: async (S) => {
           if (S.has('ch7_mother_voice')) await S.say('阿財', '聽說你們從霧裡走回來？夭壽喔……要不要買點壓驚的？');
@@ -4207,7 +4229,7 @@
     S.quest('q_ch7_main', 6);
     C7.leoLake = true;
     C7.leo = { x: 46, y: 31, a: 0.8, dir: 'left' };
-    stage(S, [['player', 45, 33, 'left'], ['hongying', 46, 33, 'left'], ['yungui', 46, 32, 'left'], ['tuanzi', 47, 33, 'left']]);
+    stage(S, [['player', 45, 33, 'left'], ['hongying', 46, 33, 'left'], ['yungui', 46, 32, 'left'], ['yuyuan', 47, 33, 'left']]);
     await S.camera(36, 22, 1.0);
     S.bgm('lake');
     await S.lines([
@@ -4225,7 +4247,7 @@
       ['', '湖岸邊，一位邵族的老人正在收拾漁網，抬頭看見他們。'],
       ['邵族長老', '外地人？從山上下來的？'],
       ['邵族長老', '你們後面……剛才是不是有一隻很大的貓？'],
-      ['tuanzi:smug', '本大爺就在這裡！'],
+      ['', '芋圓挺起胸膛。'],
       ['邵族長老', '不是你，胖的。是一隻有花紋的、很大的。'],
       ['xinghe:serious', '牠帶我們來的。我們在找一座……在霧裡的祠堂。'],
       ['邵族長老', '…………'],
@@ -4236,7 +4258,7 @@
     S.remove('elder_cs');
     S.refresh();
     S.light({ ambient: 0.45, color: '#3a1a30' });
-    stage(S, [['player', 8, 28, 'up'], ['hongying', 7, 28, 'right'], ['yungui', 9, 28, 'left'], ['tuanzi', 7, 27, 'right']]);
+    stage(S, [['player', 8, 28, 'up'], ['hongying', 7, 28, 'right'], ['yungui', 9, 28, 'left'], ['yuyuan', 7, 27, 'right']]);
     S.setPos('thao_elder', 9, 26, 'down');
     await S.camera(8, 26, 0.1);
     await S.fadeIn(0.8);
@@ -4256,11 +4278,10 @@
       ['', '眾人笑。長老望向湖心的小島。'],
       ['邵族長老', '那座島，叫 Lalu。那是我們祖靈在的地方。'],
       ['邵族長老', '我們自己，也不隨便上去。'],
-      ['', '糰子盯著湖心的島，口水滴下來。'],
-      ['tuanzi:think', '島旁邊……好多魚在跳……本大爺游過去一下下——'],
-      ['', '紅纓一把拎住糰子的後頸。'],
+      ['', '芋圓盯著湖心的島。島邊有好多魚在跳，牠的尾巴開始左右甩動。'],
+      ['', '紅纓一把把芋圓抱起來。'],
       ['hongying:serious', '不行。那是人家祖先住的地方。'],
-      ['tuanzi:sad', '……喵。'],
+      ['', '芋圓在她懷裡發出一聲很小的「喵」。'],
       ['xinghe:serious', '長老，您放心。我們不會去 Lalu。'],
       ['邵族長老', '…………謝謝。'],
       ['邵族長老', '很多外地人來，看到島就想划過去。你們是第一批自己說不去的。'],
@@ -4273,7 +4294,7 @@
     await S.fadeOut(0.8);
     S.light({ ambient: 0.62, color: '#0a1030', playerR: 200 });
     S.particles([{ type: 'mist', density: 1.2 }, { type: 'fireflies', density: 0.8 }, { type: 'motes', density: 0.4 }]);
-    stage(S, [['player', 12, 24, 'up'], ['hongying', 11, 24, 'up'], ['yungui', 14, 24, 'up'], ['tuanzi', 13, 24, 'up']]);
+    stage(S, [['player', 12, 24, 'up'], ['hongying', 11, 24, 'up'], ['yungui', 14, 24, 'up'], ['yuyuan', 13, 24, 'up']]);
     S.setPos('thao_elder', 15, 23, 'left');
     S.show('thao_w1', false); S.show('thao_w2', false);
     const W = [['pw1', 11, 21, 'right'], ['pw2', 14, 21, 'left'], ['pw3', 12, 22, 'up'], ['pw4', 13, 19, 'down']];
@@ -4293,7 +4314,7 @@
     await S.say('', '木杵的聲音在湖面上傳開，月光在水面上碎成一片。湖霧緩緩從水面升起。');
     for (let k = 0; k < 3; k++) { for (const [id] of W) S.jump(id, 10); await S.wait(0.6); }
     await S.say('', '那聲音很樸素，就像是誰家在準備明天的飯。可是在湖上聽起來，就像湖自己的心跳。');
-    await S.say('', '眾人安靜地聽。糰子把下巴擱在前爪上，耳朵跟著節奏一動一動。');
+    await S.say('', '眾人安靜地聽。芋圓把下巴擱在前爪上，耳朵跟著節奏一動一動。麻糬望著湖面，一動也不動。');
     await S.lines([
       ['xinghe:think', '（小聲）……跟布農的那一晚不一樣，可是又有點像。'],
       ['yungui:normal', '（小聲）嗯。都是過日子的聲音。過了很久很久的日子。'],
@@ -4335,8 +4356,8 @@
     C7.leo.walk = false;
     S.hideFollowers(false);
     S.gather();
-    stage(S, [['hongying', 5, 24, 'up'], ['yungui', 6, 24, 'up'], ['tuanzi', 5, 23, 'up']]);
-    await S.say('', '紅纓、雲歸、糰子也跟出來了。');
+    stage(S, [['hongying', 5, 24, 'up'], ['yungui', 6, 24, 'up'], ['yuyuan', 5, 23, 'up'], ['mochi', 6, 23, 'up']]);
+    await S.say('', '紅纓、雲歸、芋圓和麻糬也跟出來了。');
     await S.say('hongying:surprise', '……路。霧變成路了。');
     spawn(S, { id: 'elder_n', sprite: 'thao_elder', x: 5, y: 25, dir: 'up', name: '邵族長老' });
     await S.lines([
@@ -4762,7 +4783,7 @@
 
   // 7-15 師父 + 7-16 燈母之聲 + 7-17 魚粥（章末）
   C7.scene715 = async (S) => {
-    stage(S, [['player', 11, 15, 'up'], ['hongying', 10, 16, 'up'], ['yungui', 12, 15, 'up'], ['tuanzi', 11, 16, 'up']]);
+    stage(S, [['player', 11, 15, 'up'], ['hongying', 10, 16, 'up'], ['yungui', 12, 15, 'up'], ['yuyuan', 11, 16, 'up']]);
     await S.camera(11, 10, 0.8);
     await S.lines([
       ['', '巨門開啟。圓形大殿中央，一座巨大的燈座，是熄的。燈座前，一個道人盤膝而坐，低著頭，鬚髮皆白。'],
@@ -4800,7 +4821,7 @@
     S.flash('#ffffff', 0.6, 0.8);
     await S.say('', '冥燈印碎裂。藍黑色的火焰尖叫著熄滅，黑色的絲線一根根斷開，化為黑水，滲入地面。');
     S.flag('ch7_qingxu_freed');
-    stage(S, [['player', 10, 11, 'up'], ['hongying', 13, 12, 'left'], ['yungui', 11, 10, 'up'], ['tuanzi', 9, 12, 'up']]);
+    stage(S, [['player', 10, 11, 'up'], ['hongying', 13, 12, 'left'], ['yungui', 11, 10, 'up'], ['yuyuan', 9, 12, 'up']]);
     S.setPos('qingxu', 11, 9, 'down');
     S.light({ ambient: 0.6, color: '#0a0c1a', playerR: 200 });
     S.bgm('sad');
@@ -4842,12 +4863,12 @@
     await S.fadeActor('qingxu', 0, 1.5);
     S.remove('qingxu');
     await S.wait(1.5);
-    await S.move('tuanzi', 'RU');
+    await S.move('yuyuan', 'RU');
     await S.lines([
-      ['', '糰子走過去，用頭輕輕頂了頂雲歸的手。雲歸一把抱住糰子，把臉埋進牠的毛裡。'],
+      ['', '芋圓走過去，用頭輕輕頂了頂雲歸的手。雲歸一把抱住芋圓，把臉埋進牠的毛裡。'],
       ['yungui:cry', '……………………'],
       ['', '紅纓轉過身，背對他們，站得筆直。星河走過去，站在雲歸旁邊，什麼也沒說。'],
-      ['tuanzi:cry', '（很小聲）雲歸……本大爺的毛……給你擦……'],
+      ['', '麻糬走過來，在雲歸腳邊坐下，把尾巴輕輕搭在他的鞋上。'],
       ['yungui:cry', '……全是貓毛。笨蛋。'],
     ]);
     S.flag('ch7_taixu');
@@ -4905,7 +4926,7 @@
   C7.scene717 = async (S) => {
     S.light({ ambient: 0.15, color: '#3a2a40' });
     S.particles([{ type: 'mist', density: 0.6 }, { type: 'motes', density: 0.4 }]);
-    stage(S, [['player', 9, 21, 'down'], ['hongying', 8, 21, 'down'], ['yungui', 10, 21, 'down'], ['tuanzi', 9, 20, 'down']]);
+    stage(S, [['player', 9, 21, 'down'], ['hongying', 8, 21, 'down'], ['yungui', 10, 21, 'down'], ['yuyuan', 9, 20, 'down']]);
     S.setPos('thao_elder', 9, 23, 'up');
     await S.camera(9, 22, 0.1);
     S.bgm('lake');
@@ -4921,7 +4942,7 @@
       ['yungui:sad', '…………謝謝。'],
     ]);
     await S.fadeOut(0.8);
-    stage(S, [['player', 9, 21, 'down'], ['hongying', 8, 22, 'right'], ['yungui', 10, 22, 'left'], ['tuanzi', 9, 22, 'up']]);
+    stage(S, [['player', 9, 21, 'down'], ['hongying', 8, 22, 'right'], ['yungui', 10, 22, 'left'], ['yuyuan', 9, 22, 'up']]);
     await S.fadeIn(0.8);
     await S.lines([
       ['', '眾人圍坐吃粥。'],
@@ -4938,6 +4959,7 @@
     S.face('player', 'up');
     S.sfx('fire');
     await S.lines([
+      ['', '麻糬走到水邊，望著西邊。那是海的方向。脖子上的紅繩在晨風裡輕輕晃。'],
       ['', '星河站起身，攤開手掌。一團穩定的心火在掌心燃燒。'],
       ['xinghe:smile', '白芷。妳再等一下。'],
       ['xinghe:smile', '這一次，妳不會一個人發光了。'],

@@ -105,8 +105,10 @@ class Session {
     });
     await this.page.goto(BASE + query);
     await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: 300000 });
-    if (waitMap) await this.until('G.mapScene && G.mapScene.def && G.Scenes.top() === G.mapScene', 120);
+    if (waitMap) { await this.until('G.mapScene && G.mapScene.def && G.Scenes.top() === G.mapScene', 120); await this.pets(); }
   }
+  // the silent pets 芋圓 & 麻糬 have followed since chapter 1
+  async pets() { await this.ev(() => { G.state.flags.mochi_joined = true; G.state.flags.yuyuan_joined = true; if (G.mapScene) G.mapScene.refresh(); }); }
   ev(fn, arg) { return this.page.evaluate(fn, arg); }
   ff(sec) { return this.page.evaluate((s) => __qa.ff(s), sec); }
   async until(cond, maxSec = 120, step = 0.5) {
@@ -168,6 +170,7 @@ const test = (id, name, fn) => tests.push({ id, name, fn });
 test('main', '主線：startch=6 → 鹽水 → 蜂炮夜 → 府城 → 做十六歲 → 林投姐 → 潛行 → 萬燈閣 → 夜玄 → 第七章', async (s) => {
   await s.open('?debug&qa2d&startch=6', false);
   await s.until('G.mapScene && G.mapScene.def', 120);
+  await s.pets();
   await s.gear();
   await s.idle(120);
   assert(await s.map() === 'yanshui', 'intro ends in 鹽水 (map ' + await s.map() + ')');
@@ -265,7 +268,7 @@ test('ayi', '支線：轎夫阿義與母親（心燈 lantern_yanshui）', async 
   assert((await s.flags('ch6_yanshui_done'))[0] && await s.ev(() => G.Lanterns.has('lantern_yanshui') && G.state.inv.c6_wumiao_charm === 1 && G.Quests.isDone('q_yanshui_mother')), 'step 3 → 心燈');
 });
 
-test('mush', '支線：糰子的蕈譜・潮音蕈', async (s) => {
+test('mush', '支線：雲歸的蕈譜・潮音蕈', async (s) => {
   await s.open('?debug&qa2d&map=linto&lv=21&chapter=6&flags=ch6_linto_in,mush_1');
   await s.ev(() => { G.mapScene.enemies = []; G.Script.S.vision(30); });
   await s.step(22, 21);
@@ -284,7 +287,7 @@ test('yuelao', '3-8 大天后宮・月老（笑筊）', async (s) => {
   assert((await s.flags('ch6_yuelao'))[0] && await s.ev(() => G.state.inv.c6_red_thread === 1), '月老紅線');
 });
 
-test('stealth', '潛行規則：光暗視野、量表、大甕、糰子、煙火、傀儡定身、被抓 → 檢查點', async (s) => {
+test('stealth', '潛行規則：光暗視野、量表、大甕、芋圓搗蛋、煙火、傀儡定身、被抓 → 檢查點', async (s) => {
   await s.open('?debug&qa2d&map=palace_dock&lv=22&chapter=6&flags=ch6_s1_tut,ch6_infiltrate');
   await s.gear();
   await s.ff(0.5);
@@ -300,10 +303,10 @@ test('stealth', '潛行規則：光暗視野、量表、大甕、糰子、煙火
   assert(await s.ev(() => G.mapScene.c6.mask > 0), 'fireworks mask noise');
   await s.ev(() => { G.mapScene.c6.mask = 0; G.mapScene.c6.fw = 30; G.mapScene.player.setCell(4, 12); G.mapScene.player.visible = true; });
   await s.ff(0.2);
-  // 糰子 (F): runs ahead and makes noise near guard g1
+  // 芋圓 (F): runs ahead and makes noise near guard g1
   await s.ev(() => { const m = G.mapScene; const g = m.npcs.find((n) => n.id === 'g1'); g.setCell(8, 12); g.scripted = true; m.player.setCell(5, 12); m.player.dir = 'right'; G.Input._press('auto'); });
   await s.ff(1.5);
-  assert(await s.ev(() => { const g = G.mapScene.npcs.find((n) => n.id === 'g1'); return g.c6.mode === 'suspect' || g.c6.mode === 'return'; }), '糰子 noise makes the guard suspicious');
+  assert(await s.ev(() => { const g = G.mapScene.npcs.find((n) => n.id === 'g1'); return g.c6.mode === 'suspect' || g.c6.mode === 'return'; }), '芋圓 noise makes the guard suspicious');
   // light vs dark view length
   assert(await s.ev(() => { const m = G.mapScene; m.player.setCell(9, 10); m.update(0.016); const g = m.npcs.find((n) => n.id === 'g2'); return g.def.view === 5; }), 'lit → view 5');
   assert(await s.ev(() => { const m = G.mapScene; m.player.setCell(26, 16); m.update(0.016); const g = m.npcs.find((n) => n.id === 'g2'); return g.def.view === 3; }), 'dark → view 3');

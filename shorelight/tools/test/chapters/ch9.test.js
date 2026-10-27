@@ -165,6 +165,8 @@ async function partA(browser) {
   // ---- side quest: 半屏山湯圓 ----
   await talk('qh_xiu');
   check('半屏山 quest opens (ch9_banping_open)', await flag('ch9_banping_open'));
+  await choices(['住宿']);
+  await talk('qh_inn');
   await choices(['到哨船頭']);
   await talk('qh_boatman');
   await expectMap('banping_foot', 'ferry to 半屏山下');
@@ -387,7 +389,7 @@ async function partA(browser) {
 async function partB(browser) {
   console.log('\n== Part B: alternative branches ==');
   // greedy treasure room in 半屏山腹
-  await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=banping_cave&x=31&y=12&lv=31&party=xinghe,hongying,yungui&chapter=9&flags=ch9_banping_open,ch9_banping_cave_open');
+  await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=banping_cave&x=31&y=12&lv=31&party=xinghe,hongying,yungui&chapter=9&flags=mochi_joined,yuyuan_joined,ch9_banping_open,ch9_banping_cave_open');
   await trigger('bpc_e0');
   check('east room: took 金縷頭巾', (await count('c9_hd_jinlv')) === 1);
   await choices(['打開']);
@@ -404,7 +406,7 @@ async function partB(browser) {
 
   // partial 思想起 → collect the last names later → second wall scene gives the 心燈
   await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=hengchun&x=24&y=30&lv=33&party=xinghe,hongying,yungui&chapter=9' +
-    '&flags=ch9_cape_blocked,ch9_hengchun_arrive,ch9_ashun_met,ch9_names_quest,ch9_fallwind_defeated,ch9_name_1,ch9_name_2,ch9_name_3,ch9_name_4');
+    '&flags=mochi_joined,yuyuan_joined,ch9_cape_blocked,ch9_hengchun_arrive,ch9_ashun_met,ch9_names_quest,ch9_fallwind_defeated,ch9_name_1,ch9_name_2,ch9_name_3,ch9_name_4');
   await stepOn(42, 4);
   check('C9-13 with 4 names: no 心燈 yet, chapter part done', (await flag('ch9_hengchun_done')) && !(await lantern('xd_yueqin_names')));
   check('歌詞殘篇 is still obtained', await flag('ch9_lyric_hengchun'));
@@ -421,7 +423,7 @@ async function partB(browser) {
 
   // lighthouse logs delivered after the bow lamp is lit
   await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=lighthouse_top&x=2&y=7&lv=34&party=xinghe,hongying,yungui&chapter=9' +
-    '&flags=ch9_keeper_met,ch9_cave_cleared,ch9_lighthouse_flame,ch9_log_1,ch9_log_2,ch9_log_3');
+    '&flags=mochi_joined,yuyuan_joined,ch9_keeper_met,ch9_cave_cleared,ch9_lighthouse_flame,ch9_log_1,ch9_log_2,ch9_log_3');
   await ev(() => { G.Inv.add('c9_key_log', 3); });
   await choices(['接你的班']);
   await talk('lt_tom');
@@ -431,7 +433,7 @@ async function partB(browser) {
 
   // 王船 hub: sailing between ports, disembark, board
   await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=wangboat_deck&x=10&y=7&lv=33&party=xinghe,hongying,yungui&chapter=9' +
-    '&flags=ch9_wangboat_launch,ch9_cape_blocked,ch9_hengchun_done,ch9_qihou_night_done,ch9_donggang_arrive,ch9_jiaobei_done,ch9_shipyard_clear');
+    '&flags=mochi_joined,yuyuan_joined,ch9_wangboat_launch,ch9_cape_blocked,ch9_hengchun_done,ch9_qihou_night_done,ch9_donggang_arrive,ch9_jiaobei_done,ch9_shipyard_clear');
   await ev(() => { G.state.vars.ch9_port = 'nanwan'; });
   await choices(['旗後']);
   await talk('chenbo');
@@ -457,7 +459,7 @@ async function sweep(browser) {
   console.log('\n== Map sweep (load every chapter 9 map) ==');
   const maps = ['qihou', 'qihou_temple', 'banping_foot', 'banping_cave', 'donggang', 'donglong_hall', 'wangchuan_yard', 'wangboat_deck', 'hengchun', 'hengchun_wall', 'longpan', 'eluanbi', 'lighthouse_in', 'lighthouse_top', 'longkeng_caves'];
   for (const m of maps) {
-    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&autoplay=1&map=${m}&lv=32&party=xinghe,hongying,yungui&chapter=9&flags=ch9_qihou_arrive,ch9_qihou_temple,ch9_donggang_arrive,ch9_shipyard_enter,ch9_cape_blocked,ch9_hengchun_arrive,ch9_keeper_met`);
+    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&autoplay=1&map=${m}&lv=32&party=xinghe,hongying,yungui&chapter=9&flags=mochi_joined,yuyuan_joined,ch9_qihou_arrive,ch9_qihou_temple,ch9_donggang_arrive,ch9_shipyard_enter,ch9_cape_blocked,ch9_hengchun_arrive,ch9_keeper_met`);
     await page.waitForTimeout(1200);
     const ok = await ev((id) => G.mapScene && G.mapScene.def.id === id && !G.lastError, m);
     check(`map ${m} loads and renders`, ok);
@@ -471,7 +473,7 @@ async function sweep3d(browser) {
   console.log('\n== 3D sweep (?r3lite) ==');
   const maps = [['qihou', 24, 18], ['banping_cave', 20, 3, 'ch9_bp_gate'], ['donggang', 23, 10], ['wangchuan_yard', 20, 17], ['wangboat_deck', 12, 6], ['hengchun', 24, 20], ['longpan', 23, 9], ['eluanbi', 20, 14], ['longkeng_caves', 21, 13]];
   for (const [m, x, y, fl] of maps) {
-    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&r3lite&autoplay=1&map=${m}&x=${x}&y=${y}&lv=32&party=xinghe,hongying,yungui&chapter=9&flags=ch9_qihou_arrive,ch9_qihou_temple,ch9_donggang_arrive,ch9_shipyard_enter,ch9_cape_blocked,ch9_hengchun_arrive,ch9_keeper_met${fl ? ',' + fl : ''}`, null, true);
+    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&r3lite&autoplay=1&map=${m}&x=${x}&y=${y}&lv=32&party=xinghe,hongying,yungui&chapter=9&flags=mochi_joined,yuyuan_joined,ch9_qihou_arrive,ch9_qihou_temple,ch9_donggang_arrive,ch9_shipyard_enter,ch9_cape_blocked,ch9_hengchun_arrive,ch9_keeper_met${fl ? ',' + fl : ''}`, null, true);
     await page.waitForTimeout(4000);
     const ok = await ev((id) => G.mapScene && G.mapScene.def.id === id && !G.lastError, m);
     check(`3D: map ${m} builds and renders`, ok, await lastError());

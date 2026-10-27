@@ -118,6 +118,8 @@ async function openPage(browser, query) {
     window.addEventListener('error', (e) => window.__c4.winerr.push({ msg: String(e.message), file: String(e.filename || ''), done: done(), loading: loading() }));
     window.addEventListener('unhandledrejection', (e) => window.__c4.winerr.push({ msg: 'unhandledrejection: ' + String(e.reason && e.reason.stack || e.reason), file: '', done: done() }));
   });
+  // 3D renderer off unless --3d (as the lead asked: localStorage settings, or ?r3lite with --3d)
+  if (!R3D) await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
   await page.goto('file://' + path.join(ROOT, 'index.html') + query + (R3D ? '&r3lite' : ''));
   await page.waitForFunction(() => window.G && G.Debug && G.Debug.setAutoplay, null, { timeout: 30000 });
   await ev((r3d) => { G.Debug.setAutoplay(true); G.settings.lang = 'zh'; if (!r3d) G.settings.render3d = false; }, R3D);
@@ -149,13 +151,14 @@ async function problems() {
 async function mainPath(browser) {
   section = '[main]';
   console.log('\n== critical path ==');
-  await openPage(browser, '?debug&startch=4');
+  await openPage(browser, '?debug&startch=4&flags=mochi_joined,yuyuan_joined');
   await page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'zhuqian_coast' && G.state.flags.ch4_start, null, { timeout: 90000 });
   await idle();
   // 4-01
   check('chapter set to 4', (await ev(() => G.state.chapter)) === 4);
   check('party 星河 白芷 紅纓 雲歸', (await ev(() => G.state.party.slice(0, 4).join(','))) === 'xinghe,baizhi,hongying,yungui');
-  check('糰子 follows', await ev(() => G.mapScene.followers.some((f) => f.id === 'tuanzi')));
+  check('cats 麻糬 & 芋圓 follow', await ev(() => ['mochi', 'yuyuan'].every((id) => G.mapScene.followers.some((f) => f.id === id))));
+  check('no 糰子 anywhere', await ev(() => !G.mapScene.followers.some((f) => f.id === 'tuanzi')));
   check('levels ≥ 13', await ev(() => G.Party.active().every((m) => m.lv >= 13)));
   check('4-01 done (ch4_arrive_zhuqian, ch4_mifen_met)', (await flag('ch4_arrive_zhuqian')) && (await flag('ch4_mifen_met')));
   check('米粉湯 ×2', (await count('mifentang')) >= 2);
@@ -283,7 +286,7 @@ async function mainPath(browser) {
   check('boundary pushes you back onto the guest slope', (await pos())[1] < 24);
   await stepOn(39, 21);
   check('boundary (east) pushes you back', (await pos())[0] < 39);
-  for (const id of ['fc_hy', 'fc_yg', 'fc_tz', 'fc_bz', 'acheng_f', 'afu_f', 'atao_f']) await talk(id);
+  for (const id of ['fc_hy', 'fc_yg', 'fc_yy', 'fc_mc', 'fc_bz', 'acheng_f', 'afu_f', 'atao_f']) await talk(id);
   await talk('xia_f');
   check('ch4_pastaay_witnessed', await flag('ch4_pastaay_witnessed'));
   const after = await ev(() => ({ battles: G.state.battles, inv: JSON.stringify(G.state.inv), gold: G.state.gold, lanterns: G.Lanterns.count(), exp: G.Party.active().map((m) => m.exp + ':' + m.lv).join(',') }));
@@ -418,7 +421,7 @@ async function mainPath(browser) {
 async function sides(browser) {
   section = '[side]';
   console.log('\n== side quests & 心燈 ==');
-  await openPage(browser, '?debug&startch=4');
+  await openPage(browser, '?debug&startch=4&flags=mochi_joined,yuyuan_joined');
   await page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'zhuqian_coast' && G.state.flags.ch4_start, null, { timeout: 90000 });
   await idle();
   await levelTo(15);
@@ -479,7 +482,7 @@ async function sides(browser) {
   await talk('afu');
   check('S5 honest win → 花布頭巾', (await flag('ch4_shange_yungui_win')) && (await count('hd_huabu')) >= 1);
   check('q_shange_yungui done', await ev(() => G.Quests.isDone('q_shange_yungui')));
-  check('糰子 back with the party', await ev(() => !G.state.flags.tuanzi_hidden && G.mapScene.followers.some((f) => f.id === 'tuanzi')));
+  check('芋圓 back with the party after hiding in the hay', await ev(() => !G.state.flags.yuyuan_hidden && G.mapScene.followers.some((f) => f.id === 'yuyuan')));
   await talk('afu');
   check('S5 only once per rest', (await flag('ch4_s5_tried')));
   await stepOn(23, 11);

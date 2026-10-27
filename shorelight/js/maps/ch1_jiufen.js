@@ -571,7 +571,8 @@
       const foes = b.alive('enemy');
       const king = foes.find((x) => x.id === 'c1_ghost_king') || foes[0];
       if (u.gauge >= 100) return Promise.resolve({ kind: 'ultimate', skill: 'c1_u_chenbo', targets: foes });
-      if (u.hp < u.mhp * 0.25) return Promise.resolve({ kind: 'defend' });
+      // he guards when badly hurt, but never while he is the last one standing (he cannot fall, so that would stall)
+      if (u.hp < u.mhp * 0.25 && b.alive('party').length > 1 && Math.random() < 0.5) return Promise.resolve({ kind: 'defend' });
       const grabbed = b.party.find((p) => !p.dead && p.st.stun && p.c1grabBy && !p.c1grabBy.dead);
       if (grabbed) { b.say('陳伯：「放開！」', 1.2); return Promise.resolve({ kind: 'skill', skill: 'c1_cb_du', targets: [grabbed.c1grabBy] }); }
       if (u.c1n % 3 === 0) { b.say('陳伯：「黑水茫茫，莫再回頭！」', 1.6); return Promise.resolve({ kind: 'skill', skill: 'c1_cb_du', targets: [king] }); }

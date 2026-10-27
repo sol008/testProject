@@ -148,6 +148,15 @@ async function mainPath(A) {
   assert((await A.vars()).days_to_gate === 85, 'days 85');
   const party = await A.ev(() => G.state.party.slice());
   assert(party.join() === 'xinghe,hongying,yungui', 'party is 星河/紅纓/雲歸: ' + party);
+  assert((await A.ev(() => G.mapScene.followers.map((f) => f.id).join())).includes('yuyuan'), '芋圓 follows');
+  // The in-game auto-battle AI is much weaker than a player (and than tools/sim_battle.js): random encounters are
+  // skipped here, so give the party the chapter-end level and the chapter's shop gear before the story bosses.
+  await A.ev(() => {
+    for (const id of G.state.party) G.Story.ensureLevel(id, 40);
+    const g = { xinghe: 'c10_sw_lanyang', hongying: 'c10_sp_huilan', yungui: 'c10_fn_haishen' };
+    for (const id in g) Object.assign(G.state.members[id].equip, { weapon: g[id], armor: 'c10_ar_jiaosi', head: 'c10_hd_jiaosi', feet: 'c10_ft_jiaosi' });
+    G.Party.healAll();
+  });
   await A.shot('01_deck');
 
   // ---- 蘭嶼
@@ -156,7 +165,7 @@ async function mainPath(A) {
   assert(await A.flag('ch10_orchid_arrive'), 'C10-02 done');
   assert((await A.vars()).days_to_gate === 82, 'days 82');
   await A.shot('02_orchid');
-  await A.talk('tao_sinan', ['抓住糰子']);
+  await A.talk('tao_sinan', ['抓住芋圓']);
   assert(await A.flag('ch10_orchid_rules') && await A.flag('ch10_reef_open'), 'C10-03 done');
   await A.talk('tao_sinan');  // daily line after the rules
   await A.talk('tao_syapen'); await A.talk('tao_neighbor');
@@ -299,7 +308,7 @@ async function mainPath(A) {
 }
 
 // ------------------------------------------------------------------ mechanics in isolation
-const MAPQ = (map, x, y, flags = '') => `?debug&map=${map}&x=${x}&y=${y}&lv=36&party=xinghe,hongying,yungui&chapter=10&flags=${flags}`;
+const MAPQ = (map, x, y, flags = '') => `?debug&map=${map}&x=${x}&y=${y}&lv=36&party=xinghe,hongying,yungui&chapter=10&flags=yuyuan_joined,mochi_joined${flags ? ',' + flags : ''}`;
 
 async function boundary(A) {
   await A.open(MAPQ('orchid_shore', 15, 10, 'ch10_orchid_arrive'));

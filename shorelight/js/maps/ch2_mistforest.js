@@ -1004,7 +1004,7 @@
     // laughter as coloured ripples
     for (const r of fx.ripples) {
       const age = t - r.t0;
-      if (age > 3) continue;
+      if (age < 0 || age > 3) continue;
       ctx.strokeStyle = U.rgba(HUES[r.c % 7], Math.max(0, 0.6 * (1 - age / 3)) * k);
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.ellipse(r.x, r.y, 30 + age * 160, (30 + age * 160) * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
@@ -1017,7 +1017,7 @@
     }
     ctx.restore();
     // canopy kaleidoscope (screen space, gentle; scaled by the photosensitivity setting)
-    if (fx.kaleido > 0 && k > 0.05) {
+    if (fx.kaleido > 0 && k > 0.05 && !ms.view3d) {   // screen-space: 2D renderer only
       ctx.save();
       ctx.setTransform(G.S, 0, 0, G.S, 0, 0);
       ctx.globalCompositeOperation = 'screen';
@@ -1095,8 +1095,8 @@
     await S.say('baizhi:smile', '那我們先坐下來。等你的心靜下來。');
     // sit by the pond on the old log
     S.hideFollowers(false);
-    await S.move('player', 'LD');
-    await fmove(S, 'baizhi', 'LLLD');
+    await S.move('player', 'L');
+    await fmove(S, 'baizhi', 'LLL');
     for (const f of ms.followers) if (f.id !== 'baizhi') { f.setCell(16, 8); f.dir = 'down'; }
     S.face('player', 'down'); S.face('baizhi', 'down');
     await S.say('', '（兩人在池邊的倒木旁坐下。只有蟲鳴，和蕈菇呼吸的光。）');
@@ -2068,7 +2068,7 @@
   }
   function drawSkyExtras(ctx, t, ms) {
     const sky = ms.c2sky;
-    if (!sky.far.length) return;
+    if (!sky.far.length || ms.view3d) return;   // screen-space: 2D renderer only
     ctx.save();
     ctx.setTransform(G.S, 0, 0, G.S, 0, 0);
     for (const f of sky.far) {

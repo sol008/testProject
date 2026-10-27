@@ -69,9 +69,10 @@ class Session {
       else if (m.type() === 'warning' && ART_WARN.test(t)) this.errors.push('warning: ' + t.slice(0, 300));
     });
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 800)));
+    await this.ctx.addInitScript(() => { try { localStorage.clear(); localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false })); } catch (e) { /* file:// */ } });
     await this.page.goto(BASE + query);
     await this.page.waitForFunction(() => window.G && G.Debug && G.Scenes, null, { timeout: 30000 });
-    await this.ev(() => { G.Debug.setAutoplay(true); localStorage.clear(); });
+    await this.ev(() => { G.Debug.setAutoplay(true); });
   }
   ev(fn, arg) { return this.page.evaluate(fn, arg); }
   ff(sec) { return this.page.evaluate((s) => __qa.ff(s), sec); }
@@ -213,7 +214,7 @@ test('main', 'critical path: startch=8 → G.Story.next(9)', async (s) => {
 
 // ------------------------------------------------------------------------------------------ tide system & failure branch
 test('tide', 'tide counter terrain (3/5/7) and failure at 8', async (s) => {
-  await s.open('?debug&map=beigang_river&x=9&y=9&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=ch8_start,ch8_dusk,ch8_qijia,ch8_surge,ch8_river_intro');
+  await s.open('?debug&map=beigang_river&x=9&y=9&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=mochi_joined,yuyuan_joined,ch8_start,ch8_dusk,ch8_qijia,ch8_surge,ch8_river_intro');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'beigang_river', null, { timeout: 30000 });
   await s.ev(() => { G.state.flags.ch8_tide_base = 0; G.state.flags.ch8_tide = 0; G.state.flags.ch8_saved = 0; G.state.battles = 0; });
   await s.idle();
@@ -240,7 +241,7 @@ test('tide', 'tide counter terrain (3/5/7) and failure at 8', async (s) => {
 
 // ------------------------------------------------------------------------------------------ oyster option B
 test('oyster_b', '蚵殼阿嬤 option B gives no 心燈', async (s) => {
-  await s.open('?debug&map=anping&x=9&y=21&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=ch8_anping');
+  await s.open('?debug&map=anping&x=9&y=21&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=mochi_joined,yuyuan_joined,ch8_anping');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'anping', null, { timeout: 30000 });
   await s.idle();
   await s.talk('oyster', [1]);
@@ -268,7 +269,7 @@ test('npcs', 'talk to every NPC on every map & phase; inn; sluice blocking; crys
   for (const [map, x, y, flags] of phases) {
     if (!first) await s.close();
     first = false;
-    await s.open(`?debug&map=${map}&x=${x}&y=${y}&lv=30&party=xinghe,hongying,yungui&chapter=8&flags=${flags}`);
+    await s.open(`?debug&map=${map}&x=${x}&y=${y}&lv=30&party=xinghe,hongying,yungui&chapter=8&flags=mochi_joined,yuyuan_joined,${flags}`);
     await s.page.waitForFunction((m) => G.mapScene && G.mapScene.def.id === m, map, { timeout: 30000 });
     await s.ev(() => { G.state.flags.ch8_tide_base = 0; G.state.battles = 0; G.state.flags.ch8_tide = 0; });
     await s.idle();

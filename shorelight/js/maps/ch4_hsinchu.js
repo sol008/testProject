@@ -236,10 +236,10 @@
     stages: ['夜裡陪阿順伯顧米粉架。', '讓九降風變回來。', '風轉來了——夜裡再去米粉寮看看。', '阿玉的喜宴。'],
     doneText: '最後，是好風送伊。',
   };
-  Q.q_persimmon = { name: '柿柿如意', desc: '彭阿伯的柿餅少了三百個，糰子嘴角卻是橘色的。', stages: ['在柿餅寮附近調查三處線索。', '鼠窩裡有誰在啃柿餅？', '把失竊的柿餅交還彭阿伯。'], doneText: '真正的賊是柿鼠大王。' };
+  Q.q_persimmon = { name: '柿柿如意', desc: '彭阿伯的柿餅少了三百個，芋圓嘴角卻是橘色的。', stages: ['在柿餅寮附近調查三處線索。', '鼠窩裡有誰在啃柿餅？', '把失竊的柿餅交還彭阿伯。'], doneText: '真正的賊是柿鼠大王。' };
   Q.q_leicha = { name: '擂茶課', desc: '滿妹婆說：擂茶愛擂，正有味。', stages: ['跟滿妹婆學擂茶。'], doneText: '硬頸，也愛曉得轉彎。' };
   Q.q_shange_yungui = { name: '山歌擂台・道士篇', desc: '阿福想跟在旁邊笑了半天的道士哥對山歌。', stages: ['在禾埕跟阿福對山歌。'], doneText: '道士哥的歌像在念經，毋過押得準。' };
-  if (!Q.q_tuanzi_mush) Q.q_tuanzi_mush = { name: '糰子的蕈譜', desc: '雲歸的蕈譜上有七個空格。糰子負責……試吃。', stages: ['找到蕈譜上的蕈。', '找到蕈譜上的蕈。', '等待下一種蕈。'] };
+  if (!Q.q_tuanzi_mush) Q.q_tuanzi_mush = { name: '雲歸的蕈譜', desc: '雲歸的蕈譜上有七個空格。他負責……試吃，為了研究。', stages: ['找到蕈譜上的蕈。', '找到蕈譜上的蕈。', '等待下一種蕈。'] };
 
   // regional sprite variants requested by the screenplay (8-3) — built on existing specs
   if (G.Sprites && G.Sprites.define) {
@@ -467,9 +467,9 @@
     S.gather();
   }
   // step the player back one cell (used by "you can't go there" boundaries)
-  async function stepBack(S) {
+  async function stepBack(S, dir) {
     const m = G.mapScene;
-    const back = U.opposite[m.player.dir];
+    const back = dir || U.opposite[m.player.dir];
     S.face('player', back);
     await pushPlayer(S, back, 1);
   }
@@ -557,7 +557,7 @@
     {
       call: '♪ 講你道法恁高強，敢會唱歌喚太陽？', rhyme: '（韻腳：ㄤ）', opp: 80, whisper: '禾稈堆輕輕抖了一下。「……押ㄤ……」',
       a: [['喚得太陽喚月亮', '妙'], ['太陽每天自己起', '趣'], ['這題太難下一題', '平']],
-      b: [['再喚糰子滾山崗', '趣', true], ['順便叫你去餵羊', '衝', true], ['明天再唱也無妨', '平', true]],
+      b: [['再喚芋圓滾山崗', '趣', true], ['順便叫你去餵羊', '衝', true], ['明天再唱也無妨', '平', true]],
     },
     {
       call: '♪ 山歌唱到日落西，看你還有幾招奇？', rhyme: '（韻腳：ㄧ）', opp: 86, whisper: '禾稈堆輕輕抖了一下。「……押ㄧ……」',
@@ -688,9 +688,10 @@
     await S.say('yungui:normal', '每年九月起東北風，一路吹到過年，竹塹人叫它「九降風」。');
     await S.say('yungui:think', '師父在信裡說「竹塹風大，記得帶傘」……這種風，撐傘會被一起吹上天吧。');
     S.sfx('wind');
-    await S.jump('tuanzi', 30);
-    await S.say('', '糰子被吹得在地上翻了兩圈，一把抱住紅纓的小腿。');
-    await S.say('tuanzi:cry', '救命——！本大仙要被吹去唐山了！');
+    await S.jump('yuyuan', 30);
+    S.emote('yuyuan', '💧');
+    await S.say('', '芋圓被風吹得在地上翻了兩圈，毛全炸開，一把抱住紅纓的小腿，死都不放。');
+    await S.say('', '麻糬倒是安安穩穩地趴在白芷腳邊，連鬍鬚都沒動一下。');
     S.emote('hongying', '♪');
     await S.say('hongying:shy', '……抓、抓緊一點也沒關係。');
     await S.say('xinghe:smug', '紅纓，妳嘴角在笑喔。');
@@ -836,8 +837,8 @@
     await S.say('阿玉', '我阿爸講，是你們讓風轉來的。多謝！');
     await S.say('baizhi:think', '長長的米粉……我吃了三碗，是不是可以活三倍久？');
     await S.say('yungui:smug', '會胖三倍。');
-    await S.say('tuanzi:smile', '本大仙要活二十一倍久。');
-    await S.say('hongying:laugh', '你會滾著走。');
+    await S.say('', '芋圓面前疊著七個空碗。他還在舔第八個。');
+    await S.say('hongying:laugh', '芋圓，你會滾著走。');
     await S.say('阿順伯', '來來來，帶回去路上食！');
     await S.give('chaomifen', 5);
     await S.give('xitang', 3);
@@ -929,7 +930,7 @@
     ],
     events: [
       { id: 'c4_401', trigger: 'auto', if: (st) => !st.flags.ch4_start, run: scene401 },
-      { id: 'north_block', trigger: 'touch', x: 13, y: 1, w: 2, h: 1, run: async (S) => { await S.say('xinghe:think', '回頭路……還是先辦正事吧。'); await stepBack(S); } },
+      { id: 'north_block', trigger: 'touch', x: 13, y: 1, w: 2, h: 1, run: async (S) => { await S.say('xinghe:think', '回頭路……還是先辦正事吧。'); await stepBack(S, 'down'); } },
       {
         id: 'shrine', trigger: 'action', x: 15, y: 13, w: 2, h: 2, label: '參拜',
         run: async (S) => { await savePrompt(S, broken(G.state) ? '香煙直直往上，像在點頭。' : '小小的土地公祠。香爐裡的香，煙全往東邊歪。'); },
@@ -1068,7 +1069,7 @@
     await S.narrate(['一個時辰後'], { veil: 1 });
     await S.fadeIn(0.6);
     await S.say('老秀才', '……以上，是第一卷。');
-    await S.say('', '糰子趴在地上打呼。');
+    await S.say('', '雲歸靠著門柱睡著了。芋圓趴在地上打呼。');
     await S.say('xinghe:think', '（第一卷……？）');
     await S.say('老秀才', '肯聽完的年輕人，越來越少了。這支筆送你們。讀萬卷書，行萬里路。');
     await S.give('ac_maobi', 1);
@@ -1083,13 +1084,14 @@
     await S.warp('zhuqian', 27, 38, 'down', { fade: 0 });
     S.spawn({ id: 'f_bz', sprite: 'baizhi', x: 27, y: 40, dir: 'down' });
     S.spawn({ id: 'f_yg', sprite: 'yungui', x: 26, y: 39, dir: 'down' });
-    S.spawn({ id: 'f_tz', sprite: 'tuanzi', x: 28, y: 39, dir: 'down' });
+    S.spawn({ id: 'f_yy', sprite: 'yuyuan', x: 28, y: 39, dir: 'down' });
+    S.spawn({ id: 'f_mc', sprite: 'mochi', x: 26, y: 40, dir: 'down' });
     S.spawn({ id: 'f_hy', sprite: 'hongying', x: 27, y: 36, dir: 'down' });
     await S.fadeIn(0.8);
     await S.say('', '竹塹南門・歌薰門。九降風從背後吹來，乾爽而有力。');
     await S.say('xinghe:smile', '順風耶！');
     await S.say('yungui:normal', '九降風一路往南吹。我們算是被它送一程。');
-    await S.say('tuanzi:smile', '本大仙……也被柿餅送一程……');
+    await S.say('', '芋圓嘴裡叼著半塊柿餅，一路小跑跟在後面。');
     await S.say('baizhi:smile', '風也會送人嗎？');
     await S.say('xinghe:smile', '會啊。好的風就會。');
     await S.say('', '紅纓走在最後面，一直沒說話。');
@@ -1104,7 +1106,7 @@
     await S.say('baizhi:smile', '星河、紅纓，快一點！雲歸說前面有賣牛舌餅！');
     await S.say('yungui:smug', '我說的是「鹿港有」，不是「前面有」。');
     await S.say('baizhi:surprise', '……前面和鹿港，不一樣嗎？');
-    S.move('f_bz', 'DD', { wait: false }); S.move('f_yg', 'DD', { wait: false }); S.move('f_tz', 'DD', { wait: false });
+    S.move('f_bz', 'DD', { wait: false }); S.move('f_yg', 'DD', { wait: false }); S.move('f_yy', 'DD', { wait: false }); S.move('f_mc', 'DD', { wait: false });
     S.move('f_hy', 'DD', { wait: false });
     await S.move('player', 'DD');
     await S.say('', '眾人笑著走遠。九降風吹過竹塹城頭，吹過一排排雪白的米粉架。');
@@ -1202,7 +1204,7 @@
           await S.say('老秀才', '「竹塹」二字，原本是道卡斯人竹塹社的社名，這座城就是借了這個名字。');
           await S.say('老秀才', '最早的城，是種了一圈刺竹圍起來的，後來才改成土城、磚城。');
           await S.say('老秀才', '老夫考了三十年秀才……喔，我是說，考了三十年舉人。');
-          await S.say('tuanzi:think', '那就是沒考上嘛。');
+          await S.say('yungui:smug', '那就是沒考上嘛。');
           await S.say('老秀才', '……');
         },
       },
@@ -1227,7 +1229,7 @@
         id: 'stall_empty', trigger: 'action', x: 33, y: 23, w: 2, h: 1, label: '調查', if: (st) => broken(st),
         run: async (S) => { await S.say('', '燈都熄了。賣燈的人，不知道什麼時候走的。'); },
       },
-      { id: 'west_gate', trigger: 'touch', x: 0, y: 20, w: 1, h: 3, run: async (S) => { await S.say('守城兵', '西門外是往南寮港的路。這陣子風大浪大，船攏無出海，去了也沒路用。'); await stepBack(S); } },
+      { id: 'west_gate', trigger: 'touch', x: 0, y: 20, w: 1, h: 3, run: async (S) => { await S.say('守城兵', '西門外是往南寮港的路。這陣子風大浪大，船攏無出海，去了也沒路用。'); await stepBack(S, 'right'); } },
     ],
     warps: [
       { x: 27, y: 0, to: 'zhuqian_coast', tx: 13, ty: 30, tdir: 'up' },
@@ -1240,7 +1242,7 @@
         run: async (S) => {
           if (F('ch4_citygod_vision')) return true;
           await S.say('守城兵', '東門外是往客家庄的山路。這陣風怪，無事莫出城。');
-          await stepBack(S);
+          await stepBack(S, 'left');
           return false;
         },
       },
@@ -1249,11 +1251,11 @@
         run: async (S) => {
           if (!F('ch4_citygod_balanced')) {
             await S.say('守城兵', '往南是中港、後龍，再過去就是鹿港。這陣風，商隊攏停了。等風好再走。');
-            await stepBack(S);
+            await stepBack(S, 'up');
             return false;
           }
           const r = await scene418(S);
-          if (r === false && !F('ch4_done')) await stepBack(S);
+          if (r === false && !F('ch4_done')) await stepBack(S, 'up');
           return false;
         },
       },
@@ -1355,8 +1357,8 @@
     await S.camera(10, 7, 0.8);
     await S.say('阿池伯', '人算不如天算。陽間的帳算得再精，善惡最後攏是城隍爺在算。');
     await S.say('xinghe:surprise', '好大的算盤……比我還高。');
-    await S.say('tuanzi:think', '這算盤能算出本大仙一天吃幾顆飯糰嗎？');
-    await S.say('yungui:smug', '算盤會爆。');
+    await S.say('yungui:think', '這算盤能算出我一天喝幾口米酒嗎？');
+    await S.say('hongying:smug', '算盤會爆。');
     S.cameraFollow();
     await S.say('阿池伯', '咱竹塹這尊是「都城隍」，是全台城隍裡位階上高的，管的範圍上闊。');
     await S.say('阿池伯', '……可是最近，連城隍爺的帳都對不起來啊。');
@@ -1383,8 +1385,8 @@
     await S.say('阿池伯', '他在這裡擲筊問了半晌，連得三個聖筊，就說「貧道去去就回」，往東邊山裡去了。');
     await S.say('阿池伯', '……到今仔日，還沒轉來。');
     await S.say('yungui:think', '去去就回……那老頭每次這樣講，都要去很久。');
-    S.emote('tuanzi', '💧');
-    await S.say('tuanzi:sad', '……');
+    S.emote('mochi', '♥');
+    await S.say('', '麻糬走過去，輕輕蹭了蹭雲歸的腳。');
     await S.say('hongying:serious', '那我們也來問。直接問城隍爺，那些魂去了哪裡。');
     await S.say('阿池伯', '好，來，我教你們擲筊。');
     await S.say('阿池伯', '先上香。雙手捧筊，跟城隍爺報上名字、住哪裡，再把要問的代誌講清楚。');
@@ -1440,7 +1442,7 @@
     await S.wait(0.6);
     await S.say('', '幽暗的殿堂，地面是微光的青石。正前方高處只有一片溫暖而看不清的光。');
     await S.say('', '左右兩道光柱中顯出身影：一位極高，白袍高帽，帽上寫「一見大吉」；一位矮壯，黑袍方帽，帽上寫「天下太平」。');
-    await S.say('', '眾人不由自主地垂首。糰子縮到星河腳後，一動也不敢動。');
+    await S.say('', '眾人不由自主地垂首。芋圓縮到星河腳後，一動也不敢動；麻糬卻端端正正地坐著，望著那片光。');
     await S.say('', '半空中浮著一本攤開的簿冊，一行行名字正在褪色，像被風吹散的墨。');
     await S.say('謝將軍', '陽世之人，莫驚。');
     await S.say('范將軍', '簿上之名，有來無到。');
@@ -1666,8 +1668,9 @@
     await S.say('', '丘陵起伏，收割後的梯田一層層往上。山坡上一棵棵柿子樹掛滿了橘紅的果實。');
     await S.say('baizhi:surprise', '好多小太陽……掛在樹上。');
     await S.say('yungui:normal', '柿子。從竹塹往東的客家庄，家家戶戶都曬柿餅。');
-    await S.say('tuanzi:smile', '柿餅！甜的！本大仙聞到了——');
-    S.move('tuanzi', 'RRRRRR', { wait: false, speed: 7 });
+    S.emote('yuyuan', '!');
+    await S.say('', '芋圓的鼻子動了動——下一刻，他一溜煙衝向遠處的柿餅寮。');
+    S.move('yuyuan', 'RRRRRR', { wait: false, speed: 7 });
     await S.say('hongying:surprise', '喂，別亂跑！');
     await S.say('xinghe:laugh', '他跑得比被風吹還快。');
     S.gather();
@@ -1724,7 +1727,7 @@
         if (S.hasItem('key_stolen_shibing')) {
           S.take('key_stolen_shibing');
           await S.say('彭阿伯', '好！三個就算請你食个！');
-          await S.say('tuanzi:smile', '阿伯是好人！');
+          await S.say('', '芋圓蹭了蹭彭阿伯的褲腳，尾巴翹得高高的。');
           await S.say('彭阿伯', '柿餅愛揀石柿，削皮、日曬、夜收，曬到軟，就用手捏。一日捏幾擺，捏到肉軟、形扁。');
           await S.say('彭阿伯', '最尾，表面會出一層白霜——柿霜，係柿子自家个糖。毋過這陣風毋著，霜就長毋出來。');
           await S.say('彭阿伯', '這個分你兜。');
@@ -1743,10 +1746,12 @@
         }
         S.emote('peng', '💢');
         await S.say('彭阿伯', '哪位个貓仔！偷食𠊎个柿餅！');
-        S.emote('tuanzi', '!');
-        await S.say('tuanzi:surprise', '本、本大仙是石虎！而且只吃了……一、兩……三個。');
+        await S.say('', '芋圓舔了舔嘴角的橘色，一臉無辜。');
+        await S.say('xinghe:shy', '他、他最多只吃了……一、兩……三個吧？');
         await S.say('彭阿伯', '三個？𠊎這幾架少了三百個！');
-        await S.say('hongying:think', '三百個？糰子的肚子裝不下……應該。');
+        await S.say('hongying:think', '三百個？芋圓的肚子裝不下……');
+        await S.say('', '紅纓看了芋圓圓滾滾的肚子一眼。');
+        await S.say('hongying:think', '……應該。');
         await S.say('yungui:smug', '阿伯，我們幫你抓真正的賊。抓到了，那三個就算了？');
         await S.say('彭阿伯', '……抓得到正講！');
         S.quest('q_persimmon', 0);
@@ -1765,8 +1770,8 @@
         id: 'clue1', trigger: 'action', x: 31, y: 8, w: 2, h: 1, label: '調查', if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
         run: async (S) => {
           await S.say('', '每一個被咬過的柿餅上，都有一排細細的齒痕。');
-          await S.say('yungui:normal', '糰子是一口吞的，不會留這種齒痕。');
-          await S.say('tuanzi:think', '……這算是在幫我說話嗎？');
+          await S.say('yungui:normal', '芋圓是一口吞的，不會留這種齒痕。');
+          await S.say('', '芋圓瞇著眼看雲歸，像是在問：這算是在幫我說話嗎？');
           await persimmonClue(S, 1);
         },
       },
@@ -1826,8 +1831,9 @@
       run: async (S) => {
         await S.say('', '柿餅堆成的王座上，一隻圓滾滾的大鼠正抱著柿餅啃。');
         await S.say('柿鼠大王', '吱！這是本王的冬糧！');
-        await S.say('tuanzi:surprise', '你、你也太胖了吧！');
-        await S.say('柿鼠大王', '你也沒資格說本王！');
+        await S.say('xinghe:surprise', '你、你也太胖了吧！');
+        await S.say('柿鼠大王', '你身後那隻灰貓也沒資格說本王！');
+        S.emote('yuyuan', '💢');
         await S.say('hongying:laugh', '……他說得對。');
         const r = await S.battle('t4_ratking');
         if (r !== 'win') return;
@@ -1918,9 +1924,9 @@
     await S.say('', '然後，哄堂大笑。');
     await S.say('阿福', '哈哈哈哈！「再唱一句就揍你」——𠊎打山歌打二十年，頭一擺聽到恁直个！');
     await S.say('hongying:cry', '……笑、笑什麼笑！');
-    await S.say('tuanzi:laugh', '紅纓唱歌像在喊殺——');
-    await S.say('hongying:angry', '糰子！');
-    await S.say('tuanzi:cry', '……喵。');
+    await S.say('yungui:smug', '紅纓唱歌像在喊殺——');
+    await S.say('hongying:angry', '雲歸！');
+    await S.say('', '芋圓默默把耳朵壓平。');
     await S.say('baizhi:smile', '紅纓，換我試試，好嗎？');
     await S.say('hongying:surprise', '妳？');
     await S.say('baizhi:smile', '我想知道，用歌回答一個人，是什麼感覺。');
@@ -2033,13 +2039,13 @@
     S.sfx('push');
     await S.say('', '屋內傳來枕頭砸牆的聲音。白芷笑出聲來。星河也笑了。');
     S.move('yungui', 'DDD', { wait: false });
-    await S.move('tuanzi', 'DD');
-    await S.say('', '屋簷下，雲歸一個人坐著，葫蘆擱在膝上，沒有喝。');
-    await S.say('tuanzi:sad', '雲歸，你不喝喔？');
+    await S.move('mochi', 'DD');
+    await S.say('', '屋簷下，雲歸一個人坐著，葫蘆擱在膝上，沒有喝。麻糬在他身邊坐下，安靜地望著他。');
     await S.say('yungui:think', '……師父也在這種夜裡上山。一個人。');
     await S.say('yungui:normal', '那老頭，最討厭別人擔心他。所以我才不擔心。');
     await S.say('', '他把葫蘆塞上，又拔開，又塞上。');
-    await S.say('tuanzi:sad', '……本大仙也不擔心。');
+    await S.say('', '芋圓走過來，把頭靠在他腿上。');
+    await S.say('yungui:normal', '……你們也不擔心，對吧。');
     await S.wait(0.8);
     await S.say('', '遠處，北邊的山坡上，傳來一個男人的歌聲。很輕，像是隔了很多很多年。');
     await S.say('遠方的歌聲', '♪ 九降風吹嶺上松，阿妹門前柿曬紅——');
@@ -2070,8 +2076,8 @@
     await S.say('yungui:smug', '略懂。');
     await S.say('xinghe:think', '雲歸，你什麼時候會唱山歌了？');
     await S.say('yungui:smug', '現在。');
-    S.flag('tuanzi_hidden'); S.refresh();
-    await S.say('', '雲歸朝禾稈堆後面使了個眼色。一條毛茸茸的尾巴縮了進去。');
+    S.flag('yuyuan_hidden'); S.refresh();
+    await S.say('', '雲歸朝禾稈堆後面使了個眼色。芋圓叼著一張黃符鑽了進去，一條毛茸茸的尾巴縮了進去。');
     S.quest('q_shange_yungui', 0);
     const ctx = { sus: 0 };
     let mine = 0, theirs = 0, caught = false;
@@ -2085,9 +2091,11 @@
     if (!caught && ctx.sus > 0 && mine >= 300) caught = true;
     S.flag('ch4_s5_tried');
     if (caught) {
-      S.spawn({ id: 'tz_hay', sprite: 'tuanzi', x: 29, y: 16, dir: 'down' });
-      await S.say('', '糰子從禾稈堆裡探出頭，頭上插滿稻草，手裡舉著一張發光的黃符。');
-      await S.say('tuanzi:smile', '下一句押「ㄧ」韻啦！……咦？大家怎麼都在看我？');
+      S.spawn({ id: 'yy_hay', sprite: 'yuyuan', x: 29, y: 16, dir: 'down' });
+      await S.say('', '芋圓從禾稈堆裡探出頭，頭上插滿稻草，嘴裡叼著一張發光的黃符。');
+      await S.say('應聲符', '下一句押「ㄧ」韻啦！');
+      S.emote('yy_hay', '?');
+      await S.say('', '芋圓眨了眨眼——全場的人都在看他。');
       await S.say('', '全場愣住。然後爆笑。');
       await S.say('阿福', '哈哈哈！道士哥，你這係打山歌，還係打猴戲？');
       await S.say('yungui:smug', '兵不厭詐。');
@@ -2095,7 +2103,7 @@
       await S.say('庄民', '好笑！賞佢兩罐米酒！');
       if (!F('ch4_shange_yungui_caught')) await S.give('mijiu', 2);
       S.flag('ch4_shange_yungui_caught');
-      S.remove('tz_hay');
+      S.remove('yy_hay');
     } else if (mine > theirs) {
       await S.say('阿福', '道士哥……你个歌，像在念經，毋過押得準！');
       if (!F('ch4_shange_yungui_win')) { await S.give('hd_huabu', 1); S.quest('q_shange_yungui', 'done'); }
@@ -2105,7 +2113,7 @@
       await S.say('yungui:smug', '本來就是念經的。');
       if (!F('ch4_s5_lost_gift')) { await S.give('mijiu', 1); S.flag('ch4_s5_lost_gift'); }
     }
-    S.flag('tuanzi_hidden', false); S.refresh();
+    S.flag('yuyuan_hidden', false); S.refresh();
   }
   G.Maps.define('hakka_village', {
     name: '柿樹坪', subtitle: '客家庄', place: 'hsinchu',
@@ -2169,7 +2177,7 @@
       },
       {
         id: 'zeng', sprite: 'hakka_f', name: '曾師傅', x: 40, y: 17, dir: 'down',
-        talk: async (S) => { await sayAll(S, '曾師傅', ['藍衫个藍，係大菁染出來个。耐髒、耐操，做事人着最好。', '大襟開在右片，一粒一粒布扣。毋使華麗，耐着就好。', '袖口反摺起來就係一圈花邊——好看，又方便做事。']); await S.shop(['ar_hakka', 'hd_huabu', 'ft_cloth'], { title: '藍衫裁縫' }); },
+        talk: async (S) => { await S.say('曾師傅', '細妹，你這領藍衫着得好，袖口反摺得靚！'); await sayAll(S, '曾師傅', ['藍衫个藍，係大菁染出來个。耐髒、耐操，做事人着最好。', '大襟開在右片，一粒一粒布扣。毋使華麗，耐着就好。', '袖口反摺起來就係一圈花邊——好看，又方便做事。']); await S.shop(['ar_hakka', 'hd_huabu', 'ft_cloth'], { title: '藍衫裁縫' }); },
       },
       {
         id: 'kid_m', sprite: 'child_m', name: '細人仔', x: 29, y: 19, dir: 'left', wander: 2, if: (st) => !!st.flags.ch4_shange_duel && !night(st),
@@ -2192,7 +2200,7 @@
       { id: 'vf1', sprite: 'hakka_f', name: '庄裡的阿姆', x: 36, y: 24, dir: 'down', wander: 3, if: (st) => !night(st), talk: async (S) => { await S.say('庄裡的阿姆', broken(G.state) ? '這幾日風乾乾爽爽，菜脯曬得特別香。' : '今年个風，吹得菜脯都發霉咧。'); } },
       { id: 'hen1', sprite: 'chicken', x: 18, y: 20, dir: 'left', wander: 3, if: (st) => !night(st) },
       { id: 'hen2', sprite: 'chicken', x: 30, y: 21, dir: 'right', wander: 3, if: (st) => !night(st) },
-      { id: 'dog', sprite: 'dog', x: 20, y: 12, dir: 'down', wander: 2, talk: async (S) => { S.emote('dog', '♥'); await S.say('', '黃狗搖著尾巴，在糰子身上聞來聞去。'); } },
+      { id: 'dog', sprite: 'dog', x: 20, y: 12, dir: 'down', wander: 2, talk: async (S) => { S.emote('dog', '♥'); await S.say('', '黃狗搖著尾巴，在芋圓身上聞來聞去。芋圓的毛整個炸開了。'); } },
       { id: 'buffalo', sprite: 'buffalo', x: 14, y: 33, dir: 'left', wander: 1, talk: async (S) => { await S.say('', '水牛慢吞吞地嚼著稻草，看了你一眼。'); } },
       { id: 'vm1', sprite: 'hakka_m', name: '庄裡的阿叔', x: 12, y: 27, dir: 'down', wander: 3, if: (st) => !night(st), talk: ['梯田收冬咧，稻樁留在田肚，明年做肥。', '五指山？透早去，中晝前轉來，記得！'] },
     ],
@@ -2212,8 +2220,8 @@
       {
         x: 51, y: 20, h: 2, to: 'wuzhi_trail', tx: 1, ty: 47, tdir: 'right',
         run: async (S) => {
-          if (night(G.state)) { await S.say('德興伯', '暗晡上山？毋好。'); await stepBack(S); return false; }
-          if (!F('ch4_morning')) { await S.say('德興伯', '這下風恁大。今暗就歇在劉家，明朝透早再上山。'); await stepBack(S); return false; }
+          if (night(G.state)) { await S.say('德興伯', '暗晡上山？毋好。'); await stepBack(S, 'left'); return false; }
+          if (!F('ch4_morning')) { await S.say('德興伯', '這下風恁大。今暗就歇在劉家，明朝透早再上山。'); await stepBack(S, 'left'); return false; }
           return true;
         },
       },
@@ -2255,9 +2263,8 @@
     await S.say('', '紅纓猛擂。力道一路衝到頂。');
     await S.say('hongying:angry', '喝——！洛家槍法・擂！');
     S.sfx('shatter'); S.shake(6, 0.4);
-    await S.say('', '「啪！」擂棍斷成兩截。一塊鹹魚飛起，落在糰子頭上。');
-    await S.say('tuanzi:cry', '本大仙的頭……有鹹魚味……');
-    await S.say('tuanzi:think', '……還不錯。');
+    await S.say('', '「啪！」擂棍斷成兩截。一塊鹹魚飛起，落在芋圓頭上。');
+    await S.say('', '芋圓僵住了。然後，他默默地把鹹魚吃了。');
     await S.say('', '滿妹婆嚐了一口。沉默。很長的沉默。');
     await S.say('滿妹婆', '……後生人。');
     await S.say('滿妹婆', '你這毋係擂茶。');
@@ -2311,6 +2318,8 @@
     await S.say('滿妹婆', '秋妹姑婆一世人無嫁。活到八十八，教全庄个細人仔唱山歌。');
     await S.say('滿妹婆', '佢過身个時節，𠊎正十二歲。佢个藍衫，𠊎留到今仔日。');
     await S.say('', '她打開衫櫃，捧出一件洗得發白的舊藍衫。');
+    await S.say('滿妹婆', '……細妹，你身上着个，也係藍衫。');
+    await S.say('baizhi:smile', '嗯。穿著它，好像能走很遠很遠的路。');
     await S.say('baizhi:think', '袖口……裡面有字。');
     await S.say('', '翻開反摺的袖口，內側用白線細細繡著四行字。');
     await S.say('', '柿霜白過幾十冬，竹床年年曬日紅；阿哥若係名字忘，阿妹聲聲喊阿松。');
@@ -2605,7 +2614,7 @@
     await S.say('', '風穴深處傳來一聲巨大的「吸氣」。四周的草全倒向洞口。');
     await S.say('yungui:surprise', '等等，風向——');
     await S.say('xinghe:surprise', '……現在幾時了？');
-    await S.say('tuanzi:cry', '太陽在頭頂上——是中午啦！');
+    await S.say('hongying:surprise', '太陽在頭頂上——是中午啦！');
     await S.wait(1.0);
     S.shake(14, 1.4);
     S.sfx('wind'); S.sfx('ghost', 0.2);
@@ -2682,7 +2691,7 @@
         run: async (S) => {
           if (F('ch4_trail_south_open')) return true;
           await S.say('xinghe:think', '那邊是賽夏人的部落吧。我們沒事，不要隨便闖進人家家裡。');
-          await stepBack(S);
+          await stepBack(S, 'left');
           return false;
         },
       },
@@ -2739,7 +2748,8 @@
     await S.say('baizhi:smile', '那我站在你後面唱歌。');
     S.spawn({ id: 'hy_lake', sprite: 'hongying', x: 28, y: 17, dir: 'left' });
     S.spawn({ id: 'yg_lake', sprite: 'yungui', x: 28, y: 16, dir: 'left' });
-    S.spawn({ id: 'tz_lake', sprite: 'tuanzi', x: 29, y: 17, dir: 'left' });
+    S.spawn({ id: 'yy_lake', sprite: 'yuyuan', x: 29, y: 17, dir: 'left' });
+    S.spawn({ id: 'mc_lake', sprite: 'mochi', x: 23, y: 17, dir: 'left' });
     S.move('hy_lake', 'LL', { wait: false }); await S.move('yg_lake', 'LL');
     await S.say('', '其他人走過來。紅纓的手腕上還綁著芒草結。');
     await S.say('yungui:normal', '決定了？');
@@ -2757,7 +2767,7 @@
     S.flag('ch4_trail_south_open');
     S.flag('ch4_lake_morning', false);
     await S.fadeOut(0.9);
-    for (const id of ['bz_lake', 'hy_lake', 'yg_lake', 'tz_lake', 'xia_lake', 'ac_lake']) S.remove(id);
+    for (const id of ['bz_lake', 'hy_lake', 'yg_lake', 'yy_lake', 'mc_lake', 'xia_lake', 'ac_lake']) S.remove(id);
     S.hideFollowers(false);
     await S.warp('wuzhi_trail', 37, 40, 'left', { fade: 0 });
     S.spawn({ id: 'ac_trail', sprite: 'c4_saisiyat_m', x: 38, y: 41, dir: 'left' });
@@ -2796,7 +2806,7 @@
         id: 'acheng_x', sprite: 'c4_saisiyat_m', name: '阿成', x: 31, y: 16, dir: 'down', if: (st) => !st.flags.ch4_lake_morning,
         talk: async (S) => {
           if (broken(G.state)) { await S.say('阿成', '下次來，走路來就好。用滾的太快了。'); return; }
-          await sayAll(S, '阿成', ['你們四個加一隻石虎，從山上滾下來的樣子，我會記很久。', '祭典的這幾天，大家都很忙，也很開心。只是開心的方式，跟你們想的不太一樣。']);
+          await sayAll(S, '阿成', ['你們四個加兩隻貓，從山上滾下來的樣子，我會記很久。', '祭典的這幾天，大家都很忙，也很開心。只是開心的方式，跟你們想的不太一樣。']);
         },
       },
       {
@@ -2804,7 +2814,7 @@
         talk: async (S) => {
           if (broken(G.state)) { await S.say('夏大嫂', '下次來，我教那個姑娘織一條帶子。她的手很巧。'); return; }
           await S.say('夏大嫂', '苧麻要先剝、刮、曬，再捻成線，才能織布。一件衣服，要好幾個月。');
-          if (!F('ch4_pastaay_witnessed')) await S.say('夏大嫂', '那個銀頭髮的姑娘，身體好冷。我煮了熱湯，你拿去給她。');
+          if (!F('ch4_pastaay_witnessed')) await S.say('夏大嫂', '那個穿藍衫的姑娘，身體好冷。我煮了熱湯，你拿去給她。');
         },
       },
       { id: 'afu_x', sprite: 'hakka_m', name: '阿福', x: 36, y: 21, dir: 'down', if: (st) => !st.flags.ch4_pastaay_witnessed, talk: ['𠊎兜來作客。祭典个事，聽主人家个。'] },
@@ -2823,7 +2833,7 @@
         run: async (S) => {
           if (F('ch4_trail_south_open')) return true;
           await S.say('阿成', '那個姑娘還沒好，你們就別急著走了。');
-          await stepBack(S);
+          await stepBack(S, 'down');
           return false;
         },
       },
@@ -2886,7 +2896,8 @@
     await S.say('', '他抽出一片芒草葉，對折、繞圈、打結，綁在星河的手腕上。');
     await S.say('xinghe:think', '呃……這樣對嗎？');
     await S.say('', '星河笨手笨腳地學著打結——打成了一團。');
-    await S.say('夏阿公', '……像一團被石虎抓過的線。');
+    await S.say('夏阿公', '……像一團被貓抓過的線。');
+    S.emote('fc_yy', '…');
     await S.say('', '他拆開，重新綁好。');
     await S.say('夏阿公', '慢一點。結要綁緊，心要放鬆。');
     await S.say('', '紅纓三兩下就綁好了，又緊又整齊。');
@@ -2895,18 +2906,19 @@
     await S.say('', '雲歸把芒草往葫蘆上綁。');
     await S.say('夏阿公', '綁在身上。葫蘆不用保護。裡面的酒，倒是可以少喝一點。');
     await S.say('yungui:smug', '……今天被老人家教訓兩次了。');
-    await S.say('', '白芷慢慢地、很仔細地綁好自己的。然後她看向糰子。');
-    await S.say('baizhi:think', '夏爺爺，他也可以綁嗎？');
+    await S.say('', '白芷慢慢地、很仔細地綁好自己的。然後她看向腳邊的兩隻貓。');
+    await S.say('baizhi:think', '夏爺爺，牠們也可以綁嗎？');
     await S.say('夏阿公', '可以。客人就是客人。');
-    await S.say('', '糰子的尾巴上，綁了一個小小的芒草結。他一本正經地坐好，一聲不吭。');
-    S.emote('fc_hy', '♪');
+    await S.say('', '麻糬的尾巴上，綁了一個小小的芒草結。她一本正經地坐好，一聲不吭。');
+    await S.say('', '芋圓的繡球上也繫了一根。他看起來很不高興——但沒有拆掉。');
+    S.emote('fc_hy', '♥');
     await S.say('hongying:shy', '（……好可愛。）');
     await S.fadeOut(1.2);
     S.flag('ch4_fest_night');
     S.light({ ambient: 0.75, color: '#05060e', playerR: 150 });
     S.particles(['embers']);
     S.refresh();
-    for (const [id, x, y] of [['fc_hy', 29, 21], ['fc_yg', 30, 20], ['fc_tz', 30, 21], ['fc_bz', 36, 21], ['xia_f', 33, 21]]) S.setPos(id, x, y, 'down');
+    for (const [id, x, y] of [['fc_hy', 29, 21], ['fc_yg', 30, 20], ['fc_yy', 30, 21], ['fc_bz', 36, 21], ['fc_mc', 37, 21], ['xia_f', 33, 21]]) S.setPos(id, x, y, 'down');
     S.setPos('player', 33, 19, 'down');
     await S.fadeIn(1.4);
     await S.say('', '天黑。湖邊的祭場燃起火光。');
@@ -2948,7 +2960,7 @@
     await S.say('baizhi:think', '……我明白了。那我只用心記住，不用嘴巴。');
     await S.say('', '夏阿公第一次轉過頭來看她，笑了。');
     await S.say('夏阿公', '這樣就很好。');
-    await S.say('', '糰子窩在紅纓腿上睡著了，尾巴上的芒草結隨著呼吸輕輕晃動。');
+    await S.say('', '芋圓窩在紅纓腿上睡著了，繡球上的芒草結隨著呼吸輕輕晃動。紅纓一動也不敢動。');
     await S.say('', '火光。歌聲。湖面上的月亮，很圓。');
     await S.fadeOut(2.0);
     S.flag('ch4_fest_night', false);
@@ -2980,7 +2992,8 @@
       },
       { id: 'fc_hy', sprite: 'hongying', name: '洛紅纓', x: 34, y: 16, dir: 'up', talk: async (S) => { await S.say('hongying:normal', '……我本來以為，祭典都是很熱鬧的。'); } },
       { id: 'fc_yg', sprite: 'yungui', name: '雲歸', x: 32, y: 16, dir: 'up', talk: async (S) => { await S.say('yungui:normal', '熱鬧的地方很多。安靜的才少見。'); } },
-      { id: 'fc_tz', sprite: 'tuanzi', name: '糰子', x: 34, y: 17, dir: 'up', talk: async (S) => { await S.say('', '糰子一動也不動，尾巴上的芒草結輕輕晃。'); } },
+      { id: 'fc_yy', sprite: 'yuyuan', name: '芋圓', x: 34, y: 17, dir: 'up', talk: async (S) => { await S.say('', '芋圓一動也不動，繡球上的芒草結輕輕晃。'); } },
+      { id: 'fc_mc', sprite: 'mochi', name: '麻糬', x: 31, y: 17, dir: 'up', talk: async (S) => { await S.say('', '麻糬端坐在白芷腳邊，火光映在她的眼睛裡。'); } },
       { id: 'fc_bz', sprite: 'baizhi', name: '白芷', x: 32, y: 17, dir: 'up', talk: async (S) => { await S.say('', '白芷只是看著火光，沒有說話。'); } },
       { id: 'acheng_f', sprite: 'c4_saisiyat_m', name: '阿成', x: 38, y: 19, dir: 'left', talk: ['祭場那邊，客人只要在這裡看就好。', '那邊不要過去喔。'] },
       {
@@ -3000,7 +3013,8 @@
     S.spawn({ id: 'bz_bed', sprite: 'baizhi', x: 11, y: 3, dir: 'down' });
     S.spawn({ id: 'hy_h', sprite: 'hongying', x: 4, y: 6, dir: 'right' });
     S.spawn({ id: 'yg_h', sprite: 'yungui', x: 4, y: 4, dir: 'right' });
-    S.spawn({ id: 'tz_h', sprite: 'tuanzi', x: 5, y: 7, dir: 'up' });
+    S.spawn({ id: 'yy_h', sprite: 'yuyuan', x: 5, y: 7, dir: 'up' });
+    S.spawn({ id: 'mc_h', sprite: 'mochi', x: 10, y: 5, dir: 'up' });
     S.spawn({ id: 'ac_h', sprite: 'c4_saisiyat_m', x: 8, y: 7, dir: 'left' });
     S.bgm(null);
     await S.wait(0.6);
@@ -3012,8 +3026,9 @@
     await S.say('阿成', '你們四個加一隻貓，從五指山南坡滾下來，剛好滾到我砍竹子的地方。');
     await S.say('xinghe:think', '我們明明一早就出發了……');
     await S.say('阿成', '你們在半山腰跟山鬼打了一個上午。我在對面山頭都聽得到。');
-    await S.say('tuanzi:angry', '本大仙不是貓！是石虎大仙！');
-    await S.say('阿成', '喔，石虎。……那更要小心。山裡的石虎，越來越少了。');
+    S.emote('yy_h', '💢');
+    await S.say('', '芋圓瞪著阿成。');
+    await S.say('阿成', '……好，兩位貓大人。');
     await S.say('xinghe:surprise', '白芷呢？！');
     await S.say('阿成', '在裡面睡。我媽在照顧她。她身體……很冷，像冬天的湖水。');
     await S.walkTo('player', 10, 3);
@@ -3056,8 +3071,8 @@
     await S.say('夏阿公', '做得到，就留下。做不到，我叫阿成送你們下山，不會怪你們。');
     await S.say('xinghe:serious', '我們做得到。');
     await S.say('hongying:serious', '……我會管好這個笨蛋。');
-    await S.say('yungui:normal', '我會管好這隻石虎。');
-    await S.say('tuanzi:sad', '本大仙會管好本大仙的嘴……盡量。');
+    await S.say('yungui:normal', '我會管好這兩隻貓。');
+    await S.say('', '芋圓別過頭去。麻糬輕輕眨了眨眼，像是答應了。');
     await S.say('夏阿公', '很好。');
     // dinner
     await S.fadeOut(0.8);
@@ -3073,7 +3088,7 @@
     await S.say('baizhi:smile', '好暖。暖到心裡面。');
     S.flag('ch4_pastaay_invited');
     await S.fadeOut(0.6);
-    for (const id of ['bz_bed', 'hy_h', 'yg_h', 'tz_h', 'xia_h', 'ac_h2', 'daso_h']) S.remove(id);
+    for (const id of ['bz_bed', 'hy_h', 'yg_h', 'yy_h', 'mc_h', 'xia_h', 'ac_h2', 'daso_h']) S.remove(id);
     S.hideFollowers(false);
     await S.warp('xiangtian_house', 7, 7, 'down', { fade: 0 });
     await S.fadeIn(0.6);
@@ -3146,24 +3161,24 @@
     return moved;
   }
   async function s6Mushroom(S) {
+    S.emote('mochi', '!');
+    await S.say('', '麻糬對著岩縫輕輕嗅了嗅，回頭看了白芷一眼。');
     await S.say('', '岩縫裡貼著一片片灰白色、薄如耳朵的石耳。風一吹，它們輕輕振動，發出極細的「叮——」聲。');
     await S.say('yungui:surprise', '風穴石耳！書上說只長在終年有風的岩壁——居然真的有！');
-    await S.say('', '雲歸掏出蕈譜，開始畫。');
-    await S.say('', '糰子已經吃掉了一片。');
-    S.emote('yungui', '💢');
-    await S.say('yungui:angry', '我還沒畫完！');
+    await S.say('', '雲歸掏出蕈譜，畫完，又摘下一片。');
+    await S.say('yungui:serious', '為了研究，必須親口嚐一片。');
+    await S.say('hongying:smug', '你每次都這樣說。');
     S.vision(8);
-    await S.say('tuanzi:think', '……');
-    await S.say('', '糰子的瞳孔變成彩色的漩渦。背景微微呼吸。');
-    await S.say('tuanzi:serious', '……吾明白了。');
-    await S.say('tuanzi:serious', '風，沒有形狀。所以它必須借別人的形狀，才能被看見。');
-    await S.say('tuanzi:serious', '它借米粉的形狀、借柿子的形狀、借芒草的形狀……');
-    await S.say('tuanzi:serious', '今天，它借了吾的形狀。……叮。');
+    await S.say('', '雲歸的瞳孔變成彩色的漩渦。背景微微呼吸。');
+    await S.say('yungui:serious', '……吾明白了。');
+    await S.say('yungui:serious', '風，沒有形狀。所以它必須借別人的形狀，才能被看見。');
+    await S.say('yungui:serious', '它借米粉的形狀、借柿子的形狀、借芒草的形狀……');
+    await S.say('yungui:serious', '今天，它借了吾的形狀。……叮。');
     S.sfx('bell');
     await S.say('baizhi:surprise', '打嗝的聲音像風鈴！');
-    await S.say('tuanzi:serious', '吾就是風。吾——……叮。……吾要睡了。');
-    await S.say('', '糰子往後一倒。紅纓笑到蹲下。');
-    await S.say('yungui:normal', '……書上說，吃了會打嗝打出風鈴聲，連打三天。');
+    await S.say('yungui:serious', '吾就是風。吾——……叮。……吾要睡了。');
+    await S.say('', '雲歸往後一倒。芋圓趁機叼走了剩下的石耳。紅纓笑到蹲下。');
+    await S.say('xinghe:think', '……蕈譜上寫，吃了會打嗝打出風鈴聲，連打三天。');
     await S.give('mat_fengxun', 1);
     V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
     S.flag('mush_ch4');
@@ -3364,7 +3379,7 @@
     await S.give('key_qingxu_talisman', 1);
     S.cameraFollow();
     await S.say('yungui:smile', '老頭子，你最好給我活著。我還有一堆帳要跟你算。');
-    await S.say('tuanzi:sad', '雲歸……');
+    await S.say('', '麻糬靠過去，蹭了蹭雲歸的手。');
     await S.say('yungui:normal', '沒事。走吧。');
   }
   G.Maps.define('wind_cave_2', {
@@ -3516,7 +3531,8 @@
     S.sfx('wind');
     await S.say('', '風魔消散的地方，一陣乾爽的風拂過——帶著稻草、柿子和陽光的味道。');
     await S.say('yungui:smile', '……這才是九降風。');
-    await S.say('tuanzi:smile', '聞起來像柿餅！');
+    await S.say('baizhi:smile', '聞起來像柿餅！');
+    S.emote('yuyuan', '♥');
     await S.say('', '燈座下的石壁上，有人用劍尖刻了一行字。');
     await S.say('', '燈裂而魂未釋，吾力不逮。此燈底款，出自鹿港。吾往鹿港，追其源。——清虛');
     await S.say('yungui:think', '鹿港……');
@@ -3581,7 +3597,9 @@
     const ORDER = ['xinghe', 'baizhi', 'hongying', 'yungui'];
     const rank = (id) => (ORDER.includes(id) ? ORDER.indexOf(id) : 99);
     G.state.party.sort((a, b) => rank(a) - rank(b));
-    G.state.flags.tuanzi_hidden = false;
+    // the two cats from 九份 follow the party (set in chapter 1; also set here for a standalone start)
+    G.state.flags.mochi_joined = true; G.state.flags.yuyuan_joined = true;
+    G.state.flags.mochi_hidden = false; G.state.flags.yuyuan_hidden = false;
     S.quest('q_ch4_main', 0);
     G.state.vars.objective = '前往竹塹城內的都城隍廟';
     await S.travel('bangka', 'hsinchu', { label: '沿著海線官道南下，往竹塹……' });

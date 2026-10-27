@@ -115,6 +115,8 @@ async function drainErrors() {
   const browser = await chromium.launch({ headless: !HEADED });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(INIT);
+  // 2D renderer (the 3D presentation is far too slow on software GL)
+  await ctx.addInitScript(() => { try { const k = 'shorelight_settings'; const o = JSON.parse(localStorage.getItem(k) || '{}'); o.render3d = false; localStorage.setItem(k, JSON.stringify(o)); } catch (e) { /* ignore */ } });
   page = await ctx.newPage();
   page.setDefaultTimeout(0);
   page.on('console', (m) => {
@@ -131,13 +133,14 @@ async function drainErrors() {
   });
 
   try {
-    await page.goto(BASE + '?debug&startch=7', { timeout: 0 });
+    await page.goto(BASE + '?debug&startch=7&r3lite&flags=yuyuan_joined,mochi_joined', { timeout: 0 });
     await page.waitForFunction(() => window.G && G.Debug && G.Scenes, null, { timeout: 0 });
     await ev(() => { G.Audio.unlock = () => {}; G.Debug.setAutoplay(true); });
     await page.waitForFunction(() => G.mapScene && G.mapScene.def && G.mapScene.def.id === 'sugar_shrine', null, { timeout: 0, polling: 500 });
     console.log('\n第七章 雲山入夢 — playthrough');
     let st = await state();
     check('chapter set to 7, party 星河/紅纓/雲歸 (no 白芷)', st.chapter === 7 && st.party.join() === 'xinghe,hongying,yungui', st.party.join());
+    check('芋圓 & 麻糬 follow (麻糬 even while 白芷 is away)', await ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id))));
     check('燈芯 starts at 80 and scales 星河 max HP', st.flags.ch7_flame === 80 && st.xinghe.mhp === Math.floor(st.xinghe.flat * 0.8), JSON.stringify(st.xinghe));
 
     // ---------------------------------------------------------------- 7-1 甘蔗田
@@ -212,7 +215,7 @@ async function drainErrors() {
 
     // ---------------------------------------------------------------- 7-7 雲霧林
     st = await act('雲芝', 'G.Debug.trigger("yunzhi")');
-    check('糰子的雲芝 (tuanzi_mush_ch7, 雲芝)', st.flags.tuanzi_mush_ch7 && st.inv.mat_yunzhi);
+    check('雲歸 tastes the 雲芝 (mush_ch7, 七仙蕈 counter, 雲芝)', st.flags.mush_ch7 && st.inv.mat_yunzhi && (await ev(() => G.state.vars.tuanzi_mush)) >= 1);
     st = await act('fog loop A', 'G.Debug.stepOn(5, 15)');
     check('fog loop sends the party back to the fork', st.flags.ch7_loopA && st.map === 'cloud_forest' && (await ev(() => G.mapScene.player.y)) === 36);
     st = await act('to 藤婆', 'G.Debug.stepOn(20, 0)', { shot: '07_tengpo' });
@@ -221,7 +224,7 @@ async function drainErrors() {
     // ---------------------------------------------------------------- 7-9 入夢禮 → 靈境
     st = await act('7-9 rite', 'G.Debug.talk("tengpo")', { choices: [0, 2], shot: '08_vision_hub' });
     check('intent chosen (ch7_intent = 3), rite, 靈境 entered', st.flags.ch7_intent === 3 && st.flags.ch7_rite && st.map === 'vision_hub' && st.flags.ch7_vision_enter);
-    check('靈境 uses the psychedelic overlay', await ev(() => G.Mapx.val(G.mapScene.def.psychedelic) > 0));
+    check('靈境 uses the psychedelic overlay; cats hidden (giant 芋圓 drawn instead)', await ev(() => G.Mapx.val(G.mapScene.def.psychedelic) > 0 && G.state.flags.yuyuan_hidden && !G.mapScene.followers.some((f) => f.id === 'yuyuan')));
     // P7-4 breathing bridges: solid on inhale, open on exhale
     check('P7-4 bridges follow the breath', await ev(async () => {
       const m = G.mapScene; const [bx, by] = G.C7.bridges[0];
@@ -255,7 +258,7 @@ async function drainErrors() {
     check('心火 awakened: ch7_flame removed, passive +8% max HP', st.flags.ch7_xinhuo && st.flags.ch7_flame === undefined && st.xinghe.mhp === st.xinghe.flat + Math.floor(st.xinghe.flat * 0.08), JSON.stringify(st.xinghe));
     check('心火 skills learned', ['xh_xinhuo_ran', 'xh_xinhuo_zhao', 'xh_xinhuo_bumie'].every((s) => st.xinghe.skills.includes(s)));
     check('7-11 dawn: 藤心結, 雲霧藥草包, 雲豹之紋', st.flags.ch7_dawn_after && st.inv.c7_ac_tengxin && st.inv.c7_key_leopard && st.map === 'tengpo_hut');
-    check('糰子 is a normal follower again', !st.flags.tuanzi_hidden && (await ev(() => G.mapScene.followers.some((f) => f.id === 'tuanzi'))));
+    check('芋圓 & 麻糬 follow again after the dream', !st.flags.yuyuan_hidden && !st.flags.mochi_hidden && (await ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id)))));
 
     // ---------------------------------------------------------------- 7-12 日月潭
     st = await act('follow the leopard to the lake', 'G.Debug.stepOn(15, 7)', { shot: '13_sunmoon' });

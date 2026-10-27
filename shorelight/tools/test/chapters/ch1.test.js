@@ -13,7 +13,10 @@
 //   3. ahuang   : 心燈②「阿黃回家」— 小金 / 阿旺 / 阿土嬸 / the mine mouth → xd_ahuang, 小金的金仔石.
 //   4. xingmu   : 「醒木失竊記」— the cat chase, 阿水's 小魚乾, the 醒木 back to 阿炳伯 → 說書折扇.
 //   5. townsfolk: every NPC of every map talked to in every phase (P1, P2, P3, P4-raid map, P5), every action event.
-//   6. maps     : every chapter-1 map loads and renders (screenshots with --shots).
+//   6. maps     : the raid map, mines and festival maps load and render (screenshots with --shots).
+//   7. 3d       : the WebGL field view (?r3lite) runs a raid cutscene through the map's update3d hook.
+// Functional tests run with the 2D renderer (localStorage render3d:false); only test 7 uses the 3D view.
+// Debug aid: --from=raid starts the critical path at the night raid.
 // Other chapters' files (2…11) are stubbed out so work in progress elsewhere cannot break this test.
 'use strict';
 const fs = require('fs');
@@ -48,7 +51,7 @@ async function session(browser, query) {
   });
   page.on('pageerror', (e) => errors.push('pageerror: ' + (e.message + ' ' + (e.stack || '')).slice(0, 600)));
   await page.goto(BASE + query);
-  await page.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: 30000 });
+  await page.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: use3d ? 240000 : 30000 });
   await page.evaluate(() => G.Debug.setAutoplay(true));
   const s = {
     page, errors,
@@ -77,11 +80,11 @@ async function waitMap(s, id, ms = 60000) {
 }
 // no roaming enemies get in the way of the scripted path
 const calm = (s) => s.ev(() => { if (G.mapScene) G.mapScene.enemies = []; });
-const step = async (s, x, y, choices = []) => {
+const step = async (s, x, y, choices = [], ms) => {
   await s.idle(); await calm(s);
   await s.ev(([x, y, ch]) => { G.Debug.choices = ch.slice(); G.Debug.stepOn(x, y); }, [x, y, choices]);
   await s.page.waitForTimeout(150);
-  await s.idle();
+  await s.idle(ms);
 };
 const act = async (s, id, choices = []) => {
   await s.idle(); await calm(s);
@@ -271,7 +274,7 @@ async function critRaid(s) {
   assert(f.ch1_salt && f.tut_battle_item && await hasItem(s, 'c1_salt') >= 1, '1-17');
   // 1-18 … 1-21
   await level(s, 5);
-  await step(s, 19, 4, [0]);
+  await step(s, 19, 4, [0], 400000);   // 1-18 … 1-21: three battles incl. two bosses
   await waitMap(s, 'jiufen_shop', 180000);
   f = await s.flags();
   assert(f.ch1_xiaojin_saved && f.lyric_2 && f.ch1_moya_beaten && f.ch1_yinghuo && f.ch1_wgk_beaten && f.ch1_chenbo_hurt, '1-18…1-21: ' + JSON.stringify(f));
@@ -471,6 +474,20 @@ async function testMaps(browser, open) {
   return s;
 }
 
+// ------------------------------------------------------------------------------------------------ 7. 3D view smoke test
+async function test3d(browser, open) {
+  const s = await open(`?debug&map=jiufen&x=19&y=26&lv=5&party=xinghe,baizhi&chapter=1&r3lite&flags=${RAID_FLAGS}`);
+  await waitMap(s, 'jiufen', 180000);
+  assert(await s.ev(() => !!(G.mapScene.view3d && G.R3.enabled())), '3D view is active');
+  await step(s, 19, 24);   // 鬼燈籠 apparitions → monster billboards in the 3D scene, then the fight
+  assert((await s.flags())['ev_jiufen_raid_lanterns'], 'raid event ran in 3D');
+  assert(await s.ev(() => !!(G.mapScene.view3d && G.mapScene.view3d._c1)), 'update3d hook built its objects');
+  await s.shot('50_3d_raid');
+  await warp(s, 'keelung_fest', 38, 7, 'left');
+  await s.shot('51_3d_keelung');
+  return s;
+}
+
 (async () => {
   console.log('第一章　九份燈火 — chapter 1 playthrough');
   const browser = await chromium.launch();
@@ -482,6 +499,7 @@ async function testMaps(browser, open) {
     ['醒木失竊記', testXingmu],
     ['townsfolk in every phase, festival maps', testTownsfolk],
     ['raid map, mines & festival maps render', testMaps],
+    ['3D view (?r3lite): raid apparitions, festival', test3d],
   ];
   for (const [name, fn] of tests) if (!only.length || only.some((o) => name.includes(o))) await run(name, browser, fn);
   await browser.close();

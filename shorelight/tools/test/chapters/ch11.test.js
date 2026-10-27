@@ -19,6 +19,7 @@ const ROOT = path.resolve(__dirname, '..', '..', '..');
 const BASE = 'file://' + path.join(ROOT, 'index.html');
 const OUT = path.join(ROOT, 'tools', 'test', 'out', 'ch11');
 const SHOTS = process.argv.includes('--shots');
+const ALL = process.argv.includes('--all');
 const ONLY = (() => { const i = process.argv.indexOf('--only'); return i >= 0 ? process.argv[i + 1] : null; })();
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -35,8 +36,12 @@ class Run {
   constructor(browser, label) { this.browser = browser; this.label = label; this.errors = []; this.warns = []; this.shotN = 0; }
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+    // 2D renderer for the playthrough (software WebGL in headless Chromium is far too slow for the 3D view)
+    await this.ctx.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
     this.page = await this.ctx.newPage();
     const p = this.page;
+    // other chapters' map files are not needed by chapter 11; stub them (unless --all) so their work-in-progress can't fail this test
+    if (!ALL) await p.route(/js\/maps\/ch([1-9]|10)_[a-z0-9_]+\.js$/, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch11.test.js */' }));
     p.on('console', (m) => {
       const t = m.text();
       if (m.type() === 'error' && !IGNORE.some((r) => r.test(t))) this.errors.push(t.slice(0, 600));
@@ -167,7 +172,7 @@ async function runTrue(browser) {
   await R.step(7, 9);
   await R.ev(() => { G.mapScene.player.dir = 'up'; });
   await R.trigger('mush7');
-  check('A: 4-4 玄武蕈 + 七仙蕈全收集 (宇宙糰子之鈴, skill)', await R.flag('mush_7') && await R.ev(() => G.Inv.has('c11_ac_cosmic') && G.state.members.yungui.skills.includes('c11_yg_cosmic') && G.state.quests.q_tuanzi_mush && G.state.quests.q_tuanzi_mush.done));
+  check('A: 4-4 玄武蕈 + 七仙蕈全收集 (七色蕈鈴, 萬色符)', await R.flag('mush_7') && await R.ev(() => G.Inv.has('c11_ac_cosmic') && G.state.members.yungui.skills.includes('c11_yg_cosmic') && G.state.quests.q_tuanzi_mush && G.state.quests.q_tuanzi_mush.done));
   await R.step(7, 39);
   check('A: barrier before the captain sends the player back', (await R.ev(() => G.mapScene.player.y)) < 39);
   await R.step(20, 32);
@@ -216,7 +221,7 @@ async function runTrue(browser) {
   await R.shot('deck_blacktide');
   await R.choices(['暗流', 0]); await R.talk('chenbo');
   check('A: 4-2 step 1 平安信', await R.flag('ch11_tangshan_letter') && await R.ev(() => G.Inv.has('c11_pingan_letter')));
-  for (const id of ['deck_hy', 'deck_yg', 'deck_tz']) await R.talk(id);
+  for (const id of ['deck_hy', 'deck_yg', 'deck_yy', 'deck_mc']) await R.talk(id);
   await R.levelTo(41);
   await R.choices(['鯤之淵']); await R.talk('chenbo');
   check('A: 11-14 鯤 (鯤鱗甲)', await R.flag('ch11_kun') && await R.ev(() => G.Inv.has('c11_ar_kun_scale')));
@@ -328,6 +333,7 @@ async function runNormal(browser, snap) {
       for (const id of ['xinghe', 'hongying', 'yungui']) if (!G.state.members[id]) G.Party.join(id, 43);
       G.Party.join('baizhi', 43); G.Party.leave('baizhi');
       G.state.party = ['xinghe', 'hongying', 'yungui'];
+      G.state.flags.yuyuan_joined = true; G.state.flags.mochi_joined = true;
       G.state.chapter = 11;
       for (const f of ['ch11_start', 'ch11_magong', 'ch11_tianhou', 'ch11_sail', 'ch11_fog', 'ch11_farshore', 'ch11_tower_5', 'ch11_warden', 'ch11_breath', 'ch11_tongzi_met', 'ch11_seat_lit']) G.state.flags[f] = true;
       G.state.vars.ch11_leg = 5;

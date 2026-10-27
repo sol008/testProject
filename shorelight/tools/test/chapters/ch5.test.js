@@ -105,6 +105,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     // ------------------------------------------------------------------ chapter start
     check('chapter set to 5', (await ev(() => G.state.chapter)) === 5);
     check('party 星河 白芷 紅纓 雲歸', (await ev(() => G.state.party.slice(0, 4).join(','))) === 'xinghe,baizhi,hongying,yungui');
+    check('cats 芋圓・麻糬 follow, no 糰子', await ev(() => { const f = G.mapScene.followers.map((a) => a.id); return f.includes('mochi') && f.includes('yuyuan') && !f.includes('tuanzi'); }));
     check('arrival cutscene ran (ch5_start)', await flag('ch5_start'));
     check('levels ≥ 16', await ev(() => G.Party.active().every((m) => m.lv >= 16)));
     await shot('01_arrive');
@@ -136,6 +137,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
       const ok = await ev((id) => !!G.mapScene.npcs.find((n) => n.id === id), id);
       if (ok) await talk(id); else check(`npc ${id} present (day)`, false);
     }
+    await trigger('c5_lions');
     check('chest c5_01 (港灘)', await openChest('c5_01'));
     // 舊港 is closed during the day
     await stepOn(0, 32);
@@ -227,11 +229,9 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     check('福伯的老棉襖 + 牛舌餅 + 虎頭槍', await ev(() => G.Inv.has('c5_old_coat') && G.Inv.has('sp_hutou') && G.Inv.count('niushebing') >= 3));
     await trigger('c5_pipe');
     await trigger('c5_hall_seal');
-    // 憶蕈 (needs 靈視)
-    await ev(() => { G.state.vars.vision = 60; G.mapScene.computeSolid(); });
+    // 憶蕈 (麻糬 sniffs it out; 雲歸 eats it "for research")
     await trigger('c5_mush');
     check('憶蕈 (mush_ch5, tuanzi_mush +1)', (await flag('mush_ch5')) && (await ev(() => G.state.vars.tuanzi_mush >= 1)));
-    await ev(() => { G.state.vars.vision = 0; G.mapScene.computeSolid(); });
 
     // ------------------------------------------------------------------ 二樓
     await stepOn(36, 8);
@@ -308,7 +308,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
 
   // ------------------------------------------------------------------ separate check: 福伯 without 牛舌餅 (auntie gives one)
   try {
-    await page.goto('file://' + path.join(ROOT, 'index.html') + '?debug&map=lukang&x=27&y=39&lv=19&chapter=5&flags=ch5_start,ch5_gate,ch5_mazu,ch5_lamp,ch5_enter,ch5_boss,ch5_unmask');
+    await page.goto('file://' + path.join(ROOT, 'index.html') + '?debug&map=lukang&x=27&y=39&lv=19&chapter=5&flags=mochi_joined,yuyuan_joined,ch5_start,ch5_gate,ch5_mazu,ch5_lamp,ch5_enter,ch5_boss,ch5_unmask');
     await page.waitForFunction(() => window.G && G.Debug && G.mapScene, null, { timeout: 20000 });
     await ev(() => { G.Debug.setAutoplay(true); G.Inv.remove('niushebing', 99); });
     await idle();
@@ -335,7 +335,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     ['lukang_lantern', 6, 7, 'ch5_lamp'], ['lukang_inn', 6, 7, ''], ['lukang_wang', 10, 7, ''], ['lukang_shop', 6, 6, ''], ['lukang_shore', 30, 12, ''],
     ['luo_gate', 9, 10, 'ch5_gate'], ['luo_1f', 19, 20, 'ch5_lamp,ch5_enter,ev_luo_1f_c5_l1_intro'], ['luo_2f', 28, 11, 'ch5_lamp,ch5_enter']]) {
     try {
-      await page.goto('file://' + path.join(ROOT, 'index.html') + `?debug&map=${m}&x=${x}&y=${y}&lv=18&chapter=5&flags=${fl}`);
+      await page.goto('file://' + path.join(ROOT, 'index.html') + `?debug&map=${m}&x=${x}&y=${y}&lv=18&chapter=5&flags=mochi_joined,yuyuan_joined,${fl}`);
       await page.waitForFunction(() => window.G && G.mapScene, null, { timeout: 20000 });
       await page.waitForTimeout(800);
       const st = await ev(() => ({ id: G.mapScene.def.id, err: G.lastError ? String(G.lastError) : null }));
