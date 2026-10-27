@@ -552,9 +552,10 @@
       g.strokeStyle = rgba('#e0bc72', 0.45); g.lineWidth = 2;
       for (let x = 6; x < w; x += 28) { g.beginPath(); g.moveTo(x, h * (yb + 0.13)); g.lineTo(x, h * (yb + 0.03)); g.lineTo(x + 16, h * (yb + 0.03)); g.lineTo(x + 16, h * (yb + 0.1)); g.lineTo(x + 6, h * (yb + 0.1)); g.lineTo(x + 6, h * (yb + 0.07)); g.stroke(); }
     }
-    speck(g, w, h, 500, '#4f8a76', 0.4, r, 5);
-  }, );
-  REG.bronze.orm = (g, w, h, r) => { for (let i = 0; i < 500; i++) { g.fillStyle = 'rgb(0,235,40)'; g.beginPath(); g.arc(r() * w, r() * h, 0.3 + r() * 5, 0, TAU); g.fill(); } };
+    // verdigris gathers in the recesses of the relief bands and drips below them
+    for (const yb of [0.22, 0.6]) { speck(g, w, h * 0.18, 140, '#4f8a76', 0.45, r, 2.2, 0, h * yb); for (let i = 0; i < 14; i++) { const x = r() * w; g.fillStyle = lgr(g, 0, h * (yb + 0.16), 0, h * (yb + 0.3), [[0, 'rgba(79,138,118,0.35)'], [1, 'rgba(79,138,118,0)']]); g.fillRect(x, h * (yb + 0.16), 2 + r() * 3, h * 0.14); } }
+    speck(g, w, h, 60, '#4f8a76', 0.3, r, 1.5);
+  });
   region('iron', 128, 128, { pw: 0.5, ph: 0.5, rough: 0.55, metal: 0.75 }, (g, w, h, r) => metalPaint(g, w, h, '#3c3a38', r, '#6a4a32'));
   region('steel', 128, 64, { pw: 0.6, ph: 0.15, rough: 0.2, metal: 1 }, (g, w, h) => { g.fillStyle = lgr(g, 0, 0, 0, h, [[0, '#f2f6f8'], [0.45, '#a8b2b8'], [0.55, '#e6ecf0'], [1, '#6a747a']]); g.fillRect(0, 0, w, h); });
   region('mirror', 128, 128, { rough: 0.06, metal: 1 }, (g, w, h) => { g.fillStyle = rgr(g, w * 0.4, h * 0.38, w * 0.7, [[0, '#f4ffff'], [0.5, '#b8dce2'], [1, '#6a8e98']]); g.fillRect(0, 0, w, h); });
@@ -705,16 +706,23 @@
     for (let k = -h; k < w + h; k += 32) { g.beginPath(); g.moveTo(k + 2, 0); g.lineTo(k + 2 + h * 0.58, h); g.stroke(); }
   });
   // carved wooden lattice (cut): 回紋 key-fret cells for bed / screen / cabinets
+  // carved wooden lattice (cut): 燈籠錦 "lantern-frame" pattern — an open lantern-shaped pane in each cell, tied to
+  // the frame by short bars with little carved knots (bed, screen skirts, chair backs, altar sides)
   region('lattice_fret', 256, 256, { alpha: true, rough: 0.45 }, (g, w, h) => {
     g.clearRect(0, 0, w, h);
-    const c = 64;
+    const cw = 64, ch = 64, bar = (x0, y0, x1, y1, lw) => { g.lineWidth = lw; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
     g.lineCap = 'square';
-    for (let y = 0; y < h; y += c) for (let x = 0; x < w; x += c) {
-      g.strokeStyle = '#5a2418'; g.lineWidth = 7;
-      g.strokeRect(x + 3.5, y + 3.5, c - 7, c - 7);
-      g.beginPath(); g.moveTo(x + 16, y + 48); g.lineTo(x + 16, y + 16); g.lineTo(x + 48, y + 16); g.lineTo(x + 48, y + 40); g.lineTo(x + 26, y + 40); g.lineTo(x + 26, y + 26); g.lineTo(x + 38, y + 26); g.stroke();
-      g.strokeStyle = 'rgba(255,190,140,0.35)'; g.lineWidth = 1.5;
-      g.beginPath(); g.moveTo(x + 13, y + 48); g.lineTo(x + 13, y + 13); g.lineTo(x + 48, y + 13); g.stroke();
+    for (let y = 0; y < h; y += ch) for (let x = 0; x < w; x += cw) {
+      g.strokeStyle = '#5a2418';
+      g.strokeRect(x + 3, y + 3, cw - 6, ch - 6); g.lineWidth = 6; g.strokeRect(x + 3, y + 3, cw - 6, ch - 6);
+      // lantern pane: rectangle with clipped corners
+      const ix = x + 16, iy = y + 14, iw = 32, ih = 36, k = 6;
+      g.lineWidth = 5; g.beginPath(); g.moveTo(ix + k, iy); g.lineTo(ix + iw - k, iy); g.lineTo(ix + iw, iy + k); g.lineTo(ix + iw, iy + ih - k); g.lineTo(ix + iw - k, iy + ih); g.lineTo(ix + k, iy + ih); g.lineTo(ix, iy + ih - k); g.lineTo(ix, iy + k); g.closePath(); g.stroke();
+      bar(x + 32, y + 3, x + 32, iy, 5); bar(x + 32, iy + ih, x + 32, y + ch - 3, 5);
+      bar(x + 3, y + 32, ix, y + 32, 5); bar(ix + iw, y + 32, x + cw - 3, y + 32, 5);
+      g.fillStyle = '#5a2418'; for (const [kx, ky] of [[x + 32, y + 8], [x + 32, y + ch - 8], [x + 8, y + 32], [x + cw - 8, y + 32]]) { g.beginPath(); g.arc(kx, ky, 4.5, 0, TAU); g.fill(); }
+      g.strokeStyle = 'rgba(255,200,150,0.4)'; g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(ix + k, iy - 1.5); g.lineTo(ix + iw - k, iy - 1.5); g.moveTo(x + 2, y + 1.5); g.lineTo(x + cw - 2, y + 1.5); g.stroke();
     }
   });
   // gilded carving on red: a long frieze (bed lintel, altar apron, drum stand): scrolling clouds, bats, coins
@@ -1093,7 +1101,7 @@
   define('cabinet', {
     build(o, K) {
       const g = grp();
-      const wood = surf('rose'), dk = surf('rose', { tint: '#a08880' }), W = 0.82, D = 0.5, H = 1.86;
+      const wood = surf('rose'), dk = surf('rose', { tint: '#c0a098' }), W = 0.82, D = 0.5, H = 1.86;
       rbox(g, W + 0.06, 0.05, D + 0.05, 0.02, wood, 0, H - 0.05, 0);      // 櫃帽 cornice
       rbox(g, W + 0.02, 0.025, D + 0.01, 0.008, dk, 0, H - 0.075, 0);
       for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cyl(g, 0.028, 0.032, H - 0.06, wood, sx * (W / 2 - 0.02), 0, sz * (D / 2 - 0.02), { seg: 10 });
@@ -1167,7 +1175,7 @@
     build(o, K) {
       const w = Math.max(1, o.w | 0 || 2), r = rng(77 + (o.v | 0) * 31 + w);
       const g = grp();
-      const wood = surf('walnut'), dk = surf('walnut', { tint: '#8a7468' }), W = w - 0.06, D = 0.4, H = 1.86;
+      const wood = surf('walnut'), dk = surf('walnut', { tint: '#b09888' }), W = w - 0.06, D = 0.4, H = 1.86;
       for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(g, 0.05, H, 0.05, wood, sx * (W / 2 - 0.025), 0, sz * (D / 2 - 0.025));
       const shelves = [0.12, 0.66, 1.2, H - 0.04];
       for (const yy of shelves) box(g, W - 0.04, 0.03, D - 0.03, wood, 0, yy, 0);
@@ -1306,8 +1314,9 @@
     key: (o) => String(Math.max(1, o.w | 0 || 2)),
     build(o, K) {
       const w = Math.max(1, o.w | 0 || 2), g = grp();
-      const wood = surf('walnut', { tint: '#e0b8a0' }), dk = surf('walnut', { tint: '#8a7060' }), W = w - 0.06, D = 0.6, H = 0.92;
-      box(g, W - 0.06, H - 0.12, D - 0.08, dk, 0, 0.06, -0.01);
+      const wood = surf('walnut', { tint: '#e0b8a0' }), dk = surf('walnut', { tint: '#b09080' }), W = w - 0.06, D = 0.6, H = 0.92;
+      box(g, W - 0.06, H - 0.12, D - 0.32, dk, 0, 0.06, 0.1);
+      box(g, W - 0.06, 0.46, 0.26, dk, 0, 0.06, -0.17);                       // drawer bank behind
       box(g, W - 0.02, 0.06, D - 0.04, dk, 0, 0, -0.01);                       // plinth
       // front (customer side, +z): lacquered coin panels between stiles
       const n = Math.max(1, Math.round(W / 0.47)), pw = (W - 0.06) / n;
@@ -1321,6 +1330,19 @@
       box(g, W - 0.04, 0.05, 0.045, wood, 0, H - 0.13, D / 2 - 0.05);
       // top: thick board with overhang
       rbox(g, W + 0.02, 0.055, D, 0.015, surf('walnut', { tint: '#f0c8b0' }), 0, H - 0.075, 0);
+      // shopkeeper side (north): a bank of drawers with brass pulls and an open cubby row with ledgers & a cash box
+      const bz = -D / 2 + 0.0, nd = Math.max(2, Math.round(W / 0.32)), dw = (W - 0.08) / nd;
+      for (let i = 0; i < nd; i++) {
+        const cx = -W / 2 + 0.04 + dw * (i + 0.5);
+        for (const yy of [0.12, 0.32]) {
+          box(g, dw - 0.03, 0.17, 0.02, surf('walnut', { tint: '#d8b098' }), cx, yy, bz + 0.0);
+          box(g, 0.05, 0.015, 0.015, surf('brass'), cx, yy + 0.09, bz - 0.015);
+        }
+      }
+      box(g, W - 0.06, 0.03, 0.27, wood, 0, 0.52, -0.165);
+      for (let i = 0; i < 3; i++) box(g, 0.18, 0.025, 0.22, { r: 'book_edge', stretch: true, faces: { y: { r: 'book_cover', cell: [i, 4, 1] } } }, -W / 2 + 0.3 + i * 0.012, 0.55 + i * 0.026, -0.17);
+      rbox(g, 0.22, 0.12, 0.18, 0.01, surf('lacB'), W / 2 - 0.3, 0.55, -0.17);
+      box(g, 0.05, 0.03, 0.01, surf('brass'), W / 2 - 0.3, 0.6, -0.26);
       box(g, W - 0.02, 0.025, D - 0.04, dk, 0, H - 0.1, 0);
       const ty = H - 0.02;
       // abacus
@@ -1524,8 +1546,11 @@
       cyl(g, 0.3, 0.3, 0.01, surf('ash'), 0, by + 0.42, 0, { seg: 20 });
       // upright ears (立耳)
       for (const sx of [-1, 1]) {
-        extrude(g, [[-0.07, 0], [0.07, 0], [0.07, 0.16], [-0.07, 0.16]], 0.03, surf('bronze'), sx * 0.3, by + 0.42, 0, { ry: PI / 2 });
-        box(g, 0.035, 0.09, 0.08, surf('lacB', { tint: '#2a2010' }), sx * 0.3, by + 0.46, 0);
+        // upright ear: a cast loop (extruded outline with a hole)
+        const THREE = T3(), es = new THREE.Shape([[-0.075, 0], [0.075, 0], [0.08, 0.17], [-0.08, 0.17]].map(([a, b]) => new THREE.Vector2(a, b)));
+        const eh = new THREE.Path(); eh.moveTo(-0.04, 0.045); eh.lineTo(0.04, 0.045); eh.lineTo(0.045, 0.13); eh.lineTo(-0.045, 0.13); eh.closePath(); es.holes.push(eh);
+        const eg = new THREE.ExtrudeGeometry(es, { depth: 0.03, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.006, bevelSegments: 1 }); eg.translate(0, 0, -0.015);
+        mk(g, eg, surf('bronze'), sx * 0.31, by + 0.41, 0, { ry: PI / 2 });
       }
       const tips = [];
       incenseSticks(g, 0, by + 0.43, 0, 15, 0.32, 0.18, rng(8), tips);
@@ -1533,7 +1558,7 @@
       for (const d of dyn) g.add(d);
       return finish(K, g, dyn, o);
     },
-    lights: () => [{ x: 0, y: 1.1, z: 0, color: '#ff8a40', intensity: 0.35, distance: 1.8, flicker: 0.25 }],
+    lights: () => [{ x: 0, y: 1.45, z: 0.2, color: '#ff9a50', intensity: 0.25, distance: 1.6, flicker: 0.25 }],
   });
 
   // ------------------------------------------------------------------ lantern shop display shelf (o.w wide, o.v arrangement); lit display row on top
@@ -1937,5 +1962,493 @@
     },
   });
 
-  //@@MODELS@@
+  // ------------------------------------------------------------------ lantern-maker's props
+  region('staves', 256, 128, { rough: 0.8 }, (g, w, h, r) => {
+    g.fillStyle = '#8a6a48'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 90; i++) { g.fillStyle = rgba(r() < 0.6 ? '#5a3e24' : '#b8946a', 0.15 + r() * 0.2); g.fillRect(r() * w, 0, 0.8 + r() * 1.5, h); }
+    for (let x = 0; x < w; x += w / 14) { g.fillStyle = 'rgba(40,24,12,0.55)'; g.fillRect(x, 0, 1.4, h); g.fillStyle = 'rgba(255,230,190,0.18)'; g.fillRect(x + 1.6, 0, 1.2, h); }
+    g.fillStyle = lgr(g, 0, 0, 0, h, [[0, 'rgba(0,0,0,0.15)'], [0.2, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.25)']]); g.fillRect(0, 0, w, h);
+  });
+  region('combed', 256, 64, { rough: 0.85 }, (g, w, h, r) => {
+    g.fillStyle = '#9a5a30'; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 3) { g.fillStyle = rgba('#4a1e0c', 0.5); g.fillRect(x, 0, 1, h); }
+    speck(g, w, h, 100, '#c8804a', 0.3, r, 1);
+  });
+
+  // a small low work table, top at y = H
+  function lowTable(par, W, D, H, s) {
+    rbox(par, W, 0.04, D, 0.01, s, 0, H - 0.04, 0);
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(par, 0.045, H - 0.04, 0.045, s, sx * (W / 2 - 0.05), 0, sz * (D / 2 - 0.05));
+    for (const sz of [-1, 1]) box(par, W - 0.12, 0.03, 0.025, s, 0, 0.1, sz * (D / 2 - 0.05));
+    box(par, 0.025, 0.03, D - 0.12, s, 0, 0.1, 0);
+  }
+  function knife(par, x, y, z, ry) {
+    const k = grp(par, x, y, z, ry);
+    extrude(k, [[0, 0], [0.11, 0.006], [0.12, 0.022], [0, 0.025]], 0.004, surf('steel'), 0, 0.002, 0, { rx: -PI / 2 });
+    box(k, 0.07, 0.016, 0.018, surf('w_dark'), -0.035, 0, -0.012);
+  }
+  function stripBundle(par, x, y, z, ry, n = 9, len = 0.5) {
+    const b = grp(par, x, y, z, ry);
+    for (let i = 0; i < n; i++) box(b, len, 0.006, 0.012, surf('bamboo'), (i % 3) * 0.01, (i / 3 | 0) * 0.007, (i % 3) * 0.013 - 0.013);
+    for (const sx of [-0.15, 0.15]) box(b, 0.012, 0.026, 0.05, surf('red_band'), sx, -0.001, 0);
+  }
+  function pasteBowl(par, x, y, z) {
+    lathe(par, [[0.05, 0.05], [0.055, 0.045], [0.045, 0.01], [0.03, 0], [0, 0]], surf('porcelain_w', { tint: '#e8e0d0' }), x, y, z, { seg: 12 });
+    cyl(par, 0.047, 0.047, 0.004, surf('rice', { tint: '#f8f4e8' }), x, y + 0.035, z, { seg: 12 });
+    rod(par, 0.005, 0.14, surf('bamboo'), x + 0.03, y + 0.06, z, 'x', { rz: -0.5 });
+  }
+  function skeletonLantern(par, x, y, z, rw, rh, pasted) {
+    const pts = []; for (let k = 0; k <= 8; k++) { const a = k / 8 * PI; pts.push([Math.max(0.35 * rw, rw * sin(a)), rh * (1 - cos(a))]); }
+    lathe(par, pts, surf('lattice_bamboo', { k: 'cut', fit: true }), x, y, z, { seg: 12 });
+    if (pasted) {
+      const pp = pts.slice(0, Math.round(pts.length * pasted)).map(([a, b]) => [a + 0.002, b]);
+      lathe(par, pp, surf('lan_plain', { fit: true, tint: '#fbf3e4' }), x, y, z, { seg: 12, phiLength: TAU });
+    }
+    cyl(par, rw * 0.37, rw * 0.37, 0.015, surf('bamboo'), x, y + rh * 2 - 0.008, z, { seg: 10 });
+  }
+
+  define('lantern_frame', {
+    build(o, K) {
+      const g = grp(), H = 0.5;
+      lowTable(g, 0.86, 0.6, H, surf('pine', { tint: '#c89870' }));
+      // ring stand with a half-pasted skeleton
+      lathe(g, [[0.09, 0], [0.1, 0.005], [0.1, 0.03], [0.085, 0.03]], surf('w_dark'), -0.06, H, 0.0, { seg: 14 });
+      skeletonLantern(g, -0.06, H + 0.03, 0.0, 0.17, 0.17, 0.45);
+      stripBundle(g, 0.2, H, 0.15, 0.3, 9, 0.45);
+      knife(g, 0.24, H, -0.12, -0.4);
+      pasteBowl(g, 0.3, H, 0.05);
+      for (let i = 0; i < 3; i++) box(g, 0.2, 0.003, 0.15, surf('paper', { tint: i === 1 ? '#f0d8c8' : '#ffffff' }), -0.25 + i * 0.01, H + i * 0.003, 0.2 - i * 0.01, { ry: 0.2 * i });
+      rod(g, 0.022, 0.22, surf('paper_red'), -0.32, H + 0.022, -0.2, 'x', { ry: 0.3 });
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ lantern-maker's workbench (2 × 1)
+  define('workbench', {
+    build(o, K) {
+      const g = grp(), H = 0.82, wood = surf('camphor'), dk = surf('camphor', { tint: '#9a8070' });
+      rbox(g, 1.9, 0.07, 0.74, 0.015, wood, 0, H - 0.07, 0);
+      // trestle ends
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) box(g, 0.07, H - 0.07, 0.07, wood, sx * 0.8, 0, sz * 0.28);
+        box(g, 0.07, 0.06, 0.66, dk, sx * 0.8, 0.12, 0);
+        box(g, 0.06, 0.1, 0.62, wood, sx * 0.8, H - 0.17, 0);
+      }
+      box(g, 1.56, 0.06, 0.05, dk, 0, 0.14, 0);
+      // drawer with brass pull
+      box(g, 0.6, 0.12, 0.62, dk, 0, H - 0.19, -0.02);
+      box(g, 0.56, 0.1, 0.02, wood, 0, H - 0.18, 0.3);
+      box(g, 0.08, 0.02, 0.02, surf('brass'), 0, H - 0.135, 0.315);
+      const ty = H;
+      // paper sheets, a red lantern being pasted, brush pot, paints, paste, strips, knife, thread
+      for (let i = 0; i < 4; i++) box(g, 0.32, 0.003, 0.26, surf('paper', { tint: i === 3 ? '#fff8ec' : '#f4ead4' }), -0.42 + i * 0.008, ty + i * 0.003, 0.05 + i * 0.006, { ry: 0.08 * i - 0.1 });
+      box(g, 0.24, 0.004, 0.2, surf('paper_red'), -0.05, ty, 0.12, { ry: 0.25 });
+      const lh = grp(g, 0.18, ty, -0.05, 0, null);
+      lathe(lh, [[0.06, 0], [0.07, 0.005], [0.07, 0.03], [0.055, 0.03]], surf('w_dark'), 0, 0, 0, { seg: 12 });
+      lantern(lh, 0, 0.03, 0, 0.14, 0.13, '#d8342a', { motif: 'lan_fu', seg: 12 });
+      // brush pot (筆筒) with brushes
+      lathe(g, [[0, 0], [0.055, 0], [0.055, 0.14], [0.05, 0.14], [0.05, 0.01], [0, 0.01]], surf('bamboo'), 0.62, ty, -0.22, { seg: 12 });
+      for (let i = 0; i < 5; i++) { const a = i * 1.3; cyl(g, 0.006, 0.006, 0.26, surf('bamboo', { tint: i % 2 ? '#d0a070' : '#ffffff' }), 0.62 + cos(a) * 0.02, ty + 0.01, -0.22 + sin(a) * 0.02, { rz: cos(a) * 0.15, rx: sin(a) * 0.15, seg: 5 }); }
+      // paint dishes
+      [['#c8281e', 0.4], ['#f2c14e', 0.48], ['#2a4a9a', 0.56], ['#f6f4ee', 0.64]].forEach(([c, x]) => {
+        lathe(g, [[0, 0], [0.03, 0], [0.04, 0.015], [0.042, 0.018]], surf('porcelain_w'), x, ty, 0.2, { seg: 10 });
+        cyl(g, 0.034, 0.034, 0.003, surf('porcelain_w', { tint: c }), x, ty + 0.01, 0.2, { seg: 10 });
+      });
+      pasteBowl(g, 0.4, ty, -0.04);
+      stripBundle(g, -0.55, ty, -0.24, -0.1, 12, 0.6);
+      knife(g, -0.12, ty, -0.22, 0.6);
+      cyl(g, 0.025, 0.025, 0.04, surf('red_band'), 0.73, ty, 0.1, { seg: 10 });   // spool of thread
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ paper stock on a low pallet
+  define('paper_stack', {
+    build(o, K) {
+      const g = grp(), p = surf('oldwood', { tint: '#c0a080' });
+      box(g, 0.86, 0.05, 0.66, p, 0, 0.06, 0);
+      for (const sx of [-0.35, 0, 0.35]) box(g, 0.08, 0.06, 0.66, surf('oldwood', { tint: '#8a7060' }), sx, 0, 0);
+      const y0 = 0.11;
+      const stack = (x, z, w, d, h, s, ry, twine) => {
+        box(g, w, h, d, s, x, y0, z, { ry });
+        if (twine) for (const t of [-0.25, 0.25]) box(g, w + 0.01, h + 0.004, 0.012, surf('rope'), x + t * w * Math.sin(ry), y0 - 0.002, z + t * d, { ry });
+      };
+      stack(0.16, -0.06, 0.4, 0.52, 0.52, { r: 'paper_edge', faces: { y: 'paper' } }, 0.04, true);          // cream sheets, tied
+      stack(-0.24, 0.1, 0.32, 0.36, 0.22, { r: 'paper_edge', tint: '#f0a090', faces: { y: 'paper_red' } }, -0.08, true);   // red paper
+      stack(-0.24, 0.1, 0.24, 0.26, 0.12, { r: 'paper_edge', tint: '#f8d870', faces: { y: { r: 'paper_gold' } } }, 0.15, false);
+      const y1 = y0 + 0.22;
+      g.children[g.children.length - 1].position.y = y1;
+      for (let i = 0; i < 3; i++) rod(g, 0.035, 0.42, surf('paper', { tint: ['#f6b4c4', '#fff4e0', '#f6b4c4'][i] }), 0.16, y0 + 0.55 + i * 0.065, -0.12 + i * 0.07, 'x', { ry: 0.08, seg: 10 });
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ jar_row (o.w wide, o.v arrangement): 紹興 wine jars with clay caps & 酒 labels, glazed small jars
+  function wineJar(par, x, z, s, kind, r) {
+    const j = grp(par, x, 0, z, r() * TAU);
+    const gl = { wine: 'glaze_brown', amber: 'glaze_amber', green: 'glaze_green', black: 'glaze_black' }[kind];
+    if (kind === 'wine' || kind === 'amber') {
+      lathe(j, [[0, 0], [0.13, 0], [0.17, 0.05], [0.21, 0.2], [0.2, 0.34], [0.14, 0.44], [0.1, 0.47], [0.1, 0.49]].map(([a, b]) => [a * s, b * s]), surf(gl, { fit: true }), 0, 0, 0, { seg: 16 });
+      // mud seal capped with red cloth & cord
+      lathe(j, [[0.12, 0], [0.13, 0.03], [0.1, 0.09], [0, 0.11]].map(([a, b]) => [a * s, b * s]), surf('clothR', { tint: '#e8a090' }), 0, 0.47 * s, 0, { seg: 12 });
+      cyl(j, 0.125 * s, 0.125 * s, 0.015, surf('rope'), 0, 0.49 * s, 0, { seg: 12 });
+      if (kind === 'wine') plane(j, 0.15 * s, 0.15 * s, surf('fu_diamond', { k: 'cut', fit: true }), 0, 0.27 * s, 0.205 * s, { rx: -0.08 });
+    } else {
+      lathe(j, [[0, 0], [0.07, 0], [0.11, 0.08], [0.12, 0.16], [0.08, 0.26], [0.045, 0.29], [0.05, 0.31], [0.04, 0.32]].map(([a, b]) => [a * s, b * s]), surf(gl, { fit: true }), 0, 0, 0, { seg: 14 });
+      lathe(j, [[0.055, 0], [0.05, 0.03], [0, 0.045]].map(([a, b]) => [a * s, b * s]), surf(gl), 0, 0.31 * s, 0, { seg: 10 });
+    }
+  }
+  define('jar_row', {
+    variants: 8,
+    key: (o) => Math.max(1, o.w | 0 || 2) + '_' + ((o.v | 0) % 8),
+    build(o, K) {
+      const w = Math.max(1, o.w | 0 || 2), r = rng(300 + (o.v | 0) * 13 + w), g = grp();
+      for (let i = 0; i < w; i++) {
+        const cx = -w / 2 + i + 0.5;
+        wineJar(g, cx - 0.2, -0.05 + (r() - 0.5) * 0.08, 0.95 + r() * 0.15, r() < 0.6 ? 'wine' : 'amber', r);
+        wineJar(g, cx + 0.25, 0.12 + (r() - 0.5) * 0.08, 0.85 + r() * 0.3, r() < 0.5 ? 'green' : 'black', r);
+      }
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ 堂鼓 temple drum in a red lacquer stand (heads face north/south)
+  define('drum', {
+    build(o, K) {
+      const g = grp(), lac = surf('lac'), cy = 0.98, R = 0.34, Dp = 0.34;
+      box(g, 0.9, 0.08, 0.5, surf('lacD'), 0, 0, 0);
+      for (const sx of [-1, 1]) {
+        box(g, 0.075, 1.7, 0.075, lac, sx * 0.42, 0.08, 0);
+        for (const sz of [-1, 1]) tube(g, [[sx * 0.42, 0.08, sz * 0.22], [sx * 0.42, 0.35, sz * 0.03]], 0.02, lac, { seg: 3, rseg: 5 });
+        sph(g, 0.04, surf('gold'), sx * 0.42, 1.8, 0, { seg: 8 });
+        box(g, 0.16, 0.045, 0.06, lac, sx * (R + 0.04), cy - 0.02, 0);         // drum brackets
+      }
+      // top beam with upturned ends
+      extrude(g, [[-0.6, 0], [0.6, 0], [0.62, 0.1], [0.5, 0.06], [-0.5, 0.06], [-0.62, 0.1]], 0.07, lac, 0, 1.7, 0);
+      plane(g, 0.7, 0.1, surf('carve_gold', { fit: true }), 0, 1.6, 0.04);
+      plane(g, 0.7, 0.1, surf('carve_gold', { fit: true }), 0, 1.6, -0.04, { ry: PI });
+      box(g, 0.84, 0.03, 0.06, lac, 0, 1.54, 0);
+      // barrel: bulging red lacquer shell with brass nail rows; taiji heads both sides
+      const shell = []; for (let k = 0; k <= 8; k++) { const t = k / 8; shell.push([R * (0.92 + 0.08 * sin(t * PI)), t * Dp]); }
+      lathe(g, shell, lac, 0, cy, -Dp / 2, { seg: 22, rx: PI / 2 });
+      g.children[g.children.length - 1].position.set(0, cy, -Dp / 2);
+      for (const sz of [-1, 1]) {
+        cyl(g, R * 0.93, R * 0.93, 0.004, surf('drumhead', { fit: false, faces: { z: { r: 'drumhead' } } }), 0, cy, sz * (Dp / 2 + 0.002), { seg: 24, rx: PI / 2 });
+        g.children[g.children.length - 1].position.set(0, cy, sz * (Dp / 2) - 0.002);
+        for (let k = 0; k < 18; k++) { const a = k / 18 * TAU; sph(g, 0.012, surf('brass'), cos(a) * R * 0.95, cy + sin(a) * R * 0.95, sz * (Dp / 2 - 0.03), { seg: 4 }); }
+      }
+      // drumsticks resting on the base
+      for (const k of [-1, 1]) rod(g, 0.012, 0.36, surf('w_dark'), k * 0.06, 0.1, 0.12, 'x', { ry: 0.3 * k });
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ bronze temple bell (梵鐘) in a timber frame with a hanging striker log
+  define('bell', {
+    build(o, K) {
+      const g = grp(), dyn = [], wood = surf('rose', { tint: '#e0a090' });
+      box(g, 0.94, 0.12, 0.6, surf('granite'), 0, 0, 0);
+      for (const sx of [-1, 1]) {
+        box(g, 0.1, 2.0, 0.1, wood, sx * 0.4, 0.12, 0);
+        for (const sz of [-1, 1]) tube(g, [[sx * 0.4, 0.12, sz * 0.25], [sx * 0.4, 0.55, sz * 0.04]], 0.025, wood, { seg: 3, rseg: 5 });
+      }
+      extrude(g, [[-0.62, 0], [0.62, 0], [0.66, 0.14], [0.52, 0.09], [-0.52, 0.09], [-0.66, 0.14]], 0.12, wood, 0, 2.06, 0);
+      box(g, 0.84, 0.08, 0.08, wood, 0, 1.94, 0);
+      // bell body: straight-walled with a rounded crown, raised bands, nipples (乳釘)
+      const by = 1.02, bh = 0.78;
+      lathe(g, [[0.25, 0.05], [0.27, 0.0], [0.31, 0], [0.3, 0.06], [0.28, 0.25], [0.27, bh - 0.2], [0.25, bh - 0.06], [0.18, bh], [0, bh + 0.02]], surf('bronze', { fit: true }), 0, by, 0, { seg: 24 });
+      for (const yy of [0.22, 0.45]) lathe(g, [[0.282, 0], [0.292, 0.005], [0.292, 0.018], [0.282, 0.022]], surf('bronze'), 0, by + yy, 0, { seg: 24 });
+      for (let q = 0; q < 4; q++) for (let k = 0; k < 6; k++) {
+        const a = q * PI / 2 + PI / 4 + ((k % 3) - 1) * 0.18, yy = by + 0.52 + (k / 3 | 0) * 0.08;
+        sph(g, 0.016, surf('bronze'), cos(a) * 0.28, yy, sin(a) * 0.28, { seg: 5 });
+      }
+      // 蒲牢 hanging loop
+      tube(g, [[-0.07, by + bh, 0], [-0.08, by + bh + 0.1, 0], [0, by + bh + 0.16, 0], [0.08, by + bh + 0.1, 0], [0.07, by + bh, 0]], 0.022, surf('bronze'), { seg: 10, rseg: 6 });
+      cyl(g, 0.012, 0.012, 0.12, surf('iron'), 0, by + bh + 0.14, 0, { seg: 5 });
+      // striker log hung from two ropes, swinging gently (separate)
+      for (const sx of [-0.2, 0.2]) box(g, 0.05, 0.05, 0.36, wood, sx, 1.95, 0.2);   // brackets carrying the striker
+      const st = grp(g, 0, 1.95, 0.36, 0, 'striker');
+      for (const sx of [-0.2, 0.2]) cyl(st, 0.006, 0.006, 0.98, surf('rope'), sx, -0.98, 0, { seg: 4 });
+      rod(st, 0.06, 0.62, surf('pine', { tint: '#c09870' }), 0, -1.0, 0, 'x', { seg: 10 });
+      dyn.push(st);
+      return finish(K, g, dyn, o);
+    },
+    update(node, o, t) { const s = node.getObjectByName('striker'); if (s) s.rotation.x = 0.03 * sin(t * 1.1 + phaseOf(o)); },
+  });
+
+  // ------------------------------------------------------------------ weapon rack (2 × 1): spears with red tassels, a 關刀, a sheathed sword
+  function polearm(par, x, z, len, head, r) {
+    const p = grp(par, x, 0.06, z, r() * 0.4 - 0.2);
+    cyl(p, 0.015, 0.018, len, surf('w_dark', { tint: '#c09070' }), 0, 0, 0, { seg: 6 });
+    box(p, 0.035, 0.03, 0.035, surf('brass'), 0, len - 0.02, 0);
+    if (head === 'spear') {
+      extrude(p, [[0, 0], [0.025, 0.06], [0.012, 0.22], [0, 0.26], [-0.012, 0.22], [-0.025, 0.06]], 0.008, surf('steel'), 0, len + 0.01, 0);
+      for (const a of [0, PI / 2]) plane(p, 0.09, 0.14, surf('tassel', { k: 'cut', fit: true }), 0, len - 0.06, 0, { ry: a, cast: false });
+    } else {
+      // 關刀 crescent blade with a notch and a red tassel
+      extrude(p, [[-0.01, 0], [0.04, 0], [0.12, 0.18], [0.13, 0.34], [0.06, 0.46], [0.08, 0.32], [0.03, 0.12], [-0.01, 0.08]], 0.01, surf('steel'), 0, len, 0);
+      box(p, 0.06, 0.04, 0.03, surf('gold'), 0, len - 0.02, 0);
+      for (const a of [0, PI / 2]) plane(p, 0.1, 0.16, surf('tassel', { k: 'cut', fit: true }), 0, len - 0.1, 0, { ry: a, cast: false });
+    }
+    return p;
+  }
+  define('weapon_rack', {
+    build(o, K) {
+      const g = grp(), lac = surf('lac', { tint: '#e0a0a0' }), dk = surf('lacD');
+      box(g, 1.9, 0.08, 0.36, dk, 0, 0, 0);
+      for (const sx of [-1, 1]) { box(g, 0.08, 1.72, 0.08, lac, sx * 0.9, 0.08, 0); box(g, 0.1, 0.06, 0.34, dk, sx * 0.9, 0.08, 0); sph(g, 0.045, surf('gold'), sx * 0.9, 1.84, 0, { seg: 8 }); }
+      rbox(g, 1.96, 0.07, 0.1, 0.02, lac, 0, 1.76, 0);
+      box(g, 1.76, 0.05, 0.12, lac, 0, 1.0, 0);
+      plane(g, 1.6, 0.12, surf('carve_gold', { fit: true }), 0, 1.62, 0.05);
+      plane(g, 1.6, 0.12, surf('carve_gold', { fit: true }), 0, 1.62, -0.05, { ry: PI });
+      const r = rng(5);
+      [[-0.66, 'spear', 1.95], [-0.33, 'blade', 1.62], [0, 'spear', 2.0], [0.33, 'spear', 1.9]].forEach(([x, h, l]) => polearm(g, x, 0, l, h, r));
+      // sheathed sword leaning in the last slot
+      const sw = grp(g, 0.68, 0.08, 0.02, 0);
+      box(sw, 0.05, 0.86, 0.03, surf('lacB'), 0, 0, 0, { rz: -0.04 });
+      box(sw, 0.13, 0.03, 0.04, surf('brass'), 0.035, 0.86, 0);
+      cyl(sw, 0.016, 0.016, 0.2, surf('cloth_red', { tint: '#802020' }), 0.04, 0.89, 0, { seg: 6 });
+      plane(sw, 0.06, 0.16, surf('tassel', { k: 'cut', fit: true }), 0.06, 0.9, 0.03, { cast: false });
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ 照魂鏡 brass soul-mirror on a carved stand (faint spirit glow)
+  define('mirror_stand', {
+    build(o, K) {
+      const g = grp(), wood = surf('rose', { tint: '#d09080' });
+      extrude(g, [[-0.42, 0], [0.42, 0], [0.44, 0.04], [0.38, 0.1], [-0.38, 0.1], [-0.44, 0.04]], 0.42, wood, 0, 0, 0, { curve: 4 });
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) sph(g, 0.06, wood, sx * 0.34, 0.03, sz * 0.15, { seg: 8, s: [1, 0.6, 1] });   // cloud feet
+      box(g, 0.66, 0.05, 0.28, wood, 0, 0.1, 0);
+      for (const sx of [-1, 1]) { box(g, 0.06, 1.6, 0.06, wood, sx * 0.34, 0.15, 0); sph(g, 0.045, surf('gold'), sx * 0.34, 1.8, 0, { seg: 8 }); for (const sz of [-1, 1]) tube(g, [[sx * 0.34, 0.15, sz * 0.13], [sx * 0.34, 0.45, sz * 0.03]], 0.018, wood, { seg: 3, rseg: 5 }); }
+      box(g, 0.64, 0.04, 0.06, wood, 0, 0.7, 0);
+      // lotus support
+      lathe(g, [[0.03, 0], [0.12, 0.05], [0.17, 0.12], [0.12, 0.11], [0.06, 0.06]], surf('gold'), 0, 0.74, 0, { seg: 12 });
+      // mirror: brass rim with eight bosses, polished face (faint emissive), crest with a jade bead
+      const cy = 1.2, R = 0.3;
+      cyl(g, R + 0.04, R + 0.04, 0.05, surf('brass'), 0, cy, 0, { seg: 28, rx: PI / 2 });
+      g.children[g.children.length - 1].position.set(0, cy, -0.025);
+      cyl(g, R, R, 0.004, surf('mirror', { k: 'lit', tint: '#2e4e58', aoMin: 1 }), 0, cy, 0, { seg: 28, rx: PI / 2 });
+      g.children[g.children.length - 1].position.set(0, cy, 0.026);
+      cyl(g, R, R, 0.004, surf('brass', { tint: '#a08060' }), 0, cy, 0, { seg: 28, rx: PI / 2 });
+      g.children[g.children.length - 1].position.set(0, cy, -0.03);
+      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; sph(g, 0.03, surf('gold'), cos(a) * (R + 0.02), cy + sin(a) * (R + 0.02), 0.02, { seg: 6 }); }
+      extrude(g, [[-0.14, 0], [0.14, 0], [0.1, 0.1], [0, 0.16], [-0.1, 0.1]], 0.04, surf('gold'), 0, cy + R + 0.02, 0, { curve: 4 });
+      sph(g, 0.03, surf('glaze_green', { k: 'lit', tint: '#60c8c0' }), 0, cy + R + 0.1, 0.03, { seg: 8 });
+      return finish(K, g, [], o);
+    },
+    lights: () => [{ x: 0, y: 1.2, z: 0.3, color: '#9fe6ff', intensity: 0.6, distance: 3, flicker: 0.12 }],
+  });
+
+  // ------------------------------------------------------------------ bronze tripod 鼎 cauldron with a bubbling green brew
+  define('cauldron', {
+    build(o, K) {
+      const g = grp(), dyn = [];
+      for (let k = 0; k < 3; k++) {
+        const a = k / 3 * TAU + PI / 2, lx = cos(a) * 0.22, lz = sin(a) * 0.22;
+        lathe(g, [[0.035, 0], [0.05, 0.02], [0.035, 0.08], [0.04, 0.26]], surf('bronze'), lx, 0, lz, { seg: 8 });
+      }
+      lathe(g, [[0, 0.2], [0.15, 0.21], [0.27, 0.27], [0.33, 0.38], [0.34, 0.5], [0.36, 0.54], [0.34, 0.56], [0.3, 0.55]], surf('bronze', { fit: true }), 0, 0, 0, { seg: 22 });
+      for (const sx of [-1, 1]) extrude(g, [[-0.06, 0], [0.06, 0], [0.06, 0.15], [0.03, 0.15], [0.03, 0.04], [-0.03, 0.04], [-0.03, 0.15], [-0.06, 0.15]], 0.03, surf('bronze'), sx * 0.31, 0.54, 0, { ry: PI / 2 });
+      cyl(g, 0.31, 0.31, 0.01, surf('brew', { k: 'lit', tint: '#2a4220', aoMin: 1 }), 0, 0.5, 0, { seg: 22 });
+      // bubbles: little domes that swell and pop
+      const bub = grp(g, 0, 0.51, 0, 0, 'bubbles');
+      for (let k = 0; k < 4; k++) { const a = k * 2.4, d = 0.07 + (k % 3) * 0.07; sph(bub, 0.03, surf('brew', { k: 'lit', tint: '#4a7040', aoMin: 1 }), cos(a) * d, 0, sin(a) * d, { seg: 6, hseg: 3 }); }
+      dyn.push(bub);
+      bub.userData.keep = true;
+      dyn.push(smoke([{ x: -0.06, y: 0.52, z: 0, n: 9, h: 0.9, size: 0.1, speed: 0.22, col: '#e0ecd4', op: 0.25, spread: 0.08 }, { x: 0.1, y: 0.52, z: 0.05, n: 7, h: 0.7, size: 0.08, speed: 0.18, col: '#d0e8c0', op: 0.2, spread: 0.06, seed: 0.5 }]));
+      for (const d of dyn) g.add(d);
+      return finish(K, g, dyn, o);
+    },
+    update(node, o, t) {
+      const b = node.getObjectByName('bubbles');
+      if (b) b.children.forEach((m, k) => { const life = (t * 0.8 + k * 0.37 + phaseOf(o)) % 1; const s = life < 0.9 ? 0.2 + life : 0.01; m.scale.set(s, s * 0.8, s); });
+    },
+    lights: () => [{ x: 0, y: 0.8, z: 0, color: '#9ad86a', intensity: 0.35, distance: 1.8, flicker: 0.15 }],
+  });
+
+  // ------------------------------------------------------------------ herbs_rack: 中藥櫃 labelled drawers below, drying sieves and hanging bundles above
+  define('herbs_rack', {
+    build(o, K) {
+      const g = grp(), wood = surf('teak'), W = 0.86, D = 0.42;
+      box(g, W, 0.86, D, wood, 0, 0.06, 0);
+      plane(g, W - 0.06, 0.78, surf('herb_drawers', { fit: true }), 0, 0.06 + 0.43, D / 2 + 0.003);
+      box(g, W + 0.04, 0.06, D + 0.04, wood, 0, 0, 0);
+      rbox(g, W + 0.04, 0.04, D + 0.04, 0.01, wood, 0, 0.92, 0);
+      // upper open rack
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(g, 0.04, 0.98, 0.04, surf('bamboo'), sx * (W / 2 - 0.03), 0.96, sz * (D / 2 - 0.03));
+      const shelves = [1.24, 1.56];
+      for (const y of shelves) for (const sz of [-1, 1]) rod(g, 0.015, W, surf('bamboo'), 0, y, sz * (D / 2 - 0.03), 'x');
+      rbox(g, W + 0.06, 0.04, D + 0.06, 0.012, wood, 0, 1.92, 0);
+      const herbs = ['herb_g', 'herb_r', 'herb_y'];
+      [0.96, ...shelves].forEach((y, i) => {
+        lathe(g, [[0, 0.01], [0.3, 0.01], [0.33, 0.035], [0.34, 0.06], [0.32, 0.06], [0.3, 0.03]], surf('straw', { tint: '#e8d0a0' }), 0, y + 0.015, 0, { seg: 20, s: [1, 1, 0.55] });
+        cyl(g, 0.29, 0.3, 0.025, surf(herbs[i]), 0, y + 0.02, 0, { seg: 18, s: [1, 1, 0.55] });
+      });
+      for (const [x, c] of [[-0.25, '#6a7a3a'], [0, '#8a6a3a'], [0.25, '#5a6a44']]) {
+        cyl(g, 0.003, 0.003, 0.08, surf('rope'), x, 1.84, 0.12, { seg: 3 });
+        lathe(g, [[0.01, 0], [0.06, 0.04], [0.05, 0.16], [0.025, 0.2]], surf('herb_g', { tint: c === '#8a6a3a' ? '#d0a070' : '#ffffff' }), x, 1.64, 0.12, { seg: 7 });
+        cyl(g, 0.028, 0.028, 0.02, surf('red_band'), x, 1.82, 0.12, { seg: 7 });
+      }
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ small household props
+  define('bucket', {
+    build(o, K) {
+      const g = grp();
+      lathe(g, [[0, 0.02], [0.2, 0.02], [0.2, 0], [0.22, 0], [0.25, 0.42], [0.23, 0.42], [0.2, 0.06], [0, 0.06]], surf('staves', { fit: true }), 0, 0, 0, { seg: 18 });
+      for (const y of [0.08, 0.34]) cyl(g, 0.226 + y * 0.075, 0.222 + y * 0.075, 0.03, surf('bamboo', { tint: '#c0a070' }), 0, y, 0, { seg: 18, open: true });
+      cyl(g, 0.235, 0.235, 0.004, surf('water', { aoMin: 1 }), 0, 0.33, 0, { seg: 18 });
+      for (const sx of [-1, 1]) box(g, 0.04, 0.12, 0.05, surf('staves'), sx * 0.24, 0.36, 0);
+      tube(g, [[-0.24, 0.45, 0], [-0.18, 0.62, 0], [0, 0.7, 0], [0.18, 0.62, 0], [0.24, 0.45, 0]], 0.012, surf('rope'), { seg: 12, rseg: 5 });
+      return finish(K, g, [], o);
+    },
+  });
+  define('broom', {
+    build(o, K) {
+      const g = grp();
+      // broom leaning against the wall to the north
+      const b = grp(g, -0.18, 0, 0.05);
+      const top = [0.16, 1.45, -0.5], bot = [0, 0.32, 0];
+      const dx = top[0] - bot[0], dy = top[1] - bot[1], dz = top[2] - bot[2], L = Math.hypot(dx, dy, dz);
+      const shaft = grp(b, bot[0], bot[1], bot[2]);
+      shaft.lookAt(new (T3().Vector3)(dx, dy, dz).add(new (T3().Vector3)(-0.18, 0, 0.05)));
+      rod(shaft, 0.016, L, surf('bamboo'), 0, 0, L / 2, 'z');
+      // straw head: a flattened fan bound with red cord
+      const hd = grp(shaft, 0, 0, 0);
+      extrude(hd, [[-0.04, 0], [0.04, 0], [0.16, -0.36], [-0.16, -0.36]], 0.035, surf('straw', { g: 'y' }), 0, 0, 0, { rx: -PI / 2 });
+      hd.children[0].rotation.set(PI / 2, 0, 0); hd.children[0].position.z = 0.02;
+      for (const zz of [0.02, 0.09]) box(hd, 0.1 + zz * 0.6, 0.045, 0.02, surf('red_band'), 0, -0.022, -zz);
+      // 畚箕 bamboo dustpan
+      const dp = grp(g, 0.24, 0, 0.1, -0.5);
+      box(dp, 0.38, 0.015, 0.34, surf('rattan'), 0, 0, 0);
+      box(dp, 0.38, 0.14, 0.015, surf('rattan'), 0, 0, -0.17);
+      for (const sx of [-1, 1]) extrude(dp, [[0.17, 0], [-0.17, 0], [-0.17, 0.14], [0.17, 0.02]], 0.015, surf('rattan'), sx * 0.19, 0, 0, { ry: PI / 2 });
+      rod(dp, 0.012, 0.4, surf('bamboo'), 0, 0.14, -0.17, 'x');
+      return finish(K, g, [], o);
+    },
+  });
+  define('plant_pot', {
+    variants: 3,
+    key: (o) => String((o.v | 0) % 3),
+    build(o, K) {
+      const v = (o.v | 0) % 3, g = grp();
+      lathe(g, [[0, 0], [0.13, 0], [0.14, 0.02], [0.17, 0.2], [0.2, 0.3], [0.21, 0.32], [0.19, 0.32], [0.17, 0.26]], surf('porcelain', { fit: true }), 0, 0, 0, { seg: 18 });
+      cyl(g, 0.18, 0.18, 0.01, surf('soil'), 0, 0.27, 0, { seg: 16 });
+      const cut = (rk, w, h, y, n, tilt, o2 = {}) => { for (let i = 0; i < n; i++) plane(g, w, h, surf(rk, { k: 'cut', fit: true, aoMin: 0.8 }), o2.x || 0, y + h / 2, o2.z || 0, { ry: i * PI / n + (o2.ry || 0), rx: tilt, cast: true }); };
+      if (v === 0) { cut('leaves_sword', 0.62, 0.6, 0.27, 3, 0); cut('leaves_sword', 0.5, 0.42, 0.27, 2, 0.2, { ry: 0.4 }); }
+      else if (v === 1) {
+        cut('leaves_sword', 0.5, 0.22, 0.26, 2, 0.5);
+        for (const [sx, h] of [[-1, 0.62], [1, 0.55]]) {
+          const pts = [[0, 0.27, 0], [sx * 0.02, 0.27 + h * 0.6, 0.02], [sx * 0.1, 0.27 + h, 0.03], [sx * 0.22, 0.27 + h * 0.88, 0.04]];
+          tube(g, pts, 0.005, surf('leaf'), { seg: 8, rseg: 4 });
+          for (let k = 0; k < 4; k++) { const t = 0.55 + k * 0.15; const x = sx * (0.02 + t * t * 0.2), y = 0.27 + h * (0.6 + 0.4 * sin(t * 2.6)); for (const a of [0, PI / 2]) plane(g, 0.09, 0.09, surf('orchid', { k: 'cut', fit: true }), x, y - 0.045, 0.04, { ry: a + 0.4, rx: -0.3 }); }
+        }
+      } else {
+        for (let i = 0; i < 6; i++) { const a = i * 1.05, d = 0.05; const h = 0.55 + (i % 3) * 0.16; rod(g, 0.014, h, surf('bamboo', { tint: '#70c060' }), cos(a) * d, 0.27 + h / 2, sin(a) * d, 'y'); for (const r2 of [0, 1.2]) plane(g, 0.18, 0.18, surf('bamboo_leaf', { k: 'cut', fit: true }), cos(a) * d, 0.27 + h - 0.04, sin(a) * d, { ry: a + r2 }); }
+        cyl(g, 0.075, 0.075, 0.03, surf('red_band'), 0, 0.42, 0, { seg: 10 });
+      }
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ temple divination: red altar table with 筊杯 pair / 籤筒
+  function redTable(g) {
+    const lac = surf('lac');
+    rbox(g, 0.74, 0.05, 0.56, 0.012, lac, 0, 0.72, 0);
+    aprons(g, 0.74, 0.56, 0.72, 0.08, 0.04, lac, 0.04, 0.02);
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) hoofLeg(g, sx * 0.31, sz * 0.22, 0.72, 0.055, lac, sx, sz);
+    plane(g, 0.62, 0.07, surf('carve_gold', { fit: true }), 0, 0.68, 0.262);
+    // gilt inlay line around the top
+    for (const sz of [-1, 1]) box(g, 0.64, 0.004, 0.012, surf('gold'), 0, 0.77, sz * 0.23);
+    for (const sx of [-1, 1]) box(g, 0.012, 0.004, 0.47, surf('gold'), sx * 0.32, 0.77, 0);
+    return 0.77;
+  }
+  function jiao(par, x, y, z, ry, flatUp) {
+    const THREE = T3();
+    const geo = new THREE.SphereGeometry(0.075, 12, 6, 0, TAU, 0, PI / 2);
+    geo.scale(1.6, flatUp ? -0.55 : 0.55, 0.75);
+    const m = mk(par, geo, surf('lac', { tint: '#f0a090' }), x, y + (flatUp ? 0.041 : 0), z, { ry });
+    const cap = new THREE.CircleGeometry(0.075, 12); cap.rotateX(flatUp ? -PI / 2 : PI / 2); cap.scale(1.6, 1, 0.75);
+    mk(par, cap, surf('lac', { tint: '#d8b090' }), x, y + (flatUp ? 0.041 : 0.001), z, { ry });
+    return m;
+  }
+  define('divination_blocks', {
+    build(o, K) {
+      const g = grp(), ty = redTable(g);
+      box(g, 0.5, 0.008, 0.3, surf('cloth_red', { tint: '#ffd070' }), 0, ty, 0.02);
+      box(g, 0.44, 0.01, 0.24, surf('clothR'), 0, ty + 0.004, 0.02);
+      jiao(g, -0.08, ty + 0.012, 0.02, 0.4, false);      // round side up
+      jiao(g, 0.1, ty + 0.012, 0.05, -0.3, true);        // flat side up → 聖筊
+      box(g, 0.06, 0.006, 0.06, surf('paper_gold'), 0.2, ty + 0.012, -0.08, { ry: 0.3 });
+      return finish(K, g, [], o);
+    },
+  });
+  define('fortune_sticks', {
+    build(o, K) {
+      const g = grp(), ty = redTable(g), r = rng(17);
+      lathe(g, [[0, 0], [0.09, 0], [0.095, 0.02], [0.09, 0.26], [0.1, 0.28], [0.085, 0.28], [0.08, 0.03], [0, 0.03]], surf('qiantong', { fit: true }), 0, ty, -0.02, { seg: 18 });
+      for (let i = 0; i < 26; i++) {
+        const a = r() * TAU, d = r() * 0.05, l = 0.42 + r() * 0.06;
+        const s = grp(g, cos(a) * d, ty + 0.03, -0.02 + sin(a) * d, r() * TAU);
+        box(s, 0.012, l, 0.004, surf('stick', { g: 'y' }), 0, 0, 0, { rz: (r() - 0.5) * 0.18 + cos(a) * d * 2 });
+      }
+      for (const [x, z, ry] of [[-0.2, 0.12, 0.3], [0.18, 0.1, -0.2]]) box(g, 0.42, 0.004, 0.012, surf('stick'), x, ty, z, { ry });
+      box(g, 0.12, 0.003, 0.08, surf('paper', { tint: '#f8e0a0' }), 0.24, ty, -0.12, { ry: 0.2 });
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ mill_stone: v0 Hakka 擂茶 grinding bowl & pestle (as the 2D art), v1 a 石磨 hand quern
+  define('mill_stone', {
+    variants: 2,
+    key: (o) => String((o.v | 0) % 2),
+    build(o, K) {
+      const g = grp();
+      if ((o.v | 0) % 2 === 0) {
+        lathe(g, [[0.16, 0], [0.18, 0.02], [0.17, 0.06], [0.16, 0.08]], surf('straw'), 0, 0, 0, { seg: 16 });
+        lathe(g, [[0, 0.06], [0.13, 0.06], [0.24, 0.16], [0.33, 0.38], [0.35, 0.42], [0.34, 0.43]], surf('terracotta'), 0, 0, 0, { seg: 22 });
+        lathe(g, [[0.32, 0.42], [0.23, 0.2], [0.12, 0.11], [0, 0.1]], surf('combed', { fit: true }), 0, 0, 0, { seg: 22 });
+        cyl(g, 0.11, 0.15, 0.03, surf('herb_g', { tint: '#c8d890' }), 0, 0.12, 0, { seg: 14 });
+        // guava-wood pestle leaning out of the bowl
+        const p = grp(g, 0.02, 0.14, 0.02);
+        cyl(p, 0.025, 0.035, 1.0, surf('pine', { tint: '#d0a878' }), 0, 0, 0, { rz: 0.38, rx: 0.15, seg: 8 });
+      } else {
+        // 石磨: two granite stones, spout on the lower, feed hole + wooden handle on the upper, on a wooden basin frame
+        box(g, 0.8, 0.3, 0.8, surf('w_dark', { tint: '#c09070' }), 0, 0, 0);
+        lathe(g, [[0, 0.3], [0.36, 0.3], [0.36, 0.36], [0.33, 0.37], [0.3, 0.36], [0, 0.36]], surf('granite'), 0, 0, 0, { seg: 20 });
+        box(g, 0.12, 0.04, 0.12, surf('granite'), 0, 0.31, 0.38);
+        cyl(g, 0.28, 0.28, 0.14, surf('granite'), 0, 0.37, 0, { seg: 20 });
+        cyl(g, 0.27, 0.27, 0.14, surf('granite'), 0, 0.51, 0, { seg: 20 });
+        cyl(g, 0.045, 0.045, 0.005, surf('soot'), 0.08, 0.651, 0, { seg: 8 });
+        rod(g, 0.02, 0.3, surf('pine'), 0.38, 0.58, 0, 'x');
+        rod(g, 0.022, 0.18, surf('pine'), 0.52, 0.66, 0, 'y');
+      }
+      return finish(K, g, [], o);
+    },
+  });
+
+  // ------------------------------------------------------------------ small upright loom with a half-woven Atayal-style band
+  define('loom_small', {
+    build(o, K) {
+      const g = grp(), wood = surf('oldwood', { tint: '#c8a070' });
+      box(g, 0.86, 0.07, 0.4, wood, 0, 0, 0);
+      for (const sx of [-1, 1]) { box(g, 0.06, 1.55, 0.06, wood, sx * 0.38, 0.07, 0); for (const sz of [-1, 1]) tube(g, [[sx * 0.38, 0.07, sz * 0.18], [sx * 0.38, 0.4, sz * 0.03]], 0.018, wood, { seg: 3, rseg: 5 }); }
+      rod(g, 0.035, 0.84, wood, 0, 1.58, 0, 'x', { seg: 10 });     // warp beam
+      rod(g, 0.04, 0.84, wood, 0, 0.36, 0.02, 'x', { seg: 10 });   // cloth beam
+      // woven cloth (lower), warp threads (upper), heddle bar, beater
+      plane(g, 0.66, 0.5, surf('loom_cloth', { fit: true, ao: 1 }), 0, 0.64, 0.035);
+      plane(g, 0.66, 0.5, surf('loom_cloth', { fit: true, ao: 1, tint: '#d0c8b8' }), 0, 0.64, 0.033, { ry: PI });
+      plane(g, 0.66, 0.66, surf('thread', { k: 'cut', fit: true, aoMin: 1 }), 0, 1.22, 0.02);
+      rod(g, 0.012, 0.74, surf('bamboo'), 0, 1.05, 0.03, 'x');
+      rod(g, 0.012, 0.74, surf('bamboo'), 0, 1.0, 0.0, 'x');
+      box(g, 0.74, 0.05, 0.03, surf('pine'), 0, 0.9, 0.06);
+      // shuttle on the base
+      extrude(g, [[-0.16, 0], [-0.1, 0.02], [0.1, 0.02], [0.16, 0], [0.1, -0.02], [-0.1, -0.02]], 0.03, surf('pine', { tint: '#e0b080' }), 0.1, 0.085, 0.1, { rx: -PI / 2 });
+      cyl(g, 0.03, 0.03, 0.06, surf('red_band'), -0.2, 0.07, 0.1, { seg: 8 });
+      return finish(K, g, [], o);
+    },
+  });
 })();
