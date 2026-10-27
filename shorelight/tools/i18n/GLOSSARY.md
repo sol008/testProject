@@ -51,7 +51,9 @@ This file is the single source of truth for names and terms. `js/i18n/en_ui.js` 
 | 白芷 | **Bai Zhi** | Always both syllables. |
 | 洛紅纓 / 紅纓 / 阿纓 | **Luo Hongying** / **Hongying** / **Ying** | 阿纓 (Qingfeng's pet name) → "Ying". |
 | 雲歸 | **Yun Gui** | |
-| 糰子 | **Tuanzi** | Formosan leopard-cat (石虎) spirit; "he". |
+| 糰子 | **Tuanzi** | CUT from the story. Only legacy data strings remain; never add him to chapter text. |
+| 芋圓 (the cat) | **Taro** | Chubby gray tabby who adopted Xinghe; "he". Never speaks: narration and emotes only. Deadpan, gluttonous, unimpressed. (The food item 芋圓 stays "Taro Balls".) |
+| 麻糬 (the cat) | **Mochi** | Fluffy dilute calico who stays with Bai Zhi; "she". Never speaks: chirps, looks, purrs. Sees spirits. |
 | 陳伯 / 陳渡 | **Uncle Chen** / **Chen Du** | |
 | 夜玄 | **Ye Xuan** | Title 玄冥法師 → **the Abbot of the Dark Deep**. |
 | 夜念 / 念兒 | **Ye Nian** / **Nian'er** | |

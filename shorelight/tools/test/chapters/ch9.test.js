@@ -6,6 +6,7 @@
 //   node tools/test/chapters/ch9.test.js --headed
 //   node tools/test/chapters/ch9.test.js --only A,B,sweep,3d   # run selected parts
 //   node tools/test/chapters/ch9.test.js --only A --from yard  # Part A from a segment: start banping donggang yard hengchun eluanbi end
+//   node tools/test/chapters/ch9.test.js --only A --to donggang  # stop after a segment
 //
 // Part A drives the critical path from ?debug&startch=9 to G.Story.next(S, 10) while doing every side quest
 // (半屏山湯圓 心燈, 七個名字 心燈 + 歌詞殘篇, 燈塔守的家書 心燈) on the way.
@@ -26,6 +27,7 @@ const HEADED = argv.includes('--headed');
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? String(argv[i + 1] || '').split(',') : null; })();
 const want = (k) => !ONLY || ONLY.includes(k);
 const FROM = (() => { const i = argv.indexOf('--from'); return i >= 0 ? argv[i + 1] : null; })();
+const TO = (() => { const i = argv.indexOf('--to'); return i >= 0 ? argv[i + 1] : null; })();
 fs.mkdirSync(OUT, { recursive: true });
 
 const results = [];
@@ -178,7 +180,13 @@ async function openSegment(browser, sid) {
     for (const q of o.quests || []) G.Quests.done(q);
     G.state.inv = {};
     for (const [i, n] of [['shimuyu', 3], ['xumingsan', 5], ['huanhunxiang', 3], ['xiancao', 3]]) G.Inv.add(i, n);
-    // chapter-8 gear, as G.Story.ch9 gives a standalone start
+  }, S0);
+  await gearUp();
+  await settle();
+}
+// chapter-8 gear, as G.Story.ch9 gives a standalone start
+async function gearUp() {
+  await ev(() => {
     for (const id of ['xinghe', 'hongying', 'yungui']) {
       const m = G.state.members[id];
       for (const slot of ['weapon', 'armor', 'head', 'feet']) {
@@ -193,8 +201,7 @@ async function openSegment(browser, sid) {
       const st2 = G.Party.stats(id); m.hp = st2.mhp; m.mp = st2.mmp;
     }
     G.mapScene.refresh();
-  }, S0);
-  await settle();
+  });
 }
 
 async function seg_start() {
@@ -478,7 +485,8 @@ async function partA(browser, from) {
   console.log(`\n== Part A: chapter 9 critical path${from && from !== 'start' ? ' from segment ' + from : ''} → chapter 10 ==`);
   const i0 = Math.max(0, SEGMENTS.indexOf(from || 'start'));
   await openSegment(browser, SEGMENTS[i0]);
-  for (let i = i0; i < SEGMENTS.length; i++) {
+  const i1 = TO && SEGMENTS.includes(TO) ? SEGMENTS.indexOf(TO) : SEGMENTS.length - 1;
+  for (let i = i0; i <= i1; i++) {
     console.log(`  -- segment ${SEGMENTS[i]}`);
     const t0 = Date.now();
     // the run skips random encounters: catch up to the level a segment run starts at
@@ -494,6 +502,7 @@ async function partB(browser) {
   console.log('\n== Part B: alternative branches ==');
   // greedy treasure room in 半屏山腹
   await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&autoplay=1&map=banping_cave&x=31&y=12&lv=31&party=xinghe,hongying,yungui&chapter=9&flags=mochi_joined,yuyuan_joined,ch9_banping_open,ch9_banping_cave_open');
+  await gearUp();
   await trigger('bpc_e0');
   check('east room: took 金縷頭巾', (await count('c9_hd_jinlv')) === 1);
   await choices(['打開']);

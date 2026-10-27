@@ -1154,7 +1154,7 @@ G.I18N.add({
 // 貓咪助陣 (replaces the removed 糰子 summon)
 G.I18N.add({
   '貓咪助陣': 'Cat Assist',
-  '「芋圓、麻糬——拜託了！」至於來的是哪一隻、會做什麼，只有貓知道。': '"Taro Ball, Mochi — please!" Which cat answers, and what it does, only the cat knows.',
+  '「芋圓、麻糬——拜託了！」至於來的是哪一隻、會做什麼，只有貓知道。': '"Taro, Mochi — please!" Which cat answers, and what it does, only the cat knows.',
   '芋圓炸毛撲上去一陣亂抓！': 'Taro Ball puffs up and pounces in a flurry of claws!',
   '芋圓整隻坐了上去——十二斤的壓制力！': 'Taro Ball sits on it. Twelve pounds of pure suppression!',
   '芋圓擋在最虛弱的同伴前面，一臉「你敢？」。': 'Taro Ball plants himself in front of the weakest ally. "Try it."',
