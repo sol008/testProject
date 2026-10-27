@@ -57,7 +57,7 @@ class Run {
     await this.page.waitForFunction(fn, arg, { timeout: ms, polling: 250 });
     await this.idle();
   }
-  async idle(ms = 180000) {
+  async idle(ms = 900000) {
     // idle must hold for ~0.6 s (auto events start a frame after the previous script ends)
     const ok = await this.page.evaluate((t) => new Promise((res) => {
       const t0 = Date.now(); let since = 0;
@@ -124,11 +124,10 @@ const EXTRA_LANTERNS = [
   ['q_test_unknown_lamp', '某一盞別人點的燈'],
 ];
 
-async function runTrue(browser) {
-  const R = new Run(browser, 'A');
-  console.log('\n── Run A: ?debug&startch=11 → 真結局「千燈」');
-  await R.open('?debug&startch=11&autoplay=1');
-  await R.ev(() => { G.settings.battleSpeed = 8; });
+// ---- the playthrough, cut into segments. Each segment ends with a snapshot (tools/test/out/ch11/snap_<seg>.json),
+// so a failing segment can be replayed alone:  --from <seg> [--to <seg>]  or  --only <seg>.
+const SEGMENTS = {
+  temple: async (R) => {
   // 11-01 → 11-02 → 11-03 (title card, deck, Magong, temple)
   await R.until(() => G.state.flags.ch11_magong && G.mapScene && G.mapScene.def.id === 'penghu_tianhou');
   check('A: chapter set to 11', await R.ev(() => G.state.chapter === 11));
@@ -142,7 +141,8 @@ async function runTrue(browser) {
   await R.trigger('incense_in');
   check('A: 11-03 ch11_tianhou + 媽祖香火袋', await R.flag('ch11_tianhou') && await R.ev(() => G.Inv.has('c11_mazu_pouch')));
   for (const id of ['ph_ajin', 'ph_ajin', 'ph_oldman', 'ph_prayer', 'ph_ref1']) await R.talk(id);
-  await R.health('temple');
+  },
+  magong: async (R) => {
   // ---- 媽宮: NPCs, shop, inn, 添姆, 4-5 海賊的寶藏, 4-1 step 1
   await R.warp('penghu_magong', 25, 9, 'down');
   await R.shot('magong');
@@ -162,7 +162,8 @@ async function runTrue(browser) {
   await R.shot('inn');
   await R.ev(() => { G.state.gold = Math.max(G.state.gold, 500); });
   await R.choices([0]); await R.talk('ph_innkeeper');
-  await R.health('magong');
+  },
+  flats: async (R) => {
   // ---- 石滬灘 (11-04), 4-1 steps 2–4, 4-4 玄武蕈, 11-05 烏鬚船主
   await R.warp('penghu_flats', 28, 1, 'down');
   check('A: 11-04 ch11_flats', await R.flag('ch11_flats'));
@@ -190,7 +191,8 @@ async function runTrue(browser) {
   check('A: barrier before the captain sends the player back', (await R.ev(() => G.mapScene.player.y)) < 39);
   await R.step(20, 32);
   check('A: 11-05 烏鬚船主 beaten (海圖)', await R.flag('ch11_captain') && await R.ev(() => G.Inv.has('c11_blacktide_chart')));
-  await R.health('flats');
+  },
+  xuanwu: async (R) => {
   // ---- 玄武嶼 / 萬魂窟 P1 / 長明殿 / 囚室 / 逆潮台
   await R.levelTo(40);
   await R.step(7, 43);
@@ -219,13 +221,14 @@ async function runTrue(browser) {
   await R.step(21, 2);
   check('A: 11-10 鎖魂將 → 錨燈碎 (ch11_jailer, ch11_night_moves)', await R.flag('ch11_jailer') && await R.flag('ch11_night_moves'));
   check('A: back on the 王船 after 11-10', (await R.map()) === 'wangboat_blacktide');
-  await R.health('xuanwu');
   // C-state Magong (wind is back): 阿桂's gift
   await R.step(27, 8);
   check('A: gangway → 玄武嶼', (await R.map()) === 'xuanwu_shore');
   await R.warp('penghu_magong', 20, 7, 'up');
   await R.talk('ph_agui');
   check('A: 阿桂 C-state gift (丁香魚乾)', await R.flag('ch11_agui_gift'));
+  },
+  voyage: async (R) => {
   // ---- 出航 (11-11 → 11-12), 溺魂暗流 (11-13), 鯤 (11-14), 無光之霧 (11-15) → 彼岸 (11-16)
   await R.ev((L) => { for (const [id, n] of L) G.Lanterns.add(id, n); }, EXTRA_LANTERNS);
   await R.warp('wangboat_blacktide', 22, 8, 'right');
@@ -241,7 +244,8 @@ async function runTrue(browser) {
   await R.choices(['無光之霧']); await R.talk('chenbo');
   check('A: 11-15 無光之霧 → 11-16 彼岸', await R.flag('ch11_fog') && await R.flag('ch11_farshore') && (await R.map()) === 'farshore_field');
   await R.shot('farshore');
-  await R.health('voyage');
+  },
+  field: async (R) => {
   // ---- 彼岸花原 (11-17, 4-2 step 3, NPCs, shop)
   await R.talk('fs_child');
   check('A: 花葉不相見 (ch11_flower_talk)', await R.flag('ch11_flower_talk'));
@@ -253,7 +257,8 @@ async function runTrue(browser) {
   check('A: 4-2 心燈 唐山客的平安信', await R.ev(() => G.Lanterns.has('lantern_tangshan')) && await R.flag('ch11_tangshan_done'));
   await R.warp('farshore_field', 28, 38, 'down');
   await R.choices([1]); await R.talk('chenbo');
-  await R.health('field');
+  },
+  tower: async (R) => {
   // ---- 彼岸燈塔 1F–5F + 頂
   await R.levelTo(42);
   await R.step(27, 2);
@@ -294,10 +299,11 @@ async function runTrue(browser) {
   await R.shot('tower5');
   await R.step(11, 6);
   check('A: 11-23 千年燈塔守', await R.flag('ch11_warden'));
-  await R.health('tower');
   await R.step(11, 3);
   check('A: 11-24 燈心之門 → 一息界', await R.flag('ch11_breath') && (await R.map()) === 'breath_realm');
   await R.shot('breath');
+  },
+  breath: async (R) => {
   // ---- 一息界: 萬象童子 + optional 萬象遊戲 + 光之曼陀羅 (P4)
   await R.levelTo(43);
   await R.choices(['好，來玩']);
@@ -308,8 +314,8 @@ async function runTrue(browser) {
   await R.shot('mandala');
   for (const [x, y] of [[19, 8], [16, 3], [22, 6]]) await R.interactObj('crystal', x, y);
   check('A: P4 light reaches the seat', await R.flag('ch11_seat_lit'));
-  // snapshot for run B (normal ending)
-  const snap = await R.ev(() => JSON.stringify(G.state));
+  },
+  true: async (R) => {
   await R.levelTo(44);
   await R.step(19, 6);
   // ---- 燈心: reunion → 夜玄 ×2 → 夜念 → 無相 ×3 → E-00 → 真結局 → credits → stinger → title
@@ -322,38 +328,13 @@ async function runTrue(browser) {
   check(`A: lanterns ${fin.n} ≥ threshold ${fin.th} → 真結局`, fin.n >= fin.th && !!fin.f.ending_true && !fin.f.ending_normal);
   check('A: game_clear + cleared_true', !!fin.f.game_clear && !!fin.f.cleared_true && !!fin.f.ch11_done);
   await R.shot('title_after_true', true);
-  await R.health('true ending');
-  await R.ctx.close();
-  return snap;
-}
-
-async function runNormal(browser, snap) {
-  const R = new Run(browser, 'B');
-  console.log('\n── Run B: 心燈 < 14 → 普通結局「彼岸」');
-  await R.open('?debug&map=breath_realm&x=19&y=8&autoplay=1');
-  await R.idle();
-  await R.ev(() => { G.settings.battleSpeed = 8; });
-  if (snap) {
-    await R.ev((s) => {
-      const st = JSON.parse(s);
-      const keep = ['lantern_penghu_weir', 'lantern_tangshan', 'lantern_baizhi_memory', 'xd_atu_watch'];
-      for (const id of Object.keys(st.lanterns)) if (!keep.includes(id)) delete st.lanterns[id];
-      G.state = Object.assign(G.newState(), st);
-    }, snap);
-  } else {
-    // standalone: a minimal state at the mandala (as if the chapter had been played up to here)
-    await R.ev(() => {
-      for (const id of ['xinghe', 'hongying', 'yungui']) if (!G.state.members[id]) G.Party.join(id, 43);
-      G.Party.join('baizhi', 43); G.Party.leave('baizhi');
-      G.state.party = ['xinghe', 'hongying', 'yungui'];
-      G.state.flags.yuyuan_joined = true; G.state.flags.mochi_joined = true;
-      G.state.chapter = 11;
-      for (const f of ['ch11_start', 'ch11_magong', 'ch11_tianhou', 'ch11_sail', 'ch11_fog', 'ch11_farshore', 'ch11_tower_5', 'ch11_warden', 'ch11_breath', 'ch11_tongzi_met', 'ch11_seat_lit']) G.state.flags[f] = true;
-      G.state.vars.ch11_leg = 5;
-      G.state.vars.ch11_mirrors = ['\\', '\\', '/', '\\', '/'];
-      G.Lanterns.add('lantern_penghu_weir', '石滬的缺口');
-    });
-  }
+  },
+  normal: async (R) => {
+  // the state from the end of 'breath', with only a few heart lanterns left
+  await R.ev(() => {
+    const keep = ['lantern_penghu_weir', 'lantern_tangshan', 'lantern_baizhi_memory', 'xd_atu_watch'];
+    for (const id of Object.keys(G.state.lanterns)) if (!keep.includes(id)) delete G.state.lanterns[id];
+  });
   await R.levelTo(44);
   await R.script("await S.warp('breath_realm', 19, 7, 'up', { reload: true });");
   check('B: lanterns below the threshold', await R.ev(() => G.Lanterns.count() < G.Lanterns.THRESHOLD));
@@ -363,17 +344,60 @@ async function runNormal(browser, snap) {
   check(`B: lanterns ${fin.n} < 14 → 普通結局`, !!fin.f.ending_normal && !fin.f.ending_true);
   check('B: game_clear + cleared_normal', !!fin.f.game_clear && !!fin.f.cleared_normal);
   await R.shot('title_after_normal', true);
-  await R.health('normal ending');
-  await R.ctx.close();
+  },
+};
+const ORDER = ['temple', 'magong', 'flats', 'xuanwu', 'voyage', 'field', 'tower', 'breath', 'true', 'normal'];
+
+function snapPath(seg) { return path.join(OUT, `snap_${seg}.json`); }
+async function saveSnap(R, seg) {
+  const snap = await R.ev(() => JSON.stringify({ state: G.state, map: G.mapScene.def.id, x: G.mapScene.player.x, y: G.mapScene.player.y, dir: G.mapScene.player.dir }));
+  fs.writeFileSync(snapPath(seg), snap);
+}
+// open a fresh page and continue from the snapshot taken at the end of segment `seg`
+async function openFrom(browser, label, seg) {
+  const f = snapPath(seg);
+  if (!fs.existsSync(f)) throw new Error(`no snapshot ${f}: run the earlier segments first`);
+  const snap = JSON.parse(fs.readFileSync(f, 'utf8'));
+  const R = new Run(browser, label);
+  await R.open('?debug&map=sandbox&x=5&y=5&autoplay=1');
+  await R.idle();
+  await R.ev((st) => { G.state = Object.assign(G.newState(), st); }, snap.state);
+  await R.script(`await S.warp('${snap.map}', ${snap.x}, ${snap.y}, '${snap.dir}', { reload: true, fade: 0 });`);
+  return R;
+}
+
+async function play(browser, from, to) {
+  let R = null;
+  const i0 = ORDER.indexOf(from), i1 = ORDER.indexOf(to);
+  for (let i = i0; i <= i1; i++) {
+    const seg = ORDER[i];
+    console.log(`\n── segment ${seg}${seg === 'true' ? ' → 真結局「千燈」' : seg === 'normal' ? ' → 普通結局「彼岸」' : ''}`);
+    if (seg === 'temple') {
+      R = new Run(browser, 'A');
+      await R.open('?debug&startch=11&autoplay=1');
+    } else if (seg === 'normal') {
+      if (R) await R.ctx.close();
+      R = await openFrom(browser, 'B', 'breath');
+    } else if (!R) {
+      R = await openFrom(browser, 'A', ORDER[i - 1]);
+    }
+    await R.ev(() => { G.settings.battleSpeed = 8; });
+    await SEGMENTS[seg](R);
+    await R.health(seg);
+    if (seg !== 'true' && seg !== 'normal') await saveSnap(R, seg);
+  }
+  if (R) await R.ctx.close();
 }
 
 (async () => {
   const t0 = Date.now();
+  const arg = (k) => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
+  let from = arg('--from') || 'temple', to = arg('--to') || 'normal';
+  if (ONLY) { from = ONLY; to = ONLY; }
+  if (!ORDER.includes(from) || !ORDER.includes(to)) { console.log('segments: ' + ORDER.join(' ')); process.exit(2); }
   const browser = await chromium.launch();
-  let snap = null;
   try {
-    if (ONLY !== 'normal') snap = await runTrue(browser);
-    await runNormal(browser, snap);
+    await play(browser, from, to);
   } catch (e) {
     failed = true;
     console.log('  ✗ EXCEPTION ' + (e.stack || e));

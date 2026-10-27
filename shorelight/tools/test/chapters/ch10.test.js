@@ -5,6 +5,8 @@
 //   node tools/test/chapters/ch10.test.js --shots    # also save screenshots to tools/test/out/ch10/
 //   node tools/test/chapters/ch10.test.js --headed
 //   node tools/test/chapters/ch10.test.js --realtime # no extra logic steps (slow headless)
+//   node tools/test/chapters/ch10.test.js --from hualien   # main path from a later segment (orchid|taitung|hualien|toucheng)
+//   node tools/test/chapters/ch10.test.js --only main      # only tests whose name contains the word
 //   node tools/test/chapters/ch10.test.js --3d       # keep the WebGL renderer on (slow headless)
 //
 // 1. Main path from ?debug&startch=10 with G.Debug autoplay: every story beat of the screenplay up to the
@@ -140,7 +142,9 @@ function api(page) {
   return A;
 }
 
+const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? argv[i + 1] : null; })();
 async function test(browser, name, fn) {
+  if (ONLY && !name.includes(ONLY)) return;
   const { ctx, page } = await newPage(browser);
   const A = api(page);
   const t0 = Date.now();
@@ -156,6 +160,27 @@ async function test(browser, name, fn) {
 }
 
 // ------------------------------------------------------------------ the main path
+// --from <segment> starts the main path at a later segment with the story state of the previous ones preset
+// (re-run only the failing part): orchid | taitung | hualien | toucheng
+const SEGS = ['orchid', 'taitung', 'hualien', 'toucheng'];
+const FROM = (() => { const i = argv.indexOf('--from'); return i >= 0 ? argv[i + 1] : 'orchid'; })();
+const SEG = Math.max(0, SEGS.indexOf(FROM));
+async function preset(A, seg) {
+  await A.run(`
+    const F = ['ch10_orchid_arrive', 'ch10_orchid_rules', 'ch10_reef_open', 'ch10_reef_done', 'ch10_serpent_defeated', 'ch10_chuanyan', 'ch10_tao_xindeng'];
+    if (${seg} >= 2) F.push('ch10_taitung_arrive', 'ch10_race_won', 'ch10_amis_met', 'c10_fix_a', 'c10_fix_b', 'c10_fix_c', 'ch10_coast_a', 'ch10_coast_b', 'ch10_coast_c', 'ch10_coast_clear', 'ch10_haiji_witnessed');
+    if (${seg} >= 3) F.push('ch10_hualien_arrive', 'ch10_gaya_heard', 'ch10_truku_permission', 'ch10_saved_watan', 'ch10_freed_muntjac', 'ch10_colossus_defeated', 'ch10_xinghe_turn', 'ch10_rainbow_seen');
+    for (const f of F) S.flag(f);
+    G.Lanterns.add('xd_tao_tatala', '達悟家族的拼板舟'); G.Inv.add('key_boateye', 1);
+    if (${seg} >= 2) G.Lanterns.add('xd_amis_haiji', '阿美族海祭');
+    const v = G.state.vars;
+    v.xunjing = [0, 3, 4, 5][${seg}]; v.days_to_gate = [0, 76, 44, 25][${seg}];
+    v.c10_place = ['', 'orchid', 'taitung', 'taroko'][${seg}]; v.c10_port = ['', 'orchid', 'amis', 'huilan'][${seg}];
+    if (${seg} >= 3) v.c10_gorge = { d: [1, 1, 1], p: [0, 0, 0, 0] };
+    await S.warp('wangboat_deck_east', 8, 6, 'right');
+  `);
+}
+
 async function mainPath(A) {
   await A.open('?debug&startch=10');
   await A.waitFor(() => G.mapScene && G.mapScene.def.id === 'wangboat_deck_east' && G.state.flags.ch10_start, 60000, 'C10-01 on the deck');
@@ -177,6 +202,7 @@ async function mainPath(A) {
   await A.shot('01_deck');
 
   // ---- 蘭嶼
+  if (SEG <= 0) {
   await A.talk('chenbo', ['出航', '蘭嶼', '不停留']);
   assert((await A.map()) === 'orchid_shore', 'landed on 蘭嶼');
   assert(await A.flag('ch10_orchid_arrive'), 'C10-02 done');
@@ -207,7 +233,11 @@ async function mainPath(A) {
   assert((await A.map()) === 'wangboat_deck_east', 'back on the deck');
   await A.shot('04_deck_eye');
 
+  }
+
   // ---- 台東
+  if (SEG <= 1) {
+  if (FROM === 'taitung') await preset(A, 1);
   await A.talk('chenbo', ['出航', '寶桑', '不停留']);
   assert((await A.map()) === 'baosang' && await A.flag('ch10_taitung_arrive'), 'C10-07 寶桑');
   assert((await A.vars()).days_to_gate === 50, 'days 50');
@@ -240,8 +270,12 @@ async function mainPath(A) {
   assert((await A.vars()).xunjing === 4 && (await A.vars()).days_to_gate === 44, '巡境 4 / days 44');
   await A.shot('07_amis_after');
 
+  }
+
   // ---- 花蓮
-  await A.trigger('boat', ['回王船']);
+  if (SEG <= 2) {
+  if (FROM === 'hualien') await preset(A, 2);
+  if ((await A.map()) !== 'wangboat_deck_east') await A.trigger('boat', ['回王船']);
   assert((await A.map()) === 'wangboat_deck_east', 'deck');
   await A.talk('chenbo', ['出航', '洄瀾', '不停留']);
   assert((await A.map()) === 'huilan' && await A.flag('ch10_hualien_arrive'), 'C10-11');
@@ -251,7 +285,7 @@ async function mainPath(A) {
   assert((await A.map()) === 'truku_village' && await A.flag('ch10_truku_permission'), 'C10-12');
   assert(await A.count('c10_permit'), '入山許可');
   await A.shot('08_truku');
-  await A.talk('tk_iwan'); await A.talk('tk_watan'); await A.talk('tk_child');
+  await A.talk('tk_iwan'); await A.talk('tk_child');
   await A.step(39, 10);
   assert((await A.map()) === 'huilan', 'back to 洄瀾');
   await A.trigger('dock', ['回王船']);
@@ -287,9 +321,13 @@ async function mainPath(A) {
   assert((await A.map()) === 'truku_village', 'in the village at dawn');
   await A.shot('10_truku_after');
 
-  // ---- 頭城
   await A.step(39, 10);
   await A.trigger('dock', ['回王船']);
+  }
+
+  // ---- 頭城
+  if (SEG <= 3) {
+  if (FROM === 'toucheng') await preset(A, 3);
   await A.talk('chenbo', ['出航', '頭城', '不停留']);
   assert(await A.flag('ch10_zhongyuan') && await A.flag('ch10_birthday'), 'C10-15');
   assert((await A.count('c10_xinghe_lantern')) === 1, '星河的燈籠');
@@ -323,6 +361,7 @@ async function mainPath(A) {
   const lv = await A.ev(() => G.state.party.map((id) => G.state.members[id].lv));
   log('    party levels at the end of ch10:', lv.join('/'), ' 心燈:', await A.ev(() => Object.keys(G.state.lanterns).join(',')));
 }
+  }
 
 // ------------------------------------------------------------------ mechanics in isolation
 const MAPQ = (map, x, y, flags = '') => `?debug&map=${map}&x=${x}&y=${y}&lv=36&party=xinghe,hongying,yungui&chapter=10&flags=yuyuan_joined,mochi_joined${flags ? ',' + flags : ''}`;
@@ -339,7 +378,7 @@ async function boundary(A) {
 }
 
 async function lowTrust(A) {
-  // never caught 糰子, crossed the stones twice, asked questions → no 心燈 18
+  // never caught 芋圓, crossed the stones twice, asked questions → no 心燈 18
   await A.open(MAPQ('orchid_shore', 15, 10, 'ch10_orchid_arrive,ch10_orchid_rules,ch10_reef_open,ch10_reef_done'));
   await A.idle();
   await A.ev(() => { G.state.vars.ch10_tao_trust = 1; G.state.vars.ch10_line_tries = 2; G.state.vars.c10_orchid_time = 'morning'; });

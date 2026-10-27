@@ -172,7 +172,7 @@
     desc: '燒著綠火的瘟鬼。牠走過的地方，人都在發燒。',
   });
   defE('c9_plague_chief', {
-    name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 32, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
+    name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 31, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
     m: { hp: 8.5, atk: 1.85, mag: 2.0, def: 1.15, spd: 1.15, exp: 7, gold: 6 },
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
     drops: [['c9_baicaogao', 1]],
@@ -181,14 +181,14 @@
   const PUFFS = [['c9_puff_a', '風團・水生'], ['c9_puff_b', '風團・阿九'], ['c9_puff_c', '風團・順德']];
   for (const [pid, pname] of PUFFS) {
     defE(pid, {
-      name: pname, art: 'wind_sprite', variant: 2, scale: 1.3, lv: 33, elem: 'wood', weak: ['metal'], resist: ['wood'], immune: BOSS_IMM,
+      name: pname, art: 'wind_sprite', variant: 2, scale: 1.3, lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood'], immune: BOSS_IMM,
       m: { hp: 1.0, atk: 1.0, mag: 1.15, spd: 1.35, exp: 0.6, gold: 0.4 },
       skills: [['c9_es_gust', 2], ['c9_es_namecall', 2]], drops: [],
       desc: '落山風靈散開成的風團，胸口纏著一個發光的名字。',
     });
   }
   defE('c9_fallwind', {
-    name: '落山風靈', art: 'fallwind', lv: 33, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
+    name: '落山風靈', art: 'fallwind', lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
     m: { hp: 9, atk: 2.3, mag: 2.3, def: 1.15, spd: 1.4, exp: 7, gold: 7 },
     skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]],
     phases: [{ at: 0.5, summon: ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'], skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]] }],
@@ -196,7 +196,7 @@
     desc: '每年秋冬從山上直撲恆春半島的落山風。風本無惡意——它只是聽了太多溺死者喊回家。',
   });
   defE('c9_moray_king', {
-    name: '潮病鰻王', art: 'moray', variant: 2, scale: 1.9, lv: 34, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM.concat(['poison']),
+    name: '潮病鰻王', art: 'moray', variant: 2, scale: 1.9, lv: 33, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM.concat(['poison']),
     m: { hp: 8.5, atk: 1.95, mag: 1.8, def: 1.15, spd: 1.2, exp: 7, gold: 7 },
     skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1, 'ally_dead']],
     phases: [{ at: 0.4, phase: 2, text: '黑色的藤壺一片片剝落，鰻王的身體露出銀藍色——牠的動作反而更快了！',

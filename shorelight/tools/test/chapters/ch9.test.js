@@ -5,6 +5,7 @@
 //   node tools/test/chapters/ch9.test.js --shots    # also save screenshots to tools/test/out/ch9_*.png
 //   node tools/test/chapters/ch9.test.js --headed
 //   node tools/test/chapters/ch9.test.js --only A,B,sweep,3d   # run selected parts
+//   node tools/test/chapters/ch9.test.js --only A --from yard  # Part A from a segment: start banping donggang yard hengchun eluanbi end
 //
 // Part A drives the critical path from ?debug&startch=9 to G.Story.next(S, 10) while doing every side quest
 // (半屏山湯圓 心燈, 七個名字 心燈 + 歌詞殘篇, 燈塔守的家書 心燈) on the way.
@@ -24,6 +25,7 @@ const SHOTS = argv.includes('--shots');
 const HEADED = argv.includes('--headed');
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? String(argv[i + 1] || '').split(',') : null; })();
 const want = (k) => !ONLY || ONLY.includes(k);
+const FROM = (() => { const i = argv.indexOf('--from'); return i >= 0 ? argv[i + 1] : null; })();
 fs.mkdirSync(OUT, { recursive: true });
 
 const results = [];
@@ -133,13 +135,62 @@ async function newPage(browser, url, initialChoices, mode3d) {
 }
 
 // ============================================================================================ Part A
-async function partA(browser) {
-  console.log('\n== Part A: ?debug&startch=9 → chapter 10 ==');
-  await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&startch=9&autoplay=1', ['跟紅纓說話']);
+// Part A is split into segments that run in order in one page. `--from <segment>` starts at a later segment
+// from a debug map load with the flags/vars of all earlier segments (re-run only the failing part).
+const SEGMENTS = ['start', 'banping', 'donggang', 'yard', 'hengchun', 'eluanbi', 'end'];
+const SF = {};
+SF.banping = 'ch9_start,ch9_qihou_arrive,ch9_hongying_comfort,ch9_qihou_temple,ch9_qihou_night,ch9_qihou_night_done';
+SF.donggang = SF.banping + ',ch9_banping_open,ch9_banping_cave_open,ch9_tangyuan_paid,ch9_bp_gate,ch9_banping_done,ch9_banping_reward';
+SF.yard = SF.donggang + ',ch9_donggang_arrive,ch9_tiangong_incense,ch9_jiaobei_done,ch9_condition_xunjing,ch9_dg_nightfall';
+SF.hengchun = SF.yard + ',ch9_shipyard_enter,ch9_bz_w,ch9_bz_n,ch9_bz_e,ch9_carts_clear,ch9_part_rudder,ch9_part_sail,ch9_part_eye,ch9_shipyard_clear,ch9_wangboat_launch';
+SF.eluanbi = SF.hengchun + ',ch9_cape_blocked,ch9_hengchun_arrive,ch9_widow_talk,ch9_ashun_met,ch9_names_quest,ch9_hongying_song,ch9_name_1,ch9_name_2,ch9_name_3,ch9_name_4,ch9_name_5,ch9_name_6,ch9_name_7,ch9_fallwind_defeated,ch9_yueqin_xindeng,ch9_lyric_hengchun,ch9_hengchun_done';
+SF.end = SF.eluanbi + ',ch9_keeper_met,ch9_lkbz_0,ch9_log_1,ch9_log_2,ch9_log_3,ch9_cave_cleared,ch9_lighthouse_flame,ch9_keeper_home';
+const SEG_START = {
+  banping: { map: 'qihou', x: 31, y: 21, lv: 30, vars: { days_to_gate: 98 } },
+  donggang: { map: 'qihou', x: 22, y: 33, lv: 31, vars: { days_to_gate: 98 }, lanterns: ['xd_banpingshan'], quests: ['q_ch9_banping'] },
+  yard: { map: 'donggang', x: 46, y: 11, lv: 31, vars: { days_to_gate: 97 }, lanterns: ['xd_banpingshan'], quests: ['q_ch9_banping'] },
+  hengchun: { map: 'wangboat_deck', x: 12, y: 6, lv: 32, vars: { days_to_gate: 94, xunjing: 1, ch9_port: 'donggang' }, lanterns: ['xd_banpingshan'], quests: ['q_ch9_banping'] },
+  eluanbi: { map: 'wangboat_deck', x: 12, y: 8, lv: 33, vars: { days_to_gate: 90, xunjing: 1, ch9_port: 'nanwan', ch9_names: 7 }, lanterns: ['xd_banpingshan', 'xd_yueqin_names'], quests: ['q_ch9_banping', 'q_ch9_names'] },
+  end: { map: 'wangboat_deck', x: 12, y: 8, lv: 34, vars: { days_to_gate: 89, xunjing: 2, ch9_port: 'eluanbi', ch9_deck_night: true, ch9_names: 7, ch9_logs: 3 }, lanterns: ['xd_banpingshan', 'xd_yueqin_names', 'xd_lighthouse_home'], quests: ['q_ch9_banping', 'q_ch9_names', 'q_ch9_lighthouse'] },
+};
+let v = null;
+async function openSegment(browser, sid) {
+  if (sid === 'start') {
+    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + '?debug&startch=9&autoplay=1', ['跟紅纓說話']);
+    return;
+  }
+  const S0 = SEG_START[sid];
+  await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&autoplay=1&map=${S0.map}&x=${S0.x}&y=${S0.y}&lv=${S0.lv}&party=xinghe,hongying,yungui&chapter=9&flags=mochi_joined,yuyuan_joined,${SF[sid]}`);
+  await ev((o) => {
+    Object.assign(G.state.vars, o.vars);
+    for (const k of o.lanterns || []) G.state.lanterns[k] = { name: k, time: 0 };
+    for (const q of o.quests || []) G.Quests.done(q);
+    G.state.inv = {};
+    for (const [i, n] of [['shimuyu', 3], ['xumingsan', 5], ['huanhunxiang', 3], ['xiancao', 3]]) G.Inv.add(i, n);
+    // chapter-8 gear, as G.Story.ch9 gives a standalone start
+    for (const id of ['xinghe', 'hongying', 'yungui']) {
+      const m = G.state.members[id];
+      for (const slot of ['weapon', 'armor', 'head', 'feet']) {
+        let best = null;
+        for (const [iid, it] of Object.entries(G.Data.items)) {
+          if (it.type !== slot || (it.ch || 0) > 8 || (it.who && !it.who.includes(id))) continue;
+          const sc = it.stats ? (it.stats.atk || 0) + (it.stats.def || 0) + (it.stats.mag || 0) : 0;
+          if (!best || sc > best.sc) best = { iid, sc };
+        }
+        if (best) m.equip[slot] = best.iid;
+      }
+      const st2 = G.Party.stats(id); m.hp = st2.mhp; m.mp = st2.mmp;
+    }
+    G.mapScene.refresh();
+  }, S0);
+  await settle();
+}
+
+async function seg_start() {
   await settle();
   await expectMap('qihou', 'C9-01 arrives at 旗後');
   check('C9-01 flags (ch9_start, ch9_qihou_arrive, ch9_hongying_comfort)', (await flag('ch9_start')) && (await flag('ch9_qihou_arrive')) && (await flag('ch9_hongying_comfort')));
-  let v = await vars();
+  v = await vars();
   check('vars.days_to_gate starts at 100', v.days_to_gate === 100, v.days_to_gate);
   check('party is 星河・紅纓・雲歸 (陳伯 is not a party member)', JSON.stringify(await ev(() => G.state.party)) === '["xinghe","hongying","yungui"]', JSON.stringify(await ev(() => G.state.party)));
   check('陳伯 follows as an NPC on 旗後', await ev(() => !!G.mapScene.npcs.find((n) => n.id === 'chenbo')));
@@ -162,6 +213,9 @@ async function partA(browser) {
   check('days_to_gate −2 → 98', v.days_to_gate === 98, v.days_to_gate);
   await shot('04_morning');
 
+}
+
+async function seg_banping() {
   // ---- side quest: 半屏山湯圓 ----
   await talk('qh_xiu');
   check('半屏山 quest opens (ch9_banping_open)', await flag('ch9_banping_open'));
@@ -198,6 +252,9 @@ async function partA(browser) {
   check('quest q_ch9_banping done', await ev(() => G.Quests.isDone('q_ch9_banping')));
   await shot('07_banping_reward');
 
+}
+
+async function seg_donggang() {
   // rest at the inn, then C9-04 沿海南行 → 東港 (with the two road battles)
   await choices(['住宿']);
   await talk('qh_inn');
@@ -224,6 +281,9 @@ async function partA(browser) {
   await shot('09_hall');
   await stepOn(9, 13);
   await expectMap('donggang', 'night in 東港');
+}
+
+async function seg_yard() {
   // C9-07 王船廠 (rest first)
   await choices(['住宿']);
   await talk('dg_inn');
@@ -270,6 +330,9 @@ async function partA(browser) {
   check('巡境號衣 ×3', (await count('c9_ar_haoyi')) === 3);
   check('陳伯 at the helm (NPC on deck, not in party)', await ev(() => !!G.mapScene.npcs.find((n) => n.id === 'chenbo') && !G.state.party.includes('chenbo')));
   await shot('12_deck');
+}
+
+async function seg_hengchun() {
   // deck rest & save point
   await choices(['在船艙休息']);
   await trigger('deck_rest');
@@ -331,6 +394,9 @@ async function partA(browser) {
   await stepOn(24, 41);
   await expectMap('wangboat_deck', 'board at 南灣');
 
+}
+
+async function seg_eluanbi() {
   // C9-14 鵝鑾鼻 (rest in the ship's hold first)
   await choices(['在船艙休息']);
   await trigger('deck_rest');
@@ -378,6 +444,9 @@ async function partA(browser) {
   await expectMap('wangboat_deck', 'back on deck');
   await shot('23_deck_lamp');
   check('chapter objectives: quest q_ch9_lighthouse & q_ch9_names done', await ev(() => G.Quests.isDone('q_ch9_lighthouse') && G.Quests.isDone('q_ch9_names')));
+}
+
+async function seg_end() {
   // C9-16 → chapter 10
   await choices(['出航・往東', '出航（']);
   await ev(() => { G.Debug.talk('chenbo'); });
@@ -389,6 +458,16 @@ async function partA(browser) {
   check('no G.lastError in part A', !le, le);
   const unk = await scriptLog();
   check('no unknown shop items', !unk.length, unk.join(', '));
+}
+
+async function partA(browser, from) {
+  console.log(`\n== Part A: chapter 9 critical path${from && from !== 'start' ? ' from segment ' + from : ''} → chapter 10 ==`);
+  const i0 = Math.max(0, SEGMENTS.indexOf(from || 'start'));
+  await openSegment(browser, SEGMENTS[i0]);
+  for (let i = i0; i < SEGMENTS.length; i++) {
+    console.log(`  -- segment ${SEGMENTS[i]}`);
+    await ({ start: seg_start, banping: seg_banping, donggang: seg_donggang, yard: seg_yard, hengchun: seg_hengchun, eluanbi: seg_eluanbi, end: seg_end })[SEGMENTS[i]]();
+  }
   await page.close();
 }
 
@@ -493,7 +572,7 @@ async function sweep3d(browser) {
   const t0 = Date.now();
   const browser = await chromium.launch({ headless: !HEADED });
   try {
-    if (want('A')) await partA(browser);
+    if (want('A')) await partA(browser, FROM);
     if (want('B')) await partB(browser);
     if (want('sweep')) await sweep(browser);
     if (want('3d')) await sweep3d(browser);
