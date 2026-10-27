@@ -36,6 +36,9 @@ async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
+  // functional tests run on the 2D renderer (the WebGL view is slow under SwiftShader); a separate test uses ?r3lite
+  const use3d = /r3lite/.test(query);
+  await page.addInitScript((d3) => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: d3, lang: 'zh' })); } catch (e) { /* ignore */ } }, use3d);
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch1.test.js */' }));
   page.on('console', (m) => {
     const t = m.text();

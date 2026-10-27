@@ -1080,6 +1080,11 @@
     { t: 'tree_pine', x: 1, y: 16 }, { t: 'tree_pine', x: 1, y: 22 }, { t: 'tree_banyan', x: 0, y: 27 }, { t: 'tree_pine', x: 2, y: 38 },
     { t: 'reeds', x: 19, y: 12 }, { t: 'reeds', x: 19, y: 23 }, { t: 'reeds', x: 18, y: 27 }, { t: 'tallgrass', x: 11, y: 21 }, { t: 'tallgrass', x: 6, y: 31 },
     { t: 'reeds', x: 29, y: 28 }, { t: 'bush', x: 14, y: 38 }, { t: 'bush', x: 21, y: 38 }, { t: 'tree_pine', x: 27, y: 38 },
+    { t: 'reeds', x: 19, y: 1 }, { t: 'reeds', x: 19, y: 7 }, { t: 'reeds', x: 26, y: 1 }, { t: 'reeds', x: 26, y: 8 }, { t: 'reeds', x: 26, y: 12 },
+    { t: 'reeds', x: 27, y: 19 }, { t: 'reeds', x: 30, y: 21 }, { t: 'reeds', x: 36, y: 21 }, { t: 'reeds', x: 41, y: 20 }, { t: 'reeds', x: 22, y: 28 },
+    { t: 'rock_small', x: 12, y: 24 }, { t: 'rock_small', x: 33, y: 18 }, { t: 'tallgrass', x: 9, y: 33 }, { t: 'tallgrass', x: 24, y: 29 },
+    { t: 'driftwood', x: 40, y: 33 }, { t: 'seaweed', x: 43, y: 36 }, { t: 'seaweed', x: 38, y: 38 }, { t: 'rock_small', x: 46, y: 38 },
+    { t: 'tree_pine', x: 10, y: 37 }, { t: 'tree_pine', x: 16, y: 6 }, { t: 'bush', x: 2, y: 19 },
   ];
   const RV_LIGHTS = [
     { x: 4, y: 3, r: 260, color: '#ffb060', flicker: 0.3 }, { x: 9, y: 6, r: 220, color: '#ff8a40', flicker: 0.4 }, { x: 13, y: 6, r: 200, color: '#ffcf8a', flicker: 0.3 },

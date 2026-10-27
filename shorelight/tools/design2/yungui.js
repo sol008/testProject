@@ -1193,7 +1193,7 @@
     ctx.textAlign = 'left'; ctx.fillStyle = '#1e1c22'; ctx.font = DZ.font(23, 700, 'serif'); ctx.fillText(opt.zh, 64, 36);
     const zw = ctx.measureText(opt.zh).width;
     ctx.font = DZ.font(12.5, 600); ctx.fillStyle = '#4c4852'; ctx.fillText(opt.en, 64 + zw + 10, 35);
-    ctx.font = DZ.font(10, 600); ctx.fillStyle = opt.accent; ctx.fillText(opt.tag.toUpperCase(), 64, 52);
+    ctx.font = DZ.font(10, 600); ctx.fillStyle = opt.accent; ctx.fillText(opt.tag.toUpperCase() + `  ·  ${opt.ratio} 頭身 HEADS`, 64, 52);
     ctx.font = DZ.font(11.2, 400); ctx.fillStyle = '#35323a';
     DZ.wrap(ctx, opt.idea, 14, 72, CW - 28, 15);
     // figure panel
@@ -1211,7 +1211,6 @@
     for (let h = 0; h <= opt.ratio + 0.01; h += 1) { const yy = B.top + h * B.u; ctx.beginPath(); ctx.moveTo(18, yy); ctx.lineTo(h % 1 ? 22 : 26, yy); ctx.stroke(); }
     if (opt.ratio % 1) { ctx.beginPath(); ctx.moveTo(18, gy); ctx.lineTo(26, gy); ctx.stroke(); }
     ctx.beginPath(); ctx.moveTo(18, B.top); ctx.lineTo(18, gy); ctx.stroke();
-    ctx.save(); ctx.translate(31, B.top + 2); ctx.fillText(`${opt.ratio} 頭身`, 0, 6); ctx.restore();
     DZ.k = 1;
     const calls = opt.draw(ctx, B, { view: 'front' }) || [];
     ctx.restore();
@@ -1229,7 +1228,7 @@
     opt.draw(ctx, B, { view: 'front', bust: true });
     DZ.k = 1;
     ctx.restore();
-    ctx.font = DZ.font(9, 600); ctx.fillStyle = 'rgba(30,28,34,0.65)'; ctx.fillText('胸像 BUST', 18, RY + RH - 9);
+    rr(ctx, 16, RY + RH - 22, 58, 16, 4); ctx.fillStyle = 'rgba(250,247,240,0.85)'; ctx.fill(); ctx.font = DZ.font(9, 700); ctx.fillStyle = '#2a272e'; ctx.fillText('胸像 BUST', 21, RY + RH - 10.5);
     // silhouettes (front / back at map-sprite scale)
     const SX = 224, SW = CW - SX - 10;
     rr(ctx, SX, RY, SW, 108, 8); ctx.fillStyle = '#e4ded2'; ctx.fill();
