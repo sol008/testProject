@@ -581,7 +581,7 @@ G.Env3D = (() => {
           vec3 R = reflect(-V, N); R.y = abs(R.y);
           vec3 sky = uOutdoor > 0.5 ? skyColor(R, 1.0) * (1.0 - 0.45 * uNight) : uAmb * (0.25 + 0.2 * texture2D(uNoise, R.xz * 0.5).r);
           // ---- body colour (depth tint), crest scatter, caustics
-          vec3 body = mix(kShal, kDeep, deepK);
+          vec3 body = mix(kShal, kDeep, max(deepK, smoothstep(0.45, 1.0, md.b) * 0.85));
           float cs = 1.0;
           if (uCloudShadow > 0.0) cs = 1.0 - uCloudShadow * smoothstep(0.42, 0.7, texture2D(uNoise, p * 0.011 + uCloudOff * 0.35).r);
           vec3 lightC = uAmb + uSunCol * max(uSunDir.y, 0.0) * 0.55 * (1.0 - uNight) * cs;
@@ -642,7 +642,7 @@ G.Env3D = (() => {
           }
           // ---- psychedelic iridescence
           if (uPsy > 0.001) col = mix(col, col * 0.6 + eHue(dot(p, vec2(0.05, 0.08)) + uTime * 0.03 + hgt * 2.0) * 0.6 * (0.4 + F), uPsy * 0.45);
-          float alpha = mix(P0.x, P0.y, deepK);
+          float alpha = mix(P0.x, P0.y, max(deepK, smoothstep(0.45, 0.95, md.b)));
           alpha = clamp(alpha + F * 0.25 + foam * 0.5, 0.0, 1.0);
           alpha *= smoothstep(-0.32, -0.02, sd); // fade where the bank rises above the water line
           gl_FragColor = vec4(col, alpha);
