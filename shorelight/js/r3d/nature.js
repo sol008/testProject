@@ -474,10 +474,14 @@
       return m;
     });
   }
+  // one unit disc per height, sized by the mesh scale: all variants of a plant share it, so G.Batch3D can draw every
+  // decal of one material in a single back-to-front sorted InstancedMesh
+  const decalGeos = new Map();
   function decal(key, P, radius, y = 0.012) {
-    const geo = new T.CircleGeometry(radius, 20);
-    geo.rotateX(-PI / 2); geo.translate(0, y, 0);
+    let geo = decalGeos.get(y);
+    if (!geo) { geo = new T.CircleGeometry(1, 20); geo.rotateX(-PI / 2); geo.translate(0, y, 0); decalGeos.set(y, geo); }
     const m = new T.Mesh(geo, decalMat(key, P));
+    m.scale.set(radius, 1, radius);
     m.castShadow = false; m.receiveShadow = true; m.renderOrder = 1;
     return m;
   }

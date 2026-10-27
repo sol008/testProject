@@ -1,14 +1,15 @@
 // 3D field-view sweep: load every map (or the ones given) with the 3D renderer on, record build time, draw calls,
 // triangles, console errors/warnings, G.warnOnce keys, billboard fallbacks and placement outliers; save one JPEG of
 // the 3D layer (the 2D UI canvas is hidden for the shot) per map.
-//   node tools/r3d/sweep/sweep.js --out=DIR [--resume] [--frames=24] [--list] [map | map:x,y ...]
+//   node tools/r3d/sweep/sweep.js --out=DIR [--resume] [--frames=24] [--list] [--nobatch] [map | map:x,y ...]
+// --nobatch turns G.Batch3D instancing off (?nobatch), for before/after comparisons.
 // One browser, one page, navigated map to map; viewport 960×540; ?r3lite. Results: DIR/<map>.json + DIR/<map>.jpg.
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
 const ROOT = path.resolve(__dirname, '../../..');
-const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_joined,yuyuan_joined';
+let QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_joined,yuyuan_joined';
 
 (async () => {
   const args = process.argv.slice(2);
@@ -18,6 +19,7 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
     if (a.startsWith('--out=')) opt.out = path.resolve(a.slice(6));
     else if (a === '--resume') opt.resume = true;
     else if (a === '--list') opt.list = true;
+    else if (a === '--nobatch') QS += '&nobatch';
     else if (a.startsWith('--frames=')) opt.frames = +a.slice(9);
     else if (a.startsWith('--quality=')) opt.quality = a.slice(10);
     else want.push(a);
@@ -111,7 +113,7 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
     res.wallS = +((Date.now() - t0) / 1000).toFixed(1);
     fs.writeFileSync(jf, JSON.stringify(res, null, 1));
     const fb = res.fallbacks ? res.fallbacks.length : '?';
-    console.log(`${tag.padEnd(28)} ${String(res.wallS).padStart(5)}s build ${res.buildMs}ms calls ${res.calls} tris ${res.tris} fb ${fb} log ${res.log.length} warn ${(res.warned || []).length}${res.fatal ? ' FATAL ' + res.fatal : ''}`);
+    console.log(`${tag.padEnd(28)} ${String(res.wallS).padStart(5)}s build ${res.buildMs}ms calls ${res.calls} tris ${res.tris} batched ${res.batch ? res.batch.objects : 0} fb ${fb} log ${res.log.length} warn ${(res.warned || []).length}${res.fatal ? ' FATAL ' + res.fatal : ''}`);
   }
   await b.close();
 
@@ -130,6 +132,7 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
       geos: info.memory.geometries, texs: info.memory.textures,
       w: v.ms.w, h: v.ms.h, dark: +v.dark.toFixed(2), outdoor: v.outdoor, interior: v.interior, cave: v.cave,
       cam: v.camCfg, sky3d: v.def.sky3d || null, nObjects: v.nodes.size, nActors: v.actors.size,
+      batch: v.batch ? Object.assign({}, v.batch.stats) : null,
     });
     // fallbacks: objects drawn as 2D billboards, actors as sprite / monster billboards
     const fb = [];
@@ -140,12 +143,14 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
     for (const [o, node] of v.nodes) {
       typeCount[o.t] = (typeCount[o.t] || 0) + 1;
       const k = node.children[0];
+      // G.Batch3D proxy: drawn by an InstancedMesh, the empty stub child is expected
+      const batched = !!node.userData.batched;
       if (k && k.userData.fallback) fb.push({ kind: 'object', id: o.t, hasModel: G.Models.has(o.t), at: [o.x, o.y] });
-      else if (!k || !k.children.length && !k.isMesh) fb.push({ kind: 'object-empty', id: o.t, at: [o.x, o.y] });
+      else if (!batched && (!k || !k.children.length && !k.isMesh)) fb.push({ kind: 'object-empty', id: o.t, at: [o.x, o.y] });
       // placement outliers (skip invisible / flat)
       if (!node.visible) continue;
       try {
-        box.setFromObject(node, false);
+        if (batched) box.copy(node.userData.box); else box.setFromObject(node, false);
         if (box.isEmpty()) continue;
         box.getSize(sz);
         const d = G.Objects.get(o.t) || {};
