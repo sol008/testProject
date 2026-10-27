@@ -647,7 +647,7 @@
   // away the water reflection so it can stand on a floor / palanquin. `dark` dims it (unlit skeleton).
   function drawHead(ctx, x, y, sc, o, t, opt = {}) {
     const d = G.Objects.get('water_lantern');
-    if (!d) return;
+    if (!d || is3d()) return;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(sc, sc);
@@ -688,6 +688,7 @@
   }
   // apparitions (monster art drawn on the map during cutscenes)
   function drawApps(ctx, t, apps) {
+    if (is3d()) return;
     for (const ap of apps) {
       if (ap.a <= 0.01) continue;
       ctx.save();
@@ -706,11 +707,47 @@
   }
   // a figure lying down (battle 'ko' pose), e.g. 星河 on the floor or 白芷 on the bed / lantern
   function drawLying(ctx, id, x, y, sc = 0.62, alpha = 1) {
-    if (!G.Sprites || !G.Sprites.drawBattle) return;
+    if (!G.Sprites || !G.Sprites.drawBattle || is3d()) return;
     ctx.save(); ctx.globalAlpha *= alpha;
     G.Sprites.drawBattle(ctx, id, 'ko', 0, x, y, { scale: sc, shadow: false });
     ctx.restore();
   }
+
+  // ------------------------------------------------------------------ 3D field view (G.Map3D)
+  // The 3D view paints drawGround/drawOver onto a flat ground decal, which is right for glows on water and
+  // chalk marks but not for upright things. With the 3D view on, those are skipped in the decal and mirrored
+  // here instead: apparitions → monster billboards, lantern heads → water_lantern models, lying figures → Char3D.
+  const is3d = () => { const m = MS(); return !!(m && m.view3d && G.R3 && G.R3.enabled && G.R3.enabled()); };
+  function sync3d(view, dt, specs) {
+    const R = view._c1 = view._c1 || {};
+    const seen = new Set();
+    for (const sp of specs) {
+      seen.add(sp.key);
+      let r = R[sp.key];
+      if (!r) {
+        try {
+          if (sp.mon && G.Models && G.Models.monsterBillboard) { const b = G.Models.monsterBillboard(sp.mon, { height: sp.height || 1.6, variant: sp.v || 0 }); r = { b, root: b.root }; }
+          else if (sp.model && G.Models) { const n = G.Models.create(sp.model, sp.o || {}); r = n ? { root: n } : { dead: true }; }
+          else if (sp.char && G.Char3D && G.Char3D.has(sp.char)) {
+            const c = G.Char3D.create(sp.char, { context: 'cutscene' });
+            r = { c, root: c.root };
+            if (sp.anim) { try { c.play(sp.anim, { loop: true }); } catch (e) { /* clip missing */ } }
+          } else r = { dead: true };
+        } catch (e) { G.warnOnce('c1 3d ' + sp.key, e); r = { dead: true }; }
+        R[sp.key] = r;
+        if (r.root) view.scene.add(r.root);
+      }
+      if (r.dead) continue;
+      r.root.visible = sp.a > 0.01;
+      r.root.position.set(sp.x, sp.y3 || 0, sp.z);
+      if (sp.scale) r.root.scale.setScalar(sp.scale);
+      if (r.b) { if (r.b.setOpacity) r.b.setOpacity(Math.min(1, sp.a)); if (r.b.update) r.b.update(dt, view.yaw || 0, view.camera); }
+      if (r.c) { try { if (sp.ghost || sp.a < 0.99) r.c.setOpacity(Math.min(1, sp.a), !!sp.ghost); if (sp.yaw != null) r.c.setFacing(sp.yaw); r.c.update(dt, view.yaw || 0, view.camera); } catch (e) { /* optional API */ } }
+    }
+    for (const k in R) if (!seen.has(k) && R[k].root) R[k].root.visible = false;
+  }
+  const appSpecs = (list, tag) => list.map((ap, i) => ({ key: tag + i + (ap.art || ''), mon: ap.art || 'water_ghost', v: ap.v || 0, height: ap.sc * 3.4, a: ap.a == null ? 1 : ap.a, x: ap.x + 0.5, z: ap.y + 0.9, y3: (1 - (ap.rise == null ? 1 : ap.rise)) * -0.6 }));
+  const headSpec = (key, x, z, sc, a = 1) => ({ key, model: 'water_lantern', x, z, scale: sc, a });
 
   // =================================================================================================== grid helpers
   function grid(w, h, ch) { const g = []; for (let y = 0; y < h; y++) g.push(new Array(w).fill(ch)); return g; }
@@ -726,6 +763,7 @@
   }
   // a window painted on a wall face (x0..x0+n-1 on row y): sky / sea depending on the time of day
   function drawWindows(ctx, cells, t) {
+    if (is3d()) return;
     const p = phase();
     const sky = { P1: ['#b8d4ec', '#f4e2c0'], P2: ['#8ec4ec', '#d8ecf6'], P3: ['#f0a860', '#ffd890'], PX: ['#5a3a6a', '#e08050'], P4: ['#050a1e', '#0e1838'], P5: ['#8a96a6', '#b8c0c8'] }[p];
     const sea = { P1: '#5a86a8', P2: '#3a7ab0', P3: '#d89040', PX: '#6a3a50', P4: '#060c1e', P5: '#5a6a7a' }[p];
@@ -781,6 +819,7 @@
       if (FX2F.lying) { const p = MS().player; drawLying(ctx, 'xinghe', p.px + 6, p.py + 6); }
     },
     drawOver: (ctx, t) => drawHead(ctx, 6.5 * T, 3.35 * T, 0.62, { color: '#d8c8a0', text: '平安' }, t, { water: false }),
+    update3d: (view, dt) => { const p = MS().player; sync3d(view, dt, [headSpec('lamp', 6.5, 3.5, 0.55), { key: 'lying', char: 'xinghe', anim: 'ko', x: p.px / T, z: p.py / T, a: FX2F.lying ? 1 : 0 }]); },
     events: [
       { id: 'wake', trigger: 'auto', if: (st) => !st.flags.ch1_start, run: (S) => wakeUp(S, false) },
       { id: 'bed', trigger: 'action', x: 2, y: 2, h: 2, label: '調查', run: async (S) => {
@@ -909,6 +948,11 @@
       if (FXS.bzLying) drawLying(ctx, 'baizhi', 14.5 * T, 4.2 * T, 0.55);
       if (FXS.cbLying) drawLying(ctx, 'chenbo', 14.5 * T, 4.2 * T, 0.55);
     },
+    update3d: (view, dt) => sync3d(view, dt, [
+      headSpec('skeleton', 9.5, 6.2, 1.5, F('ch1_mine_done') ? 0 : 1),
+      { key: 'bz', char: 'baizhi', anim: 'sleep', x: 14.5, z: 4, y3: 0.55, a: FXS.bzLying ? 1 : 0 },
+      { key: 'cb', char: 'chenbo', anim: 'sleep', x: 14.5, z: 4, y3: 0.55, a: FXS.cbLying ? 1 : 0 },
+    ].concat(appSpecs(FXS.apps, 'a'))),
     drawOver: (ctx, t) => {
       drawApps(ctx, t, FXS.apps);
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -1577,8 +1621,9 @@
     warps: [{ x: 6, y: 8, to: 'jiufen', tx: 6, ty: 7, tdir: 'down', door: true }],
     onEnter: () => { liveBg(MS()); FXA.atu = 0; FXA.glow = G.Quests.isDone('q_atu_watch') ? 0.6 : 0; },
     drawGround: (ctx, t) => drawWindows(ctx, [[8, 1]], t),
+    update3d: (view, dt) => sync3d(view, dt, [{ key: 'atu', char: 'miner', x: 8.5, z: 2.9, a: FXA.atu, ghost: true }]),
     drawOver: (ctx, t) => {
-      if (FXA.atu > 0.01 && G.Sprites) G.Sprites.drawChar(ctx, 'miner', 'down', 0, 8.5 * T, 3 * T - 8, { alpha: FXA.atu, ghost: true });
+      if (FXA.atu > 0.01 && G.Sprites && !is3d()) G.Sprites.drawChar(ctx, 'miner', 'down', 0, 8.5 * T, 3 * T - 8, { alpha: FXA.atu, ghost: true });
       if (FXA.glow > 0.01) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; glow(ctx, 4 * T, 5.3 * T, 26, '#ffd08a', FXA.glow); ctx.restore(); ctx.globalAlpha = 1; }
     },
     events: [
@@ -1826,6 +1871,10 @@
       FXJ.apps = []; FXJ.feathers = []; FXJ.king = null; FXJ.souls = []; FXJ.oar = 0;
       applyNpcDirs(ms);
     },
+    update3d: (view, dt) => {
+      const k = FXJ.king;
+      sync3d(view, dt, appSpecs(FXJ.apps, 'j').concat([{ key: 'king', mon: 'water_ghost_king', height: 5.5, x: k ? k.x : 0, z: k ? k.y + 0.5 : 0, a: k ? k.a : 0, y3: k ? (1 - k.rise) * -2 : 0 }]));
+    },
     onUpdate: (dt, ms) => {
       for (const f of FXJ.feathers) { f.t += dt; f.y += f.vy * dt; f.x += Math.sin(f.t * 2 + f.ph) * 20 * dt; }
       FXJ.feathers = FXJ.feathers.filter((f) => f.t < f.life);
@@ -1837,7 +1886,7 @@
       if (mist && phase() === 'P4') mist.opts.alpha = 0.12 + 0.2 * (1 - ms.player.y / ms.h) + FXJ.fog * 0.15;
     },
     drawOver: (ctx, t, ms) => {
-      if (FXJ.king) {
+      if (FXJ.king && !is3d()) {
         const k = FXJ.king;
         ctx.save();
         ctx.globalAlpha = k.a;
@@ -1857,7 +1906,7 @@
         ctx.restore();
       }
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      for (const s of FXJ.souls) { const a = Math.min(1, s.t * 2) * Math.max(0, 1 - s.t / s.life); glow(ctx, s.x, s.y, 14, '#9fe6ff', a); glow(ctx, s.x, s.y, 4, '#ffffff', a); }
+      for (const s of FXJ.souls) { const a = Math.min(1, s.t * 2) * Math.max(0, 1 - s.t / s.life); glow(ctx, s.x, s.y, 14, s.c || '#9fe6ff', a); glow(ctx, s.x, s.y, 4, s.c ? '#f4f0e8' : '#ffffff', a); }
       if (phase() === 'P4') JF_EAVES.forEach(([x, y], k) => { if (blueLit(G.state, 11 + k)) glow(ctx, x * T + 32, y * T - 28, 22, BLUE, 0.55 + 0.15 * Math.sin(t * 5 + x)); });
       if (FXJ.oar > 0.01) glow(ctx, (FXJ.oarX || 19) * T + 32, (FXJ.oarY || 6) * T - 30, 220 * FXJ.oar, '#ffe6a0', FXJ.oar * 0.8);
       ctx.restore(); ctx.globalAlpha = 1;
@@ -2629,6 +2678,7 @@
       ctx.restore();
     },
     drawOver: (ctx, t) => drawApps(ctx, t, FXM2.apps),
+    update3d: (view, dt) => sync3d(view, dt, appSpecs(FXM2.apps, 'm')),
     events: [
       { id: 'foreman', trigger: 'touch', x: 9, y: 16, w: 17, if: (st) => !st.flags.ch1_foreman, run: (S) => scene17(S) },
       { id: 'wind_block', trigger: 'touch', x: 2, y: 18, w: 3, if: (st) => !st.flags.ch1_wind_done, run: async (S) => {
@@ -2905,7 +2955,7 @@
     await S.say('xinghe:smile', '……還有，保佑我今年變很厲害。');
     await S.say('添丁伯', '最後那項，要自己努力啦。');
     // the smoke drifts north toward the sea
-    for (let i = 0; i < 14; i++) FXJ.souls.push({ x: 26 * T + 32 + U.rand(-6, 6), y: 37 * T - 30, vx: U.rand(-8, 8), vy: -U.rand(140, 200), t: -i * 0.15, life: 3.2 });
+    for (let i = 0; i < 14; i++) FXJ.souls.push({ x: 26 * T + 32 + U.rand(-6, 6), y: 37 * T - 30, vx: U.rand(-8, 8), vy: -U.rand(140, 200), t: -i * 0.15, life: 3.2, c: '#d8d4cc' });
     await wait(S, 1.2);
     await camTo(19, 30, 1.4);
     await S.say('', '香插進香爐。煙裊裊升起——然後，像被誰牽著一樣，一縷一縷飄向北方的海。');
@@ -3253,6 +3303,7 @@
         name: '雞籠人' })),
     ],
     onEnter: () => { liveBg(MS()); },
+    update3d: (view, dt) => sync3d(view, dt, FXK.heads.map((h, i) => headSpec('h' + i, h.x + 1 + h.dx, h.y + 1.2, 1.4))),
     drawGround: (ctx, t) => {
       for (const h of FXK.heads) {
         const cx = (h.x + 1 + h.dx) * T, cy = (h.y + 1.3) * T;
@@ -3500,6 +3551,14 @@
       { id: 'crab2', troop: 'shore_1', x: 37, y: 12, lv: 4, radius: 1, chase: 3, respawn: false, if: bdAfter },
     ],
     onEnter: () => { liveBg(MS()); bdReset(); },
+    update3d: (view, dt) => {
+      const sp = FXB.heads.map((h, i) => headSpec('h' + i, h.x / T, h.y / T, 1.4, h.a));
+      const w = FXB.white;
+      sp.push(headSpec('white', w ? w.x / T : 0, w ? w.y / T : 0, 2, w ? w.a : 0));
+      sp.push({ key: 'girl', char: 'baizhi', anim: 'sleep', x: w ? w.x / T : 0, z: w ? w.y / T - 0.2 : 0, y3: 0.6, a: w ? FXB.girl * w.a : 0 });
+      sp.push({ key: 'girlB', char: 'baizhi', anim: 'sleep', x: 25.5, z: 19.6, a: FXB.girlBeach ? 1 : 0 });
+      sync3d(view, dt, sp.concat(appSpecs(FXB.apps, 'b')));
+    },
     onUpdate: (dt) => {
       for (const l of FXB.lamps) if (l.drift) l.y -= l.drift * dt;
     },
@@ -3647,7 +3706,6 @@
     S.bgm(null, { fade: 0.4 });
     Snd.wave(0.5, 6);
     await wait(S, 1.2);
-    G.Tweens.clear && 0;
     const order = FXB.lamps.slice().sort((a, b) => a.y - b.y);
     for (const l of FXB.lamps) l.drift = 0;
     for (const [i, l] of order.entries()) { setTimeout(() => { l.k = 1; }, auto() ? 0 : i * 80); }
@@ -3775,7 +3833,7 @@
   async function scene14(S) {
     const ms = MS();
     FXS.bzLying = true;
-    S.setPos('player', 13, 6, 'up');
+    S.setPos('player', 14, 6, 'up');
     ms.snapCamera();
     S.spawn({ id: 'lin_n', sprite: 'doctor', x: 13, y: 4, dir: 'right' });
     S.spawn({ id: 'cb_n', sprite: 'chenbo', portrait: 'chenbo', x: 12, y: 7, dir: 'up' });
@@ -3788,7 +3846,7 @@
     await S.say('林大夫', '我開點溫補的藥。讓她睡，醒了再說。');
     await S.say('chenbo:normal', '麻煩你了，林大夫。這件事……');
     await S.say('林大夫', '我知道。我什麼都沒看到。');
-    await S.move('lin_n', 'LDDDDLLLLLD');
+    await S.move('lin_n', 'DDDLLLLLLDDD');
     S.sfx('door');
     S.remove('lin_n');
     S.face('player', 'left'); S.face('cb_n', 'player');
@@ -3804,12 +3862,12 @@
     await S.say('', '陳伯從櫃檯底下拿出一個長長的布包，揹在背上。布包的形狀，像一支船槳。另外還有一個短一點的布包，也一起揹上。');
     await S.say('xinghe:think', '那是什麼？');
     await S.say('chenbo:normal', '舊東西。');
-    await S.move('cb_n', 'DDDL');
+    await S.move('cb_n', 'DDD');
     S.sfx('door');
     S.remove('cb_n');
     S.flag('ch1_home_night');
     await S.move('player', 'U');
-    S.face('player', 'right');
+    S.face('player', 'up');
     await S.say('', '星河坐在床邊的板凳上，看著少女的臉。');
     await S.say('xinghe:think', '白芷……');
     await S.say('xinghe:think', '夢裡的人，怎麼會漂到八斗子來……');
@@ -4087,7 +4145,7 @@
     await S.say('xinghe:think', '……');
     await S.say('xinghe:smile', '……好！那就一起上！');
     await cineOff();
-    await S.battle('t_c1_moya', { intro: (b) => moyaIntro(b), rewards: true, bgmAfter: null });
+    await S.battle('t_c1_moya', { intro: (b) => moyaIntro(b), rewards: true });
     cineOn();
     await S.say('', '墨鴉單膝跪地，斗篷破了好幾個洞。');
     await S.say('moya:angry', '嘎……！我的斗篷！這是用三百隻烏鴉的毛——');
@@ -4152,7 +4210,7 @@
     else { G.Story.ensureLevel('chenbo', Math.max(8, avg + 6)); }
     const cm = G.state.members.chenbo; const cst = G.Party.stats('chenbo'); cm.hp = cst.mhp; cm.mp = cst.mmp; cm.gauge = 0;
     S.remove('cb_r');
-    await S.battle('t_c1_ghost_king', { guests: ['chenbo'], intro: (b) => ghostKingIntro(b), onTurn: (b, u) => ghostKingTurn(b, u), rewards: true, bgmAfter: null });
+    await S.battle('t_c1_ghost_king', { guests: ['chenbo'], intro: (b) => ghostKingIntro(b), onTurn: (b, u) => ghostKingTurn(b, u), rewards: true });
     S.spawn({ id: 'cb_r', sprite: 'chenbo', portrait: 'chenbo', x: ms.player.x, y: ms.player.y - 1, dir: 'up' });
     cineOn();
     if (!F('ch1_yinghuo')) {
@@ -4248,7 +4306,7 @@
     S.sfx('fire'); S.flash('#5ab8ff', 0.3, 0.4);
     await S.say('林大夫', '陰寒入骨。我能做的都做了，接下來要看他自己。');
     await S.say('林大夫', '至少躺半個月。……我明天早上再來。');
-    await S.move('lin_r', 'LDDDDLLLLLD');
+    await S.move('lin_r', 'DDDLLLLLLDDD');
     S.sfx('door'); S.remove('lin_r');
     await S.move('player', 'U');
     S.face('player', 'right');

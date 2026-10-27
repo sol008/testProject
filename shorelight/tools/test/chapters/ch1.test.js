@@ -98,6 +98,16 @@ const warp = async (s, m, x, y, dir = 'down') => {
   await s.ev(([m, x, y, d]) => G.Script.run((S) => S.warp(m, x, y, d)), [m, x, y, dir]);
   await waitMap(s, m);
 };
+// one keyboard tap = one tile; waits until the step (and anything it triggered) is over
+async function tap(s, key) {
+  await s.idle();
+  const before = await s.ev(() => { const p = G.mapScene.player; return [p.x, p.y, p.dir].join(); });
+  await s.page.keyboard.down(key);
+  await s.page.waitForFunction((b) => { const p = G.mapScene && G.mapScene.player; return !p || p.moving || [p.x, p.y, p.dir].join() !== b || G.Script.busy(); }, before, { timeout: 10000 });
+  await s.page.keyboard.up(key);
+  await s.page.waitForFunction(() => G.mapScene && !G.mapScene.player.moving, null, { timeout: 10000 });
+  await s.page.waitForTimeout(60);
+}
 const level = (s, lv) => s.ev((lv) => { for (const id of G.state.party) G.Story.ensureLevel(id, lv); G.Party.healAll(); }, lv);
 const hasItem = (s, id) => s.ev((id) => G.Inv.count(id), id);
 
@@ -136,8 +146,16 @@ async function testCritical(browser, open) {
   assert(st.ch === 1 && st.party.join() === 'xinghe' && st.lv >= 2 && !st.bz, 'chapter start state: ' + JSON.stringify(st));
   assert(st.obj === '下樓找陳伯', 'objective ' + st.obj);
   await s.shot('01_attic');
+  // real keyboard input: walk over, look at the little 水燈 (Z), then walk down the stairs
+  await tap(s, 'ArrowRight');
+  await tap(s, 'ArrowUp');
+  assert(JSON.stringify(await s.ev(() => [G.mapScene.player.x, G.mapScene.player.y, G.mapScene.player.dir])) === '[6,4,"up"]', 'keyboard walk in the attic');
+  await s.page.keyboard.press('z');
+  await s.page.waitForTimeout(300);
+  await s.idle();
+  assert((await s.flags()).ch1_seen_lantern, 'Z on the little lantern');
+  for (const k of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowDown', 'ArrowDown', 'ArrowDown']) await tap(s, k);
   // 1-2
-  await step(s, 9, 7);
   await waitMap(s, 'jiufen_shop');
   f = await s.flags();
   assert(f.ch1_errands, '1-2 errands');
@@ -266,14 +284,14 @@ async function critRaid(s) {
   // 1-23b
   await step(s, 7, 11); await waitMap(s, 'jiufen');
   await s.shot('13_jiufen_P5');
-  // the departure gate before the cats have joined
-  await step(s, 19, 40);
-  assert(!(await s.flags()).ch1_done && (await s.ev(() => G.mapScene.player.y)) === 39, 'departure must wait for the teahouse farewell');
   await step(s, 13, 11); await waitMap(s, 'jiufen_yuyuan');
   f = await s.flags();
   assert(f.ch1_yuyuan && await hasItem(s, 'yuyuan') >= 3, '1-23b');
   assert(await s.ev(() => G.state.vars.objective) === '去聽雨樓跟鄭頭家道別', 'objective after 芋圓');
   await step(s, 7, 9); await waitMap(s, 'jiufen');
+  // the departure gate before the cats have joined
+  await step(s, 19, 40);
+  assert(!(await s.flags()).ch1_done && (await s.ev(() => G.mapScene.player.y)) === 39, 'departure must wait for the teahouse farewell');
   // 1-23d 麻糬 & 芋圓
   await step(s, 15, 23); await waitMap(s, 'jiufen_teahouse');
   f = await s.flags();

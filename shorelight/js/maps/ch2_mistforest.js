@@ -444,6 +444,13 @@
     const dx = x - a.x, dy = y - a.y;
     await fmove(S, id, (dx > 0 ? 'R' : 'L').repeat(Math.abs(dx)) + (dy > 0 ? 'D' : 'U').repeat(Math.abs(dy)));
   }
+  // the two silent cats (followers from ch1): a beat = an emote + one line of narration, only if the cat is with the party
+  const hasPet = (id) => !!(MS() && !MS().hideFollowers && MS().followers.some((f) => f.id === id && f.visible));
+  async function pet(S, id, emote, line) {
+    if (!hasPet(id)) return;
+    if (emote) S.emote(id, emote);
+    if (line) await S.say('', line);
+  }
   async function sayAll(S, who, lines) { for (const l of lines) await S.say(who, l); }
   async function savePrompt(S, text) {
     if (text) await S.say('', text);
@@ -615,6 +622,7 @@
     await S.say('xinghe:surprise', '陳伯？');
     S.face('player', 'up');
     await S.wait(dur(0.3));
+    await pet(S, 'mochi', '!', '（麻糬全身的毛炸了起來，朝著霧裡低低地哈了一聲。）');
     await S.say('baizhi:normal', '星河，有人叫你。');
     S.face('baizhi', 'up');
     await S.say('', '（白芷已經轉過頭去了。）');
@@ -909,7 +917,8 @@
         await S.say('xinghe:surprise', '有了！腳印！');
         await S.say('baizhi:think', '這些腳印……很小。像孩子的。');
         await S.say('xinghe:think', '……也許是以前，從這裡走出去的人留下的。');
-        await S.say('xinghe:serious', '跟著走！');
+        await pet(S, 'mochi', '♪', '（麻糬低頭聞了聞第一個腳印，尾巴豎得直直的，搶先走了出去。）');
+    await S.say('xinghe:serious', '跟著走！');
         await S.say('', '（靈視中，樟樹上的紅布條像一條紅舌頭一樣，不甘心地扭了扭。）');
         S.quest('q_ch2_main', 1);
       } },
@@ -1076,6 +1085,7 @@
     await S.say('', '（白芷蹲下，看著一朵藍紫色的小蕈。蕈傘下的光，一明一暗地照在她臉上。）');
     await S.say('baizhi:smile', '我想，我可以心靜。');
     await S.say('xinghe:surprise', '欸，等等，妳不要隨便吃路邊的——');
+    await pet(S, 'yuyuan', '♪', '（芋圓已經張嘴湊向另一朵蕈。星河一把把他抱開。）');
     S.face('baizhi', 'player');
     await S.say('baizhi:think', '你要吃嗎？');
     await S.say('xinghe:think', '我……我現在心很亂。');
@@ -1090,6 +1100,7 @@
     for (const f of ms.followers) if (f.id !== 'baizhi') { f.setCell(16, 8); f.dir = 'down'; }
     S.face('player', 'down'); S.face('baizhi', 'down');
     await S.say('', '（兩人在池邊的倒木旁坐下。只有蟲鳴，和蕈菇呼吸的光。）');
+    await pet(S, 'mochi', '♪', '（麻糬在白芷腳邊捲成一團，尾巴蓋住鼻子。芋圓趴在星河腿上，一臉不甘心。）');
     await S.say('', '（星河閉上眼睛，深深吸一口氣，慢慢吐出來。一次。兩次。三次。）');
     const pb = breathe(S, ms);
     await tweenPsy(0.25, 6.6);
@@ -1123,6 +1134,7 @@
     await S.say('xinghe:laugh', '是藍鵲！好漂亮……牠的尾巴好長……');
     await S.say('baizhi:smile', '它們是這座山的記憶。');
     await S.say('baizhi:think', '每一隻走過這裡的動物，都在這裡留下一點點光。');
+    await pet(S, 'mochi', '♥', '（光做的石虎湊到麻糬面前，兩隻貓碰了碰鼻子。麻糬的鬍鬚上，沾了一點光。）');
     S.face('player', 'right');
     await S.say('', '（星河伸出手。一隻螢火蟲停在他的指尖——接著是兩隻、十隻、一百隻。）');
     await G.Tweens.to(fx, { line: 1 }, dur(3), 'inOutQuad');
@@ -1300,8 +1312,10 @@
     await S.say('', '（在靈視裡，看得一清二楚：他手上抓的，是一把蚱蜢和一團爛泥巴。）');
     await S.say('baizhi:think', '星河。那不是雞腿。');
     await S.say('xinghe:serious', '……我知道。');
+    await pet(S, 'yuyuan', '♥', '（一聽到「雞腿」，芋圓的耳朵立刻轉了過來。）');
     await S.say('baizhi:think', '雞腿……原來是長那樣的嗎？');
     await S.say('xinghe:angry', '不是啦！真正的雞腿不是那樣啦！');
+    await pet(S, 'yuyuan', '…', '（芋圓看清楚那是蚱蜢，默默把頭轉了回去。）');
     for (const id of ['mosin_a', 'mosin_b', 'mosin_c']) { S.face(id, 'left'); S.emote(id, '!'); }
     await S.say('', '（魔神仔們同時轉過頭來。三張紅臉，三排尖尖的小牙。）');
     await S.say('魔神仔', '……看到了？');
@@ -1395,7 +1409,7 @@
     await S.say('xinghe:surprise', '白芷，妳、妳身邊……');
     S.emote('hongying_duel', '!');
     await S.say('hongying:surprise', '……');
-    await S.say('hongying:angry', '鬼火繞身……銀髮金瞳……');
+    await S.say('hongying:angry', '鬼火繞身……臉白得像紙，身上一點熱氣都沒有……');
     await S.say('hongying:angry', '妖女！');
     await S.say('baizhi:think', '妖女……是在說我嗎？');
     await S.say('hongying:angry', '還裝傻！這片林子的魔神仔，就是妳在養的吧！');
@@ -1413,6 +1427,7 @@
     await S.say('hongying:serious', '妖女，接招！');
     await S.say('xinghe:serious', '……講不聽是不是。');
     await S.say('', '（星河拔出螢火，擋在白芷前面。）');
+    await pet(S, 'yuyuan', '💢', '（芋圓擋到星河腳前，弓起背，把自己膨成一顆灰色的毛球。）');
     await S.say('xinghe:serious', '白芷，退後——');
     await S.say('baizhi:serious', '我要跟緊。');
     await S.say('xinghe:smile', '……我就知道。');
@@ -1718,15 +1733,17 @@
     }
   }
   async function alanjieTalk(S) {
-    if (PQ() === 4) { await S.say('阿藍姐', '白頭髮的姑娘，妳穿藍色一定好看。下次來，阿姐染一條給妳。'); }
+    if (PQ() === 4) { await S.say('阿藍姐', '藍衫的姑娘，妳染的那條頭巾，顏色很正。下次來，阿姐再教妳染長衫。'); }
     else if (!F('ch2_indigo_talk')) {
       S.flag('ch2_indigo_talk');
       await S.say('阿藍姐', '這片藍，是用大菁染的。田裡那些綠綠的草，就是大菁。');
       await S.say('阿藍姐', '葉子泡在缸裡，泡出藍色的泥，再拿來染布。越染越深。');
       await S.say('阿藍姐', '上游那個小庄叫「菁桐坑」——因為那裡滿山的大菁跟油桐。');
-      await S.say('阿藍姐', '小兄弟，你身上那件藍衫，看起來也是大菁染的喔？');
-      await S.say('xinghe:smile', '九份買的！');
-      await S.say('阿藍姐', '那一定是從我們這邊挑過去賣的布！');
+      if (inParty('baizhi')) {
+        await S.say('阿藍姐', '姑娘，妳身上那件藍衫，看起來也是大菁染的喔？');
+        await S.say('baizhi:think', '……是嗎？我醒來的時候，就穿著了。');
+        await S.say('阿藍姐', '那一定是從我們這邊挑過去賣的布！越洗越藍，看那個顏色就知道。');
+      }
     } else await S.say('阿藍姐', '要不要看看阿姐染的布？越洗越藍喔。');
     await S.shop(['c2_indigo_scarf', 'c2_indigo_robe'], { title: '阿藍姐染坊' });
   }
@@ -2209,6 +2226,7 @@
       await S.say('xinghe:sad', '……');
       await S.say('', '（另一面，寫著四個字：「找到鬼面」。再另一面，字寫得特別小——）');
       await S.say('xinghe:think', '……「想養一隻胖胖的貓」？');
+      await pet(S, 'yuyuan', '?', '（芋圓慢慢轉過頭，盯著紅纓。）');
       await S.say('hongying:shy', '看什麼看！');
     }
     await S.say('', '（白芷拿著筆，看著空白的燈紙，很久。）');
@@ -2281,6 +2299,7 @@
       await S.say('hongying:smug', '看天燈可以，不要看到忘記吃飯。月娘說今暝有雞湯。');
     }
     await S.say('baizhi:surprise', '雞湯！');
+    await pet(S, 'yuyuan', '!', '（芋圓已經往客棧的方向跑了。）');
     await S.say('xinghe:laugh', '走走走！');
     S.take('key_skylantern', 1);
     S.flag('ch2_tiandeng_night');
@@ -2424,7 +2443,7 @@
       { id: 'searcher1', sprite: 'villager_m', name: '搜山的人', x: 46, y: 11, dir: 'left', if: Q(1, 2, 4), talk: searcherTalk, light: { r: 120, color: '#ffb060' } },
       { id: 'searcher2', sprite: 'villager_m2', name: '搜山的人', x: 46, y: 14, dir: 'left', if: Q(1, 2, 4), talk: searcherTalk },
       // Q4: the four children on the temple square
-      kid('alan', spr('c2_alan', 'child_f'), '阿蘭', 19, 19, [['阿蘭', '我就說熱油有用吧！阿嬤的故事不會騙人！'], ['阿蘭', '白頭髮姊姊，妳的手冰冰的。下次我請妳吃熱熱的湯圓。']]),
+      kid('alan', spr('c2_alan', 'child_f'), '阿蘭', 19, 19, [['阿蘭', '我就說熱油有用吧！阿嬤的故事不會騙人！'], ['阿蘭', '藍衫姊姊，妳的手冰冰的。下次我請妳吃熱熱的湯圓。']]),
       kid('adi', 'child_m', '阿弟仔', 20, 19, async (S) => {
         await S.say('阿弟仔', '……紅色姊姊好兇。');
         if (inParty('hongying')) {
@@ -2539,6 +2558,7 @@
     await S.say('hongying:smug', '好了！洛家特製「山產炒」！');
     await S.say('xinghe:think', '……這是炭吧。');
     await S.say('hongying:angry', '是焦香！');
+    await pet(S, 'yuyuan', '…', '（連芋圓都湊過去聞了一下，然後轉身，用後腿往盤子撥了撥土。）');
     await S.say('baizhi:think', '我吃吃看。');
     await S.say('xinghe:surprise', '白芷！不要勉強！');
     await S.say('', '（白芷夾起一塊，放進嘴裡，慢慢地嚼。嚼了很久。）');
@@ -2962,6 +2982,7 @@
     S.sfx('hit'); S.shake(3, 0.2);
     await S.say('', '（花布底下，一條粗大的、黃黑相間的尾巴，「啪」地甩在地上。）');
     S.sfx('dark');
+    await pet(S, 'yuyuan', '💧', '（芋圓一溜煙躲到星河背後，只露出一雙眼睛。）');
     await S.say('虎姑婆', '嘻嘻嘻嘻……被看到了。');
     await S.say('虎姑婆', '今暝吃不到乖孫……那就——先吃最小的那個！');
     S.sfx('crit'); S.shake(6, 0.4);
