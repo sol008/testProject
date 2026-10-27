@@ -1517,7 +1517,7 @@
       for (const d of dyn) g.add(d);
       return finish(K, g, dyn, o);
     },
-    lights: () => [{ x: -0.78, y: 1.32, z: 0, color: '#ffb560', intensity: 0.9, distance: 3.5, flicker: 0.2 }, { x: 0.78, y: 1.32, z: 0, color: '#ffb560', intensity: 0.9, distance: 3.5, flicker: 0.2 }],
+    lights: () => [{ x: -0.78, y: 1.34, z: 0, color: '#ffb560', intensity: 0.55, distance: 3, flicker: 0.2 }, { x: 0.78, y: 1.34, z: 0, color: '#ffb560', intensity: 0.55, distance: 3, flicker: 0.2 }],
   });
 
   // ------------------------------------------------------------------ 香爐 big bronze temple censer on a granite pedestal
@@ -1558,7 +1558,6 @@
       for (const d of dyn) g.add(d);
       return finish(K, g, dyn, o);
     },
-    lights: () => [{ x: 0, y: 1.45, z: 0.2, color: '#ff9a50', intensity: 0.25, distance: 1.6, flicker: 0.25 }],
   });
 
   // ------------------------------------------------------------------ lantern shop display shelf (o.w wide, o.v arrangement); lit display row on top
@@ -1600,7 +1599,7 @@
       }
       return finish(K, g, [], o);
     },
-    lights: (o) => { const w = Math.max(1, o.w | 0 || 2), W = w - 0.06, n = Math.max(2, Math.round(W / 0.62) + 1), out = []; for (let i = 0; i < n && out.length < 2; i += 2) out.push({ x: -W / 2 + W * (i + 0.5) / n, y: 1.85, z: 0.1, color: '#ffc477', intensity: 0.7, distance: 3, flicker: 0.12 }); return out; },
+    lights: (o) => { const w = Math.max(1, o.w | 0 || 2), W = w - 0.06, n = Math.max(2, Math.round(W / 0.62) + 1), out = []; for (let i = 0; i < n && out.length < 2; i += 2) out.push({ x: -W / 2 + W * (i + 0.5) / n, y: 1.81, z: 0, color: '#ffc477', intensity: 0.7, distance: 3, flicker: 0.12 }); return out; },
   });
 
   // ------------------------------------------------------------------ 2D art capture: draw a G.Objects type at high resolution
@@ -2085,7 +2084,7 @@
 
   // ------------------------------------------------------------------ jar_row (o.w wide, o.v arrangement): 紹興 wine jars with clay caps & 酒 labels, glazed small jars
   function wineJar(par, x, z, s, kind, r) {
-    const j = grp(par, x, 0, z, r() * TAU);
+    const j = grp(par, x, 0, z, kind === 'wine' ? (r() - 0.5) * 0.7 : r() * TAU);   // keep the 酒 label facing out
     const gl = { wine: 'glaze_brown', amber: 'glaze_amber', green: 'glaze_green', black: 'glaze_black' }[kind];
     if (kind === 'wine' || kind === 'amber') {
       lathe(j, [[0, 0], [0.13, 0], [0.17, 0.05], [0.21, 0.2], [0.2, 0.34], [0.14, 0.44], [0.1, 0.47], [0.1, 0.49]].map(([a, b]) => [a * s, b * s]), surf(gl, { fit: true }), 0, 0, 0, { seg: 16 });
@@ -2105,8 +2104,8 @@
       const w = Math.max(1, o.w | 0 || 2), r = rng(300 + (o.v | 0) * 13 + w), g = grp();
       for (let i = 0; i < w; i++) {
         const cx = -w / 2 + i + 0.5;
-        wineJar(g, cx - 0.2, -0.05 + (r() - 0.5) * 0.08, 0.95 + r() * 0.15, r() < 0.6 ? 'wine' : 'amber', r);
-        wineJar(g, cx + 0.25, 0.12 + (r() - 0.5) * 0.08, 0.85 + r() * 0.3, r() < 0.5 ? 'green' : 'black', r);
+        wineJar(g, cx - 0.18, -0.06 + (r() - 0.5) * 0.08, 1.2 + r() * 0.18, r() < 0.6 ? 'wine' : 'amber', r);
+        wineJar(g, cx + 0.26, 0.14 + (r() - 0.5) * 0.08, 1.1 + r() * 0.35, r() < 0.5 ? 'green' : 'black', r);
       }
       return finish(K, g, [], o);
     },
@@ -2264,7 +2263,7 @@
       const b = node.getObjectByName('bubbles');
       if (b) b.children.forEach((m, k) => { const life = (t * 0.8 + k * 0.37 + phaseOf(o)) % 1; const s = life < 0.9 ? 0.2 + life : 0.01; m.scale.set(s, s * 0.8, s); });
     },
-    lights: () => [{ x: 0, y: 0.8, z: 0, color: '#9ad86a', intensity: 0.35, distance: 1.8, flicker: 0.15 }],
+    lights: () => [{ x: 0, y: 0.95, z: 0, color: '#9ad86a', intensity: 0.22, distance: 1.8, flicker: 0.15 }],
   });
 
   // ------------------------------------------------------------------ herbs_rack: 中藥櫃 labelled drawers below, drying sieves and hanging bundles above
