@@ -31,7 +31,11 @@ const path = require('path');
       await L.atRt(page, f.rt + f.T + 0.04); await L.shot(page, out, '07_impact');
     });
     await step('enemy', async () => {
-      const a = await L.nextEvent(page, 'action', 240000, { side: 'enemy' }); await L.atRt(page, a.rt + 0.1); await L.shot(page, out, '08_enemy_turn');
+      // party members may still be due before the enemy acts: let them defend until an enemy action is logged
+      const pump = setInterval(() => page.evaluate(() => {
+        const s = G.Scenes.top(); if (s && s.ui && s.ui.mode === 'main' && s.ui.u) s.ui.done({ kind: 'defend' });
+      }).catch(() => {}), 1500);
+      const a = await L.nextEvent(page, 'action', 240000, { side: 'enemy' }).finally(() => clearInterval(pump)); await L.atRt(page, a.rt + 0.1); await L.shot(page, out, '08_enemy_turn');
       const f = await L.nextEvent(page, 'fx', 240000, { side: 'enemy' }); await L.atRt(page, f.rt + f.T + 0.05); await L.shot(page, out, '09_enemy_hit');
     });
     await step('spell', async () => {
