@@ -154,6 +154,10 @@ G.Script = (() => {
       if (n > 0) { G.Audio.sfx('coin'); G.UI.toast(`獲得 {y}${n}{/} 文錢`, { icon: 'bag' }); }
     },
     join(id, lv) {
+      if (lv == null && !G.state.members[id]) {
+        const act = G.Party.active();
+        lv = act.length ? Math.round(act.reduce((a, m) => a + m.lv, 0) / act.length) : 1;
+      }
       G.Party.join(id, lv);
       map() && map().refresh();
       const nm = G.Names[id] || id;

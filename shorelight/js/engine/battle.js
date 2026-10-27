@@ -68,6 +68,7 @@ G.Battle = (() => {
     return m;
   }
   const eff = (u, k) => u[k] * statMul(u, k);
+  const hasSp = (u, id) => !!(u.specials && u.specials.includes(id));
 
   // ------------------------------------------------------------------ scene
   class BattleScene {
@@ -103,6 +104,7 @@ G.Battle = (() => {
         u.wait = 100 * 40 / (eff(u, 'spd') + 40) * U.rand(0.3, 0.9);
         if (mode === 'advantage' && u.side === 'enemy') u.wait += 60;
         if (mode === 'ambush' && u.side === 'party') u.wait += 60;
+        if (hasSp(u, 'firstStrike')) u.wait *= 0.3;
       }
       const bgm = this.troop.bgm || (this.troop.boss ? 'boss' : (G.state.chapter >= 7 ? 'battle2' : 'battle'));
       this.prevBgm = G.Music.current;
@@ -144,7 +146,7 @@ G.Battle = (() => {
         this.active = null;
         u.wait = 100 * ((cmd && cmd.delay) || 1) * 40 / (eff(u, 'spd') + 40);
         if (cmd && cmd.kind === 'defend') u.wait *= 0.75;
-        if (u.side === 'party') u.gauge = Math.min(100, u.gauge + 8);
+        if (u.side === 'party') u.gauge = Math.min(100, u.gauge + 8 * (hasSp(u, 'gaugeUp') ? 1.5 : 1));
         if (this.checkEnd()) break;
         await this.checkPhases();
         if (this.checkEnd()) break;
@@ -186,11 +188,13 @@ G.Battle = (() => {
         await this.wait(0.35);
         if (u.dead) return true;
       }
-      if (st.regen) {
-        const h = Math.round(u.mhp * 0.08);
+      if (st.regen || (hasSp(u, 'autoRegen') && u.hp < u.mhp)) {
+        const h = Math.round(u.mhp * (st.regen ? 0.08 : 0.05));
         this.healUnit(u, h);
         await this.wait(0.3);
       }
+      if (hasSp(u, 'mpRegen') && u.mp < u.mmp) u.mp = Math.min(u.mmp, u.mp + Math.max(1, Math.round(u.mmp * 0.03)));
+      u.turns = (u.turns || 0) + 1;
       if (st.sleep) { this.popText(u, '沉睡中…', '#8ab0ff'); skip = true; }
       if (st.stun) { this.popText(u, '定身！', '#ffd84a'); skip = true; }
       for (const k in st) {
@@ -217,8 +221,8 @@ G.Battle = (() => {
           const p = phases[i];
           if (e.phasesDone[i] || e.hp > e.mhp * p.at) continue;
           e.phasesDone[i] = true;
-          if (p.lines) {
-            for (const l of p.lines) await G.Dialog.say(l[0], l[1]);
+          if (p.lines || p.text) {
+            for (const l of p.lines || [['', p.text]]) await G.Dialog.say(l[0], l[1]);
             G.Dialog.close();
           }
           if (p.phase) {
@@ -231,7 +235,7 @@ G.Battle = (() => {
             await this.wait(1);
           }
           if (p.heal) { e.hp = Math.min(e.mhp, e.hp + Math.round(e.mhp * p.heal)); }
-          if (p.buffs) for (const b of p.buffs) this.addStatus(e, b.stat || b.id, b.turns || 4, true);
+          if (p.buffs) for (const b of p.buffs) this.addStatus(e, b.stat ? b.stat + ((b.amt || 0.3) < 0 ? 'Down' : 'Up') : b.id, b.turns || 4, true);
           if (p.skills) e.d = Object.assign({}, e.d, { skills: p.skills });
           if (p.summon) {
             for (const sid of p.summon) {
@@ -255,13 +259,13 @@ G.Battle = (() => {
     }
 
     usableSkills(u) {
-      return (u.m.skills || []).map((id) => G.Data.skills[id]).filter((s) => s && !s.combo && !s.ultimate && s.type !== 'passive')
+      return (u.m.skills || []).map((id) => G.Data.skills[id]).filter((s) => s && !s.combo && !s.ultimate && !s.hidden && s.type !== 'passive')
         .map((s) => s);
     }
 
     autoCommand(u) {
       const d = G.Data.skills;
-      const skills = (u.m.skills || []).filter((id) => d[id] && !d[id].combo && d[id].mp <= u.mp && !u.st.seal);
+      const skills = (u.m.skills || []).filter((id) => d[id] && !d[id].combo && !d[id].ultimate && !d[id].hidden && d[id].type !== 'special' && d[id].mp <= u.mp && !u.st.seal);
       const hurt = this.alive('party').filter((p) => p.hp < p.mhp * 0.4);
       const deadAllies = this.party.filter((p) => p.dead);
       if (u.gauge >= 100 && G.Data.chars[u.id].ultimate) {
@@ -315,12 +319,15 @@ G.Battle = (() => {
         if (!sk) return s.id === 'attack';
         if (e.st.seal && sk.type !== 'phys') return false;
         if (s.if) {
-          const c = s.if;
-          if (c === 'hp<50' && e.hp > e.mhp * 0.5) return false;
-          if (c === 'hp<30' && e.hp > e.mhp * 0.3) return false;
+          const c = String(s.if);
+          let m;
+          if ((m = /^hp<(\d+)$/.exec(c)) && e.hp > e.mhp * m[1] / 100) return false;
+          if ((m = /^hp>(\d+)$/.exec(c)) && e.hp < e.mhp * m[1] / 100) return false;
+          if ((m = /^turn>(\d+)$/.exec(c)) && (e.turns || 0) <= +m[1]) return false;
+          if (c === 'once' && e.usedOnce && e.usedOnce[s.id]) return false;
           if (c === 'ally_hurt' && !this.alive('enemy').some((x) => x.hp < x.mhp * 0.5)) return false;
           if (c === 'ally_dead' && !this.enemies.some((x) => x.dead)) return false;
-          if (c.startsWith && c.startsWith('phase') && e.phase < +c.slice(5)) return false;
+          if ((m = /^phase(\d+)$/.exec(c)) && e.phase < +m[1]) return false;
         }
         return true;
       });
@@ -336,6 +343,8 @@ G.Battle = (() => {
         return U.pick(foes);
       };
       if (pickId === 'attack' || !G.Data.skills[pickId]) return { kind: 'attack', targets: [pickFoe()] };
+      e.usedOnce = e.usedOnce || {};
+      e.usedOnce[pickId] = true;
       const s = G.Data.skills[pickId];
       let targets;
       switch (s.target) {
@@ -347,6 +356,28 @@ G.Battle = (() => {
         default: targets = [pickFoe()];
       }
       return { kind: 'skill', skill: pickId, targets };
+    }
+
+    defaultTargets(u, s) {
+      const foes = u.side === 'party' ? this.alive('enemy') : this.alive('party');
+      const friends = u.side === 'party' ? this.alive('party') : this.alive('enemy');
+      switch (s.target) {
+        case 'enemies': case 'random': return foes;
+        case 'allies': return s.revive && u.side === 'party' ? this.party.slice() : friends;
+        case 'ally': return [friends.slice().sort((a, b) => a.hp / a.mhp - b.hp / b.mhp)[0]];
+        case 'self': return [u];
+        case 'deadAlly': { const d = (u.side === 'party' ? this.party : this.enemies).filter((x) => x.dead); return d.length ? [d[0]] : [u]; }
+        default: return [U.pick(foes)];
+      }
+    }
+    freeEnemySlot() {
+      const slots = ENEMY_POS[6].concat(ENEMY_POS[5]);
+      let best = slots[0], bd = -1;
+      for (const sl of slots) {
+        const d = Math.min(...this.enemies.filter((e) => !e.dead).map((e) => Math.hypot(e.x - sl[0], e.y - sl[1])), 9999);
+        if (d > bd) { bd = d; best = sl; }
+      }
+      return best;
     }
 
     elemFactor(elem, target) {
@@ -371,7 +402,7 @@ G.Battle = (() => {
       if (cmd.kind === 'item') { await this.useItem(u, cmd.item, cmd.targets); return; }
       if (cmd.kind === 'attack') {
         const weapon = u.side === 'party' ? (G.Data.chars[u.id].weapon || 'sword') : null;
-        const sk = { name: '攻擊', type: 'phys', power: 1, target: 'enemy', fx: weapon === 'spear' ? 'thrust' : weapon === 'talisman' ? 'slash' : weapon === 'flute' ? 'slash' : 'slash', sfx: weapon === 'spear' ? 'stab' : 'slash', elem: u.side === 'enemy' ? null : null, melee: true, attack: true };
+        const sk = { name: '攻擊', type: 'phys', power: 1, target: 'enemy', fx: weapon === 'spear' ? 'thrust' : 'slash', sfx: weapon === 'spear' ? 'stab' : 'slash', elem: u.elem || null, melee: true, attack: true };
         if (u.side === 'enemy') { sk.fx = u.d.attackFx || 'claw'; sk.sfx = u.d.attackSfx || 'hit'; }
         await this.performSkill(u, sk, cmd.targets, 'attack');
         return;
@@ -382,12 +413,51 @@ G.Battle = (() => {
       if (cmd.kind === 'ultimate') u.gauge = 0;
       else if (u.side === 'party') u.mp = Math.max(0, u.mp - (s.mp || 0));
       if (s.combo) {
-        for (const pid of s.combo) {
-          const p = this.party.find((x) => x.id === pid);
-          if (p && p !== u) { p.mp = Math.max(0, p.mp - (s.mp || 0)); p.wait += 45; }
+        const ps = s.combo.map((pid) => this.party.find((x) => x.id === pid)).filter(Boolean);
+        for (const p of ps) if (p !== u) { p.mp = Math.max(0, p.mp - (s.mp || 0)); p.wait += 100 * 40 / (eff(p, 'spd') + 40); }
+        this.comboAvg = { atk: ps.reduce((a, p) => a + eff(p, 'atk'), 0) / ps.length, mag: ps.reduce((a, p) => a + eff(p, 'mag'), 0) / ps.length };
+      }
+      if (s.special === 'tuanzi' && s.outcomes) {
+        const tot = s.outcomes.reduce((a, o) => a + (o.w || 1), 0);
+        let r = Math.random() * tot, pick = s.outcomes[0];
+        for (const o of s.outcomes) { r -= (o.w || 1); if (r <= 0) { pick = o; break; } }
+        this.banner(s.name, '#ffe6a8');
+        this.fx.push(summonFxIntro(u));
+        G.Audio.sfx('magic');
+        await this.wait(0.7);
+        this.say(pick.text, 2.2);
+        await this.wait(1.2);
+        const sub = G.Data.skills[pick.skill];
+        if (sub) await this.performSkill(u, sub, this.defaultTargets(u, sub), pick.skill);
+        return;
+      }
+      if (s.summon) {
+        this.banner(s.name, '#ff9a8a');
+        G.Audio.sfx(s.sfx || 'ghost');
+        let added = 0;
+        for (const sid of s.summon) {
+          if (this.enemies.filter((x) => !x.dead).length >= 5 || !G.Data.enemies[sid]) break;
+          const nu = enemyUnit(sid, 0, 1, this.diff);
+          const slot = this.freeEnemySlot();
+          nu.x = nu.hx = slot[0]; nu.y = nu.hy = slot[1];
+          nu.alpha = 0; nu.wait = 40;
+          this.enemies.push(nu);
+          this.tween(nu, { alpha: 1 }, 0.5);
+          added++;
         }
+        if (!added) this.say('什麼也沒有出現……', 1.2);
+        await this.wait(0.8);
+        return;
+      }
+      if (s.type === 'special') {
+        this.banner(s.name, u.side === 'enemy' ? '#ff9a8a' : '#ffe6a8');
+        if (s.desc && u.side === 'enemy') this.say(s.desc, 1.6);
+        if (s.sfx) G.Audio.sfx(s.sfx);
+        await this.wait(1.0);
+        return;
       }
       await this.performSkill(u, s, cmd.targets, cmd.skill);
+      this.comboAvg = null;
       if (s.delay) cmd.delay = s.delay;
     }
 
@@ -450,15 +520,17 @@ G.Battle = (() => {
           if (Math.random() > U.clamp(hit, 0.6, 0.99)) { this.popText(tg, '閃避', '#c8d8ff'); G.Audio.sfx('miss'); return; }
         }
         let dmg;
-        const power = (s.power || 1) / (hits > 1 ? 1 : 1);
-        if (type === 'phys') dmg = power * eff(u, 'atk') * 2 * 50 / (50 + eff(tg, 'def'));
-        else dmg = power * eff(u, 'mag') * 2 * 50 / (50 + (eff(tg, 'def') * 0.3 + eff(tg, 'mag') * 0.7));
+        const power = s.power || 1;
+        const uAtk = this.comboAvg ? this.comboAvg.atk : eff(u, 'atk');
+        const uMag = this.comboAvg ? this.comboAvg.mag : eff(u, 'mag');
+        if (type === 'phys') dmg = power * uAtk * 2 * 50 / (50 + eff(tg, 'def'));
+        else dmg = power * uMag * 2 * 50 / (50 + (eff(tg, 'def') * 0.3 + eff(tg, 'mag') * 0.7));
         dmg *= U.rand(0.9, 1.1);
         const elem = s.elem || (s.attack && u.side === 'party' ? null : null);
         const em = this.elemFactor(elem, tg);
         dmg *= em;
         let crit = false;
-        const critChance = 0.05 + (u.luk || 0) / 500 + (u.st.trance ? 0.3 : 0) + (s.crit || 0);
+        const critChance = 0.05 + (u.luk || 0) / 500 + (u.st.trance ? 0.3 : 0) + (s.crit || 0) + (hasSp(u, 'critUp') ? 0.12 : 0);
         if (type === 'phys' && Math.random() < critChance) { crit = true; dmg *= 1.5; }
         if (tg.st.guard) dmg *= 0.5;
         if (u.side === 'enemy') dmg *= this.diff === 'easy' ? 0.6 : this.diff === 'hard' ? 1.25 : 1;
@@ -469,10 +541,10 @@ G.Battle = (() => {
         if (u.side === 'party') u.gauge = Math.min(100, u.gauge + 2);
       }
       if (type === 'heal' || s.heal) {
-        if (!tg.dead) {
-          const amt = Math.round((s.power || 1) * eff(u, 'mag') * 1.2 + (s.power || 1) * 10);
-          this.healUnit(tg, amt);
-        }
+        const mg = this.comboAvg ? this.comboAvg.mag : eff(u, 'mag');
+        const amt = Math.round(((s.power || 1) * mg * 1.2 + (s.power || 1) * 10) * (hasSp(u, 'healUp') ? 1.25 : 1));
+        if (tg.dead && s.revive) { this.revive(tg, 0); tg.hp = Math.min(tg.mhp, amt); }
+        else if (!tg.dead) this.healUnit(tg, amt);
       }
       if (type === 'revive') {
         if (tg.dead) this.revive(tg, s.power || 0.5);
@@ -532,7 +604,7 @@ G.Battle = (() => {
       if (o.resist) this.popText(tg, '抵抗', '#a8b8c8', -40);
       if (o.crit) { this.popText(tg, '暴擊！', '#ffcf4a', -70); this.shakeT = 0.25; G.Audio.sfx('crit'); }
       else G.Audio.sfx('hit');
-      if (tg.side === 'party' && !o.noGauge) tg.gauge = Math.min(100, tg.gauge + dmg / tg.mhp * 80);
+      if (tg.side === 'party' && !o.noGauge) tg.gauge = Math.min(100, tg.gauge + dmg / tg.mhp * 80 * (hasSp(tg, 'gaugeUp') ? 1.5 : 1));
       if (tg.hp <= 0) this.kill(tg);
       else setTimeout(() => { if (!tg.dead && tg.pose === 'hurt') tg.pose = 'idle'; }, 400);
     }
@@ -756,7 +828,8 @@ G.Battle = (() => {
         gold += e.d.gold || 0;
         for (const dr of e.d.drops || []) if (Math.random() < dr.rate) drops.push(dr.item);
       }
-      exp = Math.round(exp * diffK);
+      exp = Math.round(exp * diffK * (this.party.some((p) => !p.dead && hasSp(p, 'expUp')) ? 1.2 : 1));
+      gold = Math.round(gold * (this.party.some((p) => !p.dead && hasSp(p, 'goldUp')) ? 1.3 : 1));
       G.state.gold += gold;
       for (const d of drops) G.Inv.add(d, 1);
       const ups = G.Party.gainExp(exp);
@@ -1255,6 +1328,20 @@ G.Battle = (() => {
       },
     };
   }
+  function summonFxIntro(u) {
+    let t = 0;
+    return {
+      update(dt) { t += dt; return t < 0.9; },
+      draw(ctx) {
+        if (!G.Sprites) return;
+        const k = Math.min(1, t / 0.5);
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (0.9 - t) * 4);
+        G.Sprites.drawChar(ctx, 'tuanzi', 'left', Math.floor(t * 10) % 4, u.x - 70 * k, u.y - Math.sin(k * Math.PI) * 60, {});
+        ctx.restore();
+      },
+    };
+  }
   function summonFx(scene, u, targets) {
     let t = 0;
     const tg = targets[0];
@@ -1293,8 +1380,13 @@ G.Battle = (() => {
       ];
       const combos = this.availableCombos();
       if (combos.length) items.splice(3, 0, { label: '合擊', k: 'combo' });
-      const ult = G.Data.chars[u.id] && G.Data.chars[u.id].ultimate;
-      if (ult && u.gauge >= 100 && G.Data.skills[ult]) items.unshift({ label: '絕技・' + G.Data.skills[ult].name, k: 'ultimate', color: '#ffd97a' });
+      if (u.gauge >= 100) {
+        const ults = [];
+        const main = G.Data.chars[u.id] && G.Data.chars[u.id].ultimate;
+        if (main && G.Data.skills[main]) ults.push(main);
+        for (const sid of u.m.skills || []) if (G.Data.skills[sid] && G.Data.skills[sid].ultimate && !ults.includes(sid)) ults.push(sid);
+        ults.reverse().forEach((sid) => items.unshift({ label: '絕技・' + G.Data.skills[sid].name, k: 'ultimate', skill: sid, color: '#ffd97a' }));
+      }
       items.push({ label: '逃跑', k: 'flee' });
       this.main = new G.UI.List(items, { rows: items.length, rowH: 44, idx: this.lastMain || 0 });
     }
@@ -1305,6 +1397,8 @@ G.Battle = (() => {
         const s = G.Data.skills[id];
         if (!s.combo || !s.combo.includes(u.id)) continue;
         if (s.req && !G.state.flags[s.req]) continue;
+        if (s.flag && !G.state.flags[s.flag]) continue;
+        if (s.comboLv && s.combo.some((pid) => { const p = this.scene.party.find((x) => x.id === pid); return !p || p.lv < s.comboLv; })) continue;
         const ok = s.combo.every((pid) => {
           const p = this.scene.party.find((x) => x.id === pid);
           return p && !p.dead && !p.st.sleep && !p.st.stun && p.mp >= (s.mp || 0);
@@ -1326,10 +1420,7 @@ G.Battle = (() => {
           else if (k === 'skill') this.openSkills();
           else if (k === 'item') this.openItems();
           else if (k === 'combo') this.openCombos();
-          else if (k === 'ultimate') {
-            const ult = G.Data.chars[this.u.id].ultimate;
-            this.chooseSkill(ult, true);
-          }
+          else if (k === 'ultimate') this.chooseSkill(this.main.cur.skill, true);
         }
       } else if (this.mode === 'list') {
         const r = this.list.update();
@@ -1357,7 +1448,7 @@ G.Battle = (() => {
         case 'enemies': pool = sc.alive('enemy'); all = true; break;
         case 'random': pool = sc.alive('enemy'); all = true; break;
         case 'ally': pool = sc.alive('party'); break;
-        case 'allies': pool = sc.alive('party'); all = true; break;
+        case 'allies': pool = cmd.skill && G.Data.skills[cmd.skill] && G.Data.skills[cmd.skill].revive ? sc.party.slice() : sc.alive('party'); all = true; break;
         case 'deadAlly': pool = sc.party.filter((p) => p.dead); if (!pool.length) pool = sc.alive('party'); break;
         case 'self': pool = [this.u]; break;
         default: pool = sc.alive('enemy');
@@ -1370,7 +1461,7 @@ G.Battle = (() => {
     }
     openSkills() {
       const u = this.u;
-      const ids = (u.m.skills || []).filter((id) => G.Data.skills[id] && !G.Data.skills[id].combo && !G.Data.skills[id].ultimate && G.Data.skills[id].type !== 'passive');
+      const ids = (u.m.skills || []).filter((id) => G.Data.skills[id] && !G.Data.skills[id].combo && !G.Data.skills[id].ultimate && !G.Data.skills[id].hidden && G.Data.skills[id].type !== 'passive');
       const items = ids.map((id) => {
         const s = G.Data.skills[id];
         return { label: s.name, right: s.mp, elem: s.elem, disabled: s.mp > u.mp, id, desc: s.desc };

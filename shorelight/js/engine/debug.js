@@ -17,12 +17,14 @@ G.Debug = {
       G.state.gold = 5000;
       if (G.Data.items) for (const id of Object.keys(G.Data.items).slice(0, 12)) if (G.Data.items[id].type === 'use') G.Inv.add(id, 5);
       if (q.get('chapter')) G.state.chapter = +q.get('chapter');
+      if (q.get('auto')) { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; }
+      if (q.get('flags')) for (const f of q.get('flags').split(',')) G.state.flags[f] = true;
       for (const f of (q.get('flags') || '').split(',').filter(Boolean)) G.state.flags[f] = true;
       const mid = map || Object.keys(G.Maps.defs)[0];
       const def = G.Maps.get(mid);
       const x = +(q.get('x') || (def && def.start ? def.start[0] : 5)), y = +(q.get('y') || (def && def.start ? def.start[1] : 5));
       G.Mapx.goto(mid, x, y, 'down');
-      if (battle) G.Script.run(async (S) => { await S.battle(battle); });
+      if (battle) G.Script.run(async (S) => { window.__battleResult = await S.battle(battle); });
     }, 300);
   },
   menu() {

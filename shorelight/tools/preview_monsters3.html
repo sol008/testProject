@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Monsters 3 Preview</title>
+<style>
+  html, body { margin: 0; background: #07080d; color: #ccd; font: 13px sans-serif; }
+  #bar { padding: 6px 10px; position: sticky; top: 0; background: #0d0f18; z-index: 2; }
+  #bar a { color: #9cf; margin-right: 10px; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<canvas id="c"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/monsters3.js"></script>
+<script>
+'use strict';
+// Query params:
+//   mode=grid|detail|sheet|perf   id=<monster id> (detail)   t=<seconds> (freeze time)   bg=dark|light
+//   ids=a,b,c (subset)  cols=N  cell=WxH  scale=N (canvas zoom)  box (show w/h box)
+//   grid   : every monster idle, labelled
+//   sheet  : one row per monster: idle / attack wind-up / attack strike / hurt / cast / variant 1 / variant 2 (/ phases)
+//   detail : one monster, all states + variants (+ phases for bosses)
+const Q = new URLSearchParams(location.search);
+const mode = Q.get('mode') || 'grid';
+const freezeT = Q.has('t') ? parseFloat(Q.get('t')) : null;
+const bgMode = Q.get('bg') || 'dark';
+const zoom = parseFloat(Q.get('scale') || '1');
+G.S = parseFloat(Q.get('S') || '1');
+const ORDER = ['wind_sprite', 'wind_demon', 'mountain_ghost', 'plague_ghost', 'greed_ghost', 'moray', 'fallwind',
+  'sea_monster', 'cliff_spirit', 'hungry_ghost', 'pirate_ghost', 'gorge_colossus', 'tide_serpent'];
+const ids = Q.get('ids') ? Q.get('ids').split(',') : ORDER.filter((id) => G.Monsters.has(id));
+const NAMES = {
+  wind_demon: '風魔', wind_sprite: '九降風精', mountain_ghost: '山鬼', plague_ghost: '瘟鬼', greed_ghost: '貪鬼',
+  moray: '海鰻精', fallwind: '落山風靈', sea_monster: '海妖', cliff_spirit: '斷崖石靈', hungry_ghost: '孤魂',
+  pirate_ghost: '海盜鬼', gorge_colossus: '峽谷石巨像', tide_serpent: '潮蛇',
+};
+const BOSSES = { wind_demon: 1, fallwind: 1, gorge_colossus: 1, tide_serpent: 1 };
+const bar = document.getElementById('bar');
+bar.innerHTML = '<a href="?mode=grid">grid</a><a href="?mode=sheet">sheet</a><a href="?mode=grid&bg=light">grid(light)</a><a href="?mode=perf">perf</a> | ' +
+  ids.map((id) => `<a href="?mode=detail&id=${id}">${NAMES[id] || id}</a>`).join('');
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const errors = [];
+window.addEventListener('error', (e) => errors.push(String(e.message)));
+
+function bg(w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  if (bgMode === 'light') { g.addColorStop(0, '#8a96a6'); g.addColorStop(1, '#5a6070'); }
+  else { g.addColorStop(0, '#0b0d18'); g.addColorStop(1, '#151a28'); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+}
+function cell(id, cx, cy, cw, ch, t, o, label) {
+  const d = G.Monsters.get(id);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cx, cy, cw, ch); ctx.clip();
+  const fy = cy + ch - 18;
+  const fg = ctx.createRadialGradient(cx + cw / 2, fy, 2, cx + cw / 2, fy, cw * 0.45);
+  fg.addColorStop(0, 'rgba(120,140,200,0.18)'); fg.addColorStop(1, 'rgba(120,140,200,0)');
+  ctx.fillStyle = fg; ctx.fillRect(cx, fy - 40, cw, 60);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(cx + cw / 2, fy, (d ? d.w : 100) * 0.3, 8, 0, 0, Math.PI * 2); ctx.fill();
+  const sc = d ? Math.min(1, (ch - 46) / d.h, (cw - 16) / d.w) : 1;
+  ctx.translate(cx + cw / 2, fy); ctx.scale(sc, sc);
+  if (d && Q.has('box')) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.setLineDash([4, 4]);
+    ctx.strokeRect(-d.w / 2, -d.h, d.w, d.h); ctx.setLineDash([]);
+  }
+  try { G.Monsters.draw(ctx, id, 0, 0, t, o); } catch (e) { errors.push(id + ': ' + e.message); console.error(e); }
+  ctx.restore();
+  ctx.fillStyle = bgMode === 'light' ? '#fff' : '#e8dcc0';
+  ctx.font = G.font(16, true);
+  ctx.fillText(label, cx + 8, cy + 20);
+  ctx.font = '11px monospace'; ctx.fillStyle = 'rgba(200,210,230,0.7)';
+  ctx.fillText(d ? `${d.w}x${d.h}${sc < 1 ? '  @' + sc.toFixed(2) : ''}` : 'missing', cx + 8, cy + 34);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
+}
+const STATES = [
+  ['idle', { state: 'idle' }], ['wind-up', { state: 'attack', st: 0.18 }], ['strike', { state: 'attack', st: 0.42 }],
+  ['hurt', { state: 'hurt', st: 0.1 }], ['cast', { state: 'cast', st: 0.6 }],
+  ['variant 1', { variant: 1 }], ['variant 2', { variant: 2 }],
+];
+function liveO(o, t) {
+  const oo = Object.assign({ state: 'idle', st: t }, o);
+  if (freezeT == null && o.state && o.state !== 'idle') oo.st = (t * 0.6) % 1.2;
+  return oo;
+}
+
+let layout;
+if (mode === 'grid') {
+  const [cw, ch] = (Q.get('cell') || '320x330').split('x').map(Number);
+  const cols = parseInt(Q.get('cols') || '5');
+  const rows = Math.ceil(ids.length / cols);
+  layout = { w: cols * cw, h: rows * ch, draw(t) {
+    bg(this.w, this.h);
+    ids.forEach((id, i) => {
+      const c = i % cols, r = Math.floor(i / cols);
+      cell(id, c * cw, r * ch, cw, ch, t + i * 0.37, { state: 'idle', st: t, phase: 1 }, `${NAMES[id] || ''} ${id}`);
+    });
+  } };
+} else if (mode === 'sheet') {
+  const [cw, ch] = (Q.get('cell') || '230x240').split('x').map(Number);
+  layout = { w: STATES.length * cw, h: ids.length * ch, draw(t) {
+    bg(this.w, this.h);
+    ids.forEach((id, r) => STATES.forEach(([label, o], c) => {
+      cell(id, c * cw, r * ch, cw, ch, t, liveO(o, t), `${NAMES[id] || id} · ${label}`);
+    }));
+  } };
+} else if (mode === 'detail') {
+  const id = Q.get('id');
+  const d = G.Monsters.get(id) || { w: 140, h: 160 };
+  const cw = Math.max(300, d.w + 70), ch = Math.max(260, d.h + 70);
+  const rowsDef = [STATES.slice(0, 5), [['variant 0', { variant: 0 }], ['variant 1', { variant: 1 }], ['variant 2', { variant: 2 }], ['v2 strike', { variant: 2, state: 'attack', st: 0.42 }]]];
+  if (BOSSES[id] || Q.has('phases')) rowsDef.push([['phase 1', { phase: 1 }], ['phase 2', { phase: 2 }], ['phase 3', { phase: 3 }], ['p3 cast', { phase: 3, state: 'cast', st: 0.6 }], ['p3 strike', { phase: 3, state: 'attack', st: 0.42 }]]);
+  const cols = Math.max(...rowsDef.map((r) => r.length));
+  layout = { w: cols * cw, h: rowsDef.length * ch, draw(t) {
+    bg(this.w, this.h);
+    rowsDef.forEach((row, r) => row.forEach(([label, o], c) => {
+      cell(id, c * cw, r * ch, cw, ch, t, liveO(o, t), `${NAMES[id] || id} · ${label}`);
+    }));
+  } };
+} else if (mode === 'perf') {
+  const list = (Q.get('ids') || 'wind_demon,fallwind,gorge_colossus,tide_serpent').split(',');
+  layout = { w: 1280, h: 720, draw(t) {
+    bg(1280, 720);
+    list.forEach((id, i) => G.Monsters.draw(ctx, id, 160 + i * 320, 640, t, { state: 'idle', st: t, phase: 3 }));
+  } };
+}
+cv.width = layout.w * zoom; cv.height = layout.h * zoom;
+cv.style.width = layout.w * zoom + 'px';
+function frame(now) {
+  const t = freezeT != null ? freezeT : now / 1000;
+  ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+  layout.draw(t);
+  if (freezeT == null && mode !== 'perf') requestAnimationFrame(frame);
+}
+if (mode === 'perf') {
+  layout.draw(0);
+  const t0 = performance.now();
+  for (let i = 0; i < 120; i++) { ctx.setTransform(1, 0, 0, 1, 0, 0); layout.draw(i / 60); }
+  const ms = (performance.now() - t0) / 120;
+  document.title = 'PERF ' + ms.toFixed(2) + 'ms/frame';
+  window.PERF = ms;
+  ctx.fillStyle = '#fff'; ctx.font = '20px monospace'; ctx.fillText(document.title, 20, 30);
+} else {
+  requestAnimationFrame(frame);
+}
+window.ERRORS = errors;
+window.READY = true;
+</script>
+</body>
+</html>

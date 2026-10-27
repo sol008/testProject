@@ -178,7 +178,7 @@
         const it = G.Data.items[cur.id];
         if (it.use.vision) {
           G.Inv.remove(cur.id, 1);
-          G.Script.S.vision(it.use.vision);
+          G.Script.S.vision(Math.round(it.use.vision * 0.25)); // data is in steps (~4 steps/sec)
           G.Audio.sfx('magic');
           G.UI.toast('靈視開啟了——萬物開始呼吸。', { icon: 'mushroom' });
           this.rebuild();
@@ -259,7 +259,7 @@
       const m = G.state.members[id];
       this.list = new G.UI.List(m.skills.map((sid) => {
         const s = G.Data.skills[sid];
-        if (!s) return null;
+        if (!s || s.hidden) return null;
         const field = ['heal', 'revive', 'cure'].includes(s.type);
         return { label: s.name, right: s.mp, elem: s.elem, sid, field };
       }).filter(Boolean), { rows: 11, rowH: 44 });

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — nature preview</title>
+<style>
+  html, body { margin: 0; background: #10140f; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.75; background: rgba(0,0,0,.5); padding: 3px 6px; }
+</style>
+</head>
+<body>
+<div id="bar">?only=a,b · zoom=2 · t=1.2 (freeze) · fp=0 (hide footprints) · S=2</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/nature.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const zoom = parseFloat(q.get('zoom') || '1');
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const showFp = q.get('fp') !== '0';
+  G.S = parseFloat(q.get('S') || '1');
+  const TS = 64;
+  const all = Object.keys(G.Objects.defs);
+  const only = q.get('only') ? q.get('only').split(',') : null;
+  const types = only ? all.filter((t) => only.includes(t)) : all;
+  const NIGHT = ['mushroom_glow', 'mushroom_giant', 'crystal', 'geometry_pillar', 'jewel_flower', 'lily', 'vine_curtain'];
+  const WATER = ['lotus'];
+  const SAND = ['seaweed', 'driftwood', 'coconut_palm', 'pandanus'];
+  const COLS = 25;
+
+  // ---------- ground painting ----------
+  function tileCanvas(kind, seed) {
+    const c = G.U.makeCanvas(TS, TS); const x = c.getContext('2d');
+    const r = G.U.seeded(seed * 7919 + 13);
+    const base = { grass: '#4f7f3a', moss: '#1d2b35', sand: '#d9c08e', water: '#2f6f86', rock: '#5a5a62' }[kind];
+    x.fillStyle = base; x.fillRect(0, 0, TS, TS);
+    for (let i = 0; i < 40; i++) {
+      x.fillStyle = G.U.rgba(G.U.shade(base, (r() - 0.5) * 0.25), 0.5);
+      x.beginPath(); x.ellipse(r() * TS, r() * TS, 4 + r() * 8, 3 + r() * 6, 0, 0, Math.PI * 2); x.fill();
+    }
+    if (kind === 'grass' || kind === 'moss') {
+      for (let i = 0; i < 70; i++) {
+        const px = r() * TS, py = r() * TS;
+        x.strokeStyle = kind === 'grass' ? (r() < 0.5 ? '#6a9a48' : '#3e6a2e') : (r() < 0.5 ? '#2c4a52' : '#3a2e5a');
+        x.lineWidth = 1; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 3, py - 3 - r() * 4); x.stroke();
+      }
+      if (kind === 'moss') for (let i = 0; i < 6; i++) { x.fillStyle = G.U.rgba(['#5fffd0', '#c07bff', '#7fd8ff'][i % 3], 0.5); x.beginPath(); x.arc(r() * TS, r() * TS, 1.2, 0, 7); x.fill(); }
+    }
+    if (kind === 'water') { x.strokeStyle = 'rgba(200,240,255,0.25)'; for (let i = 0; i < 6; i++) { const yy = r() * TS; x.beginPath(); x.moveTo(r() * TS, yy); x.lineTo(r() * TS, yy); x.stroke(); } }
+    return c;
+  }
+  const tiles = {};
+  const tile = (k, cx, cy) => {
+    const v = Math.floor(G.U.hash(cx, cy, 1) * 4); const key = k + v;
+    return tiles[key] || (tiles[key] = tileCanvas(k, v + k.length * 10));
+  };
+
+  // ---------- layout ----------
+  const items = [];
+  let cx = 0, cy = 0, rowH = 0;
+    // rough height (tiles) drawn above the footprint, for compact gallery rows
+  const ABOVE = { tree_cypress: 6, tree_banyan: 3, tree_betel: 4, coconut_palm: 4, bamboo: 4, tree_pine: 3, tree_camphor: 3, tree_maple: 3, tree_sakura: 3, tree_dead: 3, tree_cedar_snow: 3, tree_fern: 3, tree_banana: 2, pandanus: 2, mushroom_giant: 2, geometry_pillar: 2, cliff_waterfall: 1, reeds: 1, silvergrass: 1, millet: 1, crystal: 1, rock_big: 0, vine_curtain: 1 };
+  const slotOf = (t) => { const d = G.Objects.defs[t]; return { sw: Math.max(3, d.w + 2), sh: d.h + 1 + (ABOVE[t] == null ? 1 : ABOVE[t]) }; };
+  function place(list, night) {
+    cx = 0;
+    for (const t of list) {
+      const d = G.Objects.defs[t]; const { sw, sh } = slotOf(t);
+      if (cx + sw > COLS) { cx = 0; cy += rowH; rowH = 0; }
+      rowH = Math.max(rowH, sh);
+      items.push({ t, d, sx: cx, sy: cy, sw, sh, night });
+      cx += sw;
+    }
+    cy += rowH; rowH = 0;
+  }
+  place(types.filter((t) => !NIGHT.includes(t)), false);
+  const nightTop = cy;
+  place(types.filter((t) => NIGHT.includes(t)), true);
+  const nightBot = cy;
+  // fix footprint positions: bottom-aligned in slot (1 tile margin under for label)
+  for (const it of items) {
+    const rowItems = items.filter((j) => j.sy === it.sy);
+    const rh = Math.max(...rowItems.map((j) => j.sh));
+    it.fx = it.sx + Math.floor((it.sw - it.d.w) / 2);
+    it.fy = it.sy + rh - 1 - it.d.h;
+    it.rowH = rh;
+  }
+  // forest composition
+  const forestTop = cy + 0, FW = COLS, FH = 11;
+  const forest = [];
+  const occ = {};
+  const fr = G.U.seeded(4242);
+  const pool = ['tree_camphor', 'tree_camphor', 'tree_pine', 'tree_maple', 'tree_sakura', 'tree_betel', 'tree_banana', 'tree_fern', 'bamboo', 'bush', 'bush', 'tallgrass', 'tallgrass', 'flowers', 'rock_small', 'silvergrass', 'tree_cedar_snow', 'stump', 'lily', 'reeds'].filter((t) => G.Objects.defs[t]);
+  const put = (t, x, y, extra) => {
+    const d = G.Objects.defs[t]; if (!d) return;
+    for (let i = 0; i < d.w; i++) for (let j = 0; j < d.h; j++) if (occ[(x + i) + ',' + (y + j)]) return;
+    for (let i = 0; i < d.w; i++) for (let j = 0; j < d.h; j++) occ[(x + i) + ',' + (y + j)] = 1;
+    forest.push(Object.assign({ t, x, y: y }, extra || {}));
+  };
+  put('tree_banyan', 9, forestTop + 3);
+  put('tree_cypress', 17, forestTop + 4);
+  put('rock_big', 4, forestTop + 7);
+  put('log', 20, forestTop + 8);
+  for (let i = 0; i < 70; i++) {
+    const x = Math.floor(fr() * FW), y = forestTop + 2 + Math.floor(fr() * (FH - 2));
+    put(pool[Math.floor(fr() * pool.length)], x, y);
+  }
+  const chars = [{ x: 10.5, y: forestTop + 3.6, c: '#c23b30' }, { x: 6.5, y: forestTop + 5.8, c: '#3a6ec2' }, { x: 15.5, y: forestTop + 8.8, c: '#e0b040' }, { x: 18.0, y: forestTop + 4.3, c: '#7a3ac2' }];
+  const H = (forestTop + FH + 1) * TS;
+  const W = COLS * TS;
+
+  const cv = document.getElementById('cv');
+  cv.width = W * zoom * G.S; cv.height = H * zoom * G.S;
+  cv.style.width = (W * zoom) + 'px';
+  const ctx = cv.getContext('2d');
+
+  function drawChar(x, y, col) {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x, y, 14, 5, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(x - 13, y - 52, 26, 50, 10); ctx.fill();
+    ctx.fillStyle = '#f2d2b0'; ctx.beginPath(); ctx.arc(x, y - 62, 13, 0, 7); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x, y - 67, 13, Math.PI, 0); ctx.fill();
+  }
+
+  function frame(t) {
+    ctx.setTransform(zoom * G.S, 0, 0, zoom * G.S, 0, 0);
+    // ground
+    for (let y = 0; y < H / TS; y++) for (let x = 0; x < COLS; x++) {
+      const night = y >= nightTop && y < nightBot;
+      ctx.drawImage(tile(night ? 'moss' : 'grass', x, y), x * TS, y * TS, TS, TS);
+    }
+    for (const it of items) {
+      const kind = WATER.includes(it.t) ? 'water' : SAND.includes(it.t) ? 'sand' : null;
+      if (kind) for (let x = it.fx - 1; x < it.fx + it.d.w + 1; x++) for (let y = it.fy - (it.t === 'lotus' ? 0 : 1); y < it.fy + it.d.h + (it.t === 'lotus' ? 0 : 0); y++) ctx.drawImage(tile(kind, x, y), x * TS, y * TS, TS, TS);
+      if (it.t === 'lotus') for (let x = it.fx - 1; x <= it.fx + 1; x++) ctx.drawImage(tile('water', x, it.fy), x * TS, it.fy * TS, TS, TS);
+    }
+    // objects
+    for (const it of items) {
+      const o = { t: it.t, x: it.fx, y: it.fy };
+      const px = it.fx * TS, py = it.fy * TS;
+      if (showFp) {
+        for (let i = 0; i < it.d.w; i++) for (let j = 0; j < it.d.h; j++) {
+          const solid = it.d.solidAt ? it.d.solidAt(o, i, j) : it.d.solid;
+          ctx.fillStyle = solid ? 'rgba(255,60,60,0.16)' : 'rgba(80,200,255,0.12)';
+          ctx.fillRect(px + i * TS, py + j * TS, TS, TS);
+          ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeRect(px + i * TS + 0.5, py + j * TS + 0.5, TS - 1, TS - 1);
+        }
+      }
+    }
+    for (const it of items) {
+      const o = { t: it.t, x: it.fx, y: it.fy };
+      G.Objects.draw(ctx, o, it.fx * TS, it.fy * TS, t);
+    }
+    // night darkness + lights
+    if (nightBot > nightTop) {
+      ctx.fillStyle = 'rgba(6,8,30,0.55)';
+      ctx.fillRect(0, nightTop * TS, W, (nightBot - nightTop) * TS);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const it of items) {
+        if (!it.night || !it.d.lights) continue;
+        const o = { t: it.t, x: it.fx, y: it.fy };
+        for (const L of it.d.lights(o)) {
+          const lx = it.fx * TS + L.dx, ly = it.fy * TS + L.dy;
+          const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, L.r);
+          const fl = 1 - (L.flicker || 0) * (0.5 + 0.5 * Math.sin(t * 9 + lx));
+          g.addColorStop(0, G.U.rgba(L.color, 0.45 * fl)); g.addColorStop(1, G.U.rgba(L.color, 0));
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, ly, L.r, 0, 7); ctx.fill();
+        }
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // labels
+    ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    for (const it of items) {
+      const lx = (it.fx + it.d.w / 2) * TS, ly = (it.fy + it.d.h) * TS + 16;
+      const txt = `${it.t} ${it.d.w}x${it.d.h} ${it.d.solidAt ? 'partial' : it.d.solid ? 'solid' : 'walk'}${it.d.lights ? ' ✦' : ''}${it.d.over ? ' over' : ''}`;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'; const tw = ctx.measureText(txt).width;
+      ctx.fillRect(lx - tw / 2 - 4, ly - 12, tw + 8, 16);
+      ctx.fillStyle = '#fff'; ctx.fillText(txt, lx, ly);
+    }
+    // forest: y-sorted by footprint bottom (characters by feet)
+    const list = forest.map((o) => ({ o, key: (o.y + G.Objects.defs[o.t].h) * TS }))
+      .concat(chars.map((c) => ({ c, key: c.y * TS })));
+    list.sort((a, b) => a.key - b.key);
+    const under = [], over = [];
+    for (const e of list) if (e.o && G.Objects.defs[e.o.t].over) over.push(e); else under.push(e);
+    for (const e of under.concat(over)) {
+      if (e.o) G.Objects.draw(ctx, e.o, e.o.x * TS, e.o.y * TS, t);
+      else drawChar(e.c.x * TS, e.c.y * TS, e.c.c);
+    }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('forest composition (y-sorted, placeholder characters)', 8, forestTop * TS + 18);
+  }
+
+  // perf probe: draw 150 trees 20x
+  window.perf = () => {
+    const pc = document.createElement('canvas'); pc.width = 1280; pc.height = 720;
+    const px = pc.getContext('2d');
+    const ts = ['tree_camphor', 'tree_pine', 'tree_maple', 'tree_sakura', 'tree_betel', 'tree_fern', 'bamboo', 'bush', 'tallgrass', 'flowers'].filter((t) => G.Objects.defs[t]);
+    const objs = []; for (let i = 0; i < 150; i++) objs.push({ t: ts[i % ts.length], x: i % 20, y: Math.floor(i / 20) });
+    for (const o of objs) for (let k = 0; k < 3; k++) G.Objects.draw(px, o, o.x * 64, o.y * 64, k); // warm caches (+bands)
+    const t0 = performance.now();
+    for (let k = 0; k < 20; k++) for (const o of objs) G.Objects.draw(px, o, o.x * 64, o.y * 64, k * 0.1);
+    return (performance.now() - t0) / 20;
+  };
+
+  if (freeze != null) { frame(freeze); window.__ready = true; }
+  else {
+    const t0 = performance.now();
+    const loop = () => { frame((performance.now() - t0) / 1000); window.__ready = true; requestAnimationFrame(loop); };
+    loop();
+  }
+})();
+</script>
+</body>
+</html>
