@@ -82,9 +82,12 @@ G.ShopScene = class ShopScene {
       const it = id && G.Data.items[id];
       if (it) {
         UI.panel(ctx, 880, 40, 360, 220, { title: it.name });
-        ctx.font = G.font(18);
-        const lines = R.wrap(ctx, it.desc || '', 320);
-        R.drawLines(ctx, lines.slice(0, 5), 900, 80, 27, '#e8dcc0');
+        // five lines fit above "Owned"; a longer (English) description drops to a smaller size instead of being cut
+        let fs = 18, flh = 27;
+        ctx.font = G.font(fs);
+        let lines = R.wrap(ctx, it.desc || '', 320);
+        if (lines.length > 5) { fs = 16; flh = 23; ctx.font = G.font(fs); lines = R.wrap(ctx, it.desc || '', 320); }
+        R.drawLines(ctx, lines.slice(0, fs === 18 ? 5 : 6), 900, 80, flh, '#e8dcc0');
         R.text(ctx, '持有 ' + G.Inv.count(id), 900, 226, { size: 17, color: '#c9b893' });
         // equipment comparison for party
         if (['weapon', 'armor', 'head', 'feet', 'acc'].includes(it.type)) {
@@ -92,14 +95,14 @@ G.ShopScene = class ShopScene {
           G.state.party.slice(0, 4).forEach((pid, i) => {
             const y = 312 + i * 64;
             const name = G.ShortNames[pid] || G.Names[pid];
-            if (!G.Party.canEquip(pid, id)) { R.text(ctx, name + '　無法裝備', 900, y, { size: 18, color: '#6a6458' }); return; }
+            if (!G.Party.canEquip(pid, id)) { R.textClip(ctx, name + '　無法裝備', 900, y, 320, { size: 18, color: '#6a6458' }); return; }
             const m = G.state.members[pid];
             const before = G.Party.stats(pid);
             const old = m.equip[it.type];
             m.equip[it.type] = id;
             const after = G.Party.stats(pid);
             m.equip[it.type] = old;
-            R.text(ctx, name + (old === id ? '（已裝備）' : ''), 900, y, { size: 18, color: '#fff0d0' });
+            R.textClip(ctx, name + (old === id ? '（已裝備）' : ''), 900, y, 320, { size: 18, color: '#fff0d0' });
             const diffs = [];
             for (const k of ['atk', 'def', 'mag', 'spd', 'mhp', 'mmp', 'luk']) {
               const d = after[k] - before[k];

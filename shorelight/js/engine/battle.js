@@ -1582,15 +1582,19 @@ G.Battle = (() => {
       G.UI.panel(ctx, x, y, 300, this.main.items.length * 44 + 24, { ornament: false });
       this.main.draw(ctx, x + 14, y + 12, 280, t, { size: 23, focus: this.mode === 'main' });
       if (this.mode === 'list' || (this.mode === 'target' && this.tg.back === 'list')) {
-        const lx = 340, ly = 170, lw = 460, lh = this.list.rows * 44 + 30;
+        const lw = 460, lh = this.list.rows * 44 + 30;
+        const cur = this.list.cur;
+        // descriptions longer than two lines (common in English) get a taller box; the list moves up to make room
+        ctx.font = G.font(18);
+        const lines = cur && cur.desc ? G.Render.wrap(ctx, cur.desc, lw - 40).slice(0, 4) : [];
+        const extra = Math.max(0, lines.length - 2) * 26;
+        const lx = 340, ly = 170 - extra;
         G.UI.panel(ctx, lx, ly, lw, lh, { title: this.list.title });
         this.list.draw(ctx, lx + 14, ly + 18, lw - 24, t, { size: 22, focus: this.mode === 'list' });
-        const cur = this.list.cur;
-        if (cur && cur.desc) {
-          G.UI.panel(ctx, lx, ly + lh + 10, lw, 70, { ornament: false });
+        if (lines.length) {
+          G.UI.panel(ctx, lx, ly + lh + 10, lw, 70 + extra, { ornament: false });
           ctx.font = G.font(18);
-          const lines = G.Render.wrap(ctx, cur.desc, lw - 40);
-          G.Render.drawLines(ctx, lines.slice(0, 2), lx + 20, ly + lh + 22, 26, '#e8dcc0');
+          G.Render.drawLines(ctx, lines, lx + 20, ly + lh + 22, 26, '#e8dcc0');
         }
       }
       G.UI.hints(ctx, [['Z', '決定'], ['X', '返回'], ['F', '自動']], G.W - 24, 70);

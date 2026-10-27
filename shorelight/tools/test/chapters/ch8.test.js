@@ -62,6 +62,7 @@ class Session {
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
     await this.ctx.addInitScript(INIT);
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     if (!ALL) await this.ctx.route(/js\/maps\/ch(?!8_)\d+_\w+\.js$/, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* other chapter stubbed for the ch8 test */' }));
     this.page = await this.ctx.newPage();
     this.page.on('console', (m) => {

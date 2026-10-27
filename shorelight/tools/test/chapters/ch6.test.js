@@ -91,6 +91,7 @@ class Session {
   async open(query, waitMap = true) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
     await this.ctx.addInitScript(INIT);
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     this.page = await this.ctx.newPage();
     this.page.setDefaultTimeout(600000);
     this.page.on('console', (m) => {

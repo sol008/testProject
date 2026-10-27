@@ -1971,8 +1971,8 @@ G.Char3D = (() => {
       mouth: S.mouth || 'flat', mouthY: P.kid ? -0.62 : P.fem ? -0.68 : -0.66, mouthW: P.kid ? 0.15 : P.fem ? 0.18 : 0.17,
       noseY: P.kid ? -0.4 : P.fem ? -0.44 : -0.41, nose: P.age ? 1.2 : 1, blush: S.face && S.face.blush === false ? 0 : (P.fem || P.kid ? 0.55 : 0.18),
       wrinkles: P.age ? 1 : 0, marks: [], shaved: false,
-      chin: P.fem ? 0.42 : P.kid ? 0.52 : P.belly ? 0.58 : 0.48, jaw: P.fem ? 0.8 : P.kid ? 0.9 : P.belly ? 0.95 : 0.87, cheek: P.kid ? 0.07 : P.fem ? 0.035 : 0.02,
-      jawTop: P.fem || P.kid ? -0.1 : -0.14,
+      chin: P.fem ? 0.6 : P.kid ? 0.68 : P.belly ? 0.74 : 0.62, jaw: P.fem ? 0.88 : P.kid ? 0.92 : P.belly ? 0.96 : 0.9, cheek: P.kid ? 0.07 : P.fem ? 0.035 : 0.02,
+      jawTop: P.fem || P.kid ? -0.25 : -0.3,
       hatRef: f3.eyeY != null ? f3.eyeY : P.kid ? -0.15 : P.age ? -0.05 : -0.08, // skull reference for hat bands (independent of the eye layout)
       paint: S.face && S.face.paint, tattoo: S.face && S.face.tattoo,
     }, f3);

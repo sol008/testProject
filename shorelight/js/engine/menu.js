@@ -217,15 +217,21 @@
         const it = G.Data.items[cur.id];
         UI().panel(ctx, 930, 54, 320, 380, { title: it.name });
         UI().icon(ctx, UI().itemIcon(it), 1060, 80, 64);
-        ctx.font = G.font(19);
-        const lines = R().wrap(ctx, it.desc || '', 280);
-        R().drawLines(ctx, lines, 950, 160, 28, '#e8dcc0');
-        let yy = 170 + lines.length * 28;
+        // the description, stat lines and "equips" line must end above the sell price (y 400): long English
+        // descriptions step down to a smaller size rather than overlap it
+        const extraH = (it.stats ? Object.keys(it.stats).length * 26 : 0) + (it.pair && it.pair.label ? 26 : 0) + (it.who ? 32 : 0);
+        let lines, dlh = 28;
+        for (const [fs, lh] of [[19, 28], [17, 25], [16, 22]]) {
+          ctx.font = G.font(fs); lines = R().wrap(ctx, it.desc || '', 280); dlh = lh;
+          if (170 + lines.length * lh + extraH <= 396) break;
+        }
+        R().drawLines(ctx, lines, 950, 160, dlh, '#e8dcc0');
+        let yy = 170 + lines.length * dlh;
         if (it.stats) {
           for (const k in it.stats) { R().text(ctx, `${STAT_NAMES[k === 'hp' ? 'mhp' : k === 'mp' ? 'mmp' : k] || k} ${it.stats[k] > 0 ? '+' : ''}${it.stats[k]}`, 950, yy, { size: 18, color: '#c9e8c0' }); yy += 26; }
         }
         if (it.pair && it.pair.label) { R().text(ctx, it.pair.label, 950, yy, { size: 17, color: '#f4c8d0' }); yy += 26; }
-        if (it.who) R().text(ctx, '可裝備：' + it.who.map(charName).join('、'), 950, yy + 6, { size: 17, color: '#c9b893' });
+        if (it.who) R().textClip(ctx, '可裝備：' + it.who.map(charName).join('、'), 950, yy + 6, 284, { size: 17, color: '#c9b893' });
         R().text(ctx, '售價 ' + Math.floor((it.price || 0) / 2) + ' 文', 950, 400, { size: 16, color: '#9c947f' });
       }
       UI().hints(ctx, [['←→', '分類'], ['Z', '使用'], ['X', '返回']]);

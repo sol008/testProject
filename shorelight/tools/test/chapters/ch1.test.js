@@ -37,6 +37,7 @@ const assert = (c, msg) => { if (!c) throw new Error(msg); };
 
 async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
+  await ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   const page = await ctx.newPage();
   const errors = [];
   // functional tests run on the 2D renderer (the WebGL view is slow under SwiftShader); a separate test uses ?r3lite

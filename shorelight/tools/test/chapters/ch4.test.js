@@ -117,6 +117,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
 
 async function openPage(browser, query) {
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  await page.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   await page.addInitScript(() => {
     window.__c4 = { log: [], winerr: [] };
     const done = () => !!(window.G && G.state && G.state.flags && G.state.flags.ch4_done);

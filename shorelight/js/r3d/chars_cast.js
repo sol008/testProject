@@ -229,7 +229,7 @@
     },
     body3d: { H: 1.76, head: 0.228, headW: 0.164, headD: 0.19, legTop: 0.91, sh: 0.176, chestW: 0.146, waistW: 0.118, hipW: 0.138, armR: 0.044, foreR: 0.037, thighR: 0.07, calfR: 0.048 },
     face3d: { eyeStyle: 'sharp', ew: 0.31, eh: 0.4, tilt: 0.42, iris: '#9a521c', irisLight: '#ffb050', lash: 0.3, browW: 2.5, browArch: 0.06, browAng: -0.3, browCol: '#141116',
-      chin: 0.33, jaw: 0.8, cheek: 0.0, mouth: 'flat', restCurve: -0.08, mouthW: 0.15, blush: 0.05 },
+      chin: 0.52, jaw: 0.86, jawTop: -0.2, cheek: 0.0, mouth: 'flat', restCurve: -0.08, mouthW: 0.15, blush: 0.05 },
     expr: 'determined',
     props3d: { sword: { glow: 'ember', blade: 'steel', guard: 'bronze', pommel: 'bronze', grip: 'dark', tassel: true } },
     style: { rest: { head: [-2, 0, 0], chest: [-2, 0, 0] } },
@@ -280,7 +280,7 @@
       eyeStyle: 'soft', ew: 0.29, eh: 0.6, tilt: 0.26, irisR: 0.6, iris: '#4b2c20', irisLight: '#9a6a46', lash: 1.0, lidW: 1.1, wing: 1.15, dbl: 0.85, low: 0.6,
       browW: 1.1, browArch: 0.42, browAng: 0.04, browCol: '#17131a', browY: 0.21,
       lips: '#cf7684', lipTint: 0.85, lipFull: 1.25, mouthW: 0.185, restCurve: 0.34,
-      chin: 0.43, jaw: 0.8, jawTop: -0.03, cheek: 0.0, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
+      chin: 0.64, jaw: 0.9, jawTop: -0.28, cheek: 0.0, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
       marks: [{ x: -0.21, y: -0.34, r: 0.8, color: '#3a2224' }],
     },
     expr: 'dreamy',
@@ -346,7 +346,7 @@
     },
     body3d: { sh: 0.158, chestW: 0.134, waistW: 0.104, armR: 0.037, foreR: 0.031 },
     face3d: { eyeStyle: 'sharp', ew: 0.275, eh: 0.74, tilt: 0.22, irisR: 0.6, iris: '#a8501c', irisLight: '#e89a50', lash: 0.75, browW: 1.55, browAng: -0.2, browArch: 0.2, browCol: '#1d161c',
-      chin: 0.36, jaw: 0.8, mouth: 'smirk', restCurve: 0.18, lips: '#d46a72', lipTint: 0.4, blush: 0.25 },
+      chin: 0.62, jaw: 0.9, jawTop: -0.28, mouth: 'smirk', restCurve: 0.18, lips: '#d46a72', lipTint: 0.4, blush: 0.25 },
     expr: 'determined',
     props3d: { spear: { tasselMat: 'tassel', grip: 0.46, len: 0.92 } },
     style: { rest: { chest: [-3, 0, 0], head: [-2, 0, 0], upperArmL: [0, 0, 3], upperArmR: [0, 0, -3] } },
@@ -382,7 +382,7 @@
     },
     body3d: { head: 0.252, headW: 0.172, headD: 0.19, sh: 0.176, chestW: 0.146, waistW: 0.124 },
     face3d: { eyeStyle: 'narrow', ew: 0.28, eh: 0.55, iris: '#5a3a26', irisLight: '#9a6a46', droop: 0.38, browAng: -0.05, browArch: 0.2, browW: 1.3, browCol: '#201e26',
-      chin: 0.4, jaw: 0.84, mouth: 'smirk', restCurve: 0.25, blush: 0.12 },
+      chin: 0.58, jaw: 0.88, jawTop: -0.25, mouth: 'smirk', restCurve: 0.25, blush: 0.12 },
     expr: 'smug',
     props3d: { fan: { mat: 'wood', rib: 'dark', len: 1.35, w: 1.9, tassel: false }, hip_gourd: { mat: 'gourd', cord: true } },
     style: { rest: { spine: [-3, 0, 2], chest: [-2, 3, 2], head: [3, -4, 6], upperArmL: [2, 0, 2] } },
@@ -466,7 +466,7 @@
       shoes: { type: 'boots', color: YX.black, sole: '#f0ece2' }, held: 'lstaff', weapon: 'lstaff', hip: ['jar'],
     },
     body3d: { H: 1.84, head: 0.232, headW: 0.164, headD: 0.19, legTop: 0.96, chestW: 0.142, waistW: 0.118, hipW: 0.138, armR: 0.042, foreR: 0.035, neckLen: 0.058 },
-    face3d: { eyeStyle: 'narrow', iris: '#c8a040', irisLight: '#f2d888', ew: 0.21, droop: 0.5, tilt: -0.08, bags: 1, browAng: 0.38, browArch: 0.1, browW: 1.15, browCol: '#1a181e', chin: 0.3, jaw: 0.74, cheek: -0.035, restCurve: 0.06, blush: 0, eyeShadow: '#a890b0' },
+    face3d: { eyeStyle: 'narrow', iris: '#c8a040', irisLight: '#f2d888', ew: 0.21, droop: 0.5, tilt: -0.08, bags: 1, browAng: 0.38, browArch: 0.1, browW: 1.15, browCol: '#1a181e', chin: 0.46, jaw: 0.82, jawTop: -0.18, cheek: -0.035, restCurve: 0.06, blush: 0, eyeShadow: '#a890b0' },
     expr: 'neutral',
     props3d: { lstaff: { len: 1.07, shaft: 'lacq', ring: 'gold', lantern: { mat: 'blue', cage: 'gold', r: 0.07, h: 0.18, light: YX.blue, i: 1.1, range: 3.6, cord: 0.05, tassel: true } } },
     style: { rest: { spine: [-1, 0, 0], chest: [-2, 0, 0], head: [2, 0, 0], upperArmL: [-6, -8, -3], upperArmR: [-6, 8, 3], foreArmL: [-28, 18, 0] } },
@@ -500,7 +500,7 @@
       shoes: { type: 'cloth', color: '#1a1820', sole: '#efe9dc' }, held: 'crook', weapon: 'crook', hip: ['tally'],
     },
     body3d: { sh: 0.17, chestW: 0.14, waistW: 0.118, thighR: 0.066, calfR: 0.044, headW: 0.172 },
-    face3d: { eyeStyle: 'sharp', iris: '#3a2230', browAng: -0.1, browArch: 0.55, browW: 1.3, chin: 0.36, jaw: 0.84, mouth: 'smirk', restCurve: 0.42 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a2230', browAng: -0.1, browArch: 0.55, browW: 1.3, chin: 0.52, jaw: 0.86, jawTop: -0.2, mouth: 'smirk', restCurve: 0.42 },
     expr: 'smug',
     style: { rest: { chest: [-5, 0, 0], head: [-5, 0, 2], hips: [-2, 0, 0] } },
     parts: [
@@ -527,14 +527,14 @@
   // lacquered demon mask and a ragged black cape. Sharp, guarded face.
   look('qingfeng', 'canon', {
     spec: { hair: { style: 'side', color: '#1b1820', sheen: '#4a4458', back: 'ponytail', len: 0.34, tie: '#7a1a20' }, top: { closure: 'side', button: '#b89a4a' }, bracers: { color: '#1e1a1e' }, hip: ['sword'] },
-    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.42, jaw: 0.86, restCurve: -0.1 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.56, jaw: 0.88, jawTop: -0.22, restCurve: -0.1 },
     props3d: { sword: { blade: 'steel', guard: 'gold', tassel: true } },
     expr: 'determined',
     style: { rest: { chest: [-2, 0, 0] } },
   });
   look('qingfeng_mask', 'canon', {
     spec: { hair: { style: 'side', color: '#1b1820', back: 'ponytail', len: 0.34, tie: '#4a1018' }, top: { closure: 'side' }, cape: { color: '#17151c', len: 0.75, ragged: true, collarColor: '#24212a' }, hip: ['sword'] },
-    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.42 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.56, jaw: 0.88, jawTop: -0.22 },
     props3d: { sword: { blade: 'steel', guard: 'dark', tassel: false } },
   });
 

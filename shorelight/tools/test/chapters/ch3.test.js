@@ -38,6 +38,7 @@ class Run {
   constructor(name, browser) { this.name = name; this.browser = browser; this.errors = []; this.foreign = []; this.checks = 0; this.fails = []; }
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     // 2D renderer for speed in headless Chromium (the WebGL path runs at ~1 fps on software GL); --3d keeps it on
     if (!R3D) await this.ctx.addInitScript(() => { try { const s = JSON.parse(localStorage.getItem('shorelight_settings') || '{}'); s.render3d = false; localStorage.setItem('shorelight_settings', JSON.stringify(s)); } catch (e) { /* ignore */ } });
     this.page = await this.ctx.newPage();

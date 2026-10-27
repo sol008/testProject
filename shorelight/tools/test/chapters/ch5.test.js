@@ -83,6 +83,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
 (async () => {
   const browser = await chromium.launch({ headless: !HEADED });
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  await page.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   await page.addInitScript(() => {
     // the WebGL 3D presentation layer (work in progress, see js/r3d/) is far too slow under headless
     // software rendering — this test exercises the chapter's content on the 2D renderer
