@@ -1467,7 +1467,7 @@
           S.toast('全員的氣血與真氣恢復了。', 'potion');
         },
       },
-      { id: 'rv_gm', sprite: 'old_f', name: '進香的阿嬤', x: 7, y: 11, dir: 'right', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_5, talk: say1('進香的阿嬤', ['阿福……我的阿福……少年仔，拜託你們……']) },
+      { id: 'rv_gm', sprite: 'old_f', name: '進香的阿嬤', x: 7, y: 11, dir: 'right', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_5 && !st.flags.ch8_afu_by_temple, talk: say1('進香的阿嬤', ['阿福……我的阿福……少年仔，拜託你們……']) },
       // trapped pilgrims
       { id: 'rv_p1', sprite: 'pilgrim', name: '老阿伯', x: 27, y: 6, dir: 'left', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_1 && NOT_OVER(st), talk: say1('老阿伯', ['旗……旗不能倒……']) },
       { id: 'rv_p2a', sprite: 'villager_m', name: '還願的丈夫', x: 10, y: 24, dir: 'left', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_2 && NOT_OVER(st), talk: say1('還願的丈夫', ['救命！車子……車子壓住她了！']) },

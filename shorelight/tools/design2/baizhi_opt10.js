@@ -11,17 +11,15 @@
     tilt: -0.04, skin: C.skin, len: -236, frontLen: -280, ends: { col: '#e8d8ff', a: 0.75 }, endsSpan: 1.0, sheen: '#7a7ab0', earDrop: '#f5a8c8', earBead: '#3a3a6a',
     face: { eye: { lookX: 0.035, irisDy: -0.024, halfLid: 0.14 } },
   });
-  const UC = [26, -466], TILT = -0.14, URX = 96, UH = 54;
+  const UC = [26, -454], TILT = -0.12, URX = 96, UH = 48;
   const U = (x, y) => [UC[0] + x * Math.cos(TILT) - y * Math.sin(TILT), UC[1] + x * Math.sin(TILT) + y * Math.cos(TILT)];
   function tentacles(front) {
     // ribbon tentacles hanging from the rim (lantern-tassel logic); back ones dimmer
     const r = rng(front ? 3 : 8);
-    const n = front ? 7 : 6;
-    for (let i = 0; i < n; i++) {
-      const t = (i + (front ? 0.5 : 0)) / n;
-      const x = -URX + t * 2 * URX;
+    const xs = front ? [-92, -80, -66, 70, 82, 94] : [-86, -58, -30, 0, 30, 58, 86];
+    for (const x of xs) {
       const top = U(x * 0.98, 4);
-      const L = 150 + r() * 160 + (Math.abs(x) < 40 ? 60 : 0);
+      const L = 140 + r() * 150 + (Math.abs(x) < 40 ? 80 : 0);
       const sw = (r() - 0.5) * 30;
       const p = ribbon([top, [top[0] + sw * 0.3, top[1] + L * 0.35], [top[0] - sw * 0.4, top[1] + L * 0.7], [top[0] + sw, top[1] + L]], [3.4, 3, 2.2, 0.3]);
       part(p, front ? C.rim : mix(C.rim, C.bell, 0.5), { alpha: front ? 0.8 : 0.5, lw: 1.1, rimW: 0.8, rim: '#ffffff', line: ink(C.rim, 0.4), sh: false });
@@ -174,13 +172,13 @@
     palette: [[C.bell, '海月藍', 'jelly bell'], [C.rim, '桃光', 'rim pink'], [C.ao, '藕紫襖', 'lilac ao'], [C.skirt, '霧藍裙', 'mist skirt'], [C.trim, '靛鑲', 'indigo trim'], [C.rib, '竹骨', 'bamboo rib'], [C.skin, '膚', 'skin']],
     callouts: [
       { zh: '海月油紙傘', en: 'oil-paper umbrella as a jellyfish bell', at: [-30, -470] },
-      { zh: '流蘇觸鬚', en: 'tassel-tentacle light ribbons', at: [96, -330] },
+      { zh: '流蘇觸鬚', en: 'tassel-tentacle light ribbons', at: [92, -330] },
       { zh: '大襟襖・水母繡', en: 'side-fastened ao, jellyfish embroidery', at: [20, -270] },
       { zh: '漸透明裙襬', en: 'hem fading to transparency', at: [-30, -40] },
       { zh: '玉笛・紅線玉牌', en: 'jade flute, red string, jade tag', at: [-46, -180] },
     ],
     bg: ['#202a4a', '#3a3a64'],
-    fs: 0.86,
+    fs: 0.84,
     fx: -14,
     contourTh: 0.7,
     bust: { y: -386, z: 1.85 },

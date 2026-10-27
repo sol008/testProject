@@ -390,7 +390,7 @@
   });
   enemy('c10_guhun_horde', {
     name: '孤魂眾', art: 'hungry_ghost', variant: 2, scale: 2.2, lv: 38, elem: 'water', weak: ['earth', 'fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 5.6, atk: 2.2, mag: 2.1, def: 1.1, spd: 1.2, exp: 6, gold: 0.01 },
+    m: { hp: 5.0, atk: 1.9, mag: 1.8, def: 1.1, spd: 1.15, exp: 6, gold: 0.01 },
     skills: [['e_hungry_grab', 3], ['e_hungry_wail', 2], ['c10_es_snatch', 1], ['c10_es_callkin', 1, 'hp<70']],
     drops: [['c10_puduash', 1]],
     desc: '數百個瘦削的孤魂糾纏成一團，伸出無數細長的手臂。它們不是恨——是餓，是沒有人叫它們的名字。',
@@ -603,6 +603,7 @@
     if (!boss) return;
     const R = { armor: 3, melt: 0, exposed: 0, n: 0, p2: false, p3: false };
     sc.c10 = R;
+    boss.mhp = boss.hp = Math.round(boss.mhp * 0.85); // the stone armour halves early damage: a little less HP
     const ai = sc.aiCommand.bind(sc), exec = sc.execute.bind(sc), dmgFn = sc.damage.bind(sc), phases = sc.checkPhases.bind(sc), hud = sc.drawHud.bind(sc);
     sc.damage = (tg, dmg, o = {}) => {
       if (tg !== boss) return dmgFn(tg, dmg, o);
@@ -695,8 +696,8 @@
     const ai = sc.aiCommand.bind(sc), exec = sc.execute.bind(sc), kill = sc.kill.bind(sc), useItem = sc.useItem.bind(sc), perform = sc.performSkill.bind(sc), phases = sc.checkPhases.bind(sc), hud = sc.drawHud.bind(sc);
     const setMad = () => {
       const mad = R.hunger >= 70;
-      if (mad && !R.mad) { boss.st.atkUp = 99; boss.st.magUp = 99; sc.popText(boss, '餓瘋了！', '#ff8a7a', -60); }
-      if (!mad && R.mad) { delete boss.st.atkUp; delete boss.st.magUp; sc.popText(boss, '安靜了一點', '#c8e8ff', -60); }
+      if (mad && !R.mad) { boss.st.atkUp = 99; sc.popText(boss, '餓瘋了！', '#ff8a7a', -60); }
+      if (!mad && R.mad) { delete boss.st.atkUp; sc.popText(boss, '安靜了一點', '#c8e8ff', -60); }
       R.mad = mad;
     };
     const feed = (n) => { R.hunger = U.clamp(R.hunger - n, 0, 100); sc.popText(boss, `饑 −${n}`, '#ffe08a', -30); setMad(); };
