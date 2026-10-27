@@ -41,7 +41,8 @@ A probe of hengchun showed the battle steadily progressing (turns, heals, revive
   Animation clips are fire-and-forget, so a missing clip never blocked a turn. `hooks.test.js` now also runs a deliberately
   broken view (Infinity intro, NaN / 1e9 / throwing `playFx`, promises that never resolve) through shore_5 and every troop
   with a phase boss (21, boss_wuxiang included). They all finish; without the fix the first one hangs.
-  `ch11.test.js --3d` runs the chapter test with the 3D renderer (SwiftShader; use with `--only`).
+  `ch11.test.js --3d` runs the chapter test with the 3D renderer (SwiftShader; use with `--only`). `--only true --3d`
+  passes 7/7 in 2767 s: 夜玄 ×2, 夜念, 無相 ×3 (the ch11 scripted phases, HP floors and 無相之心), 真結局, credits and title, 0 errors.
 - **Full-chain tour (`--full`).** The run happened while the sweep was using the single SwiftShader GPU process, and every screenshot timed out (0 console errors). It still needs a run on its own or on a real GPU.
 
 **Fixes from this round:** the windcave mouth is now a soft glow instead of a hard white disc, the billboard hit flash is capped so the art stays readable, and the tour's enemy-turn step now gets through manual mode.
