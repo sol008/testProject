@@ -1,82 +1,64 @@
 {
- "when": "2026-10-27T19:46:22.980Z",
- "pass": 4,
- "fail": 0,
+ "when": "2026-10-27T20:36:12.558Z",
+ "pass": 0,
+ "fail": 4,
  "skip": 0,
  "results": [
   {
-   "id": "map:citygod_vision",
-   "name": "map citygod_vision: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 90121,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 25.7ms/frame (p95 150.3ms) > 16ms"
-   ]
-  },
-  {
    "id": "map:mist_loop",
    "name": "map mist_loop: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 129029,
+   "status": "fail",
+   "msg": "page.evaluate: Target page, context or browser has been closed",
+   "ms": 2571104,
    "errors": [],
-   "warnings": [
-    "slow: update+draw averages 40.9ms/frame (p95 191.2ms) > 16ms"
-   ]
+   "warnings": []
   },
   {
-   "id": "map:taixu",
-   "name": "map taixu: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 121170,
+   "id": "map:citygod_vision",
+   "name": "map citygod_vision: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "page.evaluate: Target page, context or browser has been closed",
+   "ms": 2571104,
    "errors": [],
    "warnings": [
-    "slow: update+draw averages 34.7ms/frame (p95 286.3ms) > 16ms"
+    "slow: update+draw averages 67.3ms/frame (p95 15.6ms) > 16ms",
+    "[.WebGL-0x289c001a5a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels  (×3)",
+    "[.WebGL-0x289c001a5a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
    ]
   },
   {
    "id": "map:mist_grove",
    "name": "map mist_grove: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 177785,
+   "status": "fail",
+   "msg": "browser.newContext: Target page, context or browser has been closed",
+   "ms": 1,
    "errors": [],
-   "warnings": [
-    "slow: update+draw averages 83.6ms/frame (p95 293.5ms) > 16ms"
-   ]
+   "warnings": []
+  },
+  {
+   "id": "map:taixu",
+   "name": "map taixu: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "browser.newContext: Target page, context or browser has been closed",
+   "ms": 1,
+   "errors": [],
+   "warnings": []
   }
  ],
  "perf": [
   {
-   "map": "mist_grove",
-   "rafAvg": 57.78,
-   "rafMax": 83.4,
-   "cpuAvg": 83.57,
-   "cpuP95": 293.5
+   "map": "citygod_vision",
+   "rafAvg": 3617.91,
+   "rafMax": 4349.9,
+   "cpuAvg": 67.34,
+   "cpuP95": 15.6
   },
   {
    "map": "mist_loop",
-   "rafAvg": 48.05,
-   "rafMax": 149.9,
-   "cpuAvg": 40.9,
-   "cpuP95": 191.2
-  },
-  {
-   "map": "taixu",
-   "rafAvg": 56.94,
-   "rafMax": 183.4,
-   "cpuAvg": 34.73,
-   "cpuP95": 286.3
-  },
-  {
-   "map": "citygod_vision",
-   "rafAvg": 43.05,
-   "rafMax": 133.4,
-   "cpuAvg": 25.74,
-   "cpuP95": 150.3
+   "rafAvg": 3957.34,
+   "rafMax": 14316.1,
+   "cpuAvg": 12.23,
+   "cpuP95": 15.4
   }
  ],
  "bootErrors": []
