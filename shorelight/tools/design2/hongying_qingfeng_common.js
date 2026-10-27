@@ -231,7 +231,7 @@
     const s = o.scale || 1; const u = (v) => v * h * s;
     if (o.kind === 'grip') {
       // frame: a = pole axis (unit), b = perpendicular toward the wrist side
-      const a = V.norm(o.pole || [0, 1]); let b = V.perp(a); if (b[0] * sx > 0) b = V.mul(b, -1); if (o.flipB) b = V.mul(b, -1);
+      const a = V.norm(o.pole || [0, 1]); let b = V.perp(a); if (o.toward) { const tw = V.sub(o.toward, W); if (b[0] * tw[0] + b[1] * tw[1] < 0) b = V.mul(b, -1); } else if (b[0] * sx > 0) b = V.mul(b, -1); if (o.flipB) b = V.mul(b, -1);
       c.transform(a[0], a[1], b[0], b[1], 0, 0); // local x along pole, local y toward the back of the hand
       const body = sp([[-u(0.2), -u(0.05)], [-u(0.18), u(0.2)], [-u(0.05), u(0.3)], [u(0.16), u(0.26)], [u(0.22), u(0.1)], [u(0.21), -u(0.12)], [u(0.12), -u(0.2)], [-u(0.12), -u(0.19)]], true);
       cel(body, { fill: skin, shade: sh, k: u(0.09), sd: [u(0.0), -u(0.09)], line: ln, lw, rim: false });
@@ -276,6 +276,9 @@
     c.restore();
   };
 
+  // wrist position for a fist gripping a pole at `at`, arm coming from `toward` (e.g. the shoulder joint)
+  LQ.gripW = function (F, at, pole, toward, k = 0.27) { const a = V.norm(pole); let b = V.perp(a); const tw = V.sub(toward, at); if (b[0] * tw[0] + b[1] * tw[1] < 0) b = V.mul(b, -1); return V.add(at, V.mul(b, k * F.h)); };
+
   /* -------- trouser leg. o: {sx, top (y), hipW, crotchX, kneeW, ankleW, footX, ankleY, col, flare} */
   LQ.legShape = function (F, o) {
     const h = F.h, sx = o.sx; const ax = sx * (o.footX ?? F.stance); const ay = o.ankleY ?? F.ankle;
@@ -317,6 +320,47 @@
     cel(sole, { fill: o.sole || '#e9e1d2', k: 0.03 * h, sd: [0, -0.03 * h], rim: false, lw: 1.3 });
     res.foot = foot; res.toe = [toeX, g];
     return res;
+  };
+
+  // low footwear. kind: 'cloth' | 'straw' | 'clog' | 'embroidered'
+  LQ.shoe = function (F, o) {
+    const h = F.h, sx = o.sx, x = o.x, y = o.y ?? F.ankle, g = F.H; const fw = (o.footW ?? 0.17) * h; const toeX = x + sx * (o.toeOut ?? 0.09) * h;
+    const skin = o.skin, sk = shadeOf(skin || '#f0c8b0', S.skinTint); const res = {};
+    const bare = o.kind === 'straw' || o.kind === 'clog';
+    const soleT = o.kind === 'clog' ? 0.11 * h : o.kind === 'straw' ? 0.045 * h : 0.04 * h; const gb = g - soleT;
+    if (bare || o.ankle) {
+      const ank = sp([[x - fw * 0.62, y - 0.32 * h], [x + fw * 0.62, y - 0.32 * h], [x + fw * 0.75, y - 0.02 * h], [toeX + sx * fw * 1.05, gb - 0.07 * h], [toeX + sx * fw * 0.8, gb], [toeX - sx * fw * 0.95, gb], [x - sx * fw * 1.0, gb - 0.06 * h], [x - fw * 0.75, y - 0.02 * h]], true);
+      cel(ank, { fill: o.sock || skin, shade: o.sock ? undefined : sk, k: 0.08 * h, sd: [-0.07 * h, 0], rim: false, line: o.sock ? undefined : mix(mul(skin, '#80463f'), '#2a1414', 0.35), lw: 1.2 });
+      if (!S.sil && bare && !o.sock) for (let i = 0; i < 5; i++) { const tx = toeX - sx * fw * 0.8 + sx * i * fw * 0.42; line([[tx, gb - 0.005 * h], [tx + sx * 0.01 * h, gb - 0.04 * h]], rgba(sk, 0.9), 0.8); }
+      res.foot = ank;
+    }
+    if (o.kind === 'cloth' || o.kind === 'embroidered') {
+      const sh = sp([[x - fw * 0.85, y + 0.02 * h], [x + fw * 0.85, y + 0.02 * h], [toeX + sx * fw * 1.1, gb - 0.08 * h], [toeX + sx * fw * 0.65, gb], [toeX - sx * fw * 0.9, gb], [x - sx * fw * 1.05, gb - 0.06 * h]], true);
+      cel(sh, { fill: o.col, k: 0.07 * h, sd: [-0.06 * h, -0.06 * h], hi: true, hiA: 0.35, after: o.kind === 'embroidered' ? (c) => { c.fillStyle = o.emb || '#e8b84a'; c.fill(ell(toeX + sx * fw * 0.1, gb - 0.06 * h, fw * 0.35, 0.035 * h)); } : null });
+      if (!S.sil) line([[x - fw * 0.7, y + 0.05 * h], [x, y + 0.08 * h], [x + fw * 0.7, y + 0.05 * h]], lineOf(o.col), 1.1);
+      res.foot = sh;
+    }
+    const sole = sp([[toeX - sx * fw * 1.02, gb - 0.005 * h], [toeX + sx * fw * 0.75, gb - 0.005 * h], [toeX + sx * fw * 1.18, gb - 0.04 * h - (o.toeUp || 0) * h, 1], [toeX + sx * fw * 1.15, g - 0.005 * h], [toeX - sx * fw * 1.02, g], [x - sx * fw * 1.12, g - 0.01 * h], [x - sx * fw * 1.12, gb - 0.02 * h]], true);
+    cel(sole, { fill: o.sole || (o.kind === 'clog' ? '#b98a56' : o.kind === 'straw' ? '#d8bb7c' : '#ece4d4'), k: 0.03 * h, sd: [0, -0.03 * h], rim: false, lw: 1.2, tex: o.kind === 'straw' ? LQ.pattern('weave', '#8a6a3a', 0.3 * h, 0.35) : null });
+    if (o.kind === 'straw') { const st = tube([[x - sx * fw * 0.6, y - 0.05 * h], [toeX - sx * fw * 0.2, gb - 0.06 * h], [x + sx * fw * 0.75, y - 0.03 * h]], 0.022 * h, { seg: 5 }); cel(st, { fill: '#c9a865', k: 1.5, lw: 1, rim: false }); }
+    if (o.kind === 'clog') { const st = sp([[toeX - sx * fw * 0.95, gb - 0.02 * h], [toeX - sx * fw * 0.75, gb - 0.13 * h], [toeX + sx * fw * 0.8, gb - 0.14 * h], [toeX + sx * fw * 1.05, gb - 0.02 * h]], true); cel(st, { fill: o.strap || '#2e4a6e', k: 0.03 * h, lw: 1.1 }); }
+    res.toe = [toeX, g];
+    return res;
+  };
+  // 綁腿 leg wraps: spiral bands on the lower leg
+  LQ.legWrap = function (F, o) {
+    const h = F.h; const p = tube([[o.x, o.top], [o.x + (o.dx || 0), (o.top + o.bottom) / 2], [o.x + (o.dx || 0) * 1.4, o.bottom]], [o.w0 ?? 0.2 * h, o.w1 ?? 0.15 * h, o.w2 ?? 0.13 * h], { seg: 6 });
+    cel(p, { fill: o.col, k: 0.1 * h, sd: [-0.09 * h, 0], hi: true, hiA: 0.3, after: (c) => {
+      const n = o.n || 6; for (let i = 0; i <= n; i++) { const yy = o.top + (o.bottom - o.top) * (i / n); line([[o.x - 0.25 * h, yy + 0.06 * h], [o.x + 0.25 * h, yy - 0.06 * h]], lineOf(o.col), 1); fold([[o.x - 0.22 * h, yy + 0.09 * h], [o.x + 0.22 * h, yy - 0.03 * h]], 0.03 * h, shadeOf(o.col), 0.6); }
+    } });
+    if (o.tie) { const t = tube([[o.x + 0.12 * h, o.top + 0.05 * h], [o.x + 0.2 * h, o.top + 0.18 * h], [o.x + 0.17 * h, o.top + 0.32 * h]], 0.02 * h, { seg: 4 }); cel(t, { fill: o.tie, k: 1, lw: 0.9, rim: false }); }
+    return p;
+  };
+  // bare forearm between a cuff (point C) and the wrist
+  LQ.forearm = function (F, C, W, skin, w0 = 0.12, w1 = 0.09) {
+    const h = F.h; const p = tube([C, V.lerp(C, W, 0.55), W], [w0 * h, w0 * 0.95 * h, w1 * h], { seg: 4 });
+    cel(p, { fill: skin, shade: shadeOf(skin, S.skinTint), k: 0.07 * h, sd: [-0.07 * h, 0], rim: false, line: mix(mul(skin, '#80463f'), '#2a1414', 0.35), lw: 1.2 });
+    return p;
   };
 
   /* -------- face & head. ---------------------------------------------------------------- */

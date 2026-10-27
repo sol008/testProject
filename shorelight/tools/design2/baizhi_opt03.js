@@ -5,80 +5,19 @@
   const { P, part, stroke, line, fillP, glow, clipped, ribbon, curve, poly, mix, rgba, ink, lighten, shadowOf, hand, foot, tassel, jadeTag, motes, drawFace, LW, inHead, neck, lock, flute, redString, stageGrad, bokeh, hairShine } = B;
   const R = B.rig(6);
   const C = {
-    paper: '#f3e5c4', red: '#c43e2c', gold: '#e2b24c', teal: '#1f5c60', hair: '#1a161f', hairHi: '#6b5a7a', tip: '#ff7a3c',
+    paper: '#f3e5c4', red: '#c43e2c', gold: '#e2b24c', teal: '#1f5c60', hair: '#17151c', tip: '#ff7a3c',
     skin: '#f7e4d6', glowC: '#ffcf70', flame: '#bff3ff', wood: '#8a5a36', jade: '#8fd0b0',
   };
-  const F = {
-    skin: C.skin, W: 0.4, jawX: 0.28, jawY: 0.78, chinW: 0.07, cheek: 0.35,
-    eye: { y: 0.6, x: 0.178, w: 0.18, h: 0.13, shape: 'almond', tilt: 0.03, iris: '#d0562e', irisR: 0.058, irisH: 1.2, lid: 'double', halfLid: 0.22, irisDy: 0.022, pupilC: '#4a1208', glow: '#ffb060', lashes: 3, lineC: '#2a1418', lineW: 2.6 },
-    brow: { y: 0.455, x0: 0.07, len: 0.15, th: 0.014, arch: 0.016, tilt: 0.006, col: '#2a1e26' },
-    nose: { type: 'tip', y: 0.77 },
-    mouth: { type: 'soft', y: 0.865, w: 0.045, lip: '#d8404a' },
-    blush: 0.55, ear: { show: false },
-    paint: (c) => {
-      // 花鈿 forehead mark: tiny lantern-flame
+  const HD = B.bzHead(R, { tilt: 0, skin: C.skin, len: -214, frontLen: -262, ends: { col: C.tip, a: 0.95 }, endsSpan: 0.8, lip: '#d8505a', earDrop: '#d8503a', earBead: '#2a1414',
+    face: { paint: (c) => {
+      // 花鈿 forehead mark: a tiny lantern flame
       c.fillStyle = '#d23a2a';
       c.beginPath();
       c.moveTo(0, 0.33);
       c.quadraticCurveTo(0.025, 0.37, 0, 0.395);
       c.quadraticCurveTo(-0.025, 0.37, 0, 0.33);
       c.fill();
-    },
-  };
-  function hairBack() {
-    const back = P((p) => {
-      p.moveTo(-28, -404);
-      p.bezierCurveTo(-46, -390, -44, -330, -42, -280);
-      p.lineTo(-42, -214);
-      p.lineTo(42, -214);
-      p.lineTo(42, -280);
-      p.bezierCurveTo(44, -330, 46, -390, 28, -404);
-      p.closePath();
-    });
-    part(back, mix(C.hair, '#000', 0.2), {
-      lw: 1.7, rimW: 1.4, grad: [rgba(C.tip, 0), rgba(C.tip, 0.85), -250, -214],
-      inner: () => { for (const x of [-34, -22, 22, 34]) stroke([[x, -380], [x, -260], [x, -216]], 1.1, rgba(C.hairHi, 0.5)); },
-    });
-  }
-  function hairFront() {
-    inHead(R, 0, () => {
-      const cap = P((p) => {
-        p.moveTo(-0.47, 0.7);
-        p.bezierCurveTo(-0.56, 0.18, -0.32, -0.06, 0, -0.06);
-        p.bezierCurveTo(0.32, -0.06, 0.56, 0.18, 0.47, 0.7);
-        p.lineTo(0.37, 0.42);
-        p.lineTo(-0.37, 0.42);
-        p.closePath();
-      });
-      part(cap, C.hair, { sh: shadowOf(C.hair, 1.5), rimW: 0.015, lw: 1.6 });
-      hairShine(cap, 0, 0.42, 0.46, 0.38, C.hairHi, 0.7, 10);
-      // blunt hime fringe
-      const fr = P((p) => {
-        p.moveTo(-0.38, 0.2);
-        p.bezierCurveTo(-0.2, 0.08, 0.2, 0.08, 0.38, 0.2);
-        p.lineTo(0.39, 0.46);
-        p.lineTo(-0.39, 0.46);
-        p.closePath();
-      });
-      part(fr, C.hair, { sh: shadowOf(C.hair, 1.5), shift: [0.03, 0.03], rimW: 0.012, lw: 1.5, inner: (c) => {
-        for (let i = 0; i < 8; i++) stroke([[-0.33 + i * 0.095, 0.2], [-0.34 + i * 0.096, 0.45]], 0.9, rgba(C.hairHi, 0.6));
-        c.fillStyle = rgba(C.hairHi, 0.6);
-        c.fillRect(-0.36, 0.27, 0.72, 0.02);
-      } });
-      // hime side locks cut level with the chin, ends glowing lantern-red
-      for (const s of [-1, 1]) {
-        const sl = P((p) => {
-          p.moveTo(s * 0.38, 0.3);
-          p.lineTo(s * 0.47, 0.3);
-          p.bezierCurveTo(s * 0.5, 0.6, s * 0.48, 0.85, s * 0.47, 1.02);
-          p.lineTo(s * 0.33, 1.02);
-          p.bezierCurveTo(s * 0.35, 0.8, s * 0.37, 0.55, s * 0.38, 0.3);
-          p.closePath();
-        });
-        part(sl, C.hair, { sh: shadowOf(C.hair, 1.5), rimW: 0.012, lw: 1.5, grad: [rgba(C.tip, 0), rgba(C.tip, 0.9), 0.8, 1.02], inner: () => stroke([[s * 0.42, 0.35], [s * 0.42, 1.0]], 0.9, rgba(C.hairHi, 0.6)) });
-      }
-    });
-  }
+    } } });
   function roof() {
     // 燕尾脊 miniature roof crown with eave tassels, jade tag hung like a wind-chime
     inHead(R, 0, () => {
@@ -93,11 +32,9 @@
         p.closePath();
       });
       part(eave, C.red, { lw: 1.6, rimW: 0.015, shift: [0.03, 0.04], inner: () => {
-        // roof tiles
         for (let i = -6; i <= 6; i++) stroke([[i * 0.05, -0.19], [i * 0.085, 0.05]], 1, rgba('#7a1e14', 0.7));
       } });
       line(curve([[-0.7, 0.05], [-0.4, 0.07], [0.4, 0.07], [0.7, 0.05]]), C.gold, 2.2);
-      // ridge with swallow-tail curls
       const ridge = P((p) => {
         p.moveTo(-0.36, -0.2);
         p.lineTo(0.36, -0.2);
@@ -109,17 +46,13 @@
         p.closePath();
       });
       part(ridge, C.gold, { lw: 1.4, rimW: 0.012, shift: [0.02, 0.02] });
-      // pearl / flame finial
       part(P((p) => p.arc(0, -0.34, 0.06, 0, 7)), '#f8f2e0', { lw: 1.2, rimW: 0.01 });
-      // paper band (lantern wall) under the eave
-      const band = P((p) => p.roundRect(-0.36, 0.04, 0.72, 0.07, 0.01));
-      part(band, C.paper, { lw: 1.1, rim: false, sh: false });
+      part(P((p) => p.roundRect(-0.36, 0.04, 0.72, 0.07, 0.01)), C.paper, { lw: 1.1, rim: false, sh: false });
     });
     const hu = R.hu, top = R.crown;
-    tassel(-0.7 * hu, top + 0.06 * hu, 12, C.red, { w: 2.6 });
-    // jade tag chime on the right eave
-    line(curve([[0.7 * hu, top + 0.06 * hu], [0.71 * hu, top + 0.3 * hu]]), C.red, 1.3);
-    jadeTag(0.71 * hu, top + 0.42 * hu, 9, { cord: false, tassel: true, col: C.jade });
+    tassel(0.7 * hu, top + 0.06 * hu, 12, C.red, { w: 2.6 });
+    line(curve([[-0.7 * hu, top + 0.06 * hu], [-0.71 * hu, top + 0.3 * hu]]), C.red, 1.3);
+    jadeTag(-0.71 * hu, top + 0.42 * hu, 9, { cord: false, tassel: true, col: C.jade });
   }
   function base() {
     // the 水燈頭 float: lacquered wooden raft with lotus-petal rim; ripples
@@ -346,10 +279,10 @@
     idea: '她就是那座逆流漂回岸邊的水燈頭：頭戴燕尾脊小屋頂，裙是會發光的紙燈牆，掌心捧著一朵冷藍的燈心火。',
     culture: '取自雞籠中元祭「放水燈頭」：紙糊的房屋形水燈、燕尾脊、花窗、紅金配色與木製燈座；衣身仍保留右衽交領與腰帶。奇幻：人即燈屋，燈心為冷藍魂火。',
     model: '屋頂冠、肩簷、裙牆皆為硬殼大形，極易建模；花窗與波浪紋為自發光貼圖；手中火焰與裙內光為 shader；底座水波為特效。',
-    palette: [[C.paper, '燈紙', 'lantern paper'], [C.red, '朱紅', 'vermilion'], [C.gold, '描金', 'gilt'], [C.teal, '海青', 'sea teal'], [C.hair, '墨髮', 'ink hair'], [C.tip, '燈紅髮梢', 'glowing tips'], [C.flame, '冷燈心', 'cold flame']],
+    palette: [[C.paper, '燈紙', 'lantern paper'], [C.red, '朱紅', 'vermilion'], [C.gold, '描金', 'gilt'], [C.teal, '海青', 'sea teal'], [C.hair, '烏黑髮', 'jet-black hair'], [C.tip, '燈紅髮梢', 'glowing ends'], [C.flame, '冷燈心', 'cold flame']],
     callouts: [
       { zh: '燕尾脊屋頂冠', en: 'swallow-tail roof crown', at: [40, -440] },
-      { zh: '玉牌風鈴', en: 'jade tag hung as a wind-chime', at: [50, -385] },
+      { zh: '玉牌風鈴', en: 'jade tag hung as a wind-chime', at: [-50, -385] },
       { zh: '燈心冷火', en: 'cold lamp-heart flame in cupped hands', at: [0, -326] },
       { zh: '紙燈牆裙・花窗', en: 'paper-wall skirt, glowing lattice', at: [-34, -152] },
       { zh: '水燈頭燈座', en: 'lotus-rim float she stands on', at: [-50, -2] },
@@ -368,14 +301,14 @@
       bokeh(c, x, y, w, h * 0.5, 16, ['#ffd080', '#ffffff'], 3, 3, 0.5);
     },
     draw() {
-      hairBack();
+      HD.back();
       base();
       legs();
       skirt();
       bodice();
       neck(R, C.skin, { bot: -340, w: 0.11 });
-      inHead(R, 0, () => drawFace(F));
-      hairFront();
+      HD.face();
+      HD.front();
       roof();
       // flute tucked in the sash diagonally (behind arms)
       flute([-46, -262], [44, -268], 2.3, { col: C.jade, holes: 5 });
@@ -385,8 +318,8 @@
       motes([[-40, -360, 1], [44, -350, 0.9], [-60, -200, 1.1], [64, -180, 0.8]], '#ffd890');
     },
     back(c, G2, col) {
+      B.bzBack(c, R, -214, col);
       c.fillStyle = col;
-      c.fillRect(-40, -400, 80, 186);
       c.fillRect(-72, -96, 144, 6);
       c.fillRect(-4, -232, 8, 148);
     },

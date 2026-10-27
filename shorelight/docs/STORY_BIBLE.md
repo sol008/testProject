@@ -80,6 +80,10 @@ vision realms, and helping each other across.
 - Companion: **麻糬 (Mochi)**, a big, very fluffy long-haired dilute calico cat from a 九份 teahouse. She
   senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks (糰子's opposite).
   In battle she is a water-element support assist (healing purr). On the field she sniffs out hidden spirit items.
+- Second cat: **芋圓 (Yuyuan, "Taro Ball")**, the teahouse's other cat. He is a huge, chubby blue-grey tabby with olive
+  eyes and a deadpan "judging you" stare, and he decides 星河 is *his* human (to 星河's loud protests). He is silent,
+  heavy and unimpressed by ghosts. In battle he is an earth-element "body-block" assist (guards the weakest ally). On the
+  field he sits on pressure plates. 麻糬 and 芋圓 are a bonded pair; together they are the party's two pets.
 
 ### 洛紅纓 (Luo Hongying) — 19
 - Heir of **鹿港洛家**, a merchant & martial clan famed for 洛家槍. The clan was massacred three
@@ -94,8 +98,7 @@ vision realms, and helping each other across.
 - Taoist of **觀音山 太虛觀**. Sarcastic, lazy-eyed, drinks 米酒, reads forbidden texts on 「內景」
   (inner visions) and is an enthusiastic amateur mycologist (comic). Deeply loyal; searching for his
   missing master 清虛真人.
-- Companion: **糰子 (Tuanzi)**: a chubby 石虎 (Formosan leopard-cat) spirit who mostly looks like a plush blue-grey
-  tabby (olive eyes, a deadpan "judging you" stare) with faint leopard-cat stripes and ear spots. He talks, eats
+- Companion: **糰子 (Tuanzi)** — a chubby 石虎 (Formosan leopard-cat) spirit that talks, eats
   everything, panics, and, after eating spirit mushrooms, delivers absurd cosmic wisdom.
 - Weapon: talismans + fan (符扇). Element **木** (thunder), but his talismans cover all five
   elements — the "weakness exploiter".

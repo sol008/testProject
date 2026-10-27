@@ -796,7 +796,7 @@
         c.lastCell = [p.x, p.y];
         if (c.creaky.has(p.x + ',' + p.y) && !running) { G.Audio.sfx('step'); G.Audio.sfx('switch', 0.05); noise(ms, c, p.x, p.y, 2, 'creak'); }
       }
-      if (G.Input.pressed('pgup')) tuanzi(ms, c);
+      if (G.Input.pressed('auto')) tuanzi(ms, c);
       if (c.tzCool > 0) c.tzCool -= dt;
       updateTz(ms, c, dt);
       const pLit = lit(c, p.x, p.y);
@@ -804,7 +804,7 @@
       for (const pu of c.puppets) {
         if (pu.frozen > 0) { pu.frozen -= dt; continue; }
         pu.turnT += dt;
-        if (pu.turnT >= 3) { pu.turnT = 0; pu.dir = CW[pu.dir]; }
+        if (pu.turnT >= 3) { pu.turnT = 0; pu.dir = CW[pu.dir]; const e = ms.enemies.find((x) => x.id === pu.id); if (e) e.dir = pu.dir; }
         if (pu.cool > 0) { pu.cool -= dt; continue; }
         const sees = !c.hide && ms.guardSees({ x: pu.x, y: pu.y, dir: pu.dir, def: { view: 4 } }, p.x, p.y);
         if (sees) pu.meter += dt * (pLit ? 1 : 0.5) * (dist(pu.x, pu.y, p.x, p.y) <= 2 ? 2 : 1);
@@ -918,31 +918,20 @@
         g.addColorStop(0, `rgba(255,220,140,${a})`); g.addColorStop(1, 'rgba(255,220,140,0)');
         ctx.fillStyle = g; ctx.fillRect(o.x * T - 16, o.y * T - 4, 96, 96);
       }
-      // puppet cones + bodies
+      // puppet vision cones (the puppets themselves are map enemies → proper 2D/3D rendering)
       for (const pu of c.puppets) {
-        if (pu.frozen <= 0) {
-          const [dx, dy] = U.dirs[pu.dir];
-          ctx.fillStyle = 'rgba(210,140,255,0.16)';
-          for (let f = 1; f <= 4; f++) {
-            const half = Math.floor((f + 1) / 2);
-            for (let s = -half; s <= half; s++) {
-              const cx = pu.x + dx * f + (dy !== 0 ? s : 0), cy = pu.y + dy * f + (dx !== 0 ? s : 0);
-              if (cx < 0 || cy < 0 || cx >= ms.w || cy >= ms.h) continue;
-              if (!ms.guardSeesCell(pu, cx, cy)) continue;
-              ctx.fillRect(cx * T + 2, cy * T + 2, T - 4, T - 4);
-            }
+        if (pu.frozen > 0) continue;
+        const [dx, dy] = U.dirs[pu.dir];
+        ctx.fillStyle = 'rgba(210,140,255,0.16)';
+        for (let f = 1; f <= 4; f++) {
+          const half = Math.floor((f + 1) / 2);
+          for (let s = -half; s <= half; s++) {
+            const cx = pu.x + dx * f + (dy !== 0 ? s : 0), cy = pu.y + dy * f + (dx !== 0 ? s : 0);
+            if (cx < 0 || cy < 0 || cx >= ms.w || cy >= ms.h) continue;
+            if (!ms.guardSeesCell(pu, cx, cy)) continue;
+            ctx.fillRect(cx * T + 2, cy * T + 2, T - 4, T - 4);
           }
         }
-        const md = G.Monsters.get && G.Monsters.get('marionette');
-        const sc = md ? U.clamp(110 / md.h, 0.2, 0.7) : 0.5;
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath(); ctx.ellipse(pu.x * T + 32, pu.y * T + 56, 20, 7, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.translate(pu.x * T + 32, pu.y * T + 58 + (pu.frozen > 0 ? 0 : Math.sin(t * 3 + pu.x) * 2));
-        if (pu.dir === 'left') ctx.scale(-1, 1);
-        ctx.scale(sc, sc);
-        try { G.Monsters.draw(ctx, 'marionette', 0, 0, pu.frozen > 0 ? 0 : t, { state: 'idle', variant: 1 }); } catch (e) { G.warnOnce('c6 puppet', e); }
-        ctx.restore();
       }
       // 墨鴉's feathers
       for (const f of c.feathers) {
@@ -966,32 +955,47 @@
         ctx.beginPath(); ctx.arc(r.x * T + 32, r.y * T + 40, 12 + k * r.r * T, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
+    }
+    // screen positions (works for the 2D view and the 3D view): feet of an actor, or a point above a cell
+    function scrActor(ms, a) {
+      if (ms.view3d) { const s = ms.view3d.actorScreen(a); return { x: s.x, y: s.y + 112, vis: s.visible }; }
+      return { x: a.px - ms.cam.x, y: a.py - ms.cam.y, vis: true };
+    }
+    function scrCell(ms, x, y, h) {
+      if (ms.view3d) { const s = ms.view3d.toScreen(x + 0.5, h, y + 0.5); return { x: s.x, y: s.y, vis: s.visible }; }
+      return { x: x * T + 32 - ms.cam.x, y: y * T + 48 - h * 64 - ms.cam.y, vis: true };
+    }
+    function meter(ctx, x, y, k, col) {
+      ctx.fillStyle = 'rgba(10,10,20,0.75)'; ctx.fillRect(x - 24, y, 48, 7);
+      ctx.fillStyle = col; ctx.fillRect(x - 23, y + 1, 46 * Math.min(1, k), 5);
+    }
+    function drawMarks(ctx, t, ms) {
+      const c = ms.c6;
       for (const g of ms.npcs) {
-        if (!g.guard || !g.c6) continue;
-        const s = g.c6, x = g.px, y = g.py - 118;
+        if (!g.guard || !g.c6 || !g.visible) continue;
+        const s = g.c6, p = scrActor(ms, g);
+        if (!p.vis) continue;
+        const x = p.x, y = p.y - 122;
         if (s.mode === 'sleep') { G.Render.text(ctx, 'Zzz', x + 18, y + 6 + Math.sin(t * 2) * 3, { size: 20, bold: true, color: '#bcd0ff', stroke: '#10182a', strokeW: 3 }); continue; }
         if (s.meter > 0.02 || s.mode !== 'patrol') {
           const col = s.mode === 'alert' ? '#ff5a4a' : s.meter >= 0.35 ? '#ffc04a' : '#fff0c0';
-          ctx.save();
-          ctx.fillStyle = 'rgba(10,10,20,0.75)'; ctx.fillRect(x - 24, y, 48, 7);
-          ctx.fillStyle = col; ctx.fillRect(x - 23, y + 1, 46 * Math.min(1, s.meter), 5);
-          ctx.restore();
-          if (s.mode === 'alert' || s.mode === 'suspect') G.Render.text(ctx, s.mode === 'alert' ? '！' : '？', x, y - 30 + Math.sin(t * 8) * 2, { size: 28, bold: true, align: 'center', color: col, stroke: '#200', strokeW: 4 });
+          meter(ctx, x, y, s.meter, col);
+          if (s.mode === 'alert' || s.mode === 'suspect') G.Render.text(ctx, s.mode === 'alert' ? '！' : '？', x, y - 34 + Math.sin(t * 8) * 2, { size: 28, bold: true, align: 'center', color: col, stroke: '#200', strokeW: 4 });
         }
       }
       for (const pu of c.puppets) {
-        const x = pu.x * T + 32, y = pu.y * T - 52;
+        const p = scrCell(ms, pu.x, pu.y, 1.7);
+        if (!p.vis) continue;
         if (pu.frozen > 0) {
-          ctx.save(); ctx.fillStyle = '#f0d070'; ctx.fillRect(x - 8, y + 20, 16, 26);
-          ctx.strokeStyle = '#a02a1a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y + 24); ctx.lineTo(x, y + 42); ctx.moveTo(x - 5, y + 30); ctx.lineTo(x + 5, y + 30); ctx.stroke(); ctx.restore();
-          G.Render.text(ctx, `${Math.ceil(pu.frozen)}`, x + 16, y + 18, { size: 16, color: '#ffe08a', stroke: '#201000', strokeW: 3 });
-        } else if (pu.meter > 0.02) {
-          ctx.save(); ctx.fillStyle = 'rgba(10,10,20,0.75)'; ctx.fillRect(x - 24, y, 48, 7);
-          ctx.fillStyle = '#e0a0ff'; ctx.fillRect(x - 23, y + 1, 46 * Math.min(1, pu.meter), 5); ctx.restore();
-        }
+          ctx.save(); ctx.fillStyle = '#f0d070'; ctx.fillRect(p.x - 8, p.y - 4, 16, 26);
+          ctx.strokeStyle = '#a02a1a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y + 18); ctx.moveTo(p.x - 5, p.y + 6); ctx.lineTo(p.x + 5, p.y + 6); ctx.stroke(); ctx.restore();
+          G.Render.text(ctx, `${Math.ceil(pu.frozen)}`, p.x + 16, p.y - 6, { size: 16, color: '#ffe08a', stroke: '#201000', strokeW: 3 });
+        } else if (pu.meter > 0.02) meter(ctx, p.x, p.y, pu.meter, '#e0a0ff');
       }
       for (const b of c.bubbles) {
-        const x = b.a ? b.a.px : b.x * T + 32, y = (b.a ? b.a.py : b.y * T + 56) - 132 - Math.min(1, b.t * 4) * 6;
+        const p = b.a ? scrActor(ms, b.a) : scrCell(ms, b.x, b.y, -1.75);
+        if (!p.vis) continue;
+        const x = p.x, y = p.y - 140 - Math.min(1, b.t * 4) * 6;
         const a = Math.min(1, b.t * 5, (b.life - b.t) * 3);
         ctx.save();
         ctx.globalAlpha = Math.max(0, a);
@@ -1003,19 +1007,21 @@
         ctx.restore();
       }
       if (c.hide) {
-        const x = c.hide.x * T + 32, y = c.hide.y * T + 8;
-        G.Render.text(ctx, '…', x + Math.sin(t * 9) * 1.5, y - 16, { size: 22, bold: true, align: 'center', color: '#fff0c0', stroke: '#201000', strokeW: 3 });
+        const p = scrCell(ms, c.hide.x, c.hide.y, 1.1);
+        if (p.vis) G.Render.text(ctx, '…', p.x + Math.sin(t * 9) * 1.5, p.y - 24, { size: 24, bold: true, align: 'center', color: '#fff0c0', stroke: '#201000', strokeW: 3 });
       }
+      if (ms.def.extraHud) ms.def.extraHud(ctx, t, ms, scrCell);
     }
     function drawHud(ctx, t, ms) {
       const c = ms.c6;
       if (!c || G.Script.busy()) return;
+      drawMarks(ctx, t, ms);
       const x = G.W - 228, y = 70;
       ctx.save();
       G.UI.plate(ctx, x, y, 204, 70, 0.6, 14);
       if (c.mask > 0) G.Render.text(ctx, '煙火聲蓋住了腳步聲！', x + 102, y + 10, { size: 17, align: 'center', color: '#ffe08a' });
       else G.Render.text(ctx, `下一發煙火：${Math.ceil(c.fw)} 秒`, x + 102, y + 10, { size: 17, align: 'center', color: '#dfe8ff' });
-      G.Render.text(ctx, c.tzCool > 0 ? `糰子休息中：${Math.ceil(c.tzCool)}` : 'Q：糰子搗蛋', x + 102, y + 38, { size: 16, align: 'center', color: c.tzCool > 0 ? '#a8a090' : '#ffd8a0' });
+      G.Render.text(ctx, c.tzCool > 0 ? `糰子休息中：${Math.ceil(c.tzCool)}` : 'F：糰子搗蛋', x + 102, y + 38, { size: 16, align: 'center', color: c.tzCool > 0 ? '#a8a090' : '#ffd8a0' });
       ctx.restore();
     }
     return { update, drawGround, drawOver, onCaught, hideIn, puppetCharm, noise: (ms, x, y, r) => noise(ms, ms.c6 || init(ms), x, y, r, 'book'), init };
@@ -1088,7 +1094,7 @@
   })());
 
   // =================================================================================================== 1-1 鹽水・月津
-  const YS = { flashes: [], flashT: 0, palanquin: null };
+  const YS = { flashes: [], flashT: 0 };
   G.Maps.define('yanshui', (() => {
     const g = grid(44, 34, '.');
     g.rect(0, 0, 1, 34, 'h'); g.rect(43, 0, 1, 34, 'h'); g.rect(0, 0, 44, 1, 'h'); g.rect(0, 33, 44, 1, 'h');
@@ -1264,17 +1270,6 @@
             ctx.beginPath(); ctx.arc(x - 5, y - 4, 2.5, 0, Math.PI * 2); ctx.arc(x + 5, y - 4, 2.5, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(x, y + 7, 3, 4 + Math.sin(t * 6 + i) * 2, 0, 0, Math.PI * 2); ctx.fill();
           }
-          ctx.restore();
-        }
-        // the 關帝 palanquin during the procession (a moving object owned by the scene)
-        const p = YS.palanquin;
-        if (p && p.alpha > 0) {
-          ctx.save();
-          ctx.globalAlpha = p.alpha;
-          ctx.translate(p.x * T + 64, p.y * T + 64);
-          ctx.rotate(p.rot || 0);
-          ctx.translate(-(p.x * T + 64), -(p.y * T + 64) - (p.dip || 0));
-          G.Objects.get('palanquin').draw(ctx, p.x * T, p.y * T, { x: p.x, y: p.y, still: false }, t);
           ctx.restore();
         }
       },
@@ -1762,12 +1757,13 @@
     for (let y = 4; y < H; y++) for (let x = 0; x < W; x++) {
       if (open[y][x] || g.get(x, y) === 'X') continue;
       let near = false;
-      for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) { const r = open[y + dy] && open[y + dy][x + dx]; if (r === true) { near = true; break; } }
-      if (near) { objs.push({ t: 'pandanus', x, y, v: Math.floor(U.hash(x, y, 31) * 3) }); g.set(x, y, ','); }
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) { const r = open[y + dy] && open[y + dy][x + dx]; if (r === true) { near = true; break; } }
+      if (near && ((x + y) % 2 === 0 || U.hash(x, y, 9) < 0.35)) { objs.push({ t: 'pandanus', x, y, v: Math.floor(U.hash(x, y, 31) * 3) }); g.set(x, y, ','); }
     }
     for (const [x, y] of LT.graves) objs.push({ t: 'grave', x, y, v: 0 });
     objs.push({ t: 'grave', x: 12, y: 31, v: 1 }, { t: 'grave', x: 14, y: 31 }, { t: 'grave', x: 16, y: 31, v: 1 });
     objs.push({ t: 'gate_city', x: 34, y: 2, text: '水門' });
+    objs.push({ t: 'pandanus', x: 10, y: 4, v: 0 }, { t: 'pandanus', x: 11, y: 4, v: 2 }, { t: 'pandanus', x: 12, y: 4, v: 1 });
     for (const [x, y] of [[17, 4], [17, 5], [18, 4], [18, 5]]) objs.push({ t: 'pandanus', x, y, v: (x + y) % 3, if: (st) => !st.flags.ch6_linto_done });
     for (const [x, y] of [[3, 4], [5, 5], [24, 4], [29, 5], [33, 4]]) objs.push({ t: 'tallgrass', x, y });
     objs.push({ t: 'tree_dead', x: 2, y: 5 }, { t: 'reeds', x: 8, y: 4 }, { t: 'reeds', x: 26, y: 5 }, { t: 'rock_small', x: 37, y: 5 });
@@ -1829,7 +1825,7 @@
       drawGround: (ctx, t, ms) => {
         // the old pandanus where 林投姐 stands — twice the size of the others
         const d = G.Objects.get('pandanus');
-        if (d) {
+        if (d && !ms.view3d) {
           ctx.save();
           ctx.translate(11 * T + 32, 4 * T + 54); ctx.scale(2.1, 2.1); ctx.translate(-(11 * T + 32), -(4 * T + 54));
           ctx.globalAlpha = 0.95;
@@ -1860,6 +1856,8 @@
   })());
 
   // =================================================================================================== 長明宮 S1 水門倉
+  // 傀儡哨: a stationary map enemy (never chases, never touched — its cell is solid) drawn with the marionette art
+  const puppet = (id, x, y, dir) => ({ id, troop: 't_c6_guard_a', x, y, dir, art: 'marionette', variant: 1, radius: 0, chase: 0, lv: 40, speed: 0.01 });
   const jarHide = (x, y) => ({ t: 'jar', x, y, v: 1, label: '躲進大甕', interact: (S, o) => Stealth.hideIn(S, o) });
   const palaceLight = { ambient: 0.7, color: '#04081a', playerR: 150, glow: 0.35 };
   const stealthMap = (def) => Object.assign({
@@ -1893,6 +1891,7 @@
       ],
       stealth: { area: 's1', creaky: [[13, 5], [14, 5], [15, 5], [16, 5]], puppets: [{ id: 'p1', x: 15, y: 11, dir: 'up' }], fwPhase: 18 },
       pass: [{ x: 15, y: 11, solid: true }],
+      enemies: [puppet('p1', 15, 11, 'up')],
       events: [
         { id: 'enter', trigger: 'auto', if: (st) => !st.flags.ch6_s1_tut, run: (S) => Sc.stealthTutorial(S) },
         { id: 'pu_p1', trigger: 'action', x: 15, y: 11, label: '貼符', run: (S) => Stealth.puppetCharm(S, { id: 'p1' }) },
@@ -1939,6 +1938,7 @@
       stealth: { area: 's2', creaky: [[15, 3], [16, 3], [17, 3], [18, 3], [15, 4], [16, 4], [17, 4], [18, 4], [35, 15], [36, 15]],
         puppets: [{ id: 'p2', x: 5, y: 4, dir: 'down' }, { id: 'p3', x: 35, y: 26, dir: 'left' }], fwPhase: 10 },
       pass: [{ x: 5, y: 4, solid: true }, { x: 35, y: 26, solid: true }],
+      enemies: [puppet('p2', 5, 4, 'down'), puppet('p3', 35, 26, 'left')],
       events: [
         { id: 'enter', trigger: 'auto', if: (st) => !st.flags.ch6_s2_in, run: (S) => Sc.hallEnter(S) },
         { id: 'pu_p2', trigger: 'action', x: 5, y: 4, label: '貼符', run: (S) => Stealth.puppetCharm(S, { id: 'p2' }) },
@@ -1987,12 +1987,13 @@
         ctx.fillStyle = '#05060c'; ctx.fillRect(11 * T + 16, 1 * T + 6, T * 2 - 32, T - 10);
         ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 3; ctx.strokeRect(11 * T + 16, 1 * T + 6, T * 2 - 32, T - 10);
       },
-      extraOver: (ctx, t) => {
+      extraHud: (ctx, t, ms, scrCell) => {
         for (const [x, y, ch] of SHELVES) {
-          const px = x * T + 64, py = y * T - 112;
-          ctx.fillStyle = 'rgba(70,44,22,0.95)'; ctx.fillRect(px - 18, py - 2, 36, 32);
-          ctx.strokeStyle = '#c8a060'; ctx.lineWidth = 2; ctx.strokeRect(px - 18, py - 2, 36, 32);
-          G.Render.text(ctx, ch, px, py + 1, { size: 24, bold: true, align: 'center', color: '#f6e2b0', shadow: false });
+          const p = scrCell(ms, x + 0.5, y, 2.4);
+          if (!p.vis) continue;
+          ctx.fillStyle = 'rgba(70,44,22,0.95)'; ctx.fillRect(p.x - 16, p.y - 2, 32, 30);
+          ctx.strokeStyle = '#c8a060'; ctx.lineWidth = 2; ctx.strokeRect(p.x - 16, p.y - 2, 32, 30);
+          G.Render.text(ctx, ch, p.x, p.y + 1, { size: 22, bold: true, align: 'center', color: '#f6e2b0', shadow: false });
         }
       },
     });
@@ -2051,7 +2052,6 @@
   })());
 
   // =================================================================================================== 1-12 府城北郊海邊沙丘
-  const DN = { ship: null };
   G.Maps.define('north_dunes', (() => {
     const g = grid(24, 14, 's');
     g.rect(0, 0, 24, 2, ','); g.rect(0, 10, 24, 1, '-'); g.rect(0, 11, 24, 3, '~');
@@ -2061,25 +2061,6 @@
       particles: ['mist', 'wind'],
       tiles: g.rows(),
       deco: ['  P  g    x     g    P  ', ' g    x       g    x    ', '    g          g       ', '', '  g                  g  ', '', '', '         g        ', '', '  e    e      e     e   '],
-      drawOver: (ctx, t) => {
-        const s = DN.ship;
-        if (!s) return;
-        const x = s.x * T, y = 12.2 * T;
-        ctx.save();
-        ctx.globalAlpha = s.alpha;
-        ctx.fillStyle = '#05060c';
-        ctx.beginPath(); ctx.moveTo(x - 230, y - 30); ctx.lineTo(x + 200, y - 40); ctx.lineTo(x + 150, y + 26); ctx.lineTo(x - 190, y + 26); ctx.closePath(); ctx.fill();
-        ctx.fillRect(x - 40, y - 260, 10, 230); ctx.fillRect(x + 70, y - 200, 8, 170);
-        ctx.fillStyle = '#0c0e18'; ctx.beginPath(); ctx.moveTo(x - 30, y - 250); ctx.quadraticCurveTo(x + 50, y - 160, x - 30, y - 60); ctx.closePath(); ctx.fill();
-        for (let i = 0; i < 9; i++) {
-          const lx = x - 200 + i * 46, ly = y - 46 + Math.sin(t * 2 + i) * 2;
-          const gr = ctx.createRadialGradient(lx, ly, 0, lx, ly, 26);
-          gr.addColorStop(0, 'rgba(140,200,255,0.9)'); gr.addColorStop(1, 'rgba(60,120,255,0)');
-          ctx.fillStyle = gr; ctx.fillRect(lx - 26, ly - 26, 52, 52);
-        }
-        if (G.Sprites && G.Sprites.has('baizhi')) G.Sprites.drawChar(ctx, 'baizhi', 'down', 0, x + 160, y - 38, { alpha: 0.95, shadow: false, scale: 0.75 });
-        ctx.restore();
-      },
       events: [{ id: 'story', trigger: 'auto', if: (st) => !st.flags.ch6_ship, run: (S) => Sc.ship(S) }],
     };
   })());
@@ -2127,6 +2108,41 @@
     for (const [id, x, y, dir] of list) { S.setPos(id, x, y, dir); const a = S.actor(id); if (a) { a.visible = true; a.alpha = 1; } }
   }
   const tw = (obj, props, sec, ease) => G.Tweens.to(obj, props, dur(sec), ease || 'inOutQuad');
+
+  // moving scene objects (the 關帝 palanquin, the black ship). The 2D view draws float positions smoothly; the
+  // 3D view rebuilds an object's node when its cell changes, so there it advances cell by cell.
+  const Mover = {
+    add(key, t, x, y, extra) {
+      const ms = MS();
+      ms.objects = ms.objects.filter((o) => o.key !== key);
+      const o = Object.assign({ t, x, y, key, v: 0, solid: false, alpha: 1 }, extra || {});
+      ms.objects.push(o);
+      return o;
+    },
+    get(key) { const ms = MS(); return ms ? ms.objects.find((o) => o.key === key) : null; },
+    remove(key) { const ms = MS(); if (ms) ms.objects = ms.objects.filter((o) => o.key !== key); },
+    async slide(S, key, tx, ty, sec) {
+      const o = Mover.get(key);
+      if (!o) return;
+      if (!MS().view3d) { await tw(o, { x: tx, y: ty }, sec, 'linear'); return; }
+      o.x = Math.round(o.x); o.y = Math.round(o.y);
+      const n = Math.max(1, Math.abs(tx - o.x) + Math.abs(ty - o.y));
+      for (let i = 0; i < n; i++) {
+        if (o.y !== ty) o.y += Math.sign(ty - o.y); else if (o.x !== tx) o.x += Math.sign(tx - o.x);
+        await S.wait(dur(sec / n));
+      }
+    },
+    // the palanquin "nods": a small dip (2D) / a bearer's cue and the creak of the poles (both views)
+    async nod(S, key, times) {
+      const o = Mover.get(key);
+      for (let i = 0; i < times; i++) {
+        S.sfx('guard');
+        if (o && !MS().view3d) { const y0 = o.y; await tw(o, { y: y0 - 0.18 }, 0.22); await tw(o, { y: y0 }, 0.22); }
+        else await S.wait(dur(0.44));
+      }
+    },
+    async fade(S, key, sec) { const o = Mover.get(key); if (o) await tw(o, { alpha: 0 }, sec, 'linear'); Mover.remove(key); },
+  };
 
   // =================================================================================================== 3-1 序：往南的路
   Sc.intro = async (S) => {
@@ -2252,20 +2268,20 @@
     S.spawn({ id: 'ys_mom', sprite: 'ghost_f', x: 23, y: 24, dir: 'left', ghost: true });
     const bearers = [['bear_ayi', 19, 33], ['bear_b', 22, 33], ['bear_c', 19, 31], ['bear_d', 22, 31]];
     for (const [id, x, y] of bearers) S.spawn({ id, sprite: id === 'bear_ayi' ? 'villager_m2' : 'villager_m', x, y, dir: 'up' });
-    YS.palanquin = { x: 20, y: 31, alpha: 1, rot: 0, dip: 0 };
+    Mover.add('c6_pal', 'palanquin', 20, 31);
     await S.camera(21, 25, 0.1);
     await S.fadeIn(0.6);
     S.bgm('procession');
     await S.say('', '鑼鼓聲從南邊回來了。神轎由南往北回駕。');
     for (const [id] of bearers) S.move(id, 'UUUUUUU', { speed: 1.6, wait: false });
-    await tw(YS.palanquin, { y: 24 }, 4.3, 'linear');
+    await Mover.slide(S, 'c6_pal', 20, 24, 4.3);
     await S.say('', '阿義在轎前右腳的位置，肩膀紅腫，咬著牙，笑著。');
     await S.say('', '阿義的母親站在路邊，看著他。');
     S.face('ys_mom', 'left');
     await S.say('阿義的阿母', '……長這麼大了……肩膀這麼寬了……');
     await S.say('轎夫', '咦……？轎……又重了……');
-    await tw(YS.palanquin, { rot: 0.18 }, 0.6);
-    for (let i = 0; i < 1; i++) { await tw(YS.palanquin, { dip: 10 }, 0.25); await tw(YS.palanquin, { dip: 0 }, 0.25); }
+    S.emote('bear_b', '!');
+    await Mover.nod(S, 'c6_pal', 1);
     S.sfx('gong');
     await wait(S, 0.6);
     S.emote('bear_ayi', '…');
@@ -2279,9 +2295,8 @@
     if (mom) { tw(mom, { offsetY: -60 }, 1.4); await S.fadeActor('ys_mom', 0, dur(1.4)); }
     S.remove('ys_mom');
     await S.say('阿義', '（……不知為何淚流滿面。他用力扛起轎。）起轎——！');
-    await tw(YS.palanquin, { rot: 0 }, 0.4);
     for (const [id] of bearers) S.move(id, 'UUUUUU', { speed: 2, wait: false });
-    tw(YS.palanquin, { y: 18, alpha: 0 }, 3, 'linear');
+    (async () => { await Mover.slide(S, 'c6_pal', 20, 18, 2.6); await Mover.fade(S, 'c6_pal', 0.6); })();
     await wait(S, 1.2);
     S.flag('ch6_yanshui_done');
     S.quest('q_yanshui_mother', 'done');
@@ -2289,7 +2304,7 @@
     await S.give('c6_wumiao_charm');
     await S.fadeOut(0.5);
     for (const [id] of bearers) S.remove(id);
-    YS.palanquin = null;
+    Mover.remove('c6_pal');
     S.cameraFollow();
     S.gather();
     S.bgm('festival');
@@ -2311,18 +2326,20 @@
     await S.say('林伯', '……時辰到了。起轎！');
     await S.fadeOut(0.8);
     S.flag('ch6_night');
-    YS.palanquin = { x: 20, y: 5.5, alpha: 0, rot: 0, dip: 0 };
     await S.warp('yanshui', 23, 10, 'left', { fade: 0, noAutosave: true });
     stage(S, [['player', 23, 10, 'left'], ['baizhi', 24, 10, 'left'], ['hongying', 23, 11, 'left'], ['yungui', 24, 11, 'left'], ['tuanzi', 22, 11, 'left']]);
     const bearers = [['bear_ayi', 22, 7], ['bear_b', 19, 7], ['bear_c', 19, 9], ['bear_d', 22, 9]];
     for (const [id, x, y] of bearers) S.spawn({ id, sprite: id === 'bear_ayi' ? 'villager_m2' : 'villager_m', x, y, dir: 'down' });
     S.spawn({ id: 'crowd_hat', sprite: 'old_m', x: 25, y: 12, dir: 'left' });
+    const pal = Mover.add('c6_pal', 'palanquin', 20, 5);
+    pal.alpha = 0;
     S.bgm('procession');
     await S.camera(21, 10, 0.1);
     await S.fadeIn(0.8);
     S.sfx('gong');
     await S.say('', '夜。武廟前。鑼鼓、北管嗩吶齊響。');
-    await tw(YS.palanquin, { y: 7, alpha: 1 }, 1.4);
+    tw(pal, { alpha: 1 }, 0.6);
+    await Mover.slide(S, 'c6_pal', 20, 7, 1.4);
     await S.say('', '神轎抬出廟門。人群裹著棉襖、戴著斗笠、毛巾包頭，像一群圓滾滾的粽子。');
     S.emote('tuanzi', '!');
     await S.say('tuanzi:surprise', '大家都變成吾的形狀了！');
@@ -2361,21 +2378,21 @@
     S.objective('跟著神轎走，把瘟鬼從人群旁邊引開');
     // wave 1 — 小巷A口
     for (const [id] of bearers) S.move(id, 'DDDDDDD', { speed: 2.2, wait: false });
-    await tw(YS.palanquin, { y: 14 }, 3.2, 'linear');
+    await Mover.slide(S, 'c6_pal', 20, 14, 3.2);
     let r = await yanshuiWave(S, 't_c6_yanshui_1', [[15, 17], [16, 17], [14, 18]], [19, 17, 0, 'left']);
     if (r !== 'win') return;
     await S.say('斗笠阿伯', '少年仔！接著——濕毛巾！包頭包脖子！');
     healPct(0.3);
     // wave 2 — 小巷B口
     for (const [id] of bearers) S.move(id, 'DDDDDD', { speed: 2.2, wait: false });
-    await tw(YS.palanquin, { y: 20 }, 2.8, 'linear');
+    await Mover.slide(S, 'c6_pal', 20, 20, 2.8);
     r = await yanshuiWave(S, 't_c6_yanshui_2', [[26, 23], [27, 23], [28, 22]], [23, 23, 0, 'right']);
     if (r !== 'win') return;
     await S.say('hongying:serious', '還有！巷子裡還在爬出來！');
     healPct(0.3);
     // wave 3 — 小巷C口
     for (const [id] of bearers) S.move(id, 'DDDDDD', { speed: 2.2, wait: false });
-    await tw(YS.palanquin, { y: 26 }, 2.8, 'linear');
+    await Mover.slide(S, 'c6_pal', 20, 26, 2.8);
     r = await yanshuiWave(S, 't_c6_yanshui_3', [[26, 29], [27, 29], [28, 28], [29, 29]], [23, 29, 0, 'right']);
     if (r !== 'win') return;
     healPct(0.35);
@@ -2397,11 +2414,11 @@
     // the palanquin turns into the junction by the mound
     for (const [id] of bearers) S.move(id, 'DDRRRRR', { speed: 2.2, wait: false });
     S.sfx('gong');
-    await tw(YS.palanquin, { y: 27.5, x: 26 }, 3.0);
+    await Mover.slide(S, 'c6_pal', 25, 27, 3.0);
     await S.say('', '鑼鼓聲逼近。關帝的神轎轉進大疫塚前的路口。轎夫們汗流浹背，炮火如雨。');
     await S.say('轎夫', '……轎……變重了。');
-    await tw(YS.palanquin, { rot: 0.2 }, 0.8);
-    for (let i = 0; i < 3; i++) { await tw(YS.palanquin, { dip: 12 }, 0.28); S.sfx('guard'); await tw(YS.palanquin, { dip: 0 }, 0.28); }
+    S.emote('bear_b', '!'); S.emote('bear_c', '!');
+    await Mover.nod(S, 'c6_pal', 3);
     await S.say('', '神轎微微轉向，朝著瘟鬼們的方向，輕輕點了三下。');
     S.sfx('gong');
     await wait(S, 0.8);
@@ -2427,13 +2444,13 @@
     await S.say('林伯', '帝君出巡，不只是趕瘟。');
     await S.say('林伯', '也是來接那些走得太急、來不及說再見的人。');
     for (const [id] of bearers) S.move(id, 'DDDDD', { speed: 2, wait: false });
-    tw(YS.palanquin, { y: 33, x: 21, alpha: 0, rot: 0 }, 4, 'linear');
+    (async () => { await Mover.slide(S, 'c6_pal', 21, 31, 3.2); await Mover.fade(S, 'c6_pal', 0.8); })();
     await S.say('', '關帝神轎繼續前行，消失在硝煙與炮火中。');
     S.bgm('festival', { fade: 2 });
     await wait(S, 1.2);
     for (const [id] of bearers) S.remove(id);
     S.remove('keeper_s'); S.remove('crowd_hat');
-    YS.palanquin = null;
+    Mover.remove('c6_pal');
     S.flag('ch6_beehive');
     S.quest('q_ch6_main', 1);
     S.cameraFollow();
@@ -3087,7 +3104,7 @@
       '守衛看得見前方的扇形。站在長明燈的光裡，會被看得很遠；在暗處，只看得到三格。',
       '被看見時，守衛頭上的量表會上升——過了一半，他會起疑走過來；滿了，就會衝過來。',
       '跑步（Shift）和深色的吱嘎木板會發出聲音。前門每三十秒放一次煙火，煙火聲會蓋住一切聲音。',
-      '發光的大甕可以躲進去（Z）。按 Q，糰子會衝出去搗蛋，把附近的守衛引開。',
+      '發光的大甕可以躲進去（Z）。按 F，糰子會衝出去搗蛋，把附近的守衛引開。',
       '傀儡哨會轉頭張望，看見人就搖鈴叫守衛。從它背後靠近，雲歸可以貼上定身符。',
       '被抓到就要戰鬥，打贏後回到入口的石燈重來。整區都沒被發現，出口附近會有一個寶箱。',
     ], { veil: 0.85 });
@@ -3447,8 +3464,11 @@
     await S.say('hongying:hurt', '……這裡是……哪裡……');
     await S.say('yungui:hurt', '（咳血）府城北邊……三十里左右。遁符……就只能逃這麼遠。');
     await S.say('tuanzi:cry', '星河！星河醒醒！');
-    DN.ship = { x: 30, alpha: 1 };
-    await tw(DN.ship, { x: 19 }, 3.5, 'linear');
+    Mover.add('c6_ship', 'boat_ferry', 26, 11, { light: { r: 260, color: '#5a9aff', flicker: 0.3 } });
+    S.spawn({ id: 'bz_ship', sprite: 'baizhi', x: 28, y: 11, dir: 'up', ghost: true });
+    S.move('bz_ship', 'LLLLLLL', { speed: 2, wait: false });
+    await Mover.slide(S, 'c6_ship', 19, 11, 3.5);
+    S.face('bz_ship', 'up');
     await S.say('', '遠方的海面上，一艘巨大的黑船從府城的方向駛出，船身掛滿冷藍色的燈籠，緩緩駛向外海。');
     await S.say('', '船尾，一個銀白長髮的身影站著，看向岸邊。');
     await S.say('hongying:cry', '白芷……');
@@ -3465,13 +3485,16 @@
     S.bgm('sad');
     S.sfx('sing');
     await S.say('', '海上，船尾。一陣歌聲，順著海風飄了過來。是渡魂謠。');
-    tw(DN.ship, { x: 2 }, 9, 'linear');
+    S.move('bz_ship', 'LLLLLLLLLLLLLLLLL', { speed: 1.9, wait: false });
+    Mover.slide(S, 'c6_ship', 2, 11, 9);
     await S.say('白芷（歌聲）', '「燈一盞，渡一人，黑水茫茫莫回身……」');
     S.sfx('sing');
     await S.say('白芷（歌聲）', '「此身化作燈一盞，照你回家……莫照我……」');
-    await tw(DN.ship, { x: -8, alpha: 0 }, 4, 'linear');
+    await wait(S, 2.5);
+    S.fadeActor('bz_ship', 0, dur(2));
+    await Mover.fade(S, 'c6_ship', 2);
+    S.remove('bz_ship');
     await S.say('', '歌聲越來越遠。船越來越小，變成一點藍光，往西，往澎湖的方向，消失在海平線。');
-    DN.ship = null;
     S.flag('lyric_ch6');
     S.toast('記下了渡魂謠的殘句：「此身化作燈一盞，照你回家莫照我。」', 'scroll');
     await S.say('', '星河跪在淺水裡。手裡，緊緊握著那塊玉牌。');

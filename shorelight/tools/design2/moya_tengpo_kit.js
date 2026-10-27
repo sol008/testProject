@@ -232,6 +232,7 @@
     ctx.save();
     if (o.op) ctx.globalCompositeOperation = o.op;
     if (o.alpha != null) ctx.globalAlpha = o.alpha;
+    if (o.blur) ctx.filter = `blur(${o.blur * (K.pxScale || 1)}px)`;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(L[0][0], L[0][1]);

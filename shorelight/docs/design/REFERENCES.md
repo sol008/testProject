@@ -23,18 +23,17 @@ colouring, mood), then render in the game's style and 19th-century Qing-era Taiw
   can merge with the story's red string (紅繩).
 
 ## Pets: two cat references
-### 糰子 Tuanzi (雲歸's companion; story: chubby 石虎 Formosan leopard-cat spirit) ← cat reference A
+### 芋圓 Yuyuan (NEW pet, adopts 星河) ← cat reference A
 - **Breed/coat:** sturdy, **chubby blue-grey tabby domestic shorthair** with a dense, plush, velvety coat. Silvery
   ticking catches the light. Soft darker tabby stripes on the forehead (classic "M"), cheeks and shoulders; paler grey-white
   muzzle and chin.
 - **Head:** broad round head, full cheeks, **large upright ears** (pinkish inside, slightly flared).
-- **Eyes:** round **olive / yellow-green eyes**, with a skeptical, deadpan, slightly grumpy "judging you" look. That is
-  perfect for 糰子's sardonic talking-spirit personality.
+- **Eyes:** round **olive / yellow-green eyes**, with a skeptical, deadpan, slightly grumpy "judging you" look.
 - **Whiskers:** long, white, prominent.
 - **Body:** big, heavy, loaf-like, with dignified bulk.
-- **To keep him a 石虎 spirit:** add faint leopard-cat cues *on top of* the grey tabby: two pale stripes running from
-  the eyes up over the forehead, white spots on the backs of the ears (石虎's signature), and a few rosette spots on the
-  flanks that glow faintly when he uses spirit powers. The base look stays the grey tabby.
+- **Personality:** silent, heavy, unimpressed by everything (including ghosts); has decided 星河 belongs to him.
+  In battle he is an earth-element body-block assist. On the field he sits on pressure plates.
+- (糰子 the 石虎 spirit is unchanged and separate; these two cats are NEW pets.)
 
 ### 麻糬 Mochi (NEW pet companion, travels with 白芷) ← cat reference B
 - **Breed/coat:** large, very fluffy **long-haired dilute calico** (Siberian / Maine-coon-like floof).

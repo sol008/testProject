@@ -23,10 +23,14 @@ const opt = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 
 const ONLY = opt('only', '') ? String(opt('only')).split(',') : null;
 const MAPS = opt('maps', '') ? String(opt('maps')).split(',') : null;
 const TROOP_LIMIT = +opt('troops', 0) || 0;
-const WORKERS = Math.max(1, +opt('workers', 4) || 4);
+const WORKERS = Math.max(1, +opt('workers', 3) || 3);
 const HEADED = argv.includes('--headed');
 const SHOTS = argv.includes('--shots');
 const NO_SWEEP = argv.includes('--no-sweep');
+// 3D renderer (js/r3d, Three.js / WebGL #game3d canvas): scenario tests run with the game's default;
+// sweeps run with settings.render3d=false (software WebGL is very slow headless) unless --3d. --no3d forces it off everywhere.
+const FORCE_3D = argv.includes('--3d');
+const NO_3D = argv.includes('--no3d');
 const OUT = path.join(__dirname, 'out');
 fs.mkdirSync(OUT, { recursive: true });
 const BASE = 'file://' + path.join(ROOT, 'index.html');
@@ -134,6 +138,8 @@ class Session {
     if (!this.ctx) {
       this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
       await this.ctx.addInitScript(INIT);
+      const off = NO_3D || (this.no3d && !FORCE_3D);
+      if (off) await this.ctx.addInitScript(() => { try { const k = 'shorelight_settings'; const v = JSON.parse(localStorage.getItem(k) || '{}'); v.render3d = false; localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } });
     }
     if (this.page) await this.page.close().catch(() => {});
     this.page = await this.ctx.newPage();
@@ -144,11 +150,11 @@ class Session {
       else if (m.type() === 'warning') this.warnings.push(t.slice(0, 300));
     });
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 1500)));
-    await this.page.goto(BASE + query);
-    await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: o.timeout || 30000 });
+    await this.page.goto(BASE + query, { timeout: 90000 });
+    await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: o.timeout || 60000 });
     // Autoplay/test hooks must never mask input bugs: every e2e test runs with them OFF.
     await this.page.evaluate(() => { if (G.Debug) { if (G.Debug.setAutoplay) G.Debug.setAutoplay(false); G.Debug.autoplay = false; } G.settings.autoAdvance = false; });
-    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: o.timeout || 30000 });
+    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: o.timeout || 60000 });
     return this.page;
   }
   async close() { if (this.ctx) await this.ctx.close().catch(() => {}); this.ctx = null; this.page = null; }
@@ -253,6 +259,7 @@ const firstLines = (s, n = 3) => String(s).split('\n').slice(0, n).join(' | ');
 
 async function runTest(browser, t) {
   const s = new Session(browser);
+  s.no3d = !!t.o.no3d;
   const t0 = Date.now();
   let status = 'pass', msg = '';
   const warnings = [];
@@ -323,7 +330,7 @@ const DLG_STATE = () => {
   const t = G.Scenes.top();
   return JSON.stringify({ top: __qa.top(), log: G.Dialog.log.length, page: t && t.page, shown: t && Math.floor(t.shown || 0), done: !!(t && t.done), idx: t && t.list && t.list.idx, line: t && t.idx });
 };
-function defineKeyTests() {
+function defineKeyTests(info) {
   test('key-dialog', 'REAL KEYS: dialogue single & multi-page advance with Z/Space/Enter; choices with arrows, Enter and X', async (s, warn) => {
     await openOnMap(s, info);
     assert(await s.autoplayOff(), 'autoplay is on');
@@ -534,7 +541,29 @@ function defineKeyTests() {
 
 // ================================================================== tests
 function defineTests(info) {
-  defineKeyTests();
+  defineKeyTests(info);
+  test('3d', '3D renderer: #game3d WebGL canvas coexists with the 2D UI canvas; maps render; menu/dialog still work', async (s, warn) => {
+    if (NO_3D) skip('--no3d');
+    const maps = info.maps.filter((m) => m !== 'sandbox').slice(0, 3).concat(info.maps.includes('sandbox') ? ['sandbox'] : []);
+    for (const m of maps) {
+      await s.open(DEBUG_Q(m), { waitMap: true });
+      const st = await s.ev(() => ({ r3: !!G.R3, supported: !!(G.R3 && G.R3.supported && G.R3.supported()), enabled: !!(G.R3 && G.R3.enabled && G.R3.enabled()), canvas3: !!document.getElementById('game3d') }));
+      if (!st.r3) skip('G.R3 not present');
+      if (!st.supported) { warn('WebGL/THREE not available headless — 3D path not exercised'); return; }
+      await s.frames(20);
+      const cs = await s.screenStats();
+      assert(cs.std > 2, `${m}: screen is flat with 3D ${st.enabled ? 'on' : 'off'} (std ${cs.std.toFixed(1)}, #game3d ${cs.show3d ? 'visible' : cs.has3d ? 'hidden' : 'absent'})`);
+      await s.shot('3d_' + m);
+      await s.drainGameErrors();
+      if (s.realErrors().length) throw new Error(`errors rendering ${m} with the 3D renderer`);
+    }
+    // UI over 3D: pause menu opens/closes with real keys
+    await pressAndSettle(s, 'Escape', 4);
+    await s.waitTop('MenuScene', 5000);
+    await pressAndSettle(s, 'x', 4);
+    await s.waitTop('MapScene', 5000);
+  }, { timeout: 240000 });
+
   test('boot', 'boot: page loads, title scene renders, no errors', async (s) => {
     await s.open('');
     await s.waitTop('TitleScene', 15000);
@@ -957,7 +986,7 @@ async function mapSweep(browser, info) {
   console.log(`\n${C.b}Map sweep${C.x} (${maps.length} maps, ?debug&map=<id>)`);
   await pool(maps, WORKERS, async (mid) => {
     await runTest(browser, {
-      id: 'map:' + mid, name: `map ${mid}: loads, renders, NPC dialogue & events run`, o: { timeout: 900000 },
+      id: 'map:' + mid, name: `map ${mid}: loads, renders, NPC dialogue & events run`, o: { timeout: 900000, no3d: true },
       fn: async (s, warn) => {
         await s.open(DEBUG_Q(mid), { waitMap: true, timeout: 30000 });
         const id = await s.ev(() => G.mapScene.def.id);
@@ -1020,6 +1049,7 @@ async function battleSweep(browser, info) {
   const lost = [];
   await pool(chunks, WORKERS, async (chunk) => {
     const s = new Session(browser);
+    s.no3d = true;
     const fresh = async () => {
       await openOnMap(s, info);
       await s.ev(() => {

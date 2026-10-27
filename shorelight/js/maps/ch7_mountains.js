@@ -162,9 +162,9 @@
   // enemy skills
   sk('c7_e_qf_slash', { name: '鬼面斬', desc: '', mp: 0, type: 'phys', elem: 'metal', target: 'enemy', power: 1.2, fx: 'slash', sfx: 'slash' });
   sk('c7_e_qf_sneer', { name: '冷笑', desc: '面具下傳來冷冷的笑聲。', mp: 0, type: 'debuff', elem: null, target: 'enemy', power: 0, buffs: [{ stat: 'def', amt: -0.3, turns: 3 }], fx: 'debuff', sfx: 'debuff' });
-  for (const [el, nm, fx, sfx] of [['metal', '金', 'metal', 'metal'], ['wood', '木', 'wood', 'thunder'], ['water', '水', 'water', 'water'], ['fire', '火', 'fire', 'fire'], ['earth', '土', 'earth', 'earth']]) {
-    sk('c7_e_yg_fu_' + el, { name: `五行符・${nm}`, desc: '', mp: 0, type: 'mag', elem: el, target: 'enemy', power: 1.1, fx, sfx });
-    sk('c7_e_qx_' + el, { name: `五行符・${nm}`, desc: '', mp: 0, type: 'mag', elem: el, target: 'enemy', power: 1.2, fx: fx + '_big', sfx });
+  for (const [el, nm, fx, sfx] of [['metal', '五行符・金', 'metal', 'metal'], ['wood', '五行符・木', 'wood', 'thunder'], ['water', '五行符・水', 'water', 'water'], ['fire', '五行符・火', 'fire', 'fire'], ['earth', '五行符・土', 'earth', 'earth']]) {
+    sk('c7_e_yg_fu_' + el, { name: nm, desc: '', mp: 0, type: 'mag', elem: el, target: 'enemy', power: 1.1, fx, sfx });
+    sk('c7_e_qx_' + el, { name: nm, desc: '', mp: 0, type: 'mag', elem: el, target: 'enemy', power: 1.2, fx: fx + '_big', sfx });
   }
   sk('c7_e_yg_wulei', { name: '五雷', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 0.8, fx: 'wood_big', sfx: 'thunder' });
   sk('c7_e_yg_ding', { name: '定身', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemy', power: 0, status: { id: 'stun', chance: 0.3, turns: 1 }, fx: 'seal', sfx: 'magic' });
@@ -1679,10 +1679,10 @@
     two([[21, 39], [21, 31], [18, 24], [16, 14]], '=');
     two([[16, 14], [19, 12], [20, 6], [20, 0]], '=');
     two([[20, 26], [28, 20], [36, 12]], '=');
-    g.path([[19, 27], [9, 24], [7, 24]], ':');
+    g.path([[19, 26], [12, 22], [8, 22], [6, 22]], ':');
     g.obj('tree_cypress', 14, 8); g.obj('tree_cypress', 16, 8); g.obj('tree_cypress', 14, 10); g.obj('tree_cypress', 16, 10);
     g.reserve(12, 6, 8, 8);
-    g.obj('log', 6, 24, { if: (st) => !st.flags.ch7_log_moved });
+    g.obj('log', 6, 23, { if: (st) => !st.flags.ch7_log_moved });
     g.obj('tree_dead', 11, 35);
     g.obj('vine_curtain', 3, 30); g.obj('vine_curtain', 12, 29); g.obj('vine_curtain', 2, 34);
     g.obj('rock_small', 4, 28); g.obj('rock_small', 12, 33); g.obj('stump', 8, 33);
@@ -1719,7 +1719,7 @@
           await S.say('', '紅檜神木的樹幹像一面牆，樹皮的紋路如流水。它在這裡站了三千年。');
         } },
         { id: 'clouds', trigger: 'touch', x: 38, y: 10, w: 3, h: 4, if: (st) => !st.flags.ch7_seaofclouds, run: async (S) => { await C7.scene74b(S); } },
-        { id: 'log', trigger: 'action', x: 6, y: 24, w: 2, h: 1, label: '調查', if: (st) => !st.flags.ch7_log_moved, run: async (S) => {
+        { id: 'log', trigger: 'action', x: 6, y: 23, w: 2, h: 1, label: '調查', if: (st) => !st.flags.ch7_log_moved, run: async (S) => {
           if ((F().ch7_sq_pasuya || 0) >= 1 && !S.has('ch7_upper')) {
             await S.say('', '一根橫倒的大木頭擋住了往下的陡坡。坡下是一片濃得化不開的霧。');
             await S.say('hongying:serious', '讓開，這種事我來。');
@@ -3700,7 +3700,7 @@
       ['', '嬰兒沒有哭。海水已經漫過了他的臉。'],
       ['xinghe:surprise', '……那是……我？'],
     ]);
-    await S.move('player', 'RR');
+    await S.move('player', 'URR');
     S.shake(2, 0.2);
     await S.lines([
       ['', '星河衝過去，伸手——手穿過了籃子。這是記憶，碰不到。'],
@@ -4457,19 +4457,19 @@
 
   // ================================================================================================ 1.13 lamp_shrine 燈母祠（上殿／下殿）
   const MURALS = {
-    1: { title: '燈母點燈', text: '遠古的黑海上，一位女子將自己的心放進一盞燈裡。燈亮了，海上第一次有了方向。', who: 'xinghe:think', line: '燈母……把自己的心點成了燈。', v: 0 },
-    2: { title: '燈靈上岸', text: '燈光衰弱的年代，一個少女從燈中走出，赤足踏上沙灘。岸上有人提著燈籠迎她。', who: 'hongying:think', line: '提燈籠的人……是引魂人？', v: 1 },
-    3: { title: '竹筏與老人', text: '一個老人坐在岸邊，身旁點著一盞燈。海上很遠很遠的地方，有一點光在回應他。', who: 'xinghe:sad', line: '……他等到了。只是太遠了，他看不見。', v: 2 },
-    4: { title: '斷船與書生', text: '一個書生走在陸地上，背後的海上，少女提著燈目送他。書生的腳印很深，像背負著什麼他不記得的東西。', who: 'yungui:think', line: '忘了，但腳印還是重的。……記憶這種東西，大概不只住在腦子裡。', v: 1 },
-    5: { title: '千手', text: '無數的人，各自舉著一盞小小的燈，站在海岸上。他們的燈光匯成一條路，一直延伸到海的盡頭。', who: 'xinghe:surprise', line: '這是……一千個人？一千盞燈？', who2: 'yungui:think', line2: '這幅畫……跟其他的不一樣。其他的都畫著「發生過的事」。這一幅……沒有發生過。', v: 3 },
-    6: { title: '空白', text: '牆上只有一個畫框。框裡是空的，只有一層淡淡的水痕。', who: 'hongying:think', line: '沒畫完？', who2: 'xinghe:serious', line2: '……不。是還沒有發生。', v: 2, blank: true },
+    1: { title: '壁畫一「燈母點燈」', text: '遠古的黑海上，一位女子將自己的心放進一盞燈裡。燈亮了，海上第一次有了方向。', who: 'xinghe:think', line: '燈母……把自己的心點成了燈。', v: 0 },
+    2: { title: '壁畫二「燈靈上岸」', text: '燈光衰弱的年代，一個少女從燈中走出，赤足踏上沙灘。岸上有人提著燈籠迎她。', who: 'hongying:think', line: '提燈籠的人……是引魂人？', v: 1 },
+    3: { title: '壁畫三「竹筏與老人」', text: '一個老人坐在岸邊，身旁點著一盞燈。海上很遠很遠的地方，有一點光在回應他。', who: 'xinghe:sad', line: '……他等到了。只是太遠了，他看不見。', v: 2 },
+    4: { title: '壁畫四「斷船與書生」', text: '一個書生走在陸地上，背後的海上，少女提著燈目送他。書生的腳印很深，像背負著什麼他不記得的東西。', who: 'yungui:think', line: '忘了，但腳印還是重的。……記憶這種東西，大概不只住在腦子裡。', v: 1 },
+    5: { title: '壁畫五「千手」', text: '無數的人，各自舉著一盞小小的燈，站在海岸上。他們的燈光匯成一條路，一直延伸到海的盡頭。', who: 'xinghe:surprise', line: '這是……一千個人？一千盞燈？', who2: 'yungui:think', line2: '這幅畫……跟其他的不一樣。其他的都畫著「發生過的事」。這一幅……沒有發生過。', v: 3 },
+    6: { title: '壁畫六「空白」', text: '牆上只有一個畫框。框裡是空的，只有一層淡淡的水痕。', who: 'hongying:think', line: '沒畫完？', who2: 'xinghe:serious', line2: '……不。是還沒有發生。', v: 2, blank: true },
   };
   C7.MURALS = MURALS;
   const muralCount = () => { const b = F().ch7_murals || 0; let n = 0; for (let i = 1; i <= 6; i++) if (b & (1 << i)) n++; return n; };
   C7.muralCount = muralCount;
   C7.readMural = async (S, i) => {
     const mu = MURALS[i];
-    await S.say('', `壁畫${['', '一', '二', '三', '四', '五', '六'][i]}「${mu.title}」`);
+    await S.say('', mu.title);
     await S.say('', mu.text);
     await S.say(mu.who, mu.line);
     if (mu.who2) await S.say(mu.who2, mu.line2);
@@ -4512,7 +4512,7 @@
     if (lit.includes(el)) { await S.say('', '這盞燈已經點著了。'); return; }
     S.sfx('fire');
     S.flash(WX_COL[el], 0.3, 0.3);
-    S.toast(`雲歸擲出了${WX[el].name}符。`, 'talisman');
+    S.toast({ wood: '雲歸擲出了木符。', fire: '雲歸擲出了火符。', earth: '雲歸擲出了土符。', metal: '雲歸擲出了金符。', water: '雲歸擲出了水符。' }[el], 'talisman');
     const last = v.c7_wx_last;
     v.c7_wx_last = el;
     if (WX_ORDER[lit.length] === el) {

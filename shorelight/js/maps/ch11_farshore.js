@@ -885,7 +885,7 @@
     warps: [
       { x: 17, y: 9, to: 'wangboat_cabin11', tx: 7, ty: 6, tdir: 'up', door: true },
       { x: 27, y: 8, to: 'penghu_magong', tx: 11, ty: 7, tdir: 'right', if: (st) => st.flags.ch11_start && !st.flags.ch11_jailer && !st.flags.ch11_sail },
-      { x: 27, y: 8, to: 'xuanwu_shore', tx: 32, ty: 35, tdir: 'up', if: (st) => st.flags.ch11_jailer && !st.flags.ch11_sail },
+      { x: 27, y: 8, to: 'xuanwu_shore', tx: 28, ty: 36, tdir: 'left', if: (st) => st.flags.ch11_jailer && !st.flags.ch11_sail },
       { x: 27, y: 8, to: 'farshore_field', tx: 27, ty: 39, tdir: 'up', if: (st) => leg(st) >= 5 },
     ],
     onEnter: async (S) => { S.hideFollowers(true); },
@@ -953,7 +953,7 @@
     { t: 'drying_rack', x: 18, y: 5, v: 0, interact: ['竹架上曬著丁香魚和小管。風停了，魚曬不乾。'], label: '調查' },
     { t: 'drying_rack', x: 18, y: 7, v: 0 },
     { t: 'signboard', x: 14, y: 10, text: '石敢當', interact: ['刻著「石敢當」三個字的石碑，立在路衝，擋煞。', '澎湖的風大，連煞都要有東西擋。'], label: '調查' },
-    { t: 'signboard', x: 25, y: 33, text: '石敢當', interact: ['南口的石敢當。過了這裡，就是退乾的海床。'], label: '調查' },
+    { t: 'signboard', x: 27, y: 32, text: '石敢當', interact: ['南口的石敢當。過了這裡，就是退乾的海床。'], label: '調查' },
     { t: 'shophouse', x: 17, y: 12, door: -1, text: '雜貨', v: 1 },
     { t: 'stall', x: 19, y: 16, text: '黑糖糕', counter: true },
     { t: 'shophouse', x: 25, y: 12, door: -1, text: '鐵舖', v: 2 },
@@ -1018,7 +1018,7 @@
       { id: 'ph_crowd1', sprite: 'fisherman', name: '漁民', x: 24, y: 3, dir: 'up', if: stA, light: { r: 100, color: '#ffa050' }, talk: [['漁民', '彼……彼是啥物？']] },
       { id: 'ph_crowd2', sprite: 'villager_m', name: '漁民', x: 26, y: 3, dir: 'up', if: stA, light: { r: 100, color: '#ffa050' }, talk: [['漁民', '海哪會退甲遮爾遠……']] },
       { id: 'ph_crowd3', sprite: 'villager_f2', name: '婦人', x: 28, y: 3, dir: 'up', if: stA, talk: [['婦人', '媽祖婆保庇……']] },
-      { id: 'ph_crowd4', sprite: 'child_f', name: '囡仔', x: 25, y: 4, dir: 'up', if: stA, talk: [['囡仔', '阿母，天星袂振動！']] },
+      { id: 'ph_crowd4', sprite: 'child_f', name: '囡仔', x: 31, y: 3, dir: 'up', if: stA, talk: [['囡仔', '阿母，天星袂振動！']] },
       // townsfolk who make the town feel alive in B/C
       { id: 'ph_town1', sprite: 'villager_m', name: '補網的阿伯', x: 30, y: 19, dir: 'down', wander: 2, if: (st) => !stA(st) && !dawnPenghu(st),
         talk: (S) => (stC(G.state) ? L(S, [['補網的阿伯', '風轉來矣！明仔載透早，大家攏欲出海喔！']]) : L(S, [['補網的阿伯', '網補好矣，海煞無去。'], ['補網的阿伯', '我補網補四十冬，毋捌補過這款心肝。']])) },
@@ -1256,7 +1256,7 @@
     enemies: [
       { id: 'pg1', troop: 'penghu_1', x: 18, y: 4, art: 'pirate_ghost', lv: 39, radius: 3 },
       { id: 'pg2', troop: 'penghu_3', x: 14, y: 9, art: 'pirate_ghost', lv: 39, radius: 3 },
-      { id: 'pg3', troop: 'penghu_1', x: 33, y: 10, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg3', troop: 'penghu_1', x: 36, y: 12, art: 'pirate_ghost', lv: 39, radius: 3 },
       { id: 'pg4', troop: 'penghu_2', x: 10, y: 15, art: 'sea_monster', variant: 2, lv: 39, radius: 2 },
       { id: 'pg5', troop: 'penghu_3', x: 29, y: 22, art: 'pirate_ghost', lv: 39, radius: 3 },
       { id: 'pg6', troop: 'penghu_1', x: 13, y: 22, art: 'pirate_ghost', lv: 39, radius: 3 },
@@ -1411,8 +1411,8 @@
         talk: (S) => H.freedSoul(S) },
     ],
     enemies: [
-      { id: 'b1a', troop: 'xuanwu_2', x: 7, y: 26, art: 'lantern_golem', variant: 1, lv: 40, radius: 3 },
-      { id: 'b1b', troop: 't11_xw_drowned', x: 35, y: 26, art: 'drowned_swarm', lv: 41, radius: 3 },
+      { id: 'b1a', troop: 'xuanwu_2', x: 5, y: 26, art: 'lantern_golem', variant: 1, lv: 40, radius: 3 },
+      { id: 'b1b', troop: 't11_xw_drowned', x: 37, y: 26, art: 'drowned_swarm', lv: 41, radius: 3 },
       { id: 'b1c', troop: 'xuanwu_1', x: 21, y: 22, sprite: 'temple_guard', lv: 40, radius: 2 },
     ],
     events: [
@@ -1590,7 +1590,7 @@
     events: [
       { id: 'c11_10', trigger: 'auto', if: (st) => !st.flags.ch11_jailer, run: (S) => H.c11_10(S) },
     ],
-    warps: [{ x: 11, y: 19, w: 2, to: 'xuanwu_1f', tx: 21, ty: 4, tdir: 'down' }],
+    warps: [{ x: 11, y: 19, w: 2, to: 'xuanwu_1f', tx: 22, ty: 5, tdir: 'down' }],
     drawGround: (ctx, t) => {
       // 逆潮陣: concentric rune circles
       const x = 12 * T, y = 8.6 * T;

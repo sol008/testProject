@@ -82,8 +82,8 @@
   // soft anisotropic sheen band running parallel to a tier hem
   function sheen(ctx, pts, dy, w) {
     ctx.save(); ctx.globalCompositeOperation = 'screen';
-    K.taper(ctx, pts.map((q) => [q[0], q[1] - dy]), w, '#5866a8', { alpha: 0.32, w0: 0.1, w1: 0.1, a: 0.3, b: 0.3, noScale: true });
-    K.taper(ctx, pts.map((q) => [q[0], q[1] - dy - 2]), w * 0.35, '#9aa8e0', { alpha: 0.35, w0: 0.1, w1: 0.1, a: 0.35, b: 0.35, noScale: true });
+    K.taper(ctx, pts.map((q) => [q[0], q[1] - dy]), w * 1.3, '#5866a8', { alpha: 0.28, w0: 0.1, w1: 0.1, a: 0.4, b: 0.4, noScale: true, blur: 5 });
+    K.taper(ctx, pts.map((q) => [q[0], q[1] - dy - 3]), w * 0.3, '#9aa8e0', { alpha: 0.22, w0: 0.1, w1: 0.1, a: 0.45, b: 0.45, noScale: true, blur: 1.5 });
     ctx.restore();
   }
   // a feather panel: outline (closed pts), tiers [{pts (boundary polyline), n, depth}], hemPts for the bottom sheen
@@ -113,6 +113,7 @@
             sheen(cc, t.pts, 22, 16);
           },
         });
+        K.line(c, hem.map((q) => [q[0] - 1, q[1] - 2.5]), 1.3, '#4d5890', { k: 0, alpha: 0.8 });
         K.line(c, hem, 1.8, '#030205', { k: 0 });
       });
     });
@@ -161,7 +162,7 @@
     // --- crest feathers (behind the cap)
     crestFeathers(ctx, m(-0.06, -0.02, -0.25), [{ a: -0.72 + th * 0.4, l: 0.78 * u, w: 0.16 * u }, { a: -0.38 + th * 0.4, l: 0.64 * u, w: 0.15 * u }]);
     // --- queue hair at the back of the head (visible below the cap, behind the ears)
-    const hb = K.S(M([[0, 0.2], [0.33, 0.22], [0.4, 0.45], [0.42, 0.63], [0.37, 0.8], [0.22, 0.9], [-0.22, 0.9], [-0.37, 0.8], [-0.42, 0.63], [-0.4, 0.45], [-0.33, 0.22]], -0.36), true);
+    const hb = K.S(M([[0, 0.28], [0.33, 0.3], [0.4, 0.45], [0.42, 0.63], [0.37, 0.8], [0.22, 0.9], [-0.22, 0.9], [-0.37, 0.8], [-0.42, 0.63], [-0.4, 0.45], [-0.33, 0.22]], -0.36), true);
     K.toon(ctx, hb, MT.hair, { s: 5, hl: false });
 
     // --- ears (behind face)
@@ -191,11 +192,6 @@
         K.taper(c, M([[s * 0.35, 0.585], [s * 0.3, 0.665], [s * 0.24, 0.76]]), 0.065 * u, sk.sh, { alpha: s > 0 ? 0.8 : 0.55, w0: 0.3, w1: 0.2 });
         K.taper(c, M([[s * 0.2, 0.56], [s * 0.3, 0.57]]), 0.02 * u, sk.hl, { alpha: s < 0 ? 0.7 : 0.3 });
       }
-      // shaved forehead under the cap brim: faint blue-grey stubble band
-      const a = m(0, 0.2), b = m(0, 0.34);
-      const g = c.createLinearGradient(a[0], a[1], b[0], b[1]);
-      g.addColorStop(0, 'rgba(96,112,140,0.45)'); g.addColorStop(1, 'rgba(110,124,150,0)');
-      c.fillStyle = g; c.fillRect(a[0] - 80, a[1], 160, b[1] - a[1]);
       if (E === 'angry') K.taper(c, M([[-0.035, 0.42], [-0.02, 0.46]]), 0.012 * u, sk.sh2, {});
       if (E === 'angry') K.taper(c, M([[0.035, 0.42], [0.02, 0.46]]), 0.012 * u, sk.sh2, {});
       if (E === 'panic' || E === 'scheme') for (const yy of [0.32, 0.355]) K.taper(c, M([[-0.13, yy + 0.01], [0, yy - 0.006], [0.13, yy + 0.01]]), 0.01 * u, sk.sh2, { alpha: 0.7 });
@@ -251,23 +247,23 @@
     K.part(ctx, goat, { fill: '#1a1520', line: '#050307', lw: 1.2 });
 
     // --- 瓜皮帽 six-panel skullcap with red knot
-    const capP = K.S(M([[-0.405, 0.245, 1], [-0.4, 0.13], [-0.33, 0.02], [-0.18, -0.045], [0, -0.065], [0.18, -0.045], [0.33, 0.02], [0.4, 0.13], [0.405, 0.245, 1], [0.2, 0.258], [0, 0.262], [-0.2, 0.258]], -0.02), true);
+    const capP = K.S(M([[-0.41, 0.3, 1], [-0.405, 0.16], [-0.34, 0.03], [-0.18, -0.04], [0, -0.06], [0.18, -0.04], [0.34, 0.03], [0.405, 0.16], [0.41, 0.3, 1], [0.2, 0.312], [0, 0.316], [-0.2, 0.312]], -0.02), true);
     K.toon(ctx, capP, MT.hair, {
       s: 10, lw: 2.2, fill: '#1c1a22',
       inner: (c) => {
-        for (const sx of [-0.2, 0.2]) K.line(c, M([[sx * 0.15, -0.06], [sx * 0.8, 0.05], [sx * 1.15, 0.2]], -0.02), 1.6, '#000000', { alpha: 0.9 });
-        K.line(c, M([[0, -0.065], [0, 0.2]], -0.02), 1.4, '#000000', { alpha: 0.6 });
+        for (const sx of [-0.2, 0.2]) K.line(c, M([[sx * 0.15, -0.055], [sx * 0.8, 0.06], [sx * 1.15, 0.24]], -0.02), 1.6, '#000000', { alpha: 0.9 });
+        K.line(c, M([[0, -0.06], [0, 0.24]], -0.02), 1.4, '#000000', { alpha: 0.6 });
         // satin sheen
         K.taper(c, M([[-0.3, 0.06], [-0.16, -0.01], [0.02, -0.03]], 0.0), 0.05 * u, '#6c6a86', { alpha: 0.55 });
         // brim band
-        K.part(c, K.S(M([[-0.42, 0.185], [0, 0.2], [0.42, 0.185], [0.42, 0.3], [0, 0.3], [-0.42, 0.3]], -0.02), true), { fill: '#0f0e14', line: false, fx: [{ dx: 0, dy: -3, c: '#3a3950', a: 0.6 }] });
+        K.part(c, K.S(M([[-0.42, 0.235], [0, 0.25], [0.42, 0.235], [0.42, 0.34], [0, 0.34], [-0.42, 0.34]], -0.02), true), { fill: '#0f0e14', line: false, fx: [{ dx: 0, dy: -3, c: '#3a3950', a: 0.6 }] });
       },
     });
-    K.line(ctx, M([[-0.4, 0.19], [0, 0.205], [0.4, 0.19]], -0.02), 1.3, '#000');
+    K.line(ctx, M([[-0.4, 0.24], [0, 0.255], [0.4, 0.24]], -0.02), 1.3, '#000');
     const knot = m(0, -0.07, -0.02);
     K.part(ctx, K.circle(knot[0], knot[1] - 3, 0.05 * u), { fill: C.red, line: MT.red.line, lw: 1.6, fx: [{ dx: -3, dy: -2, c: MT.red.sh }, { dx: 2, dy: 2, c: MT.red.hl, a: 0.8 }] });
     // cap brim casts a shadow on the forehead
-    K.cast(ctx, faceP, capP, 0, 6, sk.sh, 0.6);
+    K.cast(ctx, faceP, capP, 0, 4, sk.sh, 0.5);
 
     // --- sweat drop (panic)
     if (E === 'panic') {
@@ -383,19 +379,13 @@
     const headP = K.S(M(outline), true, 0.9);
     K.toon(ctx, headP, sk, { s: 9, sd: [9, -4], rim: sk.rim, rimW: -2.2, lw: 2 });
     K.clipDo(ctx, headP, (c) => {
-      // shaved dome tint
-      const a = m(0, 0), b = m(0, 0.38);
-      const g = c.createLinearGradient(a[0], a[1], b[0], b[1]);
-      g.addColorStop(0, 'rgba(96,112,140,0.55)'); g.addColorStop(1, 'rgba(110,124,150,0)');
-      c.fillStyle = g; c.fillRect(a[0] - 80, a[1] - 5, 160, b[1] - a[1]);
       // cheek hollow + jaw shadow
       K.taper(c, M([[-0.18, 0.56], [-0.13, 0.66], [-0.1, 0.78]]), 0.08 * u, sk.sh, { alpha: 0.6 });
       K.taper(c, M([[-0.3, 0.97], [-0.15, 0.92], [0.0, 0.85], [0.08, 0.79]]), 0.05 * u, sk.sh, { alpha: 0.7 });
     });
-    // hair cap
-    const cap = K.S(M([[0.02, -0.025], [0.24, 0.02], [0.42, 0.14], [0.475, 0.34], [0.465, 0.54], [0.39, 0.7], [0.3, 0.76], [0.24, 0.66], [0.2, 0.42], [0.13, 0.18], [0.04, 0.05]]), true);
-    K.toon(ctx, cap, MT.hair, { s: 5, sd: [6, -3], hl: false });
-    K.line(ctx, M([[0.08, 0.04], [0.3, 0.14], [0.42, 0.34]]), 1.4, '#3d3b52', { alpha: 0.8 });
+    // queue hair at the back (below the cap)
+    const hairB = K.S(M([[0.12, 0.3], [0.44, 0.31], [0.47, 0.45], [0.42, 0.62], [0.34, 0.74], [0.24, 0.7], [0.2, 0.5], [0.14, 0.32]]), true);
+    K.toon(ctx, hairB, MT.hair, { s: 5, sd: [6, -3], hl: false });
     // ear
     const ear = K.S(M([[0.08, 0.47], [0.15, 0.44], [0.2, 0.5], [0.205, 0.6], [0.18, 0.69], [0.13, 0.75], [0.085, 0.73], [0.1, 0.62]]), true);
     K.toon(ctx, ear, sk, { s: 5, sd: [5, -3], lw: 1.8 });
@@ -418,6 +408,21 @@
     // moustache + goatee
     K.taper(ctx, M([[-0.405, 0.785], [-0.36, 0.782], [-0.31, 0.776], [-0.285, 0.75], [-0.295, 0.735]]), 0.022 * u, '#17121a', { w0: 0.5, w1: 0.2 });
     K.part(ctx, K.S(M([[-0.385, 0.86], [-0.37, 0.87], [-0.39, 0.92], [-0.405, 0.955, 1], [-0.398, 0.9]]), true), { fill: '#1a1520', line: '#050307', lw: 1.2 });
+    // crest feathers + cap
+    crestFeathers(ctx, m(0.08, -0.03), [{ a: 0.78, l: 0.74 * u, w: 0.15 * u }, { a: 0.45, l: 0.62 * u, w: 0.14 * u }]);
+    const capP = K.S(M([[-0.36, 0.31, 1], [-0.375, 0.17], [-0.31, 0.04], [-0.13, -0.045], [0.08, -0.06], [0.28, -0.015], [0.43, 0.11], [0.48, 0.27], [0.475, 0.33, 1], [0.1, 0.33]]), true);
+    K.toon(ctx, capP, MT.hair, {
+      s: 9, sd: [9, -4], lw: 2.2, fill: '#1c1a22',
+      inner: (c) => {
+        K.line(c, M([[0.06, -0.06], [0.12, 0.1], [0.12, 0.28]]), 1.6, '#000');
+        K.line(c, M([[0.06, -0.06], [0.3, 0.06], [0.42, 0.24]]), 1.6, '#000');
+        K.taper(c, M([[-0.28, 0.08], [-0.12, -0.02], [0.08, -0.04]]), 0.05 * u, '#6c6a86', { alpha: 0.55 });
+        K.part(c, K.S(M([[-0.4, 0.245], [0.1, 0.26], [0.5, 0.27], [0.5, 0.36], [-0.4, 0.36]]), true), { fill: '#0f0e14', line: false });
+      },
+    });
+    const kn = m(0.06, -0.075);
+    K.part(ctx, K.circle(kn[0], kn[1] - 2, 0.05 * u), { fill: C.red, line: MT.red.line, lw: 1.6, fx: [{ dx: 3, dy: -2, c: MT.red.sh }] });
+    K.cast(ctx, headP, capP, 0, 4, sk.sh, 0.5);
     return { headP, m, M };
   }
 
@@ -566,374 +571,355 @@
   }
 
   // ------------------------------------------------------------------ shared body bits
-  function legWrap(ctx, outer, inner, seed) {
-    // outer/inner: arrays of points from knee to ankle
+  function legWrap(ctx, outer, inner, s) {
+    // outer/inner: points from knee to ankle; bands spiral downward toward the inside of the leg
     const pts = outer.concat(inner.slice().reverse());
     const p = K.S(pts, true, 0.8);
+    const cx = (outer[0][0] + inner[0][0]) / 2;
     K.toon(ctx, p, MT.wr, {
-      s: 7, lw: 1.8,
+      s: 8, lw: 1.8,
       inner: (c) => {
         const y0 = Math.min(outer[0][1], inner[0][1]), y1 = Math.max(outer[outer.length - 1][1], inner[inner.length - 1][1]);
-        for (let y = y0 + 12; y < y1 + 10; y += 15) {
-          K.taper(c, [[-400, y + 10], [400, y - 10]].map((q) => [q[0] * 0.05 + (outer[0][0] + inner[0][0]) / 2 + q[0] * 0.2, q[1]]), 2.6, MT.wr.sh2, { alpha: 0.75, w0: 0.6, w1: 0.6 });
+        for (let y = y0 + 14; y < y1 + 14; y += 16) {
+          const a = [cx - s * 40, y - 9], b = [cx + s * 40, y + 9];
+          K.taper(c, [a, b], 4.5, MT.wr.sh, { alpha: 0.85, w0: 1, w1: 1, noScale: true });
+          K.line(c, [[a[0], a[1] - 3.2], [b[0], b[1] - 3.2]], 1.6, MT.wr.line, { alpha: 0.75 });
+          K.line(c, [[a[0], a[1] - 5.2], [b[0], b[1] - 5.2]], 1.1, MT.wr.hl, { alpha: 0.9 });
         }
-        // bindings tie at the top
-        K.line(c, [[outer[0][0], outer[0][1] + 6], [inner[0][0], inner[0][1] + 6]], 2, C.red, { alpha: 0.9 });
       },
     });
   }
-  function shoeFront(ctx, x, flip) {
-    const f = flip ? -1 : 1;
-    const sole = K.S([[x - 22, -15], [x + 22, -15], [x + 25 * f + (f < 0 ? 0 : 0), -6], [x + 22, 0, 1], [x - 22, 0, 1], [x - 25, -6]], true, 0.7);
+  function trouserLeg(ctx, s, side) {
+    const pts = side
+      ? [[-44, -380], [-50, -300], [-44, -236], [-38, -208], [-8, -199], [24, -210], [30, -222], [42, -282], [50, -380]]
+      : [[s * 84, -380], [s * 93, -300], [s * 86, -238], [s * 70, -208], [s * 48, -199], [s * 26, -208], [s * 22, -222], [s * 10, -296], [s * 3, -380]];
+    const tp = K.S(pts, true, 0.8);
+    K.toon(ctx, tp, MT.tr, {
+      s: side ? 12 : (s > 0 ? 14 : 9), lw: 2,
+      inner: (c) => {
+        if (side) {
+          K.taper(c, [[-20, -350], [-28, -280], [-30, -230]], 3, '#0b0b10', { alpha: 0.8 });
+          K.taper(c, [[30, -300], [20, -250], [6, -214]], 3, '#0b0b10', { alpha: 0.7 });
+        } else {
+          K.taper(c, [[s * 20, -360], [s * 40, -290], [s * 58, -232]], 3.2, '#0b0b10', { alpha: 0.8 });
+          K.taper(c, [[s * 74, -330], [s * 72, -270], [s * 62, -226]], 2.6, '#0b0b10', { alpha: 0.6 });
+          K.taper(c, [[s * 30, -224], [s * 48, -214], [s * 66, -222]], 2.6, '#0b0b10', { alpha: 0.7 });
+          K.taper(c, [[s * 50, -300], [s * 56, -260]], 4, MT.tr.hl, { alpha: 0.5 });
+        }
+      },
+    });
+  }
+  function shoeFront(ctx, x, s) {
+    const sole = K.S([[x - 23 + s * 2, -14], [x + 23 + s * 2, -14], [x + 25 + s * 3, -6], [x + 22 + s * 3, 0, 1], [x - 22 + s * 3, 0, 1], [x - 25 + s * 2, -6]], true, 0.7);
     K.toon(ctx, sole, MT.sole, { s: 3, lw: 1.6 });
-    for (let i = 0; i < 3; i++) K.line(ctx, [[x - 21, -11 + i * 3.6], [x + 21, -11 + i * 3.6]], 0.8, '#b3a893', { alpha: 0.9 });
-    const up = K.S([[x - 15, -44], [x + 15, -44], [x + 21, -26], [x + 20, -14], [x - 20, -14], [x - 21, -26]], true);
-    K.toon(ctx, up, MT.shoe, { s: 6, lw: 1.8 });
-    K.line(ctx, [[x - 14, -40], [x, -36], [x + 14, -40]], 1.2, '#4b4c60', { alpha: 0.9 });
-    K.line(ctx, [[x, -36], [x, -15]], 1.1, '#000000', { alpha: 0.6 });
+    for (let i = 0; i < 2; i++) K.line(ctx, [[x - 22 + s * 2, -9 + i * 4], [x + 22 + s * 2, -9 + i * 4]], 0.9, '#b3a893', { alpha: 0.9 });
+    const up = K.S([[x - 15, -46], [x + 15, -46], [x + 19 + s * 1, -32], [x + 23 + s * 2, -20], [x + 21 + s * 2, -13], [x - 21 + s * 2, -13], [x - 23 + s * 1, -20], [x - 19, -32]], true);
+    K.toon(ctx, up, MT.shoe, { s: 7, lw: 1.8 });
+    K.line(ctx, [[x - 14, -42], [x + s * 1, -37], [x + 14, -42]], 1.3, '#55566c', { alpha: 0.9 });
+    K.line(ctx, [[x + s * 1, -37], [x + s * 2, -14]], 1.4, '#000000', { alpha: 0.7 });
+    K.taper(ctx, [[x - 10 + s * 2, -30], [x - 4 + s * 2, -20]], 3, '#55566c', { alpha: 0.6 });
+  }
+  function shoeBack(ctx, x) {
+    const heel = K.S([[x - 18, -46], [x + 18, -46], [x + 21, -16], [x - 21, -16]], true);
+    K.toon(ctx, heel, MT.shoe, { s: 6, lw: 1.8 });
+    const sole = K.S([[x - 22, -16], [x + 22, -16], [x + 22, 0, 1], [x - 22, 0, 1]], true, 0.6);
+    K.toon(ctx, sole, MT.sole, { s: 3, lw: 1.6 });
+    K.line(ctx, [[x, -46], [x, -18]], 1.2, '#000', { alpha: 0.6 });
+  }
+  function shoeSide(ctx) {
+    const sole = K.S([[-64, -13], [-50, -16], [24, -15], [26, 0, 1], [-60, 0, 1], [-68, -5]], true, 0.6);
+    K.toon(ctx, sole, MT.sole, { s: 3, lw: 1.6 });
+    for (let i = 0; i < 2; i++) K.line(ctx, [[-62, -9 + i * 4], [24, -9 + i * 4]], 0.9, '#b3a893');
+    const shoe = K.S([[-30, -48], [16, -48], [24, -32], [24, -14], [-64, -13], [-60, -24], [-40, -36]], true, 0.8);
+    K.toon(ctx, shoe, MT.shoe, { s: 7, sd: [7, -3], lw: 1.8 });
+    K.line(ctx, [[-60, -22], [-40, -34], [-28, -46]], 1.3, '#55566c', { alpha: 0.9 });
+  }
+  function ruff(ctx, cx, cy, o) {
+    // stand-up feather ruff behind the head (front / back views)
+    o = o || {};
+    const tips = [], n = 17, rA = o.rA || 112, rB = o.rB || 76;
+    for (let i = 0; i <= n; i++) {
+      const a = Math.PI * (1.0 + i / n);
+      const r = i % 2 ? rB : rA + Math.sin(i * 1.7) * 6;
+      tips.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.86, 1]);
+    }
+    const pts = [[cx - 88, cy + 30, 1]].concat(tips).concat([[cx + 88, cy + 30, 1]]);
+    const p = K.S(pts, true, 0.3);
+    K.part(ctx, p, {
+      fill: MT.fe.base, line: MT.fe.line, lw: 2.2,
+      under: (c) => {
+        for (let i = 0; i <= 18; i++) {
+          const a = Math.PI * (0.98 + (1.04 * i) / 18);
+          c.save(); c.translate(cx, cy + 14); c.rotate(a + Math.PI / 2);
+          feather(c, 0, 18, 26, 100, Math.PI, { base: i % 2 ? '#1f1e2a' : '#191823', sheen: '#5a64a0', edge: '#0a090f', rachis: '#4a4f6e', sheenA: 0.2 });
+          c.restore();
+        }
+        c.save(); c.globalCompositeOperation = 'screen';
+        c.strokeStyle = 'rgba(88,102,168,0.35)'; c.lineWidth = 14; c.beginPath(); c.ellipse(cx, cy, rA * 0.72, rA * 0.6, 0, Math.PI * 1.08, Math.PI * 1.92); c.stroke();
+        c.restore();
+      },
+      fx: [{ dx: -12, dy: -4, c: '#000', a: 0.45 }, { dx: -2.4, dy: 0, c: C.rim, a: 0.85 }],
+    });
+  }
+  function poleAndLantern(ctx, PX, dir, o) {
+    // dir: +1 crook bends to +x, -1 to -x; o.side: crook seen foreshortened
+    o = o || {};
+    bamboo(ctx, PX, 0, -892, 12);
+    const crook = o.side
+      ? [[PX, -886], [PX - 3, -914], [PX - 22, -932], [PX - 48, -932], [PX - 64, -918], [PX - 70, -900]]
+      : [[PX, -886], [PX + dir * 3, -914], [PX + dir * 24, -934], [PX + dir * 54, -934], [PX + dir * 74, -918], [PX + dir * 80, -898]];
+    const d = o.side ? -1 : dir;
+    K.taper(ctx, crook, 13, MT.bam.line, { w0: 1, w1: 0.8, noScale: true });
+    K.taper(ctx, crook, 9.5, MT.bam.base, { w0: 1, w1: 0.8, noScale: true });
+    K.line(ctx, crook.map((q) => [q[0] - 1, q[1] - 2.5]), 1.4, MT.bam.hl, { alpha: 0.8 });
+    const end = crook[crook.length - 1];
+    talisman(ctx, PX + d * 28, -932, 14, 62, d * 0.05, 4);
+    talisman(ctx, PX + d * 46, -933, 14, 54, -d * 0.04, 6);
+    crowHead(ctx, end[0], end[1] + 2, 0.95, d < 0);
+    const lx = end[0] - d * 8;
+    K.line(ctx, [[lx, end[1] + 6], [lx, -878]], 1.8, C.red);
+    lantern(ctx, lx, -878, 72, 88, { sway: d * 3, t1: o.t1, t2: o.t2 });
   }
 
   // ------------------------------------------------------------------ FRONT VIEW
-  // mirror=true gives the BACK-view arrangement for shared geometry
-  function ruffFront(ctx, cx, cy, flip) {
-    // stand-up feather ruff behind the head
-    const tips = [];
-    const n = 15;
-    for (let i = 0; i <= n; i++) {
-      const a = Math.PI * (1.06 + (0.88 * i) / n);
-      const r = i % 2 ? 66 : 96 + Math.sin(i * 1.7) * 6;
-      tips.push([cx + Math.cos(a) * r * 1.02, cy + Math.sin(a) * r * 0.95, 1]);
-    }
-    const pts = [[cx - 72, cy + 22, 1]].concat(tips).concat([[cx + 72, cy + 22, 1]]);
-    const p = K.S(pts, true, 0.35);
-    K.part(ctx, p, {
-      fill: MT.fe.base, line: MT.fe.line, lw: 2,
-      under: (c) => {
-        for (let i = 0; i <= 16; i++) {
-          const a = Math.PI * (1.04 + (0.92 * i) / 16);
-          c.save(); c.translate(cx, cy + 14); c.rotate(a + Math.PI / 2 + Math.PI);
-          feather(c, 0, -20, 22, -84, 0, { base: i % 2 ? '#1f1e2a' : '#191823', sheen: '#46508a', edge: '#0a090f', rachis: '#4a4f6e' });
-          c.restore();
-        }
-      },
-      fx: [{ dx: -10, dy: -4, c: '#000', a: 0.45 }, { dx: -2.2, dy: 0, c: C.rim, a: 0.8 }],
-    });
-  }
-
   function drawFront(ctx, o) {
     o = o || {};
-    // pole & lantern (far side of the figure, viewer's right)
-    const PX = 180;
-    // ruff + back hair go behind everything on the body
-    ruffFront(ctx, 0, -640);
+    const PX = 182;
+    ruff(ctx, 0, -642);
 
     // ---- legs
     for (const s of [-1, 1]) {
-      const x = s * 46;
-      const tro = K.S([[s * 80, -345], [s * 78, -270], [s * 64, -215], [s * 46, -205], [s * 27, -214], [s * 14, -270], [s * 6, -350]], true);
-      K.toon(ctx, tro, MT.tr, { s: s > 0 ? 12 : 8, lw: 2 });
-      K.line(ctx, [[s * 70, -300], [s * 56, -250], [s * 50, -222]], 1.4, '#0a0a10', { alpha: 0.7 });
-      legWrap(ctx, [[s * 63, -214], [s * 66, -150], [s * 59, -90], [s * 55, -44]], [[s * 28, -214], [s * 27, -150], [s * 33, -90], [s * 36, -44]]);
-      shoeFront(ctx, x + s * 2, s < 0);
+      legWrap(ctx, [[s * 62, -214], [s * 65, -150], [s * 58, -90], [s * 54, -44]], [[s * 30, -214], [s * 29, -150], [s * 34, -90], [s * 37, -44]], s);
+      shoeFront(ctx, s * 46, s);
+      trouserLeg(ctx, s);
     }
     // ---- jacket skirt (below sash) with side slits
-    const skirt = K.S([[-74, -470], [74, -470], [86, -400], [94, -334, 1], [64, -326], [0, -322], [-64, -326], [-94, -334, 1], [-86, -400]], true, 0.8);
+    const skirt = K.S([[-76, -476], [76, -476], [88, -410], [96, -356, 1], [64, -349], [0, -346], [-64, -349], [-96, -356, 1], [-88, -410]], true, 0.8);
     K.toon(ctx, skirt, MT.ja, {
       s: 12, lw: 2,
       inner: (c) => {
-        K.taper(c, [[-90, -334], [-60, -330], [0, -326], [60, -330], [90, -334]], 7, C.red, { w0: 1, w1: 1 });
-        K.line(c, [[-20, -440], [-28, -380], [-30, -332]], 1.6, MT.ja.sh2, { alpha: 0.8 });
-        K.line(c, [[34, -430], [42, -370], [44, -332]], 1.6, MT.ja.sh2, { alpha: 0.7 });
+        K.taper(c, [[-92, -356], [-60, -352], [0, -349], [60, -352], [92, -356]], 7, C.red, { w0: 1, w1: 1, noScale: true });
+        K.taper(c, [[-24, -440], [-30, -390], [-32, -354]], 2.6, MT.ja.sh2, { alpha: 0.8 });
+        K.taper(c, [[36, -430], [42, -385], [44, -354]], 2.6, MT.ja.sh2, { alpha: 0.7 });
       },
     });
-    // side slit marks
-    for (const s of [-1, 1]) K.line(ctx, [[s * 88, -380], [s * 93, -336]], 2, MT.ja.line);
+    for (const s of [-1, 1]) { K.line(ctx, [[s * 89, -398], [s * 95, -358]], 2, MT.ja.line); K.taper(ctx, [[s * 86, -400], [s * 93, -360]], 4, C.red, { w0: 1, w1: 1, noScale: true }); }
 
-    // ---- arms (sleeves) under the mantle
-    // viewer-left arm: hand on hip
-    const armL = K.S([[-98, -600], [-150, -560], [-196, -492], [-190, -470], [-150, -452], [-108, -448], [-104, -470], [-150, -488], [-120, -560]], true, 0.8);
+    // ---- sleeves under the mantle
+    const armL = K.S([[-98, -600], [-150, -560], [-198, -492], [-192, -470], [-150, -452], [-112, -448], [-108, -470], [-150, -488], [-120, -560]], true, 0.8);
     K.toon(ctx, armL, MT.ja, { s: 10, lw: 2 });
-    K.taper(ctx, [[-110, -449], [-106, -468]], 6, C.red, { w0: 1, w1: 1 });
-    // viewer-right arm: hand on the pole
-    const armR = K.S([[98, -600], [146, -560], [172, -500], [184, -446], [160, -442], [148, -495], [118, -560]], true, 0.8);
+    K.taper(ctx, [[-114, -449], [-110, -468]], 6, C.red, { w0: 1, w1: 1, noScale: true });
+    const armR = K.S([[98, -600], [146, -560], [174, -500], [188, -444], [162, -440], [150, -495], [118, -560]], true, 0.8);
     K.toon(ctx, armR, MT.ja, { s: 10, lw: 2 });
-    K.taper(ctx, [[160, -444], [184, -447]], 6, C.red, { w0: 1, w1: 1 });
+    K.taper(ctx, [[162, -442], [188, -446]], 6, C.red, { w0: 1, w1: 1, noScale: true });
 
-    // ---- jacket torso (visible in the mantle opening)
-    const torso = K.S([[-18, -632], [18, -632], [70, -600], [78, -520], [74, -468], [-74, -468], [-78, -520], [-70, -600]], true);
+    // ---- jacket torso in the mantle opening
+    const torso = K.S([[-18, -636], [18, -636], [70, -600], [78, -520], [76, -474], [-76, -474], [-78, -520], [-70, -600]], true);
     K.toon(ctx, torso, MT.ja, {
       s: 12, lw: 2,
       inner: (c) => {
-        // 大襟 overlap: from neck across to the wearer's right underarm
-        const flap = [[6, -632], [-6, -612], [-34, -594], [-70, -580]];
-        K.taper(c, flap, 7, C.red, { w0: 1, w1: 1 });
+        const flap = [[6, -636], [-6, -614], [-34, -596], [-72, -582]];
+        K.taper(c, flap, 7, C.red, { w0: 1, w1: 1, noScale: true });
         K.line(c, flap.map((q) => [q[0] + 1, q[1] + 5]), 1.4, MT.ja.sh2, { alpha: 0.9 });
-        // badge (號褂 round patch)
-        K.part(c, K.circle(2, -540, 25), { fill: '#e9e0c8', line: '#4a3a2a', lw: 1.8, fx: [{ dx: -5, dy: -2, c: '#bfb197' }] });
-        c.strokeStyle = C.red; c.lineWidth = 3.4; c.beginPath(); c.arc(2, -540, 20.5, 0, Math.PI * 2); c.stroke();
-        c.fillStyle = '#1a1418'; c.font = `700 25px ${K.FONT_ZH}`; c.textAlign = 'center'; c.fillText('明', 2, -531);
-        // folds
-        K.line(c, [[-40, -560], [-46, -505], [-44, -472]], 1.4, MT.ja.sh2, { alpha: 0.6 });
+        K.part(c, K.circle(2, -540, 26), { fill: '#e9e0c8', line: '#4a3a2a', lw: 1.8, fx: [{ dx: -6, dy: -2, c: '#bfb197' }] });
+        c.strokeStyle = C.red; c.lineWidth = 3.6; c.beginPath(); c.arc(2, -540, 21, 0, Math.PI * 2); c.stroke();
+        c.fillStyle = '#1a1418'; c.font = `700 26px ${K.FONT_ZH}`; c.textAlign = 'center'; c.fillText('明', 2, -531);
+        K.taper(c, [[-44, -565], [-48, -510], [-46, -478]], 2.6, MT.ja.sh2, { alpha: 0.6 });
       },
     });
-    K.knot(ctx, -16, -607, 4.2, C.brass, -0.5);
-    K.knot(ctx, -46, -589, 4.2, C.brass, -0.35);
-    // stand collar
-    const collar = K.S([[-20, -640], [20, -640], [22, -626], [-22, -626]], true);
+    K.knot(ctx, -16, -609, 4.4, C.brass, -0.5);
+    K.knot(ctx, -46, -591, 4.4, C.brass, -0.35);
+    const collar = K.S([[-20, -646], [20, -646], [22, -630], [-22, -630]], true);
     K.toon(ctx, collar, MT.ja, { s: 4, lw: 1.6 });
-    K.taper(ctx, [[-21, -627], [0, -624], [21, -627]], 3.2, C.red, { w0: 1, w1: 1 });
+    K.taper(ctx, [[-21, -631], [0, -628], [21, -631]], 3.4, C.red, { w0: 1, w1: 1, noScale: true });
 
     // ---- sash, talismans, token
-    const sash = K.S([[-80, -478], [80, -478], [82, -444], [-82, -444]], true, 0.5);
+    const sash = K.S([[-80, -482], [80, -482], [82, -446], [-82, -446]], true, 0.5);
     K.toon(ctx, sash, MT.red, {
       s: 8, lw: 2,
-      inner: (c) => { for (const yy of [-470, -460, -452]) K.line(c, [[-80, yy], [-20, yy + 2], [40, yy - 1], [80, yy + 1]], 1.2, MT.red.sh2, { alpha: 0.6 }); },
+      inner: (c) => { for (const yy of [-473, -463, -454]) K.line(c, [[-80, yy], [-20, yy + 2], [40, yy - 1], [80, yy + 1]], 1.3, MT.red.sh2, { alpha: 0.6 }); },
     });
-    // knot and hanging ends (wearer's left = viewer's right)
-    const end1 = K.S([[36, -452], [52, -452], [58, -400], [62, -360, 1], [54, -364], [48, -356, 1], [40, -400]], true, 0.7);
-    const end2 = K.S([[48, -452], [60, -452], [76, -408], [84, -376, 1], [76, -378], [70, -370, 1], [62, -410]], true, 0.7);
+    const end1 = K.S([[36, -456], [52, -456], [58, -404], [62, -366, 1], [54, -370], [48, -362, 1], [40, -404]], true, 0.7);
+    const end2 = K.S([[48, -456], [60, -456], [76, -410], [84, -378, 1], [76, -380], [70, -372, 1], [62, -412]], true, 0.7);
     K.toon(ctx, end2, MT.red, { s: 6, lw: 1.8 });
     K.toon(ctx, end1, MT.red, { s: 6, lw: 1.8 });
-    K.part(ctx, K.ell(50, -460, 13, 11), { fill: C.red, line: MT.red.line, lw: 1.8, fx: [{ dx: -5, dy: -2, c: MT.red.sh }, { dx: 3, dy: 3, c: MT.red.hl, a: 0.6 }] });
-    // talisman packet tucked into the sash
-    talisman(ctx, -58, -500, 15, 52, -0.22, 3);
-    talisman(ctx, -44, -506, 15, 54, -0.05, 5);
-    talisman(ctx, -30, -498, 15, 50, 0.12, 9);
-    K.part(ctx, K.S([[-66, -476], [-22, -476], [-22, -452], [-66, -452]], true, 0.4), { fill: C.red, line: MT.red.line, lw: 1.6, fx: [{ dx: -5, dy: 0, c: MT.red.sh }] });
-    // temple token on cord
-    K.line(ctx, [[-8, -450], [-10, -430], [-12, -416]], 1.6, C.red);
-    const tok = K.S([[-26, -418, 1], [2, -418, 1], [4, -380], [-12, -368, 1], [-28, -380]], true, 0.4);
+    K.part(ctx, K.ell(50, -463, 14, 11.5), { fill: C.red, line: MT.red.line, lw: 1.8, fx: [{ dx: -5, dy: -2, c: MT.red.sh }, { dx: 3, dy: 3, c: MT.red.hl, a: 0.6 }] });
+    talisman(ctx, -58, -504, 16, 54, -0.22, 3);
+    talisman(ctx, -43, -510, 16, 56, -0.05, 5);
+    talisman(ctx, -28, -502, 16, 52, 0.12, 9);
+    K.part(ctx, K.S([[-68, -478], [-20, -478], [-20, -452], [-68, -452]], true, 0.4), { fill: C.red, line: MT.red.line, lw: 1.6, fx: [{ dx: -5, dy: 0, c: MT.red.sh }] });
+    K.line(ctx, [[-8, -452], [-10, -432], [-12, -420]], 1.6, C.red);
+    const tok = K.S([[-27, -422, 1], [3, -422, 1], [5, -382], [-12, -369, 1], [-29, -382]], true, 0.4);
     K.toon(ctx, tok, MT.lac, { s: 6, lw: 1.8 });
-    ctx.save(); ctx.fillStyle = '#d6aa52'; ctx.font = `700 11px ${K.FONT_ZH}`; ctx.textAlign = 'center';
-    ctx.fillText('長', -12, -402); ctx.fillText('明', -12, -389); ctx.restore();
-    K.line(ctx, [[-26, -414], [2, -414]], 1, '#d6aa52');
+    ctx.save(); ctx.fillStyle = '#d6aa52'; ctx.font = `700 12px ${K.FONT_ZH}`; ctx.textAlign = 'center';
+    ctx.fillText('長', -12, -405); ctx.fillText('明', -12, -391); ctx.restore();
+    K.line(ctx, [[-27, -417], [3, -417]], 1, '#d6aa52');
 
-    // ---- mantle (two front panels, three tiers each)
+    // ---- mantle: two front panels, three concentric tiers each
     for (const s of [-1, 1]) {
       const outer = s < 0
-        ? [[-15, -636], [-48, -646], [-90, -636], [-122, -616], [-156, -580], [-178, -530], [-200, -488]]
-        : [[15, -636], [48, -646], [90, -636], [122, -616], [154, -580], [168, -530], [174, -470]];
-      const hemPts = s < 0
-        ? [[-200, -488], [-160, -468], [-118, -452], [-80, -438]]
-        : [[174, -470], [140, -458], [110, -448], [80, -438]];
-      const innerEdge = s < 0 ? [[-80, -438], [-58, -500], [-36, -566], [-16, -626]] : [[80, -438], [58, -500], [36, -566], [16, -626]];
-      const hem = jag(hemPts, 6, 26, { seed: s < 0 ? 21 : 34, lean: s * -0.15 });
+        ? [[-15, -640], [-48, -650], [-90, -640], [-124, -618], [-158, -580], [-180, -530], [-202, -488]]
+        : [[15, -640], [48, -650], [90, -640], [124, -618], [156, -580], [170, -530], [176, -468]];
+      const hemPts = s < 0 ? [[-202, -488], [-160, -468], [-118, -452], [-80, -440]] : [[176, -468], [142, -456], [110, -448], [80, -440]];
+      const innerEdge = s < 0 ? [[-80, -440], [-58, -500], [-36, -566], [-16, -630]] : [[80, -440], [58, -500], [36, -566], [16, -630]];
+      const hem = jag(hemPts, 6, 30, { seed: s < 0 ? 21 : 34, lean: s * -0.12 });
       const outline = outer.concat(hem.slice(1)).concat(innerEdge.slice(1, -1));
-      const tiers = s < 0
-        ? [{ pts: [[-10, -600], [-60, -592], [-120, -578], [-175, -556]], n: 5, depth: 22, yb: -560, seed: 7 }, { pts: [[-60, -540], [-110, -532], [-160, -516], [-210, -500]], n: 5, depth: 24, yb: -505, seed: 12 }]
-        : [{ pts: [[10, -600], [60, -592], [120, -578], [175, -556]], n: 5, depth: 22, yb: -560, seed: 17 }, { pts: [[60, -540], [110, -532], [150, -518], [190, -500]], n: 5, depth: 24, yb: -505, seed: 19 }];
-      featherPanel(ctx, outline, tiers, { box: s < 0 ? [-215, -660, -10, -420] : [10, -660, 200, -420], fan: s * 260, cx: 0, seed: s < 0 ? 4 : 8, sd: s < 0 ? [-16, -4] : [-14, -4] });
+      const tiers = [
+        { pts: [[s * 14, -606], [s * 60, -598], [s * 118, -584], [s * 176, -558]], n: 5, depth: 24, yb: -566, seed: s < 0 ? 7 : 17 },
+        { pts: [[s * 50, -546], [s * 104, -538], [s * 156, -522], [s * 214, -500]], n: 5, depth: 26, yb: -506, seed: s < 0 ? 12 : 19 },
+      ];
+      featherPanel(ctx, outline, tiers, { box: s < 0 ? [-220, -665, -10, -420] : [10, -665, 205, -420], fan: s * 260, cx: 0, seed: s < 0 ? 4 : 8, sd: [-14, -5], hemPts });
     }
-    // throat clasp: brass disc + red frog
-    K.part(ctx, K.circle(0, -624, 9), { fill: C.brass, line: MT.br.line, lw: 1.6, fx: [{ dx: -3, dy: -2, c: MT.br.sh }, { dx: 2, dy: 2, c: MT.br.hl, a: 0.7 }] });
-    K.taper(ctx, [[-22, -628], [-10, -624]], 4, C.red, { w0: 1, w1: 1 });
-    K.taper(ctx, [[10, -624], [22, -628]], 4, C.red, { w0: 1, w1: 1 });
+    // throat clasp
+    K.part(ctx, K.circle(0, -628, 9.5), { fill: C.brass, line: MT.br.line, lw: 1.6, fx: [{ dx: -3, dy: -2, c: MT.br.sh }, { dx: 2, dy: 2, c: MT.br.hl, a: 0.7 }] });
+    K.taper(ctx, [[-24, -632], [-10, -628]], 4.4, C.red, { w0: 1, w1: 1, noScale: true });
+    K.taper(ctx, [[10, -628], [24, -632]], 4.4, C.red, { w0: 1, w1: 1, noScale: true });
 
     // ---- neck + head
-    const neck = K.S([[-17, -672], [17, -672], [19, -628], [0, -622], [-19, -628]], true);
+    const neck = K.S([[-17, -676], [17, -676], [19, -636], [0, -630], [-19, -636]], true);
     K.toon(ctx, neck, MT.sk, { s: 8, lw: 1.8 });
-    K.clipDo(ctx, neck, (c) => {
-      c.fillStyle = MT.sk.sh2; c.globalAlpha = 0.55;
-      c.beginPath(); c.ellipse(0, -658, 22, 12, 0, 0, Math.PI * 2); c.fill();
-    });
-    K.line(ctx, [[-2, -646], [2, -638]], 1.4, MT.sk.sh2);
+    K.clipDo(ctx, neck, (c) => { c.fillStyle = MT.sk.sh2; c.globalAlpha = 0.55; c.beginPath(); c.ellipse(0, -660, 22, 12, 0, 0, Math.PI * 2); c.fill(); });
+    K.line(ctx, [[-2, -650], [2, -642]], 1.4, MT.sk.sh2);
     headFront(ctx, { turn: o.turn || 0, expr: o.expr || 'smug' });
 
-    // ---- hands
-    hipHand(ctx, -108, -452, false);
-    // ---- pole, crook, lantern, talismans
-    bamboo(ctx, PX, 0, -856, 10);
-    const crook = [[PX, -850], [PX + 4, -880], [PX + 26, -900], [PX + 56, -900], [PX + 76, -884], [PX + 82, -864]];
-    K.taper(ctx, crook, 11, MT.bam.line, { w0: 1, w1: 0.8, noScale: true });
-    K.taper(ctx, crook, 8, MT.bam.base, { w0: 1, w1: 0.8, noScale: true });
-    K.line(ctx, crook.map((q) => [q[0] - 1, q[1] - 2]), 1.2, MT.bam.hl, { alpha: 0.7 });
-    crowHead(ctx, PX + 82, -860, 0.85, false);
-    K.line(ctx, [[PX + 72, -856], [PX + 72, -836]], 1.6, C.red);
-    lantern(ctx, PX + 72, -836, 62, 78, { sway: 3 });
-    talisman(ctx, PX + 30, -896, 13, 58, 0.06, 4);
-    talisman(ctx, PX + 46, -897, 13, 50, -0.04, 6);
-    fistOnPole(ctx, PX, -428, false);
+    // ---- hands, pole
+    hipHand(ctx, -112, -452, false);
+    poleAndLantern(ctx, PX, 1, {});
+    fistOnPole(ctx, PX, -426, false);
   }
 
   // ------------------------------------------------------------------ BACK VIEW
   function drawBack(ctx, o) {
     o = o || {};
-    const PX = -180;
-    // legs (heels toward viewer)
+    const PX = -182;
     for (const s of [-1, 1]) {
-      const tro = K.S([[s * 80, -345], [s * 78, -270], [s * 64, -215], [s * 46, -205], [s * 27, -214], [s * 14, -270], [s * 6, -350]], true);
-      K.toon(ctx, tro, MT.tr, { s: s > 0 ? 12 : 8, lw: 2 });
-      legWrap(ctx, [[s * 63, -214], [s * 66, -150], [s * 59, -90], [s * 55, -44]], [[s * 28, -214], [s * 27, -150], [s * 33, -90], [s * 36, -44]]);
-      const x = s * 48;
-      const heel = K.S([[x - 18, -44], [x + 18, -44], [x + 21, -16], [x - 21, -16]], true);
-      K.toon(ctx, heel, MT.shoe, { s: 5, lw: 1.8 });
-      const sole = K.S([[x - 22, -16], [x + 22, -16], [x + 22, 0, 1], [x - 22, 0, 1]], true, 0.6);
-      K.toon(ctx, sole, MT.sole, { s: 3, lw: 1.6 });
-      K.line(ctx, [[x, -44], [x, -18]], 1.2, '#000', { alpha: 0.6 });
+      legWrap(ctx, [[s * 62, -214], [s * 65, -150], [s * 58, -90], [s * 54, -44]], [[s * 30, -214], [s * 29, -150], [s * 34, -90], [s * 37, -44]], -s);
+      shoeBack(ctx, s * 47);
+      trouserLeg(ctx, s);
     }
-    // jacket skirt, back
-    const skirt = K.S([[-80, -470], [80, -470], [88, -400], [94, -334, 1], [0, -324], [-94, -334, 1], [-88, -400]], true, 0.8);
+    const skirt = K.S([[-80, -476], [80, -476], [90, -410], [96, -356, 1], [0, -347], [-96, -356, 1], [-90, -410]], true, 0.8);
     K.toon(ctx, skirt, MT.ja, {
       s: 12, lw: 2,
       inner: (c) => {
-        K.taper(c, [[-92, -334], [0, -326], [92, -334]], 7, C.red, { w0: 1, w1: 1 });
-        K.line(c, [[0, -420], [0, -330]], 1.6, MT.ja.sh2, { alpha: 0.8 });
+        K.taper(c, [[-94, -356], [0, -349], [94, -356]], 7, C.red, { w0: 1, w1: 1, noScale: true });
+        K.line(c, [[0, -430], [0, -350]], 1.6, MT.ja.sh2, { alpha: 0.8 });
       },
     });
-    // sleeves (mirrored arrangement: pole hand on viewer's left)
-    const armR = K.S([[98, -600], [150, -560], [196, -492], [190, -470], [150, -452], [108, -448], [104, -470], [150, -488], [120, -560]], true, 0.8);
+    const armR = K.S([[98, -600], [150, -560], [198, -492], [192, -470], [150, -452], [112, -448], [108, -470], [150, -488], [120, -560]], true, 0.8);
     K.toon(ctx, armR, MT.ja, { s: 10, lw: 2 });
-    const armL = K.S([[-98, -600], [-146, -560], [-172, -500], [-184, -446], [-160, -442], [-148, -495], [-118, -560]], true, 0.8);
+    const armL = K.S([[-98, -600], [-146, -560], [-174, -500], [-188, -444], [-162, -440], [-150, -495], [-118, -560]], true, 0.8);
     K.toon(ctx, armL, MT.ja, { s: 10, lw: 2 });
-    K.taper(ctx, [[-160, -444], [-184, -447]], 6, C.red, { w0: 1, w1: 1 });
-    // sash visible at the back below the mantle
-    const sash = K.S([[-82, -470], [82, -470], [84, -446], [-84, -446]], true, 0.5);
-    K.toon(ctx, sash, MT.red, { s: 8, lw: 2 });
-    // pole behind the hand
-    bamboo(ctx, PX, 0, -856, 10);
-    const crook = [[PX, -850], [PX - 4, -880], [PX - 26, -900], [PX - 56, -900], [PX - 76, -884], [PX - 82, -864]];
-    K.taper(ctx, crook, 11, MT.bam.line, { w0: 1, w1: 0.8, noScale: true });
-    K.taper(ctx, crook, 8, MT.bam.base, { w0: 1, w1: 0.8, noScale: true });
-    crowHead(ctx, PX - 82, -860, 0.85, true);
-    K.line(ctx, [[PX - 72, -856], [PX - 72, -836]], 1.6, C.red);
-    lantern(ctx, PX - 72, -836, 62, 78, { t1: '宮', t2: '燈', sway: -3 });
-    talisman(ctx, PX - 30, -896, 13, 58, -0.06, 4);
-    talisman(ctx, PX - 46, -897, 13, 50, 0.04, 6);
+    K.taper(ctx, [[-162, -442], [-188, -446]], 6, C.red, { w0: 1, w1: 1, noScale: true });
+    K.toon(ctx, K.S([[-82, -480], [82, -480], [84, -448], [-84, -448]], true, 0.5), MT.red, { s: 8, lw: 2 });
+    poleAndLantern(ctx, PX, -1, { t1: '宮', t2: '燈' });
 
-    // head back (drawn before ruff so the ruff hides the nape)
+    // head back: ears, skull, nape hair, crest, cap
     const sk = MT.sk;
     for (const s of [-1, 1]) {
-      const ear = K.S([[s * 36, -710], [s * 47, -714], [s * 52, -700], [s * 50, -682], [s * 44, -672], [s * 37, -674]], true);
+      const ear = K.S([[s * 36, -712], [s * 47, -716], [s * 52, -702], [s * 50, -684], [s * 44, -674], [s * 37, -676]], true);
       K.toon(ctx, ear, sk, { s: 4, lw: 1.8 });
+      K.line(ctx, [[s * 40, -708], [s * 47, -700], [s * 45, -684]], 1.3, sk.sh2);
     }
     const skull = K.S(K.sym([[0, -760], [20, -758], [34, -748], [40, -726], [41, -700], [37, -676], [26, -660], [0, -654]]), true);
     K.toon(ctx, skull, sk, { s: 8, lw: 2 });
-    const cap = K.S([[0, -763], [24, -757], [38, -735], [40, -706], [33, -672], [14, -654], [-14, -654], [-33, -672], [-40, -706], [-38, -735], [-24, -757]], true);
-    K.toon(ctx, cap, MT.hair, {
+    const nape = K.S([[0, -730], [30, -728], [40, -712], [36, -680], [22, -660], [0, -654], [-22, -660], [-36, -680], [-40, -712], [-30, -734]], true);
+    K.toon(ctx, nape, MT.hair, {
       s: 6, hl: false,
+      inner: (c) => { for (let i = -3; i <= 3; i++) K.line(c, [[i * 10, -736], [i * 6, -700], [i * 1.5, -664]], 1.2, '#3d3b52', { alpha: 0.75 }); },
+    });
+    crestFeathers(ctx, [6, -764], [{ a: 0.72, l: 0.78 * U, w: 0.16 * U }, { a: 0.38, l: 0.64 * U, w: 0.15 * U }]);
+    const cap = K.S([[-45, -726, 1], [-44, -742], [-37, -756], [-20, -764], [0, -767], [20, -764], [37, -756], [44, -742], [45, -726, 1], [0, -722]], true);
+    K.toon(ctx, cap, MT.hair, {
+      s: 9, lw: 2.2, fill: '#1c1a22',
       inner: (c) => {
-        for (let i = -3; i <= 3; i++) K.line(c, [[i * 9, -760], [i * 7, -720], [i * 2.5, -670]], 1.2, '#3d3b52', { alpha: 0.75 });
-        K.taper(c, [[-22, -742], [0, -748], [22, -742]], 5, '#4a4a66', { alpha: 0.7 });
+        for (const sx of [-22, 22]) K.line(c, [[sx * 0.1, -767], [sx * 0.8, -755], [sx * 1.15, -736]], 1.6, '#000');
+        K.part(c, K.S([[-46, -736], [0, -732], [46, -736], [46, -714], [-46, -714]], true), { fill: '#0f0e14', line: false });
+        K.taper(c, [[-30, -756], [-12, -764], [8, -765]], 5, '#6c6a86', { alpha: 0.5 });
       },
     });
-    // ruff (back side)
-    const tips = [];
-    for (let i = 0; i <= 15; i++) {
-      const a = Math.PI * (1.04 + (0.92 * i) / 15);
-      const r = i % 2 ? 60 : 92 + Math.sin(i * 1.3) * 5;
-      tips.push([Math.cos(a) * r, -630 + Math.sin(a) * r * 0.9, 1]);
-    }
-    const ruff = K.S([[-78, -612, 1]].concat(tips).concat([[78, -612, 1]]), true, 0.35);
-    K.part(ctx, ruff, {
-      fill: MT.fe.base, line: MT.fe.line, lw: 2,
-      under: (c) => {
-        for (let i = 0; i <= 16; i++) {
-          const a = Math.PI * (1.03 + (0.94 * i) / 16);
-          c.save(); c.translate(0, -620); c.rotate(a + Math.PI / 2 + Math.PI);
-          feather(c, 0, -18, 22, -82, 0, { base: i % 2 ? '#1f1e2a' : '#191823', sheen: '#46508a', edge: '#0a090f', rachis: '#4a4f6e' });
-          c.restore();
-        }
-      },
-      fx: [{ dx: -10, dy: -4, c: '#000', a: 0.45 }, { dx: -2.2, dy: 0, c: C.rim, a: 0.8 }],
-    });
-    // mantle back: one panel, three tiers, longer hem
-    const outer = [[-60, -640], [-100, -630], [-130, -612], [-160, -578], [-176, -530], [-178, -470]];
-    const outerR = [[200, -488], [178, -530], [156, -580], [126, -616], [96, -632], [60, -640]];
-    const hem = jag([[-178, -470], [-120, -430], [-50, -404], [0, -398], [50, -404], [120, -430], [200, -488]], 13, 28, { seed: 41 });
+    K.part(ctx, K.circle(0, -771, 5.4), { fill: C.red, line: MT.red.line, lw: 1.6, fx: [{ dx: -3, dy: -2, c: MT.red.sh }] });
+    // ruff (back), then mantle
+    ruff(ctx, 0, -632, { rA: 104, rB: 72 });
+    const outer = [[-60, -644], [-100, -634], [-130, -614], [-160, -580], [-176, -530], [-178, -470]];
+    const outerR = [[202, -488], [180, -530], [158, -580], [128, -616], [96, -636], [60, -644]];
+    const hemPts = [[-178, -470], [-120, -436], [-50, -404], [0, -394], [50, -404], [120, -436], [202, -488]];
+    const hem = jag(hemPts, 13, 30, { seed: 41, prof: (t) => 1 + 1.6 * Math.exp(-Math.pow((t - 0.47) / 0.1, 2)) });
     const outline = outer.concat(hem.slice(1)).concat(outerR.slice(1));
     featherPanel(ctx, outline, [
-      { pts: [[-175, -560], [-100, -578], [0, -584], [100, -578], [180, -560]], n: 9, depth: 22, yb: -560, seed: 44 },
-      { pts: [[-185, -500], [-100, -516], [0, -522], [100, -516], [200, -500]], n: 10, depth: 24, yb: -498, seed: 47 },
-    ], { box: [-205, -660, 215, -390], fan: 300, cx: 0, seed: 49 });
-    // back badge (號褂)
-    K.part(ctx, K.circle(0, -470, 30), { fill: '#e9e0c8', line: '#4a3a2a', lw: 2, fx: [{ dx: -6, dy: -2, c: '#bfb197' }] });
-    ctx.save(); ctx.strokeStyle = C.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, -470, 25, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#1a1418'; ctx.font = `700 30px ${K.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillText('明', 0, -459); ctx.restore();
-    // queue over everything on the back
-    braid(ctx, [[0, -672], [4, -630], [12, -560], [16, -500], [10, -440], [4, -410]], 22, 13, { seg: 15, tail: 30 });
-    // hands
-    fistOnPole(ctx, PX, -428, true);
-    hipHand(ctx, 108, -452, true);
+      { pts: [[-190, -548], [-100, -576], [0, -586], [100, -576], [200, -548]], n: 9, depth: 24, yb: -560, seed: 44 },
+      { pts: [[-195, -490], [-100, -516], [0, -524], [100, -516], [215, -490]], n: 10, depth: 26, yb: -498, seed: 47 },
+    ], { box: [-205, -665, 220, -390], fan: 300, cx: 0, seed: 49, hemPts });
+    // back badge
+    K.part(ctx, K.circle(0, -466, 30), { fill: '#e9e0c8', line: '#4a3a2a', lw: 2, fx: [{ dx: -6, dy: -2, c: '#bfb197' }] });
+    ctx.save(); ctx.strokeStyle = C.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, -466, 25, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#1a1418'; ctx.font = `700 30px ${K.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillText('明', 0, -455); ctx.restore();
+    braid(ctx, [[0, -668], [5, -630], [14, -560], [22, -505], [26, -455], [24, -425]], 22, 13, { seg: 15, tail: 30 });
+    fistOnPole(ctx, PX, -426, true);
+    const th = K.S([[108, -458], [124, -456], [122, -436], [114, -426], [106, -440]], true);
+    K.toon(ctx, th, MT.sk, { s: 4, lw: 1.8 });
+    K.taper(ctx, [[106, -458], [126, -456]], 6, C.red, { w0: 1, w1: 1, noScale: true });
   }
 
   // ------------------------------------------------------------------ SIDE VIEW (facing left)
   function drawSide(ctx, o) {
     o = o || {};
-    const PX = -14;
-    // pole (far hand) behind the body
-    bamboo(ctx, PX, 0, -856, 10);
-    const crook = [[PX, -850], [PX + 2, -878], [PX + 10, -890], [PX + 18, -884], [PX + 20, -868]];
-    K.taper(ctx, crook, 11, MT.bam.line, { w0: 1, w1: 0.8, noScale: true });
-    K.taper(ctx, crook, 8, MT.bam.base, { w0: 1, w1: 0.8, noScale: true });
-    crowHead(ctx, PX + 16, -866, 0.7, false);
-    K.line(ctx, [[PX + 14, -860], [PX + 14, -840]], 1.6, C.red);
-    lantern(ctx, PX + 14, -840, 62, 78, { tassel: true });
-    talisman(ctx, PX + 4, -886, 12, 56, 0.05, 4);
-    // ruff (behind head, flaring backward)
-    const ruffPts = [[18, -612, 1], [-6, -640, 1], [6, -664], [16, -702, 1], [30, -680], [42, -726, 1], [54, -694], [74, -730, 1], [80, -692], [104, -716, 1], [102, -676], [126, -690, 1], [116, -652], [136, -650, 1], [116, -626], [126, -604, 1], [96, -600]];
-    K.part(ctx, K.S(ruffPts, true, 0.35), {
-      fill: MT.fe.base, line: MT.fe.line, lw: 2,
+    poleAndLantern(ctx, -10, 1, { side: true });
+    // ruff flaring backward behind the head
+    const ruffPts = [[18, -612, 1], [-8, -642, 1], [6, -668], [14, -712, 1], [32, -686], [44, -742, 1], [56, -700], [78, -748, 1], [84, -704], [112, -730, 1], [108, -684], [136, -698, 1], [122, -656], [146, -652, 1], [122, -628], [134, -602, 1], [98, -600]];
+    K.part(ctx, K.S(ruffPts, true, 0.3), {
+      fill: MT.fe.base, line: MT.fe.line, lw: 2.2,
       under: (c) => {
-        for (let i = 0; i < 9; i++) {
-          c.save(); c.translate(40, -610); c.rotate(-1.75 + i * 0.2);
-          feather(c, 0, -10, 22, -92, 0, { base: i % 2 ? '#1f1e2a' : '#191823', sheen: '#46508a', edge: '#0a090f', rachis: '#4a4f6e' });
+        for (let i = 0; i < 10; i++) {
+          c.save(); c.translate(44, -606); c.rotate(-1.8 + i * 0.2);
+          feather(c, 0, -8, 26, -104, 0, { base: i % 2 ? '#1f1e2a' : '#191823', sheen: '#5a64a0', edge: '#0a090f', rachis: '#4a4f6e', sheenA: 0.2 });
           c.restore();
         }
       },
-      fx: [{ dx: 10, dy: -4, c: '#000', a: 0.4 }, { dx: -2.2, dy: 0, c: C.rim, a: 0.8 }],
+      fx: [{ dx: 12, dy: -4, c: '#000', a: 0.4 }, { dx: -2.4, dy: 0, c: C.rim, a: 0.85 }],
     });
     // legs
-    const tro = K.S([[-50, -345], [-46, -270], [-40, -214], [-8, -204], [30, -214], [54, -268], [70, -345]], true);
-    K.toon(ctx, tro, MT.tr, { s: 12, lw: 2 });
-    K.line(ctx, [[-10, -330], [-16, -270], [-20, -226]], 1.4, '#0a0a10', { alpha: 0.7 });
-    legWrap(ctx, [[-40, -214], [-38, -150], [-34, -90], [-30, -44]], [[30, -214], [38, -160], [26, -96], [16, -44]]);
-    const sole = K.S([[-62, -13], [-50, -16], [24, -15], [26, 0, 1], [-58, 0, 1], [-66, -5]], true, 0.6);
-    K.toon(ctx, sole, MT.sole, { s: 3, lw: 1.6 });
-    for (let i = 0; i < 3; i++) K.line(ctx, [[-60, -11 + i * 3.6], [24, -11 + i * 3.6]], 0.8, '#b3a893');
-    const shoe = K.S([[-34, -46], [16, -46], [24, -30], [24, -15], [-62, -14], [-56, -24], [-38, -34]], true, 0.8);
-    K.toon(ctx, shoe, MT.shoe, { s: 6, lw: 1.8 });
+    legWrap(ctx, [[-36, -214], [-35, -150], [-30, -90], [-27, -44]], [[24, -214], [33, -160], [22, -96], [14, -44]], 1);
+    shoeSide(ctx);
+    trouserLeg(ctx, 1, true);
     // jacket skirt
-    const skirt = K.S([[-56, -470], [76, -470], [84, -400], [82, -334, 1], [20, -326], [-60, -330, 1], [-62, -400]], true, 0.8);
+    const skirt = K.S([[-48, -478], [58, -478], [64, -420], [62, -356, 1], [8, -349], [-54, -354, 1], [-52, -410]], true, 0.8);
     K.toon(ctx, skirt, MT.ja, {
-      s: 12, lw: 2,
+      s: 12, sd: [12, -4], lw: 2,
       inner: (c) => {
-        K.taper(c, [[-60, -332], [20, -328], [82, -336]], 7, C.red, { w0: 1, w1: 1 });
-        K.taper(c, [[12, -390], [14, -334]], 5, C.red, { w0: 1, w1: 1 });
-        K.line(c, [[14, -392], [16, -336]], 1.6, MT.ja.line);
+        K.taper(c, [[-54, -354], [8, -351], [62, -357]], 7, C.red, { w0: 1, w1: 1, noScale: true });
+        K.taper(c, [[12, -404], [14, -356]], 4.5, C.red, { w0: 1, w1: 1, noScale: true });
+        K.line(c, [[14, -406], [16, -358]], 1.6, MT.ja.line);
       },
     });
-    // sash ends + token peeking at the front
-    K.toon(ctx, K.S([[-58, -470], [-48, -468], [-56, -380], [-62, -360, 1], [-68, -382]], true, 0.7), MT.red, { s: 5, lw: 1.8 });
-    K.toon(ctx, K.S([[-60, -418, 1], [-52, -418, 1], [-52, -372], [-56, -366, 1], [-60, -372]], true, 0.4), MT.lac, { s: 3, lw: 1.6 });
-    // near arm (hand on hip): forearm comes forward-down from under the mantle to the hip
-    const arm = K.S([[-10, -600], [30, -560], [36, -500], [26, -452], [4, -446], [-6, -470], [6, -520], [-6, -570]], true);
+    // sash ends + token at the front
+    K.toon(ctx, K.S([[-56, -472], [-46, -470], [-54, -384], [-60, -364, 1], [-66, -386]], true, 0.7), MT.red, { s: 5, lw: 1.8 });
+    K.toon(ctx, K.S([[-62, -422, 1], [-54, -422, 1], [-54, -376], [-58, -370, 1], [-62, -376]], true, 0.4), MT.lac, { s: 3, lw: 1.6 });
+    // near arm (akimbo): forearm under the mantle down to the hip
+    const arm = K.S([[-10, -600], [30, -560], [38, -500], [28, -454], [4, -448], [-6, -472], [6, -520], [-6, -570]], true);
     K.toon(ctx, arm, MT.ja, { s: 10, lw: 2 });
     // neck
-    const neck = K.S([[-18, -672], [28, -690], [38, -626], [-22, -620]], true);
+    const neck = K.S([[-18, -672], [28, -690], [38, -630], [-22, -626]], true);
     K.toon(ctx, neck, MT.sk, { s: 8, sd: [8, -3], lw: 1.8 });
     K.clipDo(ctx, neck, (c) => { c.fillStyle = MT.sk.sh2; c.globalAlpha = 0.5; c.beginPath(); c.ellipse(4, -666, 26, 12, -0.2, 0, Math.PI * 2); c.fill(); });
-    // mantle side
-    const hem = jag([[-66, -446], [0, -430], [60, -414], [104, -404]], 7, 26, { seed: 51, lean: 0.12 });
-    const outline = [[-22, -634], [-48, -614], [-62, -566], [-68, -500]].concat(hem).concat([[106, -470], [100, -540], [86, -600], [56, -632], [24, -644]]);
+    // mantle (side)
+    const hemPts = [[-64, -462], [0, -446], [50, -428], [94, -410]];
+    const hem = jag(hemPts, 7, 30, { seed: 51, lean: 0.25, prof: (t) => 1 + 1.4 * Math.exp(-Math.pow((t - 0.93) / 0.12, 2)) });
+    const outline = [[-24, -638], [-42, -620], [-54, -580], [-60, -520]].concat(hem).concat([[98, -470], [90, -545], [70, -608], [36, -648]]);
     featherPanel(ctx, outline, [
-      { pts: [[-80, -590], [-20, -592], [40, -588], [110, -572]], n: 6, depth: 22, yb: -575, seed: 53 },
-      { pts: [[-80, -530], [-10, -526], [60, -516], [115, -500]], n: 6, depth: 24, yb: -510, seed: 57 },
-    ], { box: [-75, -660, 120, -400], fan: 0, seed: 55, sd: [12, -4] });
-    // elbow bump highlight under mantle (arm akimbo pushes the mantle out toward camera)
-    K.taper(ctx, [[-4, -540], [16, -500], [20, -470]], 3, '#5b67a8', { alpha: 0.6 });
-    // hand on hip (fingers forward)
+      { pts: [[-80, -590], [-20, -592], [40, -586], [110, -566]], n: 6, depth: 24, yb: -575, seed: 53 },
+      { pts: [[-80, -528], [0, -522], [60, -510], [115, -490]], n: 6, depth: 26, yb: -510, seed: 57 },
+    ], { box: [-75, -665, 120, -400], fan: 0, seed: 55, sd: [12, -4], hemPts });
+    // hand on hip (fingers forward), cuff
     const sk = MT.sk;
-    const hand = K.S([[2, -456], [24, -456], [16, -436], [-8, -428], [-24, -432], [-28, -440], [-14, -448]], true);
+    const hand = K.S([[4, -458], [26, -458], [18, -438], [-6, -430], [-24, -433], [-30, -441], [-14, -450]], true);
     K.toon(ctx, hand, sk, { s: 4, lw: 1.8 });
-    K.line(ctx, [[-10, -440], [-24, -436]], 1, sk.sh2);
-    K.taper(ctx, [[4, -458], [24, -456]], 6, C.red, { w0: 1, w1: 1 });
+    K.line(ctx, [[-10, -442], [-26, -437]], 1, sk.sh2);
+    K.taper(ctx, [[6, -460], [26, -458]], 6, C.red, { w0: 1, w1: 1, noScale: true });
     // collar & clasp
-    K.toon(ctx, K.S([[-24, -640], [24, -652], [28, -638], [-22, -626]], true), MT.ja, { s: 4, lw: 1.6 });
-    K.part(ctx, K.circle(-24, -628, 7), { fill: C.brass, line: MT.br.line, lw: 1.5, fx: [{ dx: -2, dy: -2, c: MT.br.sh }] });
-    // head
+    K.toon(ctx, K.S([[-24, -644], [26, -656], [30, -642], [-22, -630]], true), MT.ja, { s: 4, lw: 1.6 });
+    K.part(ctx, K.circle(-24, -632, 7.5), { fill: C.brass, line: MT.br.line, lw: 1.5, fx: [{ dx: -2, dy: -2, c: MT.br.sh }] });
     headSide(ctx, { x: 8, y: -H });
-    // queue over ruff and mantle
-    braid(ctx, [[52, -712], [74, -680], [100, -640], [110, -580], [112, -500], [106, -440], [102, -415]], 20, 12, { seg: 15, tail: 30 });
+    braid(ctx, [[56, -716], [80, -684], [104, -640], [112, -580], [112, -500], [106, -440], [102, -415]], 20, 12, { seg: 15, tail: 30 });
   }
 
   // ------------------------------------------------------------------ sheet spec
@@ -943,16 +929,16 @@
     bust0: '#3a3550', bust1: '#16131d', expr: '#221e2b', silBg: 'rgba(255,255,255,0.05)',
   };
   const STAGE = [30, 168, 1630, 1012];
-  const GROUND = 1100;
+  const GROUND = 1112;
   const SPEC = {
-    W: 2400, H: 1660, theme,
+    W: 2400, H: 1660, theme, figScale: 0.97,
     title: '墨鴉', titleEn: 'MO YA  —  envoy of 長明宮',
     role: '長明宮跑腿使者 · 第一章頭目／後期再戰 · 喜劇反派 · 約三十出頭',
     concept: '「鴉披簑、辮垂羽」—— 把清代廟口跑腿的「走路仔」穿上一件鴉羽簑肩：上身鼓、下身細，像一隻站著的烏鴉；臉是自以為聰明的得意笑，手上那盞「長明燈」卻透出被困魂魄的冷藍光。',
     conceptEn: 'A Qing-era temple runner (走路仔) wearing a crow-feather mantle cut like a straw rain cape: puffed-up top, skinny bound legs — a crow standing upright. Smug, theatrical, slightly ridiculous; his temple lantern glows the cold blue of trapped souls.',
     badge: 'FINAL DESIGN · v2 · 3D TOON TURNAROUND · 7 HEADS',
     stage: STAGE,
-    heads: { u: U, n: 7, ground: GROUND, label: '頭身 HEADS', extra: [{ y: GROUND - 900, label: 'crook top 8.3 H' }] },
+    heads: { u: U, n: 7, ground: GROUND, label: '頭身 HEADS', extra: [{ y: GROUND - 940 * 0.97, label: 'crook top ≈ 8.7 H' }] },
     views: [
       {
         label: '正面', labelEn: 'FRONT', at: [520, GROUND], box: [-240, -915, 300, 30], draw: (c) => drawFront(c), shadowR: 190,
@@ -987,15 +973,16 @@
       },
     ],
     panel: [1690, 168, 680],
+    bottom: [44, 1212, 2312, 420],
     bust: {
       label: '胸像 · 得意', labelEn: 'BUST — default expression: smug', h: 440,
-      draw: (c) => drawFront(c, { turn: 0.32, expr: 'smug' }), box: [-130, -800, 150, -590], scale: 2.45, offX: -2, offY: -6,
+      draw: (c) => drawFront(c, { turn: 0.32, expr: 'smug' }), box: [-150, -846, 160, -646], scale: 2.2, offX: 0, offY: 0,
     },
     exprH: 196,
     exprs: [
-      { label: '奸笑 scheming', draw: (c) => drawFront(c, { turn: 0.2, expr: 'scheme' }), box: [-70, -785, 75, -630], scale: 1.42, offX: 4, offY: -8 },
-      { label: '暴怒 furious', draw: (c) => drawFront(c, { turn: -0.12, expr: 'angry' }), box: [-70, -785, 75, -630], scale: 1.42, offX: 4, offY: -8 },
-      { label: '慌了 panicking', draw: (c) => drawFront(c, { turn: 0.0, expr: 'panic' }), box: [-70, -785, 75, -630], scale: 1.42, offX: 4, offY: -8 },
+      { label: '奸笑 scheming', draw: (c) => drawFront(c, { turn: 0.2, expr: 'scheme' }), box: [-74, -790, 80, -650], scale: 1.42, offX: 0, offY: 0 },
+      { label: '暴怒 furious', draw: (c) => drawFront(c, { turn: -0.12, expr: 'angry' }), box: [-74, -790, 80, -650], scale: 1.42, offX: 0, offY: 0 },
+      { label: '慌了 panicking', draw: (c) => drawFront(c, { turn: 0.0, expr: 'panic' }), box: [-74, -790, 80, -650], scale: 1.42, offX: 0, offY: 0 },
     ],
     palette: [
       { c: C.feather, zh: '鴉羽黑', en: 'Crow black', role: 'PRIMARY' },

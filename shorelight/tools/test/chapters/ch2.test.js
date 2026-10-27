@@ -43,6 +43,8 @@ async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
+  // the WebGL presentation layer is still in development: drive the 2D renderer (the game logic is identical)
+  await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch2.test.js */' }));
   page.on('console', (m) => {
     const t = m.text();
@@ -286,7 +288,7 @@ async function testSides(browser, open) {
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'mistforest_n', null, { timeout: 30000 });
   await s.idle();
   // 老獵人的魂 (spirit) & his chest
-  assert(!(await s.ev(() => G.mapScene.findInteract && (G.mapScene.player.dir = 'right', G.mapScene.findInteract())))), 'the ghost is invisible without 靈視');
+  assert(!(await s.ev(() => { const n = G.mapScene.npcs.find((x) => x.id === 'hunter_ghost'); return n && G.mapScene.npcActive(n); })), 'the ghost is invisible without 靈視');
   await s.ev(() => G.Script.S.vision(60));
   await talk(s, 'hunter_ghost'); await s.idle();
   assert((await s.flags()).ch2_hunter_ghost, 'hunter ghost');

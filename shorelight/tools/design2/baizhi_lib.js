@@ -374,19 +374,25 @@
     const W = F.W;
     const e = F.ear || {};
     const y0 = e.y0 || 0.47, y1 = e.y1 || 0.68;
-    const x = side * (W - 0.015);
+    const x = side * (W - 0.02);
     const p = P((p) => {
-      p.moveTo(x, y0);
-      p.bezierCurveTo(x + side * 0.09, y0 - 0.04, x + side * 0.1, y1 - 0.08, x + side * 0.025, y1);
-      p.lineTo(x - side * 0.01, y1 - 0.02);
+      p.moveTo(x, y0 + 0.01);
+      p.bezierCurveTo(x + side * 0.06, y0 - 0.03, x + side * 0.1, y0 + 0.02, x + side * 0.085, y0 + 0.08);
+      p.bezierCurveTo(x + side * 0.075, y0 + 0.13, x + side * 0.05, y1 - 0.05, x + side * 0.035, y1 - 0.01);
+      p.quadraticCurveTo(x + side * 0.01, y1 + 0.01, x - side * 0.005, y1 - 0.03);
       p.closePath();
     });
-    part(p, F.skin, { sh: F.skinSh, rim: false, line: F.line, lw: 1.2 });
-    line(curve([[x + side * 0.02, y0 + 0.04], [x + side * 0.06, y0 + 0.06], [x + side * 0.04, y1 - 0.06]]), mix(F.skinSh, F.line, 0.3), 1);
+    part(p, F.skin, { sh: false, rim: false, line: F.line, lw: 1.2, inner: (c) => {
+      c.fillStyle = rgba(F.skinSh, 0.9);
+      c.beginPath();
+      c.ellipse(x + side * 0.035, y0 + 0.08, 0.022, 0.06, 0, 0, 7);
+      c.fill();
+    } });
+    line(curve([[x + side * 0.03, y0 + 0.02], [x + side * 0.068, y0 + 0.05], [x + side * 0.06, y0 + 0.12], [x + side * 0.035, y1 - 0.04]]), mix(F.skinSh, F.line, 0.35), 1);
   }
   function drawFace(F) {
     const c = G.ctx;
-    const skin = F.skin, sk = F.skinSh || shadowOf(skin);
+    const skin = F.skin, sk = F.skinSh || mix(skin, '#c97a6c', 0.3);
     F.skinSh = sk;
     F.line = F.line || ink(skin, 0.55);
     if (F.ear && F.ear.show) {
@@ -622,7 +628,7 @@
     const nc = mix(F.skinSh, F.line, 0.45);
     if (t === 'tip' || t === 'bridge') {
       stroke([[0.012, y - 0.005], [0.02, y + 0.008], [0.004, y + 0.016], [-0.012, y + 0.014]], 1.3, nc, { prof: [0.2, 1, 0.3] });
-      if (t === 'bridge') stroke([[0.03, F.eye.y + 0.02], [0.026, y - 0.06], [0.02, y - 0.01]], 1.0, rgba(nc, 0.7), { prof: [0, 1, 0.2] });
+      if (t === 'bridge') stroke([[0.028, y - 0.09], [0.026, y - 0.05], [0.02, y - 0.01]], 1.0, rgba(nc, 0.6), { prof: [0, 1, 0.2] });
       fillP(P((p) => p.ellipse(0.022, y - 0.02, 0.012, 0.035, 0, 0, 7)), rgba(F.skinSh, 0.6));
     } else if (t === 'button') {
       fillP(P((p) => p.ellipse(0.006, y + 0.004, w * 0.55, w * 0.3, 0, 0, 7)), rgba(F.skinSh, 0.9));

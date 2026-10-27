@@ -16,7 +16,7 @@
   const MP = (pts, m) => (m < 0 ? pts : pts.map(([x, y]) => [-x, y]));
 
   // ============================================================ HEAD — FRONT (eye line = 0; crown -43, chin +43)
-  YX.face = 'M0,-44 C19,-44 31,-32 31,-13 C32,-4 32,2 30,7 C28,12 27,17 26,21 C24,28 19,34 13,39 C8,42.5 4,44 0,44 C-4,44 -8,42.5 -13,39 C-19,34 -24,28 -26,21 C-27,17 -28,12 -30,7 C-32,2 -32,-4 -31,-13 C-31,-32 -19,-44 0,-44 Z';
+  YX.face = 'M0,-44 C19,-44 30,-32 30,-13 C31,-5 32,1 31,5 C29,10 27,14 26,19 C25,25 24,28 21,31 C16,36 11,40 6,42.5 C3,44 -3,44 -6,42.5 C-11,40 -16,36 -21,31 C-24,28 -25,25 -26,19 C-27,14 -29,10 -31,5 C-32,1 -31,-5 -30,-13 C-30,-32 -19,-44 0,-44 Z';
   YX.backHair = (ctx) => { // long hair behind the head falling to the shoulder blades (front view: visible beside neck)
     L.part(ctx, 'M-33,-30 C-40,-6 -42,30 -44,62 C-44,80 -40,96 -36,104 L36,104 C40,96 44,80 44,62 C42,30 40,-6 33,-30 Z', C.hair, { sh: 5, hi: 2, rim: 1.4, ink: '#050407', detail: (c) => {
       for (const m of [-1, 1]) for (let i = 0; i < 4; i++) L.taper(c, MP([[-34 + i * 3, -10], [-38 + i * 2, 40], [-36 + i * 3, 100]], m), 1.4, C.hairHi, 'both', 0.6);
@@ -26,8 +26,8 @@
     const grief = ex === 'grief', cold = ex === 'cold';
     // ears
     for (const m of [-1, 1]) {
-      L.part(ctx, MX('M-29,-4 C-37,-9 -40,0 -38,8 C-37,15 -33,19 -28,17 Z', m), C.skin, { sh: 2, hi: 0.7, rim: 1 });
-      L.line(ctx, MX('M-31,-1 C-35,-3 -36,3 -35,7 C-34,11 -32,12 -31,11', m), C.skinD, 1.1);
+      L.part(ctx, MX('M-29,-3 C-35,-7 -37,0 -36,7 C-35,13 -32,17 -28,15 Z', m), C.skin, { sh: 2, hi: 0.7, rim: 1 });
+      L.line(ctx, MX('M-30.5,0 C-33.5,-2 -34,3 -33.4,6.5 C-33,10 -31.5,11 -30.5,10', m), C.skinD, 1.1);
     }
     L.part(ctx, YX.face, C.skin, {
       sh: 4, hi: 1.4, rim: 1.4,
@@ -38,7 +38,8 @@
         'M2,-4 C4,4 5,10 6,15 C4,14 3,10 2,5 Z',
       ],
       under: (c) => {
-        L.fill(c, L.ellipse(-14, 7, 8, 3.2), C.circle, 0.28); L.fill(c, L.ellipse(14, 7, 8, 3.2), C.circle, 0.28); // sleepless shadows
+        L.fill(c, L.ellipse(-14, 6.5, 7, 2.4), C.circle, 0.2); L.fill(c, L.ellipse(14, 6.5, 7, 2.4), C.circle, 0.2); // sleepless shadows
+        L.fill(c, 'M-26,-12 C-18,-14 -8,-13 -3,-9 L-3,-6 C-10,-9 -18,-9 -26,-8 Z', C.skinD, 0.35); L.fill(c, 'M26,-12 C18,-14 8,-13 3,-9 L3,-6 C10,-9 18,-9 26,-8 Z', C.skinD, 0.35);
         L.fill(c, L.ellipse(-20, 10, 6, 4), C.blush, 0.18); L.fill(c, L.ellipse(20, 10, 6, 4), C.blush, 0.15);
         L.fill(c, L.ellipse(-12, -26, 10, 5, -0.2), '#fff', 0.12);
       },
@@ -50,12 +51,12 @@
         L.taper(ctx, [[cx - 7.5 * m, 0.5], [cx, 2.4], [cx + 8 * m, 2]], 2.2, '#1a1214');
         for (let i = 0; i < 3; i++) L.taper(ctx, [[cx + (2 + i * 2.5) * m, 2.4], [cx + (3 + i * 3) * m, 4.6]], 0.9, '#1a1214');
       } else {
-        const op = cold ? 5.4 : 3.9;
+        const op = cold ? 4.8 : 3.4;
         const eye = `M${cx - 7.5 * m},0 C${cx - 3 * m},${-op} ${cx + 4 * m},${-op + 0.2} ${cx + 8 * m},1.6 C${cx + 4 * m},3.4 ${cx - 3 * m},3.4 ${cx - 7.5 * m},0 Z`;
         L.fill(ctx, eye, '#f3ede6');
         L.clip(ctx, eye, () => {
-          L.fill(ctx, L.circle(cx - 0.4 * m, 0.9, 3.7), C.iris); L.fill(ctx, L.circle(cx - 0.4 * m, 0.9, 3.7 * 0.55), '#3a2208');
-          L.line(ctx, `M${cx - 0.4 * m - 3.7},0.9 A3.7,3.7 0 1 0 ${cx - 0.4 * m + 3.7},0.9 A3.7,3.7 0 1 0 ${cx - 0.4 * m - 3.7},0.9`, '#5e3d10', 1);
+          L.fill(ctx, L.circle(cx - 0.4 * m, 0.9, 3.4), C.iris); L.fill(ctx, L.circle(cx - 0.4 * m, 0.9, 3.4 * 0.5), '#3a2208');
+          L.line(ctx, `M${cx - 0.4 * m - 3.4},0.9 A3.4,3.4 0 1 0 ${cx - 0.4 * m + 3.4},0.9 A3.4,3.4 0 1 0 ${cx - 0.4 * m - 3.4},0.9`, '#5e3d10', 1);
           L.fill(ctx, L.circle(cx - 0.4 * m - 1.3, -0.4, 0.9), '#fff', 0.9);
           L.fill(ctx, `M${cx - 9},-6 L${cx + 9},-6 L${cx + 9},0.5 C${cx},-1 ${cx - 4},-1 ${cx - 9},0 Z`, '#000', 0.28);
           if (cold) L.glow(ctx, cx, 1, 6, C.gold, 0.6);
@@ -75,7 +76,9 @@
     L.line(ctx, 'M-4,17 C-2,19.5 2,19.5 4,17', C.skinD, 1.4);
     L.fill(ctx, L.ellipse(-2.5, 17.6, 1.6, 0.8), '#6e4a48', 0.7); L.fill(ctx, L.ellipse(2.5, 17.6, 1.6, 0.8), '#6e4a48', 0.7);
     L.fill(ctx, L.ellipse(-1, 13, 1.2, 1.8), '#fff', 0.35);
-    L.taper(ctx, [[-6, 17], [-11, 24], [-13, 29]], 0.9, C.skinD, 'both', 0.7); L.taper(ctx, [[6, 17], [11, 24], [13, 29]], 1, C.skinD, 'both', 0.7);
+    L.taper(ctx, [[-6, 16], [-10, 22], [-12, 30]], 0.8, C.skinD, 'both', 0.6); L.taper(ctx, [[6, 16], [10, 22], [12, 30]], 0.9, C.skinD, 'both', 0.6);
+    L.taper(ctx, [[-8, -22], [0, -23], [8, -22]], 0.8, C.skinD, 'both', 0.5);
+    for (const m of [-1, 1]) L.taper(ctx, [[23 * m, 2], [25 * m, 12], [22 * m, 22]], 1.2, C.skinD, 'both', 0.45);
     // mouth — thin; courteous almost-smile
     if (grief) L.taper(ctx, [[-7, 28], [0, 26.8], [7, 28]], 1.4, '#5c3a3c');
     else if (cold) L.taper(ctx, [[-7, 27.4], [0, 27], [7, 27.4]], 1.4, '#5c3a3c');
@@ -83,18 +86,18 @@
     L.fill(ctx, 'M-5,28.6 C-2,30.4 2,30.4 5,28.6 C2,29.6 -2,29.6 -5,28.6 Z', C.lip, 0.8);
     // thin mustache + narrow goatee
     for (const m of [-1, 1]) L.taper(ctx, [[1.5 * m, 22.2], [6 * m, 22.6], [11 * m, 25.2]], 1.6, C.hair, 'end');
-    L.part(ctx, 'M-2.6,32 C-2.8,38 -2.2,46 0,54 C2.2,46 2.8,38 2.6,32 C1,33 -1,33 -2.6,32 Z', C.hair, { sh: 0.6, hi: 0, rim: 0, lw: 0.8 });
+    L.part(ctx, 'M-3.4,32 C-4,38 -3,46 0,56 C3,46 4,38 3.4,32 C1.2,33.2 -1.2,33.2 -3.4,32 Z', C.hair, { sh: 0.6, hi: 0, rim: 0, lw: 0.8 });
     // hair (front): centre-parted, swept back; silver at the temples
     for (const m of [-1, 1]) {
       L.part(ctx, MX('M0,-46 C-12,-46 -26,-42 -32,-30 C-35,-22 -34,-12 -32,-4 C-31,-10 -30,-17 -27,-22 C-22,-28 -12,-30 -2,-27 L0,-26 Z', m), C.hair, { sh: 2.2, hi: 1, rim: 1, ink: '#050407', detail: (c) => {
         for (let i = 0; i < 6; i++) L.taper(c, MP([[-2 - i * 4, -27 - i * 0.4], [-14 - i * 3, -38 + i * 1.2], [-26 - i * 1.4, -34 + i * 4]], m), 1, C.hairHi, 'both', 0.7);
         L.taper(c, MP([[-28, -30], [-32, -20], [-32, -8]], m), 2.4, C.streak, 'both', 0.9); L.taper(c, MP([[-24, -32], [-29, -22]], m), 1.4, C.streak, 'both', 0.8);
       } });
-      L.part(ctx, L.taperPath(MP([[-24, -28], [-31, -10], [-30, 10], [-27, 30], [-29, 40]], m), 3.6, 'mid'), C.hair, { sh: 0.6, hi: 0, rim: 0, lw: 0.8, ink: '#050407' }); // loose strand
+      L.part(ctx, L.taperPath(MP([[-20, -30], [-29, -12], [-29, 8], [-26, 26], [-28, 38]], m), 2.4, 'mid'), C.hair, { sh: 0.6, hi: 0, rim: 0, lw: 0.8, ink: '#050407' }); // loose strand
     }
     // topknot + 長明冠 crown
     L.part(ctx, L.ellipse(0, -50, 12, 8), C.hair, { sh: 2, hi: 1, rim: 1, ink: '#050407' });
-    YX.crown(ctx, 0, -52, 1);
+    YX.crown(ctx, 0, -52, 0.72);
   };
   YX.crown = (ctx, x, y, s) => { // lacquered black lantern-crown with gold frame & pin
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s); const K0 = L.K; L.K = K0 / s;
@@ -114,16 +117,16 @@
   // ============================================================ HEAD — PROFILE (facing viewer-left; origin = ear centre)
   YX.headSide = (ctx, o = {}) => {
     L.part(ctx, 'M10,-40 C24,-34 30,-16 30,6 C31,40 30,80 28,104 L6,104 C8,70 6,30 2,0 Z', C.hair, { sh: 3, hi: 1, rim: 1.2, dx: -1, ink: '#050407', detail: (c) => { for (let i = 0; i < 4; i++) L.taper(c, [[12 + i * 4, -30], [20 + i * 2, 30], [16 + i * 3, 100]], 1.2, C.hairHi, 'both', 0.6); } });
-    const face = 'M2,-50 C-14,-50 -28,-44 -34,-32 C-37,-24 -38,-16 -38,-10 C-38,-7 -37,-5 -36,-3 C-38,2 -41,9 -45,15 C-46,17 -45,19 -42,19.5 C-40,20 -38,21 -38,23 C-38,25 -38,26.5 -39,28 C-37,29.5 -37,30.5 -38,32 C-38,36 -38,40 -36,44 C-32,48 -24,48 -18,44 C-10,38 -4,32 4,26 C12,18 18,8 22,-4 C26,-20 22,-36 14,-44 C10,-48 6,-50 2,-50 Z';
-    L.part(ctx, face, C.skin, { sh: 3.5, hi: 1.2, rim: 1.2, dx: -1, shades: ['M-28,8 C-22,14 -18,22 -18,30 C-22,26 -26,18 -28,8 Z', 'M-36,-3 C-32,-6 -27,-6 -24,-3 C-28,-1 -32,-1 -36,-3 Z'], under: (c) => L.fill(c, L.ellipse(-27, 4, 7, 2.5), C.circle, 0.28) });
+    const face = 'M2,-50 C-14,-50 -27,-44 -33,-32 C-36,-25 -37,-18 -37,-12 C-37,-8 -36,-6 -35,-4 C-37,2 -41,9 -46,15 C-47,17 -46,19 -42,19.6 C-40,20 -39,21 -39,23 C-39,25 -38.6,26 -39,27.4 C-38,28.6 -38,30 -39,31.4 C-38,33 -37,34 -37.4,36 C-38,39 -38,42 -36,45 C-32,48 -26,47 -20,43 C-12,38 -4,33 2,28 C12,20 18,8 22,-4 C26,-20 22,-36 14,-44 C10,-48 6,-50 2,-50 Z';
+    L.part(ctx, face, C.skin, { sh: 3.5, hi: 1.2, rim: 1.2, dx: -1, shades: ['M-30,6 C-24,12 -20,20 -20,28 C-25,24 -28,16 -30,6 Z', 'M-35,-4 C-31,-7 -26,-7 -23,-4 C-27,-2 -31,-2 -35,-4 Z', 'M-36,36 C-30,40 -22,38 -14,34 C-20,42 -30,46 -36,44 Z'], under: (c) => L.fill(c, L.ellipse(-27, 4, 6, 2), C.circle, 0.2) });
     // hair cap (swept back), ear partly visible
-    L.part(ctx, 'M-30,-38 C-24,-48 -8,-54 6,-52 C20,-50 30,-38 30,-22 C30,-10 26,0 20,6 C18,0 14,-6 8,-8 C6,-18 2,-26 -6,-30 C-14,-34 -24,-34 -30,-38 Z', C.hair, { sh: 2, hi: 1, rim: 1, dx: -1, ink: '#050407', detail: (c) => {
+    L.part(ctx, 'M-31,-36 C-26,-48 -10,-55 6,-53 C20,-51 30,-38 30,-22 C30,-10 26,0 20,6 C17,0 13,-5 7,-8 C4,-16 0,-22 -8,-27 C-16,-31 -24,-32 -31,-36 Z', C.hair, { sh: 2, hi: 1, rim: 1, dx: -1, ink: '#050407', detail: (c) => {
       for (let i = 0; i < 6; i++) L.taper(c, [[-26 + i * 3, -38 - i * 1.4], [-6 + i * 3, -44 + i * 2], [14 + i * 2, -36 + i * 5]], 1, C.hairHi, 'both', 0.7);
       L.taper(c, [[-22, -34], [-6, -32], [6, -20]], 2.4, C.streak, 'both', 0.85);
     } });
     L.part(ctx, 'M-2,-8 C4,-11 10,-7 10,0 C10,7 7,12 2,13 C-1,13 -2,10 -2,6 Z', C.skin, { sh: 1.6, hi: 0.6, rim: 0.8, dx: -1, detail: (c) => L.line(c, 'M0,-5 C5,-6 7,-1 6,4 C5,8 3,9 1,9', C.skinD, 1) });
     L.part(ctx, L.ellipse(6, -54, 11, 7, -0.2), C.hair, { sh: 1.5, rim: 1, dx: -1, ink: '#050407' });
-    YX.crownSide(ctx, 6, -56, 1);
+    YX.crownSide(ctx, 6, -55, 0.72);
     // features
     L.part(ctx, 'M-38,-12.5 C-32,-14.5 -24,-14.5 -17,-12.5 C-24,-12.4 -32,-11.8 -38,-10.6 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
     L.fill(ctx, 'M-35,-1 C-33,-3.6 -29,-3.6 -27,-1.6 C-29,0.4 -33,0.6 -35,-1 Z', '#f3ede6'); L.fill(ctx, L.ellipse(-33, -1.3, 1.3, 1.9), C.iris);
@@ -132,11 +135,11 @@
     L.fill(ctx, L.ellipse(-41, 18, 2, 0.9, 0.3), '#6e4a48', 0.7);
     L.taper(ctx, [[-40, 23], [-36, 23.6]], 1.6, C.hair, 'end');
     L.taper(ctx, [[-39, 28.2], [-35, 28.6]], 1.2, '#5c3a3c');
-    L.part(ctx, 'M-38,31 C-37,36 -37,42 -39,52 C-35,44 -34,38 -35,32 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
-    L.part(ctx, L.taperPath([[-30, -32], [-34, -14], [-31, 6], [-30, 24]], 3.2, 'mid'), C.hair, { sh: 0, rim: 0, lw: 0.8, ink: '#050407' });
+    L.part(ctx, 'M-38.5,31 C-38,37 -38,44 -40,54 C-35,46 -34,38 -35,32 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
+    L.part(ctx, L.taperPath([[-6, -26], [-8, -10], [-6, 10], [-8, 30]], 2.4, 'mid'), C.hair, { sh: 0, rim: 0, lw: 0.8, ink: '#050407' });
   };
   YX.crownSide = (ctx, x, y, s) => {
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s); const K0 = L.K; L.K = K0 / s;
     L.part(ctx, 'M-34,-5 L22,-5 C23,-3 23,-1 22,1 L-34,1 Z', C.gold, { sh: 1, rim: 0, lw: 1.2 });
     L.part(ctx, 'M-10,2 C-12,-6 -11,-14 -7,-20 L7,-20 C11,-14 12,-6 10,2 Z', C.robe, { sh: 2, rim: 1, dx: -1, detail: (c) => L.line(c, 'M0,-20 L0,2', C.gold, 0.9) });
     L.part(ctx, 'M-11,2 L11,2 L10,6 L-10,6 Z', C.gold, { sh: 0.8, rim: 0, lw: 1.1 });
@@ -144,8 +147,7 @@
     L.glow(ctx, 0, -35, 12, C.soul, 0.7);
     L.part(ctx, 'M0,-41 C3,-37 3,-33 0,-31 C-3,-33 -3,-37 0,-41 Z', '#dff6ff', { sh: 0.5, rim: 0, lw: 0.9, ink: '#4a8aa8' });
     // gauze ribbons trailing back
-    L.part(ctx, 'M10,-4 C26,4 34,30 40,70 L34,72 C28,36 20,10 8,0 Z', '#2a2832', { sh: 1, rim: 0.8, dx: -1 });
-    ctx.restore();
+    L.K = K0; ctx.restore();
   };
 
   // ============================================================ HEAD — BACK
@@ -158,7 +160,7 @@
     } });
     L.part(ctx, L.ellipse(0, -50, 12, 8), C.hair, { sh: 2, rim: 1, ink: '#050407' });
     L.part(ctx, 'M-6,-22 L6,-22 L5,-16 L-5,-16 Z', C.gold, { sh: 0.6, rim: 0, lw: 1 }); // hair cuff
-    YX.crown(ctx, 0, -52, 1);
+    YX.crown(ctx, 0, -52, 0.72);
     for (const m of [-1, 1]) L.part(ctx, MX('M-6,-50 C-12,-30 -16,10 -18,110 L-8,112 C-8,40 -6,-10 -2,-48 Z', m), '#2a2832', { sh: 1.5, rim: 0.8 }); // gauze ribbons
   };
 
@@ -262,7 +264,7 @@
       L.part(ctx, MX('M-46,-6 L-8,-6 L-8,1 C-22,3 -36,3 -46,1 Z', m), C.sole, { sh: 1, rim: 0, lw: 1.3 });
       L.part(ctx, MX('M-40,-24 C-46,-18 -48,-10 -46,-6 L-8,-6 C-7,-12 -8,-20 -12,-24 Z', m), C.boot, { sh: 2, hi: 1, rim: 1, lights: [MX('M-38,-14 C-34,-18 -26,-18 -22,-14 Z', m)] });
     }
-    YX.backHair(ctx);
+    ctx.save(); ctx.translate(0, -620); YX.backHair(ctx); ctx.restore();
     // robe 長袍
     const robe = 'M-24,-556 C-40,-552 -54,-542 -58,-526 C-56,-490 -50,-460 -46,-430 C-48,-380 -54,-300 -62,-200 C-68,-120 -74,-60 -80,-16 C-40,-12 40,-12 80,-16 C74,-60 68,-120 62,-200 C54,-300 48,-380 46,-430 C50,-460 56,-490 58,-526 C54,-542 40,-552 24,-556 Z';
     L.part(ctx, robe, C.robe, { sh: 12, hi: 3, rim: 2.2, rimCol: '#9fb3d6', shades: ['M40,-430 C44,-300 52,-180 66,-16 L80,-16 C74,-60 68,-120 62,-200 C54,-300 48,-380 46,-430 Z'],
@@ -312,9 +314,14 @@
     L.part(ctx, 'M-36,-6 L18,-6 L18,1 C0,3 -24,3 -38,1 Z', C.sole, { sh: 1, rim: 0, lw: 1.3 });
     L.part(ctx, 'M-34,-6 C-32,-16 -22,-22 -10,-24 L16,-24 L16,-6 Z', C.boot, { sh: 2, rim: 1, dx: -1 });
     // gauze ribbon & hair behind
-    ctx.save(); ctx.translate(-4, -620); L.part(ctx, 'M16,-60 C30,-40 38,20 44,140 L36,142 C30,30 22,-30 10,-58 Z', '#2a2832', { sh: 1.5, rim: 1, dx: -1 }); ctx.restore();
-    // back strips (behind body)
-    for (let i = 0; i < 6; i++) { const x0 = 6 + i * 7, len = 110 + i * 6; const d = L.tube([[x0, -540], [x0 + 6 + i * 2, -540 + len / 2], [x0 + 10 + i * 3, -540 + len]], [11, 10.5, 10], 'flat'); L.part(ctx, d, i % 2 ? C.white : L.mix(C.white, C.whiteD, 0.45), { sh: 2, rim: 1, lw: 1.3, ink: '#5a5560', dx: -1 }); L.part(ctx, `M${x0 + 10 + i * 3 - 5},${-540 + len - 8} L${x0 + 10 + i * 3 + 5},${-540 + len - 8} L${x0 + 10 + i * 3},${-540 + len + 8} Z`, C.gold, { sh: 0.6, rim: 0, lw: 1.1, ink: C.goldD }); }
+    ctx.save(); ctx.translate(-6, -620); L.part(ctx, 'M4,-58 C22,-40 34,20 40,150 L32,152 C26,30 16,-30 0,-56 Z', '#2a2832', { sh: 1.5, rim: 1, dx: -1 }); ctx.restore();
+    const sideStrip = (x0, len, splay, tone) => {
+      const y0 = -520 - Math.cos((x0 / 40) * 1.2) * 14, x1 = x0 + splay;
+      const d = L.tube([[x0, y0 - 10], [x0 + splay * 0.4, y0 + len * 0.5], [x1, y0 + len]], [11, 10.5, 10], 'flat');
+      L.part(ctx, d, tone ? C.white : L.mix(C.white, C.whiteD, 0.45), { sh: 2, hi: 0.8, rim: 1, lw: 1.3, ink: '#5a5560', dx: -1 });
+      L.part(ctx, `M${x1 - 5},${y0 + len - 8} L${x1 + 5},${y0 + len - 8} L${x1 + 4.4},${y0 + len} L${x1},${y0 + len + 7} L${x1 - 4.4},${y0 + len} Z`, C.gold, { sh: 0.6, rim: 0, lw: 1.1, ink: C.goldD });
+    };
+    for (let i = 0; i < 6; i++) sideStrip(40 - i * 6, 118 - i * 4, 16 - i * 2, i % 2); // back half, behind the body
     const robe = 'M-24,-556 C-34,-540 -36,-510 -34,-480 C-32,-450 -30,-430 -30,-410 C-32,-330 -36,-200 -40,-100 C-42,-60 -42,-36 -42,-16 C-10,-12 30,-12 56,-16 C50,-80 44,-160 40,-240 C36,-320 34,-380 32,-420 C34,-460 36,-500 30,-540 C24,-552 6,-560 -24,-556 Z';
     L.part(ctx, robe, C.robe, { sh: 10, hi: 3, rim: 2.2, dx: -1, rimCol: '#9fb3d6', detail: (c) => {
       for (const [x0, x1] of [[-20, -30], [6, 10], [24, 44]]) L.taper(c, [[x0, -400], [(x0 + x1) / 2, -200], [x1, -20]], 2.2, L.lt(C.robe, 0.12));
@@ -332,9 +339,9 @@
     // neck, collar, side strips, cloud collar (profile)
     L.part(ctx, 'M-22,-600 C-22,-586 -22,-572 -22,-556 L10,-556 C10,-570 10,-584 12,-600 Z', C.skin, { sh: 3, rim: 1, dx: -1, detail: (c) => L.taper(c, [[-16, -590], [-14, -566]], 1.2, C.skinD, 'both', 0.6) });
     L.part(ctx, 'M-25,-566 C-14,-562 4,-562 13,-566 L14,-548 C4,-544 -14,-544 -26,-548 Z', C.white, { sh: 1.5, rim: 0.8, dx: -1, detail: (c) => L.line(c, 'M-25,-566 C-14,-562 4,-562 13,-566', C.gold, 1.5) });
-    for (let i = 0; i < 6; i++) { const x0 = -36 + i * 9, len = 56 + Math.abs(i - 1) * 12; const d = L.tube([[x0, -540], [x0 - 4, -540 + len / 2], [x0 - 8, -540 + len]], [11, 10.5, 10], 'flat'); L.part(ctx, d, i % 2 ? C.white : L.mix(C.white, C.whiteD, 0.45), { sh: 2, rim: 1, lw: 1.3, ink: '#5a5560', dx: -1 }); L.part(ctx, `M${x0 - 13},${-540 + len - 8} L${x0 - 3},${-540 + len - 8} L${x0 - 8},${-540 + len + 8} Z`, C.gold, { sh: 0.6, rim: 0, lw: 1.1, ink: C.goldD }); }
-    const cc = 'M-30,-558 C-40,-552 -46,-540 -44,-528 C-40,-512 -20,-506 0,-506 C16,-508 30,-514 36,-526 C40,-540 32,-554 16,-560 C0,-564 -20,-562 -30,-558 Z';
-    L.part(ctx, cc, C.robe, { sh: 4, hi: 1.5, rim: 1.6, dx: -1, detail: (c) => L.line(c, 'M-44,-528 C-40,-512 -20,-506 0,-506 C16,-508 30,-514 36,-526', C.gold, 4) });
+    for (let i = 0; i < 9; i++) { const x0 = 6 - i * 6; sideStrip(x0, 60 + (i < 4 ? (4 - i) * 14 : 0), -2 - i * 1.6, i % 2); } // shoulder & front
+    const cc = 'M-24,-566 C-38,-560 -48,-546 -48,-532 C-46,-520 -36,-512 -20,-510 C-4,-506 14,-508 30,-514 C42,-520 46,-532 42,-546 C36,-560 18,-568 -4,-568 Z';
+    L.part(ctx, cc, C.robe, { sh: 4, hi: 1.5, rim: 1.6, dx: -1, detail: (c) => L.line(c, 'M-48,-532 C-46,-520 -36,-512 -20,-510 C-4,-506 14,-508 30,-514 C42,-520 46,-532 42,-546', C.gold, 4) });
     ctx.save(); ctx.translate(-6, -620); YX.headSide(ctx); ctx.restore();
   };
 

@@ -39,6 +39,7 @@ G.Map3D = (() => {
       this.buildParticles();
       this.buildDecals();
       this.terrainSnap = ms.terrain.slice();
+      if (G.Env3D && G.Env3D.decorate) { try { G.Env3D.decorate(this); } catch (e) { G.warnOnce('env3d decorate', e); } }
       if (this.def.build3d) { try { this.def.build3d(this, THREE); } catch (e) { G.warnOnce('build3d ' + this.def.id, e); } }
       this.snapCamera();
     }
@@ -768,6 +769,7 @@ G.Map3D = (() => {
       this.post.warp = psy;
       this.post.hue = psy > 0 ? Math.sin(this.t * 0.3) * 0.35 * psy : 0;
       this.post.sat = 1.06 + psy * 0.5;
+      if (G.Env3D && G.Env3D.update) { try { G.Env3D.update(this, dt); } catch (e) { G.warnOnce('env3d update', e); } }
       if (this.def.update3d) { try { this.def.update3d(this, dt, THREE); } catch (e) { G.warnOnce('update3d ' + this.def.id, e); } }
       G.R3.setView(this);
       G.R3.render(dt);

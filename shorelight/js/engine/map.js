@@ -219,6 +219,7 @@ G.Mapx = G.Mapx || {};
       const list = st.party.slice(1, 4).slice();
       if (st.party.includes('yungui') && !st.flags.tuanzi_hidden) list.push('tuanzi');
       if (st.party.includes('baizhi') && st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
+      if (st.flags.yuyuan_joined && !st.flags.yuyuan_hidden) list.push('yuyuan');
       const prev = {};
       for (const f of this.followers || []) prev[f.id] = f;
       this.followers = list.map((id) => {

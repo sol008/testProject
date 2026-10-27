@@ -6,84 +6,23 @@
   const R = B.rig(7);
   const C = {
     shirt: '#36598a', cuff: '#a9c9e6', cuff2: '#f1ede2', apron: '#2b2a3a', silver: '#d7dbe2', trouser: '#22212b',
-    skin: '#f3dccb', hair: '#b4a3c8', hairSh: '#7d6c98', hairHi: '#efe6fb', red: '#c3303a', jade: '#9fd3bd', shoe: '#1f1e27',
+    skin: '#f3dccb', hair: '#17151c', red: '#c3303a', jade: '#9fd3bd', shoe: '#1f1e27',
   };
-  const F = {
-    skin: C.skin, W: 0.385, jawX: 0.255, jawY: 0.8, chinW: 0.06, cheek: 0.1, chinY: 0.99,
-    eye: { y: 0.6, x: 0.172, w: 0.175, h: 0.115, shape: 'almond', tilt: 0.025, iris: '#c8973c', irisR: 0.052, irisH: 1.15, lid: 'mono', halfLid: 0.3, look: 0.0, lashes: 2, lineC: '#3b2a3c', lineW: 2.4, irisDy: 0.012 },
-    brow: { y: 0.47, x0: 0.07, len: 0.165, th: 0.012, arch: 0.01, tilt: -0.012, col: '#7d6c98' },
-    nose: { type: 'bridge', y: 0.765 },
-    mouth: { type: 'soft', y: 0.87, w: 0.05 },
-    blush: 0.35, ear: { show: false },
-  };
-  const TILT = 0.06;
-  // arm landmarks (design units)
-    const FA = [92, -302], FB = [-100, -292]; // flute held level at chest, about to play
-  function hairBack() {
-    // long straight hair falling behind the shoulders to the waist
-    const back = P((p) => {
-      p.moveTo(-24, -414);
-      p.bezierCurveTo(-42, -398, -46, -350, -44, -320);
-      p.bezierCurveTo(-44, -290, -42, -262, -36, -238);
-      p.lineTo(-26, -246);
-      p.lineTo(-14, -236);
-      p.lineTo(14, -236);
-      p.lineTo(26, -246);
-      p.lineTo(36, -238);
-      p.bezierCurveTo(42, -262, 44, -290, 44, -320);
-      p.bezierCurveTo(46, -350, 42, -398, 24, -414);
-      p.closePath();
-    });
-    part(back, C.hairSh, { sh: shadowOf(C.hairSh, 1.2), lw: 1.7, rimW: 1.4, inner: () => {
-      for (const x of [-34, -26, 26, 34]) stroke([[x * 0.7, -400], [x, -320], [x * 1.02, -250]], 1.1, rgba(ink(C.hairSh, 0.4), 0.6));
-    } });
-    // loop bun (half-up) peeking above the crown
+  const FA = [92, -302], FB = [-100, -292]; // flute held level at chest, about to play
+  const HD = B.bzHead(R, { tilt: 0.05, skin: C.skin, ornament: (P2, hu) => {
+    // jade comb + red string at the half-up
+    const a = P2(0.18, -0.02);
+    part(P((p) => p.roundRect(a[0], a[1], 0.2 * hu, 0.07 * hu, 0.03 * hu)), C.jade, { lw: 1.1, rimW: 0.6, sh: mix(C.jade, '#2d6a5a', 0.4), shift: [0.6, 1] });
+    const b = P2(0.3, 0.05);
+    line(curve([b, [b[0] + 3, b[1] + 8], [b[0] + 1, b[1] + 16]]), C.red, 1.6);
+  } });
+  function loopBun() {
+    // 半紮 half-up loop at the back of the crown (the rest of the hair stays down)
     inHead(R, 0, () => {
-      const loop = P((p) => p.ellipse(0.16, -0.06, 0.2, 0.15, 0.4, 0, 7));
-      part(loop, C.hair, { sh: shadowOf(C.hair, 1.3), lw: 1.5, rimW: 0.015 });
-      fillP(P((p) => p.ellipse(0.16, -0.06, 0.09, 0.06, 0.4, 0, 7)), C.hairSh);
-    }, TILT);
-  }
-  function hairFront() {
-    inHead(R, 0, () => {
-      const cap = P((p) => {
-        p.moveTo(-0.46, 0.66);
-        p.bezierCurveTo(-0.55, 0.2, -0.3, -0.07, 0.02, -0.07);
-        p.bezierCurveTo(0.34, -0.07, 0.56, 0.2, 0.46, 0.66);
-        p.lineTo(0.38, 0.42);
-        p.bezierCurveTo(0.3, 0.3, 0.14, 0.24, 0.08, 0.24);
-        p.lineTo(-0.36, 0.34);
-        p.lineTo(-0.38, 0.5);
-        p.closePath();
-      });
-      part(cap, C.hair, { sh: shadowOf(C.hair, 1.3), shift: [0.05, 0.04], rimW: 0.015, lw: 1.6, line: ink(C.hairSh, 0.5) });
-      hairShine(cap, 0, 0.36, 0.44, 0.36, C.hairHi, 0.7, 7);
-      // side-swept fringe from a right-side parting over the left brow
-      const sweep = P((p) => {
-        p.moveTo(0.14, 0.08);
-        p.bezierCurveTo(-0.06, 0.1, -0.28, 0.2, -0.38, 0.36);
-        p.bezierCurveTo(-0.41, 0.42, -0.41, 0.48, -0.4, 0.52);
-        p.lineTo(-0.33, 0.44);
-        p.lineTo(-0.28, 0.48);
-        p.bezierCurveTo(-0.24, 0.4, -0.16, 0.37, -0.1, 0.37);
-        p.lineTo(-0.06, 0.42);
-        p.bezierCurveTo(-0.02, 0.35, 0.06, 0.32, 0.12, 0.32);
-        p.lineTo(0.17, 0.37);
-        p.bezierCurveTo(0.2, 0.28, 0.22, 0.16, 0.14, 0.08);
-        p.closePath();
-      });
-      part(sweep, C.hair, { sh: shadowOf(C.hair, 1.3), shift: [0.03, 0.03], rimW: 0.012, lw: 1.5, line: ink(C.hairSh, 0.5), inner: () => {
-        stroke([[0.08, 0.12], [-0.1, 0.2], [-0.28, 0.38]], 1, rgba(ink(C.hairSh, 0.4), 0.7));
-        stroke([[0.14, 0.14], [0.04, 0.22], [-0.06, 0.34]], 1, rgba(ink(C.hairSh, 0.4), 0.7));
-        stroke([[0.06, 0.14], [-0.12, 0.2], [-0.24, 0.3]], 3.5, rgba(C.hairHi, 0.8));
-      } });
-      // long front locks (hime-style) down to the collarbone
-      lock([[-0.4, 0.42], [-0.44, 0.7], [-0.42, 1.0], [-0.44, 1.3]], [0.05, 0.055, 0.045, 0.004], C.hair, { n: 2, line: ink(C.hairSh, 0.5), sh: shadowOf(C.hair, 1.3) });
-      lock([[0.4, 0.4], [0.44, 0.7], [0.43, 1.0], [0.46, 1.25]], [0.05, 0.055, 0.045, 0.004], C.hair, { n: 2, line: ink(C.hairSh, 0.5), sh: shadowOf(C.hair, 1.3) });
-      // jade comb + red string in the half-up
-      part(P((p) => p.roundRect(0.22, 0.02, 0.18, 0.07, 0.03)), C.jade, { lw: 1.1, rimW: 0.01, sh: mix(C.jade, '#2d6a5a', 0.4), shift: [0.01, 0.02] });
-      line(curve([[0.3, 0.1], [0.36, 0.2], [0.33, 0.32]]), C.red, 1.6);
-    }, TILT);
+      const loop = P((p) => p.ellipse(0.14, -0.08, 0.2, 0.14, 0.35, 0, 7));
+      part(loop, '#17151c', { sh: '#08070c', shift: [0.03, 0.03], lw: 1.5, rimW: 0.015, rim: '#5d6f98', rimA: 0.6 });
+      fillP(P((p) => p.ellipse(0.14, -0.08, 0.09, 0.055, 0.35, 0, 7)), '#08070c');
+    }, 0.05);
   }
   function legs() {
     for (const s of [-1, 1]) {
@@ -256,15 +195,15 @@
     shape: 'vertical · banner sleeves',
     accent: '#36598a',
     idea: '在竹塹客家庄的山歌對唱裡，她借來藍衫與圍身裙，舉笛吹起〈渡魂謠〉——高舉的雙臂與垂落的寬袖是她最好認的剪影。',
-    culture: '台灣客家藍衫：靛藍長衫、右衽大襟、寬袖反摺淺色袖口（袖口花邊），配黑色圍身裙與銀鍊、黑褲布鞋。奇幻處：淡紫灰長髮、低垂的金色眼瞳與玉笛。',
+    culture: '台灣客家藍衫：靛藍長衫、右衽大襟、寬袖反摺淺色袖口（袖口花邊），配黑色圍身裙與銀鍊、黑褲布鞋。奇幻處：吹笛時袖口與笛尾飄出的海霧光點。',
     model: '長衫＋圍裙兩層大形；寬袖做成獨立布料（布料模擬或骨骼擺動）；袖口色帶、銀鍊用貼圖＋簡化網格；笛子為獨立道具。',
-    palette: [[C.shirt, '藍衫靛', 'indigo shirt'], [C.cuff, '袖口淺藍', 'cuff band'], [C.apron, '圍身裙', 'apron'], [C.hair, '暮紫灰髮', 'dusk-lilac hair'], [C.skin, '膚', 'skin'], [C.jade, '玉笛', 'jade flute'], [C.red, '紅線', 'red string']],
+    palette: [[C.shirt, '藍衫靛', 'indigo shirt'], [C.cuff, '袖口淺藍', 'cuff band'], [C.apron, '圍身裙', 'apron'], [C.hair, '烏黑髮', 'jet-black hair'], [C.skin, '膚', 'skin'], [C.jade, '玉笛', 'jade flute'], [C.red, '紅線', 'red string']],
     callouts: [
       { zh: '玉笛・渡魂謠', en: 'jade dizi flute, red-string tag', at: [70, -298] },
       { zh: '寬袖反摺袖口', en: 'wide sleeves, turned-back cuffs', at: [-58, -258] },
       { zh: '圍身裙＋銀鍊', en: 'Hakka apron with silver chain', at: [0, -200] },
       { zh: '藍衫長衫', en: 'long indigo 藍衫 to mid-calf', at: [38, -110] },
-      { zh: '半紮髮・玉梳', en: 'half-up loop, jade comb, red string', at: [16, -420] },
+      { zh: '半紮髮・玉梳', en: 'half-up loop, jade comb, red string', at: [14, -422] },
     ],
     bg: ['#e6e2d8', '#a8b3b0'],
     bust: { y: -372, z: 1.85 },
@@ -285,36 +224,25 @@
       bokeh(c, x, y, w, h * 0.5, 10, ['#ffffff', '#e8f4ff'], 5, 5, 0.4);
     },
     draw() {
-      hairBack();
+      loopBun();
+      HD.back();
       legs();
       shirt();
       apron();
       neck(R, C.skin, { bot: -348, w: 0.11 });
-      inHead(R, 0, () => drawFace(F), TILT);
-      hairFront();
+      HD.face();
+      HD.front();
       arms();
       hands();
       motes([[-100, -330, 1.2], [-80, -350, 0.9], [-112, -312, 0.8], [96, -340, 0.8]], '#d8f6ff');
     },
     back(c, G2, col) {
+      B.bzBack(c, R, -234, col);
       c.fillStyle = col;
-      // long hair fall + loop bun
       c.beginPath();
-      c.moveTo(-26, -416);
-      c.bezierCurveTo(-50, -380, -50, -280, -44, -236);
-      c.lineTo(44, -236);
-      c.bezierCurveTo(50, -280, 50, -380, 26, -416);
+      c.ellipse(8, -428, 13, 9, 0, 0, 7);
       c.fill();
-      c.beginPath();
-      c.ellipse(-10, -426, 13, 9, 0, 0, 7);
-      c.fill();
-      // apron ties bow
       c.fillRect(-46, -272, 92, 6);
-      c.beginPath();
-      c.moveTo(0, -268);
-      c.lineTo(-8, -240);
-      c.lineTo(8, -240);
-      c.fill();
     },
   });
 })();

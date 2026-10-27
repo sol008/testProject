@@ -163,6 +163,22 @@
     S.mx = (a) => (x, y, z) => a(abs(x), y, z); // mirror across x=0
     S.disp = (a, f) => (x, y, z) => a(x, y, z) + f(x, y, z);
     S.bound = (a, cx, cy, cz, r) => (x, y, z) => { const bd = sqrt((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2) - r; return bd > 0.25 * r ? bd : a(x, y, z); };
+    // rotated ellipsoid about its own centre (euler degrees)
+    S.rell = (m, cx, cy, cz, rx, ry, rz, ax, ay, az) => S.t(S.r(S.ell(m, 0, 0, 0, rx, ry, rz), 0, 0, 0, ax, ay, az), cx, cy, cz);
+    // non-uniform scale (approximate SDF; fine for mild factors)
+    S.ns = (a, sx, sy, sz) => { const k = min(sx, sy, sz); return (x, y, z) => a(x / sx, y / sy, z / sz) * k; };
+    // fur clumps: displaces a node outward by amp*bump(p) only near its surface (cheap lower bound elsewhere)
+    // bump = scalloped tufts from value noise sharpened; dirY biases tufts downward (gravity)
+    S.fluff = (a, amp, freq, o = {}) => {
+      const sharp = o.sharp || 2.2, off = o.off || 0, mask = o.mask || null;
+      return (x, y, z) => {
+        const d = a(x, y, z); if (d > amp * 2.2) return d - amp; const mm = MAT;
+        let w = mask ? mask(x, y, z) : 1; if (w <= 0) { MAT = mm; return d; }
+        const n = vnoise(x * freq + off, y * freq * (o.sy || 1) + off * 0.7, z * freq - off);
+        const b = Math.pow(clamp(n * 1.25 - 0.1, 0, 1), sharp);
+        MAT = mm; return d - amp * b * w;
+      };
+    };
     S.relax = 1;
     return S;
   };

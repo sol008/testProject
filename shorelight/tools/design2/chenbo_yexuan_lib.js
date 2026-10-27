@@ -227,19 +227,114 @@
   // draw a figure with a uniform toon outer contour (like an inverted-hull outline in 3D)
   L.figure = (ctx, W, H, gx, gy, z, fn, o = {}) => {
     const r = window.devicePixelRatio || 1;
-    const c = document.createElement('canvas'); c.width = W * r; c.height = H * r; const x = c.getContext('2d'); x.scale(r, r);
-    L.at(x, gx, gy, z, fn);
+    const mk = () => { const c = document.createElement('canvas'); c.width = W * r; c.height = H * r; const x = c.getContext('2d'); x.scale(r, r); return [c, x]; };
+    const [c, x] = mk(); L.at(x, gx, gy, z, fn);
     const ow = o.ow ?? 2.2;
-    if (ow > 0) {
-      const s = document.createElement('canvas'); s.width = c.width; s.height = c.height; const sx = s.getContext('2d');
-      sx.drawImage(c, 0, 0); sx.globalCompositeOperation = 'source-in'; sx.fillStyle = o.ocol || '#1e1519'; sx.fillRect(0, 0, s.width, s.height);
+    if (ow > 0) { // mask pass without glows/fx, so the contour follows only solid geometry
+      const [m, mx] = mk(); L.SIL = true; L.at(mx, gx, gy, z, fn); L.SIL = false;
+      mx.setTransform(1, 0, 0, 1, 0, 0); mx.globalCompositeOperation = 'source-in'; mx.fillStyle = o.ocol || '#1e1519'; mx.fillRect(0, 0, m.width, m.height);
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
-      const t = ctx.getTransform ? null : null;
-      for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; ctx.drawImage(s, Math.cos(a) * ow * r + (o.ox || 0) * r, Math.sin(a) * ow * r + (o.oy || 0) * r); }
+      for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; ctx.drawImage(m, Math.cos(a) * ow * r, Math.sin(a) * ow * r); }
       ctx.restore();
     }
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(c, (o.ox || 0) * r, (o.oy || 0) * r); ctx.restore();
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(c, 0, 0); ctx.restore();
   };
+
+
+  // ================================================================ TURNAROUND SHEET BUILDER (DOM + canvases)
+  L.sheet = (root, S) => {
+    const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+    const cv = (parent, w, h, cls) => { const c = el('canvas', cls); parent.appendChild(c); return [c, L.canvas(c, w, h)]; };
+    root.style.setProperty('--accent', S.accent); root.style.setProperty('--bg', S.bg); root.style.setProperty('--ink', S.ink || '#2a2226');
+    // ---- header
+    const hd = el('header', 'hd'); root.appendChild(hd);
+    hd.appendChild(el('div', 'title', `<div class="kick">${S.kicker}</div><h1>${S.name}</h1><div class="en">${S.nameEn}</div><div class="sub">${S.subtitle}</div>`));
+    const st = el('div', 'stats'); S.stats.forEach(([k, v]) => st.appendChild(el('div', 'stat', `<b>${k}</b><span>${v}</span>`))); hd.appendChild(st);
+    hd.appendChild(el('div', 'shape', `<b>${S.shapeTitle}</b><p>${S.shape}</p>`));
+    // ---- main row
+    const main = el('section', 'main'); root.appendChild(main);
+    const T = S.turn;
+    const tp = el('div', 'panel turn'); main.appendChild(tp);
+    tp.appendChild(el('div', 'ptitle', `<span>${T.title}</span><em>${T.titleEn}</em>`));
+    const [, tc] = cv(tp, T.w, T.h);
+    tc.fillStyle = T.bg; tc.fillRect(0, 0, T.w, T.h);
+    if (T.backdrop) T.backdrop(tc, T.w, T.h);
+    L.guides(tc, T.w, (y) => T.gy + y * T.z, T.guides, '#000');
+    // ground shadows + figures (each figure drawn into its own full-panel offscreen to get the toon contour)
+    for (const v of T.views) {
+      tc.save(); tc.fillStyle = 'rgba(40,30,40,0.16)'; tc.beginPath(); tc.ellipse(v.x, T.gy + 2, 70 * T.z * (v.shadowW || 1), 9, 0, 0, 7); tc.fill(); tc.restore();
+      L.figure(tc, T.w, T.h, v.x, T.gy, T.z, v.draw, { ocol: S.outline });
+      tc.save(); tc.textAlign = 'center'; tc.fillStyle = S.ink || '#2a2226'; tc.font = `bold 17px ${L.FONT_ZH}`; tc.fillText(v.zh, v.x, T.h - 26); tc.font = `italic 12px ${L.FONT_EN}`; tc.fillStyle = '#7a6e70'; tc.fillText(v.en, v.x, T.h - 10); tc.restore();
+    }
+    for (const c of T.callouts) { const v = T.views.find((q) => q.key === c.view); L.callout(tc, v.x + c.at[0] * T.z, T.gy + c.at[1] * T.z, c.lx, c.ly, c.zh, c.en, { dot: S.accent }); }
+    if (T.after) T.after(tc);
+    // extra panel (hidden gear / props)
+    const X = S.extra;
+    const xp = el('div', 'panel extra'); main.appendChild(xp);
+    xp.appendChild(el('div', 'ptitle', `<span>${X.title}</span><em>${X.titleEn}</em>`));
+    const [, xc] = cv(xp, X.w, X.h);
+    X.draw(xc, X.w, X.h);
+    for (const c of X.callouts || []) L.callout(xc, X.gx + c.at[0] * X.z, X.gy + c.at[1] * X.z, c.lx, c.ly, c.zh, c.en, { dot: S.accent, tcol: X.tcol, ecol: X.ecol, col: X.lcol });
+    // right column: bust + expressions
+    const rc = el('div', 'col'); main.appendChild(rc);
+    const bp = el('div', 'panel bust'); rc.appendChild(bp);
+    bp.appendChild(el('div', 'ptitle', `<span>${S.bust.title}</span><em>${S.bust.titleEn}</em>`));
+    const [, bc] = cv(bp, S.bust.w, S.bust.h);
+    S.bust.draw(bc, S.bust.w, S.bust.h);
+    const ep = el('div', 'panel expr'); rc.appendChild(ep);
+    ep.appendChild(el('div', 'ptitle', `<span>表情 Expressions</span><em>${S.exprNote || ''}</em>`));
+    const er = el('div', 'exrow'); ep.appendChild(er);
+    for (const e of S.expressions) { const box = el('div', 'ex'); er.appendChild(box); const [, ec] = cv(box, S.exW, S.exH); e.draw(ec, S.exW, S.exH); box.appendChild(el('div', 'cap', `<b>${e.zh}</b> ${e.en}`)); }
+    // ---- bottom row
+    const bot = el('section', 'bot'); root.appendChild(bot);
+    const pal = el('div', 'panel pal'); bot.appendChild(pal);
+    pal.appendChild(el('div', 'ptitle', `<span>配色</span><em>Palette & material zones</em>`));
+    const pg = el('div', 'swatches'); pal.appendChild(pg);
+    for (const p of S.palette) pg.appendChild(el('div', 'sw', `<i style="background:${p.hex}"></i><div><b>${p.zh}</b> <span class="hex">${p.hex}</span><br><em>${p.en}</em></div>`));
+    if (S.paletteNote) pal.appendChild(el('p', 'note', S.paletteNote));
+    const pr = el('div', 'panel props'); bot.appendChild(pr);
+    pr.appendChild(el('div', 'ptitle', `<span>${S.props.title}</span><em>${S.props.titleEn}</em>`));
+    const [, prc] = cv(pr, S.props.w, S.props.h); S.props.draw(prc, S.props.w, S.props.h);
+    const nt = el('div', 'panel notes'); bot.appendChild(nt);
+    for (const n of S.notes) nt.appendChild(el('div', 'n', `<h3>${n.h}</h3><p>${n.p}</p>`));
+    const sl = el('div', 'panel sil'); bot.appendChild(sl);
+    sl.appendChild(el('div', 'ptitle', `<span>剪影 · 3D 建模</span><em>Silhouette test & toon-model notes</em>`));
+    const [, sc] = cv(sl, S.sil.w, S.sil.h); S.sil.draw(sc, S.sil.w, S.sil.h);
+    const ul = el('ul', 'model'); S.model.forEach((m) => ul.appendChild(el('li', '', m))); sl.appendChild(ul);
+    document.body.dataset.ready = '1';
+  };
+  L.SHEET_CSS = `
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:${'"DejaVu Serif","Liberation Serif",serif'}}
+  #sheet{width:2820px;padding:26px 30px 30px;background:var(--bg)}
+  .hd{display:grid;grid-template-columns:900px 1fr 640px;gap:30px;align-items:end;border-bottom:2px solid var(--ink);padding-bottom:16px}
+  .hd .kick{font:600 13px/1 "DejaVu Sans",sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .hd h1{margin:0;font:700 66px/1.05 "WenQuanYi Zen Hei",sans-serif;letter-spacing:.06em}
+  .hd .en{font:italic 22px/1.3 "DejaVu Serif",serif;color:#6b5f62;margin-top:4px}
+  .hd .sub{font:16px/1.5 "WenQuanYi Zen Hei",sans-serif;margin-top:8px;color:#4a4044}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 18px}
+  .stat{border-left:3px solid var(--accent);padding:2px 0 2px 10px}
+  .stat b{display:block;font:600 11px/1.3 "DejaVu Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8a7c7e}
+  .stat span{font:15px/1.35 "WenQuanYi Zen Hei",sans-serif}
+  .shape b{font:600 12px "DejaVu Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .shape p{margin:6px 0 0;font:14.5px/1.55 "WenQuanYi Zen Hei",sans-serif;color:#3e3438}
+  .main{display:flex;gap:22px;margin-top:20px;align-items:flex-start}
+  .bot{display:flex;gap:22px;margin-top:22px;align-items:stretch}
+  .panel{background:rgba(255,255,255,.38);border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:10px;position:relative}
+  .ptitle{display:flex;align-items:baseline;gap:10px;margin:0 2px 8px;border-bottom:1px solid rgba(0,0,0,.14);padding-bottom:6px}
+  .ptitle span{font:700 18px "WenQuanYi Zen Hei",sans-serif} .ptitle em{font:italic 13px "DejaVu Serif",serif;color:#7a6e70}
+  canvas{display:block;border-radius:4px}
+  .col{display:flex;flex-direction:column;gap:22px}
+  .exrow{display:flex;gap:10px} .ex .cap{font:13px "WenQuanYi Zen Hei",sans-serif;text-align:center;margin-top:4px;color:#4a4044} .ex .cap b{color:var(--ink)}
+  .swatches{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+  .sw{display:flex;gap:10px;align-items:center;font:13.5px/1.35 "WenQuanYi Zen Hei",sans-serif}
+  .sw i{flex:0 0 46px;height:46px;border-radius:5px;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 -10px 0 rgba(0,0,0,.12)}
+  .sw em{font:italic 12px "DejaVu Serif",serif;color:#7a6e70} .sw .hex{font:11px "DejaVu Sans Mono",monospace;color:#8a7c7e}
+  .note{font:13px/1.55 "WenQuanYi Zen Hei",sans-serif;color:#4a4044;margin:12px 2px 0}
+  .pal{flex:0 0 520px}.props{flex:0 0 744px}.sil{flex:0 0 544px}.notes{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;align-content:start}
+  .notes h3{margin:0 0 4px;font:700 15px "WenQuanYi Zen Hei",sans-serif;color:var(--accent)}
+  .notes p{margin:0;font:13.5px/1.62 "WenQuanYi Zen Hei",sans-serif;color:#352c30}
+  .model{margin:8px 0 0;padding-left:18px;font:12.5px/1.5 "WenQuanYi Zen Hei",sans-serif;color:#3e3438} .model li{margin-bottom:3px}
+  `;
 
   G.L = L;
 })(window);

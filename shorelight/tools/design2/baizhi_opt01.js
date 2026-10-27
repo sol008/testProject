@@ -6,109 +6,9 @@
   const R = B.rig(6.5);
   const C = {
     jacket: '#a9cacb', pipe: '#272b42', pipe2: '#efe2bf', trouser: '#30344c', skin: '#f6e1d1',
-    hair: '#1d2d34', hairHi: '#6aa9a3', red: '#c32f3b', jade: '#86c4a2', shoe: '#b8334a', bag: '#7d5a8c',
+    hair: '#17151c', hairHi: '#5d6f98', red: '#c32f3b', jade: '#86c4a2', shoe: '#b8334a', bag: '#7d5a8c',
   };
-  const F = {
-    skin: C.skin, W: 0.41, jawX: 0.295, jawY: 0.79, chinW: 0.09, cheek: 0.6,
-    eye: { y: 0.6, x: 0.185, w: 0.19, h: 0.15, shape: 'round', tilt: 0.006, iris: '#3aa3a2', irisR: 0.064, irisH: 1.18, pupilC: '#11373f', pupilRing: 'rgba(205,255,248,0.9)', glow: '#7ff0e0', lid: 'double', lashes: 2, lineC: '#291b25', lineW: 2.6 },
-    brow: { y: 0.45, x0: 0.075, len: 0.16, th: 0.017, arch: 0.014, tilt: 0.004, col: '#2c3438' },
-    nose: { type: 'button', y: 0.765, w: 0.034 },
-    mouth: { type: 'open', y: 0.862, w: 0.066, open: 0.045 },
-    blush: 0.8, blushLines: true, ear: { show: true, y0: 0.5, y1: 0.7 },
-  };
-  const TILT = 0.07;
-  function hairBack() {
-    inHead(R, 0, () => {
-      const back = P((p) => {
-        p.moveTo(-0.44, 0.62);
-        p.bezierCurveTo(-0.58, 0.1, -0.3, -0.09, 0.02, -0.09);
-        p.bezierCurveTo(0.34, -0.09, 0.58, 0.1, 0.44, 0.62);
-        p.bezierCurveTo(0.4, 0.86, 0.26, 1.02, 0.12, 1.08);
-        p.lineTo(-0.12, 1.08);
-        p.bezierCurveTo(-0.26, 1.02, -0.4, 0.86, -0.44, 0.62);
-        p.closePath();
-      });
-      part(back, mix(C.hair, '#000', 0.3), { sh: false, lw: 1.6, rimW: 0.015 });
-    }, TILT);
-  }
-  function hairFront() {
-    inHead(R, 0, () => {
-      // combed-back cap with centre parting; hairline shows forehead and temples
-      const cap = P((p) => {
-        p.moveTo(-0.445, 0.56);
-        p.bezierCurveTo(-0.54, 0.16, -0.32, -0.07, 0.0, -0.07);
-        p.bezierCurveTo(0.32, -0.07, 0.54, 0.16, 0.445, 0.56);
-        p.bezierCurveTo(0.43, 0.44, 0.41, 0.33, 0.33, 0.25);
-        p.bezierCurveTo(0.24, 0.17, 0.08, 0.16, 0.0, 0.19);
-        p.bezierCurveTo(-0.08, 0.16, -0.24, 0.17, -0.33, 0.25);
-        p.bezierCurveTo(-0.41, 0.33, -0.43, 0.44, -0.445, 0.56);
-        p.closePath();
-      });
-      part(cap, C.hair, {
-        sh: shadowOf(C.hair, 1.5), shift: [0.05, 0.04], rimW: 0.016, lw: 1.7,
-        inner: () => {
-          // comb lines sweeping from the parting back over the skull
-          for (let i = 1; i <= 5; i++) {
-            const k = i * 0.075;
-            stroke([[-0.01, 0.18], [-k * 0.9, 0.02], [-k * 1.25, 0.2], [-k * 1.2 - 0.04, 0.5]], 1, rgba('#0a1418', 0.55));
-            stroke([[0.01, 0.18], [k * 0.9, 0.02], [k * 1.25, 0.2], [k * 1.2 + 0.04, 0.5]], 1, rgba('#0a1418', 0.55));
-          }
-          // soft sheen strands on the light side
-          stroke([[-0.05, 0.12], [-0.2, -0.02], [-0.34, 0.12], [-0.4, 0.32]], 5.5, rgba(C.hairHi, 0.55));
-          stroke([[-0.03, 0.15], [-0.12, 0.04], [-0.24, 0.1]], 3, rgba(lighten(C.hairHi, 0.4), 0.6));
-          stroke([[0.07, 0.1], [0.2, 0.0], [0.33, 0.12]], 3.5, rgba(C.hairHi, 0.35));
-        },
-      });
-      // curtain fringe (垂絲劉海) parted at centre, tips at brow level, swept to the temples
-      for (const s of [-1, 1]) {
-        const fr = P((p) => {
-          p.moveTo(0, 0.17);
-          p.bezierCurveTo(s * 0.12, 0.14, s * 0.3, 0.17, s * 0.39, 0.27);
-          p.bezierCurveTo(s * 0.42, 0.36, s * 0.41, 0.44, s * 0.4, 0.5);
-          p.lineTo(s * 0.35, 0.43);
-          p.lineTo(s * 0.31, 0.47);
-          p.bezierCurveTo(s * 0.28, 0.4, s * 0.24, 0.37, s * 0.2, 0.36);
-          p.lineTo(s * 0.17, 0.42);
-          p.bezierCurveTo(s * 0.14, 0.33, s * 0.08, 0.27, s * 0.03, 0.27);
-          p.lineTo(0, 0.3);
-          p.closePath();
-        });
-        part(fr, C.hair, {
-          sh: shadowOf(C.hair, 1.5), shift: [0.03, 0.03], rimW: 0.012, lw: 1.5,
-          inner: () => {
-            stroke([[s * 0.04, 0.19], [s * 0.16, 0.24], [s * 0.2, 0.34]], 1, rgba('#0a1418', 0.6));
-            stroke([[s * 0.1, 0.18], [s * 0.26, 0.23], [s * 0.33, 0.4]], 1, rgba('#0a1418', 0.6));
-            stroke([[s * 0.06, 0.2], [s * 0.18, 0.22], [s * 0.27, 0.3]], 3, rgba(C.hairHi, s < 0 ? 0.6 : 0.3));
-          },
-        });
-      }
-      // side locks in front of the ears
-      for (const s of [-1, 1]) lock([[s * 0.37, 0.3], [s * 0.42, 0.52], [s * 0.41, 0.74], [s * 0.38, 0.9]], [0.04, 0.042, 0.03, 0.002], C.hair, { n: 1 });
-      // bun-side red string bow at nape peeks behind ear (viewer right)
-    }, TILT);
-  }
-  function braid() {
-    const pts = [[18, -358], [33, -344], [38, -322], [36, -300], [33, -282], [31, -268]];
-    const s = B.cr(pts, 6);
-    const n = 10;
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1);
-      const k = Math.min(s.length - 1, Math.round(t * (s.length - 1)));
-      const [x, y] = s[k];
-      const w = 9.5 - t * 3.8;
-      const side = i % 2 ? 1 : -1;
-      const lobe = P((p) => p.ellipse(x + side * w * 0.2, y, w * 0.7, w * 0.92, side * 0.6, 0, 7));
-      part(lobe, C.hair, { sh: shadowOf(C.hair, 1.5), shift: [1.4, 1.6], rimW: 0.8, lw: 1.3, hi: P((p) => p.ellipse(x + side * w * 0.05 - 1.6, y - 2, w * 0.18, w * 0.45, side * 0.6, 0, 7)), hiC: rgba(C.hairHi, 0.7) });
-    }
-    const end = s[s.length - 1];
-    const tuft = ribbon([[end[0], end[1] + 5], [end[0] + 1.5, end[1] + 14], [end[0] + 3, end[1] + 24]], [4.6, 4, 0.4]);
-    part(tuft, C.hair, { sh: shadowOf(C.hair, 1.5), lw: 1.2, rimW: 0.8, grad: [rgba(C.hair, 0), rgba('#bff7ee', 0.85), end[1] + 9, end[1] + 24] });
-    motes([[end[0] + 7, end[1] + 27, 1.3], [end[0] - 1, end[1] + 32, 1], [end[0] + 10, end[1] + 19, 0.8]], '#9ff5e6');
-    // red string tie with long streamers + jade tag
-    part(P((p) => p.roundRect(end[0] - 5.5, end[1] + 2, 11, 4.5, 2)), C.red, { lw: 1, rimW: 0.6 });
-    stroke([[end[0] - 3, end[1] + 6], [end[0] - 7, end[1] + 15], [end[0] - 6, end[1] + 21]], 1.8, C.red, { prof: [1, 1, 0.7] });
-    jadeTag(end[0] - 6, end[1] + 29, 10, { cordLen: 0.6, tassel: false });
-  }
+  const HD = B.bzHead(R, { len: -228, frontLen: -258, tilt: -0.05, ends: { col: '#bff7ee', a: 0.55 }, skin: C.skin });
   function legs() {
     for (const s of [-1, 1]) {
       const leg = P((p) => {
@@ -314,14 +214,14 @@
     ratio: 6.5,
     shape: 'round · soft',
     accent: '#2b6f73',
-    idea: '阿柑姨把女兒的大裪衫借給她：一個能混進九份街坊的女孩，只有淺得發光的瞳孔與化成光點的辮梢洩漏她不是人。',
-    culture: '閩南（Hoklo）女子日常大裪衫：右衽大襟、黑色寬滾邊鑲米色細線、盤扣、寬袖；配寬腳大褲與繡鞋，少女單辮與垂絲劉海。奇幻處只在瞳孔光環與辮梢化成光點。',
-    model: '衣褲為簡潔大形，滾邊／盤扣以貼圖＋少量凸起表現；辮子用 8–10 節串珠網格；瞳孔光環與髮梢消散做成 shader。',
-    palette: [[C.jacket, '月白水藍', 'jacket'], [C.pipe, '黑滾邊', 'piping'], [C.hair, '黛青髮', 'hair'], [C.skin, '膚', 'skin'], [C.red, '紅線', 'red string'], [C.jade, '玉牌', 'jade'], [C.shoe, '繡鞋紅', 'shoes']],
+    idea: '阿柑姨把女兒的大裪衫借給她：一個能混進九份街坊的女孩，只有長髮髮梢與指尖那一點海玻璃色的微光洩漏她不是人。',
+    culture: '閩南（Hoklo）女子日常大裪衫：右衽大襟、黑色寬滾邊鑲米色細線、盤扣、寬袖；配寬腳大褲與繡鞋，玉牌以紅繩繫於襟扣。奇幻處只在髮梢與指尖化成光點。',
+    model: '衣褲為簡潔大形，滾邊／盤扣以貼圖＋少量凸起表現；長髮為 3 片大髮束（後髮、左側臉框髮、耳後）；髮梢消散與指尖微光為 shader。',
+    palette: [[C.jacket, '月白水藍', 'jacket'], [C.pipe, '黑滾邊', 'piping'], [C.hair, '烏黑髮', 'jet-black hair'], [C.skin, '膚', 'skin'], [C.red, '紅線', 'red string'], [C.jade, '玉牌', 'jade'], [C.shoe, '繡鞋紅', 'shoes']],
     callouts: [
       { zh: '大裪衫・右衽大襟', en: 'Hoklo side-fastened jacket', at: [-30, -316] },
       { zh: '寬滾邊＋盤扣', en: 'broad black piping, frog buttons', at: [-44, -262] },
-      { zh: '單辮・紅線・玉牌', en: 'single braid, red string, jade tag', at: [26, -242] },
+      { zh: '紅繩玉牌繫襟扣', en: 'jade tag on red string at the lapel', at: [-20, -282] },
       { zh: '九份芋圓', en: 'first bowl of taro balls', at: [0, -212] },
       { zh: '寬腳大褲・繡鞋', en: 'wide trousers, embroidered shoes', at: [-26, -70] },
     ],
@@ -351,27 +251,27 @@
     },
     draw() {
       bagBehind();
-      hairBack();
+      HD.back();
       legs();
       torso();
       neck(R, C.skin, { bot: -345, w: 0.115 });
-      inHead(R, 0, () => drawFace(F), TILT);
-      hairFront();
-      braid();
+      HD.face();
+      HD.front();
+      // jade tag hung from the lapel knot button on a red string
+      jadeTag(-20, -296, 10, { cordLen: 1.9 });
       arms();
       bowl();
+      motes([[-40, -246, 1.1], [-34, -236, 0.8], [-46, -252, 0.7]], '#bff7ee');
     },
     back(c, G2, col) {
+      B.bzBack(c, R, -228, col);
       c.fillStyle = col;
-      c.beginPath();
-      c.ellipse(0, -392, 25, 29, 0, 0, 7);
-      c.fill();
       c.fillRect(-60, -136, 120, 12);
       c.beginPath();
-      c.moveTo(60, -394);
-      c.lineTo(66, -388);
-      c.lineTo(-34, -262);
-      c.lineTo(-40, -268);
+      c.moveTo(54, -394);
+      c.lineTo(60, -388);
+      c.lineTo(-30, -262);
+      c.lineTo(-36, -268);
       c.fill();
     },
   });

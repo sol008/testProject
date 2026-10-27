@@ -1126,6 +1126,10 @@
       { id: 'awang_t', sprite: 'miner', name: '阿旺', x: 12, y: 7, dir: 'down', if: (st) => phase(st) === 'P1', talk: (S) => awangTalk(S) },
       { id: 'guest1', sprite: 'villager_m2', name: '茶客', x: 9, y: 8, dir: 'up', if: (st) => ['P1', 'P2'].includes(phase(st)),
         talk: ['列位看官、列位看官……我也想說一次看看。'] },
+      { id: 'mochi', sprite: 'mochi', name: '三花貓', x: 18, y: 8, dir: 'left', if: (st) => !st.flags.mochi_joined,
+        talk: (S) => S.say('', '一隻蓬鬆的大三花貓，窩在窗邊的光裡，尾巴像一支雞毛撢子。牠懶懶地瞇著眼。') },
+      { id: 'yuyuan_cat', sprite: 'yuyuan', name: '灰虎斑貓', x: 18, y: 9, dir: 'left', if: (st) => !st.flags.yuyuan_joined,
+        talk: async (S) => { S.emote('yuyuan_cat', '…'); await S.say('', '一隻胖得像米袋的灰虎斑貓。牠面無表情地盯著你，好像你欠牠一條魚。'); } },
       { id: 'guest2', sprite: 'villager_f', name: '茶客', x: 4, y: 11, dir: 'up', if: (st) => phase(st) !== 'P3',
         talk: ['阿炳伯講的故事，我聽了三十年，還是愛聽。'] },
     ],
@@ -1140,10 +1144,65 @@
       { id: 'xingmu_start', trigger: 'auto', once: true,
         if: (st) => st.flags.ch1_err_tea && (st.vars.c1_tea_entries || 0) >= 1 && !st.quests.q_xingmu && ['P1', 'P2', 'P3'].includes(phase(st)),
         run: (S) => xingmuStart(S) },
+      { id: 'cats', trigger: 'auto', if: (st) => st.flags.ch1_yuyuan && !st.flags.mochi_joined && st.party.includes('baizhi'), run: (S) => sceneCats(S) },
       { id: 'windows_w', trigger: 'action', x: 0, y: 3, h: 7, label: '窗外', run: teaWindow },
       { id: 'windows_n', trigger: 'action', x: 2, y: 1, w: 2, label: '窗外', run: teaWindow },
     ],
   });
+  // 1-23d 麻糬與芋圓 — the teahouse's bonded pair of cats adopt 白芷 and 星河
+  async function sceneCats(S) {
+    const ms = MS();
+    S.setPos('player', 10, 11, 'up');
+    const bz = ms.actor('baizhi');
+    if (bz) { bz.setCell(11, 11); bz.dir = 'up'; bz.scripted = true; }
+    ms.snapCamera();
+    cineOn();
+    await S.say('', '茶樓角落，兩隻大貓窩在一起。一隻蓬鬆的三花，一隻胖得像米袋的灰虎斑。');
+    await S.say('鄭頭家', '星河！姑娘！聽講你們今仔日要出門？');
+    S.face('mochi', 'baizhi');
+    S.emote('mochi', '…', 1.6);
+    await S.say('', '三花貓抬起頭，盯著白芷看了很久。牠的眼睛裡，映著她身上那一點淡淡的光。');
+    await S.walkTo('mochi', 11, 10);
+    S.face('mochi', 'down');
+    S.emote('mochi', '♥');
+    await S.say('', '牠走過來，用頭頂了頂白芷的手。一下，又一下。');
+    await S.say('baizhi:surprise', '……牠在推我。');
+    await S.say('xinghe:laugh', '是在討摸啦。');
+    await S.say('baizhi:smile', '白白的、軟軟的、圓圓的……像阿柑姨說的那個——麻糬。');
+    await S.say('baizhi:smile', '妳叫麻糬，好不好？');
+    await S.say('麻糬', '喵。');
+    await S.walkTo('yuyuan_cat', 10, 10);
+    S.face('yuyuan_cat', 'down');
+    S.emote('yuyuan_cat', '…', 1.8);
+    S.sfx('push');
+    await S.say('', '灰虎斑貓慢吞吞地走過來，看了星河一眼——然後一屁股坐上他的腳。');
+    S.emote('player', '💢');
+    await S.say('xinghe:surprise', '喂！好重！你壓到我的腳了！');
+    await S.say('', '灰貓面無表情地看著他。一動也不動。');
+    await S.say('鄭頭家', '奇怪……這兩隻在茶樓三年，誰抱都不給抱，連我都會被抓。');
+    await S.say('鄭頭家', '三花的選了姑娘，胖的……好像選了你。');
+    await S.say('xinghe:angry', '我不要！我們要去很遠的地方，帶兩隻貓怎麼走！');
+    await S.say('鄭頭家', '牠們兩隻從來沒分開過。要帶，就攏帶去。');
+    await S.say('baizhi:think', '這隻灰灰的、圓圓的，有一點紫……像早上吃的芋圓。');
+    await S.say('baizhi:smile', '那牠叫芋圓。');
+    await S.say('xinghe:sad', '不要幫牠取名字啊！取了名字就要帶走了啦！');
+    S.emote('yuyuan_cat', '…');
+    await S.say('', '芋圓打了個呵欠，把下巴擱在星河的鞋子上。');
+    await S.say('baizhi:smile', '星河。');
+    await S.say('xinghe:think', '……');
+    await S.say('xinghe:hurt', '……好啦好啦！路上的魚乾，我出！');
+    S.emote('mochi', '♥');
+    await S.say('麻糬', '喵。');
+    S.remove('mochi'); S.remove('yuyuan_cat');
+    S.flag('mochi_joined'); S.flag('yuyuan_joined');
+    if (bz) bz.scripted = false;
+    S.gather();
+    ms.refresh();
+    S.sfx('levelup');
+    S.toast('{y}麻糬{/}和{y}芋圓{/}跟上了旅程！', 'lantern');
+    await cineOff();
+    S.objective('跟九份的大家道別，從南邊的山路出發');
+  }
   function teaWindow(S) { return S.say('', '從這裡看得到整片海。說書的阿炳伯說，晴天的時候，看得到唐山的方向。……這當然是吹牛。'); }
 
   // 1-3a 差事：茶樓的燈籠
@@ -1494,7 +1553,9 @@
       await S.say('林大夫', '我開藥安神，再叫他們去廟裡收驚。藥醫身，廟醫心，攏要。');
       return;
     } else await S.say('林大夫', '要帶什麼藥？出門在外，金創藥一定要有。');
-    await S.shop(['jinchuang', 'jiedu', 'xiangbao'].concat(['P3', 'P5'].includes(p) ? ['huanhunxiang'] : []), { title: '回春堂' });
+    const goods = ['jinchuang', 'jiedu', 'xiangbao'];
+    if (p === 'P3' || p === 'P5') goods.push('huanhunxiang');
+    await S.shop(goods, { title: '回春堂' });
   }
 
   // =================================================================================================== 1.8 阿土嬸家
@@ -1850,7 +1911,11 @@
       { id: 'raid_salt', trigger: 'touch', x: 18, y: 15, w: 3, once: true, if: (st) => phase(st) === 'P4' && st.flags.ch1_night_raid, run: (S) => raidSalt(S) },
       { id: 'raid_finale', trigger: 'touch', x: 18, y: 4, w: 3, once: true, if: (st) => phase(st) === 'P4' && st.flags.ch1_night_raid, run: (S) => raidFinale(S) },
       // 1-24
-      { id: 'depart', trigger: 'touch', x: 18, y: 40, w: 3, once: true, if: (st) => st.flags.ch1_yuyuan && !st.flags.ch1_done, run: (S) => scene24(S) },
+      { id: 'depart', trigger: 'touch', x: 18, y: 40, w: 3, once: true, if: (st) => st.flags.ch1_yuyuan && st.flags.mochi_joined && !st.flags.ch1_done, run: (S) => scene24(S) },
+      { id: 'depart_gate', trigger: 'touch', x: 18, y: 40, w: 3, if: (st) => st.flags.ch1_yuyuan && !st.flags.mochi_joined, run: async (S) => {
+        await S.say('xinghe:think', '……出發之前，先去聽雨樓跟鄭頭家說一聲吧。他早上好像在找我們。');
+        await S.move('player', 'U');
+      } },
     ],
   });
   async function lockedAtNight(S) {
@@ -2318,7 +2383,7 @@
       { id: 'm1i', troop: 'mine_3', x: 36, y: 17, lv: 3, radius: 2 },
     ],
     warps: [
-      { x: 19, y: 39, w: 2, to: 'jiufen', tx: 35, ty: 31, tdir: 'down' },
+      { x: 19, y: 39, w: 2, to: 'jiufen', tx: 35, ty: 32, tdir: 'down' },
       { x: 27, y: 3, to: 'mine_2', tx: 25, ty: 4, tdir: 'down' },
       { x: 37, y: 13, to: 'mine_2', tx: 3, ty: 4, tdir: 'down' },
     ],
@@ -2637,7 +2702,7 @@
     if (c !== 0) return;
     S.sfx('bell');
     V().c1_cage = true;
-    await S.warp('jiufen', 35, 31, 'down');
+    await S.warp('jiufen', 35, 32, 'down');
   }
 
   // 1-7 金脈大廳：工頭魂・阿土伯
@@ -2774,11 +2839,11 @@
   async function scene18(S) {
     const ms = MS();
     const byCage = !!V().c1_cage;
-    S.setPos('player', 35, 31, 'down');
+    S.setPos('player', 35, 32, 'down');
     ms.snapCamera();
     S.flag('ch1_ahuang_follow', false);
     ms.followers = ms.followers.filter((f) => f.id !== 'ahuang_f');
-    const dog = S.spawn({ id: 'dog_r', sprite: 'dog', x: 35, y: 32, dir: 'down', speed: 5 });
+    const dog = S.spawn({ id: 'dog_r', sprite: 'dog', x: 35, y: 33, dir: 'down', speed: 5 });
     void dog;
     S.remove('xiaojin');
     S.spawn({ id: 'xj_r', sprite: 'child_m', x: 33, y: 33, dir: 'right' });
@@ -3396,7 +3461,7 @@
       { t: 'pandanus', x: 3, y: 20 }, { t: 'pandanus', x: 9, y: 20 }, { t: 'pandanus', x: 29, y: 20 }, { t: 'pandanus', x: 44, y: 19 }, { t: 'pandanus', x: 45, y: 15 },
       { t: 'pandanus', x: 2, y: 15 }, { t: 'tree_betel', x: 18, y: 27 }, { t: 'tree_betel', x: 27, y: 33 }, { t: 'tree_fern', x: 45, y: 23 }, { t: 'tree_fern', x: 1, y: 27 },
       { t: 'rock_big', x: 40, y: 14 }, { t: 'rock_small', x: 34, y: 14 }, { t: 'rock_small', x: 38, y: 14 }, { t: 'rock_small', x: 39, y: 6 }, { t: 'rock_small', x: 33, y: 4 },
-      { t: 'driftwood', x: 6, y: 17 }, { t: 'basket', x: 21, y: 18, v: 1 }, { t: 'jar', x: 26, y: 21 }, { t: 'well', x: 19, y: 30 },
+      { t: 'driftwood', x: 6, y: 17 }, { t: 'basket', x: 20, y: 19, v: 1 }, { t: 'jar', x: 26, y: 21 }, { t: 'well', x: 19, y: 30 },
       { t: 'stone_lantern', x: 27, y: 22, lit: true },
       ...[19, 24, 29].map((x) => ({ t: 'paper_stack', x: x - 1, y: 14, w: 2, h: 1, solid: true, alpha: 0, if: (s) => !s.flags.ch1_release })),
     ],
@@ -4355,10 +4420,12 @@
     await S.say('baizhi:think', '它現在在唱歌。');
     await S.say('agan:smile', '這些帶著，路上吃！');
     await S.give('yuyuan', 3);
+    await S.say('agan:smile', '還有隔壁攤的麻糬，也幫妳包兩個。白白、軟軟、圓圓的！');
+    await S.say('baizhi:think', '麻……糬。');
     S.flag('ch1_yuyuan');
     S.gather();
     await cineOff();
-    S.objective('跟九份的大家道別，從南邊的山路出發');
+    S.objective(F('mochi_joined') ? '跟九份的大家道別，從南邊的山路出發' : '去聽雨樓跟鄭頭家道別');
   }
 
   // =================================================================================================== 1-24 出發

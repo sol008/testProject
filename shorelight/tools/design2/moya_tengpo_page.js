@@ -4,7 +4,7 @@ window.SHEET_PAGE = function (CH) {
   const q = new URLSearchParams(location.search);
   const cv = document.getElementById('c');
   const view = q.get('view');
-  document.fonts.load('20px "WenQuanYi Zen Hei"').then(() => {
+  document.fonts.load('20px "WenQuanYi Zen Hei"').then(() => { try {
     if (!view) {
       K.sheet(cv, CH.SPEC);
     } else {
@@ -19,6 +19,7 @@ window.SHEET_PAGE = function (CH) {
       ctx.fillStyle = S.theme.paper0; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.drawImage(img, 0, 0);
     }
+    } catch (e) { console.error(e.stack); }
     document.body.dataset.ready = '1';
   });
 };

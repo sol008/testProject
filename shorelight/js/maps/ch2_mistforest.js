@@ -225,8 +225,9 @@
         }
       } else {
         const ph = (o.seq || 0) * 0.6;
-        const a = (0.45 + 0.35 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade);
-        ctx.shadowColor = '#dff4ff'; ctx.shadowBlur = 14;
+        const a = Math.min(1, (0.62 + 0.38 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade));
+        ctx.scale(1.25, 1.25);
+        ctx.shadowColor = '#dff4ff'; ctx.shadowBlur = 18;
         ctx.fillStyle = `rgba(228,242,255,${a.toFixed(3)})`;
         for (const [dx, dy] of [[-12, -7], [10, 7]]) {
           ctx.beginPath(); ctx.ellipse(dx, dy, 7.5, 4.2, 0, 0, Math.PI * 2); ctx.fill();
@@ -493,6 +494,8 @@
     if (G.Script.busy() || ms.player.moving) return;
     const p = ms.player;
     if (!ms.solid[p.y * ms.w + p.x]) return;
+    const illusionHere = ms.objects.some((o) => o.illusion && ms.objActive(o) && p.x >= o.x && p.x < o.x + (o.w || (G.Objects.get(o.t) || {}).w || 1) && p.y >= o.y && p.y < o.y + (o.h || (G.Objects.get(o.t) || {}).h || 1));
+    if (!illusionHere) return;
     for (let r = 1; r < 6; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
       const x = p.x + dx, y = p.y + dy;
@@ -3148,12 +3151,12 @@
     name: '虎姑婆的洞窟', subtitle: '山腹裡的巢',
     bgm: (st) => (st.flags.ch2_tiger_beaten ? 'mine' : 'mine'),
     start: [15, 30],
-    light: { ambient: 0.85, color: '#06040a', playerR: 230, playerColor: '#ffc890' },
+    light: { ambient: 0.78, color: '#06040a', playerR: 260, playerColor: '#ffc890' },
     particles: ['motes', { type: 'mist', density: 0.5 }],
     tiles: DEN,
     objects: [
       { t: 'brazier', x: 14, y: 24 }, { t: 'brazier', x: 17, y: 24 }, { t: 'brazier', x: 14, y: 29 }, { t: 'brazier', x: 17, y: 29 },
-      { t: 'brazier', x: 11, y: 2 }, { t: 'brazier', x: 21, y: 2 }, { t: 'brazier', x: 3, y: 15 }, { t: 'brazier', x: 28, y: 16 },
+      { t: 'brazier', x: 11, y: 2 }, { t: 'brazier', x: 21, y: 2 }, { t: 'brazier', x: 11, y: 9 }, { t: 'brazier', x: 21, y: 9 }, { t: 'brazier', x: 2, y: 3 }, { t: 'brazier', x: 3, y: 15 }, { t: 'brazier', x: 28, y: 16 },
       saveStone(16, 27, '洞裡的石燈籠——不知道是誰放的，火還亮著。'),
       // the porter's room
       { t: 'basket', x: 3, y: 4, v: 2, label: '調查', if: (st) => !st.flags.ch2_bundle_taken, interact: async (S) => { await bundle(S); } },

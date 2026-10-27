@@ -4,6 +4,7 @@
 //   node tools/test/chapters/ch9.test.js            # main story + side quests
 //   node tools/test/chapters/ch9.test.js --shots    # also save screenshots to tools/test/out/ch9_*.png
 //   node tools/test/chapters/ch9.test.js --headed
+//   node tools/test/chapters/ch9.test.js --only A,B,sweep,3d   # run selected parts
 //
 // Part A drives the critical path from ?debug&startch=9 to G.Story.next(S, 10) while doing every side quest
 // (半屏山湯圓 心燈, 七個名字 心燈 + 歌詞殘篇, 燈塔守的家書 心燈) on the way.
@@ -21,6 +22,8 @@ const OUT = path.join(ROOT, 'tools', 'test', 'out');
 const argv = process.argv.slice(2);
 const SHOTS = argv.includes('--shots');
 const HEADED = argv.includes('--headed');
+const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? String(argv[i + 1] || '').split(',') : null; })();
+const want = (k) => !ONLY || ONLY.includes(k);
 fs.mkdirSync(OUT, { recursive: true });
 
 const results = [];
@@ -32,11 +35,16 @@ function check(name, ok, info) {
   console.log(`${ok ? '  ok  ' : ' FAIL '} ${name}${info != null && !ok ? '  — ' + info : ''}`);
 }
 
+// errors thrown while LOADING other chapters' files (other builders are still writing them) are recorded by a
+// window 'error' listener with their filename; those are reported but do not fail this chapter's test.
+const FOREIGN = /js\/(maps\/ch(?!9_)|i18n\/)/;
 function installErrorHooks(p) {
-  p.on('pageerror', (e) => {
+  p.on('pageerror', async (e) => {
     const msg = String((e && e.message) || e);
     const st = String((e && e.stack) || '');
-    if (/js\/(maps\/ch(?!9_)|i18n\/)/.test(st)) { foreign.push('pageerror ' + msg); return; }
+    let files = [];
+    try { files = await p.evaluate(() => (window.__c9err || []).map((x) => x.file + ' ' + x.msg)); } catch (_) { /* page closed */ }
+    if (FOREIGN.test(st) || files.some((f) => FOREIGN.test(f) && f.includes(msg.slice(0, 40)))) { foreign.push('pageerror ' + msg); return; }
     errors.push({ kind: 'pageerror', msg: msg + ' ' + st.split('\n').slice(0, 3).join(' | ') });
   });
   p.on('console', (m) => {
@@ -96,9 +104,15 @@ async function lastError() { return ev(() => (G.lastError ? String(G.lastError &
 async function scriptLog() { return ev(() => (G.Debug.log || []).filter((l) => /SHOP: unknown/.test(l))); }
 async function expectMap(id, label) { const m = await mapId(); check(label || `on map ${id}`, m === id, m); }
 
-async function newPage(browser, url, initialChoices) {
+async function newPage(browser, url, initialChoices, mode3d) {
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   installErrorHooks(page);
+  await page.addInitScript((use3d) => {
+    window.__c9err = [];
+    window.addEventListener('error', (e) => { window.__c9err.push({ msg: String(e.message || ''), file: String(e.filename || '') }); }, true);
+    // functional runs use the 2D field renderer (fast in headless Chromium); the 3D sweep uses ?r3lite
+    if (!use3d) { const iv = setInterval(() => { if (window.G && G.settings) { G.settings.render3d = false; clearInterval(iv); } }, 1); }
+  }, !!mode3d);
   if (initialChoices) {
     await page.addInitScript((list) => {
       const iv = setInterval(() => { if (window.G && G.Debug && G.Debug.choices) { G.Debug.choices = list.slice(); clearInterval(iv); } }, 5);
@@ -435,13 +449,28 @@ async function sweep(browser) {
   }
 }
 
+// ============================================================================================ 3D sweep
+async function sweep3d(browser) {
+  console.log('\n== 3D sweep (?r3lite) ==');
+  const maps = [['qihou', 24, 18], ['banping_cave', 20, 3, 'ch9_bp_gate'], ['donggang', 23, 10], ['wangchuan_yard', 20, 17], ['wangboat_deck', 12, 6], ['hengchun', 24, 20], ['longpan', 23, 9], ['eluanbi', 20, 14], ['longkeng_caves', 21, 13]];
+  for (const [m, x, y, fl] of maps) {
+    await newPage(browser, 'file://' + path.join(ROOT, 'index.html') + `?debug&r3lite&autoplay=1&map=${m}&x=${x}&y=${y}&lv=32&party=xinghe,hongying,yungui&chapter=9&flags=ch9_qihou_arrive,ch9_qihou_temple,ch9_donggang_arrive,ch9_shipyard_enter,ch9_cape_blocked,ch9_hengchun_arrive,ch9_keeper_met${fl ? ',' + fl : ''}`, null, true);
+    await page.waitForTimeout(4000);
+    const ok = await ev((id) => G.mapScene && G.mapScene.def.id === id && !G.lastError, m);
+    check(`3D: map ${m} builds and renders`, ok, await lastError());
+    await shot('3d_' + m);
+    await page.close();
+  }
+}
+
 (async () => {
   const t0 = Date.now();
   const browser = await chromium.launch({ headless: !HEADED });
   try {
-    await partA(browser);
-    await partB(browser);
-    await sweep(browser);
+    if (want('A')) await partA(browser);
+    if (want('B')) await partB(browser);
+    if (want('sweep')) await sweep(browser);
+    if (want('3d')) await sweep3d(browser);
   } catch (e) {
     check('test run completed without exceptions', false, e && e.stack || e);
     if (page) { try { await page.screenshot({ path: path.join(OUT, 'ch9_FAIL.png') }); } catch (_) { /* ignore */ } }

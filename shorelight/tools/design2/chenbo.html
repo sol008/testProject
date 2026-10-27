@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><title>陳伯 · 陳渡 — final design v2</title>
+<script src="chenbo_yexuan_lib.js"></script>
+<script src="chenbo.js"></script>
+<script src="yexuan.js"></script>
+</head>
+<body><div id="sheet"></div>
+<script>
+(function () {
+  const C = CB.C;
+  const st = document.createElement('style'); st.textContent = L.SHEET_CSS; document.head.appendChild(st);
+  L.RIM = '#ffe4b4';
+  const paper = (ctx, w, h, a = '#efe8da', b = '#e3d9c6') => { const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, a); g.addColorStop(1, b); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); };
+  const night = (ctx, w, h) => {
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0d1b26'); g.addColorStop(0.62, '#11303a'); g.addColorStop(1, '#0a1a20'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.save(); ctx.strokeStyle = 'rgba(79,216,200,0.12)'; ctx.lineWidth = 1.2;
+    for (let i = 0; i < 9; i++) { const y = h * 0.66 + i * 24; ctx.beginPath(); for (let x = -20; x <= w + 20; x += 20) ctx.lineTo(x, y + Math.sin(x * 0.03 + i) * 4); ctx.stroke(); }
+    ctx.restore();
+    const lights = [[60, 120, 2.4], [560, 90, 2], [520, 300, 2.6], [80, 520, 2], [570, 600, 1.8], [40, 760, 2.2], [590, 430, 1.6]];
+    for (const [x, y, r] of lights) L.wisp(ctx, x, y, r, C.teal);
+  };
+  const Z = 1.3, GY = 846;
+  L.sheet(document.getElementById('sheet'), {
+    bg: '#e9e2d4', accent: '#2f8f86', ink: '#2a2226', outline: '#1e1519',
+    kicker: '彼岸燈 Shorelight · Character Design v2 · Final · 故事角色 Story cast',
+    name: '陳伯 · 陳渡', nameEn: 'Old Chen · Chen Du — lantern-maker of 九份, retired 引魂人 soul-guide',
+    subtitle: '「臭囝仔，燈籠紙糊歪了！」 — grumpy, kind, stubborn as a mule. He raised 星河 from a baby found in a 水燈, and hid his oar for twenty years.',
+    stats: [['Age 年齡', '68'], ['Height 身高', '166 cm (162 stooped)'], ['Proportion 比例', '6.4 heads · stocky'], ['Role 定位', 'Mentor · finale ferryman'], ['Weapon 武器', '引魂槳 soul-oar'], ['Element 屬性', '水 · soul-light (teal)']],
+    shapeTitle: 'Shape language 造形語言',
+    shape: '<b>Round & square</b> — a dome head, rounded shoulders, a belly and a squared apron: warm, solid, immovable. Day look is <b>low-contrast & earthy</b> (faded indigo, canvas, ink-black) so he blends into 九份. The hidden 引魂人 look adds one big <b>triangle</b> (斗笠 + 簑衣 bell) and one long <b>vertical</b> (the oar) — the grandpa becomes a lighthouse.',
+    turn: {
+      title: '轉面圖 · 日常', titleEn: 'Turnaround — day look (lantern shop)', w: 1460, h: 900, z: Z, gy: GY, bg: '#efe8da',
+      backdrop: (ctx, w, h) => paper(ctx, w, h, '#f1ebdf', '#e6dccb'),
+      guides: [[-577, '頭頂 crown'], [-484, '1 · chin'], [-394, '2'], [-304, '3'], [-214, '4'], [-124, '5'], [-34, '6'], [0, '6.4 · 166 cm (stooped 162)']],
+      views: [
+        { key: 'front', zh: '正面', en: 'Front', x: 420, draw: (c) => CB.front(c) },
+        { key: 'side', zh: '側面', en: 'Side (stooped)', x: 790, draw: (c) => CB.side(c) },
+        { key: 'back', zh: '背面', en: 'Back', x: 1110, draw: (c) => CB.back(c) },
+      ],
+      callouts: [
+        { view: 'front', at: [-20, -470], lx: 220, ly: 190, zh: '薙髮 · 光額', en: ['Qing shaved crown;', 'grey rear hair → queue'] },
+        { view: 'front', at: [-6, -446], lx: 220, ly: 270, zh: '對襟短衫 · 盤扣', en: ['faded-indigo jacket,', 'cut-in-one sleeves'] },
+        { view: 'front', at: [-82, -318], lx: 220, ly: 350, zh: '袖套', en: ['sleeve guards over', 'the forearms'] },
+        { view: 'front', at: [-14, -300], lx: 220, ly: 430, zh: '帆布圍裙 · 工具袋', en: ['stained canvas apron:', 'bamboo strips, brush'] },
+        { view: 'front', at: [-42, -298], lx: 220, ly: 520, zh: '青銅魚符「渡」', en: ['half-tally of the', '引魂人 (pair link)'] },
+        { view: 'front', at: [-36, -70], lx: 220, ly: 640, zh: '綁腿 · 布鞋', en: ['leg wraps, cloth shoes', 'with 千層底 soles'] },
+        { view: 'back', at: [2, -420], lx: 1250, ly: 300, zh: '髮辮 · 紅繩', en: ['grey queue down the', 'spine, red silk tie'] },
+        { view: 'back', at: [28, -430], lx: 1250, ly: 390, zh: '補丁', en: ['mended patch — the', 'jacket outlived 20 yrs'] },
+        { view: 'back', at: [-74, -360], lx: 1250, ly: 480, zh: '煙吹', en: ['bamboo pipe, brass', 'bowl, tobacco pouch'] },
+      ],
+    },
+    extra: {
+      title: '引魂人 · 隱藏裝備', titleEn: 'Hidden soul-guide gear (ch.1 reveal / finale)', w: 620, h: 900, z: 1.13, gx: 300, gy: 870,
+      tcol: '#e8f6f3', ecol: '#9cc9c3', lcol: '#cfeee9',
+      draw: (ctx, w, h) => { night(ctx, w, h); L.figure(ctx, w, h, 300, 870, 1.13, (c) => CB.gear(c), { ocol: '#06090c' }); },
+      callouts: [
+        { at: [60, -585], lx: 470, ly: 100, zh: '斗笠 · 引魂印', en: ['bamboo hat, teal', 'lacquer order sigil'] },
+        { at: [86, -400], lx: 470, ly: 300, zh: '簑衣', en: ['three-tier straw', 'rain cape'] },
+        { at: [-152, -600], lx: 470, ly: 40, zh: '引魂燈', en: ['soul-lantern hung', 'from the oar grip'] },
+        { at: [-122, -120], lx: 470, ly: 760, zh: '引魂槳', en: ['soul-oar: inlaid', 'tide-lines glow'] },
+        { at: [82, -214], lx: 470, ly: 560, zh: '魚符發光', en: ['tally wakes near', 'drifting souls'] },
+      ],
+    },
+    bust: { title: '頭像', titleEn: 'Bust — face structure', w: 560, h: 560,
+      draw: (ctx, w, h) => { paper(ctx, w, h, '#f2ece0', '#e1d6c2'); L.figure(ctx, w, h, 280, 252 + 531 * 2.9, 2.9, (c) => CB.front(c, { noPipe: true })); } },
+    exW: 180, exH: 190, exprNote: 'one face, three moods',
+    expressions: [
+      { zh: '罵人', en: 'scolding', draw: (ctx, w, h) => { paper(ctx, w, h); L.figure(ctx, w, h, 90, 92, 1.72, (c) => CB.headFront(c, 'shout')); } },
+      { zh: '難得一笑', en: 'rare smile', draw: (ctx, w, h) => { paper(ctx, w, h); L.figure(ctx, w, h, 90, 92, 1.72, (c) => CB.headFront(c, 'smile')); } },
+      { zh: '引魂', en: 'soul-guide', draw: (ctx, w, h) => { night(ctx, w, h); L.figure(ctx, w, h, 90, 110, 1.4, (c) => { CB.headFront(c, 'stern'); CB.hat(c); }, { ocol: '#06090c' }); } },
+    ],
+    palette: [
+      { zh: '褪靛藍', en: 'Faded indigo — jacket', hex: C.indigo }, { zh: '帆布米', en: 'Canvas ecru — apron', hex: C.apron },
+      { zh: '墨黑', en: 'Ink black — trousers, shoes', hex: C.trou }, { zh: '曬黑膚', en: 'Weathered skin', hex: C.skin },
+      { zh: '霜白髮', en: 'Frost grey — hair, brows', hex: C.grey }, { zh: '簑草黃', en: 'Straw — cape & hat (gear)', hex: C.straw },
+      { zh: '魂青', en: 'Soul teal — focal accent (emissive)', hex: C.teal }, { zh: '燈籠紅', en: 'Lantern red — cords, paint stains', hex: C.red },
+    ],
+    paletteNote: 'Value plan: day look sits in the mid-darks (indigo / ink) with one light block (apron) framing the face. The only saturated hue is <b>soul teal</b>, reserved for 引魂人 elements, so the reveal reads instantly. Bronze tally <span class="hex">#b5823d</span> is a small secondary metal.',
+    props: { title: '道具', titleEn: 'Props — modelled as separate meshes', w: 720, h: 560, draw: (ctx, w, h) => {
+      paper(ctx, w, h, '#f0eadd', '#e4dac8');
+      const lab = (x, y, zh, en, al = 'left') => { ctx.save(); ctx.textAlign = al; ctx.fillStyle = '#2a2226'; ctx.font = `bold 15px ${L.FONT_ZH}`; ctx.fillText(zh, x, y); ctx.font = `italic 12px ${L.FONT_EN}`; ctx.fillStyle = '#6a5c60'; (Array.isArray(en) ? en : [en]).forEach((t, i) => ctx.fillText(t, x, y + 15 + i * 14)); ctx.restore(); };
+      // oar laid horizontally (blade left, grip right)
+      L.figure(ctx, w, h, 24, 66, 0.98, (c) => { c.rotate(Math.PI / 2); CB.oar(c, 0, -678, true); });
+      lab(28, 122, '引魂槳 soul-oar · 190 cm', ['Ironwood shaft, T-grip, bronze collar; blade carved 「渡」 with tide-lines.', 'Tide-lines = emissive texture mask (dark by day, teal when souls are near).']);
+      // lantern unlit vs lit
+      L.figure(ctx, w, h, 80, 262, 2.1, (c) => CB.soulLantern(c, 0, 0, 1, false));
+      L.figure(ctx, w, h, 196, 262, 2.1, (c) => CB.soulLantern(c, 0, 0, 1, true));
+      lab(36, 384, '引魂燈 soul-lantern', ['paper globe, lacquer caps;', 'left: shop stock, unlit;', 'right: a soul aboard, lit']);
+      // pipe + pouch
+      L.figure(ctx, w, h, 330, 218, 1.45, (c) => CB.pipe(c, [0, 0], [180, 0], 1));
+      lab(330, 300, '煙吹 long pipe', ['bamboo stem, brass bowl, jade', 'mouthpiece, leather tobacco pouch']);
+      // the paired tally
+      L.figure(ctx, w, h, 470, 420, 3.1, (c) => { CB.tally(c, -16, 0, 1, true); c.save(); c.translate(16, 0); c.scale(-1, 1); CB.tally(c, 0, 0, 1, false); c.restore(); });
+      ctx.save(); ctx.font = `bold 20px ${L.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillStyle = '#2f8f86'; ctx.fillText('渡', 400, 532); ctx.fillStyle = '#8c6b2b'; ctx.fillText('同', 540, 532); ctx.restore();
+      lab(36, 470, '魚符「同渡」 paired tally', ['陳渡 keeps 「渡」 (teal-lit);', '夜玄 keeps 「同」 tied to his', "daughter's jar. Together:", '"we cross together".']);
+    } },
+    notes: [
+      { h: '設計概念 Concept', p: '一個把船槳藏在燈籠舖後面二十年的老人。白天是九份最兇的燈籠師傅：褪色靛藍對襟衫、沾滿紅漆金粉的帆布圍裙、袖套、煙吹。夜裡披上簑衣斗笠、拔起引魂槳，就是黑水溝上最後的引魂人。<br><i>The grumpy grandpa is the disguise; the ferryman is the man.</i>' },
+      { h: '個性 → 造形 Personality → shape', p: 'Frown built into the face (brows pulled down to the nose, mouth corners down, heavy mustache) but soft round masses everywhere else, so he scolds but never threatens. Big working hands, rolled-up practicality, a mended patch on the back — love shown in maintenance, not words.' },
+      { h: '文化根據 Cultural basis', p: 'Qing-era Hoklo working dress: 對襟短衫 with 盤扣 and cut-in-one 連袖 sleeves, 汗衫 undershirt, 大褲, 綁腿, 千層底布鞋; the 薙髮留辮 queue (historical, kept); lantern-maker’s 袖套 & 圍裙; coastal fisherman’s 簑衣 and 斗笠; long bamboo 煙吹. 引魂人 gear is fiction built from real ferry & fishing kit — no real priestly vestment is used.' },
+      { h: '幻想延伸 Fantasy departures', p: 'Soul-teal inlay on the oar, the lantern sigil lacquered on the hat and the glowing 魚符 are invented 引魂人 regalia. Teal is the game’s “soul” colour (lanterns turn blue when souls drift back in ch.1), so every teal pixel on him is story information.' },
+      { h: '雙人呼應 Pair link with 夜玄', p: 'Once partners: the bronze fish tally 「同渡」 was split between them — his half on his belt, 夜玄’s tied to 夜念’s jar. 夜玄’s strip mantle is a silk echo of this straw 簑衣; both men wear the same soul-lantern shape, one in paper (released), one in a gold cage (kept).' },
+      { h: '遊戲用途 In-game use', p: 'Portrait: bust as shown, expressions for dialogue. Map sprite: day look (round dome + apron block reads at 90 px). Battle (ch.1 & finale): gear look — the oar and hat give a clear vertical + triangle at sprite scale; the lantern is the attack VFX source.' },
+    ],
+    sil: { w: 520, h: 230, draw: (ctx, w, h) => {
+      ctx.fillStyle = '#f3eee4'; ctx.fillRect(0, 0, w, h);
+      const fig = [[(c) => CB.front(c), 50], [(c) => CB.side(c), 130], [(c) => CB.back(c), 210], [(c) => CB.gear(c), 300]];
+      L.silhouette(ctx, w * (window.devicePixelRatio || 1), h, (x) => { x.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1); for (const [f, gx] of fig) L.at(x, gx, 200, 0.3, f); });
+      // 90-px map-sprite scale
+      L.silhouette(ctx, w * (window.devicePixelRatio || 1), h, (x) => { x.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1); L.at(x, 400, 200, 0.155, (c) => CB.front(c)); L.at(x, 470, 200, 0.13, (c) => CB.gear(c)); });
+      ctx.fillStyle = '#7a6e70'; ctx.font = `11px ${L.FONT_EN}`; ctx.fillText('front · side · back · gear @180 px', 12, 222); ctx.fillText('@90 px sprite', 400, 222);
+    } },
+    model: [
+      '<b>Primary forms:</b> dome head, barrel torso, apron slab, two cylinders (wrapped shins) — reads from any camera angle.',
+      '<b>Geometry vs paint:</b> straw strands, weave, stitching, stains, braid lobes and oar inlay are <b>texture</b>; straw cape = 3 layered shell meshes with alpha-cut fringe.',
+      '<b>Queue:</b> one braided-tube mesh + 2 bones (sways in idle).',
+      '<b>Toon shading:</b> 2-tone ramp + rim; inverted-hull outline ≈2 px; emissive mask on oar inlay, hat sigil, lantern, tally.',
+      '<b>Swap kit:</b> hat, cape, oar, lantern attach to head / neck / R-hand sockets — day ↔ gear without a second body mesh.',
+    ],
+  });
+})();
+</script>
+</body></html>

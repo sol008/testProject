@@ -3,35 +3,13 @@
   'use strict';
   const B = window.BZ;
   const { P, part, stroke, line, fillP, glow, ribbon, curve, poly, mix, rgba, ink, lighten, shadowOf, hand, foot, tassel, jadeTag, motes, drawFace, LW, inHead, neck, lock, flute, redString, stageGrad, bokeh, hairShine } = B;
-  const R = B.rig(5.5);
+  const R = B.rig(6.2);
   const C = {
-    paper: '#fbf0d8', red: '#d23b35', lacquer: '#2c2228', hair: '#f0a476', hairSh: '#c66f58', hairHi: '#ffe0c0', gold: '#e8b84a',
+    paper: '#fbf0d8', red: '#d23b35', lacquer: '#2c2228', hair: '#17151c', hairSh: '#0b0a0f', hairHi: '#5d6f98', gold: '#e8b84a',
     skin: '#f9e3d3', legging: '#f3ece4', glowC: '#ffc870', jade: '#8fd0b0', shoe: '#2c2228',
   };
-  const F = {
-    skin: C.skin, W: 0.42, jawX: 0.3, jawY: 0.77, chinW: 0.1, cheek: 0.8, chinY: 0.98,
-    eye: { y: 0.62, x: 0.19, w: 0.2, h: 0.18, shape: 'round', tilt: -0.005, iris: '#d89a2a', irisR: 0.072, irisH: 1.15, pupil: 0.38, lid: 'double', glow: '#ffd070', lashes: 2, lineC: '#3a1e1a', lineW: 2.6, refl: '#fff0b0' },
-    brow: { y: 0.45, x0: 0.08, len: 0.14, th: 0.016, arch: 0.02, tilt: -0.012, col: '#b0604a' },
-    nose: { type: 'button', y: 0.775, w: 0.03 },
-    mouth: { type: 'o', y: 0.875, w: 0.06, open: 0.04 },
-    blush: 1, blushLines: true, freckles: true, ear: { show: false },
-  };
-  const TILT = -0.08;
-  function bunsBack() {
-    inHead(R, 0, () => {
-      // short back hair mass
-      const bk = P((p) => {
-        p.moveTo(-0.48, 0.62);
-        p.bezierCurveTo(-0.58, 0.12, -0.3, -0.08, 0, -0.08);
-        p.bezierCurveTo(0.3, -0.08, 0.58, 0.12, 0.48, 0.62);
-        p.bezierCurveTo(0.46, 0.85, 0.36, 0.98, 0.26, 1.02);
-        p.lineTo(-0.26, 1.02);
-        p.bezierCurveTo(-0.36, 0.98, -0.46, 0.85, -0.48, 0.62);
-        p.closePath();
-      });
-      part(bk, C.hairSh, { sh: false, lw: 1.6, rimW: 0.015, line: ink(C.hairSh, 0.55) });
-    }, TILT);
-  }
+  const HD = B.bzHead(R, { tilt: -0.07, skin: C.skin, len: -224, frontLen: -270, earDrop: '#e0503a', earBead: '#2c2228',
+    face: { blush: 0.6, mouth: { type: 'o', w: 0.05, open: 0.035, y: 0.875 }, eye: { halfLid: 0, irisDy: -0.012, lookX: 0.018 } } });
   function buns() {
     inHead(R, 0, () => {
       for (const s of [-1, 1]) {
@@ -45,45 +23,15 @@
         part(P((p) => p.roundRect(cx - 0.07, cy - 0.21, 0.14, 0.05, 0.015)), C.lacquer, { lw: 1.1, rim: false, sh: false });
         part(P((p) => p.roundRect(cx - 0.07, cy + 0.16, 0.14, 0.05, 0.015)), C.lacquer, { lw: 1.1, rim: false, sh: false });
       }
-    }, TILT);
+    }, -0.07);
   }
   function bunTassels() {
     // long red tassels hanging from the buns down to the chest
-    const pos = [[-30, -398], [31, -402]];
+    const pos = [[-30, -410], [27, -416]];
     pos.forEach(([x, y], i) => {
       line(curve([[x, y], [x + (i ? 4 : -5), y + 30], [x + (i ? 6 : -8), y + 52]]), C.red, 1.6);
       tassel(x + (i ? 6 : -8), y + 52, 22, C.red, { w: 4.5, cap: C.gold, sway: i ? 2 : -2 });
     });
-  }
-  function hairFront() {
-    inHead(R, 0, () => {
-      const cap = P((p) => {
-        p.moveTo(-0.47, 0.6);
-        p.bezierCurveTo(-0.55, 0.14, -0.3, -0.06, 0, -0.06);
-        p.bezierCurveTo(0.3, -0.06, 0.55, 0.14, 0.47, 0.6);
-        p.lineTo(0.4, 0.4);
-        p.lineTo(-0.4, 0.4);
-        p.closePath();
-      });
-      part(cap, C.hair, { sh: shadowOf(C.hair, 1.2), shift: [0.04, 0.04], rimW: 0.015, lw: 1.6, line: ink(C.hairSh, 0.55) });
-      hairShine(cap, 0, 0.38, 0.45, 0.36, C.hairHi, 0.75, 8);
-      // round puffy fringe made of 5 soft scallops
-      const fr = P((p) => {
-        p.moveTo(-0.42, 0.24);
-        p.bezierCurveTo(-0.2, 0.06, 0.2, 0.06, 0.42, 0.24);
-        p.quadraticCurveTo(0.44, 0.4, 0.4, 0.5);
-        const xs = [0.4, 0.24, 0.08, -0.08, -0.24, -0.4];
-        for (let i = 0; i < 5; i++) p.quadraticCurveTo((xs[i] + xs[i + 1]) / 2, 0.52 - (i === 2 ? 0.02 : 0), xs[i + 1], 0.43 + (i % 2 ? 0.02 : 0));
-        p.quadraticCurveTo(-0.44, 0.4, -0.42, 0.24);
-        p.closePath();
-      });
-      part(fr, C.hair, { sh: shadowOf(C.hair, 1.2), shift: [0.03, 0.03], rimW: 0.012, lw: 1.5, line: ink(C.hairSh, 0.55), inner: () => {
-        for (const x of [-0.24, -0.08, 0.08, 0.24]) stroke([[x * 0.7, 0.16], [x, 0.3], [x, 0.44]], 1, rgba(C.hairSh, 0.8));
-        stroke([[-0.3, 0.2], [-0.12, 0.14], [0.06, 0.15]], 3.5, rgba(C.hairHi, 0.8));
-      } });
-      // cheek tufts
-      for (const s of [-1, 1]) lock([[s * 0.4, 0.4], [s * 0.45, 0.6], [s * 0.4, 0.8], [s * 0.42, 0.9]], [0.05, 0.055, 0.03, 0.004], C.hair, { n: 1, line: ink(C.hairSh, 0.55), sh: shadowOf(C.hair, 1.2) });
-    }, TILT);
   }
   function legs() {
     for (const s of [-1, 1]) {
@@ -197,12 +145,12 @@
     ratio: 5.5,
     shape: 'round · bouncy',
     accent: '#d23b35',
-    idea: '「白芷」這名字是寫在燈籠上的姓——她把自己穿成一盞會走路的家門燈籠：圓裙、雙丫髻小燈、對什麼都「哇」的一聲。',
-    culture: '台灣家戶與廟口的紙燈籠：竹篾骨、上下黑漆蓋、紅字寫姓氏、紅流蘇；少女雙丫髻、對襟短襖與盤扣、綁腿布鞋。奇幻：燈籠化成的圓裙會從裡面發光。',
+    idea: '「白」是寫在燈籠上的姓——她把自己穿成一盞會走路的家門燈籠：圓裙、半紮雙髻小燈、對什麼都輕輕「咦？」一聲。',
+    culture: '台灣家戶與廟口的紙燈籠：竹篾骨、上下黑漆蓋、紅字寫姓氏、紅流蘇；少女半紮雙丫髻（其餘長髮披下）、對襟短襖與盤扣、綁腿布鞋。奇幻：燈籠化成的圓裙會從裡面發光。',
     model: '圓裙是一個球形殼＋上下環（可做擠壓伸縮動畫）；竹骨與「白」字為貼圖；雙髻小燈與流蘇用骨骼擺動；裙內暖光為 emissive。',
-    palette: [[C.paper, '燈紙白', 'lantern paper'], [C.red, '燈籠紅', 'lantern red'], [C.lacquer, '黑漆', 'lacquer'], [C.hair, '杏桃髮', 'apricot hair'], [C.gold, '金', 'gold'], [C.skin, '膚', 'skin'], [C.jade, '玉', 'jade']],
+    palette: [[C.paper, '燈紙白', 'lantern paper'], [C.red, '燈籠紅', 'lantern red'], [C.lacquer, '黑漆', 'lacquer'], [C.hair, '烏黑髮', 'jet-black hair'], [C.gold, '金', 'gold'], [C.skin, '膚', 'skin'], [C.jade, '玉', 'jade']],
     callouts: [
-      { zh: '雙丫髻・小燈籠', en: 'twin buns as little lanterns', at: [-30, -420] },
+      { zh: '半紮雙丫髻・小燈', en: 'half-up twin buns as little lanterns', at: [-30, -424] },
       { zh: '對襟短襖・盤扣', en: 'centre-opening jacket, frog buttons', at: [0, -304] },
       { zh: '燈籠圓裙「白」', en: 'lantern skirt with her surname', at: [36, -190] },
       { zh: '玉笛・紅線玉牌', en: 'jade flute, red string, jade tag', at: [-56, -200] },
@@ -234,14 +182,14 @@
       bokeh(c, x, y, w, h * 0.6, 14, ['#ffb070', '#ffd890'], 41, 9, 0.45);
     },
     draw() {
-      bunsBack();
+      buns();
+      HD.back();
       legs();
       skirt();
       top();
       neck(R, C.skin, { bot: -336, w: 0.1 });
-      inHead(R, 0, () => drawFace(F), TILT);
-      hairFront();
-      buns();
+      HD.face();
+      HD.front();
       bunTassels();
       arms();
       sleeves();
@@ -249,9 +197,11 @@
       motes([[80, -380, 1.1], [70, -400, 0.8], [-80, -300, 0.9]], '#ffe0a0');
     },
     back(c, G2, col) {
+      B.bzBack(c, R, -224, col);
       c.fillStyle = col;
       c.beginPath();
-      c.ellipse(0, -386, 30, 30, 0, 0, 7);
+      c.ellipse(-28, -414, 13, 12, 0, 0, 7);
+      c.ellipse(28, -414, 13, 12, 0, 0, 7);
       c.fill();
       c.fillRect(-36, -258, 72, 8);
       c.fillRect(-40, -128, 80, 8);

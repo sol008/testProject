@@ -2687,9 +2687,10 @@
     sash: { color: '#2b2a32', w: 3.4, emblem: 'taiji', tails: true },
     shoes: { type: 'cloth', color: '#2a2832' }, hip: ['gourd', 'fan'], weapon: 'fan', aura: '#9be36a',
   });
-  // 糰子 石虎 spirit: chubby blue-grey tabby base with leopard-cat cues (client reference, docs/design/REFERENCES.md)
-  define('tuanzi', { kind: 'quad', species: 'leopardcat', size: 1.3, aura: '#ffcf6a',
-    col: { base: '#8d929b', belly: '#dfe1e4', dark: '#4b4f57', spot: '#5c6069', nose: '#d99aa0', eye: '#a3ad3c' } });
+  define('tuanzi', { kind: 'quad', species: 'leopardcat', size: 1.3, aura: '#ffcf6a' }); // 糰子 石虎 spirit
+  // 芋圓 Yuyuan: chubby blue-grey tabby, 星河's cat (client reference, docs/design/REFERENCES.md)
+  define('yuyuan', { kind: 'quad', species: 'cat', size: 1.35, aura: '#d8c8ff',
+    col: { base: '#8d929b', belly: '#dfe1e4', dark: '#4b4f57', nose: '#d99aa0', eye: '#a3ad3c' } });
   // 麻糬 Mochi: fluffy long-haired dilute calico, 白芷's companion (client reference)
   define('mochi', { kind: 'quad', species: 'cat', size: 1.3, aura: '#bfe8ff',
     col: { base: '#f3efe8', belly: '#ffffff', dark: '#8e939c', nose: '#f2a2ac', eye: '#b9cc3a' } });

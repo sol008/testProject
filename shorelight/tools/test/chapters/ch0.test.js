@@ -42,6 +42,12 @@ const assert = (c, msg) => { if (!c) throw new Error(msg); };
 
 async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
+  // 2D renderer for the playthrough (software WebGL in headless Chromium runs the 3D view at ~1 fps);
+  // the 3D view gets its own smoke test (?r3lite)
+  const use3d = /r3lite/.test(query);
+  await ctx.addInitScript((d3) => {
+    try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: d3, lang: 'zh' })); } catch (e) { /* ignore */ }
+  }, use3d);
   const page = await ctx.newPage();
   const errors = [];
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch0.test.js */' }));
@@ -302,6 +308,17 @@ async function testWipeout(browser, open) {
   return s;
 }
 
+// ------------------------------------------------------------------------------------------------ 5. 3D smoke
+async function test3d(browser, open) {
+  const s = await open('?debug&map=dream&lv=1&party=xinghe&flags=ch0_awake,tut_move,tut_talk&r3lite');
+  await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'dream', null, { timeout: 90000 });
+  await s.page.waitForTimeout(4000);
+  const r = await s.ev(() => ({ on: !!(G.R3 && G.R3.enabled && G.R3.enabled()), v: !!G.mapScene.view3d }));
+  if (!r.on) warnings.push('3D renderer not available in this browser — 3D smoke test only checked the 2D fallback');
+  await s.shot('30_3d');
+  return s;
+}
+
 (async () => {
   console.log('序章　夢 — chapter 0 playthrough' + (ch1Ok ? ' (chapter 1 loaded for the hand-off)' : ' (chapter 1 not available: placeholder hand-off)'));
   const browser = await chromium.launch();
@@ -309,6 +326,7 @@ async function testWipeout(browser, open) {
   await run('critical path 0-1 … 0-8 → chapter 1', browser, testCritical);
   await run('souls, lamps, dream rules', browser, testExtras);
   await run('dream wipe-out retries (no Game Over)', browser, testWipeout);
+  await run('3D view loads the dream map (r3lite)', browser, test3d);
   await browser.close();
   for (const w of warnings) console.log('  ! warning: ' + w);
   const fail = results.filter((r) => r.status !== 'PASS');
