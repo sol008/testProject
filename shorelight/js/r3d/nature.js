@@ -161,6 +161,11 @@
           uniform vec3 uVar; uniform float uTrans; uniform vec3 uTransCol; varying float vNVar; varying float vNH;
           ${fx ? `uniform float uWT, uVGlow, uIrid; uniform vec4 uGlow;
           vec3 natHue(vec3 c, float a){ const vec3 k = vec3(0.57735); float ca = cos(a); return c*ca + cross(k,c)*sin(a) + k*dot(k,c)*(1.0-ca); }` : ''}`)
+        // two-sided cards keep their authored (bent) normals on the back face too — no dark backsides
+        .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
+          #if defined( DOUBLE_SIDED ) && !defined( FLAT_SHADED )
+            normal = normalize( vNormal );
+          #endif`)
         .replace('#include <color_fragment>', `#include <color_fragment>
           { float k = vNVar * 2.0 - 1.0; float k2 = fract(vNVar * 7.13) * 2.0 - 1.0;
             diffuseColor.rgb *= 1.0 + vec3(uVar.x * k + uVar.z * k2, uVar.y * k, uVar.z * k - uVar.x * k2 * 0.5); }`)
@@ -729,7 +734,7 @@
 
   defTree('tree_camphor', {
     build: (o, K) => broadleaf(o, K, {
-      id: 'tree_camphor', seed: 101, H: 5.2, forkY: 0.36, r0: 0.24, cy: 0.66, rx: 1.75, ry: 0.36, limbs: 4, clusters: 17, rc: 0.85, cards: 15,
+      id: 'tree_camphor', seed: 101, H: 4.4, forkY: 0.36, r0: 0.21, cy: 0.66, rx: 1.5, ry: 0.36, limbs: 4, clusters: 17, rc: 0.74, cards: 15,
       bark: BARKS.camphor, moss: { h: 0.9, k: 0.35, c: [0.55, 0.7, 0.35] },
       leaf: (v) => [
         { seed: 31, shape: 'oval', n: 90, L: 34, W: 13, dark: '#2c5527', mid: '#4a8634', light: '#78b443', hi: '#c6e57d' },
@@ -743,7 +748,7 @@
   });
   defTree('tree_maple', {
     build: (o, K) => broadleaf(o, K, {
-      id: 'tree_maple', seed: 202, H: 4.5, forkY: 0.34, r0: 0.17, cy: 0.66, rx: 1.45, ry: 0.36, limbs: 4, clusters: 28, rc: 0.52, cards: 10, upPull: 0.08,
+      id: 'tree_maple', seed: 202, H: 3.9, forkY: 0.34, r0: 0.15, cy: 0.66, rx: 1.3, ry: 0.36, limbs: 4, clusters: 26, rc: 0.48, cards: 10, upPull: 0.08,
       bark: BARKS.grey, sway: 0.18,
       leaf: (v) => [
         { seed: 41, shape: 'palmate', n: 70, L: 40, dark: '#7c1a1a', mid: '#b5322a', light: '#df5e30', hi: '#ffb15a' },
@@ -757,7 +762,7 @@
   });
   defTree('tree_sakura', {
     build: (o, K) => broadleaf(o, K, {
-      id: 'tree_sakura', seed: 303, H: 4.2, forkY: 0.3, r0: 0.16, cy: 0.64, rx: 1.6, ry: 0.32, limbs: 5, clusters: 30, rc: 0.5, cards: 10, upPull: 0.0, bottom: 0.4,
+      id: 'tree_sakura', seed: 303, H: 3.7, forkY: 0.3, r0: 0.15, cy: 0.64, rx: 1.45, ry: 0.32, limbs: 5, clusters: 28, rc: 0.47, cards: 10, upPull: 0.0, bottom: 0.4,
       bark: BARKS.cherry, sway: 0.15,
       leaf: (v) => [
         { seed: 51, shape: 'blossom', n: 80, W: 13, L: 22, dark: '#c94a7f', mid: '#ec7fa8', light: '#ffb2cc', hi: '#ffe0ec', eye: '#b02a5a', leafy: 0.1 },
@@ -810,7 +815,7 @@
   defTree('tree_pine', {
     build(o, K) {
       const v = o.v || 0, r = RNG(400 + v * 131);
-      const H = 6.4 * (1 + r.pm(0.06));
+      const H = 5.4 * (1 + r.pm(0.06));
       const wind = { height: H, strength: 0.12, flex: 2.4 };
       const bmat = barkMat('tree_pine', BARKS2.pine, wind);
       const P = [
@@ -836,11 +841,11 @@
       let az = r() * TAU;
       for (let i = 0; i < tiers; i++) {
         const f = i / (tiers - 1);
-        const y = lerp(2.4, H - 1.0, f) + r.pm(0.1);
+        const y = lerp(H * 0.38, H - 0.9, f) + r.pm(0.1);
         const nb = i < 1 ? 3 : 2;
         for (let b = 0; b < nb; b++) {
           az += 2.4 + r.pm(0.3);
-          const L = lerp(1.9, 0.7, f) * (0.8 + r() * 0.35);
+          const L = lerp(1.6, 0.6, f) * (0.8 + r() * 0.35);
           const p0 = trunkAt(y);
           const d = V3(cos(az), 0.12 + r() * 0.15, sin(az));
           const pts = limbPts(r, p0, d, L, 5, { wiggle: 0.18, pull: V3(0, 1, 0), pullK: 0.05 });
@@ -921,7 +926,7 @@
   defTree('tree_cypress', {
     build(o, K) {
       const v = o.v || 0, r = RNG(600 + v * 59);
-      const H = 10.5 * (1 + r.pm(0.05));
+      const H = 9.0 * (1 + r.pm(0.05));
       const wind = { height: H, strength: 0.14, flex: 2.6 };
       const bmat = barkMat('tree_cypress', BARKS2.cypress, wind);
       const smat = barkMat('tree_cypress_snag', BARKS2.snag, wind);
@@ -951,7 +956,7 @@
       let az = r() * TAU;
       for (let i = 0; i < nL; i++) {
         const f = i / (nL - 1);
-        const y = lerp(4.0, H - 1.2, f);
+        const y = lerp(H * 0.4, H - 1.1, f);
         az += 2.39 + r.pm(0.4);
         const L = lerp(3.0, 1.1, f) * (0.8 + r() * 0.4);
         const p0 = trunkAt(y);
@@ -988,7 +993,7 @@
   defTree('tree_banyan', {
     build(o, K) {
       const v = o.v || 0, r = RNG(700 + v * 41);
-      const H = 7.2 * (1 + r.pm(0.05));
+      const H = 6.3 * (1 + r.pm(0.05));
       const wind = { height: H, strength: 0.1, flex: 2.4, radial: 0.04 };
       const bmat = barkMat('tree_banyan', BARKS2.banyan, wind);
       const P = [
@@ -1000,7 +1005,7 @@
       const bark = new Acc(), leaf = new Acc();
       const ao = barkAO([0.55, 0.52, 0.42], 1.0, { h: 1.2, k: 0.35, c: [0.6, 0.72, 0.42] });
       // fused trunk: 5 strands twisting around each other
-      const ns = 5, trunkTop = 3.0;
+      const ns = 5, trunkTop = 2.6;
       const crown = [];
       for (let s = 0; s < ns; s++) {
         const a0 = s / ns * TAU, pts = [];
@@ -1321,7 +1326,7 @@
   defTree('tree_betel', {
     build(o, K) {
       const v = o.v || 0, r = RNG(900 + v * 17);
-      const H = 7.2 * (1 + r.pm(0.06));
+      const H = 6.0 * (1 + r.pm(0.06));
       const wind = { height: H, strength: 0.28, flex: 2.2, radial: 0.08 };
       const bmat = barkMat('tree_betel', BARKS3.betel, wind);
       const fmat = frondMat('tree_betel', frondTex('betel', { seed: 7, cols: 4, n: 30, leafW: 6, angle: 0.75, dark: '#2a5a1e', mid: '#4a8a2a', light: '#7ab83c', hi: '#c8e88a', rachis: '#8aa040', droopy: true }), Object.assign({}, wind, { flutter: 0.05 }));
@@ -1352,7 +1357,7 @@
   defTree('coconut_palm', {
     build(o, K) {
       const v = o.v || 0, r = RNG(950 + v * 29);
-      const H = 6.6 * (1 + r.pm(0.06));
+      const H = 5.6 * (1 + r.pm(0.06));
       const wind = { height: H, strength: 0.26, flex: 2.2, radial: 0.07 };
       const bmat = barkMat('coconut_palm', BARKS3.palm, wind);
       const fmat = frondMat('coconut_palm', frondTex('coconut', { seed: 9, cols: 4, n: 36, leafW: 5, angle: 0.4, lenK: 1, dark: '#3a6a22', mid: '#5a9230', light: '#8ab846', hi: '#d4ea94', rachis: '#b0a050', droopy: true }), Object.assign({}, wind, { flutter: 0.05 }));
@@ -1546,7 +1551,7 @@
     update(node, o, t) { Wind.tick(t); },
     build(o, K) {
       const v = o.v || 0, r = RNG(1300 + v * 53);
-      const H = 6.0 * (1 + r.pm(0.08));
+      const H = 5.0 * (1 + r.pm(0.08));
       const wind = { height: H, strength: 0.45, flex: 2.0, radial: 0.05 };
       const cmatl = cmat('bamboo_culm', () => Wind.windify(G.R3M.env({ map: culmTex(), color: 0xffffff, vertexColors: true, roughness: 0.45 }), Object.assign({ var: [0.08, 0.05, 0.08] }, wind)));
       const lmat = leafMat('bamboo' + v, leafAtlas('bamboo', { seed: 79, shape: 'oval', n: 95, L: 56, W: 8, R: 92, mass: false, gloss: false, dark: '#3a6a22', mid: '#5a8e2e', light: '#86b844', hi: '#c8e88a' }), Object.assign({}, wind, { flutter: 0.05, trans: 0.65 }));
@@ -1859,20 +1864,20 @@
       } else {
         // bare stems (leaves appear after flowering), each topped by an umbel of recurved red petals + long stamens
         const red = v === 0 ? C('#d81818') : C('#e83a28'), deep = C('#7a0a0a');
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
           const a = r() * TAU, d = sqrt(r()) * 0.3, base = V3(cos(a) * d, 0, sin(a) * d), h = 0.45 + r() * 0.22;
           const tip = blade(acc, base, a, h, 0.06, 0.008, 3, C('#4a7a2a'), C('#6a9a3a'), { taper: false });
-          for (let f = 0; f < 5; f++) {
-            const fa = f / 5 * TAU + r.pm(0.3), fd = V3(cos(fa), 0.25, sin(fa)).normalize();
+          for (let f = 0; f < 4; f++) {
+            const fa = f / 4 * TAU + r.pm(0.3), fd = V3(cos(fa), 0.25, sin(fa)).normalize();
             const c0 = tip.clone().addScaledVector(fd, 0.02);
             for (let k = 0; k < 6; k++) {
               // narrow petal arching outward and curling back
               const pa = fa + (k / 6 - 0.5) * 1.6, pd = V3(cos(pa), 0.5, sin(pa)).normalize();
-              const pts = archPts(c0, pd, 0.11, 4, 3.0, { lin: true });
-              ribbon(pet, pts, [0.006, 0.012, 0.01, 0.004], { ao: (p, t) => [lerp(deep[0], red[0], t + 0.4), lerp(deep[1], red[1], t), lerp(deep[2], red[2], t)], fold: 0.3 });
+              const pts = archPts(c0, pd, 0.11, 3, 3.0, { lin: true });
+              ribbon(pet, pts, [0.006, 0.012, 0.004], { ao: (p, t) => [lerp(deep[0], red[0], t + 0.4), lerp(deep[1], red[1], t), lerp(deep[2], red[2], t)], fold: 0.3 });
             }
             // stamens: long thin upswept filaments
-            for (let k = 0; k < 4; k++) {
+            for (let k = 0; k < 3; k++) {
               const sa = fa + r.pm(0.9), pts = archPts(c0, V3(cos(sa) * 0.7, 0.9, sin(sa) * 0.7), 0.16, 3, 0.6);
               ribbon(pet, pts, [0.0015, 0.0015, 0.0025], { ao: () => red });
             }
@@ -2846,7 +2851,7 @@
     const acc = new Acc();
     for (let i = 0; i < nBlades; i++) {
       const a = r() * TAU, d = r() * 0.08;
-      blade(acc, V3(cos(a) * d, -0.02, sin(a) * d), a + r.pm(1), h0 * (0.6 + r() * 0.6), 0.25 + r() * 0.5, 0.022, 3, C('#3a6a24'), C(r() < 0.3 ? '#b8d070' : '#8cc050'));
+      blade(acc, V3(cos(a) * d, -0.02, sin(a) * d), a + r.pm(1), h0 * (0.6 + r() * 0.6), 0.2 + r() * 0.45, 0.034, 2, C('#4a8a2e'), C(r() < 0.3 ? '#c8e07a' : '#9ad25a'));
     }
     return acc.build();
   }
@@ -2867,10 +2872,10 @@
     }
     const isG = (x, y) => x >= 0 && y >= 0 && x < Wm && y < Hm && GRASS_TILES[ms.terrain[y * Wm + x]];
     const r = RNG(ms.def && ms.def.id ? ms.def.id.length * 977 : 7);
-    const geo = grassClumpGeo(RNG(5), 6, 0.36);
+    const geo = grassClumpGeo(RNG(5), 8, 0.3);
     const mat = cmat('grass_carpet', () => {
       const m = G.R3M.env({ color: 0xffffff, vertexColors: true, side: T.DoubleSide, roughness: 0.9, cutout: false });
-      return Wind.windify(m, { grass: true, height: 0.36, strength: 0.09, flex: 1.5, flutter: 0.006, trans: 0.45, var: [0.1, 0.08, 0.05] });
+      return Wind.windify(m, { grass: true, height: 0.3, strength: 0.08, flex: 1.5, flutter: 0.006, trans: 0.45, var: [0.1, 0.08, 0.05] });
     });
     const flowerGeo = (() => { const a = new Acc(); const rr = RNG(9); for (let i = 0; i < 3; i++) { const p = V3(rr.pm(0.06), 0.16 + rr() * 0.08, rr.pm(0.06)); flowerHead(a, p, 0.03, rr.int(4), V3(rr.pm(1), 0, rr.pm(1))); } return a.build(); })();
     const fmat = cmat('grass_flowers', () => Wind.windify(G.R3M.env({ map: flowerTex(), alphaTest: 0.4, side: T.DoubleSide, vertexColors: true, roughness: 0.6, cutout: false }), { grass: true, height: 0.25, strength: 0.06, flex: 1.2 }));
