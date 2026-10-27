@@ -354,7 +354,10 @@ G.Animal3D = (() => {
       uGhost: { value: 0 }, cGhost: { value: new THREE.Color(opts.ghostTint || '#bfe8ff') },
       cGlow: { value: new THREE.Color(opts.glow || '#000000') }, uGlow: { value: opts.glow ? (opts.glowK || 0.35) : 0 },
       uFade: { value: 1 }, uTime: { value: 0 },
+      uMouth: { value: 0 }, uMouthC: { value: new THREE.Vector2(0.5, 0.33) }, uMouthR: { value: new THREE.Vector2(0.04, 0.06) },
+      cMouthIn: { value: new THREE.Color('#5a1e26') }, cTongue: { value: new THREE.Color('#e88a92') }, cLip: { value: new THREE.Color(P.line || '#2a2020') },
     };
+    if (opts.mouth) { U.uMouthC.value.set(opts.mouth.c[0], opts.mouth.c[1]); U.uMouthR.value.set(opts.mouth.r[0], opts.mouth.r[1]); }
     mat.userData.coat = U;
     const prev = mat.onBeforeCompile;
     const defs = (opts.spots ? '#define AN_SPOTS\n' : '') + (opts.faceTex ? '#define AN_FACE\n' : '') + (opts.cards ? '#define AN_CARDS\n' : '');
@@ -378,6 +381,7 @@ G.Animal3D = (() => {
           uniform vec3 cBase, cBase2, cDark, cWhite, cPA, cPB, cGhost, cGlow;
           uniform float uStripeW, uTick, uDetail, uScale, uGhost, uGlow, uFade, uTime;
           uniform sampler2D tFace; uniform sampler2D tCard;
+          uniform float uMouth; uniform vec2 uMouthC, uMouthR; uniform vec3 cMouthIn, cTongue, cLip;
           varying vec3 vRest; varying vec4 vM; varying vec4 vS; varying vec4 vCol; varying vec3 vFace;
           #ifdef AN_CARDS
           varying vec2 vCardUv;
@@ -406,6 +410,15 @@ G.Animal3D = (() => {
             #ifdef AN_FACE
             vec4 fp = texture2D(tFace, vFace.xy);
             c = mix(c, fp.rgb, fp.a * vFace.z);
+            if (uMouth > 0.01 && vFace.z > 0.3) { // open mouth: grows down from the painted lip line
+              vec2 mr = uMouthR * vec2(0.55 + 0.45 * uMouth, max(uMouth, 0.05));
+              vec2 md = (vFace.xy - (uMouthC - vec2(0.0, mr.y))) / mr;
+              float me = length(md);
+              if (me < 1.0) {
+                vec3 mc = mix(cMouthIn, cTongue, smoothstep(-0.05, -0.65, md.y) * smoothstep(1.0, 0.5, abs(md.x)));
+                c = mix(mc, cLip, smoothstep(0.78, 0.95, me));
+              }
+            }
             #endif
             c = mix(c, vCol.rgb, vCol.a);
             // fine strand texture (anisotropic noise) + baked AO
@@ -445,7 +458,7 @@ G.Animal3D = (() => {
       cIris: { value: new THREE.Color(E.iris) }, cIris2: { value: new THREE.Color(E.iris2 || E.iris) }, cRing: { value: new THREE.Color(E.ring || '#2a2a1a') },
       cSclera: { value: new THREE.Color(E.sclera || E.iris).multiplyScalar(0.55) }, uIrisR: { value: E.irisR || 0.64 }, uPupil: { value: 0.28 },
       uPupilH: { value: E.pupilH || 0.82 }, uGhost: { value: 0 }, cGhost: { value: new THREE.Color('#bfe8ff') }, uFade: { value: 1 },
-      uRound: { value: E.round ? 1 : 0 }, uGlowE: { value: E.glow || 0.12 },
+      uRound: { value: E.round ? 1 : 0 }, uGlowE: { value: E.glow || 0.12 }, cHL: { value: new THREE.Color(E.hl || '#ffffff') }, cHL2: { value: new THREE.Color(E.hl2 || '#ffffff') },
     };
     mat.userData.eye = U;
     mat.onBeforeCompile = (sh) => {
@@ -455,7 +468,7 @@ G.Animal3D = (() => {
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvEye = aEye;');
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', `#include <common>
-          uniform vec3 cIris, cIris2, cRing, cSclera, cGhost; uniform float uIrisR, uPupil, uPupilH, uGhost, uFade, uRound, uGlowE;
+          uniform vec3 cIris, cIris2, cRing, cSclera, cGhost, cHL, cHL2; uniform float uIrisR, uPupil, uPupilH, uGhost, uFade, uRound, uGlowE;
           varying vec3 vEye; ${GLSL_NOISE}`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
           vec2 q = vEye.xy; float front = vEye.z;
@@ -480,7 +493,7 @@ G.Animal3D = (() => {
           { vec3 vn = normalize(normal);
             float hl = pow(max(dot(vn, normalize(vec3(-0.38, 0.5, 0.78))), 0.0), 90.0);
             float hl2 = pow(max(dot(vn, normalize(vec3(0.3, -0.25, 0.92))), 0.0), 260.0);
-            outgoingLight = outgoingLight + diffuseColor.rgb * uGlowE + vec3(1.0) * (smoothstep(0.55, 0.75, hl) * 1.1 + smoothstep(0.5, 0.7, hl2) * 0.5);
+            outgoingLight = outgoingLight + diffuseColor.rgb * uGlowE + cHL * smoothstep(0.55, 0.75, hl) * 1.1 + cHL2 * smoothstep(0.5, 0.7, hl2) * 0.7;
             if (uGhost > 0.0) outgoingLight = mix(outgoingLight, cGhost * 1.4, uGhost * 0.6); }
           #include <opaque_fragment>`);
     };
@@ -1163,7 +1176,9 @@ G.Animal3D = (() => {
       addEar(body, e.F, e.H || R * 0.84 * es, e.W || R * 0.36 * es, e.o || { round: plan.cfg.ear && plan.cfg.ear.round, cup: 0.42, thick: 0.16 }, 'ear' + e.sx, 'head',
         (p) => earBackM(plan, p, e), (u, v, edge) => mixc(innerD, inner, smooth(0.0, 0.6, edge) * 0.6 + v * 0.4));
     }
+    plan.field = field;
     if (plan.parts) plan.parts(body, plan, mAt);
+    if (plan.cfg && plan.cfg.bow) addCollarBow(body, plan, mAt);
     // fur cards + whiskers (separate alpha-tested mesh sharing the coat shader)
     const cards = new Parts();
     if (plan.fur) addFurCards(cards, plan, mesh, vinfo);
@@ -1197,7 +1212,7 @@ G.Animal3D = (() => {
       id, plan, S, boneNames, bi,
       geo: toGeometry(body, bi, S, true), hull: toGeometry(hull, bi, S, false), eyeGeo: toGeometry(eyeP, bi, S, false, true),
       cardGeo: cards.n ? toGeometry(cards, bi, S, true, false, true) : null,
-      faceTex: faceTexture(plan, id), cardTex: cardTexture(), pal,
+      faceTex: faceTexture(plan, id), cardTex: cardTexture(), pal, mouth: mouthUV(plan),
     };
     // bounds for culling (generous; animation stays inside)
     asset.geo.computeBoundingBox();
@@ -1206,6 +1221,13 @@ G.Animal3D = (() => {
     asset.height = bb.max.y;
     asset.buildMs = performance.now() - t0;
     return asset;
+  }
+  // mouth position / size in face-texture uv (lat-long around the head centre)
+  function mouthUV(plan) {
+    const m = plan.mouth || { c: [0, -0.4, 0.74], w: 0.13, h: 0.17 }, R = plan.R;
+    const dy = m.c[1] * R, dz = m.c[2] * R;
+    const lat = Math.atan2(dy, dz), r = Math.hypot(dy, dz);
+    return { c: [0.5, 0.5 + lat / (2 * FLAT)], r: [m.w * R / (r * 2 * FLON), m.h * R / (r * 2 * FLAT)] };
   }
   function earBackM(plan, p, e) {
     const M = plan.mAt(p), coat = plan.cfg.coat, pal = PAL(plan);
@@ -1258,6 +1280,39 @@ G.Animal3D = (() => {
     }
     g.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(parts.idx, 1) : new THREE.Uint16BufferAttribute(parts.idx, 1));
     return g;
+  }
+
+  // 芋圓's red silk bow collar (design pick #07 石獅繡球): a band hugging the real neck surface + bow + knot + tails
+  function addCollarBow(body, plan, mAt) {
+    const B = plan.cfg.bow, field = plan.field, JP = plan.JP;
+    const a = JP.neck, b = plan.hc;
+    const ax = V3.norm(V3.sub(b, a));
+    const c = V3.lerp(a, b, B.at || 0.42);
+    const side = V3.norm(V3.cross(ax, [1, 0, 0])), up2 = V3.cross(ax, side);
+    const red = [...hex(B.col || '#C8332E'), 1], redD = [...hex(B.dark || '#8E1F22'), 1];
+    const ring = [];
+    const N = 16;
+    for (let i = 0; i <= N; i++) {
+      const ang = i / N * TAU, d = V3.add(V3.mul([1, 0, 0], cos(ang)), V3.mul(side, sin(ang)));
+      let t = 0.005;
+      for (let k = 0; k < 40; k++) { const q = V3.add(c, V3.mul(d, t)); if (field(q[0], q[1], q[2]) > 0) break; t += 0.0025; }
+      ring.push(V3.add(c, V3.mul(d, t - 0.001)));
+    }
+    const skin = [['neck', 0.75], ['head', 0.1], ['chest', 0.15]];
+    addTube(body, ring, ring.map(() => 0.0055), 6, skin, (p) => { const m = M0(); m.col = red; m.rest = p; m.ao = 0.95; return m; });
+    // front-most ring point → bow
+    let fi = 0; for (let i = 0; i < N; i++) if (ring[i][2] - ring[i][1] * 0.3 > ring[fi][2] - ring[fi][1] * 0.3) fi = i;
+    const f = ring[fi], fwd = V3.norm(V3.sub(f, c));
+    const bowM = (p) => { const m = M0(); m.col = red; m.rest = p; m.ao = 1; return m; };
+    const bowMD = (p) => { const m = M0(); m.col = redD; m.rest = p; return m; };
+    const k = V3.add(f, V3.mul(fwd, 0.006));
+    for (const s of [1, -1]) {
+      const lc = V3.add(k, [s * 0.021, 0.004, 0.0]);
+      addEllipsoid(body, lc, [0.02, 0.013, 0.006], rotMat(0.25, 0, -s * 0.25), 8, 6, skin, bowM);
+      const tc = V3.add(k, [s * 0.009, -0.018, 0.002]);
+      addEllipsoid(body, tc, [0.007, 0.017, 0.003], rotMat(0.2, 0, s * 0.35), 6, 5, skin, bowMD);
+    }
+    addEllipsoid(body, V3.add(k, [0, 0.0, 0.003]), [0.0085, 0.008, 0.007], null, 7, 5, skin, bowMD);
   }
 
   // ================================================================================== other quadrupeds
@@ -1712,8 +1767,8 @@ G.Animal3D = (() => {
   // ================================================================================== species → plan
   const PETS = {
     // values from the approved design kit (tools/design2/yuyuan.js, mochi.js BASE specs)
-    yuyuan: { judge: true, exprBase: 'judging', coat: 'tabby', R: 0.19, fat: 1.42, cheek: 1.15, skullW: 1.04, ear: { size: 1.25, flare: 0.28 }, eye: { yaw: 0.3, pupil: 0.2 }, tail: { len: 0.95, r: 1.1 }, scale: 1.5, leg: 0.94, legR: 1.05 },
-    mochi: { chirpy: true, voxel: 0.0135, hullH: 0.021, coat: 'calico', R: 0.2, fat: 1.32, cheek: 0.9, skullW: 1.02, ear: { size: 1.15, flare: 0.31, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42 }, tail: { len: 1.1, r: 1.5, taper: 0.95, fluff: 0.012 }, fluff: 1, ruff: 1.1, scale: 1.55, leg: 0.97, legR: 1.05 },
+    yuyuan: { judge: true, exprBase: 'judging', bow: { col: '#C8332E', dark: '#8E1F22' }, coat: 'tabby', R: 0.19, fat: 1.42, cheek: 1.15, skullW: 1.04, ear: { size: 1.25, flare: 0.28 }, eye: { yaw: 0.3, pupil: 0.2 }, tail: { len: 0.95, r: 1.1 }, scale: 1.5, leg: 0.94, legR: 1.05 },
+    mochi: { chirpy: true, voxel: 0.0135, hullH: 0.021, coat: 'calico', R: 0.2, fat: 1.32, cheek: 0.9, skullW: 1.02, ear: { size: 1.15, flare: 0.31, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42, hl: '#ffe2a8', hl2: '#ffc870' }, tail: { len: 1.1, r: 1.5, taper: 0.95, fluff: 0.012 }, fluff: 1, ruff: 1.1, scale: 1.55, leg: 0.97, legR: 1.05 },
     cat: { voxel: 0.0175, hullH: 0.024, coat: 'orange', R: 0.18, fat: 1.0, cheek: 0.5, ear: { size: 1.05, flare: 0.3 }, eye: { yaw: 0.32, pupil: 0.25 }, tail: { len: 1.05 }, scale: 1.45 },
     leopard: { voxel: 0.0165, hullH: 0.023, coat: 'leopard', R: 0.18, fat: 1.05, cheek: 0.6, ear: { size: 0.95, flare: 0.36, round: true }, eye: { yaw: 0.32, round: true, pupil: 0.5 }, tail: { len: 1.05, r: 1.2, taper: 0.85 }, scale: 1.45 },
   };
@@ -1862,11 +1917,13 @@ G.Animal3D = (() => {
     sit: { dur: 4, loop: true, fn(t, p, I) { sitBase(p, I, 1); W(p, 'headY', 0.12 * sin(t * 0.4)); } },
     loaf: { dur: 6, loop: true, fn(t, p, I) { loafBase(p, I, 1); eyes(p, 0.45 + 0.1 * sin(t * 0.3), 0.15); } },
     sleep: { dur: 6, loop: true, fn(t, p, I) {
+      // curled "donut": low loaf, spine curled sideways, head tucked toward the tail, tail wrapped round the front
       loafBase(p, I, 1);
-      W(p, 'hipY', -0.13); W(p, 'hipR', 0.95); W(p, 'hipYw', 0.2); W(p, 'sp1Y', 0.42); W(p, 'sp2Y', 0.42); W(p, 'chY', 0.35); W(p, 'chR', 0.2);
-      W(p, 'neckY', 0.55); W(p, 'neckP', 0.15); W(p, 'headY', 0.45); W(p, 'headP', 0.45); W(p, 'headR', -0.5);
-      W(p, 'tailP', 0.6); W(p, 'tailY', 0.9); W(p, 'tailCurlY', 0.4); W(p, 'tailWaveA', 0.0);
-      eyes(p, 1, 0.3); ears(p, 0.15, 0.25, 0.1); W(p, 'breath', 1.6);
+      W(p, 'hipY', -0.135); W(p, 'hipR', 0.32); W(p, 'hipYw', -0.55); W(p, 'sp1Y', 0.4); W(p, 'sp2Y', 0.42); W(p, 'chY', 0.38); W(p, 'chR', 0.1);
+      W(p, 'neckY', 0.55); W(p, 'neckP', 0.55); W(p, 'headY', 0.35); W(p, 'headP', 0.55); W(p, 'headR', -0.35);
+      W(p, 'tailP', 0.9); W(p, 'tailY', 1.0); W(p, 'tailCurlY', 0.42); W(p, 'tailCurl', 0.02); W(p, 'tailWaveA', 0.0);
+      W(p, 'FLy', 0.06); W(p, 'FRy', 0.06); W(p, 'FLz', -0.03); W(p, 'FRz', -0.04);
+      eyes(p, 1, 0.3); ears(p, 0.25, 0.3, 0.15); W(p, 'breath', 1.6); W(p, 'look', 0);
     } },
     groom: { dur: 3.2, loop: true, fn(t, p, I, k) {
       sitBase(p, I, 1);
@@ -2192,12 +2249,12 @@ G.Animal3D = (() => {
       rootBone.updateMatrixWorld(true);
       this.skeleton = new THREE.Skeleton(this.bones);
       const pal = asset.pal, cfg = plan.cfg;
-      this.mat = coatMaterial(pal, { faceTex: asset.faceTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint });
+      this.mat = coatMaterial(pal, { mouth: asset.mouth, faceTex: asset.faceTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint });
       this.body = new THREE.SkinnedMesh(asset.geo, this.mat);
       this.body.add(rootBone);
       this.body.bind(this.skeleton);
       this.body.castShadow = true; this.body.receiveShadow = true;
-      this.eyeMat = eyeMaterial({ iris: pal.iris, iris2: pal.iris2, round: !!(cfg.eye && cfg.eye.round), irisR: cfg.eye && cfg.eye.irisR, pupilH: cfg.eye && cfg.eye.round ? 0.62 : 0.82 });
+      this.eyeMat = eyeMaterial({ iris: pal.iris, iris2: pal.iris2, round: !!(cfg.eye && cfg.eye.round), irisR: cfg.eye && cfg.eye.irisR, pupilH: cfg.eye && cfg.eye.round ? 0.62 : 0.82, hl: cfg.eye && cfg.eye.hl, hl2: cfg.eye && cfg.eye.hl2 });
       this.eyes = new THREE.SkinnedMesh(asset.eyeGeo, this.eyeMat);
       this.eyes.bind(this.skeleton, this.body.bindMatrix);
       const fake = { isSkinnedMesh: true, geometry: asset.hull, skeleton: this.skeleton, bindMatrix: this.body.bindMatrix };
@@ -2343,6 +2400,7 @@ G.Animal3D = (() => {
       this.springs.step(dt);
       // eye uniforms
       this.eyeMat.userData.eye.uPupil.value = clamp(Rd(P, 'pupil'), 0.06, 1);
+      this.mat.userData.coat.uMouth.value = clamp((Rd(P, 'jaw') - 0.04) / 0.6, 0, 1);
       this.mat.userData.coat.uTime.value = this.t;
     }
     gaitFor(vp) {
