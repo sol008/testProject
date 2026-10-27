@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — interior props preview</title>
+<style>
+  html, body { margin: 0; background: #14100c; color: #e8dcc0; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.7; background: rgba(0,0,0,0.5); padding: 2px 6px; }
+</style>
+</head>
+<body>
+<div id="bar">?t=1.2 (freeze) · ?only=room|gallery · ?night=0</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/interior.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const only = q.get('only');
+  const T = 64;
+  const W = 1536;
+  const font = (s, b) => (G.font ? G.font(s, b) : `${b ? 'bold ' : ''}${s}px sans-serif`);
+  const defs = G.Objects.defs;
+
+  // ---------- gallery items -------------------------------------------------------------
+  const extra = [
+    { t: 'chair', dir: 'up' }, { t: 'chair', dir: 'left' }, { t: 'chair', dir: 'right' },
+    { t: 'table', w: 2 }, { t: 'chest', open: true }, { t: 'switch', on: true },
+    { t: 'mural', v: 1 }, { t: 'mural', v: 2 }, { t: 'mural', v: 3 }, { t: 'mural', v: 4 },
+    { t: 'plant_pot', v: 1 }, { t: 'plant_pot', v: 2 }, { t: 'shelf_lanterns', v: 1, w: 3 }, { t: 'jar_row', w: 3 },
+  ].filter((o) => defs[o.t]);
+  const base = Object.keys(defs).map((t) => ({ t }));
+  const list = base.concat(extra);
+  const dims = (o) => {
+    const d = defs[o.t];
+    return [(d.resize && o.w) || d.w, (d.resize === 'wh' && o.h) || d.h];
+  };
+  // flow into rows
+  const rows = [];
+  let row = null, x = 32;
+  for (const o of list) {
+    const [w] = dims(o);
+    const sw = w * T + 64;
+    if (!row || x + sw > W - 16) { row = { items: [] }; rows.push(row); x = 32; }
+    row.items.push({ o, x });
+    x += sw;
+  }
+  let y = 50;
+  for (const r of rows) {
+    const maxUp = Math.max(...r.items.map((it) => defs[it.o.t].up || 0));
+    const maxH = Math.max(...r.items.map((it) => dims(it.o)[1]));
+    r.wallTop = y; r.floorY = y + Math.max(110, maxUp + 24);
+    r.h = r.floorY - y + maxH * T + 46;
+    for (const it of r.items) {
+      it.y = defs[it.o.t].wallMount ? r.floorY - T : r.floorY;
+      it.o.x = Math.round(it.x / T); it.o.y = Math.round(it.y / T);
+    }
+    y += r.h;
+  }
+  const galleryH = y;
+
+  // ---------- composed room: 陳記燈籠舖 -------------------------------------------------------
+  const RW = 22, RH = 10;
+  const room = [
+    { t: 'shelf_lanterns', x: 1, y: 2, w: 3 },
+    { t: 'shelf_lanterns', x: 4, y: 2, v: 2 },
+    { t: 'door_frame', x: 7, y: 1 },
+    { t: 'lantern_rack', x: 8, y: 2 },
+    { t: 'cabinet', x: 10, y: 2 },
+    { t: 'altar', x: 11, y: 2 },
+    { t: 'mural', x: 13, y: 1, v: 0 },
+    { t: 'bookshelf', x: 15, y: 2 },
+    { t: 'stairs_up', x: 18, y: 2 },
+    { t: 'jar_row', x: 19, y: 2, w: 2 },
+    { t: 'counter', x: 2, y: 5, w: 3 },
+    { t: 'chair', x: 3, y: 4, dir: 'down' },
+    { t: 'paper_stack', x: 1, y: 7 },
+    { t: 'workbench', x: 6, y: 6 },
+    { t: 'lantern_frame', x: 8, y: 6 },
+    { t: 'chair', x: 7, y: 7, dir: 'up' },
+    { t: 'rug', x: 11, y: 5, w: 4, h: 3 },
+    { t: 'table', x: 12, y: 6 },
+    { t: 'chair', x: 11, y: 6, dir: 'right' },
+    { t: 'chair', x: 13, y: 6, dir: 'left' },
+    { t: 'tea_set', x: 16, y: 5 },
+    { t: 'pillar', x: 10, y: 4 },
+    { t: 'pillar', x: 15, y: 4 },
+    { t: 'lantern_rack', x: 3, y: 8 },
+    { t: 'chair', x: 17, y: 5, dir: 'left' },
+    { t: 'plant_pot', x: 1, y: 9, v: 0 },
+    { t: 'broom', x: 21, y: 3 },
+    { t: 'bucket', x: 20, y: 9 },
+    { t: 'stove', x: 18, y: 6 },
+    { t: 'pot', x: 21, y: 6 },
+    { t: 'chest', x: 17, y: 9 },
+    { t: 'incense_burner', x: 12, y: 3 },
+    { t: 'plant_pot', x: 9, y: 9, v: 2 },
+    { t: 'bed_mat', x: 6, y: 8 },
+  ].filter((o) => defs[o.t]);
+  const roomTop = only === 'room' ? 40 : galleryH + 40;
+  const roomH = (RH + 1) * T;
+  const H = only === 'gallery' ? galleryH : roomTop + (roomH + 40) * 2;
+
+  const cv = document.getElementById('cv');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  // ---------- floor & wall painters ----------------------------------------------------------
+  function floor(c, x0, y0, w, h) {
+    c.fillStyle = '#7a5434'; c.fillRect(x0, y0, w, h);
+    for (let yy = 0; yy < h; yy += 16) {
+      const r = G.U.seeded(((yy + y0) * 31) | 0);
+      let xx = -((yy / 16) % 3) * 40;
+      while (xx < w) {
+        const len = 70 + r() * 90;
+        c.fillStyle = G.U.mix('#82593a', '#6a4528', r());
+        c.fillRect(x0 + xx, y0 + yy, len, 15);
+        c.fillStyle = 'rgba(255,230,190,0.07)'; c.fillRect(x0 + xx, y0 + yy, len, 1.5);
+        c.fillStyle = 'rgba(30,15,5,0.4)'; c.fillRect(x0 + xx + len - 1, y0 + yy, 1, 15);
+        xx += len;
+      }
+      c.fillStyle = 'rgba(30,15,5,0.45)'; c.fillRect(x0, y0 + yy + 15, w, 1);
+    }
+  }
+  function wall(c, x0, yTop, w, faceY) {
+    // dark wall top (cap) above the face
+    c.fillStyle = '#2a1d16'; c.fillRect(x0, yTop, w, faceY - yTop);
+    c.fillStyle = '#3a2a1e'; c.fillRect(x0, faceY - 10, w, 10);
+    // plaster face (64px) with wainscot
+    const g = c.createLinearGradient(0, faceY, 0, faceY + T);
+    g.addColorStop(0, '#d9ccb2'); g.addColorStop(1, '#c4b597');
+    c.fillStyle = g; c.fillRect(x0, faceY, w, T);
+    c.fillStyle = '#5e3a22'; c.fillRect(x0, faceY + T - 18, w, 18);
+    c.fillStyle = '#7a4c2c'; c.fillRect(x0, faceY + T - 18, w, 2);
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x0, faceY + T - 3, w, 3);
+    c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(x0, faceY, w, 4);
+    for (let xx = x0 + 96; xx < x0 + w; xx += 192) { c.fillStyle = '#4a2e1c'; c.fillRect(xx, faceY, 8, T - 18); }
+  }
+
+  function drawObj(o, px, py, t) {
+    try { G.Objects.draw(ctx, o, px, py, t); } catch (e) { console.error(o.t, e); }
+  }
+
+  function drawGallery(t) {
+    ctx.fillStyle = '#e8dcc0'; ctx.font = font(20, true); ctx.textAlign = 'left';
+    ctx.fillText('彼岸燈 · 室內陳設 (interior.js) — ' + Object.keys(defs).length + ' types', 16, 30);
+    for (const r of rows) {
+      floor(ctx, 0, r.floorY, W, r.h - (r.floorY - r.wallTop) - 4);
+      wall(ctx, 0, r.wallTop, W, r.floorY - T);
+      const sorted = r.items.slice().sort((a, b) => (a.y + dims(a.o)[1] * T) - (b.y + dims(b.o)[1] * T));
+      for (const it of sorted) {
+        const [w, h] = dims(it.o);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.setLineDash([3, 3]);
+        ctx.strokeRect(it.x + 0.5, it.y + 0.5, w * T - 1, h * T - 1); ctx.setLineDash([]);
+      }
+      for (const it of sorted) drawObj(it.o, it.x, it.y, t);
+      for (const it of r.items) {
+        const d = defs[it.o.t]; const [w, h] = dims(it.o);
+        const p = Object.keys(it.o).filter((k) => !['t', 'x', 'y'].includes(k)).map((k) => k + '=' + it.o[k]).join(' ');
+        const flags = [w + 'x' + h, d.solid ? 'solid' : 'walk', d.anim ? 'anim' : '', d.lights ? 'light' : ''].filter(Boolean).join(' ');
+        const ly = r.wallTop + r.h - 26;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(it.x - 4, ly - 13, Math.max(w * T + 8, 120), 30);
+        ctx.fillStyle = '#ffe9b8'; ctx.font = font(13, true); ctx.fillText(it.o.t + (p ? ' (' + p + ')' : ''), it.x, ly);
+        ctx.fillStyle = '#b8a888'; ctx.font = font(11); ctx.fillText(flags, it.x, ly + 13);
+      }
+    }
+  }
+
+  function drawRoom(t, top, night) {
+    const x0 = (W - RW * T) / 2;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x0, top, RW * T, (RH + 1) * T); ctx.clip();
+    floor(ctx, x0, top + 2 * T, RW * T, (RH - 1) * T);
+    wall(ctx, x0, top, RW * T, top + T);
+    const objs = room.slice().sort((a, b) => {
+      const da = defs[a.t], db = defs[b.t];
+      const fa = da.solid === false && !da.wallMount ? -1e4 : 0, fb = db.solid === false && !db.wallMount ? -1e4 : 0;
+      return (fa + a.y + ((da.resize === 'wh' && a.h) || da.h)) - (fb + b.y + ((db.resize === 'wh' && b.h) || db.h));
+    });
+    for (const o of objs) drawObj(o, x0 + o.x * T, top + o.y * T, t);
+    // scale reference: a simple 92px figure
+    const fx = x0 + 10.5 * T, fy = top + 9 * T - 6;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(fx, fy, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2f4a7a'; ctx.beginPath(); ctx.roundRect(fx - 13, fy - 66, 26, 62, 9); ctx.fill();
+    ctx.fillStyle = '#f0d0b0'; ctx.beginPath(); ctx.arc(fx, fy - 76, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2a1a14'; ctx.beginPath(); ctx.arc(fx, fy - 80, 13, Math.PI, 0); ctx.fill();
+    if (night) {
+      // darkness with light holes + additive light colour
+      const lc = document.createElement('canvas'); lc.width = RW * T; lc.height = (RH + 1) * T;
+      const l = lc.getContext('2d');
+      l.fillStyle = 'rgba(8,10,28,0.78)'; l.fillRect(0, 0, lc.width, lc.height);
+      l.globalCompositeOperation = 'destination-out';
+      const lights = [];
+      for (const o of objs) {
+        const d = defs[o.t]; if (!d.lights) continue;
+        for (const L of d.lights(o)) {
+          const f = 1 - (L.flicker || 0) * 0.5 * (1 + Math.sin(t * 13 + o.x * 3));
+          lights.push([o.x * T + L.dx, o.y * T + L.dy, L.r * f, L.color]);
+        }
+      }
+      for (const [lx, ly, r] of lights) {
+        const g = l.createRadialGradient(lx, ly, 0, lx, ly, r);
+        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        l.fillStyle = g; l.fillRect(lx - r, ly - r, r * 2, r * 2);
+      }
+      ctx.drawImage(lc, x0, top);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [lx, ly, r, col] of lights) {
+        const g = ctx.createRadialGradient(x0 + lx, top + ly, 0, x0 + lx, top + ly, r);
+        g.addColorStop(0, G.U.rgba(col, 0.22)); g.addColorStop(1, G.U.rgba(col, 0));
+        ctx.fillStyle = g; ctx.fillRect(x0 + lx - r, top + ly - r, r * 2, r * 2);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.restore();
+    ctx.fillStyle = '#e8dcc0'; ctx.font = font(18, true); ctx.textAlign = 'left';
+    ctx.fillText(night ? '陳記燈籠舖 — 夜 (lights)' : '陳記燈籠舖 — 日', x0, top - 10);
+  }
+
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#14100c'; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (only !== 'room') drawGallery(t);
+    if (only !== 'gallery') {
+      drawRoom(t, roomTop, false);
+      if (q.get('night') !== '0') drawRoom(t, roomTop + roomH + 40, true);
+    }
+    if (freeze == null) requestAnimationFrame(frame);
+    else document.title = 'ready';
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
