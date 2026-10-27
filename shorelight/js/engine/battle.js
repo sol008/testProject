@@ -1631,7 +1631,7 @@ G.Battle = (() => {
 })();
 
 // ------------------------------------------------------------------ Game over
-G.GameOverScene = class {
+G.GameOverScene = class GameOverScene {
   constructor(troopId, o, stateBefore, resolve) {
     this.opaque = true;
     this.t = 0;

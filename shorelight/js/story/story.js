@@ -10,7 +10,7 @@ G.Story.newGame = function () {
   G.state.gold = 0;
   if (G.Story.ch0) {
     // a neutral black base scene; the chapter function warps to the first map
-    G.Scenes.replace({ opaque: true, update() {}, draw(ctx) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } });
+    G.Scenes.replace(new G.BlankScene());
     G.Script.run((S) => G.Story.ch0(S));
     return;
   }

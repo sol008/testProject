@@ -1,6 +1,6 @@
 // Shop scene: buy / sell with quantity and party equipment comparison.
 'use strict';
-G.ShopScene = class {
+G.ShopScene = class ShopScene {
   constructor(goods, resolve, o = {}) {
     this.goods = goods.filter((id) => G.Data.items[id]);
     this.resolve = resolve;

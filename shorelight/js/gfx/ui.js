@@ -361,7 +361,7 @@ G.UI = (() => {
 
   // ---------- list widget ----------
   // items: [{label, right, disabled, icon, color, sub}]
-  UI.List = class {
+  UI.List = class List {
     constructor(items, o = {}) {
       this.items = items;
       this.idx = o.idx || 0;

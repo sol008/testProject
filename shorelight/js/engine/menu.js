@@ -675,7 +675,7 @@
     G.inGame = true;
     const st = G.state;
     G.mapScene = null;
-    G.Scenes.replace({ update() {}, draw() {} });
+    G.Scenes.replace(new G.BlankScene(false));
     G.Mapx.goto(st.map, st.x, st.y, st.dir);
     G.Render.fade.a = 1;
     G.Render.fadeTo(0, 0.6);

@@ -211,7 +211,7 @@ const SEGMENTS = {
   },
   xuanwu: async (R) => {
   // ---- 玄武嶼 / 萬魂窟 P1 / 長明殿 / 囚室 / 逆潮台
-  await R.levelTo(40);
+  await R.levelTo(41);
   await R.step(7, 43);
   check('A: 11-06 ch11_xuanwu', (await R.map()) === 'xuanwu_shore' && await R.flag('ch11_xuanwu'));
   await R.shot('xuanwu_shore');
@@ -255,7 +255,7 @@ const SEGMENTS = {
   await R.choices(['暗流', 0]); await R.talk('chenbo');
   check('A: 4-2 step 1 平安信', await R.flag('ch11_tangshan_letter') && await R.ev(() => G.Inv.has('c11_pingan_letter')));
   for (const id of ['deck_hy', 'deck_yg', 'deck_yy', 'deck_mc']) await R.talk(id);
-  await R.levelTo(41);
+  await R.levelTo(42);
   await R.choices(['鯤之淵']); await R.talk('chenbo');
   check('A: 11-14 鯤 (鯤鱗甲)', await R.flag('ch11_kun') && await R.ev(() => G.Inv.has('c11_ar_kun_scale')));
   await R.choices(['無光之霧']); await R.talk('chenbo');
@@ -277,7 +277,7 @@ const SEGMENTS = {
   },
   tower: async (R) => {
   // ---- 彼岸燈塔 1F–5F + 頂
-  await R.levelTo(42);
+  await R.levelTo(43);
   await R.step(27, 2);
   check('A: tower 1F', (await R.map()) === 'farshore_tower_1');
   await R.trigger('echo');
@@ -322,7 +322,7 @@ const SEGMENTS = {
   },
   breath: async (R) => {
   // ---- 一息界: 萬象童子 + optional 萬象遊戲 + 光之曼陀羅 (P4)
-  await R.levelTo(43);
+  await R.levelTo(44);
   await R.choices(['好，來玩']);
   await R.step(19, 24);
   check('A: 11-25 萬象童子 met', await R.flag('ch11_tongzi_met'));
@@ -333,7 +333,7 @@ const SEGMENTS = {
   check('A: P4 light reaches the seat', await R.flag('ch11_seat_lit'));
   },
   true: async (R) => {
-  await R.levelTo(44);
+  await R.levelTo(46);
   await R.step(19, 6);
   // ---- 燈心: reunion → 夜玄 ×2 → 夜念 → 無相 ×3 → E-00 → 真結局 → credits → stinger → title
   await R.toTitle();
@@ -352,7 +352,7 @@ const SEGMENTS = {
     const keep = ['lantern_penghu_weir', 'lantern_tangshan', 'lantern_baizhi_memory', 'xd_atu_watch'];
     for (const id of Object.keys(G.state.lanterns)) if (!keep.includes(id)) delete G.state.lanterns[id];
   });
-  await R.levelTo(44);
+  await R.levelTo(46);
   await R.script("await S.warp('breath_realm', 19, 7, 'up', { reload: true });");
   check('B: lanterns below the threshold', await R.ev(() => G.Lanterns.count() < G.Lanterns.THRESHOLD));
   await R.step(19, 6);

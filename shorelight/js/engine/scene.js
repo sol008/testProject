@@ -37,5 +37,16 @@ G.Scenes = (() => {
       for (let i = start; i < stack.length; i++) stack[i].draw(ctx);
     },
   };
+  // readable name of a scene for diagnostics (class name; plain-object scenes may set `sceneName`)
+  S.nameOf = (s) => (s && (s.sceneName || (s.constructor && s.constructor !== Object && s.constructor.name))) || (s ? 'Object' : 'none');
+  S.names = () => stack.map(S.nameOf);
   return S;
 })();
+
+// Placeholder base scene (black when opaque) used while a chapter / load sets up the real one. Named so stuck-test
+// diagnostics that print constructor.name stay readable.
+G.BlankScene = class BlankScene {
+  constructor(opaque = true) { this.opaque = opaque; }
+  update() {}
+  draw(ctx) { if (this.opaque) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } }
+};

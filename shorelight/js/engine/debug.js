@@ -20,7 +20,7 @@ G.Debug = {
         if (q.get('auto')) { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; }
       if (q.get('autoplay')) G.Debug.setAutoplay(true);
         for (const f of (q.get('flags') || '').split(',').filter(Boolean)) G.state.flags[f] = true;
-        G.Scenes.replace({ opaque: true, update() {}, draw(ctx) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } });
+        G.Scenes.replace(new G.BlankScene());
         G.Script.run((S) => G.Story.next(S, n));
       }, 300);
       return;
