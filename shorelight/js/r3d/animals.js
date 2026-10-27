@@ -1563,7 +1563,7 @@ G.Animal3D = (() => {
     const col = Object.assign({ base: '#5c6068', belly: '#7a7e86', dark: '#34363c', nose: '#2a2a2e', eye: '#1c1a1e' }, spec.col || {});
     return quadPlan({
       species: 'buffalo', k: 5.5, gs: 5.6, scale: 0.95 * (spec.size || 1), voxel: 0.075, hullH: 0.12, kt: 0.12, kl: 0.05, warpM: 1.9, warpR: 1.7,
-      cfg: { coat: 'buffalo', eye: { round: true, irisR: 0.8 }, pal: palFrom(col, { iris: '#2a2220', iris2: '#4a3a30', white: '#e8e4dc', pa: '#4a4640', pb: '#a39c96', base2: '#6a6e78' }) },
+      cfg: { coat: 'buffalo', eye: { round: true, irisR: 0.8 }, pal: palFrom(col, { iris: '#2a2220', iris2: '#4a3a30', white: '#e8e4dc', pa: '#4a4640', pb: '#a39c96', base2: '#6a6e78', inner: '#8a7478' }) },
       hipH: 0.86, shH: 0.84, zH: -0.62, zS: 0.52, spY: 1.18, chestY: 0.72, hx: 0.17, fx: 0.18,
       torso: [
         { c: [0, 1.05, 0.48], r: [0.3, 0.36, 0.38], rot: [0.12, 0, 0], bone: 'chest' },
@@ -1585,8 +1585,8 @@ G.Animal3D = (() => {
       eye: { x: 0.68, y: 0.15, z: 0.5, r: 0.2, yaw: 0.95 },
       ear: { x: 0.85, y: 0.18, z: -0.25, h: 1.2, w: 0.42, flare: 1.35, back: 0.3, out: 0.9, cup: 0.45, droop: 0.25, round: true, stiff: 0.25, grav: 0.002 },
       tail: { pts: [[0, 1.18, -0.85], [0, 1.02, -0.92], [0, 0.85, -0.93], [0, 0.68, -0.92], [0, 0.52, -0.9], [0, 0.38, -0.88]], r: [0.06, 0.04, 0.03, 0.025, 0.022, 0.05], stiff: 0.22, grav: 0.004 },
-      hind: { knee: [0.66, 0.22], hock: [0.48, -0.2], foot: [0.11, -0.12], toe: [0.0, -0.02] },
-      fore: { elbow: [0.62, -0.08], wrist: [0.34, 0.0], hand: [0.11, 0.03], toe: [0.0, 0.12] },
+      hind: { knee: [0.68, 0.16], hock: [0.46, -0.13], foot: [0.1, -0.09], toe: [0.0, 0.0] },
+      fore: { elbow: [0.64, -0.06], wrist: [0.33, -0.01], hand: [0.1, 0.0], toe: [0.0, 0.09] },
       legR: { thigh: [0.16, 0.1], shin: [0.09, 0.06], meta: [0.055, 0.05], arm: [0.14, 0.095], fore: [0.07, 0.058], metaF: [0.052, 0.05] },
       hoof: { r0: 0.065, r1: 0.06 },
       haunch: { dx: 0.02, dy: -0.12, dz: 0.06, r: [0.14, 0.26, 0.24], rot: [-0.25, 0, 0] },
@@ -1597,14 +1597,15 @@ G.Animal3D = (() => {
       parts(body, plan, mAt) {
         const h = plan.hc, RR = plan.R;
         const hornC = [...hex('#3a3632'), 1], tipC = [...hex('#1e1c1a'), 1];
-        for (const s of [1, -1]) { // crescent horns sweeping out, back and up (in the plane of the forehead)
+        for (const s of [1, -1]) { // massive ridged crescent horns: out from the poll, sweeping back in the forehead plane, tips curling up/in
           const pts = [];
-          for (let i = 0; i <= 9; i++) {
-            const t = i / 9, a = t * 2.35;
-            pts.push(V3.add(h, [s * (0.55 + 1.45 * sin(a * 0.75)) * RR, (0.62 + 0.45 * t + 0.35 * sin(a * 0.9) * t) * RR, (-0.05 - 1.7 * (1 - cos(a * 0.62)) - 0.2 * t) * RR]));
+          for (let i = 0; i <= 12; i++) {
+            const t = i / 12, a = t * PI * 0.95;
+            const rx = 0.45 + 2.0 * sin(a * 0.62), rz = 0.1 - 2.3 * (1 - cos(a * 0.7)) * 0.62, ry = 0.55 + 0.28 * t + 0.55 * t * t;
+            pts.push(V3.add(h, [s * (rx - 0.35 * t * t * t) * RR, ry * RR, rz * RR]));
           }
-          const radii = pts.map((_, i) => RR * 0.26 * (1 - Math.pow(i / 9, 1.4) * 0.92));
-          addTube(body, pts, radii, 9, [['head', 1]], (p, t) => { const m = mAt(p); m.face = 0; m.col = t > 0.8 ? tipC : hornC; m.ao = 0.85 + 0.15 * (sin(t * 60) > 0 ? 1 : 0.6); return m; }, true);
+          const radii = pts.map((_, i) => RR * 0.36 * (1 - Math.pow(i / 12, 1.25) * 0.93));
+          addTube(body, pts, radii, 10, [['head', 1]], (p, t) => { const m = mAt(p); m.face = 0; m.col = t > 0.85 ? tipC : hornC; m.ao = 0.8 + 0.2 * (sin(t * 90) > -0.2 ? 1 : 0.5); return m; }, true);
         }
         // nose rope: a ring through the septum and a lead hanging down
         const ring = [];
@@ -1625,7 +1626,7 @@ G.Animal3D = (() => {
           const a = plan.JP.neck, t = z - a[2];
           if (abs(t - 0.02) < 0.03 || abs(t - 0.2 + abs(x) * 0.6) < 0.025) M.col = [...hex('#e8e4dc'), 0.95];
         }
-        M.pa = smooth(-0.3, -0.8, n[1]) * (reg.torso || 0) * 0.6; // mud-darkened underside
+        M.pa = smooth(-0.4, -0.85, n[1]) * (reg.torso || 0) * 0.35; // mud-darkened underside
       },
     }, col);
   }
