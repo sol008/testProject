@@ -329,7 +329,7 @@
   Object.assign(SK, {
     yg_pudu: { name: '普渡咒', desc: '搖響法鈴，唸起普渡科儀。請無主的孤魂先吃飽再上路。對敵全體術法傷害。', mp: 60, type: 'mag', elem: null, target: 'enemies', power: 1.2, fx: 'lantern', sfx: 'bell' },
     c10_es_dive: { name: '潛水', desc: '海蛇沉進黑水裡……水面下，一道長長的影子在移動。', mp: 0, type: 'special', elem: null, target: 'self', power: 0, fx: 'water', sfx: 'splash' },
-    c10_es_surge: { name: '破浪突襲', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemy', power: 2.0, fx: 'bite', sfx: 'crit' },
+    c10_es_surge: { name: '破浪突襲', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemy', power: 1.7, fx: 'bite', sfx: 'crit' },
     c10_es_ram: { name: '撲向拼板舟', desc: '', mp: 0, type: 'phys', elem: null, target: 'enemy', power: 1.6, fx: 'bite', sfx: 'crit' },
     c10_es_sweep: { name: '浪頭掃灘', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 1.2, fx: 'water', sfx: 'water' },
     c10_es_tailwhip: { name: '連環甩尾', desc: '', mp: 0, type: 'phys', elem: null, target: 'enemies', power: 0.9, hits: 2, fx: 'slash_multi', sfx: 'slash2' },
@@ -522,6 +522,8 @@
     const boss = sc.enemies.find((e) => e.id === 'tide_serpent');
     if (!boss) return;
     const R = { n: 0, dive: null, p2: false, p3: false };
+    // the dive turns (untargetable) lengthen the fight: compensate with a little less HP than the plain data boss
+    boss.mhp = boss.hp = Math.round(boss.mhp * 0.8);
     const ai = sc.aiCommand.bind(sc), exec = sc.execute.bind(sc), apply = sc.applyEffect.bind(sc), phases = sc.checkPhases.bind(sc);
     sc.aiCommand = (e) => {
       if (e !== boss) return ai(e);

@@ -90,7 +90,7 @@
       const lab = (x, y, zh, en) => { ctx.save(); ctx.fillStyle = '#211d24'; ctx.font = `bold 15px ${L.FONT_ZH}`; ctx.fillText(zh, x, y); ctx.font = `italic 12px ${L.FONT_EN}`; ctx.fillStyle = '#6a6066'; (Array.isArray(en) ? en : [en]).forEach((t, i) => ctx.fillText(t, x, y + 15 + i * 14)); ctx.restore(); };
       // staff head close-up
       L.figure(ctx, w, h, 50, 110 + 740 * 2.0, 2.0, (c) => YX.staff(c, 0, -790, {}));
-      lab(130, 250, '長明燈杖 lantern-staff · 220 cm', ['black lacquer, gold cage; the', 'blue flame is a soul he took']);
+      lab(110, 318, '長明燈杖 lantern-staff · 220 cm', ['black lacquer, gold cage; the', 'blue flame is a soul he took']);
       // jar large
       L.figure(ctx, w, h, 360, 170, 3.7, (c) => YX.jar(c, 0, 0, 1));
       lab(290, 425, '夜念魂罐 the soul jar', ['celadon-white porcelain, lotus band,', 'lacquer lid, red string, paper seal 符;', '陳渡’s 「同」 tally half tied below.']);
