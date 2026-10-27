@@ -62,7 +62,7 @@
       uWGust: { value: 0 }, // slow global gust envelope (−0.3..1)
       uWAmp: { value: 1 }, // global strength multiplier (weather can raise it)
     },
-    time: 0, driven: 0,
+    time: 0, driven: -1e9,
   };
   // the lead (or Env3D) calls this once per frame
   Wind.update = function (dt) {
