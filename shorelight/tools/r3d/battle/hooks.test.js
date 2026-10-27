@@ -53,5 +53,33 @@ const { load } = require('../../test/load');
   }
   for (const k of ['ctor', 'introWait', 'frame', 'drawOverlay', 'playFx', 'onAction', 'onActionEnd', 'onDamage', 'onKill', 'onCutin', 'drawCutin', 'beforeFinish', 'outro', 'dispose', 'drawTransition']) assert(calls[k] > 0, 'hook never called: ' + k);
   assert.strictEqual(calls.ctor, calls.dispose, 'every Battle3D created must be disposed');
+  // a broken view must never hang a battle: NaN / huge impact times, a throwing playFx, an intro of Infinity and
+  // presentation promises that never resolve (a missing clip, a camera move or ink wash that never ends) all time out.
+  // Every troop with a phase boss (boss_wuxiang: three phases, the final boss) runs through its phase changes at 15% HP.
+  class Broken extends Stub {
+    introWait() { return Infinity; }
+    playFx(id, u, targets, s) { hit('brokenFx'); const n = calls.brokenFx % 3; if (n === 0) return NaN; if (n === 1) return 1e9; throw new Error('missing clip'); }
+    beforeFinish() { return new Promise(() => {}); }
+    outro() { return new Promise(() => {}); }
+  }
+  G.Battle3D = Broken;
+  const warnOnce = G.warnOnce; G.warnOnce = () => {}; // the timeouts warn (once per key) by design
+  const phased = Object.keys(G.Data.troops).filter((t) => (G.Data.troops[t].enemies || []).some((id) => G.Data.enemies[id] && (G.Data.enemies[id].phases || []).length));
+  assert(phased.includes('boss_wuxiang'), 'boss_wuxiang has phases');
+  for (const troop of ['shore_5', ...phased]) {
+    for (const m of G.Party.active()) { m.hp = 9999; m.gauge = 0; }
+    let res = null;
+    G.Battle.start(troop).then((r) => { res = r; }, (e) => { res = 'threw: ' + (e && e.stack || e); });
+    await step(0.1);
+    // 15% HP, and toothless: this checks that the flow never hangs, not the boss balance (the plain auto-battle loses it)
+    for (const u of G.Scenes.top().enemies || []) { u.hp = Math.max(1, Math.ceil(u.mhp * 0.15)); u.atk = u.mag = 1; }
+    for (let i = 0; i < 600 && res == null; i++) await step(1);
+    const sc = G.Scenes.top();
+    assert(res === 'win', `broken view, ${troop}: result ${res} (top ${sc && sc.constructor.name})`);
+    console.log('  ✓ broken view', troop, res);
+  }
+  G.warnOnce = warnOnce;
+  assert(calls.brokenFx > 0, 'broken view never asked for fx');
+  console.log(`  broken view: ${phased.length} phase-boss troops OK`);
   console.log('hooks: OK', JSON.stringify(calls));
 })().catch((e) => { console.error('hooks: FAIL', e.stack || e); process.exit(1); });
