@@ -90,6 +90,7 @@ function strings(src) {
 function bucketOf(file) {
   const rel = path.relative(ROOT, file).replace(/\\/g, '/');
   if (rel.startsWith('js/i18n/') || rel.endsWith('fontdata.js') || rel.startsWith('tools/')) return null;
+  if (rel.startsWith('js/r3d/')) return null;  // calligraphy painted into 3D textures (signs, couplets, tombs) stays Chinese, like 2D signs
   if (rel.startsWith('js/data/')) return 'data';
   const m = /^js\/maps\/(ch\d+)_/.exec(rel);
   if (m) return m[1];
