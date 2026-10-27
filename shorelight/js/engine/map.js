@@ -112,7 +112,7 @@ G.Mapx = G.Mapx || {};
         }
       }
       // pre-build tile textures now (during the transition fade) instead of on first draw
-      if (G.Tiles.warm) { try { G.Tiles.warm([...new Set(this.terrain)]); } catch (e) { G.warnOnce('tiles warm', e); } }
+      this.warmTiles();
       // objects
       this.objects = [];
       const addObj = (o) => {
@@ -158,6 +158,19 @@ G.Mapx = G.Mapx || {};
       this.invuln = 0;
       this.stepCount = 0;
       if (this.initMech) this.initMech();
+    }
+
+    // draw every cell once to a scratch canvas so the tile art builds its caches during the load fade
+    warmTiles() {
+      const w = this.w, h = this.h, terr = this.terrain;
+      if (!G.MapScene._warmCanvas) G.MapScene._warmCanvas = G.U.makeCanvas(T, T);
+      const c = G.MapScene._warmCanvas.getContext('2d');
+      for (let cy = 0; cy < h; cy++) for (let cx = 0; cx < w; cx++) {
+        const id = terr[cy * w + cx];
+        if (!G.Tiles.defs[id]) continue;
+        const nb = (dx, dy) => { const nx = cx + dx, ny = cy + dy; return nx < 0 || ny < 0 || nx >= w || ny >= h ? id : terr[ny * w + nx]; };
+        try { G.Tiles.draw(c, id, 0, 0, nb, cx, cy, 0); } catch (e) { G.warnOnce('tile ' + id, e); }
+      }
     }
 
     buildNpcs() {
