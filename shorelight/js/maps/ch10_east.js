@@ -819,6 +819,7 @@
       // ---- 2 翻棚
       await S.say('阿坤', '孤棚邊比柱子寬，要倒吊著翻上去！別往下看！');
       if (roles[3] === 'yungui') await S.say('yungui:serious', '左邊！縮！');
+      else if (roles[3] === 'yuyuan' || roles[3] === 'mochi') await S.say('', (roles[3] === 'yuyuan' ? '芋圓' : '麻糬') + '的耳朵猛地一轉，全身的毛炸開——孤魂從旁邊撲過來了！');
       else await S.say(roles[3] + ':serious', '小心——孤魂從旁邊撲過來了！');
       let hits = await G.Mini.timing({ title: '第二段・翻棚', hint: '指針擺到金色區域時按 Z，倒吊翻上孤棚邊！', rounds: 3, zone: 0.17 + 0.03 * top, speed: 1.35 - 0.06 * eye });
       if (hits < 2) {
@@ -3784,7 +3785,7 @@
     await S.say('chenbo:serious', '……繞完了。');
     await S.say('', '（王船轉向。往北，再往西。速度快得像在海面上飛。）');
     await S.travel('toucheng', 'badouzi', { label: '掠過三貂角，掠過雞籠……', dur: 3.2 });
-    await S.narrate(['正午，王船經過八斗子外海。', '去年中元，星河從水燈裡被撿起來的地方；白芷乘著水燈頭漂上岸的地方。'], { veil: 0.9 });
+    await S.narrate(['正午，王船經過八斗子外海。', '十八年前，星河從水燈裡被撿起來的地方；去年中元，白芷乘著水燈頭漂上岸的地方。'], { veil: 0.9 });
     await S.narrate(['山上，九份的屋頂與紅燈籠，小小的，在陽光下。'], { veil: 0.9 });
     await S.say('xinghe:normal', '……陳伯。九份。');
     await S.say('chenbo:normal', '嗯。');

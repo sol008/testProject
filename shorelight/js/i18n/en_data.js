@@ -322,7 +322,7 @@ G.I18N.add({
     'A blessing charm from the temple, folded into a tiny packet. Cures ailments and grants a Shield for 3 turns.',
 
   // ---- regional food ----
-  '芋圓': 'Taro Balls',
+  '芋圓': 'Taro', '芋圓湯': 'Taro Ball Soup',
   '九份阿柑姨的招牌，Q彈香甜。白芷吃第一口時愣住了。回復氣血 80、真氣 10。':
     "Auntie Gan's chewy, sweet taro balls (yuyuan). Bai Zhi froze at the first bite. Restores 80 HP, 10 MP.",
   '草仔粿': 'Mugwort Rice Cake',

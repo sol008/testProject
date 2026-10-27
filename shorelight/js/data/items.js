@@ -35,7 +35,7 @@ G.Data.items = {
   pinganfu: { name: '平安符', desc: '廟裡求來的平安符，摺成小小一包。解除異常並護身三回合。', type: 'use', price: 80, ch: 1, icon: 'talisman', use: { target: 'ally', cure: ['poison', 'sleep', 'seal', 'stun'], status: { id: 'shield', chance: 1, turns: 3 }, battle: true } },
 
   // ---- regional food (picked up as you travel the island) ----
-  yuyuan: { name: '芋圓', desc: '九份阿柑姨的招牌，Q彈香甜。白芷吃第一口時愣住了。回復氣血 80、真氣 10。', type: 'use', price: 20, ch: 1, icon: 'food', use: { target: 'ally', heal: 80, mp: 10 } },
+  yuyuan: { name: '芋圓湯', desc: '九份阿柑姨的招牌，Q彈香甜。白芷吃第一口時愣住了。回復氣血 80、真氣 10。', type: 'use', price: 20, ch: 1, icon: 'food', use: { target: 'ally', heal: 80, mp: 10 } },
   caozaiguo: { name: '草仔粿', desc: '艾草揉進糯米皮，包著菜脯米。回復氣血 150。', type: 'use', price: 40, ch: 1, icon: 'food', use: { target: 'ally', heal: 150 } },
   mijiu: { name: '米酒', desc: '雲歸的最愛。「這是藥引，不是酒。」回復真氣 40。', type: 'use', price: 50, ch: 3, icon: 'wine', use: { target: 'ally', mp: 40 } },
   mifentang: { name: '米粉湯', desc: '艋舺街邊的一碗熱湯，配上黑白切。全體回復氣血 120。', type: 'use', price: 90, ch: 3, icon: 'food', use: { target: 'allies', heal: 120 } },

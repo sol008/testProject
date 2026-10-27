@@ -570,7 +570,7 @@ G.I18N.add({
   '鹽': 'Salt',
   '酒': 'Wine',
   '醋': 'Vinegar',
-  '芋圓': 'Taro Balls',
+  '芋圓': 'Taro',
   '陳': 'Chen',
   '心願': 'Wishes',
   '團圓': 'Reunion',
