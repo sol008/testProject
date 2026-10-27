@@ -1,9 +1,9 @@
 // 彼岸燈 — core utilities
 'use strict';
 const G = window.G = {
-  W: 960,
-  H: 540,
-  TILE: 48,
+  W: 1280,
+  H: 720,
+  TILE: 64,
   S: 1,            // backing-store scale
   time: 0,         // seconds since boot
   debug: /[?&]debug/.test(location.search),
