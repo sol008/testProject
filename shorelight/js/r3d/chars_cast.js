@@ -218,7 +218,7 @@
   look('xinghe', 'v2_07', {
     spec: {
       body: 'adult', skin: XH.skin, eyes: '#9a521c',
-      hair: { style: 'center', part: 0, color: XH.hair, sheen: '#4c4a62', back: 'ponytail', len: 0.36, tie: '#c8432b', tiePh: 0.22, arch: 0.08, sweep: 0.22, stiff: 0.9, locks: 0.95, vol: 1.12, bangLen: 0.06, bangSpread: 1.1 },
+      hair: { style: 'center', part: 0, color: XH.hair, sheen: '#4c4a62', back: 'ponytail', len: 0.36, tie: '#c8432b', tiePh: 0.22, arch: 0.08, sweep: 0.22, stiff: 0.9, locks: 0.95, vol: 1.12, bangLen: 0.1, bangSpread: 1.1, bangW: 1.3, front: 1.12, temple: 0.1 },
       hat: null,
       top: { color: XH.char, len: 0.46, closure: 'side', inner: '#6e2420', trim: XH.ember, sleeve: 'long', cuff: XH.char, slits: 0.07, hemArt: xingheHem },
       scarf: { color: XH.scarf, trim: '#b8481c', tail: 0.7, front: 0.26, w: 0.042, sweep: 1.0 },
@@ -334,7 +334,7 @@
   look('hongying', 'v2_01', {
     spec: {
       body: 'female', skin: HY.skin, eyes: '#b4581c',
-      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.26, sweep: 0.22, stiff: 1.5, bow: 1.05, ribbon: true, ribbonLen: 0.5, locks: 0.7, vol: 1.1 },
+      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.26, sweep: 0.22, stiff: 1.5, bow: 1.05, ribbon: true, ribbonLen: 0.5, locks: 0.7, vol: 1.1, bangW: 1.6, front: 1.12, temple: 0.1 },
       hat: null,
       top: { color: HY.crimson, len: 0.42, closure: 'side', inner: HY.moon, trim: HY.leather, collarColor: HY.moon, sleeve: 'long', cuff: '#1d1416', slits: 0.07, toggles: HY.brass,
         hemBand: { color: HY.leather, h: 0.035 }, hemArt: hongyingRobe },
@@ -372,7 +372,7 @@
   look('yungui', 'v2_01', {
     spec: {
       body: 'tall', skin: YG.skin, eyes: '#5a3a26',
-      hair: { style: 'part', color: YG.hair, sheen: '#55557a', back: 'long', len: 0.44, knot: 'halfup', knotPh: 0.2, locks: 1.45, tie: '#5a3a24', vol: 1.05 },
+      hair: { style: 'part', color: YG.hair, sheen: '#55557a', back: 'long', len: 0.44, knot: 'halfup', knotPh: 0.2, locks: 1.45, tie: '#5a3a24', vol: 1.05, front: 1.1, temple: 0.18 },
       hat: { type: 'crown', color: YG.wood, acc: YG.cinnabar },
       top: { color: YG.robe, len: 0.98, closure: 'cross', inner: YG.white, trim: YG.indigo, lapel: { w: 0.05, guard: YG.white, guardLen: 0.5 }, sleeve: 'flow', cuff: YG.indigo, cuff2: YG.white, cuffW: 0.12, emb: null },
       sash: { color: '#22212a', w: 3.6, emblem: 'taiji', tails: true, tailLen: 0.08 },
