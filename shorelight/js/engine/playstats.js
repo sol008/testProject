@@ -298,7 +298,8 @@ G.PlayStats = (() => {
     const T = G.T;
     const s = P.summary();
     const en = G.I18N.isEn();
-    const pct = (v) => (s.total > 0 ? Math.round(v / s.total * 100) : 0) + '%';
+    const actSum = P.ACTS.reduce((a, k) => a + s.act[k], 0);   // shares of tracked time, as on the page
+    const pct = (v) => (actSum > 0 ? Math.round(v / actSum * 100) : 0) + '%';
     const pad = (str, n) => { str = String(str); let w = 0; for (const ch of str) w += /[　-￿]/.test(ch) ? 2 : 1; return str + ' '.repeat(Math.max(1, n - w)); };
     const d = new Date();
     const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -377,6 +378,7 @@ G.PlayStats = (() => {
 G.StatsScene = class StatsScene {
   constructor() {
     this.t = 0;
+    this.opaque = true;       // a page of its own: the pause menu underneath must not show through
     this.statKind = 'menu';
     this.bossTop = 0;
     this.msg = null;
@@ -404,7 +406,9 @@ G.StatsScene = class StatsScene {
     const s = PS.summary();
     const fmt = PS.fmt;
     ctx.save();
-    ctx.fillStyle = 'rgba(4,6,14,0.9)'; ctx.fillRect(0, 0, G.W, G.H);
+    const bg = ctx.createLinearGradient(0, 0, 0, G.H);
+    bg.addColorStop(0, '#0b1020'); bg.addColorStop(1, '#05070e');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, G.W, G.H);
     const X0 = 50, X1 = G.W - 50;
     // ---- header: title, total
     R.textClip(ctx, '遊玩統計', X0 + 10, 26, 420, { size: 34, color: '#fff0d0' });
@@ -416,7 +420,7 @@ G.StatsScene = class StatsScene {
     R.textClip(ctx, '只計算實際遊玩：切換視窗、暫停或閒置超過三分鐘的時間不計入。', X0 + 10, 70, X1 - X0 - 20, { size: 15, color: '#8a8270' });
 
     // ---- activity split
-    const ay = 98, ah = 92;
+    const ay = 98, ah = 104;
     UI.panel(ctx, X0, ay, X1 - X0, ah, { ornament: false });
     R.textClip(ctx, '活動分佈', X0 + 20, ay + 12, 200, { size: 18, color: '#c9b893' });
     const bx = X0 + 230, bw = X1 - bx - 20, by = ay + 14, bh = 20;
@@ -436,22 +440,20 @@ G.StatsScene = class StatsScene {
       cx += w;
     }
     ctx.restore();
-    // legend: 5 equal cells
+    // legend: 5 equal cells — swatch + name, then time and share underneath
     const lw = (X1 - X0 - 40) / PS.ACTS.length;
     PS.ACTS.forEach((k, i) => {
-      const lx = X0 + 20 + i * lw, ly = ay + 52;
+      const lx = X0 + 20 + i * lw, ly = ay + 46;
       ctx.fillStyle = PS.ACT_COLORS[k][0];
-      ctx.beginPath(); ctx.roundRect(lx, ly + 4, 14, 14, 3); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(lx, ly + 3, 14, 14, 3); ctx.fill();
       const pct = sum > 0 ? Math.round(s.act[k] / sum * 100) : 0;
-      const val = fmt(s.act[k]) + '  ' + pct + '%';
-      ctx.font = G.font(17);
-      const vw = ctx.measureText(val).width;
-      R.textClip(ctx, PS.ACT_NAMES[k], lx + 22, ly + 1, lw - vw - 40, { size: 17, minSize: 12, color: '#e8dcc0' });
-      R.text(ctx, val, lx + lw - 12, ly + 1, { size: 17, align: 'right', color: '#ffe8b0' });
+      R.textClip(ctx, PS.ACT_NAMES[k], lx + 22, ly, lw - 34, { size: 17, minSize: 13, color: '#e8dcc0' });
+      R.text(ctx, fmt(s.act[k]), lx + 22, ly + 25, { size: 17, color: '#ffe8b0' });
+      R.text(ctx, pct + '%', lx + lw - 16, ly + 25, { size: 17, align: 'right', color: '#c9b893' });
     });
 
     // ---- per chapter
-    const py = 206, ph = 430;
+    const py = 222, ph = 416;
     const cw = 640;
     UI.panel(ctx, X0, py, cw, ph, { title: '各章節' });
     const cols = { name: X0 + 22, time: X0 + 418, battles: X0 + 516, go: X0 + cw - 22 };
@@ -463,7 +465,7 @@ G.StatsScene = class StatsScene {
     ctx.fillStyle = 'rgba(240,210,140,0.25)'; ctx.fillRect(X0 + 16, hy + 24, cw - 32, 1);
     const rows = s.chapters.map((c) => ({ name: PS.chapterName(c.ch), time: c.time, battles: c.battles, go: c.gameOvers, cur: G.state && c.ch === (G.state.chapter | 0) }));
     if (s.legacy > 0) rows.push({ name: '舊存檔（未分類）', time: s.legacy, battles: null, go: null, dim: true });
-    const RH = 27;
+    const RH = 25;
     const maxRows = Math.floor((py + ph - 14 - (hy + 32)) / RH);
     rows.slice(0, maxRows).forEach((r, i) => {
       const y = hy + 32 + i * RH;
