@@ -366,7 +366,7 @@ const SEGMENTS = {
     const keep = ['lantern_penghu_weir', 'lantern_tangshan', 'lantern_baizhi_memory', 'xd_atu_watch'];
     for (const id of Object.keys(G.state.lanterns)) if (!keep.includes(id)) delete G.state.lanterns[id];
   });
-  await R.levelTo(50);
+  await R.levelTo(48);
   await R.script("await S.warp('breath_realm', 19, 7, 'up', { reload: true });");
   check('B: lanterns below the threshold', await R.ev(() => G.Lanterns.count() < G.Lanterns.THRESHOLD));
   await R.stepGo(19, 6);                            // the ending runs to the title screen: don't wait for map idle
