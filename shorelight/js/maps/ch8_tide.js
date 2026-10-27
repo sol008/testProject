@@ -193,13 +193,13 @@
   });
   edef('c8_tide_wick', {
     name: '潮引燈芯', art: 'ghost_lantern', variant: 2, lv: 30, elem: 'water', weak: ['fire'], resist: ['water'],
-    m: { hp: 1.5, atk: 0.4, mag: 1.0, def: 1.2, spd: 0.75, exp: 1.2, gold: 0.2 },
+    m: { hp: 1.3, atk: 0.4, mag: 0.95, def: 1.1, spd: 0.75, exp: 1.2, gold: 0.2 },
     skills: [['c8_e_wick_feed', 1], ['c8_e_wick_wave', 2]],
     desc: '逆潮燈分出來的燈芯，藍黑色的火焰把死者的力氣灌給青鋒。',
   });
   edef('c8_qingfeng', {
     name: '洛青鋒', sprite: 'qingfeng', lv: 30, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 1.75, mag: 1.6, def: 1.15, spd: 1.45, exp: 7, gold: 6 },
+    m: { hp: 9, atk: 1.6, mag: 1.5, def: 1.15, spd: 1.4, exp: 7, gold: 6 },
     skills: [['e_qf2_sword', 3], ['c8_e_qf_qisha', 1], ['c8_e_qf_duanchao', 2], ['c8_e_qf_lowtip', 2], ['c8_e_qf_huilan', 1, 'turn>1'], ['e_qf2_tide', 1]],
     phases: [
       { at: 0.5, skills: [{ id: 'e_qf2_sword', w: 2 }, { id: 'c8_e_qf_qisha', w: 3 }, { id: 'c8_e_qf_duanchao', w: 2 }, { id: 'c8_e_qf_lowtip', w: 2 }, { id: 'c8_e_qf_huilan', w: 1 }] },
@@ -2256,7 +2256,7 @@
           const skip = await start0(u);
           if (skip || u.dead || u.id !== 'c8_qingfeng') return skip;
           const n = sc.enemies.filter((e) => e.id === 'c8_tide_wick' && !e.dead).length;
-          if (n && u.hp < u.mhp) { sc.healUnit(u, Math.round(u.mhp * 0.02 * n)); await sc.wait(0.3); }
+          if (n && u.hp < u.mhp) { sc.healUnit(u, Math.round(u.mhp * 0.015 * n)); await sc.wait(0.3); }
           if (u.hp <= u.mhp * 0.25) {
             if (!said.hes) { said.hes = true; await say([['qingfeng:hurt', '……手腕……不要僵……']]); sc.popText(u, '猶豫', '#c8d8ff'); await sc.wait(0.5); return true; }
             if (Math.random() < 0.4) { sc.popText(u, '猶豫', '#c8d8ff'); await sc.wait(0.5); return true; }
@@ -2284,7 +2284,6 @@
           if (!q || sc.result) return;
           if (!said.p70 && q.hp <= q.mhp * 0.7) { said.p70 = true; await say([['qingfeng:angry', '妳不知道我這三年是怎麼過的！'], ['hongying:cry', '我知道！我每天都在恨你！每天都在想你！']]); }
           if (!said.wicks && !wicksAlive()) { said.wicks = true; await say([['yungui:serious', '斷了！那盞燈沒辦法再把死人的力氣灌給他了！']]); }
-          if (!said.p50 && q.hp <= q.mhp * 0.5 && wicksAlive()) { said.p50 = true; sc.addStatus(q, 'atkUp', 4); }
           if (!said.p40 && q.hp <= q.mhp * 0.4 && wicksAlive()) { said.p40 = true; await say([['yungui:serious', '那兩盞燈芯在替他續命——先打燈芯！']]); }
           if (said.hyDown === 'pending') { said.hyDown = true; await say([['yungui:serious', '洛姑娘！起來——妳還沒說完！']]); }
         };

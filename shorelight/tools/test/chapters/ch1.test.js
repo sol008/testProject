@@ -77,6 +77,8 @@ async function session(browser, query) {
 async function waitMap(s, id, ms = 60000) {
   await s.page.waitForFunction((m) => G.mapScene && G.mapScene.def.id === m, id, { timeout: ms });
   await s.idle();
+  await s.page.waitForTimeout(300);   // let the map's auto events start
+  await s.idle();
 }
 // no roaming enemies get in the way of the scripted path
 const calm = (s) => s.ev(() => { if (G.mapScene) G.mapScene.enemies = []; });
