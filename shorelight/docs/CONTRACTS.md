@@ -43,13 +43,18 @@ G.Sprites.has(id) -> bool;  G.Sprites.ids() -> array
 G.Sprites.define(id, spec)   // register custom NPC variants from your spec format (document it at top of file)
 ```
 Required ids — main cast: `xinghe, baizhi, hongying, yungui, tuanzi` (石虎 leopard-cat spirit, small,
-chubby, cute; walks on 4 legs on map), `chenbo, yexuan, qingfeng, qingfeng_mask, qingxu, moya, maya,
+chubby, cute; walks on 4 legs on map), `chenbo, yexuan, qingfeng, qingfeng_mask, qingxu, moya, tengpo (藤婆 hermit herbalist),
 nianer` (little ghost girl), `lantern_mother` (glowing robed goddess).
 NPC archetypes: `villager_m, villager_f, villager_m2, villager_f2, old_m, old_f, child_m, child_f,
 miner, fisherman, merchant, shopkeeper_f, scholar, monk, taoist, temple_guard, soldier, noble_m,
-noble_f, maid, servant_old, actress (歌仔戲 costume), storyteller, doctor, tribal_m, tribal_f,
-tribal_elder, hunter, sailor, boatman, widow, ghost_m, ghost_f, ghost_child, linto (林投姐 ghost woman),
-woodcutter, tea_girl`. Animals: `dog` (yellow 台灣土狗 阿黃), `cat`, `chicken`, `buffalo` (水牛), `crow`.
+noble_f, maid, servant_old, actress (歌仔戲 costume), storyteller, doctor, hunter, sailor, boatman, widow, ghost_m, ghost_f, ghost_child, linto (林投姐 ghost woman),
+woodcutter, tea_girl`.
+Regional ids (culturally specific — see STORY_BIBLE 'Cultural accuracy & respect guide'): `temple_keeper (廟公),
+hakka_m, hakka_f (藍衫 blue Hakka shirt), saisiyat_elder, tsou_m (hunter: red jacket, leather cap with a feather),
+tsou_elder, bunun_m, bunun_f, thao_elder, tao_m, tao_f, puyuma_m, amis_f, amis_elder, truku_elder (with 紋面
+facial tattoo, dignified), kavalan_f, bajiajiang (八家將 painted-face temple troupe member), qianliyan (千里眼 giant
+temple-procession figure, green face), shunfenger (順風耳 giant figure, red face), pilgrim, yueqin_singer (old man
+with a 月琴), lighthouse_keeper (ghostly 19th-c. foreign keeper), pirate_ghost, fisher_f`. Animals: `dog` (yellow 台灣土狗 阿黃), `cat`, `chicken`, `buffalo` (水牛), `crow`.
 (Animals only need drawChar.) Main cast and important NPCs need drawBattle (all main cast + qingfeng,
 qingfeng_mask, yexuan, moya, qingxu, chenbo, temple_guard, hongying also used as a boss).
 
@@ -62,7 +67,7 @@ G.Portraits.draw(ctx, id, expr, x, y, w, h, t, o)   // bust portrait fitted into
 G.Portraits.has(id)
 ```
 Ids: `xinghe, baizhi, hongying, yungui, tuanzi, chenbo, yexuan, qingfeng, qingfeng_mask, qingxu,
-moya, maya, nianer, abing (storyteller), agan (芋圓 auntie), xiaojin (kid), atu (ghost miner), alian
+moya, tengpo, nianer, abing (storyteller), agan (芋圓 auntie), xiaojin (kid), atu (ghost miner), alian
 (widow), linto (林投姐), lantern_mother`. Style: modern anime/donghua bust, painterly soft shading,
 big expressive eyes, detailed hair strands, clothing per STORY_BIBLE. Unknown id → draw nothing.
 
@@ -74,11 +79,20 @@ Ids: `dream` (lantern bridge over black sea), `jiufen_night` (stairs, red lanter
 `jiufen_day`, `shore` (八斗子 night sea, floating lanterns), `mine`, `forest` (misty), `mushroom`
 (bioluminescent psychedelic grove), `pingxi` (sky lanterns), `mountain`, `temple` (Taoist courtyard),
 `city` (艋舺 street), `mansion` (haunted 閩南 mansion), `tainan` (府城), `palace` (長明宮 interior, jars of
-blue soul-lanterns), `linto` (林投 pandanus forest by sea), `tribe` (slate village, firelight),
+blue soul-lanterns), `linto` (林投 pandanus forest by sea), `tribe` (Bunun slate-house homestead in the high mountains at night, firelight),
 `vision` (psychedelic jungle of living geometry, serpent patterns, breathing colours), `lake`
 (日月潭 mist), `shrine` (燈母祠 interior), `chaos` (burning city, reversed black tide), `sea` (black
 tide, lanterns, boat), `farshore` (red 彼岸花 fields under strange sky), `lighthouse` (tower interior),
 `breath` (一息界 kaleidoscope hyperspace — fractal jewel geometry, highly animated).
+Regional additions: `tamsui` (淡水 river mouth, 紅毛城 on the hill, 觀音山 across), `hakka` (伙房 courtyard, terraced
+hills, persimmon & 米粉 drying racks in the wind), `windcave` (五指山 wind cave, howling streaks), `alishan` (giant
+cypress forest, sea of clouds), `yushan` (high rocky peak trail, stars), `sunmoon` (日月潭 at dawn, mist, mountains),
+`procession` (北港 night street during 媽祖遶境: firecracker smoke, temple lights, banners), `south` (打狗 harbour /
+旗後 fishing boats), `wangboat` (deck of the 王船 at sea, sails and banners), `hengchun` (windswept grassland,
+old city gate), `cape` (鵝鑾鼻 white lighthouse on a cliff, sweeping beam, night sea), `orchid` (蘭嶼 volcanic coast,
+tatala boats on the beach), `eastcoast` (台東/花蓮 coast with mountains dropping into the sea), `taroko` (marble
+gorge, turquoise river), `toucheng` (頭城 搶孤 night: towering 孤棚 frame, lanterns, crowds' torches), `penghu`
+(basalt columns, stone weirs 石滬, windswept), `xuanwu` (夜玄's temple on a black basalt isle).
 Ground plane: enemies stand around y≈420–560 on the left half, party around y≈430–600 on the right.
 
 ## Monsters — `js/gfx/monsters.js`, `js/gfx/monsters2.js` → `G.Monsters.define(id, def)`
@@ -147,11 +161,28 @@ eave/pole), `well`, `cart`, `barrel`, `crate`, `jar`, `basket`, `stall` (2x1 foo
 `boat_ferry` (3x2), `dock_post`, `water_lantern` (水燈頭 floating, anim, light), `sky_lantern` (floating
 天燈, anim, light, non-solid, over:true), `statue_lion` (石獅), `wind_lion` (風獅爺), `banner`, `grave`,
 `coffin`, `bones`, `firepit` (anim, light), `totem` (carved pole), `loom`, `drum_rack`, `bell_tower`.
+
+**objects2.js (regional architecture & props):** `hakka_house` (伙房 U-shaped courtyard house, 6x4), `drying_rack`
+(o.v 0 米粉 / 1 柿餅), `red_fort` (紅毛城, western red brick fort, 5x4), `chikan_tower` (赤崁樓 pavilion tower 5x4),
+`city_god_temple` (城隍廟, 6x4, dark & solemn), `mazu_temple` (天后宮, 6x4), `palanquin` (神轎, 2x2, anim sway),
+`kuba` (Tsou men's house: raised, thatched, 4x3), `bunun_house` (slate house, 4x3), `millet_rack`, `tao_house`
+(Tao semi-sunken stone house with low roof, 4x3), `tatala` (Tao 拼板舟 plank boat with carved eye motifs, 2x1),
+`wang_boat` (王船, large ornate junk with banners 6x3 — on water or on a beach cradle), `guzhao` (頭城 孤棚: tall
+frame of greased poles with a platform of offerings and a flag on top, 4x3, very tall), `fort_gate` (恆春古城
+gate, 3x2), `stone_weir` (石滬 curved stone wall in water, w overrides), `basalt` (basalt column cluster 2x2),
+`firecracker_tower` (蜂炮 rack, anim sparks), `qixi_pavilion` (七娘媽亭, small paper pavilion 2x2),
+`pilgrim_flag` (進香旗), `rainbow_arch` (faint spirit rainbow bridge, over:true, anim, non-solid).
 Interior — `table`, `chair`, `bed`, `cabinet`, `bookshelf`, `shelf_lanterns` (lantern shop shelves),
 `counter`, `stove`, `altar` (神桌 with incense, light), `incense_burner` (anim smoke), `screen` (屏風),
 `rug`, `door_frame`, `stairs_up`, `stairs_down`, `chest` (o.open), `switch` (o.on), `brazier` (anim, light),
 `pillar` (red lacquer), `soul_jar` (blue soul-lantern in jar, anim, light), `eternal_lamp` (長明燈 pillar,
 light), `mural` (wall painting, o.v), `bed_mat`, `tea_set`, `lantern_rack` (drying lanterns), `pot`.
+
+## Monsters (regional) — `js/gfx/monsters3.js`
+Ids: `wind_demon` (風魔 boss ~320), `wind_sprite` (九降風精), `mountain_ghost` (山鬼), `plague_ghost` (瘟鬼),
+`greed_ghost` (貪鬼, 半屏山), `moray` (海鰻精), `fallwind` (落山風靈 boss ~340), `sea_monster` (海妖),
+`cliff_spirit` (斷崖石靈), `hungry_ghost` (孤魂/餓鬼), `pirate_ghost` (澎湖 海盜鬼), `gorge_colossus` (tide-corrupted
+marble colossus boss ~380), `tide_serpent` (tide-sick sea serpent boss ~400).
 
 ## Music — `js/core/music.js` → `G.Music`
 Uses `G.Audio` (js/core/audio.js — read it): `G.Audio.ctx`, `G.Audio.playNote(inst, when, midi,
@@ -172,7 +203,12 @@ drums & chant-like), vision (ayahuasca trance, hypnotic, evolving), lake (日月
 sea (black tide, vast, melancholy), farshore, lighthouse, breath (一息界 — cosmic, kaleidoscopic,
 otherworldly), battle, battle2 (later-chapter battle), boss, final_boss, villain (夜玄's theme — tragic),
 sad, tension, love (星河 & 白芷 theme), ending (true ending), credits, victory (short fanfare, loop:false
-→ then silence), gameover (loop:false)`.
+→ then silence), gameover (loop:false)`, plus regional: `hakka` (山歌-flavoured, hill breeze),
+`wind` (竹塹 ghost-wind dungeon), `mountain` (阿里山/玉山 serene, vast, hushed — evoke mountain harmonics with
+pads but do NOT imitate the sacred Bunun 八部合音 chant), `procession` (媽祖遶境: 北管-style drums, gongs,
+nasal reed melody like a 嗩吶, festive), `south` (恆春 月琴 folk feel), `voyage` (王船 at sea, hopeful,
+wind in sails), `orchid` (蘭嶼 ocean, bright, vast), `taroko` (grand gorge), `toucheng` (ghost-month climax
+festival, tense & celebratory), `penghu` (windswept islands).
 A main leitmotif ("渡魂謠", 白芷's song) should recur in title / love / ending / sad.
 
 ## Data — `js/data/*.js` → `G.Data`
