@@ -47,7 +47,7 @@ setTimeout(function () {
   renderer.setPixelRatio(1); renderer.setSize(W, H);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
   G.R3.renderer = renderer;
   const scene = new THREE.Scene();
   const night = q.get('night') === '1';
@@ -144,8 +144,9 @@ setTimeout(function () {
   });
   const info = renderer.info.render;
   // per-item budget
-  const per = items.length ? (() => { let tris = 0, calls = 0; items[0].obj.traverse((n) => { if (n.isMesh && n.visible) { calls++; const g = n.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); return { calls, tris: Math.round(tris) }; })() : {};
+  const per = items.length ? (() => { let tris = 0, calls = 0; const parts = []; items[0].obj.traverse((n) => { if (n.isMesh && n.visible) { calls++; const g = n.geometry; const t = (g.index ? g.index.count : g.attributes.position.count) / 3; tris += t; parts.push((n.name || n.material.type) + ':' + Math.round(t)); } }); return { calls, tris: Math.round(tris), parts: parts.join(' ') }; })() : {};
   document.getElementById('info').textContent = `${items.length} items · ${info.calls} calls · ${info.triangles} tris · first: ${per.calls} calls ${per.tris} tris · build ${buildMs.toFixed(0)}ms`;
+  if (q.get('facetex') && items[0]) { const cv = items[0].inst.asset.faceTex.image; cv.style.cssText = 'position:absolute;right:0;bottom:0;width:640px;height:320px;background:#888;border:1px solid #fff'; document.body.appendChild(cv); }
   window.__stats = { calls: info.calls, tris: info.triangles, items: items.length, first: per, buildMs: Math.round(buildMs) };
   window.__ready = true;
 }, 0);

@@ -8,7 +8,7 @@ const path = require('path');
   const b = await chromium.launch();
   for (let i = 0; i + 1 < args.length; i += 2) {
     const qs = args[i], out = args[i + 1];
-    const w = (/[?&]?w=(\d+)/.exec('&' + qs) || [])[1] || 1280, h = (/[?&]h=(\d+)/.exec('&' + qs) || [])[1] || 720;
+    const w = (/[?&]w=(\d+)/.exec('&' + qs) || [])[1] || 1280, h = (/[?&]h=(\d+)/.exec('&' + qs) || [])[1] || 720;
     const p = await b.newPage({ viewport: { width: +w, height: +h } });
     const errs = [];
     p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.type() + ': ' + m.text().slice(0, 400)); });
