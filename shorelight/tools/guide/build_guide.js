@@ -390,11 +390,16 @@ for (const ch of CHS) {
     const lbl = /\/\/\s*取得：\s*(.+?)\s*$/.exec(s.slice(m.index, eol < 0 ? s.length : eol));
     if (lbl) addSrc(id, lbl[1]);
   }
-  for (const m of s.matchAll(/H\.crate\(\s*'[^']+',\s*\d+,\s*\d+,\s*\[(\[[^\n]*?\])\]/g)) {
+  for (const m of s.matchAll(/H\.crate\(\s*'([^']+)',\s*\d+,\s*\d+,\s*\[(\[[^\n]*?\])\]/g)) {
     if (inDebug(m.index)) continue;
-    const def = [...s.slice(0, m.index).matchAll(/G\.Maps\.define\(\s*'([a-z0-9_]+)'/g)].pop();
-    const mapName = def && G.Maps.defs[def[1]] ? G.Maps.defs[def[1]].name : '';
-    for (const q of m[1].matchAll(/\['([a-z0-9_]+)'/g)) {
+    // the map whose objects hold the crate (its tag is the crate key)
+    const mid = D.own[ch].maps.find((id) => {
+      let objs = G.Maps.defs[id].objects;
+      if (typeof objs === 'function') { try { objs = objs(G.state); } catch (e) { objs = []; } }
+      return (objs || []).some((o) => o && o.t === 'crate' && o.tag === m[1]);
+    });
+    const mapName = mid ? G.Maps.defs[mid].name : '';
+    for (const q of m[2].matchAll(/\['([a-z0-9_]+)'/g)) {
       if (!G.Data.items[q[1]]) continue;
       STORY_ITEMS.add(q[1]);
       addSrc(q[1], `${CH_SHORT(ch)}・${mapName}漂流木箱`);
