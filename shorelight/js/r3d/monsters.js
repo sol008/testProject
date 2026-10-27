@@ -815,7 +815,8 @@
     // ---------------------------------------------------------------- clips
     clipFn(n) {
       const c = this.spec.clips || {};
-      if (c[n]) return c[n];
+      if (!this._clips) this._clips = {};
+      if (c[n]) return this._clips[n] || (this._clips[n] = c[n].bind(c)); // clips may call siblings via this.attack(…)
       return GEN[n] || null;
     }
     // ---------------------------------------------------------------- per frame

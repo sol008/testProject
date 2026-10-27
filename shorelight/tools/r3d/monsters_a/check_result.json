@@ -1,0 +1,236 @@
+{
+ "sea_wisp": {
+  "ok": true,
+  "issues": [],
+  "tris": 2162,
+  "outline": 0,
+  "calls": 5,
+  "height": 2.23,
+  "bones": 9
+ },
+ "water_ghost": {
+  "ok": true,
+  "issues": [],
+  "tris": 4688,
+  "outline": 4112,
+  "calls": 5,
+  "height": 2.53,
+  "bones": 35
+ },
+ "ghost_lantern": {
+  "ok": true,
+  "issues": [],
+  "tris": 2730,
+  "outline": 1960,
+  "calls": 5,
+  "height": 2.59,
+  "bones": 15
+ },
+ "mine_bat": {
+  "ok": true,
+  "issues": [],
+  "tris": 2538,
+  "outline": 1932,
+  "calls": 4,
+  "height": 2.16,
+  "bones": 22
+ },
+ "miner_ghost": {
+  "ok": true,
+  "issues": [],
+  "tris": 4126,
+  "outline": 3572,
+  "calls": 6,
+  "height": 2.6,
+  "bones": 19
+ },
+ "sand_crab": {
+  "ok": true,
+  "issues": [],
+  "tris": 4428,
+  "outline": 4426,
+  "calls": 4,
+  "height": 1.8,
+  "bones": 39
+ },
+ "water_ghost_king": {
+  "ok": true,
+  "issues": [],
+  "tris": 8288,
+  "outline": 6422,
+  "calls": 6,
+  "height": 4.6,
+  "bones": 39
+ },
+ "mosina": {
+  "ok": true,
+  "issues": [],
+  "tris": 6216,
+  "outline": 5938,
+  "calls": 4,
+  "height": 2.16,
+  "bones": 26
+ },
+ "mushroom_imp": {
+  "ok": true,
+  "issues": [],
+  "tris": 2870,
+  "outline": 2868,
+  "calls": 4,
+  "height": 2.16,
+  "bones": 11
+ },
+ "bamboo_spirit": {
+  "ok": true,
+  "issues": [],
+  "tris": 5794,
+  "outline": 5684,
+  "calls": 4,
+  "height": 2.91,
+  "bones": 23
+ },
+ "bamboo_viper": {
+  "ok": true,
+  "issues": [],
+  "tris": 2974,
+  "outline": 2508,
+  "calls": 4,
+  "height": 1.8,
+  "bones": 21
+ },
+ "boar_demon": {
+  "ok": true,
+  "issues": [],
+  "tris": 3274,
+  "outline": 2828,
+  "calls": 4,
+  "height": 2.4,
+  "bones": 24
+ },
+ "macaque_demon": {
+  "ok": true,
+  "issues": [],
+  "tris": 6918,
+  "outline": 6904,
+  "calls": 4,
+  "height": 2.3,
+  "bones": 24
+ },
+ "tiger_granny": {
+  "ok": true,
+  "issues": [],
+  "tris": 7294,
+  "outline": 7044,
+  "calls": 4,
+  "height": 4.78,
+  "bones": 31
+ },
+ "yin_soldier": {
+  "ok": true,
+  "issues": [],
+  "tris": 3406,
+  "outline": 3124,
+  "calls": 5,
+  "height": 3.09,
+  "bones": 22
+ },
+ "stone_monkey": {
+  "ok": true,
+  "issues": [],
+  "tris": 5938,
+  "outline": 5936,
+  "calls": 4,
+  "height": 2.23,
+  "bones": 23
+ },
+ "rat_demon": {
+  "ok": true,
+  "issues": [],
+  "tris": 6886,
+  "outline": 6452,
+  "calls": 4,
+  "height": 2.08,
+  "bones": 29
+ },
+ "river_wraith": {
+  "ok": true,
+  "issues": [],
+  "tris": 4190,
+  "outline": 2972,
+  "calls": 5,
+  "height": 3.23,
+  "bones": 30
+ },
+ "paper_effigy": {
+  "ok": true,
+  "issues": [],
+  "tris": 1366,
+  "outline": 1364,
+  "calls": 4,
+  "height": 2.66,
+  "bones": 18
+ },
+ "chair_spirit": {
+  "ok": true,
+  "issues": [],
+  "tris": 5302,
+  "outline": 4212,
+  "calls": 5,
+  "height": 3.56,
+  "bones": 31
+ },
+ "jiangshi": {
+  "ok": true,
+  "issues": [],
+  "tris": 6154,
+  "outline": 6092,
+  "calls": 4,
+  "height": 2.83,
+  "bones": 28
+ },
+ "paper_servant": {
+  "ok": true,
+  "issues": [],
+  "tris": 350,
+  "outline": 116,
+  "calls": 5,
+  "height": 2.16,
+  "bones": 11
+ },
+ "hanged_ghost": {
+  "ok": true,
+  "issues": [],
+  "tris": 5560,
+  "outline": 5414,
+  "calls": 4,
+  "height": 3.09,
+  "bones": 35
+ },
+ "bone_general": {
+  "ok": true,
+  "issues": [],
+  "tris": 6934,
+  "outline": 6660,
+  "calls": 5,
+  "height": 3.09,
+  "bones": 25
+ },
+ "grudge_maid": {
+  "ok": true,
+  "issues": [],
+  "tris": 3374,
+  "outline": 3324,
+  "calls": 4,
+  "height": 2.66,
+  "bones": 16
+ },
+ "grudge_feast": {
+  "ok": true,
+  "issues": [],
+  "tris": 10434,
+  "outline": 7264,
+  "calls": 6,
+  "height": 5.41,
+  "bones": 36
+ }
+}
