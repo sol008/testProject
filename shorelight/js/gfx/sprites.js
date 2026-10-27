@@ -38,7 +38,7 @@
 //   vest:{ color, trim, len, bands, stripes, open }, sash:{ color, w, tails, emblem:'taiji' }, belt:{ color },
 //   apron:{ color, len }, cape:{ color, len, feathers, collar }, chest:{ color, trim }, bag:{ color, strap },
 //   beads:{ colors:[], rows }, patch:{ text, color }, towel:{ color }, armor:{ color, trim },
-//   bracers:{ color }, bracelet:{ color }, kasaya:{ color },
+//   bracers:{ color }, bracelet:{ color }, kasaya:{ color }, scarf:{ color } (neck scarf with a long tail),
 //   held:'cane'|'staff'|'lstaff'|'oar'|'spear'|'glaive'|'halberd'|'flag'|'pestle'|'lantern'|'oillamp'|'pipe'|
 //        'fan'|'ffan'|'book'|'whisk'|'incense'|'axe'|'pick'|'rod'|'basket'|'yueqin'|'bow'|'plaque'|'abacus'|
 //        'tray'|'broom'|'hoe'|'medbox'|'grass'|'fiber'|'saber'|'sword'|'flute'|'paddle'|'beads',
@@ -630,6 +630,18 @@
     }
     const sg = R.B ? -1 : 1, x = sg * P.sw * 0.55;
     tube(c, [[x - sg * 2 * k, R.shY - 1.4 * k], [x + sg * 1.5 * k, R.shY + 1 * k], [x + sg * 1.8 * k, R.shY + 9 * k]], [1.7 * k, 1.9 * k, 1.6 * k], t.color, lw * 0.8);
+  }
+  // neck scarf (wrapped band + one long tail): front tail down the chest, side/q tail streaming back, back view down the back
+  function drawScarf(c, R, sc) {
+    const k = R.k, P = R.P, lw = R.lw, col = sc.color;
+    const y = R.shY + 0.6 * k, cx = -R.T * P.sw * 0.3;
+    const bw = P.sw * (R.LT ? 0.72 : 0.95);
+    ell(c, cx, y, bw, 3.6 * k); paint(c, col, cx - bw, y - 4 * k, cx + bw, y + 4 * k, lw * 0.85, 0.28, -0.3);
+    c.strokeStyle = rgba(shade(col, -0.45), 0.7); c.lineWidth = 0.9 * k;
+    c.beginPath(); c.moveTo(cx - bw * 0.7, y + 1 * k); c.quadraticCurveTo(cx, y + 3.2 * k, cx + bw * 0.7, y + 1 * k); c.stroke();
+    if (R.B) { tube(c, [[cx + 2 * k, y + 2 * k], [cx + 3 * k, y + 10 * k], [cx + 4 * k, y + 18 * k]], [3 * k, 2.7 * k, 2.2 * k], col, lw * 0.85); return; }
+    if (R.LT) { tube(c, [[cx + 3 * k, y], [cx + 10 * k, y + 1 * k], [cx + 17 * k, y + 4 * k], [cx + 24 * k, y + 2.5 * k]], [3 * k, 2.8 * k, 2.3 * k, 1.5 * k], col, lw * 0.85); return; }
+    tube(c, [[cx - 3.2 * k, y + 2 * k], [cx - 4 * k, y + 10 * k], [cx - 3.2 * k, y + 19 * k]], [3 * k, 2.8 * k, 2.3 * k], col, lw * 0.85);
   }
   function drawArmor(c, R, a) {
     const k = R.k, lw = R.lw;
@@ -1917,6 +1929,7 @@
         armFn(0, false); armFn(1, false);
         if (S.armor) drawPauldrons(c, R, S.armor);
         if (S.cape) drawMantle(c, R, S.cape);
+        if (S.scarf) drawScarf(c, R, S.scarf);
         drawHead(c, R);
         if (S.beadsOver) drawBeads(c, R, S.beads);
       });
@@ -1928,6 +1941,7 @@
         if (S.armor) drawPauldrons(c, R, S.armor);
         hipItems(c, R);
         if (S.cape) { drawCapeBack(c, R, S.cape); drawMantle(c, R, S.cape); }
+        if (S.scarf) drawScarf(c, R, S.scarf);
         if (S.back !== 'spear') backItems(c, R, 'over');
         drawHead(c, R);
         drawTail(c, R, H, 'over');
@@ -1947,6 +1961,7 @@
       upper(c, R, () => {
         body(); hipItems(c, R);
         if (S.cape) drawMantle(c, R, S.cape);
+        if (S.scarf) drawScarf(c, R, S.scarf);
         drawHead(c, R);
         armFn(1, false);
         if (S.armor) drawPauldrons(c, R, S.armor);
@@ -2653,13 +2668,14 @@
   const HC = { black: '#25222d', ink: '#1e2130', brown: '#4a3328', grey: '#8f8c94', white: '#e8e6ec', silver: '#e4ecf4' };
 
   // ---------------------------------------------------------------- main cast
-  define('xinghe', { // 沈星河: messy dark short topknot, indigo short jacket, white inner, straw sandals, red string bracelet, sword on back
-    body: 'adult', skin: SK.light, eyes: '#8a5230', eyeStyle: 'round',
-    hair: { style: 'messy', color: '#2b2632', back: 'short', knot: 'topknot', tie: '#b8322c' },
-    top: { color: '#34477e', len: 0.2, closure: 'cross', inner: '#f4f0e6', trim: '#23305c', sleeve: 'rolled' },
-    sash: { color: '#7a4f34', w: 2.8, tails: true },
-    bottom: { type: 'pants', color: '#2d2a34' }, shoes: { type: 'sandal', color: '#cfae72' },
-    bracelet: { color: '#e0302a' }, back: 'sword', weapon: 'sword', aura: '#ff9a3c',
+  define('xinghe', { // 沈星河 — client pick v2 #07 螢火劍客: high ponytail (red cord), centre-parted fringe, charcoal 大襟 long tunic
+    // to the knee with ember piping, orange scarf, wide leather belt, bracers, black trousers in boots, sword 螢火 (docs/design/v2/xinghe.md)
+    body: 'adult', skin: '#e2ae88', eyes: '#9a521c', eyeStyle: 'sharp', brows: 'fierce', mouth: 'flat',
+    hair: { style: 'center', color: '#161317', back: 'ponytail', len: 0.45, tie: '#c8432b', locks: 0.9 },
+    top: { color: '#2a2a31', len: 0.45, closure: 'side', inner: '#6e2420', trim: '#e0672a', sleeve: 'long' },
+    scarf: { color: '#d9622a' }, belt: { color: '#5b3a26' }, bracers: { color: '#5b3a26' },
+    bottom: { type: 'pants', color: '#1f1f25' }, shoes: { type: 'boots', color: '#3a2a22' },
+    bracelet: { color: '#e0302a' }, hip: ['sword'], weapon: 'sword', aura: '#ff9a3c',
   });
   define('baizhi', { // 白芷 — client pick v2 #02 藍衫笛歌: long black hair half-up (jade comb, red string), indigo Hakka 藍衫 to mid-calf
     // with turned-back light-blue cuffs, dark 圍身裙 apron, black trousers, cloth shoes, jade flute (docs/design/v2/baizhi.md)

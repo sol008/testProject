@@ -62,8 +62,11 @@ vision realms, and helping each other across.
 - Weapon: sword 「螢火」 (given by 陳伯). Element **火**. Balanced sword fighter.
 - **Secret:** he drowned as a baby. The lamp spirit (白芷, in a previous falter) gave him a spark of
   her own flame. Ghosts hesitate before him; he faintly sees spirits; he has no soul-lantern of his own.
-- Look: dark messy hair in a short topknot with loose strands, warm brown eyes, indigo short jacket over
-  white inner shirt, rolled sleeves, dark trousers, straw sandals; red string bracelet; later a sword on back.
+- Look (client pick, v2 #07 螢火劍客): high ponytail tied with a red cord, centre-parted fringe and long side locks;
+  narrow face, long upturned amber-brown eyes with a spark of firelight, straight sword brows, a small scar on the left
+  cheek; charcoal 大襟 long tunic to the knee with side slits and ember-orange piping, an orange scarf (one tail on the
+  chest, one streaming), wide leather belt with brass buckle, leather bracers, black trousers tucked into boots; sword
+  「螢火」 in a scabbard at the left hip; red string bracelet. (Wuxia adaptation, not Qing-accurate hair.)
 
 ### 白芷 (Bai Zhi) — heroine, appears ~19
 - Arrives unconscious on a great 水燈頭 drifting **in from** the sea (lanterns should only go out).

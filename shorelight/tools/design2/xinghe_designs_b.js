@@ -142,6 +142,7 @@
       blushA: 0.08,
       skinExtras: (c) => { XL.line(c, [[-0.3, 0.7], [-0.2, 0.74]], XL.rgba('#a85a4a', 0.9), 1.2); },
     };
+    global.XH07F = F; // exposed for the in-game portrait bake
     const backHair = (c) => {
       // high ponytail streaming right
       const tail = [XL.curve([[0.0, -0.18], [0.3, -0.24], [0.7, -0.1], [1.1, 0.18], [1.5, 0.3], [1.85, 0.62, 'c'], [1.4, 0.5], [1.05, 0.42], [0.62, 0.22], [0.25, 0.04], [0.0, -0.02]]),

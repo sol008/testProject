@@ -142,6 +142,7 @@
     return c;
   }
 
+  global.XH_drawFigure = drawFigure; // used by the in-game portrait bake (xinghe_portrait.html)
   global.renderCard = function (D, dpr = 1) {
     const card = document.createElement('div'); card.className = 'card'; card.id = 'opt' + D.id;
     card.innerHTML = `<header><span class="num">${D.id}</span><div class="names"><h2>${D.zh}</h2><h3>${D.en}</h3></div>
