@@ -759,6 +759,48 @@ G.VFX3D = (() => {
         dispose: () => { this.scene.remove(m, gm); geo.dispose(); gGeo.dispose(); mat.dispose(); glowMat.dispose(); },
       });
     }
+    // weapon trail: a fading ribbon through the recent positions of getPos() (hand / weapon bone), width toward the camera
+    trail(getPos, o = {}) {
+      const T = THREE, cam = this.view.camera;
+      const N = 18, pal = o.pal || PAL.neutral;
+      const pts = [];
+      const geo = new T.BufferGeometry();
+      const pos = new Float32Array(N * 2 * 3), al = new Float32Array(N * 2);
+      geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+      geo.setAttribute('aA', new T.BufferAttribute(al, 1));
+      const idx = []; for (let i = 0; i < N - 1; i++) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+      geo.setIndex(idx);
+      const mat = new T.ShaderMaterial({
+        uniforms: { uA: { value: new T.Color(pal[0]).multiplyScalar(1.8) }, uB: { value: new T.Color(pal[1]).multiplyScalar(1.4) }, uK: { value: 1 } },
+        vertexShader: 'attribute float aA; varying float vA; void main(){ vA = aA; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: `uniform vec3 uA, uB; uniform float uK; varying float vA; void main(){ float a = vA * uK; gl_FragColor = vec4(mix(uB, uA, vA) * a, a); ${OUT_GLSL} }`,
+        transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
+      });
+      const m = new T.Mesh(geo, mat); m.frustumCulled = false; m.renderOrder = 29;
+      this.scene.add(m);
+      let t = 0; const dur = o.dur || 0.45, w = o.w || 0.22;
+      const vd = new T.Vector3(), side = new T.Vector3();
+      return this.track({
+        update: (dt) => {
+          t += dt;
+          if (t < dur * 0.75) { const p = getPos(); if (p) { pts.unshift(p.clone()); if (pts.length > N) pts.pop(); } }
+          else if (pts.length) pts.pop();
+          for (let i = 0; i < N; i++) {
+            const p = pts[Math.min(i, pts.length - 1)] || new T.Vector3();
+            const q = pts[Math.min(i + 1, pts.length - 1)] || p;
+            vd.copy(cam.position).sub(p);
+            side.copy(q).sub(p).cross(vd).normalize().multiplyScalar(w * (1 - i / N));
+            pos.set([p.x - side.x, p.y - side.y, p.z - side.z, p.x + side.x, p.y + side.y, p.z + side.z], i * 6);
+            const a = i < pts.length - 1 ? (1 - i / N) : 0;
+            al[i * 2] = a; al[i * 2 + 1] = a;
+          }
+          geo.attributes.position.needsUpdate = true; geo.attributes.aA.needsUpdate = true;
+          mat.uniforms.uK.value = t > dur ? Math.max(0, 1 - (t - dur) / 0.2) : 1;
+          return t < dur + 0.2;
+        },
+        dispose: () => { this.scene.remove(m); geo.dispose(); mat.dispose(); },
+      });
+    }
     // generic animated object
     obj(o3d, update, dispose) {
       this.scene.add(o3d);
@@ -899,6 +941,9 @@ G.VFX3D = (() => {
       const elem = s && s.elem;
       const pal = elem ? palOf(elem) : (u.side === 'enemy' ? ['#fff0e8', '#ff8a7a', '#c8382a', '#2a1010'] : ['#ffffff', '#ffe6b0', '#ffb860', '#3a2a20']);
       const T = 0.16;
+      const uv = this.UV(u);
+      const hand = uv && uv.inst && uv.inst.bone ? (uv.inst.bone('weapR') || uv.inst.bone('handR')) : null;
+      if (hand) { const wp = new THREE.Vector3(); this.trail(() => hand.getWorldPosition(wp), { pal, dur: 0.42, w: kind === 'thrust' ? 0.12 : 0.24 }); }
       for (const tg of targets) {
         const c = this.P(tg, 'chest'), sc = this.sizeOf(tg);
         const side = u.side === 'party' ? 1 : -1;
@@ -1423,6 +1468,13 @@ G.VFX3D = (() => {
         sp.obj.scale.setScalar(s * sp.base);
         return t < 0.9;
       }, sp.dispose);
+    }
+    summonPuff(u) {
+      const feet = this.P(u, 'feet'), sc = this.sizeOf(u);
+      const pal = u.side === 'enemy' ? PAL.dark : PAL.holy;
+      this.circle(feet, u.side === 'enemy' ? 'dark' : 'holy', pal[1], { size: 2.4 * sc, dur: 0.9, k: 1.6 });
+      this.emit({ pos: feet.clone().add(new THREE.Vector3(0, 0.4 * sc, 0)), disk: 0.6 * sc, n: 22, up: 0.6, speed: [0.4, 1.4], drag: 1.2, gravity: -0.4, life: [0.7, 1.2], size: [0.7 * sc, 1.6 * sc], color0: pal[3], a0: 0.5, alpha: true, shape: 'smoke' });
+      this.emit({ pos: feet, disk: 0.5 * sc, n: 20, dir: new THREE.Vector3(0, 1, 0), cone: 0.3, speed: [1, 3], drag: 1, life: [0.5, 0.9], size: [0.14, 0.02], color0: pal.slice(0, 2), shape: 'ember', k: 2 });
     }
     tuanziSprite(id = 'yuyuan') {
       // Prefer a real 3D pet if the animals team provides one; otherwise a billboard of the 2D sprite.

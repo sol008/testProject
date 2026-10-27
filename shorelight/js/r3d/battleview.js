@@ -224,6 +224,7 @@ G.Battle3D = (() => {
       this.director = new Director(this);
       this.syncUnits(0);
       this.director.start();
+      this.started = true;
       this.intro = { t: 0, dur: 1.15 };
       this.buildShatter();
       this.pops = new WeakMap();
@@ -284,7 +285,11 @@ G.Battle3D = (() => {
       for (const u of bs.all()) {
         live.add(u);
         let uv = this.units.get(u);
-        if (!uv) { uv = new UnitView(this, u); this.units.set(u, uv); this.scene.add(uv.root); this.placeUnit(uv, 0, true); }
+        if (!uv) {
+          uv = new UnitView(this, u); this.units.set(u, uv); this.scene.add(uv.root); this.placeUnit(uv, 0, true);
+          // joined mid-battle (summons, story guests): entrance clip + a puff of spirit smoke
+          if (this.started) { if (uv.kind === 'mon') uv.clip('enter'); if (this.fx) this.fx.summonPuff(u); }
+        }
       }
       for (const [u, uv] of this.units) if (!live.has(u)) { this.scene.remove(uv.root); uv.dispose(); this.units.delete(u); }
     }
@@ -804,7 +809,8 @@ G.Battle3D = (() => {
     }
 
     dispose() {
-      for (const [, uv] of this.units) { try { uv.dispose(); } catch (e) { /* ignore */ } }
+      // units: instances dispose their own resources; detach them first (Char3D/Mon3D share template geometry with the field)
+      for (const [, uv] of this.units) { this.scene.remove(uv.root); if (uv.kind !== 'bb') uv.root.remove(uv.inst.root); try { uv.dispose(); } catch (e) { /* ignore */ } G.R3.dispose(uv.root); }
       this.units.clear();
       if (this.fx) this.fx.dispose();
       if (this.arena.dispose) this.arena.dispose();
@@ -1131,7 +1137,7 @@ G.Battle3D.Arena = (() => {
     jiufen_night: { sky: { zen: '#0c0a26', hor: '#3a2a5a', low: '#1a1430', moon: { az: -55, el: 30, size: 1.8 }, stars: 0.8, clouds: 0.2, cloudCol: '#2a2448' }, fog: ['#2a2244', 26, 110], light: { sun: '#8a9aff', si: 0.7, hemi: ['#5a4a8a', '#2a1a1a', 0.7], unit: '#c8b8d8', lamps: [{ x: -9, y: 3, z: -6, col: '#ffb060', i: 6, d: 14 }, { x: 8, y: 3, z: -7, col: '#ff9a50', i: 6, d: 14 }] }, ground: { kind: 'pavers', tint: '#8a7a80' }, ridges: [{ r: 160, h: 26, col: '#1a1a34', rough: 0.6 }], kit: 'jiufen', night: 1, post: { bloom: 0.95, threshold: 0.55 } },
     jiufen_day: { sky: { zen: '#5aa0e0', hor: '#d8ecf4', low: '#a8c0c8', sun: { az: -10, el: 40, size: 1.4 }, clouds: 0.5, cloudCol: '#ffffff' }, fog: ['#c8dce8', 40, 160], light: { sun: '#fff0d8', si: 2.6, hemi: ['#bcd8f0', '#6a5a4a', 1.1], unit: '#ffffff' }, ground: { kind: 'pavers', tint: '#c8bca8' }, ridges: [{ r: 170, h: 40, col: '#6a8a9a', rough: 0.6 }, { r: 120, h: 18, col: '#4a7a4a', rough: 0.7 }], kit: 'jiufen' },
     shore: { sky: { zen: '#050b1a', hor: '#2c5478', low: '#14284a', moon: { az: 35, el: 22, size: 2.4 }, stars: 1, clouds: 0.35, cloudCol: '#20365a' }, fog: ['#1f3a5e', 30, 150], light: { sun: '#a8c4ff', si: 1.1, hemi: ['#5a7ab8', '#1a1a2a', 0.8], unit: '#b0c0e8' }, ground: { kind: 'rockshelf', tint: '#6a6a80' }, water: { col: '#14284a', deep: '#081428', y: -0.35, z: -9 }, ridges: [{ r: 190, h: 14, col: '#101a2e', rough: 0.4, arc: [60, 140] }], kit: 'shore', night: 1, post: { bloom: 0.8, threshold: 0.6 } },
-    mine: { indoor: 'cave', sky: null, bg: '#0a0806', fog: ['#0c0906', 10, 46], light: { sun: '#ffb070', si: 0.5, hemi: ['#6a5a4a', '#1a120a', 0.55], unit: '#e0c8a8', lamps: [{ x: -7, y: 2.6, z: -5, col: '#ffa04a', i: 9, d: 13 }, { x: 6, y: 2.6, z: -6, col: '#ffa04a', i: 9, d: 13 }, { x: 0, y: 2.8, z: 6, col: '#ff9040', i: 5, d: 12 }] }, ground: { kind: 'cavefloor', tint: '#7a6a58' }, kit: 'mine', night: 1, post: { bloom: 0.8, threshold: 0.6, vignette: 0.55 } },
+    mine: { indoor: 'cave', sky: null, bg: '#0a0806', fog: ['#0c0906', 10, 46], light: { sun: '#ffb070', si: 0.8, hemi: ['#8a7a6a', '#2a1a10', 0.75], unit: '#e8d0b0', lamps: [{ x: -7, y: 2.6, z: -5, col: '#ffa04a', i: 9, d: 13 }, { x: 6, y: 2.6, z: -6, col: '#ffa04a', i: 9, d: 13 }, { x: 0, y: 2.8, z: 6, col: '#ff9040', i: 5, d: 12 }] }, ground: { kind: 'cavefloor', tint: '#7a6a58' }, kit: 'mine', night: 1, post: { bloom: 0.8, threshold: 0.6, vignette: 0.55 } },
     forest: { sky: { zen: '#9ab8a8', hor: '#dcebe0', low: '#a8c0b0', sun: { az: 10, el: 50, size: 1.6, col: '#fff8e0' }, clouds: 0.2 }, fog: ['#b8d0c0', 12, 70], light: { sun: '#fff4d8', si: 1.8, hemi: ['#c8e8d8', '#3a4a2a', 1.0], unit: '#e8f0e0' }, ground: { kind: 'forestfloor', tint: '#8a9a6a' }, kit: 'forest', post: { bloom: 0.6, threshold: 0.75 }, motes: 'pollen' },
     mushroom: { sky: { zen: '#0a0620', hor: '#3a1a5a', low: '#1a0a2a', stars: 0.8, clouds: 0 }, fog: ['#2a1048', 14, 70], light: { sun: '#a080ff', si: 0.6, hemi: ['#6a4aaa', '#1a0a2a', 0.8], unit: '#c0b0e0', lamps: [{ x: -9, y: 3, z: -6, col: '#5affd8', i: 8, d: 14 }, { x: 8, y: 4, z: -7, col: '#ff5af0', i: 8, d: 14 }, { x: 0, y: 3, z: -11, col: '#5ac8ff', i: 6, d: 14 }] }, ground: { kind: 'moss', tint: '#5a4a8a' }, kit: 'mushroom', night: 1, post: { bloom: 1.1, threshold: 0.5, sat: 1.2 }, motes: 'spores' },
     pingxi: { sky: { zen: '#2a2050', hor: '#e89870', low: '#6a4060', sun: { az: -20, el: 3, size: 3, col: '#ffb070' }, stars: 0.5, clouds: 0.35, cloudCol: '#8a5a7a' }, fog: ['#8a5a6a', 30, 140], light: { sun: '#ffa070', si: 1.2, hemi: ['#a080b0', '#3a2a2a', 0.8], unit: '#f0c8c0' }, ground: { kind: 'grass', tint: '#7a6a5a' }, ridges: [{ r: 170, h: 22, col: '#3a2a48', rough: 0.6 }, { r: 120, h: 10, col: '#2a2034', rough: 0.7 }], kit: 'pingxi', post: { bloom: 0.9, threshold: 0.6 } },
@@ -1140,7 +1146,7 @@ G.Battle3D.Arena = (() => {
     city: { sky: { zen: '#3a4a8a', hor: '#e8a888', low: '#8a6a6a', sun: { az: 0, el: 4, size: 2.4, col: '#ffc890' }, clouds: 0.4, cloudCol: '#c88a8a' }, fog: ['#a08080', 26, 110], light: { sun: '#ffc090', si: 1.5, hemi: ['#c0a8c0', '#4a3020', 0.9], unit: '#f8e0d8', lamps: [{ x: -8, y: 3.2, z: -7, col: '#ffa050', i: 6, d: 12 }, { x: 7, y: 3.2, z: -8, col: '#ffa050', i: 6, d: 12 }] }, ground: { kind: 'pavers', tint: '#a8907a' }, kit: 'street', style: 'city', post: { bloom: 0.8, threshold: 0.65 } },
     mansion: { sky: { zen: '#061a1e', hor: '#1e4a4a', low: '#0a2020', moon: { az: -40, el: 28, size: 2.2, col: '#f0fff0' }, stars: 0.6, clouds: 0.25, cloudCol: '#103030' }, fog: ['#103030', 20, 100], light: { sun: '#a0e0d0', si: 0.9, hemi: ['#3a7a6a', '#1a1010', 0.7], unit: '#a8d0c8', lamps: [{ x: 0, y: 2.2, z: -12, col: '#80ffa0', i: 3, d: 10 }] }, ground: { kind: 'mossystone', tint: '#5a7068' }, kit: 'mansion', night: 1, post: { bloom: 0.8, threshold: 0.6, sat: 0.95 } },
     tainan: { sky: { zen: '#e8a060', hor: '#ffe0b0', low: '#d09070', sun: { az: 15, el: 10, size: 3, col: '#fff0c0' }, clouds: 0.3, cloudCol: '#ffffff' }, fog: ['#f0c8a0', 34, 140], light: { sun: '#ffd8a0', si: 2.4, hemi: ['#ffd8b8', '#7a4a30', 1.0], unit: '#fff0e0' }, ground: { kind: 'redbrick', tint: '#d0987a' }, kit: 'tainan', post: { bloom: 0.7, threshold: 0.75, sat: 1.1 } },
-    palace: { indoor: 'hall', bg: '#04060e', fog: ['#060a18', 14, 60], light: { sun: '#6a9aff', si: 0.6, hemi: ['#3a5aa8', '#0a0a1a', 0.6], unit: '#a8b8e0', lamps: [{ x: 0, y: 3, z: -12, col: '#ffe0a0', i: 8, d: 14 }, { x: -8, y: 3, z: -4, col: '#5a8aff', i: 5, d: 12 }, { x: 8, y: 3, z: -4, col: '#5a8aff', i: 5, d: 12 }] }, ground: { kind: 'darktile', tint: '#3a4a6a' }, kit: 'palace', night: 1, post: { bloom: 1.0, threshold: 0.5, vignette: 0.55 } },
+    palace: { indoor: 'hall', bg: '#04060e', fog: ['#060a18', 14, 60], light: { sun: '#8ab0ff', si: 0.9, hemi: ['#5a7ac8', '#1a1a2a', 0.9], unit: '#b8c4e8', lamps: [{ x: 0, y: 3, z: -12, col: '#ffe0a0', i: 10, d: 16 }, { x: -8, y: 3, z: -2, col: '#6a9aff', i: 8, d: 14 }, { x: 8, y: 3, z: -2, col: '#6a9aff', i: 8, d: 14 }, { x: 0, y: 4, z: 6, col: '#8ab0ff', i: 5, d: 14 }] }, ground: { kind: 'darktile', tint: '#6a7aa0' }, kit: 'palace', night: 1, post: { bloom: 1.0, threshold: 0.5, vignette: 0.55 } },
     linto: { sky: { zen: '#0e0a2a', hor: '#4a3a6a', low: '#1a1430', moon: { az: 10, el: 14, size: 2.2 }, stars: 0.8, clouds: 0.25, cloudCol: '#2a2448' }, fog: ['#3a2c58', 30, 140], light: { sun: '#b0a0ff', si: 0.9, hemi: ['#6a5a9a', '#1a1424', 0.75], unit: '#c0b8e0' }, ground: { kind: 'sand', tint: '#7a6a80' }, water: { col: '#2a2448', deep: '#100c24', y: -0.35, z: -10 }, kit: 'beach', style: 'linto', night: 1, post: { bloom: 0.8, threshold: 0.6 } },
     tribe: { sky: { zen: '#060a1a', hor: '#2a3050', low: '#10142a', stars: 1, milky: 1, clouds: 0.1 }, fog: ['#1a2036', 26, 110], light: { sun: '#9ab0ff', si: 0.8, hemi: ['#4a5a8a', '#1a1612', 0.7], unit: '#b0b8d8', lamps: [{ x: -6, y: 1.4, z: -10, col: '#ffb060', i: 6, d: 12 }] }, ground: { kind: 'slate', tint: '#6a6a70' }, ridges: [{ r: 170, h: 26, col: '#0c1020', rough: 0.6 }], kit: 'tribe', night: 1, post: { bloom: 0.85, threshold: 0.6 } },
     vision: { sky: { zen: '#1a0a3a', hor: '#5a2a8a', low: '#2a1a5a', stars: 1, clouds: 0, psy: 1 }, fog: ['#3a1a6a', 16, 80], light: { sun: '#c08aff', si: 0.8, hemi: ['#8a5aff', '#2a0a4a', 0.9], unit: '#e0c8ff', lamps: [{ x: -6, y: 3, z: -8, col: '#3affc0', i: 6, d: 14 }, { x: 6, y: 3, z: -8, col: '#ff6af0', i: 6, d: 14 }] }, ground: { kind: 'psyfloor', tint: '#8a6ac8', uvScale: 8 }, kit: 'vision', night: 1, post: { bloom: 1.0, threshold: 0.55, sat: 1.25, warp: 0.25 } },
@@ -1154,7 +1160,7 @@ G.Battle3D.Arena = (() => {
     lighthouse: { indoor: 'tower', bg: '#0a0a0e', fog: ['#16161c', 12, 50], light: { sun: '#fff0d0', si: 1.6, sunDir: [0.1, 1, -0.2], hemi: ['#6a6a7a', '#141418', 0.55], unit: '#d8d0c8', lamps: [{ x: 0, y: 8, z: -2, col: '#ffe8b0', i: 10, d: 20 }, { x: -9, y: 2, z: -6, col: '#6a8aff', i: 3, d: 8 }] }, ground: { kind: 'stonetile', tint: '#6a6a72' }, kit: 'tower', night: 1, post: { bloom: 0.9, threshold: 0.6, vignette: 0.55 } },
     tamsui: { sky: { zen: '#3a3a7a', hor: '#ffb070', low: '#a06050', sun: { az: 0, el: 4, size: 3.2, col: '#fff0b0' }, clouds: 0.35, cloudCol: '#ffb090' }, fog: ['#e0a080', 30, 140], light: { sun: '#ffb070', si: 2.0, hemi: ['#e0a8a0', '#4a3020', 0.9], unit: '#ffe0c8' }, ground: { kind: 'pavers', tint: '#a8906a' }, water: { col: '#c07060', deep: '#5a3048', y: -0.6, z: -8 }, ridges: [{ r: 170, h: 30, col: '#5a3a5a', rough: 0.7, arc: [-30, 40] }], kit: 'harbor', post: { bloom: 0.85, threshold: 0.65 } },
     hakka: { sky: { zen: '#4a90e0', hor: '#d8eaf0', low: '#b8c8c8', sun: { az: 30, el: 50, size: 1.4 }, clouds: 0.4, cloudCol: '#ffffff' }, fog: ['#d0e0e4', 40, 160], light: { sun: '#fff4e0', si: 2.7, hemi: ['#c0d8f0', '#7a6a4a', 1.1], unit: '#ffffff' }, ground: { kind: 'dirt', tint: '#d0b890' }, ridges: [{ r: 170, h: 20, col: '#6a8a9a', rough: 0.6 }], kit: 'hakka' },
-    windcave: { indoor: 'cave', bg: '#0a0c10', fog: ['#141c26', 12, 50], light: { sun: '#c8e0ff', si: 1.2, sunDir: [-0.3, 0.6, -1], hemi: ['#5a6a8a', '#141418', 0.65], unit: '#c8d4e8', lamps: [{ x: 0, y: 4, z: -14, col: '#a8d0ff', i: 10, d: 22 }] }, ground: { kind: 'cavefloor', tint: '#5a6070' }, kit: 'windcave', night: 1, post: { bloom: 0.9, threshold: 0.6 }, motes: 'wind' },
+    windcave: { indoor: 'cave', bg: '#0a0c10', fog: ['#141c26', 12, 50], light: { sun: '#c8e0ff', si: 1.6, sunDir: [-0.3, 0.6, -1], hemi: ['#7a8aaa', '#2a2a34', 0.9], unit: '#c8d4e8', lamps: [{ x: 0, y: 4, z: -14, col: '#a8d0ff', i: 12, d: 26 }, { x: -9, y: 2, z: -2, col: '#6ab8ff', i: 5, d: 10 }, { x: 9, y: 2, z: -3, col: '#6ab8ff', i: 5, d: 10 }] }, ground: { kind: 'cavefloor', tint: '#5a6070' }, kit: 'windcave', night: 1, post: { bloom: 0.9, threshold: 0.6 }, motes: 'wind' },
     alishan: { sky: { zen: '#5a6aa8', hor: '#f8d0b0', low: '#e0e0e8', sun: { az: -10, el: 8, size: 2.4, col: '#fff0d0' }, clouds: 0.25, cloudCol: '#ffffff' }, fog: ['#e0d8d8', 26, 130], light: { sun: '#ffd8b0', si: 2.0, hemi: ['#e0c8d0', '#4a5a3a', 1.0], unit: '#fff0e8' }, ground: { kind: 'forestfloor', tint: '#7a8a5a' }, cloudsea: '#f4f0f4', ridges: [{ r: 190, h: 18, col: '#8a7aa8', rough: 0.6 }], kit: 'alishan', motes: 'pollen' },
     yushan: { sky: { zen: '#02040e', hor: '#1a2240', low: '#0a0e1a', stars: 1, milky: 1, clouds: 0 }, fog: ['#141a2e', 30, 140], light: { sun: '#a0b4ff', si: 0.9, hemi: ['#4a5a8a', '#141418', 0.7], unit: '#b0b8d8' }, ground: { kind: 'scree', tint: '#5a5a66' }, ridges: [{ r: 150, h: 70, col: '#1e2234', rough: 0.95, snow: 0.7, arc: [-50, 50] }, { r: 110, h: 14, col: '#10141e', rough: 0.7 }], kit: 'scree', night: 1, post: { bloom: 0.8, threshold: 0.6 } },
     procession: { sky: { zen: '#1a1430', hor: '#a05a50', low: '#4a2a2a', clouds: 0.3, cloudCol: '#4a2a3a', stars: 0.4 }, fog: ['#6a3a34', 22, 100], light: { sun: '#ff9a6a', si: 1.0, hemi: ['#a07a8a', '#3a1a10', 0.8], unit: '#f0c8b8', lamps: [{ x: -7, y: 3, z: -6, col: '#ff8a3a', i: 8, d: 13 }, { x: 7, y: 3, z: -7, col: '#ff8a3a', i: 8, d: 13 }, { x: 0, y: 3, z: -14, col: '#ffb050', i: 6, d: 14 }] }, ground: { kind: 'pavers', tint: '#8a6a5a' }, kit: 'street', style: 'procession', night: 1, post: { bloom: 0.95, threshold: 0.55 }, motes: 'embers' },
@@ -1167,7 +1173,7 @@ G.Battle3D.Arena = (() => {
     taroko: { sky: { zen: '#8ac0e8', hor: '#e8f0f4', low: '#c8d8e0', sun: { az: -10, el: 55, size: 1.4 }, clouds: 0.3, cloudCol: '#ffffff' }, fog: ['#d8e4ea', 26, 120], light: { sun: '#fff8ec', si: 2.4, hemi: ['#d0e0f0', '#6a6a6a', 1.1], unit: '#ffffff' }, ground: { kind: 'gravel', tint: '#c8c8c8' }, water: { col: '#4ac8c8', deep: '#1a8a9a', y: -0.4, z: -9, river: true }, kit: 'gorge' },
     toucheng: { sky: { zen: '#04060e', hor: '#1a1a2a', low: '#0a0a14', stars: 0.9, clouds: 0.1 }, fog: ['#1a1418', 24, 110], light: { sun: '#ffb070', si: 0.7, hemi: ['#5a4a5a', '#2a1a10', 0.7], unit: '#e0c8b0', lamps: [{ x: 0, y: 6, z: -14, col: '#ffc060', i: 12, d: 22 }, { x: -9, y: 2.5, z: -6, col: '#ff9a40', i: 5, d: 12 }, { x: 9, y: 2.5, z: -6, col: '#ff9a40', i: 5, d: 12 }] }, ground: { kind: 'dirt', tint: '#6a5040' }, kit: 'festival', night: 1, post: { bloom: 1.0, threshold: 0.55 } },
     penghu: { sky: { zen: '#3a8ae8', hor: '#d8f0f8', low: '#a8d8e0', sun: { az: 30, el: 50, size: 1.5 }, clouds: 0.45, cloudCol: '#ffffff' }, fog: ['#d0ecf4', 40, 170], light: { sun: '#fff8ec', si: 2.9, hemi: ['#c0e0f8', '#5a5a60', 1.1], unit: '#ffffff' }, ground: { kind: 'hexbasalt', tint: '#7a7a80' }, water: { col: '#3ac0c8', deep: '#1a7aa0', y: -0.4, z: -9 }, kit: 'basalt' },
-    xuanwu: { sky: { zen: '#04060e', hor: '#1a2a4a', low: '#0a0e1a', clouds: 0.7, cloudCol: '#141c30', stars: 0.2 }, fog: ['#141e34', 22, 110], light: { sun: '#6a9aff', si: 0.8, hemi: ['#3a5a9a', '#0a0a14', 0.7], unit: '#a8b8e0', lamps: [{ x: -6, y: 2.4, z: -8, col: '#4a9aff', i: 7, d: 12 }, { x: 6, y: 2.4, z: -8, col: '#4a9aff', i: 7, d: 12 }, { x: 0, y: 6, z: -22, col: '#6ab8ff', i: 10, d: 24 }] }, ground: { kind: 'hexbasalt', tint: '#3a3e4e' }, kit: 'xuanwu', night: 1, post: { bloom: 0.95, threshold: 0.55 }, motes: 'souls' },
+    xuanwu: { sky: { zen: '#04060e', hor: '#1a2a4a', low: '#0a0e1a', clouds: 0.7, cloudCol: '#141c30', stars: 0.2 }, fog: ['#141e34', 22, 110], light: { sun: '#6a9aff', si: 0.8, hemi: ['#3a5a9a', '#0a0a14', 0.7], unit: '#a8b8e0', lamps: [{ x: -6, y: 2.4, z: -8, col: '#4a9aff', i: 7, d: 12 }, { x: 6, y: 2.4, z: -8, col: '#4a9aff', i: 7, d: 12 }, { x: 0, y: 6, z: -22, col: '#6ab8ff', i: 10, d: 24 }] }, ground: { kind: 'hexbasalt', tint: '#5a6278' }, kit: 'xuanwu', night: 1, post: { bloom: 0.95, threshold: 0.55 }, motes: 'souls' },
   };
   A.THEMES = T;
   A.ids = () => Object.keys(T);
@@ -1735,6 +1741,21 @@ G.Battle3D.Arena = (() => {
     for (let i = 0; i < 12; i++) { const m = K.mesh(frondGeo(h * 0.6, 0.7, 1.1), mat, 0, h, 0); m.rotation.y = i / 12 * TAU; g.add(m); }
     return g;
   };
+ // volcanic sea-stack spire (蘭嶼 rocks): jagged tall cone, dark stone, mossy top
+  PR.spire = (K, s = 3) => {
+    const TT = K.T, g = new TT.Group();
+    for (let i = 0; i < 3; i++) {
+      const h = s * K.r(2.2, 3.4) * (i ? 0.6 : 1), r = s * K.r(0.5, 0.75) * (i ? 0.6 : 1);
+      const geo = new TT.ConeGeometry(r, h, 7, 6);
+      const p = geo.attributes.position;
+      for (let j = 0; j < p.count; j++) { const y = p.getY(j) / h + 0.5; const n = 0.75 + U.vnoise(p.getX(j) * 2 + i * 7, p.getY(j) * 1.5, 5) * 0.5; p.setX(j, p.getX(j) * n); p.setZ(j, p.getZ(j) * n); if (y > 0.92) p.setY(j, p.getY(j) - K.r(0, 0.2) * h); }
+      geo.computeVertexNormals(); geo.translate(0, h / 2, 0);
+      g.add(K.mesh(geo, K.mat(i ? '#3a3a40' : '#2e2e34', { flatShading: true, roughness: 0.95 }), i ? K.r(-1, 1) * s * 0.6 : 0, 0, i ? K.r(-1, 1) * s * 0.4 : 0));
+    }
+    const moss = new TT.SphereGeometry(s * 0.35, 8, 5, 0, TAU, 0, Math.PI / 2); moss.scale(1, 0.4, 1);
+    g.add(K.mesh(moss, K.mat('#4a6a3a', { flatShading: true }), 0, s * 2.0, 0));
+    return g;
+  };
   PR.pandanus = (K, h = 3.5) => {
     const TT = K.T, g = new TT.Group();
     for (let i = 0; i < 4; i++) { const a = i / 4 * TAU; g.add(K.mesh(new TT.CylinderGeometry(0.03, 0.05, 1.0, 5), K.mat('#6a5a40'), Math.cos(a) * 0.3, 0.4, Math.sin(a) * 0.3, { rz: Math.cos(a) * 0.35, rx: -Math.sin(a) * 0.35 })); }
@@ -2205,6 +2226,7 @@ G.Battle3D.Arena = (() => {
     K.out.group.add(mouth); K.out.disposables.push(() => { mouth.geometry.dispose(); mouth.material.dispose(); });
     for (let i = 0; i < 8; i++) { const sp = K.mesh(new TT.ConeGeometry(K.r(0.4, 1), K.r(2, 5), 6), K.mat('#c8e0f0', { roughness: 0.3, metalness: 0.1 }), K.r(-5, 5), 0, -24 + K.r(-1, 1)); sp.position.y = sp.geometry.parameters.height / 2; K.staticGroup.add(sp); }
     K.ring(14, 13, 8, (x, z) => K.place(PR.rock(K, K.r(0.5, 1.6), ['#3a4048', '#2a3038']), x, z));
+    K.ring(10, 11.5, 7, (x, z) => M(K, 'crystal', x, z, { s: K.r(1, 1.8) }), { phase: 0.3 });
   };
   function caveShell(K, col, rx, rz, open) {
     // rough dome of rock around the arena (normals inward)
@@ -2412,7 +2434,7 @@ G.Battle3D.Arena = (() => {
     // columnar basalt cliff behind + scattered hex columns
     const TT = K.T;
     const cols = [];
-    for (let i = 0; i < 120; i++) { const x = K.r(-30, -8), z = K.r(-22, -12); cols.push({ x, z, s: 1, sy: K.r(4, 9), c: '#3a3a40' }); }
+    for (let i = 0; i < 120; i++) { const x = K.r(-34, -15), z = K.r(-8, 6); cols.push({ x, z, s: 1, sy: K.r(3, 8) * (1 + (-x - 15) * 0.05), c: '#3a3a40' }); }
     for (let i = 0; i < 30; i++) { const a = K.r(0, TAU), rr = K.r(11, 18); const x = Math.sin(a) * rr * 1.2, z = -Math.cos(a) * rr * 0.7; if (z > 3 && x > -8 && x < 14) continue; cols.push({ x, z, s: 1, sy: K.r(0.2, 1.4), c: '#4a4a52' }); }
     const geo = new TT.CylinderGeometry(0.55, 0.55, 1, 6); geo.translate(0, 0.5, 0);
     PR.instances(K, geo, K.mat('#ffffff', { flatShading: true, roughness: 0.9 }), cols);
@@ -2476,8 +2498,8 @@ G.Battle3D.Arena = (() => {
 
   const PINES = ['tree_pine', 'tree_cedar_snow'];
   KITS.meadow = (K, th) => {
-    K.ring(16, 20, 15, (x, z) => M(K, 'tree_pine', x, z, { s: K.r(1.6, 2.4) }, () => PR.pine(K, K.r(5, 9))));
-    K.ring(10, 30, 22, (x, z) => M(K, 'tree_cedar_snow', x, z, { s: K.r(2, 3) }, () => PR.pine(K, K.r(7, 11), '#2a4038')), { phase: 0.3 });
+    K.ring(16, 21, 15, (x, z) => M(K, 'tree_pine', x, z, { s: K.r(1.1, 1.6) }, () => PR.pine(K, K.r(5, 9))));
+    K.ring(10, 30, 22, (x, z) => M(K, 'tree_cedar_snow', x, z, { s: K.r(1.4, 2.2) }, () => PR.pine(K, K.r(7, 11), '#2a4038')), { phase: 0.3 });
     K.ring(12, 14, 9, (x, z) => M(K, K.rng() < 0.3 ? 'rock_big' : 'rock_small', x, z, { s: K.r(0.8, 1.4) }, () => PR.rock(K, K.r(0.3, 0.9), ['#8a8a84', '#6a6a66'])), { phase: 0.15 });
     K.ring(14, 12, 7.5, (x, z) => M(K, K.rng() < 0.5 ? 'flowers' : 'bush', x, z, { s: K.r(0.9, 1.3) }), { phase: 0.4 });
     PR.grassField(K, K.view.lite ? 1500 : 5000, [-26, 26, -18, 14], ['#7aa04a', '#8ab052', '#5a8a3a'], 0.45, { clear: [10, 4.5], inside: 0.15 });
@@ -2528,7 +2550,7 @@ G.Battle3D.Arena = (() => {
       K.ring(12, 15, 8, (x, z) => { if (z > -7) M(K, 'pandanus', x, z, { s: K.r(1.2, 1.8) }); });
       K.ring(6, 22, 12, (x, z) => { if (z > -7) M(K, 'coconut_palm', x, z, { s: K.r(1.6, 2.2) }); }, { phase: 0.3 });
     } else if (st === 'orchid') {
-      for (const [x, z, s] of [[-18, -10, 6], [-13, -14, 4], [16, -12, 7], [22, -8, 5]]) { const r = PR.rock(K, s, ['#2a2a30', '#3a3a3e']); r.scale.y *= 2.2; K.place(r, x, z); }
+      for (const [x, z, s] of [[-18, -9, 3.2], [-13, -12, 2.2], [16, -11, 3.6], [22, -7, 2.6], [-24, -4, 2.8]]) K.place(PR.spire(K, s), x, z);
       for (const [x, z, ry] of [[-10, -3, 0.3], [12, -3.5, -0.4]]) M(K, 'tatala', x, z, { ry }, () => PR.boat(K, 4, '#e8e0d0'));
       K.ring(8, 14, 7, (x, z) => { if (z > -6) M(K, 'rock_small', x, z, { s: K.r(0.8, 1.3) }); });
     } else if (st === 'south') {
@@ -2598,7 +2620,7 @@ G.Battle3D.Arena = (() => {
   const hakkaBase = KITS.hakka;
   KITS.hakka = (K, th) => {
     if (!G.Models || !G.Models.has('hakka_house')) { hakkaBase(K, th); return; }
-    M(K, 'hakka_house', 0, -17, { s: 1.4 });
+    M(K, 'hakka_house', 0, -15, { s: 2.0 });
     for (const [x, z] of [[-17, -8], [18, -7], [-20, 3]]) M(K, 'bamboo', x, z, { s: 2 }, () => PR.bamboo(K, K.r(6, 9), 9));
     for (const [x, z] of [[-10, -6], [10, -6]]) M(K, 'drying_rack', x, z, { s: 1.2 });
   };
