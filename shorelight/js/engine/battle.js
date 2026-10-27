@@ -963,13 +963,16 @@ G.Battle = (() => {
       }
       const drawBody = (c) => {
         if (u.side === 'party' || u.sprite) {
-          if (G.Sprites) G.Sprites.drawBattle(c, u.sprite, u.dead && u.side === 'party' ? 'ko' : u.pose, t + (u.hx || 0), x, y, { flip: u.side === 'enemy' });
-          else { c.fillStyle = '#4a6ab8'; c.fillRect(x - 25, y - 140, 50, 140); }
+          let ok = false;
+          if (G.Sprites && G.Sprites.has(u.sprite)) {
+            try { G.Sprites.drawBattle(c, u.sprite, u.dead && u.side === 'party' ? 'ko' : u.pose, t + (u.hx || 0), x, y, { flip: u.side === 'enemy' }); ok = true; } catch (e) { G.warnOnce('sprite ' + u.sprite, e); }
+          }
+          if (!ok) { c.fillStyle = '#4a6ab8'; c.fillRect(x - 25, y - 140, 50, 140); }
         } else {
           c.save();
           c.translate(x, y);
           c.scale(u.scale, u.scale);
-          G.Monsters.draw(c, u.art, 0, 0, t + u.hx * 0.01, { state: u.pose === 'ready' ? 'attack' : u.pose, st: u.poseT, variant: u.variant, phase: u.phase });
+          try { G.Monsters.draw(c, u.art, 0, 0, t + u.hx * 0.01, { state: u.pose === 'ready' ? 'attack' : u.pose, st: u.poseT, variant: u.variant, phase: u.phase }); } catch (e) { G.warnOnce('monster ' + u.art, e); }
           c.restore();
         }
       };

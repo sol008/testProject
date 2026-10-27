@@ -112,6 +112,14 @@ G.U = (() => {
   return U;
 })();
 
+// log a problem once (art/data issues must never crash the frame)
+G._warned = new Set();
+G.warnOnce = function (key, err) {
+  if (G._warned.has(key)) return;
+  G._warned.add(key);
+  console.warn('[shorelight] ' + key, err ? (err.stack || err) : '');
+};
+
 // Promise-based timers driven by game time (paused when game paused)
 G.Timers = (() => {
   const list = [];

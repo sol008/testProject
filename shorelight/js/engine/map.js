@@ -666,7 +666,7 @@ G.Mapx = G.Mapx || {};
             ctx.save();
             if (it.o.spirit) ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 3);
             if (it.o.alpha != null) ctx.globalAlpha *= it.o.alpha;
-            it.d.draw(ctx, it.px, it.py, it.o, t);
+            try { it.d.draw(ctx, it.px, it.py, it.o, t); } catch (e) { G.warnOnce('object ' + it.o.t, e); }
             ctx.restore();
           } else this.fallbackObj(ctx, it.o, it.px, it.py);
         } else if (it.kind === 'enemy') this.drawEnemy(ctx, it.a, t);
@@ -698,8 +698,11 @@ G.Mapx = G.Mapx || {};
       ctx.save();
       if (a.offsetY) ctx.translate(0, a.offsetY);
       if (a.jumpY) ctx.translate(0, -a.jumpY);
-      if (G.Sprites) G.Sprites.drawChar(ctx, sprite, a.dir, a.frame, Math.round(a.px), Math.round(a.py), o);
-      else this.fallbackChar(ctx, a, isPlayer);
+      let ok = false;
+      if (G.Sprites && G.Sprites.has(sprite)) {
+        try { G.Sprites.drawChar(ctx, sprite, a.dir, a.frame, Math.round(a.px), Math.round(a.py), o); ok = true; } catch (e) { G.warnOnce('sprite ' + sprite, e); }
+      } else G.warnOnce('missing sprite ' + sprite);
+      if (!ok) this.fallbackChar(ctx, a, isPlayer);
       ctx.restore();
     }
 
