@@ -255,16 +255,32 @@ G.Dialog = (() => {
       ctx.globalAlpha = this.alpha;
       const n = this.idx + 1;
       const lh = 50;
-      const y0 = G.H / 2 - (this.lines.length * lh) / 2;
+      // Lines too wide for the screen (most English narration) wrap onto extra rows at full size instead of being
+      // shrunk; the block stays vertically centred. A line that fits keeps the original one-row layout.
+      if (!this.layout || this.layout.lang !== G.I18N.lang()) {
+        const size0 = this.o.size || 30;
+        const build = (size) => {
+          ctx.font = G.font(size);
+          const rows = this.lines.map((l) => G.Render.wrap(ctx, l, G.W - 160).map((r) => r.map((g) => g.ch).join('')));
+          const rowH = Math.round(size * 1.3);
+          const height = rows.reduce((h, r) => h + lh + Math.max(0, r.length - 1) * rowH, 0);
+          return { rows, rowH, size, height, lang: G.I18N.lang() };
+        };
+        let L = build(size0);
+        while (L.height > G.H - 60 && L.size > 18) L = build(L.size - 2);
+        this.layout = L;
+      }
+      const L = this.layout;
+      let y = G.H / 2 - L.height / 2;
       for (let i = 0; i < n; i++) {
         const a = i === this.idx ? Math.min(1, this.lineT / 0.9) : 1;
-        let size = this.o.size || 30;
-        ctx.font = G.font(size);
-        const wpx = G.Render.measure(ctx, this.lines[i]);
-        if (wpx > G.W - 120) size = Math.max(16, Math.floor(size * (G.W - 120) / wpx));
-        G.Render.text(ctx, this.lines[i], G.W / 2, y0 + i * lh + (1 - a) * 8, {
-          size, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
+        const rows = L.rows[i].length ? L.rows[i] : [''];
+        rows.forEach((row, k) => {
+          G.Render.text(ctx, row, G.W / 2, y + k * L.rowH + (1 - a) * 8, {
+            size: L.size, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
+          });
         });
+        y += lh + (rows.length - 1) * L.rowH;
       }
       ctx.restore();
     }

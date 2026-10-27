@@ -100,7 +100,7 @@
       this.list.draw(ctx, 40, 32, 214, t, { size: 22, focus: !this.sub });
       // info plate
       UI().panel(ctx, 30, G.H - 106, 230, 96, { ornament: false });
-      R().text(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, { size: 20, color: '#fff0d0' });
+      R().textClip(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, 200, { size: 20, minSize: 14, color: '#fff0d0' });
       R().text(ctx, '時間 ' + U.fmtTime(G.state.playtime), 48, G.H - 68, { size: 17, color: '#c9b893' });
       R().text(ctx, '錢財 ' + G.state.gold + ' 文', 48, G.H - 44, { size: 17, color: '#ffe08a' });
       UI().lanternIcon(ctx, 220, G.H - 56, 9, t);
@@ -111,9 +111,10 @@
         const ms = G.state.party.map((id) => G.state.members[id]).filter(Boolean);
         ms.slice(0, 4).forEach((m, i) => memberCard(ctx, m, 290, 30 + i * 166, 620, 152, t, false));
         if (G.state.vars.objective) {
-          UI().panel(ctx, 940, 30, 310, 130, { title: '目標' });
           ctx.font = G.font(20);
           const lines = R().wrap(ctx, G.state.vars.objective, 270);
+          UI().panel(ctx, 940, 30, 310, Math.max(130, lines.length * 30 + 40), { title: '目標' });
+          ctx.font = G.font(20);
           R().drawLines(ctx, lines, 960, 62, 30, '#f0e4c4');
         }
         const ch = G.Chapters && G.Chapters[G.state.chapter];
@@ -378,10 +379,10 @@
       this.slots.forEach((s, i) => {
         const y = 84 + i * 52;
         if (i === this.slotIdx) UI().cursor(ctx, 304, y, 590, 46, t, this.mode === 'slots');
-        R().text(ctx, SLOT_NAMES[s], 330, y + 10, { size: 21, color: '#c9b893' });
+        R().textClip(ctx, SLOT_NAMES[s], 330, y + 10, 82, { size: 21, color: '#c9b893' });
         const it = m.equip[s] && G.Data.items[m.equip[s]];
         if (it) UI().icon(ctx, UI().itemIcon(it), 420, y + 7, 32);
-        R().text(ctx, it ? it.name : '—', 462, y + 10, { size: 22, color: '#fff0d0' });
+        R().textClip(ctx, it ? it.name : '—', 462, y + 10, 420, { size: 22, color: '#fff0d0' });
       });
       // stats
       UI().panel(ctx, 290, 370, 620, 300, { title: '能力' });
@@ -428,8 +429,8 @@
       const st = G.Party.stats(this.id);
       UI().panel(ctx, 290, 30, 960, 660);
       G.Portraits.draw(ctx, this.id, 'normal', 300, 60, 420, 520, t, {});
-      R().text(ctx, d.name, 760, 60, { size: 40, color: '#fff0d0' });
-      R().text(ctx, d.title || '', 760, 110, { size: 20, color: '#c9b893' });
+      R().textClip(ctx, d.name, 760, 60, 340, { size: 40, minSize: 28, color: '#fff0d0' });
+      R().textClip(ctx, d.title || '', 760, 110, 470, { size: 20, color: '#c9b893' });
       R().text(ctx, 'Lv ' + m.lv, 1220, 70, { size: 26, align: 'right', color: '#ffd97a' });
       if (st.elem) { UI().elemBadge(ctx, st.elem, 774, 158, 14); R().text(ctx, ELEM_CN[st.elem] + '行', 796, 146, { size: 20, color: '#e8dcc0' }); }
       const keys = ['mhp', 'mmp', 'atk', 'def', 'mag', 'spd', 'luk'];
@@ -655,9 +656,9 @@
         if (meta) {
           const img = this.thumb(slot, meta);
           if (img && img.complete) { ctx.drawImage(img, x + 130, y + 10, 157, 88); ctx.strokeStyle = 'rgba(240,210,140,0.5)'; ctx.strokeRect(x + 130, y + 10, 157, 88); }
-          R().text(ctx, meta.place || '', x + 310, y + 16, { size: 24, color: '#fff0d0' });
-          R().text(ctx, (G.Chapters && G.Chapters[meta.chapter]) || '', x + 310, y + 54, { size: 18, color: '#c9b893' });
-          R().text(ctx, (meta.party || []).map((p) => `${G.ShortNames[p.id] || G.Names[p.id] || p.id} Lv${p.lv}`).join('　'), x + 640, y + 18, { size: 18, color: '#e8dcc0' });
+          R().textClip(ctx, meta.place || '', x + 310, y + 16, 310, { size: 24, minSize: 17, color: '#fff0d0' });
+          R().textClip(ctx, (G.Chapters && G.Chapters[meta.chapter]) || '', x + 310, y + 54, 310, { size: 18, color: '#c9b893' });
+          R().textClip(ctx, (meta.party || []).map((p) => `${G.T(G.ShortNames[p.id] || G.Names[p.id] || p.id)} Lv${p.lv}`).join('　'), x + 640, y + 18, w - 664, { size: 18, color: '#e8dcc0' });
           R().text(ctx, '時間 ' + U.fmtTime(meta.playtime || 0) + '　心燈 ' + (meta.lanterns || 0), x + 640, y + 54, { size: 18, color: '#c9b893' });
           const d = new Date(meta.time);
           R().text(ctx, `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, x + w - 24, y + 72, { size: 15, align: 'right', color: '#8a8270' });
@@ -733,23 +734,25 @@
       const t = this.t;
       ctx.save();
       ctx.fillStyle = 'rgba(4,6,14,0.85)'; ctx.fillRect(0, 0, G.W, G.H);
-      UI().panel(ctx, 240, 30, 800, this.rows.length * 46 + 44, { title: '設定' });
+      // 14 rows: 42px each so the panel ends above the two key-help lines (at 46px the last row sat on top of them)
+      const RH = 42;
+      UI().panel(ctx, 240, 30, 800, this.rows.length * RH + 44, { title: '設定' });
       this.rows.forEach((row, i) => {
-        const y = 58 + i * 46;
-        if (i === this.idx) UI().cursor(ctx, 256, y, 768, 42, t, true);
-        R().textFit(ctx, row.label, 290, y + 9, 330, { size: 22, color: '#fff0d0' });
+        const y = 58 + i * RH;
+        if (i === this.idx) UI().cursor(ctx, 256, y, 768, RH - 4, t, true);
+        R().textFit(ctx, row.label, 290, y + 8, 330, { size: 22, color: '#fff0d0' });
         let v = '';
         if (row.type === 'vol') {
-          UI().bar(ctx, 640, y + 14, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
+          UI().bar(ctx, 640, y + 12, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
           v = Math.round(G.settings[row.k] * 100) + '%';
         } else if (row.type === 'enum') {
           const j = row.opts.indexOf(G.settings[row.k]);
           v = '◀ ' + (row.names[j < 0 ? 0 : j]) + ' ▶';
         } else v = 'Z 切換';
-        R().text(ctx, v, 1000, y + 9, { size: 21, align: 'right', color: '#ffd97a' });
+        R().text(ctx, v, 1000, y + 8, { size: 21, align: 'right', color: '#ffd97a' });
       });
-      R().textFit(ctx, '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑', 640, G.H - 58, 1180, { size: 16, align: 'center', color: '#9c947f' });
-      R().textFit(ctx, 'F 自動（戰鬥/對話）　L 對話紀錄　按住 Ctrl 快進　E 戰鬥速度　F11 全螢幕', 640, G.H - 34, 1180, { size: 16, align: 'center', color: '#9c947f' });
+      R().textFit(ctx, '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑', 640, G.H - 50, 1180, { size: 16, align: 'center', color: '#9c947f' });
+      R().textFit(ctx, 'F 自動（戰鬥/對話）　L 對話紀錄　按住 Ctrl 快進　E 戰鬥速度　F11 全螢幕', 640, G.H - 27, 1180, { size: 16, align: 'center', color: '#9c947f' });
       ctx.restore();
     }
   }
