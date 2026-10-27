@@ -861,6 +861,9 @@ async function main() {
           if (M.preset.lv && M.preset.lv > want) await h.levelAssumption(M.preset.lv, `debug start lv=${M.preset.lv} (above the progression table's ${want})`, null);
         }
       }
+      // G.Debug.log is a test-only log; the chapter drivers read it as if their page were fresh (e.g. ch9 counts every
+      // 'minigame Jiaobei' line since load), so each chapter starts with an empty one
+      if (n > 0) await h.ev(() => { G.Debug.log.length = 0; });
       saveReport();
       if (boundaryOnly) { rec.status = 'BOUNDARY'; delete rec.start; saveReport(); break; }
       // ---------------------------------------------------------- the chapter
