@@ -1106,7 +1106,9 @@
     if (label) for (const s of [1, -1]) mk(sub, decal(min(w, h) * 0.72, min(w, h) * 0.72), STAMP(label), { p: [0, h * 0.5 - min(w, h) * 0.36, s * (d / 2 + 0.0215)], r: [0, s > 0 ? 0 : PI, 0], cast: false });
   }
   function addSack(g, x, z, w, h, d, o = {}) {
-    mk(g, G3.rbox2(w, h, d, min(w, h, d) * 0.42), MAT('cloth'), { p: [x, o.y || 0, z], r: [0, o.ry || 0, o.rz || 0], c: o.col || '#d8c8a0' });
+    const sk = G3.sphere(1, 10, 6); sk.scale(w / 2, h / 2, d / 2); sk.translate(0, h / 2, 0);
+    { const P = sk.attributes.position; for (let i = 0; i < P.count; i++) { const y = P.getY(i) / h; const f = 1.12 - 0.12 * Math.pow(abs(y * 2 - 1), 3); P.setX(i, P.getX(i) * f); P.setZ(i, P.getZ(i) * f); } sk.computeVertexNormals(); }
+    mk(g, sk, MAT('cloth'), { p: [x, o.y || 0, z], r: [0, o.ry || 0, o.rz || 0], c: o.col || '#d8c8a0' });
     // tied neck + red cord
     mk(g, G3.cyl(w * 0.12, w * 0.2, h * 0.22, 7), MAT('cloth'), { p: [x + (o.neck || 0), (o.y || 0) + h * 0.86, z], r: [0, 0, o.rz || 0], c: o.col || '#d8c8a0' });
     if (o.label) mk(g, decal(min(w, h) * 0.7, min(w, h) * 0.7, d * 0.6), STAMP(o.label), { p: [x, (o.y || 0) + h * 0.5 - min(w, h) * 0.35, z + d / 2 + 0.006], r: [0, 0, o.rz || 0], cast: false });
@@ -1509,14 +1511,14 @@
         const up = s === side;
         const top = V3(s * 0.1, y0 + 0.38, 0.1), foot = up ? V3(s * 0.13, y0 + (v === 0 ? 0.2 : 0.15), 0.22) : V3(s * 0.1, y0 + 0.04, 0.17);
         const len = top.distanceTo(foot), mid = top.clone().add(foot).multiplyScalar(0.5);
-        const leg = G3.cyl(0.05, 0.058, len, 9); leg.translate(0, -len / 2, 0);
+        const leg = G3.cyl(0.05, 0.058, len, 7); leg.translate(0, -len / 2, 0);
         const m = mk(g, leg, S, { p: [mid.x, mid.y, mid.z], c: C });
         m.quaternion.setFromUnitVectors(V3(0, 1, 0), top.clone().sub(foot).normalize());
         blob(g, S, [foot.x, foot.y, foot.z + 0.01], [0.065, 0.045, 0.08], L2);
         for (let t = -1; t <= 1; t++) blob(g, S, [foot.x + t * 0.03, foot.y - 0.005, foot.z + 0.08], [0.02, 0.02, 0.02], L2, { ws: 4, hs: 3 });
       }
       if (v === 0) { // embroidered ball 繡球 with ribbon
-        blob(g, S, [side * 0.13, y0 + 0.09, 0.22], [0.09, 0.09, 0.09], L2, { ws: 12, hs: 8 });
+        blob(g, S, [side * 0.13, y0 + 0.09, 0.22], [0.09, 0.09, 0.09], L2, { ws: 10, hs: 7 });
         mk(g, G3.torus(0.09, 0.012, 4, 14), S, { p: [side * 0.13, y0 + 0.09, 0.22], r: [0.4, 0.6, 0], c: D });
         mk(g, G3.torus(0.09, 0.012, 4, 14), S, { p: [side * 0.13, y0 + 0.09, 0.22], r: [-0.4, -0.5, 1.2], c: D });
       } else { // cub playing under the paw
@@ -1528,23 +1530,23 @@
       const hy = y0 + 0.6, hz = 0.07;
       curls(g, S, 0, hy + 0.01, hz - 0.06, 0.19, 14, 0.062, C);
       curls(g, S, 0, hy + 0.02, hz - 0.13, 0.08, 4, 0.065, C);
-      blob(g, S, [0, hy, hz], [0.17, 0.16, 0.15], L2, { ws: 10, hs: 7 });
+      blob(g, S, [0, hy, hz], [0.17, 0.16, 0.15], L2, { ws: 9, hs: 6 });
       mk(g, G3.rbox(0.17, 0.09, 0.1, 0.035), S, { p: [0, hy - 0.11, hz + 0.12], c: L2 });
       blob(g, S, [0, hy - 0.035, hz + 0.21], [0.045, 0.032, 0.03], C);
       for (const s of [-1, 1]) {
-        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.12], [0.042, 0.042, 0.035], '#dedad0', { ws: 9, hs: 6 });
+        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.12], [0.042, 0.042, 0.035], '#dedad0', { ws: 7, hs: 5 });
         blob(g, S, [s * 0.065, hy + 0.06, hz + 0.152], [0.016, 0.016, 0.01], '#5e5a50', { ws: 6, hs: 4 });
-        mk(g, G3.rbox(0.085, 0.025, 0.045, 0.01), S, { p: [s * 0.065, hy + 0.1, hz + 0.12], r: [0, 0, -s * 0.25], c: C });
+        mk(g, G3.cbox(0.09, 0.028, 0.05), S, { p: [s * 0.068, hy + 0.105, hz + 0.125], r: [0, 0, s * 0.3], c: C });
         blob(g, S, [s * 0.15, hy + 0.12, hz - 0.02], [0.04, 0.03, 0.025], C, { ws: 6, hs: 4 });
       }
       if (v === 0) {
-        mk(g, G3.cbox(0.12, 0.05, 0.03), S, { p: [0, hy - 0.16, hz + 0.155], c: '#4a463e', ao: 0.7 });
-        for (const s of [-1, 1]) mk(g, G3.cbox(0.02, 0.025, 0.02), S, { p: [s * 0.04, hy - 0.145, hz + 0.17], c: '#e4e0d4' });
-        mk(g, G3.rbox(0.14, 0.04, 0.09, 0.015), S, { p: [0, hy - 0.22, hz + 0.12], c: L2 });
-      } else mk(g, G3.rbox(0.13, 0.03, 0.08, 0.012), S, { p: [0, hy - 0.17, hz + 0.13], c: D });
+        blob(g, S, [0, hy - 0.165, hz + 0.15], [0.065, 0.035, 0.03], '#5a3a32', { ao: 0.75 });
+        for (const s of [-1, 1]) mk(g, G3.cyl(0.0, 0.012, 0.03, 4), S, { p: [s * 0.04, hy - 0.135, hz + 0.17], r: [PI, 0, 0], c: '#e4e0d4' });
+        blob(g, S, [0, hy - 0.2, hz + 0.12], [0.07, 0.025, 0.05], L2);
+      } else blob(g, S, [0, hy - 0.155, hz + 0.13], [0.065, 0.016, 0.045], D);
       curls(g, S, 0, hy - 0.24, hz + 0.09, 0.05, 3, 0.032, C, { sy: 0.5 });
       // collar with bell, tail curls
-      mk(g, G3.torus(0.13, 0.016, 4, 16), S, { p: [0, y0 + 0.45, 0.04], r: [PI / 2 - 0.35, 0, 0], c: D });
+      mk(g, G3.torus(0.13, 0.016, 3, 14), S, { p: [0, y0 + 0.45, 0.04], r: [PI / 2 - 0.35, 0, 0], c: D });
       blob(g, S, [0, y0 + 0.4, 0.17], [0.034, 0.034, 0.034], L2);
       for (let i = 0; i < 3; i++) blob(g, S, [0, y0 + 0.22 + i * 0.09, -0.19 - i * 0.015], [0.05, 0.045, 0.04], C, { ws: 7, hs: 5 });
       return tagged(bake(g, { ao: 0.4, aoH: 0.4 }));
@@ -1578,7 +1580,7 @@
       for (const s of [-1, 1]) {
         blob(g, S, [s * 0.07, hy + 0.035, hz + 0.13], [0.046, 0.046, 0.035], '#f2ece0', { ws: 9, hs: 6 });
         blob(g, S, [s * 0.07, hy + 0.035, hz + 0.163], [0.02, 0.02, 0.01], '#2a2418', { ws: 6, hs: 4 });
-        mk(g, G3.rbox(0.09, 0.025, 0.04, 0.01), S, { p: [s * 0.07, hy + 0.085, hz + 0.13], r: [0, 0, -s * 0.3], c: '#8a7a5a' });
+        mk(g, G3.cbox(0.09, 0.025, 0.04), S, { p: [s * 0.07, hy + 0.09, hz + 0.135], r: [0, 0, s * 0.25], c: '#8a7a5a' });
       }
       blob(g, S, [0, hy - 0.03, hz + 0.17], [0.05, 0.035, 0.035], '#b8a47e');
       // wide grin: red mouth, white teeth
@@ -1908,6 +1910,231 @@
       }
       return tagged(bake(g));
     },
+  });
+
+  // =================================================================================================
+  // dungeon / shrine puzzle props (2D art lives in gfx/interior.js but these stand outdoors too)
+  // =================================================================================================
+  // ---------------------------------------------------------------- chest 寶箱: lacquered, domed lid on brass straps; o.open swings the lid back
+  const CH = { w: 0.74, h: 0.4, d: 0.46, r: 0.23, open: -1.95 };
+  def('chest', {
+    key: (o) => (o.open ? 'open' : ''),
+    build(o) {
+      const g = new THREE.Group(), LQ = MAT('lacquer'), M = MAT('metal'), wood = '#7a3a20', brass = '#d4a548';
+      const { w, h, d } = CH, t = 0.03;
+      // body as five panels so the open chest has a real interior
+      mk(g, G3.box(w, 0.04, d), LQ, { p: [0, 0.05, 0], c: wood });
+      for (const s of [-1, 1]) { mk(g, G3.box(w, h - 0.05, t, 'x'), LQ, { p: [0, 0.05, s * (d / 2 - t / 2)], c: wood }); mk(g, G3.box(t, h - 0.05, d - 2 * t), LQ, { p: [s * (w / 2 - t / 2), 0.05, 0], c: wood }); }
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) mk(g, G3.box(0.08, 0.06, 0.08), LQ, { p: [sx * (w / 2 - 0.04), 0, sz * (d / 2 - 0.04)], c: '#4a2010' });
+      mk(g, G3.box(w + 0.02, 0.03, d + 0.02), LQ, { p: [0, 0.05, 0], c: '#5a2614' });
+      // brass straps, corner brackets, side ring handles, lock plate
+      for (const x of [-0.22, 0.22]) for (const s of [-1, 1]) mk(g, G3.box(0.05, h - 0.03, 0.008), M, { p: [x, 0.05, s * (d / 2 + 0.004)], c: brass });
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0.06, h - 0.07]) mk(g, G3.box(0.07, 0.07, 0.07), M, { p: [sx * (w / 2 - 0.03), y, sz * (d / 2 - 0.03)], s: [1.05, 1, 1.05], c: '#b88a38' });
+      for (const s of [-1, 1]) { mk(g, G3.torus(0.045, 0.008, 4, 12), M, { p: [s * (w / 2 + 0.012), 0.26, 0], r: [0, PI / 2, 0], c: brass }); mk(g, G3.cbox(0.012, 0.05, 0.05), M, { p: [s * (w / 2 + 0.004), 0.3, 0], c: brass }); }
+      mk(g, G3.rbox(0.11, 0.12, 0.016, 0.02), M, { p: [0, h - 0.15, d / 2 + 0.008], c: brass });
+      mk(g, G3.cbox(0.014, 0.04, 0.01), M, { p: [0, h - 0.09, d / 2 + 0.018], c: '#2a1806' });
+      if (o.open) {
+        // red silk lining and treasure: silver/gold 元寶 ingots, coins, pearls (faint glow)
+        mk(g, G3.box(w - 2 * t, 0.005, d - 2 * t), MAT('cloth'), { p: [0, 0.09, 0], c: '#8a1a1e' });
+        for (const s of [-1, 1]) mk(g, decal(w - 2 * t, h - 0.1), MAT('cloth'), { p: [0, 0.09, s * (d / 2 - t - 0.002)], r: [0, s > 0 ? PI : 0, 0], c: '#a8282c' });
+        const r = rng(8), GL = GLOW('treasure', null, 0.55);
+        for (let i = 0; i < 9; i++) {
+          const x = (r() - 0.5) * 0.5, z = (r() - 0.5) * 0.26, y = 0.12 + r() * 0.12 + (0.25 - abs(x)) * 0.25;
+          const ry = r() * PI;
+          blob(g, GL, [x, y, z], [0.06, 0.03, 0.035], i % 3 ? '#f2c050' : '#d8dce0', { r: [0, ry, 0] });
+          blob(g, GL, [x, y + 0.025, z], [0.025, 0.022, 0.022], i % 3 ? '#f8d070' : '#e8ecf0', { r: [0, ry, 0] });
+        }
+        for (let i = 0; i < 10; i++) mk(g, G3.cyl(0.025, 0.025, 0.006, 8), GL, { p: [(r() - 0.5) * 0.55, 0.12 + r() * 0.2, (r() - 0.5) * 0.3], r: [r() - 0.5, 0, r() - 0.5], c: '#e8b040' });
+        for (let i = 0; i < 5; i++) blob(g, GL, [(r() - 0.5) * 0.4, 0.3 + r() * 0.05, (r() - 0.5) * 0.2], [0.018, 0.018, 0.018], '#f4f0ff', { ws: 6, hs: 4 });
+      }
+      // lid on a hinge at the back top edge
+      const lid = part('lid', [0, h, -d / 2], (lg) => {
+        mk(lg, G3.box(w + 0.02, 0.06, d + 0.02), LQ, { p: [0, h, 0], c: '#86422a' });
+        const dome = new THREE.CylinderGeometry(CH.r, CH.r, w + 0.02, 18, 1, false, 0, PI); dome.rotateZ(PI / 2); dome.scale(1, 0.55, 1); projUV(dome, 'x');
+        mk(lg, dome, LQ, { p: [0, h + 0.06, 0], c: '#8a462c' });
+        for (const x of [-0.22, 0.22]) {
+          const st = new THREE.CylinderGeometry(CH.r + 0.006, CH.r + 0.006, 0.05, 18, 1, true, 0, PI); st.rotateZ(PI / 2); st.scale(1, 0.55, 1);
+          mk(lg, st, M, { p: [x, h + 0.06, 0], c: brass });
+          for (const s of [-1, 1]) mk(lg, G3.box(0.05, 0.062, 0.008), M, { p: [x, h - 0.001, s * (d / 2 + 0.014)], c: brass });
+        }
+        mk(lg, G3.cbox(0.06, 0.07, 0.012), M, { p: [0, h + 0.02, d / 2 + 0.016], c: brass }); // hasp
+        if (o.open) mk(lg, G3.box(w - 0.04, 0.005, d - 0.04), LQ, { p: [0, h - 0.004, 0], c: '#9a1c20' });
+      });
+      lid.rotation.x = o.open ? CH.open : 0;
+      const out = bake(g);
+      out.add(lid); // baked separately so it can swing on its hinge
+      return tagged(out);
+    },
+    update(node, o, t) {
+      const lid = node.getObjectByName('lid');
+      if (!lid || !o) return;
+      if (!o.open) { lid.rotation.x = 0; return; }
+      if (node.userData.t0 == null) node.userData.t0 = t;
+      const k2 = clamp((t - node.userData.t0) / 0.75, 0, 1);
+      lid.rotation.x = CH.open * (1 - Math.pow(1 - k2, 3)) + (k2 >= 1 ? 0 : sin(k2 * PI) * -0.06);
+    },
+    lights(o) { return o.open ? [{ x: 0, y: 0.55, z: 0.1, color: '#ffd27a', intensity: 0.7, distance: 2.4, flicker: 0.05 }] : []; },
+  });
+
+  // ---------------------------------------------------------------- switch 八卦機關: octagonal stone pressure plate; o.on glows and sinks
+  function baguaTex(glow) {
+    return TEX('bagua:' + (glow ? 'g' : 'c'), 256, 256, (g, w, h) => {
+      const r = rng(31), cx = w / 2, cy = h / 2;
+      if (glow) { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); } else {
+        g.fillStyle = '#a7a39a'; g.fillRect(0, 0, w, h);
+        speckle(g, w, h, r, 2200, '42,40,38', 0.2, 0.5, 1, 2); blotch(g, w, h, r, 10, '60,58,54', 0.18, 10, 50);
+      }
+      const ln = glow ? '#ffffff' : 'rgba(40,38,34,0.85)';
+      g.strokeStyle = ln; g.lineWidth = glow ? 5 : 4;
+      g.beginPath(); for (let k2 = 0; k2 <= 8; k2++) { const a = k2 / 8 * TAU + PI / 8; g.lineTo(cx + cos(a) * 118, cy + sin(a) * 118); } g.stroke();
+      // eight trigrams 八卦
+      for (let k2 = 0; k2 < 8; k2++) {
+        const a = k2 / 8 * TAU;
+        for (let j = 0; j < 3; j++) {
+          const rr = 72 + j * 13, broken = ((k2 >> j) & 1) === 1;
+          const px = cos(a) * rr, py = sin(a) * rr, tx = -sin(a) * 22, ty = cos(a) * 22;
+          g.lineWidth = 7;
+          if (broken) { g.beginPath(); g.moveTo(cx + px - tx, cy + py - ty); g.lineTo(cx + px - tx * 0.22, cy + py - ty * 0.22); g.moveTo(cx + px + tx * 0.22, cy + py + ty * 0.22); g.lineTo(cx + px + tx, cy + py + ty); g.stroke(); }
+          else { g.beginPath(); g.moveTo(cx + px - tx, cy + py - ty); g.lineTo(cx + px + tx, cy + py + ty); g.stroke(); }
+        }
+      }
+      // taiji 太極
+      const R = 40;
+      g.lineWidth = 4; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+      g.fillStyle = glow ? '#ffffff' : 'rgba(40,38,34,0.85)';
+      g.beginPath(); g.arc(cx, cy, R, -PI / 2, PI / 2); g.arc(cx, cy + R / 2, R / 2, PI / 2, -PI / 2, true); g.arc(cx, cy - R / 2, R / 2, PI / 2, PI * 1.5, false); g.fill();
+      g.beginPath(); g.arc(cx, cy - R / 2, R / 7, 0, TAU); g.fillStyle = glow ? '#000' : '#a7a39a'; g.fill();
+      g.beginPath(); g.arc(cx, cy + R / 2, R / 7, 0, TAU); g.fillStyle = glow ? '#fff' : 'rgba(40,38,34,0.85)'; g.fill();
+    }, 0, { wrap: false });
+  }
+  def('switch', {
+    key: (o) => (o.on ? 'on' : ''),
+    build(o) {
+      const g = new THREE.Group(), S = MAT('stone'), on = !!o.on;
+      const oct = (rt, rb, hh) => { const c = G3.cyl(rt, rb, hh, 8); c.rotateY(PI / 8); return c; };
+      mk(g, oct(0.45, 0.47, 0.05), S, { c: '#7e7a72' });
+      const py = on ? 0.035 : 0.065;
+      mk(g, oct(0.39, 0.4, py), S, { p: [0, 0.03, 0], c: '#9a968c' });
+      const face = new THREE.CircleGeometry(0.37, 8); face.rotateX(-PI / 2); face.rotateY(PI / 8);
+      const mat = on ? cached('baguaOn', () => vcEmit(env({ map: baguaTex(false), emissiveMap: baguaTex(true), emissive: new THREE.Color('#6ff0c4'), emissiveIntensity: 1.6, roughness: 0.9 })))
+        : TMAT('baguaOff', baguaTex(false), { roughness: 0.92 });
+      mk(g, face, mat, { p: [0, 0.03 + py + 0.002, 0], c: '#ffffff', noAO: true });
+      return tagged(bake(g, { ao: 0.2, aoH: 0.1 }));
+    },
+    lights(o) { return o.on ? [{ x: 0, y: 0.6, z: 0, color: '#7fe8c8', intensity: 0.7, distance: 3, flicker: 0.1 }] : []; },
+  });
+
+  // ---------------------------------------------------------------- brazier 火盆: bronze tripod bowl with coals, flames and sparks
+  def('brazier', {
+    build() {
+      const g = new THREE.Group(), M = MAT('metal'), bronze = '#9a7440';
+      mk(g, G3.lathe([[0, 0.5], [0.12, 0.505], [0.25, 0.56], [0.31, 0.65], [0.33, 0.72], [0.345, 0.74], [0.33, 0.745], [0.3, 0.68], [0.0, 0.65]], 18), M, { c: bronze });
+      mk(g, G3.torus(0.34, 0.016, 4, 22), M, { p: [0, 0.742, 0], r: [PI / 2, 0, 0], c: '#d8b066' });
+      mk(g, G3.torus(0.312, 0.012, 4, 22), M, { p: [0, 0.64, 0], r: [PI / 2, 0, 0], c: '#6a4a22' });
+      for (let i = 0; i < 3; i++) {
+        const a = i / 3 * TAU + PI / 2, c = cos(a), s = sin(a);
+        mk(g, G3.tube([V3(c * 0.18, 0.54, s * 0.18), V3(c * 0.27, 0.36, s * 0.27), V3(c * 0.29, 0.14, s * 0.29), V3(c * 0.35, 0.04, s * 0.35)], 0.03, 10, 6), M, { c: '#7a5a30' });
+        blob(g, M, [c * 0.37, 0.03, s * 0.37], [0.05, 0.03, 0.05], '#6a4a22');
+      }
+      for (const s of [-1, 1]) mk(g, G3.torus(0.05, 0.011, 4, 12), M, { p: [s * 0.36, 0.78, 0], r: [0, PI / 2, 0], c: '#c49a52' });
+      for (let i = 0; i < 9; i++) { const a = i * 2.4, d2 = (i % 3) * 0.08; mk(g, rock(0.05, 60 + i), GLOW('ember', null, 2.5), { p: [cos(a) * d2, 0.69, sin(a) * d2], c: i % 2 ? '#b8401a' : '#3a1206', noAO: true }); }
+      addFlames(g, 0, 0.7, 0, [0.48, 0.36, 0.32]);
+      g.add(particles('sparks', 10, 0, 0.95, 0, 11));
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+    lights() { return [{ x: 0, y: 1.05, z: 0, color: '#ff9a40', intensity: 1.8, distance: 7, flicker: 0.3 }]; },
+  });
+
+  // ---------------------------------------------------------------- pillar 紅柱: red lacquer column on a lotus 柱珠, teal capital with gold studs
+  def('pillar', {
+    build() {
+      const g = new THREE.Group(), S = MAT('stone'), LQ = MAT('lacquer'), M = MAT('metal');
+      mk(g, G3.rbox(0.66, 0.06, 0.66, 0.02), S, { c: '#8e897e' });
+      mk(g, G3.lathe([[0, 0.06], [0.3, 0.06], [0.32, 0.1], [0.33, 0.17], [0.3, 0.27], [0.25, 0.31], [0.23, 0.33], [0, 0.33]], 16), S, { c: '#b4afa4' });
+      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; blob(g, S, [cos(a) * 0.3, 0.2, sin(a) * 0.3], [0.05, 0.08, 0.03], '#c4bfb2', { r: [0, -a + PI / 2, 0] }); }
+      mk(g, G3.cyl(0.19, 0.205, 2.78, 16), LQ, { p: [0, 0.32, 0], c: '#b5281e' });
+      for (const y of [0.42, 2.92]) mk(g, G3.cyl(0.212, 0.212, 0.06, 16), M, { p: [0, y, 0], c: '#d9a441' });
+      mk(g, G3.rbox(0.54, 0.16, 0.54, 0.02), LQ, { p: [0, 3.08, 0], c: '#2e5a5a' });
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+        const a = i * PI / 2, x = (j - 1) * 0.15;
+        mk(g, G3.sphere(0.028, 7, 5), M, { p: [cos(a) * x + sin(a) * 0.272, 3.16, -sin(a) * x + cos(a) * 0.272], c: '#d9a441' });
+      }
+      mk(g, G3.rbox(0.44, 0.1, 0.44, 0.02), LQ, { p: [0, 3.24, 0], c: '#6a1410' });
+      mk(g, G3.rbox(0.6, 0.06, 0.6, 0.02), LQ, { p: [0, 3.34, 0], c: '#1c3a3a' });
+      return tagged(bake(g, { ao: 0.35, aoH: 0.6 }));
+    },
+  });
+
+  // ---------------------------------------------------------------- eternal_lamp 長明燈: stone pillar, bronze lamp-house, pale undying flame
+  def('eternal_lamp', {
+    build() {
+      const g = new THREE.Group(), S = MAT('stone'), M = MAT('metal');
+      const oct = (rt, rb, hh) => { const c = G3.cyl(rt, rb, hh, 8); c.rotateY(PI / 8); return c; };
+      mk(g, oct(0.3, 0.34, 0.12), S, { c: '#a8a398', top: ['#7a8a5a', 0.2] });
+      mk(g, oct(0.22, 0.25, 0.07), S, { p: [0, 0.12, 0], c: '#b4afa4' });
+      mk(g, oct(0.075, 0.085, 0.78), S, { p: [0, 0.19, 0], c: '#bab5a8' });
+      for (const y of [0.42, 0.7]) mk(g, oct(0.1, 0.1, 0.04), S, { p: [0, y, 0], c: '#c4bfb2' });
+      mk(g, G3.rbox(0.42, 0.07, 0.42, 0.015), S, { p: [0, 0.96, 0], c: '#c8c3b6' });
+      const hy = 1.03, hh = 0.36, hw = 0.14;
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) mk(g, G3.box(0.03, hh, 0.03), M, { p: [sx * hw, hy, sz * hw], c: '#8a6a3a' });
+      for (const y of [hy + 0.03, hy + hh - 0.06]) for (const r of [0, PI / 2]) for (const s of [-1, 1]) {
+        mk(g, G3.box(2 * hw, 0.014, 0.012), M, { p: r ? [s * hw, y, 0] : [0, y, s * hw], r: [0, r, 0], c: '#6a4e24' });
+        for (const t2 of [-0.5, 0, 0.5]) mk(g, G3.box(0.01, 0.06, 0.01), M, { p: r ? [s * hw, y - 0.045, t2 * hw] : [t2 * hw, y - 0.045, s * hw], c: '#6a4e24' });
+      }
+      mk(g, G3.box(0.34, 0.025, 0.34), M, { p: [0, hy, 0], c: '#8a6a3a' });
+      mk(g, G3.lathe([[0, 0], [0.04, 0.0], [0.055, 0.03], [0.05, 0.035], [0, 0.025]], 10), M, { p: [0, hy + 0.025, 0], c: '#a8803a' });
+      addFlames(g, 0, hy + 0.05, 0, [0.15], 'pale');
+      const roof = G3.flat(G3.lathe([[0, -0.01], [0.26, -0.01], [0.3, 0.035], [0.25, 0.055], [0.12, 0.13], [0.05, 0.17], [0, 0.18]], 4, 'native'));
+      roof.rotateY(PI / 4); projUV(roof);
+      mk(g, roof, M, { p: [0, hy + hh, 0], c: '#5f9384' });
+      mk(g, G3.sphere(0.035, 8, 6), M, { p: [0, hy + hh + 0.21, 0], c: '#e0b050' });
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+    lights() { return [{ x: 0, y: 1.2, z: 0, color: '#ffe2a8', intensity: 1, distance: 4.5, flicker: 0.06 }]; },
+  });
+
+  // ---------------------------------------------------------------- soul_jar 鎮魂罐: talisman-sealed glass jar with a trapped blue soul-light
+  function talismanTex() {
+    return TEX('talisman', 64, 256, (g, w, h) => {
+      const r = rng(66);
+      const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#f6dc6a'); gr.addColorStop(1, '#d4b040');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      speckle(g, w, h, r, 300, '120,80,20', 0.1, 0.3, 1, 2);
+      ink(g, '敕令', w / 2, 46, 24, '#b8241c', { spacing: 1.05 });
+      g.strokeStyle = '#b8241c'; g.lineWidth = 3; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(w / 2, 82); g.lineTo(w / 2, 240);
+      for (let y = 100; y < 230; y += 26) { g.moveTo(w / 2 - 14, y); g.quadraticCurveTo(w / 2 + 18, y + 6, w / 2 - 12, y + 16); }
+      g.stroke();
+    }, 0, { wrap: false });
+  }
+  def('soul_jar', {
+    build() {
+      const g = new THREE.Group(), M = MAT('metal');
+      mk(g, G3.lathe([[0, 0], [0.27, 0], [0.29, 0.03], [0.27, 0.07], [0.22, 0.08], [0, 0.08]], 16), MAT('wood'), { c: '#4a2c1a' });
+      const prof = [[0.17, 0.08], [0.27, 0.16], [0.3, 0.28], [0.28, 0.4], [0.2, 0.5], [0.15, 0.55], [0.155, 0.6]];
+      const glass = cached('glass', () => env({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.05, metalness: 0.1, depthWrite: false, side: THREE.DoubleSide, cutout: false }));
+      mk(g, G3.lathe(prof, 20, 'native'), glass, { c: '#d4f0ff', noAO: true, cast: false });
+      mk(g, G3.lathe([[0, 0.6], [0.17, 0.6], [0.175, 0.64], [0.12, 0.665], [0.05, 0.68], [0.035, 0.71], [0.04, 0.73], [0, 0.735]], 14), M, { c: '#c69a52' });
+      mk(g, G3.torus(0.158, 0.009, 4, 16), M, { p: [0, 0.56, 0], r: [PI / 2, 0, 0], c: '#a8221a' }); // red cord
+      // talisman 符 sealing the lid: over the top and down the front, following the jar's profile
+      const tl = new THREE.PlaneGeometry(0.075, 0.5, 1, 14), P = tl.attributes.position;
+      const rAt = (y) => { for (let i = 1; i < prof.length; i++) if (y <= prof[i][1]) { const a = prof[i - 1], b = prof[i]; return lerp(a[0], b[0], (y - a[1]) / (b[1] - a[1])); } return 0.155; };
+      for (let i = 0; i < P.count; i++) {
+        const v = (P.getY(i) + 0.25) / 0.5; // 0 bottom … 1 top
+        const y = lerp(0.3, 0.74, v);
+        if (y > 0.6) { const u = (y - 0.6) / 0.14; P.setXYZ(i, P.getX(i), 0.6 + sin(u * PI / 2) * 0.13, cos(u * PI / 2) * 0.17 + 0.004); }
+        else P.setXYZ(i, P.getX(i), y, rAt(y) + 0.006);
+      }
+      tl.computeVertexNormals();
+      mk(g, tl, TMAT('talisman', talismanTex(), { roughness: 0.85, side: THREE.DoubleSide }), { c: '#ffffff', cast: false });
+      addFlames(g, 0, 0.17, 0, [0.22, 0.15], 'blue');
+      g.add(particles('motes', 9, 0, 0.32, 0, 13));
+      return tagged(bake(g, { ao: 0.3 }));
+    },
+    update(node, o, t) { tick(t); },
+    lights() { return [{ x: 0, y: 0.35, z: 0, color: '#5ab8ff', intensity: 1, distance: 3.6, flicker: 0.25 }]; },
   });
 
   // exported for the test harness / other teams
