@@ -150,18 +150,18 @@
     return e;
   }
   defE('c9_drowned', {
-    name: '溺魂', art: 'water_ghost', variant: 1, lv: 30, elem: 'water', weak: ['earth'], resist: ['water'], m: { hp: 0.95, atk: 0.95, mag: 0.9 },
+    name: '溺魂', art: 'water_ghost', variant: 1, lv: 30, elem: 'water', weak: ['earth'], resist: ['water'], m: { hp: 0.95, atk: 0.95, mag: 0.9, exp: 1.53 },
     skills: [['c9_es_drag', 3], ['c9_es_wail', 2], ['e_claw', 1]], drops: [['shimuyu', 0.15]],
     desc: '從府城那邊的海被逆潮推到打狗來的溺死者。他們以為自己終於到家了。',
   });
   defE('c9_sea_wisp', {
-    name: '海霧魂', art: 'sea_wisp', variant: 2, lv: 30, elem: 'water', weak: ['earth'], m: { hp: 0.7, atk: 0.7, mag: 1.1, spd: 1.3 },
+    name: '海霧魂', art: 'sea_wisp', variant: 2, lv: 30, elem: 'water', weak: ['earth'], m: { hp: 0.7, atk: 0.7, mag: 1.1, spd: 1.3, exp: 1.19 },
     skills: [['c9_es_mist', 1], ['c9_es_chill', 3]], drops: [['c9_xiancaodong', 0.15]],
     desc: '夜裡海面上一點一點的藍火。靠近了，才看出是一張張濕淋淋的臉。',
   });
   defE('c9_greed_big', {
     name: '大肚貪鬼', art: 'greed_ghost', variant: 1, scale: 1.6, lv: 31, elem: 'earth', weak: ['wood'], resist: ['earth', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 10.7, atk: 3.35, mag: 3.0, def: 1.15, spd: 1.75, luk: 2, exp: 5, gold: 8 }, // sim_story: was hp 7 atk 1.9 mag 1.7 spd 1
+    m: { hp: 10.7, atk: 3.35, mag: 3.0, def: 1.15, spd: 1.75, luk: 2, exp: 14.5, gold: 8 }, // sim_story: was hp 7 atk 1.9 mag 1.7 spd 1
     skills: [['c9_es_devour', 2], ['c9_es_belly', 3], ['e_greed_grab', 3], ['c9_es_gorge', 1, 'hp<60']],
     drops: [['c9_mat_banpingshi', 1]],
     desc: '白拿了幾百年的貪鬼，肚子裡隱約有半座山的輪廓。從來沒有吃飽過。',
@@ -173,7 +173,7 @@
   });
   defE('c9_plague_chief', {
     name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 31, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 11.7, atk: 3.05, mag: 2.95, def: 1.1, spd: 1.85, exp: 7, gold: 6 }, // sim_story: was hp 8 atk 1.8 mag 1.75 spd 1.1
+    m: { hp: 11.7, atk: 3.05, mag: 2.95, def: 1.1, spd: 1.85, exp: 16.1, gold: 14.2 }, // sim_story: was hp 8 atk 1.8 mag 1.75 spd 1.1
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
     drops: [['c9_baicaogao', 1]],
     desc: '數十隻瘟鬼疊成的駝背身影。咳嗽聲像一整個村子在咳。',
@@ -189,7 +189,7 @@
   }
   defE('c9_fallwind', {
     name: '落山風靈', art: 'fallwind', lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.6, atk: 2.55, mag: 2.55, def: 1.1, spd: 1.6, exp: 7, gold: 7 }, // sim_story: was hp 7.5 atk/mag 2.0 spd 1.25
+    m: { hp: 8.6, atk: 2.55, mag: 2.55, def: 1.1, spd: 1.6, exp: 15.2, gold: 15.2 }, // sim_story: was hp 7.5 atk/mag 2.0 spd 1.25
     skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]],
     phases: [{ at: 0.5, summon: ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'], skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]] }],
     drops: [['c9_mat_fengshi', 1], ['c9_hd_fenggu', 1]],

@@ -82,13 +82,31 @@ G.Audio = (() => {
     return buf;
   }
 
+  // attack / decay / sustain / release. A note that ends before its decay is over releases from wherever the
+  // decay had got to (the old order of events let such a note swell back up to the sustain level after its
+  // release and hold it until the oscillator stopped — an audible click on short bass/erhu notes).
   function env(g, t, a, peak, d, sus, r, end) {
-    g.gain.cancelScheduledValues(t);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(peak, t + a);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * sus), t + a + d);
-    g.gain.setValueAtTime(Math.max(0.0001, peak * sus), end);
-    g.gain.exponentialRampToValueAtTime(0.0001, end + r);
+    const p = g.gain;
+    p.cancelScheduledValues(t);
+    p.setValueAtTime(0.0001, t);
+    p.linearRampToValueAtTime(peak, t + a);
+    end = Math.max(end, t + a);
+    const s = Math.max(0.0001, peak * sus);
+    if (end >= t + a + d) { p.exponentialRampToValueAtTime(s, t + a + d); p.setValueAtTime(s, end); }
+    else if (end > t + a) p.exponentialRampToValueAtTime(Math.max(0.0001, peak * Math.pow(sus, (end - t - a) / d)), end);
+    p.exponentialRampToValueAtTime(0.0001, end + r);
+  }
+  // per-pitch variation (vibrato rate etc.) without Math.random, so a loop renders the same every pass
+  const vary = (midi, k) => ((midi * 7 + k * 3) % 11) / 10;
+  // delayed vibrato on a detune param (cents, so every partial moves by the same ratio)
+  function vibrato(t, dur, rate, cents, params, delay = 0.18) {
+    const v = ac.createOscillator(); v.frequency.value = rate;
+    const vg = ac.createGain();
+    const on = t + Math.min(delay, dur * 0.35), full = t + Math.min(delay + 0.5, dur * 0.85);
+    vg.gain.setValueAtTime(0, t); vg.gain.setValueAtTime(0, on); vg.gain.linearRampToValueAtTime(dur > 0.3 ? cents : cents * 0.25, full);
+    v.connect(vg);
+    for (const p of params) vg.connect(p);
+    return v;
   }
 
   // ---- instruments --------------------------------------------------------
@@ -100,7 +118,10 @@ G.Audio = (() => {
       src.playbackRate.setValueAtTime(0.985, t);
       src.playbackRate.linearRampToValueAtTime(1, t + 0.06);
       const g = ac.createGain(); g.gain.value = vol * 0.9;
-      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
+      // nail-bright attack whose upper partials die away faster than the fundamental
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(6500, t);
+      lp.frequency.setTargetAtTime(Math.min(5200, freq(midi) * 4 + 900), t + 0.02, 0.35);
       src.connect(lp); lp.connect(g); g.connect(out);
       src.start(t); src.stop(t + Math.min(3, dur + 1.6));
       return g;
@@ -109,49 +130,100 @@ G.Audio = (() => {
       const src = ac.createBufferSource();
       src.buffer = ksBuffer(midi, 0.85, Math.min(1.6, dur + 0.6));
       const g = ac.createGain(); g.gain.value = vol * 0.8;
-      src.connect(g); g.connect(out);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(8000, t);
+      lp.frequency.setTargetAtTime(Math.min(6000, freq(midi) * 5 + 1200), t + 0.01, 0.2);
+      src.connect(lp); lp.connect(g); g.connect(out);
       src.start(t); src.stop(t + Math.min(1.6, dur + 0.6));
       return g;
     },
+    // 笛子: sine body + octave triangle + a touch of 3rd harmonic (the 笛膜 buzz), a breathy chiff at the
+    // onset that settles into a thin air stream, a small scoop up to pitch, and a delayed breath vibrato
+    // (pitch + a little amplitude) that only blooms on held notes
     dizi(t, midi, dur, vol, out) {
-      const o = ac.createOscillator(); o.type = 'sine';
-      const o2 = ac.createOscillator(); o2.type = 'triangle';
       const f = freq(midi);
-      o.frequency.value = f; o2.frequency.value = f * 2;
-      const vib = ac.createOscillator(); vib.frequency.value = 5.2;
-      const vg = ac.createGain(); vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + Math.min(0.5, dur * 0.6));
-      vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const o2 = ac.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f * 2;
+      const o3 = ac.createOscillator(); o3.type = 'sine'; o3.frequency.value = f * 3;
+      for (const x of [o, o2, o3]) { x.detune.setValueAtTime(-22, t); x.detune.linearRampToValueAtTime(0, t + 0.045); }
       const g = ac.createGain();
       const g2 = ac.createGain(); g2.gain.value = 0.12;
-      o.connect(g); o2.connect(g2); g2.connect(g);
-      // breath noise
-      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 2;
-      const ng = ac.createGain(); ng.gain.value = 0.05;
-      n.connect(bp); bp.connect(ng); ng.connect(g);
+      const g3 = ac.createGain(); g3.gain.value = midi > 84 ? 0.02 : 0.05;
+      o.connect(g); o2.connect(g2); g2.connect(g); o3.connect(g3); g3.connect(g);
+      const vib = vibrato(t, dur, 5.0 + vary(midi, 1) * 0.6, 16, [o.detune, o2.detune, o3.detune]);
+      const ag = ac.createGain();                  // breath pulse riding on the vibrato
+      const pulse = dur > 0.4 ? vol * 0.5 * 0.05 : 0;
+      ag.gain.setValueAtTime(0, t); ag.gain.linearRampToValueAtTime(pulse, t + Math.min(0.7, dur * 0.7));
+      ag.gain.linearRampToValueAtTime(0, t + dur);
+      vib.connect(ag); ag.connect(g.gain);
       env(g, t, 0.06, vol * 0.5, 0.15, 0.8, 0.18, t + dur);
       g.connect(out);
+      // breath: a chiff on the attack, then a faint air stream for the length of the note
+      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(5000, Math.max(1400, f * 2.2)); bp.Q.value = 1.1;
+      const ng = ac.createGain();
+      env(ng, t, 0.012, vol * 0.12, 0.09, 0.18, 0.15, t + dur);
+      n.connect(bp); bp.connect(ng); ng.connect(out);
       const end = t + dur + 0.3;
-      o.start(t); o2.start(t); vib.start(t); n.start(t);
-      o.stop(end); o2.stop(end); vib.stop(end); n.stop(end);
+      for (const x of [o, o2, o3, vib, n]) { x.start(t); x.stop(end); }
       return g;
     },
-    erhu(t, midi, dur, vol, out) {
+    // 二胡: bowed saw through a body filter. Slides (滑音) in from the previous note when the sequencer passes
+    // x.from, otherwise scoops up a little; the bow bites (filter opens) on the attack with a breath of rosin
+    // noise; vibrato starts after the note has settled.
+    erhu(t, midi, dur, vol, out, x) {
       const f = freq(midi);
       const o = ac.createOscillator(); o.type = 'sawtooth';
-      o.frequency.setValueAtTime(f * 0.97, t);
-      o.frequency.linearRampToValueAtTime(f, t + 0.08);
-      const vib = ac.createOscillator(); vib.frequency.value = 5.8;
-      const vg = ac.createGain(); vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.018, t + Math.min(0.6, dur * 0.7));
-      vib.connect(vg); vg.connect(o.frequency);
-      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = f * 4; lp.Q.value = 1.5;
+      const from = x && x.from;
+      if (from && from !== midi) {
+        const st = Math.min(0.05 + 0.012 * Math.abs(from - midi), dur * 0.4);
+        o.frequency.setValueAtTime(freq(from), t);
+        o.frequency.exponentialRampToValueAtTime(f, t + st);
+      } else {
+        o.frequency.setValueAtTime(f * 0.97, t);
+        o.frequency.linearRampToValueAtTime(f, t + 0.08);
+      }
+      const vib = vibrato(t, dur, 5.4 + vary(midi, 2) * 0.5, 24, [o.detune], 0.15);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.5;
+      lp.frequency.setValueAtTime(f * 2.4, t); lp.frequency.exponentialRampToValueAtTime(f * 4, t + 0.12);
       const pk = ac.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 1100; pk.gain.value = 6;
       const g = ac.createGain();
       o.connect(lp); lp.connect(pk); pk.connect(g);
+      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.9;
+      const ng = ac.createGain();
+      env(ng, t, 0.02, 0.14, 0.12, 0.2, 0.15, t + dur);
+      n.connect(bp); bp.connect(ng); ng.connect(pk);
       env(g, t, 0.12, vol * 0.32, 0.2, 0.85, 0.25, t + dur);
       g.connect(out);
-      o.start(t); vib.start(t);
-      o.stop(t + dur + 0.4); vib.stop(t + dur + 0.4);
+      const end = t + dur + 0.4;
+      for (const s of [o, vib, n]) { s.start(t); s.stop(end); }
+      return g;
+    },
+    // a hummed "oo" (白芷's voice in 渡魂謠): sine + saw through a soft vowel filter, sung portamento, late vibrato
+    voice(t, midi, dur, vol, out, x) {
+      const f = freq(midi);
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      const o2 = ac.createOscillator(); o2.type = 'sine';
+      const from = x && x.from;
+      for (const s of [o, o2]) {
+        if (from && from !== midi) {
+          s.frequency.setValueAtTime(freq(from), t);
+          s.frequency.exponentialRampToValueAtTime(f, t + Math.min(0.06 + 0.012 * Math.abs(from - midi), dur * 0.4));
+        } else { s.frequency.value = f; s.detune.setValueAtTime(-30, t); s.detune.linearRampToValueAtTime(0, t + 0.09); }
+      }
+      const vib = vibrato(t, dur, 4.9 + vary(midi, 3) * 0.4, 18, [o.detune, o2.detune], 0.25);
+      const gs = ac.createGain(); gs.gain.value = 0.45;
+      const gn = ac.createGain(); gn.gain.value = 0.9;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(2200, Math.max(1000, f * 2.2)); lp.Q.value = 0.5;
+      const f2 = ac.createBiquadFilter(); f2.type = 'peaking'; f2.frequency.value = 780; f2.Q.value = 1.4; f2.gain.value = 5;
+      const f3 = ac.createBiquadFilter(); f3.type = 'peaking'; f3.frequency.value = 2900; f3.Q.value = 2.5; f3.gain.value = 4;
+      const g = ac.createGain();
+      o.connect(gs); o2.connect(gn); gs.connect(lp); gn.connect(lp); lp.connect(f2); f2.connect(f3); f3.connect(g);
+      env(g, t, 0.16, vol * 0.3, 0.3, 0.85, 0.4, t + dur);
+      g.connect(out);
+      const end = t + dur + 0.5;
+      for (const s of [o, o2, vib]) { s.start(t); s.stop(end); }
       return g;
     },
     pad(t, midi, dur, vol, out) {
@@ -244,8 +316,9 @@ G.Audio = (() => {
     },
   };
 
-  // dryOut / wetOut: optional destination nodes (used by the music engine for per-song faders)
-  function playNote(instName, t, midi, dur, vol, toReverb = 0.5, dryOut, wetOut) {
+  // dryOut / wetOut: optional destination nodes (used by the music engine for per-song faders);
+  // x: optional per-note extras from the sequencer ({ from: midi } = slide in from that pitch)
+  function playNote(instName, t, midi, dur, vol, toReverb = 0.5, dryOut, wetOut, x) {
     if (!ac || !inst[instName]) return;
     const out = ac.createGain();
     out.gain.value = 1;
@@ -254,7 +327,7 @@ G.Audio = (() => {
       const s = ac.createGain(); s.gain.value = toReverb;
       out.connect(s); s.connect(wetOut || reverbSend);
     }
-    inst[instName](t, midi, dur, vol, out);
+    inst[instName](t, midi, dur, vol, out, x);
   }
 
   // ---- sound effects -----------------------------------------------------------

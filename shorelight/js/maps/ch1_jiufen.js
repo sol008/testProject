@@ -106,7 +106,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   EN.c1_foreman = mkEnemy({
     name: '工頭魂・金貴仔', art: 'miner_ghost', variant: 2, scale: 1.5, lv: 3, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 5.2, atk: 2.0, mag: 1.4, def: 1.1, spd: 1.4, exp: 7, gold: 4 }, // tools/sim_story.js: was hp 4.1 atk 1.4 spd 1 (never threatened a careful player)
+    m: { hp: 5.2, atk: 2.0, mag: 1.4, def: 1.1, spd: 1.4, exp: 7, gold: 10.3 }, // tools/sim_story.js: was hp 4.1 atk 1.4 spd 1 (never threatened a careful player)
     skills: [['e_pickaxe', 5], ['c1_e_gold_dust', 2], ['c1_e_big_pick', 1]],
     phases: [{ at: 0.5, heal: 0.15, lines: [['工頭魂', '攏是我的！攏是我的！']], buffs: [{ stat: 'atk', amt: 0.3, turns: 3 }] }],
     desc: '舊金礦坑的工頭「金貴仔」。死了也抱著金塊不放，腰上還掛著算盤。被金子附了身，是「金」性的魂——金驚火。',
@@ -239,10 +239,7 @@
 
   // =================================================================================================== sound
   // 渡魂謠 on a lone dizi over a soft drone (same melody as the prologue)
-  const DUHUN = 'a4:4 c5:2 d5:2 e5:6 g5:2 | e5:4 d5:2 c5:2 d5:8 | a4:4 c5:2 d5:2 e5:4 g5:2 a5:2 | g5:4 e5:2 d5:2 e5:8 |' +
-    ' a5:6 g5:2 e5:4 d5:4 | c5:2 d5:2 e5:2 g5:2 d5:8 | c5:4 d5:2 c5:2 a4:4 g4:2 c5:2 | a4:12 -:4';
-  const DUHUN_CH = [['a3', 'c4', 'e4'], ['g3', 'b3', 'd4'], ['a3', 'c4', 'e4'], ['e3', 'g3', 'b3'],
-    ['f3', 'a3', 'c4'], ['g3', 'b3', 'd4'], ['d3', 'f3', 'a3'], ['a3', 'c4', 'e4']];
+  const { duhun: DUHUN, duhunChords: DUHUN_CH } = G.Music.themes;   // 渡魂謠 lives in js/core/music.js
   const Snd = {
     nb: null, lull: null,
     ac() { const a = G.Audio && G.Audio.ctx; return a && a.state === 'running' && G.Audio.musicBus && G.Audio.musicBus() ? a : null; },
@@ -4264,7 +4261,7 @@
     await S.say('chenbo:serious', '白芷姑娘，唱吧。我來渡。');
     await S.say('baizhi:surprise', '……你知道我的名字？');
     await S.say('chenbo:normal', '星河一路叫得那麼大聲，聾子都聽到了。');
-    S.bgm('love');
+    S.bgm('duhun');
     await S.say('', '白芷唱起渡魂謠。陳伯把引魂槳插進石階的縫裡，雙手握住。');
     await S.say('chenbo:serious', '黑水茫茫，莫再回頭。');
     await S.say('chenbo:serious', '引魂人陳渡，在此——渡！');

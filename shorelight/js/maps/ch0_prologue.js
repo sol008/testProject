@@ -36,10 +36,7 @@
 
   // =================================================================================================== sound
   // The synth has no wave / chime samples: build them from noise and the shared instruments.
-  const DUHUN = 'a4:4 c5:2 d5:2 e5:6 g5:2 | e5:4 d5:2 c5:2 d5:8 | a4:4 c5:2 d5:2 e5:4 g5:2 a5:2 | g5:4 e5:2 d5:2 e5:8 |' +
-    ' a5:6 g5:2 e5:4 d5:4 | c5:2 d5:2 e5:2 g5:2 d5:8 | c5:4 d5:2 c5:2 a4:4 g4:2 c5:2 | a4:12 -:4';
-  const DUHUN_CH = [['a3', 'c4', 'e4'], ['g3', 'b3', 'd4'], ['a3', 'c4', 'e4'], ['e3', 'g3', 'b3'],
-    ['f3', 'a3', 'c4'], ['g3', 'b3', 'd4'], ['d3', 'f3', 'a3'], ['a3', 'c4', 'e4']];
+  const { duhun: DUHUN, duhunChords: DUHUN_CH } = G.Music.themes;   // 渡魂謠 lives in js/core/music.js
   const Snd = {
     nb: null, lull: null,
     ac() { const a = G.Audio && G.Audio.ctx; return a && a.state === 'running' && G.Audio.musicBus() ? a : null; },

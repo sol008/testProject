@@ -208,7 +208,7 @@
   }
   enemy('c7_bear_boss', {
     name: '黑熊精（潮病）', art: 'bear_spirit', lv: 24, elem: 'earth', boss: true, immune: BOSS_IMM, endAt: 0.3,
-    m: { hp: 16.2, atk: 3.6, mag: 2.05, def: 1.2, spd: 2.05, exp: 5, gold: 4 }, // sim_story: was hp 9 atk 1.75 mag 1 spd 1
+    m: { hp: 16.2, atk: 3.6, mag: 2.05, def: 1.2, spd: 2.05, exp: 27.1, gold: 33.2 }, // sim_story: was hp 9 atk 1.75 mag 1 spd 1
     skills: [['e_bear_swipe', 3], ['e_bear_roar', 1], ['e_claw', 2]], drops: [['c7_mat_bear', 1]],
     phases: [{ at: 0.5, text: '黑熊精胸前的黑水沸騰起來——黑潮狂怒！', buffs: [{ stat: 'atk', amt: 0.3, turns: 8 }] }],
     desc: '胸前的白色 V 字斑紋被黑水染污，眼角淌著黑色的水。牠不是獵物——牠是病了。',
@@ -222,7 +222,7 @@
   });
   enemy('c7_heart_yg', {
     name: '心魔・雲歸', sprite: 'yungui', lv: 25, elem: 'wood', weak: ['metal'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.1, atk: 1.45, mag: 3.4, def: 1.0, spd: 2.05, exp: 4, gold: 0 }, // sim_story: was hp 5.2 atk 0.8 mag 1.9 spd 1.15
+    m: { hp: 8.1, atk: 1.45, mag: 3.4, def: 1.0, spd: 2.05, exp: 25.2, gold: 0 }, // sim_story: was hp 5.2 atk 0.8 mag 1.9 spd 1.15
     skills: [['c7_e_yg_wulei', 2], ['c7_e_yg_ding', 1], ['c7_e_yg_fu_wood', 2]], drops: [['c7_huiqi', 1]],
     phases: [{ at: 0.5, lines: [['心魔・雲歸', '你連我都打不贏，還想找他？']] }],
     desc: '不喝酒、不偷懶、不玩物喪志。他是雲歸以為師父想要的那個弟子。',
@@ -239,7 +239,7 @@
   });
   enemy('c7_lightless', {
     name: '無光之影', sprite: 'xinghe', scale: 1.3, lv: 26, elem: 'water', weak: ['fire'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 13.3, atk: 2.75, mag: 3.25, def: 1.1, spd: 2.05, exp: 6, gold: 0 }, // sim_story: was hp 9 atk 1.6 mag 1.9 spd 1.2
+    m: { hp: 13.3, atk: 2.75, mag: 3.25, def: 1.1, spd: 2.05, exp: 26.4, gold: 0 }, // sim_story: was hp 9 atk 1.6 mag 1.9 spd 1.2
     skills: [['c7_e_xideng', 3], ['c7_e_heichao', 2], ['c7_e_jieguang', 1], ['attack', 1]], drops: [['c7_ac_xinghuo', 1]],
     phases: [{
       at: 0.5, lines: [['無光之影', '你明明……只是一個燈籠舖的學徒……'], ['xinghe:smile', '對啊。所以我最會點燈了！']],
@@ -249,7 +249,7 @@
   });
   enemy('c7_jiao_boss', {
     name: '蛟', art: 'jiao', lv: 26, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.5, atk: 3.6, mag: 3.4, def: 1.15, spd: 2.0, exp: 5, gold: 5 }, // sim_story: was atk 1.8 mag 1.7 spd 1
+    m: { hp: 8.5, atk: 3.6, mag: 3.4, def: 1.15, spd: 2.0, exp: 26.4, gold: 34.9 }, // sim_story: was atk 1.8 mag 1.7 spd 1
     skills: [['e_jiao_bite', 3], ['c7_e_jiao_tail', 2], ['attack', 1]], drops: [['c7_mat_jiao', 1]],
     desc: '長著角的巨大水蛇，鱗片上纏著黑色的水草，眼中淌著黑水。湖底的老東西也被潮病染了。',
   });
@@ -262,7 +262,7 @@
   });
   enemy('c7_dark_seal', {
     name: '冥燈印', art: 'ghost_lantern', variant: 2, lv: 27, elem: 'water', weak: ['fire'], resist: ['water'], immune: BOSS_IMM,
-    m: { hp: 5.5, atk: 0.95, mag: 2.5, def: 1.1, spd: 1.65, exp: 12, gold: 10 }, // sim_story: was atk 0.6 mag 1.6 spd 1.05
+    m: { hp: 5.5, atk: 0.95, mag: 2.5, def: 1.1, spd: 1.65, exp: 14.3, gold: 28.5 }, // sim_story: was atk 0.6 mag 1.6 spd 1.05
     skills: [['c7_e_seal_fire', 1]], drops: [['c7_key_taixu_book', 1]],
     phases: [
       { at: 0.5, lines: [['qingxu:serious', '五雷——轟頂！']] },
@@ -916,7 +916,7 @@
       particles: [{ type: 'mist', density: 0.5 }, { type: 'motes', density: 0.5 }],
       tiles: g.rows(),
       objects: g.objs,
-      chests: [{ id: 'c7_ss_a', x: 6, y: 4, item: 'jinchuang', n: 2 }],
+      chests: [{ id: 'c7_ss_a', x: 6, y: 4, gold: 1500, item: 'jinchuang', n: 2 }],
       npcs: [
         { id: 'ss_buffalo', sprite: 'buffalo', x: 18, y: 9, dir: 'left', wander: 1, name: '水牛', talk: async (S) => {
           await S.say('', '水牛慢慢嚼著草，對逃亡、燈火、命運都毫無興趣。');
@@ -1211,7 +1211,7 @@
       ['hongying:surprise', '……！'],
       ['yungui:normal', '聽到了。打到牠站不起來就停手，剩下的交給我的淨化符。'],
     ]);
-    const r = await S.battle('t_c7_bear', { bgmAfter: null });
+    const r = await S.battle('t_c7_bear', { bgmAfter: null, rewards: true }); // ends at 30 % (endAt): the reward is still given
     if (r !== 'win') return;
     S.flag('ch7_bear_freed');
     stage(S, [['player', 23, 10, 'up'], ['hongying', 22, 10, 'up'], ['yungui', 24, 10, 'up'], ['yuyuan', 23, 11, 'up']]);
@@ -1718,7 +1718,7 @@
       }),
       particles: (st) => (st.flags.ch7_seaofclouds ? [{ type: 'mist', density: 0.8 }, { type: 'leaves', density: 0.5 }, { type: 'motes', density: 0.5 }] : [{ type: 'mist', density: 1.6 }, { type: 'motes', density: 0.6 }]),
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_af_d', x: 24, y: 20, item: 'c7_shanshen', n: 2 }, { id: 'c7_af_e', x: 5, y: 36, item: 'huanhunxiang', n: 1 }],
+      chests: [{ id: 'c7_af_d', x: 24, y: 20, gold: 1200, item: 'c7_shanshen', n: 2 }, { id: 'c7_af_e', x: 5, y: 36, item: 'huanhunxiang', n: 1 }],
       enemies: [
         { id: 'af1', troop: 't_c7_mist', x: 30, y: 30, art: 'fog_spirit', lv: 23, radius: 3 },
         { id: 'af2', troop: 't_c7_eyes', x: 10, y: 17, art: 'hundred_eye', lv: 24, radius: 3 },
@@ -1895,7 +1895,7 @@
       lights: lightsWith([]),
       particles: [{ type: 'wind', density: 0.5 }, { type: 'snow', density: 0.12 }, { type: 'mist', density: 0.6 }],
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_ys_e', x: 36, y: 32, item: 'c7_ac_tiegu' }, { id: 'c7_ys_f', x: 40, y: 4, item: 'c7_sw_chixia' }],
+      chests: [{ id: 'c7_ys_e', x: 36, y: 32, gold: 1000, item: 'c7_ac_tiegu' }, { id: 'c7_ys_f', x: 40, y: 4, item: 'c7_sw_chixia' }],
       npcs: [],
       enemies: [
         { id: 'ys1', troop: 't_c7_peak2', x: 28, y: 42, art: 'fog_spirit', variant: 1, lv: 24, radius: 3 },
@@ -2367,7 +2367,7 @@
       lights: lightsWith([]),
       particles: [{ type: 'mist', density: 2.0 }, { type: 'motes', density: 0.8 }, { type: 'rain', density: 0.06 }],
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_cf_g', x: 26, y: 38, item: 'c7_yunwu', n: 2 }, { id: 'c7_cf_h', x: 36, y: 4, item: 'c7_fn_qinglan' }],
+      chests: [{ id: 'c7_cf_g', x: 26, y: 38, gold: 1000, item: 'c7_yunwu', n: 2 }, { id: 'c7_cf_h', x: 36, y: 4, item: 'c7_fn_qinglan' }],
       enemies: [
         { id: 'cf1', troop: 't_c7_cloud', x: 25, y: 34, art: 'serpent_shade', lv: 25, radius: 2 },
         { id: 'cf2', troop: 't_c7_cloud2', x: 13, y: 18, art: 'mushroom_imp', variant: 2, lv: 25, radius: 2 },
@@ -4431,7 +4431,7 @@
       lights: lightsWith(() => [{ x: C7.leo.x, y: C7.leo.y - 0.5, r: 230, color: '#cfd8ff', flicker: 0.15 }]),
       particles: [{ type: 'mist', density: 2.4 }, { type: 'motes', density: 0.8 }],
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_sm_i', x: 6, y: 30, item: 'c7_ac_huyue' }, { id: 'c7_sm_j', x: 25, y: 12, item: 'huanhundan' }],
+      chests: [{ id: 'c7_sm_i', x: 6, y: 30, gold: 1500, item: 'c7_ac_huyue' }, { id: 'c7_sm_j', x: 25, y: 12, gold: 1000, item: 'huanhundan' }],
       enemies: [
         { id: 'sm1', troop: 't_c7_lake', x: 9, y: 33, art: 'lamp_moth', lv: 26, radius: 1 },
         { id: 'sm2', troop: 't_c7_lake2', x: 15, y: 18, art: 'tide_grudge', lv: 26, radius: 1 },

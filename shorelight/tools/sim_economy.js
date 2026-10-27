@@ -23,8 +23,9 @@
 //                     thorough every roaming enemy of every map of the chapter (side maps too), × 1.5 (BALANCE.md's
 //                              cross-check: each symbol enemy fought ~1.5 times).
 //                   Not counted: stealth guards / rescue posts (chase 0), enemies that are story fights.
-//   Chests          normal: chests within 6 cells of the critical path on main-path maps; minimal: within 2 cells;
-//                   thorough: all. Gold counts as gold; gear found in a chest is not bought again.
+//   Chests          normal: chests within 10 steps of the critical path on main-path maps (and every chest of the
+//                   chapter's towns); minimal: within 4 steps; thorough: all. Gold counts as gold; gear found in a chest
+//                   is worn when it is better; consumables found pay for part of the next consumable restock.
 //   Side quests     REWARDS below (gold and gear per quest, read from the chapter scripts): normal does half of the
 //                   心燈 (lantern) quests of a chapter (the cheaper half is not assumed: the average), minimal none,
 //                   thorough all side quests.
@@ -41,18 +42,24 @@
 const path = require('path');
 
 // ------------------------------------------------------------------------------------------------ the main path
-// Per chapter, in story order: { map } a main-path map with roaming enemies (encounters met on its critical path),
-// { troop } a story battle, { troop, boss: <sim_story_fights id> } a boss of docs/BALANCE.md. `side` = optional maps
+// Per chapter, in story order: { map, random? } a main-path map with roaming enemies (encounters met on its critical
+// path; `random` = the map's step encounters (暗雷): rate per step on the listed terrain, on the critical path),
+// { sea: [troops], rate? } a fight at sea the player may take (ch10: the optional 巡海 on each leg; ch11: the
+// black-tide boarding, `rate` per crossing),
+// { troop } a story battle, { troop, boss: <sim_story_fights id> } a boss of docs/BALANCE.md (noShop: it follows the
+// previous boss with no shop in between — same gear and kit; noReward: it ends by script without `rewards: true`;
+// extra: enemies the fight summons that always give their reward, e.g. 清虛's 冥燈印). Adds other bosses summon now and
+// then are not counted (the model's exp / gold are a little low there). `side` = optional maps
 // (only the thorough player goes there). `floor` = the chapter opening's level floor (G.Story.chN).
 const STORY = [
   { ch: 0, floor: 1, steps: [] },
   { ch: 1, floor: 2, side: [], steps: [
     { map: 'mine_1' }, { map: 'mine_2', to: 'foreman' }, { troop: 't_c1_foreman', boss: 'c1_foreman' },
     { map: 'badouzi' }, { troop: 't_c1_shore_ghost' },
-    { map: 'jiufen' }, { troop: 'jiufen_3' }, { troop: 'jiufen_4' }, { troop: 't_c1_moya', boss: 'c1_moya' }, { troop: 't_c1_ghost_king', boss: 'c1_ghost_king' },
+    { map: 'jiufen' }, { troop: 'jiufen_3' }, { troop: 'jiufen_4' }, { troop: 'jiufen_1' }, { troop: 't_c1_moya', boss: 'c1_moya' }, { troop: 't_c1_ghost_king', boss: 'c1_ghost_king' },
   ] },
   { ch: 2, floor: 5, side: [], steps: [
-    { map: 'mistforest_n' }, { map: 'mistforest_s' }, { troop: 't_c2_woodcutter_v' }, { troop: 'boss_hongying', boss: 'c2_duel' }, { troop: 't_c2_ambush' },
+    { map: 'mistforest_n' }, { map: 'mistforest_s' }, { troop: 't_c2_woodcutter_v' }, { troop: 'boss_hongying', boss: 'c2_duel', noReward: true }, { troop: 't_c2_ambush' },
     { map: 'tiger_lair' }, { map: 'tiger_den' }, { troop: 't_c2_tiger', boss: 'c2_tiger' },
   ] },
   { ch: 3, floor: 9, side: [], steps: [
@@ -64,7 +71,7 @@ const STORY = [
     { map: 'wuzhi_trail' }, { map: 'wind_cave_1' }, { map: 'wind_cave_2' }, { troop: 't4_boss_wind_demon', boss: 'c4_wind_demon' },
   ] },
   { ch: 5, floor: 16, side: [], steps: [
-    { map: 'lukang_jiuqu' }, { map: 'lukang_shore' }, { map: 'luo_1f' }, { troop: 'luo_1' }, { map: 'luo_2f' }, { troop: 'luo_1' },
+    { map: 'lukang_jiuqu' }, { map: 'lukang_shore' }, { map: 'luo_1f' }, { map: 'luo_2f' },
     { troop: 't_c5_feast', boss: 'c5_feast' },
   ] },
   { ch: 6, floor: 19, side: [], steps: [
@@ -75,7 +82,7 @@ const STORY = [
   { ch: 7, floor: 23, side: [], steps: [
     { map: 'alishan_trail' }, { troop: 't_c7_bear', boss: 'c7_bear' }, { map: 'alishan_forest' }, { map: 'yushan_trail' }, { map: 'cloud_forest' },
     { map: 'vision_hub' }, { troop: 't_c7_mirror_qf', noReward: true }, { troop: 't_c7_mirror_yg', boss: 'c7_mirror_yg' }, { troop: 't_c7_shadow', boss: 'c7_shadow' },
-    { map: 'sunmoon_mist' }, { troop: 't_c7_jiao', boss: 'c7_jiao' }, { map: 'lamp_shrine' }, { map: 'lamp_shrine_lower' }, { troop: 't_c7_qingxu', boss: 'c7_qingxu' },
+    { map: 'sunmoon_mist' }, { troop: 't_c7_jiao', boss: 'c7_jiao' }, { map: 'lamp_shrine' }, { map: 'lamp_shrine_lower' }, { troop: 't_c7_qingxu', boss: 'c7_qingxu', extra: ['c7_dark_seal'] },
   ] },
   { ch: 8, floor: 27, side: [], steps: [
     { troop: 't_c8_street' }, { map: 'beigang_river' }, { troop: 't_c8_p1' }, { troop: 't_c8_p2' }, { troop: 't_c8_p3' }, { troop: 't_c8_p4' }, { troop: 't_c8_p5' },
@@ -87,15 +94,16 @@ const STORY = [
     { map: 'longkeng_caves' }, { troop: 't_c9_moray_king', boss: 'c9_moray' },
   ] },
   { ch: 10, floor: 34, side: [], steps: [
-    { map: 'orchid_reef' }, { troop: 't_c10_reef_kaswal' }, { troop: 'boss_tide_serpent', boss: 'c10_serpent' }, { map: 'taitung_coast' }, { troop: 't_c10_coast_fix_a' },
-    { troop: 't_c10_coast_fix_b' }, { troop: 't_c10_coast_boss', boss: 'c10_coast' }, { map: 'qingshui_cliffs' }, { map: 'taroko_gorge' }, { troop: 'boss_colossus', boss: 'c10_colossus' },
-    { troop: 't_c10_guhun', boss: 'c10_guhun' },
+    { sea: ['t_c10_sea_a'] }, { map: 'orchid_reef' }, { troop: 't_c10_reef_kaswal' }, { troop: 'boss_tide_serpent', boss: 'c10_serpent' }, { sea: ['t_c10_sea_b'] }, { map: 'taitung_coast' },
+    { troop: 't_c10_coast_fix_a' }, { troop: 't_c10_coast_fix_b' }, { troop: 't_c10_coast_boss', boss: 'c10_coast' }, { sea: ['t_c10_sea_a'] }, { map: 'qingshui_cliffs' }, { map: 'taroko_gorge' },
+    { troop: 'boss_colossus', boss: 'c10_colossus' }, { sea: ['t_c10_sea_b'] }, { troop: 't_c10_guhun', boss: 'c10_guhun' },
   ] },
-  { ch: 11, floor: 0, side: [], steps: [
-    { map: 'penghu_flats' }, { troop: 't11_captain', boss: 'c11_captain' }, { map: 'xuanwu_shore' }, { map: 'xuanwu_b1' }, { map: 'xuanwu_1f' }, { troop: 't11_jailer', boss: 'c11_jailer' },
-    { troop: 't11_kun', boss: 'c11_kun' }, { map: 'farshore_field' }, { map: 'farshore_tower_1' }, { map: 'farshore_tower_2' }, { map: 'farshore_tower_4' },
-    { troop: 't11_warden', boss: 'c11_warden' }, { troop: 't11_yexuan_1', boss: 'c11_yexuan1', noReward: true }, { troop: 't11_yexuan_2', boss: 'c11_yexuan2' },
-    { troop: 't11_wuxiang_1', boss: 'c11_wuxiang1', noReward: true }, { troop: 't11_wuxiang_2', boss: 'c11_wuxiang2', noReward: true },
+  { ch: 11, floor: 38, side: [], steps: [
+    { map: 'penghu_flats', random: { terr: ['shallow'], rate: 0.07, troops: ['penghu_2'] } }, { troop: 't11_captain', boss: 'c11_captain' }, { map: 'xuanwu_shore' },
+    { map: 'xuanwu_b1', random: { terr: ['shallow'], rate: 0.06, troops: ['t11_xw_drowned'] } }, { map: 'xuanwu_1f' }, { troop: 't11_jailer', boss: 'c11_jailer' },
+    { sea: ['blacktide_1', 'blacktide_2', 'blacktide_3', 'blacktide_4'], rate: 0.5 }, { troop: 't11_kun', boss: 'c11_kun' }, { map: 'farshore_field' }, { map: 'farshore_tower_1' }, { map: 'farshore_tower_2' }, { map: 'farshore_tower_4' },
+    { troop: 't11_warden', boss: 'c11_warden' }, { troop: 't11_yexuan_1', boss: 'c11_yexuan1', noReward: true }, { troop: 't11_yexuan_2', boss: 'c11_yexuan2', noShop: true },
+    { troop: 't11_wuxiang_1', boss: 'c11_wuxiang1', noReward: true, noShop: true }, { troop: 't11_wuxiang_2', boss: 'c11_wuxiang2', noReward: true, noShop: true },
   ] },
 ];
 
@@ -118,8 +126,9 @@ const REWARDS = {
 
 const BACKTRACK = 1.3;      // normal player: ~1.3 × the critical-path steps
 const THOROUGH = 1.5;       // thorough player: every symbol enemy ~1.5 times (BALANCE.md cross-check)
-const CHEST_NEAR = { normal: 6, minimal: 2 };
-const KIT_RESTOCK = 0.4;   // after a chapter's first boss, each boss restocks ~40 % of the kit
+const CHEST_NEAR = { normal: 10, minimal: 4 }; // chests opened: within this many steps of the critical path
+const KIT_RESTOCK = 0.4;
+const UPGRADE_MIN = 0.08; // a gear upgrade smaller than this (relative score) is a side-grade: bought last, with gold to spare   // after a chapter's first boss, each boss restocks ~40 % of the kit
 
 
 // ------------------------------------------------------------------------------------------------ the game
@@ -147,6 +156,12 @@ const troopSum = (G, id) => {
   let exp = 0, gold = 0;
   if (T) for (const e of T.enemies) { const d = G.Data.enemies[e]; if (d) { exp += d.exp; gold += d.gold; } }
   return { exp, gold, missing: !T };
+};
+
+const avgTroop = (G, ids) => {
+  const a = { exp: 0, gold: 0 };
+  for (const id of ids) { const t = troopSum(G, id); a.exp += t.exp / ids.length; a.gold += t.gold / ids.length; }
+  return a;
 };
 
 // ------------------------------------------------------------------------------------------------ map paths
@@ -226,7 +241,9 @@ function mapInfo(id) {
   });
   const chests = (def.chests || []).map((c) => ({ id: c.id, gold: c.gold || 0, item: c.item || null, n: c.n || 1, d: dToPath(c.x, c.y), extra: c.run ? String(c.run) : '' }));
   for (const c of chests) { const m = /S\.gold\((\d+)\)/.exec(c.extra); if (m) c.gold += +m[1]; delete c.extra; }
-  MAPCACHE[id] = { id, w: W, h: H, steps, pathCells: cells.length, warps: warps.length, enemies, chests };
+  const terrOnPath = {};
+  for (const [x, y] of cells) { const t = sc.terrain[y * W + x]; terrOnPath[t] = (terrOnPath[t] || 0) + 1; }
+  MAPCACHE[id] = { id, w: W, h: H, steps, pathCells: cells.length, warps: warps.length, enemies, chests, terrOnPath };
   return MAPCACHE[id];
 }
 
@@ -266,10 +283,10 @@ function model(o = {}) {
   const I = G.Data.items;
   const e2n = (lv) => G.Party.expToNext(lv);
   const res = { chapters: [], bosses: [] };
-  const P = {};
+  const P = {}, lastBoss = {};
   // each style's player: level / exp (every active member gets the full troop exp, so one track), gold, the gear each
   // member wears, gear found in chests (free, not yet worn)
-  for (const s of STYLES) P[s] = { lv: 1, exp: 0, gold: 0, wear: {}, found: [] };
+  for (const s of STYLES) P[s] = { lv: 1, exp: 0, gold: 0, wear: {}, found: [], kitCredit: 0 };
   const wearOf = (p, cid) => p.wear[cid] || (p.wear[cid] = Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, (G.Data.chars[cid] || {}).equip || {}));
   const gain = (p, exp) => { p.exp += exp; while (p.exp >= e2n(p.lv) && p.lv < 50) { p.exp -= e2n(p.lv); p.lv++; } };
   const floorTo = (p, lv) => { if (p.lv < lv) { p.lv = lv; p.exp = 0; } };
@@ -287,24 +304,29 @@ function model(o = {}) {
       // chests (main-path maps: those near the path; town maps: all; thorough: every chest of the chapter) and quests
       // are credited at the chapter start: a player picks them up on the way, and shops in the chapter's towns
       const townMaps = chMaps.filter((id) => !(G.Maps.defs[id].enemies || []).length && !(C.side || []).includes(id));
-      const chestMaps = s === 'thorough' ? chMaps : mainMaps.concat(townMaps);
-      for (const id of chestMaps) {
-        const mi = mapInfo(id);
-        for (const c of mi.chests) {
+      // chests: a main-path map's when the story gets there (those near its path), every town chest of the chapter at
+      // its start (towns come first), the thorough player's side maps at the start too
+      const openChests = (id) => {
+        let g = 0;
+        for (const c of mapInfo(id).chests) {
           if (s !== 'thorough' && mainMaps.includes(id) && c.d > CHEST_NEAR[s]) continue;
-          r.chestGold += c.gold;
+          g += c.gold;
           if (c.item && I[c.item] && SLOTS.includes(I[c.item].type)) p.found.push(c.item);
+          if (c.item && I[c.item] && I[c.item].type === 'use') p.kitCredit += (I[c.item].price || 0) * c.n;
         }
-      }
+        r.chestGold += g; p.gold += g;
+      };
+      for (const id of s === 'thorough' ? chMaps.filter((m) => !mainMaps.includes(m)) : townMaps) openChests(id);
       for (const q of REWARDS[C.ch] || []) {
         if (s === 'minimal') continue;
         r.questGold += Math.round((q.gold || 0) * (s === 'thorough' ? 1 : q.lantern ? 0.5 : 0));
       }
-      p.gold += r.chestGold + r.questGold;
+      p.gold += r.questGold;
       let kitBought = false;
       for (const st of C.steps) {
         if (st.map) {
           const mi = mapInfo(st.map);
+          openChests(st.map);
           let ex = 0, go = 0, n = 0;
           for (const e of mi.enemies) {
             if (e.story) continue;
@@ -313,21 +335,56 @@ function model(o = {}) {
             if (s === 'thorough') k = e.respawn ? THOROUGH : 1;
             ex += e.exp * k * diffK; go += e.gold * k; n += k;
           }
+          if (st.random && s !== 'minimal') {
+            // step encounters on the path's matching terrain (thorough walks 1.5 × as far)
+            const cellsOn = st.random.terr.reduce((a, t) => a + (mi.terrOnPath[t] || 0), 0);
+            const k = cellsOn * st.random.rate * (s === 'thorough' ? THOROUGH : BACKTRACK);
+            const t = avgTroop(G, st.random.troops);
+            ex += t.exp * k * diffK; go += t.gold * k; n += k;
+          }
           r.encExp += ex; r.encGold += go; r.encFights += n;
           gain(p, Math.round(ex)); p.gold += Math.round(go);
           if (s === 'normal') row.encounters.push({ map: st.map, exp: Math.round(ex), gold: Math.round(go), fights: +n.toFixed(1) });
           continue;
         }
+        if (st.sea) {
+          // optional fights at sea (ch10 巡海): normal takes half, thorough all; a random boarding (ch11, `rate`): fought
+          // by normal and thorough when it happens; minimal declines / flees
+          const k = s === 'minimal' ? 0 : st.rate != null ? st.rate : s === 'normal' ? 0.5 : 1;
+          const t = avgTroop(G, st.sea);
+          r.encExp += t.exp * k * diffK; r.encGold += t.gold * k; r.encFights += k;
+          gain(p, Math.round(t.exp * k * diffK)); p.gold += Math.round(t.gold * k);
+          if (s === 'normal') row.encounters.push({ sea: st.sea.join('/'), exp: Math.round(t.exp * k * diffK), gold: Math.round(t.gold * k), fights: k });
+          continue;
+        }
         const F = st.boss && fights[st.boss];
-        if (F) {
+        if (F && st.noShop && lastBoss[s]) {
+          // a fight that follows the previous boss with no shop in between (the finale): same gear and kit
+          const b = Object.assign({}, lastBoss[s], { id: st.boss, name: F.name, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv,
+            lv: p.lv, lvf: lvf(p), goldBefore: p.gold, spent: 0, kitCost: 0, missing: [] });
+          r.bosses.push(b); res.bosses.push(b);
+        } else if (F) {
           // before a boss: restock the kit (once per chapter), then buy toward the gear docs/BALANCE.md assumes —
           // weapons, armour, head/feet, accessories, the biggest gain per coin first — with the gold carried
           const before = p.gold;
           const kit = kitOf(G, F);
-          // the chapter's first boss: the whole kit; later bosses: restock what a fight uses up (~40 %)
-          const kitNeed = Math.round(kit.cost * (kitBought ? KIT_RESTOCK : 1));
-          let kitCost = 0;
-          if (p.gold >= kitNeed) { kitCost = kitNeed; p.gold -= kitCost; kitBought = true; }
+          // the chapter's first boss: the whole kit; later bosses: restock what a fight uses up (KIT_RESTOCK)
+          const kitNeed0 = Math.round(kit.cost * (kitBought ? KIT_RESTOCK : 1));
+          // consumables found in chests cover part of it (at most half: they are not always the right ones)
+          const credit = Math.min(p.kitCredit, Math.round(kitNeed0 / 2));
+          p.kitCredit -= credit;
+          const kitNeed = kitNeed0 - credit;
+          let kitCost = 0, kitInv = {};
+          if (p.gold >= kitNeed) { kitCost = kitNeed; kitInv = kit.inv; } else if (kitNeed > 0) {
+            // (the credit already covers part of every item)
+            // short of gold: as much of each item as the gold allows (a careful player never goes without heals)
+            const f = (p.gold + credit) / kitNeed0;
+            for (const [id, nn] of Object.entries(kit.inv)) { const k = Math.floor(nn * f); if (k > 0) kitInv[id] = k; }
+            kitCost = p.gold;
+          }
+          p.gold -= kitCost; kitBought = true;
+          // gear: keep the next boss's restock in reserve
+          const reserve = Math.round(kit.cost * KIT_RESTOCK);
           const wants = [];
           let wantCost = 0;
           for (const cid of F.party) {
@@ -339,25 +396,27 @@ function model(o = {}) {
               const cur = wear[slot] && I[wear[slot]] ? gearScore(G, cid, I[wear[slot]], slot) : 0;
               const gainV = gearScore(G, cid, I[id], slot) - cur;
               if (gainV <= 0.01) continue;
+              // a side-grade (armour / accessory less than 8 % better than what is worn) is bought last, with gold to spare
+              const side = slot !== 'weapon' && cur > 0 && gainV < cur * UPGRADE_MIN; // a new weapon may change the element
               const fi = p.found.indexOf(id);
               if (fi >= 0) { p.found.splice(fi, 1); wear[slot] = id; continue; } // found in a chest
               const gift = (F.gifts && (F.gifts[cid] || []).includes(id)) || !(I[id].price > 0);
               if (gift) { wear[slot] = id; continue; }
-              wants.push({ cid, slot, id, gain: gainV, price: I[id].price });
+              wants.push({ cid, slot, id, gain: gainV, price: I[id].price, side });
               wantCost += I[id].price;
             }
           }
-          wants.sort((a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot] || b.gain / b.price - a.gain / a.price);
+          wants.sort((a, b) => (a.side - b.side) || SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot] || b.gain / b.price - a.gain / a.price);
           let spent = 0;
           const missing = [];
           for (const w of wants) {
-            if (p.gold >= w.price) { p.gold -= w.price; spent += w.price; wearOf(p, w.cid)[w.slot] = w.id; } else missing.push(`${w.cid}.${w.slot}=${w.id}(${w.price})`);
+            if (p.gold - reserve >= w.price * (w.side ? 1.5 : 1)) { p.gold -= w.price; spent += w.price; wearOf(p, w.cid)[w.slot] = w.id; } else missing.push(`${w.cid}.${w.slot}=${w.id}(${w.price})`);
           }
           r.spentGear += spent; r.spentKit += kitCost; r.wantedGear += wantCost;
           const b = { id: st.boss, name: F.name, ch: C.ch, style: s, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv,
-            lv: p.lv, lvf: lvf(p), goldBefore: before, wantCost, spent, kitCost, kitFull: kitCost > 0 || !kit.cost, missing,
-            gear: Object.fromEntries(F.party.map((cid) => [cid, Object.assign({}, wearOf(p, cid))])), kit: kitCost > 0 ? kit.inv : {} };
-          // coverage: the share (by price) of the boss's BALANCE.md gear the party wears, a slot at least as good counting
+            lv: p.lv, lvf: lvf(p), goldBefore: before, wantCost, spent, kitCost, kitFull: kitCost >= kitNeed, missing,
+            gear: Object.fromEntries(F.party.map((cid) => [cid, Object.assign({}, wearOf(p, cid))])), kit: kitInv };
+          // coverage: the share (by price) of the boss's BALANCE.md gear the party has (a worn item at least as good)
           let balV = 0, haveV = 0;
           for (const cid of F.party) {
             const bal = wantedGear(G, F, cid, Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, (G.Data.chars[cid] || {}).equip || {}));
@@ -366,15 +425,19 @@ function model(o = {}) {
               const id = bal[slot];
               if (!id || !(I[id].price > 0)) continue;
               balV += I[id].price;
-              if (wear[slot] && gearScore(G, cid, I[wear[slot]], slot) >= gearScore(G, cid, I[id], slot) - 0.01) haveV += I[id].price;
+              const want = gearScore(G, cid, I[id], slot);
+              const have = wear[slot] && I[wear[slot]] ? gearScore(G, cid, I[wear[slot]], slot) : 0;
+              if (have >= want * 0.97) haveV += I[id].price; // at least as good (3 % tolerance)
             }
           }
           b.coverage = balV ? +(haveV / balV).toFixed(2) : 1;
           r.bosses.push(b);
           res.bosses.push(b);
+          lastBoss[s] = b;
         }
         if (!st.noReward && !st.lose) {
           const t = troopSum(G, st.troop);
+          for (const id of st.extra || []) { const d = G.Data.enemies[id]; if (d) { t.exp += d.exp; t.gold += d.gold; } }
           r.storyExp += t.exp * diffK; r.storyGold += t.gold;
           gain(p, Math.round(t.exp * diffK)); p.gold += t.gold;
         }

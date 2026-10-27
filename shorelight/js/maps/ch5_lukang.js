@@ -85,7 +85,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   defEnemy('c5_feast', {
     name: '怨宴', art: 'grudge_feast', lv: 20, elem: 'earth', weak: ['wood'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 10.5, atk: 4.2, mag: 4.3, def: 1.15, spd: 2.7, exp: 7, gold: 8 }, // sim_story: was atk 2.0 mag 2.05 spd 1.3
+    m: { hp: 10.5, atk: 4.2, mag: 4.3, def: 1.15, spd: 2.7, exp: 24.7, gold: 41.7 }, // sim_story: was atk 2.0 mag 2.05 spd 1.3
     skills: [['c5_e_gulp', 3], ['c5_e_shatter', 3], ['c5_e_wine', 2], ['c5_e_seat', 1, 'turn>2'],
       ['c5_e_serve_pig', 2, 'ally_dead'], ['c5_e_serve_turtle', 2, 'ally_dead']],
     phases: [{
@@ -348,7 +348,7 @@
       { x: 38, y: 16, r: 120, color: '#ffa050', flicker: 0.3 }, { x: 49, y: 15, r: 120, color: '#ffb060', flicker: 0.2 },
       { x: 23, y: 31, r: 100, color: '#ffc080', flicker: 0.2 },
     ] : []),
-    chests: [{ id: 'c5_01', x: 6, y: 14, item: 'xumingsan', n: 2 }],
+    chests: [{ id: 'c5_01', x: 6, y: 14, gold: 800, item: 'xumingsan', n: 2 }],
     npcs: [
       { id: 'lk_niushe', sprite: 'shopkeeper_f', name: '牛舌餅阿嬸', x: 12, y: 17, dir: 'down', fixedDir: false, talk: (S, n) => niusheTalk(S, n) },
       { id: 'lk_mianxian', sprite: 'villager_m2', name: '麵線糊頭家', x: 17, y: 17, dir: 'down', if: (s) => time5(s) < 2,
@@ -1809,9 +1809,9 @@
       { t: 'red_lantern', x: 21, y: 25, hang: true, if: NY },
     ],
     chests: [
-      { id: 'c5_06', x: 37, y: 14, item: 'c5_abacus' },
-      { id: 'c5_07', x: 3, y: 11, item: 'niushebing', n: 3, run: async (S) => { await S.give('c5_old_coat'); } },
-      { id: 'c5_08', x: 14, y: 16, item: 'sp_hutou', run: async (S) => {
+      { id: 'c5_06', x: 37, y: 14, gold: 600, item: 'c5_abacus' },
+      { id: 'c5_07', x: 3, y: 11, gold: 800, item: 'niushebing', n: 3, run: async (S) => { await S.give('c5_old_coat'); } },
+      { id: 'c5_08', x: 14, y: 16, gold: 600, item: 'sp_hutou', run: async (S) => {
         if (hasActor('hongying')) await S.say('hongying:sad', '……洛家的虎頭槍。爹說，等我出嫁那天才給我。');
       } },
     ],
@@ -2208,8 +2208,8 @@
       { x: P2.ox + P2.lamp[0], y: P2.oy + P2.lamp[1], solid: true },
     ],
     chests: [
-      { id: 'c5_09', x: 9, y: 15, item: 'c5_old_hairpin' },
-      { id: 'c5_10', x: 8, y: 3, item: 'c5_father_tassel', if: (s) => !!s.flags.ch5_mirrors },
+      { id: 'c5_09', x: 9, y: 15, gold: 600, item: 'c5_old_hairpin' },
+      { id: 'c5_10', x: 8, y: 3, gold: 600, item: 'c5_father_tassel', if: (s) => !!s.flags.ch5_mirrors },
       { id: 'c5_11', x: 29, y: 17, item: 'c5_sw_youth', run: async (S) => {
         await S.say('', '劍的底下壓著一張字條：「給紅纓，等她學會回馬槍。」');
         if (hasActor('hongying')) await S.say('hongying:sad', '……誰要你的劍。笨蛋。');

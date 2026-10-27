@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — offline music render</title>
+</head>
+<body>
+<!-- Driven by tools/render_music.js (headless Chromium). Renders one song per page load through the real
+     G.Audio graph (music bus → master → compressor) into an OfflineAudioContext, scheduling the notes the
+     same way G.Music's pump() does (swing, humanisation, per-song gain), then analyses the result. -->
+<script src="../js/core/util.js"></script>
+<script src="../js/core/audio.js"></script>
+<script src="../js/core/music.js"></script>
+<script>
+'use strict';
+(() => {
+  let OFF = null;
+  // G.Audio.init() calls `new AudioContext()`; hand it our offline context instead
+  window.AudioContext = function () { return OFF; };
+  window.webkitAudioContext = undefined;
+
+  // deterministic humanisation (same formula as G.Music's note()), reseeded at every loop start → every loop after the first renders identically,
+  // so the steady-state loop cut is sample-periodic (the in-game humanisation differs per loop, by design)
+  let seed = 1;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+  window.renderSong = async (id, o = {}) => {
+    const sr = o.sr || 44100;
+    const c = G.Music.compile(id);
+    const L = c.len * c.step;
+    const loops = c.loop ? (o.loops || 2) : 1;
+    const extra = c.loop ? (o.extra == null ? 4 : o.extra) : 5;     // seconds of the next loop / release tail
+    const t0 = 0.08;
+    const total = t0 + L * loops + extra;
+    OFF = new OfflineAudioContext(2, Math.ceil(total * sr), sr);
+    OFF.resume = () => Promise.resolve();
+    G.Audio.unlock();
+    delete OFF.resume;
+    G.Audio.musicBus().gain.value = o.music == null ? 0.6 : o.music;
+    const dry = OFF.createGain(), wet = OFF.createGain();
+    dry.connect(G.Audio.musicBus()); if (!o.noRev) wet.connect(G.Audio.reverbInput());
+    const fade = o.fade || 0;
+    for (const g of [dry, wet]) {
+      if (fade > 0.01) { g.gain.setValueAtTime(0.0001, 0); g.gain.linearRampToValueAtTime(c.gain, fade); } else g.gain.value = c.gain;
+    }
+    let k = 0, idx = 0, notes = 0, maxPoly = 0;
+    const active = [];
+    const endT = c.loop ? total : t0 + L;
+    function schedule(h) {
+      while (true) {
+        if (idx === 0) seed = 12345;          // reseed per loop
+        const e = c.ev[idx];
+        let t = t0 + k * L + e.s * c.step;
+        if (c.swing) { const q = e.s % 4; if (q === 2) t += c.swing; else if (q === 1 || q === 3) t += c.swing * 0.5; }
+        if (t > h || t >= endT) return;
+        const humanT = e.perc ? 0.003 : 0.008;
+        const tt = Math.max(0, t + (rnd() - 0.5) * humanT);
+        const vol = e.vol * (0.94 + rnd() * 0.12);
+        for (const m of e.m) {
+          G.Audio.playNote(e.inst, tt, m, e.d, vol, e.rev, dry, wet, e.x);
+          notes++;
+          active.push([tt, tt + e.d + 1.0]);
+        }
+        if (++idx >= c.ev.length) { idx = 0; k++; if (!c.loop) return; }
+      }
+    }
+    // lookahead scheduling in 1 s chunks; poly = notes sounding (incl. ~1 s release) at each chunk start
+    const CH = 1;
+    schedule(CH + 0.5);
+    for (let s = CH; s < total; s += CH) {
+      OFF.suspend(Math.round(s * sr / 128) * 128 / sr).then(() => {
+        schedule(s + CH + 0.5);
+        let n = 0; for (const x of active) if (x[0] <= s && x[1] > s) n++;
+        maxPoly = Math.max(maxPoly, n);
+        OFF.resume();
+      });
+    }
+    const buf = await OFF.startRendering();
+    const A = buf.getChannelData(0), B = buf.getChannelData(1);
+    const N = A.length;
+    const db = (x) => 20 * Math.log10(Math.max(1e-9, x));
+    let peak = 0;
+    for (let i = 0; i < N; i++) peak = Math.max(peak, Math.abs(A[i]), Math.abs(B[i]));
+    // analysis window: steady-state loop (2nd pass) when available
+    const a = Math.round((t0 + (loops >= 2 ? L : 0)) * sr);
+    const b = Math.round((t0 + (loops >= 2 ? 2 * L : L)) * sr);
+    const rmsOf = (X, Y, i0, i1) => { let s = 0; for (let i = i0; i < i1; i++) s += X[i] * X[i] + Y[i] * Y[i]; return Math.sqrt(s / (2 * Math.max(1, i1 - i0))); };
+    const rms = rmsOf(A, B, a, b);
+    // K-weighting approximation (BS.1770 pre-filter: high-shelf +4 dB @1.5 kHz, high-pass 38 Hz)
+    const kctx = new OfflineAudioContext(2, b - a, sr);
+    const kb = kctx.createBuffer(2, b - a, sr);
+    kb.getChannelData(0).set(A.subarray(a, b)); kb.getChannelData(1).set(B.subarray(a, b));
+    const ks = kctx.createBufferSource(); ks.buffer = kb;
+    const hs = kctx.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 1500; hs.gain.value = 4;
+    const hp = kctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 38; hp.Q.value = 0.5;
+    ks.connect(hs); hs.connect(hp); hp.connect(kctx.destination); ks.start();
+    const kbuf = await kctx.startRendering();
+    const krms = rmsOf(kbuf.getChannelData(0), kbuf.getChannelData(1), 0, b - a);
+    const out = { id, sr, bpm: G.Music.songs[id].bpm, loopSec: +L.toFixed(3), loops, gain: c.gain, notes, maxPoly,
+      peakDb: +db(peak).toFixed(2), rmsDb: +db(rms).toFixed(2), kDb: +db(krms).toFixed(2), a, b };
+    // loop seam: (1) periodicity — the next loop's first second against this loop's first second;
+    // (2) the jump across the cut (last sample of the loop → first sample) against the signal's own
+    //     sample-to-sample differences; (3) loudness 250 ms either side of the seam
+    if (c.loop && loops >= 2 && b + sr < N) {
+      let e = 0, r = 0;
+      for (let i = 0; i < sr; i++) { const d0 = A[b + i] - A[a + i], d1 = B[b + i] - B[a + i]; e += d0 * d0 + d1 * d1; r += A[a + i] * A[a + i] + B[a + i] * B[a + i]; }
+      out.periodicErrDb = +(10 * Math.log10(Math.max(1e-18, e / Math.max(1e-18, r)))).toFixed(1);
+      const diffs = [];
+      for (let i = a + 1; i < b; i += 7) diffs.push(Math.abs(A[i] - A[i - 1]));
+      diffs.sort((x, y) => x - y);
+      const p999 = diffs[Math.floor(diffs.length * 0.999)];
+      const jump = Math.max(Math.abs(A[a] - A[b - 1]), Math.abs(B[a] - B[b - 1]));
+      out.seamJump = +jump.toFixed(5); out.diffP999 = +p999.toFixed(5); out.seamOk = jump <= p999;
+      const w = Math.round(0.25 * sr);
+      out.seamBeforeDb = +db(rmsOf(A, B, b - w, b)).toFixed(1);
+      out.seamAfterDb = +db(rmsOf(A, B, b, b + w)).toFixed(1);
+    }
+    window.__buf = buf; window.__ab = [a, b];
+    return out;
+  };
+
+  // 16-bit PCM WAV (base64) of [from, to) seconds of the last render; fadeOut seconds at the end
+  window.wavB64 = (from, to, fadeOut = 0, loopCut = false) => {
+    const buf = window.__buf, sr = buf.sampleRate;
+    let i0, i1;
+    if (loopCut) [i0, i1] = window.__ab; else { i0 = Math.round(from * sr); i1 = Math.min(buf.length, Math.round(to * sr)); }
+    const n = i1 - i0, A = buf.getChannelData(0), B = buf.getChannelData(1);
+    const bytes = new Uint8Array(44 + n * 4), dv = new DataView(bytes.buffer);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+    str(0, 'RIFF'); dv.setUint32(4, 36 + n * 4, true); str(8, 'WAVE'); str(12, 'fmt ');
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 2, true); dv.setUint32(24, sr, true);
+    dv.setUint32(28, sr * 4, true); dv.setUint16(32, 4, true); dv.setUint16(34, 16, true); str(36, 'data'); dv.setUint32(40, n * 4, true);
+    const fo = Math.round(fadeOut * sr);
+    for (let i = 0; i < n; i++) {
+      const g = fo && i > n - fo ? (n - i) / fo : 1;
+      const l = Math.max(-1, Math.min(1, A[i0 + i] * g)), r = Math.max(-1, Math.min(1, B[i0 + i] * g));
+      dv.setInt16(44 + i * 4, Math.round(l * 32767), true); dv.setInt16(46 + i * 4, Math.round(r * 32767), true);
+    }
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>

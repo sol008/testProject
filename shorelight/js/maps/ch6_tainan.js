@@ -145,7 +145,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   defEnemy('c6_plague_mass', {
     name: '疫聚', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 21, elem: 'earth', weak: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 17.4, atk: 3.9, mag: 4.1, def: 1.1, spd: 1.9, exp: 5.5, gold: 5 }, // sim_story: was hp 12 atk 1.95 mag 2.05 spd 0.95
+    m: { hp: 17.4, atk: 3.9, mag: 4.1, def: 1.1, spd: 1.9, exp: 25.9, gold: 32.7 }, // sim_story: was hp 12 atk 1.95 mag 2.05 spd 0.95
     skills: [['c6_pm_cough', 3], ['c6_pm_fever', 2], ['c6_pm_drag', 2], ['c6_pm_gather', 1, 'hp<50']],
     phases: [{ at: 0.5, heal: 0.1, text: '灰霧裡又浮出了幾張臉——它在把整條街的哭聲吸回去。' }],
     drops: [['fengpao', 1]],
@@ -158,13 +158,13 @@
   });
   defEnemy('c6_linto', {
     name: '林投姐', art: 'linto_jie', scale: 1.15, lv: 22, elem: 'water', weak: ['earth'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 12.5, atk: 2.0, mag: 2.3, def: 1.05, spd: 1.3, exp: 7, gold: 0 },
+    m: { hp: 12.5, atk: 2.0, mag: 2.3, def: 1.05, spd: 1.3, exp: 29.7, gold: 0 },
     skills: [['c6_lj_thorns', 3], ['c6_lj_hair', 2], ['c6_lj_tears', 2], ['c6_lj_call', 1]],
     desc: '府城最有名的女鬼。她要的不是報仇——是有人聽她把話說完。',
   });
   defEnemy('c6_netherlamp', {
     name: '冥燈護法', art: 'nether_guardian', lv: 24, elem: 'water', weak: ['earth'], resist: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 12.5, atk: 3.45, mag: 3.55, def: 1.15, spd: 2.2, exp: 7, gold: 8 }, // sim_story: was atk 2.05 mag 2.1 spd 1.3
+    m: { hp: 12.5, atk: 3.45, mag: 3.55, def: 1.15, spd: 2.2, exp: 33.9, gold: 55.3 }, // sim_story: was atk 2.05 mag 2.1 spd 1.3
     skills: [['c6_ng_chain', 3], ['c6_ng_light', 3], ['c6_ng_bind', 2]],
     phases: [
       { at: 0.5, phase: 2, lines: [['baizhi:sad', '……它也在哭。它說：「不要打了，我也是被綁著的。」']], msg: '燈籠頭裂開了一道縫，藍火往外噴！',
@@ -1185,8 +1185,8 @@
         ['well', 31, 18], ['laundry', 12, 24], ['cart', 26, 31], ['basket', 13, 31], ['barrel', 32, 25],
       ]),
       chests: [
-        { id: 'c6_01', x: 3, y: 18, item: 'c6_jinchuang2', n: 3 },
-        { id: 'c6_02', x: 41, y: 30, item: 'c6_mugwort' },
+        { id: 'c6_01', x: 3, y: 18, gold: 600, item: 'c6_jinchuang2', n: 3 },
+        { id: 'c6_02', x: 41, y: 30, gold: 600, item: 'c6_mugwort' },
       ],
       npcs: [
         { id: 'ys_bearer', sprite: 'villager_m2', name: '阿義', x: 23, y: 8, dir: 'left', if: (st) => !st.flags.ch6_night, talk: (S, n) => Sc.ayiTalk(S, n) },
@@ -1444,7 +1444,7 @@
         return deco(list);
       },
       pass: [{ x: 6, y: 2, h: 2, solid: true }],
-      chests: [{ id: 'c6_03', x: 30, y: 8, item: 'c6_ningshen', n: 3, run: async (S) => { S.gold(800); } }],
+      chests: [{ id: 'c6_03', x: 30, y: 8, gold: 800, item: 'c6_ningshen', n: 3, run: async (S) => { S.gold(800); } }],
       npcs: [
         { id: 'fc_guard', sprite: 'temple_guard', name: '長明宮守門衛', x: 6, y: 4, dir: 'down', fixedDir: true, talk: (S) => Sc.fcGuard(S) },
         { id: 'fc_guard2', sprite: 'temple_guard', name: '長明宮守門衛', x: 8, y: 4, dir: 'down', fixedDir: true, if: (st) => (st.vars.ch6_time || 0) >= 2, talk: ['大典進行中。閒雜人等，退後。'] },
@@ -1929,8 +1929,8 @@
       hides: [{ x: 2, y: 11, w: 2 }, { x: 2, y: 19, w: 2 }, { x: 26, y: 5, w: 2 }, { x: 36, y: 13, w: 2 },
         { x: 12, y: 10, h: 2 }, { x: 10, y: 12, w: 2 }, { x: 27, y: 19, h: 2 }, { x: 28, y: 17, w: 2 }],
       chests: [
-        { id: 'c6_11', x: 2, y: 20, item: 'c6_jinchuang2', n: 2, run: async (S) => { await S.give('huanhundan', 1); } },
-        { id: 'c6_09', x: 37, y: 2, item: 'c6_netherlamp_ward', if: (st) => !st.vars.ch6_s2_spotted },
+        { id: 'c6_11', x: 2, y: 20, gold: 800, item: 'c6_jinchuang2', n: 2, run: async (S) => { await S.give('huanhundan', 1); } },
+        { id: 'c6_09', x: 37, y: 2, gold: 800, item: 'c6_netherlamp_ward', if: (st) => !st.vars.ch6_s2_spotted },
       ],
       checkpoint: [4, 26, 'up'],
       guards: [
@@ -2030,7 +2030,7 @@
       particles: ['motes'],
       tiles: g.rows(),
       objects: objs,
-      chests: [{ id: 'c6_12', x: 16, y: 25, item: 'c6_revive_incense' }],
+      chests: [{ id: 'c6_12', x: 16, y: 25, gold: 1000, item: 'c6_revive_incense' }],
       events: [{ id: 'story', trigger: 'auto', if: (st) => !st.flags.ch6_yexuan_met, run: (S) => Sc.lanterns(S) }],
       drawGround: (ctx, t, ms) => {
         // the shelves rising into the dark: every wall cell holds rows of small breathing jars

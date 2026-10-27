@@ -142,8 +142,8 @@
     c11_fn_leishan: { name: '雷霆符扇', desc: '扇骨裡封著一道海上的雷。木屬性。', type: 'weapon', price: 2650, ch: 11, icon: 'fan', who: ['yungui'], elem: 'wood', stats: { atk: 12, mag: 92, mp: 28 } },
     c11_ar_coral: { name: '咾咕石甲', desc: '珊瑚礁石片綴成的甲，灰白、滿是小孔，比看起來輕。', type: 'armor', price: 2200, ch: 11, icon: 'armor', who: ['xinghe', 'yungui'], stats: { def: 46, hp: 40 } },
     c11_ar_haiwen: { name: '海紋褙子', desc: '繡著海浪紋的褙子。', type: 'armor', price: 2250, ch: 11, icon: 'armor', who: ['baizhi', 'hongying'], stats: { def: 44, mag: 8 } },
-    c11_hd_douli: { name: '漁夫斗笠', desc: '澎湖漁夫的斗笠，綁帶綁得很緊，風再大也吹不走。', type: 'head', price: 1200, ch: 11, icon: 'hat', stats: { def: 22 } },
-    c11_ft_bu: { name: '澎湖布鞋', desc: '踩在咾咕石上也不痛的布鞋。', type: 'feet', price: 1300, ch: 11, icon: 'shoes', stats: { def: 15, spd: 10 } },
+    c11_hd_douli: { name: '漁夫斗笠', desc: '澎湖漁夫的斗笠，綁帶綁得很緊，風再大也吹不走。', type: 'head', price: 1000, ch: 11, icon: 'hat', stats: { def: 22 } },
+    c11_ft_bu: { name: '澎湖布鞋', desc: '踩在咾咕石上也不痛的布鞋。', type: 'feet', price: 1000, ch: 11, icon: 'shoes', stats: { def: 15, spd: 10 } },
     c11_ac_juhua: { name: '天人菊香囊', desc: '紅黃相間的天人菊曬乾縫成的香囊。「風吹不倒的花」。免疫睡眠。', type: 'acc', price: 1500, ch: 11, icon: 'bag', stats: { mag: 10 }, immune: ['sleep'] },
     c11_ac_fisher: { name: '漁夫的護身符', desc: '石滬灘撿到的護身符，香火袋已經褪色。抵抗水屬性。', type: 'acc', price: 0, ch: 11, icon: 'jade', stats: { def: 10 }, resist: ['water'] },
     c11_ac_weir_stone: { name: '滬石護符', desc: '添家滬滬門頂那粒石頭，阿添伯的老爸疊的。抵抗水屬性，免疫定身。', type: 'acc', price: 0, ch: 11, icon: 'gem', stats: { def: 18 }, resist: ['water'], immune: ['stun'] },
@@ -262,28 +262,28 @@
   }
   const BIMM = ['sleep', 'stun', 'trance'];
   mkEnemy('c11_captain', { name: '烏鬚船主', art: 'pirate_ghost', variant: 2, scale: 1.55, lv: 39, elem: 'water', weak: ['earth'], boss: true, immune: BIMM,
-    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 5, gold: 6 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
+    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 42.6, gold: 28.8 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
     skills: [['e11_cap_blade', 4], ['e11_cap_crew', 2, 'ally_dead'], ['e11_cap_keg', 2], ['e11_cap_rob', 1], ['e_pirate_cutlass', 2]],
     drops: [['c11_ac_captain_patch', 1]],
     desc: '三百年前在澎湖海面橫行的海盜頭子。錨鏈拴在一盞長明燈上，「守不住路，燈就燒老子。」' });
   mkEnemy('c11_powder_keg', { name: '火藥桶', art: 'pirate_ghost', variant: 1, scale: 0.6, lv: 39, elem: 'fire', m: { hp: 0.2, atk: 0.1, def: 0.5, spd: 0.6, exp: 0, gold: 0 },
     skills: [['e11_keg_hiss', 1]], desc: '冒著煙的火藥桶。先打爆它，就炸到他們自己人。' });
   mkEnemy('c11_jailer', { name: '鎖魂將', art: 'lantern_golem', variant: 2, scale: 1.7, lv: 40, elem: 'metal', weak: ['fire'], resist: ['water'], boss: true, immune: BIMM,
-    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 7, gold: 8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
+    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 48.3, gold: 27.8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
     skills: [['e11_jl_sweep', 4], ['e11_jl_seal', 3], ['e11_jl_drain', 3], ['e11_jl_lock', 2], ['e11_jl_refill', 4, 'hp<50']],
     drops: [['c11_ac_iron_heart', 1]],
     desc: '用鎖鏈、魂罐與熄不掉的長明燈拼成的獄卒。沒有頭，胸口是一只空空的罐子。' });
   mkEnemy('c11_jar', { name: '魂罐', art: 'ghost_lantern', variant: 2, scale: 1.1, lv: 40, elem: 'water', m: { hp: 0.75, atk: 0.1, def: 0.8, spd: 0.5, exp: 0.3, gold: 0 },
     skills: [['e11_jar_hum', 1]], desc: '肩上與背上的魂罐。裡面的魂在替它擋刀。' });
   mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.025,
-    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 7, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
+    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 53.5, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
     skills: [['e11_kun_swallow', 3], ['e_kun_spout', 4], ['e11_kun_roll', 3]],
     drops: [], desc: '黑水溝的老守者。吞下迷路的魂，馱著游到彼岸再吐出來。燈暗了，牠找不到岸。' });
   mkEnemy('c11_kun_tumor', { name: '吞魂燈瘤', art: 'ghost_lantern', variant: 1, scale: 1.25, lv: 41, elem: 'water', weak: ['earth'],
     m: { hp: 1.1, atk: 0.8, mag: 0.9, def: 0.9, spd: 0.8, exp: 0.6, gold: 0 },
     skills: [['e11_tumor_light', 1]], desc: '鯤背上腫脹的燈瘤，塞滿了吐不出去的魂。每回合替鯤回復。' });
   mkEnemy('c11_warden_elder', { name: '千年燈塔守', art: 'tower_warden', variant: 2, scale: 1.5, lv: 42, elem: 'metal', weak: ['fire'], boss: true, immune: BIMM,
-    m: { hp: 9, atk: 1.65, mag: 1.55, def: 1.2, spd: 0.95, exp: 7, gold: 7 },
+    m: { hp: 9, atk: 1.65, mag: 1.55, def: 1.2, spd: 0.95, exp: 55.9, gold: 25.9 },
     skills: [['e11_wd_staff', 4], ['e11_wd_black', 3], ['e11_wd_ash', 2], ['e11_wd_guard', 2, 'hp<60']],
     drops: [['c11_lamp_ash', 1]], desc: '守了一千年的燈，自己的火卻黑了。燈罩臉裡的火，是黑的。' });
   for (const [id, v, nm] of [['c11_tongzi_a', 0, '赤金童'], ['c11_tongzi_b', 1, '青碧童'], ['c11_tongzi_c', 2, '紫玉童']]) {
@@ -1020,8 +1020,8 @@
     objects: MG_OBJ,
     pass: [{ x: 43, y: 1, w: 1, h: 1, solid: true }, { x: 46, y: 1, w: 1, h: 1, solid: true }],
     chests: [
-      { id: 'c11_01', x: 20, y: 4, item: 'c11_dingxiang', n: 2 },
-      { id: 'c11_02', x: 23, y: 18, item: 'huanhunxiang', n: 1 },
+      { id: 'c11_01', x: 20, y: 4, gold: 2500, item: 'c11_dingxiang', n: 2 },
+      { id: 'c11_02', x: 23, y: 18, gold: 2500, item: 'huanhunxiang', n: 1 },
     ],
     lights: (st) => (dawnPenghu(st) ? [] : [
       { x: 13, y: 3, r: 150, color: '#ffa050', flicker: 0.4 }, { x: 29, y: 3, r: 150, color: '#ffa050', flicker: 0.4 },
@@ -1268,7 +1268,7 @@
     objects: FL_OBJ,
     chests: [
       { id: 'c11_03', x: 49, y: 3, item: 'c11_xiaoguan', n: 3, run: async (S) => { S.gold(800); } },
-      { id: 'c11_04', x: 7, y: 12, item: 'lingxun', n: 2 },
+      { id: 'c11_04', x: 7, y: 12, gold: 1000, item: 'lingxun', n: 2 },
       { id: 'c11_05', x: 44, y: 23, item: 'c11_ac_fisher', n: 1 },
       { id: 'c11_06', x: 43, y: 31, item: 'huanhundan', n: 1 },
     ],
@@ -1429,9 +1429,9 @@
       return o;
     })(),
     chests: [
-      { id: 'c11_08', x: 4, y: 19, item: 'c11_lamp_oil', n: 2 },
-      { id: 'c11_09', x: 38, y: 19, item: 'c11_ac_jade_bracer', n: 1 },
-      { id: 'c11_10', x: 17, y: 33, item: 'huanhundan', n: 1 },
+      { id: 'c11_08', x: 4, y: 19, gold: 1500, item: 'c11_lamp_oil', n: 2 },
+      { id: 'c11_09', x: 38, y: 19, gold: 1000, item: 'c11_ac_jade_bracer', n: 1 },
+      { id: 'c11_10', x: 17, y: 33, gold: 1000, item: 'huanhundan', n: 1 },
     ],
     npcs: [
       { id: 'xw_freed_soul', sprite: 'c11_freed_soul', name: '被放出的魂', x: 18, y: 12, dir: 'down', ghost: true, if: (st) => st.flags.ch11_jars_freed && !st.flags.ch11_freed_talk,
@@ -4692,39 +4692,56 @@
     await S.fadeActor('nianer', 1, 1.0);
     await S.say('', '藍光聚成一個七歲的小女孩。濕漉漉的雙髻，赤著腳，衣角還在滴水。她看著夜玄。');
     S.face('yexuan', 'nianer');
+    // each beat breathes; the longest silences sit before and after 「讓我走吧」
     const beats = [
-      ['nianer:normal', '……爹。'],
-      ['yexuan:cry', '念兒……念兒……妳說話了……'],
-      ['yexuan:cry', '二十年……妳終於……'],
-      ['nianer:sad', '爹，你的頭髮白了。'],
-      ['yexuan:cry', '爹沒事。爹一點都沒事。'],
-      ['yexuan:cry', '念兒，再等一下。等天一亮，潮就會——'],
-      ['nianer:sad', '爹。'],
-      ['nianer:sad', '每天晚上，我都在那個水裡。'],
-      ['yexuan:hurt', '……'],
-      ['nianer:sad', '好冷。好黑。船一直翻，一直翻。'],
-      ['nianer:sad', '爹不讓我忘記……所以，我一直都在那天晚上。'],
-      ['', '夜玄的手，垂了下來。'],
-      ['nianer:cry', '爹，我好累……讓我走吧。'],
+      ['nianer:normal', '……爹。', 1.0],
+      ['yexuan:cry', '念兒……念兒……妳說話了……', 0.5],
+      ['yexuan:cry', '二十年……妳終於……', 0.8],
+      ['nianer:sad', '爹，你的頭髮白了。', 0.8],
+      ['yexuan:cry', '爹沒事。爹一點都沒事。', 0.4],
+      ['yexuan:cry', '念兒，再等一下。等天一亮，潮就會——', 0.2],
+      ['nianer:sad', '爹。', 1.2],
+      ['nianer:sad', '每天晚上，我都在那個水裡。', 0.6],
+      ['yexuan:hurt', '……', 0.6],
+      ['nianer:sad', '好冷。好黑。船一直翻，一直翻。', 0.6],
+      ['nianer:sad', '爹不讓我忘記……所以，我一直都在那天晚上。', 1.0],
+      ['', '夜玄的手，垂了下來。', 1.4],
+      ['nianer:cry', '爹，我好累……讓我走吧。', 0],
     ];
-    for (const b of beats) { await S.say(b[0], b[1]); await pause(S, 0.5); }
-    await pause(S, 1.4);
-    S.bgm('sad', { fade: 3 });
+    for (const b of beats) { await S.say(b[0], b[1]); await pause(S, b[2] || 0.3); }
+    // no words, no music: only the sea
+    S.sfx('water');
+    await pause(S, 2.4);
+    S.bgm('sad', { fade: 4 });
     await L(S, [
-      ['', '長長的靜默。只有海浪聲。'],
       ['yexuan:cry', '……'],
       ['yexuan:cry', '爹……爹只是……不想讓妳一個人……'],
+    ]);
+    await pause(S, 0.6);
+    await L(S, [
       ['nianer:smile', '我不是一個人呀。'],
       ['nianer:smile', '娘在那邊等我。她一直在花田那裡，提著燈。'],
       ['nianer:smile', '我從罐子裡，每天都看得到她的燈。'],
       ['nianer:smile', '中元那天，還有一盞燈漂過窗外，上面寫著我的名字。'],
       ['nianer:smile', '外面，還有別人記得我。'],
-      ['', '陳伯不在這裡。可是星河想起了中元夜，陳伯寫下「念兒」兩個字的手。'],
-      ['yexuan:cry', '……婉……'],
-      ['', '夜玄伸出手，想摸女兒的頭。手穿過了她。他看著自己的手，像第一次看見它。'],
+      ['', '星河想起了中元夜，陳伯寫下「念兒」兩個字的手。'],
+    ]);
+    await pause(S, 0.8);
+    await S.say('yexuan:cry', '……婉……');
+    await pause(S, 0.8);
+    await S.say('', '夜玄伸出手，想摸女兒的頭。');
+    // the hand goes through her: she flickers like a flame
+    await S.fadeActor('nianer', 0.45, 0.3);
+    await S.fadeActor('nianer', 1, 0.5);
+    await S.say('', '手穿過了她。他看著自己的手，像第一次看見它。');
+    await pause(S, 1.2);
+    await L(S, [
       ['yexuan:cry', '爹……抓錯了……'],
       ['yexuan:cry', '爹抓了二十年……抓住的，是妳最冷的那一夜……'],
       ['', '他伏在地上，像一個孩子一樣，哭了起來。'],
+    ]);
+    await pause(S, 1.4);
+    await L(S, [
       ['', '白芷走過去，在夜念面前蹲下，用雙手輕輕捧住她的光。'],
       ['baizhi:smile', '念兒。等一下下就好。姊姊幫妳顧著。'],
       ['nianer:smile', '……姊姊，妳就是唱歌的那個姊姊。'],
@@ -4732,6 +4749,11 @@
       ['nianer:smile', '妳唱歌很好聽。比哥哥好聽。'],
       ['xinghe:shy', '……為什麼連她都知道。'],
     ]);
+    S.emote('nianer', '♪');
+    await pause(S, 0.8);
+    S.face('yexuan', 'nianer');
+    await S.say('', '夜念笑了。夜玄抬起頭。二十年來，他第一次聽見女兒笑。');
+    await pause(S, 1.4);
     S.flag('ch11_nianer');
   };
   H.wuxiangIntro = async (S) => {
@@ -5142,12 +5164,19 @@
     await L(S, [['', '烏鬚船主和海盜們，縮手縮腳地站在路邊。'], ['烏鬚船主', '……老子，也能過？'], ['chenbo:normal', '能。燈不挑人。'], ['烏鬚船主', '……小的們！走了！']]);
     await Promise.all(['cap_e', 'pir_e1', 'pir_e2'].map((id) => S.fadeActor(id, 0, 1.0)));
     S.remove('cb_e');
-    await L(S, [['', '小渡口。夜玄躺在棧橋上，慢慢睜開眼睛。夜念蹲在他身邊，手托著下巴。'], ['nianer:smile', '爹，你睡好久。'], ['yexuan:surprise', '……念兒。']]);
+    await L(S, [['', '小渡口。夜玄躺在棧橋上，慢慢睜開眼睛。夜念蹲在他身邊，手托著下巴。'], ['nianer:smile', '爹，你睡好久。']]);
+    await pause(S, 0.8);
+    await S.say('yexuan:surprise', '……念兒。');
     S.face('yx_e', 'left');
     const sw = S.spawn({ id: 'sw_e', sprite: 'c11_suwan', x: 32, y: 9, dir: 'down', ghost: true, light: { r: 140, color: '#ffe6b0' } }); sw.alpha = 0;
     await S.fadeActor('sw_e', 1, 1.0);
     await S.move('sw_e', 'D');
-    await L(S, [['', '花田深處，一盞白燈籠走了過來。提燈的婦人，眉眼溫柔。'], ['蘇婉', '……你們父女，讓我等得好久。'], ['yexuan:cry', '……婉。'], ['蘇婉', '鬍子也不刮。']]);
+    await L(S, [['', '花田深處，一盞白燈籠走了過來。提燈的婦人，眉眼溫柔。'], ['蘇婉', '……你們父女，讓我等得好久。']]);
+    await pause(S, 1.0);
+    await S.say('yexuan:cry', '……婉。');
+    await pause(S, 0.8);
+    await S.say('蘇婉', '鬍子也不刮。');
+    await pause(S, 0.6);
     addObj({ t: 'boat_small', x: 34, y: 12 });
     S.spawn({ id: 'cb_boat', sprite: 'chenbo', portrait: 'chenbo', x: 34, y: 12, dir: 'left' });
     await L(S, [
@@ -5155,13 +5184,20 @@
       ['chenbo:normal', '上船吧，阿玄。'],
       ['yexuan:surprise', '……阿渡。'],
       ['chenbo:serious', '引魂人不留魂。'],
-      ['chenbo:serious', '……這一次，我來渡你。'],
+    ]);
+    await pause(S, 0.6);
+    await S.say('chenbo:serious', '……這一次，我來渡你。');
+    await pause(S, 1.0);
+    await L(S, [
       ['yexuan:sad', '我打了你。我關了那麼多魂。我害死了青鋒。'],
       ['yexuan:sad', '我不配上這條船。'],
       ['chenbo:angry', '配不配，不是你說了算。上船。'],
       ['hongying:serious', '……夜玄。'],
       ['yexuan:sad', '紅纓姑娘。'],
       ['hongying:serious', '我不原諒你。'],
+    ]);
+    await pause(S, 0.8);
+    await L(S, [
       ['hongying:sad', '……可是哥會希望我讓你走。'],
       ['hongying:serious', '所以，走吧。好好地走。'],
       ['yexuan:cry', '……謝謝。'],
@@ -5171,10 +5207,19 @@
       ['yexuan:smile', '是用來……送的。'],
       ['yexuan:sad', '白芷姑娘。……對不起。'],
       ['baizhi:smile', '去吧。念兒在等你牽她。'],
-      ['', '夜念一手牽起娘，一手牽起爹。夜玄低頭看著那隻小小的手，不敢用力。'],
-      ['nianer:smile', '爹，牽著跟抓著，不一樣喔。'],
+    ]);
+    await pause(S, 0.8);
+    await S.say('', '夜念一手牽起娘，一手牽起爹。夜玄低頭看著那隻小小的手，不敢用力。');
+    await pause(S, 1.0);
+    // the whole game's argument, in a seven-year-old's words
+    await S.say('nianer:smile', '爹，牽著跟抓著，不一樣喔。');
+    await pause(S, 1.6);
+    await L(S, [
       ['yexuan:cry', '……'],
       ['yexuan:smile', '……嗯。爹學會了。'],
+    ]);
+    await pause(S, 1.0);
+    await L(S, [
       ['', '三人上了船。陳伯撐槳。小舟離開棧橋，划向光。'],
       ['yexuan:smile', '阿渡，你划得還是比我差。'],
       ['chenbo:angry', '閉嘴，坐好。'],
@@ -5489,22 +5534,36 @@
     await S.fadeIn(1.0);
     await S.say('', '小渡口。夜玄醒來，夜念蹲在他身邊。蘇婉提著白燈籠走來。');
     await S.fadeActor('sw_e', 1, 1.0);
+    await S.say('蘇婉', '……你們父女，讓我等得好久。');
+    await pause(S, 1.0);
+    await S.say('yexuan:cry', '……婉。');
+    await pause(S, 0.8);
+    S.face('yx_e', 'up');   // toward the lighthouse
+    await S.say('', '夜玄看著燈塔。看了很久。');
+    await pause(S, 1.2);
+    S.face('yx_e', 'left');
     await L(S, [
-      ['蘇婉', '……你們父女，讓我等得好久。'],
-      ['yexuan:cry', '……婉。'],
-      ['', '夜玄看著燈塔。看了很久。'],
       ['yexuan:sad', '念兒，跟娘去吧。'],
       ['nianer:surprise', '爹不來嗎？'],
       ['yexuan:sad', '那盞燈裡的姑娘，是我害她回去的。'],
       ['yexuan:serious', '總要有人，替她守著。'],
+    ]);
+    await pause(S, 0.8);
+    await L(S, [
       ['nianer:sad', '爹會來嗎？'],
       ['yexuan:smile', '會。等燈不需要人守的那一天。'],
-      ['', '夜念想了想，用力抱了他一下。然後牽起娘的手，走向光。走到一半，她回頭揮手。'],
-      ['nianer:smile', '爹，這一次，換我等你喔！'],
     ]);
-    await Promise.all([S.fadeActor('nian_e', 0, 1.2), S.fadeActor('sw_e', 0, 1.2)]);
-    await L(S, [['', '夜玄朝燈塔走去。陳伯叫住他。'], ['chenbo:sad', '阿玄……'], ['yexuan:smile', '阿渡。這一次，換我顧燈了。']]);
-    await S.fadeActor('yx_e', 0, 1.2);
+    await pause(S, 0.8);
+    await S.say('', '夜念想了想，用力抱了他一下。然後牽起娘的手，走向光。走到一半，她回頭揮手。');
+    S.face('nian_e', 'left');
+    await S.say('nianer:smile', '爹，這一次，換我等你喔！');
+    await Promise.all([S.fadeActor('nian_e', 0, 1.6), S.fadeActor('sw_e', 0, 1.6)]);
+    await pause(S, 1.0);
+    await L(S, [['', '夜玄朝燈塔走去。陳伯叫住他。'], ['chenbo:sad', '阿玄……']]);
+    await pause(S, 0.8);
+    await S.say('yexuan:smile', '阿渡。這一次，換我顧燈了。');
+    await S.fadeActor('yx_e', 0, 1.6);
+    await pause(S, 0.8);
     await S.fadeOut(1.0);
     V().c11_dawn = 1;
     await S.warp(DECK, 12, 6, 'up', { reload: true, fade: 0 });
@@ -5712,7 +5771,9 @@
     S.chapter(11);
     installEnding('true');
     // party: 星河・紅纓・雲歸 (+芋圓/麻糬 as silent followers); 白芷 is away until the top of the tower; 陳伯 is the helmsman (not a member)
-    const lv = avgLv();
+    // level floor = the progression table's ch11 start (G.Data.progression lv[0] = 38), like every other chapter entry
+    const lv0 = ((G.Data.progression || []).find((p) => p.ch === 11) || { lv: [38] }).lv[0];
+    const lv = Math.max(avgLv(), lv0);
     for (const id of ['xinghe', 'hongying', 'yungui']) {
       if (!G.state.members[id]) G.Party.create(id, lv);
       G.Story.ensureLevel(id, lv);

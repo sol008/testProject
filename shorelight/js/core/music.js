@@ -117,14 +117,17 @@ G.Music = (() => {
     Am: 'a2.e3.a3.c4.e4', Am9: 'a2.e3.b3.c4.e4', C: 'c3.g3.c4.d4.e4', Dm: 'd2.a2.d3.f3.a3', D: 'd2.a2.d3.f#3.a3',
     Em: 'e2.b2.e3.g3.b3', E: 'e2.b2.e3.g#3.b3', Esus: 'e2.b2.e3.a3.b3', F: 'f2.c3.a3.c4.e4', G: 'g2.d3.g3.a3.d4',
     G7: 'g2.d3.f3.b3.d4', Bb: 'bb2.f3.bb3.d4.f4', Dsus: 'd2.a2.d3.e3.a3', Gm: 'g2.d3.g3.bb3.d4', Bm: 'b2.f#3.b3.d4.f#4',
+    Fm: 'f2.c3.ab3.c4.f4', Asus: 'a2.e3.a3.d4.e4',
   };
   const VP = {   // close triads around a3-e4 for pads
     Am: 'a3.c4.e4', Am9: 'b3.c4.e4', C: 'g3.c4.e4', Dm: 'a3.d4.f4', D: 'a3.d4.f#4', Em: 'g3.b3.e4', E: 'g#3.b3.e4',
     Esus: 'a3.b3.e4', F: 'a3.c4.f4', G: 'g3.b3.d4', G7: 'g3.b3.f4', Bb: 'bb3.d4.f4', Dsus: 'a3.d4.e4', Gm: 'g3.bb3.d4', Bm: 'f#3.b3.d4',
+    Fm: 'ab3.c4.f4', Asus: 'a3.d4.e4',
   };
   const VB = {   // bass: root, fifth, octave
     Am: 'a2.e3.a3', Am9: 'a2.e3.a3', C: 'c3.g3.c4', Dm: 'd2.a2.d3', D: 'd2.a2.d3', Em: 'e2.b2.e3', E: 'e2.b2.e3',
     Esus: 'e2.b2.e3', F: 'f2.c3.f3', G: 'g2.d3.g3', G7: 'g2.d3.g3', Bb: 'bb2.f3.bb3', Dsus: 'd2.a2.d3', Gm: 'g2.d3.g3', Bm: 'b2.f#3.b3',
+    Fm: 'f2.c3.f3', Asus: 'a2.e3.a3',
   };
   const voice = (tbl) => (prog, k = 0) => {
     const s = prog.trim().split(/\s+/).map((c) => {
@@ -136,41 +139,76 @@ G.Music = (() => {
   };
   const vz = voice(VZ), vp = voice(VP), vb = voice(VB);
 
-  // ===== 「渡魂謠」 — 白芷's song (A 羽 mode: a c d e g). Harmony: Am G Am Em F G Dm Am
-  const DUHUN = 'a4:4 c5:2 d5:2 e5:6 g5:2 | e5:4 d5:2 c5:2 d5:8 | a4:4 c5:2 d5:2 e5:4 g5:2 a5:2 | g5:4 e5:2 d5:2 e5:8 |' +
-    ' a5:6 g5:2 e5:4 d5:4 | c5:2 d5:2 e5:2 g5:2 d5:8 | c5:4 d5:2 c5:2 a4:4 g4:2 c5:2 | a4:12 -:4';
-  const DUHUN_PROG = 'Am G Am Em F G Dm Am';
-  // the same song turned toward its relative major (宮) — the love / hope form. Harmony: F G Am C F G F C
-  const LOVEM = 'a4:4 c5:2 d5:2 e5:6 g5:2 | e5:4 d5:2 c5:2 d5:8 | a4:4 c5:2 d5:2 e5:4 g5:2 a5:2 | g5:4 e5:2 d5:2 e5:8 |' +
-    ' a5:6 g5:2 e5:4 d5:4 | c5:2 d5:2 e5:2 g5:2 d5:8 | c5:4 d5:2 e5:2 g5:4 e5:2 d5:2 | c5:12 -:4';
-  const LOVE_PROG = 'F G Am C F G F C';
-  const LOVE_COUNTER = 'f4:8 a4:8 | b4:8 g4:8 | c5:8 a4:8 | g4:16 | c5:8 a4:8 | b4:8 g4:8 | a4:8 c5:8 | e4:16';
+  // ===== the 燈 motif (leitmotif of the whole score, docs/MUSIC.md) — A 羽 mode (a c d e g, 1 = C):
+  //   6̣ 3 6 — | 5·3 2 3 —    a lantern lifted in two open leaps (fifth, fourth), then set drifting on the water.
+  // Its 宮 form 1 5 1̇ — | 6·5 3 5 — is the same shape a pentatonic step higher: the hopeful / 千燈 face.
+  const MOTIF = 'a4:4 e5:4 a5:8 | g5:3 e5:1 d5:4 e5:8';
+  // ===== 「渡魂謠」 — 白芷's song, one verse = 4 lines × 2 bars, set to the lyric (起承轉合):
+  //   燈一盞，渡一人，| 黑水茫茫莫回身；| 前塵如霧隨潮去，| 彼岸花開又一春。
+  // Harmony: Am Em F Am F G Am Dm (the plagal Dm → Am across the loop / into the next verse)
+  const DUHUN = MOTIF + ' | c5:4 d5:2 c5:2 a4:4 g4:4 | a4:4 c5:2 d5:2 e5:8 |' +
+    ' a5:6 c6:2 a5:4 g5:4 | e5:4 g5:2 e5:2 d5:8 | a4:4 e5:4 a5:4 g5:2 e5:2 | d5:3 e5:1 c5:2 d5:2 a4:8';
+  const DUHUN_PROG = 'Am Em F Am F G Am Dm';
+  // shared harmony line under 「渡魂謠」 (erhu)
+  const DUHUN_COUNTER = 'c5:8 e5:8 | b4:8 g4:8 | a4:8 f4:8 | e4:8 a4:8 | c5:16 | b4:8 g4:8 | c5:8 e5:8 | f4:8 e4:8';
+  // the same song turned to its 宮 form (every note one pentatonic degree up: 6̣→1, 1→2, 2→3, 3→5, 5→6) —
+  // the love / hope / 千燈之段 face, C major. Harmony: C Am Dm F Am Em F C
+  const LOVEM = 'c5:4 g5:4 c6:8 | a5:3 g5:1 e5:4 g5:8 | d5:4 e5:2 d5:2 c5:4 a4:4 | c5:4 d5:2 e5:2 g5:8 |' +
+    ' c6:6 d6:2 c6:4 a5:4 | g5:4 a5:2 g5:2 e5:8 | c5:4 g5:4 c6:4 a5:2 g5:2 | e5:3 g5:1 d5:2 e5:2 c5:8';
+  const LOVE_PROG = 'C Am Dm F Am Em F C';
+  const LOVE_COUNTER = 'e4:8 g4:8 | c5:8 a4:8 | f4:8 a4:8 | a4:8 c5:8 | e5:8 c5:8 | b4:8 g4:8 | a4:8 c5:8 | g4:8 e4:8';
+  // chords for the lone-flute 渡魂謠 in the prologue / ch1 (one triad per bar; the last is an open A-sus so the
+  // unaccompanied verse ends at rest)
+  const DUHUN_CH = [['a3', 'c4', 'e4'], ['g3', 'b3', 'e4'], ['f3', 'a3', 'c4'], ['a3', 'c4', 'e4'],
+    ['f3', 'a3', 'c4'], ['g3', 'b3', 'd4'], ['a3', 'c4', 'e4'], ['a3', 'd4', 'e4']];
+  // 「彼岸燈」 main-title melody: the motif climbs in sequence (6̣ 3 6 → 1 5 1̇ → 2 6 2̇), lanterns rising one
+  // after another, crests on 3̇ and settles back onto the motif's tail. Harmony: F G Am C Dm F Am Em
+  const TITLE_A = MOTIF + ' | c5:4 g5:4 c6:8 | a5:3 g5:1 e5:4 g5:8 |' +
+    ' d5:4 a5:4 e6:0.5 d6:7.5 | c6:3 a5:1 g5:4 a5:8 | e6:6 d6:2 c6:4 a5:4 | g5:3 a5:1 g5:2 e5:2 d5:2 e5:6';
+  const TITLE_PROG = 'F G Am C Dm F Am Em';
   // 九份 town tune (G 徵 / major pentatonic) shared by jiufen and credits. Harmony: G Em C D C Em Am G
   const JIUFEN_A = 'd5:2 e5:2 g5:4 e5:2 d5:2 b4:4 | d5:2 e5:2 d5:2 b4:2 a4:8 | g4:2 a4:2 b4:4 d5:2 e5:2 g5:2 e5:2 | d5:12 -:4 |' +
     ' e5:2 g5:2 a5:4 g5:2 e5:2 d5:4 | e5:2 d5:2 b4:2 a4:2 b4:8 | a4:2 b4:2 d5:4 b4:2 a4:2 e4:4 | g4:12 -:4';
   const JIUFEN_PROG = 'C Am F G F Am Dm C'; // written in C-family, transposed +7 to G
 
+  // 「彼岸燈」 main title: lanterns on the night sea — wistful, then hopeful. A 羽 ↔ C 宮.
+  //   intro (4)  bells ring the motif over the sea pad, the zheng rises
+  //   A (8)      dizi alone: the title melody (the motif climbing in sequence)
+  //   B (8)      the hopeful turn to C 宮: dizi high over an erhu counter-line, a soft pulse
+  //   A' (8)     the title melody again with the erhu beneath and bells doubling each rising lantern;
+  //              cadences like 渡魂謠 (2·3 1 2 6̣) and falls back into the intro
   SONGS.title = (() => {
-    const prog = 'Am F G Esus ' + DUHUN_PROG + ' ' + DUHUN_PROG + ' F G Am Am';
-    const descant = 'c6:8 b5:8 | b5:8 d6:8 | c6:8 e6:8 | b5:16 | c6:8 a5:8 | b5:8 d6:8 | a5:8 f5:4 g5:4 | e5:16';
-    const tail = 'a4:4 c5:2 d5:2 e5:8 | g5:4 e5:4 d5:8 | c5:4 d5:2 c5:2 a4:4 g4:2 c5:2 | a4:16';
+    const intro = 'Am9 F G Esus', progB = 'F G Em Am Dm G C G';
+    const progA2 = TITLE_PROG.replace(/Em$/, 'Dm');
+    const prog = intro + ' ' + TITLE_PROG + ' ' + progB + ' ' + progA2;
+    const B = 'c6:8 a5:4 g5:4 | d6:8 c6:2 a5:2 g5:4 | e5:6 g5:2 a5:4 g5:4 | e5:8 c5:4 d5:4 |' +
+      ' d5:4 e5:4 a5:4 c6:4 | d6:6 e6:2 d6:4 c6:2 a5:2 | e6:12 d6:2 c6:2 | a5:4 g5:4 e5:4 d5:4';
+    const A2 = TITLE_A.replace(/g5:3 a5:1 g5:2 e5:2 d5:2 e5:6$/, 'd5:3 e5:1 c5:2 d5:2 a4:8');
+    const erhuB = 'a4:8 c5:8 | b4:8 d5:8 | g4:8 b4:8 | c5:8 a4:8 | f4:8 a4:8 | b4:8 g4:8 | g4:8 c5:4 e5:4 | d5:8 b4:8';
+    const erhuA2 = 'c5:8 a4:8 | b4:8 d5:8 | e4:8 a4:8 | g4:8 e4:8 | f4:8 a4:8 | a4:8 c5:8 | c5:8 e5:8 | f4:8 e4:8';
     return {
-      bpm: 72, bars: 24, tracks: [
-        T('zheng', 0.42, 0.5, ch(vz(prog), '0:2 1 2 3 4 3 2 1')),
-        T('pad', 0.32, 0.6, ch(vp(prog), '*:16')),
-        T('bass', 0.5, 0.2, ch(vb(prog), '0:12 1:4')),
-        T('dizi', 0.55, 0.55, cat('-:64', DUHUN, descant, tail), { v: 0.5 }),
-        T('erhu', 0.55, 0.45, cat('-:192', DUHUN, '-:64')),
-        T('bell', 0.3, 0.7, cat('-:8 e6:8 | -:16 | -:8 d6:8 | -:8 b5:8', rep('e6:16 | -:48', 5))),
-        T('drum', 0.3, 0.3, cat('-:192', rep(grid('x.....x.........'), 8), '-:64')),
+      bpm: 72, bars: 28, tracks: [
+        T('dizi', 0.5, 0.55, cat('-:64', TITLE_A, B, A2)),
+        T('erhu', 0.4, 0.45, cat('-:192', erhuB, erhuA2)),
+        T('zheng', 0.36, 0.55, cat(ch(vz(intro), '0:4 2:4 4:4 7:4'), ch(vz(TITLE_PROG), '0:4 2:2 3:2 4:4 3:2 2:2'),
+          ch(vz(progB + ' ' + progA2), '0:2 1 2 3 4 3 2 1'))),
+        T('pad', 0.3, 0.65, ch(vp(prog), '*:16')),
+        T('bass', 0.42, 0.25, cat(ch(vb(intro), '0:16'), ch(vb(TITLE_PROG), '0:12 1:4'), ch(vb(progB + ' ' + progA2), '0:8 1:4 2:4'))),
+        T('bell', 0.24, 0.8, cat('a5:4 e6:4 a6:8 | g6:3 e6:1 d6:4 e6:8 | -:16 | -:8 b5:8',
+          '-:16 | -:8 e6:8 | -:32 | -:16 | -:8 a6:8 | -:32', '-:96 | e6:16 | -:16',
+          'a5:4 e6:4 a6:8 | -:16 | c6:4 g6:4 c7:8 | -:16 | d6:4 a6:4 d7:8 | -:16 | -:32')),
+        T('drum', 0.22, 0.35, cat('-:192', rep(grid('x.......x.......'), 7), grid('x.......x...x.x.'), rep(grid('x...............'), 8))),
+        T('cymbal', 0.07, 0.8, cat('-:48 -:8 x:8', '-:128', 'x:16 -:112', 'x:16 -:112')),
+        T('gong', 0.1, 0.8, 'x:448'),
       ],
     };
   })();
 
   SONGS.dream = (() => {
     const prog = 'Am9*2 F*2 C*2 G*2 Am9*2 F*2 Dm*2 Esus*2';
-    const bells = 'a5:4 c6:2 d6:2 e6:8 | -:16 | e6:4 d6:2 c6:2 d6:8 | -:16 | e6:4 g6:4 e6:8 | -:16 | d6:8 a5:8 | -:16 | -:128';
-    const dizi = '-:128 | a5:6 g5:2 e5:4 d5:4 | e5:16 | c5:2 d5:2 e5:2 g5:2 a5:8 | g5:16 | f5:4 e5:2 d5:2 a4:8 | -:16 | b4:8 a4:8 | -:16';
+    // the lantern-bridge dream: bells ring the 燈 motif, then the flute half-remembers it
+    const bells = 'a5:4 e6:4 a6:8 | -:16 | g6:3 e6:1 d6:4 e6:8 | -:16 | e6:4 g6:4 e6:8 | -:16 | d6:8 a5:8 | -:16 | -:128';
+    const dizi = '-:128 | ' + MOTIF + ' | c6:6 a5:2 g5:4 e5:4 | g5:16 | f5:4 e5:2 d5:2 a4:8 | -:16 | b4:8 a4:8 | -:16';
     return {
       bpm: 60, bars: 16, tracks: [
         T('pad', 0.4, 0.8, ch(vp(prog), '*:16')),
@@ -183,27 +221,39 @@ G.Music = (() => {
     };
   })();
 
+  // 白芷's theme (id `love`, her theme is also the love theme): a dreamy 3/4 on the jade 笛子, D 宮.
+  //   A (8)    the motif in its 宮 form opens her melody (1 5 1̇ — 6·5 3 5), harp-like zheng ripples
+  //   A' (8)   higher, closes on 1
+  //   B (8)    the far shore: the motif turned upside down (3̇ 6 3 — its reflection on the water), a hummed
+  //            inner voice sinking c → b → a → a♭ → g over Am F C G F Fm C G (the minor iv is the otherworldly turn)
+  //   A'' (8)  A' as a duet: the erhu follows the flute a bar behind, an octave down
   SONGS.love = (() => {
-    const prog = 'F G Am C ' + LOVE_PROG + ' Am Em F C Dm Am F G ' + LOVE_PROG + ' F G C C';
-    const bridgeErhu = 'c5:4 e5:2 a5:2 g5:6 e5:2 | e5:8 -:8 | f5:4 e5:2 c5:2 a4:6 c5:2 | g4:8 -:8 |' +
-      ' d5:4 f5:2 a5:2 c6:6 a5:2 | a5:4 g5:2 e5:2 c5:8 | c5:4 d5:2 f5:2 e5:4 d5:4 | d5:12 -:4';
-    const bridgeDizi = '-:16 | -:8 b5:2 a5:2 g5:4 | -:16 | -:8 e5:2 g5:2 c6:4 | -:16 | -:8 e6:2 d6:2 c6:4 | -:32';
-    const tail = 'e5:4 g5:2 a5:2 g5:8 | d5:4 e5:2 d5:2 b4:8 | c5:16 | -:16';
+    const pA = 'C Am F G C Em F G', pA2 = 'C Am F Am Dm G C C', pB = 'Am F C G F Fm C G';
+    const prog = pA + ' ' + pA2 + ' ' + pB + ' ' + pA2;
+    const A = 'c5:4 g5:4 c6:4 | a5:3 g5:1 e5:2 g5:6 | a5:6 c6:2 a5:4 | g5:8 e5:2 d5:2 |' +
+      ' e5:4 g5:4 a5:4 | g5:6 e5:2 d5:4 | c5:4 d5:2 e5:2 g5:4 | d5:12';
+    const A2 = 'c5:4 g5:4 c6:4 | a5:3 g5:1 e5:2 g5:6 | d6:0.5 c6:5.5 d6:2 c6:4 | a5:4 g5:4 e5:4 |' +
+      ' d5:4 e5:4 a5:4 | g5:6 a5:2 g5:2 e5:2 | c5:12 | -:12';
+    const B = 'e6:4 a5:4 e5:4 | g5:3 a5:1 c6:2 a5:6 | d6:4 g5:4 d5:4 | e5:3 g5:1 a5:2 g5:6 |' +
+      ' a5:8 c6:2 d6:2 | c6:6 ab5:2 g5:4 | e5:6 d5:2 c5:2 d5:2 | g5:12';
+    const echo = '-:12 | ' + A2.split('|').slice(0, 7).join('|');
     return {
-      bpm: 68, bars: 32, tracks: [
-        T('zheng', 0.4, 0.55, ch(vz(prog), '0:4 2:2 3 4:4 3:2 2')),
-        T('pad', 0.3, 0.6, ch(vp(prog), '*:16')),
-        T('bass', 0.45, 0.2, ch(vb(prog), '0:8 1:4 2:4')),
-        T('dizi', 0.5, 0.55, cat('-:64', LOVEM, bridgeDizi, LOVEM, tail)),
-        T('erhu', 0.5, 0.45, cat('-:192', bridgeErhu, LOVE_COUNTER, '-:64')),
-        T('bell', 0.25, 0.8, cat('c6:16 | -:16 | e6:16 | -:16', '-:384', 'c6:16 | -:16 | g5:16 | -:16')),
+      bpm: 66, bar: 12, bars: 32, tracks: [
+        T('dizi', 0.5, 0.7, cat(A, A2, B, A2), { tr: 2 }),
+        T('erhu', 0.34, 0.55, cat('-:288', echo), { tr: -10 }),
+        T('voice', 0.34, 0.75, cat('-:192', 'c5:12 | c5:12 | c5:12 | b4:12 | a4:12 | ab4:12 | g4:12 | b4:12', '-:96'), { tr: 2 }),
+        T('zheng', 0.3, 0.7, cat(ch(vz(pA + ' ' + pA2, 2), '0:2 2 4 7 4 2'), ch(vz(pB, 2), '0:4 4:4 7:4'), ch(vz(pA2, 2), '0:2 2 4 7 4 2'))),
+        T('pad', 0.28, 0.75, ch(vp(prog, 2), '*:12')),
+        T('bass', 0.3, 0.35, ch(vb(prog, 2), '0:12')),
+        T('bell', 0.2, 0.9, cat('-:84 | -:6 e6:6', '-:84 | c6:4 g6:4 c7:4', '-:96', '-:84 | c6:4 g6:4 c7:4'), { tr: 2 }),
+        T('cymbal', 0.05, 0.9, cat('-:192', 'x:24 -:72', '-:96')),
       ],
     };
   })();
 
   SONGS.sad = (() => {
     const prog = DUHUN_PROG + ' ' + DUHUN_PROG;
-    const counter = 'f4:8 a4:8 | e4:8 g4:8 | f4:8 d4:8 | e4:16 | d4:8 f4:8 | e4:8 g4:8 | bb4:8 g4:8 | a4:16';
+    const counter = 'f4:8 a4:8 | e4:8 a4:8 | d4:8 f4:8 | a4:8 f4:8 | d4:8 f4:8 | e4:8 g4:8 | f4:8 a4:8 | bb4:8 a4:8';
     return {
       bpm: 54, bars: 16, tracks: [
         T('erhu', 0.6, 0.5, cat(tr(DUHUN, -7), counter)),
@@ -215,23 +265,53 @@ G.Music = (() => {
     };
   })();
 
+  // 「千燈」 true-ending theme — the payoff of the title (fades in under 11-15's 心燈 and plays through the epilogue):
+  //   P (8)  prelude: 渡魂謠 on lone zheng notes over its bass roots (the fog / heart-lantern scene)
+  //   T (8)  the title melody on dizi, bells doubling every rising lantern, erhu joins halfway
+  //   Q (8)  千燈之段: 渡魂謠 in its 宮 form, lifted to D — dizi and erhu in octaves, gong, a heartbeat drum, bell cascades
+  //   C (4)  coda: the motif in 宮 (1 5 1̇ — 6·5 3 5 — 6·1̇ 2̇ — 1̇), a plagal F → C (G → D) "amen", back to the prelude
   SONGS.ending = (() => {
-    const prog = 'Am F C G ' + DUHUN_PROG + ' ' + LOVE_PROG;
-    const zc = vz(prog) + ' ' + vz(LOVE_PROG + ' F G C C', 2);
-    const pc = vp(prog) + ' ' + vp(LOVE_PROG + ' F G C C', 2);
-    const bc = vb(prog) + ' ' + vb(LOVE_PROG + ' F G C C', 2);
-    const cascade = 'e6:2 c6 a5 g5 e5 g5 a5 c6 | c6:2 a5 f5 e5 c5 e5 f5 a5 | g6:2 e6 c6 g5 e5 g5 c6 e6 | d6:2 b5 g5 d5 g5 b5 d6 g6';
-    const tail = 'f#5:4 a5:2 b5:2 a5:8 | e5:4 f#5:2 e5:2 b4:8 | d5:16 | -:16';
+    const pT = TITLE_PROG, pQ = LOVE_PROG, pC = 'C Am F C';
+    const coda = 'c5:4 g5:4 c6:8 | a5:3 g5:1 e5:4 g5:8 | a5:6 c6:2 d6:8 | c6:16';
+    const erhuT = '-:64 | f4:8 a4:8 | a4:8 c5:8 | c5:8 e5:8 | b4:8 g4:8';
+    const erhuC = 'e4:8 g4:8 | e4:8 c5:8 | c5:8 a4:8 | g4:16';
+    const bellsT = 'a5:4 e6:4 a6:8 | -:16 | c6:4 g6:4 c7:8 | -:16 | d6:4 a6:4 d7:8 | -:16 | -:32';
+    const cascade = 'g6:2 e6 c6 g5 e5 g5 c6 e6 | -:16 | -:16 | a6:2 f6 c6 a5 f5 a5 c6 f6 | e6:2 c6 a5 e5 c5 e5 a5 c6 | -:16 | -:16 | c6:2 e6 g6 c7 -:8';
+    const bellsC = 'c6:4 g6:4 c7:8 | -:16 | a5:4 c6:4 f6:8 | c6:4 g6:4 c7:8';
     return {
-      bpm: 76, bars: 32, tracks: [
-        T('zheng', 0.38, 0.55, ch(zc, '0:2 1 2 3 4 3 2 1')),
-        T('pad', 0.3, 0.6, ch(pc, '*:16')),
-        T('bass', 0.45, 0.2, ch(bc, '0:8 1:4 2:4')),
-        T('dizi', 0.52, 0.55, cat('-:64', DUHUN, LOVEM, tr(LOVEM, 2), tail)),
-        T('erhu', 0.45, 0.45, cat('-:192', LOVE_COUNTER, tr(LOVE_COUNTER, 2), '-:64')),
-        T('bell', 0.22, 0.85, cat(cascade, '-:256', ch(zc.split(' ').slice(20, 28).join(' '), '12:4 13:4 14:8'), 'b5:4 d6:4 g6:8 | c#6:4 e6:4 a6:8 | f#6:4 a6:4 d7:8 | -:16')),
-        T('drum', 0.28, 0.3, cat('-:192', rep(grid('x.......x.....x.'), 16), '-:64')),
-        T('cymbal', 0.25, 0.6, '-:320 x:16 -:112 x:16 -:48'),
+      bpm: 76, bars: 28, tracks: [
+        T('zheng', 0.46, 0.6, cat(DUHUN, '-:320')),
+        T('zheng', 0.3, 0.55, cat(ch(vz(DUHUN_PROG), '0:16'), ch(vz(pT), '0:4 2:2 3:2 4:4 3:2 2:2'),
+          ch(vz(pQ, 2), '0:1 1 2 3 4 3 2 1 0 1 2 3 4 3 2 1'), ch(vz(pC, 2), '0:2 1 2 3 4 3 2 1'))),
+        T('pad', 0.28, 0.65, cat('-:64', ch(vp('F G Am Dm'), '*:16'), ch(vp(pT), '*:16'), ch(vp(pQ + ' ' + pC, 2), '*:16'))),
+        T('bass', 0.42, 0.25, cat('-:128', ch(vb(pT), '0:12 1:4'), ch(vb(pQ + ' ' + pC, 2), '0:8 1:4 2:4'))),
+        T('dizi', 0.5, 0.55, cat('-:128', TITLE_A, tr(LOVEM, 2), tr(coda, 2))),
+        T('erhu', 0.42, 0.45, cat('-:128', erhuT, tr(LOVEM, -10), tr(erhuC, 2))),
+        T('bell', 0.22, 0.85, cat('-:128', bellsT, tr(cascade, 2), tr(bellsC, 2))),
+        T('drum', 0.3, 0.3, cat('-:256', rep(grid('X.......x.....x.'), 7), grid('X.......x.x.x.x.'), grid('X...............'), '-:48')),
+        T('cymbal', 0.16, 0.6, cat('-:256', 'x:16 -:112', 'x:16 -:48')),
+        T('gong', 0.2, 0.7, cat('-:256', 'x:128', 'x:64')),
+      ],
+    };
+  })();
+
+  // 「渡魂謠」 as a song (id `duhun`) — for the scenes where 白芷 sings or plays it. It starts on the first word,
+  // so even a short scene hears 「燈一盞，渡一人」.
+  //   verse 1 (8): voice and jade flute in octaves over zheng and pad · verse 2 (8): the flute leads, erhu
+  //   counter-line, zheng ripples, the voice holding long notes · interlude (2): bells ring the motif, Esus → verse 1
+  SONGS.duhun = (() => {
+    const prog = DUHUN_PROG + ' ' + DUHUN_PROG + ' F Esus';
+    const hum = 'e4:16 | e4:16 | f4:16 | e4:16 | f4:16 | d4:16 | e4:16 | d4:16';
+    return {
+      bpm: 60, bars: 18, tracks: [
+        T('voice', 0.42, 0.7, cat(tr(DUHUN, -12), hum, '-:32')),
+        T('dizi', 0.34, 0.8, cat(DUHUN, '-:160')),
+        T('dizi', 0.46, 0.65, cat('-:128', DUHUN, '-:32')),
+        T('erhu', 0.34, 0.55, cat('-:128', DUHUN_COUNTER, '-:32')),
+        T('zheng', 0.3, 0.7, cat(ch(vz(DUHUN_PROG), '0:4 2:4 4:8'), ch(vz(DUHUN_PROG), '0:2 1 2 3 4 3 2 1'), ch(vz('F Esus'), '0:4 2:4 4:8'))),
+        T('pad', 0.24, 0.75, ch(vp(prog), '*:16')),
+        T('bass', 0.3, 0.35, cat('-:128', ch(vb(DUHUN_PROG), '0:16'), '-:32')),
+        T('bell', 0.2, 0.9, cat('-:128', '-:16 | -:8 e6:8 | -:64 | -:16 | -:8 a6:8', tr(MOTIF, 12))),
       ],
     };
   })();
@@ -574,10 +654,10 @@ G.Music = (() => {
     };
   })();
 
-  // 燈母祠 drowned shrine: sacred hush; bells remember the opening of 「渡魂謠」 (E 羽)
+  // 燈母祠 drowned shrine: sacred hush; bells remember the 燈 motif and a line of 「渡魂謠」 (E 羽)
   SONGS.shrine = (() => {
     const prog = 'Em C Em D Em C Am Bm Em C Em D C Am Bm Em';
-    const bells = 'e5:4 g5:2 a5:2 b5:6 d6:2 | b5:4 a5:2 g5:2 a5:8 | -:32 | -:64 | e6:6 d6:2 b5:4 a5:4 | g5:2 a5:2 b5:2 d6:2 a5:8 | -:32 | -:64';
+    const bells = cat(tr(MOTIF, 7), '-:32 | -:64 | e6:6 g6:2 e6:4 d6:4 | b5:4 d6:2 b5:2 a5:8 | -:32 | -:64');
     const dizi = '-:64 | b4:8 d5:4 e5:4 | g5:12 e5:4 | e5:8 d5:4 c5:4 | b4:16 | -:64 | g4:8 a4:4 b4:4 | e5:8 d5:4 c5:4 | b4:4 a4:4 f#4:8 | e4:16';
     return {
       bpm: 60, bars: 16, tracks: [
@@ -638,12 +718,12 @@ G.Music = (() => {
     };
   })();
 
-  // 彼岸花原: the far shore's flower field — a bittersweet waltz (E major pentatonic); erhu recalls 「渡魂謠」
+  // 彼岸花原: the far shore's flower field — a bittersweet waltz (E major pentatonic); erhu recalls the 燈 motif, 羽 then 宮
   SONGS.farshore = (() => {
     const prog = 'C*2 Am*2 F*2 G*2 C*2 Em*2 F*2 G*2 Am*2 F*2 C*2 G*2';
     const dizi = 'e5:8 g5:4 | c6:12 | b5:4 a5:4 g5:4 | e5:12 | f5:4 a5:4 c6:4 | e6:8 d6:4 | b5:8 a5:4 | g5:12 |' +
       ' e5:8 g5:4 | c6:8 d6:4 | e6:8 d6:4 | b5:12 | a5:4 g5:4 f5:4 | e5:4 f5:4 a5:4 | d5:12 | -:12 | -:96';
-    const erhu = '-:192 | a4:4 c5:2 d5:2 e5:4 | g5:4 e5:8 | a5:6 g5:2 e5:4 | d5:12 | c5:4 d5:2 e5:2 g5:4 | e5:12 | d5:4 b4:4 g4:4 | d5:12';
+    const erhu = '-:192 | a4:4 e5:4 a5:4 | g5:3 e5:1 d5:2 e5:6 | c5:4 d5:2 c5:2 a4:4 | c5:12 | c5:4 g5:4 c6:4 | a5:3 g5:1 e5:2 g5:6 | d5:4 e5:2 g5:2 d5:4 | d5:12';
     return {
       bpm: 72, bar: 12, bars: 24, tracks: [
         T('dizi', 0.48, 0.65, dizi, { tr: 4 }),
@@ -656,8 +736,6 @@ G.Music = (() => {
     };
   })();
 
-  // shared harmony line under 「渡魂謠」 (A minor)
-  const DUHUN_COUNTER = 'c5:8 e5:8 | b4:8 d5:8 | c5:8 a4:8 | b4:16 | a4:8 c5:8 | b4:8 d5:8 | f5:8 d5:8 | e5:16';
 
   // 彼岸燈塔: climbing the tower — rising arpeggios, a resolute erhu theme, then 白芷's song at its heart (B minor)
   SONGS.lighthouse = (() => {
@@ -753,12 +831,12 @@ G.Music = (() => {
     ],
   };
 
-  // game over: the end of 「渡魂謠」, falling (one-shot)
+  // game over: the last lines of 「渡魂謠」 (前塵如霧隨潮去…又一春), in D minor on the erhu, falling (one-shot)
   SONGS.gameover = {
     bpm: 60, bars: 4, loop: false, tracks: [
-      T('erhu', 0.55, 0.6, 'e5:6 d5:2 c5:4 a4:4 | c5:4 d5:2 c5:2 a4:4 g4:2 c5:2 | a4:16 | -:16'),
-      T('pad', 0.3, 0.75, 'a3+c4+e4:16 | f3+a3+c4:16 | d3+f3+a3:8 e3+g#3+b3:8 | a2+e3+a3:16'),
-      T('zheng', 0.26, 0.7, 'a3:8 e4:8 | f3:8 c4:8 | d3:8 e3:8 | a2:16'),
+      T('erhu', 0.55, 0.6, 'a5:6 c6:2 a5:4 g5:4 | e5:4 g5:2 e5:2 d5:8 | d5:3 e5:1 c5:2 d5:2 a4:8 | -:16', { tr: -7 }),
+      T('pad', 0.3, 0.75, 'a3+c4+f4:16 | g3+b3+d4:16 | a3+d4+f4:8 a3+c4+e4:8 | a2+e3+a3:16', { tr: -7 }),
+      T('zheng', 0.26, 0.7, 'f3:8 c4:8 | g3:8 d4:8 | d3:8 a3:8 | a2:16', { tr: -7 }),
       T('gong', 0.3, 0.8, 'x:32 | x:32'),
     ],
   };
@@ -1100,7 +1178,10 @@ G.Music = (() => {
 
   // ---------------------------------------------------------------------------------- compile
   const PERC = { drum: 1, wood: 1, cymbal: 1, gong: 1 };
-  const LEG = { dizi: 0.9, erhu: 0.94, pad: 1.0, bass: 0.85, bell: 1, zheng: 1, pipa: 1 };
+  const LEG = { dizi: 0.9, erhu: 0.94, voice: 0.97, pad: 1.0, bass: 0.85, bell: 1, zheng: 1, pipa: 1 };
+  // 滑音: a bowed / sung note slides in from the previous one when the line is connected and the interval is a
+  // leap (erhu: up a minor third or more, down a fourth or more; voice: any leap up to a sixth) — not on short notes
+  const SLIDE = { erhu: (iv) => iv >= 3 ? iv <= 7 : iv <= -5 && iv >= -7, voice: (iv) => Math.abs(iv) >= 2 && Math.abs(iv) <= 9 };
   const compiled = {};
   function compile(id) {
     if (compiled[id]) return compiled[id];
@@ -1113,14 +1194,19 @@ G.Music = (() => {
       const p = parse(t.n);
       if (Math.abs(p.len - total) > 1e-6) throw new Error('song ' + id + ' track ' + ti + ' (' + t.i + ') is ' + p.len + ' steps, expected ' + total);
       const leg = t.leg || LEG[t.i] || 0.92;
+      let prev = null;
       for (const e of p.ev) {
         let d = e.l * step;
         if (t.i === 'zheng') d = d < 0.5 ? 0.6 : 1.4;          // keeps G.Audio's string-buffer cache small
         else if (t.i === 'pipa') d = d < 0.35 ? 0.4 : 1.0;
         else if (!PERC[t.i]) d *= leg;
+        let x;
+        if (SLIDE[t.i] && prev && e.m.length === 1 && prev.m.length === 1 && e.s - (prev.s + prev.l) <= 0.5 && d >= 0.25 &&
+          SLIDE[t.i](e.m[0] - prev.m[0])) x = { from: prev.m[0] + (t.tr || 0) };
+        prev = e;
         ev.push({
           s: e.s, d, inst: t.i, vol: (t.v == null ? 0.5 : t.v) * e.a, rev: t.r == null ? 0.4 : t.r,
-          m: e.m.map((v) => (v ? v + (t.tr || 0) : 0)), perc: !!PERC[t.i],
+          m: e.m.map((v) => (v ? v + (t.tr || 0) : 0)), perc: !!PERC[t.i], x,
         });
       }
     });
@@ -1188,7 +1274,7 @@ G.Music = (() => {
     const vol = e.vol * (0.94 + Math.random() * 0.12);
     const bus = G.Audio.musicBus();
     for (const midi of e.m) {
-      G.Audio.playNote(e.inst, tt, midi, e.d, vol, e.rev, inst.dry, revSend ? inst.wet : undefined);
+      G.Audio.playNote(e.inst, tt, midi, e.d, vol, e.rev, inst.dry, revSend ? inst.wet : undefined, e.x);
       stats.scheduled++;
     }
   }
@@ -1275,6 +1361,8 @@ G.Music = (() => {
     ids: () => Object.keys(SONGS),
     // for tools / tests
     songs: SONGS, parse, compile, stats, debugLive: () => live.map((i) => i.id + (i.fading ? '(fading)' : '')),
+    // the shared melodic material (chapter scripts play 渡魂謠 on a lone flute from these)
+    themes: { motif: MOTIF, duhun: DUHUN, duhunChords: DUHUN_CH, duhunProg: DUHUN_PROG, title: TITLE_A, lovem: LOVEM },
     helpers: { rep, cat, tr, grid, ch },
   };
 })();

@@ -293,27 +293,27 @@
     c10_quxiefu: { name: '驅邪符', desc: '洄瀾小廟求來的符，專門對付不肯走的東西。對敵一體造成 600 點火屬性傷害。', type: 'use', price: 200, ch: 10, icon: 'talisman', use: { target: 'enemy', damage: 600, elem: 'fire', battle: true } },
     // equipment
     c10_sw_chaosheng: { name: '潮聲劍', desc: '寶桑打鐵舖的劍，揮起來有浪的聲音。', type: 'weapon', price: 2000, ch: 10, icon: 'sword', who: ['xinghe'], stats: { atk: 76 } },
-    c10_sw_lanyang: { name: '蘭陽劍', desc: '蘭陽平原的鐵匠打的劍，劍脊直得像頭城的海岸線。', type: 'weapon', price: 2600, ch: 10, icon: 'sword', who: ['xinghe'], stats: { atk: 84, luk: 3 } },
+    c10_sw_lanyang: { name: '蘭陽劍', desc: '蘭陽平原的鐵匠打的劍，劍脊直得像頭城的海岸線。', type: 'weapon', price: 1900, ch: 10, icon: 'sword', who: ['xinghe'], stats: { atk: 84, luk: 3 } },
     c10_sw_heichao: { name: '黑潮劍', desc: '被逆潮沖進峽谷的外來漂流物。劍身泛著深藍的光，像黑潮本身。', type: 'weapon', price: 0, ch: 10, icon: 'sword', who: ['xinghe'], stats: { atk: 87, spd: 3 } },
     c10_sp_huilang: { name: '洄浪槍', desc: '槍身刻著回捲的浪紋。', type: 'weapon', price: 2000, ch: 10, icon: 'spear', who: ['hongying'], stats: { atk: 78 } },
     c10_sp_huilan: { name: '洄瀾槍', desc: '洄瀾港的老師傅打的槍，「水在這裡打轉」。', type: 'weapon', price: 2400, ch: 10, icon: 'spear', who: ['hongying'], stats: { atk: 83, spd: 2 } },
     c10_sp_duanya: { name: '斷崖槍', desc: '卡在清水斷崖岩棚上的長槍，不知是哪艘沉船上的東西。', type: 'weapon', price: 0, ch: 10, icon: 'spear', who: ['hongying'], stats: { atk: 88, luk: 4 } },
     c10_fn_jingge: { name: '鯨歌符扇', desc: '被浪打上河口的符扇，扇骨是鯨骨。搧起來像遠處的鯨在唱歌。', type: 'weapon', price: 0, ch: 10, icon: 'fan', who: ['yungui'], stats: { atk: 10, mag: 82, mp: 24 } },
     c10_fn_yunjian: { name: '雲澗符扇', desc: '峽谷壺穴裡撿到的外來漂流物。扇面上的雲像峽谷裡的水氣。', type: 'weapon', price: 0, ch: 10, icon: 'fan', who: ['yungui'], stats: { atk: 11, mag: 90, mp: 28 } },
-    c10_fn_haishen: { name: '海神符扇', desc: '頭城道壇流出來的老符扇。', type: 'weapon', price: 2800, ch: 10, icon: 'fan', who: ['yungui'], stats: { atk: 11, mag: 92, mp: 26 } },
+    c10_fn_haishen: { name: '海神符扇', desc: '頭城道壇流出來的老符扇。', type: 'weapon', price: 2000, ch: 10, icon: 'fan', who: ['yungui'], stats: { atk: 11, mag: 92, mp: 26 } },
     c10_ar_tengjia: { name: '藤甲', desc: '山藤編成的甲，輕又韌。', type: 'armor', price: 1500, ch: 10, icon: 'armor', stats: { def: 40 } },
     c10_ar_shiwen: { name: '石紋甲', desc: '甲片磨成大理石的紋路。', type: 'armor', price: 1800, ch: 10, icon: 'armor', stats: { def: 43, hp: 20 } },
-    c10_ar_jiaosi: { name: '蕉絲衫', desc: '蕉絲阿姨用香蕉絲織的布做的衫，涼爽，不怕水。', type: 'armor', price: 2200, ch: 10, icon: 'armor', stats: { def: 45 }, resist: ['water'] },
+    c10_ar_jiaosi: { name: '蕉絲衫', desc: '蕉絲阿姨用香蕉絲織的布做的衫，涼爽，不怕水。', type: 'armor', price: 1600, ch: 10, icon: 'armor', stats: { def: 45 }, resist: ['water'] },
     c10_hd_lupi: { name: '鹿皮帽', desc: '寶桑交易街換來的鹿皮帽。', type: 'head', price: 900, ch: 10, icon: 'hat', stats: { def: 19 } },
     c10_hd_zhubian: { name: '竹編笠', desc: '洄瀾的竹編斗笠，風再大也吹不跑。', type: 'head', price: 1000, ch: 10, icon: 'hat', stats: { def: 21 }, resist: ['wood'] },
-    c10_hd_jiaosi: { name: '蕉絲頭巾', desc: '蕉絲織成的頭巾。', type: 'head', price: 1150, ch: 10, icon: 'hat', stats: { def: 22, mag: 6 } },
+    c10_hd_jiaosi: { name: '蕉絲頭巾', desc: '蕉絲織成的頭巾。', type: 'head', price: 850, ch: 10, icon: 'hat', stats: { def: 22, mag: 6 } },
     c10_ft_lupi: { name: '鹿皮綁靴', desc: '寶桑的鹿皮做的綁靴，走礫石灘也不磨腳。', type: 'feet', price: 800, ch: 10, icon: 'shoes', stats: { def: 14, spd: 5 } },
     c10_ft_kuaitui: { name: '快腿綁腿', desc: '巴拉冠青年送的綁腿。「輸了要服氣。我服氣。」', type: 'feet', price: 0, ch: 10, icon: 'shoes', stats: { def: 14, spd: 9 } },
-    c10_ft_jiaosi: { name: '蕉絲綁腿', desc: '蕉絲織的綁腿，輕巧耐走。', type: 'feet', price: 1000, ch: 10, icon: 'shoes', stats: { def: 16, spd: 7 } },
+    c10_ft_jiaosi: { name: '蕉絲綁腿', desc: '蕉絲織的綁腿，輕巧耐走。', type: 'feet', price: 750, ch: 10, icon: 'shoes', stats: { def: 16, spd: 7 } },
     c10_ac_coral: { name: '珊瑚護符', desc: '岬角崖邊撿到的紅珊瑚，被海水磨得圓潤。', type: 'acc', price: 0, ch: 10, icon: 'charm', stats: { def: 10 }, resist: ['water'] },
     c10_ac_snakescale: { name: '蛇鱗護腕', desc: '海蛇洗淨後留在灘上的一片鱗，深藍帶金紋。', type: 'acc', price: 0, ch: 10, icon: 'charm', stats: { def: 12, hp: 40 }, resist: ['water'] },
     c10_ac_shiwen: { name: '石紋護符', desc: '石巨靈崩落後，溪水裡一塊溫溫的大理石。', type: 'acc', price: 0, ch: 10, icon: 'gem', stats: { def: 16 }, resist: ['earth'] },
-    c10_ac_yujia: { name: '漁家護腕', desc: '烏石港漁夫用的護腕，拉網拉出來的力氣。', type: 'acc', price: 1400, ch: 10, icon: 'charm', stats: { atk: 12 } },
+    c10_ac_yujia: { name: '漁家護腕', desc: '烏石港漁夫用的護腕，拉網拉出來的力氣。', type: 'acc', price: 1100, ch: 10, icon: 'charm', stats: { atk: 12 } },
     c10_ac_kolas: { name: 'Kolas 的魚鉤', desc: '「我年輕的時候也是這樣。」老漁夫用了幾十年的骨製魚鉤。', type: 'acc', price: 0, ch: 10, icon: 'charm', stats: { luk: 12, spd: 2 }, special: ['goldUp'] },
     c10_ac_touqi: { name: '頭旗綵帶', desc: '搶到頭旗的隊伍才有的綵帶。戰鬥開始時搶先行動。', type: 'acc', price: 0, ch: 10, icon: 'charm', stats: { spd: 10, luk: 8 }, special: ['firstStrike'] },
     c10_ac_iwan: { name: '依旺的織帶', desc: '依旺奶奶織的布帶。紅底白菱紋。「你綁著，記得今天。」', type: 'acc', price: 0, ch: 10, icon: 'charm', who: ['xinghe'], stats: { hp: 70, def: 6 }, immune: ['seal'], special: ['gaugeUp'] },
@@ -382,7 +382,7 @@
   });
   enemy('c10_tide_wraith_big', {
     name: '大潮怨', art: 'tide_grudge', variant: 2, scale: 1.45, lv: 36, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 4.4, atk: 1.95, mag: 1.9, def: 1.1, spd: 1.1, exp: 4, gold: 4 },
+    m: { hp: 4.4, atk: 1.95, mag: 1.9, def: 1.1, spd: 1.1, exp: 14.5, gold: 22.6 },
     skills: [['c10_es_undertow', 3], ['c10_es_homesick', 2], ['e_tg_wave', 1], ['c10_es_pull', 1, 'hp<70']],
     phases: [{ at: 0.5, text: '潮怨：「……回……回唐山……回不去……就在這裡……」', skills: [['c10_es_homesick', 3], ['c10_es_undertow', 2], ['c10_es_pull', 1]] }],
     drops: [['c10_baicao', 1]],
@@ -390,7 +390,7 @@
   });
   enemy('c10_guhun_horde', {
     name: '孤魂眾', art: 'hungry_ghost', variant: 2, scale: 2.2, lv: 38, elem: 'water', weak: ['earth', 'fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 6.0, atk: 2.55, mag: 2.4, def: 1.1, spd: 1.55, exp: 6, gold: 0.01 }, // sim_story: was hp 5 atk 1.9 mag 1.8 spd 1.15
+    m: { hp: 6.0, atk: 2.55, mag: 2.4, def: 1.1, spd: 1.55, exp: 16.7, gold: 23.9 }, // sim_story: was hp 5 atk 1.9 mag 1.8 spd 1.15
     skills: [['e_hungry_grab', 3], ['e_hungry_wail', 2], ['c10_es_snatch', 1], ['c10_es_callkin', 1, 'hp<70']],
     drops: [['c10_puduash', 1]],
     desc: '數百個瘦削的孤魂糾纏成一團，伸出無數細長的手臂。它們不是恨——是餓，是沒有人叫它們的名字。',
@@ -2229,8 +2229,8 @@
       drawOver: (ctx, t) => H.drawLights(ctx, t),
       chests: [
         { id: 'coastA', x: 6, y: 34, item: 'c10_fn_jingge', n: 1 },
-        { id: 'coastB', x: 36, y: 16, item: 'c10_baicao', n: 2 },
-        { id: 'coastC', x: 33, y: 5, item: 'huanhunxiang', n: 2, run: async (S) => { await S.give('c10_ac_coral', 1); } },
+        { id: 'coastB', x: 36, y: 16, gold: 1000, item: 'c10_baicao', n: 2 },
+        { id: 'coastC', x: 33, y: 5, gold: 2000, item: 'huanhunxiang', n: 2, run: async (S) => { await S.give('c10_ac_coral', 1); } },
       ],
       npcs: [
         { id: 'ghost_a', sprite: 'ghost_m', ghost: true, name: '溺魂', x: 21, y: 26, dir: 'left', if: () => !F('c10_fix_a'), talk: ['……冷……好冷……'] },

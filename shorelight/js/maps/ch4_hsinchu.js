@@ -172,7 +172,7 @@
   });
   edef('e_wind_demon', {
     name: '風魔', art: 'wind_demon', lv: 18, elem: 'wood', weak: ['metal'], resist: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 16.5, atk: 2.35, mag: 2.3, def: 1.15, spd: 1.35, exp: 7, gold: 8 },
+    m: { hp: 16.5, atk: 2.35, mag: 2.3, def: 1.15, spd: 1.35, exp: 7, gold: 55.2 },
     skills: [['e_wd_gust', 3], ['e_wind_howl', 2], ['e_wd_headwind', 1]],
     phases: [
       {
@@ -1685,7 +1685,7 @@
     chests: [
       { id: 'c4_07', x: 36, y: 18, item: 'shibing', n: 2 },
       { id: 'c4_08', x: 6, y: 31, item: 'bantiao', n: 2 },
-      { id: 'c4_09', x: 17, y: 24, gold: 300 },
+      { id: 'c4_09', x: 17, y: 24, gold: 800 },
       { id: 'c4_11', x: 20, y: 5, item: 'xiangbao', n: 2 },
     ],
     npcs: [{
@@ -2619,7 +2619,7 @@
     await S.say('yungui:surprise', '……風在躲你？');
     await S.say('xinghe:surprise', '我、我也不知道！');
     await S.say('yungui:think', '（聽說從九份那晚起就是這樣……鬼魂見到他，總要猶豫一下。）');
-    S.bgm('sad');
+    S.bgm('duhun');
     await S.say('', '白芷站在星河背後，舉起玉笛。渡魂謠的旋律在風中響起——不是對抗，是回答。');
     await S.say('baizhi:normal', '我聽見你們了。');
     await S.say('baizhi:normal', '我不會把你們留下。我會帶你們回家。');
@@ -2636,10 +2636,10 @@
     tiles: trailGrid.rows(), objects: trailObjects,
     winds: [{ x: 0, y: 4, w: 40, h: 10, dir: 'down', period: 4.5, dur: 0.8, if: (st) => !broken(st) }],
     chests: [
-      { id: 'c4_12', x: 23, y: 28, item: 'xumingsan', n: 2 },
+      { id: 'c4_12', x: 23, y: 28, gold: 300, item: 'xumingsan', n: 2 },
       { id: 'c4_13', x: 4, y: 20, item: 'ac_bagua' },
       { id: 'c4_14', x: 30, y: 10, item: 'huanhunxiang', n: 2 },
-      { id: 'c4_15', x: 35, y: 42, item: 'bianpao', n: 3 },
+      { id: 'c4_15', x: 35, y: 42, gold: 500, item: 'bianpao', n: 3 },
     ],
     enemies: [
       { id: 't1', troop: 't4_trail_a', x: 14, y: 40, art: 'mountain_ghost', radius: 3, lv: 15 },
@@ -3213,7 +3213,7 @@
     chests: [
       { id: 'c4_16', x: 23, y: 19, item: 'xumingsan', n: 2 },
       { id: 'c4_17', x: 33, y: 6, item: 'ac_yingshi' },
-      { id: 'c4_18', x: 10, y: 12, item: 'huanhunxiang', n: 2 },
+      { id: 'c4_18', x: 10, y: 12, gold: 600, item: 'huanhunxiang', n: 2 },
       { id: 'c4_19', x: 36, y: 3, item: 'lingxun', spirit: true, run: async (S) => { S.gold(400); } },
     ],
     enemies: [
@@ -3398,7 +3398,7 @@
     chests: [
       { id: 'c4_20', x: 9, y: 26, item: 'xiancao', n: 3 },
       { id: 'c4_21', x: 26, y: 4, item: 'ft_lupi', run: async (S) => { await echoLoop(S, 1); } },
-      { id: 'c4_22', x: 4, y: 8, item: 'xumingsan', n: 2, run: async (S) => { await S.give('xiangbao', 2); } },
+      { id: 'c4_22', x: 4, y: 8, gold: 600, item: 'xumingsan', n: 2, run: async (S) => { await S.give('xiangbao', 2); } },
       { id: 'c4_23', x: 39, y: 30, item: 'ac_jinqian', spirit: true },
     ],
     enemies: [

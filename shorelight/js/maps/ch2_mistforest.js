@@ -137,7 +137,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   c2enemy('c2_mosin_lead', {
     name: '魔神仔頭', art: 'mosina', variant: 1, scale: 1.4, lv: 6, elem: 'wood', immune: BOSS_IMM, hp: 560,
-    m: { hp: 3, atk: 1.15, def: 1.05, spd: 1.3, luk: 2, exp: 3, gold: 2.5 },
+    m: { hp: 3, atk: 1.15, def: 1.05, spd: 1.3, luk: 2, exp: 8.1, gold: 12.4 },
     skills: [['e_mosin_trick', 3], ['e_mosin_feast', 3], ['e_claw', 2], ['c2_e_split', 3, 'ally_dead']],
     drops: [['lingxun', 1], ['mat_wuxun', 0.5]],
     desc: '比其他魔神仔高一個頭，紅臉笑成一團，頭上綁滿紅布條。手上拎著一隻「雞腿」——靈視裡看得出是一把草。',
@@ -1551,7 +1551,7 @@
       { t: 'tree_fern', x: 25, y: 27 }, { t: 'tree_fern', x: 14, y: 27 }, { t: 'mushroom_glow', x: 2, y: 33 }, { t: 'mushroom_glow', x: 27, y: 41 },
     ],
     chests: [
-      { id: 'c2_s1', x: 9, y: 12, item: 'jiedu', n: 3 },
+      { id: 'c2_s1', x: 9, y: 12, gold: 200, item: 'jiedu', n: 3 },
       { id: 'c2_s2', x: 26, y: 40, item: 'ac_xionghuang' },
       { id: 'c2_s3', x: 35, y: 38, item: 'huanhunxiang', spirit: true },
     ],

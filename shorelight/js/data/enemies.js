@@ -59,8 +59,11 @@ G.Data.enemyCurve = function (L) {
   const pDef = 11 + 3.5 * (L - 1);           // expected party DEF incl. gear
   const dPhys = (0.11 + 0.0012 * L) * pHP;   // standard hit ≈ 11% (L1) – 16% (L44) of a member's HP
   const dMag = Math.min((0.09 + 0.001 * L) * pHP, 120);
-  // fights per level by chapter (more regions in a chapter → each fight worth less)
-  const FPL = [5, 9, 9, 10, 12, 9, 13, 13, 9, 13, 13, 13];
+  // fights per level by chapter (more regions in a chapter → each fight worth less). Retuned with
+  // tools/sim_economy.js (docs/BALANCE.md "Progression & economy") to the fights a player really meets: ch4–5 have
+  // few roaming enemies (each worth more: 12→10, 9→7.2); ch7, ch10, ch11 have many (each worth less: 13→17.3, 15.3,
+  // 16.25 — their exp moved to the bosses, so a player who flees fights is not left 3 levels behind)
+  const FPL = [5, 9, 9, 10, 10, 7.2, 13, 17.3, 9, 13, 15.3, 16.25];
   let ch = 0;
   for (const p of G.Data.progression) if (L >= p.lv[0]) ch = p.ch;
   // party grows from 1–2 to 4 members across L4–L12: normal enemies get sturdier to match
@@ -256,7 +259,7 @@ G.Data.enemyCurve = function (L) {
   troop('lair_4', ['mosinzai', 'mosinzai', 'macaque'], 'forest');
   def('tiger_granny', {
     name: '虎姑婆', art: 'tiger_granny', lv: 9, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 16, atk: 2.64, mag: 2.34, def: 1.15, spd: 1.35, exp: 7, gold: 9 },
+    m: { hp: 16, atk: 2.64, mag: 2.34, def: 1.15, spd: 1.35, exp: 7, gold: 20.2 },
     skills: [['e_tiger_claw', 3], ['e_tiger_pounce', 2], ['e_tiger_lullaby', 1], ['e_tiger_snack', 1, 'hp<50']],
     drops: [['ac_huzhao', 1]],
     desc: '專挑大人不在家的夜晚，扮成阿婆來敲門的老虎精。半夜在被窩裡喀啦喀啦嚼的，她說是「花生」。',
@@ -669,7 +672,7 @@ G.Data.enemyCurve = function (L) {
   troop('orchid_4', ['drowned_soul', 'drowned_soul', 'moray_v2'], 'orchid', 'battle2');
   def('tide_serpent', {
     name: '潮病海蛇', art: 'tide_serpent', lv: 36, elem: 'water', weak: ['earth', 'wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 11.5, atk: 3.05, mag: 2.95, def: 1.15, spd: 1.95, exp: 7, gold: 7 }, // tools/sim_story.js: was hp 9 atk 2.1 mag 2.03 spd 1.35
+    m: { hp: 11.5, atk: 3.05, mag: 2.95, def: 1.15, spd: 1.95, exp: 15.9, gold: 25.8 }, // tools/sim_story.js: was hp 9 atk 2.1 mag 2.03 spd 1.35
     skills: [['e_ts_bite', 3], ['e_ts_wave', 3], ['e_ts_sick', 1], ['e_sea_tentacle', 1]],
     drops: [['hd_kunlin', 1]],
     desc: '隨黑潮洄游的巨大海蛇，鱗片下滲著黑色的潮病。牠撞壞了拼板舟，不是因為兇猛，是因為痛。',
@@ -695,7 +698,7 @@ G.Data.enemyCurve = function (L) {
   troop('taroko_4', ['cliff_spirit_v1', 'fog_spirit_v2', 'drowned_soul'], 'taroko', 'battle2');
   def('gorge_colossus', {
     name: '峽谷巨像', art: 'gorge_colossus', lv: 38, elem: 'earth', weak: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8, atk: 2.15, mag: 1.65, def: 1.35, spd: 1.25, exp: 7, gold: 7 }, // tools/sim_story.js: was atk 3.04 mag 2.72 (its 濁流 nearly one-shot the party)
+    m: { hp: 8, atk: 2.15, mag: 1.65, def: 1.35, spd: 1.25, exp: 26.5, gold: 35.8 }, // tools/sim_story.js: was atk 3.04 mag 2.72 (its 濁流 nearly one-shot the party)
     skills: [['e_gc_smash', 3], ['e_gc_quake', 2], ['e_gc_river', 2], ['e_cliff_shell', 1, 'hp<50']],
     drops: [['ft_shunfeng', 1]],
     desc: '被潮病侵蝕的大理石巨像，立霧溪的碧水在它腳下變得混濁。它守著峽谷，卻已經不記得在守什麼。',

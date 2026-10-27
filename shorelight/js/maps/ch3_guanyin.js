@@ -113,9 +113,9 @@
     c3_old_helmet: { name: '舊鐵盔', desc: '紅毛城裡生鏽的鐵盔，不知道是哪一國的兵留下的。', type: 'head', price: 0, ch: 3, icon: 'hat', stats: { def: 6 } },
     c3_sw_guanyin: { name: '觀音山石劍', desc: '劍身嵌著觀音山石，沉而不鈍。土屬性。', type: 'weapon', price: 0, ch: 3, icon: 'sword', who: ['xinghe'], elem: 'earth', stats: { atk: 22, def: 2 } },
     c3_fn_thunderwood: { name: '雷擊木符扇', desc: '被雷劈過的棗木做的扇骨，夾著太虛觀的符。木屬性。', type: 'weapon', price: 0, ch: 3, icon: 'fan', who: ['yungui'], elem: 'wood', stats: { atk: 4, mag: 29 } },
-    c3_fn_peach: { name: '桃木符扇', desc: '艋舺陳師傅削的桃木扇骨，辟邪。', type: 'weapon', price: 600, ch: 3, icon: 'fan', who: ['yungui'], stats: { atk: 5, mag: 30 } },
-    c3_ar_shortcoat: { name: '艋舺短打', desc: '碼頭工人穿的粗布短打，耐磨又好活動。', type: 'armor', price: 520, ch: 3, icon: 'armor', who: ['xinghe', 'yungui'], stats: { def: 14 } },
-    c3_ar_embroidered: { name: '繡花褙子', desc: '艋舺繡莊的褙子，袖口繡著小小的玉蘭花。', type: 'armor', price: 540, ch: 3, icon: 'armor', who: ['baizhi', 'hongying'], stats: { def: 13, mag: 3 } },
+    c3_fn_peach: { name: '桃木符扇', desc: '艋舺陳師傅削的桃木扇骨，辟邪。', type: 'weapon', price: 450, ch: 3, icon: 'fan', who: ['yungui'], stats: { atk: 5, mag: 30 } },
+    c3_ar_shortcoat: { name: '艋舺短打', desc: '碼頭工人穿的粗布短打，耐磨又好活動。', type: 'armor', price: 380, ch: 3, icon: 'armor', who: ['xinghe', 'yungui'], stats: { def: 14 } },
+    c3_ar_embroidered: { name: '繡花褙子', desc: '艋舺繡莊的褙子，袖口繡著小小的玉蘭花。', type: 'armor', price: 400, ch: 3, icon: 'armor', who: ['baizhi', 'hongying'], stats: { def: 13, mag: 3 } },
     c3_ar_water_gauze: { name: '水紋紗衣', desc: '翻覆的小船下找到的紗衣，水紋會隨光流動。減輕水屬性傷害。', type: 'armor', price: 0, ch: 3, icon: 'armor', who: ['baizhi'], stats: { def: 12, mag: 4 }, resist: ['water'] },
     c3_ft_cloudboots: { name: '雲紋道靴', desc: '太虛觀後院槐樹下埋著的道靴，鞋底繡著雲紋。', type: 'feet', price: 0, ch: 3, icon: 'shoes', stats: { def: 5, spd: 3 } },
     c3_hd_ade: { name: '阿德的斗笠', desc: '阿蓮家牆上的舊斗笠。阿德戴了十年。減輕水屬性傷害。', type: 'head', price: 0, ch: 3, icon: 'hat', stats: { def: 9 }, resist: ['water'] },
@@ -159,7 +159,7 @@
 
   c3enemy('c3_monkey_king', {
     name: '石猴王', art: 'stone_monkey', variant: 2, scale: 1.6, lv: 12, elem: 'earth', weak: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 6.6, atk: 1.3, def: 1.55, mag: 0.6, spd: 0.85, exp: 3.5, gold: 3 },
+    m: { hp: 6.6, atk: 1.3, def: 1.55, mag: 0.6, spd: 0.85, exp: 10.8, gold: 12.5 },
     skills: [['c3_monkey_rocks', 3], ['c3_monkey_fist', 3], ['c3_monkey_incense', 2, 'hp<50'], ['e_monkey_taunt', 1]],
     drops: [['jinchuang', 1]],
     desc: '一塊會站起來的觀音山巨石，石紋像皺巴巴的猴臉，頭頂插著一炷從土地公廟偷來的香。',
@@ -167,7 +167,7 @@
   // 鬼面 at the 太虛觀 raid: a gentler copy of data's qingfeng_mask (two 陰兵 fight beside him; ends at 50% HP)
   c3enemy('c3_guimian', {
     name: '鬼面', sprite: 'qingfeng_mask', lv: 11, elem: 'metal', weak: ['fire'], resist: ['metal'], boss: true, immune: BOSS_IMM, endAt: 0.5,
-    m: { hp: 30, atk: 1.62, mag: 1.5, def: 1.2, spd: 1.35, exp: 7, gold: 6 },
+    m: { hp: 30, atk: 1.62, mag: 1.5, def: 1.2, spd: 1.35, exp: 23.6, gold: 19.2 },
     skills: [['e_qf_sword', 3], ['e_qf_luojia', 2], ['e_qf_crescent', 1], ['e_qf_shadow', 2, 'hp<75']],
     desc: '戴著鬼面具的劍客，夜襲太虛觀。他的劍路——紅纓一眼就認得出來。',
   });
@@ -178,7 +178,7 @@
   });
   c3enemy('c3_river_boss', {
     name: '河伯怨靈', art: 'river_wraith', variant: 1, scale: 1.5, lv: 13, elem: 'water', weak: ['earth'], resist: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 15.2, atk: 3.0, mag: 3.4, def: 1.1, spd: 1.9, exp: 4, gold: 3.5 }, // sim_story: was hp 10.5 atk 1.5 mag 1.7 spd 0.95
+    m: { hp: 15.2, atk: 3.0, mag: 3.4, def: 1.1, spd: 1.9, exp: 4, gold: 18.3 }, // sim_story: was hp 10.5 atk 1.5 mag 1.7 spd 0.95
     skills: [['c3_wraith_wave', 3], ['c3_wraith_bind', 2], ['c3_wraith_swallow', 2], ['c3_wraith_call', 1]],
     drops: [['xiangbao', 1]],
     desc: '河底淤泥與水草纏成的巨大人形，臉是一團漩渦。身上掛著幾盞熄滅的漁燈。',
