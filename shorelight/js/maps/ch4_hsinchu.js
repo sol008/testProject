@@ -497,28 +497,8 @@
     return G.Mini.jiaobei({ title: '擲筊', throws: results.length, results, prompt: prompt || '誠心默禱，按 Z 擲筊' });
   }
 
-  // ----------------------------------------------------------------------- wind guard (逆風輸入無效)
-  // While a wind zone is blowing, the player cannot step against it (but can move sideways); installed per map
-  // instance from onEnter.
-  function installWindGuard() {
-    const m = G.mapScene;
-    if (!m || m.c4WindGuard) return;
-    m.c4WindGuard = true;
-    const blocked0 = m.blocked.bind(m);
-    m.blocked = function (x, y, self) {
-      if (self && self === m.player && m.def.winds) {
-        const p = m.player;
-        for (const w of m.def.winds) {
-          if (w.if && !w.if(G.state)) continue;
-          if (!m.windActive(w)) continue;
-          if (!(p.x >= w.x && p.x < w.x + (w.w || 1) && p.y >= w.y && p.y < w.y + (w.h || 1))) continue;
-          const [dx, dy] = U.dirs[w.dir];
-          if (x - p.x === -dx && y - p.y === -dy) return true;
-        }
-      }
-      return blocked0(x, y, self);
-    };
-  }
+  // 逆風輸入無效: the engine's wind mechanic (js/engine/mapmech.js) blocks stepping straight against an active gust and
+  // pushes the player between steps, so the per-map wind guard this chapter used to install is no longer needed.
   // set a map's wind clock so that the next gust starts after `calm` seconds
   function windCalm(w, calm) {
     const m = G.mapScene;
@@ -859,7 +839,6 @@
     particles: (st) => (st.flags.ch4_coast_night ? [{ type: 'wind', density: broken(st) ? 0.4 : 1.2 }, 'fireflies'] : windyParticles(st)),
     tiles: coastTiles,
     objects: coastObjects,
-    onEnter: async () => { installWindGuard(); },
     chests: [
       { id: 'c4_01', x: 8, y: 4, item: 'jinchuang', n: 3 },
       { id: 'c4_02', x: 42, y: 16, gold: 200 },
@@ -1137,7 +1116,6 @@
       ctx.strokeStyle = 'rgba(240,230,210,0.8)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, 26); ctx.quadraticCurveTo(14, 50, 4, 74); ctx.stroke();
       ctx.restore();
     },
-    onEnter: async () => { installWindGuard(); },
     chests: [
       { id: 'c4_04', x: 31, y: 12, item: 'xumingsan', n: 1 },
       { id: 'c4_05', x: 52, y: 18, item: 'jiedu', n: 3, run: async (S) => { S.gold(150); } },
@@ -2657,7 +2635,6 @@
     particles: (st) => (broken(st) ? ['leaves', { type: 'wind', density: 0.4 }] : [{ type: 'wind', density: 1.4 }, 'leaves', { type: 'motes', density: 0.6 }, { type: 'mist', density: 0.5 }]),
     tiles: trailGrid.rows(), objects: trailObjects,
     winds: [{ x: 0, y: 4, w: 40, h: 10, dir: 'down', period: 4.5, dur: 0.8, if: (st) => !broken(st) }],
-    onEnter: async () => { installWindGuard(); },
     chests: [
       { id: 'c4_12', x: 23, y: 28, item: 'xumingsan', n: 2 },
       { id: 'c4_13', x: 4, y: 20, item: 'ac_bagua' },
@@ -3216,7 +3193,6 @@
       { t: 'rock_small', x: 12, y: 9 }, { t: 'rock_big', x: 23, y: 9 }, { t: 'rock_small', x: 31, y: 12 }, { t: 'crystal', x: 30, y: 2 }, { t: 'crystal', x: 33, y: 1 },
     ],
     winds: [{ x: 19, y: 14, w: 3, h: 22, dir: 'down', period: 3.5, dur: 2.0, if: (st) => !broken(st) }],
-    onEnter: async () => { installWindGuard(); },
     onPush: async (S) => {
       if (F('ch4_cave_lift') || !stonesOnVents()) return;
       S.flag('ch4_cave_lift');
@@ -3566,7 +3542,6 @@
     ],
     lights: (st) => (broken(st) ? [{ x: 15, y: 4, r: 260, color: '#ffc070', flicker: 0.2 }] : [{ x: 15, y: 4, r: 420, color: '#4a8aff', flicker: 0.6 }]),
     winds: [{ x: 13, y: 9, w: 5, h: 17, dir: 'up', period: 3.0, dur: 1.4, if: (st) => !broken(st) }],
-    onEnter: async () => { installWindGuard(); },
     drawGround: (ctx, t) => drawCave3(ctx, t),
     chests: [{ id: 'c4_24', x: 20, y: 27, item: 'huanhunxiang', n: 1, run: async (S) => { await S.give('xumingsan', 2); } }],
     events: [
