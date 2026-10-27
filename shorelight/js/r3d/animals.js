@@ -1640,7 +1640,7 @@ G.Animal3D = (() => {
         : { body: [0.075, 0.08, 0.11], head: 0.027, neck: 0.04, legH: 0.15, tail: 0.16, beak: 0.024, scale: 1.2 * (spec.size || 1) };
     const pal = magpie ? { base: '#2f6fd0', base2: '#4a8ae8', dark: '#101018', white: '#f4f4f0', pa: '#101018', pb: '#2f6fd0', beak: '#d0302a', leg: '#d0302a', iris: '#f0e060', iris2: '#f8f0a0', comb: '#d0302a', tail: '#2f6fd0' }
       : crow ? { base: '#24222c', base2: '#3a3a52', dark: '#141218', white: '#2a2833', pa: '#24222c', pb: '#24222c', beak: '#2a2830', leg: '#2e2a34', iris: '#2a2028', iris2: '#4a3a40', tail: '#1c1a24' }
-        : { base: '#f2ece0', base2: '#fff8ea', dark: '#c8a070', white: '#fbf6ec', pa: '#d89848', pb: '#c86030', beak: '#e8a83a', leg: '#e0a040', iris: '#c86a20', iris2: '#f0b040', comb: '#d8302a', tail: '#2e5a40' };
+        : { base: '#f2ece0', base2: '#fff8ea', dark: '#c8a070', white: '#fbf6ec', pa: '#e0a85a', pb: '#b8743a', beak: '#e8a83a', leg: '#e0a040', iris: '#c86a20', iris2: '#f0b040', comb: '#d8302a', tail: '#2e5a40' };
     const y0 = B.legH + B.body[1] * 0.55;
     const hc = [0, y0 + B.body[1] * 1.1 + B.neck * 1.6, B.body[2] * 0.85];
     const R = B.head;
@@ -1707,7 +1707,7 @@ G.Animal3D = (() => {
       coatPost(plan, x, y, z, n, M, reg) {
         M.st = 0; M.tick = 0.2;
         if (reg.comb > 0.3) M.col = [...hex(pal.comb || pal.beak), 1];
-        if (plan.species === 'chicken') { M.pa = (reg.neck || 0) * smooth(0.0, 0.6, n[1] + 0.3) * 0.9; M.pb = (reg.wing || 0) * 0.7; }
+        if (plan.species === 'chicken') { M.pa = (reg.neck || 0) * smooth(0.0, 0.6, n[1] + 0.3) * 0.9; M.pb = (reg.wing || 0) * smooth(-0.2, 0.5, n[1]) * 0.55; }
         if (plan.species === 'magpie') { M.pa = max(reg.head || 0, (reg.neck || 0) * smooth(plan.hc[1] - 0.06, plan.hc[1] - 0.03, y)); M.white = smooth(-0.2, -0.7, n[1]) * (reg.torso || 0) * 0.3; }
         if (plan.species === 'crow') M.tick = 0.6;
       },
@@ -1759,9 +1759,10 @@ G.Animal3D = (() => {
     const n = V3.norm(V3.cross(dir, bn));
     cards.grid(1, 3, (uu, t) => {
       const q = V3.add(root, V3.add(V3.mul(dir, L * t), [0, -L * 0.15 * t * t, 0]));
-      const p = V3.add(q, V3.mul(bn, (uu - 0.5) * W * (1 - 0.3 * t)));
-      const m = Object.assign({}, M, { rest: root, ao: lerp(0.8, 1.05, t), col: t > 0.82 && whiteTip ? [...hex('#f4f4f0'), 1] : (tipCol ? [...hex(tipCol), smooth(0.3, 0.9, t) * 0.8] : M.col) });
-      return { p, n, skin, m, x: [uu, t] };
+      // solid vane (sampled from the opaque core of the card atlas), tapering to a rounded point
+      const p = V3.add(q, V3.mul(bn, (uu - 0.5) * W * (1 - 0.75 * t * t)));
+      const m = Object.assign({}, M, { rest: root, ao: lerp(0.8, 1.05, t), col: t > 0.8 && whiteTip ? [...hex('#f4f4f0'), 1] : (tipCol ? [...hex(tipCol), lerp(0.55, 0.95, t)] : M.col) });
+      return { p, n, skin, m, x: [0.5, 0.45 + 0.1 * (uu - 0.5)] };
     }, false);
   }
 
