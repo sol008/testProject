@@ -1454,6 +1454,7 @@ G.Char3D = (() => {
     if (S.cape) buildCape(B, S.cape);
     // ---- towel round the neck, beads, bag strap, bracers, bracelet
     if (S.towel) buildTowel(B, S.towel);
+    if (S.scarf) buildScarf(B, S.scarf);
     if (S.beads) buildBeads(B, S.beads);
     if (S.bag) buildBag(B, S.bag);
     if (S.bracers) for (const SD of ['L', 'R']) {
@@ -1623,6 +1624,48 @@ G.Char3D = (() => {
     const pts = [];
     for (let i = 0; i <= 16; i++) { const th = (i / 16) * TAU; pts.push([sin(th) * (P.neckR + 0.03 * s), P.neckY - 0.006 * s - 0.012 * s * max(0, cos(th)), cos(th) * (P.neckR + 0.03 * s)]); }
     tube(B.G, pts, 8, rect, () => ({ rx: 0.016 * s, ry: 0.012 * s }), () => [[B.b('chest'), 0.7], [B.b('neck'), 0.3]], { nv: 32, up: [0, 1, 0] });
+  }
+
+  // 圍巾 neck scarf (sprite piece `scarf: { color }`): a thick wrap round the neck, a short end hanging down the chest
+  // from a knot at the wearer's right, and a long tail trailing back over the left shoulder. Both ends are spring
+  // ribbons; the tail's rest line sweeps out sideways (stiff enough to read as "trailing" at rest, free in motion).
+  // sc: { color, trim, tail (length m, default 0.62), front (m, 0.24), w (half width m, 0.04), sweep 0..1 }
+  function buildScarf(B, sc) {
+    const P = B.P, s = P.s, R = torsoRings(P);
+    const col = sc.color || '#d9622a', trim = sc.trim || shade(col, -0.22);
+    const rect = B.rect('scarf', 0.6, 0.12, (g, x, y, w, h) => {
+      Pn.cloth(g, x, y, w, h, col, { weave: 'cotton', folds: false, seed: B.id + 'scarf' });
+      g.fillStyle = rgba(shade(col, -0.3), 0.35); for (let i = 0; i < 5; i++) g.fillRect(x, y + h * (0.12 + i * 0.19), w, max(1, h * 0.025)); // soft knit ribs
+      g.fillStyle = trim; g.fillRect(x - 2, y - 2, w + 4, max(1.5, h * 0.06)); g.fillRect(x - 2, y + h * 0.95, w + 4, h * 0.07);
+      Pn.aoEdges(g, x, y, w, h, 0.15, 0.15);
+    });
+    const hw = (sc.w || 0.04) * s;
+    const yN = P.neckY + 0.006 * s, rN = P.neckR + 0.03 * s + (B.S.top && ['side', 'center', 'round'].includes(B.S.top.closure) ? 0.008 * s : 0);
+    // the wrap: a fat ring, a touch lower at the front
+    const ring = [];
+    for (let i = 0; i <= 20; i++) { const th = (i / 20) * TAU; ring.push([sin(th) * rN * 1.04, yN - 0.014 * s * max(0, cos(th)), cos(th) * rN + 0.004 * s]); }
+    tube(B.G, ring, 8, rect, () => ({ rx: 0.017 * s, ry: 0.026 * s }), () => [[B.b('chest'), 0.55], [B.b('neck'), 0.45]], { nv: 40, up: [0, 1, 0], uvf: (u, v) => [v, u * 0.5] });
+    // knot at the wearer's right of the throat
+    const kth = -0.42;
+    const kp = [sin(kth) * rN * 1.15, yN - 0.03 * s, cos(kth) * rN * 1.15 + 0.008 * s];
+    blob(B.G, 9, 7, rect, kp, [0.028 * s, 0.026 * s, 0.017 * s], [[B.b('chest'), 0.8], [B.b('neck'), 0.2]]);
+    // short end down the chest (follows the torso front)
+    const fL = (sc.front || 0.24) * s;
+    const fpt = (t) => { const y = kp[1] - fL * t; const p = torsoPt(ringAt(R, clamp(y, P.legTop, P.neckY)), kth * (1 - 0.6 * t) + 0.05, 0.03 * s + 0.006 * s * t); return [p[0], y, max(p[2], kp[2] * (1 - t))]; };
+    const fp = [kp, fpt(0.35), fpt(0.7), fpt(1)];
+    const fids = B.chain('nscarfF', 'chest', fp, { stiff: 1.2, drag: 0.35, grav: 0.8, r: 0.016 * s, groups: ['body'], kind: 'ribbon' });
+    ribbon(B, fp, fids, rect, (t) => hw * (1 - 0.55 * pow(t, 1.5)) * (t > 0.92 ? (1 - t) / 0.08 * 0.5 + 0.5 : 1), [sin(kth) * 0.5, 0, 1], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
+    // long tail from the back-left of the neck, sweeping back and out over the left shoulder blade
+    const tL = (sc.tail || 0.62) * s, sw = sc.sweep != null ? sc.sweep : 0.6;
+    const t0 = [sin(2.3) * rN, yN - 0.01 * s, cos(2.3) * rN - 0.004 * s];
+    const tp = [t0];
+    for (let i = 1; i <= 4; i++) {
+      const t = i / 4, y = t0[1] - tL * lerp(0.95, 0.55, sw) * t;
+      const bz = -(ringAt(R, clamp(y, P.legTop, P.neckY)).rb + 0.035 * s);
+      tp.push([t0[0] + (0.05 + tL * 0.55 * sw * t) * s, y, min(bz, t0[2]) - tL * 0.35 * sw * t * t]);
+    }
+    const tids = B.chain('nscarfT', 'chest', tp, { stiff: 0.55 + sw * 0.6, drag: 0.3, grav: 0.75, r: 0.02 * s, groups: ['body'], kind: 'ribbon' });
+    ribbon(B, tp, tids, rect, (t) => hw * (1.05 - 0.45 * t) * (t > 0.9 ? (1 - t) / 0.1 * 0.6 + 0.4 : 1), [0.45, 0.15, -1], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
   }
 
   function buildBeads(B, bd) {
