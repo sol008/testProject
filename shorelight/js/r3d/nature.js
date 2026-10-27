@@ -96,12 +96,12 @@
   //         irid: k (view-angle rainbow fresnel, psychedelic spirit materials) }
   Wind.windify = function (mat, opts = {}) {
     if (mat.userData.wind) { Object.assign(mat.userData.wind, opts); return mat; }
-    const o = Object.assign({ strength: 0.12, height: 4, flex: 2, flutter: 0, radial: 0, var: [0.08, 0.08, 0.05], trans: 0, transColor: 0xd8ff8a, hang: 0, pulse: 0, pulseSpeed: 1.6, hue: 0, hueRate: 0, vglow: 0, irid: 0 }, opts);
+    const o = Object.assign({ strength: 0.12, height: 4, flex: 2, flutter: 0, radial: 0, var: [0.08, 0.08, 0.05], trans: 0, transColor: 0xd8ff8a, hang: 0, pulse: 0, pulseSpeed: 1.6, hue: 0, hueRate: 0, vglow: 0, irid: 0, billow: 0 }, opts);
     mat.userData.wind = o;
     const U = {
       uWS: { value: o.strength }, uWH: { value: o.height }, uWFx: { value: o.flex }, uWFl: { value: o.flutter }, uWRad: { value: o.radial },
       uVar: { value: new T.Vector3(o.var[0], o.var[1], o.var[2]) }, uTrans: { value: o.trans }, uTransCol: { value: new T.Color(o.transColor) },
-      uWHang: { value: o.hang }, uGlow: { value: new T.Vector4(o.pulse, o.pulseSpeed, o.hue, o.hueRate) }, uVGlow: { value: o.vglow }, uIrid: { value: o.irid },
+      uWHang: { value: o.hang }, uGlow: { value: new T.Vector4(o.pulse, o.pulseSpeed, o.hue, o.hueRate) }, uVGlow: { value: o.vglow }, uIrid: { value: o.irid }, uBillow: { value: o.billow },
     };
     const fx = o.pulse || o.hue || o.hueRate || o.vglow || o.irid;
     mat.userData.windU = U;
@@ -112,7 +112,7 @@
       Object.assign(sh.uniforms, Wind.uniforms, U, inst ? Nature.grassU : {});
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', `#include <common>
-          uniform float uWT, uWGust, uWAmp, uWS, uWH, uWFx, uWFl, uWRad, uWHang; uniform vec3 uWDir;
+          uniform float uWT, uWGust, uWAmp, uWS, uWH, uWFx, uWFl, uWRad, uWHang, uBillow; uniform vec3 uWDir;
           ${inst ? 'uniform vec3 uPlayer; uniform float uGrassFar; uniform vec3 uCamPos;' : ''}
           varying float vNVar; varying float vNH;`)
         .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -150,6 +150,8 @@
             // flutter: leaves jitter along their normal, phase by position
             float fl = sin(t * 7.3 + dot(transformed, vec3(3.1, 2.3, 4.7)) + ph * 3.0) * sin(t * 2.9 + transformed.y * 1.7 + ph);
             disp += objectNormal * fl * uWFl * clamp(h * 1.5, 0.0, 1.0) * (0.5 + 0.7 * uWGust) * uWAmp;
+            // billow (clouds): slow swelling along the normal
+            disp += objectNormal * uBillow * (sin(t * 0.55 + dot(transformed, vec3(1.3, 0.9, 1.1)) + ph) * 0.6 + sin(t * 0.31 + dot(transformed, vec3(-0.7, 1.7, 0.4))) * 0.4);
             // keep branch length roughly constant: dip a little when bent
             disp.y -= dot(disp.xz, disp.xz) * 0.35 / max(hy, 0.6);
             transformed += disp;
@@ -2672,4 +2674,265 @@
       return out;
     },
   });
+
+  // =====================================================================================================
+  // cliff_waterfall (2×3, solid) — stacked rock strata, water sheet falling into a plunge pool, mist & foam
+  // footprint: x −1..1, z −1.5..1.5; the cliff stands on the north rows, the pool fills the south row.
+  // =====================================================================================================
+  function streakTex() {
+    return tex('waterstreak', 128, 256, (g, w, h) => {
+      const r = RNG(131);
+      g.fillStyle = 'rgba(150,200,230,0.55)'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 90; i++) {
+        const x = r() * w, y = r() * h, L = 30 + r() * 140, wd = 1 + r() * 4;
+        g.strokeStyle = r() < 0.6 ? `rgba(255,255,255,${0.35 + r() * 0.5})` : `rgba(90,150,200,${0.3 + r() * 0.3})`;
+        g.lineWidth = wd;
+        for (const dy of [-h, 0, h]) for (const dx of [-w, 0, w]) { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + r.pm(1), y + dy + L); g.stroke(); }
+      }
+    }, { wrap: true });
+  }
+  // scrolling-uv water material (v flows toward +v at `flow` repeats/s); emissive keeps falling water bright
+  function flowMat(key, map, flow, params = {}) {
+    return cmat('flow_' + key, () => {
+      const m = G.R3M.env(Object.assign({ map, transparent: true, depthWrite: false, roughness: 0.15, metalness: 0, color: 0xffffff, emissive: 0x6aa8c8, emissiveIntensity: 0.35, side: T.DoubleSide, vertexColors: true }, params));
+      const U = { uFlow: { value: flow } };
+      const prev = m.onBeforeCompile;
+      m.onBeforeCompile = function (sh, rr) {
+        if (prev) prev.call(this, sh, rr);
+        Object.assign(sh.uniforms, U, { uWT: Wind.uniforms.uWT });
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform float uWT, uFlow;')
+          .replace('#include <map_fragment>', `#ifdef USE_MAP
+            vec2 fuv = vMapUv - vec2(0.0, uWT * uFlow);
+            vec4 sampledDiffuseColor = texture2D(map, fuv) * 0.6 + texture2D(map, fuv * vec2(1.7, 0.8) - vec2(0.31, uWT * uFlow * 0.4)) * 0.4;
+            diffuseColor *= sampledDiffuseColor;
+          #endif`);
+      };
+      const pk = m.customProgramCacheKey;
+      m.customProgramCacheKey = function () { return (pk ? pk.call(this) : '') + '|flow'; };
+      return m;
+    });
+  }
+  function foamTex() {
+    return tex('foamring', 256, 256, (g, w) => {
+      const r = RNG(133);
+      for (let i = 0; i < 260; i++) {
+        const a = r() * TAU, d = w * (0.18 + r() * 0.3);
+        g.fillStyle = `rgba(255,255,255,${0.15 + r() * 0.5})`;
+        g.beginPath(); g.ellipse(w / 2 + cos(a) * d, w / 2 + sin(a) * d, 3 + r() * 9, 2 + r() * 5, a, 0, TAU); g.fill();
+      }
+    });
+  }
+  G.Models.define('cliff_waterfall', {
+    variants: 3,
+    occluder: true,
+    update(node, o, t) {
+      Wind.tick(t);
+      const f = node.getObjectByName('foam'); if (f) f.rotation.y = t * 0.25;
+      const f2 = node.getObjectByName('foam2'); if (f2) f2.rotation.y = -t * 0.18;
+    },
+    lights(o) { return [{ x: 0, y: 0.4, z: 0.9, color: '#a8e0ff', intensity: 0.6, distance: 3.5, flicker: 0.05 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3700 + v * 5);
+      const rock = new Acc(), green = new Acc();
+      const tint = [[0.9, 0.9, 0.92], [0.98, 0.92, 0.84], [0.82, 0.92, 0.9]][v];
+      const TOPY = 4.0, FACEZ = 0.05;
+      // strata: rows of chunky boulders forming the cliff body (darker & wetter low down)
+      for (let row = 0; row < 5; row++) {
+        const y = 0.35 + row * 0.82;
+        let x = -1.25 + r() * 0.15;
+        while (x < 1.25) {
+          const bw = 0.42 + r() * 0.25;
+          const k = row / 4;
+          const zf = FACEZ - 0.35 + r.pm(0.12) - row * 0.03;
+          boulder(rock, V3(x + bw / 2, y, zf - 0.55), { r: [bw * 0.62, 0.5 + r() * 0.1, 1.0], seed: row * 13 + x * 7 + v * 31, noise: 0.22, detail: 2, facet: 0.75, base: 0.9, tint: tint.map((c) => c * lerp(0.7, 1, k)), moss: { k: lerp(0.9, 0.6, k), col: [0.28, 0.48, 0.2] } });
+          x += bw * 0.9;
+        }
+      }
+      // plunge-pool rim stones
+      for (let i = 0; i < 9; i++) {
+        const a = PI * (i / 8), p = V3(cos(a) * 0.95, 0.05, 0.75 + sin(a) * 0.65);
+        boulder(rock, p, { r: [0.22 + r() * 0.1, 0.16, 0.2], seed: 200 + i + v * 9, noise: 0.3, detail: 1, facet: 0.7, moss: MOSS });
+      }
+      // top: mossy crown + grassy clumps
+      const lm = leafMat('falltop' + v, leafAtlas('bush0', { seed: 101, shape: 'oval', n: 90, L: 26, W: 11, dark: '#1f4a2a', mid: '#336c36', light: '#559845', hi: '#a8d470' }), { height: 5, strength: 0.05, flex: 2 });
+      for (let i = 0; i < 9; i++) {
+        const c = V3(r.pm(1.1), TOPY + 0.15, -0.8 + r.pm(0.55));
+        if (abs(c.x) < 0.3 && c.z > -0.6) c.x += c.x < 0 ? -0.35 : 0.35;
+        clump(green, r, c, 0.3 + r() * 0.15, { cards: 6, C: c.clone().add(V3(0, -0.3, 0)), Rn: V3(0.4, 0.3, 0.4), sphere: 0.6, flat: 0.3 });
+      }
+      // ferns tucked into ledges
+      for (let i = 0; i < 6; i++) { const c = V3(r.pm(1.05), 0.9 + r() * 2.6, FACEZ - 0.1); if (abs(c.x) < 0.45) continue; clump(green, r, c, 0.2, { cards: 4, C: c.clone().add(V3(0, 0, -0.3)), Rn: V3(0.3, 0.3, 0.3), sphere: 0.5 }); }
+      // water: a stream on top, the falling sheet (two layers at different speeds), pool surface
+      const st = streakTex();
+      const fallA = flowMat('fallA', st, 1.25), fallB = flowMat('fallB', st, 0.8, { opacity: 0.7, emissiveIntensity: 0.5 });
+      const sheet = new Acc(), sheet2 = new Acc();
+      const fpts = [];
+      for (let i = 0; i <= 10; i++) { const t = i / 10; fpts.push(V3(0, lerp(TOPY + 0.05, 0.06, t), lerp(-0.85, FACEZ + 0.32, sstep(0, 0.25, t)) + t * 0.15)); }
+      ribbon(sheet, fpts, fpts.map((_, i) => 0.3 + i * 0.012), { up: V3(0, 0, 1), keepSide: true, v0: 0, v1: 2.4, ao: (p, t) => [lerp(1.2, 0.95, t), lerp(1.2, 1, t), lerp(1.2, 1.05, t)] });
+      ribbon(sheet2, fpts.map((p) => p.clone().add(V3(0, 0, 0.05))), fpts.map((_, i) => 0.22 + i * 0.015), { up: V3(0, 0, 1), keepSide: true, u0: 0.2, u1: 0.8, v0: 0, v1: 1.6 });
+      const stream = [];
+      for (let i = 0; i <= 4; i++) stream.push(V3(sin(i) * 0.05, TOPY + 0.07, lerp(-1.5, -0.85, i / 4)));
+      ribbon(sheet, stream, stream.map(() => 0.28), { v0: -1, v1: 0 });
+      const poolM = cmat('pool', () => G.R3M.env({ color: 0x2a6a7a, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.88, depthWrite: false, envMapIntensity: 1.2, cutout: false }));
+      const pg = new T.CircleGeometry(0.95, 24); pg.rotateX(-PI / 2); pg.scale(1, 1, 0.75); pg.translate(0, 0.07, 0.78);
+      const g = K.group(meshOf(rock, rockMat('granite')), meshOf(green, lm));
+      const out = K.merge(g);
+      const pool = new T.Mesh(pg, poolM); pool.receiveShadow = true; pool.castShadow = false; pool.renderOrder = 2;
+      const sA = meshOf(sheet, fallA, { cast: false }), sB = meshOf(sheet2, fallB, { cast: false });
+      sA.renderOrder = 3; sB.renderOrder = 3;
+      out.add(pool, sA, sB);
+      // spinning foam rings where the water lands
+      const fm = cmat('foam', () => new T.MeshBasicMaterial({ map: foamTex(), transparent: true, depthWrite: false, opacity: 0.85 }));
+      for (const [nm, s2] of [['foam', 1], ['foam2', 0.65]]) {
+        const fg = new T.CircleGeometry(0.55 * s2, 20); fg.rotateX(-PI / 2);
+        const f = new T.Mesh(fg, fm); f.name = nm; f.position.set(0, 0.09 + s2 * 0.01, FACEZ + 0.5); f.renderOrder = 3; f.castShadow = false;
+        out.add(f);
+      }
+      out.add(motes({ n: 26, r: 0.45, h: 1.6, y0: 0, color: '#eaf6ff', size: 18, speed: 0.12, swirl: 0.2, seed: 51 + v, blend: 'normal', mist: true }).translateZ(FACEZ + 0.45));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // sea_of_clouds 雲海 (4×2, walk-through visual) — billowing puffs with warm tops, cool undersides + drifting mist
+  // =====================================================================================================
+  G.Models.define('sea_of_clouds', {
+    variants: 3,
+    occluder: false,
+    key: (o) => (o.w || 4) + 'x' + (o.h || 2),
+    update(node, o, t) { Wind.tick(t); },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3800 + v * 9);
+      const W = o.w || 4, D = o.h || 2;
+      const m = cmat('cloud' + v, () => {
+        const mm = G.R3M.env({ color: 0xffffff, vertexColors: true, roughness: 1, cutout: false });
+        return Wind.windify(mm, { height: 2, strength: 0.0, billow: 0.07, vglow: 0.1, var: [0.03, 0.03, 0.03], trans: 0.5, transColor: 0xfff0e0 });
+      });
+      const acc = new Acc();
+      const warm = [[0.95, 0.9, 0.84], [0.95, 0.84, 0.8], [0.92, 0.92, 0.95]][v], cool = [[0.45, 0.5, 0.72], [0.52, 0.46, 0.7], [0.48, 0.56, 0.7]][v];
+      const n = Math.round(W * D * 3.4);
+      for (let i = 0; i < n; i++) {
+        const x = r.pm(W / 2 - 0.3), z = r.pm(D / 2 - 0.25);
+        const edge = max(abs(x) / (W / 2), abs(z) / (D / 2));
+        const R0 = (0.42 + r() * 0.42) * (1 - edge * 0.35);
+        const y = 0.15 + r() * 0.45 * (1 - edge) + R0 * 0.25;
+        const g = new T.IcosahedronGeometry(1, 2), P = g.attributes.position, N = g.attributes.normal;
+        const b0 = acc.count;
+        for (let k = 0; k < P.count; k++) {
+          let px = P.getX(k), py = P.getY(k), pz = P.getZ(k);
+          const bump = 1 + n3(px * 1.6 + i, py * 1.6, pz * 1.6) * 0.12;
+          py = py < -0.2 ? -0.2 + (py + 0.2) * 0.3 : py; // flat-ish underside
+          const ny = N.getY(k);
+          const u = sstep(-0.6, 0.8, ny);
+          const c = [lerp(cool[0], warm[0], u), lerp(cool[1], warm[1], u), lerp(cool[2], warm[2], u)];
+          acc.v(x + px * R0 * 1.25 * bump, y + py * R0 * 0.8 * bump, z + pz * R0 * bump, N.getX(k), ny, N.getZ(k), 0, 0, c[0], c[1], c[2]);
+        }
+        const ix = g.index ? g.index.array : [...Array(P.count).keys()];
+        for (let k = 0; k < ix.length; k += 3) acc.tri(b0 + ix[k], b0 + ix[k + 1], b0 + ix[k + 2]);
+        g.dispose();
+      }
+      const out = K.merge(K.group(meshOf(acc, m, { cast: false })));
+      out.add(motes({ n: Math.round(W * D * 3), r: max(W, D) * 0.5, h: 0.9, y0: 0.2, color: '#ffffff', size: 40, speed: 0.03, swirl: 0.5, seed: 61 + v, blend: 'normal', mist: true }));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // GRASS CARPET — instanced blade clumps over grass tiles of a map view (with wind, player push, distance fade)
+  // =====================================================================================================
+  const GRASS_TILES = { grass: [1, 1, 1], grass_dark: [0.72, 0.85, 0.75], flowers_ground: [1.05, 1.02, 0.9] };
+  function grassClumpGeo(r, nBlades, h0) {
+    const acc = new Acc();
+    for (let i = 0; i < nBlades; i++) {
+      const a = r() * TAU, d = r() * 0.08;
+      blade(acc, V3(cos(a) * d, -0.02, sin(a) * d), a + r.pm(1), h0 * (0.6 + r() * 0.6), 0.25 + r() * 0.5, 0.022, 3, C('#3a6a24'), C(r() < 0.3 ? '#b8d070' : '#8cc050'));
+    }
+    return acc.build();
+  }
+  Nature.scatterGrass = function (view) {
+    const q = G.settings.quality || 'high';
+    if (q === 'low' || (G.R3 && G.R3.lite && !Nature.forceGrass)) return null;
+    const ms = view.ms, Wm = ms.w, Hm = ms.h;
+    const per = q === 'ultra' ? 22 : q === 'medium' ? 8 : 14; // clumps per tile
+    // tiles blocked by solid objects
+    const blocked = new Uint8Array(Wm * Hm);
+    for (const o of ms.objects || []) {
+      const d = G.Objects.get(o.t); if (!d) continue;
+      const w = o.w || d.w, h = o.h || d.h;
+      for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) {
+        const solid = d.solidAt ? d.solidAt(o, dx, dy) : d.solid;
+        if (solid || d.w > 1) { const x = o.x + dx, y = o.y + dy; if (x >= 0 && y >= 0 && x < Wm && y < Hm) blocked[y * Wm + x] = 1; }
+      }
+    }
+    const isG = (x, y) => x >= 0 && y >= 0 && x < Wm && y < Hm && GRASS_TILES[ms.terrain[y * Wm + x]];
+    const r = RNG(ms.def && ms.def.id ? ms.def.id.length * 977 : 7);
+    const geo = grassClumpGeo(RNG(5), 6, 0.36);
+    const mat = cmat('grass_carpet', () => {
+      const m = G.R3M.env({ color: 0xffffff, vertexColors: true, side: T.DoubleSide, roughness: 0.9, cutout: false });
+      return Wind.windify(m, { grass: true, height: 0.36, strength: 0.09, flex: 1.5, flutter: 0.006, trans: 0.45, var: [0.1, 0.08, 0.05] });
+    });
+    const flowerGeo = (() => { const a = new Acc(); const rr = RNG(9); for (let i = 0; i < 3; i++) { const p = V3(rr.pm(0.06), 0.16 + rr() * 0.08, rr.pm(0.06)); flowerHead(a, p, 0.03, rr.int(4), V3(rr.pm(1), 0, rr.pm(1))); } return a.build(); })();
+    const fmat = cmat('grass_flowers', () => Wind.windify(G.R3M.env({ map: flowerTex(), alphaTest: 0.4, side: T.DoubleSide, vertexColors: true, roughness: 0.6, cutout: false }), { grass: true, height: 0.25, strength: 0.06, flex: 1.2 }));
+    const group = new T.Group(); group.name = 'grassCarpet';
+    const CHK = 8, m4 = new T.Matrix4(), qt = new T.Quaternion(), sc = V3(), ps = V3(), col = new T.Color();
+    const chunks = [];
+    for (let cy = 0; cy < Hm; cy += CHK) for (let cx = 0; cx < Wm; cx += CHK) {
+      const mats = [], cols = [], fl = [];
+      for (let y = cy; y < min(Hm, cy + CHK); y++) for (let x = cx; x < min(Wm, cx + CHK); x++) {
+        const tint = isG(x, y);
+        if (!tint || blocked[y * Wm + x]) continue;
+        // keep a little margin from non-grass neighbours (paths, water banks) so blades don't poke into them
+        const edgeN = !isG(x - 1, y) || !isG(x + 1, y) || !isG(x, y - 1) || !isG(x, y + 1);
+        const n = edgeN ? floor(per * 0.45) : per;
+        for (let k = 0; k < n; k++) {
+          const px = x + (edgeN ? 0.2 + r() * 0.6 : r()), pz = y + (edgeN ? 0.2 + r() * 0.6 : r());
+          qt.setFromAxisAngle(V3(0, 1, 0), r() * TAU);
+          const s2 = 0.75 + r() * 0.5;
+          sc.set(s2, s2 * (0.8 + r() * 0.5), s2);
+          mats.push(m4.compose(ps.set(px, 0, pz), qt, sc).clone());
+          cols.push(col.setRGB(tint[0] * (0.85 + r() * 0.3), tint[1] * (0.85 + r() * 0.3), tint[2] * (0.9 + r() * 0.2)).clone());
+          if (ms.terrain[y * Wm + x] === 'flowers_ground' && r() < 0.35) fl.push(m4.clone());
+        }
+      }
+      if (!mats.length) continue;
+      const im = new T.InstancedMesh(geo, mat, mats.length);
+      mats.forEach((mm, i) => { im.setMatrixAt(i, mm); im.setColorAt(i, cols[i]); });
+      im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      im.computeBoundingSphere();
+      im.castShadow = false; im.receiveShadow = true;
+      im.userData.centre = V3(cx + CHK / 2, 0, cy + CHK / 2);
+      group.add(im); chunks.push(im);
+      if (fl.length) {
+        const fm = new T.InstancedMesh(flowerGeo, fmat, fl.length);
+        fl.forEach((mm, i) => fm.setMatrixAt(i, mm));
+        fm.instanceMatrix.needsUpdate = true; fm.computeBoundingSphere();
+        fm.castShadow = false; fm.userData.centre = im.userData.centre;
+        group.add(fm); chunks.push(fm);
+      }
+    }
+    // keep shared uniforms fresh even if nobody calls Nature.update (any visible chunk triggers it)
+    const U = Nature.grassU;
+    const sync = (renderer, scene, camera) => { U.uCamPos.value.copy(camera.position); const P = ms.player; if (P) U.uPlayer.value.set(P.px / G.TILE, 0, (P.py + 8) / G.TILE); };
+    for (const c of chunks) c.onBeforeRender = sync;
+    U.uGrassFar.value = q === 'ultra' ? 34 : 26;
+    view.scene.add(group);
+    const handle = {
+      group, chunks,
+      update(v2) {
+        const cam = (v2 || view).camera; if (!cam) return;
+        const far = U.uGrassFar.value + CHK;
+        const tgt = (v2 || view).camTarget || cam.position;
+        for (const c of chunks) c.visible = Math.hypot(c.userData.centre.x - tgt.x, c.userData.centre.z - tgt.z) < far;
+      },
+      dispose() { view.scene.remove(group); for (const c of chunks) c.dispose(); },
+    };
+    Nature._grass = handle;
+    return handle;
+  };
+  // optional per-frame hook (wind + grass culling) for the lead / Env3D
+  Nature.update = function (view, dt) {
+    Wind.update(dt);
+    if (Nature._grass && Nature._grass.group.parent === view.scene) Nature._grass.update(view);
+  };
 })();
