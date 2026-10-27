@@ -55,11 +55,21 @@ G.Dialog = (() => {
       this.hasPortrait = !!(w.id && G.Portraits && G.Portraits.has(w.id) && !this.opts.noPortrait);
       const ctx = G.ctx;
       ctx.save();
-      ctx.font = G.font(this.opts.size || 27);
+      const en = G.I18N.isEn();
+      this.fontSize = this.opts.size || (en ? 25 : 27);
+      this.lineH = en ? 36 : 40;
+      ctx.font = G.font(this.fontSize);
       const tx = this.hasPortrait ? 300 : 40;
       this.textX = BOX.x + tx;
-      this.lines = G.Render.wrap(ctx, text, BOX.w - tx - 40);
+      const all = G.Render.wrap(ctx, text, BOX.w - tx - 40);
       ctx.restore();
+      // long (usually translated) lines are split into pages of `maxLines`
+      const maxLines = en ? 4 : 3;
+      this.pages = [];
+      for (let i = 0; i < all.length; i += maxLines) this.pages.push(all.slice(i, i + maxLines));
+      if (!this.pages.length) this.pages.push([]);
+      this.page = 0;
+      this.lines = this.pages[0];
       this.total = G.Render.countGlyphs(this.lines);
       log.push({ name: w.name, text });
       if (log.length > 200) log.shift();
@@ -82,7 +92,7 @@ G.Dialog = (() => {
       }
       const speeds = [25, 40, 65, 140, 9999];
       const cps = speeds[G.U.clamp(G.settings.textSpeed, 0, 4)];
-      const skipping = I.held('skip');
+      const skipping = I.held('skip') || (G.Debug && G.Debug.autoplay);
       if (!this.done) {
         const before = Math.floor(this.shown);
         this.shown += dt * (skipping ? 9999 : cps);
@@ -92,6 +102,13 @@ G.Dialog = (() => {
       } else {
         this.autoT += dt;
         const autoGo = G.settings.autoAdvance && this.autoT > 1.2 + this.total * 0.04;
+        if ((I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06)) && this.page < this.pages.length - 1) {
+          this.page++;
+          this.lines = this.pages[this.page];
+          this.total = G.Render.countGlyphs(this.lines);
+          this.shown = 0; this.done = false; this.autoT = 0;
+          return;
+        }
         if (I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06)) {
           const r = this.resolve;
           this.resolve = null;
@@ -115,7 +132,7 @@ G.Dialog = (() => {
       if (this.who.name) {
         const nx = this.hasPortrait ? BOX.x + 290 : BOX.x + 30;
         ctx.font = G.font(24, true);
-        const nw = ctx.measureText(this.who.name).width + 44;
+        const nw = G.Render.measure(ctx, this.who.name) + 44;
         const g = ctx.createLinearGradient(nx, BOX.y - 22, nx, BOX.y + 14);
         g.addColorStop(0, '#8a2f24'); g.addColorStop(1, '#561a14');
         ctx.fillStyle = g;
@@ -123,9 +140,9 @@ G.Dialog = (() => {
         ctx.strokeStyle = G.UI.GOLD; ctx.lineWidth = 1.5; ctx.stroke();
         G.Render.text(ctx, this.who.name, nx + nw / 2, BOX.y - 15, { size: 24, bold: true, align: 'center', color: '#fbe7b8' });
       }
-      ctx.font = G.font(this.opts.size || 27);
+      ctx.font = G.font(this.fontSize);
       ctx.textBaseline = 'top';
-      G.Render.drawLines(ctx, this.lines, this.textX, BOX.y + 36, 40, this.opts.color || '#f6efdc', Math.floor(this.shown));
+      G.Render.drawLines(ctx, this.lines, this.textX, BOX.y + (this.lineH < 40 ? 30 : 36), this.lineH, this.opts.color || '#f6efdc', Math.floor(this.shown));
       if (this.done && this.resolve) {
         // advance indicator: little bobbing lantern
         G.UI.lanternIcon(ctx, BOX.x + BOX.w - 40, BOX.y + BOX.h - 32 + Math.sin(t * 5) * 3, 8, t);
@@ -150,7 +167,7 @@ G.Dialog = (() => {
       this.options = options;
       const ctx = G.ctx;
       ctx.font = G.font(25);
-      this.w = Math.max(280, ...options.map((s) => ctx.measureText(s).width + 90));
+      this.w = Math.max(280, ...options.map((s) => G.Render.measure(ctx, s) + 90));
       this.h = this.list.rows * 50 + 36;
       this.x = G.W - this.w - 60;
       this.y = BOX.y - this.h - 24;
@@ -158,6 +175,13 @@ G.Dialog = (() => {
     }
     update(dt) {
       this.alpha = Math.min(1, this.alpha + dt * 6);
+      if ((G.Debug && G.Debug.autoplay)) {
+        const q = G.Debug.choices;
+        let pick = q && q.length ? q.shift() : 0;
+        if (typeof pick === 'string') { const j = this.options.findIndex((o) => o.includes(pick)); pick = j < 0 ? 0 : j; }
+        G.Debug.log && G.Debug.log.push('choice: ' + this.options.join(' / ') + ' -> ' + this.options[pick]);
+        G.Scenes.pop(this); this.resolve(Math.min(pick, this.options.length - 1)); return;
+      }
       const r = this.list.update();
       if (r === 'ok') { G.Scenes.pop(this); this.resolve(this.list.idx); }
       else if (r === 'cancel' && this.opts.cancel != null) { G.Scenes.pop(this); this.resolve(this.opts.cancel); }
@@ -210,7 +234,7 @@ G.Dialog = (() => {
       if (!this.closing) this.alpha = Math.min(1, this.alpha + dt * 2);
       else { this.alpha -= dt * 2; if (this.alpha <= 0) { G.Scenes.pop(this); this.resolve(); } return; }
       const I = G.Input;
-      const adv = I.pressed('ok') || I.clicked() || (I.held('skip') && this.lineT > 0.1) || (G.settings.autoAdvance && this.lineT > 2.5);
+      const adv = I.pressed('ok') || I.clicked() || ((I.held('skip') || (G.Debug && G.Debug.autoplay)) && this.lineT > 0.1) || (G.settings.autoAdvance && this.lineT > 2.5);
       if (adv) {
         if (this.lineT < 0.9) this.lineT = 0.9;
         else if (this.idx < this.lines.length - 1) { this.idx++; this.lineT = 0; }
@@ -228,8 +252,12 @@ G.Dialog = (() => {
       const y0 = G.H / 2 - (this.lines.length * lh) / 2;
       for (let i = 0; i < n; i++) {
         const a = i === this.idx ? Math.min(1, this.lineT / 0.9) : 1;
+        let size = this.o.size || 30;
+        ctx.font = G.font(size);
+        const wpx = G.Render.measure(ctx, this.lines[i]);
+        if (wpx > G.W - 120) size = Math.max(16, Math.floor(size * (G.W - 120) / wpx));
         G.Render.text(ctx, this.lines[i], G.W / 2, y0 + i * lh + (1 - a) * 8, {
-          size: this.o.size || 30, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
+          size, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
         });
       }
       ctx.restore();

@@ -7,7 +7,19 @@
 G.Mini = (() => {
   const U = G.U;
   const M = {};
-  const push = (scene) => new Promise((res) => { G.Dialog.close(); scene.res = res; G.Scenes.push(scene); });
+  const push = (scene) => new Promise((res) => {
+    G.Dialog.close();
+    if ((G.Debug && G.Debug.autoplay)) {
+      // test autoplay: resolve with a successful result immediately
+      const o = scene.o || {};
+      const v = scene instanceof Timing ? o.rounds : scene instanceof Mash ? true : scene instanceof Song ? o.rounds
+        : scene instanceof Jiaobei ? (o.results || Array(o.throws || 1).fill('sheng')).slice(0, o.throws || 1) : true;
+      G.Debug.log && G.Debug.log.push('minigame ' + (scene.constructor && scene.constructor.name) + ' -> ' + JSON.stringify(v));
+      setTimeout(() => res(v), 30);
+      return;
+    }
+    scene.res = res; G.Scenes.push(scene);
+  });
   const finish = (scene, v) => { G.Scenes.pop(scene); scene.res(v); };
 
   function frame(ctx, title, sub) {

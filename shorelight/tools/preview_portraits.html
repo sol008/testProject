@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — portrait preview</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.7; }
+</style>
+</head>
+<body>
+<div id="bar">?id=baizhi &amp; ids=a,b &amp; expr=smile &amp; t=1.2 (freeze) &amp; zoom=2 &amp; big=1 &amp; mode=grid|expr|big|dialog</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/portraits.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const zoom = parseFloat(q.get('zoom') || '1');
+  G.S = parseFloat(q.get('S') || '1') * zoom;
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const all = G.Portraits.ids();
+  const mode = q.get('mode') || 'all';
+  const ids = q.get('ids') && mode !== 'cast' ? q.get('ids').split(',') : all;
+  const sel = q.get('id') || 'baizhi';
+  const gExpr = q.get('expr') || 'normal';
+  const exprs = G.Portraits.exprs();
+  const cellW = 220, cellH = 260;
+  const W = 1580;
+  const cols = Math.floor(W / cellW);
+  const items = [];
+  let y = 40;
+  if (mode === 'all' || mode === 'grid') {
+    ids.forEach((id, i) => {
+      items.push({ id, expr: gExpr, x: (i % cols) * cellW + 10, y: y + Math.floor(i / cols) * cellH, w: cellW - 20, h: cellH - 30, label: id });
+    });
+    y += Math.ceil(ids.length / cols) * cellH + 20;
+  }
+  if (mode === 'all' || mode === 'expr') {
+    exprs.forEach((ex, i) => {
+      items.push({ id: sel, expr: ex, x: (i % cols) * cellW + 10, y: y + Math.floor(i / cols) * cellH, w: cellW - 20, h: cellH - 30, label: sel + ' · ' + ex });
+    });
+    y += Math.ceil(exprs.length / cols) * cellH + 20;
+  }
+  if (mode === 'big') {
+    const list = (q.get('exprs') || 'normal,smile,angry').split(',');
+    list.forEach((ex, i) => {
+      items.push({ id: sel, expr: ex, x: 10 + i * 520, y, w: 500, h: 566, label: sel + ' · ' + ex });
+    });
+    y += 600;
+  }
+  if (mode === 'cast') {
+    const list = (q.get('ids') || 'baizhi,xinghe,hongying,yungui').split(',');
+    list.forEach((id, i) => {
+      items.push({ id, expr: gExpr, x: 10 + (i % 4) * 390, y: y + Math.floor(i / 4) * 460, w: 380, h: 430, label: id + ' · ' + gExpr });
+    });
+    y += Math.ceil(list.length / 4) * 460;
+  }
+  if (mode === 'dialog' || mode === 'all') {
+    items.push({ dialog: true, y });
+    y += 360;
+  }
+  const H = y + 20;
+  const cv = document.getElementById('cv');
+  cv.width = W * zoom; cv.height = H * zoom;
+  const ctx = cv.getContext('2d');
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#2a3048'); bg.addColorStop(1, '#141826');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e8d9b0'; ctx.font = G.font(20, true); ctx.textAlign = 'left';
+    ctx.fillText('彼岸燈 · 立繪 (portraits.js) — ' + all.length + ' characters', 14, 26);
+    for (const it of items) {
+      if (it.dialog) {
+        // mock dialog box: speaker left, listener right dimmed+flipped
+        const by = it.y;
+        ctx.fillStyle = 'rgba(10,12,24,0.85)'; ctx.fillRect(0, by + 220, W, 120);
+        G.Portraits.draw(ctx, sel, gExpr, 20, by, 300, 340, t, {});
+        G.Portraits.draw(ctx, 'xinghe', 'normal', W - 320, by, 300, 340, t, { flip: true, dim: true });
+        G.Portraits.draw(ctx, 'nianer', 'sad', W - 640, by, 300, 340, t, { flip: true, alpha: 0.6 });
+        ctx.fillStyle = '#f0e6cc'; ctx.font = G.font(24); ctx.fillText('「星河……這一次，別再來找我了。」', 340, by + 280);
+        continue;
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(it.x, it.y, it.w, it.h);
+      try {
+        G.Portraits.draw(ctx, it.id, it.expr, it.x, it.y, it.w, it.h, t, {});
+      } catch (e) { console.error(it.id, it.expr, e); }
+      ctx.fillStyle = '#9aa6c0'; ctx.font = G.font(13); ctx.textAlign = 'center';
+      ctx.fillText(it.label, it.x + it.w / 2, it.y + it.h + 16);
+      ctx.textAlign = 'left';
+    }
+    if (freeze == null) requestAnimationFrame(frame);
+    else window.__done = true;
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

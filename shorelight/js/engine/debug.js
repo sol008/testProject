@@ -74,3 +74,47 @@ G.Debug = {
     });
   },
 };
+
+// ---------------------------------------------------------------- test-bot helpers (used by tools/test)
+// G.Debug.autoplay = true  → dialogue auto-advances, choices pick G.Debug.choices.shift() (index or substring,
+// default 0), minigames succeed instantly, title cards / travel / 心燈 / shops skip, battles auto-fight at x3.
+G.Debug.autoplay = false;
+G.Debug.choices = [];
+G.Debug.log = [];
+G.Debug.setAutoplay = function (on) {
+  G.Debug.autoplay = on;
+  if (on) { G.settings.battleSpeed = 3; G.settings.textSpeed = 4; }
+};
+// run a map event by id (on the current map unless mapId given) and resolve when the script finishes
+G.Debug.trigger = function (eventId, mapId) {
+  const def = G.Maps.get(mapId || (G.mapScene && G.mapScene.def.id));
+  const ev = def && (def.events || []).find((e) => e.id === eventId);
+  if (!ev) return Promise.reject(new Error('no event ' + eventId));
+  return G.Script.run(ev.run, ev);
+};
+// talk to an NPC by id on the current map
+G.Debug.talk = function (npcId) {
+  const m = G.mapScene;
+  const n = m && m.npcs.find((x) => x.id === npcId);
+  if (!n) return Promise.reject(new Error('no npc ' + npcId));
+  const talk = n.talk || (n.def && n.def.talk);
+  return G.Script.run(async (S) => { if (typeof talk === 'function') await talk(S, n); else await S.lines(talk, n); });
+};
+// teleport the player onto a cell and fire touch events / warps as if they had walked there
+G.Debug.stepOn = function (x, y) {
+  const m = G.mapScene;
+  m.player.setCell(x, y);
+  m.player.onArrive = null;
+  m.onPlayerArrive();
+};
+// wait until no script is running and no overlay scene is open (resolves with true, or false on timeout)
+G.Debug.idle = function (timeoutMs = 60000) {
+  const t0 = Date.now();
+  return new Promise((res) => {
+    const iv = setInterval(() => {
+      const top = G.Scenes.top();
+      const idle = !G.Script.busy() && top === G.mapScene && G.Render.fade.a < 0.05;
+      if (idle || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(idle); }
+    }, 100);
+  });
+};

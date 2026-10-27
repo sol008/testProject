@@ -311,7 +311,7 @@ G.FX = (() => {
     constructor(title, sub, res) { this.title = title; this.sub = sub; this.res = res; this.t = 0; }
     update(dt) {
       this.t += dt;
-      if ((G.Input.pressed('ok') || G.Input.clicked()) && this.t > 1) this.t = Math.max(this.t, 3.6);
+      if (((G.Input.pressed('ok') || G.Input.clicked()) && this.t > 1) || (G.Debug && G.Debug.autoplay)) this.t = Math.max(this.t, 4.3);
       if (this.t > 4.4) { G.Scenes.pop(this); this.res(); }
     }
     draw(ctx) {
@@ -343,7 +343,7 @@ G.FX = (() => {
     constructor(name, res) { this.name = name; this.res = res; this.t = 0; G.Audio.sfx('lantern'); }
     update(dt) {
       this.t += dt;
-      if (this.t > 1.5 && (G.Input.pressed('ok') || G.Input.clicked())) this.t = Math.max(this.t, 3.6);
+      if ((this.t > 1.5 && (G.Input.pressed('ok') || G.Input.clicked())) || (G.Debug && G.Debug.autoplay)) this.t = Math.max(this.t, 4.1);
       if (this.t > 4.2) { G.Scenes.pop(this); this.res(); }
     }
     draw(ctx) {

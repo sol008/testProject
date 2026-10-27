@@ -478,7 +478,7 @@ G.UI = (() => {
       ctx.save();
       ctx.globalAlpha = a;
       ctx.font = G.font(22);
-      const w = ctx.measureText(ts.text.replace(/\{.\}|\{\/\}/g, '')).width + (ts.icon ? 54 : 30) + 20;
+      const w = ctx.measureText(G.T(ts.text).replace(/\{.\}|\{\/\}/g, '')).width + (ts.icon ? 54 : 30) + 20;
       const x = G.W / 2 - w / 2;
       UI.panel(ctx, x, y, w, 44, { ornament: false });
       let tx = x + 20;
@@ -496,7 +496,7 @@ G.UI = (() => {
     let cx = x;
     for (let i = list.length - 1; i >= 0; i--) {
       const [k, label] = list[i];
-      const lw = ctx.measureText(label).width;
+      const lw = G.Render.measure(ctx, label);
       cx -= lw;
       G.Render.text(ctx, label, cx, y, { size: 17, color: '#d8ceb0' });
       ctx.font = G.font(15, true);

@@ -771,7 +771,7 @@ G.Mapx = G.Mapx || {};
       y += Math.sin(t * 4) * 3;
       ctx.save();
       ctx.font = G.font(17);
-      const w = ctx.measureText(label).width + 44;
+      const w = G.Render.measure(ctx, label) + 44;
       ctx.fillStyle = 'rgba(10,14,28,0.78)';
       ctx.beginPath(); ctx.roundRect(x - w / 2, y - 30, w, 28, 14); ctx.fill();
       ctx.strokeStyle = it.kind === 'enemy' ? 'rgba(255,120,100,0.8)' : 'rgba(240,210,140,0.7)'; ctx.lineWidth = 1.2; ctx.stroke();
@@ -804,7 +804,7 @@ G.Mapx = G.Mapx || {};
       if (obj && !G.Script.busy()) {
         ctx.save();
         ctx.font = G.font(18);
-        const tw = ctx.measureText(obj).width;
+        const tw = G.Render.measure(ctx, obj);
         const x = G.W - tw - 64, y = 22;
         G.UI.plate(ctx, x, y, tw + 44, 36, 0.55, 18);
         G.UI.lanternIcon(ctx, x + 18, y + 18, 6, t);

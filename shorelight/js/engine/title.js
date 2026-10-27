@@ -90,6 +90,7 @@ G.Title = (() => {
         { label: '繼續旅程', k: 'continue', disabled: !has },
         { label: '讀取進度', k: 'load', disabled: !has },
         { label: '設定', k: 'settings' },
+        { label: G.I18N.isEn() ? '繁體中文' : 'English', k: 'lang' },
       ];
       this.list = new G.UI.List(this.items, { rows: this.items.length, rowH: 50, idx: has ? 1 : 0 });
     }
@@ -124,6 +125,7 @@ G.Title = (() => {
         else if (k === 'continue') { const s = G.Save.latest(); if (s >= 0) G.loadGame(s); }
         else if (k === 'load') G.Scenes.push(new G.SaveScene('load', () => {}));
         else if (k === 'settings') G.Scenes.push(new G.SettingsScene());
+        else if (k === 'lang') { G.settings.lang = G.I18N.isEn() ? 'zh' : 'en'; G.saveSettings(); const i = this.list.idx; this.buildMenu(); this.list.idx = i; }
       }
     }
     async newGame() {

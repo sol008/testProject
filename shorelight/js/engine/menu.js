@@ -686,6 +686,7 @@
     constructor() {
       this.t = 0;
       this.rows = [
+        { k: 'lang', label: '語言 Language', type: 'enum', opts: ['zh', 'en'], names: ['繁體中文', 'English'] },
         { k: 'music', label: '音樂音量', type: 'vol' },
         { k: 'sfx', label: '音效音量', type: 'vol' },
         { k: 'textSpeed', label: '文字速度', type: 'enum', opts: [0, 1, 2, 3, 4], names: ['很慢', '慢', '普通', '快', '瞬間'] },

@@ -3,7 +3,9 @@
 G.Data = G.Data || {};
 
 G.settings = (() => {
-  const def = { music: 0.6, sfx: 0.8, textSpeed: 2, battleSpeed: 1, difficulty: 'normal', quality: 'high', runDefault: false, autoAdvance: false };
+  const navLang = (navigator.language || 'en').toLowerCase();
+  const def = { music: 0.6, sfx: 0.8, textSpeed: 2, battleSpeed: 1, difficulty: 'normal', quality: 'high', runDefault: false, autoAdvance: false,
+    lang: navLang.startsWith('zh') ? 'zh' : 'en' };
   try {
     const s = JSON.parse(localStorage.getItem('shorelight_settings') || '{}');
     return Object.assign(def, s);

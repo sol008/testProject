@@ -84,7 +84,7 @@ G.Battle = (() => {
       this.pops = [];
       this.msg = null;
       this.ui = null;
-      this.auto = !!G.state.vars.autoBattle;
+      this.auto = !!G.state.vars.autoBattle || !!(G.Debug && G.Debug.autoplay);
       this.snapshot = G.Render.snapshot();
       this.introT = 0;
       this.diff = G.settings.difficulty;
@@ -882,7 +882,7 @@ G.Battle = (() => {
       if (this.keyWait) {
         this.keyWait.t += dt;
         if (this.vic) this.vic.t += dt;
-        if (this.keyWait.t > this.keyWait.min && (G.Input.pressed('ok') || G.Input.clicked() || G.Input.held('skip'))) {
+        if (this.keyWait.t > this.keyWait.min && (G.Input.pressed('ok') || G.Input.clicked() || G.Input.held('skip') || (G.Debug && G.Debug.autoplay))) {
           const r = this.keyWait.res; this.keyWait = null; r();
         }
       }

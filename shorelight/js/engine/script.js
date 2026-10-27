@@ -215,7 +215,11 @@ G.Script = (() => {
       const r = await G.Battle.start(troop, o);
       return r;
     },
-    shop(goods, o) { G.Dialog.close(); return new Promise((res) => G.Scenes.push(new G.ShopScene(goods, res, o))); },
+    shop(goods, o) {
+      G.Dialog.close();
+      if ((G.Debug && G.Debug.autoplay)) { (goods || []).forEach((id) => { if (!G.Data.items[id]) G.Debug.log && G.Debug.log.push('SHOP: unknown item ' + id); }); return Promise.resolve(); }
+      return new Promise((res) => G.Scenes.push(new G.ShopScene(goods, res, o)));
+    },
     async inn(price, o = {}) {
       const c = await S.choice([`住宿（${price} 文）`, '不用了'], { cancel: 1 });
       if (c !== 0) return false;

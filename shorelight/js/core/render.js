@@ -68,24 +68,38 @@ G.Render = (() => {
   const NO_LINE_START = '，。、！？；：」』）》〉…—,.!?;:)';
   // Wrap marked-up text into lines of glyph arrays that fit maxW
   R.wrap = function (ctx2, text, maxW) {
-    const glyphs = R.parseMarkup(text);
+    const glyphs = R.parseMarkup(G.T(String(text)));
     const lines = [];
     let line = [], w = 0;
+    let lastSpace = -1; // index in `line` of the last space (for word wrapping Latin text)
+    const isLatin = (c) => /[A-Za-z0-9'’\-.,!?;:"()]/.test(c);
     for (const g of glyphs) {
-      if (g.ch === '\n') { lines.push(line); line = []; w = 0; continue; }
+      if (g.ch === '\n') { lines.push(line); line = []; w = 0; lastSpace = -1; continue; }
       const cw = ctx2.measureText(g.ch).width;
       if (w + cw > maxW && line.length) {
-        if (NO_LINE_START.includes(g.ch)) {
-          // hang punctuation on this line
+        if (g.ch === ' ') { lines.push(line); line = []; w = 0; lastSpace = -1; continue; }
+        if (NO_LINE_START.includes(g.ch) && !isLatin(g.ch)) {
+          // hang CJK punctuation on this line
           line.push(g); w += cw; continue;
         }
-        lines.push(line); line = []; w = 0;
+        if (isLatin(g.ch) && lastSpace > 0) {
+          // move the partial word to the next line
+          const carry = line.slice(lastSpace + 1);
+          lines.push(line.slice(0, lastSpace));
+          line = carry;
+          w = carry.reduce((a, q) => a + ctx2.measureText(q.ch).width, 0);
+          lastSpace = -1;
+        } else { lines.push(line); line = []; w = 0; lastSpace = -1; }
       }
+      if (g.ch === ' ' && !line.length) continue; // no leading spaces
+      if (g.ch === ' ') lastSpace = line.length;
       line.push(g); w += cw;
     }
     if (line.length) lines.push(line);
     return lines;
   };
+  // translated text width
+  R.measure = (ctx2, s) => ctx2.measureText(G.T(String(s))).width;
 
   // Draw wrapped glyph lines; limit = number of glyphs to show (typewriter)
   R.drawLines = function (ctx2, lines, x, y, lh, baseColor, limit = Infinity, shadow = true) {
@@ -110,6 +124,7 @@ G.Render = (() => {
   R.countGlyphs = (lines) => lines.reduce((a, l) => a + l.length, 0);
 
   R.text = function (ctx2, str, x, y, o = {}) {
+    str = G.T(str);
     ctx2.save();
     ctx2.font = G.font(o.size || 22, o.bold);
     ctx2.textAlign = o.align || 'left';

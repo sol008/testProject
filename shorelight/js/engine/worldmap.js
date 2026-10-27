@@ -143,7 +143,7 @@ G.World = (() => {
     }
     update(dt) {
       this.t += dt;
-      if (this.t > 0.8 && (G.Input.pressed('ok') || G.Input.clicked())) this.t = Math.max(this.t, this.dur);
+      if ((this.t > 0.8 && (G.Input.pressed('ok') || G.Input.clicked())) || (G.Debug && G.Debug.autoplay)) this.t = Math.max(this.t, this.dur + 0.6);
       if (this.t > this.dur + 0.6) { W.visit(this.to); G.Scenes.pop(this); this.res(); }
     }
     draw(ctx) {
