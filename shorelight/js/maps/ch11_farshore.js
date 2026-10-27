@@ -4841,6 +4841,9 @@
   H.finalBattle = async (S) => {
     // phase 1 無相・萬面
     if (!F('ch11_wuxiang_1')) {
+      // before the last fight, the heart flame mends everyone (and a lost fight retries from here, healed again)
+      G.Party.healAll();
+      S.toast('燈心的白焰撫過每個人的傷。全員完全回復。', 'lantern');
       S.bgm('final_boss');
       const r = await S.battle('t11_wuxiang_1', wuxiang1Hooks());
       if (r !== 'win') return;
@@ -4854,6 +4857,9 @@
     }
     // phase 2 無相・深淵 (trio)
     if (!F('ch11_wuxiang_2')) {
+      await S.say('xinghe:serious', '……還沒完。白芷還在裡面！');
+      for (const m of G.Party.active()) { const st = G.Party.stats(m.id); m.hp = Math.min(st.mhp, Math.max(1, m.hp) + Math.round(st.mhp * 0.5)); m.mp = Math.min(st.mmp, m.mp + Math.round(st.mmp * 0.5)); }
+      S.toast('心燈的火一熱。全員氣血、真氣回復五成。', 'lantern');
       const r = await S.battle('t11_wuxiang_2', wuxiang2Hooks());
       if (r !== 'win') return;
       S.shake(10, 1.2); S.sfx('earth');
