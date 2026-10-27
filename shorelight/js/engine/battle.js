@@ -118,6 +118,7 @@ G.Battle = (() => {
         if (mode === 'ambush' && u.side === 'party') u.wait += 60;
         if (hasSp(u, 'firstStrike')) u.wait *= 0.3;
       }
+      if (G.PlayStats) G.PlayStats.battleStart(this);
       const bgm = this.troop.bgm || (this.troop.boss ? 'boss' : (G.state.chapter >= 7 ? 'battle2' : 'battle'));
       this.prevBgm = G.Music.current;
       G.Music.play(bgm, { fade: 0.3 });
@@ -851,6 +852,7 @@ G.Battle = (() => {
         }
       }
       G.state.battles++;
+      if (G.PlayStats) G.PlayStats.battleEnd(this, r);
       if (r === 'lose' && !this.o.loseOk) {
         G.Music.play('gameover', { loop: false });
         await G.Render.fadeTo(1, 1.2, '#000');
@@ -1667,7 +1669,10 @@ G.GameOverScene = class GameOverScene {
     if (r === 'ok') {
       const k = this.list.cur.k;
       if (k === 'retry') {
+        // the party/inventory go back to before the fight; the play statistics (time, game overs) do not
+        const keep = G.PlayStats && G.PlayStats.keep();
         G.state = Object.assign(G.newState(), JSON.parse(this.stateBefore));
+        if (G.PlayStats) G.PlayStats.retry(this.troopId, keep);
         G.Scenes.pop(this);
         G.Battle.start(this.troopId, this.o).then(this.resolve);
       } else if (k === 'load') {
