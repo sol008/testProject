@@ -62,7 +62,7 @@ G.Mon3D = G.Mon3D || {
   const now = () => (G.time != null ? G.time : performance.now() / 1000);
 
   // =============================================================================================== atlas
-  // 8×8 cells of 256 px. Tiling cells are painted seamlessly; decal cells (faces, emblems) are used with 0..1 UVs.
+  // 10×10 cells (painted at 256 px, stored at 204 px in a 2048² atlas). Tiling cells are painted seamlessly; decal cells (faces, emblems) are used with 0..1 UVs.
   const CELLS = [
     'plain', 'scale', 'bigscale', 'fur', 'cloth', 'stone', 'marble', 'wood',
     'metal', 'wing', 'lamellar', 'skin', 'frond', 'paper', 'weed', 'water',
@@ -72,9 +72,13 @@ G.Mon3D = G.Mon3D || {
     'ghostface', 'plagueface', 'pirateface', 'ghoulface', 'drownface', 'maw', 'greedface', 'cliffface',
     'eyeball', 'grad', 'bark', 'rope', 'glass', 'tile', 'brick', 'mandala',
     'windmask', 'stars', 'blank', 'ring', 'streak', 'dots', 'mouthO', 'bearface',
+    'fin', 'lantern', 'lattice', 'kelp', 'smoke', 'petal', 'shard', 'web', 'gold', 'bandage',
+    'brocade', 'pandan', 'robe', 'qilin', 'mirror', 'bubble', 'sand', 'drip', 'heart', 'seal',
+    'iris2', 'vein', 'coral', 'mask_g', 'zigzag', 'moss', 'lacquer', 'string', 'wave', 'blankA',
   ];
+  const NC = 10; // cells per row
   const CI = {}; CELLS.forEach((n, i) => { CI[n] = i; });
-  const AT = 2048, CS = 256;
+  const AT = 2048, CS = 256, CP = 204; // painters draw at CS, cells are stored at CP px
   let atlasTex = null;
 
   function cellCanvas() { const c = document.createElement('canvas'); c.width = c.height = CS; return c; }
@@ -512,6 +516,57 @@ G.Mon3D = G.Mon3D || {
       g.fillStyle = 'rgba(255,255,255,0.5)'; g.beginPath(); g.ellipse(116, 70, 12, 6, 0, 0, TAU); g.fill();
       g.strokeStyle = '#1a1210'; g.lineWidth = 5; g.beginPath(); g.moveTo(128, 110); g.lineTo(128, 160); g.quadraticCurveTo(100, 190, 80, 170); g.moveTo(128, 160); g.quadraticCurveTo(156, 190, 176, 170); g.stroke();
     },
+    fin(g) {
+      // fan membrane with rays; scalloped free edge (alpha), u across, v from base (bottom) to tip (top)
+      g.clearRect(0, 0, CS, CS);
+      g.beginPath(); g.moveTo(10, CS);
+      const n = 7;
+      for (let i = 0; i <= n; i++) { const x = 10 + i * (CS - 20) / n, y = 20 + abs(sin(i * 1.3)) * 30 + (i === 0 || i === n ? 60 : 0); g.lineTo(x, y); if (i < n) g.quadraticCurveTo(x + (CS - 20) / n / 2, y + 50, x + (CS - 20) / n, 20 + abs(sin((i + 1) * 1.3)) * 30); }
+      g.lineTo(CS - 10, CS); g.closePath();
+      const gr = g.createLinearGradient(0, CS, 0, 0); gr.addColorStop(0, grey(150)); gr.addColorStop(1, grey(255)); g.fillStyle = gr; g.fill();
+      g.strokeStyle = grey(80, 0.8); g.lineWidth = 4;
+      for (let i = 0; i <= n; i++) { const x = 10 + i * (CS - 20) / n; g.beginPath(); g.moveTo(CS / 2 + (x - CS / 2) * 0.4, CS); g.lineTo(x, 30 + abs(sin(i * 1.3)) * 30); g.stroke(); }
+    },
+    lantern(g) {
+      // paper lantern skin (lit from inside): warm paper, vertical ribs, red bands
+      g.fillStyle = '#fff0d0'; g.fillRect(0, 0, CS, CS);
+      for (let x = 0; x < CS; x += 32) { g.fillStyle = 'rgba(150,90,40,0.35)'; g.fillRect(x, 0, 3, CS); }
+      g.fillStyle = '#c03020'; g.fillRect(0, 0, CS, 18); g.fillRect(0, CS - 18, CS, 18);
+    },
+    lattice(g) { g.fillStyle = grey(235); g.fillRect(0, 0, CS, CS); g.strokeStyle = grey(70); g.lineWidth = 10; for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(i * 64, 0); g.lineTo(i * 64, CS); g.moveTo(0, i * 64); g.lineTo(CS, i * 64); g.stroke(); } g.lineWidth = 4; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc(32 + i * 64, 32 + j * 64, 14, 0, TAU); g.stroke(); } },
+    kelp(g, r) { g.clearRect(0, 0, CS, CS); for (let i = 0; i < 3; i++) { const x0 = 50 + i * 75; g.beginPath(); for (let y = CS; y >= 0; y -= 8) g.lineTo(x0 + sin(y / 30 + i) * 14 - 14 * (y / CS), y); for (let y = 0; y <= CS; y += 8) g.lineTo(x0 + sin(y / 30 + i) * 14 + 14 * (y / CS) + 4, y); g.closePath(); g.fillStyle = grey(200 + r() * 50); g.fill(); } },
+    smoke(g) { g.clearRect(0, 0, CS, CS); for (let i = 0; i < 9; i++) { const x = 60 + Math.random() * 136, y = 60 + Math.random() * 136, rr = 40 + Math.random() * 50; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); } },
+    petal(g) { g.clearRect(0, 0, CS, CS); const gr = g.createLinearGradient(0, CS, 0, 0); gr.addColorStop(0, grey(170)); gr.addColorStop(1, grey(255)); g.fillStyle = gr; g.beginPath(); g.moveTo(128, CS); g.bezierCurveTo(30, 180, 40, 40, 128, 4); g.bezierCurveTo(216, 40, 226, 180, 128, CS); g.fill(); g.strokeStyle = grey(150, 0.6); g.lineWidth = 2; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(128, CS); g.quadraticCurveTo(128 + i * 30, 120, 128 + i * 20, 20); g.stroke(); } },
+    shard(g) { g.fillStyle = grey(235); g.fillRect(0, 0, CS, CS); g.strokeStyle = grey(255); g.lineWidth = 3; for (let i = 0; i < 12; i++) { g.beginPath(); g.moveTo(Math.random() * CS, Math.random() * CS); g.lineTo(Math.random() * CS, Math.random() * CS); g.stroke(); } const gr = g.createLinearGradient(0, 0, CS, CS); gr.addColorStop(0, 'rgba(255,255,255,0.5)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(255,255,255,0.4)'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); },
+    web(g) { g.clearRect(0, 0, CS, CS); g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; g.beginPath(); g.moveTo(128, 128); g.lineTo(128 + cos(a) * 128, 128 + sin(a) * 128); g.stroke(); } for (let r = 16; r < 128; r += 16) { g.beginPath(); for (let i = 0; i <= 12; i++) { const a = i / 12 * TAU; g.lineTo(128 + cos(a) * r, 128 + sin(a) * r); } g.stroke(); } },
+    gold(g, r) { mottle(g, r, 220, 30, 40, 30); for (let i = 0; i < 40; i++) { const x = r() * CS, y = r() * CS; wrap(g, () => { g.strokeStyle = grey(255, 0.6); g.lineWidth = 2; g.beginPath(); g.arc(x, y, 8, 0, PI); g.stroke(); }); } },
+    bandage(g, r) { g.fillStyle = grey(230); g.fillRect(0, 0, CS, CS); for (let y = 0; y < CS; y += 28) { g.fillStyle = grey(190, 0.7); g.fillRect(0, y, CS, 3); g.fillStyle = grey(250, 0.6); g.fillRect(0, y + 4, CS, 6); } speck(g, r, 400, 120, 200, 0.2); },
+    brocade(g) {
+      // embroidered silk (puppet costume): cloud scrolls and coin motifs, coloured gold on white (tinted per part)
+      g.fillStyle = grey(225); g.fillRect(0, 0, CS, CS);
+      g.strokeStyle = 'rgba(250,210,90,1)'; g.lineWidth = 5;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const x = i * 64 + (j % 2) * 32, y = j * 64; g.beginPath(); g.arc(x + 16, y + 24, 12, PI, TAU * 0.9); g.arc(x + 34, y + 24, 9, PI, TAU * 0.9); g.stroke(); }
+      g.fillStyle = 'rgba(250,210,90,1)'; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc(i * 64 + 48 - (j % 2) * 32, j * 64 + 52, 5, 0, TAU); g.fill(); }
+    },
+    pandan(g, r) { g.fillStyle = grey(200); g.fillRect(0, 0, CS, CS); for (let x = 0; x < CS; x += 16) { g.fillStyle = grey(150 + r() * 80, 0.6); g.fillRect(x, 0, 6, CS); } },
+    robe(g, r) { PAINT.cloth(g, r); g.strokeStyle = grey(170, 0.4); g.lineWidth = 3; for (let i = 0; i < 9; i++) { g.beginPath(); g.moveTo(i * 30 + 10, 0); g.quadraticCurveTo(i * 30 + 25, CS / 2, i * 30 + 5, CS); g.stroke(); } },
+    qilin(g) { g.fillStyle = '#d8b040'; g.fillRect(0, 0, CS, CS); g.strokeStyle = '#7a4a10'; g.lineWidth = 6; g.strokeRect(20, 20, 216, 216); g.beginPath(); g.arc(128, 128, 70, 0, TAU); g.stroke(); g.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; g.moveTo(128, 128); g.lineTo(128 + cos(a) * 70, 128 + sin(a) * 70); } g.stroke(); },
+    mirror(g) { const gr = g.createLinearGradient(0, 0, CS, CS); gr.addColorStop(0, '#fff'); gr.addColorStop(0.45, '#9aa4b8'); gr.addColorStop(0.55, '#e8ecf4'); gr.addColorStop(1, '#6a7488'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); },
+    bubble(g) { g.clearRect(0, 0, CS, CS); g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 6; g.beginPath(); g.arc(128, 128, 110, 0, TAU); g.stroke(); g.fillStyle = 'rgba(255,255,255,0.25)'; g.fill(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.ellipse(90, 80, 26, 14, -0.6, 0, TAU); g.fill(); },
+    sand(g, r) { mottle(g, r, 215, 20, 50, 30); speck(g, r, 3000, 140, 255, 0.4, 1.6); for (let i = 0; i < 8; i++) { const y = r() * CS; g.strokeStyle = grey(180, 0.4); g.lineWidth = 3; g.beginPath(); for (let x = 0; x <= CS; x += 16) g.lineTo(x, y + sin(x / 30 + i) * 6); g.stroke(); } },
+    drip(g) { g.clearRect(0, 0, CS, CS); g.fillStyle = grey(255); g.fillRect(0, 0, CS, 50); for (let i = 0; i < 9; i++) { const x = 14 + i * 28, l = 60 + ((i * 53) % 150); g.beginPath(); g.moveTo(x - 10, 40); g.lineTo(x - 5, l); g.arc(x, l, 6, PI, 0, true); g.lineTo(x + 10, 40); g.fill(); } },
+    heart(g) { g.fillStyle = '#000'; g.fillRect(0, 0, CS, CS); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, '#fff'); gr.addColorStop(0.3, '#ffd0a0'); gr.addColorStop(1, 'rgba(255,120,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); },
+    seal(g) { g.fillStyle = '#e8dcc0'; g.fillRect(0, 0, CS, CS); g.strokeStyle = '#a01818'; g.lineWidth = 12; g.strokeRect(30, 30, 196, 196); g.fillStyle = '#a01818'; g.font = 'bold 120px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('封', 128, 136); },
+    iris2(g) { g.fillStyle = '#f4f0ff'; g.fillRect(0, 0, CS, CS); const gr = g.createRadialGradient(128, 128, 10, 128, 128, 100); gr.addColorStop(0, '#fff'); gr.addColorStop(0.3, '#80f0ff'); gr.addColorStop(0.75, '#2050c0'); gr.addColorStop(1, '#0a0a30'); g.fillStyle = gr; g.beginPath(); g.arc(128, 128, 100, 0, TAU); g.fill(); g.fillStyle = '#05040a'; g.beginPath(); g.arc(128, 128, 30, 0, TAU); g.fill(); },
+    vein(g, r) { g.fillStyle = '#000'; g.fillRect(0, 0, CS, CS); for (let i = 0; i < 6; i++) { let x = r() * CS, y = 0; g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 12; k++) { x += (r() - 0.5) * 30; y += 22; g.lineTo(x, y); } g.stroke(); } },
+    coral(g, r) { mottle(g, r, 210, 30, 50, 20); for (let i = 0; i < 300; i++) { const x = r() * CS, y = r() * CS; wrap(g, () => { g.fillStyle = grey(120, 0.5); g.beginPath(); g.arc(x, y, 2.5, 0, TAU); g.fill(); }); } },
+    mask_g(g) { face(g, '#e8e4dc', () => { for (const s of [-1, 1]) { g.fillStyle = '#101018'; g.beginPath(); g.ellipse(128 + s * 42, 118, 16, 8, s * 0.2, 0, TAU); g.fill(); } g.strokeStyle = '#601018'; g.lineWidth = 4; g.beginPath(); g.moveTo(108, 190); g.quadraticCurveTo(128, 196, 148, 190); g.stroke(); }); },
+    zigzag(g) { g.fillStyle = grey(230); g.fillRect(0, 0, CS, CS); g.strokeStyle = grey(90); g.lineWidth = 12; for (let y = 32; y < CS; y += 64) { g.beginPath(); for (let x = 0; x <= CS; x += 32) g.lineTo(x, y + ((x / 32) % 2 ? 20 : -20)); g.stroke(); } },
+    moss(g, r) { mottle(g, r, 200, 40, 90, 20); for (let i = 0; i < 1500; i++) { g.fillStyle = grey(150 + r() * 100, 0.5); g.beginPath(); g.arc(r() * CS, r() * CS, 1 + r() * 2.5, 0, TAU); g.fill(); } },
+    lacquer(g, r) { mottle(g, r, 235, 15, 30, 60); const gr = g.createLinearGradient(0, 0, 0, CS); gr.addColorStop(0, 'rgba(255,255,255,0.25)'); gr.addColorStop(0.4, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); },
+    string(g) { g.fillStyle = grey(240); g.fillRect(0, 0, CS, CS); for (let x = 0; x < CS; x += 8) { g.fillStyle = grey(200); g.fillRect(x, 0, 2, CS); } },
+    wave(g) { g.fillStyle = grey(200); g.fillRect(0, 0, CS, CS); g.strokeStyle = grey(255); g.lineWidth = 6; for (let y = 0; y < CS + 32; y += 32) { g.beginPath(); for (let x = 0; x <= CS; x += 8) g.lineTo(x, y + sin(x / CS * TAU * 2) * 10); g.stroke(); } },
+    blankA(g) { g.clearRect(0, 0, CS, CS); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS); },
   };
   function mottleColor(g, c) { for (let i = 0; i < 30; i++) { g.fillStyle = c; g.beginPath(); g.arc(Math.random() * CS, Math.random() * CS, 10 + Math.random() * 30, 0, TAU); g.fill(); } }
 
@@ -523,7 +578,7 @@ G.Mon3D = G.Mon3D || {
       const cc = cellCanvas(), cg = cc.getContext('2d');
       cg.fillStyle = '#fff'; cg.fillRect(0, 0, CS, CS);
       try { (PAINT[name] || PAINT.blank)(cg, rng(hstr(name)), name); } catch (e) { console.warn('mon3d-b atlas', name, e); }
-      g.drawImage(cc, (i % 8) * CS, floor(i / 8) * CS);
+      g.drawImage(cc, (i % NC) * CP, floor(i / NC) * CP, CP, CP);
     });
     atlasTex = G.R3M.canvasTex(c, {});
     atlasTex.flipY = false; // cell (0,0) = top-left; UVs below use v down
@@ -532,7 +587,7 @@ G.Mon3D = G.Mon3D || {
     return atlasTex;
   }
   // cell rect in atlas UV space: [u0, v0, size]
-  const cellRect = (name) => { const i = CI[name] != null ? CI[name] : 0; return [(i % 8) / 8, floor(i / 8) / 8, 1 / 8]; };
+  const cellRect = (name) => { const i = CI[name] != null ? CI[name] : 0; return [(i % NC) * CP / AT, floor(i / NC) * CP / AT, CP / AT]; };
 
   // =============================================================================================== shaders
   const UT = { value: 0 }; // shared clock
@@ -571,7 +626,7 @@ G.Mon3D = G.Mon3D || {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
         varying vec3 vCell; varying vec3 vObj; varying vec3 vVN; varying vec3 vVP;
-        uniform float uTime, uFlash, uDiss, uOpac, uGlow, uHue, uScroll; uniform vec3 uEdge; uniform vec4 uPsy;
+        uniform float uTime, uFlash, uDiss, uOpac, uGlow, uHue, uScroll, uClipY, uIri; uniform vec3 uEdge; uniform vec4 uPsy;
         ${GLSL_NOISE}`)
       .replace('#include <map_fragment>', `
         #ifdef USE_MAP
@@ -579,8 +634,12 @@ G.Mon3D = G.Mon3D || {
           vec2 mbC = vCell.xy + (0.02 + 0.96 * fract(mbU)) * vCell.z;
           vec4 sampledDiffuseColor = textureGrad(map, mbC, dFdx(mbU) * vCell.z * 0.96, dFdy(mbU) * vCell.z * 0.96);
           diffuseColor *= sampledDiffuseColor;
+          float mbTexL = dot(sampledDiffuseColor.rgb, vec3(0.333));
+        #else
+          float mbTexL = 1.0;
         #endif`)
       .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+        if (vObj.y < uClipY) discard;
         float mbD = mbF(vObj * 2.6 + vec3(0.0, uTime * 0.05, 0.0));
         if (uDiss > 0.001 && mbD < uDiss * 1.08 - 0.04) discard;
         float mbEdge = uDiss > 0.001 ? 1.0 - smoothstep(0.0, 0.07, mbD - (uDiss * 1.08 - 0.04)) : 0.0;`)
@@ -590,7 +649,7 @@ G.Mon3D = G.Mon3D || {
     const T = THREE;
     return {
       uTime: UT, uFlash: { value: 0 }, uDiss: { value: 0 }, uOpac: { value: 1 }, uGlow: { value: 1 }, uHue: { value: 0 },
-      uScroll: { value: 0 }, uEdge: { value: new T.Color(1.6, 0.9, 0.4) }, uPsy: { value: new T.Vector4(1.6, 6, 0.08, 1) },
+      uScroll: { value: 0 }, uClipY: { value: -100 }, uIri: { value: 0 }, uEdge: { value: new T.Color(1.6, 0.9, 0.4) }, uPsy: { value: new T.Vector4(1.6, 6, 0.08, 1) },
     };
   }
   // per-instance material set (shared U → one uniform write per frame drives every material)
@@ -604,7 +663,10 @@ G.Mon3D = G.Mon3D || {
       if (prevB) prevB.call(this, sh, r);
       injectCommon(sh, U);
       sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += uFlash * vec3(1.0, 0.92, 0.85) + mbEdge * uEdge * 3.0;`);
+        totalEmissiveRadiance += uFlash * vec3(1.0, 0.92, 0.85) + mbEdge * uEdge * 3.0;
+        if (uIri > 0.0) { vec3 n = normalize(vVN); float fr = 1.0 - abs(dot(n, normalize(vVP)));
+          vec3 film = 0.5 + 0.5 * cos(6.28318 * (fr * 1.3 + vObj.y * 0.18 + vObj.x * 0.1 - uTime * 0.06 + vec3(0.0, 0.33, 0.67)));
+          totalEmissiveRadiance += film * uIri * uGlow * (smoothstep(0.82, 1.0, mbTexL) * 0.7 + fr * fr * 0.9); }`);
     };
     body.customProgramCacheKey = () => 'mbB';
     mats.body = body;
@@ -642,11 +704,13 @@ G.Mon3D = G.Mon3D || {
       { vec3 n = normalize(vVN); float fr = 1.0 - abs(dot(n, normalize(vVP)));
         vec3 pc = mbPsy(vObj, fr, uTime, uPsy);
         outgoingLight = mix(outgoingLight, pc * outgoingLight * 1.8 + pc * 0.25, 0.85) * uPsy.w * uGlow + mbEdge * uEdge * 2.0; }`);
+    mats.soft = basic('S', { transparent: true, depthWrite: false, side: T.DoubleSide }, `outgoingLight *= uGlow;`);
+    mats.add = basic('A', { transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending }, `outgoingLight *= uGlow * 1.6 * (0.85 + 0.15 * sin(uTime * 11.0 + vObj.y * 9.0));`);
     mats.water = basic('W', { transparent: true, depthWrite: false, side: T.DoubleSide }, `
       { vec3 n = normalize(vVN); if (!gl_FrontFacing) n = -n; float fr = 1.0 - abs(dot(n, normalize(vVP)));
         float lt = 0.55 + 0.45 * max(0.0, n.y);
         outgoingLight = outgoingLight * lt + fr * fr * vec3(0.55, 0.85, 1.0) * 0.6;
-        diffuseColor.a *= 0.55 + 0.45 * fr; }`);
+        diffuseColor.a *= 0.3 + 0.5 * fr; }`);
     return mats;
   }
 
@@ -675,7 +739,7 @@ G.Mon3D = G.Mon3D || {
       fragmentShader: `
         uniform float uOpac, uK; varying vec3 vC; varying float vA;
         void main(){ vec2 d = gl_PointCoord - 0.5; float r = length(d) * 2.0; if (r > 1.0) discard;
-          float f = pow(1.0 - r, 1.6); gl_FragColor = vec4(vC * uK, f * vA * uOpac);
+          float f = pow(1.0 - r, 1.6) * (uK < 1.5 ? 0.45 : 1.0); gl_FragColor = vec4(vC * uK, f * vA * uOpac);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -730,12 +794,12 @@ G.Mon3D = G.Mon3D || {
       let N;
       if (!prevN) { N = new V(0, 1, 0); if (abs(N.dot(t)) > 0.9) N.set(1, 0, 0); N.sub(t.clone().multiplyScalar(N.dot(t))).normalize(); }
       else { N = prevN.clone().sub(t.clone().multiplyScalar(prevN.dot(t))).normalize(); }
-      if (o.up) { const up = new V(...o.up); N = up.sub(t.clone().multiplyScalar(up.dot(t))).normalize(); }
+      if (o.up) { const up = new V(...o.up); up.sub(t.clone().multiplyScalar(up.dot(t))); if (up.length() > 0.35) N = up.normalize(); }
       prevN = N;
       const B = new V().crossVectors(t, N).normalize();
       const rad = rf(u);
       for (let j = 0; j <= sides; j++) {
-        const a = j / sides * TAU, ca = cos(a) * ell[0], sa = sin(a) * ell[1];
+        const a = j / sides * TAU - PI / 2, ca = cos(a) * ell[0], sa = sin(a) * ell[1];
         const nn = new V().addScaledVector(N, sa / ell[1] * ell[0]).addScaledVector(B, ca / ell[0] * ell[1]).normalize();
         pos.push(c.x + (N.x * sa + B.x * ca) * rad, c.y + (N.y * sa + B.y * ca) * rad, c.z + (N.z * sa + B.z * ca) * rad);
         nor.push(nn.x, nn.y, nn.z);
@@ -852,6 +916,12 @@ G.Mon3D = G.Mon3D || {
       if (ext[0]) P.unshift(P[0].clone().addScaledVector(P[0].clone().sub(P[1]).normalize(), ext[0]));
       if (ext[1]) { const L = P.length; P.push(P[L - 1].clone().addScaledVector(P[L - 1].clone().sub(P[L - 2]).normalize(), ext[1])); }
       const g = GEO.sweep(P, o.r != null ? o.r : 0.1, { sides: o.sides || 10, ell: o.ell, n: o.n || (names.length + 1) * 5, cap: o.cap, up: o.up });
+      if (o.tile) {
+        // square texels: repeats along = length / circumference × repeats around
+        let len = 0; for (let i = 1; i < P.length; i++) len += P[i].distanceTo(P[i - 1]);
+        let rm = 0; for (let i = 0; i <= 20; i++) rm = max(rm, typeof o.r === 'function' ? o.r(i / 20) : o.r);
+        o = Object.assign({}, o, { rep: [o.tile, len / (TAU * rm) * o.tile] });
+      }
       // weights: project each vertex's ring centre onto the bone polyline
       const bp = names.map((nm) => this.B[nm].pos);
       const cum = [0]; for (let i = 1; i < bp.length; i++) cum.push(cum[i - 1] + bp[i].distanceTo(bp[i - 1]));
@@ -1031,9 +1101,12 @@ G.Mon3D = G.Mon3D || {
       this.U.uHue.value = [0, 0.6, -0.9][opts.variant || 0] || 0;
       if (def.psy) this.U.uPsy.value.set(...def.psy);
       if (def.edge) this.U.uEdge.value.set(...def.edge);
+      if (def.clipY != null) this.U.uClipY.value = def.clipY;
+      if (def.iri) this.U.uIri.value = def.iri;
+      if (def.scroll) this.U.uScroll.value = def.scroll;
       this.mats = makeMats(this.U, def);
       this.meshes = {};
-      const order = ['body', 'cut', 'glow', 'psy', 'ghost', 'water'];
+      const order = ['body', 'cut', 'glow', 'psy', 'ghost', 'water', 'soft', 'add'];
       for (const k of order) {
         const g = tpl.geos[k]; if (!g) continue;
         const m = new T.SkinnedMesh(g, this.mats[k]);
@@ -1041,17 +1114,18 @@ G.Mon3D = G.Mon3D || {
         m.frustumCulled = false;
         m.castShadow = (k === 'body' || (k === 'psy' && def.psyShadow !== false)) && def.shadow !== false;
         m.receiveShadow = k === 'body' || k === 'cut';
-        if (k === 'ghost' || k === 'water') m.renderOrder = 2;
+        if (k === 'ghost' || k === 'water' || k === 'soft' || k === 'add') m.renderOrder = 2;
         this.rig.add(m); this.meshes[k] = m;
         if (k === 'body' && def.outline !== 0) {
-          const ol = G.R3M.outline(m, { width: def.outline || 0.008, color: def.olColor || 0x1a1014 });
+          const ol = G.R3M.outline(m, { width: def.outline || 0.003, color: def.olColor || 0x1a1014 });
           const om = ol.material, prev = om.onBeforeCompile, U = this.U;
           om.onBeforeCompile = (sh, r) => {
             if (prev) prev(sh, r);
-            sh.uniforms.uDiss = U.uDiss; sh.uniforms.uOpac = U.uOpac; sh.uniforms.uTime = UT;
+            sh.uniforms.uDiss = U.uDiss; sh.uniforms.uOpac = U.uOpac; sh.uniforms.uTime = UT; sh.uniforms.uClipY = U.uClipY;
             sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObj;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvObj = position;');
-            sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vObj; uniform float uDiss, uOpac, uTime;${GLSL_NOISE}`)
+            sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vObj; uniform float uDiss, uOpac, uTime, uClipY;${GLSL_NOISE}`)
               .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+                if (vObj.y < uClipY) discard;
                 if (uDiss > 0.001 && mbF(vObj * 2.6 + vec3(0.0, uTime * 0.05, 0.0)) < uDiss * 1.08 + 0.02) discard;`)
               .replace('#include <opaque_fragment>', 'diffuseColor.a *= uOpac;\n#include <opaque_fragment>');
           };
@@ -1327,10 +1401,390 @@ G.Mon3D = G.Mon3D || {
   const byZ = (a, b, z0, z1) => (p) => { const t = sm(z0, z1, p.z); return [[a, 1 - t], [b, t]]; };
 
   /* CREATURES */
+  // place items along a bone chain: fn(i, mid, tangent, side, up, radius) → part opts (or null); skinned to the segment
+  function along(R, order, rf, from, to, step, fn) {
+    const P = order.map((n) => R.B[n].pos), N = P.length;
+    for (let f = from; f < to; f += step) {
+      const i = min(N - 2, floor(f * (N - 1))), t = f * (N - 1) - i;
+      const a = P[i], b = P[i + 1], m = a.clone().lerp(b, t);
+      const d = b.clone().sub(a).normalize();
+      let side = new THREE.Vector3(0, 1, 0).cross(d); if (side.length() < 0.2) side.set(1, 0, 0); side.normalize();
+      const up = d.clone().cross(side).normalize();
+      const o = fn(f, m, d, side, up, rf(f));
+      if (!o) continue;
+      const g = o.geo; delete o.geo;
+      R.add(g, Object.assign({ w: [[order[i], 1 - t * 0.5], [order[i + 1], t * 0.5]] }, o));
+    }
+  }
+  // orientation (euler YXZ) that points local +y along dir
+  function yAlong(d) { const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize()); const e = new THREE.Euler().setFromQuaternion(q, 'YXZ'); return [e.x, e.y, e.z]; }
+
+  // ============================================================================ 蛟 jiao
+  // A jade water-dragon that never finished its cultivation, woken in the lake: rises from mist, whiskers trailing, pearl in claw.
+  const JIAO = {};
+  defB('jiao', {
+    h: 3.7, outline: 0.003, rim: 0.4, rimColor: 0xb0fff0, clipY: -0.04, wide: 1.3, scroll: -0.08,
+    build(R) {
+      const JADE = 0x2f9a78, JADE2 = 0x5ad0a0, BELLY = 0xf2e4b8;
+      const c = snake(R, {
+        tail: [[1.35, -0.3, -1.25], [1.15, 0.55, -1.35], [0.6, 0.85, -1.3], [0.05, 0.4, -1.05], [-0.25, -0.3, -0.6]],
+        base: [-0.25, -0.15, 0.0],
+        neck: [[0.0, 0.7, 0.25], [0.32, 1.45, 0.2], [0.25, 2.2, -0.05], [-0.1, 2.8, 0.05]],
+        head: [-0.05, 3.1, 0.4],
+        r: (u) => 0.03 + 0.3 * sm(0, 0.4, u) * (1 - 0.25 * sm(0.6, 0.95, u)) + 0.02 * sm(0.95, 1, u),
+        c: (v, uu) => { const b = sm(0.25, 0.6, cos(TAU * uu)); return b > 0.5 ? BELLY : Rig.mix(JADE, JADE2, 0.3 + 0.4 * sin(v.y * 3)); },
+        cell: 'bigscale', rep: [4, 26],
+      });
+      Object.assign(JIAO, c);
+      // long dragon head: upturned snout, brow ridges, horn nubs, cheek frills, whiskers
+      snakeHead(R, [-0.05, 3.12, 0.48], { len: 0.85, w: 0.5, hgt: 0.36, col: JADE, belly: BELLY, eye: 0xc0a040, cell: 'bigscale', snout: 0.25, upturn: 0.05, tongue: false });
+      for (const s of [-1, 1]) {
+        R.add(GEO.cone(0.06, 0.32, 8), { b: 'head', c: 0xe8d8a0, cell: 'stone', at: [s * 0.14, 3.38, 0.25], rot: [-1.0, 0, s * -0.35] });
+        R.add(GEO.card(0.5, 0.42, 1, 3), { m: 'cut', b: 'head', c: 0x3fb890, cell: 'frond', decal: true, at: [s * 0.24, 3.1, 0.25], rot: [-1.2, s * 1.3, 0], s: [1.6, 1, 1] });
+        R.add(GEO.card(0.5, 0.42, 1, 3), { m: 'cut', b: 'head', c: 0x2a9a78, cell: 'frond', decal: true, at: [s * 0.2, 3.0, 0.12], rot: [-1.6, s * 1.5, 0], s: [1.4, 1.2, 1] });
+        // whiskers: spring chains trailing from the snout
+        const w = R.chain('wh' + (s < 0 ? 'L' : 'R'), 'head', [[s * 0.16, 3.08, 0.86], [s * 0.42, 3.02, 0.92], [s * 0.7, 2.86, 0.82], [s * 0.92, 2.62, 0.62], [s * 1.04, 2.38, 0.4]]);
+        R.tube(w, { r: (u) => 0.022 * (1 - u * 0.7), sides: 5, c: 0xe8d090, cell: 'plain', n: 20 });
+        R.spring(w.slice(0, 4), { k: 0.18, drag: 0.12, g: 0.4, tail: [s * 0.12, -0.24, -0.22] });
+      }
+      // dorsal spines along the back
+      const rf = (u) => 0.03 + 0.3 * sm(0, 0.4, u);
+      along(R, c.order, rf, 0.08, 0.96, 0.035, (u, m, d, side, up, r) => ({ geo: GEO.cone(0.05 + r * 0.18, 0.12 + r * 0.6, 6), c: 0x1f6a58, cell: 'stone', at: [m.x + up.x * r * 0.95, m.y + up.y * r * 0.95, m.z + up.z * r * 0.95], rot: yAlong(up.clone().addScaledVector(d, -0.6)) }));
+      // forelegs with a glowing pearl
+      for (const s of [-1, 1]) {
+        const L = s < 0 ? 'L' : 'R';
+        R.bone('arm' + L, 'n1', [s * 0.25 + 0.3, 1.5, 0.3]);
+        R.bone('fore' + L, 'arm' + L, [s * 0.45 + 0.3, 1.25, 0.55]);
+        R.bone('hand' + L, 'fore' + L, [s * 0.32 + 0.3, 1.32, 0.8]);
+        R.tube(['arm' + L, 'fore' + L, 'hand' + L], { r: (u) => 0.1 - u * 0.04, sides: 8, c: JADE, cell: 'bigscale', rep: [2, 3] });
+        for (let i = 0; i < 3; i++) R.add(GEO.cone(0.025, 0.14, 5), { b: 'hand' + L, c: 0xf0e0b0, at: [s * 0.32 + 0.3 + (i - 1) * 0.06, 1.3, 0.9], rot: [1.9, 0, (i - 1) * 0.3] });
+      }
+      R.bone('pearl', 'handR', [0.3, 1.42, 0.92]);
+      R.add(GEO.sph(0.13, 0.13, 0.13, 16, 12), { m: 'glow', b: 'pearl', c: 0xb8fff4, cell: 'blank', at: [0.3, 1.42, 0.92] });
+      // tail fin (fan) at the tip
+      R.add(GEO.card(0.9, 0.8, 1, 3), { m: 'cut', b: 't4', c: 0x48c09a, cell: 'fin', decal: true, at: [1.4, -0.05, -1.25], rot: [0, 0.6, -0.35] });
+      waterDisk(R, 2.3, [0, 0.02, -0.4], 0x2f7a88);
+      R.fx({ mode: 'wander', n: 18, at: [0, 0.3, -0.4], box: [3.4, 0.4, 2.6], col: [0xe8f4f4, 0xcfe8ec], size: 0.9, speed: 0.25, p: [0.5, 0.3, 1], blend: 'normal' });
+      R.fx({ mode: 'orbit', n: 22, at: [0.3, 1.45, 0.92], box: [0.05, 0.05, 0.05], col: [0xb8fff4, 0x80e0ff], size: 0.05, speed: 2.2, p: [0.25, 0.1, 1] });
+      R.fx({ mode: 'fall', n: 30, at: [0, 2.0, 0.1], box: [1.2, 2.4, 1.2], col: [0x9ae8ff], size: 0.04, speed: 1.2, p: [1.8, 0.1, 1] });
+      R.light({ b: 'pearl', at: [0.3, 1.42, 0.92], color: '#b8fff4', i: 1.2, r: 4, flicker: 0.05 });
+    },
+    idle(k) {
+      SERP.idle(k, JIAO, 0.8);
+      k.wave(JIAO.tail, 'x', 0.05, 5, 0.9);
+      for (const s of ['L', 'R']) { k.r('arm' + s, sin(k.t * 1.4 + (s === 'L' ? 0 : 1)) * 0.15, 0, 0); k.r('fore' + s, -0.3 + sin(k.t * 1.4) * 0.1, 0, 0); }
+      k.p('body', 0, sin(k.t * 0.9) * 0.06, 0);
+    },
+    move(k) { SERP.move(k, JIAO); },
+    clips: serpentClips(() => JIAO, {
+      cast(k) {
+        // raise the pearl: neck rears, pearl lifts and flares, rain spirals
+        SERP.cast(k, JIAO);
+        const up = pulse(k.u, 0.05, 0.35, 0.75, 1);
+        k.r('armR', -1.4 * up, 0, 0.3 * up); k.r('foreR', -0.4 * up); k.p('pearl', 0, 0.25 * up, 0); k.s('pearl', 0.6 * up);
+      },
+      special(k) {
+        // tidal coil: whole body winds, head circles, everything flares
+        const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1);
+        k.wave(JIAO.neck, 'z', 0.25 * up, 2, 9); k.wave(JIAO.tail, 'y', 0.3 * up, 2, 9);
+        k.r('head', -0.3 * up, sin(u * TAU * 2) * 0.6 * up, 0); k.r('jaw', 0.8 * up); k.p('body', 0, 0.4 * up, 0);
+        k.fx.glow += 2 * up;
+      },
+    }),
+  });
+
+  // ============================================================================ 雲蛇 baibu
+  // Vast benevolent cloud-serpent, a spirit guide: cream body with the ancestral diamond/triangle pattern, resting on clouds.
+  const BAIBU = {};
+  defB('baibu', {
+    h: 3.6, outline: 0.003, rim: 0.6, rimColor: 0x9ad8ff, wide: 1.7, glowBase: 1,
+    build(R) {
+      const c = snake(R, {
+        tail: [[2.5, 0.55, -0.5], [1.9, 0.75, 0.25], [1.1, 0.62, 0.65], [0.3, 0.55, 0.3], [-0.4, 0.62, -0.45], [-1.2, 0.8, -0.65]],
+        base: [-1.85, 0.95, -0.1],
+        neck: [[-1.85, 1.65, 0.25], [-1.45, 2.4, 0.35], [-1.0, 2.95, 0.45]],
+        head: [-0.6, 3.2, 0.75],
+        r: (u) => 0.02 + 0.28 * sm(0, 0.45, u) * (1 - 0.35 * sm(0.75, 0.95, u)) + 0.03 * sm(0.95, 1, u),
+        c: (v, uu) => (cos(TAU * uu) > 0.45 ? 0xfff2dc : 0xffffff), cell: 'diamond', tile: 1,
+      });
+      Object.assign(BAIBU, c);
+      // triangular head with the upturned snout of the hundred-pacer
+      snakeHead(R, [-0.55, 3.22, 0.82], { len: 0.75, w: 0.6, hgt: 0.32, col: 0xe8dcbc, belly: 0xfff2dc, eye: 0xd8b060, cell: 'plain', snout: 0.6, upturn: 0.22, fangs: true });
+      R.add(GEO.cone(0.12, 0.2, 3), { b: 'head', c: 0x5a3a22, cell: 'plain', at: [-0.55, 3.38, 0.72], rot: [-1.45, PI, 0], s: [1.6, 1, 0.4] });
+      // the cloud bank it rests on
+      for (const [x, z, sz] of [[2.3, -0.4, 0.75], [1.6, 0.35, 0.85], [0.7, 0.7, 0.8], [-0.2, 0.15, 0.85], [-0.9, -0.55, 0.8], [-1.75, -0.15, 0.95], [0.3, -0.6, 0.6]]) cloud(R, [x, 0.35 * sz, z], sz);
+      R.fx({ mode: 'wander', n: 22, at: [0.3, 0.45, 0], box: [5, 0.6, 2.2], col: [0xffffff, 0xe6eefa], size: 1.1, speed: 0.2, p: [0.6, 0.2, 1], blend: 'normal' });
+      R.fx({ mode: 'rise', n: 26, at: [0, 1.2, 0], box: [4.5, 1.8, 1.6], col: [0xffd27a, 0xfff2c0], size: 0.06, speed: 0.6, p: [1.2, 0.15, 1] });
+    },
+    idle(k) {
+      // slow, dignified: a breath that travels down the body, head regarding the party
+      k.wave(BAIBU.tail, 'x', 0.04, 3, 0.8, 0, (u) => u); k.wave(BAIBU.tail, 'y', 0.05, 4, 0.6);
+      k.wave(BAIBU.neck, 'z', 0.04, 3, 0.7); k.r('head', 0.05 + sin(k.t * 0.5) * 0.06, sin(k.t * 0.35) * 0.2, 0);
+      k.p('body', 0, sin(k.t * 0.7) * 0.05, 0);
+      const fl = pulse((k.t * 0.4) % 1, 0, 0.05, 0.1, 0.16); k.s('tongue', -1 + fl * 1.2, 0, -1 + fl * 1.2);
+    },
+    move(k) { SERP.move(k, BAIBU); },
+    clips: serpentClips(() => BAIBU, {
+      special(k) {
+        const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1);
+        k.wave(BAIBU.tail, 'y', 0.2 * up, 2, 4); k.r('n0', -0.3 * up); k.r('head', -0.5 * up, 0, 0); k.r('jaw', 0.5 * up);
+        k.fx.glow += 2.5 * up;
+      },
+    }),
+  });
+
+  // ============================================================================ 海鰻精 moray
+  const MORAY = {};
+  defB('moray', {
+    h: 2.4, outline: 0.003, rim: 0.4, rimColor: 0xe0ffb0, clipY: -0.03, scroll: -0.1,
+    build(R) {
+      // S-curve rearing out of a dark hole in the water, mouth agape
+      const c = snake(R, {
+        tail: [[-0.1, -0.9, -0.5], [0.0, -0.45, -0.3]],
+        base: [0.05, 0.0, -0.15],
+        neck: [[0.15, 0.55, -0.32], [0.1, 1.1, -0.3], [-0.05, 1.55, -0.08], [0.0, 1.82, 0.28]],
+        head: [0.02, 1.9, 0.6],
+        r: (u) => 0.21 - 0.05 * sm(0.75, 1, u),
+        c: (v, uu) => Rig.mix(0x7a8a28, 0xd0c870, sm(0.3, 0.8, cos(TAU * uu))), cell: 'reticulate', tile: 2,
+      });
+      Object.assign(MORAY, c);
+      const hx = 0.02, hy = 1.92, hz = 0.66;
+      R.bone('jaw', 'head', [hx, hy - 0.05, hz - 0.12]);
+      const skull = GEO.lumpy(GEO.sph(0.2, 0.16, 0.42, 18, 12), 0.03, 4);
+      GEO.warp(skull, (v) => { if (v.y < -0.02) v.y = -0.02 + (v.y + 0.02) * 0.3; v.y += max(0, -v.z) * 0.15; });
+      R.add(skull, { b: 'head', c: 0x7a8a28, cell: 'reticulate', rep: [2, 2], at: [hx, hy + 0.05, hz + 0.06] });
+      const jaw = GEO.sph(0.18, 0.1, 0.4, 14, 8); GEO.warp(jaw, (v) => { if (v.y > 0.01) v.y = 0.01 + (v.y - 0.01) * 0.2; });
+      R.add(jaw, { b: 'jaw', c: 0xc8c070, cell: 'reticulate', at: [hx, hy - 0.06, hz + 0.05] });
+      // throat/gums inside the gape
+      R.add(GEO.sph(0.15, 0.06, 0.34, 12, 6), { b: 'head', c: 0x9a2a3a, cell: 'skin', at: [hx, hy + 0.0, hz + 0.04] });
+      R.add(GEO.sph(0.15, 0.05, 0.34, 12, 6), { b: 'jaw', c: 0x7a1a2a, cell: 'skin', at: [hx, hy - 0.04, hz + 0.04] });
+      for (const s of [-1, 1]) for (let i = 0; i < 6; i++) {
+        R.add(GEO.cone(0.022, 0.085 - i * 0.006, 5), { b: 'head', c: 0xf4f0dc, at: [hx + s * (0.14 - i * 0.01), hy - 0.02, hz + 0.38 - i * 0.07], rot: [PI, 0, 0] });
+        R.add(GEO.cone(0.02, 0.075 - i * 0.006, 5), { b: 'jaw', c: 0xf4f0dc, at: [hx + s * (0.13 - i * 0.01), hy - 0.03, hz + 0.36 - i * 0.07] });
+      }
+      R.add(GEO.cone(0.03, 0.12, 5), { b: 'head', c: 0xf4f0dc, at: [hx, hy - 0.02, hz + 0.43], rot: [PI, 0, 0] });
+      for (const s of [-1, 1]) R.add(GEO.cyl(0.015, 0.02, 0.08, 6), { b: 'head', c: 0x5a6a18, at: [hx + s * 0.06, hy + 0.12, hz + 0.44], rot: [-0.6, 0, 0] });
+      eyes(R, 'head', [hx, hy + 0.15, hz + 0.24], 0.12, 0.045, 0xb0b050, { yaw: 1.1, cell: 'eye' });
+      // continuous dorsal fin along the back and down over the neck
+      along(R, c.order, () => 0.21, 0.32, 0.93, 0.05, (u, m, d, side, up) => ({ geo: GEO.card(0.2, 0.13, 1, 1), m: 'cut', c: 0x5a6a1a, cell: 'fin', decal: true,
+        at: [m.x - d.x * 0.05, m.y - d.y * 0.05, m.z - d.z * 0.05].map((x, i) => x + [up.x, up.y, up.z][i] * 0.17),
+        rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(d.clone().negate(), up, side)), 'YXZ'); return [e.x, e.y, e.z]; })() }));
+      waterDisk(R, 1.25, [0.05, 0.02, -0.1], 0x245a6a);
+      R.add(GEO.cyl(0.3, 0.3, 0.02, 20), { m: 'glow', c: 0x0a1a20, cell: 'blank', at: [0.05, 0.0, -0.15] });
+      R.fx({ mode: 'rise', n: 16, at: [0, 0.2, 0], box: [0.8, 0.2, 0.8], col: [0xc0f0ff], size: 0.06, speed: 0.6, p: [1.6, 0.1, 1] });
+    },
+    idle(k) { SERP.idle(k, MORAY, 1.4); k.r('jaw', 0.32 + 0.15 * sin(k.t * 2.4)); },
+    move(k) { SERP.move(k, MORAY); },
+    clips: serpentClips(() => MORAY),
+  });
+
+  // ============================================================================ 潮病海蛇 tide_serpent (boss)
+  // A colossal sea serpent swimming the Kuroshio, scales seeping black tide-sickness. It wrecked the canoes because it hurts.
+  // Phase 2: the sickness erupts — black thorns split through the scales and the glowing spots turn violet.
+  const TIDE = {};
+  defB('tide_serpent', {
+    h: 5.6, boss: true, outline: 0.003, rim: 0.45, rimColor: 0xa0fff0, clipY: -0.05, wide: 1.4, scroll: -0.06, edge: [0.5, 1.6, 1.4], phaseGlow: 1.6,
+    build(R) {
+      const SEA = 0x1f5f66, SEA2 = 0x3a8a88, BELLY = 0xb8d8c8;
+      const c = snake(R, {
+        tail: [[2.6, -0.6, -2.4], [2.4, 0.9, -2.5], [1.9, 1.5, -2.4], [1.3, 0.9, -2.2], [1.0, -0.8, -2.0], [0.2, -0.8, -1.8], [-0.4, 0.9, -1.8], [-1.1, 1.8, -1.6], [-1.8, 1.0, -1.2], [-2.0, -0.6, -0.8]],
+        base: [-1.4, -0.7, 0.0],
+        neck: [[-0.6, 0.6, 0.15], [-0.1, 1.8, 0.0], [0.2, 3.0, -0.25], [0.05, 4.0, -0.15], [-0.25, 4.7, 0.2]],
+        head: [-0.2, 5.0, 0.75],
+        r: (u) => 0.06 + 0.42 * sm(0, 0.4, u) * (1 - 0.2 * sm(0.7, 0.95, u)) + 0.05 * sm(0.95, 1, u),
+        c: (v, uu) => {
+          const b = sm(0.3, 0.7, cos(TAU * uu));
+          const sick = sm(0.55, 0.75, fbm(v.x * 1.3, v.y * 1.3, v.z * 1.3));
+          return Rig.mix(Rig.mix(SEA, SEA2, 0.5 + 0.5 * sin(v.y * 2 + v.x)), BELLY, b).lerp(new THREE.Color(0x0a0c14), sick * 0.85);
+        },
+        cell: 'scale', rep: [5, 40], sides: 16,
+      });
+      Object.assign(TIDE, c);
+      // head: wide toothed sea-serpent skull, cheek fins, barnacle crown
+      const hx = -0.2, hy = 5.02, hz = 0.85;
+      snakeHead(R, [hx, hy, hz], { len: 1.15, w: 0.8, hgt: 0.55, col: SEA, belly: BELLY, eye: 0xd0ff90, cell: 'scale', snout: 0.3, tongue: false });
+      R.add(GEO.sph(0.32, 0.12, 0.5, 14, 8), { b: 'jaw', c: 0xffffff, cell: 'maw', uvp: 'y', at: [hx, hy - 0.12, hz + 0.15] });
+      for (const s of [-1, 1]) {
+        for (let i = 0; i < 6; i++) R.add(GEO.cone(0.035, 0.16, 5), { b: 'head', c: 0xf0ecd8, at: [hx + s * (0.3 - i * 0.03), hy - 0.18, hz + 0.45 - i * 0.12], rot: [PI, 0, 0] });
+        R.add(GEO.card(0.9, 0.8, 1, 3), { m: 'cut', b: 'head', c: 0x3ab0a8, cell: 'fin', decal: true, at: [hx + s * 0.35, hy + 0.05, hz - 0.35], rot: [-1.3, s * 1.2, 0], s: [1.3, 1, 1] });
+        R.add(GEO.card(0.7, 0.6, 1, 3), { m: 'cut', b: 'head', c: 0x2a8a88, cell: 'fin', decal: true, at: [hx + s * 0.3, hy - 0.15, hz - 0.45], rot: [-1.8, s * 1.4, 0], s: [1.3, 1, 1] });
+      }
+      for (const [bx, bz, br] of [[0.12, -0.1, 0.09], [-0.1, -0.25, 0.07], [0.02, -0.4, 0.06]]) R.add(GEO.lumpy(GEO.cyl(br * 0.6, br, br * 0.8, 8), 0.05, 8), { b: 'head', c: 0xd8d4c4, cell: 'barnacle', at: [hx + bx, hy + 0.24, hz + bz] });
+      // dorsal sail along the neck, barnacle patches, glowing spots
+      const rf = (u) => 0.06 + 0.42 * sm(0, 0.4, u);
+      along(R, c.order, rf, 0.52, 0.95, 0.03, (u, m, d, side, up, r) => ({ geo: GEO.card(0.42, 0.55 + 0.25 * sin(u * 40), 1, 2), m: 'cut', c: 0x2f9a98, cell: 'fin', decal: true, at: [m.x + up.x * r * 0.7, m.y + up.y * r * 0.7, m.z + up.z * r * 0.7], rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(d.clone().negate(), up, side)), 'YXZ'); return [e.x, e.y, e.z]; })() }));
+      along(R, c.order, rf, 0.05, 0.95, 0.022, (u, m, d, side, up, r) => {
+        const a = R.r() * TAU, n = up.clone().multiplyScalar(cos(a)).addScaledVector(side, sin(a));
+        if (n.y < -0.4) return null;
+        return { geo: GEO.sph(0.035 + r * 0.06, 0.03 + r * 0.06, 0.035 + r * 0.06, 8, 6), m: 'glow', c: 0x6af0c0, cell: 'blank', at: [m.x + n.x * r * 0.97, m.y + n.y * r * 0.97, m.z + n.z * r * 0.97] };
+      });
+      along(R, c.order, rf, 0.1, 0.9, 0.07, (u, m, d, side, up, r) => ({ geo: GEO.lumpy(GEO.sph(r * 0.4, r * 0.18, r * 0.4, 8, 6), 0.03, 6), c: 0xc8c4b0, cell: 'barnacle', at: [m.x + up.x * r * 0.9 + side.x * r * 0.3, m.y + up.y * r * 0.9, m.z + up.z * r * 0.9 + side.z * r * 0.3] }));
+      // phase 2: black thorns erupt along the spine (grown in by phase bones)
+      const thorns = c.order.slice(3, c.order.length - 2);
+      thorns.forEach((bn, i) => {
+        if (i % 2) return;
+        const pb = R.phaseBone('thorn' + i, bn, R.B[bn].pos.toArray(), 2);
+        const m = R.B[bn].pos, r = rf(i / thorns.length * 0.8 + 0.2);
+        for (let j = 0; j < 3; j++) {
+          const a = (j - 1) * 0.9, dir = new THREE.Vector3(sin(a) * 0.8, cos(a), 0.2).normalize();
+          R.add(GEO.cone(0.08, 0.6 + R.r() * 0.4, 6), { b: pb, c: 0x0c0a14, cell: 'stone', at: [m.x + dir.x * r, m.y + dir.y * r + 0.25, m.z + dir.z * r], rot: yAlong(dir) });
+          R.add(GEO.cone(0.03, 0.45, 5), { m: 'glow', b: pb, c: 0x9a40ff, cell: 'blank', at: [m.x + dir.x * r * 1.05, m.y + dir.y * r + 0.22, m.z + dir.z * r * 1.05], rot: yAlong(dir) });
+        }
+      });
+      waterDisk(R, 3.6, [0, 0.02, -1.0], 0x1a4a5a);
+      R.fx({ mode: 'fall', n: 40, at: [0, 3.0, -0.5], box: [3.5, 3.5, 3.0], col: [0x0a0a14, 0x1a1028], size: 0.08, speed: 0.8, p: [2.5, 0.1, 1], blend: 'normal' });
+      R.fx({ mode: 'rise', n: 40, at: [0, 0.2, -1.0], box: [5, 0.3, 4], col: [0xb0f0ff, 0x6af0c0], size: 0.07, speed: 0.6, p: [2.2, 0.2, 1] });
+      R.fx({ mode: 'wander', n: 16, at: [0, 0.35, -1.0], box: [6, 0.4, 5], col: [0xd8eef0], size: 1.4, speed: 0.2, p: [0.6, 0.2, 1], blend: 'normal' });
+      R.light({ b: 'head', at: [hx, hy + 0.2, hz + 0.3], color: '#6af0c0', i: 1.2, r: 6 });
+    },
+    idle(k) {
+      SERP.idle(k, TIDE, 0.7);
+      k.wave(TIDE.tail, 'x', 0.06, 4, 0.9, 0, (u) => u);
+      k.r('jaw', 0.1 + 0.08 * sin(k.t * 1.3));
+      // pain: occasional shudder
+      const sh = pulse((k.t * 0.23) % 1, 0.0, 0.03, 0.08, 0.14); k.wave(TIDE.neck, 'z', 0.06 * sh, 1, 40);
+    },
+    move(k) { SERP.move(k, TIDE); },
+    clips: serpentClips(() => TIDE, {
+      special(k) {
+        // tidal slam: rears to full height, crashes down onto the party
+        const u = k.u, up = pulse(u, 0.05, 0.4, 0.4, 0.55), down = pulse(u, 0.45, 0.58, 0.7, 1);
+        TIDE.neck.forEach((b, i) => k.r(b, -0.18 * up + 0.32 * down * (0.4 + i / 5), 0, 0));
+        k.r('head', -0.5 * up + 0.3 * down); k.r('jaw', 1.0 * up); k.p('body', 0, 0.4 * up, 0.6 * down);
+        k.fx.glow += 2.5 * up + 1.5 * down; k.fx.flash = max(k.fx.flash, 0.5 * pulse(u, 0.55, 0.58, 0.62, 0.75));
+      },
+    }),
+  });
+
+  // ============================================================================ serpent family helpers
+  // snake(R, { tail: [tip … next-to-base], base, neck: [after base …], head, r(u) (u: 0 tail tip → 1 head), c(v,u,w), cell, rep, sides, m })
+  // bones: 'body' at base; tail chain 't0…' runs base→tip; neck chain 'n0…' runs base→head; 'head' at the end.
+  function snake(R, o) {
+    R.bone('body', 'root', o.base);
+    const tailPts = o.tail.slice().reverse(); // base-side first
+    const tail = tailPts.map((p, i) => R.bone('t' + i, i ? 't' + (i - 1) : 'body', p));
+    const neck = o.neck.map((p, i) => R.bone('n' + i, i ? 'n' + (i - 1) : 'body', p));
+    R.bone('head', neck.length ? neck[neck.length - 1] : 'body', o.head);
+    const order = tail.slice().reverse().concat(['body'], neck, ['head']);
+    R.tube(order, { r: o.r, sides: o.sides || 14, c: o.c, cell: o.cell || 'scale', rep: o.rep || [2, 30], tile: o.tile, m: o.m, ext: [0.12, 0], n: order.length * 6, up: [0, 1, 0] });
+    return { tail, neck, order };
+  }
+  // generic serpent head: skull + jaw, eyes, nostrils, fangs, forked tongue. o: { len, w, hgt, col, belly, eye, cell, snout }
+  function snakeHead(R, at, o) {
+    const [x, y, z] = at, L = o.len, W = o.w, Hh = o.hgt || W * 0.72;
+    R.bone('jaw', 'head', [x, y - Hh * 0.2, z - L * 0.25]);
+    const skull = GEO.sph(W * 0.5, Hh * 0.5, L * 0.55, 18, 12);
+    GEO.warp(skull, (v) => { const f = (v.z / (L * 0.55) + 1) / 2; v.x *= 1 - f * (o.snout || 0.35); v.y *= 1 - f * 0.25; if (v.y < 0) v.y *= 0.55; v.y += f * f * (o.upturn || 0) * L; });
+    R.add(skull, { b: 'head', c: o.col, cell: o.cell || 'scale', rep: [2, 2], at: [x, y, z] });
+    const jaw = GEO.sph(W * 0.42, Hh * 0.22, L * 0.5, 14, 8);
+    GEO.warp(jaw, (v) => { const f = (v.z / (L * 0.5) + 1) / 2; v.x *= 1 - f * 0.4; });
+    R.add(jaw, { b: 'jaw', c: o.belly || o.col, cell: 'belly', at: [x, y - Hh * 0.3, z + L * 0.02] });
+    R.add(GEO.sph(W * 0.36, Hh * 0.1, L * 0.42, 12, 6), { b: 'jaw', c: 0x5a1a28, cell: 'skin', at: [x, y - Hh * 0.2, z + L * 0.05] });
+    // brow ridges over set-in, slit-pupil eyes
+    for (const s of [-1, 1]) R.add(GEO.sph(W * 0.16, W * 0.07, L * 0.2, 10, 6), { b: 'head', c: o.col, cell: o.cell || 'scale', at: [x + s * W * 0.3, y + Hh * 0.36, z + L * 0.1], rot: [0, s * 0.35, s * -0.3] });
+    eyes(R, 'head', [x, y + Hh * 0.2, z + L * 0.12], W * 0.37, W * 0.11, o.eye || 0x9a9050, { yaw: 1.0, sy: 0.75, cell: o.eyeCell || 'eye', m: o.eyeM || 'glow' });
+    for (const s of [-1, 1]) {
+      R.add(GEO.sph(W * 0.03, W * 0.02, W * 0.03, 6, 4), { b: 'head', c: 0x101010, at: [x + s * W * 0.1, y + Hh * 0.12 + (o.upturn || 0) * L * 0.8, z + L * 0.46] });
+      if (o.fangs !== false) R.add(GEO.cone(W * 0.035, Hh * 0.35, 6), { b: 'head', c: 0xf4eedc, at: [x + s * W * 0.16, y - Hh * 0.26, z + L * 0.32], rot: [PI, 0, 0] });
+    }
+    if (o.tongue !== false) {
+      R.bone('tongue', 'jaw', [x, y - Hh * 0.22, z + L * 0.3]);
+      for (const s of [-1, 1]) R.add(GEO.sweep([[x, y - Hh * 0.22, z + L * 0.3], [x, y - Hh * 0.22, z + L * 0.62], [x + s * W * 0.07, y - Hh * 0.2, z + L * 0.78]], W * 0.022, { sides: 4 }), { b: 'tongue', c: 0xd03050, cell: 'skin' });
+    }
+  }
+  // serpent motion library
+  const SERP = {
+    idle(k, c, amp = 1) {
+      k.wave(c.neck, 'z', 0.05 * amp, 4, 1.3); k.wave(c.neck, 'x', 0.04 * amp, 5, 0.9, 1);
+      k.wave(c.tail, 'y', 0.06 * amp, 4, 1.1, 0, (u) => u);
+      k.r('head', sin(k.t * 0.9) * 0.1, sin(k.t * 0.6) * 0.25 * amp, 0); k.r('jaw', 0.03 + 0.03 * sin(k.t * 2));
+      const fl = pulse((k.t * 0.7) % 1, 0, 0.05, 0.12, 0.2); k.s('tongue', -1 + fl * 1.2, 0, -1 + fl * 1.2); k.r('tongue', sin(k.t * 40) * 0.2 * fl);
+      k.s('body', sin(k.t * 1.5) * 0.02);
+    },
+    move(k, c) { k.wave(c.tail, 'y', 0.22, 3, 6, 0, (u) => 0.3 + u); k.wave(c.neck, 'z', 0.08, 3, 6, PI); k.r('head', 0, -sin(k.t * 6) * 0.15, 0); k.s('tongue', -0.9, 0, -0.9); },
+    attack(k, c, s = 1) {
+      // coil back → strike → hold → recoil
+      const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.58, 0.95), n = c.neck.length;
+      c.neck.forEach((b, i) => { const f = (i + 1) / n; k.r(b, (-0.35 * back + 0.42 * hit) * s * (0.4 + f), 0, 0); });
+      k.p('body', 0, 0, (0.3 * hit - 0.1 * back) * s); k.r('head', 0.3 * back - 0.25 * hit, 0, 0);
+      k.r('jaw', 0.9 * pulse(u, 0.25, 0.38, 0.5, 0.7)); k.s('tongue', -0.95, 0, -0.95);
+      k.wave(c.tail, 'y', 0.15 * hit, 3, 12);
+    },
+    cast(k, c) {
+      const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1);
+      c.neck.forEach((b, i) => k.r(b, -0.12 * up, 0, sin(k.ct * 5 + i) * 0.04 * up));
+      k.r('head', -0.45 * up, 0, 0); k.r('jaw', 0.7 * up); k.p('body', 0, 0.1 * up, 0);
+      k.fx.glow += 1.8 * up; k.fx.psy += up;
+    },
+    hurt(k, c) { const h = pulse(k.u, 0, 0.08, 0.2, 1); c.neck.forEach((b) => k.r(b, -0.12 * h, 0, sin(k.ct * 50) * 0.05 * h)); k.r('head', -0.4 * h); k.r('jaw', 0.5 * h); k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, k.u)) * 1.2); },
+    die(k, c) {
+      const u = k.u, fall = sm(0.15, 0.75, u);
+      c.neck.forEach((b, i) => k.r(b, 0.25 * fall + sin(k.ct * 30) * 0.03 * (1 - fall), 0, 0.12 * fall * (i % 2 ? 1 : -1)));
+      k.r('head', 0.5 * fall); k.r('jaw', 0.6 * sm(0, 0.2, u));
+      k.wave(c.tail, 'y', 0.2 * (1 - fall), 2, 20);
+      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.15, u)) * 0.8); k.fx.diss = max(k.fx.diss, sm(0.4, 1, u));
+    },
+  };
+  function serpentClips(get, extra = {}) {
+    return Object.assign({
+      attack: (k) => SERP.attack(k, get()), cast: (k) => SERP.cast(k, get()), hurt: (k) => SERP.hurt(k, get()), die: (k) => SERP.die(k, get()),
+    }, extra);
+  }
+  // stylised 3D cloud: a cluster of soft lumps, flat-ish underside, white top → blue-grey belly (no outline)
+  function cloud(R, at, sz, o = {}) {
+    const r = R.r;
+    const n = o.n || 6;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + r(), d = (i ? 0.55 : 0) * sz * (0.6 + r() * 0.5);
+      const rr = sz * (i ? 0.38 + r() * 0.22 : 0.6);
+      const g = GEO.lumpy(GEO.sph(rr * 1.15, rr * 0.8, rr, 14, 10), 0.08, 2.5, i + at[0]);
+      GEO.warp(g, (v) => { if (v.y < 0) v.y *= 0.4; });
+      R.add(g, { m: o.m || 'cut', b: o.b || 'root', cell: 'plain', at: [at[0] + cos(a) * d, at[1] + (i ? r() * 0.2 * sz : 0.1 * sz), at[2] + sin(a) * d * 0.7],
+        c: (v) => Rig.mix(o.lo || 0xb8c4dc, o.hi || 0xffffff, sm(at[1] - sz * 0.2, at[1] + sz * 0.45, v.y)) });
+    }
+  }
+  // water ripple disk (sea creatures surfacing)
+  function waterDisk(R, r, at = [0, 0.02, 0], col = 0x2a6a80) {
+    const g = idx(new THREE.RingGeometry(r * 0.15, r, 40, 3));
+    g.rotateX(-PI / 2);
+    // radial UVs (u around, v outward) so the scrolling ripple cell reads as rings
+    const p = g.attributes.position, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); uv.setXY(i, (atan2(z, x) / TAU + 1) % 1 * 6, Math.hypot(x, z) / r * 3); }
+    R.add(g, { m: 'water', c: (v) => Rig.mix(col, 0x9ad8e8, sm(0.85, 1.0, Math.hypot(v.x - at[0], v.z - at[2]) / r)), cell: 'water', at, rep: [1, 1] });
+  }
+
+  // ============================================================================ 蛇影 serpent_shade
+  // The shadow left behind where the cloud serpent passed (一息界): an oil-dark snake whose scales breathe in rainbow.
+  const SHADE = {};
+  defB('serpent_shade', {
+    h: 2.3, outline: 0.003, rim: 0.5, rimColor: 0xc0a0ff, psy: [2.2, 6, 0.12, 0.9], wide: 1.3, iri: 0.4,
+    build(R) {
+      const c = snake(R, {
+        tail: [[1.0, 0.1, -0.35], [0.75, 0.13, -0.8], [0.15, 0.15, -1.0], [-0.5, 0.16, -0.8], [-0.85, 0.17, -0.2], [-0.62, 0.18, 0.38]],
+        base: [-0.05, 0.2, 0.55],
+        neck: [[0.4, 0.5, 0.42], [0.42, 0.95, 0.15], [0.1, 1.38, 0.0], [-0.12, 1.75, 0.12]],
+        head: [-0.02, 1.98, 0.38],
+        r: (u) => 0.008 + 0.16 * sm(0, 0.35, u) * (1 - 0.3 * sm(0.75, 0.95, u)) + 0.04 * sm(0.93, 1, u),
+        c: (v, uu) => Rig.mix(0x2c2440, 0x7a68a0, sm(0.3, 0.75, cos(TAU * uu))), cell: 'scale', rep: [3, 30],
+      });
+      Object.assign(SHADE, c);
+      snakeHead(R, [-0.02, 1.99, 0.44], { len: 0.55, w: 0.4, col: 0x30284a, belly: 0x6a5a8a, eye: 0x9ab850, cell: 'scale', snout: 0.45 });
+      R.fx({ mode: 'wander', n: 30, at: [0, 0.9, 0], box: [2, 1.6, 2], col: [0xb080ff, 0x60e0ff, 0xff80d0], size: 0.05, speed: 0.6, p: [0.3, 1, 1] });
+    },
+    idle: (k) => SERP.idle(k, SHADE), move: (k) => SERP.move(k, SHADE),
+    clips: serpentClips(() => SHADE, {
+      special(k) { // shadow coil: whole body ripples with light, head sweeps round
+        const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1);
+        k.wave(SHADE.tail, 'y', 0.3 * up, 3, 10); k.wave(SHADE.neck, 'z', 0.2 * up, 2, 8); k.r('head', 0, sin(u * TAU) * 0.8 * up, 0); k.r('jaw', 0.8 * up);
+        k.fx.psy += 2.5 * up; k.fx.glow += up;
+      },
+    }),
+  });
+
   // ============================================================================ 黑熊精 bear_spirit
   // Formosan black bear spirit: upright, heavy, white V on the chest; teal spirit-cracks glow through its fur.
   defB('bear_spirit', {
-    h: 2.7, outline: 0.006, rim: 0.4, rimColor: 0x8ff0e0,
+    h: 2.7, outline: 0.003, rim: 0.4, rimColor: 0x8ff0e0,
     build(R) {
       const FUR = 0x3c3846, FUR2 = 0x5a5464, TEAL = 0x3ff0d0;
       R.bone('body', 'root', [0, 1.05, 0]);

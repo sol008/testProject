@@ -89,9 +89,9 @@ setTimeout(function () {
   }
   const cam = new THREE.PerspectiveCamera(num('fov', 30), W / H, 0.05, 500);
   const camYaw = num('yaw', 20) * Math.PI / 180, pitch = num('pitch', 18) * Math.PI / 180;
-  const radius = Math.max(size.x, size.y * 1.6, size.z) * 0.5 + 0.3;
+  const radius = q.has('rad') ? num('rad', 1) : Math.max(size.x, size.y * 1.6, size.z) * 0.5 + 0.3;
   const dist = radius / Math.tan(cam.fov * Math.PI / 360) * 1.1 * num('dist', 1);
-  const look = ctr.clone(); look.y = size.y * 0.45;
+  const look = ctr.clone(); look.y = q.has('ly') ? num('ly', 1) : size.y * 0.45; if (q.has('lz')) look.z += num('lz', 0); if (q.has('lx')) look.x += num('lx', 0);
   cam.position.set(look.x + Math.sin(camYaw) * Math.cos(pitch) * dist, look.y + Math.sin(pitch) * dist, look.z + Math.cos(camYaw) * Math.cos(pitch) * dist); cam.lookAt(look);
   sun.position.copy(look).add(new THREE.Vector3(-12, 20, 9)); sun.target.position.copy(look); sun.target.updateMatrixWorld();
   const sc = sun.shadow.camera, r2 = radius * 1.5 + 2; sc.left = -r2; sc.right = r2; sc.top = r2; sc.bottom = -r2; sc.far = 120; sc.updateProjectionMatrix();
