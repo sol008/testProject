@@ -361,7 +361,7 @@ G.Animal3D = (() => {
     mat.onBeforeCompile = (sh, r) => {
       if (prev) prev(sh, r);
       Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader
+      sh.vertexShader = defs + sh.vertexShader
         .replace('#include <common>', `#include <common>
           attribute vec3 aRest; attribute vec4 aM; attribute vec4 aS; attribute vec4 aCol; attribute vec3 aFace;
           varying vec3 vRest; varying vec4 vM; varying vec4 vS; varying vec4 vCol; varying vec3 vFace;
@@ -385,7 +385,7 @@ G.Animal3D = (() => {
           ${GLSL_NOISE}
           vec3 an_coat(out float strandA){
             vec3 p = vRest * uScale;               // plan-space metres (pattern glued to the rest pose)
-            vec3 c = mix(cBase, cBase2, smoothstep(0.35, 0.75, an_vn(p * vec3(160.0, 60.0, 160.0))) * uTick * vS.w);
+            vec3 c = mix(cBase, cBase2, (smoothstep(0.45, 0.85, an_vn(p * vec3(420.0, 150.0, 420.0))) * 0.7 + an_fbm(p * 30.0) * 0.3) * uTick * vS.w);
             // patches (calico / dilute patches) with ragged organic edges
             float pa = smoothstep(0.46, 0.54, vM.y + (an_fbm(p * 22.0) - 0.5) * 0.55);
             float pb = smoothstep(0.46, 0.54, vM.z + (an_fbm(p * 22.0 + 7.0) - 0.5) * 0.55);
@@ -420,6 +420,7 @@ G.Animal3D = (() => {
           }`)
         .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `float an_a; vec3 an_c = an_coat(an_a);
           vec4 diffuseColor = vec4( diffuse * an_c, opacity * an_a * uFade );`)
+        .replace('#include <normal_fragment_begin>', opts.cards ? THREE.ShaderChunk.normal_fragment_begin.replace('normal *= faceDirection;', '') : '#include <normal_fragment_begin>')
         .replace('#include <opaque_fragment>', `
           { vec3 vn = normalize(normal); vec3 vv = normalize(vViewPosition);
             float fr = 1.0 - clamp(dot(vn, vv), 0.0, 1.0);
@@ -442,7 +443,7 @@ G.Animal3D = (() => {
     const mat = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: G.R3M.ramp(2) });
     const U = {
       cIris: { value: new THREE.Color(E.iris) }, cIris2: { value: new THREE.Color(E.iris2 || E.iris) }, cRing: { value: new THREE.Color(E.ring || '#2a2a1a') },
-      cSclera: { value: new THREE.Color(E.sclera || '#f2efe6') }, uIrisR: { value: E.irisR || 0.58 }, uPupil: { value: 0.28 },
+      cSclera: { value: new THREE.Color(E.sclera || E.iris).multiplyScalar(0.55) }, uIrisR: { value: E.irisR || 0.64 }, uPupil: { value: 0.28 },
       uPupilH: { value: E.pupilH || 0.82 }, uGhost: { value: 0 }, cGhost: { value: new THREE.Color('#bfe8ff') }, uFade: { value: 1 },
       uRound: { value: E.round ? 1 : 0 }, uGlowE: { value: E.glow || 0.12 },
     };
@@ -465,7 +466,7 @@ G.Animal3D = (() => {
           iris *= 0.82 + 0.36 * fib;
           iris = mix(iris, cRing, smoothstep(0.78, 1.0, r));
           // pupil: vertical slit (cats) .. round
-          float pw = mix(uPupil, 1.0, uRound) * 0.5, ph = uPupilH;
+          float pw = mix(uPupil * 0.5, 0.25 + uPupil * 0.5, uRound) * (uRound > 0.5 ? 1.0 : 1.0), ph = mix(uPupilH, 0.25 + uPupil * 0.55, uRound);
           float pd = length(vec2(q.x / max(pw * uIrisR, 0.02), q.y / (ph * uIrisR)));
           float pupil = 1.0 - smoothstep(0.9, 1.05, pd);
           vec3 col = mix(iris, vec3(0.02, 0.018, 0.025), pupil);
@@ -495,9 +496,9 @@ G.Animal3D = (() => {
   }
   // eyeball (UV sphere, pole = gaze) into an eye Parts with aEye extra
   function addEyeball(parts, F, r, bone) {
-    const nu = 20, nv = 14;
+    const nu = 16, nv = 10;
     parts.grid(nu, nv, (u, v) => {
-      const th = v * PI * 0.92, ph = u * TAU;
+      const th = v * PI * 0.6, ph = u * TAU;
       const l = [sin(th) * cos(ph), sin(th) * sin(ph), cos(th)];
       return { p: F.to(V3.mul(l, r)), n: F.dir(l), skin: [[bone, 1]], x: l };
     }, true, true);
@@ -663,23 +664,29 @@ G.Animal3D = (() => {
   // cfg: { coat:'tabby'|'calico'|'orange'|'leopard', pal (hex palette), fat, len, leg, head, cheek, ear:{size,flare,round,
   //   lynx}, eye:{iris,iris2,round,pupil,lid}, tail:{len,r,fluff}, fluff (long hair 0..1), ruff, scale, bow }
   function catPlan(cfg) {
-    const f = cfg.fat || 1, sf = sqrt(f), L = cfg.len || 1, lg = cfg.leg || 1, hs = cfg.head || 1.15, ch = cfg.cheek || 1, lr = cfg.legR || 1;
+    // Proportions follow the approved design kit's standing pose (tools/design2/tuanzi_yuyuan_mochi_catkit.js,
+    // POSES.stand), authored in kit units and converted to plan units (≈ real cat metres) by u.
+    const u = 0.36;
+    const f = cfg.fat || 1, sf = sqrt(f), lg = cfg.leg || 1, ch = cfg.cheek != null ? cfg.cheek : 0.6, lr = cfg.legR || 1;
     const fl = cfg.fluff || 0;
-    const legH = 0.155 * lg, zH = -0.14 * L, zS = 0.13 * L, spY = legH + 0.06;
-    const R = 0.05 * hs; // head radius
-    const hc = [0, spY + 0.075 + 0.012 * hs, zS + 0.085 + R * 0.35];
+    const Rk = cfg.R || 0.19;
+    const Y = (y) => (y <= 0.47 ? y * lg : y - 0.47 * (1 - lg));
+    const k3 = (x, y, z) => [x * u, Y(y) * u, z * u];
+    const R = Rk * u * (cfg.head || 1); // head radius (plan units)
+    const hc = k3(0, 0.6 + Rk * 0.55 + (cfg.headUp || 0), 0.44 + (cfg.headFwd || 0));
+    const spY = Y(0.46) * u, zS = 0.2 * u, zH = -0.27 * u;
     const J = [];
     const j = (name, parent, p) => J.push([name, parent, p]);
     j('root', null, [0, 0, 0]);
-    j('hips', 'root', [0, spY, zH]);
-    j('spine1', 'hips', [0, spY + 0.006, lerp(zH, zS, 0.33)]);
-    j('belly', 'spine1', [0, spY - 0.05 * f, lerp(zH, zS, 0.45)]);
-    j('spine2', 'spine1', [0, spY + 0.006, lerp(zH, zS, 0.66)]);
-    j('chest', 'spine2', [0, spY - 0.004, zS]);
-    j('neck', 'chest', [0, spY + 0.022, zS + 0.04]);
-    j('head', 'neck', [0, hc[1] - 0.45 * R, hc[2] - 0.75 * R]);
+    j('hips', 'root', k3(0, 0.45, -0.27));
+    j('spine1', 'hips', k3(0, 0.46, -0.13));
+    j('belly', 'spine1', k3(0, 0.3, -0.06));
+    j('spine2', 'spine1', k3(0, 0.465, 0.02));
+    j('chest', 'spine2', k3(0, 0.47, 0.17));
+    j('neck', 'chest', k3(0, 0.52, 0.28));
+    j('head', 'neck', [0, hc[1] - 0.45 * R, hc[2] - 0.7 * R]);
     j('jaw', 'head', [0, hc[1] - 0.3 * R, hc[2] + 0.1 * R]);
-    // eyes
+    // eyes: large deep-set eyeballs; only a shallow dome is exposed (the opening ≈ the kit's painted eye)
     const eyeR = R * (cfg.eye && cfg.eye.size || 0.4);
     const eyes = [];
     for (const s of [1, -1]) {
@@ -691,53 +698,52 @@ G.Animal3D = (() => {
       j('eye' + sx, 'head', c); j('lidU' + sx, 'head', c); j('lidD' + sx, 'head', c);
       eyes.push({ s, c, F, sx, r: eyeR });
     }
-    // ears
-    const es = (cfg.ear && cfg.ear.size) || 1, earH = R * 0.84 * es, earW = R * 0.36 * es;
+    // ears (kit: base (0.46R, 0.52R, -0.06R), length 0.78R·es, base radius 0.36R·es, flare/yaw/back tilt)
+    const es = (cfg.ear && cfg.ear.size) || 1, earH = R * 0.8 * es, earW = R * 0.36 * es;
     const ears = [];
     for (const s of [1, -1]) {
       const sx = s > 0 ? 'L' : 'R';
-      const base = [s * R * 0.5, hc[1] + R * 0.6, hc[2] - R * 0.1];
+      const base = [s * R * 0.47, hc[1] + R * 0.55, hc[2] - R * 0.08];
       const flare = (cfg.ear && cfg.ear.flare != null ? cfg.ear.flare : 0.3);
-      const up = V3.norm([s * sin(flare), cos(flare), -0.12]);
-      const face = V3.norm([s * 0.42, 0.05, 1]);
+      const up = V3.norm([s * sin(flare), cos(flare), -0.2]);
+      const face = V3.norm([s * 0.45, 0.05, 1]);
       const F = frameOf(base, face, up);
-      // re-orthonormalise so y = up exactly
       const yv = up, zv = V3.norm(V3.sub(face, V3.mul(yv, V3.dot(face, yv)))), xv = V3.cross(yv, zv);
       F.x = xv; F.y = yv; F.z = zv;
       j('ear' + sx, 'head', base);
       ears.push({ s, sx, F, base });
     }
-    // tail chain: base behind the rump, drooping arc
-    const tl = 0.27 * (cfg.tail && cfg.tail.len || 1), tN = 7;
+    // tail: base behind the rump, relaxed drooping arc (rest pose; animation lifts it)
+    const tl = 0.6 * u * (cfg.tail && cfg.tail.len || 1), tN = 7;
     const tailP = [];
-    let tp = [0, spY + 0.012, zH - 0.05];
+    let tp = k3(0, 0.47, -0.4);
     for (let i = 0; i <= tN; i++) {
       tailP.push(tp);
-      const a = -0.25 - 0.55 * (i / tN);
+      const a = -0.2 - 0.5 * (i / tN);
       tp = V3.add(tp, [0, sin(a) * tl / tN, -cos(a) * tl / tN]);
     }
     for (let i = 0; i < tN; i++) j('tail' + (i + 1), i ? 'tail' + i : 'hips', tailP[i]);
     // legs (x > 0 = the cat's left)
-    const hx = 0.04 * sf, fx = 0.043 * sf;
     const legs = {};
+    const lx = (x) => x * (0.75 + 0.25 * sf);
     for (const s of [1, -1]) {
       const sx = s > 0 ? 'L' : 'R';
-      j('thigh' + sx, 'hips', [s * hx, legH + 0.035, zH]);
-      j('shin' + sx, 'thigh' + sx, [s * (hx + 0.004), 0.105 * lg, zH + 0.05 * lg]);
-      j('hock' + sx, 'shin' + sx, [s * hx, 0.055 * lg, zH - 0.035 * lg]);
-      j('foot' + sx, 'hock' + sx, [s * hx, 0.017, zH - 0.012]);
-      j('scap' + sx, 'chest', [s * 0.028 * sf, spY + 0.032, zS - 0.045]);
-      j('arm' + sx, 'scap' + sx, [s * fx, legH + 0.02, zS + 0.02]);
-      j('fore' + sx, 'arm' + sx, [s * fx, 0.105 * lg, zS - 0.02]);
-      j('wrist' + sx, 'fore' + sx, [s * (fx - 0.003), 0.032, zS]);
-      j('hand' + sx, 'wrist' + sx, [s * (fx - 0.003), 0.017, zS + 0.012]);
-      legs['H' + sx] = { s, front: false, chain: ['thigh' + sx, 'shin' + sx, 'hock' + sx, 'foot' + sx], toe: [s * hx, 0.012, zH + 0.024], girdle: 'hips' };
-      legs['F' + sx] = { s, front: true, scap: 'scap' + sx, chain: ['arm' + sx, 'fore' + sx, 'wrist' + sx, 'hand' + sx], toe: [s * (fx - 0.003), 0.012, zS + 0.042], girdle: 'chest' };
+      j('thigh' + sx, 'hips', k3(s * lx(0.11), 0.4, -0.28));
+      j('shin' + sx, 'thigh' + sx, k3(s * lx(0.13), 0.255, -0.17));
+      j('hock' + sx, 'shin' + sx, k3(s * lx(0.12), 0.11, -0.37));
+      j('foot' + sx, 'hock' + sx, k3(s * lx(0.115), 0.048, -0.33));
+      j('scap' + sx, 'chest', k3(s * lx(0.07), 0.56, 0.16));
+      j('arm' + sx, 'scap' + sx, k3(s * lx(0.1), 0.43, 0.25));
+      j('fore' + sx, 'arm' + sx, k3(s * lx(0.105), 0.265, 0.2));
+      j('wrist' + sx, 'fore' + sx, k3(s * lx(0.1), 0.095, 0.255));
+      j('hand' + sx, 'wrist' + sx, k3(s * lx(0.1), 0.048, 0.278));
+      legs['H' + sx] = { s, front: false, chain: ['thigh' + sx, 'shin' + sx, 'hock' + sx, 'foot' + sx], toe: k3(s * lx(0.115), 0.03, -0.25), girdle: 'hips' };
+      legs['F' + sx] = { s, front: true, scap: 'scap' + sx, chain: ['arm' + sx, 'fore' + sx, 'wrist' + sx, 'hand' + sx], toe: k3(s * lx(0.1), 0.03, 0.345), girdle: 'chest' };
     }
-    if (cfg.ruff) j('ruff', 'chest', [0, spY + 0.0, zS + 0.05]);
+    if (cfg.ruff) j('ruff', 'chest', k3(0, 0.44, 0.3));
     const JP = {}; for (const [n, , p] of J) JP[n] = p;
 
-    // ----- primitives
+    // ----- primitives (kit stand pose, kit blend radii ×u)
     const prims = [];
     const P = (p) => { prims.push(p); return p; };
     const spineBones = [['hips', JP.hips[2]], ['spine1', JP.spine1[2]], ['spine2', JP.spine2[2]], ['chest', JP.chest[2]]];
@@ -749,55 +755,88 @@ G.Animal3D = (() => {
       }
       return [['chest', 1]];
     };
-    const torsoSc = (x, y, z) => -z / 0.034 + abs(x) * 5;
-    const TORSO = { region: 'torso', boneFn: spineW, st: 1, scFn: torsoSc, fluff: fl * 0.009, flow: [0, -0.2, -1], clump: 55 };
-    P(ell([0, spY - 0.004, zH + 0.012], [0.066 * f, 0.07 * sf, 0.078], Object.assign({ bone: 'hips', k: 0.04 }, TORSO)));
-    P(ell([0, spY - 0.012, lerp(zH, zS, 0.5)], [0.072 * f, 0.08 * sf, 0.125 * L], Object.assign({ bone: 'spine1', k: 0.04 }, TORSO)));
-    P(ell([0, spY - 0.008, zS - 0.004], [0.06 * Math.pow(f, 0.7), 0.074 * sf, 0.074], Object.assign({ bone: 'chest', k: 0.035 }, TORSO)));
-    P(ell([0, spY - 0.052 * f, lerp(zH, zS, 0.42)], [0.058 * f, 0.038 * f, 0.1 * L], Object.assign({}, TORSO, { bone: 'belly', boneFn: null, k: 0.04, region: 'belly', fluff: fl * 0.012, flow: [0, -1, -0.3] })));
+    const torsoSc = (x, y, z) => -z / 0.036 + abs(x) * 4;
+    const TORSO = { region: 'torso', boneFn: spineW, st: 1, scFn: torsoSc, fluff: fl * 0.004, flow: [0, -0.25, -1], clump: 30 };
+    const kt = 0.06 * u;
+    P(ell(k3(0, 0.45, 0.19), [0.16 * sf * u, 0.18 * u, 0.19 * u], Object.assign({ rot: [0.17, 0, 0], bone: 'chest', k: kt }, TORSO)));
+    P(ell(k3(0, 0.38, -0.04), [0.19 * f * u, 0.17 * sf * u, 0.25 * u], Object.assign({ bone: 'spine1', k: kt }, TORSO)));
+    P(ell(k3(0, 0.44, -0.27), [0.15 * sf * u, 0.16 * u, 0.15 * u], Object.assign({ bone: 'hips', k: kt }, TORSO)));
+    if (f > 1.15) P(ell(k3(0, 0.3, -0.07), [0.15 * f * u, 0.1 * f * u, 0.19 * u], Object.assign({}, TORSO, { bone: 'belly', boneFn: null, k: kt, region: 'belly', fluff: fl * 0.01, flow: [0, -1, -0.3] })));
     // neck / ruff
-    P(cone([0, spY + 0.012, zS + 0.01], [0, hc[1] - R * 0.25, hc[2] - R * 0.35], 0.05 * sf, 0.042 * hs, { bone: 'neck', bp: 'chest', bc: 'head', k: 0.03, region: 'neck', st: 0.8, scFn: torsoSc, fluff: fl * 0.012, flow: [0, -0.6, -1] }));
+    P(cone(k3(0, 0.5, 0.26), [0, hc[1] - R * 0.3, hc[2] - R * 0.45], 0.11 * u * sf, 0.1 * u, { bone: 'neck', bp: 'chest', bc: 'head', k: 0.045 * u, region: 'neck', st: 0.8, scFn: torsoSc, fluff: fl * 0.01, flow: [0, -0.6, -1] }));
     if (cfg.ruff) {
-      P(ell([0, spY + 0.004, zS + 0.05], [0.075 * cfg.ruff, 0.07 * cfg.ruff, 0.055 * cfg.ruff], { rot: [-0.5, 0, 0], bone: 'ruff', k: 0.035, region: 'ruff', white: 1, fluff: 0.016, flow: [0, -1, 0.35], clump: 45 }));
+      P(ell(k3(0, 0.44, 0.3), [0.17 * cfg.ruff * u, 0.17 * cfg.ruff * u, 0.12 * cfg.ruff * u], { rot: [-0.45, 0, 0], bone: 'ruff', k: 0.05 * u, region: 'ruff', white: 1, fluff: 0.014, flow: [0, -1, 0.4], clump: 34 }));
     }
-    // head
-    const H = (o, pos) => [hc[0] + pos[0] * R, hc[1] + pos[1] * R, hc[2] + pos[2] * R];
+    // head (kit head: skull, cheeks/jowls, nose bridge, whisker pads, chin, nose leather; blend 0.17R)
+    const H = (pos) => [hc[0] + pos[0] * R, hc[1] + pos[1] * R, hc[2] + pos[2] * R];
     const HEADM = { region: 'head', bone: 'head' };
-    P(ell(H(0, [0, 0.04, -0.04]), [R * 1.03, R * 0.88, R * 0.93], Object.assign({ k: 0.012 }, HEADM)));
+    const mz = cfg.muzzle || 1;
+    P(ell(H([0, 0.04, -0.04]), [R * (cfg.skullW || 1), R * 0.86, R * 0.9], Object.assign({ k: R * 0.17 }, HEADM)));
     for (const s of [1, -1]) {
-      P(ell(H(0, [s * (0.36 + 0.07 * ch), -(0.22 + 0.05 * ch), 0.14]), [R * (0.5 + 0.14 * ch), R * (0.4 + 0.07 * ch), R * 0.5], Object.assign({ k: R * 0.17, fluff: fl * 0.006, flow: [s, -0.6, -0.5], clump: 70 }, HEADM)));
-      P(ell(H(0, [s * 0.15, -0.3, 0.69]), [R * 0.19, R * 0.17, R * 0.19], Object.assign({ k: R * 0.12 }, HEADM))); // whisker pads
+      P(ell(H([s * (0.36 + 0.07 * ch), -(0.22 + 0.05 * ch), 0.14]), [R * (0.5 + 0.14 * ch), R * (0.4 + 0.07 * ch), R * 0.48], Object.assign({ k: R * 0.17, fluff: fl * 0.006, flow: [s, -0.6, -0.5], clump: 60 }, HEADM)));
+      P(ell(H([s * 0.14 * mz, -0.3, 0.68 + 0.03 * mz]), [R * 0.185 * mz, R * 0.185 * mz, R * 0.185 * mz], Object.assign({ k: R * 0.17 }, HEADM))); // whisker pads
     }
-    P(ell(H(0, [0, -0.03, 0.62]), [R * 0.17, R * 0.2, R * 0.24], Object.assign({ k: R * 0.15 }, HEADM))); // bridge
-    P(ell(H(0, [0, -0.14, 0.86]), [R * 0.11, R * 0.075, R * 0.07], Object.assign({ k: R * 0.04 }, HEADM))); // nose leather
-    P(ell(H(0, [0, -0.47, 0.54]), [R * 0.15, R * 0.11, R * 0.13], { region: 'head', bone: 'jaw', k: R * 0.12 })); // chin
-    // legs
-    const LEGM = { region: 'leg', st: 0.75, scFn: (x, y) => y / 0.03, fluff: fl * 0.004, flow: [0, -1, -0.4] };
+    P(ell(H([0, -0.04, 0.62]), [R * 0.17, R * 0.2, R * 0.22], Object.assign({ k: R * 0.17 }, HEADM))); // bridge
+    for (const e of eyes) P(ell(V3.add(e.c, V3.mul(e.F.z, R * 0.12)), [R * 0.25, R * 0.23, R * 0.16], Object.assign({ rot: [0, e.s * 0.3, 0], k: R * 0.17 }, HEADM))); // brow/eye bulge
+    P(ell(H([0, -0.15, 0.86 + 0.03 * mz]), [R * 0.1, R * 0.07, R * 0.065], Object.assign({ k: R * 0.03 }, HEADM))); // nose leather
+    P(ell(H([0, -0.46, 0.56]), [R * 0.14 * mz, R * 0.1, R * 0.12], { region: 'head', bone: 'jaw', k: R * 0.17 })); // chin
+    // limbs (kit radii) + haunch/shoulder masses
+    const LEGM = { region: 'leg', st: 0.75, scFn: (x, y) => y / 0.032, fluff: fl * 0.004, flow: [0, -1, -0.4] };
+    const kl = 0.02 * u;
     for (const s of [1, -1]) {
       const sx = s > 0 ? 'L' : 'R';
       const g = (n) => JP[n + sx];
-      P(ell(V3.lerp(g('thigh'), g('shin'), 0.4).map((v, i) => v + (i === 0 ? s * 0.01 : i === 1 ? 0.005 : 0)), [0.034 * sf, 0.058, 0.058], Object.assign({}, LEGM, { rot: [0.45, 0, 0], bone: 'thigh' + sx, bp: 'hips', k: 0.03, region: 'haunch', fluff: fl * 0.014 })));
-      P(cone(g('thigh'), g('shin'), 0.036 * sf * lr, 0.022 * lr, Object.assign({}, LEGM, { bone: 'thigh' + sx, bp: 'hips', bc: 'shin' + sx, k: 0.02 })));
-      P(cone(g('shin'), g('hock'), 0.021 * lr, 0.0145 * lr, Object.assign({}, LEGM, { bone: 'shin' + sx, bc: 'hock' + sx, k: 0.012 })));
-      P(cone(g('hock'), g('foot'), 0.0145 * lr, 0.0138 * lr, Object.assign({}, LEGM, { bone: 'hock' + sx, bc: 'foot' + sx, k: 0.01, region: 'lowleg' })));
-      P(ell(V3.lerp(g('foot'), legs['H' + sx].toe, 0.45), [0.0185 * lr, 0.0145 * lr, 0.028 * lr], Object.assign({}, LEGM, { bone: 'foot' + sx, k: 0.01, region: 'paw' })));
-      P(ell(V3.lerp(g('scap'), g('arm'), 0.55), [0.026 * sf, 0.045, 0.034], Object.assign({}, LEGM, { rot: [-0.5, 0, 0], bone: 'scap' + sx, bp: 'chest', k: 0.03, region: 'shoulder' })));
-      P(cone(g('arm'), g('fore'), 0.029 * sf * lr, 0.021 * lr, Object.assign({}, LEGM, { bone: 'arm' + sx, bp: 'scap' + sx, bc: 'fore' + sx, k: 0.022 })));
-      P(cone(g('fore'), g('wrist'), 0.019 * lr, 0.0145 * lr, Object.assign({}, LEGM, { bone: 'fore' + sx, bc: 'wrist' + sx, k: 0.012 })));
-      P(cone(g('wrist'), g('hand'), 0.0145 * lr, 0.0145 * lr, Object.assign({}, LEGM, { bone: 'wrist' + sx, bc: 'hand' + sx, k: 0.01, region: 'lowleg' })));
-      P(ell(V3.lerp(g('hand'), legs['F' + sx].toe, 0.4), [0.019 * lr, 0.0145 * lr, 0.026 * lr], Object.assign({}, LEGM, { bone: 'hand' + sx, k: 0.01, region: 'paw' })));
+      P(ell(k3(s * lx(0.11), 0.4, -0.25), [0.1 * u * sf, 0.15 * u, 0.15 * u], Object.assign({}, LEGM, { rot: [-0.26, 0, 0], bone: 'thigh' + sx, bp: 'hips', k: 0.05 * u, region: 'haunch', st: 0.9, scFn: torsoSc, fluff: fl * 0.012 })));
+      P(ell(k3(s * lx(0.1), 0.48, 0.24), [0.06 * u * sf, 0.12 * u, 0.08 * u], Object.assign({}, LEGM, { rot: [0.44, 0, 0], bone: 'scap' + sx, bp: 'chest', k: 0.05 * u, region: 'shoulder', scFn: torsoSc })));
+      P(cone(g('thigh'), g('shin'), 0.085 * u * lr, 0.066 * u * lr, Object.assign({}, LEGM, { bone: 'thigh' + sx, bp: 'hips', bc: 'shin' + sx, k: kl })));
+      P(cone(g('shin'), g('hock'), 0.066 * u * lr, 0.042 * u * lr, Object.assign({}, LEGM, { bone: 'shin' + sx, bc: 'hock' + sx, k: kl })));
+      P(cone(g('hock'), g('foot'), 0.042 * u * lr, 0.038 * u * lr, Object.assign({}, LEGM, { bone: 'hock' + sx, bc: 'foot' + sx, k: kl, region: 'lowleg' })));
+      P(ell(V3.lerp(g('foot'), legs['H' + sx].toe, 0.42), [0.056 * u * lr, 0.04 * u * lr, 0.07 * u * lr], Object.assign({}, LEGM, { bone: 'foot' + sx, k: 0.018 * u, region: 'paw' })));
+      P(cone(g('arm'), g('fore'), 0.068 * u * lr, 0.058 * u * lr, Object.assign({}, LEGM, { bone: 'arm' + sx, bp: 'scap' + sx, bc: 'fore' + sx, k: kl })));
+      P(cone(g('fore'), g('wrist'), 0.058 * u * lr, 0.045 * u * lr, Object.assign({}, LEGM, { bone: 'fore' + sx, bc: 'wrist' + sx, k: kl })));
+      P(cone(g('wrist'), g('hand'), 0.045 * u * lr, 0.043 * u * lr, Object.assign({}, LEGM, { bone: 'wrist' + sx, bc: 'hand' + sx, k: kl, region: 'lowleg' })));
+      P(ell(V3.lerp(g('hand'), legs['F' + sx].toe, 0.38), [0.058 * u * lr, 0.042 * u * lr, 0.072 * u * lr], Object.assign({}, LEGM, { bone: 'hand' + sx, k: 0.018 * u, region: 'paw' })));
     }
     // tail
-    const tr0 = 0.018 * (cfg.tail && cfg.tail.r || 1), tr1 = tr0 * (cfg.tail && cfg.tail.taper != null ? cfg.tail.taper : 0.62);
+    const tr0 = 0.05 * u * (cfg.tail && cfg.tail.r || 1), tr1 = tr0 * (cfg.tail && cfg.tail.taper != null ? cfg.tail.taper : 0.72);
     for (let i = 0; i < tN; i++) {
       P(cone(tailP[i], tailP[i + 1], lerp(tr0, tr1, i / tN), lerp(tr0, tr1, (i + 1) / tN), {
-        bone: 'tail' + (i + 1), bp: i ? 'tail' + i : 'hips', bc: i < tN - 1 ? 'tail' + (i + 2) : null, k: i ? 0.008 : 0.025, region: 'tail',
-        st: 1, sc: [i * 8 / tN, (i + 1) * 8 / tN], tailT: [i / tN, (i + 1) / tN], fluff: (cfg.tail && cfg.tail.fluff || 0), flow: V3.sub(tailP[i + 1], tailP[i]), clump: 40,
+        bone: 'tail' + (i + 1), bp: i ? 'tail' + i : 'hips', bc: i < tN - 1 ? 'tail' + (i + 2) : null, k: i ? 0.008 : 0.03 * u, region: 'tail',
+        st: 1, sc: [i * 7 / tN, (i + 1) * 7 / tN], tailT: [i / tN, (i + 1) / tN], fluff: (cfg.tail && cfg.tail.fluff || 0), flow: V3.sub(tailP[i + 1], tailP[i]), clump: 36,
       }));
     }
+    const tailDir = V3.norm(V3.sub(tailP[tN], tailP[0]));
+    const cheekWhere = (p) => p[1] < hc[1] - 0.12 * R && abs(p[0]) > 0.42 * R && p[2] < hc[2] + 0.45 * R;
+    const FUR = fl ? {
+      ruff: { dens: 0.95, len: 0.05, w: 0.034, lift: 0.55, droop: 0.6, flow: [0, -1, 0.35] },
+      neck: { dens: 0.8, len: 0.045, w: 0.032, lift: 0.45, droop: 0.5, flow: [0, -0.8, -0.5] },
+      torso: { dens: 0.35, len: 0.034, w: 0.028, lift: 0.28, droop: 0.5, flow: [0, -0.35, -1] },
+      belly: { dens: 0.9, len: 0.045, w: 0.032, lift: 0.12, droop: 0.2, flow: [0, -1, -0.25], grav: 0.35 },
+      haunch: { dens: 0.75, len: 0.045, w: 0.032, lift: 0.3, droop: 0.5, flow: [0, -1, -0.7] },
+      tail: { dens: 1, len: 0.05, w: 0.034, lift: 0.8, droop: 0.45, flow: (p, n) => V3.add(tailDir, V3.mul(n, 0.15)), grav: 0.05 },
+      head: { dens: 1, len: 0.03, w: 0.024, lift: 0.75, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.7, -0.45], where: cheekWhere },
+      shoulder: { dens: 0.3, len: 0.028, w: 0.024, lift: 0.25, droop: 0.4, flow: [0, -1, -0.2] },
+      leg: { dens: 0.18, len: 0.022, w: 0.02, lift: 0.3, droop: 0.4, flow: [0, -1, -0.4] },
+      paw: { dens: 0.7, len: 0.016, w: 0.016, lift: 0.55, droop: 0.2, flow: [0, 0.1, 1], where: (p) => p[1] < 0.02 },
+    } : {
+      head: { dens: 0.75, len: 0.017, w: 0.018, lift: 0.7, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.6, -0.5], where: cheekWhere },
+      neck: { dens: 0.25, len: 0.018, w: 0.02, lift: 0.3, droop: 0.4, flow: [0, -0.9, 0.3], where: (p) => p[2] > zS },
+    };
     return {
-      cfg, joints: J, JP, prims, legs, eyes, ears, hc, R, spY, legH, zH, zS, tailN: tN,
-      h: cfg.voxel || 0.0125, hullH: 0.017, warp: { c: hc, m: 2.4, R: R * 1.3 },
+      fur: FUR, furMax: fl ? 380 : 70, whiskers: { col: cfg.whiskerCol || '#f7f5f0' },
+      cfg, joints: J, JP, prims, legs, eyes, ears, hc, R, spY, zH, zS, tailN: tN,
+      h: cfg.voxel || 0.0125, hullH: 0.019, warp: { c: hc, m: 2.4, R: R * 1.3 },
+      springs: (S) => {
+        const d = [];
+        for (let i = 0; i < tN; i++) {
+          const a = tailP[i], b2 = tailP[i + 1];
+          d.push({ bone: 'tail' + (i + 1), tail: V3.mul(V3.sub(b2, a), S), stiff: lerp(0.3, 0.13, i / (tN - 1)), drag: 0.16, grav: 0.002 });
+        }
+        for (const e of ears) d.push({ bone: 'ear' + e.sx, tail: V3.mul(e.F.y, earH * S), stiff: 0.32, drag: 0.22 });
+        d.push({ bone: 'belly', tail: [0, -0.05 * S, 0.01 * S], stiff: 0.16, drag: 0.1, w: 0.8 });
+        if (cfg.ruff) d.push({ bone: 'ruff', tail: [0, -0.04 * S, 0.03 * S], stiff: 0.2, drag: 0.12 });
+        return d;
+      },
       scale: cfg.scale || 1.5,
     };
   }
@@ -805,7 +844,7 @@ G.Animal3D = (() => {
   // ================================================================================== coats
   const PALETTES = {
     tabby: { base: '#8E97A3', base2: '#C6CDD6', dark: '#545C69', white: '#E3E5E8', nose: '#C98884', nostril: '#6E4A4C', inner: '#E2AAA6', line: '#2E3440', rim: '#2E3440', iris: '#7E8E36', iris2: '#CFCB5E', paw: '#B9BFC8' },
-    calico: { base: '#F5F2EC', base2: '#FFFFFF', dark: '#7F8894', white: '#F7F4EF', grey: '#9BA3AE', greyDark: '#7F8894', cream: '#EBC79D', nose: '#EC9FA8', nostril: '#B56A76', inner: '#EDB3B3', line: '#4A4450', rim: '#4A4450', iris: '#8DB43A', iris2: '#DCE45E', paw: '#F7F4EF' },
+    calico: { base: '#F5F2EC', base2: '#FFFFFF', dark: '#7F8894', white: '#F7F4EF', grey: '#9BA3AE', greyDark: '#7F8894', cream: '#EBC79D', pa: '#9BA3AE', pb: '#EBC79D', nose: '#EC9FA8', nostril: '#B56A76', inner: '#EDB3B3', line: '#4A4450', rim: '#4A4450', iris: '#8DB43A', iris2: '#DCE45E', paw: '#F7F4EF' },
     orange: { base: '#E4A464', base2: '#F4CB92', dark: '#B4682F', white: '#FBF2E2', nose: '#E39486', nostril: '#8A4A40', inner: '#EFB0A8', line: '#5A3220', rim: '#5A3220', iris: '#6E9A36', iris2: '#D6C24E', paw: '#F6E3C8' },
     leopard: { base: '#C49A62', base2: '#DDBA88', dark: '#3B2A1E', white: '#F3ECDD', nose: '#B8695B', nostril: '#5A2E28', inner: '#D7B1A0', line: '#3A2617', rim: '#2A1E16', iris: '#93A44C', iris2: '#E9C752', paw: '#E8D6B8', earBack: '#2B2320' },
   };
@@ -828,18 +867,21 @@ G.Animal3D = (() => {
     } else if (coat === 'calico') {
       M.st = 0;
       const neckY = spY + 0.03;
-      const bib = smooth(-0.1, 0.45, n[2]) * smooth(neckY + 0.04, neckY - 0.02, y) * smooth(plan.zS - 0.06, plan.zS + 0.02, z);
+      const bib = max(smooth(-0.1, 0.45, n[2]) * smooth(neckY + 0.04, neckY - 0.02, y) * smooth(plan.zS - 0.06, plan.zS + 0.02, z),
+        smooth(-0.3, 0.2, n[2]) * smooth(plan.zS - 0.02, plan.zS + 0.03, z) * smooth(plan.hc[1] - 0.2 * plan.R, plan.hc[1] - 0.45 * plan.R, y) * (1 - (reg.head || 0)));
       const under = smooth(-0.05, -0.45, n[1]);
       const low = smooth(spY - 0.035, spY - 0.075, y);
       M.white = max(M.white, bib, under * (1 - (reg.tail || 0)), low * (1 - (reg.tail || 0)));
-      // dilute patches on the top surfaces (grey dominant, cream islands), seeded noise
-      const top = smooth(-0.15, 0.4, n[1]) * (1 - M.white);
-      const n1 = vnoise(x * 11 + 2.3, y * 11, z * 11 + 1.1) * 0.65 + vnoise(x * 25, y * 25 + 3, z * 25) * 0.35;
-      const n2 = vnoise(x * 17 + 9, y * 17 + 4, z * 17);
-      M.pa = max(M.pa, top * smooth(0.4, 0.48, n1) * (1 - (reg.tail || 0)));
-      M.pb = max(M.pb, top * smooth(0.5, 0.6, n2) * (1 - M.pa * 0.7) * (1 - (reg.tail || 0)));
+      // authored dilute-calico patches (reference: grey saddle + right shoulder, cream on the left flank / rump)
+      const top = smooth(-0.35, 0.25, n[1]) * (1 - M.white);
+      const blob = (cx, cy, cz, rx, ry, rz) => { const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2; return smooth(1.25, 0.6, d); };
+      const sp = plan.spY, zs = plan.zS, zh = plan.zH;
+      const grey = max(blob(-0.012, sp + 0.03, lerp(zh, zs, 0.45), 0.07, 0.06, 0.075), blob(-0.05, sp + 0.01, zs - 0.01, 0.04, 0.05, 0.05), blob(0.02, sp + 0.02, zh - 0.02, 0.05, 0.05, 0.05));
+      const cream = max(blob(0.06, sp - 0.005, lerp(zh, zs, 0.25), 0.045, 0.05, 0.06), blob(0.035, sp + 0.03, lerp(zh, zs, 0.72), 0.035, 0.035, 0.04));
+      M.pa = max(M.pa, top * grey * (1 - (reg.tail || 0)) * (1 - (reg.head || 0)));
+      M.pb = max(M.pb, top * cream * (1 - M.pa * 0.8) * (1 - (reg.tail || 0)) * (1 - (reg.head || 0)));
       if (M.tailT != null && reg.tail > 0.3) { // banded grey / cream plume with a white tip
-        const ph = sin(M.tailT * 15 + vnoise(x * 30, y * 30, z * 30) * 3);
+        const ph = sin(M.tailT * 9.5 + vnoise(x * 30, y * 30, z * 30) * 2.5);
         M.pa = M.tailT > 0.88 ? 0 : (ph > 0.2 ? 1 : 0) * reg.tail;
         M.pb = M.tailT > 0.88 ? 0 : (ph <= 0.2 && ph > -0.5 ? 1 : 0) * reg.tail;
         M.white = M.tailT > 0.88 ? 1 : (ph <= -0.5 ? 0.8 : 0);
@@ -927,6 +969,107 @@ G.Animal3D = (() => {
     return { skin: topSkin(acc), M, reg };
   }
 
+  // fur cards: tufts rooted on SDF vertices, oriented along the region's fur flow, lifted off the surface by `lift`
+  // and drooping toward the flow; colour comes from the coat at the root (aRest = root), alpha from a strand atlas.
+  function hash1(i) { return hash3(i, 17, 91); }
+  function addFurCards(parts, plan, mesh, vinfo) {
+    const F = plan.fur, nv = mesh.pos.length / 3;
+    const cand = [];
+    for (let v = 0; v < nv; v++) {
+      const reg = vinfo[v].reg; let best = null, bw = 0;
+      for (const k in reg) if (F[k] && reg[k] > bw) { bw = reg[k]; best = k; }
+      if (!best || bw < 0.45) continue;
+      const spec = F[best];
+      const p = [mesh.pos[v * 3], mesh.pos[v * 3 + 1], mesh.pos[v * 3 + 2]], n = [mesh.nrm[v * 3], mesh.nrm[v * 3 + 1], mesh.nrm[v * 3 + 2]];
+      if (spec.where && !spec.where(p, n)) continue;
+      if (hash1(v) > spec.dens) continue;
+      cand.push({ v, p, n, spec, key: best });
+    }
+    const maxN = plan.furMax || 400;
+    const step = cand.length > maxN ? cand.length / maxN : 1;
+    for (let c = 0; c < cand.length && c / step < maxN; c += step) {
+      const { v, p, n, spec } = cand[Math.floor(c)];
+      const r1 = hash3(v, 3, 5), r2 = hash3(v, 7, 11), r3 = hash3(v, 13, 2);
+      let fl = typeof spec.flow === 'function' ? spec.flow(p, n) : spec.flow;
+      fl = V3.sub(fl, V3.mul(n, V3.dot(fl, n)));
+      if (V3.len(fl) < 1e-4) fl = V3.cross(n, [1, 0, 0]);
+      fl = V3.norm(V3.add(V3.norm(fl), [(r1 - 0.5) * 0.25, (r2 - 0.5) * 0.15, (r3 - 0.5) * 0.25]));
+      fl = V3.norm(V3.sub(fl, V3.mul(n, V3.dot(fl, n))));
+      const bn = V3.norm(V3.cross(n, fl));
+      const L = spec.len * (0.75 + 0.5 * r2), w = spec.w * (0.8 + 0.4 * r3), lift = spec.lift * (0.7 + 0.6 * r1);
+      const info = vinfo[v], M = info.M;
+      const root = V3.sub(p, V3.mul(n, 0.0015));
+      const segs = 3;
+      parts.grid(1, segs, (uu, t) => {
+        const a = lift * (1 - t * spec.droop);
+        const along = V3.add(V3.mul(fl, cos(a)), V3.mul(n, sin(a)));
+        const q = V3.add(root, V3.add(V3.mul(along, L * t), V3.mul([0, -1, 0], L * t * t * (spec.grav || 0.15))));
+        const wt = w * (1 - 0.35 * t) * (uu - 0.5);
+        const pos = V3.add(q, V3.mul(bn, wt));
+        const m = Object.assign({}, M, { rest: p, ao: lerp(0.72, 1.05, t) * (M.ao || 1), col: M.col });
+        return { p: pos, n, skin: info.skin, m, x: [uu, t] };
+      }, false);
+    }
+  }
+  // whiskers: long thin tapered white strips from the whisker pads (+ two brow whiskers), skinned to the head
+  function addWhiskers(parts, plan, mAt) {
+    const R = plan.R, hc = plan.hc, W = plan.whiskers;
+    const rows = W.rows || [[-0.25, 12, 1.45], [-0.29, 2, 1.55], [-0.33, -9, 1.5], [-0.37, -20, 1.3]];
+    const white = [...hex(W.col || '#f7f5f0'), 1];
+    const add = (a, b, bend, wid) => {
+      const segs = 4;
+      parts.grid(1, segs, (uu, t) => {
+        const q = V3.add(V3.lerp(a, b, t), [0, -bend * sin(PI * t) * 0.5 - bend * t * t, 0]);
+        const side = V3.norm(V3.cross(V3.sub(b, a), [0, 0, 1]));
+        const wd = wid * (1 - 0.85 * t);
+        const pos = V3.add(q, V3.mul([0, 1, 0], (uu - 0.5) * wd));
+        const m = M0(); m.rest = a; m.col = white; m.ao = 1.15; m.tick = 0;
+        return { p: pos, n: V3.norm(V3.add([0, 0.6, 0], V3.mul(side, 0.3))), skin: [['head', 1]], m, x: [0.5, 0.25 + t * 0.2] };
+      }, false);
+    };
+    for (const s of [1, -1]) {
+      for (const [wy, ang, l] of rows) {
+        const A = ang * PI / 180;
+        const a = [hc[0] + s * 0.24 * R, hc[1] + wy * R, hc[2] + 0.8 * R];
+        const b = [hc[0] + s * (0.24 + Math.cos(A) * l) * R, hc[1] + (wy + Math.sin(A) * l) * R, hc[2] + (0.8 - 0.55 * l) * R];
+        add(a, b, 0.12 * R, W.w || 0.012 * R * 4);
+      }
+      for (const [bx, ang, l] of [[0.24, 60, 0.55], [0.32, 48, 0.6]]) {
+        const A = ang * PI / 180;
+        const a = [hc[0] + s * bx * R, hc[1] + 0.3 * R, hc[2] + 0.66 * R];
+        const b = [hc[0] + s * (bx + Math.cos(A) * l * 0.6) * R, hc[1] + (0.3 + Math.sin(A) * l) * R, hc[2] + (0.66 - 0.3 * l) * R];
+        add(a, b, -0.05 * R, W.w || 0.04 * R);
+      }
+    }
+  }
+  function cardTexture() {
+    // 2×1 atlas of fur tufts: solid flame-shaped clumps (alpha) with strand shading in R (dark root → light tip)
+    return G.R3M.tex('animalFurCard2', 128, 256, (g, w, h) => {
+      g.clearRect(0, 0, w, h);
+      const tuft = (cx, base, top, wd, lean) => {
+        g.beginPath();
+        g.moveTo(cx - wd, base);
+        g.bezierCurveTo(cx - wd * 1.05, base - (base - top) * 0.45, cx - wd * 0.35 + lean * 0.5, top + (base - top) * 0.25, cx + lean, top);
+        g.bezierCurveTo(cx + wd * 0.35 + lean * 0.5, top + (base - top) * 0.25, cx + wd * 1.05, base - (base - top) * 0.45, cx + wd, base);
+        g.closePath();
+      };
+      const gr = g.createLinearGradient(0, h, 0, 0);
+      gr.addColorStop(0, 'rgb(110,110,110)'); gr.addColorStop(0.55, 'rgb(205,205,205)'); gr.addColorStop(1, 'rgb(255,255,255)');
+      g.fillStyle = gr;
+      // a main clump with two side locks
+      tuft(w * 0.5, h, h * 0.02, w * 0.3, w * 0.02); g.fill();
+      tuft(w * 0.27, h, h * 0.22, w * 0.2, -w * 0.08); g.fill();
+      tuft(w * 0.73, h, h * 0.18, w * 0.2, w * 0.09); g.fill();
+      // strand lines (darker grooves) inside the clumps
+      g.globalCompositeOperation = 'source-atop';
+      for (let i = 0; i < 22; i++) {
+        const x0 = w * (0.15 + 0.7 * hash3(i, 3, 1)), x1 = lerp(x0, w * 0.5, 0.6);
+        g.strokeStyle = `rgba(70,70,70,${0.25 + 0.25 * hash3(i, 5, 2)})`; g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(x0, h); g.quadraticCurveTo(x0, h * 0.5, x1, h * (0.08 + 0.3 * hash3(i, 1, 9))); g.stroke();
+      }
+      g.globalCompositeOperation = 'source-over';
+    });
+  }
   function buildAsset(id, spec) {
     const THREE = T3();
     const plan = planFor(id, spec);
@@ -939,12 +1082,14 @@ G.Animal3D = (() => {
     const W = { ds: new Float64Array(NP), ts: new Float64Array(NP), raw: new Float64Array(NP) };
     const body = new Parts();
     const nv = mesh.pos.length / 3;
+    const vinfo = [];
     for (let v = 0; v < nv; v++) {
       const x = mesh.pos[v * 3], y = mesh.pos[v * 3 + 1], z = mesh.pos[v * 3 + 2];
       const n = [mesh.nrm[v * 3], mesh.nrm[v * 3 + 1], mesh.nrm[v * 3 + 2]];
       const info = vertexInfo(plan, skinPrims, W, x, y, z, n);
       info.M.ao = sdfAO(field, x, y, z, n[0], n[1], n[2], plan.h * 1.6);
       body.vert([x, y, z], n, info.skin, info.M);
+      vinfo.push(info);
     }
     body.idx = mesh.idx.slice();
     const mAt = (p) => { const r = vertexInfo(plan, skinPrims, W, p[0], p[1], p[2], [0, 1, 0]); return r.M; };
@@ -965,6 +1110,10 @@ G.Animal3D = (() => {
         (p) => earBackM(plan, p, e), (u, v, edge) => mixc(innerD, inner, smooth(0.0, 0.6, edge) * 0.6 + v * 0.4));
     }
     if (plan.parts) plan.parts(body, plan, mAt);
+    // fur cards + whiskers (separate alpha-tested mesh sharing the coat shader)
+    const cards = new Parts();
+    if (plan.fur) addFurCards(cards, plan, mesh, vinfo);
+    if (plan.whiskers) addWhiskers(cards, plan, mAt);
     // eyes
     const eyeP = new Parts();
     for (const e of plan.eyes) addEyeball(eyeP, e.F, e.r, 'eye' + e.sx);
@@ -972,7 +1121,7 @@ G.Animal3D = (() => {
     // hull: no fur noise (it would pierce the fine surface), slightly inflated instead; eye sockets kept closed
     const hullPrims = prims.filter((p) => !p.noHull && !p.sub).map((p) => {
       const q = Object.assign({}, p, { fluff: 0, bb: null });
-      const inf = (p.fluff || 0) * 0.55;
+      const inf = (p.fluff || 0) * 0.2;
       if (q.type === 'e') { q.rx += inf; q.ry += inf; q.rz += inf; } else { q.r1 += inf; q.r2 += inf; }
       return q;
     });
@@ -992,7 +1141,8 @@ G.Animal3D = (() => {
     const asset = {
       id, plan, S, boneNames, bi,
       geo: toGeometry(body, bi, S, true), hull: toGeometry(hull, bi, S, false), eyeGeo: toGeometry(eyeP, bi, S, false, true),
-      faceTex: faceTexture(plan, id), pal,
+      cardGeo: cards.n ? toGeometry(cards, bi, S, true, false, true) : null,
+      faceTex: faceTexture(plan, id), cardTex: cardTexture(), pal,
     };
     // bounds for culling (generous; animation stays inside)
     asset.geo.computeBoundingBox();
@@ -1011,7 +1161,7 @@ G.Animal3D = (() => {
     M.face = 0;
     return M;
   }
-  function toGeometry(parts, bi, S, coat, eye) {
+  function toGeometry(parts, bi, S, coat, eye, card) {
     const THREE = T3();
     const n = parts.n;
     const g = new THREE.BufferGeometry();
@@ -1046,17 +1196,24 @@ G.Animal3D = (() => {
       for (let v = 0; v < n; v++) { const x = parts.extra[v] || [0, 0, 1]; ae[v * 3] = x[0]; ae[v * 3 + 1] = x[1]; ae[v * 3 + 2] = x[2]; }
       g.setAttribute('aEye', new THREE.BufferAttribute(ae, 3));
     }
+    if (card) {
+      const uv = new Float32Array(n * 2);
+      for (let v = 0; v < n; v++) { const x = parts.extra[v] || [0.5, 0.5]; uv[v * 2] = x[0]; uv[v * 2 + 1] = x[1]; }
+      g.setAttribute('aCardUv', new THREE.BufferAttribute(uv, 2));
+    }
     g.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(parts.idx, 1) : new THREE.Uint16BufferAttribute(parts.idx, 1));
     return g;
   }
 
   // ================================================================================== species → plan
   const PETS = {
-    yuyuan: { coat: 'tabby', fat: 1.5, head: 1.36, cheek: 1.3, ear: { size: 1.18, flare: 0.28 }, eye: { yaw: 0.3, round: false, pupil: 0.2, lid: 0.34 }, tail: { len: 0.9, r: 1.35 }, scale: 1.5, leg: 0.84, len: 0.94, legR: 1.25 },
-    mochi: { coat: 'calico', fat: 1.32, head: 1.26, cheek: 1.05, ear: { size: 1.15, flare: 0.24, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42, lid: 0.08 }, tail: { len: 1.1, r: 1.9, taper: 0.9, fluff: 0.014 }, fluff: 1, ruff: 1.15, scale: 1.55, leg: 0.9, len: 1.08, legR: 1.2 },
-    cat: { coat: 'orange', fat: 1.0, head: 1.18, cheek: 0.75, ear: { size: 1.05, flare: 0.3 }, eye: { yaw: 0.32, pupil: 0.25 }, tail: { len: 1.05 }, scale: 1.45, leg: 1.0, len: 1.0, legR: 1.05 },
-    leopard: { coat: 'leopard', fat: 1.05, head: 1.18, cheek: 0.85, ear: { size: 0.95, flare: 0.36, round: true }, eye: { yaw: 0.32, round: true, pupil: 0.5 }, tail: { len: 1.05, r: 1.2, taper: 0.85 }, scale: 1.45, leg: 1.0, len: 1.05, legR: 1.05 },
+    // values from the approved design kit (tools/design2/yuyuan.js, mochi.js BASE specs)
+    yuyuan: { judge: true, exprBase: 'judging', coat: 'tabby', R: 0.19, fat: 1.42, cheek: 1.15, skullW: 1.04, ear: { size: 1.25, flare: 0.28 }, eye: { yaw: 0.3, pupil: 0.2 }, tail: { len: 0.95, r: 1.1 }, scale: 1.5, leg: 0.94, legR: 1.05 },
+    mochi: { chirpy: true, voxel: 0.0135, coat: 'calico', R: 0.2, fat: 1.32, cheek: 0.9, skullW: 1.02, ear: { size: 1.15, flare: 0.31, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42 }, tail: { len: 1.1, r: 1.5, taper: 0.95, fluff: 0.012 }, fluff: 1, ruff: 1.1, scale: 1.55, leg: 0.97, legR: 1.05 },
+    cat: { coat: 'orange', R: 0.18, fat: 1.0, cheek: 0.5, ear: { size: 1.05, flare: 0.3 }, eye: { yaw: 0.32, pupil: 0.25 }, tail: { len: 1.05 }, scale: 1.45 },
+    leopard: { coat: 'leopard', R: 0.18, fat: 1.05, cheek: 0.6, ear: { size: 0.95, flare: 0.36, round: true }, eye: { yaw: 0.32, round: true, pupil: 0.5 }, tail: { len: 1.05, r: 1.2, taper: 0.85 }, scale: 1.45 },
   };
+
   function planFor(id, spec) {
     const sp = spec.species;
     if (PETS[id]) return catPlan(PETS[id]);
@@ -1064,15 +1221,393 @@ G.Animal3D = (() => {
     return catPlan(PETS.cat);
   }
 
+  // ================================================================================== pose layer
+  // A pose is a flat set of blendable numbers (plan units / radians). Clips write absolute poses starting from the
+  // neutral standing pose; the instance crossfades locomotion ↔ clips, then adds additive layers, then solves the rig.
+  const LEGK = ['FL', 'FR', 'HL', 'HR'];
+  const PK = ['hipX', 'hipY', 'hipZ', 'hipP', 'hipYw', 'hipR', 'sp1P', 'sp1Y', 'sp1R', 'sp2P', 'sp2Y', 'sp2R', 'chP', 'chY', 'chR',
+    'neckP', 'neckY', 'neckR', 'headP', 'headY', 'headR', 'jaw', 'tongue',
+    'earLP', 'earLY', 'earLR', 'earRP', 'earRY', 'earRR', 'scapL', 'scapR', 'bellyY',
+    'lidUL', 'lidUR', 'lidDL', 'lidDR', 'pupil', 'eyeY', 'eyeP',
+    'tailP', 'tailY', 'tailCurl', 'tailCurlY', 'tailTipP', 'tailWaveA', 'tailWaveF', 'purr', 'look', 'breath'];
+  for (const l of LEGK) for (const c of ['x', 'y', 'z', 'g', 'm', 't']) PK.push(l + c);
+  const PI_ = {}; PK.forEach((k, i) => (PI_[k] = i));
+  const NP = PK.length;
+  const newPose = () => new Float32Array(NP);
+  // pose accessor: p.k = value via proxy-free helpers (fast and blendable)
+  function W(p, k, v) { p[PI_[k]] = v; }
+  function Ad(p, k, v) { p[PI_[k]] += v; }
+  function Rd(p, k) { return p[PI_[k]]; }
+  function blendInto(dst, src, w) { if (w <= 0) return; if (w >= 1) { dst.set(src); return; } for (let i = 0; i < NP; i++) dst[i] += (src[i] - dst[i]) * w; }
+  function neutral(p, I) {
+    p.fill(0);
+    W(p, 'pupil', I.expr.pupil); W(p, 'look', 1); W(p, 'breath', 1);
+    W(p, 'lidUL', I.expr.lidU); W(p, 'lidUR', I.expr.lidU); W(p, 'lidDL', I.expr.lidD); W(p, 'lidDR', I.expr.lidD);
+    W(p, 'tailP', 0.1); W(p, 'tailCurl', -0.06); W(p, 'tailTipP', -0.25); W(p, 'tailWaveA', 0.06); W(p, 'tailWaveF', 0.35);
+    return p;
+  }
+  const ease = (t) => t * t * (3 - 2 * t);
+  const easeO = (t) => 1 - (1 - t) * (1 - t);
+  const pulse = (t, a, b, c, d) => smooth(a, b, t) * (1 - smooth(c, d, t)); // 0→1 between a..b, back to 0 between c..d
+
+  // ================================================================================== gaits (cat family)
+  // offsets: phase of each foot's touchdown within the stride; duty: stance fraction. All lengths in plan units.
+  const GAITS = {
+    walk: { duty: 0.64, off: { HL: 0, FL: 0.24, HR: 0.5, FR: 0.74 }, lift: 0.032, liftF: 0.04, f0: 1.25, fk: 2.4, sweepMax: 0.105, bob: 0.004, roll: 0.03, yaw: 0.07, scap: 0.008 },
+    trot: { duty: 0.44, off: { FL: 0, HR: 0.02, FR: 0.5, HL: 0.52 }, lift: 0.04, liftF: 0.048, f0: 2.3, fk: 0.9, sweepMax: 0.12, bob: 0.006, roll: 0.02, yaw: 0.035, scap: 0.006 },
+    gallop: { duty: 0.3, off: { HL: 0, HR: 0.09, FR: 0.44, FL: 0.53 }, lift: 0.05, liftF: 0.06, f0: 2.7, fk: 0.22, sweepMax: 0.14, bob: 0.014, roll: 0.0, yaw: 0.0, scap: 0.004, flex: 0.2 },
+  };
+  function gaitPose(p, I, g, phase, vp) {
+    const G_ = GAITS[g];
+    const f = I.cadence[g];
+    const sweep = vp * G_.duty / max(f, 0.01);
+    for (const L of LEGK) {
+      const front = L[0] === 'F';
+      const ph = ((phase + G_.off[L]) % 1 + 1) % 1;
+      let z, y = 0, m = 0, t = 0;
+      if (ph < G_.duty) { // stance: the foot sweeps back at exactly body speed (planted)
+        const s = ph / G_.duty;
+        z = sweep * (0.5 - s);
+        if (!front) m = -0.25 * smooth(0.6, 1, s); // heel (hock) lifts in push-off
+        else m = -0.4 * smooth(0.65, 1, s);
+        t = 0.25 * smooth(0.7, 1, s);
+      } else { // swing: accelerate forward, arc up, paw flicks back then reaches
+        const s = (ph - G_.duty) / (1 - G_.duty);
+        z = sweep * (-0.5 + ease(s));
+        y = (front ? G_.liftF : G_.lift) * Math.pow(sin(PI * s), 0.8) * min(1, 0.45 + vp * 1.2);
+        if (front) { const fl = sin(PI * Math.pow(s, 0.75)) * min(1, 0.45 + vp); m = -1.5 * fl; t = 1.3 * fl; }
+        else { m = -0.5 * sin(PI * s); t = 0.5 * sin(PI * s); }
+      }
+      if (g === 'gallop') z += front ? 0.025 : 0.02;
+      W(p, L + 'z', z); W(p, L + 'y', y); W(p, L + 'm', m); W(p, L + 't', t);
+    }
+    const ph2 = phase * TAU;
+    if (g === 'gallop') {
+      const fl = G_.flex;
+      const flex = cos(ph2 - 0.3); // +1 gathered (arched), -1 extended
+      W(p, 'sp1P', -fl * 0.5 * flex); W(p, 'sp2P', -fl * 0.5 * flex); W(p, 'chP', -fl * 0.25 * flex);
+      W(p, 'hipP', 0.12 * sin(ph2 - 1.2));
+      W(p, 'hipY', G_.bob * cos(ph2 - 5.6) - 0.004);
+      W(p, 'hipZ', 0.012 * flex);
+      W(p, 'neckP', 0.12 * sin(ph2 - 0.6)); W(p, 'headP', -0.12 * sin(ph2 - 0.6));
+      W(p, 'tailP', -0.15 + 0.15 * sin(ph2)); W(p, 'tailCurl', 0.03);
+      W(p, 'earLP', -0.25); W(p, 'earRP', -0.25);
+    } else {
+      // two dips per stride (each hind touchdown), roll toward the stance side, lateral spine wave, head stabilised
+      W(p, 'hipY', -G_.bob * (0.5 + 0.5 * cos(2 * ph2 - 0.6)));
+      W(p, 'hipR', G_.roll * sin(ph2));
+      W(p, 'chR', -G_.roll * 0.8 * sin(ph2 + PI * 0.5));
+      W(p, 'sp1Y', G_.yaw * sin(ph2)); W(p, 'sp2Y', -G_.yaw * 0.5 * sin(ph2)); W(p, 'chY', -G_.yaw * 0.6 * sin(ph2 + 0.4));
+      W(p, 'neckY', G_.yaw * 0.6 * sin(ph2 + 0.4)); W(p, 'headY', G_.yaw * 0.3 * sin(ph2 + 0.4)); W(p, 'headR', G_.roll * 0.5 * sin(ph2));
+      W(p, 'headP', 0.03 * cos(2 * ph2)); W(p, 'neckP', g === 'walk' ? 0.12 : 0.05);
+      W(p, 'tailP', g === 'walk' ? -0.25 : -0.1); W(p, 'tailCurl', g === 'walk' ? -0.1 : -0.04); W(p, 'tailTipP', -0.35);
+      W(p, 'tailY', 0.12 * sin(ph2 + 1.5));
+    }
+    // shoulder blades ride up through each front stance
+    for (const [L, k] of [['FL', 'scapL'], ['FR', 'scapR']]) {
+      const ph = ((phase + G_.off[L]) % 1 + 1) % 1;
+      W(p, k, G_.scap * (ph < G_.duty ? sin(PI * ph / G_.duty) : -0.4 * sin(PI * (ph - G_.duty) / (1 - G_.duty))));
+    }
+    W(p, 'tailWaveA', 0.04); W(p, 'tailWaveF', g === 'walk' ? 0.5 : 0.8);
+    W(p, 'breath', 0.5);
+  }
+
+  // ================================================================================== behaviour clips (cats)
+  // Each clip: { dur, loop, fn(t, p, I, k) } where k = normalised time (0..1 of dur, wraps if looping).
+  function sitBase(p, I, amt = 1) {
+    W(p, 'hipY', -0.135 * amt); W(p, 'hipZ', 0.012 * amt); W(p, 'hipP', -0.62 * amt);
+    W(p, 'sp1P', -0.12 * amt); W(p, 'sp2P', -0.12 * amt); W(p, 'chP', -0.06 * amt);
+    W(p, 'neckP', 0.55 * amt); W(p, 'headP', 0.32 * amt);
+    for (const s of ['L', 'R']) {
+      W(p, 'H' + s + 'z', 0.085 * amt); W(p, 'H' + s + 'y', 0); W(p, 'H' + s + 'm', 1.25 * amt); W(p, 'H' + s + 't', -0.1 * amt);
+      W(p, 'F' + s + 'z', -0.025 * amt); W(p, 'F' + s + 'm', -0.2 * amt);
+    }
+    W(p, 'HLx', 0.012 * amt); W(p, 'HRx', -0.012 * amt);
+    W(p, 'tailP', 1.05 * amt); W(p, 'tailCurl', 0.04); W(p, 'tailCurlY', 0.36 * amt); W(p, 'tailTipP', 0.1); W(p, 'tailWaveA', 0.02);
+  }
+  function loafBase(p, I, amt = 1) {
+    W(p, 'hipY', -0.122 * amt); W(p, 'hipZ', 0.0); W(p, 'hipP', 0.04 * amt);
+    W(p, 'chP', -0.05 * amt); W(p, 'sp2P', 0.02 * amt);
+    W(p, 'neckP', -0.25 * amt); W(p, 'headP', 0.18 * amt);
+    for (const s of ['L', 'R']) {
+      W(p, 'F' + s + 'g', amt); W(p, 'F' + s + 'z', -0.06 * amt); W(p, 'F' + s + 'y', 0.075 * amt); W(p, 'F' + s + 'm', 2.2 * amt); W(p, 'F' + s + 't', 1.4 * amt);
+      W(p, 'H' + s + 'g', amt); W(p, 'H' + s + 'z', 0.07 * amt); W(p, 'H' + s + 'y', 0.07 * amt); W(p, 'H' + s + 'm', 1.25 * amt); W(p, 'H' + s + 't', 0.2 * amt);
+    }
+    W(p, 'tailP', 1.0 * amt); W(p, 'tailCurlY', 0.33 * amt); W(p, 'tailCurl', 0.03); W(p, 'tailWaveA', 0.015);
+  }
+  function eyes(p, u, d) { W(p, 'lidUL', u); W(p, 'lidUR', u); if (d != null) { W(p, 'lidDL', d); W(p, 'lidDR', d); } }
+  function ears(p, pitch, yaw, roll) { W(p, 'earLP', pitch); W(p, 'earRP', pitch); W(p, 'earLY', yaw || 0); W(p, 'earRY', yaw || 0); W(p, 'earLR', roll || 0); W(p, 'earRR', roll || 0); }
+  const CLIPS = {
+    sit: { dur: 4, loop: true, fn(t, p, I) { sitBase(p, I, 1); W(p, 'headY', 0.12 * sin(t * 0.4)); } },
+    loaf: { dur: 6, loop: true, fn(t, p, I) { loafBase(p, I, 1); eyes(p, 0.45 + 0.1 * sin(t * 0.3), 0.15); } },
+    sleep: { dur: 6, loop: true, fn(t, p, I) {
+      loafBase(p, I, 1);
+      W(p, 'hipY', -0.13); W(p, 'hipR', 0.95); W(p, 'hipYw', 0.2); W(p, 'sp1Y', 0.42); W(p, 'sp2Y', 0.42); W(p, 'chY', 0.35); W(p, 'chR', 0.2);
+      W(p, 'neckY', 0.55); W(p, 'neckP', 0.15); W(p, 'headY', 0.45); W(p, 'headP', 0.45); W(p, 'headR', -0.5);
+      W(p, 'tailP', 0.6); W(p, 'tailY', 0.9); W(p, 'tailCurlY', 0.4); W(p, 'tailWaveA', 0.0);
+      eyes(p, 1, 0.3); ears(p, 0.15, 0.25, 0.1); W(p, 'breath', 1.6);
+    } },
+    groom: { dur: 3.2, loop: true, fn(t, p, I, k) {
+      sitBase(p, I, 1);
+      // lick, lick, then wipe over the ear
+      const lick = k < 0.55, cyc = k / 0.55 * 2 % 1;
+      W(p, 'FLg', 1); W(p, 'FLy', 0.135); W(p, 'FLz', 0.06); W(p, 'FLm', 1.9); W(p, 'FLt', 1.0); W(p, 'FLx', -0.012);
+      if (lick) {
+        W(p, 'neckP', 0.75 + 0.1 * sin(cyc * TAU)); W(p, 'headP', 0.55 + 0.18 * sin(cyc * TAU)); W(p, 'headY', 0.15); W(p, 'headR', -0.12);
+        W(p, 'jaw', 0.25 * pulse(cyc, 0.1, 0.3, 0.6, 0.8)); W(p, 'tongue', pulse(cyc, 0.15, 0.3, 0.55, 0.75));
+        eyes(p, 0.7, 0.2);
+      } else {
+        const w = (k - 0.55) / 0.45;
+        W(p, 'neckP', 0.5); W(p, 'headP', 0.6 - 0.3 * sin(w * PI)); W(p, 'headY', 0.3); W(p, 'headR', -0.35 * sin(w * PI));
+        W(p, 'FLy', 0.15 + 0.07 * sin(w * PI)); W(p, 'FLz', 0.075 - 0.02 * sin(w * PI)); W(p, 'FLx', 0.0);
+        eyes(p, 0.85, 0.3); ears(p, -0.1, 0.3, 0.3);
+      }
+    } },
+    stretch: { dur: 3, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0.0, 0.25, 0.7, 1.0);
+      W(p, 'hipP', 0.32 * a); W(p, 'sp1P', 0.1 * a); W(p, 'sp2P', 0.1 * a); W(p, 'chP', 0.05 * a); W(p, 'hipY', 0.01 * a);
+      W(p, 'FLz', 0.13 * a); W(p, 'FRz', 0.12 * a); W(p, 'FLm', -0.5 * a); W(p, 'FRm', -0.5 * a);
+      W(p, 'neckP', -0.7 * a); W(p, 'headP', -0.35 * a); W(p, 'jaw', 0.5 * pulse(k, 0.2, 0.35, 0.55, 0.7));
+      W(p, 'tailP', -0.9 * a); W(p, 'tailCurl', 0.05);
+      eyes(p, 0.9 * a + I.expr.lidU * (1 - a), 0.3 * a); ears(p, 0.4 * a, 0.3 * a, 0);
+    } },
+    yawn: { dur: 2.6, loop: false, fn(t, p, I, k) {
+      sitBase(p, I, 1);
+      const a = pulse(k, 0.05, 0.35, 0.65, 0.95);
+      W(p, 'neckP', 0.35); W(p, 'headP', 0.32 - 0.55 * a); W(p, 'jaw', 0.75 * a); W(p, 'tongue', 0.6 * a);
+      eyes(p, 0.25 + 0.75 * a, 0.4 * a); ears(p, 0.55 * a, 0.45 * a, 0.2 * a);
+    } },
+    knead: { dur: 1.2, loop: true, fn(t, p, I, k) {
+      loafBase(p, I, 0.55);
+      for (const [s, o] of [['L', 0], ['R', 0.5]]) {
+        const c = (k + o) % 1; const up = pulse(c, 0.0, 0.25, 0.35, 0.6);
+        W(p, 'F' + s + 'g', 0); W(p, 'F' + s + 'y', 0.03 * up); W(p, 'F' + s + 'z', 0.02); W(p, 'F' + s + 'm', 0.8 * up - 0.2); W(p, 'F' + s + 't', -0.4 * up + 0.2);
+      }
+      W(p, 'chY', 0.04 * sin(k * TAU)); W(p, 'headY', -0.03 * sin(k * TAU));
+      eyes(p, 0.7, 0.3); W(p, 'purr', 1); ears(p, 0.05, 0.25, 0);
+    } },
+    headbutt: { dur: 1.4, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0.1, 0.35, 0.55, 0.9);
+      W(p, 'neckP', 0.25 * a); W(p, 'headP', 0.45 * a); W(p, 'hipZ', 0.03 * a); W(p, 'headR', -0.4 * pulse(k, 0.35, 0.55, 0.7, 0.9));
+      W(p, 'chP', 0.08 * a); eyes(p, 0.95 * a + I.expr.lidU * (1 - a), 0.2 * a); ears(p, 0.35 * a, 0.35 * a, 0);
+      W(p, 'tailP', -0.9 * a); W(p, 'tailCurl', 0.12 * a); W(p, 'tailTipP', -0.6 * a);
+    } },
+    purr: { dur: 4, loop: true, fn(t, p, I) { loafBase(p, I, 1); eyes(p, 0.92, 0.35); ears(p, 0.1, 0.2, 0); W(p, 'purr', 1); W(p, 'headP', 0.28); } },
+    pounce: { dur: 2.6, loop: false, fn(t, p, I, k) {
+      // crouch + butt wiggle (0..0.55) → leap (0.55..0.75) → land & recover
+      const crouch = pulse(k, 0, 0.15, 0.55, 0.62), leap = pulse(k, 0.55, 0.64, 0.72, 0.85), back = smooth(0.8, 1, k);
+      const wig = sin(t * 26) * smooth(0.25, 0.35, k) * (1 - smooth(0.5, 0.55, k));
+      W(p, 'hipY', -0.06 * crouch + 0.06 * leap); W(p, 'hipZ', -0.02 * crouch + 0.18 * leap * (1 - back));
+      W(p, 'hipYw', 0.12 * wig); W(p, 'hipR', 0.06 * wig); W(p, 'hipP', 0.08 * crouch - 0.15 * leap);
+      W(p, 'chP', 0.12 * crouch); W(p, 'neckP', -0.45 * crouch + 0.3 * leap); W(p, 'headP', 0.3 * crouch - 0.2 * leap);
+      for (const s of ['L', 'R']) {
+        W(p, 'H' + s + 'z', -0.02 * crouch + 0.05 * wig * (s === 'L' ? 1 : -1) * 0); W(p, 'H' + s + 'm', 0.5 * crouch); W(p, 'H' + s + 'y', 0.02 * leap);
+        W(p, 'F' + s + 'z', 0.03 * crouch + 0.12 * leap); W(p, 'F' + s + 'y', 0.06 * leap); W(p, 'F' + s + 'm', -0.3 * crouch + 0.6 * leap); W(p, 'F' + s + 't', -0.5 * leap);
+      }
+      W(p, 'pupil', 0.85 * crouch + 0.3); eyes(p, 0, 0); ears(p, -0.3 * crouch, 0, 0);
+      W(p, 'tailP', -0.1 * crouch); W(p, 'tailWaveA', 0.35 * crouch); W(p, 'tailWaveF', 2.5);
+    } },
+    judge: { dur: 7, loop: true, fn(t, p, I, k) { // 芋圓's flat, unimpressed stare
+      sitBase(p, I, 1);
+      W(p, 'neckP', 0.42); W(p, 'headP', 0.22 + 0.04 * smooth(0.4, 0.6, k)); W(p, 'headR', 0.06 * smooth(0.3, 0.5, k) * (1 - smooth(0.8, 0.95, k)));
+      eyes(p, 0.5, 0.18); W(p, 'pupil', 0.12); ears(p, 0.05, 0.42, 0.18);
+      W(p, 'tailWaveA', 0.0); W(p, 'tailTipP', 0.1 + 0.4 * pulse((t * 0.6) % 1, 0.0, 0.1, 0.15, 0.3));
+    } },
+    chirp: { dur: 1.3, loop: false, fn(t, p, I, k) { // 麻糬's chirp: quick bright trill with a head bob
+      const a = pulse(k, 0, 0.15, 0.75, 1), b1 = pulse(k, 0.15, 0.25, 0.3, 0.4), b2 = pulse(k, 0.42, 0.5, 0.56, 0.66);
+      W(p, 'neckP', -0.15 * a); W(p, 'headP', -0.12 * a + 0.1 * (b1 + b2)); W(p, 'headR', 0.18 * a);
+      W(p, 'jaw', 0.32 * (b1 + b2)); ears(p, -0.2 * a, -0.2 * a, 0); eyes(p, 0, 0); W(p, 'pupil', 0.55);
+      W(p, 'tailP', -1.0 * a); W(p, 'tailCurl', 0.08 * a); W(p, 'tailTipP', -0.5 * a); W(p, 'tailWaveA', 0.05);
+    } },
+    sniff: { dur: 2.4, loop: true, fn(t, p, I, k) {
+      W(p, 'neckP', 0.75); W(p, 'headP', 0.35 + 0.05 * sin(t * 15) * pulse(k, 0.1, 0.2, 0.6, 0.7)); W(p, 'headY', 0.25 * sin(k * TAU));
+      W(p, 'chP', 0.08); W(p, 'hipZ', 0.01); ears(p, -0.15, 0, 0); W(p, 'tailP', -0.5); W(p, 'tailCurl', 0.05);
+    } },
+    slowblink: { dur: 2.2, loop: false, fn(t, p, I, k) { eyes(p, I.expr.lidU + (1 - I.expr.lidU) * pulse(k, 0.15, 0.4, 0.65, 0.9), 0.3 * pulse(k, 0.15, 0.4, 0.65, 0.9)); W(p, 'headP', 0.08 * pulse(k, 0.1, 0.4, 0.7, 0.95)); } },
+    // ---- battle (assist) clips
+    idle: { dur: 3, loop: true, battle: true, fn(t, p, I) {
+      W(p, 'hipY', -0.012); W(p, 'chP', 0.06); W(p, 'neckP', -0.1); W(p, 'headP', 0.05);
+      W(p, 'FLz', 0.02); W(p, 'FRz', -0.01); W(p, 'HLz', 0.01); W(p, 'HRz', -0.015);
+      ears(p, -0.15, 0, 0); W(p, 'tailP', -0.35); W(p, 'tailCurl', 0.06); W(p, 'tailWaveA', 0.18); W(p, 'tailWaveF', 0.7); W(p, 'pupil', 0.5);
+    } },
+    ready: { dur: 2, loop: true, fn(t, p, I) {
+      W(p, 'hipY', -0.03); W(p, 'hipP', 0.08); W(p, 'chP', 0.1); W(p, 'neckP', -0.3); W(p, 'headP', 0.3);
+      W(p, 'FLz', 0.03); W(p, 'FRz', 0.03); W(p, 'HLm', 0.3); W(p, 'HRm', 0.3);
+      ears(p, -0.35, 0.1, 0); W(p, 'tailP', 0.1); W(p, 'tailWaveA', 0.3); W(p, 'tailWaveF', 1.6); W(p, 'pupil', 0.75);
+    } },
+    attack: { dur: 1.1, loop: false, fn(t, p, I, k) { // anticipation → lunge-swipe → follow-through → recover
+      const ant = pulse(k, 0, 0.22, 0.28, 0.36), hit = pulse(k, 0.28, 0.4, 0.5, 0.75);
+      W(p, 'hipY', -0.04 * ant + 0.04 * hit); W(p, 'hipZ', -0.03 * ant + 0.14 * hit); W(p, 'hipP', 0.1 * ant - 0.25 * hit);
+      W(p, 'chP', 0.12 * ant - 0.15 * hit); W(p, 'neckP', -0.4 * ant + 0.2 * hit); W(p, 'headP', 0.3 * ant);
+      W(p, 'FRg', hit); W(p, 'FRy', 0.14 * hit); W(p, 'FRz', 0.12 * hit); W(p, 'FRx', 0.03 * pulse(k, 0.3, 0.42, 0.45, 0.55) - 0.04 * pulse(k, 0.45, 0.52, 0.6, 0.75)); W(p, 'FRm', -0.6 * hit); W(p, 'FRt', -0.6 * hit);
+      W(p, 'FLz', 0.08 * hit); W(p, 'HLm', 0.4 * ant); W(p, 'HRm', 0.4 * ant);
+      ears(p, -0.55 * (ant + hit), 0.2, 0); W(p, 'jaw', 0.35 * hit); W(p, 'pupil', 0.8);
+      W(p, 'tailP', -0.4 * hit); W(p, 'tailWaveA', 0.2);
+    } },
+    attack2: { dur: 1.2, loop: false, fn(t, p, I, k) {
+      const up = pulse(k, 0.1, 0.3, 0.7, 0.9);
+      W(p, 'hipY', -0.08 * up); W(p, 'hipP', -0.5 * up); W(p, 'neckP', 0.3 * up); W(p, 'headP', 0.2 * up);
+      for (const [s, o] of [['L', 0], ['R', 0.12]]) {
+        const sw = pulse(k, 0.3 + o, 0.38 + o, 0.42 + o, 0.55 + o);
+        W(p, 'F' + s + 'g', up); W(p, 'F' + s + 'y', 0.12 * up + 0.03 * sw); W(p, 'F' + s + 'z', 0.05 * up + 0.08 * sw); W(p, 'F' + s + 'm', -0.4 * up); W(p, 'F' + s + 't', -0.5 * up);
+      }
+      for (const s of ['L', 'R']) { W(p, 'H' + s + 'm', 0.9 * up); W(p, 'H' + s + 'z', 0.04 * up); }
+      ears(p, -0.5 * up, 0.2, 0); W(p, 'jaw', 0.3 * up); W(p, 'tailP', 0.5 * up); W(p, 'tailWaveA', 0.2);
+    } },
+    cast: { dur: 1.4, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0.05, 0.3, 0.75, 1);
+      sitBase(p, I, a); W(p, 'neckP', 0.55 * a - 0.35 * pulse(k, 0.35, 0.5, 0.6, 0.8)); W(p, 'headP', 0.32 * a - 0.2 * pulse(k, 0.35, 0.5, 0.6, 0.8));
+      eyes(p, 0.95 * pulse(k, 0.1, 0.25, 0.4, 0.5), 0.3 * pulse(k, 0.1, 0.25, 0.4, 0.5)); W(p, 'pupil', 0.9);
+      W(p, 'tailP', -0.8 * a); W(p, 'tailCurl', 0.1 * a); W(p, 'tailTipP', -0.6 * a); ears(p, -0.2 * a, 0, 0);
+    } },
+    skill: { dur: 1.8, loop: false, fn(t, p, I, k) { CLIPS.cast.fn(t, p, I, k); W(p, 'jaw', 0.4 * pulse(k, 0.4, 0.5, 0.6, 0.75)); W(p, 'hipY', Rd(p, 'hipY') + 0.03 * pulse(k, 0.4, 0.5, 0.55, 0.7)); } },
+    hurt: { dur: 0.7, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0, 0.08, 0.3, 1);
+      W(p, 'hipZ', -0.06 * a); W(p, 'hipY', -0.02 * a); W(p, 'hipP', -0.15 * a); W(p, 'neckP', -0.2 * a); W(p, 'headP', -0.3 * a); W(p, 'headR', 0.2 * a);
+      eyes(p, 0.9 * a, 0.5 * a); ears(p, 0.9 * a, 0.5 * a, 0.4 * a); W(p, 'jaw', 0.3 * a); W(p, 'tailP', 0.6 * a);
+      W(p, 'FLz', -0.03 * a); W(p, 'FRz', -0.03 * a);
+    } },
+    guard: { dur: 2, loop: true, fn(t, p, I) { // 芋圓 plants himself: wide, low, unmovable
+      W(p, 'hipY', -0.05); W(p, 'chP', 0.05); W(p, 'neckP', -0.35); W(p, 'headP', 0.4);
+      W(p, 'FLx', 0.02); W(p, 'FRx', -0.02); W(p, 'HLx', 0.02); W(p, 'HRx', -0.02); W(p, 'FLz', 0.02); W(p, 'FRz', 0.02);
+      ears(p, 0.6, 0.45, 0.35); eyes(p, 0.45, 0.2); W(p, 'pupil', 0.15); W(p, 'tailP', 0.7); W(p, 'tailWaveA', 0.12); W(p, 'tailWaveF', 1.2);
+    } },
+    ko: { dur: 1.2, loop: false, hold: true, fn(t, p, I, k) {
+      const a = easeO(min(1, k * 1.4));
+      CLIPS.sleep.fn(t, p, I, k); blendInto(p, neutral(newPose(), I), 1 - a);
+      W(p, 'breath', 0.4); eyes(p, a, 0.4 * a); W(p, 'tailWaveA', 0);
+    } },
+    revive: { dur: 1.2, loop: false, fn(t, p, I, k) {
+      const a = 1 - ease(min(1, k * 1.2)); const q = newPose(); CLIPS.sleep.fn(t, q, I, 0); neutral(p, I); blendInto(p, q, a);
+      W(p, 'hipY', Rd(p, 'hipY') + 0.03 * pulse(k, 0.5, 0.65, 0.7, 0.9)); ears(p, -0.2 * pulse(k, 0.5, 0.7, 0.8, 1), 0, 0);
+    } },
+    victory: { dur: 3, loop: true, fn(t, p, I, k) {
+      sitBase(p, I, 1); W(p, 'neckP', 0.35); W(p, 'headP', 0.15); W(p, 'headR', 0.12 * sin(t * 1.2));
+      W(p, 'tailP', -0.9); W(p, 'tailCurlY', 0); W(p, 'tailCurl', 0.12); W(p, 'tailTipP', -0.7); W(p, 'tailWaveA', 0.05);
+      eyes(p, I.expr.lidU * 0.5 + 0.6 * pulse((t * 0.35) % 1, 0.1, 0.25, 0.4, 0.55), 0.1); ears(p, -0.15, 0, 0);
+    } },
+    item: { dur: 1.4, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0.05, 0.25, 0.7, 1); const tap = pulse(k, 0.35, 0.45, 0.5, 0.6);
+      W(p, 'neckP', 0.6 * a); W(p, 'headP', 0.3 * a); W(p, 'FRy', 0.05 * tap); W(p, 'FRz', 0.04 * a); W(p, 'FRm', 0.6 * tap);
+      ears(p, -0.25 * a, 0, 0); W(p, 'tailP', -0.6 * a); W(p, 'tailCurl', 0.08);
+    } },
+    dodge: { dur: 0.6, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0, 0.15, 0.35, 0.9), air = pulse(k, 0.08, 0.2, 0.3, 0.45);
+      W(p, 'hipX', 0.1 * a); W(p, 'hipY', 0.06 * air - 0.02 * a); W(p, 'hipR', -0.25 * air);
+      for (const L of LEGK) W(p, L + 'y', 0.04 * air); ears(p, 0.5 * a, 0.3, 0); W(p, 'tailP', -0.3 * a);
+    } },
+    // ---- field / cutscene clips shared with the humans' vocabulary
+    talk: { dur: 1.2, loop: true, fn(t, p, I, k) { W(p, 'jaw', 0.28 * max(0, sin(k * TAU * 2))); W(p, 'headP', -0.08 * max(0, sin(k * TAU * 2))); ears(p, -0.1, 0, 0); } },
+    nod: { dur: 0.9, loop: false, fn(t, p, I, k) { W(p, 'headP', 0.3 * sin(PI * k) * (k < 1 ? 1 : 0)); W(p, 'neckP', 0.1 * sin(PI * k)); } },
+    shake: { dur: 0.8, loop: false, fn(t, p, I, k) { W(p, 'headY', 0.35 * sin(k * TAU * 2.5) * sin(PI * k)); W(p, 'headR', 0.12 * sin(k * TAU * 2.5)); ears(p, 0.3 * sin(PI * k), 0.2, 0); } },
+    bow: { dur: 3, loop: false, fn(t, p, I, k) { CLIPS.stretch.fn(t, p, I, k); } },
+    kneel: { dur: 6, loop: true, fn(t, p, I) { loafBase(p, I, 1); } },
+    point: { dur: 1.5, loop: true, fn(t, p, I) { sitBase(p, I, 1); W(p, 'FRg', 1); W(p, 'FRy', 0.1); W(p, 'FRz', 0.09); W(p, 'FRm', -0.2); } },
+    wave: { dur: 1.2, loop: true, fn(t, p, I, k) { sitBase(p, I, 1); W(p, 'FRg', 1); W(p, 'FRy', 0.12 + 0.02 * sin(k * TAU * 2)); W(p, 'FRz', 0.06); W(p, 'FRx', 0.02 * sin(k * TAU * 2)); W(p, 'FRm', 1.2); W(p, 'FRt', 0.8); } },
+    cry: { dur: 3, loop: true, fn(t, p, I) { sitBase(p, I, 1); W(p, 'neckP', 0.75); W(p, 'headP', 0.4); ears(p, 0.4, 0.7, 0.5); eyes(p, 0.6, 0.3); W(p, 'tailWaveA', 0); } },
+    laugh: { dur: 1.3, loop: false, fn(t, p, I, k) { CLIPS.chirp.fn(t, p, I, k); } },
+    think: { dur: 3, loop: true, fn(t, p, I) { sitBase(p, I, 1); W(p, 'headR', 0.35); W(p, 'headY', 0.1); ears(p, -0.1, 0.1, 0); W(p, 'tailTipP', 0.3 * sin(t * 2)); } },
+    surprise: { dur: 0.9, loop: false, fn(t, p, I, k) {
+      const a = pulse(k, 0, 0.08, 0.45, 0.9), air = pulse(k, 0.02, 0.1, 0.18, 0.3);
+      W(p, 'hipY', 0.07 * air); W(p, 'hipZ', -0.05 * a); W(p, 'sp1P', -0.15 * a); W(p, 'sp2P', -0.15 * a); for (const L of LEGK) W(p, L + 'y', 0.05 * air);
+      eyes(p, 0, 0); W(p, 'pupil', 0.95); ears(p, -0.35 * a, -0.15, 0); W(p, 'tailP', -0.9 * a); W(p, 'tailCurl', 0.1 * a);
+    } },
+    pray: { dur: 4, loop: true, fn(t, p, I) { sitBase(p, I, 1); eyes(p, 1, 0.35); W(p, 'headP', 0.45); } },
+    fall: { dur: 1, loop: false, hold: true, fn(t, p, I, k) { CLIPS.ko.fn(t, p, I, k); } },
+    run: { dur: 1, loop: true, fn() {} }, // locomotion handles run; kept for the battle vocabulary
+  };
+  // emotes → short additive reactions (deltas on top of whatever is playing)
+  const EMOTES = {
+    '!': { dur: 0.8, fn(p, k) { const a = pulse(k, 0, 0.08, 0.5, 1); Ad(p, 'hipY', 0.025 * pulse(k, 0, 0.06, 0.12, 0.25)); Ad(p, 'headP', -0.15 * a); Ad(p, 'earLP', -0.4 * a); Ad(p, 'earRP', -0.4 * a); Ad(p, 'pupil', 0.6 * a); Ad(p, 'lidUL', -0.5 * a); Ad(p, 'lidUR', -0.5 * a); Ad(p, 'tailP', -0.5 * a); } },
+    '?': { dur: 1.4, fn(p, k) { const a = pulse(k, 0, 0.2, 0.7, 1); Ad(p, 'headR', 0.4 * a); Ad(p, 'earLY', 0.3 * a); Ad(p, 'earRY', -0.2 * a); } },
+    '…': { dur: 1.6, fn(p, k) { const a = pulse(k, 0, 0.2, 0.75, 1); Ad(p, 'lidUL', 0.35 * a); Ad(p, 'lidUR', 0.35 * a); Ad(p, 'earLY', 0.4 * a); Ad(p, 'earRY', 0.4 * a); Ad(p, 'tailTipP', 0.5 * pulse(k, 0.3, 0.4, 0.45, 0.6)); } },
+    '♪': { dur: 1.6, fn(p, k) { const a = pulse(k, 0, 0.15, 0.8, 1); Ad(p, 'headR', 0.15 * sin(k * TAU * 2) * a); Ad(p, 'tailP', -0.6 * a); Ad(p, 'tailTipP', -0.4 * a); Ad(p, 'lidUL', 0.4 * a); Ad(p, 'lidUR', 0.4 * a); } },
+    '💢': { dur: 1.2, fn(p, k) { const a = pulse(k, 0, 0.1, 0.7, 1); Ad(p, 'earLP', 0.9 * a); Ad(p, 'earRP', 0.9 * a); Ad(p, 'earLY', 0.6 * a); Ad(p, 'earRY', 0.6 * a); Ad(p, 'jaw', 0.4 * a); Ad(p, 'pupil', -0.2 * a); Ad(p, 'tailWaveA', 0.4 * a); Ad(p, 'tailWaveF', 2 * a); Ad(p, 'hipY', -0.02 * a); } },
+    '♥': { dur: 2.2, fn(p, k) { const a = pulse(k, 0.1, 0.35, 0.6, 0.9); Ad(p, 'lidUL', 0.9 * a); Ad(p, 'lidUR', 0.9 * a); Ad(p, 'lidDL', 0.3 * a); Ad(p, 'lidDR', 0.3 * a); Ad(p, 'headR', -0.15 * a); Ad(p, 'headP', 0.08 * a); Ad(p, 'tailP', -0.4 * a); Ad(p, 'purr', a); } },
+    '💧': { dur: 1.8, fn(p, k) { const a = pulse(k, 0, 0.2, 0.7, 1); Ad(p, 'earLP', 0.5 * a); Ad(p, 'earRP', 0.5 * a); Ad(p, 'earLR', 0.5 * a); Ad(p, 'earRR', 0.5 * a); Ad(p, 'headP', 0.2 * a); Ad(p, 'tailP', 0.6 * a); } },
+    '✦': { dur: 1.4, fn(p, k) { const a = pulse(k, 0, 0.1, 0.7, 1); Ad(p, 'pupil', 0.7 * a); Ad(p, 'lidUL', -0.4 * a); Ad(p, 'lidUR', -0.4 * a); Ad(p, 'earLP', -0.3 * a); Ad(p, 'earRP', -0.3 * a); Ad(p, 'headP', -0.1 * a); } },
+  };
+  // expressions → targets for lids / pupils / ears / mouth (smoothed)
+  const EXPR = {
+    neutral: { lidU: 0.1, lidD: 0.05, pupil: 0.3, ear: 0, earY: 0, jaw: 0 },
+    smile: { lidU: 0.45, lidD: 0.2, pupil: 0.35, ear: -0.05, earY: 0.1, jaw: 0 },
+    sad: { lidU: 0.4, lidD: 0.05, pupil: 0.45, ear: 0.5, earY: 0.6, jaw: 0 },
+    angry: { lidU: 0.3, lidD: 0.25, pupil: 0.08, ear: 0.9, earY: 0.65, jaw: 0.25 },
+    surprised: { lidU: -0.25, lidD: -0.1, pupil: 0.9, ear: -0.35, earY: -0.1, jaw: 0.1 },
+    shy: { lidU: 0.35, lidD: 0.15, pupil: 0.5, ear: 0.2, earY: 0.5, jaw: 0 },
+    pain: { lidU: 0.75, lidD: 0.45, pupil: 0.2, ear: 0.7, earY: 0.5, jaw: 0.15 },
+    closed: { lidU: 1, lidD: 0.35, pupil: 0.3, ear: 0, earY: 0.1, jaw: 0 },
+    determined: { lidU: 0.3, lidD: 0.2, pupil: 0.2, ear: -0.3, earY: 0, jaw: 0 },
+    judging: { lidU: 0.5, lidD: 0.18, pupil: 0.12, ear: 0.05, earY: 0.35, jaw: 0 },
+  };
+
+  // ================================================================================== spring bones
+  // Verlet "jiggle" chains (VRM-style): each bone's tail is a particle pulled toward its animated position, with drag
+  // and gravity, length-constrained to the bone; the bone is then rotated to point at it. Fixed 60 Hz substeps.
+  class Springs {
+    constructor(inst, defs) {
+      const THREE = T3();
+      this.I = inst; this.list = [];
+      for (const d of defs) {
+        const b = inst.B[d.bone]; if (!b) continue;
+        this.list.push({ b, tailL: new THREE.Vector3(...d.tail), stiff: d.stiff, drag: d.drag, grav: d.grav || 0, cur: new THREE.Vector3(), prev: new THREE.Vector3(), len: Math.hypot(...d.tail), init: false, w: d.w != null ? d.w : 1 });
+      }
+      this.acc = 0;
+      this._v = new THREE.Vector3(); this._a = new THREE.Vector3(); this._h = new THREE.Vector3(); this._q = new THREE.Quaternion(); this._pq = new THREE.Quaternion(); this._wq = new THREE.Quaternion();
+      this._d0 = new THREE.Vector3(); this._d1 = new THREE.Vector3();
+    }
+    reset() { for (const s of this.list) s.init = false; }
+    step(dt) {
+      this.acc = min(this.acc + dt, 4 / 60);
+      const n = Math.floor(this.acc * 60 + 1e-6);
+      this.acc -= n / 60;
+      const sub = max(1, n);
+      for (const s of this.list) {
+        const b = s.b;
+        b.updateMatrixWorld(true);
+        const h = this._h.setFromMatrixPosition(b.matrixWorld);
+        const ta = this._a.copy(s.tailL).applyMatrix4(b.matrixWorld);
+        if (!s.init) { s.cur.copy(ta); s.prev.copy(ta); s.init = true; }
+        const worldLen = ta.distanceTo(h);
+        if (n > 0) for (let i = 0; i < sub; i++) {
+          const v = this._v.copy(s.cur).sub(s.prev).multiplyScalar(1 - s.drag);
+          s.prev.copy(s.cur);
+          s.cur.add(v).add(this._d0.copy(ta).sub(s.cur).multiplyScalar(s.stiff));
+          s.cur.y -= s.grav * worldLen;
+          const d = this._d1.copy(s.cur).sub(h); const l = d.length() || 1;
+          s.cur.copy(h).addScaledVector(d, worldLen / l);
+        }
+        // rotate the bone so its tail points at the particle
+        const d0 = this._d0.copy(ta).sub(h).normalize(), d1 = this._d1.copy(s.cur).sub(h).normalize();
+        if (d0.dot(d1) > 0.99999 || s.w <= 0) continue;
+        const q = this._q.setFromUnitVectors(d0, d1);
+        if (s.w < 1) q.slerp(this._wq.identity(), 1 - s.w);
+        b.getWorldQuaternion(this._wq);
+        const nw = q.multiply(this._wq);
+        b.parent.getWorldQuaternion(this._pq);
+        b.quaternion.copy(this._pq.invert().multiply(nw));
+        b.updateMatrixWorld(true);
+      }
+    }
+  }
+
   // ================================================================================== instance
-  const BONE_ALIAS = { spine: 'spine1', handL: 'handL', handR: 'handR', footL: 'footL', footR: 'footR', hips: 'hips', chest: 'chest', neck: 'neck', head: 'head' };
+  const BONE_ALIAS = { spine: 'spine1', hips: 'hips', chest: 'chest', neck: 'neck', head: 'head', handL: 'handL', handR: 'handR', footL: 'footL', footR: 'footR' };
+  const _v1 = () => new (T3().Vector3)();
+  function frameQuat(d0, s0, d1, s1, out) { // rotation taking basis (s0, d0) → (s1, d1)
+    const THREE = T3();
+    const a = s0.clone().addScaledVector(d0, -s0.dot(d0)).normalize(), b = s1.clone().addScaledVector(d1, -s1.dot(d1)).normalize();
+    const c0 = new THREE.Vector3().crossVectors(a, d0), c1 = new THREE.Vector3().crossVectors(b, d1);
+    const m0 = new THREE.Matrix4().makeBasis(a, d0, c0), m1 = new THREE.Matrix4().makeBasis(b, d1, c1);
+    return out.setFromRotationMatrix(m1.multiply(m0.transpose()));
+  }
   class AnimalInst {
     constructor(asset, opts = {}) {
       const THREE = T3();
-      this.asset = asset; this.id = asset.id; this.opts = opts;
+      this.asset = asset; this.id = asset.id; this.opts = opts; this.context = opts.context || 'map';
       const plan = asset.plan, S = asset.S;
+      this.plan = plan; this.S = S;
       this.root = new THREE.Group(); this.root.name = 'animal:' + asset.id;
-      // bones (rest orientation = identity, positions relative to the parent)
       this.bones = []; this.B = {};
       for (const [name, parent, p] of plan.joints) {
         const b = new THREE.Bone(); b.name = name;
@@ -1081,17 +1616,17 @@ G.Animal3D = (() => {
         if (parent) this.B[parent].add(b);
         this.bones.push(b); this.B[name] = b;
       }
-      this.rest = this.bones.map((b) => b.position.clone());
+      this.restPos = {}; for (const b of this.bones) this.restPos[b.name] = b.position.clone();
       const rootBone = this.B.root;
       rootBone.updateMatrixWorld(true);
       this.skeleton = new THREE.Skeleton(this.bones);
-      const pal = asset.pal;
-      this.mat = coatMaterial(pal, { faceTex: asset.faceTex, spots: plan.cfg.coat === 'leopard', tick: plan.cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3 });
+      const pal = asset.pal, cfg = plan.cfg;
+      this.mat = coatMaterial(pal, { faceTex: asset.faceTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint });
       this.body = new THREE.SkinnedMesh(asset.geo, this.mat);
       this.body.add(rootBone);
       this.body.bind(this.skeleton);
       this.body.castShadow = true; this.body.receiveShadow = true;
-      this.eyeMat = eyeMaterial({ iris: pal.iris, iris2: pal.iris2, round: false });
+      this.eyeMat = eyeMaterial({ iris: pal.iris, iris2: pal.iris2, round: !!(cfg.eye && cfg.eye.round), irisR: cfg.eye && cfg.eye.irisR, pupilH: cfg.eye && cfg.eye.round ? 0.62 : 0.82 });
       this.eyes = new THREE.SkinnedMesh(asset.eyeGeo, this.eyeMat);
       this.eyes.bind(this.skeleton, this.body.bindMatrix);
       const fake = { isSkinnedMesh: true, geometry: asset.hull, skeleton: this.skeleton, bindMatrix: this.body.bindMatrix };
@@ -1099,21 +1634,349 @@ G.Animal3D = (() => {
       for (const m of [this.body, this.eyes, this.outline]) { m.boundingSphere = asset.sphere.clone(); m.frustumCulled = true; }
       this.eyes.castShadow = false;
       this.root.add(this.body, this.eyes, this.outline);
+      if (asset.cardGeo) {
+        this.cardMat = coatMaterial(pal, { faceTex: asset.faceTex, cards: true, cardTex: asset.cardTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint, rim: 0.2 });
+        this.cards = new THREE.SkinnedMesh(asset.cardGeo, this.cardMat);
+        this.cards.bind(this.skeleton, this.body.bindMatrix);
+        this.cards.boundingSphere = asset.sphere.clone(); this.cards.castShadow = false;
+        this.root.add(this.cards);
+      }
       this.height = asset.height;
-      this.yaw = 0; this._speed = 0;
+      // rig data (model space, scaled)
+      this.legs = {};
+      for (const L of LEGK) {
+        const lg = plan.legs[L[1] === 'L' ? L[0] + 'L' : L[0] + 'R'] || plan.legs[L];
+        const ch = lg.chain.map((n) => new THREE.Vector3(...plan.JP[n]).multiplyScalar(S));
+        const toe = new THREE.Vector3(...lg.toe).multiplyScalar(S);
+        const gird = new THREE.Vector3(...plan.JP[lg.girdle]).multiplyScalar(S);
+        const down = new THREE.Vector3(0, -1, 0), fwd = new THREE.Vector3(0, 0, 1);
+        const metaDir = ch[3].clone().sub(ch[2]).normalize();
+        this.legs[L] = {
+          def: lg, bones: lg.chain.map((n) => this.B[n]), girdle: this.B[lg.girdle], front: lg.front,
+          la: ch[1].distanceTo(ch[0]), lb: ch[2].distanceTo(ch[1]), lc: ch[3].distanceTo(ch[2]),
+          restDirs: [ch[1].clone().sub(ch[0]).normalize(), ch[2].clone().sub(ch[1]).normalize(), metaDir, toe.clone().sub(ch[3]).normalize()],
+          restPaw: ch[3].clone(), pawInGirdle: ch[3].clone().sub(gird), minY: ch[3].y,
+          meta0: Math.atan2(metaDir.dot(fwd), metaDir.dot(down)),
+          femur0: (() => { const d = ch[1].clone().sub(ch[0]).normalize(); return Math.atan2(d.dot(fwd), d.dot(down)); })(),
+        };
+      }
+      // eye/lid axes (head-local = model at rest)
+      this.eyeInfo = plan.eyes.map((e) => ({ sx: e.sx, x: new THREE.Vector3(...e.F.x), y: new THREE.Vector3(...e.F.y), z: new THREE.Vector3(...e.F.z) }));
+      // state
+      this.t = 0; this.yaw = 0; this.yawPrev = null; this.yawRate = 0; this._speed = 0; this.speed = 0; this.accel = 0;
+      this.phase = 0; this.gait = 'walk'; this.gaitPrev = null; this.gaitFade = 1; this.moveW = 0;
+      this.cadence = { walk: 1, trot: 2, gallop: 3 };
+      this.clip = null; this.clipPrev = null; this.emotes = [];
+      this.expr = Object.assign({}, EXPR.neutral, cfg.exprBase ? EXPR[cfg.exprBase] : null); this.exprName = 'neutral';
+      this.exprT = Object.assign({}, this.expr);
+      this.blink = { next: 1.5 + Math.random() * 3, t: -1, dbl: false };
+      this.earFlick = { next: 2 + Math.random() * 4, t: -1, side: 1 };
+      this.idleBrain = { t: 0, next: 3 + Math.random() * 3, cur: null };
+      this.lookTarget = null; this.lookW = 0; this.lookYaw = 0; this.lookPitch = 0; this.saccade = { t: 0, x: 0, y: 0 };
+      this.tailOsc = 0; this.purrT = 0;
+      this.P = newPose(); this.Q = newPose(); this.R = newPose(); this.E = newPose();
+      this.springs = new Springs(this, plan.springs ? plan.springs(S) : []);
+      this.opacity = 1; this.ghost = false;
+      const sp = G.Sprites.spec(asset.id) || {};
+      if (sp.ghost) this.setOpacity(1, true);
+      this._tmp = { a: _v1(), b: _v1(), c: _v1(), d: _v1(), e: _v1(), f: _v1(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), m: new THREE.Matrix4(), m2: new THREE.Matrix4(), eu: new THREE.Euler(0, 0, 0, 'YXZ') };
+      this.update(0);
     }
-    setFacing(yaw) { this.yaw = yaw; this.root.rotation.y = yaw; }
-    setMove(speed) { this._speed = speed; }
-    play() {} emote() {} setExpression() {} lookAt() {}
+    // ---------------------------------------------------------------- public interface
+    setFacing(yaw) { this.yaw = yaw; }
+    setMove(speed) { this._speed = max(0, speed || 0); }
+    play(name, o = {}) {
+      if (!name) { if (this.clip) { this.clipPrev = this.clip; this.clipPrev.fadeOut = o.fade || 0.3; this.clipPrev.fo = 0; } this.clip = null; return; }
+      let key = name;
+      if (!CLIPS[key]) key = { attack2: 'attack2', walk: null }[name] || 'sit';
+      if (!key) return;
+      const def = CLIPS[key];
+      if (this.clip && this.clip.name === key && (o.loop != null ? o.loop : def.loop)) return;
+      if (this.clip) { this.clipPrev = this.clip; this.clipPrev.fadeOut = o.fade || 0.25; this.clipPrev.fo = 0; }
+      this.clip = { name: key, def, t: 0, w: 0, fade: o.fade != null ? o.fade : 0.28, loop: o.loop != null ? o.loop : def.loop, onDone: o.onDone || null, explicit: true };
+    }
+    emote(k) { const d = EMOTES[k]; if (d) this.emotes.push({ d, t: 0 }); if (k === '♥' && !this.clip) this.play('slowblink'); }
+    setExpression(name) { const e = EXPR[name] || EXPR.neutral; this.exprName = name; Object.assign(this.exprT, e); }
+    lookAt(v) { this.lookTarget = v ? v.clone() : null; }
     setOpacity(a, ghost) {
+      this.opacity = a; this.ghost = !!ghost;
       const U = this.mat.userData.coat; U.uFade.value = a; U.uGhost.value = ghost ? 1 : 0;
-      const tr = a < 0.99 || ghost; this.mat.transparent = tr; this.mat.depthWrite = !ghost;
-      this.eyeMat.transparent = tr; this.eyeMat.userData.eye.uFade.value = a;
+      const tr = a < 0.99 || !!ghost;
+      if (this.mat.transparent !== tr) { this.mat.transparent = tr; this.mat.needsUpdate = true; this.eyeMat.transparent = tr; this.eyeMat.needsUpdate = true; }
+      this.mat.depthWrite = !ghost;
+      const EU = this.eyeMat.userData.eye; EU.uFade.value = a; EU.uGhost.value = ghost ? 1 : 0;
+      if (this.cardMat) { const C = this.cardMat.userData.coat; C.uFade.value = a; C.uGhost.value = ghost ? 1 : 0; this.cardMat.depthWrite = !ghost; if (this.cardMat.transparent !== tr) { this.cardMat.transparent = tr; this.cardMat.needsUpdate = true; } }
       this.outline.visible = a > 0.6 && !ghost;
+      this.body.castShadow = !ghost && a > 0.5;
     }
-    update(dt) { this.root.updateMatrixWorld(true); }
     bone(name) { return this.B[BONE_ALIAS[name] || name] || this.B.root; }
-    dispose() { this.mat.dispose(); this.eyeMat.dispose(); this.outline.material.dispose(); }
+    dispose() { this.mat.dispose(); this.eyeMat.dispose(); this.outline.material.dispose(); if (this.cardMat) this.cardMat.dispose(); }
+
+    // ---------------------------------------------------------------- update
+    update(dt, camYaw, camera) {
+      dt = min(dt || 0, 0.1);
+      this.t += dt;
+      this.root.rotation.y = this.yaw;
+      // turn rate (for leaning into turns)
+      if (this.yawPrev == null) this.yawPrev = this.yaw;
+      const dy = Math.atan2(sin(this.yaw - this.yawPrev), cos(this.yaw - this.yawPrev)); this.yawPrev = this.yaw;
+      if (dt > 0) this.yawRate += (dy / dt - this.yawRate) * min(1, dt * 8);
+      // speed smoothing + gait selection with hysteresis
+      const prevSpeed = this.speed;
+      this.speed += (this._speed - this.speed) * min(1, dt * 10);
+      if (dt > 0) this.accel += ((this.speed - prevSpeed) / dt - this.accel) * min(1, dt * 6);
+      const S = this.S, vp = this.speed / S;
+      const want = this.gaitFor(vp);
+      if (want !== this.gait) { this.gaitPrev = this.gait; this.gait = want; this.gaitFade = 0; }
+      this.gaitFade = min(1, this.gaitFade + dt / 0.3);
+      for (const g in GAITS) { const G_ = GAITS[g]; this.cadence[g] = max(G_.f0 + G_.fk * vp, vp * G_.duty / G_.sweepMax); }
+      const f = lerp(this.cadence[this.gaitPrev || this.gait], this.cadence[this.gait], this.gaitFade);
+      this.phase = (this.phase + dt * f) % 1;
+      this.moveW += ((this.speed > 0.05 ? 1 : 0) - this.moveW) * min(1, dt * (this.speed > 0.05 ? 9 : 5));
+      // expression smoothing
+      for (const k in this.exprT) this.expr[k] += (this.exprT[k] - this.expr[k]) * min(1, dt * 8);
+      // ---- base: idle stand ↔ locomotion
+      const P = this.P, Q = this.Q;
+      neutral(P, this);
+      this.idlePose(P, dt);
+      if (this.moveW > 0.001) {
+        neutral(Q, this); gaitPose(Q, this, this.gait, this.phase, vp);
+        if (this.gaitPrev && this.gaitFade < 1) { const R = this.R; neutral(R, this); gaitPose(R, this, this.gaitPrev, this.phase, vp); blendInto(R, Q, this.gaitFade); Q.set(R); }
+        blendInto(P, Q, this.moveW);
+      }
+      // ---- clips (crossfaded over the base; moving cancels idle-brain clips)
+      if (this.clip && !this.clip.explicit && this.speed > 0.15) this.play(null, { fade: 0.18 });
+      if (this.clipPrev) {
+        const c = this.clipPrev; c.fo += dt; c.t += dt;
+        const w = c.w * (1 - c.fo / c.fadeOut);
+        if (w <= 0) this.clipPrev = null; else { this.evalClip(c, Q); blendInto(P, Q, w); }
+      }
+      if (this.clip) {
+        const c = this.clip; c.t += dt; c.w = min(1, c.w + dt / max(0.01, c.fade));
+        const done = !c.loop && c.t >= c.def.dur;
+        this.evalClip(c, Q);
+        let w = c.w;
+        if (this.speed > 0.15 && !c.def.battle) w *= 1 - this.moveW * 0.85; // locomotion wins while moving
+        blendInto(P, Q, w);
+        if (done && !c.def.hold) { const cb = c.onDone; this.play(null, { fade: 0.35 }); if (cb) cb(); }
+        else if (done && c.def.hold && c.onDone) { const cb = c.onDone; c.onDone = null; cb(); }
+      }
+      // ---- additive layers
+      this.additive(P, dt);
+      // ---- solve
+      this.applyPose(P, dt);
+      this.springs.step(dt);
+      // eye uniforms
+      this.eyeMat.userData.eye.uPupil.value = clamp(Rd(P, 'pupil'), 0.06, 1);
+      this.mat.userData.coat.uTime.value = this.t;
+    }
+    gaitFor(vp) {
+      const g = this.gait, h = 0.06;
+      const w2t = 1.0 / 1.0 * 1.15, t2g = 2.35; // plan-unit speeds (m/s at real cat scale)
+      if (g === 'walk') return vp > w2t + h ? (vp > t2g + h ? 'gallop' : 'trot') : 'walk';
+      if (g === 'trot') return vp < w2t - h ? 'walk' : vp > t2g + h ? 'gallop' : 'trot';
+      return vp < t2g - h ? (vp < w2t - h ? 'walk' : 'trot') : 'gallop';
+    }
+    evalClip(c, out) {
+      neutral(out, this);
+      const dur = c.def.dur;
+      const k = c.loop ? (c.t / dur) % 1 : min(1, c.t / dur);
+      c.def.fn(c.t, out, this, k);
+    }
+    // idle behaviour brain: stand → sit → (groom | look around | loaf | yawn) while nothing else is requested
+    idlePose(P, dt) {
+      const B_ = this.idleBrain;
+      // standing idle: weight shift + slow head looks
+      const t = this.t;
+      W(P, 'hipX', 0.003 * sin(t * 0.37)); W(P, 'hipR', 0.015 * sin(t * 0.37)); W(P, 'headY', 0.18 * sin(t * 0.23) * sin(t * 0.11)); W(P, 'neckP', 0.05);
+      if (this.speed > 0.05 || (this.clip && this.clip.explicit)) { B_.t = 0; return; }
+      if (this.context !== 'map' && this.context !== 'cutscene') return;
+      B_.t += dt;
+      if (B_.t > B_.next) {
+        B_.t = 0;
+        const pet = this.plan.cfg;
+        const r = Math.random();
+        let pick;
+        if (!this.clip) pick = r < 0.6 ? 'sit' : r < 0.85 ? 'loaf' : 'stretch';
+        else if (this.clip.name === 'sit') pick = r < 0.25 ? 'groom' : r < 0.4 ? 'yawn' : r < 0.55 && pet.judge ? 'judge' : r < 0.65 ? 'loaf' : r < 0.72 && pet.chirpy ? 'chirp' : null;
+        else if (this.clip.name === 'loaf') pick = r < 0.25 ? 'purr' : r < 0.35 ? 'sleep' : r < 0.5 ? 'sit' : null;
+        else if (this.clip.name === 'groom' || this.clip.name === 'judge' || this.clip.name === 'purr') pick = r < 0.6 ? 'sit' : 'loaf';
+        if (pick) { this.play(pick, { fade: pick === 'sit' || pick === 'loaf' ? 0.9 : 0.5 }); this.clip.explicit = false; if (!CLIPS[pick].loop) this.clip.onDone = () => this.play('sit', { fade: 0.6 }); if (this.clip) this.clip.explicit = false; }
+        B_.next = 4 + Math.random() * 6;
+      }
+    }
+    additive(P, dt) {
+      const t = this.t;
+      // breathing (chest/belly) – faster when moving or after running
+      const br = Rd(P, 'breath'), rate = 1.6 + this.moveW * 1.2;
+      W(P, 'bellyY', Rd(P, 'bellyY') + 0.0018 * br * sin(t * rate * TAU / 2));
+      Ad(P, 'chP', -0.012 * br * sin(t * rate * TAU / 2));
+      // tail: base swish oscillator (frequency from the pose, phase kept here so blending never pops)
+      this.tailOsc += dt * Rd(P, 'tailWaveF') * TAU;
+      // ear flicks
+      const ef = this.earFlick;
+      if (t > ef.next && ef.t < 0) { ef.t = 0; ef.side = Math.random() < 0.5 ? 1 : -1; ef.next = t + 3 + Math.random() * 6; }
+      if (ef.t >= 0) {
+        ef.t += dt; const a = pulse(ef.t, 0, 0.05, 0.12, 0.3);
+        Ad(P, ef.side > 0 ? 'earLY' : 'earRY', 0.5 * a); Ad(P, ef.side > 0 ? 'earLR' : 'earRR', 0.3 * a);
+        if (ef.t > 0.3) ef.t = -1;
+      }
+      // blinks (occasional double blink)
+      const bl = this.blink;
+      if (t > bl.next && bl.t < 0) { bl.t = 0; bl.dbl = Math.random() < 0.2; bl.next = t + 2 + Math.random() * 4.5; }
+      if (bl.t >= 0) {
+        bl.t += dt;
+        const one = (x) => pulse(x, 0, 0.06, 0.1, 0.2);
+        const a = max(one(bl.t), bl.dbl ? one(bl.t - 0.24) : 0);
+        for (const k of ['lidUL', 'lidUR']) W(P, k, Rd(P, k) + (1 - Rd(P, k)) * a);
+        for (const k of ['lidDL', 'lidDR']) W(P, k, Rd(P, k) + (0.3 - Rd(P, k)) * a * 0.6);
+        if (bl.t > (bl.dbl ? 0.45 : 0.22)) bl.t = -1;
+      }
+      // emotes
+      for (let i = this.emotes.length - 1; i >= 0; i--) {
+        const e = this.emotes[i]; e.t += dt; const k = e.t / e.d.dur;
+        if (k >= 1) { this.emotes.splice(i, 1); continue; }
+        e.d.fn(P, k);
+      }
+      // expression ears
+      Ad(P, 'earLP', this.expr.ear); Ad(P, 'earRP', this.expr.ear); Ad(P, 'earLY', this.expr.earY); Ad(P, 'earRY', this.expr.earY);
+      Ad(P, 'jaw', this.expr.jaw);
+      // purr: fine vibration + closed-eye contentment
+      const pu = Rd(P, 'purr');
+      if (pu > 0.01) { const v = sin(t * 2 * PI * 23) * 0.5 + sin(t * 2 * PI * 17.3) * 0.5; Ad(P, 'chP', 0.004 * pu * v); Ad(P, 'headP', 0.006 * pu * v); Ad(P, 'bellyY', 0.0008 * pu * v); }
+      // turn lean & acceleration
+      const yr = clamp(this.yawRate, -6, 6) * this.moveW;
+      Ad(P, 'sp1Y', -0.03 * yr); Ad(P, 'sp2Y', -0.03 * yr); Ad(P, 'chY', -0.02 * yr); Ad(P, 'neckY', -0.05 * yr); Ad(P, 'hipR', 0.025 * yr);
+      Ad(P, 'tailY', 0.06 * yr);
+      const ac = clamp(this.accel / this.S, -6, 6);
+      Ad(P, 'hipP', 0.01 * ac); Ad(P, 'chP', 0.008 * ac);
+      // look-at (head + eyes) with limits & smoothing; saccades when idle
+      this.updateLook(P, dt);
+    }
+    updateLook(P, dt) {
+      let ty = 0, tp = 0, w = 0;
+      if (this.lookTarget) {
+        const hb = this.B.head, hp = this._tmp.a; hb.getWorldPosition(hp);
+        const d = this._tmp.b.copy(this.lookTarget).sub(hp);
+        const yawW = Math.atan2(d.x, d.z);
+        ty = Math.atan2(sin(yawW - this.yaw), cos(yawW - this.yaw));
+        tp = -Math.atan2(d.y, Math.hypot(d.x, d.z));
+        w = abs(ty) < 2.2 ? 1 : 0;
+      }
+      this.lookW += (w - this.lookW) * min(1, dt * 4);
+      this.lookYaw += (clamp(ty, -1.3, 1.3) - this.lookYaw) * min(1, dt * 5);
+      this.lookPitch += (clamp(tp, -0.6, 0.5) - this.lookPitch) * min(1, dt * 5);
+      const lw = this.lookW * Rd(P, 'look');
+      Ad(P, 'neckY', this.lookYaw * 0.45 * lw); Ad(P, 'headY', this.lookYaw * 0.4 * lw);
+      Ad(P, 'headP', this.lookPitch * 0.6 * lw); Ad(P, 'headR', -this.lookYaw * 0.12 * lw);
+      // eyes: remaining yaw + saccades
+      const sc = this.saccade; sc.t -= dt;
+      if (sc.t <= 0) { sc.t = 0.6 + Math.random() * 2.2; sc.x = (Math.random() - 0.5) * 0.18; sc.y = (Math.random() - 0.5) * 0.1; }
+      Ad(P, 'eyeY', this.lookYaw * 0.15 * lw + sc.x); Ad(P, 'eyeP', this.lookPitch * 0.3 * lw + sc.y);
+    }
+    // ---------------------------------------------------------------- rig solve
+    applyPose(P, dt) {
+      const B = this.B, S = this.S, eu = this._tmp.eu, rp = this.restPos;
+      const setR = (b, x, y, z) => { eu.set(x, y, z, 'YXZ'); b.quaternion.setFromEuler(eu); };
+      B.hips.position.copy(rp.hips).add(this._tmp.a.set(Rd(P, 'hipX') * S, Rd(P, 'hipY') * S, Rd(P, 'hipZ') * S));
+      setR(B.hips, Rd(P, 'hipP'), Rd(P, 'hipYw'), Rd(P, 'hipR'));
+      setR(B.spine1, Rd(P, 'sp1P'), Rd(P, 'sp1Y'), Rd(P, 'sp1R'));
+      setR(B.spine2, Rd(P, 'sp2P'), Rd(P, 'sp2Y'), Rd(P, 'sp2R'));
+      setR(B.chest, Rd(P, 'chP'), Rd(P, 'chY'), Rd(P, 'chR'));
+      setR(B.neck, Rd(P, 'neckP'), Rd(P, 'neckY'), Rd(P, 'neckR'));
+      setR(B.head, Rd(P, 'headP'), Rd(P, 'headY'), Rd(P, 'headR'));
+      if (B.jaw) setR(B.jaw, Rd(P, 'jaw') * 0.6, 0, 0);
+      if (B.belly) B.belly.position.copy(rp.belly).add(this._tmp.a.set(0, Rd(P, 'bellyY') * S, 0));
+      // tail: base + per-segment curl + travelling swish wave (tip lags)
+      const n = this.plan.tailN, wa = Rd(P, 'tailWaveA');
+      for (let i = 0; i < n; i++) {
+        const b = B['tail' + (i + 1)]; if (!b) break;
+        const u = i / (n - 1);
+        // tail bones point backwards: a positive x-rotation lifts them, so negate (pose convention: + = down)
+        const pitch = -((i === 0 ? Rd(P, 'tailP') : 0) + Rd(P, 'tailCurl') + (i >= n - 2 ? Rd(P, 'tailTipP') * 0.5 : 0));
+        const yaw = (i === 0 ? Rd(P, 'tailY') : 0) + Rd(P, 'tailCurlY') + wa * (0.4 + u) * sin(this.tailOsc - i * 0.55);
+        setR(b, pitch, yaw, 0);
+      }
+      // ears (R mirrored: positive yaw/roll = outward for both)
+      if (B.earL) setR(B.earL, Rd(P, 'earLP'), -Rd(P, 'earLY') * 0.9, -Rd(P, 'earLR') * 0.9 - Rd(P, 'earLY') * 0.4);
+      if (B.earR) setR(B.earR, Rd(P, 'earRP'), Rd(P, 'earRY') * 0.9, Rd(P, 'earRR') * 0.9 + Rd(P, 'earRY') * 0.4);
+      // scapulae ride up/down
+      for (const [k, s] of [['scapL', 'L'], ['scapR', 'R']]) { const b = B['scap' + s]; if (b) { b.position.copy(rp['scap' + s]).add(this._tmp.a.set(0, Rd(P, k) * S, 0)); } }
+      // eyes & lids
+      for (const e of this.eyeInfo) {
+        const s = e.sx;
+        const up = clamp(Rd(P, 'lidU' + s), -0.4, 1.05), dn = clamp(Rd(P, 'lidD' + s), -0.3, 1);
+        B['lidU' + s].quaternion.setFromAxisAngle(e.x, up * 0.62);
+        B['lidD' + s].quaternion.setFromAxisAngle(e.x, -dn * 0.34);
+        const q = this._tmp.q.setFromAxisAngle(e.y, clamp(Rd(P, 'eyeY'), -0.4, 0.4));
+        B['eye' + s].quaternion.setFromAxisAngle(e.x, clamp(Rd(P, 'eyeP'), -0.3, 0.3)).premultiply(q);
+      }
+      this.root.updateMatrixWorld(true);
+      // legs (model space = skeleton root space)
+      const rootInv = this._tmp.m.copy(B.root.matrixWorld).invert();
+      for (const L of LEGK) this.solveLeg(L, P, rootInv);
+    }
+    solveLeg(L, P, rootInv) {
+      const THREE = T3();
+      const lg = this.legs[L], S = this.S, [A, Bn, C, D] = lg.bones;
+      const mG = this._tmp.m2.multiplyMatrices(rootInv, lg.girdle.matrixWorld);
+      const gx = new THREE.Vector3().setFromMatrixColumn(mG, 0).normalize();
+      const gy = new THREE.Vector3().setFromMatrixColumn(mG, 1).normalize();
+      const gz = new THREE.Vector3().setFromMatrixColumn(mG, 2).normalize();
+      const off = new THREE.Vector3(Rd(P, L + 'x') * S, Rd(P, L + 'y') * S, Rd(P, L + 'z') * S);
+      const g = clamp(Rd(P, L + 'g'), 0, 1);
+      const Tg = lg.restPaw.clone().add(off);
+      Tg.y = max(Tg.y, lg.minY * 0.6);
+      const Tl = lg.pawInGirdle.clone().add(off).applyMatrix4(mG);
+      const T = Tg.lerp(Tl, g);
+      // joint A position (model)
+      const pA = new THREE.Vector3().setFromMatrixPosition(this._tmp.m.clone().multiply(A.matrixWorld)); // rootInv * A.world
+      // leg plane: side = girdle x; down/forward blend between ground frame and girdle frame
+      const down = new THREE.Vector3(0, -1, 0).lerp(gy.clone().negate(), max(g, 0.35)).normalize();
+      const n = gx.clone();
+      const fwd = new THREE.Vector3().crossVectors(n, down).normalize().negate(); // forward in the leg plane
+      const sign = lg.front ? 1 : -1;
+      let phi = lg.meta0 + Rd(P, L + 'm');
+      let pB, K;
+      for (let it = 0; it < (lg.front ? 1 : 2); it++) {
+        const md = down.clone().multiplyScalar(cos(phi)).addScaledVector(fwd, sin(phi));
+        K = T.clone().addScaledVector(md, -lg.lc);
+        pB = this.solve2(pA, K, lg.la, lg.lb, n, sign);
+        if (!lg.front) { // pantograph: metatarsus stays roughly parallel to the femur
+          const fd = pB.clone().sub(pA).normalize();
+          const femur = Math.atan2(fd.dot(fwd), fd.dot(down));
+          phi = lerp(phi, femur + (lg.meta0 - lg.femur0) + Rd(P, L + 'm'), 0.65 * (1 - smooth(0.3, 0.8, abs(Rd(P, L + 'm')))));
+        }
+      }
+      // K may have been pulled in by the reach clamp
+      const dirs = [pB.clone().sub(pA).normalize(), K.clone().sub(pB).normalize(), T.clone().sub(K).normalize()];
+      // paw (toe) direction: forward along the ground (or girdle), curled by the toe param
+      const pf = new THREE.Vector3(0, 0, 1).lerp(gz, g).normalize();
+      const pd = pf.clone().applyAxisAngle(n, Rd(P, L + 't') + 0.12).normalize();
+      dirs.push(pd);
+      // set bone rotations: model rotation from rest frame, then local = parentModel^-1 * model
+      const parentQ = new THREE.Quaternion();
+      A.parent.updateMatrixWorld(true);
+      const mp = this._tmp.m.clone().multiply(A.parent.matrixWorld);
+      mp.decompose(new THREE.Vector3(), parentQ, new THREE.Vector3());
+      const X = new THREE.Vector3(1, 0, 0);
+      let prevQ = parentQ;
+      [A, Bn, C, D].forEach((b, i) => {
+        const mq = frameQuat(lg.restDirs[i], X, dirs[i], n, new THREE.Quaternion());
+        b.quaternion.copy(prevQ.clone().invert().multiply(mq));
+        prevQ = mq;
+      });
+      A.updateMatrixWorld(true);
+    }
+    solve2(pA, K, la, lb, n, sign) {
+      const AK = K.clone().sub(pA); let d = AK.length();
+      const u = AK.divideScalar(d || 1);
+      d = clamp(d, abs(la - lb) + 1e-4, (la + lb) * 0.9995);
+      K.copy(pA).addScaledVector(u, d);
+      const ca = clamp((la * la + d * d - lb * lb) / (2 * la * d), -1, 1);
+      const a = Math.acos(ca) * sign;
+      return pA.clone().addScaledVector(u.clone().applyAxisAngle(n, a), la);
+    }
   }
 
   // ================================================================================== registry

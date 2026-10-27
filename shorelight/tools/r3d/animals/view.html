@@ -79,7 +79,7 @@ setTimeout(function () {
   }
   const buildMs = performance.now() - t0;
   const camYaw = num('yaw', 20) * Math.PI / 180;
-  const speeds = { walk: 1.6, trot: 3.2, run: 4.2, gallop: 7, lope: 4.2 };
+  const speeds = { walk: 1.2, trot: 2.8, run: 4.2, gallop: 7, lope: 4.2 };
   for (const it of items) {
     const ins = it.inst;
     ins.setFacing(it.yaw);
@@ -122,13 +122,16 @@ setTimeout(function () {
   }
   const cam = new THREE.PerspectiveCamera(num('fov', 30), W / H, 0.02, 500);
   const pitch = num('pitch', 18) * Math.PI / 180;
-  let look = ctr.clone(); look.y = size.y * 0.45;
+  let look = ctr.clone(); look.y = size.y * 0.5;
   let radius = Math.max(size.x, size.y * 1.6 * W / H * 0.6, size.z) * 0.5 + 0.08;
   if (q.get('zoom') === 'head' && items[0]) {
     const hb = items[0].inst.bone('head'); const hp = new THREE.Vector3(); hb.getWorldPosition(hp);
     look = hp.add(new THREE.Vector3(0, 0.02, 0)); radius = num('zr', 0.16);
   }
-  const dist = radius / Math.tan(cam.fov * Math.PI / 360) * 1.1 * num('dist', 1);
+  const vt = Math.tan(cam.fov * Math.PI / 360), ht = vt * W / H;
+  let dist = radius / vt * 1.1;
+  if (q.get('zoom') !== 'head') { const span = Math.hypot(size.x, size.z); dist = Math.max((span * 0.5 + 0.1) / ht, (size.y * 0.5 + 0.1) / vt) * 1.08 + span * 0.25; }
+  dist *= num('dist', 1);
   cam.position.set(look.x + Math.sin(camYaw) * Math.cos(pitch) * dist, look.y + Math.sin(pitch) * dist, look.z + Math.cos(camYaw) * Math.cos(pitch) * dist);
   cam.lookAt(look);
   sun.position.copy(look).add(new THREE.Vector3(-6, 10, 5)); sun.target.position.copy(look); sun.target.updateMatrixWorld();
