@@ -861,7 +861,9 @@ G.Battle = (() => {
       }
       await G.Render.fadeTo(1, 0.45, '#000');
       G.Scenes.pop(this);
-      if (this.o.bgmAfter !== undefined) G.Music.play(this.o.bgmAfter);
+      // bgmAfter: null = silence after the fight (scripted beat follows)
+      if (this.o.bgmAfter === null) G.Music.stop(0.6);
+      else if (this.o.bgmAfter !== undefined) G.Music.play(this.o.bgmAfter);
       else if (this.prevBgm && this.prevBgm !== 'victory') G.Music.play(this.prevBgm, { fade: 0.6 });
       else if (G.mapScene) G.Music.play(G.Mapx.val(G.mapScene.def.bgm));
       await G.Render.fadeTo(0, 0.45);
