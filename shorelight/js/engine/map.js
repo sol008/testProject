@@ -915,11 +915,13 @@ G.Mapx = G.Mapx || {};
       if (obj && !G.Script.busy()) {
         ctx.save();
         ctx.font = G.font(18);
-        const tw = G.Render.measure(ctx, obj);
-        const x = G.W - tw - 64, y = 22;
-        G.UI.plate(ctx, x, y, tw + 44, 36, 0.55, 18);
+        // English objectives run to 100+ characters: wrap them in a capped-width tracker instead of one long strip
+        const lines = G.Render.wrap(ctx, obj, G.I18N.isEn() ? 520 : 4000);
+        const tw = Math.max(...lines.map((l) => G.Render.lineWidth(ctx, l)), 0);
+        const x = G.W - tw - 64, y = 22, h = 36 + (lines.length - 1) * 24;
+        G.UI.plate(ctx, x, y, tw + 44, h, 0.55, lines.length > 1 ? 14 : 18);
         G.UI.lanternIcon(ctx, x + 18, y + 18, 6, t);
-        G.Render.text(ctx, obj, x + 32, y + 7, { size: 18, color: '#f0e4c4' });
+        G.Render.drawLines(ctx, lines, x + 32, y + 7, 24, '#f0e4c4');
         ctx.restore();
       }
       // vision timer

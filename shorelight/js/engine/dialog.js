@@ -169,7 +169,8 @@ G.Dialog = (() => {
       this.options = options;
       const ctx = G.ctx;
       ctx.font = G.font(25);
-      this.w = Math.max(280, ...options.map((s) => G.Render.measure(ctx, s) + 90));
+      // capped to the screen; a longer (translated) option is shrunk to fit by the list (no ellipsis for choices)
+      this.w = Math.min(G.W - 120, Math.max(280, ...options.map((s) => G.Render.measure(ctx, s) + 90)));
       this.h = this.list.rows * 50 + 36;
       this.x = G.W - this.w - 60;
       this.y = BOX.y - this.h - 24;
@@ -192,7 +193,7 @@ G.Dialog = (() => {
       ctx.save();
       ctx.globalAlpha = this.alpha;
       G.UI.panel(ctx, this.x, this.y, this.w, this.h);
-      this.list.draw(ctx, this.x + 20, this.y + 18, this.w - 30, G.time, { size: 25 });
+      this.list.draw(ctx, this.x + 20, this.y + 18, this.w - 30, G.time, { size: 25, minSize: 15, ellipsis: false });
       ctx.restore();
     }
   }
