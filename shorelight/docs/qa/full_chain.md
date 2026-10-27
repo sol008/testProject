@@ -11,7 +11,8 @@ every chapter boundary was sane, and saves survive reloads in a fresh page.
 
 There is **one wall: 潮怨・百手 (ch8)**. The carried party cannot beat it, not even at the chapter test's own Lv31.
 It only gets through with the free 北港 shop gear that ch8.test.js equips (worth 14,400 gold, against 1,983 carried).
-Chapters 8–11 below were played with that documented assist (O1).
+Chapters 8–11 below were played with that documented assist (O1). **Since the progression & economy pass the chain runs
+ch5 → both endings with no assist** (next section).
 
 ## How the run plays
 
@@ -53,11 +54,50 @@ Chapters 8–11 below were played with that documented assist (O1).
 node tools/test/full_chain.js --assist-from ch8 --trace --out <dir>     # the run below (≈ 50 min)
 node tools/test/full_chain.js --from ch8 --assist-from ch8 --out <dir>  # resume at a boundary save
 node tools/test/full_chain.js --check                                   # drivers load & compile (no browser)
+node tools/test/full_chain.js --from ch5 --encounters --out <dir>      # a normal player's field fights + shopping, no assist
 ```
 
 Run artefacts: in the session scratchpad `chain/` directory. It holds `ch00_start_title.png` … `ch11_start.png`,
 `ch11_branch.png`, `ending_true_title.png`, `ending_normal_title.png`, `saves/ch01…ch11.json`,
 `saves/ch11_branch.json`, `report_final.json` and the logs.
+
+## No-assist run after the progression pass (`--encounters`)
+
+After the progression & economy pass (docs/BALANCE.md "Progression & economy"), the chain was run again **from the ch5
+boundary save to both endings with no assist**:
+
+```
+node tools/test/full_chain.js --from ch5 --encounters --trace --stall 300 --out <dir>   # 35 min
+```
+
+`--encounters` makes the chain a *normal* player instead of a driver that skips the field: the roaming / random fights
+`tools/sim_economy.js` expects that player to meet (× 1.3 for backtracking, ch11's step encounters, half of ch10's sea
+fights; easy-difficulty exp) are paid as exp + gold — the part met on the way to a boss when that boss's battle starts,
+the rest at the chapter boundary — and before each boss the party shops like one: the sim's consumable kit, then the
+best gear of the shops docs/BALANCE.md says are reachable there, with its own gold. Every payment and purchase is
+logged (`[encounters]`, `[shop]`). The ch5 save predates the pass, so the run starts with a one-time logged catch-up to
+the model's normal player at that boundary (+6,967 gold of wealth, Lv16 → 17); nothing else is added.
+
+| Ch | Result | Time | Entry Lv | Gold at entry | Bosses (party Lv vs BALANCE Lv) | Help |
+|---|---|---|---|---|---|---|
+| 5 | PASS | 290 s | ×4 Lv17 | 8,758 (after catch-up) | 怨宴 19 vs 19 | – |
+| 6 | PASS | 132 s | ×4 Lv20 | 10,517 | 疫聚 21/21 · 林投姐 23/22 · 冥燈護法 24/23 | – |
+| 7 | PASS* | 219 s | ×3 Lv25 | 5,351 | 黑熊精 25/24 · 心魔 26/25 · 無光之影 27/26 · 蛟 28/26 · 清虛 29/27 | – (1 driver check: 老吳's salt, O7) |
+| 8 | PASS | 244 s | ×3 Lv30 | 3,836 | **潮怨・百手 31/28 (win)** · 洛青鋒 31/29 | – |
+| 9 | PASS | 295 s | ×3 Lv33 | 4,098 | 貪鬼 33/31 · 瘟鬼頭 35/32 · 落山風靈 36/33 · 鰻王 37/34 | – |
+| 10 | PASS | 148 s | ×3 Lv37 | 7,183 | 海蛇 38/35 · 大潮怨 39/36 · 石巨靈 40/37 · 孤魂眾 41/38 | – |
+| 11 + endings | PASS* | 764 s | ×3 Lv42 | 4,869 | 船主 42/39 · 鎖魂將 44/40 · 鯤 45/41 · 燈塔守 46/43 · 夜玄 / 無相 48/44 | – (driver's `tuanzi_mush = 6` blocked) |
+
+- **No assist, no level boost, no driver gear kit, 0 wipes, 0 retries, 0 page / console errors.** 千燈 (true) from the
+  run, 彼岸 (normal) from the branch save reloaded in a fresh page — the one FORCED 心燈 removal of O2, as before.
+- The party is 1–4 levels above BALANCE.md from ch7 on: the chain plays **easy** (exp ×1.2) and its drivers do most 心燈
+  side quests. That is exactly the model's normal player on easy (`node tools/sim_economy.js --diff easy`: 清虛 29.3,
+  百手 30.8, 石巨靈 40.4 vs the chain's 29 / 31 / 40); on normal difficulty the model puts that player at the boss level
+  (±1) — docs/BALANCE.md.
+- The two PASS* are driver assumptions, not game problems: ch7's injected 老吳 salt (O7) and ch11's 七仙蕈 check, which
+  needs 6 mushrooms the drivers never pick up (they now exist and are reachable — O5; from ch5 the drivers found 憶蕈
+  and 雲芝).
+- Run artefacts: the session scratchpad `chain_enc/` (`run.out`, `chain_from_ch5.log`, `report.json`, saves, shots).
 
 ## Per chapter (final continuous run)
 
@@ -154,7 +194,7 @@ critical-path drivers, which play most of the lantern side quests on the way. Th
 
 ### Open (ranked)
 
-- **O1 [S1, design gap] 潮怨・百手 (ch8) is a wall for a carried party.** BALANCE.md tunes it for Lv28 plus the best
+- **O1 [S1, design gap — FIXED by the progression & economy pass] 潮怨・百手 (ch8) is a wall for a carried party.** BALANCE.md tunes it for Lv28 plus the best
    S8a shop gear (89%).
    - Strict (Lv27 after fix F1, easy, battle bot, gear bought with carried gold): **3 wipes in a row**
      (`--retries 2`). The trace shows the opening party-wide hit taking about 40% of max HP, and the party at
@@ -177,7 +217,8 @@ critical-path drivers, which play most of the lantern side quests on the way. Th
    - Only 3–5 of the 19 are main story (yizigu, linto, tatala, plus haiji/pilgrims inside the main flow), so a
      main-path-only player gets 彼岸. That is the intended split, but it is worth knowing that even the "critical path"
      tests are deep into side content.
-- **O3 [S2, finding] Levels come almost entirely from the chapter-entry floors.**
+- **O3 [S2, finding — addressed by the progression & economy pass: field fights modelled, boss rewards raised, ch11
+   floor added] Levels come almost entirely from the chapter-entry floors.**
    - Story battles alone gave **≤ 1 level per chapter**: ch1 2→4, ch2 5→5, ch3 9→9, ch4 13→13, ch5 16→16,
      ch6 19→20, ch7 23→23.
    - The floors in each `G.Story.chN` (`ensureLevel`, which also heals fully) add 1–4 levels per chapter.
@@ -200,10 +241,12 @@ critical-path drivers, which play most of the lantern side quests on the way. Th
    | 11 | 46 / 48 | 44–46 |
 
    `tools/test/full_chain.js` is the check that uses the real carried state.
-- **O5 [S3] The 七仙蕈 side quest cannot complete from the critical paths.** `tuanzi_mush` is 2 at ch11, and 玄武蕈
+- **O5 [S3 — FIXED: a sixth mushroom (ch9 龍坑), no 杉皮蕈 prerequisite, quest-log hints; docs/BALANCE.md] The 七仙蕈 side
+   quest cannot complete from the critical paths.** `tuanzi_mush` is 2 at ch11, and 玄武蕈
    needs 6. ch11.test.js sets it to 6 (blocked here), so its 「七仙蕈全收集」 check fails in the chain. This is side
    content; the information is for the ch11 builder.
-- **O6 [S3] Two side quests opened by main-path scenes stay open for the rest of the game:** `q_atu_watch` (ch1 mine)
+- **O6 [S3 — FIXED: the next chapter's opening drops the previous chapter's unfinished chapter-local side quests] Two
+   side quests opened by main-path scenes stay open for the rest of the game:** `q_atu_watch` (ch1 mine)
    and `q_hy_kitchen` (ch2 inn). Expected for side quests, but they clutter the quest log for 10 chapters if
    skipped.
 - **O7 [S4, driver assumptions] State the chapter drivers inject instead of playing** (all blocked and logged by the
@@ -226,4 +269,5 @@ critical-path drivers, which play most of the lantern side quests on the way. Th
 | 2 | strict + shopping | ch0–7 PASS (ch7: 1 side check). **ch8 wipe at 百手**, Lv27 |
 | ch8 probes | from the ch8 save: `--retries 2`, then `--assist` levels only, then `--assist` with driver gear | 3 wipes; wipe at Lv31; PASS → introduced `--assist-from` |
 | final | strict ch0–7, `--assist-from ch8`, `--trace` | **all chapters + both endings, 50 min, 0 errors** |
+| economy | after the progression & economy pass: `--from ch5 --encounters`, **no assist** | **ch5 → both endings, 35 min, 0 wipes, 0 errors** |
 | verify | `--from ch9` (boundary save, title load menu) after fixes F3 and F2 | PASS, 0 failed checks |

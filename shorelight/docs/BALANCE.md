@@ -398,7 +398,12 @@ Field gold is unchanged.
 
 - `node tools/sim_story.js` (BALANCE conditions, n = 100): unchanged within noise — 85–100 % for every boss.
 - `node tools/sim_story.js --model normal|minimal|thorough` (n = 300 / 300 / 100): the "Sim win" columns above.
-- `node tools/test/full_chain.js --from ch5 --encounters` (no assist): see docs/qa/full_chain.md.
+- `node tools/test/full_chain.js --from ch5 --encounters` (no assist, one browser, 35 min): **ch5 → 千燈 and 彼岸,
+  every boss won first try, 0 wipes, 0 errors** (docs/qa/full_chain.md). `--encounters` pays the model's field fights
+  (exp + gold, logged) before each boss and at chapter boundaries and shops before bosses like a normal player. The
+  chain plays easy (exp ×1.2), so it ran 1–4 levels above the boss levels from ch7 on — exactly the model's normal
+  player on easy (`--diff easy`), which validates the model's level curve against the real game.
+- The new 潮汐蕈 scene was run headless (event live, glow placed, counter / flag / quest stage set, event gone after).
 - `node tools/test/validate.js`: 0 errors · `node tools/test/unit.js`: 60 passed.
 
 ### Notes / open
