@@ -3389,13 +3389,16 @@
     await S.say('yexuan:sad', '護法也撐不住。……燈靈大人身邊的人，果然都不簡單。');
     await S.say('yexuan:serious', '那就由我來吧。');
     await S.battle('t_c6_yexuan_loss', yexuanRules());
-    S.bgm('tension');
+    // after the loss the hall is silent — no music until she kneels to him
+    S.bgm(null, { fade: 1.5 });
     stage(S, [['player', 18, 18, 'up'], ['baizhi', 16, 20, 'up'], ['hongying', 19, 20, 'left'], ['yungui', 17, 21, 'up'], ['yuyuan', 20, 21, 'up']]);
     S.setPos('yexuan', 18, 16, 'down');
-    await S.say('', '戰鬥結束了。紅纓、雲歸倒在地上。星河單膝跪地，劍插在地上撐著身體。');
+    await wait(S, 1.0);
+    await S.say('', '紅纓、雲歸倒在地上。星河單膝跪地，劍插在地上，撐著身體。');
     await S.say('xinghe:hurt', '……還……沒完……');
     await mv(S, 'yexuan', 'D');
-    await S.say('yexuan:think', '（低頭看他）……奇怪。');
+    await wait(S, 0.8);   // he looks down at the boy for a long moment
+    await S.say('yexuan:think', '……奇怪。');
     await S.say('yexuan:think', '從一開始我就覺得奇怪。你身上，沒有魂燈。');
     S.sfx('dark');
     S.flash('#ffd060', 0.6, 0.5);
@@ -3405,32 +3408,42 @@
     await S.say('', '星河的手指邊緣，開始變得透明。');
     await S.say('yexuan:surprise', '……這火的顏色。');
     S.face('yexuan', 'baizhi');
-    await S.say('yexuan:think', '（轉頭看白芷）燈靈大人。這孩子身上的火……是您的吧。');
+    await wait(S, 0.6);
+    await S.say('yexuan:think', '燈靈大人。這孩子身上的火……是您的吧。');
     await S.say('baizhi:surprise', '……我的？');
-    await S.say('xinghe:hurt', '（耳邊嗡嗡作響，聽不清楚）……');
-    await S.say('yexuan:serious', '您不記得了。……也好。');
-    await S.say('yexuan:serious', '只要把這點火還給您……燈靈大人，就能完整一點。');
+    // 星河's hearing goes: the rest of 夜玄's words reach him from far away
+    await S.say('', '耳邊嗡嗡作響。聲音，忽然變得好遠。', { color: '#9aa4b8' });
+    await S.say('yexuan:serious', '您不記得了。……也好。', { color: '#8f98ac', size: 23 });
+    await S.say('yexuan:serious', '只要把這點火還給您……燈靈大人，就能完整一點。', { color: '#8f98ac', size: 23 });
     S.sfx('dark'); S.shake(6, 1.0);
     await tw(S.actor('player'), { alpha: 0.3 }, 1.0);
     await S.say('', '金色的火被抽出得更多。星河的身體越來越透明。他倒下了。');
+    S.shake(4, 0.2);
     await S.say('baizhi:cry', '住手！！');
     await wt(S, 'baizhi', 18, 19);
     S.face('baizhi', 'up');
     S.sfx('hit');
     await S.say('', '白芷衝了過去，張開雙臂擋在星河身前。玉笛掉在地上。');
     await S.say('baizhi:cry', '住手……求求你，住手……');
+    await wait(S, 1.0);
     await S.say('baizhi:serious', '我跟你走。');
-    await S.say('yexuan:think', '（手停住）……燈靈大人，您確定？');
+    S.emote('yexuan', '…', 1.6);
+    await wait(S, 0.8);
+    await S.say('yexuan:think', '……燈靈大人，您確定？');
     await S.say('baizhi:serious', '我跟你走。不要拿走他的火。');
     await S.say('baizhi:serious', '不要碰他們任何一個人。');
     await S.say('yexuan:serious', '……好。我答應您。');
     S.sfx('lantern');
     await tw(S.actor('player'), { alpha: 0.75 }, 1.0);
     await S.say('', '他收回了手。金色的火流回星河胸口——但只回去了一半。');
-    await S.say('xinghe:hurt', '（伸出手，抓住白芷的衣角）……白……芷……不要……');
+    await S.say('', '星河伸出手，抓住了白芷的衣角。');
+    await S.say('xinghe:hurt', '……白……芷……不要……');
     S.face('baizhi', 'player');
     await S.say('', '白芷跪下，捧住他的臉。');
+    S.bgm('love', { fade: 3 });
+    await wait(S, 1.0);
     await S.say('baizhi:smile', '星河，你說過，燈籠飄走了，要追回來。這是基本功。');
+    await wait(S, 0.6);
     await S.say('baizhi:cry', '……那你要來追我喔。');
     await S.say('', '她把脖子上的玉牌解下，放進星河的手心。玉牌上刻著「白芷」。');
     if (!S.hasItem('key_jadetag')) await S.give('key_jadetag');
@@ -3438,34 +3451,43 @@
     await S.say('baizhi:smile', '我的名字，你先替我保管。');
     await S.say('baizhi:smile', '鄭嫂嫂說，大人要替人扛東西。……這次換我扛。');
     await S.say('xinghe:cry', '……還有……另一半……她說……要讓別人……替妳扛……');
-    await S.say('baizhi:sad', '（微微一怔，然後笑了）……嗯。下次。下次換你。');
+    S.emote('baizhi', '…', 1.4);
+    await wait(S, 1.2);
+    await S.say('baizhi:smile', '……嗯。下次。下次換你。');
     if (S.has('ch5_rabbit')) {
       await S.say('', '白芷站起來，撿起地上的兔子燈，走向夜玄。');
       await S.say('baizhi:serious', '我要把這個，帶去給念念。');
-      await S.say('yexuan:sad', '（看著兔子燈，很久）……謝謝您。');
+      await wait(S, 1.6);   // he looks at the rabbit lantern a long time
+      await S.say('yexuan:sad', '……謝謝您。');
     } else {
       await S.say('', '白芷站起來，走向夜玄。');
     }
     await mv(S, 'baizhi', 'UU');
+    S.bgm(null, { fade: 1.0 });
     S.emote('hongying', '💢');
-    await S.say('hongying:angry', '（撐起上半身）哥！！你就這樣看著！？');
-    await S.say('qingfeng:sad', '（別過臉）……她會被好好對待。我保證。');
+    await S.say('hongying:angry', '哥！！你就這樣看著！？');
+    S.face('qingfeng', 'right');   // he turns his face away
+    await S.say('qingfeng:sad', '……她會被好好對待。我保證。');
     await S.say('hongying:cry', '你保證！？你連自己都保不住！！');
     await S.say('moya:smug', '法師，剩下這幾個怎麼處理？依我看，一併關進——');
     await S.say('yexuan:normal', '放他們——');
-    await S.say('moya:smug', '（打斷，對衛兵揮手）——關進地牢！法師心太軟，這種事墨護法來就好！');
+    await S.say('moya:smug', '——關進地牢！法師心太軟，這種事墨護法來就好！');
     S.move('guard_c1', 'LLD', { wait: false }); S.move('guard_c2', 'LLU', { wait: false });
     S.move('yexuan', 'RRR', { wait: false });
     await mv(S, 'baizhi', 'RRR');
     await S.say('', '衛兵圍了上來。夜玄皺起眉，卻已經帶著白芷走向門口。');
-    await S.say('yungui:serious', '（趴在地上，從懷裡摸出一張符。符紙是金色的，邊緣已經磨毛）');
+    await S.say('', '雲歸趴在地上，從懷裡摸出一張符。符紙是金色的，邊緣已經磨毛。');
     await S.say('yungui:serious', '師父說……這張符，只能在「一定得活下去」的時候用。');
     await S.say('yungui:serious', '……就是現在了。');
     S.sfx('magic');
+    S.flash('#ffffff', 0.3, 0.4);
     await S.say('', '雲歸咬破手指，在符上一抹。遁符爆出刺眼的白光。');
     await S.say('moya:surprise', '什——遁符！？攔住他們！');
+    // everything stops for her last look back
     S.face('baizhi', 'left');
-    await S.say('baizhi:smile', '（在門口回頭）……星河。');
+    await wait(S, 1.0);
+    await S.say('baizhi:smile', '……星河。');
+    await wait(S, 0.6);
     S.bgm(null);
     S.sfx('thunder');
     await S.flash('#ffffff', 1.4, 1);
@@ -3486,7 +3508,8 @@
     S.actor('player').alpha = 0.8;
     await S.say('', '府城北郊的海邊沙丘。夜。三人一貓被遁符摔在沙上。星河昏迷不醒。');
     await S.say('hongying:hurt', '……這裡是……哪裡……');
-    await S.say('yungui:hurt', '（咳血）府城北邊……三十里左右。遁符……就只能逃這麼遠。');
+    await S.say('', '雲歸咳出一口血。');
+    await S.say('yungui:hurt', '府城北邊……三十里左右。遁符……就只能逃這麼遠。');
     await S.say('hongying:cry', '星河！星河醒醒！');
     S.emote('yuyuan', '💧');
     await S.say('', '芋圓一直用頭去頂星河冰冷的手。');
@@ -3503,7 +3526,6 @@
       S.emote('mochi_s', '!');
       await mv(S, 'mochi_s', 'DDD', { speed: 4 });
       await S.say('', '麻糬衝到浪邊，對著海上那點藍光一聲一聲地叫。浪打濕了牠的毛，牠也不退。');
-      await S.say('', '……那是白芷的光。全世界只有牠，一眼就認得出來。');
     }
     S.emote('player', '!');
     await S.say('', '星河睜開眼。看見了那艘船。他爬起來，踉蹌著衝進海裡。');
@@ -3515,14 +3537,17 @@
     await S.say('', '浪打在他身上。他跌倒，又爬起來，海水淹到了腰。');
     await S.say('hongying:cry', '星河！回來！你追不上的！');
     await S.say('xinghe:cry', '白芷——！！！');
-    S.bgm('sad');
+    // no answer — only the sea; then the song comes across the water
+    await wait(S, 1.6);
+    S.bgm('sad', { fade: 3 });
     S.sfx('sing');
     await S.say('', '海上，船尾。一陣歌聲，順著海風飄了過來。是渡魂謠。');
     S.move('bz_ship', 'LLLLLLLLLLLLLLLLL', { speed: 1.9, wait: false });
     Mover.slide(S, 'c6_ship', 2, 11, 9);
-    await S.say('白芷（歌聲）', '「燈一盞，渡一人，黑水茫茫莫回身……」');
+    // her voice in the colour of the prologue's dream voice
+    await S.say('白芷（歌聲）', '「燈一盞，渡一人，黑水茫茫莫回身……」', { color: '#e6f4ff' });
     S.sfx('sing');
-    await S.say('白芷（歌聲）', '「此身化作燈一盞，照你回家……莫照我……」');
+    await S.say('白芷（歌聲）', '「此身化作燈一盞，照你回家……莫照我……」', { color: '#e6f4ff' });
     await wait(S, 2.5);
     S.fadeActor('bz_ship', 0, dur(2));
     await Mover.fade(S, 'c6_ship', 2);
@@ -3530,10 +3555,14 @@
     await S.say('', '歌聲越來越遠。船越來越小，變成一點藍光，往西，往澎湖的方向，消失在海平線。');
     S.flag('lyric_ch6');
     S.toast('記下了渡魂謠的殘句：「此身化作燈一盞，照你回家莫照我。」', 'scroll');
+    await wait(S, 1.0);
     await S.say('', '星河跪在淺水裡。手裡，緊緊握著那塊玉牌。');
     await S.say('', '他看著自己的手——手指的邊緣，像薄紙燈罩一樣，透出微弱的、搖晃的光。那光在閃。一下亮，一下暗。');
+    await wait(S, 0.8);
+    await S.say('xinghe:cry', '……要追回來。');
     await wt(S, 'yungui', 11, 9);
-    await S.say('yungui:serious', '（涉水把他拖回岸上）……他的火。只剩一半了。');
+    await S.say('', '雲歸涉水過去，把他拖回岸上。');
+    await S.say('yungui:serious', '……他的火。只剩一半了。');
     await S.say('yungui:serious', '而且……離她越遠，燒得越弱。');
     await S.say('hongying:cry', '那怎麼辦！你不是什麼都懂嗎！想辦法啊！');
     await S.say('yungui:sad', '……我不懂。這個，書上沒寫。');
