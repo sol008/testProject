@@ -990,7 +990,7 @@
     } else if (k === 'c') {
       if (first) {
         await soulSay(S, '大哥哥，前面好暗喔。');
-        await soulSay(S, '以前一直往前漂，就會看到光。阿嬤說，那叫做『彼岸』。');
+        await soulSay(S, '以前一直往前漂，就會看到光。阿嬤說，那叫做「彼岸」。');
         await soulSay(S, '可是現在……燈好像累了。');
         await say(S, 'xinghe:sad', '……別怕，哥哥去前面看看。');
       } else {

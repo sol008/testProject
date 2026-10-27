@@ -26,7 +26,9 @@
       G.Render.updateFx(dt);
       G.UI.updateToasts(dt);
       G.Scenes.update(dt);
-      if (G.state && G.inGame) G.state.playtime += dt;
+      // play clock: real (unclamped) frame time; skips hidden/unfocused/idle time — see js/engine/playstats.js
+      if (G.PlayStats) G.PlayStats.tick(dtRaw);
+      else if (G.state && G.inGame) G.state.playtime += dt;
 
       const ctx = G.ctx;
       G.Render.begin();

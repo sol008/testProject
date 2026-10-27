@@ -1255,7 +1255,7 @@
     S.face('lk_shi', 'down');
     await S.say('', '（燈籠舖。天花板掛滿紅燈籠，暖光像糖漿一樣。施燈師正在糊一盞燈，頭也不抬。）');
     await S.say('施燈師', '要買燈就自己挑，要訂燈下個月再來。');
-    await S.say('yungui:normal', '老師傅，一個月前，一個姓清虛的道士訂了一盞燈。');
+    await S.say('yungui:normal', '老師傅，一個月前，一個叫清虛的道士訂了一盞燈。');
     S.emote('lk_shi', '…');
     await S.say('施燈師', '（抬頭，推了推眼鏡）……喔，那個長鬍子的。燈骨我紮好了，紙也糊好了。');
     await S.say('施燈師', '可是他說——燈上的字，要讓「那家的人」自己寫。他寫不得。');
@@ -2725,7 +2725,7 @@
     await S.wait(1.0);
     const qa = G.mapScene.actor('qf');
     if (qa) qa.sprite = 'qingfeng';
-    await S.say('', '（慢鏡頭。鬼王面具裂成兩半，落在地上。）');
+    await S.say('', '（鬼王面具緩緩裂成兩半，落在地上。）');
     await S.say('', '（面具下，是一張年輕男人的臉。左半邊完好，眉目和紅纓有七分像；右半邊，從額頭到下顎，是一大片被冷火燒過的疤。）');
     await S.wait(0.8);
     await S.say('hongying:surprise', '……');

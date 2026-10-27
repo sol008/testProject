@@ -18,7 +18,7 @@ G.Mini = (() => {
       setTimeout(() => res(v), 30);
       return;
     }
-    scene.res = res; G.Scenes.push(scene);
+    scene.res = res; scene.statKind = 'minigame'; G.Scenes.push(scene);
   });
   const finish = (scene, v) => { G.Scenes.pop(scene); scene.res(v); };
 

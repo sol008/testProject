@@ -5,11 +5,16 @@
 //   node tools/test/full_chain.js                       # whole run (≈ 60–90 min), one browser, one page
 //   node tools/test/full_chain.js --from ch6            # resume at the chapter-6 boundary save (saves/ch06.json)
 //   node tools/test/full_chain.js --to ch3              # stop after chapter 3 (still writes the ch04 boundary save)
-//   node tools/test/full_chain.js --assist              # also apply the chapter tests' own mid-chapter level boosts
+//   node tools/test/full_chain.js --assist              # also apply the chapter tests' own assumptions: their mid-chapter
+//                                                       # level boosts and the free shop gear kits they equip (logged)
+//   node tools/test/full_chain.js --assist-from ch8      # strict up to ch7, --assist from ch8 on (one continuous run)
 //   node tools/test/full_chain.js --difficulty normal   # default: easy (the setting every chapter test uses)
 //   node tools/test/full_chain.js --reload-at ch6       # boundary where the run reloads its save in a fresh page
 //   node tools/test/full_chain.js --out <dir>           # screenshots, saves, logs, report.json (default tools/test/out/chain)
 //   node tools/test/full_chain.js --check               # only load/compile the reused chapter drivers (no browser)
+//   node tools/test/full_chain.js --no-shop             # don't buy gear with the carried gold at chapter starts
+//   node tools/test/full_chain.js --trace               # per-action battle HP log, dumped on a failure
+//   node tools/test/full_chain.js --retries 1           # on a wipe, press 重新挑戰 (logged) instead of failing at once
 //
 // How it works
 //   · The page starts at the real title screen (no ?debug), localStorage shorelight_settings = {"render3d":false},
@@ -27,11 +32,16 @@
 //   · Allowed, documented help: difficulty easy + the shared battle bot (tools/test/lib/battlebot.js, a "sensible player"
 //     that uses items), heals before bosses, and at each chapter start the party is raised to the expected start level
 //     (G.Data.progression[ch].lv[0]; docs/BALANCE.md did not exist when this was written).
+//   · Shopping (not a help: the player's own gold): at each chapter start the party buys, with the gold it really
+//     carries, the best gear per slot from the shops reachable by then (cumulative pools of tools/sim_story_fights.js,
+//     the ones docs/BALANCE.md was tuned with), as a player would — instead of the free gear the drivers equip.
 //   · At every chapter boundary: G.state.chapter must increment, no page errors / console errors / warnings, party /
 //     cats / quest log sanity; time per chapter, a screenshot at each chapter start, a real save (G.Save.write → slot 1)
 //     exported to <out>/saves/chNN.json (--from uses it through the title screen's 讀取進度 menu).
-//   · Endings: in 彼岸燈塔 5F, before 她的記憶 (the last optional 心燈 before the finale), the run saves to slot 2, plays the
-//     true ending 「千燈」, then reloads slot 2 in a fresh page, skips the memories and plays the normal ending 「彼岸」.
+//   · Endings: in 一息界, right before the step that starts the finale (燈心 → ending), the run saves to slot 2, plays
+//     the true ending 「千燈」 to the title screen, then reloads slot 2 in a fresh page and plays the normal ending 「彼岸」.
+//     The ending is decided only by G.Lanterns.count() >= THRESHOLD; when the carried count is already above it, the
+//     ch11 driver's own lantern removal is let through for that one segment and logged as FORCED.
 //   · Robustness: timestamped progress lines; fail fast on Game Over or 3 min without progress (dumps G.Scenes.names(),
 //     the map and the busy state); one browser at a time.
 'use strict';
@@ -53,6 +63,7 @@ const OPT = {
   from: chNum(opt('from', null)) || 0,
   to: chNum(opt('to', null)) ?? 11,
   assist: argv.includes('--assist'),
+  assistFrom: chNum(opt('assist-from', null)),
   difficulty: opt('difficulty', 'easy'),
   reloadAt: opt('reload-at', 'ch6') === 'none' ? -1 : chNum(opt('reload-at', 'ch6')),
   out: path.resolve(opt('out', path.join(__dirname, 'out', 'chain'))),
@@ -61,6 +72,9 @@ const OPT = {
   headed: argv.includes('--headed'),
   check: argv.includes('--check'),
   endings: !argv.includes('--no-endings'),
+  shop: !argv.includes('--no-shop'),
+  retries: +opt('retries', 0),
+  trace: argv.includes('--trace'),
 };
 const SAVES = path.join(OPT.out, 'saves');
 fs.mkdirSync(SAVES, { recursive: true });
@@ -164,8 +178,10 @@ const BALANCE = balanceTable();
 // the BALANCE.md row of a battle: same chapter, the fight name contains one of the enemies' names
 function balanceRow(b) {
   if (!b.boss && !/^t_/.test(b.troop)) return null;
-  const names = (b.names || []).map((n) => String(n).replace(/[·・].*$/, ''));
-  return BALANCE.find((r) => r.ch === b.ch && names.some((n) => n && r.fight.includes(n))) || null;
+  const lead = String((b.names || [])[0] || '');
+  if (!lead) return null;
+  const rows = BALANCE.filter((r) => r.ch === b.ch);
+  return rows.find((r) => r.fight.startsWith(lead)) || rows.find((r) => r.fight.startsWith(lead.replace(/[（(].*$/, ''))) || rows.find((r) => r.fight.includes(lead)) || null;
 }
 
 // choices a chapter test pre-loads before its debug start (consumed by the chapter's opening, i.e. by G.Story.next)
@@ -242,8 +258,8 @@ class Harness {
       window.__battleBot = { difficulty: diff };
     }, [Object.entries(seed || {}), OPT.difficulty]);
     await this.ctx.addInitScript({ path: BATTLEBOT });
-    await this.ctx.addInitScript(([speed, choices]) => {
-      window.__chain = { speed, battles: [], next: [], lastError: [] };
+    await this.ctx.addInitScript(([speed, choices, retries]) => {
+      window.__chain = { speed, battles: [], next: [], lastError: [], retries, wipes: [] };
       const iv = setInterval(() => {
         if (!(window.G && G.Story && G.Story.next && G.Debug && G.Debug.setAutoplay && G.Battle && G.Battle.start)) return;
         clearInterval(iv);
@@ -252,6 +268,20 @@ class Harness {
           __chain.next.push({ n, at: Date.now() });
           if (choices[n]) G.Debug.choices = choices[n].slice();
           return next.call(this, S, n);
+        };
+        // --retries: a wipe takes the Game Over screen's own 重新挑戰 path (state restored, same battle again) — in the
+        // page, before any driver can see the GameOverScene
+        const push = G.Scenes.push;
+        G.Scenes.push = function (sc) {
+          if (G.GameOverScene && sc instanceof G.GameOverScene && sc.troopId != null && sc.stateBefore && __chain.retries > 0) {
+            __chain.retries--;
+            const last = __chain.battles[__chain.battles.length - 1] || {};
+            __chain.wipes.push({ troop: sc.troopId, names: last.names, lv: last.lv, ch: G.state.chapter, map: G.mapScene && G.mapScene.def && G.mapScene.def.id, at: Date.now() });
+            G.state = Object.assign(G.newState(), JSON.parse(sc.stateBefore));
+            G.Battle.start(sc.troopId, sc.o).then(sc.resolve);
+            return sc;
+          }
+          return push.apply(this, arguments);
         };
         const sa = G.Debug.setAutoplay;
         G.Debug.setAutoplay = function (on) { sa.call(this, on); if (on) G.settings.battleSpeed = __chain.speed; };
@@ -270,7 +300,18 @@ class Harness {
           return p;
         };
       }, 2);
-    }, [OPT.speed, OPENING_CHOICES]);
+    }, [OPT.speed, OPENING_CHOICES, OPT.retries]);
+    if (OPT.trace) await this.ctx.addInitScript(() => {
+      window.__chainTrace = [];
+      setInterval(() => {
+        const t = window.G && G.Scenes && G.Scenes.top();
+        if (!t || !t.party || !t.enemies) return;
+        const f = (u) => `${u.id}:${u.hp}/${u.mhp}${u.dead ? 'X' : ''}${Object.keys(u.st || {}).length ? '[' + Object.keys(u.st).join('+') + ']' : ''}`;
+        const line = `r${t.rounds} ${t.party.map(f).join(' ')} | ${t.enemies.map(f).join(' ')}${t.msg && t.msg.text ? ' «' + t.msg.text + '»' : ''}`;
+        if (window.__chainTrace[window.__chainTrace.length - 1] !== line) window.__chainTrace.push(line);
+        if (window.__chainTrace.length > 400) window.__chainTrace.splice(0, 100);
+      }, 100);
+    });
     this.page = await this.ctx.newPage();
     this.page.on('console', (m) => {
       const ty = m.type();
@@ -304,6 +345,8 @@ class Harness {
     await this.page.evaluate(s, arg).catch((e) => log('chain', 'init script failed: ' + e.message));
   }
   // ---------------------------------------------------------------- firewall
+  get assist() { return OPT.assist || (OPT.assistFrom != null && this.ch >= OPT.assistFrom); }
+  curMap() { return this.page.evaluate(() => (G.mapScene && G.mapScene.def ? G.mapScene.def.id : null)).catch(() => this.lastMap); }
   note(kind, detail) {
     const key = this.ch + '|' + kind;
     this.noteCount[key] = (this.noteCount[key] || 0) + 1;
@@ -323,8 +366,23 @@ class Harness {
       for (const [k, re] of Object.entries(NOTES)) if (re.test(src)) this.note(k);
       return this.page.evaluate(fn, arg);
     }
+    if (cats.length && this.allowForced && cats.every((c) => this.allowForced.includes(c)) && !level) {
+      const f = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), forced: true };
+      REPORT.forced = (REPORT.forced || []).concat([f]);
+      log('FORCED', `ch${this.ch} [${cats.join(',')}] let through: ${f.code.slice(0, 160)}`);
+      return this.page.evaluate(fn, arg);
+    }
+    // --assist: the chapter tests' own gear kits (free shop gear, with the items given in the same call) go through
+    if (cats.length && this.assist && cats.includes('gear') && cats.every((c) => c === 'gear' || c === 'items')) {
+      const a = { ch: this.ch, map: await this.curMap(), cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), assisted: true };
+      a.before = await this.page.evaluate(() => G.state.party.map((id) => id + ':' + Object.values(G.state.members[id].equip).filter(Boolean).join('/'))).catch(() => null);
+      REPORT.assisted = (REPORT.assisted || []).concat([a]);
+      log('ASSIST', `ch${this.ch} [${cats.join(',')}] driver gear kit applied (--assist): ${a.code.slice(0, 140)}`);
+      if (level) await this.levelAssumption(levelTarget(src, arg), 'driver level boost (with its gear kit)', src);
+      return this.page.evaluate(fn, arg);
+    }
     if (cats.length) {
-      const b = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), arg: typeof arg === 'string' ? snippet(arg) : arg };
+      const b = { ch: this.ch, map: await this.curMap(), cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), arg: typeof arg === 'string' ? snippet(arg) : arg };
       if (cats.includes('items') || cats.includes('gear')) b.state = await this.page.evaluate(() => ({ gold: G.state.gold, equip: G.state.party.map((id) => id + ':' + Object.values(G.state.members[id].equip).filter(Boolean).join('/')) })).catch(() => null);
       REPORT.blocked.push(b);
       log('BLOCK', `ch${this.ch} [${cats.join(',')}] ${b.code.slice(0, 160)}${typeof arg === 'string' ? ' ‹' + snippet(arg).slice(0, 80) + '›' : ''}`);
@@ -344,13 +402,13 @@ class Harness {
   async levelAssumption(target, how, src) {
     const party = await this.partyLv();
     const min = party.length ? Math.min(...party.map((p) => p[1])) : 0;
-    const rec = { ch: this.ch, map: this.lastMap, how, assumed: target, party: party.map((p) => p.join(':')), min, deficit: target == null ? null : target - min, applied: false };
-    if (target != null && OPT.assist && target > min) {
+    const rec = { ch: this.ch, map: await this.curMap(), how, assumed: target, party: party.map((p) => p.join(':')), min, deficit: target == null ? null : target - min, applied: false };
+    if (target != null && this.assist && target > min) {
       await this.page.evaluate((lv) => { for (const id of G.state.party) G.Story.ensureLevel(id, lv); G.Party.healAll(); }, target);
       rec.applied = true;
     } else if (src != null) await this.page.evaluate(() => G.Party.healAll());
     REPORT.levels.push(rec);
-    log('LEVEL', `ch${this.ch} ${how}: assumed Lv${target ?? '?'}, party ${rec.party.join(' ')}${rec.deficit > 0 ? ` → ${rec.deficit} below` : ''}${rec.applied ? ' (applied: --assist)' : src != null ? ' (not applied; party healed)' : ''}`);
+    log('LEVEL', `ch${this.ch} ${how}: assumed Lv${target ?? '?'}, party ${rec.party.join(' ')}${rec.deficit > 0 ? ` → ${rec.deficit} below` : ''}${rec.applied ? ' (applied: assist)' : src != null ? ' (not applied; party healed)' : ''}`);
     saveReport();
   }
   // ---------------------------------------------------------------- game helpers
@@ -385,7 +443,7 @@ class Harness {
       pos: G.mapScene && [G.mapScene.player.x, G.mapScene.player.y], busy: G.Script.busy(), fade: G.Render.fade.a, chapter: G.state.chapter,
       dialog: G.Dialog.log.slice(-6).map((l) => (l.name || '') + '：' + l.text), debugLog: G.Debug.log.slice(-8), choices: G.Debug.choices.slice(),
       party: G.state.party.map((id) => { const m = G.state.members[id]; return m ? `${id} Lv${m.lv} ${m.hp}HP` : id; }),
-      battles: (window.__chain.battles || []).slice(-3), lastError: G.lastError ? String(G.lastError.stack || G.lastError).slice(0, 800) : null,
+      battles: (window.__chain.battles || []).slice(-3), trace: (window.__chainTrace || []).slice(-60), lastError: G.lastError ? String(G.lastError.stack || G.lastError).slice(0, 800) : null,
     })).catch((e) => ({ dumpFailed: e.message }));
     log('DUMP', reason);
     log('DUMP', JSON.stringify(d, null, 1));
@@ -404,6 +462,10 @@ class Harness {
   // a fresh page that only has the saved game, loaded through the title screen: any key → 讀取進度 → slot
   async loadInFreshPage(file) {
     const s = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (this.page) {
+      const c = await this.page.evaluate(() => ({ b: window.__chain.battles.splice(0), w: window.__chain.wipes.splice(0) })).catch(() => ({ b: [], w: [] }));
+      this.carry = { b: (this.carry ? this.carry.b : []).concat(c.b), w: (this.carry ? this.carry.w : []).concat(c.w) };
+    }
     await this.newContext({ [s.key]: s.data });
     const k = this.page.keyboard;
     await this.page.waitForFunction(() => G.Scenes.top() && G.Scenes.top().stage === 'press', null, { timeout: 30000 });
@@ -447,7 +509,13 @@ function watchdog(h) {
     if (st) {
       h.lastMap = st.map;
       if (st.lastError) { h.recordError('G.lastError', st.lastError); await h.ev(() => { G.lastError = null; }).catch(() => {}); }
-      if (st.gameover) { failing = true; reject(new ChainFail('GAME OVER (party wiped) on ' + st.map)); return; }
+      if (st.gameover) {
+        const last = await h.ev(() => (window.__chain.battles.slice(-1)[0] || {})).catch(() => ({}));
+        REPORT.wipes = REPORT.wipes || [];
+        REPORT.wipes.push({ ch: h.ch, map: st.map, troop: last.troop, names: last.names, lv: last.lv, retried: false });
+        saveReport();
+        failing = true; reject(new ChainFail(`GAME OVER (party wiped) on ${st.map} by ${last.troop} (${(last.names || []).join('+')}) at ${(last.lv || []).join(' ')}`)); return;
+      }
       const s = JSON.stringify([st.map, st.pos, st.names, st.dlg, st.dbg, st.bt, st.flags, st.battles, st.cred, st.busy]);
       if (s !== sig) { sig = s; since = Date.now(); }
       if (Date.now() - lastLine > 30000) {
@@ -510,6 +578,56 @@ function sanity(n, s, prevMain) {
   if (prevMain && !s.quests.done.includes(prevMain)) p.push(`previous main quest ${prevMain} is not done`);
   if (s.gold < 0 || !Number.isFinite(s.gold)) p.push('gold is ' + s.gold);
   return p;
+}
+
+// ------------------------------------------------------------------------------------------------ shopping
+// gear a player can buy by the start of chapter N (cumulative shop pools of tools/sim_story_fights.js)
+const SHOP_POOL = { 1: 'S1a', 2: 'S2a', 3: 'S3a', 4: 'S4', 5: 'S5', 6: 'S6', 7: 'S7a', 8: 'S8a', 9: 'S9a', 10: 'S9', 11: 'S11' };
+async function shop(h, n) {
+  let SHOPS;
+  try { SHOPS = require(path.join(ROOT, 'tools', 'sim_story_fights.js')).SHOPS; } catch (e) { log('shop', 'no shop pools: ' + e.message); return null; }
+  const pool = SHOPS[SHOP_POOL[n]];
+  if (!pool) return null;
+  const r = await h.ev((pool) => {
+    // same per-slot score as tools/sim_story.js gearScore (casters value mag)
+    const score = (cid, it, slot) => {
+      const c = G.Data.chars[cid], s = it.stats || {}, caster = c.weapon === 'flute' || c.weapon === 'talisman';
+      if (slot === 'weapon') return caster ? (s.mag || 0) + (s.atk || 0) * 0.2 + (s.hp || 0) / 20 : (s.atk || 0) + (s.mag || 0) * 0.1 + (s.hp || 0) / 20;
+      const sp = [].concat(it.special || []);
+      return (s.def || 0) * 1.5 + (s.hp || 0) / 8 + (s.mp || 0) / 8 + (s.spd || 0) * 1.2 + (caster ? (s.mag || 0) : (s.atk || 0)) + (s.atk || 0) * 0.3 + (s.mag || 0) * 0.3 + (s.luk || 0) * 0.3
+        + sp.length * 4 + (it.immune ? 2 * it.immune.length : 0) + (it.resist ? 2 : 0);
+    };
+    const I = G.Data.items, bought = [], gold0 = G.state.gold;
+    const wants = [];
+    for (const cid of G.state.party.slice(0, 4)) {
+      const m = G.state.members[cid];
+      for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
+        const cur = m.equip[slot] && I[m.equip[slot]];
+        const curV = cur ? score(cid, cur, slot) : 0;
+        let best = null, bv = curV;
+        for (const id of pool) {
+          const it = I[id];
+          if (!it || it.type !== slot || !(it.price > 0) || (it.who && !it.who.includes(cid))) continue;
+          const v = score(cid, it, slot);
+          if (v > bv + 0.01) { bv = v; best = id; }
+        }
+        if (best) wants.push({ cid, slot, id: best, gain: bv - curV, price: I[best].price });
+      }
+    }
+    // weapons and armour first, then the biggest gain per coin
+    const order = { weapon: 0, armor: 1, head: 2, feet: 2, acc: 3 };
+    wants.sort((a, b) => order[a.slot] - order[b.slot] || b.gain / b.price - a.gain / a.price);
+    for (const w of wants) {
+      if (G.state.gold < w.price) continue;
+      G.state.gold -= w.price; G.Inv.add(w.id, 1); G.Party.equip(w.cid, w.slot, w.id);
+      bought.push(`${w.cid}.${w.slot}=${w.id}(${I[w.id].name},${w.price})`);
+    }
+    for (const cid of G.state.party) { const s = G.Party.stats(cid), mm = G.state.members[cid]; mm.hp = Math.min(mm.hp, s.mhp); mm.mp = Math.min(mm.mp, s.mmp); }
+    const missing = wants.filter((w) => !bought.some((b) => b.startsWith(w.cid + '.' + w.slot + '=')));
+    return { gold0, gold: G.state.gold, bought, skipped: missing.length, wantCost: wants.reduce((a, w) => a + w.price, 0), missing: missing.map((w) => `${w.cid}.${w.slot}=${w.id}(${w.price})`) };
+  }, pool);
+  log('shop', `ch${n} (${SHOP_POOL[n]}): spent ${r.gold0 - r.gold} of ${r.gold0} gold — ${r.bought.join(' ') || 'nothing better on sale'}${r.skipped ? ` — ${r.skipped} upgrade(s) unaffordable; the full kit would cost ${r.wantCost} gold (has ${r.gold0})` : ''}`);
+  return r;
 }
 
 // ------------------------------------------------------------------------------------------------ chapter adapters
@@ -605,51 +723,48 @@ function towerParts(M) {
 }
 async function runCh11(h, M) {
   const Run = M.get('Run'), SEG = M.get('SEGMENTS');
-  const T = towerParts(M);
   const mkRun = (label) => { const R = new Run(h.fakeBrowser, label); R.page = h.proxy; R.ctx = h.ctxFake; return R; };
   const R = mkRun('A');
-  for (const seg of ['temple', 'magong', 'flats', 'xuanwu', 'voyage', 'field']) {
+  for (const seg of ['temple', 'magong', 'flats', 'xuanwu', 'voyage', 'field', 'tower', 'breath']) {
     log('ch11', 'segment ' + seg);
+    h.watch && h.watch.reset();
     await SEG[seg](R);
     await R.health(seg);
   }
-  log('ch11', "segment tower (1F–5F, up to 她的記憶)");
-  await T.a(R);
-  // ---- the finale branch: save before the last optional 心燈 (she 4-3 她的記憶)
+  // ---- the finale branch: 一息界, the light reaches the seat; the next step starts 燈心 → ending (count-based)
   const branchFile = path.join(SAVES, 'ch11_branch.json');
   const meta = await h.save(2, branchFile);
   const L = meta.lanterns, TH = await h.ev(() => G.Lanterns.THRESHOLD);
-  REPORT.endings.branch = { lanterns: L, threshold: TH, lanternIds: await h.ev(() => Object.keys(G.state.lanterns)), map: await h.ev(() => G.mapScene.def.id) };
-  log('ch11', `finale branch saved: 心燈 ${L} / threshold ${TH} — 她的記憶 adds 1 → true needs ${L + 1} ≥ ${TH}, normal needs ${L} < ${TH}`);
-  await h.shot('ch11_branch_5F');
+  REPORT.endings.branch = { lanterns: L, threshold: TH, lanternIds: await h.ev(() => Object.keys(G.state.lanterns)), map: await h.ev(() => G.mapScene.def.id), lv: await h.partyLv() };
+  log('ch11', `finale branch saved (slot 2): 心燈 ${L} / threshold ${TH} → this save leads to ${L >= TH ? '千燈 (true)' : '彼岸 (normal)'} as it stands`);
+  await h.shot('ch11_branch');
   saveReport();
   if (!OPT.endings) return { checks: okList(M.get('results')) };
-  // ---- true ending: collect the six memories, the warden, 一息界, the finale
+  const fin = (k) => h.ev((k) => ({ f: ['ending_true', 'ending_normal', 'game_clear', 'cleared_true', 'cleared_normal', 'ch11_done', 'ch11_reunion', 'ch11_yexuan', 'ch11_nianer', 'ch11_wuxiang', 'qiandeng'].reduce((a, x) => { a[x] = !!G.state.flags[x]; return a; }, {}),
+    n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()), lv: G.state.party.map((id) => id + ':' + G.state.members[id].lv) }), k);
+  // ---- true ending
   const tTrue = Date.now();
-  log('ch11', 'TRUE route: 她的記憶 → 千年燈塔守 → 一息界 → 燈心 → 千燈');
-  await T.mem(R);
-  await T.b(R);
-  await SEG.breath(R); await R.health('breath');
+  log('ch11', 'TRUE route: 燈心 → 夜玄 → 夜念 → 無相 → 千燈 → credits → title');
   h.watch && h.watch.reset();
   await SEG.true(R); await R.health('true');
-  const fin = await h.ev(() => ({ f: { ending_true: !!G.state.flags.ending_true, ending_normal: !!G.state.flags.ending_normal, game_clear: !!G.state.flags.game_clear, cleared_true: !!G.state.flags.cleared_true }, n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()), lv: G.state.party.map((id) => id + ':' + G.state.members[id].lv) }));
-  REPORT.endings.true = Object.assign({ sec: Math.round((Date.now() - tTrue) / 1000) }, fin);
-  log('ch11', 'TRUE route finished: ' + JSON.stringify(fin));
+  REPORT.endings.true = Object.assign({ sec: Math.round((Date.now() - tTrue) / 1000) }, await fin());
+  log('ch11', 'TRUE route finished: ' + JSON.stringify(REPORT.endings.true));
   await h.shot('ending_true_title');
   saveReport();
-  // ---- normal ending: reload the branch save in a fresh page, leave 她的記憶 alone
+  // ---- normal ending: the same save in a fresh page. The ending is decided only by G.Lanterns.count() >= THRESHOLD:
+  // with L >= TH no player action left can lead to 彼岸, so the driver's own lantern removal (ch11.test.js 'normal') is
+  // let through — the ONE forced state change of the run, logged as FORCED.
   const tNorm = Date.now();
-  log('ch11', 'NORMAL route: reload the branch save in a fresh page, skip 她的記憶 → 彼岸');
+  log('ch11', 'NORMAL route: reload the branch save in a fresh page → 彼岸');
   await h.loadInFreshPage(branchFile);
   h.watch && h.watch.reset();
   const R2 = mkRun('B');
   await h.ev(() => G.Debug.setAutoplay(true));
-  await T.b(R2);
-  await SEG.breath(R2); await R2.health('breath (B)');
-  await SEG.normal(R2); await R2.health('normal');
-  const fin2 = await h.ev(() => ({ f: { ending_true: !!G.state.flags.ending_true, ending_normal: !!G.state.flags.ending_normal, game_clear: !!G.state.flags.game_clear, cleared_normal: !!G.state.flags.cleared_normal }, n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()) }));
-  REPORT.endings.normal = Object.assign({ sec: Math.round((Date.now() - tNorm) / 1000) }, fin2);
-  log('ch11', 'NORMAL route finished: ' + JSON.stringify(fin2));
+  h.allowForced = L >= TH ? ['lanterns'] : null;
+  try { await SEG.normal(R2); } finally { h.allowForced = null; }
+  await R2.health('normal');
+  REPORT.endings.normal = Object.assign({ sec: Math.round((Date.now() - tNorm) / 1000), forcedLanternRemoval: L >= TH }, await fin());
+  log('ch11', 'NORMAL route finished: ' + JSON.stringify(REPORT.endings.normal));
   await h.shot('ending_normal_title');
   return { checks: okList(M.get('results')) };
 }
@@ -688,7 +803,7 @@ async function main() {
       h.ch = n;
       const boundaryOnly = n > OPT.to;   // --to chN: still reach, check and save the next boundary
       const M = MODS[n];
-      const rec = REPORT.chapters[n] = { n, status: 'RUNNING', preset: M.preset, start: new Date().toISOString() };
+      const rec = REPORT.chapters[n] = { n, status: 'RUNNING', preset: M.preset, start: new Date().toISOString(), assist: OPT.assist || (OPT.assistFrom != null && n >= OPT.assistFrom) };
       const t0 = Date.now();
       // ---------------------------------------------------------- chapter start / boundary
       if (n === 0) {
@@ -733,6 +848,7 @@ async function main() {
           }
           log('reload', `fresh page + title → 讀取進度 → slot 1: state ${rec.reload.same ? 'identical' : 'DIFFERS in ' + rec.reload.diff.join(',')}`);
         }
+        if (OPT.shop) rec.shopping = await shop(h, n);
         // allowed help: raise the party to the chapter's expected start level
         if (prog) {
           const want = prog.lv[0];
@@ -745,6 +861,9 @@ async function main() {
           if (M.preset.lv && M.preset.lv > want) await h.levelAssumption(M.preset.lv, `debug start lv=${M.preset.lv} (above the progression table's ${want})`, null);
         }
       }
+      // G.Debug.log is a test-only log; the chapter drivers read it as if their page were fresh (e.g. ch9 counts every
+      // 'minigame Jiaobei' line since load), so each chapter starts with an empty one
+      if (n > 0) await h.ev(() => { G.Debug.log.length = 0; });
       saveReport();
       if (boundaryOnly) { rec.status = 'BOUNDARY'; delete rec.start; saveReport(); break; }
       // ---------------------------------------------------------- the chapter
@@ -763,8 +882,10 @@ async function main() {
         rec.sec = Math.round((Date.now() - t0) / 1000);
         rec.error = String(e && e.message || e).slice(0, 2000);
         rec.dump = await h.dump(`chapter ${n} failed: ${rec.error}`);
-        rec.battles = await h.ev(() => window.__chain.battles.slice()).catch(() => []);
+        rec.battles = (h.carry ? h.carry.b : []).concat(await h.ev(() => window.__chain.battles.slice()).catch(() => []));
         for (const b of rec.battles) REPORT.battles.push(Object.assign({ ch: n }, b));
+        rec.wipes = await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []);
+        for (const w of rec.wipes) (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w));
         rec.checks = okList((() => { try { return M.get('results'); } catch (_) { return []; } })()).filter((c) => !c.ok);
         log('FAIL', `chapter ${n}: ${rec.error.split('\n')[0]}`);
         status = 1;
@@ -774,7 +895,10 @@ async function main() {
       rec.sec = Math.round((Date.now() - t0) / 1000);
       rec.checks = (res.checks || []).filter((c) => !c.ok);
       rec.checksTotal = res.total || (res.checks || []).length;
-      rec.battles = await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; });
+      rec.battles = (h.carry ? h.carry.b : []).concat(await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; }));
+      rec.wipes = (h.carry ? h.carry.w : []).concat(await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []));
+      h.carry = null;
+      for (const w of rec.wipes) { (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w)); log('WIPE', `ch${n} party wiped by ${w.troop} (${(w.names || []).join('+')}) at ${(w.lv || []).join(' ')} on ${w.map} — retried (重新挑戰)`); }
       for (const b of rec.battles) {
         const row = balanceRow(b);
         if (row) { b.balance = row; const lv = b.lv.map((x) => +String(x).split(':')[1]).filter(Boolean); b.lvGap = Math.min(...lv) - row.lv; }
@@ -803,7 +927,7 @@ async function main() {
   log('summary', 'chapter  status  time   entry');
   for (const r of Object.values(REPORT.chapters)) {
     const e = r.entry && r.entry.party ? `${r.entry.party.map((m) => m.id[0] + m.lv).join(' ')} gold ${r.entry.gold} 心燈 ${r.entry.lanterns.length}` : '';
-    log('summary', `ch${pad(r.n)}     ${r.status.padEnd(6)} ${String(r.sec || '-').padStart(5)}s ${e}${r.error ? '  ✗ ' + r.error.split('\n')[0].slice(0, 120) : ''}`);
+    log('summary', `ch${pad(r.n)}     ${(r.status + (r.assist ? '(A)' : '')).padEnd(9)} ${String(r.sec || '-').padStart(5)}s ${e}${r.error ? '  ✗ ' + r.error.split('\n')[0].slice(0, 120) : ''}`);
   }
   if (REPORT.endings.true) log('summary', 'true ending: ' + JSON.stringify(REPORT.endings.true));
   if (REPORT.endings.normal) log('summary', 'normal ending: ' + JSON.stringify(REPORT.endings.normal));

@@ -1215,7 +1215,7 @@
         { id: 'ys_fisher', sprite: 'fisherman', name: '老漁夫', x: 8, y: 19, dir: 'left', talk: ['港淤了，大船進不來囉。以前月津港，帆比厝還多。', '月津、月津……月亮的渡口。名字是好名字。'] },
         { id: 'ys_crowd1', sprite: 'villager_m2', name: '扛炮城的人', x: 19, y: 16, dir: 'down', if: night, talk: ['讓讓讓！炮城要過了！'] },
         { id: 'ys_crowd2', sprite: 'pilgrim', name: '跟轎的香客', x: 24, y: 17, dir: 'left', if: night, talk: ['帝君保庇！帝君保庇！'] },
-        { id: 'ys_crowd3', sprite: 'villager_f', name: '包著毛巾的阿姨', x: 19, y: 22, dir: 'right', if: night, talk: ['（她全身包得只剩兩隻眼睛，對你們比了一個讚。）'] },
+        { id: 'ys_crowd3', sprite: 'villager_f', name: '包著毛巾的阿姨', x: 19, y: 22, dir: 'right', if: night, talk: ['（她全身包得只剩兩隻眼睛，對你們豎起了大拇指。）'] },
         { id: 'ys_ayi_mother', sprite: 'ghost_f', name: '咳嗽的婦人', x: 38, y: 29, dir: 'down', ghost: true,
           if: (st) => st.flags.ch6_beehive && st.flags.ch6_ayi_met && !st.flags.ch6_ayi_mother, talk: (S, n) => Sc.ayiMother(S, n) },
       ],
@@ -1324,7 +1324,7 @@
       ]),
       npcs: [
         { id: 'ys_innkeeper', sprite: 'shopkeeper_f', name: '客棧老闆娘', x: 6, y: 3, dir: 'down', talk: (S, n) => Sc.yanshuiInn(S, n) },
-        { id: 'ys_guest', sprite: 'merchant', name: '住客', x: 10, y: 5, dir: 'down', talk: ['我從台南來做生意，每年元宵都住這。', '老闆娘說窗仔要關緊——去年有一支炮飛進來，把我的帽子燒了一個洞。'] },
+        { id: 'ys_guest', sprite: 'merchant', name: '住客', x: 10, y: 5, dir: 'down', talk: ['我從府城來做生意，每年元宵都住這。', '老闆娘說窗仔要關緊——去年有一支炮飛進來，把我的帽子燒了一個洞。'] },
       ],
       warps: [{ x: 6, y: 9, w: 2, to: 'yanshui', tx: 25, ty: 17, tdir: 'down', door: true }],
     };

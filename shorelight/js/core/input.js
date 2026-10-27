@@ -20,6 +20,8 @@ G.Input = (() => {
   let anyKey = false;
   let mouse = { x: 0, y: 0, clicked: false, moved: false };
   let gpPrev = {};
+  // any real input (key, click, mouse move, touch, wheel, gamepad) tells the play clock someone is at the keyboard
+  const active = () => { if (G.PlayStats) G.PlayStats.input(); };
 
   window.addEventListener('keydown', (e) => {
     if (e.metaKey && e.code !== 'MetaLeft') return; // ⌘-shortcuts (e.g. ⌘F fullscreen) are not game input
@@ -31,6 +33,7 @@ G.Input = (() => {
       held[a] = true;
     }
     anyKey = true;
+    active();
     if (G.Audio) G.Audio.unlock();
   });
   window.addEventListener('keyup', (e) => {
@@ -49,15 +52,18 @@ G.Input = (() => {
     mouse.x = p.x; mouse.y = p.y;
     if (e.button === 0) { mouse.clicked = true; anyKey = true; }
     if (e.button === 2) { pressedNow.cancel = true; }
+    active();
     if (G.Audio) G.Audio.unlock();
   });
   window.addEventListener('mousemove', (e) => {
     if (!G.canvas) return;
     const p = canvasPos(e);
     mouse.x = p.x; mouse.y = p.y; mouse.moved = true;
+    active();
   });
+  window.addEventListener('wheel', active, { passive: true });
   window.addEventListener('contextmenu', (e) => e.preventDefault());
-  window.addEventListener('touchstart', () => { anyKey = true; mouse.clicked = true; if (G.Audio) G.Audio.unlock(); }, { passive: true });
+  window.addEventListener('touchstart', () => { anyKey = true; mouse.clicked = true; active(); if (G.Audio) G.Audio.unlock(); }, { passive: true });
 
   function pollGamepad() {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -77,7 +83,7 @@ G.Input = (() => {
       auto: gp.buttons[8]?.pressed,
     };
     for (const k in st) {
-      if (st[k] && !gpPrev[k]) { pressedNow[k] = true; repeatT[k] = 0; anyKey = true; }
+      if (st[k] && !gpPrev[k]) { pressedNow[k] = true; repeatT[k] = 0; anyKey = true; active(); }
       if (st[k]) held[k] = true;
       else if (gpPrev[k]) held[k] = false;
     }
@@ -86,6 +92,8 @@ G.Input = (() => {
 
   const I = {
     held: (a) => !!held[a],
+    // true while any game key / pad button is held (a held key is input too: holding a direction to walk)
+    anyHeld() { for (const k in held) if (held[k]) return true; return false; },
     // consumed pressed check
     pressed(a) {
       if (pressedNow[a]) { pressedNow[a] = false; return true; }
@@ -126,8 +134,8 @@ G.Input = (() => {
       anyKey = false;
     },
     // test hook
-    _press(a) { pressedNow[a] = true; held[a] = true; setTimeout(() => (held[a] = false), 60); },
-    _hold(a, v) { held[a] = v; if (v) pressedNow[a] = true; },
+    _press(a) { pressedNow[a] = true; held[a] = true; active(); setTimeout(() => (held[a] = false), 60); },
+    _hold(a, v) { held[a] = v; if (v) pressedNow[a] = true; active(); },
   };
   return I;
 })();

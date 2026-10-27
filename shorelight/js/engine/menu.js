@@ -50,12 +50,14 @@
         { label: '心燈', k: 'lanterns', icon: 'lantern' },
         { label: '地圖', k: 'world', icon: 'scroll' },
         { label: '圖鑑', k: 'bestiary', icon: 'mushroom' },
+        { label: '遊玩統計', k: 'stats', icon: 'watch' },
         { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.Mapx.val(G.mapScene.def.noSave)) },
         { label: '讀檔', k: 'load', icon: 'key' },
         { label: '設定', k: 'settings', icon: 'fan' },
         { label: '回標題', k: 'title', icon: 'hat' },
       ];
-      this.list = new G.UI.List(this.items, { rows: this.items.length, rowH: 42 });
+      // 14 rows of 40px: the list panel ends above the place/time plate at the bottom
+      this.list = new G.UI.List(this.items, { rows: this.items.length, rowH: 40 });
       this.sub = null;
     }
     update(dt) {
@@ -80,6 +82,7 @@
         case 'lanterns': this.sub = new LanternPanel(back); break;
         case 'bestiary': this.sub = new BestiaryPanel(back); break;
         case 'world': G.Scenes.push(new G.WorldMapScene()); break;
+        case 'stats': G.Scenes.push(new G.StatsScene()); break;
         case 'save': G.Scenes.push(new SaveScene('save', () => {})); break;
         case 'load': G.Scenes.push(new SaveScene('load', () => {})); break;
         case 'settings': G.Scenes.push(new SettingsScene()); break;
@@ -96,12 +99,12 @@
       ctx.fillStyle = 'rgba(4,6,14,0.62)';
       ctx.fillRect(0, 0, G.W, G.H);
       // left menu
-      UI().panel(ctx, 30, 20, 230, this.items.length * 42 + 24);
+      UI().panel(ctx, 30, 20, 230, this.items.length * 40 + 24);
       this.list.draw(ctx, 40, 32, 214, t, { size: 22, focus: !this.sub });
       // info plate
       UI().panel(ctx, 30, G.H - 106, 230, 96, { ornament: false });
       R().textClip(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, 200, { size: 20, minSize: 13, color: '#fff0d0' });
-      R().text(ctx, '時間 ' + U.fmtTime(G.state.playtime), 48, G.H - 68, { size: 17, color: '#c9b893' });
+      R().text(ctx, '時間 ' + U.fmtTime(G.PlayStats ? G.PlayStats.total() : G.state.playtime), 48, G.H - 68, { size: 17, color: '#c9b893' });
       R().text(ctx, '錢財 ' + G.state.gold + ' 文', 48, G.H - 44, { size: 17, color: '#ffe08a' });
       UI().lanternIcon(ctx, 220, G.H - 56, 9, t);
       R().text(ctx, String(G.Lanterns.count()), 236, G.H - 68, { size: 20, color: '#ffd9a0' });

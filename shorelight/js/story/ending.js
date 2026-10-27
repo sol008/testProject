@@ -81,7 +81,7 @@ G.Ending = (() => {
       ctx.restore();
       if (this.endT) {
         const a = Math.min(1, (this.t - this.endT) / 1.5);
-        G.Render.text(ctx, this.kind === 'true' ? '— 完 —' : '— 彼岸 —', G.W / 2, G.H / 2 - 30, { size: 56, align: 'center', color: '#fff3dc', alpha: a, glow: 'rgba(255,170,90,0.7)', glowBlur: 24 });
+        G.Render.text(ctx, this.kind === 'true' ? '—— 完 ——' : '—— 彼岸 ——', G.W / 2, G.H / 2 - 30, { size: 56, align: 'center', color: '#fff3dc', alpha: a, glow: 'rgba(255,170,90,0.7)', glowBlur: 24 });
       }
       G.FX.vignette(ctx, 0.45);
     }

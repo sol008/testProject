@@ -113,7 +113,7 @@ G.I18N.add({
   '少年仔，來進香的？今年人特別多，三月瘋媽祖，一年比一年瘋。': 'Here for the pilgrimage, young man? Big crowd this year. Third month, everyone goes mad for Mazu, and madder every year.',
   '媽祖婆是海上人的母親。討海的、過海的，誰沒在浪頭上喊過一聲「媽祖婆」？': 'Mazu is mother to everyone who lives by the sea. Fishermen, travelers crossing over—who hasn\'t cried out "Mazu!" on the crest of a wave?',
   '起駕要看時辰。吉時一到，鞭炮一響，神轎就出廟門，一路巡過整個北港。': 'The send-off goes by the hour. When the auspicious moment comes, the firecrackers go off and the palanquin leaves the temple to tour all of Beigang.',
-  '遶境是媽祖出來看看她的子民，看哪裡不平安，就把不乾淨的東西掃走。': 'The procession is Mazu coming out to look in on Her people. Wherever there\'s trouble, She sweeps the unclean things away.',
+  '遶境是媽祖出來看看祂的子民，看哪裡不平安，就把不乾淨的東西掃走。': 'The procession is Mazu coming out to look in on Her people. Wherever there\'s trouble, She sweeps the unclean things away.',
   '等一下神轎經過，你們可以去鑽轎腳。跪在路上，讓神轎從頭頂過去，媽祖就會保庇你。': 'When the palanquin comes by, you can crawl beneath it. Kneel in the road, let it pass over your head, and Mazu will watch over you.',
   '要找船？渡頭在主街東邊，順著巷子走就到了。': 'Looking for a boat? The landing\'s east of the main street. Follow the alley and you\'ll find it.',
   '起駕前，去廟埕兩邊看看吧。八家將在開臉，神將也在歇駕。': 'Before the send-off, have a look around both sides of the courtyard. The Eight Generals are having their faces painted, and the giant deity figures are resting.',

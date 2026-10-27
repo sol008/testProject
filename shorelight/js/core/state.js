@@ -36,7 +36,43 @@ G.newState = function () {
     chapter: 0,
     steps: 0,
     battles: 0,
+    stats: G.newStats(),
   };
+};
+
+// Play statistics (G.state.stats). The clock itself lives in js/engine/playstats.js; this is only the saved shape.
+// `playtime` stays the single source for the total: chapters[n].time sums to playtime - legacy.
+//   legacy    seconds carried over from a save made before stats existed (not broken down)
+//   chapters  { [chapter]: { time, act: {dialogue,battle,explore,menu,minigame}, battles, wins, losses, gameOvers, flees, retries } }
+//   bosses    { [troopKey]: { enemy, ch, attempts, wins, losses, retries, time, firstWin } }  (firstWin = attempt # of the first win)
+//   afk       { count, lost }  AFK episodes and the seconds subtracted for them
+G.STAT_ACTS = ['dialogue', 'battle', 'explore', 'menu', 'minigame'];
+G.newStats = function () {
+  return { v: 1, runId: 'r' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36), legacy: 0, chapters: {}, bosses: {}, afk: { count: 0, lost: 0 } };
+};
+G.statChapter = function (stats, ch) {
+  const k = String(ch | 0);
+  let c = stats.chapters[k];
+  if (!c || typeof c !== 'object') c = stats.chapters[k] = {};
+  for (const n of ['time', 'battles', 'wins', 'losses', 'gameOvers', 'flees', 'retries']) if (typeof c[n] !== 'number') c[n] = 0;
+  if (!c.act || typeof c.act !== 'object') c.act = {};
+  for (const a of G.STAT_ACTS) if (typeof c.act[a] !== 'number') c.act[a] = 0;
+  return c;
+};
+// fill in stats for a state loaded from an older save (no stats → the whole playtime becomes `legacy`)
+G.migrateStats = function (st) {
+  if (!st.stats || typeof st.stats !== 'object') {
+    st.stats = G.newStats();
+    st.stats.legacy = st.playtime || 0;
+    return st;
+  }
+  const s = st.stats, d = G.newStats();
+  for (const k in d) if (s[k] == null || typeof s[k] !== typeof d[k]) s[k] = d[k];
+  for (const k in s.chapters) G.statChapter(s, k);
+  for (const k in s.bosses) s.bosses[k] = Object.assign({ enemy: null, ch: 0, attempts: 0, wins: 0, losses: 0, retries: 0, time: 0, firstWin: 0 }, s.bosses[k]);
+  if (s.afk.count == null) s.afk.count = 0;
+  if (s.afk.lost == null) s.afk.lost = 0;
+  return st;
 };
 G.state = G.newState();
 
@@ -240,6 +276,8 @@ G.Save = {
   SLOTS: 8,
   key: (slot) => 'shorelight_save_' + slot,
   write(slot, thumb) {
+    // fold the play-time still pending since the last input into the total before it is written
+    if (G.PlayStats) G.PlayStats.commit();
     const data = {
       state: G.state,
       meta: {
@@ -270,7 +308,13 @@ G.Save = {
     try {
       const d = JSON.parse(localStorage.getItem(G.Save.key(slot)));
       if (!d) return false;
-      G.state = Object.assign(G.newState(), d.state);
+      const st = Object.assign(G.newState(), d.state);
+      if (!d.state || !d.state.stats) st.stats = null; // made before play statistics existed
+      G.migrateStats(st);
+      // play statistics are a record of real play, not of the save: loading an older save of the same
+      // playthrough (after a game over, or after quitting without saving) keeps the time/battles played since
+      if (G.PlayStats) G.PlayStats.adoptLoaded(st);
+      G.state = st;
       return true;
     } catch (e) { return false; }
   },

@@ -342,7 +342,7 @@
     if (F('ch9_fallwind_defeated')) return ['chenbo:smile', '風停了。……今晚城牆上，應該聽得很清楚。'];
     if (F('ch9_names_quest')) return ['chenbo:serious', '風的源頭在龍磐。出東門，往台地上走。'];
     if (F('ch9_cape_blocked')) return ['chenbo:serious', '這城裡的人，怕的不是風，是風裡的聲音。'];
-    if (F('ch9_wangboat_launch')) return ['chenbo:normal', '三十年沒掌舵了。手生了，船倒是熟的——好船就是這樣，會教人。'];
+    if (F('ch9_wangboat_launch')) return ['chenbo:normal', '二十年沒掌舵了。手生了，船倒是熟的——好船就是這樣，會教人。'];
     if (F('ch9_jiaobei_done')) return ['chenbo:serious', '王船廠今晚會鬧。艾草帶著，別逞強。'];
     if (F('ch9_donggang_arrive')) return ['chenbo:serious', '進廟之前，先拜天公爐。規矩不能亂。'];
     if (F('ch9_qihou_night_done')) return ['chenbo:normal', '沿沙洲往南，就是東港。路上的海，你們多看兩眼。'];
@@ -813,7 +813,7 @@
       { t: 'stone_lantern', x: 21, y: 3 }, { t: 'stone_lantern', x: 24, y: 3 },
       { t: 'lamp_post', x: 19, y: 9 }, { t: 'lamp_post', x: 35, y: 9 },
       { t: 'red_lantern', x: 29, y: 18 }, { t: 'red_lantern', x: 35, y: 19 },
-      { t: 'signboard', x: 21, y: 31, text: '往東港', interact: ['路牌：「沿沙洲往南──東港」。'], label: '看' },
+      { t: 'signboard', x: 21, y: 31, text: '往東港', interact: ['路牌：「沿沙洲往南——東港」。'], label: '看' },
     ],
     chests: [
       { id: 'qh_hill', x: 26, y: 2, item: 'c9_xiancaodong', n: 3 },
@@ -1049,7 +1049,7 @@
     await S.say('', '紅纓擦擦眼睛，站起來，把槍往沙裡一插。');
     await S.say('hongying:angry', '好！明天我煮早餐！');
     await S.say('xinghe:surprise', '欸？不、不用了吧——');
-    if (V().ch9_comfort === 'talk') await S.say('hongying:smug', '你早上不是說胃太好？');
+    if (V().ch9_comfort === 'talk') await S.say('hongying:smug', '你剛剛不是說胃太好？');
     else await S.say('hongying:smug', '誰叫你剛剛陪我。');
     S.bgm('south');
     await S.say('', '星河看著海，乾笑。');
@@ -1988,6 +1988,8 @@
     await xunjingShow(S, 0);
     await S.say('添丁伯', '（遠遠地）出巡要穿號衣，千歲爺才認得是自己人——');
     await S.give('c9_ar_haoyi', 3);
+    // the rudder, the sail and the dragon eyes are on the 王船 now (令旗 and 巡境圖 stay with the party for the 巡境)
+    for (const k of ['c9_key_rudder', 'c9_key_sail', 'c9_key_eye']) S.take(k, 99);
     S.flag('ch9_wangboat_launch');
     V().ch9_port = 'donggang';
     V().ch9_deck_night = false;

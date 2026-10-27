@@ -349,7 +349,7 @@
     }
     const pool = [
       ['少年仔，來進香的？今年人特別多，三月瘋媽祖，一年比一年瘋。', '媽祖婆是海上人的母親。討海的、過海的，誰沒在浪頭上喊過一聲「媽祖婆」？'],
-      ['起駕要看時辰。吉時一到，鞭炮一響，神轎就出廟門，一路巡過整個北港。', '遶境是媽祖出來看看她的子民，看哪裡不平安，就把不乾淨的東西掃走。'],
+      ['起駕要看時辰。吉時一到，鞭炮一響，神轎就出廟門，一路巡過整個北港。', '遶境是媽祖出來看看祂的子民，看哪裡不平安，就把不乾淨的東西掃走。'],
       ['等一下神轎經過，你們可以去鑽轎腳。跪在路上，讓神轎從頭頂過去，媽祖就會保庇你。'],
     ];
     for (const l of pool[rot('ch8_keeper_n', 3)]) await S.say('添壽伯', l);
@@ -2711,10 +2711,12 @@
     S.chapter(8);
     // party: 星河、紅纓、雲歸 (+ the cats 芋圓 & 麻糬; 麻糬 only follows while 白芷 is in the party). 白芷 is away (taken to 玄武嶼 at the end of ch6).
     if (G.state.party.includes('baizhi')) S.leave('baizhi');
+    // level floor = the progression table's ch8 start (G.Data.progression lv[0] = 27), like every other chapter entry
+    const lv0 = ((G.Data.progression || []).find((p) => p.ch === 8) || { lv: [27] }).lv[0];
     for (const id of ['xinghe', 'hongying', 'yungui']) {
-      if (!G.state.members[id]) G.Party.join(id, 25);
+      if (!G.state.members[id]) G.Party.join(id, lv0);
       else if (!G.state.party.includes(id)) G.Party.join(id);
-      G.Story.ensureLevel(id, 25);
+      G.Story.ensureLevel(id, lv0);
     }
     const order = ['xinghe', 'hongying', 'yungui'];
     G.state.party = order.concat(G.state.party.filter((p) => !order.includes(p)));
