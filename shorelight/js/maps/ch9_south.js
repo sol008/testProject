@@ -380,9 +380,9 @@
   const withFollow = (extra) => (dt, m, busy) => { chenboFollow(m, dt, busy); if (extra) extra(dt, m, busy); };
 
   // ---- 3D field view support -------------------------------------------------------------------------
-  // G.Map3D does not call drawGround / drawOver. Maps with custom visuals also define update3d: cutscene
-  // monsters become billboards in the 3D scene and HUD meters are drawn on the 2D overlay canvas (G.ctx).
-  //   spec: { monsters: [{ key, art, x, y, height, variant, alpha: () => 0..1 }], hud: (ctx, mapScene, t) => {} }
+  // In 3D, G.Map3D routes drawGround / drawOver itself (CONTRACTS_3D "2D map hooks in 3D"), so HUD meters
+  // drawn in drawOver already reach the screen. update3d adds the cutscene monsters as billboards.
+  //   spec: { monsters: [{ key, art, x, y, height, variant, alpha: () => 0..1 }], hud?: (ctx, mapScene, t) => {} }
   function view3d(spec) {
     return (view, dt) => {
       view._c9 = view._c9 || {};
@@ -3031,7 +3031,7 @@
       if (!s.flags.ch9_fallwind_defeated && v.ch9_fwShow) drawMonsterAt(ctx, 'fallwind', 23, 5, t, { scale: 0.62, alpha: v.ch9_fwShow });
       hud2d(ctx, m, t, lpGustHud);
     },
-    update3d: view3d({ monsters: [{ key: 'fw', art: 'fallwind', x: 23, y: 5, height: 4.2, alpha: () => (st().flags.ch9_fallwind_defeated ? 0 : V().ch9_fwShow || 0) }], hud: (ctx, m, t) => lpGustHud(ctx, m, t) }),
+    update3d: view3d({ monsters: [{ key: 'fw', art: 'fallwind', x: 23, y: 5, height: 4.2, alpha: () => (st().flags.ch9_fallwind_defeated ? 0 : V().ch9_fwShow || 0) }] }),
     lights: (s) => (s.flags.ch9_name_7 ? [] : [{ x: 43, y: 18, r: 110, color: '#fff2c0', flicker: 0.2 }]),
     npcs: [chenboNpc('longpan', [4, 40])],
     onUpdate: withFollow((dt, m, busy) => {
@@ -3498,7 +3498,7 @@
       if (v.ch9_kingShow) drawMonsterAt(ctx, 'moray', 21, 39, t, { scale: 0.8, variant: 2, alpha: v.ch9_kingShow });
       hud2d(ctx, m, t, lkHud);
     },
-    update3d: view3d({ monsters: [{ key: 'king', art: 'moray', x: 21, y: 39, height: 3.2, variant: 2, alpha: () => V().ch9_kingShow || 0 }], hud: (ctx, m, t) => lkHud(ctx, m, t) }),
+    update3d: view3d({ monsters: [{ key: 'king', art: 'moray', x: 21, y: 39, height: 3.2, variant: 2, alpha: () => V().ch9_kingShow || 0 }] }),
     onUpdate: (dt, m, busy) => {
       const s = st(), v = V();
       if (s.flags.ch9_cave_cleared) return;

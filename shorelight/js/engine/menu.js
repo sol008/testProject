@@ -623,7 +623,7 @@
               const saved = G.ctx;
               const big = document.createElement('canvas'); big.width = G.W; big.height = G.H;
               const bctx = big.getContext('2d');
-              G.ctx = bctx; G.mapScene.draw(bctx); G.ctx = saved;
+              G.ctx = bctx; try { G.mapScene.draw(bctx); } finally { G.ctx = saved; }
               if (G.mapScene.view3d && G.R3.enabled()) cx.drawImage(G.R3.canvas, 0, 0, 192, 108);
               cx.drawImage(big, 0, 0, 192, 108);
               thumb = c.toDataURL('image/jpeg', 0.6);
