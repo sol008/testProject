@@ -217,7 +217,8 @@ G.Mapx = G.Mapx || {};
     buildFollowers() {
       const st = G.state;
       const list = st.party.slice(1, 4).slice();
-      if (st.party.includes('baizhi') && st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
+      // 麻糬 stays with the party even while 白芷 is away (ch7–ch11), waiting for her
+      if (st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
       if (st.flags.yuyuan_joined && !st.flags.yuyuan_hidden) list.push('yuyuan');
       const prev = {};
       for (const f of this.followers || []) prev[f.id] = f;
