@@ -265,8 +265,9 @@ test('main', 'critical path: startch=8 → G.Story.next(9)' + (FROM ? ` (from ${
   if (i0 > 0) await s.page.waitForFunction(() => G.mapScene && G.mapScene.def, null, { timeout: 30000 });
   for (let i = i0; i <= i1; i++) {
     const g = SEGMENTS[i];
+    const t0 = Date.now();
     try { await g.run(s, i === i0); } catch (e) { throw new Error(`[segment ${g.id}] ${e.message}`); }
-    console.log(`    · segment ${g.id} ok`);
+    console.log(`    · segment ${g.id} ok  ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
 });
 
