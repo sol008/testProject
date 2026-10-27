@@ -66,14 +66,15 @@ G.UI = (() => {
       corner(x, y, 1, 1); corner(x + w, y, -1, 1); corner(x, y + h, 1, -1); corner(x + w, y + h, -1, -1);
     }
     if (o.title) {
-      const tw = Math.max(120, o.title.length * 26 + 50);
+      ctx.font = G.font(20);
+      const tw = Math.max(120, Math.min(w - 48, G.Render.measure(ctx, o.title) + 50));
       const tx = x + 24, ty = y - 16;
       const tg = ctx.createLinearGradient(tx, ty, tx, ty + 32);
       tg.addColorStop(0, '#7a2a22'); tg.addColorStop(1, '#4a1612');
       ctx.fillStyle = tg;
       ctx.beginPath(); ctx.roundRect(tx, ty, tw, 32, 6); ctx.fill();
       ctx.strokeStyle = UI.GOLD; ctx.lineWidth = 1.5; ctx.stroke();
-      G.Render.text(ctx, o.title, tx + tw / 2, ty + 5, { size: 20, align: 'center', color: UI.GOLD_L });
+      G.Render.textFit(ctx, o.title, tx + tw / 2, ty + 5, tw - 20, { size: 20, align: 'center', color: UI.GOLD_L });
     }
     ctx.restore();
   };

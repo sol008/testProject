@@ -379,7 +379,7 @@ G.FX = (() => {
       G.UI.lanternIcon(ctx, x, y, 18 * pulse, G.time);
       const ta = Math.min(1, Math.max(0, (t - 1.2) / 0.6));
       ctx.globalAlpha = Math.max(0, a) * ta;
-      G.Render.text(ctx, '心燈', x, y + 64, { size: 22, align: 'center', color: '#ffd9a0' });
+      G.Render.text(ctx, '點亮心燈', x, y + 64, { size: 22, align: 'center', color: '#ffd9a0' });
       G.Render.text(ctx, this.name, x, y + 96, { size: 34, align: 'center', color: '#fff3d8', glow: 'rgba(255,170,90,0.7)', glowBlur: 16 });
       G.Render.text(ctx, `已點亮的心燈：${G.Lanterns.count()}`, x, y + 148, { size: 20, align: 'center', color: '#c9b893' });
       ctx.restore();

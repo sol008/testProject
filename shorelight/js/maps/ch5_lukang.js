@@ -1432,5 +1432,218 @@
     warps: [{ x: 35, y: 11, h: 2, to: 'lukang', tx: 1, ty: 32, tdir: 'right' }],
   });
 
+  // ============================================================================================ 洛家古厝・大門 luo_gate (20×14)
+  const LG = (() => {
+    const g = grid(20, 14, ':');
+    g.rect(0, 0, 20, 6, 'R');                // tall red-brick enclosure wall of the mansion
+    g.rect(8, 4, 3, 2, '%');                 // under the gate
+    g.rect(8, 6, 4, 8, '%');                 // brick path
+    g.rect(0, 6, 2, 8, 'R'); g.rect(18, 6, 2, 8, 'R');
+    g.rect(2, 11, 3, 2, ','); g.rect(14, 9, 3, 3, ',');
+    return g.rows();
+  })();
+  const gateLight = (s) => (s.flags.ch5_done ? { ambient: 0.05, color: '#203040' }
+    : time5(s) === 3 ? { ambient: 0.2, color: '#203040' }
+      : time5(s) >= 2 ? { ambient: 0.75, color: '#050818', playerR: s.flags.ch5_lamp ? 230 : 160, playerColor: '#ffb070' }
+        : { ambient: 0.28, color: '#1a1a28', tint: 'rgba(160,170,190,0.12)' });
+  G.Maps.define('luo_gate', {
+    name: '洛家古厝',
+    subtitle: '洛府・大門',
+    place: 'lukang',
+    bgm: (s) => (time5(s) === 3 ? 'sad' : 'mansion'),
+    start: [9, 10],
+    light: gateLight,
+    particles: [{ type: 'wind', density: 0.7 }, 'leaves'],
+    tiles: LG,
+    objects: [
+      { t: 'gate_city', x: 8, y: 4, text: '洛府', lit: false },
+      { t: 'statue_lion', x: 7, y: 6 }, { t: 'statue_lion', x: 11, y: 6, flip: true },
+      { t: 'well', x: 4, y: 8 }, { t: 'tree_dead', x: 2, y: 7 }, { t: 'tree_dead', x: 16, y: 7 }, { t: 'tree_dead', x: 15, y: 12 },
+      { t: 'tallgrass', x: 3, y: 11 }, { t: 'tallgrass', x: 14, y: 10 }, { t: 'silvergrass', x: 5, y: 12 }, { t: 'silvergrass', x: 16, y: 10 },
+      { t: 'lantern_string', x: 7, y: 6, w: 5, v: 2, lift: 120, if: (s) => !s.flags.ch5_rest },
+      { t: 'lantern_string', x: 7, y: 6, w: 5, v: 0, lift: 120, if: (s) => !!s.flags.ch5_rest },
+      { t: 'rock_small', x: 12, y: 11 }, { t: 'stump', x: 3, y: 9 },
+      { t: 'pot', x: 10, y: 6, if: (s) => !!s.vars.c5_bowl },
+    ],
+    npcs: [
+      { id: 'fubo', sprite: 'servant_old', name: '福伯', ghost: true, x: 9, y: 4, dir: 'down',
+        pos: (s) => (s.flags.ch5_unmask ? [12, 7] : [9, 4]),
+        if: (s) => !s.flags.ch5_fubo_done && (!s.flags.ch5_enter || s.flags.ch5_unmask) && s.flags.ch5_gate,
+        talk: (S) => fuboTalk(S) },
+    ],
+    events: [
+      { id: 'c5_gate_first', trigger: 'auto', if: (s) => !s.flags.ch5_gate, run: (S) => sceneGate(S) },
+      { id: 'c5_gate_enter', trigger: 'auto', if: (s) => s.flags.ch5_lamp && !s.flags.ch5_enter, run: (S) => sceneEnter(S) },
+      { id: 'c5_fubo_1', trigger: 'auto', if: (s) => s.flags.ch5_unmask && !s.quests.q_fubo, run: (S) => fuboStep1(S) },
+      { id: 'c5_gate_well', trigger: 'action', x: 4, y: 8, label: '井', run: async (S) => {
+        await S.say('', '門前的井早就乾了。井底只有落葉。');
+      } },
+      { id: 'c5_gate_lion', trigger: 'action', x: 7, y: 6, label: '石獅', run: async (S) => {
+        await S.say('', '左邊的石獅缺了一隻耳朵。');
+        if (hasActor('hongying')) await S.say('hongying:smile', '……是我七歲爬上去摔下來，撞斷的。');
+      } },
+    ],
+    warps: [
+      { x: 9, y: 5, to: 'luo_1f', tx: 19, ty: 26, tdir: 'up', door: true, run: async (S) => {
+        if (flag('ch5_enter')) return true;
+        await S.say('', '門被一股冷風推著，打不開。');
+        await S.move('player', 'D');
+        return false;
+      } },
+      { x: 8, y: 13, w: 4, to: 'lukang', tx: 27, ty: 39, tdir: 'down' },
+    ],
+    drawOver(ctx, t) {
+      // 黃符 on the gate (burns away once the 洛家燈 arrives)
+      if (flag('ch5_enter')) return;
+      const x = 9 * T + 20, y = 4 * T + 20;
+      ctx.save();
+      ctx.fillStyle = '#e8c84a'; ctx.strokeStyle = '#8a6a1a'; ctx.lineWidth = 1;
+      ctx.fillRect(x, y, 24, 54); ctx.strokeRect(x, y, 24, 54);
+      ctx.strokeStyle = 'rgba(190,40,30,0.55)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x + 12, y + 6); ctx.lineTo(x + 12, y + 48); ctx.moveTo(x + 5, y + 16); ctx.lineTo(x + 19, y + 16);
+      ctx.moveTo(x + 6, y + 28); ctx.quadraticCurveTo(x + 12, y + 22, x + 18, y + 30); ctx.moveTo(x + 6, y + 40); ctx.lineTo(x + 18, y + 38); ctx.stroke();
+      // cold draught from the gap
+      if (time5() >= 2 || !flag('ch5_gate')) {
+        ctx.globalAlpha = 0.25 + 0.15 * Math.sin(t * 2);
+        ctx.fillStyle = '#9ab8e8';
+        ctx.beginPath(); ctx.ellipse(9 * T + 32, 5 * T + 40, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    },
+  });
+
+  // ---- §3-2 洛家大門與福伯 -------------------------------------------------------------------------------------
+  async function sceneGate(S) {
+    S.flag('ch5_gate');
+    S.hideFollowers(false);
+    place(S, [['player', 9, 9, 'up'], ['hongying', 9, 8, 'up'], ['baizhi', 8, 9, 'up'], ['yungui', 10, 9, 'up'], ['tuanzi', 10, 10, 'up']]);
+    await S.camera(9, 6, 0.6);
+    await S.say('', '（洛家古厝大門。圍牆斑駁，白燈籠被風撕成碎條。門上一張黃符，硃砂褪了一半。）');
+    await S.say('hongying:sad', '……');
+    S.face('hongying', 'left');
+    await S.say('hongying:sad', '門口的獅子，左邊那隻缺一隻耳朵。是我七歲爬上去摔下來，撞斷的。');
+    await S.say('hongying:smile', '爹罰我跪了一個下午。哥偷偷拿牛舌餅給我吃……不對，是福伯拿的。哥只負責把風。');
+    S.face('hongying', 'up');
+    S.emote('yungui', '!');
+    await S.say('yungui:surprise', '（盯著門上的符）……這是師父的符。');
+    await S.say('xinghe:surprise', '清虛真人來過這裡？');
+    await S.say('yungui:serious', '「鎮宅符」。把屋裡的東西封在裡面，不讓它出來。……符力快沒了。');
+    await S.move('hongying', 'UU');
+    S.sfx('wind'); S.shake(3, 0.4);
+    await S.say('', '（紅纓伸手推門。門縫裡突然湧出一陣冷風。門後，一個佝僂的老人身影擋在那裡。）');
+    S.emote('fubo', '!');
+    await S.say('福伯', '莫入來！小姐，莫入來！');
+    S.emote('hongying', '!');
+    await S.say('hongying:surprise', '……福伯？');
+    await S.say('福伯', '裡面有鬼！好多鬼！老爺叫我顧門！不能讓它們出去，不能讓妳入來！');
+    await S.say('福伯', '小姐，妳去天后宮！去媽祖那裡！天光以前不要回來！');
+    await S.say('hongying:cry', '福伯……已經……已經三年了……');
+    await S.say('福伯', '三年？莫亂講，今暗是中元，酒席才剛擺好……');
+    S.sfx('dark'); S.shake(6, 0.5); S.flash('#203050', 0.4, 0.6);
+    await S.move('hongying', 'DD', { speed: 6 });
+    S.face('hongying', 'up');
+    S.sfx('door');
+    await S.fadeActor('fubo', 0.25, 0.5);
+    await S.say('', '（門內冷風驟強，黑霧從門縫湧出，紅纓被推退兩步。門「砰」地關上。）');
+    await S.say('yungui:serious', '他還困在那一晚。而且這屋子裡的東西……比他看到的還多。');
+    await S.say('yungui:think', '符是師父貼的。他一定知道怎麼進去。他在鹿港會落腳的地方——');
+    await S.say('yungui:normal', '天后宮。道士借宿，十有八九在廟裡。');
+    await S.say('hongying:serious', '（擦掉眼淚）……走。');
+    await S.fadeActor('fubo', 1, 0.3);
+    S.cameraFollow();
+    S.gather();
+    S.quest('q_ch5_main', 1);
+    S.objective('去天后宮打聽清虛真人');
+  }
+
+  // ---- §3-6 進入古厝 -------------------------------------------------------------------------------------------
+  async function sceneEnter(S) {
+    S.hideFollowers(false);
+    place(S, [['player', 9, 8, 'up'], ['hongying', 9, 7, 'up'], ['baizhi', 8, 8, 'up'], ['yungui', 10, 8, 'up'], ['tuanzi', 10, 9, 'up']]);
+    await S.camera(9, 6, 0.4);
+    await S.say('', '（夜。風停了。古厝大門前，連蟲鳴都沒有。紅纓提著洛家燈。）');
+    S.sfx('fire'); S.flash('#ffb060', 0.5, 0.5);
+    S.flag('ch5_enter');
+    await S.say('', '（燈光照到大門。門上的符無聲地燃成灰。門內的冷風退了。）');
+    await S.say('福伯', '（門縫後）……這盞燈……是施師傅的燈。上面寫著「洛」……');
+    await S.say('福伯', '小姐……？妳怎麼回來了……');
+    await S.say('hongying:serious', '福伯。我回來了。讓我進去。');
+    await S.say('福伯', '不行……裡面……（聲音漸弱）老爺說……顧好門……');
+    await S.say('hongying:sad', '福伯你一直顧著。顧得很好。現在換我進去，好不好？');
+    await S.wait(0.8);
+    S.sfx('door');
+    await S.fadeActor('fubo', 0, 1.0);
+    await S.say('', '（沉默。門「吱呀」一聲，開了一條縫。福伯的身影退到門房的陰影裡。）');
+    await S.say('福伯', '……小姐，燈要提好。裡面的東西，怕光。');
+    await S.say('yungui:serious', '進去之後，洛家燈不能離手。燈照不到的地方，有東西會抓人。');
+    S.move('tuanzi', 'L', { wait: false });
+    await S.say('tuanzi:surprise', '（躲到雲歸袖子裡）吾……吾在這裡幫你們把風。');
+    S.face('hongying', 'right');
+    await S.say('hongying:normal', '（抱起糰子）你跟我。我需要摸個軟的東西。');
+    await S.say('tuanzi:sad', '……好吧。');
+    S.quest('q_ch5_main', 4);
+    S.objective('探索洛家古厝');
+    await S.warp('luo_1f', 19, 26, 'up');
+  }
+
+  // ---- §4-1 福伯（心燈 #10） ---------------------------------------------------------------------------------------
+  async function fuboStep1(S) {
+    S.hideFollowers(false);
+    const fb = G.mapScene.actor('fubo');
+    if (fb) { fb.alpha = 1; S.setPos('fubo', 12, 7, 'left'); }
+    place(S, [['player', 9, 9, 'up'], ['hongying', 11, 7, 'right'], ['baizhi', 8, 9, 'up'], ['yungui', 10, 9, 'up'], ['tuanzi', 10, 10, 'up']]);
+    await S.camera(11, 7, 0.4);
+    await S.say('', '（天快亮了。大門邊的門房裡，福伯的鬼魂還站在那裡，手撐著門閂。）');
+    await S.say('福伯', '小姐……裡面……靜下來了？');
+    await S.say('hongying:sad', '嗯。靜下來了。那些東西，都走了。');
+    await S.say('福伯', '老爺呢？夫人呢？少爺呢？');
+    await S.say('hongying:sad', '……');
+    await S.say('hongying:serious', '爹和娘……走了。三年前就走了。');
+    await S.say('hongying:serious', '哥……還活著。他只是迷路了。');
+    await S.say('福伯', '（笑）少爺從細漢就愛迷路。去天后宮會走到港邊，去港邊會走到墓仔埔。');
+    await S.say('福伯', '小姐，妳要去找他喔。妳若不找，他會一直迷路下去。');
+    await S.say('hongying:cry', '……我會。');
+    await S.say('福伯', '那……福伯可以休息了嗎？顧門顧得……腳好痠。');
+    await S.say('福伯', '啊，在走之前……福伯好想吃一片牛舌餅。以前偷買給小姐，自己都沒吃過。');
+    S.quest('q_fubo', 0);
+    S.cameraFollow();
+    S.gather();
+    if (S.hasItem('niushebing')) { await S.say('hongying:think', '……身上剛好有一片。'); await fuboStep2(S); return; }
+    S.objective('買一片牛舌餅給福伯（不見天街）');
+  }
+  async function fuboTalk(S) {
+    if (G.Quests.isDone('q_fubo')) return;
+    if (G.state.quests.q_fubo && S.hasItem('niushebing')) { await fuboStep2(S); return; }
+    if (G.state.quests.q_fubo) { await S.say('福伯', '牛舌餅……要不見天街那攤的。薄薄的、酥酥的。'); return; }
+    if (flag('ch5_enter')) { await S.say('福伯', '小姐，燈要提好……'); return; }
+    await S.say('福伯', '莫入來……莫入來……');
+  }
+  async function fuboStep2(S) {
+    S.take('niushebing', 1);
+    S.hideFollowers(false);
+    place(S, [['hongying', 11, 7, 'right'], ['player', 10, 8, 'up']]);
+    await S.say('hongying:smile', '（把牛舌餅放在門檻上）……福伯。這次換我買給你。');
+    await S.say('福伯', '（拿起來，咬一口。牛舌餅碎了一地）……碎得一塌糊塗。');
+    await S.say('福伯', '（笑出聲）跟以前藏在袖子裡的一模一樣。');
+    await S.say('福伯', '小姐，大門……天光以後，要記得開。洛家的門，不能一直關著。');
+    await S.say('福伯', '有人來，才是家。');
+    S.sfx('lantern');
+    const fb = G.mapScene.actor('fubo');
+    if (fb) fb.ghost = true;
+    await S.fadeActor('fubo', 0.3, 0.8);
+    await S.say('', '（福伯放開門閂。他的身影變成一點溫和的光，飄起，在紅纓頭上繞了一圈，往海的方向去了。）');
+    S.flash('#fff0c0', 0.6, 0.5);
+    S.remove('fubo');
+    await S.say('hongying:cry', '……福伯，謝謝你。顧了三年。');
+    S.flag('ch5_fubo_done');
+    await S.give('c5_luo_key');
+    await S.give('c5_fubo_pipe');
+    S.quest('q_fubo', 'done');
+    await S.lantern('lantern_fubo', '福伯');
+    S.gather();
+    S.quest('q_ch5_main', 6);
+    S.objective('回客棧休息');
+  }
+
   // @@C5-CONTINUE@@
 })();

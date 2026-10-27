@@ -5,7 +5,7 @@
   const UI = () => G.UI;
   const R = () => G.Render;
   const SLOT_NAMES = { weapon: '武器', armor: '衣裝', head: '頭飾', feet: '鞋履', acc: '佩飾' };
-  const STAT_NAMES = { mhp: '生命', mmp: '真氣', atk: '武力', def: '防禦', mag: '法力', spd: '身法', luk: '運氣' };
+  const STAT_NAMES = { mhp: '生命', mmp: '真氣', atk: '武力', def: '防禦力', mag: '法力', spd: '身法', luk: '運氣' };
   const ELEM_CN = { metal: '金', wood: '木', water: '水', fire: '火', earth: '土' };
 
   function charName(id) { return G.ShortNames[id] || G.Names[id] || (G.Data.chars[id] && G.Data.chars[id].name) || id; }
@@ -21,7 +21,8 @@
     const tx = x + 144;
     R().text(ctx, G.Names[m.id] || charName(m.id), tx, y + 12, { size: 26, color: '#fff0d0' });
     R().text(ctx, 'Lv ' + m.lv, x + w - 20, y + 16, { size: 20, align: 'right', color: '#ffd97a' });
-    if (st.elem) UI().elemBadge(ctx, st.elem, tx + 140, y + 28, 11);
+    ctx.font = G.font(26);
+    if (st.elem) UI().elemBadge(ctx, st.elem, tx + Math.min(300, G.Render.measure(ctx, G.Names[m.id] || charName(m.id)) + 22), y + 28, 11);
     const bw = w - 170;
     R().text(ctx, '生命', tx, y + 52, { size: 16, color: '#c9b893' });
     UI().bar(ctx, tx + 44, y + 56, bw - 44, 12, m.hp / st.mhp, '#7ae08a', '#2a9a4a');
@@ -149,7 +150,7 @@
   class ItemsPanel {
     constructor(back) {
       this.back = back;
-      this.tabs = [{ k: 'use', label: '消耗' }, { k: 'equip', label: '裝備' }, { k: 'key', label: '貴重' }];
+      this.tabs = [{ k: 'use', label: '消耗' }, { k: 'equip', label: '裝備品' }, { k: 'key', label: '貴重' }];
       this.tab = 0;
       this.mode = 'list';
       this.rebuild();
@@ -441,7 +442,7 @@
       R().text(ctx, `劍意 ${Math.round(m.gauge || 0)}`, 770, 518, { size: 19, color: '#ffd97a' });
       ['weapon', 'armor', 'head', 'feet', 'acc'].forEach((s, i) => {
         const it = m.equip[s] && G.Data.items[m.equip[s]];
-        R().text(ctx, SLOT_NAMES[s] + '：' + (it ? it.name : '—'), 1040, 196 + i * 34, { size: 17, color: '#e8dcc0' });
+        R().textFit(ctx, G.T(SLOT_NAMES[s]) + (G.I18N.isEn() ? ': ' : '：') + G.T(it ? it.name : '—'), 1040, 196 + i * 34, 196, { size: 17, color: '#e8dcc0' });
       });
       if (d.bio) {
         ctx.font = G.font(18);
@@ -728,23 +729,23 @@
       const t = this.t;
       ctx.save();
       ctx.fillStyle = 'rgba(4,6,14,0.85)'; ctx.fillRect(0, 0, G.W, G.H);
-      UI().panel(ctx, 240, 60, 800, this.rows.length * 52 + 50, { title: '設定' });
+      UI().panel(ctx, 240, 30, 800, this.rows.length * 46 + 44, { title: '設定' });
       this.rows.forEach((row, i) => {
-        const y = 92 + i * 52;
-        if (i === this.idx) UI().cursor(ctx, 256, y, 768, 46, t, true);
-        R().text(ctx, row.label, 290, y + 10, { size: 22, color: '#fff0d0' });
+        const y = 58 + i * 46;
+        if (i === this.idx) UI().cursor(ctx, 256, y, 768, 42, t, true);
+        R().textFit(ctx, row.label, 290, y + 9, 330, { size: 22, color: '#fff0d0' });
         let v = '';
         if (row.type === 'vol') {
-          UI().bar(ctx, 640, y + 16, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
+          UI().bar(ctx, 640, y + 14, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
           v = Math.round(G.settings[row.k] * 100) + '%';
         } else if (row.type === 'enum') {
           const j = row.opts.indexOf(G.settings[row.k]);
           v = '◀ ' + (row.names[j < 0 ? 0 : j]) + ' ▶';
         } else v = 'Z 切換';
-        R().text(ctx, v, 1000, y + 10, { size: 21, align: 'right', color: '#ffd97a' });
+        R().text(ctx, v, 1000, y + 9, { size: 21, align: 'right', color: '#ffd97a' });
       });
-      R().text(ctx, '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑', 640, G.H - 96, { size: 17, align: 'center', color: '#9c947f' });
-      R().text(ctx, 'F 自動（戰鬥/對話）　L 對話紀錄　按住 Ctrl 快進　E 戰鬥速度　F11 全螢幕', 640, G.H - 68, { size: 17, align: 'center', color: '#9c947f' });
+      R().textFit(ctx, '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑', 640, G.H - 58, 1180, { size: 16, align: 'center', color: '#9c947f' });
+      R().textFit(ctx, 'F 自動（戰鬥/對話）　L 對話紀錄　按住 Ctrl 快進　E 戰鬥速度　F11 全螢幕', 640, G.H - 34, 1180, { size: 16, align: 'center', color: '#9c947f' });
       ctx.restore();
     }
   }

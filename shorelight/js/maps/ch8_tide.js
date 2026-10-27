@@ -1004,5 +1004,518 @@
     warps: [{ x: 7, y: 11, w: 2, h: 1, to: 'beigang', tx: 5, ty: 38, tdir: 'down', door: true }],
   });
 
+  // ================================================================================== floating light orbs (shared)
+  // m.c8orbs: [{x, y (px), vx, vy, r, color, life, t}] — drawn additively in drawOver, also emitted as lights
+  function orb(m, x, y, o = {}) {
+    m.c8orbs = m.c8orbs || [];
+    const q = Object.assign({ x: x * T + T / 2, y: y * T + T / 2 - 30, vx: 0, vy: -12, r: 10, color: '#ffd890', life: 6, t: 0, lightR: 90 }, o);
+    m.c8orbs.push(q);
+    return q;
+  }
+  function drawOrbs(ctx, t, m) {
+    if (!m.c8orbs || !m.c8orbs.length) return;
+    const dt = 1 / 60;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const q of m.c8orbs) {
+      q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt + Math.sin(q.t * 2 + q.x) * 0.15;
+      const a = Math.min(1, q.t / 0.8, Math.max(0, (q.life - q.t) / 1.2));
+      const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, q.r * 3);
+      g.addColorStop(0, U.rgba('#ffffff', 0.9 * a)); g.addColorStop(0.25, U.rgba(q.color, 0.8 * a)); g.addColorStop(1, U.rgba(q.color, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(q.x - q.r * 3, q.y - q.r * 3, q.r * 6, q.r * 6);
+    }
+    ctx.restore();
+    m.c8orbs = m.c8orbs.filter((q) => q.t < q.life);
+  }
+  const orbLights = (m) => (m && m.c8orbs ? m.c8orbs.map((q) => ({ x: q.x / T - 0.5, y: q.y / T - 0.5, r: q.lightR, color: q.color, flicker: 0.1 })) : []);
+
+  // ================================================================================== 北港溪口 beigang_river (P8-1)
+  const LANE = (tide) => (tide >= 7 ? 'r' : tide >= 3 ? '-' : ':');
+  function riverTiles(st) {
+    const tide = st.flags.ch8_surge && !st.flags.ch8_surge_end ? TIDE(st) : 0;
+    const g = mk(48, 40, '.');
+    g.rect(0, 0, 14, 14, '#');                 // 街口・安全區
+    g.rect(3, 14, 3, 21, '=');                 // 西岸路
+    g.rect(3, 34, 38, 3, '=');                 // 南岸路
+    g.rect(14, 3, 6, 2, '=');                  // 往北橋
+    g.rect(6, 17, 8, 2, '=');                  // 往河岸小巷
+    g.rect(31, 1, 13, 9, 's');                 // 沙洲
+    g.rect(26, 3, 6, 2, '=');
+    g.rect(28, 5, 2, 12, '=');
+    g.rect(26, 16, 2, 2, '=');
+    g.rect(30, 28, 18, 12, 's');               // 河口灘地
+    g.rect(20, 0, 6, 28, 'r');                 // 北港溪（逆流）
+    g.rect(20, 22, 28, 6, 'r');
+    g.rect(44, 14, 4, 18, 'w');                // 出海口
+    g.rect(36, 28, 6, 2, '-');                 // 河口淺灘
+    g.rect(20, 3, 6, 2, 'b');                  // 北橋
+    g.rect(20, 16, 6, 2, tide >= 5 ? 'r' : 'b');  // 南橋
+    g.rect(14, 14, 6, 8, LANE(tide));          // ▒ 河岸小巷
+    g.rect(10, 29, 9, 4, LANE(tide));          // ▒ 河彎小巷
+    g.rect(30, 28, 2, 1, 'k');                 // 斷掉的碼頭
+    return g.rows();
+  }
+  const RV_OBJECTS = [
+    // 遶境隊伍（安全區）
+    { t: 'palanquin', x: 2, y: 2, still: true }, { t: 'firecracker_tower', x: 1, y: 9 }, { t: 'firecracker_tower', x: 6, y: 0 },
+    { t: 'pilgrim_flag', x: 1, y: 6, text: '進香', color: '#f1c232' }, { t: 'pilgrim_flag', x: 10, y: 0, text: '北港', color: '#d8382a' },
+    { t: 'incense_burner', x: 13, y: 1 }, { t: 'incense_burner', x: 13, y: 4 }, { t: 'incense_burner', x: 13, y: 7 }, { t: 'incense_burner', x: 13, y: 10 },
+    { t: 'pilgrim_flag', x: 13, y: 2, text: '香', color: '#e8b030' }, { t: 'pilgrim_flag', x: 13, y: 5, text: '平安', color: '#d8382a' },
+    { t: 'pilgrim_flag', x: 13, y: 8, text: '香', color: '#e8b030' }, { t: 'pilgrim_flag', x: 13, y: 11, text: '平安', color: '#d8382a' },
+    { t: 'lantern_string', x: 3, y: 5, w: 6, v: 1 }, { t: 'barrel', x: 0, y: 12 }, { t: 'basket', x: 12, y: 13 },
+    // houses along the west bank
+    { t: 'house_jiufen', x: 14, y: 9, lit: false }, { t: 'house_jiufen', x: 7, y: 14, lit: false }, { t: 'house_jiufen', x: 6, y: 29, lit: false },
+    { t: 'cart', x: 8, y: 23 }, { t: 'stall', x: 16, y: 20, text: '煎盤粿' }, { t: 'boat_small', x: 14, y: 31 },
+    { t: 'barrel', x: 15, y: 15 }, { t: 'jar', x: 18, y: 14 },
+    // 沙洲
+    { t: 'crate', x: 38, y: 5 }, { t: 'drum', x: 39, y: 4 }, { t: 'driftwood', x: 34, y: 8 }, { t: 'reeds', x: 32, y: 2 }, { t: 'reeds', x: 43, y: 7 },
+    { t: 'rock_small', x: 42, y: 2 }, { t: 'reeds', x: 30, y: 9 },
+    // NE block
+    { t: 'tree_pine', x: 27, y: 9 }, { t: 'tree_pine', x: 31, y: 12 }, { t: 'tree_banyan', x: 36, y: 15 }, { t: 'bush', x: 41, y: 12 },
+    { t: 'pilgrim_flag', x: 26, y: 6, text: '進香', color: '#f1c232', if: (st) => !st.flags.ch8_saved_1 },
+    // 漁村
+    { t: 'house_jiufen', x: 21, y: 30, lit: false }, { t: 'house_jiufen', x: 26, y: 30, lit: false }, { t: 'house_jiufen', x: 32, y: 37, lit: false },
+    { t: 'house_jiufen', x: 37, y: 37, lit: false }, { t: 'fishing_net', x: 29, y: 33 }, { t: 'boat_small', x: 33, y: 31 }, { t: 'dock_post', x: 31, y: 28 },
+    { t: 'barrel', x: 25, y: 33 }, { t: 'jar', x: 36, y: 33 },
+    // trees & reeds on the west bank
+    { t: 'tree_pine', x: 1, y: 16 }, { t: 'tree_pine', x: 1, y: 22 }, { t: 'tree_banyan', x: 0, y: 27 }, { t: 'tree_pine', x: 2, y: 38 },
+    { t: 'reeds', x: 19, y: 12 }, { t: 'reeds', x: 19, y: 23 }, { t: 'reeds', x: 18, y: 27 }, { t: 'tallgrass', x: 11, y: 21 }, { t: 'tallgrass', x: 6, y: 31 },
+    { t: 'reeds', x: 29, y: 28 }, { t: 'bush', x: 14, y: 38 }, { t: 'bush', x: 21, y: 38 }, { t: 'tree_pine', x: 27, y: 38 },
+  ];
+  const RV_LIGHTS = [
+    { x: 4, y: 3, r: 260, color: '#ffb060', flicker: 0.3 }, { x: 9, y: 6, r: 220, color: '#ff8a40', flicker: 0.4 }, { x: 13, y: 6, r: 200, color: '#ffcf8a', flicker: 0.3 },
+    { x: 22, y: 6, r: 150, color: '#3a7aff', flicker: 0.2 }, { x: 23, y: 13, r: 150, color: '#3a7aff', flicker: 0.2 }, { x: 22, y: 20, r: 150, color: '#3a7aff', flicker: 0.2 },
+    { x: 28, y: 25, r: 160, color: '#3a7aff', flicker: 0.2 }, { x: 36, y: 24, r: 160, color: '#3a7aff', flicker: 0.2 }, { x: 43, y: 25, r: 180, color: '#4a6aff', flicker: 0.2 },
+    { x: 45, y: 34, r: 220, color: '#6a4aff', flicker: 0.3 },
+  ];
+  const PILGRIM_SAFE = { 1: [2, 12], 2: [4, 12], 3: [9, 8], 4: [10, 12], 5: [7, 12] };
+
+  // ---------------------------------------------------------------- tide HUD & mechanics
+  function drawTideGauge(ctx, t) {
+    const st = G.state;
+    const tide = TIDE(st), n = SAVED(st);
+    const w = 236, h = 74, x = G.W - w - 24, y = 70;
+    ctx.save();
+    G.UI.plate(ctx, x, y, w, h, 0.62, 12);
+    G.Render.text(ctx, '潮位', x + 14, y + 8, { size: 19, color: '#cfe0ff' });
+    for (let i = 0; i < 8; i++) {
+      const bx = x + 64 + i * 20, by = y + 12, filled = i < tide;
+      const col = i < 3 ? '#4a9aff' : i < 5 ? '#6a7aff' : i < 7 ? '#c06aff' : '#ff5a6a';
+      ctx.fillStyle = filled ? col : 'rgba(255,255,255,0.12)';
+      ctx.beginPath(); ctx.roundRect(bx, by + (filled ? Math.sin(t * 3 + i) * 1.5 : 0), 15, 20, 4); ctx.fill();
+    }
+    G.Render.text(ctx, `已救出 ${n}／5`, x + 14, y + 42, { size: 18, color: '#ffe8b0' });
+    ctx.restore();
+  }
+  function installRiver(m) {
+    if (!m || m.def.id !== 'beigang_river' || m._c8river) return;
+    m._c8river = true;
+    const ob = m.blocked.bind(m);
+    // the drowned never cross the incense line around the procession
+    m.blocked = function (x, y, self) { if (self && this.enemies.includes(self) && x <= 13 && y <= 13) return true; return ob(x, y, self); };
+    const p = m.player, um = p.updateMove.bind(p);
+    p.updateMove = function (dt, mul = 1) { return um(dt, mul * (tideActive(G.state) && m.terrainAt(this.x, this.y) === 'shallow' ? 0.6 : 1)); };
+    const dh = m.drawHud.bind(m);
+    m.drawHud = function (ctx, t) { dh(ctx, t); if (tideActive(G.state)) drawTideGauge(ctx, t); };
+  }
+  function unsaved(st) { return [1, 2, 3, 4, 5].filter((i) => !st.flags['ch8_saved_' + i]); }
+  // ④ (in the riverside lanes) is lost once the lanes become river; ⑤ always appears after three rescues
+  function reachableLeft(st) { return unsaved(st).filter((i) => !(i === 4 && TIDE(st) >= 7)); }
+  function setRescueObjective() {
+    const n = SAVED(G.state);
+    G.state.vars.objective = n >= 5 ? '前往河口' : `救出受困的香客（${n}／5）`;
+  }
+  async function tideTick(S) {
+    const m = MS();
+    const st = G.state;
+    const before = TIDE(st);
+    const now = tideNow(st);
+    S.flag('ch8_tide', now);
+    retile(m);
+    for (const a of [m.player, ...m.followers]) { if (m.solid[a.y * m.w + a.x]) { const [x, y] = freeCell(m, a.x, a.y); a.setCell(x, y); } }
+    for (const e of m.enemies) { if (m.solid[e.y * m.w + e.x]) { const [x, y] = freeCell(m, e.x, e.y); e.setCell(x, y); e.homeX = x; e.homeY = y; } }
+    if (m.player.x !== st.x || m.player.y !== st.y) { st.x = m.player.x; st.y = m.player.y; }
+    S.sfx('splash'); S.shake(4, 0.6);
+    if (before < 3 && now >= 3) { S.toast('潮水漫進了河岸小巷，腳步變得沉重。', 'potion'); await S.say('yungui:serious', '水在漲……小巷裡已經淹到腳踝了。快一點！'); }
+    if (before < 5 && now >= 5) { S.toast('南橋被潮水吞沒了！只能繞北橋過河。', 'potion'); await S.say('hongying:serious', '南橋沒了！要過河只能走北橋！'); }
+    if (before < 7 && now >= 7) { S.toast('河岸小巷整片沒入了水中……', 'potion'); await S.say('xinghe:serious', '小巷全淹了……！'); }
+    if (now > before && now < 8) S.toast(`潮位上升了（${now}／8）`, 'potion');
+    await checkRescueEnd(S);
+  }
+  async function checkRescueEnd(S) {
+    const st = G.state;
+    if (st.flags.ch8_rescue_over) return;
+    if (SAVED(st) >= 5) {
+      S.flag('ch8_rescue_over');
+      S.quest('q_ch8_pilgrims', 1);
+      setRescueObjective();
+      S.toast('所有受困的香客都救出來了！', 'lantern');
+      await S.say('yungui:serious', '人都找到了。……可是河口那邊，水在打轉。');
+      await S.say('xinghe:serious', '去河口。');
+      MS().buildEnemies();
+      return;
+    }
+    if (TIDE(st) >= 8 || !reachableLeft(st).length) await rescueFail(S);
+  }
+  async function rescueFail(S) {
+    const m = MS();
+    S.flag('ch8_tide_fail');
+    S.flag('ch8_rescue_over');
+    for (const i of unsaved(G.state)) S.flag('ch8_temple_saved_' + i);
+    if (!fl().ch8_afu_found) S.flag('ch8_afu_by_temple');
+    S.bgm('tension');
+    S.shake(10, 1.6); S.sfx('splash'); S.sfx('water', 0.4);
+    await nar(S, '潮水暴漲，整片河岸被淹沒。');
+    await pan(S, 12, 8, 2, 0.6);
+    const marchers = [['fm1', 'bajiajiang', 10, 4], ['fm2', 'bajiajiang', 10, 6], ['fm3', 'bajiajiang', 10, 8], ['fm4', 'bajiajiang', 10, 10], ['fm5', 'villager_m2', 9, 5], ['fm6', 'villager_m2', 9, 9], ['fm7', 'villager_m', 8, 7]];
+    for (const [id, sprite, x, y] of marchers) S.spawn({ id, sprite, x, y, dir: 'right' });
+    for (const [id] of marchers) S.move(id, 'RRRRRR', { wait: false, speed: 1.1 });
+    drumRoll(16, 0.3, 0.4);
+    await nar(S, '遠處，八家將的陣型整齊地往河岸推進，一步、一步。廟方的年輕人拉著繩子跟在後面，把困在水中的香客一個個拉回來。');
+    await S.wait(1.2);
+    S.cameraFollow();
+    await S.say('yungui:serious', '……他們把剩下的人救回去了。');
+    await S.say('xinghe:sad', '我們太慢了。');
+    await S.say('hongying:serious', '至少人都活著。走，河口的那個東西還沒解決！');
+    for (const [id] of marchers) S.remove(id);
+    S.quest('q_ch8_pilgrims', 1);
+    G.state.vars.objective = '前往河口';
+    S.toast('目標：前往河口', 'lantern');
+    m.buildEnemies();
+    S.bgm('chaos');
+  }
+  // common epilogue of a rescue: the pilgrim walks back to the safe zone
+  async function rescued(S, i, actorId) {
+    const m = MS();
+    if (actorId && m.actor(actorId)) await S.fadeActor(actorId, 0, 0.8);
+    S.flag('ch8_saved_' + i);
+    S.flag('ch8_saved', SAVED(G.state) + 1);
+    if (i === 5) S.flag('ch8_afu_found');
+    m.buildEnemies();
+    setRescueObjective();
+    S.toast(`香客平安撤回神轎後方（${SAVED(G.state)}／5）`, 'lantern');
+    await checkRescueEnd(S);
+  }
+
+  // ---------------------------------------------------------------- the five pilgrims
+  async function rescue1(S, viaBattle = true) {
+    if (fl().ch8_saved_1) return;
+    if (viaBattle) {
+      await nar(S, '北橋頭，一個老人緊緊抱著進香旗，被濕透的人影團團圍住。');
+      const r = await S.battle('t_c8_p1');
+      if (r !== 'win') return;
+    }
+    await S.say('老阿伯', '旗……旗不能倒……');
+    await S.say('hongying:serious', '阿伯，旗我來扛！你先走！');
+    await S.say('老阿伯', '小姑娘，這支旗很重——');
+    await nar(S, '紅纓單手把進香旗扛上肩，旗面在風中獵獵作響。');
+    await S.say('老阿伯', '……好、好力！');
+    await S.say('hongying:smile', '我家以前是開武館的。走吧！');
+    await nar(S, '老阿伯往西北邊的神轎撤退。紅纓扛著旗，送他過了北橋。');
+    await rescued(S, 1, 'rv_p1');
+  }
+  async function rescue2(S, viaBattle = true) {
+    if (fl().ch8_saved_2) return;
+    if (viaBattle) {
+      await nar(S, '翻倒的牛車旁，一個年輕人拚命推著車身。溺死者正從水邊一個接一個爬上來。');
+      const r = await S.battle('t_c8_p2');
+      if (r !== 'win') return;
+    }
+    await S.say('還願的丈夫', '我太太……她有身孕……她的腳被車子壓住了！');
+    await S.say('xinghe:serious', '雲歸！');
+    await S.say('yungui:serious', '知道！——起！');
+    S.sfx('earth'); S.shake(3, 0.4);
+    await nar(S, '雲歸擲出一張土符，牛車被一股力量托起。星河扶出妻子。');
+    await S.say('還願的妻子', '謝……謝謝……');
+    await S.say('yungui:smile', '不用謝。等孩子生了，記得跟他說，有個很帥的道士幫過他。');
+    await S.say('hongying:angry', '這種時候還耍嘴皮！');
+    S.fadeActor('rv_p2b', 0, 0.8);
+    await rescued(S, 2, 'rv_p2a');
+  }
+  async function rescue3(S, viaBattle = true) {
+    if (fl().ch8_saved_3) return;
+    if (viaBattle) {
+      drumRoll(12, 0.2, 0.45);
+      await nar(S, '沙洲中央，一個小男孩坐在翻倒的木箱上，閉著眼睛，雙手不停地打著鼓。溺死者圍成一圈，在三步之外搖晃著，不敢靠近。');
+      await S.say('阿添', '不能停……師傅說……不能停……');
+      await S.say('xinghe:surprise', '他一個人在這裡打了多久……？');
+      let iv = null;
+      let r;
+      try {
+        r = await S.battle('t_c8_p3', {
+          intro: async (sc) => {
+            for (const e of sc.enemies) e.spd = Math.round(e.spd * 0.9);
+            sc.say('阿添的鼓聲沒有停——溺死者的動作慢了下來。', 1.8);
+            drumRoll(8, 0.2, 0.35);
+            iv = setInterval(() => drumRoll(8, 0.2, 0.3), 1700);
+          },
+        });
+      } finally { if (iv) clearInterval(iv); }
+      if (r !== 'win') return;
+    }
+    await nar(S, '星河蹲下，按住阿添的手。');
+    await S.say('xinghe:smile', '可以停了。你很厲害。你打得很好。');
+    await S.say('阿添', '……真、真的嗎？');
+    await S.say('阿添', '我好怕……我的手好痛……可是我一停下來，它們就會往前走……');
+    await S.say('xinghe:smile', '嗯。你剛才救了你自己。下次記得，也要讓別人來救你。');
+    await S.say('tuanzi:smile', '本大爺揹你！');
+    await nar(S, '糰子讓阿添趴到背上，結果被壓扁。');
+    await S.say('tuanzi:hurt', '……星河，你揹。');
+    await rescued(S, 3, 'rv_p3');
+  }
+  async function rescue4(S, viaBattle = true) {
+    if (fl().ch8_saved_4) return;
+    if (viaBattle) {
+      await S.say('秀英姨', '救命啊——我的攤子——我的煎盤粿——');
+      const r = await S.battle('t_c8_p4');
+      if (r !== 'win') return;
+    }
+    await S.say('hongying:surprise', '阿姨！人比較重要！');
+    await S.say('秀英姨', '我知道人比較重要！可是那一鍋粿漿是我昨晚泡到半夜的——');
+    await S.say('yungui:smug', '……那就粿漿也一起救。糰子，抱鍋子。');
+    await S.say('tuanzi:smile', '本大爺最會抱鍋子了！');
+    await S.say('秀英姨', '那、那隻貓為什麼會說話？！');
+    await S.say('xinghe:smile', '阿姨，今晚奇怪的事情很多，這是最不奇怪的一件。');
+    await rescued(S, 4, 'rv_p4');
+  }
+  // ⑤ appears after any three rescues (auto event)
+  async function rescue5Scene(S) {
+    S.flag('ch8_afu_shown');
+    MS().refresh();
+    await S.wait(0.3);
+    await nar(S, '河口方向，傳來孩子的哭聲。');
+    await S.say('xinghe:surprise', '——那邊！');
+    await pan(S, 38, 29, 1.6, 1.6);
+    await nar(S, '河口附近的灘地上，一尊巨大的身影立在逆流的水中——是千里眼神將。不知何時，祂從隊伍的另一端繞到了這裡，綠色的大臉迎著潮水。');
+    await nar(S, '神將的腳邊，阿福緊緊抱著神將的腿，哭得滿臉鼻涕。溺死者在四周搖晃，卻不敢靠近神將一步。');
+    await S.wait(1.0);
+    await nar(S, '神將一動不動。');
+    await S.say('hongying:surprise', '……千里眼。');
+    await S.say('yungui:serious', '祂看見了。千里之外都看得見，何況一個迷路的孩子。');
+    await S.say('xinghe:serious', '走——去接他！');
+    await S.fadeOut(0.5);
+    S.setPos('player', 38, 31, 'up'); S.gather();
+    S.cameraFollow();
+    MS().snapCamera();
+    await S.fadeIn(0.5);
+    const r = await S.battle('t_c8_p5');
+    if (r !== 'win') { G.state.vars.objective = '阿福在河口！'; return; }
+    await rescue5After(S);
+  }
+  async function rescue5After(S) {
+    if (fl().ch8_saved_5) return;
+    await nar(S, '星河把阿福抱起來。阿福死死抓著星河的衣服。');
+    await S.say('阿福', '我、我在找阿嬤……水一直來……那些人一直走過來……');
+    await S.say('阿福', '然後那個大大的綠色的神明就走過來了……祂一直站著……都沒有走……');
+    await nar(S, '星河抬頭看向神將。神將綠色的臉在潮光中，望著海的方向。');
+    await nar(S, '神將裡的人——扛神將的阿伯——的聲音，悶悶地從神將的胸口傳出來：');
+    await S.say('扛神將的人', '……少年仔，囝仔交給你了。我不能蹲，祂不能蹲。');
+    await S.say('扛神將的人', '我還要站在這裡。海還沒退。');
+    await S.say('xinghe:serious', '……是。交給我。');
+    S.face('player', 'up');
+    await nar(S, '星河抱著阿福，向神將深深一鞠躬。');
+    await rescued(S, 5, 'rv_p5');
+  }
+
+  // ---------------------------------------------------------------- 8-3c 潮怨・百手
+  async function hundredScene(S) {
+    if (fl().ch8_hundred_done) return;
+    await pan(S, 44, 34, 1.6, 1.2);
+    await nar(S, '河口。逆流的水在這裡匯成一個漩渦。漩渦中央，無數隻濕透的手從水裡伸出來，交纏、扭結，凝成一個巨大的人形。');
+    await nar(S, '那是許多溺死者的怨念聚在一起的形狀。');
+    await S.say('潮怨・百手', '……冷……好冷……');
+    await S.say('潮怨・百手', '……讓我們上岸……讓我們回家……');
+    await S.say('yungui:serious', '這麼多人……全擠在一起。它們不是想害人。它們只是……想回家。');
+    await S.say('xinghe:serious', '我知道。可是你們回不去了。');
+    await S.say('xinghe:sad', '你們的家，已經不在岸上了。在海的那一邊。');
+    await S.say('xinghe:serious', '——我送你們過去！');
+    S.cameraFollow();
+    const r = await S.battle('t_c8_hundred', { bgmAfter: 'chaos' });
+    if (r !== 'win') return;
+    await hundredAfter(S);
+  }
+  async function hundredAfter(S) {
+    const m = MS();
+    if (fl().ch8_hundred_done) return;
+    S.flag('ch8_hundred_done');
+    m.enemies = m.enemies.filter((e) => e.def.troop !== 't_c8_hundred');
+    S.sfx('splash');
+    await nar(S, '百手散開，化成無數條水流，流回河裡。');
+    S.setPos('player', 41, 34, 'right'); S.gather();
+    S.setPos('hongying', 41, 35, 'right'); S.setPos('yungui', 40, 34, 'right'); S.setPos('tuanzi', 40, 35, 'right');
+    await nar(S, '這時，西北方傳來一陣騷動。眾人回頭。');
+    S.face('player', 'left'); S.face('hongying', 'left'); S.face('yungui', 'left');
+    // the procession arrives
+    const pr = [['hb1', 'bajiajiang', 28, 34], ['hb2', 'bajiajiang', 28, 36], ['hb3', 'bajiajiang', 26, 34], ['hb4', 'bajiajiang', 26, 36],
+      ['hq', 'qianliyan', 23, 34], ['hs', 'shunfenger', 23, 36], ['hk', 'temple_keeper', 21, 36], ['hc', 'villager_m2', 20, 34]];
+    for (const [id, sprite, x, y] of pr) S.spawn({ id, sprite, x, y, dir: 'right' });
+    const pal = addObj(m, { t: 'palanquin', x: 19, y: 34, solid: false });
+    await pan(S, 32, 35, 1.4, 0.6);
+    drumRoll(24, 0.32, 0.4);
+    for (const [id] of pr) S.move(id, 'RRRRRR', { wait: false, speed: 1.2 });
+    const palMove = G.Tweens.to(pal, { x: 25 }, 5, 'linear');
+    await nar(S, '遶境隊伍來了。神轎在八家將的護衛下，一步一步地走到了河岸邊。千里眼、順風耳立在兩側。');
+    await palMove;
+    await S.say('添壽伯', '（跟在轎旁）停、停了！轎子自己停了！');
+    await S.say('轎夫', '推不動……阿伯，推不動！轎子不肯走了！');
+    await S.say('添壽伯', '……那就不要推。');
+    await S.say('添壽伯', '媽祖婆要停在這裡。祂要在這裡看著海。');
+    await nar(S, '神轎停在河岸邊，正對著河口。轎頂的流蘇在風中輕輕晃動。');
+    S.bgm(null, { fade: 3 });
+    await pan(S, 40, 26, 0.9, 1.5);
+    await S.wait(1.2);
+    await nar(S, '……');
+    await nar(S, '逆流的河水，慢了下來。');
+    await S.wait(1.0);
+    await nar(S, '然後，靜止了。');
+    await S.wait(1.0);
+    G.Tweens.to(m.lightCfg, { ambient: 0.45 }, 6, 'linear');
+    await nar(S, '然後——緩緩地，一寸一寸地，開始往海的方向流回去。');
+    const drowned = [['dw1', 'ghost_m', 38, 31], ['dw2', 'ghost_f', 40, 31], ['dw3', 'fisherman', 36, 32], ['dw4', 'ghost_child', 42, 31], ['dw5', 'ghost_m', 34, 30]];
+    for (const [id, sprite, x, y] of drowned) { const a = S.spawn({ id, sprite, x, y, dir: 'left', ghost: true }); a.alpha = 0; G.Tweens.to(a, { alpha: 0.9 }, 1, 'linear'); }
+    await pan(S, 38, 30, 1.2, 1.0);
+    await nar(S, '還留在岸上的溺死者，一個接一個轉過身，看著神轎的方向，搖晃著，往水裡走回去。');
+    for (const [id] of drowned) S.move(id, 'UU', { wait: false, speed: 0.9 });
+    await S.wait(1.4);
+    for (const [id, , x] of drowned) { orb(m, x, 28, { vx: 14, vy: -18, life: 7, color: '#ffd890' }); S.fadeActor(id, 0, 1.4); }
+    await nar(S, '有幾個在走進水裡之前，身上浮起一點小小的光，那光朝著大海，往外飄去。');
+    await S.narrate(['方向是對的。'], { veil: 0.55 });
+    for (const [id] of drowned) S.remove(id);
+    S.cameraFollow();
+    await S.say('xinghe:think', '……它們……往外走了。');
+    await S.say('yungui:normal', '不是我們打退的。我們只是撐到了祂來。');
+    await S.say('hongying:normal', '……嗯。');
+    S.face('player', 'left'); S.face('hongying', 'left'); S.face('yungui', 'left'); S.face('tuanzi', 'left');
+    await nar(S, '紅纓雙手合十，對著神轎的方向，深深地拜了三拜。星河與雲歸跟著。糰子也學著，把兩隻前爪合起來。');
+    for (let k = 0; k < 3; k++) { S.emote('hongying', '…', 0.8); await S.wait(0.7); }
+    G.Tweens.to(m.lightCfg, { ambient: 0.22 }, 3, 'linear');
+    S.bgm('pingxi');
+    await nar(S, '東方的天空，開始泛白。');
+    S.flag('ch8_surge_end');
+    S.quest('q_ch8_tide', 3);
+    await S.fadeOut(1.2);
+    for (const [id] of pr) S.remove(id);
+    rmObj(m, pal);
+    await S.warp('beigang', 27, 16, 'up', { fade: 0.01 });
+  }
+
+  // ---------------------------------------------------------------- river intro on arrival
+  async function riverIntro(S) {
+    S.flag('ch8_river_intro');
+    setRescueObjective();
+    await pan(S, 9, 6, 2, 0.6);
+    await nar(S, '街口。遶境隊伍停在這裡，八家將列陣，千里眼與順風耳立在最前。一排香煙，像一條線，劃在街口與河岸之間。');
+    await nar(S, '溺死者走到香煙線前，就搖晃著停住了。');
+    S.cameraFollow();
+    await S.say('yungui:serious', '水還在漲。每打一場，就耽擱一點時間——潮位會越來越高。');
+    await S.say('hongying:serious', '能繞開的就繞開。先把人找回來！');
+    await S.say('', '每經過一場戰鬥（勝利或逃跑），潮位就會上升一格。潮位漲滿之前，把五名香客都救出來。');
+    await S.say('', '香客分別在：北橋頭、翻倒的牛車、沙洲、河岸小巷……還有一個孩子不知去向。');
+  }
+
+  const NOT_OVER = (st) => !st.flags.ch8_rescue_over;
+  const safePos = (i) => (st) => PILGRIM_SAFE[i];
+  const safeIf = (i) => (st) => !!st.flags['ch8_saved_' + i] || (!!st.flags.ch8_rescue_over && i !== 5) || (i === 5 && !!st.flags.ch8_afu_by_temple && !!st.flags.ch8_rescue_over);
+  const inRiverNight = (st) => !!st.flags.ch8_surge && !st.flags.ch8_surge_end;
+  G.Maps.define('beigang_river', {
+    name: '北港溪口', subtitle: (st) => (inRiverNight(st) ? '逆潮之夜' : '退潮後的河口'),
+    place: 'beigang', noSave: false,
+    bgm: (st) => (inRiverNight(st) ? 'chaos' : 'sea'),
+    start: [9, 9],
+    light: (st) => (inRiverNight(st) ? { ambient: 0.7, color: '#04102a', playerR: 210, playerColor: '#ffd8a0', glow: 0.3 } : { ambient: 0.12, color: '#202838' }),
+    particles: (st) => (inRiverNight(st) ? [{ type: 'rain', density: 0.4 }, { type: 'mist', color: '#8aa8d8', alpha: 0.14 }, 'motes', { type: 'embers', density: 0.4 }] : ['motes', { type: 'mist', color: '#e0e8f0', alpha: 0.1 }]),
+    lights: (st) => (inRiverNight(st) ? RV_LIGHTS.concat(orbLights(MS())) : orbLights(MS())),
+    drawOver: (ctx, t, m) => drawOrbs(ctx, t, m),
+    tiles: riverTiles,
+    objects: RV_OBJECTS,
+    chests: [
+      { id: 'c8_rv_village', x: 31, y: 32, item: 'huanhundan' },
+      { id: 'c8_rv_sandbar', x: 40, y: 8, item: 'c8_jingtao' },
+    ],
+    npcs: [
+      // the procession (holds the street mouth; never fights)
+      { id: 'rv_bj1', sprite: 'bajiajiang', name: '八家將', x: 6, y: 3, dir: 'right', fixedDir: true, if: inRiverNight, talk: talkBjSilent },
+      { id: 'rv_bj2', sprite: 'bajiajiang', name: '八家將', x: 8, y: 3, dir: 'right', fixedDir: true, if: inRiverNight, talk: talkBjSilent },
+      { id: 'rv_bj3', sprite: 'bajiajiang', name: '八家將', x: 6, y: 6, dir: 'right', fixedDir: true, if: inRiverNight, talk: talkBjSilent },
+      { id: 'rv_bj4', sprite: 'bajiajiang', name: '八家將', x: 8, y: 6, dir: 'right', fixedDir: true, if: inRiverNight, talk: talkBjSilent },
+      { id: 'rv_qly', sprite: 'qianliyan', name: '千里眼', x: 11, y: 3, dir: 'right', fixedDir: true, if: (st) => inRiverNight(st) && !st.flags.ch8_afu_shown, talk: (S) => talkGiant(S, 'qly') },
+      { id: 'rv_sfe', sprite: 'shunfenger', name: '順風耳', x: 11, y: 6, dir: 'right', fixedDir: true, if: inRiverNight, talk: (S) => talkGiant(S, 'sfe') },
+      { id: 'rv_music', sprite: 'villager_m', name: '阿進', x: 4, y: 7, dir: 'right', if: inRiverNight, talk: say1('阿進', ['鼓不能停！嗩吶不能停！我們在這裡吹，它們就過不來！']) },
+      {
+        id: 'rv_keeper', sprite: 'temple_keeper', name: '添壽伯', x: 9, y: 11, dir: 'right', if: inRiverNight,
+        talk: async (S) => {
+          const f = fl();
+          if (f.ch8_rescue_over) { await S.say('添壽伯', '河口……河口那邊有東西。少年仔，小心。'); return; }
+          await S.say('添壽伯', '少年仔，河邊的人，每一個都要找到喔。水是不等人的。');
+          const left = unsaved(G.state).length;
+          await S.say('添壽伯', left >= 4 ? '北橋頭、沙洲、河岸小巷、還有翻倒的牛車那邊……都有人沒回來。' : '還有人沒回來……快去！');
+        },
+      },
+      {
+        id: 'rv_aunt', sprite: 'villager_f2', name: '廟方的阿姨', x: 5, y: 11, dir: 'right', if: inRiverNight,
+        talk: async (S) => {
+          await S.say('廟方的阿姨', '來，喝一口平安茶。神轎在這裡，喘口氣再去。');
+          S.healParty();
+          S.toast('全員的氣血與真氣恢復了。', 'potion');
+        },
+      },
+      { id: 'rv_gm', sprite: 'old_f', name: '進香的阿嬤', x: 7, y: 11, dir: 'right', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_5, talk: say1('進香的阿嬤', ['阿福……我的阿福……少年仔，拜託你們……']) },
+      // trapped pilgrims
+      { id: 'rv_p1', sprite: 'pilgrim', name: '老阿伯', x: 27, y: 6, dir: 'left', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_1 && NOT_OVER(st), talk: say1('老阿伯', ['旗……旗不能倒……']) },
+      { id: 'rv_p2a', sprite: 'villager_m', name: '還願的丈夫', x: 10, y: 24, dir: 'left', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_2 && NOT_OVER(st), talk: say1('還願的丈夫', ['救命！車子……車子壓住她了！']) },
+      { id: 'rv_p2b', sprite: 'villager_f', name: '還願的妻子', x: 8, y: 24, dir: 'up', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_2 && NOT_OVER(st), talk: say1('還願的妻子', ['……好痛……孩子……']) },
+      { id: 'rv_p3', sprite: 'child_m', name: '阿添', x: 38, y: 4, dir: 'down', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_3 && NOT_OVER(st), talk: say1('阿添', ['不能停……師傅說……不能停……']) },
+      { id: 'rv_p4', sprite: 'shopkeeper_f', name: '秀英姨', x: 18, y: 20, dir: 'left', if: (st) => inRiverNight(st) && !st.flags.ch8_saved_4 && NOT_OVER(st), talk: say1('秀英姨', ['救命啊——我的攤子——']) },
+      { id: 'rv_p5', sprite: 'child_m', name: '阿福', x: 38, y: 28, dir: 'right', if: (st) => inRiverNight(st) && !!st.flags.ch8_afu_shown && !st.flags.ch8_saved_5 && NOT_OVER(st), talk: say1('阿福', ['嗚……阿嬤……']) },
+      { id: 'rv_qly5', sprite: 'qianliyan', name: '千里眼', x: 39, y: 28, dir: 'down', fixedDir: true, if: (st) => inRiverNight(st) && !!st.flags.ch8_afu_shown, talk: say1('扛神將的人', ['……海還沒退。我還要站在這裡。']) },
+      // rescued pilgrims in the safe zone
+      { id: 'sv1', sprite: 'pilgrim', name: '老阿伯', pos: safePos(1), x: 2, y: 12, dir: 'right', if: (st) => inRiverNight(st) && safeIf(1)(st), talk: say1('老阿伯', ['旗沒有倒……旗沒有倒……']) },
+      { id: 'sv2', sprite: 'villager_f', name: '還願的妻子', pos: safePos(2), x: 4, y: 12, dir: 'right', if: (st) => inRiverNight(st) && safeIf(2)(st), talk: say1('還願的妻子', ['我沒事了……孩子也沒事。謝謝你們。']) },
+      { id: 'sv3', sprite: 'child_m', name: '阿添', pos: safePos(3), x: 9, y: 8, dir: 'right', if: (st) => inRiverNight(st) && safeIf(3)(st), talk: say1('阿添', ['我、我的手還在抖……可是我還可以打！']) },
+      { id: 'sv4', sprite: 'shopkeeper_f', name: '秀英姨', pos: safePos(4), x: 10, y: 12, dir: 'right', if: (st) => inRiverNight(st) && safeIf(4)(st), talk: say1('秀英姨', ['粿漿救回來了！人也救回來了！今晚我秀英什麼都不怕了！']) },
+      { id: 'sv5', sprite: 'child_m', name: '阿福', pos: safePos(5), x: 7, y: 12, dir: 'right', if: (st) => inRiverNight(st) && safeIf(5)(st), talk: say1('阿福', ['阿嬤，我不會再亂跑了……']) },
+    ],
+    enemies: [
+      // visible guards around each pilgrim (they never move; touching them = that rescue fight)
+      { id: 'gd1', troop: 't_c8_p1', x: 29, y: 7, art: 'drowned_soldier', chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !st.flags.ch8_saved_1 && NOT_OVER(st), onWin: (S) => rescue1(S, false) },
+      { id: 'gd2', troop: 't_c8_p2', x: 7, y: 26, art: 'tide_grudge', chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !st.flags.ch8_saved_2 && NOT_OVER(st), onWin: (S) => rescue2(S, false) },
+      { id: 'gd3a', troop: 't_c8_p3', x: 36, y: 4, art: 'drowned_soldier', chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !st.flags.ch8_saved_3 && NOT_OVER(st), onWin: (S) => rescue3(S, false) },
+      { id: 'gd3b', troop: 't_c8_p3', x: 40, y: 6, art: 'tide_grudge', chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !st.flags.ch8_saved_3 && NOT_OVER(st), onWin: (S) => rescue3(S, false) },
+      { id: 'gd4', troop: 't_c8_p4', x: 15, y: 19, art: 'water_ghost', variant: 2, chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !st.flags.ch8_saved_4 && NOT_OVER(st), onWin: (S) => rescue4(S, false) },
+      { id: 'gd5a', troop: 't_c8_p5', x: 36, y: 30, art: 'drowned_soldier', chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !!st.flags.ch8_afu_shown && !st.flags.ch8_saved_5 && NOT_OVER(st), onWin: (S) => rescue5After(S) },
+      { id: 'gd5b', troop: 't_c8_p5', x: 41, y: 31, art: 'water_ghost', variant: 2, chase: 0, radius: 0, respawn: false, lv: 28, if: (st) => inRiverNight(st) && !!st.flags.ch8_afu_shown && !st.flags.ch8_saved_5 && NOT_OVER(st), onWin: (S) => rescue5After(S) },
+      // three roaming groups of the drowned (slowly approach the player)
+      { id: 'rm1', troop: 't_c8_roam', x: 4, y: 28, art: 'drowned_soldier', chase: 5, radius: 3, speed: 2.7, respawn: false, lv: 27, if: (st) => inRiverNight(st) && NOT_OVER(st) },
+      { id: 'rm2', troop: 't_c8_roam', x: 34, y: 13, art: 'drowned_soldier', chase: 5, radius: 3, speed: 2.7, respawn: false, lv: 27, if: (st) => inRiverNight(st) && NOT_OVER(st) },
+      { id: 'rm3', troop: 't_c8_roam', x: 26, y: 35, art: 'water_ghost', variant: 2, chase: 5, radius: 3, speed: 2.7, respawn: false, lv: 27, if: (st) => inRiverNight(st) && NOT_OVER(st) },
+      // 潮怨・百手 at the river mouth
+      { id: 'hundred', troop: 't_c8_hundred', x: 45, y: 35, art: 'tide_grudge', variant: 2, mapScale: 0.85, chase: 0, radius: 0, respawn: false, if: (st) => inRiverNight(st) && !!st.flags.ch8_rescue_over && !st.flags.ch8_hundred_done, onWin: (S) => hundredAfter(S) },
+    ],
+    warps: [
+      { x: 0, y: 3, w: 1, h: 6, to: 'beigang', tx: 50, ty: 1, tdir: 'down', if: (st) => !inRiverNight(st) },
+    ],
+    events: [
+      { id: 'tide_tick', trigger: 'auto', if: (st) => tideActive(st) && tideNow(st) !== TIDE(st), run: tideTick },
+      { id: 'tide_check', trigger: 'auto', if: (st) => tideActive(st) && (SAVED(st) >= 5 || TIDE(st) >= 8 || !reachableLeft(st).length), run: checkRescueEnd },
+      { id: 'river_intro', trigger: 'auto', if: (st) => inRiverNight(st) && !st.flags.ch8_river_intro, run: riverIntro },
+      { id: 'afu_appears', trigger: 'auto', if: (st) => tideActive(st) && SAVED(st) >= 3 && !st.flags.ch8_afu_shown && !st.flags.ch8_saved_5, run: rescue5Scene },
+      { id: 'zone1', trigger: 'touch', x: 26, y: 2, w: 6, h: 8, if: (st) => tideActive(st) && !st.flags.ch8_saved_1, run: (S) => rescue1(S) },
+      { id: 'zone2', trigger: 'touch', x: 6, y: 21, w: 7, h: 7, if: (st) => tideActive(st) && !st.flags.ch8_saved_2, run: (S) => rescue2(S) },
+      { id: 'zone3', trigger: 'touch', x: 33, y: 1, w: 10, h: 7, if: (st) => tideActive(st) && !st.flags.ch8_saved_3, run: (S) => rescue3(S) },
+      { id: 'zone4', trigger: 'touch', x: 14, y: 18, w: 6, h: 4, if: (st) => tideActive(st) && !st.flags.ch8_saved_4, run: (S) => rescue4(S) },
+      {
+        id: 'zone5', trigger: 'touch', x: 34, y: 29, w: 9, h: 4, if: (st) => tideActive(st) && !!st.flags.ch8_afu_shown && !st.flags.ch8_saved_5,
+        run: async (S) => { const r = await S.battle('t_c8_p5'); if (r === 'win') await rescue5After(S); },
+      },
+      { id: 'hundred_zone', trigger: 'touch', x: 42, y: 32, w: 6, h: 8, if: (st) => inRiverNight(st) && !!st.flags.ch8_rescue_over && !st.flags.ch8_hundred_done, run: hundredScene },
+      {
+        id: 'west_edge', trigger: 'touch', x: 0, y: 0, w: 1, h: 14, if: inRiverNight,
+        run: async (S) => { await S.say('yungui:normal', '街口擠滿了躲在神轎後面的香客。……現在不能回去。'); await S.move('player', 'R'); },
+      },
+    ],
+    onEnter: async () => { installRiver(MS()); },
+  });
+
 // @@CONTINUE@@
 })();

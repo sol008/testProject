@@ -104,6 +104,8 @@ G.Render = (() => {
   // Draw wrapped glyph lines; limit = number of glyphs to show (typewriter)
   R.drawLines = function (ctx2, lines, x, y, lh, baseColor, limit = Infinity, shadow = true) {
     let n = 0;
+    ctx2.textBaseline = 'top';
+    ctx2.textAlign = 'left';
     for (let li = 0; li < lines.length; li++) {
       let cx = x;
       for (const g of lines[li]) {
@@ -122,6 +124,17 @@ G.Render = (() => {
   };
 
   R.countGlyphs = (lines) => lines.reduce((a, l) => a + l.length, 0);
+
+  // like R.text but shrinks the font so the (translated) string fits in maxW
+  R.textFit = function (ctx2, str, x, y, maxW, o = {}) {
+    let size = o.size || 22;
+    ctx2.save();
+    ctx2.font = G.font(size, o.bold);
+    const w = R.measure(ctx2, str);
+    ctx2.restore();
+    if (w > maxW && w > 0) size = Math.max(11, Math.floor(size * maxW / w));
+    R.text(ctx2, str, x, y, Object.assign({}, o, { size }));
+  };
 
   R.text = function (ctx2, str, x, y, o = {}) {
     str = G.T(str);

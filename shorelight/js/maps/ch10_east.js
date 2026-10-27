@@ -1814,4 +1814,562 @@
     S.setPos('chenbo', 4, 6, 'right');
     H.objective(S, '乘黑潮北上，前往台東（與陳伯說話）');
   };
+
+  // =================================================================================================
+  // MAP: baosang 寶桑（台東）
+  // =================================================================================================
+  (function baosang() {
+    const W = 40, HH = 30;
+    const g = new Grid(W, HH, '.');
+    g.blob(5, 6, 4, 4, 'f', 11); g.blob(4, 19, 4, 4, 'f', 12); g.rect(0, 0, 9, 3, 'f');
+    g.blob(18, 22, 4, 2, ',', 4);
+    g.line([[12, 0], [12, 28]], ':', 2);
+    g.line([[12, 13], [27, 13]], ':', 2);
+    g.line([[3, 12], [12, 12]], ':');
+    g.band(26, W - 1, () => 0, () => 27, 's');
+    g.band(0, W - 1, () => 0, () => 0, 's');
+    for (let y = 0; y < HH; y++) {
+      const e = 34 + Math.round(Math.sin(y * 0.45) * 0.8);
+      for (let x = e; x < W; x++) g.set(x, y, x === e ? '-' : x > e + 2 ? 'w' : '~');
+    }
+    g.rect(14, 27, W - 14, 3, 'r'); g.rect(13, 27, 1, 3, 'm'); g.rect(15, 26, 10, 1, 'm');
+    g.rect(31, 24, 7, 1, 'k');
+    const objs = [
+      { t: 'shophouse', x: 15, y: 2, door: 1, text: '雜貨' },
+      { t: 'shophouse', x: 15, y: 8, door: 1, text: '武具', v: 2 },
+      { t: 'house_minnan', x: 20, y: 8, text: '客棧', v: 1 },
+      { t: 'signboard', x: 24, y: 11, text: '客棧' },
+      { t: 'stall', x: 15, y: 16, text: '番薯' },
+      { t: 'shrine_small', x: 19, y: 19, text: '福德祠' },
+      { t: 'stone_lantern', x: 18, y: 20 }, { t: 'incense_burner', x: 21, y: 20 },
+      { t: 'house_minnan', x: 2, y: 8, v: 0 },
+      { t: 'tree_banyan', x: 8, y: 14 },
+      { t: 'well', x: 7, y: 18 }, { t: 'bucket', x: 8, y: 18 },
+      { t: 'bamboo', x: 0, y: 12 }, { t: 'bamboo', x: 1, y: 13 }, { t: 'bamboo', x: 0, y: 22 }, { t: 'bamboo', x: 2, y: 25 }, { t: 'bamboo', x: 10, y: 4 },
+      { t: 'tree_banana', x: 10, y: 9 }, { t: 'tree_betel', x: 20, y: 3 }, { t: 'tree_betel', x: 22, y: 4 }, { t: 'tree_banana', x: 24, y: 15 },
+      { t: 'cart', x: 14, y: 14 }, { t: 'basket', x: 17, y: 15 }, { t: 'jar', x: 19, y: 5 }, { t: 'barrel', x: 14, y: 6 }, { t: 'crate', x: 19, y: 11 },
+      { t: 'fence_bamboo', x: 1, y: 3 }, { t: 'fence_bamboo', x: 4, y: 3 },
+      { t: 'driftwood', x: 28, y: 6 }, { t: 'rock_small', x: 31, y: 3 }, { t: 'rock_small', x: 27, y: 20 }, { t: 'rock_big', x: 29, y: 1 },
+      { t: 'boat_small', x: 28, y: 22 }, { t: 'fishing_net', x: 30, y: 19 }, { t: 'boat_small', x: 36, y: 25 }, { t: 'dock_post', x: 31, y: 25 },
+    ];
+    const deco = [];
+    scatter(deco, g, 'silvergrass', [0, 0, 10, 26], ['f'], 0.18, 21);
+    scatter(deco, g, 'tallgrass', [0, 0, 26, 26], ['.'], 0.04, 22);
+    const occ = (list) => list.flatMap((o) => cellsOf(o.x, o.y, o.w || (G.Objects.get(o.t) || {}).w || 1, o.h || (G.Objects.get(o.t) || {}).h || 1));
+    const clean2 = objs.concat(clearCells(deco, [...occ(objs), ...cellsOf(12, 0, 2, 29), ...cellsOf(12, 13, 16, 2), ...cellsOf(16, 5, 1, 1), ...cellsOf(16, 11, 1, 1), ...cellsOf(22, 11, 1, 1), ...cellsOf(4, 11, 1, 1), ...cellsOf(28, 4, 6, 20)]));
+    G.Maps.define('baosang', {
+      name: '寶桑', subtitle: '後山平原的交易小街', place: 'taitung', bgm: 'south',
+      start: [13, 3],
+      light: { ambient: 0.05, color: '#203048' },
+      particles: ['wind', 'leaves'],
+      tiles: g.rows(), objects: clean2,
+      npcs: [
+        { id: 'bs_runner', sprite: 'puyuma_m', name: '巴拉冠青年', x: 30, y: 16, dir: 'left', talk: (S) => H.runnerTalk(S) },
+        { id: 'bs_runner2', sprite: 'c10_puyuma_boy', name: '巴拉冠青年', x: 29, y: 10, dir: 'down', wander: 2, talk: ['我是這一級最慢的。……可是我耐跑！跑到最後的一定是我！'] },
+        { id: 'bs_run3', sprite: 'puyuma_m', name: '巴拉冠青年', x: 31, y: 7, dir: 'down', wander: 3, talk: ['（喘）……第、第十圈……'] },
+        { id: 'bs_run4', sprite: 'puyuma_m', name: '巴拉冠青年', x: 32, y: 12, dir: 'up', wander: 3, talk: ['長輩說，跑步的時候不要講話。……我剛剛講話了嗎？'] },
+        { id: 'bs_shop1', sprite: 'merchant', name: '阿旺伯', x: 16, y: 5, dir: 'down', talk: async (S) => {
+          await S.say('阿旺伯', '寶桑這裡什麼都有：番薯、小米、鹿皮、鹽。漢人、卑南人、阿美人都在這裡換東西。');
+          await S.shop(['shimuyu', 'c10_qiyuwan', 'c10_xiaomigao', 'huanhunxiang', 'c10_baicao', 'c10_fanshu', 'jiedu', 'xiangbao'], { title: '寶桑雜貨' });
+        } },
+        { id: 'bs_shop2', sprite: 'villager_m', name: '打鐵師傅', x: 16, y: 11, dir: 'down', talk: async (S) => {
+          await S.say('打鐵師傅', '後山的鐵不好找。這幾把，是我用船運來的好鐵打的。');
+          await S.shop(['c10_sw_chaosheng', 'c10_sp_huilang', 'c10_ar_tengjia', 'c10_hd_lupi', 'c10_ft_lupi'], { title: '寶桑武具' });
+        } },
+        { id: 'bs_inn', sprite: 'shopkeeper_f', name: '客棧娘', x: 22, y: 11, dir: 'down', talk: async (S) => {
+          await S.say('客棧娘', '一晚一百文。晚上別去海邊，最近不平靜。');
+          await S.inn(100, { who: '客棧娘' });
+        } },
+        { id: 'bs_stall', sprite: 'fisher_f', name: '番薯攤阿嬸', x: 17, y: 17, dir: 'left', talk: ['烤番薯、小米糕！熱的喔！', '寶桑的番薯，是卑南溪沖下來的土種出來的。甜！'] },
+        { id: 'bs_old', sprite: 'old_m', name: '阿伯', x: 6, y: 13, dir: 'right', wander: 1, talk: ['這棵榕樹，比寶桑街還老。', '西邊那座山，高到雲都要繞路走。'] },
+      ],
+      warps: [{ x: 12, y: 0, w: 2, to: 'amis_village', tx: 8, ty: 31, tdir: 'up' }],
+      events: [
+        { id: 'c10_07', trigger: 'auto', if: (st) => !st.flags.ch10_taitung_arrive, run: (S) => H.c10_07(S) },
+        { id: 'south', trigger: 'touch', x: 12, y: 28, w: 2, run: async (S) => {
+          await S.say('', '卑南溪口。溪水夾著泥沙衝出來，溪口泥沙太深，走不過去。');
+          await S.move('player', 'U');
+        } },
+        { id: 'dock', trigger: 'action', x: 36, y: 25, w: 2, label: '舢舨', run: async (S) => {
+          const c = await S.choice(['划舢舨回王船', '留在寶桑'], { cancel: 1 });
+          if (c === 0) await H.toDeck(S);
+        } },
+        { id: 'shrine', trigger: 'action', x: 19, y: 19, w: 2, h: 2, label: '參拜', run: async (S) => {
+          await S.say('', '小小的土地公廟。香爐裡插著幾支新香。');
+          await S.say('yungui:normal', '走到哪，土地公都在。……後山也一樣。');
+        } },
+      ],
+    });
+  })();
+
+  H.c10_07 = async (S) => {
+    V().c10_place = 'taitung'; V().c10_port = 'baosang';
+    S.quest('q_c10_main', 1);
+    H.place(S, 30, 14, 'right');
+    S.setPos('hongying', 29, 14, 'right'); S.setPos('yungui', 29, 15, 'right'); S.setPos('tuanzi', 30, 15, 'right');
+    const ms = G.mapScene;
+    const runner = ms.actor('bs_runner');
+    S.setPos('bs_runner', 32, 9, 'down');
+    await S.camera(31, 12, 0.01);
+    await S.say('', '（寶桑，早晨。礫石灘上，一群年輕人赤著腳在跑步，一圈又一圈。）');
+    S.emote('tuanzi', '!');
+    await S.say('tuanzi:surprise', '喵！他們在逃命嗎？');
+    await S.say('yungui:normal', '在練腳力。');
+    if (runner) await S.move('bs_runner', 'DDDD', { speed: 5 });
+    S.face('bs_runner', 'left');
+    await S.say('', '（跑在最前面的青年停下來，喘著氣，打量著他們。）');
+    await S.say('巴拉冠青年', '外地人？你們的船好怪，像一間廟在海上漂。');
+    await S.say('xinghe:laugh', '差不多就是那樣。');
+    await S.say('巴拉冠青年', '我們是巴拉冠的青年。巴拉冠是我們卑南族青年的會所。');
+    await S.say('巴拉冠青年', '我們在那裡學跑、學打獵、學聽長輩的話。……裡面的事，外人不能看。');
+    await S.say('巴拉冠青年', '你們在外面看我們跑，可以。');
+    await S.say('hongying:smile', '（盯著他們的腿）跑得很快。');
+    await S.say('巴拉冠青年', '妳看起來也很快。要不要比一圈？……等一下也行，我一直在這裡。');
+    await S.say('巴拉冠青年', '不過說正經的——你們如果要往北，小心。');
+    await S.say('巴拉冠青年', '北邊海岸有個阿美族的部落，他們的海祭快到了，可是海邊不乾淨。');
+    await S.say('巴拉冠青年', '晚上，溺死的人在灘上走。不是他們的人，也不是我們的人。');
+    await S.say('巴拉冠青年', '是從西邊的海，被推過來的陌生人。');
+    await S.say('xinghe:serious', '……又是逆潮。');
+    await S.say('巴拉冠青年', '他們部落年齡階層的人守了好幾晚，有人病倒了。你們如果能幫，就去幫。');
+    await S.say('巴拉冠青年', '跟他們的長老說，是寶桑海邊跑步的人叫你們去的。');
+    S.cameraFollow();
+    S.setPos('bs_runner', 30, 16, 'left');
+    S.flag('ch10_taitung_arrive');
+    S.quest('q_c10_race', 0);
+    H.objective(S, '往北，到阿美族部落（寶桑北口）');
+  };
+
+  H.runnerTalk = async (S) => {
+    if (!F('ch10_race_won')) {
+      await S.say('巴拉冠青年', '我們每天早上跑。跑得快，腳才夠力。巴拉冠的長輩說，一個青年最先要學的，是聽話跟耐累。');
+      await S.say('巴拉冠青年', '那個紅衣服的，腳看起來很快。要不要比一圈？');
+      const c = await S.choice(['比一圈（紅纓上場）', '下次吧'], { cancel: 1 });
+      if (c !== 0) return;
+      await S.say('hongying:smug', '比就比。輸了不要哭。');
+      const tries = (V().c10_race_tries = (V().c10_race_tries || 0) + 1);
+      const win = await G.Mini.mash({ title: '海灘賽跑', hint: '連按 Z 往前衝！跑一圈礫石灘', time: 11, need: 42, rivals: [{ name: '巴拉冠青年', rate: 4.1 * (tries > 1 ? 1.1 : 1) }] });
+      if (win) {
+        await S.say('巴拉冠青年', '（喘）……妳是第一個贏我的外地人。我們長輩說，輸了要服氣。我服氣。');
+        await S.give('c10_beinanstone', 2);
+        await S.give('c10_ft_kuaitui', 1);
+        S.flag('ch10_race_won');
+        S.quest('q_c10_race', 'done');
+      } else {
+        await S.say('巴拉冠青年', '不錯！妳要是在我們巴拉冠，會是很好的青年！……啊，妳是女的。那妳會是很好的……很好的妳。');
+        await S.say('hongying:angry', '……再一次。');
+      }
+      return;
+    }
+    const lines = ['巴拉冠是我們青年的會所。裡面的事，外人不能看。你們在外面看我們跑，可以。', '北邊海岸的阿美族朋友，這幾天晚上不敢靠近海。聽說溺死的人在灘上走。', '那不是他們的人，也不是我們的人。是從西邊的海被推過來的陌生人。'];
+    if (F('ch10_haiji_witnessed')) await S.say('巴拉冠青年', '聽說北邊的海祭順利辦完了。……你們跑得也不慢嘛。');
+    else await S.say('巴拉冠青年', lines[(V().c10_runner_i = ((V().c10_runner_i || 0) + 1)) % lines.length]);
+  };
+
+  // =================================================================================================
+  // MAP: amis_village 阿美族部落（海岸階地）
+  // =================================================================================================
+  (function amis() {
+    const W = 44, HH = 34;
+    const g = new Grid(W, HH, '.');
+    g.blob(30, 4, 6, 3, ',', 31); g.blob(8, 26, 6, 4, ',', 32);
+    g.rect(13, 8, 13, 6, ':');                         // plaza
+    g.line([[8, 33], [8, 20], [12, 20], [12, 14]], ':', 2);
+    g.line([[18, 14], [18, 19], [28, 19]], ':', 2);
+    g.line([[25, 9], [36, 9], [36, 0]], ':', 2);
+    g.line([[19, 7], [19, 8]], ':', 2);
+    g.rect(2, 15, 7, 5, 'f');                          // wild-vegetable garden
+    g.band(20, W - 1, (x) => 22 + Math.sin(x * 0.4) * 0.8, () => 30, 's');
+    g.band(14, 19, () => 25, () => 30, 's');
+    g.band(14, W - 1, (x) => 29 + Math.sin(x * 0.5 + 1) * 0.6, () => 31, '-');
+    g.band(14, W - 1, () => 31, () => 34, '~');
+    g.rect(40, 0, 4, 22, 'X');
+    g.rect(0, 0, 2, 22, 'X');
+    const objs = [
+      { t: 'c10_amis_house', x: 3, y: 1, door: 2 }, { t: 'c10_amis_house', x: 26, y: 1, door: 2 },
+      { t: 'c10_amis_house', x: 14, y: 1, w: 6, door: 3, big: true, tag: 'menhouse' },
+      { t: 'c10_amis_house', x: 2, y: 9, door: 2 }, { t: 'c10_amis_house', x: 21, y: 15, door: 2 }, { t: 'c10_amis_house', x: 33, y: 11, door: 1, w: 4 },
+      { t: 'millet_rack', x: 9, y: 5 }, { t: 'millet_rack', x: 22, y: 5 },
+      { t: 'firepit', x: 19, y: 10 }, { t: 'bench', x: 15, y: 11 }, { t: 'bench', x: 22, y: 12 },
+      { t: 'jar', x: 13, y: 13 }, { t: 'basket', x: 14, y: 13, v: 2 }, { t: 'jar', x: 25, y: 8 },
+      { t: 'tree_banyan', x: 29, y: 13, tag: 'viewtree' },
+      { t: 'tree_betel', x: 11, y: 2 }, { t: 'tree_betel', x: 12, y: 4 }, { t: 'tree_betel', x: 33, y: 5 }, { t: 'tree_betel', x: 38, y: 16 }, { t: 'tree_betel', x: 2, y: 13 },
+      { t: 'bamboo', x: 9, y: 1 }, { t: 'bamboo', x: 23, y: 1 }, { t: 'bamboo', x: 38, y: 2 }, { t: 'tree_banana', x: 31, y: 8 },
+      { t: 'fence_bamboo', x: 2, y: 20 }, { t: 'fence_bamboo', x: 5, y: 20 },
+      { t: 'fishing_net', x: 24, y: 24 }, { t: 'boat_small', x: 28, y: 24 }, { t: 'driftwood', x: 39, y: 25 }, { t: 'rock_small', x: 18, y: 26 },
+      { t: 'boat_small', x: 33, y: 29 },
+    ];
+    const deco = [];
+    scatter(deco, g, 'tallgrass', [0, 21, 14, 13], ['.', ','], 0.12, 41);
+    scatter(deco, g, 'flowers', [24, 0, 16, 8], ['.', ','], 0.06, 42);
+    const clean = objs.concat(clearCells(deco, [...cellsOf(8, 20, 2, 14), ...cellsOf(36, 0, 2, 10), ...cellsOf(30, 16, 5, 4), ...cellsOf(34, 26, 2, 3), ...objs.flatMap((o) => cellsOf(o.x, o.y, o.w || (G.Objects.get(o.t) || {}).w || 1, o.h || (G.Objects.get(o.t) || {}).h || 1))]));
+    const time = (st) => st.vars.c10_amis_time;
+    G.Maps.define('amis_village', {
+      name: '阿美族部落', subtitle: '海岸階地上的部落', place: 'taitung',
+      bgm: (st) => (time(st) === 'dawn' ? null : 'tribe'),
+      start: [8, 31],
+      light: (st) => (time(st) === 'dawn' ? { ambient: 0.28, color: '#2a1a28', tint: 'rgba(255,160,90,0.24)' } : { ambient: 0.05, color: '#203048' }),
+      particles: (st) => (time(st) === 'dawn' ? ['wind', 'motes'] : ['wind']),
+      tiles: g.rows(), objects: clean,
+      pass: [{ x: 17, y: 3, solid: true }],
+      drawOver: (ctx, t) => H.drawLights(ctx, t),
+      npcs: [
+        { id: 'am_kolas', sprite: 'amis_elder', name: 'Kolas', x: 21, y: 10, dir: 'down', talk: (S) => H.kolasTalk(S), if: () => !time(G.state) },
+        { id: 'am_panay', sprite: 'amis_f', name: 'Panay', x: 5, y: 14, dir: 'down', wander: 1, talk: (S) => H.panayTalk(S), if: () => !time(G.state) },
+        { id: 'am_youth', sprite: 'c10_amis_m', name: '年齡階層的青年', x: 16, y: 5, dir: 'down', talk: (S) => H.youthTalk(S), if: () => !time(G.state) },
+        { id: 'am_youth2', sprite: 'c10_amis_m', name: '年齡階層的青年', x: 19, y: 5, dir: 'down', talk: ['……', '（他站得筆直，看了你一眼，沒有說話。）'], if: () => !time(G.state) },
+        { id: 'am_kid', sprite: 'child_m', name: '部落孩子', x: 27, y: 18, dir: 'left', wander: 2, talk: ['長老年輕的時候，是部落最會抓魚的人！……他自己說的。'], if: () => !time(G.state) },
+      ],
+      warps: [
+        { x: 8, y: 33, w: 2, to: 'baosang', tx: 12, ty: 1, tdir: 'down' },
+        { x: 36, y: 0, w: 2, to: 'taitung_coast', tx: 23, ty: 37, tdir: 'up', run: async (S) => {
+          if (F('ch10_amis_met')) return true;
+          await S.say('', '往北是海岸。部落的人說，這幾天晚上不要靠近。');
+          await S.move('player', 'D');
+          return false;
+        } },
+      ],
+      events: [
+        { id: 'c10_08', trigger: 'auto', if: (st) => st.flags.ch10_taitung_arrive && !st.flags.ch10_amis_met, run: (S) => H.c10_08(S) },
+        { id: 'c10_10', trigger: 'auto', if: (st) => st.flags.ch10_coast_clear && !st.flags.ch10_haiji_witnessed, run: (S) => H.c10_10(S) },
+        { id: 'menhouse', trigger: 'action', x: 17, y: 3, label: '調查', run: async (S) => {
+          await S.say('', '年齡階層的會所。門口有青年守著。');
+          await S.say('yungui:normal', '那是他們年輕人的地方。外人不進去。');
+        } },
+        { id: 'boat', trigger: 'action', x: 33, y: 29, w: 2, label: '舢舨', run: async (S) => {
+          const c = await S.choice(['划舢舨回王船', '留在部落'], { cancel: 1 });
+          if (c === 0) await H.toDeck(S);
+        } },
+      ],
+    });
+  })();
+
+  H.kolasTalk = async (S) => {
+    if (F('ch10_haiji_witnessed')) {
+      await S.say('Kolas', '你們這群外地人，還算懂事。下次來，帶好一點的酒。');
+      return;
+    }
+    const lines = ['Nga\'ay ho。……坐。不要站著，站著的客人像要走。', '年輕人就是要給長輩使喚。我年輕的時候也一樣，被使喚到現在變成長輩，換我使喚。'];
+    if (F('ch10_amis_met') && !F('ch10_coast_clear')) lines.push('河口、礁岸、岬角。天亮之前清乾淨。後天就是海祭。');
+    await S.say('Kolas', lines[(V().c10_kolas_i = ((V().c10_kolas_i || 0) + 1)) % lines.length]);
+  };
+  H.panayTalk = async (S) => {
+    const lines = ['我們阿美族有句話：牛吃的草，我們都能吃。你看這個，這個，這個，都是菜。', '海祭那天，男人去海邊，我們在家裡準備吃的。這是我們部落的規矩。你們？你們是客人，站遠一點看就好。', '那些年輕男人啊，平常很神氣，被長老罵一句就像小雞。'];
+    const i = (V().c10_panay_i = ((V().c10_panay_i || 0) + 1)) % lines.length;
+    await S.say('Panay', lines[i]);
+    if (i === 0 && !F('c10_panay_veg')) {
+      S.flag('c10_panay_veg');
+      await S.say('Panay', '（遞給糰子一片葉子）吃吃看。');
+      await S.say('tuanzi:cry', '本大爺是肉食的！');
+      await S.say('Panay', '那你就是還沒吃過好吃的草。');
+    }
+  };
+  H.youthTalk = async (S) => {
+    if (F('ch10_haiji_witnessed')) { await S.say('年齡階層的青年', '謝謝你們。長老嘴巴不說，可是他今天多分了一條魚給你們。那是很大的意思。'); return; }
+    const lines = ['我們這一級的，這幾天晚上輪流守海邊。可是那些溺死的……刀砍下去像砍水。', '長老說，海祭前，海邊要乾淨。不乾淨，海不會聽我們說話。'];
+    await S.say('年齡階層的青年', lines[(V().c10_youth_i = ((V().c10_youth_i || 0) + 1)) % 2]);
+  };
+
+  // ---------------------------------------------------------------- C10-08 阿美族部落
+  H.c10_08 = async (S) => {
+    S.bgm('tribe');
+    const youths = [[16, 12], [17, 12], [18, 12], [19, 12]];
+    youths.forEach(([x, y], i) => S.spawn({ id: 'yo' + i, sprite: 'c10_amis_m', x, y, dir: 'up' }));
+    S.setPos('am_kolas', 18, 10, 'down');
+    H.place(S, 12, 16, 'up');
+    S.setPos('hongying', 11, 17, 'up'); S.setPos('yungui', 13, 17, 'up'); S.setPos('tuanzi', 12, 17, 'up');
+    await S.camera(17, 12, 0.01);
+    await S.say('', '（部落廣場上，幾個年輕男人垂著頭站成一排，一位滿臉皺紋的老人正在罵他們。）');
+    S.emote('am_kolas', '💢');
+    await S.say('Kolas', '——守了三個晚上，一個都沒趕走！還病倒兩個！你們這一級，是吃什麼長大的？');
+    await S.say('年輕人', '……吃野菜，長老。');
+    await S.say('Kolas', '大聲一點！');
+    S.shake(2, 0.3);
+    await S.say('年輕人們', '吃野菜！長老！');
+    S.face('am_kolas', 'left');
+    S.cameraFollow();
+    await S.walkTo('player', 15, 13);
+    S.face('player', 'right');
+    await S.say('', '（Kolas 轉身，看到隊伍。）');
+    await S.say('Kolas', '……Nga\'ay ho。你們是誰？');
+    await S.say('xinghe:normal', 'Nga\'ay ho！我們是寶桑海邊跑步的人叫來的。');
+    await S.say('Kolas', '（哼）卑南的那些小子。腳快，嘴也快。');
+    await S.say('Kolas', '外面來的人，帶來的東西都很麻煩。你們來做什麼？');
+    await S.say('xinghe:serious', '聽說你們的海邊有溺魂。我們可以幫忙把它們送走。');
+    await S.say('Kolas', '……你們會送？');
+    await S.say('yungui:normal', '我是道士。他身上有引魂人的令。送迷路的魂，是我們的本事。');
+    await S.say('Kolas', '（看著星河很久）……海祭，是我們跟海說話的日子。');
+    await S.say('Kolas', '謝謝海這一年給我們的，請海今年也照顧出去討海的孩子。');
+    await S.say('Kolas', '海邊不乾淨，海不會聽我們說話。');
+    await S.say('Kolas', '那些溺死的，不是我們的人。我們不認識他們，他們也不認識我們。');
+    await S.say('Kolas', '可是他們在我們的海邊哭。……我們也不忍心。');
+    S.spawn({ id: 'panay_c', sprite: 'amis_f', x: 11, y: 14, dir: 'right' });
+    await S.walkTo('panay_c', 14, 14);
+    S.face('panay_c', 'right');
+    await S.say('', '（一個年輕女子提著一籃野菜走過來。）');
+    await S.say('Panay', '長老，客人來了，你就讓客人站著罵小孩？');
+    await S.say('Kolas', '……Panay。');
+    await S.say('Panay', '坐、坐。（塞給每人一把野菜）先吃。吃飽了，晚上才有力氣。');
+    await S.say('tuanzi:cry', '本大爺是肉食的！');
+    await S.say('Panay', '那你就是還沒吃過好吃的草。（硬塞一片葉子進糰子嘴裡）');
+    await S.say('tuanzi:surprise', '……（嚼）……咦？');
+    await S.say('tuanzi:shy', '……苦苦的，可是後面甜甜的。');
+    await S.say('Panay', '（得意）看吧。我們有句話：牛吃的草，我們都能吃。');
+    await S.say('Kolas', '（揉額頭）……今晚，你們去海邊。三個地方：河口、礁岸、岬角。');
+    await S.say('Kolas', '我們這一級的青年，在部落這一邊守。你們不要把那些東西趕到部落裡來。');
+    await S.say('Kolas', '天亮之前清乾淨。後天就是海祭。');
+    youths.forEach((c, i) => S.remove('yo' + i));
+    S.remove('panay_c');
+    S.setPos('am_kolas', 21, 10, 'down');
+    S.flag('ch10_amis_met');
+    H.days(47);
+    S.quest('q_c10_haiji', 0);
+    S.gather();
+    H.objective(S, '夜晚清理台東海岸的三處溺魂（部落東北的海岸小路）');
+  };
+
+  // =================================================================================================
+  // MAP: taitung_coast 台東海岸（夜，地城）
+  // =================================================================================================
+  const COAST = { A: [20, 25], B: [30, 13], C: [14, 5] };
+  (function coast() {
+    const W = 48, HH = 40;
+    const g = new Grid(W, HH, '.');
+    g.rect(0, 0, 4, HH, 'X'); g.rect(4, 0, 2, 22, 'X');
+    // sea along the east, deeper outward
+    for (let y = 0; y < HH; y++) {
+      const e = 37 + Math.round(Math.sin(y * 0.3) * 1.2) - (y < 9 ? 3 : 0);
+      for (let x = e; x < W; x++) g.set(x, y, x === e ? '-' : x > e + 3 ? 'w' : '~');
+    }
+    // C — headland (grass), cliff edge facing north & east
+    g.rect(6, 0, 30, 1, 'X'); g.rect(30, 1, 4, 2, 'X');
+    g.blob(18, 5, 8, 3, ',', 51);
+    // B — reef shore
+    g.rect(6, 10, 31, 11, 's');
+    g.blob(21, 15, 3, 2, '-', 52); g.blob(32, 17, 2, 1.5, '-', 53); g.blob(12, 13, 2, 1.5, '-', 54);
+    g.rect(6, 9, 18, 1, 'X'); g.rect(27, 9, 10, 1, 'X');      // low cliff between B and C; stairs at x 24..26
+    g.rect(24, 9, 3, 1, 'H');
+    // A — river mouth
+    g.rect(6, 21, 31, 17, 's');
+    g.blob(10, 25, 5, 3, 'm', 55); g.blob(9, 33, 4, 3, 'm', 56);
+    g.rect(4, 29, 34, 2, 'r');
+    g.rect(16, 29, 2, 2, '-');                                  // the ford (sand bar)
+    g.rect(22, 38, 4, 2, ':'); g.rect(4, 38, 18, 2, 'X'); g.rect(26, 38, 12, 2, 'X');
+    const objs = [
+      { t: 'rock_big', x: 8, y: 11 }, { t: 'rock_big', x: 26, y: 12 }, { t: 'rock_basalt', x: 17, y: 12 }, { t: 'rock_big', x: 34, y: 11 }, { t: 'rock_small', x: 28, y: 16 },
+      { t: 'rock_big', x: 14, y: 17 }, { t: 'rock_basalt', x: 24, y: 18 }, { t: 'rock_small', x: 9, y: 16 }, { t: 'rock_big', x: 29, y: 19 }, { t: 'rock_small', x: 35, y: 15 },
+      { t: 'driftwood', x: 20, y: 20 }, { t: 'driftwood', x: 28, y: 23 }, { t: 'seaweed', x: 21, y: 15 }, { t: 'seaweed', x: 32, y: 17 },
+      { t: 'rock_small', x: 31, y: 34 }, { t: 'driftwood', x: 30, y: 26 }, { t: 'rock_big', x: 33, y: 23 },
+      { t: 'tree_pine', x: 8, y: 3 }, { t: 'tree_pine', x: 10, y: 1 }, { t: 'bush', x: 27, y: 6 }, { t: 'rock_big', x: 30, y: 5 }, { t: 'pandanus', x: 7, y: 7 },
+    ];
+    const deco = [];
+    scatter(deco, g, 'reeds', [6, 21, 14, 17], ['m', 's'], 0.3, 61);
+    scatter(deco, g, 'tallgrass', [6, 1, 28, 8], ['.', ','], 0.16, 62);
+    scatter(deco, g, 'silvergrass', [6, 1, 28, 8], ['.', ','], 0.05, 63);
+    const keep = [...cellsOf(15, 22, 4, 16), ...cellsOf(22, 31, 4, 8), ...cellsOf(19, 24, 3, 3), ...cellsOf(29, 12, 3, 3), ...cellsOf(13, 4, 3, 3), ...cellsOf(24, 8, 3, 3),
+      ...cellsOf(18, 2, 8, 4), ...cellsOf(15, 10, 14, 2), ...cellsOf(6, 33, 2, 2), ...cellsOf(32, 4, 3, 3), ...cellsOf(35, 16, 2, 2)];
+    const clean = objs.concat(clearCells(deco, keep.concat(objs.flatMap((o) => cellsOf(o.x, o.y, (G.Objects.get(o.t) || {}).w || 1, (G.Objects.get(o.t) || {}).h || 1)))));
+    const pointLight = (st) => {
+      const out = [];
+      if (!st.flags.ch10_coast_a) out.push({ x: COAST.A[0], y: COAST.A[1], r: 150, color: '#6aa8ff', flicker: 0.3 });
+      if (!st.flags.ch10_coast_b) out.push({ x: COAST.B[0], y: COAST.B[1], r: 150, color: '#6aa8ff', flicker: 0.3 });
+      if (!st.flags.ch10_coast_c) out.push({ x: COAST.C[0], y: COAST.C[1], r: 150, color: '#6aa8ff', flicker: 0.3 });
+      return out;
+    };
+    G.Maps.define('taitung_coast', {
+      name: '台東海岸', subtitle: '溺魂徘徊的夜', place: 'taitung',
+      bgm: (st) => (st.flags.ch10_coast_clear ? 'tribe' : 'night'),
+      start: [23, 37],
+      light: (st) => (st.flags.ch10_coast_clear ? { ambient: 0.18, color: '#2a2030', tint: 'rgba(255,170,110,0.14)' } : { ambient: 0.62, color: '#060c26', playerR: 210 }),
+      particles: (st) => (st.flags.ch10_coast_clear ? ['wind'] : ['mist', 'motes']),
+      tiles: g.rows(), objects: clean,
+      lights: pointLight,
+      drawOver: (ctx, t) => H.drawLights(ctx, t),
+      chests: [
+        { id: 'coastA', x: 6, y: 34, item: 'c10_fn_jingge', n: 1 },
+        { id: 'coastB', x: 36, y: 16, item: 'c10_baicao', n: 2 },
+        { id: 'coastC', x: 33, y: 5, item: 'huanhunxiang', n: 2, run: async (S) => { await S.give('c10_ac_coral', 1); } },
+      ],
+      npcs: [
+        { id: 'ghost_a', sprite: 'ghost_m', ghost: true, name: '溺魂', x: 21, y: 26, dir: 'left', if: () => !F('c10_fix_a'), talk: ['……冷……好冷……'] },
+        { id: 'ghost_b', sprite: 'ghost_f', ghost: true, name: '溺魂', x: 31, y: 14, dir: 'left', if: () => !F('c10_fix_b'), talk: ['……回……'] },
+        { id: 'ghost_c', sprite: 'ghost_m', ghost: true, name: '溺魂', x: 22, y: 3, dir: 'left', if: () => !F('ch10_coast_c'), talk: ['（他面朝西方，一動也不動。）'] },
+      ],
+      enemies: [
+        { id: 'ca1', troop: 'taitung_1', x: 26, y: 34, art: 'water_ghost', variant: 2, lv: 35, if: () => !F('ch10_coast_clear') },
+        { id: 'ca2', troop: 't_c10_coast_a', x: 11, y: 23, art: 'water_ghost', variant: 2, lv: 35, if: () => !F('ch10_coast_clear') },
+        { id: 'cb1', troop: 't_c10_coast_b', x: 19, y: 18, art: 'tide_grudge', variant: 2, lv: 35, if: () => !F('ch10_coast_clear') },
+        { id: 'cb2', troop: 'taitung_3', x: 33, y: 20, art: 'cliff_spirit', lv: 36, if: () => !F('ch10_coast_clear') },
+        { id: 'cc1', troop: 'taitung_2', x: 28, y: 4, art: 'sea_monster', variant: 1, lv: 35, if: () => !F('ch10_coast_clear') },
+      ],
+      warps: [{ x: 22, y: 39, w: 4, to: 'amis_village', tx: 36, ty: 2, tdir: 'down', run: async () => {
+        if (!(F('ch10_coast_a') && F('ch10_coast_b') && F('ch10_coast_c'))) V().c10_coast_left = true;
+        return true;
+      } }],
+      events: [
+        { id: 'fixA', trigger: 'touch', x: 18, y: 23, w: 5, h: 5, if: (st) => !st.flags.c10_fix_a, run: async (S) => {
+          await S.say('', '河口的沙洲上，溺魂從水裡一個一個爬上來。');
+          await S.say('xinghe:serious', '來了！');
+          await S.battle('t_c10_coast_fix_a');
+          S.flag('c10_fix_a');
+          await S.say('yungui:normal', '那邊的水漬裡有一點藍光。是招魂點。');
+        } },
+        { id: 'fixB', trigger: 'touch', x: 27, y: 11, w: 7, h: 5, if: (st) => !st.flags.c10_fix_b, run: async (S) => {
+          await S.say('', '礁岸上，一個大型的潮怨守著水漬，四周的溺魂都朝它聚過來。');
+          await S.battle('t_c10_coast_fix_b');
+          S.flag('c10_fix_b');
+        } },
+        { id: 'fixC', trigger: 'touch', x: 17, y: 2, w: 9, h: 4, if: (st) => !st.flags.c10_fix_c, run: (S) => H.coastBoss(S) },
+        { id: 'ptA', trigger: 'action', x: COAST.A[0], y: COAST.A[1], label: '招魂', if: (st) => st.flags.c10_fix_a && !st.flags.ch10_coast_a, run: async (S) => {
+          await H.guide(S, COAST.A);
+          await S.say('xinghe:normal', '往北走。黑潮會帶你們走。');
+          S.flag('ch10_coast_a');
+          await H.coastCheck(S);
+        } },
+        { id: 'ptB', trigger: 'action', x: COAST.B[0], y: COAST.B[1], label: '招魂', if: (st) => st.flags.c10_fix_b && !st.flags.ch10_coast_b, run: async (S) => {
+          await H.guide(S, COAST.B);
+          await S.say('', '（一個溺魂在消失前，回頭看了星河一眼，用很輕的聲音說了一句聽不懂的鄉音。）');
+          await S.say('yungui:sad', '……漳州腔。是從唐山渡海的人。');
+          S.flag('ch10_coast_b');
+          await H.coastCheck(S);
+        } },
+        { id: 'ptC', trigger: 'action', x: COAST.C[0], y: COAST.C[1], label: '招魂', if: (st) => st.flags.c10_fix_c && !st.flags.ch10_coast_c, run: async (S) => {
+          await H.guide(S, COAST.C, 40);
+          await S.say('', '（所有溺魂的藍光升起，在岬角上空繞了一圈，往北方、往黑潮的方向，慢慢漂走。）');
+          S.flag('ch10_coast_c');
+          await H.coastCheck(S);
+        } },
+        { id: 'edge', trigger: 'action', x: 34, y: 2, label: '眺望', run: async (S) => {
+          await S.say('', '岬角上，可以眺望整片海。黑潮在月光下，一路往北流。');
+        } },
+      ],
+      onEnter: async () => { if (!V().c10_coast_night) V().c10_coast_night = 1; },
+    });
+  })();
+
+  // 引魂令: blue lights rise from the water stain and drift north toward the Kuroshio
+  H.guide = async (S, [x, y], n = 16) => {
+    S.face('player', 'up');
+    await S.say('', '（星河舉起引魂令。）');
+    S.sfx('lantern');
+    H.lightsStart(x, y, n, n > 20 ? 4 : 1.5, { vy: -30, vx: 10 });
+    await S.say('', '（水漬裡的藍光一點一點浮起，排成一列，往海的方向漂去。）');
+    await S.wait(1.2);
+    H.lightsStop();
+  };
+  H.coastBoss = async (S) => {
+    S.bgm('tension');
+    await S.camera(21, 3, 0.8);
+    await S.say('', '（岬角上，數十個溺魂圍成一圈，面朝西方——他們家鄉的方向。圈的中心，一個巨大的潮怨正把新的溺魂從海裡拉上岸。）');
+    await S.say('潮怨', '……回……回唐山……回不去……就在這裡……');
+    S.cameraFollow();
+    await S.say('xinghe:serious', '這裡不是你們的家，也不是你們該停的地方。');
+    await S.battle('t_c10_coast_boss');
+    S.flag('c10_fix_c');
+    S.bgm('night');
+    await S.say('yungui:normal', '招魂點在那邊。送他們走吧。');
+  };
+  H.coastCheck = async (S) => {
+    if (!(F('ch10_coast_a') && F('ch10_coast_b') && F('ch10_coast_c'))) return;
+    await S.wait(0.4);
+    S.light({ ambient: 0.32, color: '#2a2030', tint: 'rgba(255,170,110,0.14)' });
+    S.particles(['wind']);
+    await S.say('', '（天邊開始泛白。部落方向傳來一聲短短的呼喊——是青年們在報平安。）');
+    await S.say('hongying:smile', '……天亮了。');
+    S.flag('ch10_coast_clear');
+    S.quest('q_c10_haiji', 1);
+    S.refresh();
+    H.objective(S, '回到阿美族部落');
+  };
+
+  // ---------------------------------------------------------------- C10-10 遠觀海祭・心燈 19
+  // The 海祭 is performed by the village; the party only watches from the viewing tree.
+  // Fixed camera, no BGM (waves and wind only), the player cannot move, no minigame, no prayer text.
+  H.c10_10 = async (S) => {
+    await S.fadeOut(0.8);
+    S.bgm(null);
+    V().c10_amis_time = 'dawn';
+    await S.warp('amis_village', 31, 17, 'down', { reload: true, fade: 0.01, stayDark: true });
+    S.bgm(null);
+    S.setPos('hongying', 30, 17, 'down'); S.setPos('yungui', 32, 17, 'down'); S.setPos('tuanzi', 31, 18, 'down');
+    S.spawn({ id: 'panay_h', sprite: 'amis_f', x: 29, y: 17, dir: 'down' });
+    // age-grade rows on the beach, eldest in front (closest to the sea), 長老 Kolas at the very front
+    S.spawn({ id: 'kolas_h', sprite: 'amis_elder', x: 27, y: 28, dir: 'down' });
+    const rows = [[25, 27, 'amis_elder'], [29, 27, 'amis_elder'], [24, 26, 'c10_amis_m'], [26, 26, 'c10_amis_m'], [28, 26, 'c10_amis_m'], [30, 26, 'c10_amis_m'],
+      [23, 25, 'c10_amis_m'], [25, 25, 'c10_amis_m'], [27, 25, 'c10_amis_m'], [29, 25, 'c10_amis_m'], [31, 25, 'c10_amis_m']];
+    rows.forEach(([x, y, sp], i) => S.spawn({ id: 'hj' + i, sprite: sp, x, y, dir: 'down' }));
+    S.particles(['wind', 'motes']);
+    await S.camera(29, 20, 0.01);
+    await S.fadeIn(1.2);
+    S.sfx('wind');
+    await S.say('', '（黎明。隊伍站在觀禮樹下。）');
+    await S.say('Panay', '（小聲）就在這裡看。不要拍手、不要叫、不要走過去。');
+    await S.say('Panay', '（對糰子）也不要去偷祭品。');
+    await S.say('tuanzi:sad', '（小聲）……為什麼每個人都這樣說本大爺。');
+    await S.camera(27, 25, 2.0);
+    await S.say('', '（遠景：海灘上，部落的男人按年齡階層排成幾列，最年長的在最前面，Kolas 站在最前方。年輕人在後面，一動也不動。）');
+    S.sfx('water');
+    await S.say('', '（海邊擺著幾樣供品：酒、檳榔、糯米。Kolas 面向大海，說了很長的一段話。風把聲音帶走了，隊伍聽不清楚。）');
+    await S.camera(31, 18, 1.4);
+    await S.say('', '（鏡頭停在隊伍臉上。星河靜靜看著。紅纓不自覺地挺直了背。雲歸收起了扇子。）');
+    await S.camera(27, 27, 1.6);
+    for (let i = 6; i < rows.length; i++) S.move('hj' + i, 'DDDDD', { wait: false, speed: 1.6 });
+    await S.wait(1.0);
+    S.sfx('splash');
+    await S.say('', '（Kolas 說完，年輕人們走進海裡，撒網。浪拍打著他們的腰。）');
+    await S.camera(27, 30, 1.4);
+    H.lightsStart(27, 33, 60, 14, { vy: -14, vx: 6 });
+    await S.say('', '（這時，遠方海平線上，一點、兩點、十點、上百點微弱的藍光，從海面浮起——那是昨夜送走的溺魂。）');
+    await S.say('', '（它們在晨光中閃了一下，像是點頭，然後順著黑潮，往北方漂去，消失在光裡。）');
+    await S.say('', '（部落的人沒有看到藍光。只有隊伍看到了。）');
+    await S.camera(31, 18, 1.4);
+    await S.say('xinghe:normal', '（……他們跟海說話的時候，也順便替這些陌生人說了一句吧。）');
+    H.lightsStart(27, 30, 1, 0.3, { vy: -40, vx: 14 });
+    await S.say('', '（一點小小的光從海上飄回來，越過正在撒網的年輕人，落到星河手上。）');
+    await S.lantern('xd_amis_haiji', '阿美族海祭');
+    H.lightsStop();
+    S.quest('q_c10_haiji', 'done');
+    await S.fadeOut(1.0);
+    // daytime plaza: sharing the catch
+    V().c10_amis_time = undefined;
+    for (let i = 0; i < rows.length; i++) S.remove('hj' + i);
+    S.remove('kolas_h'); S.remove('panay_h');
+    await S.warp('amis_village', 18, 12, 'up', { reload: true, fade: 0.01, stayDark: true });
+    S.setPos('am_kolas', 19, 9, 'down');
+    S.setPos('hongying', 17, 12, 'up'); S.setPos('yungui', 20, 12, 'up'); S.setPos('tuanzi', 21, 11, 'up');
+    S.setPos('am_youth', 16, 10, 'right'); S.setPos('am_panay', 22, 10, 'left');
+    S.bgm('tribe');
+    await S.camera(19, 11, 0.01);
+    await S.fadeIn(1.0);
+    await S.say('', '（白天，部落廣場。大家圍坐，年輕人把魚分好，先送到長老面前。）');
+    await S.say('Kolas', '（拿起一條魚，看了看，遞給星河）……拿去。');
+    await S.say('年輕人', '（小聲對隊伍）長老分魚給你們，是很大的意思。');
+    await S.say('Kolas', '問什麼問。吃。');
+    await S.say('Panay', '（端來一個用葉子編成的小包）阿里鳳鳳。裡面是飯。出遠門的人帶著吃。');
+    await S.give('c10_alifengfeng', 3);
+    await S.say('Kolas', '（遞上一小杯小米酒）喝一口。一口就好，你們還要開船。');
+    await S.say('', '（紅纓、星河各喝一小口。雲歸雙手接過，恭敬地喝了一口，眼睛一亮。）');
+    await S.say('yungui:smile', '……好酒。');
+    await S.say('Kolas', '（得意）當然。我老婆釀的。');
+    await S.say('', '（Kolas 又遞來檳榔。星河接過，學著嚼——臉皺成一團。）');
+    S.emote('player', '💧');
+    await S.say('xinghe:cry', '……好、好澀……');
+    await S.say('Kolas', '（大笑）哈哈哈哈！漢人小子！');
+    await S.say('Kolas', '……你們這群外地人，還算懂事。');
+    if (!V().c10_coast_left) {
+      await S.say('Kolas', '一個晚上就清乾淨了？……我年輕的時候也是這樣。');
+      await S.say('Kolas', '這個給你們。我用了幾十年的魚鉤。');
+      await S.give('c10_ac_kolas', 1);
+    }
+    await S.say('Kolas', '海今年會聽我們說話了。你們也去吧。你們的船，海也會照顧。');
+    S.cameraFollow();
+    await H.xunjing(S, 4);
+    S.flag('ch10_haiji_witnessed');
+    H.days(44);
+    S.quest('q_c10_main', 2);
+    S.setPos('am_youth', 16, 5, 'down'); S.setPos('am_panay', 5, 14, 'down'); S.setPos('am_kolas', 21, 10, 'down');
+    S.refresh();
+    S.gather();
+    V().c10_port = 'amis';
+    H.objective(S, '繼續北上，前往花蓮（海灘的舢舨可回王船）');
+  };
 })();

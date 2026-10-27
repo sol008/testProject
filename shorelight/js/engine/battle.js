@@ -1105,7 +1105,7 @@ G.Battle = (() => {
       const boss = this.enemies.find((e) => e.boss && !e.dead);
       if (boss) {
         const bw = 520, bx = 40, by = 86;
-        G.Render.text(ctx, boss.name, bx, by - 30, { size: 24, color: '#ffd8c8', glow: 'rgba(255,80,60,0.6)', glowBlur: 10 });
+        G.Render.textFit(ctx, boss.name, bx, by - 30, bw, { size: 24, color: '#ffd8c8', glow: 'rgba(255,80,60,0.6)', glowBlur: 10 });
         G.UI.bar(ctx, bx, by, bw, 16, boss.hp / boss.mhp, '#ff7a5a', '#a8201a');
         if (boss.d.elem) G.UI.elemBadge(ctx, boss.d.elem, bx + bw + 20, by + 8, 12);
       }
@@ -1594,11 +1594,16 @@ G.Battle = (() => {
         if (!tg.all || list.length === 1) {
           // target info
           const info = `${u.name}${u.side === 'enemy' && u.d && u.d.elem ? '' : ''}`;
-          G.Render.text(ctx, info, x, y - 52, { size: 22, align: 'center', color: '#fff0d0', stroke: '#1a0e08', strokeW: 4 });
+          G.Render.text(ctx, info, x, y - 74, { size: 22, align: 'center', color: '#fff0d0', stroke: '#1a0e08', strokeW: 4 });
           if (u.side === 'enemy' && u.d) {
             const known = (G.state.bestiary[u.id] || 0) > 0;
-            if (u.d.elem) G.UI.elemBadge(ctx, u.d.elem, x - 60, y - 40, 10);
-            if (known && u.weak && u.weak.length) G.Render.text(ctx, '弱：' + u.weak.map((e) => ELEM_NAMES[e]).join(''), x + 10, y - 50, { size: 15, color: '#ffd84a' });
+            const weakTxt = known && u.weak && u.weak.length ? G.T('弱：' + u.weak.map((e) => ELEM_NAMES[e]).join('')) : '';
+            ctx.font = G.font(15);
+            const ww = weakTxt ? ctx.measureText(weakTxt).width : 0;
+            const total = (u.d.elem ? 26 : 0) + ww;
+            let lx = x - total / 2;
+            if (u.d.elem) { G.UI.elemBadge(ctx, u.d.elem, lx + 10, y - 32, 10); lx += 26; }
+            if (weakTxt) G.Render.text(ctx, weakTxt, lx, y - 41, { size: 15, color: '#ffd84a' });
           }
         }
       }

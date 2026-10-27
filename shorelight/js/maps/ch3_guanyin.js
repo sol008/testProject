@@ -1168,7 +1168,7 @@
     const W = 28, H = 22;
     const g = grid(W, H, 'T');
     fill(g, 0, 0, W, 2, 'E'); fill(g, 0, 0, 1, H, 'E'); fill(g, W - 1, 0, 1, H, 'E');
-    fill(g, 0, 20, W, 2, 'E'); fill(g, 12, 20, 4, 1, 'T'); fill(g, 13, 21, 2, 1, 'H');
+    fill(g, 0, 21, W, 1, 'E'); fill(g, 13, 21, 2, 1, 'H');
     fill(g, 1, 2, 8, 5, ','); fill(g, 18, 2, 9, 4, ',');   // back yard (mushroom beds) & east garden
     fill(g, 1, 10, 5, 10, '.'); fill(g, 22, 11, 5, 3, '.');
     const d = grid(W, H, ' ');
@@ -1409,7 +1409,7 @@
     tiles: TX.tiles, deco: TX.deco,
     objects: [
       { t: 'temple', x: 10, y: 2, text: '太虛觀' },
-      { t: 'paifang', x: 12, y: 20, v: 0, text: '太虛觀' },
+      { t: 'stone_lantern', x: 11, y: 20 }, { t: 'stone_lantern', x: 16, y: 20 },
       { t: 'incense_burner', x: 13, y: 11 },
       { t: 'stone_lantern', x: 9, y: 9 }, { t: 'stone_lantern', x: 18, y: 9 }, { t: 'stone_lantern', x: 9, y: 16 }, { t: 'stone_lantern', x: 18, y: 16 },
       { t: 'bell_tower', x: 21, y: 15 },

@@ -39,6 +39,8 @@ G.World = (() => {
     'taroko', 'toucheng', 'penghu', 'farshore'];
 
   const LON0 = 118.7, LAT0 = 25.45, KX = 196, KY = 208;
+  // label nudges (px at scale 1) so crowded northern names don't overlap
+  const LABEL_OFF = { tamsui: [-70, -14], guanyin: [-78, 8], bangka: [-62, 22], pingxi: [-56, 18], jiufen: [6, -14], badouzi: [10, -30], hsinchu: [-62, 0], xiangtian: [-70, 14] };
   W.proj = (lon, lat, box) => {
     const x = (lon - LON0) * KX, y = (LAT0 - lat) * KY;
     return [box.x + x * box.s, box.y + y * box.s];
@@ -127,7 +129,8 @@ G.World = (() => {
       ctx.strokeStyle = '#2a1408'; ctx.lineWidth = 1.5; ctx.stroke();
       if (cur) G.UI.lanternIcon(ctx, x, y - 22, 8, t);
       const right = p[0] > 121.3 || id === 'farshore';
-      G.Render.text(ctx, p[2], x + (right ? -10 : 10), y - 10, { size: Math.min(26, 15 * Math.max(1, box.s * 0.75)), align: right ? 'right' : 'left', color: known ? '#fff0d0' : '#8a8a8a', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
+      const off = LABEL_OFF[id] || [0, 0];
+      G.Render.text(ctx, p[2], x + (right ? -10 : 10) + off[0] * box.s, y - 10 + off[1] * box.s, { size: Math.min(26, 15 * Math.max(1, box.s * 0.75)), align: right ? 'right' : 'left', color: known ? '#fff0d0' : '#8a8a8a', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
     }
     ctx.restore();
   };
@@ -157,7 +160,7 @@ G.World = (() => {
         const s = G.U.clamp(1 / span, 1, 3.2);
         const cx = (ax + bx2) / 2, cy = (ay + by2) / 2;
         this.box = { x: 0, y: 0, w: G.W, h: G.H, ox: G.W * 0.58 - cx * s, oy: G.H * 0.45 - cy * s, s };
-        if (s <= 1.05) { this.box.ox = 300; this.box.oy = -10; this.box.s = 1; }
+        if (s <= 1.05) { this.box.ox = 330; this.box.oy = 14; this.box.s = 0.92; }
       }
       const box = this.box;
       W.drawMap(ctx, box, t, { current: null, extra: [this.from, this.to] });
@@ -195,7 +198,7 @@ G.World = (() => {
     }
     draw(ctx) {
       const cur = G.mapScene && G.mapScene.def.place;
-      W.drawMap(ctx, { x: 0, y: 0, w: G.W, h: G.H, ox: 300, oy: -10, s: 1 }, this.t, { current: cur });
+      W.drawMap(ctx, { x: 0, y: 0, w: G.W, h: G.H, ox: 330, oy: 14, s: 0.92 }, this.t, { current: cur });
       G.Render.text(ctx, '福爾摩沙・旅途', 60, 40, { size: 36, color: '#fff0d0', glow: 'rgba(255,170,90,0.5)', glowBlur: 12 });
       const n = Object.keys(G.state.vars.visited || {}).length;
       G.Render.text(ctx, `已到訪 ${n} 處`, 62, 92, { size: 20, color: '#c9b893' });

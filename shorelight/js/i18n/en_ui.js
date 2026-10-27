@@ -585,3 +585,8 @@ G.I18N.add({
   '南門': 'South Gate',
   '炮城': 'Firecracker Fort',
 });
+G.I18N.add({
+  '點亮心燈': 'Heart Lantern Lit',
+  '防禦力': 'Defense',
+  '裝備品': 'Gear',
+});
