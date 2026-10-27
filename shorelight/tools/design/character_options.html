@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>彼岸燈 — 角色造型提案</title>
+<style>
+  :root {
+    --bg: #12131c; --panel: #1b1d2a; --ink: #ece6da; --muted: #9a9cb0; --line: #2c2f42; --gold: #d8b25a;
+    --kai: "LXGW WenKai TC", "Kaiti TC", "STKaiti", "BiauKai", "DFKai-SB", "Noto Serif TC", "Songti TC", "PingFang TC", "Microsoft JhengHei", "WenQuanYi Zen Hei", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--kai); }
+  body { width: 1600px; padding: 26px 18px 30px; }
+  .sheet { margin-bottom: 40px; }
+  .sheet header { display: flex; align-items: flex-end; gap: 26px; padding: 6px 4px 16px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .ttl { display: flex; flex-direction: column; min-width: 300px; }
+  .ttl .zh { font-size: 40px; letter-spacing: 6px; color: #fff3dc; }
+  .ttl .en { font-size: 14px; color: var(--gold); letter-spacing: 2px; font-family: Georgia, serif; }
+  .brief { margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted); max-width: 1180px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 296px); gap: 18px 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .card .art { height: 334px; line-height: 0; }
+  .meta { padding: 10px 12px 12px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .num { font-family: Georgia, serif; font-weight: bold; font-size: 20px; color: #12131c; background: var(--gold); border-radius: 6px; padding: 1px 7px; }
+  .name { font-size: 21px; color: #fff3dc; letter-spacing: 1px; flex: 1; white-space: nowrap; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+  .enname { font-family: Georgia, serif; font-size: 12px; color: var(--gold); margin: 4px 0 4px; }
+  .desc { font-size: 13.5px; line-height: 1.5; color: #c9c6c0; min-height: 60px; }
+  .strip { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 6px; }
+  .strip h3 { margin: 0 0 4px; font-size: 14px; color: var(--muted); font-weight: normal; }
+  .strip canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="../../js/core/util.js"></script>
+<script src="engine.js"></script>
+<script src="lib.js"></script>
+<script src="options.js"></script>
+<script src="options_baizhi.js"></script>
+<script src="options_hongying.js"></script>
+<script src="options_yungui.js"></script>
+<script src="tuanzi.js"></script>
+<script src="strip.js"></script>
+<script src="sheet.js"></script>
+</body>
+</html>

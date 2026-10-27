@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — sprite preview</title>
+<style>
+  html, body { margin: 0; background: #10131c; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.7; background: #0008; padding: 2px 6px; }
+</style>
+</head>
+<body>
+<div id="bar">?sec=map|battle|lineup|all &amp; ids=a,b &amp; zoom=2 &amp; t=1.2 (freeze) &amp; S=2</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/sprites.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const zoom = parseFloat(q.get('zoom') || '1');
+  G.S = parseFloat(q.get('S') || String(Math.max(1, zoom)));
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const sec = q.get('sec') || 'all';
+  const all = G.Sprites.ids();
+  const ids = q.get('ids') ? q.get('ids').split(',').filter((i) => all.includes(i)) : all;
+  const required = ('xinghe baizhi hongying yungui tuanzi chenbo yexuan qingfeng qingfeng_mask qingxu moya tengpo nianer lantern_mother ' +
+    'villager_m villager_f villager_m2 villager_f2 old_m old_f child_m child_f miner fisherman merchant shopkeeper_f scholar monk taoist ' +
+    'temple_guard soldier noble_m noble_f maid servant_old actress storyteller doctor hunter sailor boatman widow ghost_m ghost_f ghost_child ' +
+    'linto woodcutter tea_girl temple_keeper hakka_m hakka_f saisiyat_elder tsou_m tsou_elder bunun_m bunun_f thao_elder tao_m tao_f puyuma_m ' +
+    'amis_f amis_elder truku_elder kavalan_f bajiajiang qianliyan shunfenger pilgrim yueqin_singer lighthouse_keeper pirate_ghost fisher_f ' +
+    'dog cat chicken buffalo crow').split(' ');
+  const missing = required.filter((i) => !all.includes(i));
+  if (missing.length) console.error('missing ids: ' + missing.join(','));
+  const battleIds = (q.get('bids') ? q.get('bids').split(',') : ['xinghe', 'baizhi', 'hongying', 'yungui', 'tuanzi', 'chenbo', 'yexuan', 'qingfeng', 'qingfeng_mask', 'qingxu', 'moya', 'temple_guard'])
+    .filter((i) => ids.includes(i) || !q.get('ids'));
+  const poses = ['idle', 'ready', 'attack', 'cast', 'hurt', 'ko', 'guard', 'victory', 'item'];
+  const dirs = ['down', 'left', 'right', 'up'];
+  const W = parseInt(q.get('w') || '1700', 10);
+  const items = []; // {kind, id, x, y, ...}
+  let y = 40;
+  const sections = [];
+  if (sec === 'lineup' || sec === 'all') {
+    const cast = ids.filter((i) => !['dog', 'cat', 'chicken', 'buffalo', 'crow'].includes(i));
+    sections.push({ title: 'lineup (real size, walking down / left)', y });
+    y += 20;
+    const per = Math.floor((W - 40) / 58);
+    cast.forEach((id, i) => {
+      const cx = 40 + (i % per) * 58, cy = y + 120 + Math.floor(i / per) * 150;
+      items.push({ kind: 'map', id, dir: i % 2 && false ? 'left' : 'down', x: cx, y: cy, anim: true, label: id, small: true });
+    });
+    y += 150 * Math.ceil(cast.length / per) + 30;
+  }
+  if (sec === 'map' || sec === 'all') {
+    sections.push({ title: 'map sprites: 4 dirs × 4 frames', y, grass: true });
+    y += 20;
+    const cellW = 54, block = cellW * 16 + 20;
+    const per = Math.max(1, Math.floor((W - 20) / block));
+    ids.forEach((id, i) => {
+      const S = G.Sprites.spec(id) || {};
+      const big = (S.size || 1) > 1.2 || id === 'buffalo';
+      const bx = 20 + (i % per) * block, by = y + Math.floor(i / per) * 140 + 118;
+      items.push({ kind: 'label', text: id, x: bx, y: by - 104 });
+      dirs.forEach((d, di) => [0, 1, 2, 3].forEach((f) => {
+        items.push({ kind: 'map', id, dir: d, frame: f, x: bx + (di * 4 + f) * cellW + cellW / 2, y: by, scale: big ? 0.62 : 1 });
+      }));
+    });
+    y += 140 * Math.ceil(ids.length / per) + 30;
+  }
+  if (sec === 'battle' || sec === 'all') {
+    sections.push({ title: 'battle sprites (facing left) — ' + poses.join(' / '), y, dark: true });
+    y += 20;
+    const cw = 186;
+    battleIds.forEach((id) => {
+      items.push({ kind: 'label', text: id, x: 10, y: y + 14 });
+      poses.forEach((p, j) => items.push({ kind: 'battle', id, pose: p, x: 120 + j * cw, y: y + 205, label: p }));
+      y += 240;
+    });
+  }
+  const H = y + 30;
+  const cv = document.getElementById('cv');
+  cv.width = W * zoom; cv.height = H * zoom;
+  cv.style.width = W * zoom + 'px'; cv.style.height = H * zoom + 'px';
+  const ctx = cv.getContext('2d');
+  function grass(x, y, w, h) {
+    ctx.fillStyle = '#5f8a46'; ctx.fillRect(x, y, w, h);
+    for (let i = 0; i < w * h / 180; i++) {
+      const gx = x + G.U.hash(i, 1, 3) * w, gy = y + G.U.hash(i, 2, 3) * h;
+      ctx.fillStyle = G.U.hash(i, 3, 3) > 0.5 ? 'rgba(120,170,80,0.5)' : 'rgba(60,100,50,0.45)';
+      ctx.fillRect(gx, gy, 2, 3);
+    }
+  }
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    G.time = t;
+    ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+    ctx.fillStyle = '#141826'; ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < sections.length; i++) {
+      const s = sections[i], s2 = sections[i + 1];
+      const y1 = s2 ? s2.y : H;
+      if (s.grass || s.title.startsWith('lineup')) grass(0, s.y + 22, W, y1 - s.y - 30);
+      else { const g = ctx.createLinearGradient(0, s.y, 0, y1); g.addColorStop(0, '#2a2f44'); g.addColorStop(1, '#1a1d2a'); ctx.fillStyle = g; ctx.fillRect(0, s.y + 22, W, y1 - s.y - 30); }
+      ctx.fillStyle = '#e8d9b0'; ctx.font = G.font(16, true); ctx.textAlign = 'left';
+      ctx.fillText(s.title, 12, s.y + 16);
+    }
+    for (const it of items) {
+      try {
+        if (it.kind === 'label') { ctx.fillStyle = '#fff6d8'; ctx.font = G.font(13, true); ctx.textAlign = 'left'; ctx.fillText(it.text, it.x, it.y); continue; }
+        if (it.kind === 'map') {
+          const f = it.anim ? Math.floor(t * 6) % 4 : it.frame;
+          G.Sprites.drawChar(ctx, it.id, it.dir, f, it.x, it.y, { scale: it.scale || 1 });
+          if (it.label) { ctx.fillStyle = '#fff'; ctx.font = G.font(10); ctx.textAlign = 'center'; ctx.fillText(it.label, it.x, it.y + 16); }
+        } else if (it.kind === 'battle') {
+          G.Sprites.drawBattle(ctx, it.id, it.pose, t, it.x, it.y, {});
+          ctx.fillStyle = '#9aa6c0'; ctx.font = G.font(12); ctx.textAlign = 'center'; ctx.fillText(it.label, it.x, it.y + 22);
+        }
+      } catch (e) { console.error(it.id, it.pose || it.dir, e && e.stack || e); }
+    }
+    if (freeze == null) requestAnimationFrame(frame);
+    else document.title = 'ready';
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

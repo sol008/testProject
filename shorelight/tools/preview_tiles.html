@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — terrain tile preview</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.75; background: rgba(0,0,0,0.5); padding: 3px 6px; }
+</style>
+</head>
+<body>
+<div id="bar">?map=jiufen,shore &amp; zoom=0.5 &amp; t=1.2 (freeze) &amp; bench=jiufen &amp; s=2 (backing scale) &amp; ids (tile sheet)</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/tiles.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const T = G.TILE;
+  G.S = parseFloat(q.get('s') || '1');
+  const zoom = parseFloat(q.get('zoom') || '1');
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+
+  const L = {
+    g: 'grass', G: 'grass_dark', f: 'flowers_ground', d: 'dirt', p: 'path', s: 'stone', '^': 'stairs', b: 'brick',
+    a: 'sand', w: 'water', D: 'deepwater', l: 'shallow', L: 'lake', r: 'river', m: 'marsh', o: 'wood', t: 'tile_floor',
+    R: 'red_carpet', T: 'temple_floor', M: 'mat', c: 'cave', '=': 'rail', F: 'farmland', k: 'dock', '-': 'bridge_h',
+    '|': 'bridge_v', P: 'spirit_floor', Y: 'lily_field', x: 'moss_glow', V: 'vision', Z: 'breath', C: 'cloud',
+    N: 'lantern_bridge', e: 'slate', n: 'snow_rock', q: 'marble', h: 'basalt_floor', j: 'coral', i: 'field_rice', K: 'deck',
+    1: 'cliff', 2: 'cave_wall', 3: 'wall_plaster', 4: 'wall_brick', 5: 'wall_wood', 6: 'wall_temple', 7: 'hedge',
+    0: 'void', 8: 'black_sea', 9: 'wall_slate', '#': 'wall_basalt',
+  };
+  const MAPS = {
+    jiufen: [
+      '44444555555544',
+      '44444555555544',
+      'sssss^^sssssss',
+      'ggsss^^sssggff',
+      'gpsss^^ssspggg',
+      'gppss^^sspppgg',
+      '7777s^^s777777',
+      '7777s^^s777777',
+      'ggggpppppggggg',
+    ],
+    shore: [
+      'GGggggggppgggg',
+      'ggggfggpppgggg',
+      'aaaggaappaaaga',
+      'aaaaaaaakkajja',
+      'lllaaallkkljjl',
+      'wwwllllwkkwllw',
+      'wwwwwwwwkkwwww',
+      'wwDDwwwwwwwDDw',
+      'DDDDDDwwwDDDDD',
+    ],
+    interior: [
+      '33333333333333',
+      '33333333333333',
+      '3ooooooRRoooo3',
+      '3ooooooRRoooo3',
+      '3ttttooRRoMMM3',
+      '3ttttooRRoMMM3',
+      '3ttttooRRoooo3',
+      '333333oo333333',
+      '333333oo333333',
+    ],
+    cave: [
+      '22222222222222',
+      '22222222222222',
+      '2ccccccccccc22',
+      '2c=======cccc2',
+      '2c=ccccc=cccc2',
+      '2c=ccccc======',
+      '2c=ccccccccc22',
+      '222=222ccccc22',
+      '222=222ccccc22',
+    ],
+    cliff: [
+      'gggggggggggggg',
+      'ggfggggggGpppg',
+      '1111111^^11111',
+      '1111111^^11111',
+      'ggdddgg^^ggggg',
+      'rrrrrrr||rrrrr',
+      'rrrrrrr||rrrrr',
+      'gggggggppggggg',
+      'gggfgggppgggGG',
+    ],
+    psychedelic: [
+      'VVVVVVVZZZZZZZ',
+      'VVVVVVVZZZZZZZ',
+      'VVVxxxxxxZZZZZ',
+      'xxxxxGGxxxxPPP',
+      'xxGGGGGGxxxPPP',
+      'CCCCxxxxxxxPPP',
+      'CCCCCCCCCCCCCC',
+      'CCCCCCC00CCCCC',
+      '00000000000000',
+    ],
+    lily: [
+      'YYYYYYYYYYYYYY',
+      'YYYYYYYYYYYYYY',
+      'YYYYYYYYYYYYYY',
+      '8YYYYYYYYYYYY8',
+      '888YYYNYYYY888',
+      '888888N8888888',
+      '888888NNNN8888',
+      '888888888N8888',
+      '888888888N8888',
+    ],
+    rice: [
+      'ggggggpgggGGGG',
+      'iiiiigpgiiiiii',
+      'iiiiigpgiiiiii',
+      'pppppppppppppp',
+      'iiiiigpFFFFFFF',
+      'iiiiigpFFFFFFF',
+      'iiiiigpgmmmmgg',
+      'LLLLLgpgmmmmgg',
+      'LLLLLgpggggggg',
+    ],
+    gorge: [
+      '1111qqrrqq1111',
+      '1111qqrrqq1111',
+      'qqqqqqrrqqqqqq',
+      'qqqqqqrrqqqqqq',
+      'qqnqqq--qqqqqq',
+      'qqqqqqrrqqqqqq',
+      'qqqqqlrrlqqqqq',
+      'qqqqqlrrlqqqqq',
+      'qqqqqqrrqqqqqq',
+    ],
+    mountain: [
+      '99999999nnnnnn',
+      '99999999nnnnnn',
+      'eeeeeeeennnnnn',
+      'eeeeeeeeGGnnnn',
+      'eeeeeeeeGGGnnn',
+      'GGeeeeGGGGGGnn',
+      'GGGGddGGGGG111',
+      'GGGGddGGGGG111',
+      'GGGGddGGGGGGGG',
+    ],
+    penghu: [
+      '########hhhhhh',
+      '########hhhhhh',
+      'hhhhhhhhhhhaaa',
+      'hhhhhhhhhaaaaa',
+      'aaaahhaaaaaKKK',
+      'aaaaaaaallwKKK',
+      'llllaallwwwKKK',
+      'wwwwwwwwwwwwww',
+      'wwwwwwwwDDDDww',
+    ],
+    temple: [
+      '66666666666666',
+      '66666666666666',
+      'TTTTTTRRTTTTTT',
+      'TTTTTTRRTTTTTT',
+      '666TTTRRTTT666',
+      '666TTTRRTTT666',
+      'bbbbbbRRbbbbbb',
+      'bbbbbbbbbbbbbb',
+      '44bbbbbbbbbb44',
+    ],
+  };
+
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d', { alpha: false, willReadFrequently: false });
+  const errors = [];
+  window.addEventListener('error', (e) => errors.push(String(e.message)));
+  window.__errors = errors;
+
+  function parse(rows) {
+    const h = rows.length, w = rows[0].length, terr = new Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const id = L[rows[y][x]];
+      if (!id) throw new Error('bad legend char ' + rows[y][x]);
+      terr[y * w + x] = id;
+    }
+    return { w, h, terr };
+  }
+  // identical neighbour logic to js/engine/map.js
+  function drawMap(m, ox, oy, t) {
+    const { w, h, terr } = m;
+    for (let cy = 0; cy < h; cy++) {
+      for (let cx = 0; cx < w; cx++) {
+        const id = terr[cy * w + cx];
+        const nb = (dx, dy) => {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) return id;
+          return terr[ny * w + nx];
+        };
+        G.Tiles.draw(ctx, id, ox + cx * T, oy + cy * T, nb, cx, cy, t);
+      }
+    }
+  }
+
+  // ---- bench: 21x13 visible cells, built by repeating a mini-map ---------------------------------
+  if (q.get('bench')) {
+    const perId = q.get('bench') === 'ids';
+    const names = perId ? G.Tiles.ids() : q.get('bench') === 'all' ? Object.keys(MAPS) : q.get('bench').split(',');
+    cv.width = 21 * T * G.S; cv.height = 13 * T * G.S;
+    cv.style.width = (21 * T) + 'px';
+    const res = {};
+    for (const name of names) {
+      const src = perId ? { w: 1, h: 1, terr: [name] } : parse(MAPS[name]);
+      const m = { w: 21, h: 13, terr: [] };
+      for (let y = 0; y < 13; y++) for (let x = 0; x < 21; x++) m.terr.push(src.terr[(y % src.h) * src.w + (x % src.w)]);
+      ctx.setTransform(G.S, 0, 0, G.S, 0, 0);
+      const t0 = performance.now();
+      drawMap(m, 0, 0, 0);
+      const warm = performance.now() - t0;
+      // best of 3 runs of 40 animated frames each (headless timing is noisy)
+      let per = 1e9;
+      for (let run = 0; run < 3; run++) {
+        const N = 40;
+        ctx.getImageData(0, 0, 1, 1);
+        const t1 = performance.now();
+        for (let i = 0; i < N; i++) drawMap(m, 0, 0, (run * N + i) / 60);
+        ctx.getImageData(0, 0, 1, 1);   // flush rasterisation
+        per = Math.min(per, (performance.now() - t1) / N);
+      }
+      res[name] = perId ? +per.toFixed(2) : { warmMs: +warm.toFixed(1), frameMs: +per.toFixed(2) };
+    }
+    window.__bench = res;
+    document.title = 'bench done';
+    return;
+  }
+
+  // ---- tile sheet: every id on its own 3x3 island over grass ---------------------------------------
+  let panels = [];
+  if (q.has('ids')) {
+    const ids = G.Tiles.ids ? G.Tiles.ids() : Object.keys(G.Tiles.defs);
+    ids.forEach((id) => {
+      const rows = [];
+      for (let y = 0; y < 5; y++) { const r = []; for (let x = 0; x < 4; x++) r.push(x >= 1 && x <= 2 && y >= 1 && y <= 3 ? id : 'grass'); rows.push(r); }
+      panels.push({ name: id, m: { w: 4, h: 5, terr: rows.flat() } });
+    });
+  } else {
+    const names = q.get('map') ? q.get('map').split(',') : Object.keys(MAPS);
+    panels = names.map((n) => ({ name: n, m: parse(MAPS[n]) }));
+  }
+  const pad = 26;
+  const pw = Math.max(...panels.map((p) => p.m.w)) * T, ph = Math.max(...panels.map((p) => p.m.h)) * T + pad;
+  const cols = parseInt(q.get('cols') || (panels.length === 1 ? '1' : q.has('ids') ? '8' : '3'), 10);
+  const rowsN = Math.ceil(panels.length / cols);
+  const W = cols * (pw + 10), H = rowsN * (ph + 10);
+  cv.width = Math.round(W * zoom * G.S); cv.height = Math.round(H * zoom * G.S);
+  cv.style.width = Math.round(W * zoom) + 'px';
+
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    ctx.setTransform(G.S * zoom, 0, 0, G.S * zoom, 0, 0);
+    ctx.fillStyle = '#0b0d14'; ctx.fillRect(0, 0, W, H);
+    panels.forEach((p, i) => {
+      const ox = (i % cols) * (pw + 10), oy = Math.floor(i / cols) * (ph + 10);
+      ctx.fillStyle = '#cfd6e6'; ctx.font = '16px sans-serif'; ctx.fillText(p.name, ox + 4, oy + 18);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(ox, oy + pad, p.m.w * T, p.m.h * T); ctx.clip();
+      drawMap(p.m, ox, oy + pad, t);
+      ctx.restore();
+    });
+    if (freeze == null) requestAnimationFrame(frame);
+    else document.title = 'ready';
+  }
+  try { requestAnimationFrame(frame); } catch (e) { errors.push(String(e)); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — backdrop preview</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 4px; right: 8px; font-size: 12px; opacity: 0.6; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="bar">?id=xxx (full size) · ?ids=a,b,c&amp;cols=2 · ?t=1.5 (freeze) · ?guides=1 · ?bench=1 · ?s=2 (HiDPI) · click a thumbnail to open</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/backdrops.js"></script>
+<script>
+'use strict';
+(() => {
+  const q = new URLSearchParams(location.search);
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const S = q.has('s') ? parseFloat(q.get('s')) : 1; // backing-store scale test (G.S)
+  G.S = S;
+  const guides = q.has('guides');
+  const all = G.Backdrops.ids();
+  const single = q.get('id');
+  let ids = single ? [single] : (q.get('ids') ? q.get('ids').split(',') : all);
+  const cols = single ? 1 : parseInt(q.get('cols') || '4', 10);
+  const sc = single ? 1 : 1 / cols;
+  const cw = 1280 * sc, ch = 720 * sc, pad = single ? 0 : 4, lab = single ? 0 : 16;
+  const rows = Math.ceil(ids.length / cols);
+  const cv = document.getElementById('cv');
+  cv.width = cols * (cw + pad) * S; cv.height = rows * (ch + pad + lab) * S;
+  cv.style.width = cols * (cw + pad) + 'px'; cv.style.height = rows * (ch + pad + lab) + 'px';
+  const ctx = cv.getContext('2d');
+  window.__errors = [];
+  window.addEventListener('error', (e) => window.__errors.push(String(e.message)));
+
+  // bench: bake time + mean live draw time per id
+  if (q.has('bench')) {
+    const off = document.createElement('canvas'); off.width = 1280; off.height = 720;
+    const octx = off.getContext('2d');
+    const res = {};
+    for (const id of ids) {
+      const t0 = performance.now(); G.Backdrops.preload(id); const bake = performance.now() - t0;
+      for (let i = 0; i < 10; i++) G.Backdrops.draw(octx, id, i * 0.1); // warm sprite caches
+      octx.getImageData(0, 0, 1, 1);
+      // best of several chunks: robust against other processes competing for the CPU
+      let best = 1e9, sum = 0;
+      for (let chunk = 0; chunk < 6; chunk++) {
+        const N = 12, t1 = performance.now();
+        for (let i = 0; i < N; i++) G.Backdrops.draw(octx, id, 3 + chunk + i / 60);
+        octx.getImageData(0, 0, 1, 1); // flush
+        const ms = (performance.now() - t1) / N; best = Math.min(best, ms); sum += ms;
+      }
+      res[id] = { bake: +bake.toFixed(1), frame: +best.toFixed(2), mean: +(sum / 6).toFixed(2) };
+    }
+    window.__bench = res;
+    console.log(JSON.stringify(res));
+  }
+
+  cv.addEventListener('click', (e) => {
+    if (single) return;
+    const r = cv.getBoundingClientRect();
+    const i = Math.floor((e.clientY - r.top) / (ch + pad + lab)) * cols + Math.floor((e.clientX - r.left) / (cw + pad));
+    if (ids[i]) location.search = '?id=' + ids[i];
+  });
+
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    ctx.setTransform(S, 0, 0, S, 0, 0);
+    ctx.fillStyle = '#0b0d14'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ids.forEach((id, i) => {
+      const x = (i % cols) * (cw + pad), y = Math.floor(i / cols) * (ch + pad + lab);
+      ctx.save();
+      ctx.translate(x, y + lab);
+      ctx.beginPath(); ctx.rect(0, 0, cw, ch); ctx.clip();
+      ctx.scale(sc, sc);
+      try { G.Backdrops.draw(ctx, id, t); } catch (err) { window.__errors.push(id + ': ' + err.message); console.error(id, err); }
+      if (guides) {
+        ctx.strokeStyle = 'rgba(255,80,80,0.8)'; ctx.lineWidth = 2 / sc;
+        ctx.strokeRect(120, 420, 480, 140);
+        ctx.strokeStyle = 'rgba(80,200,255,0.8)'; ctx.strokeRect(760, 430, 420, 170);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        for (const [px, py, h] of [[240, 540, 160], [430, 520, 140], [860, 560, 150], [1000, 590, 150], [1120, 540, 150]]) {
+          ctx.beginPath(); ctx.ellipse(px, py, 34, 9, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(30,30,40,0.85)'; ctx.fillRect(px - 22, py - h, 44, h); ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        }
+      }
+      ctx.restore();
+      if (!single) { ctx.fillStyle = '#e8d9b0'; ctx.font = '12px sans-serif'; ctx.textBaseline = 'top'; ctx.fillText(id + (G.Backdrops.has(id) ? '' : ' (missing)'), x + 2, y + 2); }
+    });
+    if (freeze == null) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

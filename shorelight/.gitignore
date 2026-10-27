@@ -1,3 +1,4 @@
 node_modules/
 dist/
 js/core/fontdata.js
+tools/i18n/out/

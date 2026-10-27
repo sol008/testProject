@@ -1,0 +1,28 @@
+{
+ "when": "2026-10-27T05:13:34.629Z",
+ "pass": 1,
+ "fail": 1,
+ "skip": 0,
+ "results": [
+  {
+   "id": "dialog",
+   "name": "dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens",
+   "status": "fail",
+   "msg": "choice did not appear after the 5 lines",
+   "ms": 5549,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "gameover",
+   "name": "battle: defeat → GameOver scene → 重新挑戰 restores state and the retry can be won",
+   "status": "pass",
+   "msg": "",
+   "ms": 3505,
+   "errors": [],
+   "warnings": []
+  }
+ ],
+ "perf": [],
+ "bootErrors": []
+}
