@@ -74,6 +74,7 @@ function headless(G) {
   if (G.UI) G.UI.toast = () => {};
   G.Scenes.push = (sc) => { G.__top = sc; }; G.Scenes.pop = () => {}; G.Scenes.top = () => G.__top; G.Scenes.replace = (sc) => { G.__top = sc; };
   G.settings.difficulty = 'normal'; G.settings.battleSpeed = 1;
+  { const i = process.argv.indexOf('--diff'); if (i >= 0) G.settings.difficulty = process.argv[i + 1]; }
   const P = G.Battle.Scene.prototype;
   P.tween = R; P.waitKey = R; P.cutIn = async function () {}; P.playFx = R;
   P.finish = async function () {
