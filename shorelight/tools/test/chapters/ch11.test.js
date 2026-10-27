@@ -371,6 +371,7 @@ async function openFrom(browser, label, seg) {
   return R;
 }
 
+const TIMES = [];
 async function play(browser, from, to) {
   let R = null;
   const i0 = ORDER.indexOf(from), i1 = ORDER.indexOf(to);
@@ -387,8 +388,11 @@ async function play(browser, from, to) {
       R = await openFrom(browser, 'A', ORDER[i - 1]);
     }
     await R.ev(() => { G.settings.battleSpeed = 8; });
+    const ts = Date.now();
     await SEGMENTS[seg](R);
     await R.health(seg);
+    TIMES.push([seg, (Date.now() - ts) / 1000]);
+    console.log(`  ⏱ ${seg}: ${((Date.now() - ts) / 1000).toFixed(0)}s`);
     if (seg !== 'true' && seg !== 'normal') await saveSnap(R, seg);
   }
   if (R) await R.ctx.close();
@@ -410,6 +414,7 @@ async function play(browser, from, to) {
   } finally {
     await browser.close();
   }
+  if (TIMES.length) console.log('\nsegment times: ' + TIMES.map(([k, t]) => `${k} ${t.toFixed(0)}s`).join(', '));
   const nOk = results.filter((r) => r.ok).length;
   console.log(`\nch11: ${failed ? 'FAIL' : 'PASS'} — ${nOk}/${results.length} checks passed in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
   process.exit(failed ? 1 : 0);
