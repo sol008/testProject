@@ -533,6 +533,7 @@ G.I18N.add({
   '大廳的神案。香爐裡的香灰，結成了硬塊。': 'The altar table in the great hall. The incense ash in the burner has caked into hard lumps.',
   '主位': 'Head of the Table',
   '主位前的桌上，洛家燈靜靜地亮著。': 'On the table before the head seat, the Luo lantern glows quietly.',
+  '洛': '洛',
   '（洛家燈照到月洞門，門框泛起紅光。紅纓走過去，燈光一晃——）': '(The Luo lantern\'s light falls on the moon gate, and its frame flushes red. Hongying steps toward it, and the light flickers—)',
   '（記憶。白天的練武場。陽光。兵器架完好。十歲的紅纓抓著一根比她還長的掃把，滿頭大汗。）': '(A memory. The training yard by day. Sunlight. The weapon racks intact. Ten-year-old Hongying, drenched in sweat, clutching a broom longer than she is tall.)',
   '小紅纓': 'Young Hongying',
