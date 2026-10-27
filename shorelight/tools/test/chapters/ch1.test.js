@@ -118,7 +118,16 @@ async function run(name, browser, fn) {
 }
 
 // ------------------------------------------------------------------------------------------------ 1. critical path
+const FROM = (process.argv.find((a) => a.startsWith('--from=')) || '').slice(7);   // debugging aid: --from=raid
+const RAID_FLAGS = 'ch1_start,ch1_errands,ch1_err_tea,ch1_err_oil,ch1_err_fude,ch1_ahuang_lost,ch1_mine_open,ch1_foreman,ch1_atu_met,ch1_mine_done,' +
+  'ch1_depart_fest,ch1_keelung,ch1_moya_seen,ch1_fu_taken,ch1_procession,ch1_bd_in,ch1_release,ch1_lanterns_back,ch1_baizhi_found,ch1_home_night,ch1_baizhi_wake,ch1_baizhi_join,ch1_night_raid';
 async function testCritical(browser, open) {
+  if (FROM === 'raid') {
+    const s = await open('?debug&map=jiufen&x=23&y=30&lv=4&party=xinghe,baizhi&chapter=1&flags=' + RAID_FLAGS);
+    await waitMap(s, 'jiufen');
+    await s.ev(() => { G.Inv.add('c1_changming_fu', 1); for (const id of ['tut_battle', 'tut_move', 'tut_talk']) G.state.flags[id] = true; });
+    return critRaid(s);
+  }
   const s = await open('?debug&startch=1');
   await waitMap(s, 'jiufen_shop_2f');
   let f = await s.flags();
@@ -233,6 +242,10 @@ async function testCritical(browser, open) {
   st = await s.ev(() => ({ party: G.state.party.slice(), bz: G.state.members.baizhi.lv, xh: G.state.members.xinghe.lv }));
   assert(st.party.join() === 'xinghe,baizhi' && st.bz === st.xh, '白芷 joins at the party level: ' + JSON.stringify(st));
   await s.shot('11_jiufen_raid');
+  return critRaid(s);
+}
+async function critRaid(s) {
+  let f, st;
   // 1-16 / 1-17
   await step(s, 19, 24);
   await step(s, 19, 15);

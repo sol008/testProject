@@ -4016,7 +4016,12 @@
     await S.say('baizhi:sad', '星河。');
     await S.say('baizhi:sad', '它們不是壞人。只是太冷了，冷到想拉一個人陪。');
     await S.say('baizhi:serious', '讓我試試看。');
-    if (ms.actor('baizhi')) { const b = ms.actor('baizhi'); b.scripted = true; await S.move('baizhi', b.x === 19 ? 'U' : (b.x < 19 ? 'RU' : 'LU')); S.face('baizhi', 'up'); }
+    // (followers' S.move promises never resolve in the engine, so 白芷 is a stand-in actor for this scene)
+    S.hideFollowers(true);
+    const bzx = ms.player.x === 19 ? 20 : 19;
+    S.spawn({ id: 'bz_r', sprite: 'baizhi', portrait: 'baizhi', x: bzx, y: ms.player.y, dir: 'up' }).light = { r: 90, color: '#dff6ff' };
+    await S.move('bz_r', 'U');
+    S.face('bz_r', 'up');
     await S.say('', '白芷往前走。水鬼們轉向她。星河伸手想拉住她，又停住了。');
     S.bgm('love');
     await sing(S, ['燈一盞，渡一人，', '黑水茫茫莫回身；', '前塵如霧隨潮去，', '彼岸花開又一春。'], 4.4);
@@ -4221,6 +4226,7 @@
     await S.say('chenbo:hurt', '去叫林大夫……');
     S.flag('ch1_chenbo_hurt');
     delete G.state.members.chenbo;
+    S.remove('bz_r'); S.hideFollowers(false);
     await cineOff();
     await S.fadeOut(dur(1.0));
     S.remove('cb_r');
