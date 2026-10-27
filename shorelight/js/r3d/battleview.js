@@ -371,6 +371,8 @@ G.Battle3D = (() => {
         // opacity / death dissolve
         const ghost = !!(bs.c7 && bs.c7.ghost && bs.c7.ghost[u.id] === 'ghost');
         if (uv.inst.setOpacity) uv.inst.setOpacity(u.alpha, ghost);
+        if (u.side === 'enemy' && u.phase > 1 && uv.seenPhase != null && u.phase !== uv.seenPhase && !u.dead) this.director.onPhase(u);
+        uv.seenPhase = u.phase;
         if (uv.kind === 'bb') uv.inst.uni.uLight.value.copy(this.arena.unitLight || new THREE.Color(1, 1, 1));
         uv.blob.material.opacity = 0.9;
         uv.blob.visible = u.alpha > 0.2 && uv.kind !== 'mon';
@@ -536,6 +538,10 @@ G.Battle3D = (() => {
       if (this.slowT > 0) { this.slowT -= rdt; ts *= this.slowK; }
       const dt = rdt * sp * ts;
       this.rt += rdt; this.t += dt;
+      this.cutin = !!this.bs.cutin;
+      // 2D shake requests (boss phase changes, chapter scripts) → camera trauma
+      if ((this.bs.shakeT || 0) > 0.05 && (this.bs.shakeT || 0) > (this._shk || 0)) this.trauma = Math.min(1, this.trauma + Math.min(0.6, this.bs.shakeT));
+      this._shk = this.bs.shakeT || 0;
       // shared map systems: no see-through cutout in battle; drive the foliage wind clock
       if (G.R3M.cut) G.R3M.cut.uCutOn.value = 0;
       if (G.Wind3D && G.Wind3D.update) { try { G.Wind3D.update(rdt); } catch (e) { G.warnOnce('wind3d', e); } }
@@ -1072,13 +1078,19 @@ G.Battle3D = (() => {
         const a = (uv ? uv.yaw : 0) + 0.9 - t * 0.7;
         return { pos: p.clone().add(V3(Math.sin(a) * 2.6, 0.5 + t * 0.4, Math.cos(a) * 2.6)), look: p.clone().setY(h * 0.62), fov: 30, roll: 0.05 };
       } }, 0);
-      this.v.cutin = true;
-      setTimeout(() => { this.v.cutin = false; }, 1250 / this.v.speed());
     }
     onKill(u, last) {
       if (last) { this.finishTarget = u; this.v.slowMo(0.3, 0.55); this.v.fovKick = 3; }
     }
     onPartyDown() { this.v.shake(0.2); }
+    // a boss changes form: hold a low close-up on it for a beat (unless an action is mid-flight)
+    onPhase(u) {
+      if (this.v.action) return;
+      this.locked = true; this.kind = 'phase';
+      this.set({ kind: 'phase', f: (t) => { const p = this.P(u, 'feet'); const uv = this.v.units.get(u); const h = uv ? uv.height : 2; return { pos: V3(p.x + 3 + t * 0.4, 0.6 + h * 0.2, p.z + h * 1.4 + 2.2), look: V3(p.x, h * 0.6, p.z), fov: 32, roll: 0.04 }; } }, 0.25);
+      this.v.shake(0.5); this.v.fovKick = 3;
+      setTimeout(() => { if (this.kind === 'phase') { this.locked = false; this.kind = null; } }, 1800);
+    }
     async finisher() {
       const u = this.finishTarget;
       if (!u) return;
@@ -2077,6 +2089,7 @@ G.Battle3D.Arena = (() => {
     for (let i = 0; i < 9; i++) for (const zz of [-4.6, 4.6]) {
       const x = -16 + i * 4;
       K.place(K.cyl(0.1, 0.12, 3, K.mat('#2a2018')), x, zz, { y: -1.8 });
+      if (zz > 0 && Math.abs(x) < 12) continue; // keep the camera side of the stage clear
       if (zz < 0 || i % 2) { const l = PR.lantern(K, '#ffb050', 0.9); l.position.set(x, 1.6, zz); K.out.group.add(l); K.lampHalo(x, 1.6, zz, '#ffb050', 0.9); K.place(K.cyl(0.04, 0.05, 1.5, K.mat('#2a2018')), x, zz, { y: 0 }); }
     }
     PR.floatingLanterns(K, 40, [-60, 60, -80, -12], '#ffb060', -0.5, -0.4, 1);

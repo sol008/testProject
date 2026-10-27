@@ -170,4 +170,17 @@ Ambient motes per theme: pollen, spores, embers, petals, wind streaks, souls.
 
 `lib.js` freezes the game (timers, tweens, scene updates and the view clock) while it takes a screenshot. Under SwiftShader a screenshot takes seconds; without the freeze, every capture lands long after the moment it waited for.
 
-<!-- KNOWN -->
+## Known gaps
+- **No SwiftShader-free measurement.** Everything was verified under SwiftShader at 1–10 fps. Real-GPU cost should be modest: units are 3–6 draw calls each; particles are 2 instanced draws; arenas merge their static procedural props. There is no profiling data from real hardware.
+- **Billboard fallbacks.** Billboards remain only for ids that have no 3D model. With Char3D, Mon3D (A and B) and Animal3D merged, that is none of the troops tested here. Billboards repaint their 2D art at 30 fps, which is cheap but not free.
+- **Enemy hit timing.** Melee impacts align to Char3D `clipInfo().hit`. Mon3D has no `clipInfo` yet, so enemy strikes use the fixed VFX impact time (0.16–0.2 s). If monster teams add `clipInfo`, `playFx` picks it up automatically.
+- **Chapter-scripted 2D fx.** These (`sc.fx.push(...)` in chapter maps) are drawn as 2D overlays through the fitted affine. They are positioned on the right unit but stay flat.
+- **Ultimates.** `ultimate_chenbo` and the generic enemy ultimates use simpler effects than the four main-cast ultimates.
+- **Arena fallbacks.** A few arenas still lean on procedural fallbacks where no team model fits: ship deck, mine timber, palace and shrine interiors, the tower. They read correctly but are less detailed than the model-dressed ones.
+- **r3lite captures.** In `r3lite` there is no bloom or post chain, so screen flashes and dimming are drawn on the 2D layer. Full-chain captures (`*_full.png`) show the intended look.
+
+## Requests for the lead / other teams
+1. **`G.R3M.cut`.** Map3D's see-through cutout uniform is shared. Battle3D sets `uCutOn = 0` every frame; Map3D sets it back on its own frame, so nothing breaks. A per-view uniform would be cleaner.
+2. **Monster teams.** Please consider `clipInfo(name)` → `{dur, hit}` on Mon3D instances, so enemy strikes can land on the exact claw frame.
+3. **`main.js`.** The battle view already works through `base.view3d`. No change is needed.
+

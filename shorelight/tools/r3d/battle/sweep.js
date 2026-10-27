@@ -13,6 +13,7 @@ const fs = require('fs');
   fs.mkdirSync(out, { recursive: true });
   const { browser, page, errors } = await L.open({ troop: 'shore_1', lv: 45, lite: !full, auto: true });
   await L.waitBattle(page);
+  await page.evaluate(() => { G.Debug.setAutoplay(true); }); // results screens / dialogue advance on their own
   await L.until(page, () => !G.Battle3D.current, null, 600000).catch(() => {});
   // one troop per backdrop (bosses preferred: they exercise boss intros and big units)
   const list = only.length ? only : await page.evaluate(() => {
