@@ -277,12 +277,12 @@ P1 與 P2 的鎮民台詞大致相同（見各 NPC 註記）。P4 鎮民全部�
 - 物件：鐵軌上的礦車 `cart` (6,16)；轉轍器 `switch` a (14,15)、b (28,15)（`o.on` 表示方向，見謎題）；坍方石堆（R：y=7 的 x26–28 整排，`rock_big`+`rock_small` 堆疊；r：(34,16) 單格 `rock_big`）；擋車木 `fence_wood` (15,24)；梯子 `stairs_down` (27,3)、(37,13)；木樑支架 `log` 裝飾；散落的鶴嘴鋤 `bones`?（不用骨頭——改 `crate`、`barrel`、`basket`）。
 - 告示（`signboard`，阿土伯的粉筆字，見 1-6）：礦車旁 (7,15)、岔道①旁 (16,17)「廢坑・勿入」、岔道②旁 (29,17)。
 - 地圖敵人（遊蕩，`respawn` 預設；部隊見第 6 節）：
-  - 入口大廳 (21,36)：`t_mine_bat2`（教學用，1-5 後）
-  - 主通道 (19,26)：`t_mine_bat2`
-  - 中央大坑 (22,18)：`t_mine_ghost`；(12,18)：`t_mine_bat3`
-  - 蝙蝠洞 (7,5)：`t_mine_bat3`；(10,3)：`t_mine_mix`
-  - 東南支坑 (33,28)：`t_mine_mix`；(35,31)：`t_mine_ghost2`
-  - 東室 (36,17)：`t_mine_ghost`
+  - 入口大廳 (21,36)：`mine_2`（教學用，1-5 後）
+  - 主通道 (19,26)：`mine_2`
+  - 中央大坑 (22,18)：`mine_3`；(12,18)：`mine_5`
+  - 蝙蝠洞 (7,5)：`mine_5`；(10,3)：`mine_4`
+  - 東南支坑 (33,28)：`mine_4`；(35,31)：`mine_4`
+  - 東室 (36,17)：`mine_3`
 - 出口：(19–20,39) → `jiufen` (35,31)；梯子 L (27,3) → `mine_2` (25,4)；梯子 l (37,13) → `mine_2` (3,4)。
 
 ### 1.10 `mine_2` — 舊金礦坑・下層（金脈大廳）
@@ -325,7 +325,7 @@ P1 與 P2 的鎮民台詞大致相同（見各 NPC 註記）。P4 鎮民全部�
 ```
 - 金脈大廳與坍方室之間是 x=7–8 的實心岩壁（「坍方的亂石，另一頭隱約有風聲」）。
 - 物件：金脈 `crystal`（金色）×6 散在大廳牆邊；吊籠 `cart` 改繪（或 `stairs_up` + 告示「吊籠」）；`log` 支架；阿土伯的便當盒（坍方室 (5,21) 調查文字，見支線）。
-- 地圖敵人：東坡道 (24,9)：`t_mine_ghost`；大廳 (20,24)：`t_mine_mix`（1-7 後才出現）；西支線 (4,6)：`t_mine_ghost2`；風道全亮後 (3,16)：`t_mine_bat3`。
+- 地圖敵人：東坡道 (24,9)：`mine_3`；大廳 (20,24)：`mine_4`（1-7 後才出現）；西支線 (4,6)：`mine_4`；風道全亮後 (3,16)：`mine_5`。
 - 出口：梯子 L (25,3) → `mine_1` (27,4)；梯子 l (3,3) → `mine_1` (37,14)；吊籠 Q (22,26) → `jiufen` (35,31)（`ch1_foreman` 後啟用；調查：「坐吊籠回地面？」是／否）。
 
 ### 1.11 `keelung_fest` — 雞籠街・主普壇（中元夜）
@@ -417,7 +417,7 @@ P1 與 P2 的鎮民台詞大致相同（見各 NPC 註記）。P4 鎮民全部�
  35  ......................===.......................   ← 南口 (22–24,35)：回九份（1-14 腳本使用）
 ```
 - 物件：漁船 `boat_small`；`dock_post`；晾魚架 `drying_rack`（v0 當作曬魚）；`firepit`；`banner`（各姓旗）；海上 `water_lantern` ×12（1-12）。
-- 地圖敵人：1-13 期間才出現：沙蟹精 `t_shore_crab` (34,9)、(36,11)（不重生）；水鬼 (36,8) 為固定事件戰 `t_shore_ghost`。
+- 地圖敵人：1-13 期間才出現：沙蟹精 `shore_1` (34,9)、(36,11)（不重生）；水鬼 (36,8) 為固定事件戰 `t_c1_shore_ghost`。
 - 出口：南口 (22–24,35)：1-12 前擋住；1-14 為腳本使用。
 
 ---
@@ -938,11 +938,11 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 15. 添丁伯(serious)：「香煙往海那邊飄……土地公是在講，今暝海邊要較細膩。」
 16. [短暫的沉默。遠處傳來海鳥的叫聲。]
 17. 添丁伯(smile)：「來，這個你帶著。」→ 獲得 **平安符**
-18. 添丁伯(smile)：「在土地公爐上過過火的。掛在身上，土地公就認得你。」
+18. 添丁伯(smile)：「在土地公爐上過過火的。危急的時候拿出來，土地公會保庇你。」
 19. `flag: ch1_err_fude`
 20. [教學 `tut_menu`]
     > 按 C、M 或 Tab 打開選單，可以查看道具、裝備、法術與隊伍狀態。
-    > 試著到「裝備」→「飾品」，把平安符戴上吧！
+    > 平安符可以在戰鬥中使用：解除異常，還會護身三回合。先收好吧！
 
 **三項差事全部完成時**：`objective('回燈籠舖向陳伯報告')`
 
@@ -1049,7 +1049,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 11. 阿土伯(serious)：「那就好！幫我顧住這隻憨狗！」
 12. 工頭魂：「又一個……又一個來偷金仔的！」
 13. [工頭魂膨脹起來，懷裡的金塊浮到半空中旋轉。`bgm: boss`]
-14. **戰鬥**：`t_mine_foreman`（背景 `mine`，BGM `boss`，不可逃跑）
+14. **戰鬥**：`t_c1_foreman`（背景 `mine`，BGM `boss`，不可逃跑）
     - 開戰時戰鬥訊息：阿土伯：「少年仔！金貴仔是『金』性的魂——金驚火！用火！」
     - [教學 `tut_element`]
       > 五行：金、木、水、火、土。相剋時造成 1.5 倍傷害；反過來被剋，只剩 0.7 倍。
@@ -1256,7 +1256,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 3. 星河(surprise)：「放、放手！」
 4. [水鬼抬起頭，看著星河的臉。手，忽然鬆了一下。]
 5. 水鬼：「……你……？」
-6. **戰鬥**：`t_shore_ghost`（背景 `shore`，BGM `battle`，不可逃跑；特殊規則「遲疑」：水鬼前兩個回合什麼都不做，戰鬥訊息「水鬼盯著星河……遲疑了。」）
+6. **戰鬥**：`t_c1_shore_ghost`（背景 `shore`，BGM `battle`，不可逃跑；特殊規則「遲疑」：水鬼前兩個回合什麼都不做，戰鬥訊息「水鬼盯著星河……遲疑了。」）
 7. [勝利後。水鬼沉回海裡前，回頭看了星河一眼。]
 8. 星河(think)：「牠剛剛……為什麼不抓我？」
 
@@ -1395,14 +1395,14 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 `jiufen` P4 的配置：
 - 光線 ambient 0.8；所有 `red_lantern` 改為藍色光 `#6fb6ff`；北方的霧（`mist` 濃度隨 y 增加）。BGM `tension`。
 - 所有鎮民 NPC 不出現（門窗緊閉）。南口、礦坑口、所有室內門：調查「門閂住了。裡面傳來壓低的聲音：『莫開門……』」（燈籠舖的門可進出，可在後房床上休息恢復——陳伯不在。）
-- 地圖敵人（不重生）：`t_night_ghost2` (19,18)、(8,13)、(31,13)；`t_night_mix` (19,7)、(25,5)。
+- 地圖敵人（不重生）：`jiufen_4` (19,18)、(8,13)、(31,13)；`jiufen_2` (19,7)、(25,5)。
 
 **半山平台・鬼燈籠**：touch (18–20, 24)，once。
 1. [茶樓屋簷下的燈籠，一盞一盞脫鉤飛起來。燈籠紙裂開，變成一張張嘴。]
 2. 星河(surprise)：「那是我們家的燈籠！早上才掛上去的！」
 3. 白芷(think)：「它們被冷到了。」
 4. 白芷(normal)：「它們是火。我的水，可以讓它們安靜。」
-5. **戰鬥**：`t_night_lantern`（背景 `jiufen_night`，BGM `battle`）
+5. **戰鬥**：`jiufen_3`（背景 `jiufen_night`，BGM `battle`）
 
 **暗街仔路口・鹽米**：touch (18–20, 15)，once。
 1. [雜貨店二樓的窗戶「砰」地打開。]
@@ -1416,7 +1416,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 9. [教學 `tut_battle_item`]
    > 戰鬥中也可以使用道具。「鹽米」帶土屬性——土剋水，對水屬性的水鬼特別有效！
 10. [霧裡，兩個水鬼從暗街仔兩側爬出來。]
-11. **戰鬥**：`t_night_ghost2`（背景 `jiufen_night`，BGM `battle`）
+11. **戰鬥**：`jiufen_4`（背景 `jiufen_night`，BGM `battle`）
 
 ### 1-18　救小金・渡魂謠
 **觸發**：touch (18–20, 4)，once。
@@ -1426,7 +1426,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 3. 水鬼：「……海裡……好涼……」
 4. 小金（失神）：「……好……」
 5. 星河(angry)：「放開他！」
-6. **戰鬥**：`t_night_xiaojin`（背景 `jiufen_night`，BGM `battle`，不可逃跑）
+6. **戰鬥**：`jiufen_1`（背景 `jiufen_night`，BGM `battle`，不可逃跑）
 7. [勝利後。水鬼們退開了，卻沒有消失。它們圍成一圈，低低地嗚咽。]
 8. 星河(hurt)：「呼……打不完……它們一直站起來……」
 9. [小金軟倒。阿黃從霧裡衝出來，咬住小金的衣角，拼命往後拖。]
@@ -1485,7 +1485,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 18. 白芷(serious)：「你剛剛說『跟緊我』。我要跟緊。」
 19. 星河(think)：「……」
 20. 星河(smile)：「……好！那就一起上！」
-21. **戰鬥**：`t_moya`（頭目，背景 `jiufen_night`，BGM `boss`，不可逃跑）— 設計見 6.4。
+21. **戰鬥**：`boss_moya`（頭目，背景 `jiufen_night`，BGM `boss`，不可逃跑）— 設計見 6.4。
 22. [勝利後（墨鴉不會死）。墨鴉單膝跪地，斗篷破了好幾個洞。]
 23. 墨鴉(angry)：「嘎……！我的斗篷！這是用三百隻烏鴉的毛——」
 24. 墨鴉(angry)：「……不對，重點不是這個！」
@@ -1531,7 +1531,7 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 22. 星河(smile)：「……多謝，陳伯。」
 23. 陳伯(serious)：「謝什麼。用給我看。」
 24. 陳伯以「客人」身分加入（戰鬥中自動行動）。[教學 `tut_guest`]：「陳伯以『客人』身分暫時加入。他會自己判斷行動。」
-25. **戰鬥**：`t_water_ghost_king`（頭目，背景 `jiufen_night`，BGM `boss`，不可逃跑，客人：陳伯）— 設計見 6.5。
+25. **戰鬥**：`t_c1_ghost_king`（頭目，背景 `jiufen_night`，BGM `boss`，不可逃跑，客人：陳伯）— 設計見 6.5。
 26. [勝利後。水鬼王跪倒。它身上的臉，一張一張停止了哭號。]
 27. 陳伯(serious)：「白芷姑娘，唱吧。我來渡。」
 28. 白芷(surprise)：「……你知道我的名字？」
@@ -1945,18 +1945,20 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 
 ## 5. 商店・寶箱・謎題
 
+> 道具 id：已存在於 js/data/items.js 的直接使用（價格以 data 為準）；本章新增的道具以 `c1_` 開頭，定義見 7.2。
+
 ### 5.1 商店（價格單位：文）
 
 | 商店 id | 地點 | 商品 |
 |---|---|---|
-| `shop_jiufen_store` 阿財商行 | `jiufen_store` | 草仔粿 20、番薯 8、青草茶 40、解毒草 15、鹽米 20（P5 起 18）、小魚乾 10、竹笠 80、布鞋 70、藍染短衫 150；**P3 起**加 金創藥 60 |
-| `shop_jiufen_yuyuan` 阿柑芋圓 | `jiufen_yuyuan` | 芋圓 30、芋圓冰 35 |
-| `shop_jiufen_tea` 聽雨樓 | `jiufen_teahouse` | 烏龍茶 45、茶葉蛋 15 |
-| `shop_jiufen_clinic` 回春堂 | `jiufen_clinic` | 金創藥 60、解毒草 15、醒神香 25、艾草束 30、還魂香 150 |
-| `shop_guopo` 粿婆 | `jiufen` 暗街仔 | 草仔粿 18、紅龜粿 30 |
-| `shop_keelung_food1` 鼎邊趖 | `keelung_fest` | 鼎邊趖 45 |
-| `shop_keelung_food2` 天婦羅 | `keelung_fest` | 天婦羅 30 |
-| `shop_keelung_charm` 吊飾攤 | `keelung_fest` | 水燈吊飾 60、香火袋 90 |
+| `shop_jiufen_store` 阿財商行 | `jiufen_store` | 草仔粿 `caozaiguo`、金創藥 `jinchuang`、解毒草 `jiedu`、鞭炮 `bianpao`（「普渡剩下的，鬼也怕」）、鹽米 `c1_salt` 20（P5 起 18）、番薯 `c1_sweetpotato` 8、小魚乾 `c1_dried_fish` 10、烏龍茶 `c1_oolong` 45、夾棉短襖 `ar_padded`、斗笠 `hd_douli`、布鞋 `ft_cloth`；**P5 起**加 九份竹笛 `fl_bamboo`（阿財：「隔壁竹藝攤寄賣的，姑娘吹吹看？」） |
+| `shop_jiufen_yuyuan` 阿柑芋圓 | `jiufen_yuyuan` | 芋圓 `yuyuan`、芋圓冰 `c1_yuyuan_ice` 35 |
+| `shop_jiufen_tea` 聽雨樓 | `jiufen_teahouse` | 烏龍茶 `c1_oolong` 45、茶葉蛋 `c1_tea_egg` 15 |
+| `shop_jiufen_clinic` 回春堂 | `jiufen_clinic` | 金創藥 `jinchuang`、解毒草 `jiedu`、香包 `xiangbao`、還魂香 `huanhunxiang`（P3 起） |
+| `shop_guopo` 粿婆 | `jiufen` 暗街仔 | 草仔粿 `caozaiguo`（9 折）、紅龜粿 `c1_honggui` 30 |
+| `shop_keelung_food1` 鼎邊趖 | `keelung_fest` | 鼎邊趖 `c1_dingbian` 45 |
+| `shop_keelung_food2` 天婦羅 | `keelung_fest` | 天婦羅 `c1_tempura` 30 |
+| `shop_keelung_charm` 吊飾攤 | `keelung_fest` | 水燈吊飾 `c1_shuideng` 60、香火袋 `c1_xianghuo` 90、平安符 `pinganfu` |
 
 **休息**：`jiufen_shop_2f` 星河的床（P1–P3、P5 免費，完全恢復）；P4 可在 `jiufen_shop` 後房的床休息。
 
@@ -1967,14 +1969,14 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 | `jiufen_shop_2f` | (10,4) | 草仔粿 ×2 | `ch1_c_2f` |
 | `jiufen` | (37,2) 望海平台旁草叢 | 番薯 ×3 | `ch1_c_jf1` |
 | `jiufen` | (2,30) 西側檳榔樹下 | 鹽米 ×2 | `ch1_c_jf2` |
-| `jiufen` | (36,39) 東南角 | 青草茶 ×1 | `ch1_c_jf3` |
+| `jiufen` | (36,39) 東南角 | 烏龍茶 ×1 | `ch1_c_jf3` |
 | `jiufen` | 甕 `jar` (10,16)（調查） | 20 文 | `ch1_c_jar` |
-| `mine_1` | (4,3) 蝙蝠洞 | 金創藥 ×1 | `ch1_c_m1a` |
-| `mine_1` | (37,19) 東室 | 礦工頭巾 | `ch1_c_m1b` |
+| `mine_1` | (4,3) 蝙蝠洞 | 金創藥 ×2 | `ch1_c_m1a` |
+| `mine_1` | (37,19) 東室 | 礦工頭巾 `c1_miner_cloth`（**首次開啟時教學 `tut_equip`**：「打開選單 →『裝備』，把礦工頭巾戴上吧！裝備會改變能力值。」） | `ch1_c_m1b` |
 | `mine_1` | (36,31) 東南支坑 | 金砂 ×2 | `ch1_c_m1c` |
-| `mine_1` | (23,37) 入口大廳 | 草仔粿 ×2 | `ch1_c_m1d` |
+| `mine_1` | (23,37) 入口大廳 | 草仔粿 ×1 | `ch1_c_m1d` |
 | `mine_2` | (6,4) 西支線 | 鹽米 ×3 | `ch1_c_m2a` |
-| `mine_2` | (10,26) 大廳 | 青草茶 ×2 | `ch1_c_m2b` |
+| `mine_2` | (10,26) 大廳 | 烏龍茶 ×2 | `ch1_c_m2b` |
 | `mine_2` | (24,10) 東坡道 | 金創藥 ×1 | `ch1_c_m2c` |
 
 ### 5.3 謎題：礦車與轉轍器（`mine_1`）
@@ -1998,82 +2000,64 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 - **輸入**：調查壁燈 →「熄滅的壁燈。旁邊有粉筆畫的記號：『（記號）』。點燈？」
 - **解法**：「一」(5,14) → 「丅」(5,17) → 「下」(5,11)（正字筆畫 1→2→3）。
 - **失敗**：點錯順序 → [一陣冷風灌進來，所有壁燈同時熄滅。] `windLit` 清空。星河(think)：「……順序不對嗎？」（第二次失敗後追加提示：星河(think)：「阿土伯說過，他做記號都用『正』字……一劃、兩劃、三劃。」）
-- **成功**：三盞全亮 → 風勢平息，風道粒子停止，`flag: ch1_wind_done`，遊蕩敵人 `t_mine_bat3` 在 (3,16) 出現。
+- **成功**：三盞全亮 → 風勢平息，風道粒子停止，`flag: ch1_wind_done`，遊蕩敵人 `mine_5` 在 (3,16) 出現。
 
 ---
 
 ## 6. 敵人與頭目
 
-### 6.1 各地圖敵人
-| 地圖 | 遊蕩敵人（部隊） |
+> 數值與平衡以 **js/data/enemies.js** 為準（已依 tools/sim_battle.js 調好）。本節只列：本章使用哪些既有部隊、需要新增的敵人／部隊（`c1_` / `t_c1_` 前綴），以及頭目的演出與特殊規則。
+
+### 6.1 各地圖敵人（既有部隊）
+| 地圖 | 遊蕩敵人（`G.Data.troops`） |
 |---|---|
-| `mine_1` | `t_mine_bat2`、`t_mine_bat3`、`t_mine_ghost`、`t_mine_ghost2`、`t_mine_mix`（位置見 1.9） |
-| `mine_2` | `t_mine_ghost`、`t_mine_ghost2`、`t_mine_mix`、`t_mine_bat3`（位置見 1.10）；固定戰 `t_mine_foreman` |
-| `badouzi` | `t_shore_crab` ×2（1-13 期間，不重生）；固定戰 `t_shore_ghost` |
-| `jiufen`（P4） | `t_night_ghost2` ×3、`t_night_mix` ×2（不重生）；固定戰 `t_night_lantern`、`t_night_ghost2`（路口）、`t_night_xiaojin`、`t_moya`、`t_water_ghost_king` |
+| `mine_1` | 入口大廳 (21,36) `mine_1`；主通道 (19,26) `mine_2`；中央大坑 (22,18) `mine_3`、(12,18) `mine_5`；蝙蝠洞 (7,5) `mine_5`、(10,3) `mine_4`；東南支坑 (33,28) `mine_4`、(35,31) `mine_4`；東室 (36,17) `mine_3` |
+| `mine_2` | 東坡道 (24,9) `mine_3`；西支線 (4,6) `mine_4`；大廳 (20,24) `mine_4`（1-7 後）；風道 (3,16) `mine_5`（風道全亮後）；固定戰 `t_c1_foreman` |
+| `badouzi` | (34,9)、(36,11) `shore_1`（1-13 期間，`respawn:false`）；固定戰 `t_c1_shore_ghost` |
+| `jiufen`（P4） | 遊蕩 (19,18) `jiufen_4`、(8,13) `jiufen_2`、(31,13) `jiufen_4`、(19,7) `jiufen_2`、(25,5) `jiufen_4`（皆 `respawn:false`）；固定戰：半山平台 `jiufen_3`、路口 `jiufen_4`、救小金 `jiufen_1`、`boss_moya`、`t_c1_ghost_king`（或 `boss_ghost_king`） |
 
-### 6.2 一般敵人數值（建議值，依 CONTRACTS 公式）
+本章用到的既有敵人：`mine_bat`、`miner_ghost`、`sand_crab`、`water_ghost`、`ghost_lantern`、`moya`、`ghost_king`（序章另有 `sea_wisp`）。
 
-| id | 名稱 | art | lv | hp | mp | atk | def | mag | spd | luk | 屬性 | 弱 | 抗 | exp | 文 | 掉落 | 技能 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `mine_bat` | 礦坑蝙蝠 | `mine_bat`（新） | 2 | 48 | 0 | 11 | 5 | 4 | 17 | 5 | 土 | 木 | 水 | 14 | 6 | 草仔粿 10% | 咬（phys 1.0, w8）；超音波（敵單 spdDown 2 回合 40%, w2） |
-| `miner_ghost` | 礦工魂 | `miner_ghost`（新） | 3 | 80 | 10 | 14 | 9 | 8 | 10 | 4 | 金 | 火 | 木 | 22 | 10 | 金砂 15%、鹽米 10% | 鶴嘴鋤（phys 1.2, w7）；礦塵（敵單 atkDown 2 回合, w3） |
-| `sand_crab` | 沙蟹精 | `sand_crab`（新） | 4 | 95 | 0 | 16 | 16 | 5 | 8 | 3 | 土 | 木 | 水 | 26 | 14 | 草仔粿 15% | 夾（phys 1.1, w7）；縮殼（自身 defUp 3 回合, w3） |
-| `water_ghost` | 水鬼 | `water_ghost` | 4 | 100 | 20 | 15 | 10 | 12 | 11 | 4 | 水 | 土 | 火 | 30 | 12 | 鹽米 10%、解毒草 10% | 拉扯（phys 1.0＋spdDown 30%, w6）；溺（mag 水 1.0, w3）；抓交替（打 HP 最低者 phys 1.4, w1） |
-| `water_ghost_h` | 水鬼（遲疑） | `water_ghost` | 4 | 100 | 20 | 15 | 10 | 12 | 11 | 4 | 水 | 土 | 火 | 30 | 12 | 同上 | 同上；特殊 `hesitate: 2`（前 2 回合不行動，訊息「水鬼盯著星河……遲疑了。」） |
-| `ghost_lantern` | 鬼燈籠 | `ghost_lantern` | 4 | 70 | 20 | 12 | 8 | 16 | 14 | 6 | 火 | 水 | — | 24 | 10 | 青草茶 10% | 鬼火（mag 火 1.0, w6）；燈影（敵單 atkDown 2 回合, w4） |
-
-部隊：
-- `t_mine_bat2` [mine_bat, mine_bat]；`t_mine_bat3` [mine_bat ×3]；`t_mine_ghost` [miner_ghost]；`t_mine_ghost2` [miner_ghost ×2]；`t_mine_mix` [miner_ghost, mine_bat, mine_bat] — bg `mine`，bgm `battle`
-- `t_shore_crab` [sand_crab, sand_crab]；`t_shore_ghost` [water_ghost_h]（flee:false）— bg `shore`
-- `t_night_lantern` [ghost_lantern ×2]；`t_night_ghost2` [water_ghost ×2]；`t_night_mix` [water_ghost, ghost_lantern]；`t_night_xiaojin` [water_ghost ×3]（flee:false）— bg `jiufen_night`
-
-### 6.3 小頭目：工頭魂・金貴仔 `foreman_ghost`
-- **外觀**：比礦工魂大一圈（art `miner_ghost` variant 2、scale 1.5，或新 art `foreman_ghost` ~240px）。穿工頭的對襟短褂，腰掛算盤，懷裡抱著一堆發光的金塊；臉被金光照得發青，雙眼是兩點金光。周身漂浮著旋轉的金塊。
-- **數值**：lv 4、hp 380、mp 30、atk 18、def 12、mag 12、spd 11、luk 6；屬性 **金**、弱 火、抗 木；exp 120、文 80；掉落：（劇情給金砂 ×3）。
+### 6.2 新增：小頭目「工頭魂・金貴仔」 `c1_foreman`
+- **外觀**：art `miner_ghost`，`variant: 2`，`scale: 1.5`。穿工頭的對襟短褂，腰掛算盤，懷裡抱著一堆發光的金塊；臉被金光照得發青，雙眼是兩點金光，周身漂浮著旋轉的金塊。
+- **資料建議**：`lv 3`，**`elem: 'metal'`**（五行教學：火剋金；與一般礦工魂的土屬性不同，正是「金貴仔」被金子附身的寫照），`boss: true`，`immune: ['sleep','stun','trance']`，HP 約為同級標準敵人的 5 倍（`m.hp ≈ 5`）、`m.atk ≈ 1.6`、`m.def ≈ 1.1`；掉落由劇情給「金砂 ×3」。
+- **部隊**：`t_c1_foreman` = { enemies: ['c1_foreman'], bg: 'mine', bgm: 'boss', boss: true, flee: false }
 - **技能**：
-  - 鶴嘴鋤（phys 1.0, w5）
-  - 鶴嘴鋤重擊（phys 1.7，**前一回合預告**：頭上「！」與訊息「工頭魂高高舉起鶴嘴鋤……」，w3）——讓玩家練習「防禦」。
-  - 金砂迷眼（敵全體 spdDown 2 回合 50%＋金屬性 mag 0.5, w2）
-  - 「攏是我的！」（HP<50% 時一次：吸回四散的金塊，回復 120 HP＋atkUp 3 回合）
+  - 鶴嘴鋤（`e_pickaxe`, w5）
+  - 鶴嘴鋤重擊（新 `c1_e_big_pick`：phys 1.7，**前一回合預告**——頭上「！」與訊息「工頭魂高高舉起鶴嘴鋤……」，w3）→ 練習「防禦」
+  - 金砂迷眼（新 `c1_e_gold_dust`：敵全 spdDown 2 回合 50%，w2）
+  - 攏是我的！（`if: 'hp<50'`、`once`：回復 15% HP＋atkUp 3 回合）
 - **台詞（戰鬥訊息）**：開場「金仔……是我的！」；HP<50%「攏是我的！攏是我的！」；倒下「我的……金仔……」
 
-### 6.4 頭目：墨鴉 `moya`
-- **外觀**：sprite `moya` 的戰鬥姿態。瘦高，黑鴉羽斗篷，羽毛邊緣帶藍黑金屬光澤；鳥嘴形的半截面具；手指修長，指間夾著黑羽。動作像鳥：歪頭、跳步、張開斗篷。
-- **數值**：lv 6、hp 700、mp 80、atk 19、def 14、mag 20、spd 18、luk 10；屬性 **水**（北方玄色）、弱 土、抗 火；exp 220、文 150；掉落：金創藥 ×2（必定）、鴉羽（素材，賣 40）100%。
-- **AI／技能**：
-  - 鴉羽鏢（隨機目標 phys 0.45 × 3 段, w5）
-  - 攝魂索（**優先白芷**：stun 1 回合 60%，訊息「長明宮的燈，在等妳。」, w3）
-  - 招鴉（HP<70% 且場上沒有鬼燈籠時：召喚 `ghost_lantern` ×1；全場最多 2 隻, w4）
-  - 黑羽蔽月（HP<40% 起，每 3 回合一次：我方全體 spdDown 2 回合＋水屬性 mag 1.0 全體）
-- **劇情台詞（戰鬥訊息）**：
+### 6.3 新增：遲疑的水鬼 `c1_water_ghost_h`
+- 以既有 `water_ghost` 為底（`variant` 相同），加一個特殊規則 **`hesitate: 2`**：前 2 個回合不行動，戰鬥訊息「水鬼盯著星河……遲疑了。」（若引擎沒有此欄位，可給它一個 w 很高、無效果的技能 `c1_e_hesitate`「遲疑」＋`if:'turn<3'`。）
+- **部隊**：`t_c1_shore_ghost` = { enemies: ['c1_water_ghost_h'], bg: 'shore', bgm: 'battle', flee: false }
+
+### 6.4 頭目：墨鴉 `boss_moya`（既有 `moya`）
+- **外觀**：sprite `moya` 戰鬥姿態（`flip` 面向右）。瘦高，黑鴉羽斗篷，羽毛邊緣帶藍黑金屬光澤，鳥嘴形半截面具；動作像鳥：歪頭、跳步、張開斗篷。
+- **數值／技能**：依 data（lv 5、**金屬性**——火剋金）。技能沿用 `e_crow_feathers`／`e_crow_hex`／`e_crow_wind`／`e_slash`／`e_crow_smug`。
+- **本章追加的演出**（建議以 troop 的劇情插入或技能 `text` 實作）：
   - 開場：墨鴉「嘎——鄉下小子，讓開。」
+  - `e_crow_hex`（咒縛）優先選白芷為目標，訊息「長明宮的燈，在等妳。」
   - HP<50%：墨鴉「你……你這個沒有燈的傢伙，到底是什麼東西？」
   - HP<25%：墨鴉「嘎！我的羽毛！這件斗篷很貴的！」
-  - 戰敗：墨鴉「……今暝，只是打個招呼。」
-- **設計意圖**：墨鴉是水屬性，抗火——星河的螢火斬效果打折，引導玩家使用剛拿到的鹽米（土）與普攻；白芷要注意被攝魂索定住時由星河撐住。劍意教學在此戰最容易觸發。
+  - 戰敗：墨鴉「……今暝，只是打個招呼。」（墨鴉不會死：建議 `endAt: 0.0` 照常勝利，但不播放死亡溶解——之後劇情裡他還站著。）
+- **設計意圖**：「金驚火」在礦坑學到、在這裡回收——星河的螢火斬是主力；白芷負責補血與解除咒縛。劍意教學在此戰最容易第一次觸發。
 
-### 6.5 頭目：水鬼王 `water_ghost_king`
-- **外觀**（新 art，~380px）：一個從霧裡站起來的溺死巨人。身體是許多溺死者糾纏而成——手臂裡有手臂，胸口浮現一張張臉；海藻般的長髮；頭上歪戴一座燒焦的水燈頭當作破碎的王冠；眼睛是兩團藍色的魂燈火。兩隻長臂從霧中伸出，是獨立的目標「水鬼之手」。phase 2 時身上的臉會張口哭號（`o.phase`）。
-- **部隊** `t_water_ghost_king`：[water_ghost_king, wgk_hand_l, wgk_hand_r]；bg `jiufen_night`；bgm `boss`；boss:true；flee:false；**客人：陳伯**。
-- **本體**：lv 7、hp 1300、mp 60、atk 24、def 16、mag 20、spd 9、luk 5；屬性 **水**、弱 土、抗 火；exp 300、文 0；掉落無。
-  - 黑潮（水屬性 mag 0.9 全體, w4）
-  - 溺（水屬性 mag 1.6 單體, w3）
-  - 再生之手（任一隻手被打倒後第 3 回合重新長出，HP 全滿）
-- **水鬼之手** `wgk_hand`（art：水鬼王的手臂部件，或 `water_ghost` 的手臂放大）：hp 160、atk 20、def 10、spd 13；屬性 水、弱 土。
-  - 抓（**抓交替**：對一名角色施加「被抓住」＝ stun 持續到這隻手被打倒或 3 回合，期間每回合損失 6% 最大 HP。訊息：「冰冷的手抓住了 XX！」, w5）
-  - 拍擊（phys 1.0, w3）
-- **Phase 2（本體 HP<50%）**：
-  - 劇情插入（戰鬥中對話）：
-    - 白芷(sad)：「它身體裡……有好多人。他們都好冷。」
-    - 星河(serious)：「那就——送他們回家！」
-  - 本體每回合 30% 使用「百面哀嚎」（我方全體 atkDown 2 回合）。
-  - **白芷對本體使用「渡魂謠」時**：不會讓它睡著，而是移除一層「怨」——本體 atk −15%（最多 3 層），訊息：「一張溺死者的臉安靜下來，化作一點光，漂走了。」（若引擎無法特例處理，則改為：phase 2 時本體可被睡眠，睡眠持續 1 回合。）
-- **陳伯（客人，AI 控制）**：lv 15 相當；hp 600、atk 40、def 25、mag 30、spd 18。
+### 6.5 頭目：水鬼王 `t_c1_ghost_king`（既有 `ghost_king` ＋ 新增雙手）
+- **外觀**（art `water_ghost_king`）：從霧裡站起來的溺死巨人。身體由許多溺死者糾纏而成——手臂裡有手臂，胸口浮現一張張臉；海藻般的長髮；頭上歪戴一座燒焦的水燈頭，像一頂破碎的王冠；眼睛是兩團藍色魂燈。phase 2 時身上的臉張口哭號。
+- **部隊（建議）**：`t_c1_ghost_king` = { enemies: ['ghost_king', 'c1_wgk_hand', 'c1_wgk_hand'], bg: 'jiufen_night', bgm: 'boss', boss: true, flee: false, **guest: 'chenbo'** }。
+  - **降級方案**：若雙手或客人難以實作，直接用既有 `boss_ghost_king`，並讓陳伯以臨時隊員身分加入（見下）。
+- **新增「水鬼之手」 `c1_wgk_hand`**（art：`water_ghost` 放大的手臂，或 `water_ghost` variant 1 scale 0.8）：HP 約本體的 12%，水屬性；技能「抓」（`c1_e_grab`：施加 stun，持續到這隻手被打倒或 3 回合；期間每回合 6% 最大 HP 傷害；訊息「冰冷的手抓住了 XX！」）、拍擊（`e_claw`）。被打倒後第 3 回合重新長出（本體技能 `c1_e_regrow`）。
+- **Phase 2（本體 HP<50%，`phases` 欄位）**：
+  - 劇情插入：白芷(sad)「它身體裡……有好多人。他們都好冷。」→ 星河(serious)「那就——送他們回家！」
+  - 本體追加「百面哀嚎」（敵全 atkDown 2 回合）。
+  - **白芷對本體使用「渡魂謠」（`bz_duhun`）時**：不讓它入睡，而是移除一層「怨」——本體 atk −15%（最多 3 層），訊息：「一張溺死者的臉安靜下來，化作一點光，漂走了。」（降級方案：phase 2 時本體不再免疫睡眠，睡眠持續 1 回合。）
+- **陳伯（客人）**：建議以 `G.Data.enemies` 格式之外的「客人」實作：AI 控制、不可操作、HP 降到 1 時改為防禦（不會倒下）。強度約相當隊伍等級 +8。技能：
   - 槳掃（phys 0.9 敵全體）
-  - 引魂・渡（對「靈體」敵人 ×2.5 的特殊傷害，每 3 回合一次，訊息「陳伯：黑水茫茫，莫再回頭！」）
-  - 護（被抓住的角色會被他優先搭救：攻擊抓住該角色的手）
-  - 陳伯不會倒下（HP 降到 1 時改為防禦）。
+  - 引魂・渡（對靈體 ×2.5 的單體傷害，每 3 回合一次，訊息「陳伯：黑水茫茫，莫再回頭！」）
+  - 搭救（隊友被「抓」時，優先攻擊那隻手）
+  - **降級方案**：`S.join('chenbo', lv)` 為臨時隊員（需要在本章檔案定義 `G.Data.chars.chenbo`：火／水不拘，建議 elem `water`、weapon 用 `talisman` 動作或 sprite 的 attack 姿態；1-21 後 `S.leave('chenbo')`）。
 - **結束**：本體 HP 0 → 劇情（1-20 第 26 步起）。
 
 ---
@@ -2082,67 +2066,59 @@ NPC 只在 `ch1_procession && !ch1_lanterns_back` 出現；之後依 1-12 腳本
 
 ### 7.1 旗標
 `ch1_start`, `ch1_errands`, `ch1_err_tea`, `ch1_err_oil`, `ch1_err_fude`, `ch1_ahuang_lost`, `ch1_mine_open`, `ch1_cart_main`, `ch1_cart_side`, `ch1_wind_done`, `ch1_foreman`, `ch1_atu_met`, `ch1_mine_done`, `ch1_depart_fest`, `ch1_keelung`（=進入 keelung_fest）, `ch1_moya_seen`, `ch1_fu_taken`, `ch1_procession`, `ch1_release`, `ch1_lanterns_back`, `ch1_baizhi_found`, `ch1_home_night`, `ch1_baizhi_wake`, `ch1_baizhi_join`, `ch1_night_raid`, `ch1_salt`, `ch1_xiaojin_saved`, `lyric_2`, `ch1_moya_beaten`, `ch1_yinghuo`, `ch1_wgk_beaten`, `ch1_chenbo_hurt`, `ch1_fu_burned`, `ch1_reveal`, `ch1_morning_after`, `ch1_yuyuan`, `ch1_awang_gift`, `ch1_guopo_gift`, `ch1_done`
-教學：`tut_save`, `tut_shop`, `tut_menu`, `tut_field_enemy`, `tut_element`, `tut_gauge`, `tut_party`, `tut_combo`, `tut_battle_item`, `tut_guest`, `tut_xindeng`
+教學：`tut_save`, `tut_shop`, `tut_menu`, `tut_equip`, `tut_field_enemy`, `tut_element`, `tut_gauge`, `tut_party`, `tut_combo`, `tut_battle_item`, `tut_guest`, `tut_xindeng`
 變數：`vars.swA`, `vars.swB`, `vars.windLit`, `vars.ch1_lantern_text`
-任務：`q_atu_watch`（阿土伯的懷錶）、`q_ahuang`（阿黃回家）、`q_xingmu`（醒木失竊記）
+任務（`G.Data.quests`）：`q_atu_watch`（阿土伯的懷錶，lantern:true）、`q_ahuang`（阿黃回家，lantern:true）、`q_xingmu`（醒木失竊記）
 心燈：`xd_atu_watch`「阿土伯的懷錶」、`xd_ahuang`「阿黃回家」
 
-### 7.2 道具（建議 id／數值／價格）
-**消耗品**
-| id | 名稱 | 效果 | 價格 |
-|---|---|---|---|
-| `it_caoguo` | 草仔粿 | HP +60 | 20 |
-| `it_sweetpotato` | 番薯 | HP +30 | 8 |
-| `it_qingcao` | 青草茶 | MP +25 | 40 |
-| `it_jiedu` | 解毒草 | 解除中毒 | 15 |
-| `it_salt` | 鹽米 | 戰鬥：土屬性傷害（固定 60＋），單體 | 20 |
-| `it_dried_fish` | 小魚乾 | HP +20（支線用） | 10 |
-| `it_jinchuang` | 金創藥 | HP +180 | 60 |
-| `it_xingshen` | 醒神香 | 解除睡眠／暈眩／幻境 | 25 |
-| `it_aicao` | 艾草束 | 解除封印 | 30 |
-| `it_huanhun` | 還魂香 | 復活（HP 30%） | 150 |
-| `it_yuyuan` | 芋圓 | HP +80、MP +10 | 30 |
-| `it_yuyuan_ice` | 芋圓冰 | HP +40、MP +25 | 35 |
-| `it_oolong` | 烏龍茶 | MP +40 | 45 |
-| `it_tea_egg` | 茶葉蛋 | HP +50 | 15 |
-| `it_honggui` | 紅龜粿 | HP +90 | 30 |
-| `it_dingbian` | 鼎邊趖 | HP +130 | 45 |
-| `it_tempura` | 天婦羅 | HP +60、MP +10 | 30 |
-| `it_maltose` | 麥芽糖 | HP +40、MP +5 | 12 |
-| `it_gold_dust` | 金砂 | 素材（賣 50） | 100 |
-| `it_crow_feather` | 鴉羽 | 素材（賣 40） | 80 |
+### 7.2 道具
+**使用既有（js/data/items.js）**：`caozaiguo` 草仔粿、`jinchuang` 金創藥、`jiedu` 解毒草、`xiangbao` 香包、`huanhunxiang` 還魂香、`pinganfu` 平安符（1-3c 添丁伯給 ×1）、`yuyuan` 芋圓、`bianpao` 鞭炮、`sw_bamboo` 竹劍、`sw_yinghuo` 螢火、`fl_bamboo` 九份竹笛、`ar_padded` 夾棉短襖、`hd_douli` 斗笠、`ft_cloth` 布鞋、`key_yinhunling` 引魂令、`key_watch` 阿土伯的懷錶、`key_jadetag` 白芷的玉牌（白芷加入時由引擎或 1-15 給予）
 
-**裝備**
-| id | 名稱 | 類別 | 數值 | 價格 | 誰 |
+**本章新增（在 ch1 檔案中定義 `G.Data.items.c1_*`）**
+| id | 名稱 | type | 效果／數值 | 價格 | 說明文字 |
 |---|---|---|---|---|---|
-| `sw_bamboo` | 竹劍 | 武器 | atk +3 | — | 星河（起始；1-19 損毀） |
-| `sw_yinghuo` | 螢火 | 武器 | atk +14、火屬性 | — | 星河 |
-| `ar_indigo` | 藍染短衫 | 防具 | def +6 | 150 | 全員 |
-| `hd_bamboo_hat` | 竹笠 | 頭 | def +2 | 80 | 全員 |
-| `hd_miner_cloth` | 礦工頭巾 | 頭 | def +2、luk +2 | — | 全員 |
-| `ft_cloth` | 布鞋 | 腳 | def +1、spd +1 | 70 | 全員 |
-| `ac_pingan` | 平安符 | 飾品 | luk +3、抗暈眩 | — | 全員 |
-| `ac_xianghuo` | 香火袋 | 飾品 | mag +2、抗封印 | 90 | 全員 |
-| `ac_shuideng` | 水燈吊飾 | 飾品 | luk +3、def +1 | 60 | 全員 |
-| `ac_fan_story` | 說書折扇 | 飾品 | mag +2、luk +3 | — | 全員 |
-| `ac_foolsgold` | 小金的金仔石 | 飾品 | luk +4（說明：「小金說這是金仔。其實是黃鐵礦。」） | — | 全員 |
+| `c1_salt` | 鹽米 | use（battle） | 敵單 `damage: 70`、`elem: 'earth'` | 20 | 「粗鹽拌白米。撒出去，不乾淨的東西都要退三步。土屬性。」 |
+| `c1_sweetpotato` | 番薯 | use | heal 40 | 8 | 「九份人從小吃到大的番薯。」 |
+| `c1_dried_fish` | 小魚乾 | use | heal 20 | 10 | 「八斗子曬的小魚乾。貓很愛。」 |
+| `c1_oolong` | 烏龍茶 | use | mp 40 | 45 | 「聽雨樓的烏龍茶，喝一口，眼睛都亮了。」 |
+| `c1_tea_egg` | 茶葉蛋 | use | heal 60 | 15 | 「茶湯裡滷了一整夜的蛋，殼上一圈圈裂紋。」 |
+| `c1_yuyuan_ice` | 芋圓冰 | use | heal 40、mp 25 | 35 | 「七月天，一碗芋圓冰。」 |
+| `c1_honggui` | 紅龜粿 | use | heal 120 | 30 | 「紅通通的龜形粿，印著龜甲紋，拜拜用的吉祥物。」 |
+| `c1_dingbian` | 鼎邊趖 | use | heal 160 | 45 | 「米漿沿著大鼎邊一趖就熟。雞籠人的早頓。」 |
+| `c1_tempura` | 天婦羅 | use | heal 80、mp 10 | 30 | 「魚漿炸的天婦羅，甜甜辣辣。」 |
+| `c1_maltose` | 麥芽糖 | use | heal 50、mp 5 | 12 | 「阿土嬸的糖仔。黏牙，很甜。」 |
+| `c1_gold_dust` | 金砂 | material | — | 100（賣 50） | 「舊金礦坑裡的金砂。工頭魂抱了一輩子的東西。」 |
+| `c1_miner_cloth` | 礦工頭巾 | head | def 4、luk 2 | 0 | 「礦工綁在頭上的粗布巾，吸過很多汗。」 |
+| `c1_shuideng` | 水燈吊飾 | acc | luk 3、def 1 | 60 | 「小小的紙水燈，綁在身上，一年平安。」 |
+| `c1_xianghuo` | 香火袋 | acc | mag 2、`immune: ['seal']` | 90 | 「土地公爐上過過火的紅布袋。」（1-23c 添丁伯送白芷一個） |
+| `c1_fan_story` | 說書折扇 | acc | mag 2、luk 3 | 0 | 「阿炳伯說了四十年書的扇子。」 |
+| `c1_foolsgold` | 小金的金仔石 | acc | luk 5 | 0 | 「小金說這是金仔。其實是黃鐵礦。」 |
+| `c1_tea_lanterns` | 茶樓的燈籠 | key | | | 「聽雨樓訂的四盞紅燈籠。」 |
+| `c1_lamp_oil` | 燈油 | key | | | 「一甕燈油，沉甸甸的。」 |
+| `c1_offering` | 供品籃 | key | | | 「草仔粿、米酒、水果與一疊金紙。」 |
+| `c1_lantern` | 提燈 | key | 持有時玩家光源 `playerR: 220` | | 「陳伯丟給你的手提燈籠。」 |
+| `c1_xingmu` | 醒木 | key | | | 「阿炳伯說書用的醒木，上面有貓的牙印。」 |
+| `c1_changming_fu` | 長明燈符 | key | | | 「府城長明宮的符紙，畫著一盞燈。摸起來冰冰的，好像裡面關著什麼。」 |
+| `c1_broken_sword` | 斷掉的竹劍 | key | | | 「星河從小用到大的竹劍，斷成兩截了。捨不得丟。」 |
 
-**重要物品**：`key_tea_lanterns` 茶樓的燈籠、`key_lamp_oil` 燈油、`key_offering` 供品籃、`key_lantern` 提燈（持有時玩家光源）、`key_watch` 阿土伯的懷錶、`key_xingmu` 醒木、`key_changming_fu` 長明燈符（說明：「府城長明宮的符紙，畫著一盞燈。摸起來冰冰的，好像裡面關著什麼。」）、`key_broken_sword` 斷掉的竹劍（「星河從小用到大的竹劍，斷成兩截了。捨不得丟。」）、`key_yinhunling` 引魂令（「黑檀木令牌，刻著一盞燈與一支槳。引魂人的信物——迷路的魂看到它，比較肯開口。」）
+（螢火在 1-20 交給星河時自動裝備；竹劍在 1-19 從裝備欄移除。）
 
 ### 7.3 部隊與敵人
-敵人：`mine_bat`, `miner_ghost`, `foreman_ghost`, `sand_crab`, `water_ghost`, `water_ghost_h`, `ghost_lantern`, `moya`, `water_ghost_king`, `wgk_hand_l`, `wgk_hand_r`
-部隊：`t_mine_bat2`, `t_mine_bat3`, `t_mine_ghost`, `t_mine_ghost2`, `t_mine_mix`, `t_mine_foreman`, `t_shore_crab`, `t_shore_ghost`, `t_night_lantern`, `t_night_ghost2`, `t_night_mix`, `t_night_xiaojin`, `t_moya`, `t_water_ghost_king`
+- 既有部隊：`mine_1`–`mine_5`、`shore_1`、`jiufen_1`–`jiufen_4`、`boss_moya`、`boss_ghost_king`
+- 新增敵人：`c1_foreman`、`c1_water_ghost_h`、`c1_wgk_hand`
+- 新增部隊：`t_c1_foreman`、`t_c1_shore_ghost`、`t_c1_ghost_king`
+- 新增技能（建議）：`c1_e_big_pick`、`c1_e_gold_dust`、`c1_e_grab`、`c1_e_regrow`、`c1_e_hesitate`
 
 ### 7.4 給實作者的備註
-- **新美術需求**：monster `mine_bat`、`miner_ghost`、`sand_crab`、`water_ghost_king`（含手臂部件／或獨立 `wgk_hand`）；`foreman_ghost`（可用 `miner_ghost` variant 2 放大）；物件 `zhupu_altar`（主普壇，6x4，大量燈光）。`moya` 需要 drawBattle（CONTRACTS 已列）。
-- **引擎功能需求**：
-  1. 客人隊友（陳伯，AI 控制，不可被操作、不會倒下）。
-  2. 敵人特殊旗標 `hesitate: n`（前 n 回合跳過行動並顯示訊息）。
-  3. 「被抓住」狀態（＝stun＋持續傷害，綁定施放者存活）。若太複雜：以 stun 2 回合＋poison 代替。
-  4. 渡魂謠 × 水鬼王 的特例（見 6.5；有降級方案）。
-  5. 礦車沿鐵軌移動的腳本動畫（可用 spawn 一個 `cart` 物件逐格 tween）。
-  6. 風道推回（touch 事件 + `S.setPos`）。
+- **美術**：monster `mine_bat`、`miner_ghost`、`sand_crab`、`water_ghost_king` 已在 data 中引用；物件 `zhupu_altar`（主普壇，6x4，大量燈光）若不存在，用 `temple` 加上 `lantern_string` 與額外 `lights` 代替。
+- **引擎功能**：
+  1. 客人隊友（陳伯）或臨時隊員降級方案（6.5）。
+  2. 遲疑規則 `hesitate`（6.3）。
+  3. 「抓」狀態（6.5；降級：stun 2 回合＋poison）。
+  4. 渡魂謠 × 水鬼王 的特例（6.5；有降級方案）。
+  5. 礦車沿鐵軌移動的腳本動畫（spawn 一個 `cart` 物件逐格 tween）。
+  6. 風道推回（touch 事件＋`S.setPos`；或 mapmech 的 `winds`）。
   7. P1–P5 時段：同一張 `jiufen` 依旗標切換 `light`、`particles`、`bgm`、燈籠光色、NPC 列表（`if`）。
-  8. 1-12 水燈換色：`water_lantern` 支援 `o.color`／`o.blue` 參數。
+  8. 1-12 水燈換色：`water_lantern` 支援 `o.color`／`o.blue` 參數；或以 `lights` 覆寫顏色。
 - **對話框名字**：沒有頭像的 NPC 顯示中文名（阿財、鄭頭家……）；墨鴉、阿土伯（`atu`）、阿炳伯（`abing`）、阿柑姨（`agan`）、小金（`xiaojin`）有頭像。
-- **時間軸提醒**：七月十四白天 → 深夜 → 七月十五清晨（中元當天）。第二章從七月十五白天開始。
+- **時間軸**：七月十四白天 → 深夜 → 七月十五清晨（中元當天）出發。第二章從七月十五白天開始。

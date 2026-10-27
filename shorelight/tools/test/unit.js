@@ -10,7 +10,7 @@
 'use strict';
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { load, ROOT } = require('./load');
+const { load, ROOT, indexScripts } = require('./load');
 
 // ------------------------------------------------------------------ tiny test framework
 const tests = [];
@@ -72,9 +72,13 @@ function fixture(G) {
   return G;
 }
 
+// Content scripts (maps / story / i18n) are skipped: engine tests must not depend on chapters other agents
+// are still writing (validate.js reports those). Load failures in core/engine/data abort the test.
+const CONTENT = indexScripts().filter((f) => /^js\/(maps|story|i18n)\//.test(f));
 function fresh(o = {}) {
-  const env = load(Object.assign({ console: 'silent' }, o));
-  if (env.errors.length) throw new Error('game failed to load: ' + env.errors.map((e) => e.file + ': ' + e.error.message).join('; '));
+  const env = load(Object.assign({ console: 'silent', skip: CONTENT }, o));
+  const fatal = env.errors.filter((e) => /^js\/(core|engine|data)\//.test(e.file));
+  if (fatal.length) throw new Error('game failed to load: ' + fatal.map((e) => e.file + ': ' + e.error.message).join('; '));
   fixture(env.G);
   env.G.state = env.G.newState();
   return env;

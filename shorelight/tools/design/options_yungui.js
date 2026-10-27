@@ -66,7 +66,7 @@
         }),
       },
       {
-        name: '醉臥米酒', en: 'Tipsy Immortal', style: 'water', expr: 'smile', bg: ['#e8b080', '#a0b8d0'], accent: '#f0a070',
+        name: '醉臥米酒', en: 'Tipsy Immortal', style: 'water', expr: 'laugh', bg: ['#e8b080', '#a0b8d0'], accent: '#f0a070',
         desc: '屋頂上喝醉的那一幕：長髮全散、領口鬆垮滑開，臉頰泛紅、眼睛瞇成一條線，抱著大葫蘆米酒。最慵懶、最有「酒仙」味。',
         spec: yg({
           faceOpt: { blush: 0.55 }, eye: { lid: 0.55, droop: 0.08 },
@@ -82,18 +82,17 @@
             HF.cap(c, S, { top: -112, wx: -2, hl: -104 });
             HF.bangs(c, S, 'center', { len: 1.08 });
             strays(c, S);
-            S.K.lock(c, [-20, -102, -50, -122, -70, -110], 9, { p: 1, strands: false });
-            S.K.lock(c, [16, -104, 40, -124, 60, -114], 8, { p: 1, strands: false });
+            S.K.lock(c, [-30, -100, -56, -108, -72, -96], 10, { p: 1, strands: false });
+            S.K.lock(c, [-62, -40, -92, -20, -96, 10], 9, { p: 1, strands: false });
             sideLong(c, S, 1.05);
           },
-          acc(c) { AC.bow(c, -64, 60, '#c8283a', 0.5); },
         }),
       },
       {
         name: '符籙天師', en: 'Talisman Master', style: 'donghua', expr: 'serious', bg: ['#0a0a14', '#2a1a0a'], accent: '#ffcc50', rim: '#fff0c0',
         desc: '認真起來的樣子：高聳黑道冠嵌太極、玄黑道袍滾金八卦紋，身邊環繞發光黃符，眼底一層金光。最帥、最「天師」。',
         spec: yg({
-          eye: { lid: 0.86, iris: ['#2a2008', '#8a6a1a', '#ffd060', '#fff4c0'] },
+          eye: { lid: 0.9, slant: 0.1, irisW: 0.92, iris: ['#2a2008', '#8a6a1a', '#ffd060', '#fff4c0'] }, faceOpt: { browTh: 4.4 }, brow: { arch: 0.3 },
           aura(c) {
             AC.aura(c, '#ffcc50', 0.18, 170);
             AC.talisman(c, -118, -60, -0.3, 0.9, { glow: '#ffd060' });
@@ -124,7 +123,7 @@
         name: '蕈癡學者', en: 'Mushroom Nerd', style: 'cel', expr: 'laugh', bg: ['#7ab060', '#f0e8b0'], accent: '#fff4d0',
         desc: '把「業餘蕈菇學家」演滿：圓框眼鏡、髮冠上插著兩朵七彩靈蕈，苔綠道袍斜背採集袋、帶子上別滿香菇徽章。一聊蘑菇就停不下來。',
         spec: yg({
-          eye: { lid: 0.9, iris: ['#2a2a10', '#5a6a2a', '#a8c060', '#e8f4b0'] },
+          eye: { lid: 1, h: 1.12, irisH: 1.05, slant: 0, iris: ['#2a2a10', '#5a6a2a', '#a8c060', '#e8f4b0'] }, faceOpt: { eyeH: 28 },
           hair: { base: '#2e2a26', dark: '#120e0c', light: '#7a6e60', line: '#0a0806', hi: '#b0a490' },
           back(c, S) { HB.long(c, S, { len: 150, w: 0.95 }); },
           body(c, S) {
@@ -144,8 +143,8 @@
           },
           acc(c) {
             woodCrown(c);
-            AC.mushroom(c, -30, -132, 1.1, '#e04a8a', '#ff90d0');
-            AC.mushroom(c, 8, -138, 0.9, '#40a0e0', '#90e0ff');
+            AC.mushroom(c, -34, -128, 1.6, '#e04a8a', '#ff90d0');
+            AC.mushroom(c, 12, -134, 1.3, '#40a0e0', '#90e0ff');
           },
           over(c, S) { AC.glasses(c, S, { col: '#5a3a1a', chain: '#d8b25a' }); },
         }),
@@ -186,7 +185,7 @@
         name: '青衫摺扇', en: 'Scholar Behind the Fan', style: 'classic', expr: 'smug', bg: ['#1a3a3a', '#3a5a4a'], accent: '#c0f0d0',
         desc: '書生扮相：長髮低束一條青緞帶，青碧儒衫，摺扇半掩著嘴只露出一雙笑眼——「在下只是路過的閒散道人。」最有心機感。',
         spec: yg({
-          eye: { lid: 0.7, droop: 0.04 },
+          eye: { lid: 0.58, droop: 0.1, slant: 0 },
           back(c, S) { HB.ponyLow(c, S, { vol: 1.15, tie: '#3a8a7a' }); },
           body(c, S) {
             OF.robe(c, S, { col: '#4a8a7e', colL: '#68aa9c', colD: '#2a5a50', line: '#123a32', X: [4, 172], collar: [{ col: '#f1efe8', line: '#a9a59a', w: 10 }, { col: '#2a5a50', line: '#123a32', w: 3 }] });
@@ -216,7 +215,7 @@
         name: '墨竹道人', en: 'Ink-bamboo Hermit', style: 'ink', expr: 'normal', bg: ['#6a8a6a', '#222'],
         desc: '水墨隱士：長髮只用一根竹簪鬆鬆挽住，素袍、竹影橫斜，眼神淡然。這是他獨處、想念師父時的樣子——安靜的那一面。',
         spec: yg({
-          eye: { lid: 0.8, droop: 0.05 }, mouths: { normal: 'flat' },
+          eye: { lid: 0.84, droop: 0.12, slant: -0.02 }, mouths: { normal: 'flat' },
           back(c, S) { HB.long(c, S, { len: 210, w: 1.05 }); },
           body(c, S) {
             OF.robe(c, S, { col: '#e8e6e0', colL: '#f8f6f2', colD: '#b8b4ac', line: '#5a5650', X: [4, 172], collar: [{ col: '#4a4a50', line: '#1a1a1e', w: 10 }, { col: '#ffffff', line: '#a0a0a0', w: 5 }] });
@@ -258,8 +257,8 @@
             S.K.lock(c, [62, -30, 76, 30, 66, 100, 72, 150], 18, { p: 0.6 });
           },
           acc(c) {
-            AC.strawHat(c, -8, -92, 128, 26, -0.08, { col: '#c8a868', band: '#5a3a1a' });
-            c.strokeStyle = '#5a3a1a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-60, -84); c.quadraticCurveTo(-70, 20, -20, 84); c.stroke();
+            c.strokeStyle = '#5a3a1a'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-58, -70); c.quadraticCurveTo(-70, 20, -20, 84); c.stroke();
+            AC.strawHat(c, -6, -70, 132, 42, -0.08, { col: '#c8a868', band: '#5a3a1a' });
           },
         }),
       },
@@ -267,7 +266,7 @@
         name: '不羈野道', en: 'Rogue Taoist', style: 'cel', expr: 'smug', bg: ['#3a3a5a', '#d06a40'], accent: '#ffd080',
         desc: '大膽現代詮釋：頭髮剪短、後腦只紮一小撮，耳上掛兩枚符咒耳墜，頸側畫著朱砂符紋；黑內襯外披敞開的藍灰無袖道袍。浪子氣十足。',
         spec: yg({
-          faceOpt: { chinY: 86 }, eye: { lid: 0.7, slant: 0.08 },
+          faceOpt: { chinY: 86, browTh: 4.4 }, eye: { lid: 0.72, slant: 0.15, h: 0.9 }, brow: { arch: 0.2 },
           back(c, S) { HB.nape(c, S, { len: 0.8 }); S.K.lock(c, [-56, -70, -84, -84, -96, -64], 16, { p: 0.6 }); },
           body(c, S) {
             OF.robe(c, S, { col: '#1e1c22', colL: '#2e2a32', colD: '#0a0a0e', line: '#000', X: [6, 150], collar: [{ col: '#16141a', line: '#000', w: 5 }] });

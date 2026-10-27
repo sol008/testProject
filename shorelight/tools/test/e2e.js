@@ -146,7 +146,7 @@ class Session {
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 1500)));
     await this.page.goto(BASE + query);
     await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: o.timeout || 30000 });
-    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.top() === G.mapScene, null, { timeout: o.timeout || 30000 });
+    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: o.timeout || 30000 });
     return this.page;
   }
   async close() { if (this.ctx) await this.ctx.close().catch(() => {}); this.ctx = null; this.page = null; }
@@ -179,6 +179,7 @@ class Session {
         if (top === 'GameOverScene') return 'gameover';
         if (top === 'ShopScene') { const s = G.Scenes.top(); s.mode = 'menu'; s.menu.idx = 2; G.Input._press('ok'); }
         if (top === 'MenuScene' || top === 'SaveScene' || top === 'SettingsScene' || top === 'WorldMapScene') G.Input._press('cancel');
+        else if (!['MapScene', 'DialogScene', 'ChoiceScene', 'BattleScene', 'ShopScene', 'NarrateScene', 'TravelScene', 'BacklogScene'].includes(top)) G.Input._press('ok'); // tutorials, title cards, minigames…
         return G.Script.busy() || top !== 'MapScene' ? 'busy' : 'idle';
       }, choice);
       if (st === 'idle') break;
@@ -189,17 +190,30 @@ class Session {
     await this.ev(() => G.Input._hold('skip', false));
     return t >= maxSec ? 'timeout' : 'idle';
   }
+  // Wait until no script is running (G.Script.busy() false) — real time, no input.
+  async waitIdle(timeout = 10000) {
+    await this.page.waitForFunction(() => !G.Script.busy(), null, { timeout }).catch(() => { throw new Error('script still busy after ' + timeout + 'ms'); });
+  }
+  // Press Z (real key events) while a dialogue box is open; returns the number of presses.
+  async advanceDialogs(max = 200) {
+    let n = 0;
+    while (n < max && (await this.ev(() => G.Dialog.isOpen()))) { await this.key('z'); await this.frames(2); n++; }
+    if (n >= max) throw new Error(`dialogue still open after ${max} Z presses (stuck line?)`);
+    return n;
+  }
   async drainGameErrors() {
     if (!this.page) return;
     const e = await this.page.evaluate(() => { const r = __qa.errs.slice(); __qa.errs.length = 0; const le = G && G.lastError; if (G) G.lastError = null; return { r, le: le ? String(le.stack || le) : null }; }).catch(() => ({ r: [], le: null }));
     this.errors.push(...e.r);
     if (e.le && !e.r.some((x) => x.includes(e.le.split('\n')[0]))) this.errors.push('G.lastError: ' + e.le.slice(0, 1500));
   }
+  realErrors() { return this.errors.filter((e) => !BOOT_KEYS.has(firstLines(e, 1))); }
   async shot(name) { if (SHOTS && this.page) await this.page.screenshot({ path: path.join(OUT, name.replace(/[^\w.-]+/g, '_') + '.png') }); }
 }
 
 // ------------------------------------------------------------------ test registry & runner
 const results = [];
+const BOOT_KEYS = new Set();
 const perf = [];
 const tests = [];
 const test = (id, name, fn, o = {}) => tests.push({ id, name, fn, o });
@@ -219,7 +233,9 @@ async function runTest(browser, t) {
     if (e instanceof Skip) { status = 'skip'; msg = e.message; } else { status = 'fail'; msg = e.message; }
   }
   await s.drainGameErrors().catch(() => {});
-  const errs = s.errors.filter((e) => !(t.o.allowErrors && t.o.allowErrors.some((r) => r.test(e))));
+  // errors that already happen on a plain boot (e.g. a content script with a syntax error) are reported
+  // once by the boot test, not by every other test
+  const errs = s.errors.filter((e) => !(t.o.allowErrors && t.o.allowErrors.some((r) => r.test(e))) && (t.id === 'boot' || !BOOT_KEYS.has(firstLines(e, 1))));
   if (errs.length && status !== 'skip') { if (status === 'pass') { status = 'fail'; msg = `${errs.length} game error(s) logged`; } }
   await s.close();
   const r = { id: t.id, name: t.name, status, msg, ms: Date.now() - t0, errors: dedupe(errs), warnings: warnings.concat(dedupe(s.warnings).slice(0, 10)) };
@@ -423,7 +439,7 @@ function defineTests(info) {
       const st = await s.ev(() => ({ top: __qa.top(), sub: G.Scenes.top().sub ? G.Scenes.top().sub.constructor.name : null }));
       assert(st.top === 'MenuScene' && !st.sub, `after visiting '${k}' expected to be back on the menu, got top=${st.top} sub=${st.sub}`);
       await s.drainGameErrors();
-      if (s.errors.length) throw new Error(`errors while visiting menu panel '${k}'`);
+      if (s.realErrors().length) throw new Error(`errors while visiting menu panel '${k}'`);
       visited.push(k);
     }
     await s.key('x');
@@ -678,13 +694,17 @@ async function mapSweep(browser, info) {
         const cs = await s.ev(() => __qa.canvasStats());
         assert(cs.std > 2, `map renders as a flat colour (std ${cs.std.toFixed(1)}, mean ${cs.mean.toFixed(0)})`);
         const raf = await s.ev(() => __qa.rafAvg(60));
+        await s.ev(() => __qa.frameCost(30)); // warm caches (first-use pre-rendering)
         const cost = await s.ev(() => __qa.frameCost(40));
         perf.push({ map: mid, rafAvg: +raf.avg.toFixed(2), rafMax: +raf.max.toFixed(1), cpuAvg: +cost.avg.toFixed(2), cpuP95: +cost.p95.toFixed(2) });
         if (cost.avg > SLOW_FRAME_MS) warn(`slow: update+draw averages ${cost.avg.toFixed(1)}ms/frame (p95 ${cost.p95.toFixed(1)}ms) > ${SLOW_FRAME_MS}ms`);
         await s.shot('map_' + mid);
         await s.drainGameErrors();
-        if (s.errors.length) throw new Error('errors while loading/rendering the map');
+        if (s.realErrors().length) throw new Error('errors while loading/rendering the map');
         // talk to every NPC (each in turn, from the current state)
+        const auto = await s.drive(90);
+        if (auto === 'timeout') warn('auto events on map entry did not finish within 90s of auto-advance');
+        if (auto === 'gameover' || !(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid))) { warn('map-entry script left the map; NPC checks use a fresh load'); await s.open(DEBUG_Q(mid), { waitMap: true }); }
         const npcs = await s.ev(() => G.mapScene.npcs.filter((n) => n.talk || (n.def && n.def.talk)).map((n) => n.id));
         await s.ev(() => { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; });
         for (const nid of npcs) {
@@ -694,7 +714,7 @@ async function mapSweep(browser, info) {
           if (r === 'gameover') { warn(`npc ${nid}: talk led to a game over`); await s.open(DEBUG_Q(mid), { waitMap: true }); }
           if (!(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid))) await s.open(DEBUG_Q(mid), { waitMap: true });
           await s.drainGameErrors();
-          if (s.errors.length) throw new Error(`errors while talking to npc '${nid}'`);
+          if (s.realErrors().length) throw new Error(`errors while talking to npc '${nid}'`);
         }
         // run every action/touch/auto event once on a fresh load
         const evs = await s.ev(() => (G.mapScene.def.events || []).map((e, i) => ({ i, trig: e.trigger, id: e.id || `${e.x},${e.y}` })));
@@ -705,7 +725,7 @@ async function mapSweep(browser, info) {
           if (r === 'timeout') warn(`event ${ev.id} (${ev.trig}): script did not finish within 90s`);
           if (r === 'gameover' || !(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid).catch(() => false))) await s.open(DEBUG_Q(mid), { waitMap: true });
           await s.drainGameErrors();
-          if (s.errors.length) throw new Error(`errors while running event '${ev.id}'`);
+          if (s.realErrors().length) throw new Error(`errors while running event '${ev.id}'`);
         }
         const bad = await s.ev(() => __qa.numericSanity());
         assert(!bad.length, 'state corrupted: ' + bad.join(', '));
@@ -769,8 +789,8 @@ async function battleSweep(browser, info) {
         }
       } catch (e) { status = 'fail'; msg = e.message; await fresh().catch(() => {}); }
       await s.drainGameErrors();
-      if (s.errors.length && status === 'pass') { status = 'fail'; msg = `${s.errors.length} game error(s) logged`; }
-      const r = { id: 'battle:' + troop, name: `battle ${troop}`, status, msg: status === 'pass' ? '' : msg, ms: Date.now() - t0, errors: dedupe(s.errors), warnings: [] };
+      if (s.realErrors().length && status === 'pass') { status = 'fail'; msg = `${s.realErrors().length} game error(s) logged`; }
+      const r = { id: 'battle:' + troop, name: `battle ${troop}`, status, msg: status === 'pass' ? '' : msg, ms: Date.now() - t0, errors: dedupe(s.realErrors()), warnings: [] };
       results.push(r); stats.push({ troop, result: msg, ms: r.ms });
       if (status !== 'pass') printResult(r);
     }
@@ -791,6 +811,7 @@ function G_opp(d) { return { up: 'down', down: 'up', left: 'right', right: 'left
   try { info = await gameInfo(browser); } catch (e) { console.error('Could not boot the game at all:', e.message); await browser.close(); process.exit(2); }
   console.log(`${C.b}Shorelight e2e${C.x}  ${info.maps.length} maps, ${info.troops.length} troops, story:${info.story}, world:${info.world}`);
   if (info.bootErrors.length) { console.log(`${C.r}errors during plain boot:${C.x}`); for (const e of dedupe(info.bootErrors).slice(0, 8)) console.log('   ' + e.slice(0, 400)); }
+  for (const e of info.bootErrors) BOOT_KEYS.add(firstLines(e, 1));
   defineTests(info);
   const sel = (id) => !ONLY || ONLY.some((o) => id.includes(o));
   console.log(`\n${C.b}Scenario tests${C.x}`);
@@ -802,7 +823,7 @@ function G_opp(d) { return { up: 'down', down: 'up', left: 'right', right: 'left
   await browser.close();
   // perf table
   if (perf.length) {
-    console.log(`\n${C.b}Frame cost per map${C.x} (update+draw CPU ms, headless Chromium software raster; rAF interval)`);
+    console.log(`\n${C.b}Frame cost per map${C.x} (update+draw CPU ms after warm-up, headless Chromium software raster, ${WORKERS} parallel worker(s) — use --workers 1 for clean numbers; rAF interval)`);
     perf.sort((a, b) => b.cpuAvg - a.cpuAvg);
     for (const p of perf.slice(0, 25)) console.log(`  ${p.cpuAvg > SLOW_FRAME_MS ? C.y : ''}${p.map.padEnd(24)} cpu avg ${String(p.cpuAvg).padStart(6)}  p95 ${String(p.cpuP95).padStart(6)}   rAF ${String(p.rafAvg).padStart(6)} (max ${p.rafMax})${C.x}`);
   }

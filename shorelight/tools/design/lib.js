@@ -980,11 +980,11 @@
     const col = o.col || '#dff0ff';
     // one long scarf arching behind the back from hip to hip, plus a fluttering end
     const sp = [-150, 210, -176, 40, 160, 30, 140, 210];
-    ribbonPath(c, sp, 22, { p: 0, bulge: 0.15, w0: 1, n: 30 });
-    const g = c.createLinearGradient(0, 30, 0, 210); g.addColorStop(0, U.rgba(col, 0.5)); g.addColorStop(1, U.rgba(col, 0.9));
+    ribbonPath(c, sp, 16, { p: 0, bulge: 0.35, w0: 1, n: 30 });
+    const g = c.createLinearGradient(0, 30, 0, 210); g.addColorStop(0, U.rgba(col, 0.25)); g.addColorStop(1, U.rgba(col, 0.6));
     c.fillStyle = g; c.fill(); c.strokeStyle = U.rgba(o.line || '#8aa8c8', 0.7); c.lineWidth = 1; c.stroke();
     ribbonPath(c, [-128, 150, -150, 110, -170, 120, -176, 80], 12, { p: 0.4, bulge: 0.3, w0: 1 });
-    c.fillStyle = U.rgba(col, 0.75); c.fill(); c.stroke();
+    c.fillStyle = U.rgba(col, 0.5); c.fill(); c.stroke();
   };
   // a bowl of 芋圓 held in front (body-local)
   AC.taroBowl = (c, x, y) => {
@@ -1102,7 +1102,7 @@
     c.fillStyle = '#f4ead8'; c.beginPath(); c.moveTo(-3, 0); c.quadraticCurveTo(-4, -8, -2, -10); c.lineTo(2, -10); c.quadraticCurveTo(4, -8, 3, 0); c.closePath(); c.fill();
     c.strokeStyle = '#8a7050'; c.lineWidth = 0.8; c.stroke();
     const g = c.createRadialGradient(-2, -16, 1, 0, -12, 12); g.addColorStop(0, U.shade(cap, 0.5)); g.addColorStop(1, cap);
-    c.beginPath(); c.moveTo(-11, -9); c.quadraticCurveTo(-10, -20, 0, -20); c.quadraticCurveTo(10, -20, 11, -9); c.closePath();
+    c.beginPath(); c.moveTo(-12, -8); c.bezierCurveTo(-13, -18, -6, -23, 0, -23); c.bezierCurveTo(6, -23, 13, -18, 12, -8); c.quadraticCurveTo(0, -11, -12, -8); c.closePath();
     c.fillStyle = g; c.fill(); c.strokeStyle = U.shade(cap, -0.5); c.lineWidth = 1; c.stroke();
     c.fillStyle = 'rgba(255,255,255,0.85)'; for (const [px, py] of [[-5, -14], [2, -17], [6, -12]]) { ell(c, px, py, 1.6, 1.3); c.fill(); }
     c.restore();

@@ -35,8 +35,8 @@
       skin: Object.assign({}, SKIN.fair, { base: T.fur, mid: T.furD, shade: T.furD, deep: U.shade(T.furD, -0.25), line: T.line, blush: o.blush || '#ff9aa0', lip: '#a05050' }),
       eye: Object.assign({ iris: ['#2a3a10', '#7d9a22', '#e4e070', '#fff6b0'], lash: U.shade(T.line, -0.3) }, o.eye || {}),
       hair: { base: T.fur, dark: T.furD, light: T.furL, line: T.line },
-      pose: Object.assign({ hx: 150, hy: 172, s: 1 }, o.pose || {}),
-      noNose: true, noBrows: true, ring: null, rimCol: null, hairShadow: false,
+      pose: Object.assign({ hx: 150, hy: 140, s: 0.9 }, o.pose || {}),
+      noNose: true, noBrows: true, ring: null, rimCol: null, hairShadow: false, noFaceLines: true,
       mouths: Object.assign({ normal: 'catw', smile: 'catw', smug: 'catw', think: 'catw', serious: 'catw' }, o.mouths || {}),
       neck() {},
       aura: o.aura,
@@ -63,7 +63,7 @@
           c.strokeStyle = T.white; c.lineWidth = 1.2;
           for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(k * 5, 8); c.lineTo(k * 7, -8 * tip); c.stroke(); }
           c.fillStyle = T.spot; c.beginPath(); c.moveTo(-8, -32 * tip); c.quadraticCurveTo(0, -42 * tip, 8, -32 * tip); c.quadraticCurveTo(0, -27 * tip, -8, -32 * tip); c.fill();
-          if (o.ears && o.ears.tuft) { c.strokeStyle = T.spot; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -38 * tip); c.lineTo(2, -50); c.stroke(); }
+          if (o.ears && o.ears.tuft) { c.fillStyle = T.spot; c.beginPath(); c.moveTo(-4, -36 * tip); c.quadraticCurveTo(0, -44, 3, -48); c.quadraticCurveTo(3, -42, 4, -36 * tip); c.closePath(); c.fill(); }
           c.restore();
         }
         head(c);
@@ -172,11 +172,11 @@
   }
 
   const BODY = {
-    round: [[-96, 200], [-100, 140], [-80, 96], [-40, 76], [40, 74], [84, 96], [100, 140], [96, 200]],
-    pear: [[-122, 200], [-118, 140], [-84, 96], [-40, 78], [40, 76], [86, 96], [118, 140], [122, 200]],
-    loaf: [[-138, 200], [-136, 124], [-110, 90], [-50, 76], [50, 74], [108, 88], [134, 124], [138, 200]],
-    tiny: [[-62, 200], [-66, 140], [-50, 104], [-24, 88], [26, 88], [52, 104], [66, 140], [62, 200]],
-    sleek: [[-70, 200], [-76, 140], [-62, 100], [-34, 80], [36, 80], [62, 100], [76, 140], [70, 200]],
+    round: [[-98, 250], [-100, 140], [-80, 96], [-40, 76], [40, 74], [84, 96], [100, 140], [98, 250]],
+    pear: [[-126, 250], [-118, 140], [-84, 96], [-40, 78], [40, 76], [86, 96], [118, 140], [126, 250]],
+    loaf: [[-140, 250], [-136, 124], [-110, 90], [-50, 76], [50, 74], [108, 88], [134, 124], [140, 250]],
+    tiny: [[-64, 250], [-66, 140], [-50, 104], [-24, 88], [26, 88], [52, 104], [66, 140], [64, 250]],
+    sleek: [[-74, 250], [-76, 140], [-62, 100], [-34, 80], [36, 80], [62, 100], [76, 140], [74, 250]],
   };
   function drawBody(c, T, kind, spots, glowSpot, o) {
     const pts = BODY[kind] || BODY.round;
@@ -185,8 +185,12 @@
     c.fillStyle = g; c.fill(); c.strokeStyle = T.line; c.lineWidth = 2; c.stroke();
     // belly
     const bw = kind === 'loaf' ? 1.3 : kind === 'pear' ? 1.15 : kind === 'tiny' ? 0.7 : kind === 'sleek' ? 0.7 : 1;
-    blob(c, [[-50, 200], [-56, 130], [-20, 96], [30, 96], [60, 130], [56, 200]].map(([x, y]) => [x * bw, y]));
+    blob(c, [[-50, 250], [-58, 140], [-20, 96], [30, 96], [62, 140], [56, 250]].map(([x, y]) => [x * bw, y]));
     c.fillStyle = T.furL; c.fill();
+    // soft shadow cast by the head
+    const hs = c.createRadialGradient(4, 74, 10, 4, 80, 90);
+    hs.addColorStop(0, U.rgba(T.line, 0.35)); hs.addColorStop(1, U.rgba(T.line, 0));
+    c.save(); blob(c, pts); c.clip(); c.fillStyle = hs; c.fillRect(-150, 60, 300, 120); c.restore();
     // spots / rosettes on the sides
     c.save(); blob(c, pts); c.clip();
     const r = DL.rng(o.spotSeed || 5);
@@ -194,7 +198,7 @@
     const W = Math.abs(pts[0][0]);
     for (let k = 0; k < n; k++) {
       const side = k % 2 ? 1 : -1;
-      const x = side * U.lerp(W * 0.55, W * 0.98, r()), y = U.lerp(96, 196, r()), rr = 3.5 + r() * 3;
+      const x = side * U.lerp(W * 0.5, W * 0.98, r()), y = U.lerp(96, 236, r()), rr = 3.5 + r() * 3;
       if (glowSpot) { glowDot(c, x, y, rr * 3, glowSpot, 0.6); }
       c.fillStyle = glowSpot || T.spot;
       if (spots === 'rosette') { c.strokeStyle = T.spot; c.lineWidth = 2; c.beginPath(); c.arc(x, y, rr + 1, 0.4, TAU - 0.4); c.stroke(); }
@@ -205,8 +209,8 @@
     if (o.paws !== false) {
       const px = kind === 'tiny' ? 26 : kind === 'loaf' ? 44 : 34;
       for (const dx of [-px, px]) {
-        ell(c, dx, 188, 15, 11); c.fillStyle = T.furL; c.fill(); c.strokeStyle = T.line; c.lineWidth = 1.5; c.stroke();
-        c.beginPath(); c.moveTo(dx - 4, 182); c.lineTo(dx - 4, 188); c.moveTo(dx + 4, 182); c.lineTo(dx + 4, 188); c.stroke();
+        ell(c, dx, 198, 17, 12); c.fillStyle = T.furL; c.fill(); c.strokeStyle = T.line; c.lineWidth = 1.5; c.stroke();
+        c.beginPath(); c.moveTo(dx - 5, 191); c.lineTo(dx - 5, 198); c.moveTo(dx + 5, 191); c.lineTo(dx + 5, 198); c.stroke();
       }
     }
   }
@@ -263,7 +267,7 @@
       c.restore();
     },
   };
-  const held = (name) => (c) => PROP[name](c);
+  const held = (name) => (c) => { c.save(); c.translate(6, 186); c.scale(1.6, 1.6); c.translate(-6, -150); PROP[name](c); c.restore(); };
 
   // ------------------------------------------------------------------ options
   DESIGN_OPTIONS.push({
@@ -315,7 +319,7 @@
           },
           tail: {},
           acc(c) {
-            c.save(); c.translate(-2, -20); c.scale(0.9, 0.9);
+            c.save(); c.translate(-4, 40); c.scale(0.85, 0.85);
             AC.daoGuan(c, { col: '#1a1a22', taiji: true, pin: '#c99550' });
             c.restore();
           },
@@ -381,7 +385,7 @@
         name: '燈火尾巴', en: 'Lantern-flame Tail', style: 'cel', expr: 'laugh', bg: ['#f08040', '#3a1a4a'], accent: '#ffd060',
         desc: '和燈籠舖呼應：毛色偏橘紅、尾巴尖端燃著一簇不燙手的燈火，脖子繫紅緞帶，張嘴大笑。跟星河站在一起像「燈籠舖的招牌貓」。',
         spec: tz({
-          fur: 'ember', body: 'pear', ears: { s: 1.05 }, eye: { iris: ['#4a2a08', '#c06a10', '#ffc050', '#fff4c0'] },
+          fur: 'ember', body: 'round', ears: { s: 1.05 }, eye: { iris: ['#4a2a08', '#c06a10', '#ffc050', '#fff4c0'] },
           tail: { spine: [86, 170, 160, 160, 160, 60, 118, 30], w: 26, flame: true, ring: '#5a2010' },
           bodyExtra(c) { AC.bow(c, 6, 98, '#d0283a', 1.1, true); },
         }),
@@ -390,7 +394,7 @@
         name: '招財糰子', en: 'Lucky Beckoning Tuanzi', style: 'water', expr: 'smile', bg: ['#f0d070', '#f09090'], accent: '#f0c050',
         desc: '過年版：金黃毛色、胸前紅肚兜繡金「福」，舉起一隻肉球招手、另一手抱著福壽古錢，鈴鐺叮噹。適合節慶活動與商店吉祥物。',
         spec: tz({
-          fur: 'golden', body: 'round', spots: 'sparse', eye: { iris: ['#3a2a08', '#8a6a10', '#f0d050', '#fffbd0'] },
+          fur: 'golden', body: 'pear', spots: 'sparse', eye: { iris: ['#3a2a08', '#8a6a10', '#f0d050', '#fffbd0'] },
           paws: false,
           bodyExtra(c) {
             // red bib 肚兜
@@ -400,9 +404,9 @@
             c.strokeStyle = '#f0c050'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-36, 102); c.quadraticCurveTo(4, 116, 44, 100); c.stroke();
             c.fillStyle = '#f8d060'; c.font = 'bold 26px "LXGW WenKai TC","Kaiti TC","STKaiti","Noto Serif TC","WenQuanYi Zen Hei",serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
             c.fillText('福', 4, 134);
-            PROP.coin(c);
+            c.save(); c.translate(34, 42); PROP.coin(c); c.restore();
             // paws: one raised beckoning
-            ell(c, -40, 186, 15, 11); c.fillStyle = '#fff0c8'; c.fill(); c.strokeStyle = '#6a4018'; c.lineWidth = 1.5; c.stroke();
+            ell(c, -40, 198, 17, 12); c.fillStyle = '#fff0c8'; c.fill(); c.strokeStyle = '#6a4018'; c.lineWidth = 1.5; c.stroke();
             c.save(); c.translate(-82, 92); c.rotate(-0.3);
             c.beginPath(); c.moveTo(-14, 40); c.quadraticCurveTo(-18, 0, 0, -10); c.quadraticCurveTo(18, 0, 14, 40); c.closePath();
             c.fillStyle = '#e8b450'; c.fill(); c.stroke();

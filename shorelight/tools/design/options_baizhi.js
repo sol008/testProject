@@ -43,7 +43,7 @@
           hair: { base: '#eceaf8', dark: '#a8a0d0', light: '#ffffff', line: '#8a80b4', hi: '#ffffff' },
           eye: { h: 1.04, irisH: 1.04 },
           aura(c) { AC.aura(c, '#c8d0ff', 0.3, 170); },
-          behind(c) { AC.pibo(c, { col: '#e8eeff', line: '#9aa8d8' }); },
+          behind(c) { AC.pibo(c, { col: '#b8c8ff', line: '#8a9ad8' }); },
           back(c, S) { HB.long(c, S, { len: 210, w: 0.95 }); },
           body(c, S) {
             OF.robe(c, S, { col: '#c8d0f0', colL: '#e0e6ff', colD: '#9aa4d0', line: '#4a5488', X: [4, 150], collar: [{ col: '#ffffff', line: '#9aa4c8', w: 6 }, { col: '#e8c8d8', line: '#a07a90', w: 4 }] });
@@ -139,7 +139,7 @@
       },
       {
         name: '渡魂歌者', en: 'Soul-ferrying Singer', style: 'classic', expr: 'normal', bg: ['#0e2a30', '#1a4a48'], accent: '#90f0c8',
-        desc: '強調「〈渡魂謠〉與玉笛」：半挽髮、兩側垂著翠玉流蘇，薄荷綠長衣繡浪紋，玉笛斜抱在胸前。安靜、神聖、帶一點哀傷。',
+        desc: '強調「〈渡魂謠〉與玉笛」：銀髮編成一圈辮冠、鬢邊垂著翠玉流蘇，薄荷綠長衣繡浪紋，玉笛斜抱在胸前。安靜、神聖、帶一點哀傷。',
         spec: bz({
           eye: { iris: ['#4a4a12', '#a09a3a', '#e8e490', '#fffbd8'], droop: 0.08 },
           hair: { base: '#e8f2f0', dark: '#98c0b8', light: '#ffffff', line: '#6a9890', hi: '#ffffff' },
@@ -151,10 +151,11 @@
             AC.flute(c, { x: -6, y: 172, a: -0.42, col: '#8fd8b8' });
           },
           front(c, S) {
-            HF.bun(c, S, { x: -24, y: -116, r: 0.8 });
             HF.cap(c, S, { mode: 'smooth' });
             HF.sideLocks(c, S, { near: 1, far: 0.9 });
-            HF.bangs(c, S, 'soft');
+            HF.bangs(c, S, 'soft', { len: 0.95 });
+            // braided crown circling the head
+            DL.braid(c, S, [-70, -40, -60, -118, 34, -124, 70, -50], 17, { n: 14 });
           },
           acc(c) {
             AC.jadeTag(c, -74, -40, 0.9, '#5aae88', '#2a8a6a');
@@ -214,11 +215,16 @@
       },
       {
         name: '墨韻燈靈', en: 'Ink-wash Lamp Spirit', style: 'ink', expr: 'normal', bg: ['#a0c8d8', '#222'], inkAccent: true,
-        desc: '水墨版：極長的髮如一筆濃淡墨暈開，素白衣只留紅繩與燈籠一點紅。留白多、意境重，適合做章節插畫或開場圖。',
+        desc: '水墨版：長髮在腦後鬆鬆一束、用紅繩繫住任它散開如一筆墨暈，素白衣只留紅繩與燈籠一點紅。留白多、意境重，適合章節插畫。',
         spec: bz({
           eye: { droop: 0.05, lid: 0.86 },
           hair: { base: '#d8dce4', dark: '#6a7488', light: '#ffffff', line: '#4a5468', hi: '#ffffff' },
-          back(c, S) { HB.long(c, S, { len: 220, w: 1.12, wf: 1.05 }); },
+          back(c, S) {
+            HB.nape(c, S, { len: 0.6 });
+            S.K.lock(c, [-60, 30, -120, 80, -96, 150, -132, 210], 46, { p: 0.35, bulge: 0.3, strands: 4 });
+            S.K.lock(c, [-56, 36, -92, 90, -80, 150, -100, 210], 26, { p: 0.4 });
+            AC.cordWrap(c, -78, 66, '#d0283a', 0.9);
+          },
           body(c, S) {
             OF.robe(c, S, { col: '#f4f2ee', colL: '#ffffff', colD: '#c8c4bc', line: '#6a6660', X: [4, 160], collar: [{ col: '#5a5a62', line: '#222', w: 6 }, { col: '#ffffff', line: '#a0a0a0', w: 4 }] });
             AC.bamboo(c, -110, 190, 1.1, -0.6, '#3a3a40');

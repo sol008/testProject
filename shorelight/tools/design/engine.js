@@ -1044,7 +1044,7 @@
       const lfa = layer(); const c = ctxOf(lfa);
       c.save(); headT(c, P);
       if (sp.faceDraw) sp.faceDraw(c, Sx); else drawFaceBase(c, sp, F, E);
-      shadeFace(c, sp, F, E);
+      if (!sp.noFaceLines) shadeFace(c, sp, F, E);
       c.restore();
       if (lf && sp.hairShadow !== false) {
         const sh = silhouette(lf, U.rgba(sp.skin.deep, 0.5));
@@ -1052,7 +1052,7 @@
       }
       c.save(); headT(c, P);
       if (sp.faceDraw2) sp.faceDraw2(c, Sx);
-      faceLines(c, sp, F);
+      if (!sp.noFaceLines) faceLines(c, sp, F);
       if (sp.wrinkles) sp.wrinkles(c, Sx);
       if (!sp.noNose) drawNose(c, sp, F);
       if (sp.mouthDraw) sp.mouthDraw(c, Sx); else drawMouth(c, sp, F, E);

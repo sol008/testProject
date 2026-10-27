@@ -37,7 +37,8 @@ const info = (cat, msg, w) => issue('info', cat, msg, w);
 const env = load({ console: 'silent', extra: EXTRA });
 const G = env.G;
 const indexList = indexScripts().concat(EXTRA);
-const ART_OPTIONAL = /^js\/gfx\//;
+// content still being written by other agents → warning; core/engine/data → error
+const ART_OPTIONAL = /^js\/(gfx|maps|story|i18n)\//;
 for (const f of env.missing) {
   if (ART_OPTIONAL.test(f)) warn('load', `script listed in index.html does not exist yet: ${f} (related checks are skipped)`, { file: 'index.html', line: SC.locate('index.html', f), id: f });
   else err('load', `script listed in index.html does not exist: ${f} (page will log ERR_FILE_NOT_FOUND and dependent features break)`, { file: 'index.html', line: SC.locate('index.html', f), id: f });
@@ -592,12 +593,19 @@ for (const f of scriptFiles) {
   }
 }
 for (const c of [...sc(/\bS\.flag\(/), ...sc(/\bG\.Flags\.set\(/)]) { const k = str(c.args[0]); if (k) (flagSets[k] = flagSets[k] || []).push(L(c)); }
+// files that set flags with a computed key (e.g. tutorial(k) → flags[k] = true): every snake_case string
+// literal in such a file may be a flag that gets set, so don't report those as never-set.
+const maybeSet = new Set();
+for (const f of scriptFiles) {
+  const src = SC.read(f);
+  if (/\bflags\[\s*[A-Za-z_$][\w$.]*\s*\]\s*=(?!=)|\bS\.flag\(\s*[A-Za-z_$`]|\bG\.Flags\.set\(\s*[A-Za-z_$`]/.test(src)) for (const m of src.matchAll(/['"]([a-z][a-z0-9_]{2,})['"]/g)) maybeSet.add(m[1]);
+}
 for (const c of [...sc(/\bS\.has\(/), ...sc(/\bG\.Flags\.(?:has|get)\(/)]) { const k = str(c.args[0]); if (k) (flagReads[k] = flagReads[k] || []).push(L(c)); }
 // data-side flag reads (learn entries gated by story flags, combo req)
 for (const [cid, c] of Object.entries(chars)) for (const l of c.learn || []) if (l.flag) (flagReads[l.flag] = flagReads[l.flag] || []).push({ file: F.chars, line: SC.locate(F.chars, l.flag), data: true });
 for (const [sid, s] of Object.entries(skills)) if (s.req) (flagReads[s.req] = flagReads[s.req] || []).push({ file: F.skills, line: SC.locate(F.skills, sid), data: true });
 for (const [k, reads] of Object.entries(flagReads)) {
-  if (flagSets[k] || /^(ev_|dead_)/.test(k)) continue;
+  if (flagSets[k] || maybeSet.has(k) || /^(ev_|dead_)/.test(k)) continue;
   const r = reads[0];
   if (r.data) warn('flags', 'story flag referenced by data (learn.flag / skill.req) is never set by any script — the gated skill can never be learned/used', { file: r.file, line: r.line, id: k, group: 'flag-data' });
   else warn('flags', `flag '${k}' is read (${reads.length}×) but never set by any script`, { file: r.file, line: r.line, id: k });
@@ -665,19 +673,25 @@ for (const [mid, def] of Object.entries(maps)) {
     }
   }
   const reach = (x, y) => inB(g, x, y) && seen[y * g.w + x] === 1;
-  const adjReach = (x, y, w = 1, h = 1) => { for (let yy = y - 1; yy <= y + h; yy++) for (let xx = x - 1; xx <= x + w; xx++) if (reach(xx, yy)) return true; return false; };
+  // interaction happens from an orthogonally adjacent cell (NPCs also across a 1-cell counter)
+  const adjReach = (x, y, w = 1, h = 1, far = false) => {
+    for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (reach(xx + dx, yy + dy) || (far && reach(xx + 2 * dx, yy + 2 * dy))) return true;
+    }
+    return false;
+  };
   for (const w of def.warps || []) if (inB(g, w.x, w.y) && !w.if && !reach(w.x, w.y)) warn('reach', `${mid}: warp at ${w.x},${w.y} → ${w.to} is not reachable from any entry point`, mw(mid, `'${w.to}'`));
   for (const c of def.chests || []) if (inB(g, c.x, c.y) && !c.spirit && !c.if && !adjReach(c.x, c.y)) warn('reach', `${mid}: chest ${c.id || c.x + ',' + c.y} cannot be reached`, mw(mid, c.id));
   for (const n of def.npcs || []) {
     if (!n.talk || n.if || n.spirit) continue;
     const p = valOf(n.pos, G.newState()) || [n.x, n.y];
-    if (inB(g, p[0], p[1]) && !adjReach(p[0], p[1])) warn('reach', `${mid}: npc ${n.id} cannot be reached to talk to`, mw(mid, `'${n.id}'`));
+    if (inB(g, p[0], p[1]) && !adjReach(p[0], p[1], 1, 1, true)) warn('reach', `${mid}: npc ${n.id} cannot be reached to talk to`, mw(mid, `'${n.id}'`));
   }
   for (const ev of def.events || []) {
     if (ev.trigger === 'auto' || ev.if || ev.spirit) continue;
     let ok = false;
-    for (let yy = ev.y; yy < ev.y + (ev.h || 1); yy++) for (let xx = ev.x; xx < ev.x + (ev.w || 1); xx++) if (ev.trigger === 'touch' ? reach(xx, yy) : adjReach(xx, yy)) ok = true;
-    if (!ok) warn('reach', `${mid}: ${ev.trigger} event ${ev.id || ev.x + ',' + ev.y} cannot be reached`, mw(mid, ev.id));
+    for (let yy = ev.y; yy < ev.y + (ev.h || 1); yy++) for (let xx = ev.x; xx < ev.x + (ev.w || 1); xx++) if (ev.trigger === 'touch' || ev.self ? reach(xx, yy) : adjReach(xx, yy)) ok = true;
+    if (!ok) warn('reach', `${mid}: ${ev.trigger} event ${ev.id || ev.x + ',' + ev.y} cannot be reached (initial state; ignores scripted terrain changes)`, mw(mid, ev.id));
   }
 }
 
