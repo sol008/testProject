@@ -119,7 +119,7 @@
     c9_es_howl: { name: '呼嘯', desc: '', mp: 0, type: 'buff', elem: null, target: 'self', power: 0, buffs: [{ stat: 'mag', amt: 0.3, turns: 3 }], fx: 'buff', sfx: 'wind' },
     c9_es_namecall: { name: '喚名', desc: '風裡有人在喊一個名字。', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 0.8, status: { id: 'seal', chance: 0.2, turns: 2 }, fx: 'wind', sfx: 'ghost' },
     c9_es_lastwind: { name: '最後的風', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 1.3, fx: 'wind', sfx: 'wind' },
-    c9_es_bite_big: { name: '鰻王噬', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemy', power: 1.75, status: { id: 'poison', chance: 0.4, turns: 3 }, fx: 'bite', sfx: 'crit' },
+    c9_es_bite_big: { name: '鰻王噬', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemy', power: 1.4, status: { id: 'poison', chance: 0.4, turns: 3 }, fx: 'bite', sfx: 'crit' },
     c9_es_tailsweep: { name: '甩尾', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 1.0, fx: 'water_big', sfx: 'splash' },
     c9_es_tailsweep2: { name: '甩尾連擊', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 0.6, hits: 2, fx: 'water_big', sfx: 'splash' },
     c9_es_snuff: { name: '撲火', desc: '鰻王撲向燈火，浪花劈頭蓋下！', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 0.95, fx: 'water_big', sfx: 'splash' },
@@ -197,7 +197,7 @@
   });
   defE('c9_moray_king', {
     name: '潮病鰻王', art: 'moray', variant: 2, scale: 1.9, lv: 33, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 8.5, atk: 1.95, mag: 1.8, def: 1.15, spd: 1.2, exp: 7, gold: 7 },
+    m: { hp: 7, atk: 1.7, mag: 1.7, def: 1.1, spd: 1.1, exp: 7, gold: 7 },
     skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1, 'ally_dead']],
     phases: [{ at: 0.4, phase: 2, text: '黑色的藤壺一片片剝落，鰻王的身體露出銀藍色——牠的動作反而更快了！',
       skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep2', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1, 'ally_dead']] }],
@@ -670,7 +670,7 @@
       v.flame = Math.max(40, v.flame == null ? 100 : v.flame);
       const xh = sc.party.find((p) => p.id === 'xinghe');
       if (xh && !xh.m.skills.includes('c9_guard_lamp')) xh.m.skills.push('c9_guard_lamp');
-      let p2 = false, dark = false;
+      let p2 = false, dark = false, tides = 0;
       const setFlame = (n, u) => {
         const before = v.flame;
         v.flame = Math.max(0, Math.min(100, n));
@@ -681,7 +681,7 @@
       const ai = sc.aiCommand.bind(sc);
       sc.aiCommand = (e) => {
         const cmd = ai(e);
-        if (e === king && cmd.skill === 'c9_es_tide_rise' && sc.enemies.some((x) => x !== king && !x.dead)) {
+        if (e === king && cmd.skill === 'c9_es_tide_rise' && (tides >= 1 || sc.enemies.some((x) => x !== king && !x.dead))) {
           return { kind: 'skill', skill: p2 ? 'c9_es_tailsweep2' : 'c9_es_tailsweep', targets: sc.alive('party') };
         }
         return cmd;
@@ -691,7 +691,7 @@
         await exec(u, cmd);
         if (cmd && cmd.skill === 'c9_guard_lamp') setFlame(v.flame + 15, u);
         if (u === king && cmd && cmd.skill === 'c9_es_snuff') setFlame(v.flame - 10, sc.alive('party')[0] || u);
-        if (u === king && cmd && cmd.skill === 'c9_es_tide_rise') sc.addStatus(king, 'atkUp', 3);
+        if (u === king && cmd && cmd.skill === 'c9_es_tide_rise') { tides++; sc.addStatus(king, 'atkUp', 3); }
       };
       const startTurn = sc.startTurn.bind(sc);
       sc.startTurn = async (u) => {
@@ -707,7 +707,7 @@
       const phases = sc.checkPhases.bind(sc);
       sc.checkPhases = async () => {
         await phases();
-        if (!p2 && king && king.phase === 2) { p2 = true; king.def = Math.round(king.def * 0.75); king.spd += 10; }
+        if (!p2 && king && king.phase === 2) { p2 = true; king.def = Math.round(king.def * 0.75); king.spd += 5; }
       };
       const draw = sc.draw.bind(sc);
       sc.draw = (ctx) => {

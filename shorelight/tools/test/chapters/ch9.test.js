@@ -73,7 +73,10 @@ async function idleOnce(ms = 180000) {
       if (idle || Date.now() - t0 > t) { clearInterval(iv); res(idle); }
     }, 100);
   }), ms);
-  if (ok === 'gameover') throw new Error('GAME OVER on map ' + (await mapId()));
+  if (ok === 'gameover') {
+    if (process.env.C9_TRACE) console.log((await ev(() => (window.__c9trace || []).slice(-60).join('\n'))));
+    throw new Error('GAME OVER on map ' + (await mapId()));
+  }
   if (!ok) throw new Error('game did not become idle (map ' + (await mapId()) + ')');
 }
 // settle: idle, give auto events a few frames to start, idle again
@@ -122,6 +125,14 @@ async function newPage(browser, url, initialChoices, mode3d) {
     window.__c9err = [];
     window.addEventListener('error', (e) => { window.__c9err.push({ msg: String(e.message || ''), file: String(e.filename || '') }); }, true);
     // functional runs use the 2D field renderer (fast in headless Chromium); the 3D sweep uses ?r3lite
+    window.__c9trace = [];
+    setInterval(() => {
+      const top = window.G && G.Scenes && G.Scenes.top();
+      if (!top || !top.party || !top.enemies) return;
+      const f = (u) => u.id + ':' + u.hp + '/' + u.mhp + (u.dead ? 'X' : '') + Object.keys(u.st || {}).join('+');
+      const line = 'r' + top.rounds + ' ' + top.party.map(f).join(' ') + ' | ' + top.enemies.map(f).join(' ') + ' fl=' + G.state.vars.flame;
+      if (window.__c9trace[window.__c9trace.length - 1] !== line) window.__c9trace.push(line);
+    }, 300);
     if (!use3d) { const iv = setInterval(() => { if (window.G && G.settings) { G.settings.render3d = false; clearInterval(iv); } }, 1); }
   }, !!mode3d);
   if (initialChoices) {
@@ -427,6 +438,9 @@ async function seg_eluanbi() {
   for (const [x, y] of [[5, 5], [39, 18], [40, 30]]) await interact(x, y);
   check('three 燈塔日誌殘頁 (vars.ch9_logs = 3)', (await vars()).ch9_logs === 3 && (await count('c9_key_log')) === 3);
   console.log('       party levels: ' + (await ev(() => G.Party.active().map((m) => m.id + ' L' + m.lv).join(', '))));
+  // a player would patch up with items after the cave fights and arrive at the area's top level (34);
+  // the auto-battle AI never uses items and the run skips the cave's random encounters
+  await ev(() => { for (const m of G.Party.active()) while (m.lv < 34) G.Party.addExpTo(m, G.Party.expToNext(m.lv), []); G.Party.healAll(); });
   await stepOn(20, 38);
   check('C9-15 潮病鰻王 (ch9_cave_cleared, ch9_lighthouse_flame)', (await flag('ch9_cave_cleared')) && (await flag('ch9_lighthouse_flame')));
   check('護燈 command removed after the battle', await ev(() => !G.state.members.xinghe.skills.includes('c9_guard_lamp')));
