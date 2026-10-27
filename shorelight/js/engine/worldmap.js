@@ -43,8 +43,8 @@ G.World = (() => {
   const LABEL_OFF = { tamsui: [-70, -14], guanyin: [-78, 8], bangka: [-62, 22], pingxi: [-56, 18], jiufen: [6, -14], badouzi: [10, -30], hsinchu: [-62, 0], xiangtian: [-70, 14] };
   // English names are 3-5x wider than the Chinese ones: labels nudged to the left of their dot are drawn right-aligned
   // there instead (so they end at the dot rather than run across it), and a few crowded pairs swap sides.
-  const LABEL_EN = { tamsui: [0, -14, 1], guanyin: [0, 8, 1], bangka: [0, 22, 1], pingxi: [-4, 18, 1], hsinchu: [0, 0, 1], xiangtian: [0, 14, 1],
-    alishan: [0, -2, 1], hengchun: [0, -12, 1], orchid: [0, -14, 0], yushan: [0, 12, 0] };
+  const LABEL_EN = { tamsui: [0, -14, 1], guanyin: [0, 8, 1], bangka: [0, 22, 1], pingxi: [0, 22, 0], hsinchu: [0, 0, 1], xiangtian: [0, 14, 1],
+    alishan: [40, -28, 1], hengchun: [0, -12, 1], orchid: [0, -14, 0], yushan: [0, 12, 0] };
   W.proj = (lon, lat, box) => {
     const x = (lon - LON0) * KX, y = (LAT0 - lat) * KY;
     return [box.x + x * box.s, box.y + y * box.s];
