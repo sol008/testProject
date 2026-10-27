@@ -1609,7 +1609,7 @@
     seg(c, hx + dx * 3 * t, hy + dy * 3 * t, lx - dx * 4 * t, ly - dy * 4 * t, '#d6b25a', 0.7 * t);
     c.save(); c.translate(lx, ly); c.rotate(atan2(dy, dx) - PI / 2);
     c.save(); c.globalCompositeOperation = 'lighter';
-    const g = c.createRadialGradient(lx, ly, 0, lx, ly, 12 * t); g.addColorStop(0, 'rgba(160,220,255,0.55)'); g.addColorStop(1, 'rgba(120,180,255,0)'); c.fillStyle = g; c.fillRect(lx - 12 * t, ly - 12 * t, 24 * t, 24 * t);
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, 12 * t); g.addColorStop(0, 'rgba(160,220,255,0.55)'); g.addColorStop(1, 'rgba(120,180,255,0)'); c.fillStyle = g; c.fillRect(-12 * t, -12 * t, 24 * t, 24 * t);
     c.restore();
     ell(c, 0, 0, 3.4 * t, 4.4 * t); paint(c, '#bfe6ff', -3, -4, 3, 4, lw * 0.8, 0.4, -0.2);
     seg(c, -2.6 * t, -4.3 * t, 2.6 * t, -4.3 * t, '#d6b25a', 1 * t); seg(c, -2.6 * t, 4.3 * t, 2.6 * t, 4.3 * t, '#d6b25a', 1 * t);
@@ -1875,7 +1875,7 @@
     const holdArm = R.LT ? (S.armPose ? 0 : 1) : R.B ? 0 : 1;
     const armFn = (i, dim) => drawArm(c, R, i, dim, () => {
       if (R.pose.w && (R.pose.w.hand != null ? R.pose.w.hand : 1) === i) weaponDraw(c, R);
-      else if (!R.pose.w && i === holdArm) heldDraw(c, R, R.arms[i]);
+      else if (!R.pose.w && !R.bat && i === holdArm) heldDraw(c, R, R.arms[i]);
       if (R.pose.item && i === 1) drawProp(c, R, R.pose.item, R.arms[1].w[0], R.arms[1].w[1] - 2 * R.k, -PI / 2, {});
     });
     const legs = () => {
@@ -1995,6 +1995,19 @@
         seg(c, x + 2.3 * k, y - 8 * k, x + 5 * k, y - 6 * k, rgba('#dff6ff', 0.9), 0.9 * k);
       }
     },
+    feathers(c, R) {
+      const h = R.arms[1].w, k = R.k;
+      [[-30, -10, -0.3], [-46, 4, 0.1], [-24, 12, 0.45], [-58, -4, -0.1]].forEach(([dx, dy, a]) => {
+        const x = h[0] + dx * k, y = h[1] + dy * k;
+        c.save(); c.translate(x, y); c.rotate(PI + a);
+        c.beginPath(); c.ellipse(0, 0, 7 * k, 2 * k, 0, 0, TAU); paint(c, '#1e1b26', -7, -2, 7, 2, R.lw * 0.6, 0.3, -0.1);
+        seg(c, -8 * k, 0, 7 * k, 0, rgba('#9a8ac8', 0.6), 0.6 * k);
+        c.restore();
+        c.save(); c.globalCompositeOperation = 'lighter';
+        seg(c, x + 4 * k, y, x + 18 * k, y + a * 6 * k, rgba(R.S.aura || '#b07aff', 0.35), 1.6 * k);
+        c.restore();
+      });
+    },
     ring(c, R) {
       const h = R.arms[1].w, k = R.k;
       c.save(); c.globalCompositeOperation = 'lighter';
@@ -2040,7 +2053,8 @@
     const sc = (S.size || 1);
     const k = 1, lw = bat ? 1.6 : 1.3;
     c.save(); c.scale(sc, sc);
-    if (pose.rot) { c.translate(0, -Q.leg * 0.4); c.rotate(pose.rot); }
+    if (pose.belly) { c.translate(0, -(Q.leg + Q.bh * 1.75)); c.scale(1, -1); }
+    else if (pose.rot) { c.translate(0, -Q.leg * 0.4); c.rotate(pose.rot); }
     const legY = -Q.leg - (pose.hop || 0);
     const by = legY - Q.bh * 0.55;
     const sw = pose.legs || [0, 0, 0, 0]; // swings: frontNear, frontFar, backNear, backFar
@@ -2342,6 +2356,11 @@
       if (p.w && map[style] && (p.w.type === 'spear' || p.w.type === 'fan')) p.w.type = style;
       if (p.w && style === 'lstaff' && pose === 'cast') { p.w.ang = 268; p.w.two = null; p.arms[1] = A([-0.3, -0.95], 1); p.arms[0] = A([-0.3, 0.3]); p.fx = ['sparks']; }
       if (p.w && style === 'whisk' && p.w.type === 'talisman' && pose !== 'attack') p.w.type = 'whisk';
+      if (style === 'ffan' && p.w) { // 墨鴉 throws crow feathers instead of talismans
+        if (p.w.type === 'talisman') p.w.type = pose === 'attack' ? 'ffan' : 'ffan';
+        if (p.w.type2 === 'fan' || p.w.type2 === 'talisman') p.w.type2 = null;
+        if (p.fx) p.fx = p.fx.map((f) => (f === 'talis' ? 'feathers' : f));
+      }
     } else {
       const nf = {
         idle: [A([-0.2, 0.9]), { a: -0.1, e: 0.2 }], ready: [A([-0.6, 0.3]), A([-0.4, 0.35])], attack: [A([-1.0, 0.05]), { a: -1, e: 0.4 }],
@@ -2365,7 +2384,7 @@
       guard: { legs: [0.3, 0.3, -0.3, -0.3], tail: 2, expr: 'focus', headY: 2, crouch: 3 },
       victory: { legs: [0.1, 0, -0.1, 0], hop: 4, tail: -5, expr: 'smile' },
       item: { legs: [0.05, -0.05, -0.05, 0.05], tail: -2, expr: 'smile' },
-      ko: { legs: [0.6, 0.5, -0.6, -0.5], rot: PI * 0.92, expr: 'ko' },
+      ko: { legs: [0.6, 0.5, -0.6, -0.5], belly: true, expr: 'ko' },
     }[pose] || { legs: [0, 0, 0, 0] };
   }
 
