@@ -5,7 +5,8 @@
 //   node tools/test/full_chain.js                       # whole run (≈ 60–90 min), one browser, one page
 //   node tools/test/full_chain.js --from ch6            # resume at the chapter-6 boundary save (saves/ch06.json)
 //   node tools/test/full_chain.js --to ch3              # stop after chapter 3 (still writes the ch04 boundary save)
-//   node tools/test/full_chain.js --assist              # also apply the chapter tests' own mid-chapter level boosts
+//   node tools/test/full_chain.js --assist              # also apply the chapter tests' own assumptions: their mid-chapter
+//                                                       # level boosts and the free shop gear kits they equip (logged)
 //   node tools/test/full_chain.js --difficulty normal   # default: easy (the setting every chapter test uses)
 //   node tools/test/full_chain.js --reload-at ch6       # boundary where the run reloads its save in a fresh page
 //   node tools/test/full_chain.js --out <dir>           # screenshots, saves, logs, report.json (default tools/test/out/chain)
@@ -364,6 +365,16 @@ class Harness {
       REPORT.forced = (REPORT.forced || []).concat([f]);
       log('FORCED', `ch${this.ch} [${cats.join(',')}] let through: ${f.code.slice(0, 160)}`);
       return this.page.evaluate(fn, arg);
+    }
+    // --assist: the chapter tests' own gear kits (free shop gear, with the items given in the same call) go through
+    if (cats.length && OPT.assist && cats.includes('gear') && cats.every((c) => c === 'gear' || c === 'items')) {
+      const a = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), assisted: true };
+      a.before = await this.page.evaluate(() => G.state.party.map((id) => id + ':' + Object.values(G.state.members[id].equip).filter(Boolean).join('/'))).catch(() => null);
+      REPORT.assisted = (REPORT.assisted || []).concat([a]);
+      log('ASSIST', `ch${this.ch} [${cats.join(',')}] driver gear kit applied (--assist): ${a.code.slice(0, 140)}`);
+      const r = await this.page.evaluate(fn, arg);
+      if (level) await this.levelAssumption(levelTarget(src, arg), 'driver level boost', src);
+      return r;
     }
     if (cats.length) {
       const b = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), arg: typeof arg === 'string' ? snippet(arg) : arg };
