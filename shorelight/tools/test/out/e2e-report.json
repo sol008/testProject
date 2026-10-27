@@ -1,28 +1,1557 @@
 {
- "when": "2026-10-27T05:13:34.629Z",
- "pass": 1,
- "fail": 1,
+ "when": "2026-10-27T05:21:22.807Z",
+ "pass": 166,
+ "fail": 5,
  "skip": 0,
  "results": [
   {
-   "id": "dialog",
-   "name": "dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens",
-   "status": "fail",
-   "msg": "choice did not appear after the 5 lines",
-   "ms": 5549,
+   "id": "map:sandbox",
+   "name": "map sandbox: loads, renders, NPC dialogue & events run",
+   "status": "pass",
+   "msg": "",
+   "ms": 6534,
    "errors": [],
    "warnings": []
   },
   {
-   "id": "gameover",
-   "name": "battle: defeat → GameOver scene → 重新挑戰 restores state and the retry can be won",
+   "id": "battle:dream_1",
+   "name": "battle dream_1",
    "status": "pass",
    "msg": "",
-   "ms": 3505,
+   "ms": 2176,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:banka_1",
+   "name": "battle banka_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2737,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:palace_4",
+   "name": "battle palace_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3340,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dream_2",
+   "name": "battle dream_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2135,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dream_3",
+   "name": "battle dream_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1334,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:banka_2",
+   "name": "battle banka_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3415,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:mine_1",
+   "name": "battle mine_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 1289,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:cape_3",
+   "name": "battle cape_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 7222,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:mine_2",
+   "name": "battle mine_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1391,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:banka_3",
+   "name": "battle banka_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 2111,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:mine_3",
+   "name": "battle mine_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 2056,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:banka_4",
+   "name": "battle banka_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 2909,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:mine_4",
+   "name": "battle mine_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 1613,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:cape_4",
+   "name": "battle cape_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 5243,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:mine_5",
+   "name": "battle mine_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 3663,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shore_1",
+   "name": "battle shore_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2425,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_chair",
+   "name": "battle boss_chair",
+   "status": "pass",
+   "msg": "",
+   "ms": 7440,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_nether",
+   "name": "battle boss_nether",
+   "status": "pass",
+   "msg": "",
+   "ms": 16064,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shore_2",
+   "name": "battle shore_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2274,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:orchid_1",
+   "name": "battle orchid_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 9422,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:alishan_1",
+   "name": "battle alishan_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5441,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:zhuqian_1",
+   "name": "battle zhuqian_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 6085,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shore_3",
+   "name": "battle shore_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4803,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:zhuqian_2",
+   "name": "battle zhuqian_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3050,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:alishan_2",
+   "name": "battle alishan_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3739,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shore_4",
+   "name": "battle shore_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 4186,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:orchid_2",
+   "name": "battle orchid_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 8014,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shore_5",
+   "name": "battle shore_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 2943,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:zhuqian_3",
+   "name": "battle zhuqian_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4571,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:alishan_3",
+   "name": "battle alishan_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4840,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:jiufen_1",
+   "name": "battle jiufen_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 3068,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:orchid_3",
+   "name": "battle orchid_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 5820,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:alishan_4",
+   "name": "battle alishan_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3487,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:zhuqian_4",
+   "name": "battle zhuqian_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 4943,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:jiufen_2",
+   "name": "battle jiufen_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 4416,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hakka_1",
+   "name": "battle hakka_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 4568,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yushan_1",
+   "name": "battle yushan_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5669,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:jiufen_3",
+   "name": "battle jiufen_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 2679,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:orchid_4",
+   "name": "battle orchid_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 7574,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yushan_2",
+   "name": "battle yushan_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2402,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hakka_2",
+   "name": "battle hakka_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 4242,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:jiufen_4",
+   "name": "battle jiufen_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3919,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hakka_3",
+   "name": "battle hakka_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1355,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_moya",
+   "name": "battle boss_moya",
+   "status": "pass",
+   "msg": "",
+   "ms": 2901,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yushan_3",
+   "name": "battle yushan_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4794,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hakka_4",
+   "name": "battle hakka_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 2552,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_ghost_king",
+   "name": "battle boss_ghost_king",
+   "status": "pass",
+   "msg": "",
+   "ms": 2796,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:windcave_1",
+   "name": "battle windcave_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2847,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:forest_1",
+   "name": "battle forest_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2302,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yushan_4",
+   "name": "battle yushan_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 5876,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:windcave_2",
+   "name": "battle windcave_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2402,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:forest_2",
+   "name": "battle forest_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1782,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:forest_3",
+   "name": "battle forest_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1980,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:windcave_3",
+   "name": "battle windcave_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 3465,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:vision_1",
+   "name": "battle vision_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 4793,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:forest_4",
+   "name": "battle forest_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 2256,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:windcave_4",
+   "name": "battle windcave_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3908,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:forest_5",
+   "name": "battle forest_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 3418,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_hongying",
+   "name": "battle boss_hongying",
+   "status": "pass",
+   "msg": "",
+   "ms": 1273,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:windcave_5",
+   "name": "battle windcave_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 2590,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lair_1",
+   "name": "battle lair_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 1809,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_tide_serpent",
+   "name": "battle boss_tide_serpent",
+   "status": "pass",
+   "msg": "",
+   "ms": 23622,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lair_2",
+   "name": "battle lair_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2804,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:vision_2",
+   "name": "battle vision_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 10010,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_wind_demon",
+   "name": "battle boss_wind_demon",
+   "status": "pass",
+   "msg": "",
+   "ms": 5040,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lair_3",
+   "name": "battle lair_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1788,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lukang_1",
+   "name": "battle lukang_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 1187,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lukang_2",
+   "name": "battle lukang_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1361,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lair_4",
+   "name": "battle lair_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 2488,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taitung_1",
+   "name": "battle taitung_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 8448,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_tiger",
+   "name": "battle boss_tiger",
+   "status": "pass",
+   "msg": "",
+   "ms": 2111,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:vision_3",
+   "name": "battle vision_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 6650,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lukang_3",
+   "name": "battle lukang_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4010,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:pingxi_1",
+   "name": "battle pingxi_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 1661,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:lukang_4",
+   "name": "battle lukang_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 1555,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:pingxi_2",
+   "name": "battle pingxi_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1221,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:pingxi_3",
+   "name": "battle pingxi_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1376,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:luo_1",
+   "name": "battle luo_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2773,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tamsui_1",
+   "name": "battle tamsui_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2236,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:luo_2",
+   "name": "battle luo_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 2142,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:vision_4",
+   "name": "battle vision_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 7067,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tamsui_2",
+   "name": "battle tamsui_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1597,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taitung_2",
+   "name": "battle taitung_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 9371,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tamsui_3",
+   "name": "battle tamsui_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 1881,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:luo_3",
+   "name": "battle luo_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4371,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tamsui_4",
+   "name": "battle tamsui_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3061,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taitung_3",
+   "name": "battle taitung_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4044,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shrine_1",
+   "name": "battle shrine_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5253,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tamsui_5",
+   "name": "battle tamsui_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 1756,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:luo_4",
+   "name": "battle luo_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 3538,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shrine_2",
+   "name": "battle shrine_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3285,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:guanyin_1",
+   "name": "battle guanyin_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2230,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:luo_5",
+   "name": "battle luo_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 2852,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:guanyin_2",
+   "name": "battle guanyin_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 1702,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taroko_1",
+   "name": "battle taroko_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 7286,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:guanyin_3",
+   "name": "battle guanyin_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 2497,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shrine_3",
+   "name": "battle shrine_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 7384,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:guanyin_4",
+   "name": "battle guanyin_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 4755,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_feast",
+   "name": "battle boss_feast",
+   "status": "pass",
+   "msg": "",
+   "ms": 8829,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tainan_1",
+   "name": "battle tainan_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 2179,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_qingfeng_mask",
+   "name": "battle boss_qingfeng_mask",
+   "status": "pass",
+   "msg": "",
+   "ms": 4399,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shrine_4",
+   "name": "battle shrine_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 7273,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taroko_2",
+   "name": "battle taroko_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 10869,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tainan_2",
+   "name": "battle tainan_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3712,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tainan_3",
+   "name": "battle tainan_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 3580,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:shrine_5",
+   "name": "battle shrine_5",
+   "status": "pass",
+   "msg": "",
+   "ms": 6272,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yanshui_1",
+   "name": "battle yanshui_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 3004,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taroko_3",
+   "name": "battle taroko_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 8588,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yanshui_2",
+   "name": "battle yanshui_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 5393,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:taroko_4",
+   "name": "battle taroko_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 9612,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:yanshui_3",
+   "name": "battle yanshui_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 6019,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:linto_1",
+   "name": "battle linto_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5864,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_qingxu",
+   "name": "battle boss_qingxu",
+   "status": "pass",
+   "msg": "",
+   "ms": 20685,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:linto_2",
+   "name": "battle linto_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 7572,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:beigang_1",
+   "name": "battle beigang_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 7896,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:linto_3",
+   "name": "battle linto_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 5482,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:beigang_2",
+   "name": "battle beigang_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 6716,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:linto_4",
+   "name": "battle linto_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 5629,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_colossus",
+   "name": "battle boss_colossus",
+   "status": "pass",
+   "msg": "",
+   "ms": 26072,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:beigang_3",
+   "name": "battle beigang_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 6261,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_linto",
+   "name": "battle boss_linto",
+   "status": "pass",
+   "msg": "",
+   "ms": 11406,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:toucheng_1",
+   "name": "battle toucheng_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 11590,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:beigang_4",
+   "name": "battle beigang_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 8607,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:palace_1",
+   "name": "battle palace_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 6991,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:anping_1",
+   "name": "battle anping_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 7787,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:palace_2",
+   "name": "battle palace_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 3651,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:toucheng_2",
+   "name": "battle toucheng_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 14263,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:anping_2",
+   "name": "battle anping_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 8293,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:palace_3",
+   "name": "battle palace_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 6474,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:toucheng_3",
+   "name": "battle toucheng_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 9204,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:anping_3",
+   "name": "battle anping_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 11105,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:anping_4",
+   "name": "battle anping_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 6880,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_qingfeng",
+   "name": "battle boss_qingfeng",
+   "status": "pass",
+   "msg": "",
+   "ms": 16865,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dagou_1",
+   "name": "battle dagou_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5108,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dagou_2",
+   "name": "battle dagou_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 6564,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_guzhao",
+   "name": "battle boss_guzhao",
+   "status": "fail",
+   "msg": "party (lv50) lost → GameOver. enemies null",
+   "ms": 43225,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dagou_3",
+   "name": "battle dagou_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 4938,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:dagou_4",
+   "name": "battle dagou_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 5880,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:penghu_1",
+   "name": "battle penghu_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 7143,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:donggang_1",
+   "name": "battle donggang_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5062,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:penghu_2",
+   "name": "battle penghu_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 6249,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:donggang_2",
+   "name": "battle donggang_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 5150,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:donggang_3",
+   "name": "battle donggang_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 7756,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:penghu_3",
+   "name": "battle penghu_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 12619,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hengchun_1",
+   "name": "battle hengchun_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 4217,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:xuanwu_1",
+   "name": "battle xuanwu_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 9227,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hengchun_2",
+   "name": "battle hengchun_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 7246,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hengchun_3",
+   "name": "battle hengchun_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 8849,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:xuanwu_2",
+   "name": "battle xuanwu_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 14210,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:hengchun_4",
+   "name": "battle hengchun_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 7840,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:xuanwu_3",
+   "name": "battle xuanwu_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 13669,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_fallwind",
+   "name": "battle boss_fallwind",
+   "status": "pass",
+   "msg": "",
+   "ms": 20731,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_moya2",
+   "name": "battle boss_moya2",
+   "status": "fail",
+   "msg": "party (lv50) lost → GameOver. enemies null",
+   "ms": 14145,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:cape_1",
+   "name": "battle cape_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 3330,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:cape_2",
+   "name": "battle cape_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 4850,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:blacktide_1",
+   "name": "battle blacktide_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 5383,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:blacktide_2",
+   "name": "battle blacktide_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 4934,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:blacktide_3",
+   "name": "battle blacktide_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 9171,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:blacktide_4",
+   "name": "battle blacktide_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 6321,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_kun",
+   "name": "battle boss_kun",
+   "status": "fail",
+   "msg": "party (lv50) lost → GameOver. enemies null",
+   "ms": 22120,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:farshore_1",
+   "name": "battle farshore_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 4709,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:farshore_2",
+   "name": "battle farshore_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 4221,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:farshore_3",
+   "name": "battle farshore_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 7170,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tower_1",
+   "name": "battle tower_1",
+   "status": "pass",
+   "msg": "",
+   "ms": 3916,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tower_2",
+   "name": "battle tower_2",
+   "status": "pass",
+   "msg": "",
+   "ms": 5846,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tower_3",
+   "name": "battle tower_3",
+   "status": "pass",
+   "msg": "",
+   "ms": 7402,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:tower_4",
+   "name": "battle tower_4",
+   "status": "pass",
+   "msg": "",
+   "ms": 8162,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:breath_game",
+   "name": "battle breath_game",
+   "status": "pass",
+   "msg": "",
+   "ms": 23052,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_yexuan",
+   "name": "battle boss_yexuan",
+   "status": "fail",
+   "msg": "party (lv50) lost → GameOver. enemies null",
+   "ms": 4598,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "battle:boss_wuxiang",
+   "name": "battle boss_wuxiang",
+   "status": "fail",
+   "msg": "party (lv50) lost → GameOver. enemies null",
+   "ms": 6944,
    "errors": [],
    "warnings": []
   }
  ],
- "perf": [],
+ "perf": [
+  {
+   "map": "sandbox",
+   "rafAvg": 17.22,
+   "rafMax": 33.4,
+   "cpuAvg": 11.06,
+   "cpuP95": 48.9
+  }
+ ],
  "bootErrors": []
 }

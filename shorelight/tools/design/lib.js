@@ -142,20 +142,23 @@
       const a = pts[idx], b = pts[idx + 1];
       seg.push({ x: a[0], y: a[1], ang: Math.atan2(b[1] - a[1], b[0] - a[0]), w: w * (1 - t * 0.45) });
     }
-    seg.forEach((s, i) => {
-      for (const side of [-1, 1]) {
-        c.save(); c.translate(s.x, s.y); c.rotate(s.ang + side * 0.5 * (i % 2 ? 1 : -1) * 0);
-        const r = s.w * 0.62;
-        c.beginPath();
-        c.ellipse(side * 0, side * r * 0.32 * (i % 2 ? 1 : -1), r * 1.05, r * 0.62, side * 0.55 * (i % 2 ? 1 : -1), 0, TAU);
-        const g = c.createLinearGradient(0, -r, 0, r);
-        g.addColorStop(0, U.mix(H.base, H.light, 0.25)); g.addColorStop(1, H.dark);
-        c.fillStyle = g; c.fill(); c.strokeStyle = H.line; c.lineWidth = 1.2; c.stroke();
-        c.strokeStyle = U.rgba(H.light, 0.5); c.lineWidth = 0.9;
-        c.beginPath(); c.ellipse(side * 0, side * r * 0.32 * (i % 2 ? 1 : -1) - r * 0.15, r * 0.6, r * 0.2, side * 0.55 * (i % 2 ? 1 : -1), Math.PI * 1.1, Math.PI * 1.9); c.stroke();
-        c.restore();
-      }
-    });
+    // alternating lobes, drawn bottom-up so each upper lobe overlaps the one below
+    for (let i = seg.length - 1; i >= 0; i--) {
+      const s = seg[i], side = i % 2 ? 1 : -1;
+      const nx = -Math.sin(s.ang), ny = Math.cos(s.ang);
+      const cx = s.x + nx * side * s.w * 0.2, cy = s.y + ny * side * s.w * 0.2;
+      c.save(); c.translate(cx, cy); c.rotate(s.ang + side * 0.55);
+      const rx = s.w * 0.62, ry = s.w * 0.36;
+      c.beginPath(); c.moveTo(-rx, 0); c.quadraticCurveTo(-rx * 0.2, -ry * 1.5, rx, -ry * 0.1); c.quadraticCurveTo(-rx * 0.1, ry * 1.4, -rx, 0); c.closePath();
+      const g = c.createLinearGradient(0, -ry, 0, ry);
+      g.addColorStop(0, U.mix(H.base, H.light, 0.35)); g.addColorStop(0.55, H.base); g.addColorStop(1, H.dark);
+      c.fillStyle = g; c.fill(); c.strokeStyle = H.line; c.lineWidth = 1.1; c.stroke();
+      c.strokeStyle = U.rgba(H.light, 0.55); c.lineWidth = 0.9;
+      c.beginPath(); c.moveTo(-rx * 0.6, -ry * 0.2); c.quadraticCurveTo(0, -ry * 0.75, rx * 0.6, -ry * 0.2); c.stroke();
+      c.strokeStyle = U.rgba(H.line, 0.45);
+      c.beginPath(); c.moveTo(-rx * 0.5, ry * 0.25); c.quadraticCurveTo(0, ry * 0.5, rx * 0.5, 0); c.stroke();
+      c.restore();
+    }
     const e = pts[pts.length - 1];
     if (o.tie) {
       c.fillStyle = o.tie; c.strokeStyle = U.shade(o.tie, -0.5); c.lineWidth = 1;
@@ -466,12 +469,15 @@
   OF.armor = (c, S, o) => {
     const m = o.metal || '#9aa3b0', mL = U.shade(m, 0.35), mD = U.shade(m, -0.4), line = o.line || '#2a2e36';
     for (let k = 2; k >= 0; k--) {
-      c.save(); c.translate(-92 + k * 6, 118 + k * 12);
-      c.beginPath(); c.moveTo(-34, 6); c.quadraticCurveTo(-26, -18, 18, -16); c.quadraticCurveTo(34, -12, 34, 2); c.quadraticCurveTo(0, 0, -34, 14); c.closePath();
-      const g = c.createLinearGradient(0, -18, 0, 14); g.addColorStop(0, mL); g.addColorStop(1, mD);
+      const oy = k * 13, ox = -k * 3;
+      c.beginPath();
+      c.moveTo(-58 + ox, 106 + oy); c.quadraticCurveTo(-102 + ox, 100 + oy, -128 + ox, 126 + oy);
+      c.lineTo(-130 + ox, 142 + oy); c.quadraticCurveTo(-102 + ox, 118 + oy, -58 + ox, 122 + oy); c.closePath();
+      const g = c.createLinearGradient(0, 100 + oy, 0, 142 + oy); g.addColorStop(0, mL); g.addColorStop(0.6, m); g.addColorStop(1, mD);
       c.fillStyle = g; c.fill(); c.strokeStyle = line; c.lineWidth = 1.3; c.stroke();
-      if (o.edge) { c.strokeStyle = o.edge; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-32, 12); c.quadraticCurveTo(0, -1, 33, 2); c.stroke(); }
-      c.restore();
+      if (o.edge) { c.strokeStyle = o.edge; c.lineWidth = 2; c.beginPath(); c.moveTo(-128 + ox, 140 + oy); c.quadraticCurveTo(-102 + ox, 117 + oy, -60 + ox, 121 + oy); c.stroke(); }
+      c.fillStyle = o.edge || mL;
+      for (const [rx, ry] of [[-74, 114], [-96, 114], [-116, 124]]) { ell(c, rx + ox, ry + oy, 1.8, 1.8); c.fill(); }
     }
     // far shoulder small plate
     c.save(); c.translate(80, 124);

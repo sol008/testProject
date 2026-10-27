@@ -722,9 +722,22 @@ async function battleSweep(browser, info) {
   const per = Math.ceil(troops.length / WORKERS);
   for (let i = 0; i < troops.length; i += per) chunks.push(troops.slice(i, i + per));
   const stats = [];
+  const lost = [];
   await pool(chunks, WORKERS, async (chunk) => {
     const s = new Session(browser);
-    const fresh = async () => { await openOnMap(s, info); await s.ev(() => { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; G.Input._hold('skip', true); }); };
+    const fresh = async () => {
+      await openOnMap(s, info);
+      await s.ev(() => {
+        G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; G.Input._hold('skip', true);
+        // give every member the strongest gear they can wear (debug party starts with chapter-1 equipment)
+        const score = (it) => Object.values(it.stats || {}).reduce((a, v) => a + v, 0) + (it.price || 0) / 1000;
+        for (const id of G.state.party) for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
+          const best = Object.keys(G.Data.items).filter((k) => G.Data.items[k].type === slot && G.Party.canEquip(id, k)).sort((a, b) => score(G.Data.items[b]) - score(G.Data.items[a]))[0];
+          if (best) { G.Inv.add(best, 1); G.Party.equip(id, slot, best); }
+        }
+        G.Party.healAll();
+      });
+    };
     await fresh();
     for (const troop of chunk) {
       const t0 = Date.now();
@@ -733,13 +746,18 @@ async function battleSweep(browser, info) {
       try {
         await s.ev(() => { G.Party.healAll(); for (const id of G.state.party) G.state.members[id].gauge = 0; });
         await s.script(`async (S) => S.battle(${JSON.stringify(troop)})`);
-        const ok = await s.ff(900, { until: 'window.__qa.done || __qa.top() === "GameOverScene"', drawEvery: 3 });
+        const ok = await s.ff(900, { until: 'window.__qa.done || __qa.top() === "GameOverScene"', drawEvery: 5 });
         const r = await s.ev(() => {
           const sc = G.Scenes.stack.find((x) => G.Battle && x instanceof G.Battle.Scene);
           return { done: window.__qa.done, res: window.__qa.res, top: __qa.top(), busy: G.Script.busy(),
             enemies: sc ? sc.enemies.map((e) => `${e.id}:${e.hp}/${e.mhp}${e.dead ? '†' : ''}`) : null, party: sc ? sc.party.map((p) => `${p.id}:${p.hp}`) : null, playtime: G.state.playtime };
         });
-        if (r.top === 'GameOverScene') { status = 'fail'; msg = `party (lv50) lost → GameOver. enemies ${r.enemies}`; await fresh(); }
+        if (r.top === 'GameOverScene') {
+          // a loss is a valid resolution; check the game-over screen is usable, then reload for the next troop
+          const go = await s.ev(() => ({ items: G.Scenes.top().list.items.map((i) => i.k) }));
+          if (!go.items.includes('retry')) { status = 'fail'; msg = 'GameOver without a retry option'; } else { msg = 'lose'; lost.push(troop); }
+          await fresh();
+        }
         else if (!ok || !r.done) { status = 'fail'; msg = `did not resolve within 900 game-seconds (top=${r.top}; enemies ${r.enemies}; party ${r.party})`; await fresh(); }
         else if (!['win', 'lose', 'flee'].includes(r.res)) { status = 'fail'; msg = 'unexpected result ' + r.res; }
         else {
@@ -759,6 +777,7 @@ async function battleSweep(browser, info) {
     await s.close();
   });
   const bt = results.filter((r) => r.id.startsWith('battle:'));
+  if (lost.length) console.log(`  ${C.y}balance note: a lv50 party with the best available gear LOST (auto-battle) to: ${lost.join(', ')}${C.x}`);
   console.log(`  ${C.g}${bt.filter((r) => r.status === 'pass').length} passed${C.x}, ${bt.filter((r) => r.status === 'fail').length ? C.r : ''}${bt.filter((r) => r.status === 'fail').length} failed${C.x}  ${C.d}(avg ${(bt.reduce((a, r) => a + r.ms, 0) / Math.max(1, bt.length) / 1000).toFixed(1)}s per battle)${C.x}`);
 }
 

@@ -208,7 +208,7 @@ G.Lanterns = {
     G.state.lanterns[id] = { name, time: G.state.playtime };
     return true;
   },
-  THRESHOLD: 11,
+  THRESHOLD: 14,
 };
 
 G.Quests = {

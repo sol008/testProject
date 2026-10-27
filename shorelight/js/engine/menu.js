@@ -695,6 +695,7 @@
         { k: 'runDefault', label: '預設奔跑', type: 'enum', opts: [false, true], names: ['關', '開'] },
         { k: 'autosave', label: '自動存檔', type: 'enum', opts: [true, false], names: ['開', '關'] },
         { k: 'autoAdvance', label: '對話自動播放', type: 'enum', opts: [false, true], names: ['關', '開'] },
+        { k: 'visualFx', label: '迷幻視覺強度（光敏保護）', type: 'enum', opts: [1, 0.5, 0.2], names: ['完整', '柔和', '最低'] },
         { k: 'quality', label: '畫質（重新啟動後生效）', type: 'enum', opts: ['high', 'low'], names: ['高', '省電'] },
         { k: 'fullscreen', label: '全螢幕', type: 'action' },
       ];

@@ -159,3 +159,8 @@ Minigames (js/engine/minigames.js): `await G.Mini.timing({...})`, `await G.Mini.
   `guests` fight this battle only (created at the party's average level if they have never joined);
   `turnLimit` ends the battle after N rounds with `turnLimitResult`.
 - Enemy data `endAt: 0.5` ends a story battle as a win at 50% HP (no death animation).
+- Final-battle hooks: `S.battle(troop, { onTurn: async (b, unit) => {}, hpFloor: { enemyId: 0.2 }, finishers: ['skill_id'],
+  onFloor: async (b, enemyUnit) => {}, loseOk: true })`. Inside hooks: `b.addPartyMember('baizhi', lv)`, `b.removePartyMember(id)`,
+  `await b.say2('baizhi:sad', '台詞')` (dialogue mid-battle), `b.say('battle message')`, `b.result = 'win'` to end the battle,
+  `b.rounds` (round counter), `b.enemies` / `b.party` units (hp, mhp, st, phase). Skills may set `invert: true` (turn the
+  target's buffs into debuffs). Players can lower psychedelic visuals in Settings (G.settings.visualFx) — keep strobing gentle.

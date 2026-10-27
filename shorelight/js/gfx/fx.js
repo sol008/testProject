@@ -238,6 +238,8 @@ G.FX = (() => {
   // ---------------------------------------------------------------- psychedelic vision overlay
   let buf = null;
   FX.vision = function (ctx, t, k) {
+    k *= G.settings.visualFx == null ? 1 : G.settings.visualFx;
+    if (k <= 0.01) return;
     const cv = G.canvas;
     if (!buf || buf.width !== cv.width) {
       buf = document.createElement('canvas');

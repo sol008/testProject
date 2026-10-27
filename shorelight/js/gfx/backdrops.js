@@ -1934,7 +1934,7 @@
   // ---------- 靈境 vision: breathing jungle of living geometry, cloud serpent ----------
   const VIS_PAL = [
     { bg0: '#03101a', bg1: '#0a3a3c', bg2: '#1a6a5a', glow: '#3affc0', acc: '#ffcc33', acc2: '#c040ff', leaf: '#06362e', leafHi: '#2affa8', floor: '#0a2a2a' },
-    { bg0: '#12041e', bg1: '#3a0a4a', bg2: '#7a2a6a', glow: '#ff4ad8', acc: '#33e0ff', acc2: '#ffa020', leaf: '#3a0a3e', leafHi: '#ff6af0', floor: '#2a0a2a' },
+    { bg0: '#0a0620', bg1: '#22104e', bg2: '#5a2a9a', glow: '#c060ff', acc: '#ffb020', acc2: '#ff4ad8', leaf: '#1e0e46', leafHi: '#c890ff', floor: '#1a0a3a' },
   ];
   // geometric patterned leaf (tip at angle a from base x,y)
   function geoLeaf(c, x, y, len, wid, a, P, alpha = 1) {
@@ -2058,7 +2058,7 @@
     const hue = t * 25;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < N; i += 8) lglow(ctx, pts[i][0], pts[i][1], pts[i][4] * 3.2, qHue(hue + i * 4), 0.2);
+    for (let i = 0; i < N; i += 8) lglow(ctx, pts[i][0], pts[i][1], pts[i][4] * 2.2, qHue(hue + i * 4), 0.24);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.fillStyle = lg(ctx, 0, 60, 0, 330, [[0, '#0e3a44'], [0.5, '#06202a'], [1, '#12304a']]);
     ctx.beginPath(); ctx.moveTo(left[0][0], left[0][1]);
@@ -2086,12 +2086,12 @@
     ctx.restore();
   }
   def('vision', (c) => { c.drawImage(visBack(0), 0, 0, W, H); visBack(1); visFront(0); visFront(1); mandalaSpr('v1', 260, ['#ffe08a', '#3affc0', '#ff6af0']); }, (ctx, t) => {
-    const mix = 0.5 + 0.5 * Math.sin(t * 0.35); // hues drift between the two palettes
+    const sw = Math.sin(t * 0.3), mix = 0.5 + 0.5 * Math.sign(sw) * Math.pow(Math.abs(sw), 0.6); // hues drift: emerald <-> violet
     ctx.save(); ctx.globalAlpha = mix; ctx.drawImage(visBack(1), 0, 0, W, H); ctx.restore();
     // living geometry: counter-rotating mandalas over the portal
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     const m1 = mandalaSpr('v1', 260, ['#ffe08a', '#3affc0', '#ff6af0']);
-    for (const [k, sc, sp, a] of [[0, 1 + Math.sin(t * 0.9) * 0.08, 0.08, 0.35], [1, 0.55 + Math.sin(t * 1.3 + 1) * 0.05, -0.14, 0.45]]) {
+    for (const [k, sc, sp, a] of [[0, 0.86 + Math.sin(t * 0.9) * 0.08, 0.08, 0.4], [1, 0.5 + Math.sin(t * 1.3 + 1) * 0.05, -0.14, 0.5]]) {
       ctx.save(); ctx.translate(640, 250); ctx.rotate(t * sp + k); ctx.scale(sc, sc);
       ctx.globalAlpha = a * (0.7 + 0.3 * Math.sin(t * 0.7 + k));
       ctx.drawImage(m1, -260, -260, 520, 520); ctx.restore();
@@ -2103,9 +2103,6 @@
     ctx.save();
     ctx.drawImage(visFront(0), 0, 0, W, H);
     ctx.globalAlpha = mix; ctx.drawImage(visFront(1), 0, 0, W, H);
-    ctx.globalCompositeOperation = 'lighter';
-    const br = 0.5 + 0.5 * Math.sin(t * 0.9);
-    lglow(ctx, 640, 280, 380, qHue(150 + t * 20), 0.07 + br * 0.09);
     ctx.restore();
     motes(ctx, t, { n: 36, seed: 71, x: 0, y: 60, w: W, h: 620, vx: 3, vy: -12, r: 6, cols: ['#3affc0', '#ffcc33', '#ff6af0', '#33e0ff'], col: '#3affc0', a: 0.6, tw: 2, wob: 30 });
   });
@@ -2212,7 +2209,7 @@
       const big = s > 0.36, g = big ? bx : ctx;
       if (!big && pending) { ctx.drawImage(brBuf, 0, 0, W, H); pending = false; }
       g.save(); if (big) g.setTransform(0.5, 0, 0, 0.5, 0, 0);
-      g.translate(cx, cy); g.rotate(rot); g.globalAlpha = a;
+      g.translate(cx, cy); if (!big) g.rotate(rot); else if (k % 2) g.scale(-1, 1); g.globalAlpha = a;
       g.drawImage(tx, -BR_R * s, -BR_R * s, BR_R * 2 * s, BR_R * 2 * s);
       g.restore();
       if (big) pending = true;
@@ -2221,7 +2218,7 @@
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     // pulsing core
     const p = 0.5 + 0.5 * Math.sin(t * 1.4);
-    lglow(ctx, cx, cy, 220 + p * 60, qHue(t * 40), 0.35 + p * 0.2);
+    lglow(ctx, cx, cy, 150 + p * 40, qHue(t * 40), 0.4 + p * 0.2);
     lglow(ctx, cx, cy, 50 + p * 20, '#ffffff', 0.8, true);
     // rotating golden star-polygons
     ctx.strokeStyle = '#ffe6a0'; ctx.lineWidth = 1.6;
@@ -2389,8 +2386,8 @@
       }
       ctx.stroke();
     }
-    for (let i = 0; i < 5; i++) {
-      const a = 0.05 + 0.04 * Math.sin(t * 0.5 + i * 1.3), x0 = 480 + i * 70 + Math.sin(t * 0.15 + i) * 20;
+    for (let i = 0; i < 5; i += 2) {
+      const a = 0.06 + 0.05 * Math.sin(t * 0.5 + i * 1.3), x0 = 480 + i * 70 + Math.sin(t * 0.15 + i) * 20;
       ctx.globalAlpha = a; ctx.fillStyle = '#c8f6ff';
       ctx.beginPath(); ctx.moveTo(x0, -10); ctx.lineTo(x0 + 30, -10); ctx.lineTo(x0 + 120 + (i - 2) * 60, 720); ctx.lineTo(x0 + 40 + (i - 2) * 60, 720); ctx.closePath(); ctx.fill();
     }

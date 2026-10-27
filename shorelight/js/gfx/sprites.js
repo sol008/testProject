@@ -1188,11 +1188,12 @@
     c.fillStyle = rgba('#3d4762', 0.62);
     c.fillRect(X(0) - 0.85 * k, Y(-0.7), 1.7 * k, h.ry * 0.62); // forehead line
     if (t === 'truku_m') { c.fillRect(X(0) - 1 * k, Y(0.74), 2 * k, h.ry * 0.24); return; }
-    c.beginPath(); // broad cheek band from ear to ear across the mouth
-    c.moveTo(X(-0.98), Y(0.3)); c.quadraticCurveTo(X(0), Y(0.42), X(0.98), Y(0.3));
-    c.lineTo(X(0.92), Y(0.6)); c.quadraticCurveTo(X(0), Y(0.92), X(-0.92), Y(0.6)); c.closePath(); c.fill();
-    c.strokeStyle = rgba('#2a3148', 0.35); c.lineWidth = 0.5 * k;
-    for (let j = 1; j < 4; j++) { c.beginPath(); c.moveTo(X(-0.95), Y(0.3 + j * 0.075)); c.quadraticCurveTo(X(0), Y(0.42 + j * 0.115), X(0.95), Y(0.3 + j * 0.075)); c.stroke(); }
+    c.fillStyle = rgba('#46506c', 0.42);
+    c.beginPath(); // band from ear to ear sweeping down around the mouth (V-shaped)
+    c.moveTo(X(-0.98), Y(0.38)); c.quadraticCurveTo(X(-0.3), Y(0.5), X(0), Y(0.56)); c.quadraticCurveTo(X(0.3), Y(0.5), X(0.98), Y(0.38));
+    c.lineTo(X(0.94), Y(0.56)); c.quadraticCurveTo(X(0.3), Y(0.74), X(0), Y(0.86)); c.quadraticCurveTo(X(-0.3), Y(0.74), X(-0.94), Y(0.56)); c.closePath(); c.fill();
+    c.strokeStyle = rgba('#2a3148', 0.3); c.lineWidth = 0.45 * k;
+    for (let j = 1; j < 3; j++) { const o = j * 0.1; c.beginPath(); c.moveTo(X(-0.96), Y(0.4 + o * 0.9)); c.quadraticCurveTo(X(-0.3), Y(0.53 + o), X(0), Y(0.6 + o)); c.quadraticCurveTo(X(0.3), Y(0.53 + o), X(0.96), Y(0.4 + o * 0.9)); c.stroke(); }
   }
   function ghostMask(c, R) { // 鬼面 — pale demon mask with dark eye holes and red streaks
     const h = R.head, k = R.k, T = R.T;
@@ -1341,11 +1342,12 @@
       const pts = [];
       for (let j = 0; j < n; j++) { const a = j * TAU / n; pts.push([cx + cos(a) * rx, cy + sin(a) * ry, sin(a)]); }
       pts.sort((a, b) => a[2] - b[2]);
+      let ci = 0;
       for (const [x, y, z] of pts) {
         if (z > 0.2 && R.B) continue;
         for (const dx of [-1, 1]) { ell(c, x + dx * 1.6 * k, y + 0.4 * k, 1.4 * k, 0.8 * k, dx * 0.5); fill(c, '#4f8a3a'); }
-        const col = cols[((x * 7 + y * 3) | 0) % cols.length & 0x7fffffff % cols.length] || cols[0];
-        ball(c, x, y, 2.1 * k * (0.85 + z * 0.15), col, R.lw * 0.5, 0.25, -0.1);
+        const col = cols[(ci++ * 3) % cols.length];
+        ball(c, x, y, 2.5 * k * (0.85 + z * 0.15), col, R.lw * 0.5, 0.25, -0.1);
         circ(c, x, y, 0.7 * k); fill(c, '#ffe9a0');
       }
     },
@@ -1355,13 +1357,12 @@
       const h = R.head, k = R.k, T = R.T, cy = h.y - h.ry * 0.62;
       const cols = ['#e83a3a', '#f2c230', '#3a9a5a', '#2f6ac0', '#e83a3a'];
       if (!R.B) for (let j = 0; j < 5; j++) { const u = -0.7 + j * 0.35; const x = HX(R, u); if (R.LT && u < -0.5) continue; ball(c, x, cy - 2 * k, 1.7 * k, cols[j], R.lw * 0.5, 0.3, -0.1); }
-      for (const u of [-0.25, 0.25]) { const x = HX(R, u) + (R.B ? 0 : 0); c.beginPath(); c.moveTo(x, cy - 3 * k); c.quadraticCurveTo(x + u * 8 * k, cy - 10 * k, x + u * 12 * k, cy - 14 * k); stroke(c, '#f4f0e6', 2 * k); stroke(c, rgba('#c0302a', 0.4), 0.7 * k); }
     },
     tsou(c, R, o, phase) { // Tsou leather cap with long feathers
       const h = R.head, k = R.k, T = R.T, col = o.color || '#7a5236';
       const cx = h.x + h.rx * 0.06 * T, cy = h.y - h.ry * 0.3;
       if (phase === 'pre' || (phase === 'front' && R.B)) {
-        for (const [dx, a, len] of [[-0.15, -0.35, 1.45], [0.15, -0.12, 1.65], [0.42, 0.18, 1.4]]) {
+        for (const [dx, a, len] of [[-0.05, -0.08, 1.5], [0.22, 0.22, 1.3]]) {
           const bx = R.LT ? cx + h.rx * (0.4 + dx) : cx + h.rx * dx * 1.4, by = cy - h.ry * 0.62;
           const ang = -PI / 2 + a + (R.LT ? 0.45 : 0);
           const tx = bx + cos(ang) * h.ry * len, ty = by + sin(ang) * h.ry * len;
@@ -1392,10 +1393,10 @@
     taoist(c, R, o, phase) { // soft black Taoist hat (混元巾-like)
       if (phase !== 'front') return;
       const h = R.head, k = R.k, col = o.color || '#23222c';
-      const cx = h.x + h.rx * 0.06 * R.T, cy = h.y - h.ry * 0.42;
-      c.beginPath(); c.moveTo(cx - h.rx * 1.06, cy + 1 * k); c.lineTo(cx - h.rx * 0.82, cy - h.ry * 0.95); c.quadraticCurveTo(cx, cy - h.ry * 1.25, cx + h.rx * 0.82, cy - h.ry * 0.95); c.lineTo(cx + h.rx * 1.06, cy + 1 * k); c.quadraticCurveTo(cx, cy + h.ry * 0.25, cx - h.rx * 1.06, cy + 1 * k); c.closePath();
+      const cx = h.x + h.rx * 0.08 * R.T, cy = h.y - h.ry * 0.62;
+      c.beginPath(); c.moveTo(cx - h.rx * 1.02, cy + 1 * k); c.quadraticCurveTo(cx - h.rx * 0.95, cy - h.ry * 0.5, cx - h.rx * 0.62, cy - h.ry * 0.72); c.quadraticCurveTo(cx, cy - h.ry * 0.86, cx + h.rx * 0.62, cy - h.ry * 0.72); c.quadraticCurveTo(cx + h.rx * 0.95, cy - h.ry * 0.5, cx + h.rx * 1.02, cy + 1 * k); c.quadraticCurveTo(cx, cy + h.ry * 0.2, cx - h.rx * 1.02, cy + 1 * k); c.closePath();
       paint(c, col, cx - h.rx, cy - h.ry, cx + h.rx, cy, R.lw, 0.2, -0.2);
-      if (!R.B) { const y = cy - h.ry * 0.45; c.beginPath(); c.roundRect(cx - 2.2 * k - R.T * h.rx * 0.4, y - 1.8 * k, 4.4 * k, 3.6 * k, 1 * k); paint(c, o.acc || '#d8c06a', cx - 2, y - 2, cx + 2, y + 2, R.lw * 0.5); }
+      if (!R.B) { const y = cy - h.ry * 0.3; c.beginPath(); c.roundRect(cx - 2.2 * k - R.T * h.rx * 0.4, y - 1.8 * k, 4.4 * k, 3.6 * k, 1 * k); paint(c, o.acc || '#d8c06a', cx - 2, y - 2, cx + 2, y + 2, R.lw * 0.5); }
     },
     scholar(c, R, o, phase) { // 儒巾 soft cap with ribbons behind
       const h = R.head, k = R.k, col = o.color || '#24232c';
@@ -1417,8 +1418,8 @@
     guard(c, R, o, phase) { // temple-guard helmet: dark dome, flaps, gold lamp emblem
       if (phase !== 'front') return;
       const h = R.head, k = R.k, col = o.color || '#2a2d3e';
-      const cx = h.x + h.rx * 0.06 * R.T, cy = h.y - h.ry * 0.25;
-      c.beginPath(); c.ellipse(cx, cy, h.rx + 3 * k, h.ry * 1.05, 0, PI * 0.92, PI * 2.08); c.lineTo(cx + h.rx + 3 * k, cy + h.ry * 0.6); c.lineTo(cx + h.rx * 0.75, cy + h.ry * 0.6);
+      const cx = h.x + h.rx * 0.06 * R.T, cy = h.y - h.ry * 0.3;
+      c.beginPath(); c.ellipse(cx, cy, h.rx + 3 * k, h.ry * 0.92, 0, PI * 0.92, PI * 2.08); c.lineTo(cx + h.rx + 3 * k, cy + h.ry * 0.6); c.lineTo(cx + h.rx * 0.75, cy + h.ry * 0.6);
       c.quadraticCurveTo(cx, cy - h.ry * 0.15, cx - h.rx * 0.75, cy + h.ry * 0.6); c.lineTo(cx - h.rx - 3 * k, cy + h.ry * 0.6); c.closePath();
       if (R.B) { c.beginPath(); c.ellipse(cx, cy, h.rx + 3 * k, h.ry * 1.05, 0, PI * 0.92, PI * 2.08); c.lineTo(cx + h.rx + 2 * k, cy + h.ry * 0.95); c.lineTo(cx - h.rx - 2 * k, cy + h.ry * 0.95); c.closePath(); }
       paint(c, col, cx - h.rx, cy - h.ry, cx + h.rx, cy + h.ry, R.lw, 0.26, -0.2);
@@ -1841,7 +1842,7 @@
     const sg = R.LT ? -1 : (R.B ? -1 : 1);
     const long = { staff: 1, lstaff: 1, oar: 1, spear: 1, glaive: 1, halberd: 1, flag: 1, pestle: 1, paddle: 1, hoe: 1, broom: 1 };
     if (long[it]) {
-      const ang = R.LT ? -PI / 2 - 0.12 : -PI / 2 + sg * 0.06;
+      const ang = R.LT ? -PI / 2 - 0.2 : -PI / 2 + sg * 0.06;
       const L = propLen(R, it);
       drawProp(c, R, it, x, y + 1 * k, ang, { grip: clamp((-y - 2) / L, 0.12, 0.8) });
     } else if (it === 'cane') drawProp(c, R, 'cane', x, y, -PI / 2 + (R.LT ? -0.22 : sg * 0.1), { grip: clamp(1 - (-y - 1) / propLen(R, 'cane'), 0, 0.97) });
@@ -1868,9 +1869,10 @@
     if (S.glow) {
       const g = c.createRadialGradient(0, R.shY, 0, 0, R.shY, -R.head.y * 0.7);
       g.addColorStop(0, rgba(S.glow, 0.3)); g.addColorStop(0.6, rgba(S.glow, 0.1)); g.addColorStop(1, rgba(S.glow, 0));
-      c.fillStyle = g; c.fillRect(-R.P.hr * 3, R.head.y - R.P.hr * 2, R.P.hr * 6, -R.head.y + R.P.hr * 2);
+      const gr = -R.head.y * 0.7;
+      c.fillStyle = g; c.fillRect(-gr, R.shY - gr, gr * 2, gr * 2);
     }
-    const holdArm = R.LT ? 1 : R.B ? 0 : 1;
+    const holdArm = R.LT ? (S.armPose ? 0 : 1) : R.B ? 0 : 1;
     const armFn = (i, dim) => drawArm(c, R, i, dim, () => {
       if (R.pose.w && (R.pose.w.hand != null ? R.pose.w.hand : 1) === i) weaponDraw(c, R);
       else if (!R.pose.w && i === holdArm) heldDraw(c, R, R.arms[i]);
@@ -2251,13 +2253,14 @@
       p.legs = s === 0 ? [[0, 0], [0, 0]] : s > 0 ? [[0.3, 0.05], [-0.22, 0.42]] : [[-0.22, 0.42], [0.3, 0.05]];
       p.arms = s === 0 ? [{ a: 0, e: 0.08 }, { a: 0, e: 0.08 }] : [{ a: -0.32 * s, e: 0.15 }, { a: 0.32 * s, e: 0.15 }];
     }
+    const holdIdx = view === 'side' ? (S.armPose ? 0 : 1) : view === 'back' ? 0 : 1;
     if (S.held && { cane: 1, staff: 1, lstaff: 1, oar: 1, spear: 1, glaive: 1, halberd: 1, flag: 1, pestle: 1, paddle: 1, hoe: 1, broom: 1, lantern: 1, oillamp: 1, yueqin: 1, basket: 1, medbox: 1 }[S.held]) {
-      const hi = view === 'side' ? 1 : view === 'back' ? 0 : 1;
-      p.arms[hi] = view === 'side' ? { a: 0.55, e: 0.6 } : { a: 0.2, e: 0.75, out: 0.25 };
+      const hi = holdIdx;
+      p.arms[hi] = view === 'side' ? { a: 0.95, e: 0.3 } : { a: 0.2, e: 0.75, out: 0.25 };
       if (S.held === 'lantern' || S.held === 'oillamp' || S.held === 'basket' || S.held === 'medbox') p.arms[hi] = view === 'side' ? { a: 0.35, e: 0.25 } : { a: 0.1, e: 0.15, out: 0.35 };
       if (S.held === 'yueqin') p.arms[hi] = view === 'side' ? { a: 0.7, e: 1.0 } : { a: 0.3, e: 1.2, out: -0.2 };
     } else if (S.held) {
-      const hi = view === 'side' ? 1 : view === 'back' ? 0 : 1;
+      const hi = holdIdx;
       p.arms[hi] = view === 'side' ? { a: 0.5, e: 1.2 } : { a: 0.15, e: 1.1, out: -0.1 };
     }
     if (S.armPose) { // giant figures: 千里眼 shading the eyes, 順風耳 cupping the ear
@@ -2290,10 +2293,10 @@
         idle: () => set(A([-0.3, 0.86]), { a: -0.12, e: 0.3 }, { type: 'sword', ang: 128, glow: S.aura }),
         ready: () => set(A([-0.78, 0.42]), A([-0.42, 0.28]), { type: 'sword', ang: 205, glow: S.aura }),
         attack: () => set(A([-0.98, 0.12]), { a: -1.0, e: 0.4 }, { type: 'sword', ang: 183, glow: S.aura }, { fx: ['slash'] }),
-        cast: () => set(A([-0.42, -0.8], 1), A([-0.4, 0.3]), { type: 'sword', ang: 262, glow: S.aura }, { fx: ['sparks'] }),
+        cast: () => set(A([-0.8, -0.5], 1), A([-0.4, 0.3]), { type: 'sword', ang: 250, glow: S.aura }, { fx: ['sparks'] }),
         hurt: () => set(A([-0.1, 0.9]), { a: 0.7, e: 0.4 }, { type: 'sword', ang: 112 }),
         guard: () => set(A([-0.62, 0.32]), A([-0.55, 0.42]), { type: 'sword', ang: 262 }),
-        victory: () => set(A([-0.2, -0.96], 1), A([0.3, 0.6], 1), { type: 'sword', ang: 268, glow: S.aura }),
+        victory: () => set(A([-0.72, -0.66], 1), A([0.3, 0.6], 1), { type: 'sword', ang: 255, glow: S.aura }),
         item: () => set(A([-0.62, -0.05]), { a: -0.1, e: 0.3 }, null, { item: 'jar' }),
         ko: () => set({ a: 0.2, e: 0.1 }, { a: -0.1, e: 0.1 }),
       },
@@ -2434,12 +2437,12 @@
     c.ax = ax - lx0; c.ay = ay - ly0;
     return c;
   }
-  function ghostify(src) {
+  function ghostify(src, tint) {
     const c = U.makeCanvas(src.lw, src.lh, G.S || 1);
     const x = c.getContext('2d');
     x.setTransform(1, 0, 0, 1, 0, 0);
     x.drawImage(src, 0, 0);
-    x.globalCompositeOperation = 'color'; x.fillStyle = '#9cc8f0'; x.fillRect(0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'color'; x.fillStyle = tint || '#9cc8f0'; x.fillRect(0, 0, c.width, c.height);
     x.globalCompositeOperation = 'destination-in'; x.drawImage(src, 0, 0);
     x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(214,236,255,0.38)'; x.fillRect(0, 0, c.width, c.height);
     x.globalCompositeOperation = 'destination-out';
@@ -2453,7 +2456,7 @@
     const key = id + '|m|' + view + '|' + f + (ghost ? '|g' : '');
     let c = CACHE.get(key);
     if (c) return c;
-    if (ghost) { c = ghostify(mapFrame(id, view, f, false)); CACHE.set(key, c); return c; }
+    if (ghost) { c = ghostify(mapFrame(id, view, f, false), SPECS[id].ghostTint); CACHE.set(key, c); return c; }
     const S = SPECS[id];
     const sz = S.size || 1;
     const w = 150 * sz, h = 170 * sz;
@@ -2478,7 +2481,7 @@
     const key = id + '|b|' + pose + (ghost ? '|g' : '');
     let c = CACHE.get(key);
     if (c) return c;
-    if (ghost) { c = ghostify(battleFrame(id, pose, false)); CACHE.set(key, c); return c; }
+    if (ghost) { c = ghostify(battleFrame(id, pose, false), SPECS[id].ghostTint); CACHE.set(key, c); return c; }
     const S = SPECS[id];
     const sz = S.size || 1;
     const w = 460 * sz, h = 330 * sz, ax = 270 * sz, ay = h - 40 * sz;
@@ -2497,7 +2500,7 @@
       if (pose === 'ko') {
         const R = rig(S, true, 'q', p);
         const hgt = -R.head.y;
-        x.translate(hgt * 0.42, -R.P.sw * 0.75);
+        x.translate(-hgt * 0.5, -R.P.sw * 0.75);
         x.rotate(PI / 2 * 0.95);
         drawHuman(x, S, R);
         return;
@@ -2849,7 +2852,7 @@
   define('ghost_child', { body: 'child', skin: SK.ghost, eyes: '#3a4a5a', eyeStyle: 'soft', brows: 'soft', mouth: 'flat', ghost: true,
     hair: { style: 'straight', color: '#2a2a36', knot: 'topknot' },
     top: { color: '#d8dee8', len: 0.35, closure: 'side', trim: '#98a4b4', sleeve: 'short' }, bottom: { type: 'shorts', color: '#8894a4' }, shoes: { type: 'bare' } });
-  define('linto', { body: 'female', skin: '#eee8ee', eyes: '#4a3a4a', eyeStyle: 'soft', brows: 'soft', mouth: 'flat', ghost: true, // 林投姐: a wronged spirit
+  define('linto', { body: 'female', skin: '#eee8ee', eyes: '#4a3a4a', eyeStyle: 'soft', brows: 'soft', mouth: 'flat', ghost: true, ghostTint: '#c8a0d8', // 林投姐: a wronged spirit
     hair: { style: 'center', color: '#1e1c26', back: 'long', len: 0.75, locks: 1.5 },
     top: { color: '#ece6ea', len: 1.02, closure: 'side', trim: '#a88a9a', sleeve: 'wide' }, sash: { color: '#a85a6a', w: 2, tails: true }, shoes: { type: 'bare' } });
   define('woodcutter', { body: 'adult', skin: SK.tan, eyes: '#2a2018', eyeStyle: 'dot', mouth: 'smile',

@@ -150,6 +150,7 @@ G.Battle = (() => {
           if (this.o.turnLimit && this.rounds > this.o.turnLimit) { this.result = this.o.turnLimitResult || 'win'; this.scriptedEnd = true; break; }
         }
         this.active = u;
+        if (this.o.onTurn) { await this.o.onTurn(this, u); if (this.checkEnd()) break; if (u.dead) continue; }
         const skip = await this.startTurn(u);
         if (this.checkEnd()) break;
         let cmd = null;
@@ -163,6 +164,7 @@ G.Battle = (() => {
         if (cmd && cmd.kind === 'defend') u.wait *= 0.75;
         if (u.side === 'party') u.gauge = Math.min(100, u.gauge + 8 * (hasSp(u, 'gaugeUp') ? 1.5 : 1));
         if (this.checkEnd()) break;
+        if (this.floorEvent && this.o.onFloor) { const fe = this.floorEvent; this.floorEvent = null; await this.o.onFloor(this, fe); if (this.checkEnd()) break; }
         await this.checkPhases();
         if (this.checkEnd()) break;
       }
@@ -373,6 +375,27 @@ G.Battle = (() => {
       return { kind: 'skill', skill: pickId, targets };
     }
 
+    // mid-battle roster changes (for story scripts in o.onTurn / o.onFloor)
+    addPartyMember(id, lv) {
+      if (this.party.some((p) => p.id === id) || this.party.length >= 4) return null;
+      if (!G.state.members[id]) G.Party.create(id, lv || 1);
+      const u = partyUnit(G.state.members[id], this.party.length);
+      if (u.dead) { u.dead = false; u.hp = Math.max(1, Math.round(u.mhp * 0.5)); u.pose = 'idle'; }
+      u.alpha = 0; u.wait = 20;
+      this.party.push(u);
+      this.tween(u, { alpha: 1 }, 0.5);
+      G.Audio.sfx('buff');
+      return u;
+    }
+    removePartyMember(id) {
+      const u = this.party.find((p) => p.id === id);
+      if (!u) return;
+      u.m.hp = u.hp; u.m.mp = u.mp; u.m.gauge = Math.round(u.gauge);
+      this.party = this.party.filter((p) => p !== u);
+      this.party.forEach((p, i) => { [p.hx, p.hy] = PARTY_POS[i]; p.x = p.hx; p.y = p.hy; });
+    }
+    say2(who, text) { return G.Dialog.say(who, text).then(() => G.Dialog.close()); }
+
     defaultTargets(u, s) {
       const foes = u.side === 'party' ? this.alive('enemy') : this.alive('party');
       const friends = u.side === 'party' ? this.alive('party') : this.alive('enemy');
@@ -477,6 +500,7 @@ G.Battle = (() => {
     }
 
     async performSkill(u, s, targets, id) {
+      this.curSkillId = id;
       targets = targets.filter(Boolean);
       const isUlt = s.ultimate || (id && id.startsWith('ult'));
       if (!s.attack) this.banner(s.name, u.side === 'enemy' ? '#ff9a8a' : '#ffe6a8');
@@ -551,7 +575,7 @@ G.Battle = (() => {
         if (u.side === 'enemy') dmg *= this.diff === 'easy' ? 0.6 : this.diff === 'hard' ? 1.25 : 1;
         if (tg.side === 'party' && tg.resist && elem && tg.resist.includes(elem)) dmg *= 0.6;
         dmg = Math.max(1, Math.round(dmg));
-        this.damage(tg, dmg, { crit, weak: em > 1.2, resist: em < 0.9, elem, attacker: u });
+        this.damage(tg, dmg, { crit, weak: em > 1.2, resist: em < 0.9, elem, attacker: u, skillId: s.id || this.curSkillId });
         if (s.drain) this.healUnit(u, Math.round(dmg * s.drain));
         if (u.side === 'party') u.gauge = Math.min(100, u.gauge + 2);
       }
@@ -582,6 +606,11 @@ G.Battle = (() => {
         tg.st.shield = { turns: 4, amt: Math.round((s.shield || 1) * eff(u, 'mag') * 2 + 20) };
         this.popText(tg, '護盾', '#f0d070');
       }
+      if (s.invert && !tg.dead) {
+        // turn every positive buff on the target into its negative counterpart
+        for (const k of Object.keys(tg.st)) if (k.endsWith('Up')) { const t2 = tg.st[k]; delete tg.st[k]; tg.st[k.replace('Up', 'Down')] = t2; }
+        this.popText(tg, '反轉！', '#c08aff');
+      }
       if (s.mpHeal && !tg.dead) { tg.mp = Math.min(tg.mmp, tg.mp + s.mpHeal); this.popText(tg, '+' + s.mpHeal + ' MP', '#8ac8ff'); }
       if (s.gaugeUp && tg.side === 'party') tg.gauge = Math.min(100, tg.gauge + s.gaugeUp);
     }
@@ -610,6 +639,12 @@ G.Battle = (() => {
         if (dmg <= 0) return;
       }
       tg.hp = Math.max(0, tg.hp - dmg);
+      // HP floor: some story bosses cannot fall until a finisher skill lands (o.hpFloor: {enemyId: fraction}, o.finishers: [skillIds])
+      const floorK = tg.side === 'enemy' && this.o.hpFloor && this.o.hpFloor[tg.id];
+      if (floorK != null && !(o.skillId && (this.o.finishers || []).includes(o.skillId))) {
+        tg.hp = Math.max(tg.hp, Math.ceil(tg.mhp * floorK));
+        if (tg.hp <= Math.ceil(tg.mhp * floorK) && !tg.floorHit) { tg.floorHit = true; if (this.o.onFloor) this.floorEvent = tg; }
+      }
       tg.flash = 1;
       tg.pose = 'hurt'; tg.poseT = 0;
       if (tg.st.sleep) delete tg.st.sleep;
