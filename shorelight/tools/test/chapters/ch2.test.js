@@ -108,7 +108,7 @@ async function run(name, browser, fn) {
 
 // ------------------------------------------------------------------------------------------------ 1. critical path
 async function testCritical(browser, open) {
-  const s = await open('?debug&startch=2');
+  const s = await open('?debug&startch=2&flags=mochi_joined,yuyuan_joined');
   await s.ev(() => G.Debug.setAutoplay(true));
   await s.onMap('mistforest_n');
   let f = await s.flags();
@@ -252,7 +252,7 @@ async function testCritical(browser, open) {
 
 // ------------------------------------------------------------------------------------------------ 2. maze rules
 async function testMaze(browser, open) {
-  const s = await open('?debug&map=mist_loop&x=11&y=6&lv=6&party=xinghe,baizhi&flags=ch2_start,ch2_grove_open,ch2_lingshi&autoplay=1');
+  const s = await open('?debug&map=mist_loop&x=11&y=6&lv=6&party=xinghe,baizhi&flags=mochi_joined,yuyuan_joined,ch2_start,ch2_grove_open,ch2_lingshi&autoplay=1');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'mist_loop', null, { timeout: 30000 });
   await s.idle();
   // no 靈視: wrong turn resets, the right order still works blind
@@ -284,7 +284,7 @@ async function testMaze(browser, open) {
 
 // ------------------------------------------------------------------------------------------------ 3. side quests
 async function testSides(browser, open) {
-  const s = await open('?debug&map=mistforest_n&x=33&y=30&lv=7&party=xinghe,baizhi&flags=ch2_start,ch2_azhu_met&autoplay=1');
+  const s = await open('?debug&map=mistforest_n&x=33&y=30&lv=7&party=xinghe,baizhi&flags=mochi_joined,yuyuan_joined,ch2_start,ch2_azhu_met&autoplay=1');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'mistforest_n', null, { timeout: 30000 });
   await s.idle();
   // 老獵人的魂 (spirit) & his chest
