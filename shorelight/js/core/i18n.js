@@ -18,7 +18,20 @@ G.I18N = (() => {
   I.lang = () => (G.settings && G.settings.lang) || 'zh';
   I.isEn = () => I.lang() === 'en';
 
-  I.add = function (obj) {
+  // Chapter dictionaries (js/i18n/en_chN.js) are also kept per chapter: a short line such as 「誰？」 may be
+  // translated differently in two chapters, and the current chapter's own entry wins over the shared table.
+  const byChapter = new Map();   // chapter number -> Map
+  let memoCh = null;
+  function scriptChapter() {
+    const cs = typeof document !== 'undefined' && document.currentScript;
+    const m = cs && /en_ch(\d+)\.js/.exec(cs.src || '');
+    return m ? +m[1] : null;
+  }
+
+  I.add = function (obj, chapter) {
+    const ch = chapter != null ? chapter : scriptChapter();
+    let cd = null;
+    if (ch != null) { cd = byChapter.get(ch); if (!cd) byChapter.set(ch, cd = new Map()); }
     for (const k in obj) {
       const v = obj[k];
       if (v == null || v === '') continue;
@@ -30,12 +43,15 @@ G.I18N = (() => {
           return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }).join('');
         templates.push({ re: new RegExp('^' + pattern + '$', 's'), src: k, dst: v, kinds });
-      } else dict.set(k, v);
+      } else { dict.set(k, v); if (cd) cd.set(k, v); }
     }
     memo.clear();
   };
 
   function translate(s) {
+    const cd = byChapter.get(memoCh);
+    const own = cd && cd.get(s);
+    if (own != null) return own;
     const d = dict.get(s);
     if (d != null) return d;
     for (const tp of templates) {
@@ -53,6 +69,8 @@ G.I18N = (() => {
   // translate a display string (returns the input unchanged in Chinese mode or when no translation exists)
   I.t = function (s) {
     if (typeof s !== 'string' || !s || I.lang() !== 'en' || !CJK.test(s)) return s;
+    const ch = G.state ? G.state.chapter : null;
+    if (ch !== memoCh) { memoCh = ch; memo.clear(); }
     let r = memo.get(s);
     if (r !== undefined) return r;
     r = translate(s);
