@@ -147,8 +147,8 @@
           },
           acc(c) {
             woodCrown(c);
-            AC.mushroom(c, -34, -128, 1.6, '#e04a8a', '#ff90d0');
-            AC.mushroom(c, 12, -134, 1.3, '#40a0e0', '#90e0ff');
+            c.save(); c.translate(-42, -112); c.rotate(-0.6); AC.mushroom(c, 0, 0, 1.5, '#e04a8a', '#ff90d0'); c.restore();
+            c.save(); c.translate(18, -118); c.rotate(0.55); AC.mushroom(c, 0, 0, 1.25, '#40a0e0', '#90e0ff'); c.restore();
           },
           over(c, S) { AC.glasses(c, S, { col: '#5a3a1a', chain: '#d8b25a' }); },
         }),

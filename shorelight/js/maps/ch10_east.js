@@ -961,6 +961,7 @@
       particles: (st) => (st.vars.c10_deck === 'night' ? ['wind', 'lanterns'] : st.vars.c10_deck === 'dawn' ? ['mist', 'wind'] : ['wind']),
       tiles: g.rows(),
       objects: objs,
+      drawGround: (ctx) => deckRim(ctx),
       drawOver: (ctx, t) => H.drawLights(ctx, t),
       npcs: [
         { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', name: '陳伯', x: 4, y: 6, dir: 'right', fixedDir: true, talk: (S) => H.chenboDeck(S) },
@@ -996,6 +997,37 @@
       ],
     });
   })();
+
+  // painted hull side + red lacquered gunwale around the deck (world coords)
+  function deckRim(ctx) {
+    const c = cached('deckrim', 26 * T, 8 * T, (g) => {
+      const P = [[3, 5], [4, 5], [4, 4], [22, 4], [22, 5], [23, 5], [23, 6], [24, 6], [24, 7], [23, 7], [23, 8], [22, 8], [22, 9], [4, 9], [4, 8], [3, 8]];
+      const pts = P.map(([x, y]) => [(x - 2) * T, (y - 3) * T]);
+      // hull side below the bottom edge
+      const hy = (9 - 3) * T;
+      const hg = g.createLinearGradient(0, hy, 0, hy + 46);
+      hg.addColorStop(0, '#2f7a52'); hg.addColorStop(0.35, '#2f7a52'); hg.addColorStop(0.36, '#c8302a'); hg.addColorStop(0.7, '#c8302a'); hg.addColorStop(0.71, '#1e1a1c'); hg.addColorStop(1, '#141214');
+      g.fillStyle = hg;
+      g.beginPath(); g.moveTo(2 * T, hy - 2); g.lineTo(20 * T, hy - 2); g.lineTo(21.4 * T, hy - 2 - T); g.lineTo(21.6 * T, hy + 20 - T); g.lineTo(20.2 * T, hy + 40); g.lineTo(2.2 * T, hy + 40); g.lineTo(1.4 * T, hy + 10); g.closePath(); g.fill();
+      g.strokeStyle = '#e8c060'; g.lineWidth = 2; g.beginPath(); g.moveTo(2 * T, hy + 15); g.lineTo(20 * T, hy + 15); g.stroke();
+      for (let x = 2.3 * T; x < 20 * T; x += 40) { g.strokeStyle = 'rgba(240,220,160,0.75)'; g.lineWidth = 1.4; g.beginPath(); g.arc(x, hy + 24, 6, Math.PI, 0); g.stroke(); }
+      // 龍目 at the bow
+      const ex = 20.6 * T, ey = hy - 18;
+      g.fillStyle = '#f4efe2'; g.beginPath(); g.ellipse(ex, ey, 14, 9, -0.3, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#3a1a10'; g.lineWidth = 2; g.stroke();
+      g.fillStyle = '#c8302a'; g.beginPath(); g.arc(ex - 2, ey, 5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#141214'; g.beginPath(); g.arc(ex - 2, ey, 2.4, 0, Math.PI * 2); g.fill();
+      // gunwale
+      g.strokeStyle = '#5a1810'; g.lineWidth = 9; g.lineJoin = 'round';
+      g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+      g.strokeStyle = '#c8402e'; g.lineWidth = 5;
+      g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke();
+      g.strokeStyle = 'rgba(255,220,170,0.45)'; g.lineWidth = 1.2;
+      g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y - 2) : g.moveTo(x, y - 2))); g.closePath(); g.stroke();
+      for (const [x, y] of pts) { g.fillStyle = '#e8c060'; g.beginPath(); g.arc(x, y, 4, 0, Math.PI * 2); g.fill(); }
+    });
+    ctx.drawImage(c, 2 * T, 3 * T, c.lw, c.lh);
+  }
 
   H.chenboDeck = async (S) => {
     const opts = ['出航', '聊天'];
@@ -1782,3 +1814,4 @@
     S.setPos('chenbo', 4, 6, 'right');
     H.objective(S, '乘黑潮北上，前往台東（與陳伯說話）');
   };
+})();

@@ -206,8 +206,9 @@
       ch.options.forEach((opt, i) => {
         opt.seed = opt.seed || (i + 1) * 17 + ch.id.length;
         if (opt.spec && !opt.spec.seed) opt.spec.seed = opt.seed;
-        if (opt.spec && opt.spec.ring === undefined) opt.spec.ring = opt.style === 'ink' ? null : { a: opt.style === 'water' ? 0.3 : opt.style === 'cel' ? 0.75 : 0.5 };
+        if (opt.spec && opt.spec.ring === undefined) opt.spec.ring = opt.style === 'ink' ? null : { w: 4.2, a: opt.style === 'water' ? 0.45 : opt.style === 'cel' ? 0.85 : 0.65 };
         const card = document.createElement('div'); card.className = 'card s-' + opt.style;
+        if (opt.gloss) card.title = opt.en + ' — ' + opt.gloss;
         const art = renderCard(opt, opt.accent || ch.accent);
         const num = String(i + 1).padStart(2, '0');
         card.innerHTML = `<div class="art"></div><div class="meta"><div class="row"><span class="num">${num}</span><span class="name">${opt.name}</span><span class="tag">${STYLE_NAMES[opt.style] || ''}</span></div>

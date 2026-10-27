@@ -250,5 +250,845 @@
       stages: ['在龍坑的三個側洞找回燈塔日誌殘頁。', '把日誌殘頁交給燈室裡的湯先生。'] },
   });
 
-  // @@DATA_END@@
+  // =====================================================================================================
+  // SHARED HELPERS
+  // =====================================================================================================
+  const U = G.U;
+  const auto = () => !!(G.Debug && G.Debug.autoplay);
+  // re-apply a map's (state-dependent) lighting / particles / music after a flag changed mid-map
+  function relight(S, o = {}) {
+    const m = G.mapScene;
+    if (!m) return;
+    m.lightCfg = Object.assign({}, G.Mapx.val(m.def.light) || { ambient: 0 });
+    S.particles(G.Mapx.val(m.def.particles));
+    if (o.bgm !== false) { const b = G.Mapx.val(m.def.bgm); if (b) S.bgm(b); }
+  }
+  // 距關鬼門 countdown
+  function days(S, n) {
+    const v = V();
+    v.days_to_gate = Math.max(0, (v.days_to_gate == null ? 100 : v.days_to_gate) - n);
+    S.sfx('bell');
+    S.toast(`距關鬼門　${v.days_to_gate} 日`, 'lantern');
+  }
+  // names of the 七個名字 (flags ch9_name_1..7 → vars.ch9_names)
+  const NAMES = ['陳水生', '黃阿九', '李順德', '王木', '潘金水', '林添福', '阿財仔'];
+  function nameCount() { let n = 0; for (let i = 1; i <= 7; i++) if (F('ch9_name_' + i)) n++; V().ch9_names = n; return n; }
+  async function gainName(S, i) {
+    if (F('ch9_name_' + i)) return;
+    S.flag('ch9_name_' + i);
+    const n = nameCount();
+    S.sfx('lantern');
+    S.toast(`名字光：{y}${NAMES[i - 1]}{/}（${n} / 7）`, 'lantern');
+    if (n === 7 && F('ch9_names_quest')) S.quest('q_ch9_names', 1);
+  }
+  function logCount() { let n = 0; for (let i = 1; i <= 3; i++) if (F('ch9_log_' + i)) n++; V().ch9_logs = n; return n; }
+
+  // ---- 巡境圖 (island outline, six patrol points) --------------------------------------------------
+  const XUNJING = [['donggang', '東港'], ['eluanbi', '鵝鑾鼻'], ['orchid', '蘭嶼'], ['taitung', '台東'], ['taroko', '太魯閣'], ['toucheng', '頭城']];
+  class XunjingScene {
+    constructor(newIdx) { this.t = 0; this.newIdx = newIdx; this.opaque = true; }
+    update(dt) {
+      this.t += dt;
+      const done = auto() ? this.t > 0.1 : (this.t > 4.5 || (this.t > 1.5 && (G.Input.pressed('ok') || G.Input.clicked())));
+      if (done && !this.closed) { this.closed = true; G.Scenes.pop(this); if (this.onDone) this.onDone(); }
+    }
+    draw(ctx) {
+      const box = { x: 0, y: 0, w: G.W, h: G.H, ox: 300, oy: -10, s: 1 };
+      G.World.drawMap(ctx, box, this.t, {});
+      const sub = { x: box.ox, y: box.oy, s: 1 };
+      const lit = V().xunjing || 0;
+      XUNJING.forEach(([pid, label], i) => {
+        const p = G.World.PLACES[pid];
+        const [x, y] = G.World.proj(p[0], p[1], sub);
+        const on = i < lit;
+        const fresh = i === this.newIdx;
+        const k = fresh ? Math.min(1, Math.max(0, (this.t - 0.6) / 0.8)) : on ? 1 : 0;
+        ctx.save();
+        if (k > 0) {
+          const r = 26 + 10 * Math.sin(this.t * 4);
+          const gr = ctx.createRadialGradient(x, y, 0, x, y, r * (fresh ? 1 + (1 - k) * 2 : 1));
+          gr.addColorStop(0, `rgba(255,220,130,${0.9 * k})`); gr.addColorStop(1, 'rgba(255,160,60,0)');
+          ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = k > 0.5 ? '#ffe7a0' : 'rgba(200,190,170,0.55)';
+        ctx.strokeStyle = '#2a1408'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        G.Render.text(ctx, String(i + 1), x, y - 9, { size: 14, bold: true, align: 'center', color: '#3a2008', shadow: false });
+        G.Render.text(ctx, label, x + 16, y - 30, { size: 20, color: k > 0.5 ? '#fff0c8' : '#9a9486', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
+        ctx.restore();
+      });
+      G.Render.text(ctx, '巡境圖', 60, 40, { size: 40, color: '#fff0d0', glow: 'rgba(255,170,90,0.6)', glowBlur: 14 });
+      G.Render.text(ctx, `已巡 ${lit} / 6`, 64, 96, { size: 22, color: '#c9b893' });
+    }
+  }
+  async function xunjingShow(S, idx) {
+    V().xunjing = Math.max(V().xunjing || 0, idx + 1);
+    S.sfx('bell');
+    await S.scene(new XunjingScene(idx));
+    S.toast(`巡境圖：{y}${XUNJING[idx][1]}{/} 亮起`, 'scroll');
+  }
+
+  // ---- 陳伯 as a guest follower (NPC, never in G.state.party) ----------------------------------------
+  function chenboLine() {
+    if (F('ch9_lighthouse_flame')) return ['chenbo:normal', '燈點了，這船才算醒。……星河，這燈是你們一路借來的，要記得還。'];
+    if (F('ch9_keeper_met')) return ['chenbo:normal', '火要護好。燈塔的火分出來，就是你們的責任了。'];
+    if (F('ch9_hengchun_done')) return ['chenbo:normal', '南岬的風讓路了。回船上，往鵝鑾鼻。'];
+    if (F('ch9_fallwind_defeated')) return ['chenbo:smile', '風停了。……今晚城牆上，應該聽得很清楚。'];
+    if (F('ch9_names_quest')) return ['chenbo:serious', '風的源頭在龍磐。出東門，往台地上走。'];
+    if (F('ch9_cape_blocked')) return ['chenbo:serious', '這城裡的人，怕的不是風，是風裡的聲音。'];
+    if (F('ch9_wangboat_launch')) return ['chenbo:normal', '三十年沒掌舵了。手生了，船倒是熟的——好船就是這樣，會教人。'];
+    if (F('ch9_jiaobei_done')) return ['chenbo:serious', '王船廠今晚會鬧。艾草帶著，別逞強。'];
+    if (F('ch9_donggang_arrive')) return ['chenbo:serious', '進廟之前，先拜天公爐。規矩不能亂。'];
+    if (F('ch9_qihou_night_done')) return ['chenbo:normal', '沿沙洲往南，就是東港。路上的海，你們多看兩眼。'];
+    if (F('ch9_qihou_temple')) return ['chenbo:sad', '晚上要去海邊吧。……我在附近看著。'];
+    return ['chenbo:normal', '先到天后宮打聽消息。阿標那傢伙，應該還在。'];
+  }
+  function chenboNpc(mapId, start, cond) {
+    return {
+      id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', name: '陳伯', follow: true, through: true, dir: 'down',
+      x: start[0], y: start[1], pos: (s) => (s.map === mapId ? [s.x, s.y] : start),
+      if: cond || (() => true),
+      talk: async (S) => { await S.lines([chenboLine()]); },
+    };
+  }
+  function chenboFollow(m, dt, busy) {
+    const c = m.npcs.find((n) => n.id === 'chenbo' && n.def && n.def.follow);
+    if (!c) return;
+    const tail = m.followers.length && !m.hideFollowers ? m.followers[m.followers.length - 1] : m.player;
+    const tr = m._c9trail || (m._c9trail = []);
+    const last = tr[tr.length - 1];
+    if (!last || last[0] !== tail.x || last[1] !== tail.y) { tr.push([tail.x, tail.y]); if (tr.length > 8) tr.shift(); }
+    if (busy || c.scripted || c.moving || c.queue.length) return;
+    const d = Math.abs(c.x - tail.x) + Math.abs(c.y - tail.y);
+    if (d > 5) { const p = tr.length > 1 ? tr[tr.length - 2] : [tail.x, tail.y]; c.setCell(p[0], p[1]); return; }
+    if (d <= 1) return;
+    const tgt = tr.length > 1 ? tr[tr.length - 2] : [tail.x, tail.y];
+    let dx = Math.sign(tgt[0] - c.x), dy = Math.sign(tgt[1] - c.y);
+    if (dx && dy) { if (Math.abs(tgt[0] - c.x) >= Math.abs(tgt[1] - c.y)) dy = 0; else dx = 0; }
+    if (!dx && !dy) return;
+    c.dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
+    c.speed = 6.9;
+    c.startMove(c.x + dx, c.y + dy);
+  }
+  // compose a map's onUpdate: 陳伯 follows + optional extra mechanics
+  const withFollow = (extra) => (dt, m, busy) => { chenboFollow(m, dt, busy); if (extra) extra(dt, m, busy); };
+
+  // ---- small UI bits drawn in world space ---------------------------------------------------------
+  function screenOrigin(ctx, m) { return [m.cam.x, m.cam.y]; }
+  function glowDot(ctx, x, y, r, col, a) {
+    const gr = ctx.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, U.rgba(col, a)); gr.addColorStop(1, U.rgba(col, 0));
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+  // floating golden-white "name light" / log sparkle at a cell
+  function drawSpark(ctx, cx, cy, t, col = '#fff2c0') {
+    const x = cx * T + T / 2, y = cy * T + T / 2 - 18 + Math.sin(t * 2.4 + cx) * 4;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    glowDot(ctx, x, y, 26, col, 0.55 + 0.2 * Math.sin(t * 5 + cy));
+    glowDot(ctx, x, y, 8, '#ffffff', 0.9);
+    ctx.restore();
+  }
+
+  // ---- story party setup ------------------------------------------------------------------------------
+  // Chapter 9 party: 星河・紅纓・雲歸 (+糰子). When started standalone (debug), give them the gear they
+  // would have collected by the end of chapter 8.
+  function prepareParty() {
+    for (const id of ['xinghe', 'hongying', 'yungui']) {
+      if (!G.state.members[id]) G.Party.create(id, 30);
+      if (!G.state.party.includes(id)) G.state.party.push(id);
+      G.Story.ensureLevel(id, 30);
+    }
+    G.Party.leave('baizhi');
+    G.state.party = ['xinghe', 'hongying', 'yungui'].concat(G.state.party.filter((p) => !['xinghe', 'hongying', 'yungui'].includes(p)));
+    if (!F('ch8_end')) {
+      const best = (id, slot) => {
+        let b = null;
+        for (const [iid, it] of Object.entries(D.items)) {
+          if (it.type !== slot || (it.ch || 0) > 8 || (it.who && !it.who.includes(id))) continue;
+          const sc = (it.stats ? (it.stats.atk || 0) + (it.stats.def || 0) + (it.stats.mag || 0) : 0);
+          if (!b || sc > b.sc) b = { iid, sc };
+        }
+        return b && b.iid;
+      };
+      for (const id of ['xinghe', 'hongying', 'yungui']) {
+        const m = G.state.members[id];
+        for (const slot of ['weapon', 'armor', 'head', 'feet']) { const it = best(id, slot); if (it) m.equip[slot] = it; }
+        const st2 = G.Party.stats(id); m.hp = st2.mhp; m.mp = st2.mmp;
+      }
+      if (!G.Inv.has('key_jianpu')) G.Inv.add('key_jianpu', 1);
+      if (!G.Inv.has('key_oar')) G.Inv.add('key_oar', 1);
+      for (const [iid, n] of [['shimuyu', 3], ['xumingsan', 5], ['huanhunxiang', 3], ['xiancao', 3]]) if (G.Inv.count(iid) < n) G.Inv.add(iid, n - G.Inv.count(iid));
+      if (G.state.gold < 3000) G.state.gold = 3000;
+    }
+  }
+
+  // =====================================================================================================
+  // BOSS BATTLE HOOKS (installed through S.battle(troop, { intro }) — they wrap the scene instance only)
+  // =====================================================================================================
+  // 大肚貪鬼: 吞食 steals a consumable each time; everything comes back when it falls.
+  function greedIntro(stolen) {
+    return async (sc) => {
+      const exec = sc.execute.bind(sc);
+      sc.execute = async (u, cmd) => {
+        if (u.side === 'enemy' && cmd && cmd.skill === 'c9_es_devour') {
+          await exec(u, cmd);
+          const pool = G.Inv.list((it) => it.type === 'use');
+          if (pool.length) {
+            const id = U.pick(pool);
+            G.Inv.remove(id, 1);
+            stolen.push(id);
+            sc.say(`${D.items[id].name}被吞掉了！`, 1.6);
+          } else sc.say('什麼也沒吞到……大肚貪鬼更餓了。', 1.4);
+          await sc.wait(0.9);
+          return;
+        }
+        return exec(u, cmd);
+      };
+    };
+  }
+
+  // 瘟鬼頭: 躲在人群裡 (-40% damage while small ghosts live), 高燒 (P2), 艾草 silences 瘟息, 陳伯's 龍目 call.
+  function plagueIntro() {
+    return async (sc) => {
+      const chief = sc.enemies.find((e) => e.id === 'c9_plague_chief');
+      if (!chief) return;
+      let p2 = false, critNext = false, noBreath = 0;
+      const smalls = () => sc.enemies.filter((e) => !e.dead && e !== chief);
+      const dmg = sc.damage.bind(sc);
+      sc.damage = (tg, d, o = {}) => {
+        if (tg === chief && smalls().length) d = Math.max(1, Math.round(d * 0.6));
+        if (critNext && o.attacker && o.attacker.id === 'xinghe' && tg.side === 'enemy') {
+          critNext = false;
+          if (!o.crit) { d = Math.round(d * 1.5); o = Object.assign({}, o, { crit: true }); }
+        }
+        return dmg(tg, d, o);
+      };
+      const ai = sc.aiCommand.bind(sc);
+      sc.aiCommand = (e) => {
+        let cmd = ai(e);
+        if (e === chief) {
+          const tgt = () => [U.pick(sc.alive('party'))];
+          if (cmd.skill === 'c9_es_plague_breath' && noBreath > 0) cmd = { kind: 'skill', skill: 'c9_es_fever_touch', targets: tgt() };
+          else if (cmd.skill === 'c9_es_summon_plague' && smalls().length >= 2) cmd = { kind: 'skill', skill: 'c9_es_fever_touch', targets: tgt() };
+          if (noBreath > 0) noBreath--;
+        }
+        return cmd;
+      };
+      const useItem = sc.useItem.bind(sc);
+      sc.useItem = async (u, id, tgs) => {
+        await useItem(u, id, tgs);
+        if (id === 'c9_aicao' && !chief.dead) { noBreath = 1; sc.say('艾草的煙一熏，瘟鬼頭嗆得噴不出瘟息！', 1.6); await sc.wait(0.8); }
+      };
+      const phases = sc.checkPhases.bind(sc);
+      sc.checkPhases = async () => {
+        await phases();
+        if (!p2 && !chief.dead && chief.hp <= chief.mhp * 0.5) {
+          p2 = true;
+          await G.Dialog.say('', '瘟鬼頭的身體燒得通紅——「高燒」！熱氣燒灼著整個船台。');
+          await G.Dialog.say('chenbo:angry', '星河！龍目！');
+          await G.Dialog.say('xinghe:serious', '……看見了！');
+          G.Dialog.close();
+          chief.def = Math.round(chief.def * 0.8);
+          sc.addStatus(chief, 'defDown', 3);
+          critNext = true;
+          sc.say('龍目的光照在瘟鬼頭身上！', 1.6);
+          await sc.wait(0.9);
+        }
+      };
+      const startTurn = sc.startTurn.bind(sc);
+      sc.startTurn = async (u) => {
+        if (p2 && u === chief && !chief.dead) {
+          for (const p of sc.alive('party')) {
+            const d = Math.min(p.hp - 1, Math.max(1, Math.round(p.mhp * 0.03)));
+            if (d > 0) dmg(p, d, { color: '#ff9a6a', noGauge: true });
+          }
+          sc.say('高燒的熱氣燒灼著每個人……', 1.0);
+          await sc.wait(0.4);
+        }
+        return startTurn(u);
+      };
+    };
+  }
+
+  // 落山風靈: 風勢 gauge 0–3 → forced 落山 (吹離 unless guarding / 月琴弦護符); metal hits pierce the wind eye;
+  // 70% 月琴聲 regen; 50% splits into three 風團 (each carries a name); P3 regroups at 50% HP, gauge cap 2.
+  function fallwindIntro() {
+    return async (sc) => {
+      const boss = sc.enemies[0];
+      const W = { v: 0, cap: 3, regen: false, split: false, rejoined: false, p3: false, blow: false, metal: false, cur: null };
+      const puffIds = ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'];
+      const puffs = () => sc.enemies.filter((e) => puffIds.includes(e.id));
+      const amulet = (u) => !!(u.m && Object.values(u.m.equip || {}).includes('c9_ac_yueqin'));
+      const ai = sc.aiCommand.bind(sc);
+      sc.aiCommand = (e) => {
+        if (W.cap >= 3 && W.v >= 3) { W.blow = true; return { kind: 'skill', skill: 'c9_es_downslope', targets: sc.alive('party') }; }
+        return ai(e);
+      };
+      const apply = sc.applyEffect.bind(sc);
+      sc.applyEffect = (u, tg, s, hits) => {
+        if (u.side === 'party' && tg.side === 'enemy' && !tg.dead && s && s.elem === 'metal' && (s.type === 'phys' || s.type === 'mag')) W.metal = true;
+        return apply(u, tg, s, hits);
+      };
+      const dmg = sc.damage.bind(sc);
+      sc.damage = (tg, d, o = {}) => {
+        if (W.cur === 'c9_es_downslope' && tg.side === 'party' && W.regen && !W.split) d = Math.round(d * 1.15);
+        return dmg(tg, d, o);
+      };
+      const exec = sc.execute.bind(sc);
+      sc.execute = async (u, cmd) => {
+        W.cur = cmd && cmd.skill;
+        W.metal = false;
+        await exec(u, cmd);
+        W.cur = null;
+        if (u.side === 'party' && W.metal && W.v > 0) { W.v--; sc.popText(u, '刺穿風眼！', '#fff0a0', -40); }
+        if (u.side === 'enemy') {
+          if (W.blow) {
+            W.blow = false; W.v = 0;
+            for (const p of sc.alive('party')) {
+              if (p.st.guard || amulet(p)) { sc.popText(p, '穩住了！', '#d8f0ff', -40); continue; }
+              p.wait += 150 * 40 / (p.spd + 40);
+              sc.popText(p, '吹離！', '#c8f0ff', -40);
+            }
+            await sc.wait(0.5);
+          } else {
+            W.v = Math.min(W.cap, W.v + 1);
+            if (W.v === 2 && W.cap >= 3) sc.say('雲歸：「它要吹了！伏低！」', 1.6);
+          }
+        }
+      };
+      const kill = sc.kill.bind(sc);
+      sc.kill = (u) => {
+        kill(u);
+        const i = puffIds.indexOf(u.id);
+        if (i >= 0) {
+          G.state.flags['ch9_name_' + (i + 1)] = true;
+          nameCount();
+          sc.say(`名字浮現了——${NAMES[i]}`, 1.8);
+        }
+      };
+      const ce = sc.checkEnd.bind(sc);
+      sc.checkEnd = () => {
+        if (W.split && !W.rejoined && !sc.result && puffs().length && puffs().every((p) => p.dead)) {
+          W.rejoined = true; W.p3 = true;
+          boss.dead = false; boss.alpha = 0.75; boss.hp = Math.round(boss.mhp * 0.5); boss.phase = 3; boss.st = {};
+          boss.scale = (boss.scale || 1) * 0.85; boss.wait = 30;
+          W.cap = 2; W.v = Math.min(W.v, 2);
+          boss.d = Object.assign({}, boss.d, { skills: [{ id: 'c9_es_lastwind', w: 3 }, { id: 'c9_es_gust', w: 2 }, { id: 'c9_es_sandblast', w: 2 }] });
+          sc.say('風團重新聚了起來——落山風靈又站了起來，卻透明了許多。', 2);
+        }
+        return ce();
+      };
+      const phases = sc.checkPhases.bind(sc);
+      sc.checkPhases = async () => {
+        if (!W.regen && !boss.dead && boss.hp <= boss.mhp * 0.7) {
+          W.regen = true;
+          await G.Dialog.say('', '遠方，細細的月琴聲穿過風傳了過來——「思啊想啊起——」');
+          await G.Dialog.say('hongying:surprise', '是阿順伯！');
+          await G.Dialog.say('xinghe:smile', '他說過，會一直彈。');
+          G.Dialog.close();
+          for (const p of sc.alive('party')) sc.addStatus(p, 'regen', 3);
+          await sc.wait(0.5);
+        }
+        await phases();
+        if (!W.split && puffs().length) {
+          W.split = true;
+          boss.dead = true; boss.st = {};
+          sc.tween(boss, { alpha: 0 }, 0.6);
+          await G.Dialog.say('', '落山風靈散成三團風團——每一團的胸口，都纏著一個發光的名字。');
+          G.Dialog.close();
+        }
+        if (W.p3) {
+          W.p3 = false;
+          await G.Dialog.say('', '落山風靈：……回——家——……我……也要……回……');
+          await G.Dialog.say('xinghe:serious', '你不用回家！你本來就是風——你的家是山跟海之間！');
+          G.Dialog.close();
+        }
+      };
+      const draw = sc.draw.bind(sc);
+      sc.draw = (ctx) => {
+        draw(ctx);
+        if (sc.vic || sc.result) return;
+        const x = G.W / 2 - 120, y = 92;
+        ctx.save();
+        G.UI.plate(ctx, x, y, 240, 44, 0.6, 20);
+        G.Render.text(ctx, '風勢', x + 18, y + 9, { size: 20, color: '#d8f0ff' });
+        for (let i = 0; i < 3; i++) {
+          const on = i < W.v, capped = i >= W.cap;
+          const cx = x + 98 + i * 44, cy = y + 22;
+          ctx.globalAlpha = capped ? 0.25 : 1;
+          ctx.strokeStyle = on ? (W.v >= 2 && W.cap >= 3 ? `rgba(255,${150 + 80 * Math.sin(sc.t * 12)},120,1)` : '#bff0ff') : 'rgba(200,220,240,0.35)';
+          ctx.lineWidth = 3; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(cx, cy, 13, Math.PI * 0.9, Math.PI * 2.3); ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx + 2, cy, 6, Math.PI * 1.1, Math.PI * 2.4); ctx.stroke();
+        }
+        ctx.restore();
+      };
+    };
+  }
+
+  // 潮病鰻王: 護火 (flame gauge carried in from the cave; 撲火 −10; 0 → darkness magDown), 護燈 command,
+  // lighthouse beam stuns the king every 4 rounds; P2 (<40%) def −25%, spd +10.
+  function morayIntro() {
+    return async (sc) => {
+      const king = sc.enemies.find((e) => e.id === 'c9_moray_king');
+      const v = V();
+      v.flame = Math.max(40, v.flame == null ? 100 : v.flame);
+      const xh = sc.party.find((p) => p.id === 'xinghe');
+      if (xh && !xh.m.skills.includes('c9_guard_lamp')) xh.m.skills.push('c9_guard_lamp');
+      let p2 = false, dark = false;
+      const setFlame = (n, u) => {
+        const before = v.flame;
+        v.flame = Math.max(0, Math.min(100, n));
+        if (u && v.flame !== before) sc.popText(u, `燈火 ${v.flame > before ? '+' : ''}${v.flame - before}`, '#ffd27a', -60);
+        if (v.flame <= 0 && !dark) { dark = true; sc.say('防風燈熄了——拱門下一片漆黑！', 1.8); }
+        if (v.flame > 0 && dark) { dark = false; sc.say('燈火又亮了起來。', 1.2); }
+      };
+      const ai = sc.aiCommand.bind(sc);
+      sc.aiCommand = (e) => {
+        const cmd = ai(e);
+        if (e === king && cmd.skill === 'c9_es_tide_rise' && sc.enemies.some((x) => x !== king && !x.dead)) {
+          return { kind: 'skill', skill: p2 ? 'c9_es_tailsweep2' : 'c9_es_tailsweep', targets: sc.alive('party') };
+        }
+        return cmd;
+      };
+      const exec = sc.execute.bind(sc);
+      sc.execute = async (u, cmd) => {
+        await exec(u, cmd);
+        if (cmd && cmd.skill === 'c9_guard_lamp') setFlame(v.flame + 15, u);
+        if (u === king && cmd && cmd.skill === 'c9_es_snuff') setFlame(v.flame - 10, sc.alive('party')[0] || u);
+        if (u === king && cmd && cmd.skill === 'c9_es_tide_rise') sc.addStatus(king, 'atkUp', 3);
+      };
+      const startTurn = sc.startTurn.bind(sc);
+      sc.startTurn = async (u) => {
+        if (u === sc.party[0] && sc.rounds > 1 && (sc.rounds - 1) % 4 === 0 && king && !king.dead) {
+          sc.say('湯姆的聲音：「This way! 這邊！」燈塔的光束掃進了拱門！', 2);
+          G.Render.doFlash('#fff6d8', 0.5, 0.6);
+          sc.addStatus(king, 'stun', 1);
+          await sc.wait(0.8);
+        }
+        if (u.side === 'party' && dark && !u.st.magDown) sc.addStatus(u, 'magDown', 2, true);
+        return startTurn(u);
+      };
+      const phases = sc.checkPhases.bind(sc);
+      sc.checkPhases = async () => {
+        await phases();
+        if (!p2 && king && king.phase === 2) { p2 = true; king.def = Math.round(king.def * 0.75); king.spd += 10; }
+      };
+      const draw = sc.draw.bind(sc);
+      sc.draw = (ctx) => {
+        draw(ctx);
+        if (sc.vic || sc.result) return;
+        const x = G.W / 2 - 130, y = 92;
+        ctx.save();
+        G.UI.plate(ctx, x, y, 260, 44, 0.6, 20);
+        G.UI.lanternIcon(ctx, x + 24, y + 22, 9, sc.t);
+        G.Render.text(ctx, '燈火', x + 42, y + 9, { size: 20, color: '#ffe0a0' });
+        G.UI.bar(ctx, x + 96, y + 16, 140, 12, v.flame / 100, '#ffd27a', '#e07a2a');
+        ctx.restore();
+      };
+    };
+  }
+  function removeGuardLamp() { const m = G.state.members.xinghe; if (m) m.skills = m.skills.filter((s) => s !== 'c9_guard_lamp'); }
+
+  // =====================================================================================================
+  // MAP 1 — qihou 旗後漁村（打狗）
+  // =====================================================================================================
+  const qhNight = (s) => !!s.flags.ch9_qihou_night && !s.flags.ch9_qihou_night_done;
+  const QH = (() => {
+    const g = grid(48, 36, '.');
+    g.rect(0, 0, 48, 1, '~').rect(0, 0, 3, 36, '~').rect(41, 0, 7, 36, '~').rect(0, 34, 48, 2, '~');
+    g.rect(3, 1, 7, 33, 's').rect(39, 1, 2, 33, 's').rect(10, 30, 29, 4, 's').rect(20, 34, 8, 2, 's');
+    // 旗後山 (cliff), summit plateau, stone steps
+    g.rect(12, 1, 22, 6, 'X').rect(17, 2, 11, 2, ',').rect(22, 4, 2, 3, 'H');
+    g.set(12, 6, '.').set(33, 6, '.').set(12, 5, '.').set(33, 5, '.');
+    // roads & lanes
+    g.rect(10, 7, 29, 2, '=').rect(22, 7, 2, 1, '=');
+    g.rect(16, 9, 2, 6, ':').rect(24, 9, 2, 6, ':');
+    g.rect(36, 9, 2, 22, '=');
+    g.rect(15, 15, 13, 6, '%');           // 廟埕
+    g.rect(22, 21, 2, 15, '=');           // road south to the sandspit
+    g.rect(19, 26, 17, 1, '=');
+    g.rect(28, 21, 8, 1, '=');
+    g.rect(10, 24, 9, 4, ':');            // 金萬大厝 courtyard
+    // pier
+    g.rect(39, 7, 7, 2, 'k');
+    // shore details
+    g.dots([[3, 1], [3, 2], [3, 33], [4, 33], [9, 33]], '-');
+    return g.rows();
+  })();
+  const QH_DECO = (() => {
+    const d = grid(48, 36, ' ');
+    // beach & hill vegetation
+    d.dots([[10, 2], [11, 4], [34, 2], [35, 4], [37, 3], [10, 5], [35, 6]], 't');
+    d.dots([[17, 2], [27, 3], [18, 3]], 't');
+    d.dots([[3, 27], [4, 27], [5, 28], [3, 28], [3, 30], [5, 30], [6, 31], [8, 32], [4, 31]], 'P');
+    d.dots([[11, 13], [13, 13], [29, 12], [38, 4], [38, 2], [12, 29], [16, 29], [26, 29], [33, 28]], 'h');
+    d.dots([[10, 15], [10, 17], [34, 28], [35, 29], [28, 31], [33, 31]], 'u');
+    d.dots([[25, 31], [27, 31], [24, 32]], 'e');
+    d.dots([[7, 21], [8, 22], [7, 24]], 'r');
+    return d.rows();
+  })();
+  G.Maps.define('qihou', {
+    name: '旗後', subtitle: '打狗港口的沙洲漁村', place: 'takao',
+    bgm: (s) => (qhNight(s) ? 'night' : 'south'),
+    start: [40, 8],
+    light: (s) => (qhNight(s) ? { ambient: 0.55, color: '#0a1030', playerR: 230 } : { ambient: 0 }),
+    particles: (s) => (qhNight(s) ? ['lanterns', 'embers'] : [{ type: 'wind', density: 0.5 }]),
+    tiles: QH, deco: QH_DECO,
+    objects: [
+      { t: 'mazu_temple', x: 18, y: 11, door: 2, text: '旗後天后宮' },
+      { t: 'incense_burner', x: 21, y: 17 },
+      { t: 'statue_lion', x: 17, y: 15 }, { t: 'statue_lion', x: 24, y: 15, flip: true },
+      { t: 'red_lantern', x: 15, y: 15 }, { t: 'red_lantern', x: 27, y: 15 },
+      { t: 'lantern_string', x: 15, y: 14, w: 3 }, { t: 'lantern_string', x: 25, y: 14, w: 3 },
+      { t: 'house_minnan', x: 11, y: 9, v: 0 }, { t: 'house_minnan', x: 27, y: 9, v: 1 },
+      { t: 'drying_rack', x: 33, y: 10, v: 0 }, { t: 'barrel', x: 32, y: 10 },
+      { t: 'stall', x: 30, y: 13, text: '鮮魚', counter: true }, { t: 'stall', x: 33, y: 13, text: '虱目魚' }, { t: 'stall', x: 30, y: 16, text: '魚乾' },
+      { t: 'basket', x: 35, y: 13 }, { t: 'basket', x: 29, y: 17 }, { t: 'jar', x: 32, y: 17 },
+      { t: 'shophouse', x: 30, y: 18, v: 0, text: '海口客棧' },
+      { t: 'shophouse', x: 30, y: 22, v: 1, text: '雜貨' },
+      { t: 'shophouse', x: 24, y: 22, v: 2, text: '藥鋪' },
+      { t: 'house_minnan', x: 11, y: 21, w: 6, door: 3, v: 1, text: '金萬' },
+      { t: 'fence_wood', x: 10, y: 27, w: 4 }, { t: 'fence_wood', x: 15, y: 27, w: 4 },
+      { t: 'well', x: 12, y: 25, interact: async (S) => {
+        if (F('ch9_banping_done')) await S.say('', '水窟仔的鎖拆了，井口擺著一支木勺。水是甜的。');
+        else await S.say('', '一口加了蓋、上了大鎖的水窟仔。鎖頭擦得發亮。');
+      }, label: '調查' },
+      { t: 'well', x: 19, y: 22, interact: ['井水帶著海的鹹味。逆潮倒灌，旗後的井都鹹了。'], label: '調查' },
+      { t: 'tree_banyan', x: 29, y: 27 },
+      { t: 'bench', x: 26, y: 28 },
+      // beach: boats, nets, drying fish
+      { t: 'boat_small', x: 4, y: 4 }, { t: 'boat_small', x: 4, y: 6 }, { t: 'boat_small', x: 6, y: 2 },
+      { t: 'fishing_net', x: 6, y: 10 }, { t: 'fishing_net', x: 6, y: 12 },
+      { t: 'laundry', x: 3, y: 10 },
+      { t: 'drying_rack', x: 7, y: 8, v: 0 },
+      { t: 'barrel', x: 8, y: 5 }, { t: 'crate', x: 9, y: 5 },
+      { t: 'firepit', x: 6, y: 16, if: (s) => qhNight(s) },
+      { t: 'driftwood', x: 4, y: 22 }, { t: 'rock_small', x: 8, y: 26 },
+      // pier & ferry
+      { t: 'dock_post', x: 45, y: 6 }, { t: 'dock_post', x: 45, y: 9 }, { t: 'dock_post', x: 39, y: 9 },
+      { t: 'boat_ferry', x: 43, y: 9, solid: false, z: -200, key: 'qh_ferry' },
+      { t: 'wang_boat', x: 41, y: 12, water: true, solid: false, z: -200, if: (s) => !!s.flags.ch9_wangboat_launch && s.vars.ch9_port === 'qihou' },
+      { t: 'crate', x: 38, y: 6 }, { t: 'barrel', x: 38, y: 5 },
+      // hill
+      { t: 'signboard', x: 19, y: 2, text: '旗後山', interact: ['「旗後山」。從山頂望下去，打狗港窄窄的一道口，兩邊山夾著。', '港內的水看起來平，一艘竹筏正慢慢渡過去。'], label: '眺望' },
+      { t: 'stone_lantern', x: 21, y: 3 }, { t: 'stone_lantern', x: 24, y: 3 },
+      { t: 'lamp_post', x: 19, y: 9 }, { t: 'lamp_post', x: 35, y: 9 },
+      { t: 'red_lantern', x: 29, y: 18 }, { t: 'red_lantern', x: 35, y: 19 },
+      { t: 'signboard', x: 21, y: 31, text: '往東港', interact: ['路牌：「沿沙洲往南──東港」。'], label: '看' },
+    ],
+    chests: [
+      { id: 'qh_hill', x: 26, y: 2, item: 'c9_xiancaodong', n: 3 },
+      { id: 'qh_pandanus', x: 4, y: 29, item: 'shimuyu', n: 2 },
+      { id: 'qh_lane', x: 37, y: 31, gold: 600 },
+    ],
+    lights: (s) => (qhNight(s) ? [{ x: 21, y: 16, r: 220, color: '#ffb060', flicker: 0.2 }, { x: 31, y: 14, r: 150, color: '#ffb060' }, { x: 32, y: 20, r: 150, color: '#ffc070' }, { x: 13, y: 12, r: 120, color: '#ffb060' }] : []),
+    npcs: [
+      chenboNpc('qihou', [40, 8], (s) => !!s.flags.ch9_qihou_arrive && !qhNight(s)),
+      { id: 'qh_boatman', sprite: 'boatman', name: '船夫阿水', x: 42, y: 7, dir: 'down', talk: async (S) => {
+        if (F('ch9_banping_done')) await S.say('船夫阿水', '聽講金萬伯把水窟仔打開了？夭壽，太陽打西邊出來喔。');
+        if (F('ch9_banping_open')) {
+          await S.say('船夫阿水', '要去半屏山？坐我的竹筏到對面，再走一段就到。');
+          const c = await S.choice(['到哨船頭（往半屏山）', '不用了'], { cancel: 1 });
+          if (c === 0) { await ferryToBanping(S); return; }
+          return;
+        }
+        await S.say('船夫阿水', '哨船頭到旗後，一趟兩文。港內水看起來平，底下流仔可急咧。');
+        await S.say('船夫阿水', '打狗港口窄，兩邊山夾著，船要算準潮水才進得來。');
+      } },
+      { id: 'qh_netwoman', sprite: 'fisher_f', name: '阿蕊姨', x: 8, y: 11, dir: 'left', wander: 1, if: (s) => !qhNight(s), talk: async (S) => {
+        if (F('ch9_qihou_night_done')) { await S.say('阿蕊姨', '昨晚那些……是溺死的人吼？唉，可憐。我燒了一點金紙給他們。'); return; }
+        await S.say('阿蕊姨', '網破了要補，人心破了也要補。補網我會，補人心我就不會了。');
+        await S.say('阿蕊姨', '最近晚上海面有藍色的火，一點一點往岸上走。我男人說是漁火，我看不是。');
+      } },
+      { id: 'qh_fisher_old', sprite: 'fisherman', name: '海龍伯', x: 7, y: 6, dir: 'down', if: (s) => !qhNight(s), talk: [
+        '旗後人出海，看天、看雲、看水色。今年的水色不對，黑裡帶青，像死人臉。',
+        '南邊的水是好的。黑潮那條，暖的、藍的，飛魚一群一群跟著來。',
+        '同樣叫「黑」，西邊那條黑水溝收人命，東邊那條黑潮送魚來。海也有兩張臉啦。',
+      ] },
+      { id: 'qh_kid', sprite: 'child_m', name: '阿全', x: 26, y: 18, dir: 'left', wander: 2, if: (s) => !qhNight(s), talk: async (S) => {
+        await S.say('阿全', '你的貓好胖！牠會游泳嗎？');
+        await S.say('tuanzi:angry', '本大爺是石虎！石虎不游泳，石虎坐船！');
+        await S.say('阿全', '阿嬤說晚上不能在海邊叫人家名字，會被聽到。');
+      } },
+      { id: 'qh_xiu', sprite: 'child_f', name: '阿秀', x: 15, y: 25, dir: 'down', if: (s) => !!s.flags.ch9_qihou_night_done && !s.flags.ch9_banping_reward, talk: async (S) => {
+        if (F('ch9_banping_done')) { await S.say('阿秀', '阿公回來了！他在水窟仔那邊……'); return; }
+        if (F('ch9_banping_open')) { await S.say('阿秀', '坐渡船到哨船頭，再往北走，就是半屏山。拜託你們……'); return; }
+        await xiuScene(S);
+      } },
+      { id: 'qh_jinwan', sprite: 'merchant', name: '金萬伯', x: 13, y: 26, dir: 'up', if: (s) => !!s.flags.ch9_banping_done, talk: [
+        '來來來，不用錢！……不對，這不是「不用錢」。是我請的。',
+        '我拿了一輩子，從來沒有飽過。現在給出去，奇怪，倒是飽了。',
+      ] },
+      { id: 'qh_inn', sprite: 'shopkeeper_f', name: '老闆娘', x: 32, y: 21, dir: 'down', if: (s) => !qhNight(s), talk: async (S) => {
+        await S.say('老闆娘', '住一晚八十文。今晚吃虱目魚粥，早上剛殺的，新鮮。');
+        await S.inn(80, { who: '老闆娘' });
+      } },
+      { id: 'qh_shop1', sprite: 'merchant', name: '雜貨鋪頭家', x: 32, y: 25, dir: 'down', if: (s) => !qhNight(s), talk: async (S) => {
+        await S.say('雜貨鋪頭家', '出海、趕路，要帶的都有。艾草束是端午前新割的。');
+        await S.shop(['shimuyu', 'c9_xiancaodong', 'ezaijian', 'c9_aicao', 'huanhunxiang'], { title: '旗後雜貨' });
+      } },
+      { id: 'qh_shop2', sprite: 'doctor', name: '藥鋪先生', x: 26, y: 25, dir: 'down', if: (s) => !qhNight(s), talk: async (S) => {
+        await S.say('藥鋪先生', '海邊濕氣重，解毒、清心的藥，帶一些在身上。');
+        await S.shop(['c9_jiedusan', 'c9_qingxindan', 'c9_baicaogao', 'c9_lurongjiu'], { title: '旗後藥鋪' });
+      } },
+      { id: 'qh_vendor1', sprite: 'villager_m', name: '魚市攤販', x: 31, y: 12, dir: 'down', fixedDir: true, if: (s) => !qhNight(s), talk: ['虱目魚、肉魚、白帶魚！逆潮以後魚變少了，價錢歹勢喔，要漲一點。'] },
+      { id: 'qh_vendor2', sprite: 'old_f', name: '魚乾阿婆', x: 34, y: 11, dir: 'down', if: (s) => !qhNight(s), talk: ['魚乾要曬三日日頭。今年的風一直怪怪的，曬不乾，臭臭的。'] },
+      { id: 'qh_scholar', sprite: 'scholar', name: '落第秀才', x: 14, y: 8, dir: 'down', wander: 2, if: (s) => !qhNight(s), talk: [
+        '打狗二字粗鄙！粗鄙！……不過聽說源自平埔語，意為竹林，倒也風雅。',
+        '半屏山的故事你們聽過嗎？貪心不足蛇吞象，貪心不足人吞山。',
+      ] },
+    ],
+    events: [
+      // C9-03 夜灘
+      { id: 'qh_nightbeach', trigger: 'touch', x: 3, y: 12, w: 7, h: 10, if: (s) => qhNight(s), run: async (S) => { await nightBeach(S); } },
+      // 半屏山 reward when coming back
+      { id: 'qh_banping_reward', trigger: 'auto', if: (s) => !!s.flags.ch9_banping_done && !s.flags.ch9_banping_reward, run: async (S) => { await banpingReward(S); } },
+      // C9-04 沿海南行
+      { id: 'qh_south', trigger: 'touch', x: 20, y: 35, w: 8, h: 1, run: async (S) => {
+        if (!F('ch9_qihou_night_done')) {
+          await S.say('chenbo:serious', '急什麼。王船的消息還沒打聽清楚，先在旗後落腳。');
+          await S.move('player', 'U'); return;
+        }
+        await roadSouth(S);
+      } },
+      // board the 王船 when it is moored in 打狗港
+      { id: 'qh_board', trigger: 'touch', x: 45, y: 7, w: 1, h: 2, if: (s) => !!s.flags.ch9_wangboat_launch && s.vars.ch9_port === 'qihou', run: async (S) => { await boardDeck(S); } },
+    ],
+    warps: [
+      { x: 20, y: 14, w: 2, to: 'qihou_temple', tx: 7, ty: 9, tdir: 'up', door: true },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 旗後天后宮 interior ----
+  G.Maps.define('qihou_temple', {
+    name: '旗後天后宮', subtitle: '打狗最老的媽祖廟', place: 'takao', bgm: 'temple', start: [7, 9],
+    light: { ambient: 0.18, color: '#2a1408' }, particles: ['motes'],
+    tiles: (() => {
+      const g = grid(16, 12, 'E');
+      g.rect(1, 2, 14, 9, 'T').rect(7, 11, 2, 1, 'T');
+      g.rect(6, 6, 4, 4, 'c');
+      return g.rows();
+    })(),
+    objects: [
+      { t: 'altar', x: 7, y: 2 }, { t: 'eternal_lamp', x: 5, y: 2 }, { t: 'eternal_lamp', x: 10, y: 2 },
+      { t: 'banner', x: 4, y: 2, color: '#b0281e' }, { t: 'banner', x: 11, y: 2, color: '#b0281e' },
+      { t: 'pillar', x: 2, y: 2 }, { t: 'pillar', x: 13, y: 2 }, { t: 'pillar', x: 2, y: 8 }, { t: 'pillar', x: 13, y: 8 },
+      { t: 'incense_burner', x: 8, y: 4 },
+      { t: 'fortune_sticks', x: 11, y: 4 }, { t: 'divination_blocks', x: 4, y: 4 },
+      { t: 'mural', x: 2, y: 1, v: 3 }, { t: 'mural', x: 12, y: 1, v: 1 },
+      { t: 'plant_pot', x: 1, y: 10, v: 1 }, { t: 'plant_pot', x: 14, y: 10, v: 2 },
+    ],
+    npcs: [
+      chenboNpc('qihou_temple', [8, 9]),
+      { id: 'qh_keeper', sprite: 'temple_keeper', name: '阿標伯', x: 11, y: 5, dir: 'left', talk: async (S) => {
+        if (F('ch9_qihou_night_done')) await S.say('阿標伯', '昨晚海邊的事我聽講了。……多謝你們。');
+        await S.say('阿標伯', '媽祖婆保佑討海人。你們要過黑水溝，路上記得心裡念祂。');
+        await S.say('阿標伯', '這間廟是早年從唐山過來討海的人一磚一瓦蓋起來的，打狗這裡最老的。');
+      } },
+    ],
+    events: [
+      { id: 'qht_c902', trigger: 'auto', if: (s) => !!s.flags.ch9_qihou_arrive && !s.flags.ch9_qihou_temple, run: async (S) => { await qihouTemple(S); } },
+      { id: 'qht_pray', trigger: 'action', x: 7, y: 3, w: 2, h: 1, label: '參拜', run: async (S) => {
+        S.sfx('bell');
+        await S.say('', '星河雙手合十。香煙繚繞，神龕裡的燭火輕輕搖晃。');
+      } },
+    ],
+    warps: [
+      { x: 7, y: 11, w: 2, to: 'qihou', tx: 20, ty: 15, tdir: 'down', door: true, run: async (S) => {
+        if (F('ch9_qihou_temple') && !F('ch9_qihou_night')) {
+          S.flag('ch9_qihou_night');
+          await S.fadeOut(0.6);
+          await S.narrate(['天色漸漸暗了。', '旗後的漁火，一盞一盞亮了起來。'], { veil: 1 });
+        }
+        return true;
+      } },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 旗後 scripts -----------------------------------------------------------------------------------
+  async function qihouTemple(S) {
+    S.bgm('temple');
+    S.hideFollowers(false);
+    S.setPos('player', 7, 8, 'up'); S.setPos('hongying', 6, 8, 'up'); S.setPos('yungui', 9, 8, 'up'); S.setPos('tuanzi', 8, 9, 'up'); S.setPos('chenbo', 8, 8, 'up');
+    await S.say('', '廟內香煙繚繞。一個老廟公正在擦拭供桌。');
+    await S.say('阿標伯', '外地來的吼？先拜拜，媽祖婆會保佑你們平安。');
+    S.sfx('bell');
+    await S.say('', '眾人上香，合掌。糰子也學著合起兩隻前掌——結果往前一倒。');
+    await S.jump('tuanzi', 12);
+    await S.say('tuanzi:surprise', '喵！');
+    await S.say('阿標伯', '哈哈，這隻貓仔有禮貌。');
+    S.face('chenbo', 'qh_keeper');
+    await S.say('chenbo:normal', '阿標，好久不見。');
+    S.emote('qh_keeper', '!');
+    await S.say('阿標伯', '……陳渡？！你這個老骨頭還沒死喔！二十年不見了！');
+    await S.say('chenbo:smug', '還沒。閻羅王嫌我脾氣壞，不收。');
+    await S.say('xinghe:surprise', '陳伯，你在這裡也有朋友？');
+    await S.say('chenbo:normal', '以前跑水路的時候，常在旗後歇腳。');
+    await S.say('阿標伯', '你們要找王船？哈，奇怪的事，今年剛好有。');
+    await S.say('阿標伯', '今年不是迎王的年。可是東港的千歲爺，正月就降旨要提早造王船。');
+    await S.say('阿標伯', '東港人擲筊問了好幾次，都是一樣的意思：快造，今年有用。');
+    await S.say('yungui:think', '正月？逆潮是三月才起的。千歲爺……早就知道了。');
+    await S.say('阿標伯', '神明看得比人遠。不過聽說王船廠最近不平靜，造船師傅一個一個病倒。');
+    await S.say('阿標伯', '還有啊，這陣子旗後海邊，晚上會有藍色的火往岸上走。');
+    await S.say('阿標伯', '你們今晚若住在旗後，晚上不要去海邊。');
+    await S.say('hongying:serious', '……那我們今晚就去海邊。');
+    S.emote('qh_keeper', '?');
+    await S.say('阿標伯', '欸？');
+    await S.say('xinghe:smile', '她的意思是，我們去把那些火送回去。阿伯放心。');
+    S.flag('ch9_qihou_temple');
+    S.quest('q_ch9_main', 0);
+    S.objective('晚上到旗後西側沙灘看看');
+  }
+
+  async function nightBeach(S) {
+    S.bgm('night');
+    S.hideFollowers(false);
+    S.setPos('player', 6, 15, 'left'); S.setPos('hongying', 6, 14, 'left'); S.setPos('yungui', 7, 15, 'left'); S.setPos('tuanzi', 7, 16, 'left');
+    await S.camera(4, 15, 0.8);
+    const ghosts = [[1, 13], [1, 15], [2, 17], [1, 18]];
+    ghosts.forEach(([x, y], i) => S.spawn({ id: 'qh_drowned' + i, sprite: i % 2 ? 'ghost_f' : 'ghost_m', x, y, dir: 'right', ghost: true, light: { r: 90, color: '#6ab8ff' } }));
+    await S.say('', '海面上，一點一點藍色的光像燈籠一樣，緩緩往岸上漂。浪退時，光變成一個個濕淋淋的人影。');
+    for (let i = 0; i < ghosts.length; i++) S.move('qh_drowned' + i, 'R', { wait: false, speed: 1 });
+    await S.wait(0.8);
+    await S.say('tuanzi:cry', '喵嗚嗚嗚，又來了又來了！本大爺最怕濕的鬼！');
+    await S.say('yungui:serious', '溺魂。從府城那邊的海，被逆潮推到這裡來的。');
+    await S.say('xinghe:serious', '他們在找什麼？');
+    await S.say('chenbo:sad', '找岸。他們以為自己終於到家了。');
+    S.move('hongying', 'L', { wait: false });
+    await S.wait(0.3);
+    S.sfx('slash');
+    await S.say('hongying:angry', '不要過來！……不要再有人被拉回來了！');
+    let r = await S.battle('t_c9_beach_1', { bgmAfter: 'night' });
+    if (r !== 'win') return;
+    r = await S.battle('t_c9_beach_2', { bgmAfter: 'night' });
+    if (r !== 'win') return;
+    for (let i = 0; i < ghosts.length; i++) { S.fadeActor('qh_drowned' + i, 0, 1.0); }
+    await S.say('', '溺魂消散成細小的藍光，飄回海面。');
+    for (let i = 0; i < ghosts.length; i++) S.remove('qh_drowned' + i);
+    // campfire talk
+    await S.fadeOut(0.8);
+    S.cameraFollow();
+    S.setPos('player', 7, 16, 'left'); S.setPos('hongying', 5, 16, 'right');
+    S.show('yungui', false); S.show('tuanzi', false);
+    S.setPos('chenbo', 9, 13, 'left');
+    await S.fadeIn(0.8);
+    await S.say('', '沙灘上的篝火。陳伯與雲歸先回了客棧，糰子在雲歸懷裡睡著。只剩星河與紅纓。');
+    await S.say('', '紅纓單手拿著劍譜，另一手持槍，一遍一遍練同一招，練到槍尖發抖。');
+    for (let k = 0; k < 2; k++) { S.sfx('stab'); await S.jump('hongying', 10); await S.wait(0.3); }
+    await S.say('xinghe:normal', '那是……洛家劍？用槍使？');
+    await S.say('hongying:serious', '劍譜是哥哥的。我不會用劍。……所以我要用槍把它練出來。');
+    await S.say('hongying:serious', '他寫的每一招，我都要會。一招都不能忘。');
+    S.sfx('stab');
+    await S.say('', '她又刺了一槍，膝蓋一軟，跪坐在沙上。');
+    await S.say('hongying:sad', '星河。人死了，到了彼岸，是不是真的什麼都會忘記？');
+    await S.say('hongying:cry', '哥哥他……會不會已經忘了我了？');
+    await S.say('xinghe:sad', '……');
+    const c = await S.choice(['「他不會忘。」', '「就算他忘了，妳也還記得。」']);
+    if (c === 0) {
+      await S.say('xinghe:serious', '他不會忘。他最後一刻擋在妳前面——那種事，忘不掉的。');
+      await S.say('hongying:cry', '你又不知道……');
+      await S.say('xinghe:smile', '嗯，我不知道。可是我賭他不會。我賭運很好的。');
+      await S.say('hongying:sad', '……你上次跟雲歸賭，輸了三天的飯錢。');
+      await S.say('xinghe:laugh', '那次不算！');
+    } else {
+      await S.say('xinghe:serious', '就算他忘了，妳也還記得。妳替他記著，他就還在。');
+      await S.say('hongying:sad', '……替他記著。');
+      await S.say('xinghe:normal', '嗯。就像這本劍譜。他把會的都寫下來給妳了。');
+      await S.say('xinghe:normal', '他自己大概也知道，自己會忘吧。所以才寫下來。');
+    }
+    await S.camera(9, 13, 0.8);
+    await S.say('', '遠處，陳伯站在沙丘上，背著手。他沒有走近。');
+    await S.say('chenbo:sad', '（……「替他記著」嗎。玄啊，你也是這樣想的吧。）');
+    await S.say('chenbo:sad', '（可是你記得太用力了。）');
+    S.cameraFollow();
+    await S.wait(0.4);
+    await S.say('', '紅纓擦擦眼睛，站起來，把槍往沙裡一插。');
+    await S.say('hongying:angry', '好！明天我煮早餐！');
+    await S.say('xinghe:surprise', '欸？不、不用了吧——');
+    if (V().ch9_comfort === 'talk') await S.say('hongying:smug', '你早上不是說胃太好？');
+    else await S.say('hongying:smug', '誰叫你剛剛陪我。');
+    S.bgm('south');
+    await S.say('', '星河看著海，乾笑。');
+    await S.fadeOut(1.0);
+    await S.narrate(['隔天早上，星河吃了一碗「黑色的、會冒泡的粥」。'], { veil: 1 });
+    S.flag('ch9_qihou_night_done');
+    await S.warp('qihou', 33, 23, 'down', { fade: 0.01 });
+    S.show('yungui', true); S.show('tuanzi', true);
+    S.setPos('player', 33, 23, 'down'); S.setPos('hongying', 32, 23, 'right'); S.setPos('yungui', 34, 24, 'left'); S.setPos('tuanzi', 33, 24, 'up'); S.setPos('chenbo', 35, 23, 'left');
+    S.emote('player', '💧');
+    await S.say('', '客棧門口，星河趴在桌上，一動也不動。');
+    await S.say('yungui:smug', '英勇。');
+    await S.say('tuanzi:sad', '本大爺聞了一下就飽了。');
+    days(S, 2);
+    S.quest('q_ch9_main', 1);
+    S.objective('沿沙洲往南，前往東港');
+    relight(S);
+  }
+
+  async function roadSouth(S) {
+    await S.say('', '旗後往南，沿著沙洲與海邊的小路，走兩天就到東港。');
+    const c = await S.choice(['趕路', '沿路巡一巡（可能遇敵）'], { cancel: 0 });
+    await S.travel('takao', 'donggang', { label: '旗後往南，沿著沙洲與海邊的小路，走了兩天。' });
+    if (c === 1) {
+      await S.say('', '沿著海岸巡了一趟，逆潮推上岸的東西果然不少。');
+      if ((await S.battle('t_c9_road_a')) !== 'win') return;
+      if ((await S.battle('t_c9_road_b')) !== 'win') return;
+    }
+    await S.warp('donggang', 16, 1, 'down');
+  }
+
+  // ---- 半屏山湯圓 (心燈 16) ----
+  async function xiuScene(S) {
+    S.emote('qh_xiu', '💧');
+    await S.say('阿秀', '嗚……阿公不見了……');
+    await S.say('hongying:surprise', '（蹲下）怎麼了？誰欺負妳？');
+    await S.say('', '紅纓遞出一條手帕。手帕上繡著一隻歪掉的兔子。');
+    await S.say('阿秀', '……這隻是豬嗎？');
+    await S.say('hongying:shy', '是兔子！');
+    S.emote('qh_xiu', '♪');
+    await S.say('阿秀', '（破涕為笑）阿公是金萬。旗後最有錢的人。');
+    await S.say('阿秀', '逆潮以後，旗後的井都鹹了，只有我們家的水窟仔是甜的。');
+    await S.say('阿秀', '阿公把水窟仔鎖起來，一桶水賣十文。厝邊都罵他。');
+    await S.say('阿秀', '我晚上偷偷開鎖分水給人，被阿公罵……');
+    await S.say('阿秀', '前天，阿公聽說半屏山那個賣湯圓的又出現了，「兩碗不用錢」。');
+    await S.say('阿秀', '阿公什麼都不付錢的。他坐轎子去了，到現在還沒回來。');
+    await S.say('xinghe:normal', '半屏山？');
+    await S.say('阿秀', '坐渡船到哨船頭，再往北走。');
+    S.flag('ch9_banping_open');
+    S.quest('q_ch9_banping', 0);
+    S.toast('支線：到半屏山找金萬', 'scroll');
+  }
+  async function ferryToBanping(S) {
+    await S.fadeOut(0.6);
+    await S.narrate(['竹筏渡過打狗港，到了對岸的哨船頭。', '再往北走一段，路邊的山像被刀切掉了一半。'], { veil: 1 });
+    await S.warp('banping_foot', 19, 27, 'up', { fade: 0.01 });
+  }
+  async function banpingReward(S) {
+    S.setPos('player', 15, 26, 'up'); S.gather();
+    S.setPos('chenbo', 17, 26, 'up');
+    await S.say('', '金萬大厝院子裡，水窟仔的鎖被拆了。金萬親自拿著木勺，一勺一勺分水給排隊的厝邊。');
+    const q = [[11, 26], [10, 26], [10, 25]];
+    q.forEach(([x, y], i) => S.spawn({ id: 'qh_queue' + i, sprite: ['villager_f', 'old_m', 'villager_m2'][i], x, y, dir: 'right' }));
+    S.setPos('qh_jinwan', 12, 26, 'left');
+    await S.say('金萬伯', '來來來，不用錢！……不對，這不是「不用錢」。是我請的。');
+    S.setPos('qh_xiu', 15, 24, 'down');
+    await S.move('qh_xiu', 'D', { speed: 4 });
+    S.emote('qh_xiu', '♥');
+    await S.say('阿秀', '（衝過來抱住星河的腰）謝謝哥哥！謝謝姊姊！謝謝胖貓！');
+    await S.say('tuanzi:angry', '本大爺是石——……算了，胖貓就胖貓。');
+    S.face('qh_jinwan', 'player');
+    await S.say('金萬伯', '少年仔，我欠你一文錢。（掏出一大袋）這是一千文。');
+    await S.say('xinghe:surprise', '欸？這、這不只一文吧？');
+    await S.say('金萬伯', '利息。……我請的。');
+    S.gold(1000);
+    for (let i = 0; i < q.length; i++) S.remove('qh_queue' + i);
+    S.flag('ch9_banping_reward');
+    S.quest('q_ch9_banping', 'done');
+  }
+
+  // @@MAPS@@
 })();

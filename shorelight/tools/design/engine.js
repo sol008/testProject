@@ -870,34 +870,28 @@
       const r = Object.assign({ cx: -4, cy: -24, rx: 76, ry: 52, a0: 3.5, a1: 5.95, w: 3.4, n: 44, a: 0.8 }, R || {});
       const rng = U.seeded((sp.seed || 3) * 13 + 1);
       const P2 = (a, d) => [r.cx + Math.cos(a) * (r.rx + d), r.cy + Math.sin(a) * (r.ry + d)];
-      // jagged band: outer edge and inner edge with alternating spikes
+      // (design-tool variant) smooth crescent sheen + fine strand glints instead of the jagged band
+      const hiC = U.mix(H.base, H.hi || H.light, r.mix != null ? r.mix : 0.65);
       const outer = [], inner = [];
       for (let k = 0; k <= r.n; k++) {
-        const a = U.lerp(r.a0, r.a1, k / r.n);
-        const edge = Math.min(1, Math.min(k, r.n - k) / 4); // taper at both ends
-        const sp1 = 0.2 + rng() * 0.4;
-        const sp2 = rng() < 0.45 ? 0.15 + rng() * 0.4 : 1.2 + rng() * 2.4;
-        outer.push(P2(a, r.w * 0.5 * edge + r.w * sp1 * edge));
-        inner.push(P2(a, -r.w * 0.5 * edge - r.w * sp2 * edge));
+        const t = k / r.n, a = U.lerp(r.a0, r.a1, t);
+        const fall = Math.pow(Math.sin(Math.PI * t), 0.7);
+        outer.push(P2(a, r.w * 0.7 * fall));
+        inner.push(P2(a, -r.w * (1.5 + 0.55 * Math.sin(k * 1.9) + 0.35 * Math.sin(k * 0.7)) * fall));
       }
-      // broken into a few segments
-      c.fillStyle = U.rgba(U.mix(H.base, H.hi || H.light, r.mix != null ? r.mix : 0.6), r.a);
-      let k0 = 0;
-      while (k0 < r.n) {
-        const len = 4 + Math.floor(rng() * 6);
-        const k1 = Math.min(r.n, k0 + len);
-        c.beginPath(); c.moveTo(outer[k0][0], outer[k0][1]);
-        for (let k = k0; k <= k1; k++) c.lineTo(outer[k][0], outer[k][1]);
-        for (let k = k1; k >= k0; k--) c.lineTo(inner[k][0], inner[k][1]);
-        c.closePath(); c.fill();
-        k0 = k1 + 1 + Math.floor(rng() * 2);
-      }
-      // bright core streaks
-      c.fillStyle = U.rgba(H.hi || H.light, r.a * 0.45);
-      for (let k = 2; k < r.n - 2; k += 3) {
-        const a = U.lerp(r.a0, r.a1, (k + rng()) / r.n);
-        const o1 = P2(a, r.w * 0.8), i1 = P2(a, -r.w * 1.1), s1 = P2(a + 0.02, 0), s2 = P2(a - 0.02, 0);
-        c.beginPath(); c.moveTo(o1[0], o1[1]); c.quadraticCurveTo(s1[0], s1[1], i1[0], i1[1]); c.quadraticCurveTo(s2[0], s2[1], o1[0], o1[1]); c.fill();
+      const gx = c.createLinearGradient(r.cx - r.rx, 0, r.cx + r.rx, 0);
+      gx.addColorStop(0, U.rgba(hiC, 0)); gx.addColorStop(0.18, U.rgba(hiC, r.a * 0.9)); gx.addColorStop(0.45, U.rgba(hiC, r.a * 0.75));
+      gx.addColorStop(0.8, U.rgba(hiC, r.a * 0.35)); gx.addColorStop(1, U.rgba(hiC, 0));
+      c.beginPath(); c.moveTo(outer[0][0], outer[0][1]);
+      for (const p of outer) c.lineTo(p[0], p[1]);
+      for (let k = inner.length - 1; k >= 0; k--) c.lineTo(inner[k][0], inner[k][1]);
+      c.closePath(); c.fillStyle = gx; c.fill();
+      // strand glints: short bright arcs at slightly different radii
+      c.lineCap = 'round';
+      for (let k = 0; k < 9; k++) {
+        const t = 0.08 + rng() * 0.62, len = 0.06 + rng() * 0.12, d = (rng() - 0.6) * r.w * 2;
+        c.beginPath(); c.ellipse(r.cx, r.cy, r.rx + d, r.ry + d, 0, U.lerp(r.a0, r.a1, t), U.lerp(r.a0, r.a1, t + len));
+        c.strokeStyle = U.rgba(H.hi || H.light, r.a * (0.5 + rng() * 0.4)); c.lineWidth = 0.8 + rng() * 0.8; c.stroke();
       }
     }
     c.restore();

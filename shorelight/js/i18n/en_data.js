@@ -896,7 +896,7 @@ G.I18N.add({
     'Fire sword and silver spear burst like Lantern Festival fireworks. 3 hits on all foes.',
   '雷霆槍陣': 'Thunderspear',
   '【合擊・紅纓＋雲歸】雷符附槍，一槍引落九天之雷。木屬性單體極大傷害，可能暈眩。':
-    'A thunder talisman on the spear calls down the heavens. Huge Wood damage to one foe; may Stun.',
+    'Talisman meets spear, and heaven strikes. Huge Wood damage to one foe; may Stun.',
   '雲水禪心': 'Zen of Cloud and Water',
   '【合擊・白芷＋雲歸】笛聲與符光相和。我方全體大幅回復並持續回復。':
     'Flute song and talisman light in harmony. Greatly heals all allies and grants Regen.',
@@ -908,7 +908,7 @@ G.I18N.add({
     'Moonlight gathers on the spear tip. Heavy Water strike on one foe; lowers its Guard.',
   '千燈': 'A Thousand Lanterns',
   '【合擊・四人】「妳不是一個人在發光。」一路上被渡過的每一盞心燈一同亮起。全體極大傷害。':
-    '"You\'re not the only one shining." Every heart lantern blazes. Huge damage to all.',
+    '"You\'re not shining alone." Every lantern blazes. Huge damage.',
 
   // ---- enemy skills: generic ----
   '撞擊': 'Ram',

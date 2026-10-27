@@ -302,9 +302,7 @@
             HF.sideLocks(c, S, { near: 0.85, far: 0.7, w: 0.85 });
           },
           acc(c) {
-            c.fillStyle = '#e8e8f0'; c.strokeStyle = '#5a5a6a'; c.lineWidth = 1.1;
-            c.beginPath(); c.moveTo(-28, -112); c.lineTo(-24, -128); c.quadraticCurveTo(-10, -136, 6, -128); c.lineTo(8, -112); c.closePath(); c.fill(); c.stroke();
-            c.fillStyle = '#e04030'; ell(c, -10, -126, 3, 3); c.fill();
+            AC.crown(c, -10, -116, { lotus: true, col: '#e8ecf4', line: '#b08a3a', gem: '#e04030' });
             c.strokeStyle = '#c8c8d0'; c.lineWidth = 2.4; c.lineCap = 'round'; c.beginPath(); c.moveTo(-40, -116); c.lineTo(18, -126); c.stroke();
           },
         }),

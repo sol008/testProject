@@ -525,5 +525,912 @@
     S.objective('跟紅纓回洛家古厝（鹿港南端）');
   }
 
+  // ============================================================================================ 天后宮 lukang_mazu (24×18)
+  const MZ = (() => {
+    const g = grid(24, 18, 'T');
+    g.rect(0, 0, 24, 2, 'E'); g.rect(0, 0, 1, 18, 'E'); g.rect(23, 0, 1, 18, 'E'); g.rect(0, 16, 24, 2, 'E');
+    g.rect(11, 16, 2, 2, 'T');           // door
+    g.rect(11, 4, 2, 12, 'c');           // red carpet aisle
+    g.rect(1, 2, 22, 1, 'T');
+    return g.rows();
+  })();
+  G.Maps.define('lukang_mazu', {
+    name: '鹿港天后宮',
+    subtitle: '湄洲渡海而來的媽祖',
+    place: 'lukang',
+    bgm: 'temple',
+    start: [11, 14],
+    light: { ambient: 0.3, color: '#1a0a06', playerR: 180 },
+    particles: ['motes'],
+    tiles: MZ,
+    objects: [
+      { t: 'altar', x: 11, y: 2 },
+      { t: 'brazier', x: 8, y: 3 }, { t: 'brazier', x: 15, y: 3 },
+      { t: 'mural', x: 3, y: 1, v: 2 }, { t: 'mural', x: 18, y: 1, v: 2 },
+      { t: 'pillar', x: 7, y: 5 }, { t: 'pillar', x: 16, y: 5 }, { t: 'pillar', x: 7, y: 9 }, { t: 'pillar', x: 16, y: 9 },
+      { t: 'pillar', x: 7, y: 13 }, { t: 'pillar', x: 16, y: 13 },
+      { t: 'incense_burner', x: 13, y: 9 },
+      { t: 'bell_tower', x: 2, y: 11 }, { t: 'drum', x: 20, y: 11 },
+      { t: 'divination_blocks', x: 10, y: 4 }, { t: 'fortune_sticks', x: 13, y: 4 },
+      { t: 'red_lantern', x: 6, y: 4, hang: true }, { t: 'red_lantern', x: 17, y: 4, hang: true },
+      { t: 'red_lantern', x: 6, y: 12, hang: true }, { t: 'red_lantern', x: 17, y: 12, hang: true },
+      { t: 'plant_pot', x: 1, y: 3, v: 1 }, { t: 'plant_pot', x: 22, y: 3, v: 2 },
+      { t: 'bench', x: 3, y: 7 }, { t: 'bench', x: 19, y: 7 },
+    ],
+    npcs: [
+      // 千里眼、順風耳：只作陳設
+      { id: 'mz_qianliyan', sprite: 'qianliyan', x: 5, y: 3, dir: 'down', fixedDir: true },
+      { id: 'mz_shunfenger', sprite: 'shunfenger', x: 18, y: 3, dir: 'down', fixedDir: true },
+      { id: 'lk_mazu_keeper', sprite: 'temple_keeper', name: '許廟公', x: 14, y: 6, dir: 'left', talk: async (S) => {
+        const t = time5();
+        if (t === 4) await S.say('許廟公', '明年正月，媽祖也要過年。你們若在府城，記得去大天后宮上一炷香。');
+        else if (flag('ch5_lamp')) await S.say('許廟公', '燈籠做好了？媽祖保庇，進去小心。');
+        else if (flag('ch5_mazu')) await S.say('許廟公', '施師傅的燈籠舖在九曲巷裡面。巷子彎彎曲曲，要順著彎走，莫走直的。');
+        else await S.say('許廟公', '入廟先拜媽祖，出海才會平安。');
+      } },
+      { id: 'mz_pilgrim', sprite: 'old_f', name: '老香客', x: 9, y: 8, dir: 'up', if: (s) => time5(s) < 2,
+        talk: ['我年年都來替討海的囝仔上香。', '一人一炷香，媽祖就不孤單。'] },
+    ],
+    events: [
+      { id: 'c5_mazu_scene', trigger: 'auto', if: (s) => s.flags.ch5_gate && !s.flags.ch5_mazu, run: (S) => sceneMazu(S) },
+      { id: 'c5_mazu_altar', trigger: 'action', x: 11, y: 2, w: 2, h: 1, label: '參拜', run: async (S) => {
+        await S.say('', '神龕前香煙繚繞，燭火靜靜地亮著。幾百年的香火，把神龕都燻得烏黑發亮。');
+        await S.say('', '「黑面媽祖」——拜的人越多，就越黑。');
+        if (hasActor('baizhi')) await S.say('baizhi:smile', '一人一炷香……我也想上一炷。');
+      } },
+      { id: 'c5_mazu_mural', trigger: 'action', x: 3, y: 1, w: 2, h: 1, label: '看壁畫', run: async (S) => {
+        await S.say('', '壁畫上，一艘船在黑水溝的巨浪裡翻滾，桅杆頂上亮著一點小小的紅光。');
+      } },
+      { id: 'c5_mazu_mural2', trigger: 'action', x: 18, y: 1, w: 2, h: 1, label: '看壁畫', run: async (S) => {
+        await S.say('', '壁畫上畫著渡海的人。他們抱著神像，一直唸、一直唸，望著遠方的一盞燈。');
+      } },
+    ],
+    warps: [{ x: 11, y: 17, w: 2, to: 'lukang', tx: 27, ty: 7, tdir: 'down', door: true }],
+  });
+
+  // ---- §3-3 天后宮：媽祖的燈 --------------------------------------------------------------------------------
+  async function sceneMazu(S) {
+    S.flag('ch5_mazu');
+    S.hideFollowers(false);
+    place(S, [['player', 11, 11, 'up'], ['baizhi', 12, 11, 'up'], ['hongying', 11, 12, 'up'], ['yungui', 12, 12, 'up'], ['tuanzi', 10, 12, 'up']]);
+    await S.camera(11, 6, 0.6);
+    await S.move('player', 'UU');
+    S.move('baizhi', 'UUU', { wait: false });
+    await S.move('hongying', 'UU');
+    S.move('yungui', 'UU', { wait: false });
+    S.face('baizhi', 'up');
+    await S.say('baizhi:think', '……她的臉是黑色的。');
+    S.face('lk_mazu_keeper', 'left');
+    await S.say('許廟公', '那是幾百年的香火燻的。黑面媽祖，是鹿港人最親的媽祖。');
+    await S.say('許廟公', '我們的媽祖，是從湄洲祖廟，一路渡過黑水溝請來的。');
+    await S.say('許廟公', '那時候的人，過海是拿命在賭。六死三留一回頭。');
+    await S.say('許廟公', '船在黑水溝裡翻滾的時候，他們就抱著媽祖的神像，一直唸、一直唸。');
+    await S.say('許廟公', '老一輩的討海人說，風暴最大的時候，桅杆頂上會亮起一點紅光。');
+    await S.say('許廟公', '那是媽祖點的燈。看到那盞燈，就知道——有人在海上替你照路。');
+    S.sfx('bell');
+    await S.say('', '（殿內的燭火，在無風的殿中，輕輕朝白芷的方向傾了一下，又直了。）');
+    await S.say('baizhi:sad', '……替人照路的燈。');
+    await S.say('baizhi:think', '她……一定很累吧。每一個人都要照。');
+    await S.say('許廟公', '（微笑）所以才要大家一起拜啊。一人一炷香，媽祖就不孤單。');
+    await S.say('xinghe:think', '（一人一炷香……）');
+    S.face('yungui', 'lk_mazu_keeper');
+    await S.say('yungui:normal', '廟公，打聽個人。一個月前，有沒有一個灰袍道士在這裡借宿？鬍子很長，講話很欠揍。');
+    S.emote('lk_mazu_keeper', '!');
+    await S.say('許廟公', '清虛道長？有啊！他住了三暝。每暝都去洛家古厝門口站到天光。');
+    await S.say('許廟公', '最後一暝，他在門上貼了一張符，回來說：「那屋裡有一場永遠吃不完的宴席。」');
+    await S.say('許廟公', '他說，符只能封，不能解。要解，得有人進去。');
+    await S.say('許廟公', '「要進那間厝，得提一盞燈——一盞愛過那間厝的人親手點的燈。」');
+    await S.say('許廟公', '他去九曲巷的施師傅那裡訂了一盞燈，可是燈還沒做好，他就急著往府城去了。');
+    await S.say('yungui:serious', '府城。');
+    await S.say('許廟公', '他說要去看看那個「長明宮」。說那宮裡的燈，跟洛家門口那股冷風，是同一種味道。');
+    S.emote('hongying', '!');
+    await S.say('hongying:surprise', '長明宮……和我家？');
+    await S.say('yungui:serious', '……鬼面身上也有長明宮的燈味。在觀音山的時候。');
+    await S.say('hongying:angry', '（握緊槍）所以那天晚上……是長明宮——');
+    S.face('player', 'hongying');
+    await S.say('xinghe:serious', '紅纓。先進去。進去了，才知道那天晚上到底發生什麼。');
+    await S.say('hongying:serious', '……嗯。');
+    S.cameraFollow();
+    S.emote('baizhi', '?');
+    const c = await S.choice(['讓白芷擲筊', '離開'], { cancel: 1 });
+    if (c === 0) {
+      await S.say('baizhi:think', '廟公，我可以問媽祖一個問題嗎？');
+      await S.say('許廟公', '當然。誠心問，媽祖會應。');
+      await S.walkTo('baizhi', 12, 4, { yFirst: true });
+      S.face('baizhi', 'up');
+      await S.say('baizhi:serious', '（學著雲歸在龍山寺的樣子跪下，捧筊）媽祖婆婆。紅纓……回家以後，會好好的嗎？');
+      await G.Mini.jiaobei({ throws: 3, results: ['sheng', 'sheng', 'sheng'], title: '擲筊' });
+      S.sfx('bell');
+      await S.say('許廟公', '三個聖筊……');
+      S.emote('hongying', '💢');
+      await S.say('hongying:shy', '……誰要妳問這個！');
+      S.face('baizhi', 'hongying');
+      await S.say('baizhi:smile', '媽祖說會的。三次。');
+      S.face('hongying', 'left');
+      await S.say('hongying:sad', '（別過臉，聲音很小）……謝謝。');
+      S.flag('ch5_jiaobei');
+    }
+    S.gather();
+    setTime(S, 1);
+    S.quest('q_ch5_main', 2);
+    S.objective('去九曲巷施家燈籠舖，取回清虛真人訂的燈');
+    G.UI.toast('天色漸漸暗了下來……', { icon: 'lantern' });
+  }
+
+  // ============================================================================================ 兵器鋪 lukang_shop (12×9)
+  G.Maps.define('lukang_shop', {
+    name: '施家鐵舖',
+    place: 'lukang',
+    bgm: (s) => (time5(s) === 2 ? 'night' : 'city'),
+    start: [6, 6],
+    light: (s) => (time5(s) >= 2 ? { ambient: 0.45, color: '#120804', playerR: 180 } : { ambient: 0.12, color: '#120804' }),
+    tiles: (() => { const g = grid(12, 9, '_'); g.rect(0, 0, 12, 2, 'W'); g.rect(0, 0, 1, 9, 'W'); g.rect(11, 0, 1, 9, 'W'); g.rect(0, 8, 12, 1, 'W'); g.rect(6, 8, 1, 1, '_'); return g.rows(); })(),
+    objects: [
+      { t: 'counter', x: 4, y: 4, w: 3 }, { t: 'weapon_rack', x: 1, y: 2 }, { t: 'weapon_rack', x: 8, y: 2 },
+      { t: 'cauldron', x: 3, y: 2 }, { t: 'barrel', x: 10, y: 5 }, { t: 'crate', x: 1, y: 6 }, { t: 'bucket', x: 10, y: 7 },
+      { t: 'brazier', x: 6, y: 2 },
+    ],
+    npcs: [{ id: 'lk_smith', sprite: 'merchant', name: '施鐵', x: 5, y: 3, dir: 'down', talk: async (S) => {
+      await S.say('施鐵', '我阿兄做燈，我打鐵。施家一熱一冷，剛好。');
+      if (flag('ch5_lamp')) await S.say('施鐵', '阿兄說他替洛家小姐紮了一盞燈？那盞燈，比我打的任何一把刀都利。');
+      await S.shop(['sw_bailian', 'c5_sp_steel', 'fl_diaohua', 'fn_zhusha', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'], { title: '施家鐵舖' });
+    } }],
+    warps: [{ x: 6, y: 8, to: 'lukang', tx: 35, ty: 14, tdir: 'down', door: true }],
+  });
+
+  // ============================================================================================ 客棧 lukang_inn (14×10)
+  G.Maps.define('lukang_inn', {
+    name: '鹿港客棧',
+    place: 'lukang',
+    bgm: (s) => (time5(s) === 3 ? 'jiufen' : time5(s) === 2 ? 'night' : 'city'),
+    start: [6, 7],
+    light: (s) => (time5(s) === 2 ? { ambient: 0.45, color: '#120804', playerR: 180 } : { ambient: 0.1, color: '#120804' }),
+    tiles: (() => { const g = grid(14, 10, '_'); g.rect(0, 0, 14, 2, 'W'); g.rect(0, 0, 1, 10, 'W'); g.rect(13, 0, 1, 10, 'W'); g.rect(0, 9, 14, 1, 'W'); g.rect(6, 9, 1, 1, '_'); return g.rows(); })(),
+    objects: [
+      { t: 'counter', x: 1, y: 4, w: 3 }, { t: 'shelf_lanterns', x: 1, y: 2, v: 2 }, { t: 'jar_row', x: 4, y: 2, w: 2 },
+      { t: 'table', x: 8, y: 4 }, { t: 'chair', x: 7, y: 4, dir: 'right' }, { t: 'chair', x: 9, y: 4, dir: 'left' },
+      { t: 'table', x: 8, y: 7 }, { t: 'chair', x: 7, y: 7, dir: 'right' }, { t: 'chair', x: 9, y: 7, dir: 'left' },
+      { t: 'table', x: 11, y: 5 }, { t: 'tea_set', x: 11, y: 2 }, { t: 'stairs_up', x: 12, y: 2 },
+      { t: 'red_lantern', x: 6, y: 2, hang: true }, { t: 'plant_pot', x: 1, y: 8, v: 1 },
+      { t: 'mural', x: 8, y: 1, v: 3 },
+    ],
+    npcs: [
+      { id: 'lk_innkeeper', sprite: 'old_m', name: '蔡頭家', x: 3, y: 3, dir: 'down', if: (s) => !s.vars.c5_inn_scene, talk: async (S) => {
+        await S.say('蔡頭家', '冬至前後，風最大。出門記得戴帽。');
+        if (flag('ch5_unmask') && !flag('ch5_noodles')) { await innScene(S); return; }
+        const ok = await S.inn(50, { who: '蔡頭家' });
+        if (ok && !flag('ch5_mazu')) await S.say('蔡頭家', '一暝睏飽，明仔載才有力氣。');
+      } },
+      { id: 'lk_inn_guest', sprite: 'villager_m2', name: '住客', x: 9, y: 5, dir: 'left', if: (s) => time5(s) < 3, talk: ['我是從泉州來收貨的。蚶江的船現在都不太敢開進來了，港道淤得太厲害。', '以前啊，鹿港跟蚶江對渡，一個月好幾趟。'] },
+    ],
+    events: [
+      { id: 'c5_inn_auto', trigger: 'auto', if: (s) => s.flags.ch5_fubo_done && !s.flags.ch5_noodles, run: (S) => innScene(S) },
+    ],
+    warps: [{ x: 6, y: 9, to: 'lukang', tx: 49, ty: 14, tdir: 'down', door: true }],
+  });
+
+  // ============================================================================================ 九曲巷 lukang_jiuqu (40×32)
+  // Winding brick alleys. Straight alleys (直巷) are wind tunnels: every 2.5 s a gust from the north-east
+  // pushes whoever stands in them two cells back (west / south). Bends (彎) and niches are wind shadows.
+  const JQ = (() => {
+    const g = grid(40, 32, 'R');
+    const F = '%';
+    g.rect(0, 3, 10, 2, F);                 // A: 巷口 (from 鹿港街)
+    g.rect(4, 5, 1, 9, F);                  // 摸乳巷 (1 wide, 9 long)
+    g.rect(1, 14, 11, 4, F);                // 曬衣 courtyard
+    // ② 九拐的彎巷 (safe, long)
+    g.rect(8, 5, 1, 2, F); g.rect(8, 7, 5, 1, F); g.rect(12, 7, 1, 3, F); g.rect(10, 9, 3, 1, F);
+    g.rect(10, 9, 1, 3, F); g.rect(10, 11, 5, 1, F); g.rect(14, 11, 1, 3, F); g.rect(11, 13, 4, 1, F);
+    // courtyard → 半邊井
+    g.rect(12, 17, 3, 1, F);
+    g.rect(14, 16, 10, 5, F);               // 半邊井 square (王家牆 above, rows 14–15)
+    g.set(21, 15, F);                       // 王家側門
+    g.rect(24, 18, 2, 1, F); g.rect(25, 18, 1, 5, F);
+    g.rect(24, 23, 14, 6, F);               // 施家燈籠舖 front square
+    g.rect(26, 20, 4, 3, F);                // (under the shop building)
+    // ① 長直巷 (wind tunnel, west wind)
+    g.rect(10, 3, 20, 1, F); g.rect(14, 2, 2, 1, F); g.rect(20, 4, 2, 1, F);
+    g.rect(30, 2, 8, 3, F);                 // 土地公 square
+    g.rect(33, 5, 1, 2, F);                 // passage under the gate tower
+    g.rect(32, 7, 3, 2, F);                 // 隘門
+    g.rect(33, 9, 1, 3, F); g.rect(28, 11, 6, 1, F); g.rect(28, 11, 1, 5, F); g.rect(28, 15, 5, 1, F); g.rect(32, 15, 1, 8, F);
+    // dead-end straight alley (north wind) with a chest at its end
+    g.rect(37, 11, 1, 12, F); g.set(36, 17, F);
+    // a few plaster walls for variety
+    g.rect(5, 6, 3, 6, 'P'); g.rect(16, 6, 8, 3, 'P'); g.rect(30, 12, 2, 3, 'P'); g.rect(34, 12, 2, 10, 'P');
+    return g.rows();
+  })();
+  const JQ_WINDS = [
+    { x: 10, y: 3, w: 4, h: 1, dir: 'left', period: 2.5, dur: 0.5 },
+    { x: 16, y: 3, w: 4, h: 1, dir: 'left', period: 2.5, dur: 0.5 },
+    { x: 22, y: 3, w: 4, h: 1, dir: 'left', period: 2.5, dur: 0.5 },
+    { x: 37, y: 18, w: 1, h: 4, dir: 'down', period: 2.5, dur: 0.5 },
+    { x: 37, y: 12, w: 1, h: 4, dir: 'down', period: 2.5, dur: 0.5 },
+  ];
+  const wellState = () => (G.state.vars.c5_well = G.state.vars.c5_well || {});
+  const gateClosed = (s) => time5(s) === 2 && !s.flags.ch5_gate_open;
+
+  G.Maps.define('lukang_jiuqu', {
+    name: '九曲巷',
+    subtitle: '九彎十八拐',
+    place: 'lukang',
+    bgm: (s) => (time5(s) === 2 ? 'night' : 'city'),
+    start: [1, 3],
+    light: (s) => townLight(s),
+    particles: (s) => (time5(s) === 2 ? [{ type: 'wind', density: 0.5 }, 'mist'] : [{ type: 'wind', density: 0.7 }]),
+    tiles: JQ,
+    winds: JQ_WINDS,
+    objects: [
+      { t: 'red_lantern', x: 2, y: 3, hang: true }, { t: 'jar', x: 9, y: 4 },
+      { t: 'laundry', x: 2, y: 14 }, { t: 'laundry', x: 7, y: 14 }, { t: 'jar', x: 1, y: 17 }, { t: 'jar', x: 2, y: 17 },
+      { t: 'bench', x: 8, y: 17 }, { t: 'basket', x: 11, y: 15 }, { t: 'bucket', x: 6, y: 17 },
+      // 半邊井：井口被王家的牆從中間穿過
+      { t: 'well', x: 18, y: 15 }, { t: 'door_frame', x: 21, y: 15 },
+      { t: 'crate', x: 20, y: 16 }, { t: 'crate', x: 16, y: 20 }, { t: 'jar', x: 23, y: 20 },
+      { t: 'red_lantern', x: 15, y: 16, hang: true },
+      // 土地公廟 square
+      { t: 'shrine_small', x: 35, y: 2, text: '福德祠' }, { t: 'incense_burner', x: 34, y: 4 }, { t: 'stone_lantern', x: 31, y: 2 },
+      { t: 'gate_city', x: 32, y: 7, text: '隘門' },
+      // 施家燈籠舖
+      { t: 'shophouse', x: 26, y: 20, text: '施家燈籠', v: 2, door: 1 },
+      { t: 'lantern_rack', x: 24, y: 26 }, { t: 'red_lantern', x: 30, y: 23, hang: true },
+      { t: 'house_minnan', x: 32, y: 25, door: 2, v: 1 }, { t: 'plant_pot', x: 31, y: 27, v: 2 },
+      { t: 'basket', x: 24, y: 28 }, { t: 'jar', x: 25, y: 28 },
+      { t: 'red_lantern', x: 12, y: 7, hang: true }, { t: 'red_lantern', x: 28, y: 13, hang: true },
+      // 除夕 / night lanterns
+      { t: 'red_lantern', x: 25, y: 19, hang: true, if: (s) => time5(s) >= 2 },
+    ],
+    lights: (s) => (time5(s) >= 1 ? [{ x: 27, y: 23, r: 150, color: '#ffb060', flicker: 0.25 }, { x: 34, y: 4, r: 110, color: '#ffa050', flicker: 0.3 },
+      { x: 18, y: 17, r: 100, color: '#ffb070', flicker: 0.2 }] : []),
+    chests: [
+      { id: 'c5_02', x: 37, y: 11, item: 'c5_lukang_coat' },
+      { id: 'c5_03', x: 33, y: 2, item: 'huanhunxiang', gold: 500 },
+    ],
+    npcs: [
+      { id: 'lk_alley_lady', sprite: 'villager_f2', name: '阿桑', x: 5, y: 4, dir: 'left', talk: async (S) => {
+        if (flag('ch5_alley')) { await S.say('阿桑', '摸乳巷又叫君子巷。男人遇到女人，要轉身面壁。記牢喔！'); return; }
+        await S.say('阿桑', '欸，少年仔，要過摸乳巷？');
+      } },
+      { id: 'lk_granny_well', sprite: 'old_f', name: '井邊阿婆', x: 17, y: 17, dir: 'up', talk: (S) => grannyTalk(S) },
+      { id: 'lk_mason', sprite: 'villager_m2', name: '泥水師傅', x: 19, y: 17, dir: 'up', if: (s) => !s.flags.ch5_well_done, talk: async (S) => {
+        await S.say('泥水師傅', '阿婆，我也是拿人錢做事。王少爺說天光前要封好。');
+        await S.say('泥水師傅', '唉，砌這個牆，我心肝也艱苦。我細漢也是喝這口井的水大漢的。');
+      } },
+      { id: 'lk_watchman', sprite: 'old_m', name: '打更阿福伯', pos: (s) => (gateClosed(s) ? [33, 8] : [32, 4]), x: 32, y: 4, dir: 'down', talk: (S) => watchmanTalk(S) },
+      { id: 'lk_shrine_kid', sprite: 'child_m', name: '巷仔內的囝仔', x: 30, y: 25, dir: 'right', wander: 2, if: (s) => time5(s) < 2,
+        talk: ['直直走會被風吹回來！要彎過去、彎過去！', '你看，風在直巷子裡最大，轉個彎就沒了。'] },
+      { id: 'lk_auntie_home', sprite: 'villager_f', name: '阿婆家媳婦', x: 34, y: 28, dir: 'up', if: (s) => time5(s) < 2,
+        talk: ['施師傅那間燈籠舖，四十年了。我嫁來的時候，他就在那裡糊燈。', '晚上隘門會關，要找打更的阿福伯開門。'] },
+    ],
+    enemies: [
+      { id: 'jq_paper1', troop: 'lukang_1', x: 6, y: 16, art: 'paper_servant', radius: 3, chase: 3, if: (s) => time5(s) === 2 && !s.flags.ch5_unmask },
+      { id: 'jq_paper2', troop: 'lukang_3', x: 30, y: 27, art: 'hanged_ghost', radius: 3, chase: 3, if: (s) => time5(s) === 2 && !s.flags.ch5_unmask },
+    ],
+    events: [
+      { id: 'c5_alley', trigger: 'touch', x: 3, y: 3, w: 1, h: 2, if: (s) => !s.flags.ch5_alley, run: (S) => sceneAlley(S) },
+      { id: 'c5_well_start', trigger: 'touch', x: 15, y: 16, w: 1, h: 5, if: (s) => s.flags.ch5_mazu && !G.state.quests.q_halfwell, run: (S) => wellStart(S) },
+      { id: 'c5_well_night', trigger: 'auto', if: (s) => G.Quests.stage('q_halfwell') === 2 && !G.Quests.isDone('q_halfwell') && time5(s) === 2, run: (S) => wellNight(S) },
+      { id: 'c5_well_look', trigger: 'action', x: 18, y: 15, label: '半邊井', run: async (S) => {
+        await S.say('', '一口井，被王家的紅磚牆從中間穿過——一半在牆內，一半在牆外。');
+        if (!flag('ch5_well_done')) await S.say('', '牆外這半邊的井欄上，已經擺了好幾塊磚頭。');
+        else await S.say('', '井欄上的磚頭都拿掉了。井水映著兩邊的天。');
+      } },
+      { id: 'c5_shrine', trigger: 'action', x: 35, y: 3, w: 2, h: 1, label: '參拜', run: async (S) => {
+        await S.say('', '巷子裡的土地公廟。香爐裡插著幾炷剛點的香。');
+        if (hasActor('yungui')) await S.say('yungui:smile', '土地公顧巷子，打更的顧人。鹿港人兩邊都不放心，所以兩個都請了。');
+      } },
+    ],
+    warps: [
+      { x: 0, y: 3, h: 2, to: 'lukang', tx: 53, ty: 9, tdir: 'left' },
+      { x: 27, y: 22, to: 'lukang_lantern', tx: 6, ty: 8, tdir: 'up', door: true },
+      { x: 21, y: 15, to: 'lukang_wang', tx: 10, ty: 8, tdir: 'up', door: true, run: async (S) => {
+        if (G.state.quests.q_halfwell || flag('ch5_well_done')) return true;
+        await S.say('', '王家的側門關著。門內傳來算盤聲，劈哩啪啦。');
+        await S.move('player', 'D');
+        return false;
+      } },
+    ],
+    onUpdate(dt, ms, busy) {
+      // gust onset: shove a player who is pushing against the wind back two cells (input locked briefly)
+      ms.c5w = ms.c5w || [];
+      const p = ms.player;
+      JQ_WINDS.forEach((w, i) => {
+        const on = ms.windActive(w);
+        const was = ms.c5w[i];
+        ms.c5w[i] = on;
+        if (!on || was || busy) return;
+        if (!(p.x >= w.x && p.x < w.x + w.w && p.y >= w.y && p.y < w.y + w.h)) return;
+        if (G.Debug && G.Debug.autoplay) return;
+        G.Script.run(async (S) => {
+          G.Audio.sfx('wind');
+          const step = w.dir === 'left' ? 'L' : 'D';
+          let n = 0;
+          for (let k = 0; k < 2; k++) {
+            const [dx, dy] = U.dirs[w.dir];
+            if (ms.blocked(p.x + dx, p.y + dy, p)) break;
+            n++;
+            await S.move('player', step, { speed: 9 });
+          }
+          if (n) S.face('player', w.dir === 'left' ? 'right' : 'up');
+          if (hasActor('tuanzi') && n) S.emote('tuanzi', '💧', 0.8);
+        });
+      });
+    },
+    drawOver(ctx, t, ms) {
+      // 半邊井：王家的牆從井口中間穿過
+      const wx = 18 * T, wy = 15 * T;
+      ctx.save();
+      const brick = ctx.createLinearGradient(0, wy - 10, 0, wy + 30);
+      brick.addColorStop(0, '#b0503a'); brick.addColorStop(1, '#7a3020');
+      ctx.fillStyle = brick;
+      ctx.fillRect(wx + 26, wy - 30, 12, 72);
+      ctx.strokeStyle = 'rgba(60,20,10,0.6)'; ctx.lineWidth = 1;
+      for (let y = wy - 30; y < wy + 42; y += 8) { ctx.beginPath(); ctx.moveTo(wx + 26, y); ctx.lineTo(wx + 38, y); ctx.stroke(); }
+      ctx.fillStyle = '#c8a890'; ctx.fillRect(wx + 24, wy - 34, 16, 5);
+      // bricks laid on the outer half (until the quest is done)
+      if (!flag('ch5_well_done')) {
+        ctx.fillStyle = '#a84a34'; ctx.strokeStyle = '#5a2010';
+        for (let k = 0; k < 3; k++) { ctx.fillRect(wx + 6 + k * 6, wy + 18 - k * 5, 16, 7); ctx.strokeRect(wx + 6 + k * 6, wy + 18 - k * 5, 16, 7); }
+      }
+      ctx.restore();
+      // wind gauge (風勢) — counts down to the next gust
+      const inZone = JQ_WINDS.some((w) => ms.player.x >= w.x - 3 && ms.player.x < w.x + w.w + 3 && ms.player.y >= w.y - 3 && ms.player.y < w.y + w.h + 3);
+      if (!inZone || G.Script.busy()) return;
+      screenSpace(ctx, ms, (c) => {
+        const per = 2.5, ph = (ms.windT % per);
+        const on = ph < 0.5;
+        const left = on ? 0 : per - ph;
+        const x = 34, y = G.H - 120;
+        c.fillStyle = 'rgba(8,10,20,0.66)';
+        c.beginPath(); c.roundRect(x, y, 196, 54, 14); c.fill();
+        c.strokeStyle = on ? 'rgba(220,240,255,0.9)' : 'rgba(240,210,140,0.6)'; c.lineWidth = 1.5; c.stroke();
+        G.Render.text(c, on ? '風勢　陣風！' : '風勢', x + 14, y + 8, { size: 20, color: on ? '#e8f4ff' : '#f0e0c0' });
+        c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(x + 14, y + 36, 168, 8);
+        c.fillStyle = on ? '#bfe4ff' : '#ffcf6a';
+        c.fillRect(x + 14, y + 36, 168 * (on ? 1 : 1 - left / (per - 0.5)), 8);
+        // swirl icon
+        c.strokeStyle = on ? '#e8f4ff' : '#c8b890'; c.lineWidth = 2;
+        for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(x + 168, y + 18, 4 + k * 4, t * (on ? 9 : 2) + k, t * (on ? 9 : 2) + k + 3.6); c.stroke(); }
+      });
+    },
+  });
+
+  // ---- §3-4 九曲巷・摸乳巷 -------------------------------------------------------------------------------------
+  async function sceneAlley(S) {
+    S.flag('ch5_alley');
+    S.hideFollowers(false);
+    place(S, [['player', 3, 3, 'right'], ['baizhi', 2, 3, 'right'], ['hongying', 2, 4, 'right'], ['yungui', 1, 3, 'right'], ['tuanzi', 1, 4, 'right']]);
+    S.face('lk_alley_lady', 'left');
+    S.emote('lk_alley_lady', '!');
+    await S.say('', '（一條窄到只容一人側身的巷子。巷口一位阿桑正在等。）');
+    await S.say('阿桑', '欸，少年仔，你們要過摸乳巷？');
+    S.emote('player', '?');
+    await S.say('xinghe:surprise', '摸、摸什麼巷？');
+    await S.say('阿桑', '摸乳巷！這麼窄，兩個人對面相遇，一不小心就……你知道的。');
+    await S.say('阿桑', '所以也叫君子巷。規矩是：男人遇到女人，要轉身面壁，讓女人先過。');
+    await S.say('yungui:smug', '好巷名。很有學問。');
+    S.emote('hongying', '💢');
+    await S.say('hongying:angry', '哪裡有學問！');
+    await S.say('tuanzi:smile', '吾先過！吾是石虎，不分男女！');
+    await S.move('tuanzi', 'RRR', { speed: 6 });
+    await S.move('tuanzi', 'DDDD', { speed: 6 });
+    S.sfx('push'); S.shake(2, 0.3);
+    S.emote('tuanzi', '…');
+    await S.say('', '（糰子衝到巷子中間——卡住了。噗嘰。）');
+    await S.say('tuanzi:cry', '卡、卡住了！前面過不去！後面也退不回來！');
+    await S.say('yungui:normal', '這就是一路吃牛舌餅的報應。');
+    await S.walkTo('player', 4, 4);
+    S.face('player', 'down');
+    await S.say('xinghe:laugh', '（推糰子的屁股）嗯——！不行，太緊了！');
+    await S.say('hongying:think', '（從懷裡掏出一片牛舌餅）……我繞到另一頭去。');
+    await S.fadeActor('hongying', 0, 0.4);
+    S.setPos('hongying', 4, 15, 'up');
+    await S.fadeActor('hongying', 1, 0.4);
+    await S.say('hongying:normal', '……糰子，過來。');
+    S.emote('tuanzi', '!');
+    await S.say('tuanzi:surprise', '牛舌餅！');
+    S.sfx('push');
+    await S.move('tuanzi', 'DDDDD', { speed: 9 });
+    S.setPos('tuanzi', 5, 15, 'left');
+    await S.jump('tuanzi', 36);
+    await S.say('阿桑', '哈哈哈！我在這巷子口住了五十年，第一次看到貓卡在裡面！');
+    await S.say('tuanzi:angry', '吾不是貓！');
+    // 星河 walks in; 白芷 comes from the other end
+    await S.move('player', 'DDDD');
+    S.setPos('baizhi', 4, 13, 'up');
+    await S.move('baizhi', 'UUUU');
+    await S.say('baizhi:smile', '星河！我從這邊繞過來了。');
+    S.emote('player', '!');
+    await S.say('xinghe:surprise', '等、等一下！規矩、規矩是——');
+    S.face('player', 'left');
+    await S.say('', '（星河急忙轉身，臉貼牆壁。）');
+    S.face('baizhi', 'up');
+    await S.say('baizhi:think', '（也轉身——轉向星河，面對面）是這樣嗎？面對面比較有禮貌吧？');
+    S.face('player', 'down');
+    S.emote('player', '💧');
+    await S.wait(0.3);
+    S.emote('player', '!');
+    await S.say('xinghe:shy', '不是——是、是要面壁——');
+    await S.say('baizhi:think', '為什麼要面壁？牆又不跟我們說話。');
+    S.emote('hongying', '💢');
+    await S.say('hongying:angry', '（從巷口）笨蛋星河——！你給我轉過去！不對，白芷妳轉過去！不對——你們兩個都給我出來！！');
+    S.setPos('yungui', 4, 4, 'down');
+    await S.say('yungui:laugh', '（靠著牆笑到彎腰）好巷、好巷……');
+    await S.fadeOut(0.5);
+    place(S, [['player', 5, 15, 'right'], ['baizhi', 4, 15, 'right'], ['hongying', 6, 16, 'up'], ['yungui', 3, 15, 'right'], ['tuanzi', 5, 16, 'up']]);
+    S.gather();
+    await S.fadeIn(0.5);
+    await S.say('hongying:angry', '……走了啦！燈籠舖在東邊。');
+  }
+
+  // ---- 半邊井 (q_halfwell) ----------------------------------------------------------------------------------------
+  async function wellStart(S) {
+    S.quest('q_halfwell', 0);
+    S.face('lk_granny_well', 'right');
+    S.face('lk_mason', 'left');
+    await S.say('', '（半邊井。一口井，被王家的紅磚牆從中間穿過——一半在牆內，一半在牆外。泥水師傅正在牆外那半邊擺磚頭。）');
+    await S.say('井邊阿婆', '師傅！你不能封！這口井我挑了六十年的水！');
+    await S.say('泥水師傅', '阿婆，我也是拿人錢做事。王少爺說明天天光前要封好。');
+    await S.say('baizhi:think', '為什麼一口井，一半在裡面、一半在外面？');
+    S.face('lk_granny_well', 'left');
+    await S.say('井邊阿婆', '這叫半邊井。王家的祖先挖的。那時候鹿港大旱，巷子裡的人沒水喝。');
+    await S.say('井邊阿婆', '王老太爺說：井挖在我家，水是天給的，一半給外面的人用。');
+    await S.say('井邊阿婆', '就這樣，牆從井中間砌過去。裡面的人用一半，外面的人用一半。');
+    await S.say('yungui:smile', '好一個「一半」。');
+    await S.say('hongying:think', '那為什麼現在要封？');
+    await S.say('泥水師傅', '王少爺上個月一條船在黑水溝沉了，整船的貨。欠了一屁股債。');
+    await S.say('泥水師傅', '他說，外面這半邊封了，井水就能挑去賣。');
+    S.objective('找王少爺談談半邊井（王家側門）');
+  }
+  async function grannyTalk(S) {
+    const w = wellState();
+    const stg = G.Quests.stage('q_halfwell');
+    if (flag('ch5_well_done')) { await S.say('井邊阿婆', '這口井，我還要再挑六十年。'); return; }
+    if (stg === 1 && !w.granny) {
+      await S.say('井邊阿婆', '王家的事？……三十年前，王家的店仔失火。');
+      await S.say('井邊阿婆', '巷子裡的人排成一排，從這口井一桶一桶傳水，傳到天亮。把火滅了。');
+      await S.say('井邊阿婆', '（笑）那時候少爺才剛出世，抱在他娘懷裡哭。他不記得了。');
+      await S.say('井邊阿婆', '我這裡還有一個水桶，桶底烙著「王」字。是那時王家送給大家救火用的。');
+      await S.give('c5_wang_bucket');
+      w.granny = true;
+      await wellCheck(S);
+      return;
+    }
+    if (stg < 0) await S.say('井邊阿婆', '這口井，我挑了六十年的水。');
+    else await S.say('井邊阿婆', '少爺不是壞囝仔……他只是太久沒抬頭看巷子了。');
+  }
+  async function watchmanTalk(S) {
+    const s = G.state;
+    const w = wellState();
+    const stg = G.Quests.stage('q_halfwell');
+    if (stg === 1 && !w.watch) {
+      await S.say('打更阿福伯', '王家？哈，那年王家失火，我是第一個敲鑼的。');
+      await S.say('打更阿福伯', '整條九曲巷的人都來了。誰家有桶拿桶，沒桶的拿鍋，拿碗。');
+      await S.say('打更阿福伯', '（想了想）你說王少爺有難？……你等一下。我去敲鑼。');
+      S.flag('ch5_well_gong');
+      w.watch = true;
+      await wellCheck(S);
+      return;
+    }
+    if (gateClosed(s)) {
+      await S.say('打更阿福伯', '隘門晚上二更就關。你們要進出，跟我講一聲。');
+      const c = await S.choice(['麻煩開個門', '不用了'], { cancel: 1 });
+      if (c === 0) {
+        await S.say('打更阿福伯', '好啦好啦，少年人暗時還在走跳。小心風。');
+        S.flag('ch5_gate_open');
+        S.sfx('door');
+        await S.move('lk_watchman', 'UUUU');
+        S.setPos('lk_watchman', 32, 4, 'down');
+      }
+      return;
+    }
+    if (stg === 2 && !G.Quests.isDone('q_halfwell')) { await S.say('打更阿福伯', '等天暗了，我就去敲鑼。九曲巷的人，一聽到鑼聲就會出來。'); return; }
+    await S.say('打更阿福伯', time5() === 2 ? '天乾物燥——小心火燭——' : '隘門晚上二更就關。你們要進出，跟我講一聲。');
+  }
+  async function wellCheck(S) {
+    const w = wellState();
+    if (w.granny && w.niushe && w.watch && G.Quests.stage('q_halfwell') === 1) {
+      S.quest('q_halfwell', 2);
+      if (time5() === 2) S.objective('回半邊井');
+      else { await S.say('xinghe:think', '阿福伯說要等天暗了再敲鑼……晚一點再回半邊井看看吧。'); S.objective('天黑後，回九曲巷的半邊井'); }
+    }
+  }
+  async function wellNight(S) {
+    await S.fadeOut(0.6);
+    await S.warp('lukang_jiuqu', 18, 19, 'up', { fade: 0 });
+    S.hideFollowers(false);
+    place(S, [['player', 18, 19, 'up'], ['baizhi', 17, 19, 'up'], ['hongying', 19, 19, 'up'], ['yungui', 16, 19, 'up'], ['tuanzi', 20, 19, 'up']]);
+    S.setPos('lk_granny_well', 16, 17, 'right');
+    S.setPos('lk_mason', 20, 17, 'left');
+    await S.camera(18, 17, 0.1);
+    await S.fadeIn(0.6);
+    await S.say('', '（夜。半邊井外。九曲巷的鄰居一個接一個走出來，手裡提著東西——米袋、一串銅錢、一籃雞蛋、牛舌餅。）');
+    const nb = [['wn_1', 'villager_m', 14, 18], ['wn_2', 'villager_f', 14, 19], ['wn_3', 'fisher_f', 22, 18], ['wn_4', 'villager_m2', 23, 19], ['wn_5', 'shopkeeper_f', 15, 20]];
+    for (const [id, sp, x, y] of nb) S.spawn({ id, sprite: sp, x, y, dir: x < 18 ? 'right' : 'left' });
+    S.spawn({ id: 'wn_watch', sprite: 'old_m', x: 22, y: 16, dir: 'left' });
+    S.sfx('gong');
+    await S.say('打更阿福伯', '（敲鑼）王家有難！九曲巷的，起會仔啦！');
+    await S.say('xinghe:surprise', '會仔？');
+    await S.say('yungui:normal', '標會。大家每個月出一點錢，湊成一筆，先給急用的人。以後再輪流還。');
+    await S.say('yungui:smile', '鄉下人的錢莊。不收利息，只收人情。');
+    S.spawn({ id: 'wn_wang', sprite: 'noble_m', x: 21, y: 15, dir: 'down' });
+    S.sfx('door');
+    await S.move('wn_wang', 'D');
+    S.emote('wn_wang', '!');
+    await S.say('王少爺', '你們……');
+    await S.say('井邊阿婆', '（把王字水桶塞到他手裡）三十年前，王家的桶救了大家的厝。今天換大家的桶。');
+    S.take('c5_wang_bucket');
+    await S.say('牛舌餅阿嬸', '（遞上帳本）你阿公賒給我阿爸的麵粉，我一筆一筆都記著。這次我還。');
+    S.take('c5_old_ledger');
+    await S.say('王少爺', '……我……我還以為……');
+    await S.say('王少爺', '我還以為一半給出去，就少了一半。');
+    S.spawn({ id: 'wn_ghost', sprite: 'ghost_m', x: 17, y: 16, dir: 'down', ghost: true });
+    G.mapScene.actor('wn_ghost').alpha = 0;
+    await S.fadeActor('wn_ghost', 0.75, 1.0);
+    S.face('baizhi', 'wn_ghost');
+    await S.say('', '（白芷看見——井邊站著一個穿舊式長衫的老人鬼魂，拄著拐杖，看著這一切，笑得滿臉皺紋。）');
+    await S.say('baizhi:smile', '（輕聲）……星河，井邊。');
+    await S.say('xinghe:smile', '（……王老太爺。）');
+    S.emote('wn_ghost', '♪');
+    await S.say('', '（老人鬼魂對白芷點點頭，伸手拍了拍井欄，化成一點光，落進井水裡。）');
+    S.sfx('splash');
+    await S.fadeActor('wn_ghost', 0, 0.8);
+    S.remove('wn_ghost');
+    S.flag('ch5_well_done');
+    await S.say('王少爺', '（把磚頭一塊一塊拿下來）師傅，工錢我照付。這口井，不封了。');
+    await S.say('王少爺', '牆裡一半是王家的，牆外一半是大家的——');
+    await S.say('王少爺', '原來，是同一口水。');
+    await S.give('c5_halfwell', 3);
+    S.gold(1500);
+    S.quest('q_halfwell', 'done');
+    await S.lantern('lantern_halfwell', '半邊井');
+    await S.fadeOut(0.5);
+    for (const id of ['wn_1', 'wn_2', 'wn_3', 'wn_4', 'wn_5', 'wn_watch', 'wn_wang']) S.remove(id);
+    S.setPos('lk_granny_well', 17, 17, 'up');
+    S.cameraFollow();
+    S.gather();
+    await S.fadeIn(0.5);
+    restoreObjective(S);
+  }
+  // put the main objective back after a side quest
+  function restoreObjective(S) {
+    const s = G.state.flags;
+    if (s.ch5_unmask && !s.ch5_fubo_done) S.objective('回大門，跟福伯說一聲');
+    else if (s.ch5_fubo_done) S.objective('回客棧休息');
+    else if (s.ch5_enter) S.objective('探索洛家古厝');
+    else if (s.ch5_lamp) S.objective('提著洛家燈，回洛家古厝');
+    else if (s.ch5_mazu) S.objective('去九曲巷施家燈籠舖，取回清虛真人訂的燈');
+    else if (s.ch5_gate) S.objective('去天后宮打聽清虛真人');
+    else S.objective('跟紅纓回洛家古厝（鹿港南端）');
+  }
+
+  // ============================================================================================ 施家燈籠舖 lukang_lantern (14×10)
+  function drawRabbitLantern(ctx, x, y, t, a) {
+    // a faded paper rabbit lantern (one ear drooping) hanging from a hook — x,y = cell top-left
+    const cx = x + 32, cy = y - 6 + Math.sin(t * 1.3) * 1.5;
+    ctx.save();
+    ctx.globalAlpha = a == null ? 1 : a;
+    ctx.strokeStyle = '#5a4030'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, y - 52); ctx.lineTo(cx, cy - 18); ctx.stroke();
+    const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 40);
+    glow.addColorStop(0, 'rgba(255,220,150,0.35)'); glow.addColorStop(1, 'rgba(255,220,150,0)');
+    ctx.fillStyle = glow; ctx.fillRect(cx - 40, cy - 40, 80, 80);
+    // body
+    ctx.fillStyle = '#efe2c0'; ctx.strokeStyle = '#8a7050'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 20, 14, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // head
+    ctx.beginPath(); ctx.ellipse(cx + 17, cy - 8, 9, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // ears: one up, one drooping
+    ctx.beginPath(); ctx.ellipse(cx + 16, cy - 22, 3, 9, -0.15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx + 26, cy - 12, 3, 8, 1.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // eye & red markings
+    ctx.fillStyle = '#c83a2a';
+    ctx.beginPath(); ctx.arc(cx + 20, cy - 9, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(200,58,42,0.55)';
+    ctx.beginPath(); ctx.ellipse(cx - 4, cy - 2, 7, 3, 0.3, 0, Math.PI * 2); ctx.fill();
+    // wheels
+    ctx.strokeStyle = '#6a5038'; ctx.lineWidth = 1.5;
+    for (const wx of [cx - 10, cx + 10]) { ctx.beginPath(); ctx.arc(wx, cy + 16, 5, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+  }
+  G.Maps.define('lukang_lantern', {
+    name: '施家燈籠舖',
+    subtitle: '九曲巷',
+    place: 'lukang',
+    bgm: 'pingxi',
+    start: [6, 7],
+    light: (s) => (time5(s) >= 1 ? { ambient: 0.32, color: '#1a0804', playerR: 180 } : { ambient: 0.15, color: '#1a0804' }),
+    tiles: (() => { const g = grid(14, 10, '_'); g.rect(0, 0, 14, 2, 'W'); g.rect(0, 0, 1, 10, 'W'); g.rect(13, 0, 1, 10, 'W'); g.rect(0, 9, 14, 1, 'W'); g.rect(6, 9, 1, 1, '_'); return g.rows(); })(),
+    objects: [
+      { t: 'shelf_lanterns', x: 1, y: 2, v: 1 }, { t: 'shelf_lanterns', x: 3, y: 2, v: 3 }, { t: 'shelf_lanterns', x: 10, y: 2, v: 5 },
+      { t: 'lantern_rack', x: 6, y: 2 }, { t: 'lantern_rack', x: 1, y: 6 },
+      { t: 'workbench', x: 6, y: 4, counter: true }, { t: 'paper_stack', x: 8, y: 4 }, { t: 'lantern_frame', x: 9, y: 4 },
+      { t: 'counter', x: 10, y: 6, w: 2 }, { t: 'jar', x: 1, y: 8 }, { t: 'basket', x: 11, y: 8 },
+      { t: 'red_lantern', x: 2, y: 4, hang: true }, { t: 'red_lantern', x: 5, y: 3, hang: true }, { t: 'red_lantern', x: 9, y: 3, hang: true },
+      { t: 'red_lantern', x: 4, y: 6, hang: true }, { t: 'red_lantern', x: 8, y: 7, hang: true },
+    ],
+    pass: [{ x: 12, y: 3, solid: true }],
+    lights: [{ x: 6, y: 4, r: 160, color: '#ffb060', flicker: 0.25 }, { x: 12, y: 3, r: 90, color: '#ffe0a0', flicker: 0.15 }],
+    npcs: [
+      { id: 'lk_shi', sprite: 'old_m', name: '施燈師', x: 6, y: 3, dir: 'down', talk: async (S) => {
+        if (flag('ch5_lamp')) await S.say('施燈師', '那盞洛家燈，提好。燈在，人就找得到路。');
+        else await S.say('施燈師', '燈籠的骨架要正，紙要糊得緊，字要寫得有力。三樣缺一樣，燈就不亮。');
+      } },
+    ],
+    events: [
+      { id: 'c5_lamp_scene', trigger: 'auto', if: (s) => s.flags.ch5_mazu && !s.flags.ch5_lamp, run: (S) => sceneLantern(S) },
+      { id: 'c5_rabbit_look', trigger: 'action', x: 12, y: 3, label: '兔子燈', if: (s) => !s.flags.ch5_rabbit, run: async (S) => {
+        await S.say('', '角落掛著一盞褪色的兔子燈。紙已發黃，一隻耳朵垂下來。');
+      } },
+    ],
+    drawOver(ctx, t) { if (!flag('ch5_rabbit')) drawRabbitLantern(ctx, 12 * T, 3 * T, t); },
+    warps: [{ x: 6, y: 9, to: 'lukang_jiuqu', tx: 27, ty: 23, tdir: 'down', door: true }],
+  });
+
+  // ---- §3-5 施家燈籠舖：洛家燈 ★ --------------------------------------------------------------------------------
+  async function sceneLantern(S) {
+    S.hideFollowers(false);
+    place(S, [['player', 6, 6, 'up'], ['baizhi', 8, 7, 'up'], ['hongying', 5, 6, 'up'], ['yungui', 7, 6, 'up'], ['tuanzi', 4, 7, 'up']]);
+    S.face('lk_shi', 'down');
+    await S.say('', '（燈籠舖。天花板掛滿紅燈籠，暖光像糖漿一樣。施燈師正在糊一盞燈，頭也不抬。）');
+    await S.say('施燈師', '要買燈就自己挑，要訂燈下個月再來。');
+    await S.say('yungui:normal', '老師傅，一個月前，一個姓清虛的道士訂了一盞燈。');
+    S.emote('lk_shi', '…');
+    await S.say('施燈師', '（抬頭，推了推眼鏡）……喔，那個長鬍子的。燈骨我紮好了，紙也糊好了。');
+    await S.say('施燈師', '可是他說——燈上的字，要讓「那家的人」自己寫。他寫不得。');
+    await S.say('', '（他從架上取下一盞未寫字的白燈籠，骨架方正，紙面潔淨。）');
+    await S.say('施燈師', '他說要寫一個姓。哪一家？');
+    await S.say('hongying:serious', '……洛。洛陽的洛。');
+    S.emote('lk_shi', '!');
+    await S.say('施燈師', '（手停住）洛家……妳是洛家的小姐？那個常常跑來店裡，把我的燈籠戳破的小丫頭？');
+    await S.say('hongying:shy', '……我沒有常常。');
+    await S.say('施燈師', '妳家的燈籠，四十年來都是我做的。過年的、上元的、娶媳婦的……普渡的。');
+    await S.say('施燈師', '中元那晚以後，就再也沒人來訂了。（把毛筆遞給她）來，寫吧。');
+    await S.say('', '（紅纓接過筆，手在發抖。墨滴在紙上暈開一小點。）');
+    await S.say('hongying:sad', '……我寫字很醜。哥的字才好看。');
+    S.face('player', 'hongying');
+    await S.say('xinghe:serious', '（按住燈籠的另一邊）我幫妳扶著。妳寫，我來補骨。陳伯說，燈籠要兩個人做才穩。');
+    await S.say('hongying:normal', '……嗯。');
+    S.face('player', 'up'); S.face('hongying', 'up');
+    await S.wait(0.6);
+    await S.say('', '（她一筆一筆寫下「洛」。字歪歪斜斜，最後一筆卻拉得又長又有力，像一桿槍。）');
+    await S.say('施燈師', '好字。有槍的味道。');
+    S.sfx('lantern'); S.flash('#ffd890', 0.5, 0.5);
+    await S.say('xinghe:smile', '（點上燭火。燈籠亮起，「洛」字在紅光裡透出來）……好了。');
+    await S.give('c5_luo_lantern');
+    S.flag('ch5_lamp');
+    // 長明燈碎片（第四章）
+    if (G.Inv.has(SHARD_LAMP) || flag('ch4_lamp_broken')) {
+      await S.say('yungui:serious', '老師傅，再請教一件事。（取出竹塹風穴裡撿到的長明燈碎片）這個底款。');
+      await S.say('施燈師', '（湊近，眼鏡推到額頭上）……半個字。左邊是個「方」，右邊糊掉了……');
+      S.emote('lk_shi', '!');
+      await S.say('施燈師', '……這是「施」。這是我的店號。');
+      await S.say('施燈師', '去年，府城來了一個人，說廟裡要用燈，一口氣訂了三百副燈骨。錢給得很爽快。');
+      await S.say('施燈師', '我還高興了好幾天……那個長鬍子道士拿著一模一樣的碎片來問我，我才知道。');
+      await S.say('施燈師', '我做了一輩子的燈，是給人照路的。不是……不是給人關人的！');
+      await S.say('施燈師', '（把洛家燈推到紅纓手裡）這盞，不收錢。……就當我替那三百副燈骨，還一點債。');
+      await S.say('yungui:normal', '……師父來鹿港，就是為了追這個底款。');
+      if (G.Inv.has(SHARD_LAMP)) G.Inv.remove(SHARD_LAMP, 1);
+      S.flag('ch5_shard_traced');
+    }
+    // 兔子燈 → 白芷的記憶閃回
+    S.face('baizhi', 'right');
+    await S.walkTo('baizhi', 11, 4, { yFirst: true });
+    S.face('baizhi', 'right');
+    await S.say('', '（白芷的視線被角落一盞褪色的兔子燈吸住了。紙已發黃，一隻耳朵垂下來。）');
+    await S.say('baizhi:think', '……這是什麼？');
+    await S.say('施燈師', '兔子燈。元宵的時候給囝仔提的。這盞是舊的，不賣。');
+    await S.say('施燈師', '二十幾年前，有兩個男人常來我這裡訂白燈——不是喜慶用的，說是在海上用的。');
+    await S.say('施燈師', '一個脾氣很臭，叫陳渡。');
+    S.emote('player', '!');
+    await S.say('xinghe:surprise', '陳伯？！');
+    await S.say('施燈師', '另一個姓夜，斯斯文文的，講話很客氣。他帶過他女兒來。三四歲，叫念念。');
+    await S.say('施燈師', '念念最愛我糊的兔子燈。這盞，就是照她那盞的樣子做的。');
+    await S.say('施燈師', '後來聽說，他們一家從唐山搬過來的時候……船在黑水溝翻了。');
+    await S.say('', '（白芷伸手，指尖碰到兔子燈。）');
+    S.bgm(null);
+    await S.wait(0.5);
+    await nianFlashback(S);
+    S.bgm('sad');
+    await S.say('baizhi:cry', '……她沒有來。');
+    await S.say('xinghe:surprise', '白芷！？');
+    await S.say('baizhi:cry', '有一個小女孩……提著兔子燈……她就快到了……可是有人把她拉回去了……');
+    await S.say('baizhi:cry', '她沒有來。我等了她好久……');
+    S.emote('player', '…');
+    await S.say('', '（白芷的手指邊緣，像燈罩一樣微微透出光。只有星河注意到。）');
+    await S.say('xinghe:think', '（……她的手。）');
+    await S.say('yungui:serious', '（按住白芷的肩）先坐下。照魂鏡之後，第二次了。');
+    await S.say('施燈師', '姑娘……妳怎麼知道……念念的燈……');
+    await S.say('baizhi:sad', '我不知道。我只是……記得。');
+    S.flag('lyric_ch5');
+    S.sfx('sing');
+    G.UI.toast('想起了渡魂謠的殘句：「名也忘來鄉也忘，岸頭仍有一人等。」', { icon: 'scroll' });
+    await S.wait(1.2);
+    await S.say('施燈師', '這盞兔子燈……妳帶去吧。我留著它，也只是一直想起那個囝仔。');
+    await S.give('c5_rabbit_lantern');
+    S.flag('ch5_rabbit');
+    S.flag('ch5_memory_nian');
+    S.bgm('pingxi');
+    S.gather();
+    setTime(S, 2);
+    S.quest('q_ch5_main', 3);
+    S.objective('天黑了。提著洛家燈，回洛家古厝');
+    G.UI.toast('天黑了……', { icon: 'lantern' });
+  }
+  // 記憶閃回（白芷視角）: black water, lights drifting, a small rabbit-shaped light pulled back
+  async function nianFlashback(S) {
+    S.sfx('dark');
+    await new Promise((res) => {
+      const sc = {
+        opaque: true, t: 0,
+        update(dt) { this.t += dt; if (this.t > 7.2 || (G.Debug && G.Debug.autoplay && this.t > 0.5)) { G.Scenes.pop(this); res(); } },
+        draw(ctx) {
+          const t = this.t;
+          ctx.fillStyle = '#040608'; ctx.fillRect(0, 0, G.W, G.H);
+          // water ripples (grey)
+          ctx.strokeStyle = 'rgba(180,190,200,0.12)'; ctx.lineWidth = 2;
+          for (let i = 0; i < 18; i++) {
+            const y = 60 + i * 38 + Math.sin(t * 1.4 + i) * 6;
+            ctx.beginPath();
+            for (let x = 0; x <= G.W; x += 40) ctx.lineTo(x, y + Math.sin(x * 0.02 + t * 2 + i) * 5);
+            ctx.stroke();
+          }
+          // drifting lights towards the viewer
+          for (let i = 0; i < 40; i++) {
+            const a = (U.hash(i, 3, 9) * 6.28), r = ((t * 40 + U.hash(i, 1, 9) * 600) % 600);
+            const x = G.W / 2 + Math.cos(a) * (620 - r), y = G.H / 2 + Math.sin(a) * (360 - r * 0.6);
+            ctx.fillStyle = `rgba(220,230,240,${0.15 + 0.4 * (r / 600)})`;
+            ctx.beginPath(); ctx.arc(x, y, 2 + r / 150, 0, 6.28); ctx.fill();
+          }
+          // the little rabbit light approaches, then is pulled up and away
+          const k = Math.min(1, t / 3.5);
+          const pull = Math.max(0, t - 4.2);
+          const lx = G.W / 2 - 220 + k * 170, ly = G.H / 2 + 120 - k * 70 - pull * pull * 70;
+          const g = ctx.createRadialGradient(lx, ly, 2, lx, ly, 46);
+          g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.3, 'rgba(230,230,230,0.5)'); g.addColorStop(1, 'rgba(230,230,230,0)');
+          ctx.fillStyle = g; ctx.fillRect(lx - 50, ly - 50, 100, 100);
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.ellipse(lx, ly, 9, 6, 0, 0, 6.28); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(lx + 6, ly - 9, 2, 6, -0.2, 0, 6.28); ctx.fill();
+          // her own reaching hand (from the right) and a man's hand from above
+          ctx.strokeStyle = 'rgba(230,240,250,0.6)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(G.W + 20, G.H / 2 + 60); ctx.lineTo(G.W / 2 + 80 - k * 60, G.H / 2 + 40); ctx.stroke();
+          if (t > 3.6) {
+            ctx.strokeStyle = 'rgba(120,130,150,0.85)'; ctx.lineWidth = 14;
+            ctx.beginPath(); ctx.moveTo(lx + 10, -40); ctx.lineTo(lx + 4, ly - 16); ctx.stroke();
+          }
+          if (t > 4.4 && t < 7) G.Render.text(ctx, '念念——！不要走！念念！', G.W / 2, G.H - 140, { size: 30, align: 'center', color: '#d8dce4' });
+          // fade in/out
+          const fa = t < 0.6 ? 1 - t / 0.6 : t > 6.4 ? (t - 6.4) / 0.8 : 0;
+          if (fa > 0) { ctx.fillStyle = `rgba(0,0,0,${Math.min(1, fa)})`; ctx.fillRect(0, 0, G.W, G.H); }
+        },
+      };
+      G.Dialog.close();
+      G.Scenes.push(sc);
+    });
+  }
+
+  // ============================================================================================ 王家 lukang_wang (14×10)
+  G.Maps.define('lukang_wang', {
+    name: '王家',
+    subtitle: '九曲巷',
+    place: 'lukang',
+    bgm: (s) => (time5(s) === 2 ? 'night' : 'city'),
+    start: [10, 7],
+    light: (s) => (time5(s) >= 1 ? { ambient: 0.4, color: '#100804', playerR: 180 } : { ambient: 0.12, color: '#100804' }),
+    tiles: (() => {
+      const g = grid(14, 10, 't');
+      g.rect(0, 0, 14, 2, 'R'); g.rect(0, 0, 1, 10, 'R'); g.rect(13, 0, 1, 10, 'R');
+      g.rect(7, 6, 6, 3, '%');            // little inner yard
+      g.rect(0, 9, 14, 1, 'R'); g.set(10, 9, '%');
+      return g.rows();
+    })(),
+    objects: [
+      { t: 'altar', x: 3, y: 2 }, { t: 'incense_burner', x: 5, y: 2 }, { t: 'cabinet', x: 1, y: 2 }, { t: 'bookshelf', x: 8, y: 2 },
+      { t: 'table', x: 3, y: 5, w: 2 }, { t: 'chair', x: 2, y: 5, dir: 'right' }, { t: 'chair', x: 5, y: 5, dir: 'left' },
+      { t: 'paper_stack', x: 4, y: 7 }, { t: 'well', x: 12, y: 7 }, { t: 'plant_pot', x: 7, y: 6, v: 1 },
+      { t: 'red_lantern', x: 10, y: 2, hang: true },
+    ],
+    npcs: [{ id: 'lk_wang', sprite: 'noble_m', name: '王少爺', x: 4, y: 6, dir: 'down', if: (s) => !s.flags.ch5_well_done || true, talk: (S) => wangTalk(S) }],
+    events: [
+      { id: 'c5_wang_ledger', trigger: 'action', x: 3, y: 5, w: 2, h: 1, label: '帳本', run: async (S) => {
+        await S.say('', '桌上攤著帳本。一行一行，全是紅字。');
+        if (!flag('ch5_well_done')) await S.say('', '最後一頁寫著：「黑水溝，沉船一艘。船工撫恤……」後面的數字被墨水暈開了。');
+      } },
+      { id: 'c5_wang_well', trigger: 'action', x: 12, y: 7, label: '半邊井', run: async (S) => {
+        await S.say('', '院子裡的半邊井，只有一半的井口——另一半在牆外，給巷子裡的人用。');
+      } },
+    ],
+    drawOver(ctx) {
+      // inner half of the 半邊井: the wall runs through the middle of the well
+      const wx = 12 * T, wy = 7 * T;
+      ctx.save();
+      ctx.fillStyle = '#9a4430'; ctx.fillRect(wx + 40, wy - 30, 24, 72);
+      ctx.strokeStyle = 'rgba(60,20,10,0.6)';
+      for (let y = wy - 30; y < wy + 42; y += 8) { ctx.beginPath(); ctx.moveTo(wx + 40, y); ctx.lineTo(wx + 64, y); ctx.stroke(); }
+      ctx.restore();
+    },
+    warps: [{ x: 10, y: 9, to: 'lukang_jiuqu', tx: 21, ty: 16, tdir: 'down', door: true }],
+  });
+  async function wangTalk(S) {
+    const stg = G.Quests.stage('q_halfwell');
+    if (flag('ch5_well_done')) {
+      await S.say('王少爺', '我阿公以前常說：「水是天給的。」我現在才聽懂。');
+      await S.say('王少爺', '會仔的錢，我一定會還。一筆一筆，像牛舌餅阿嬸那樣記著。');
+      return;
+    }
+    if (stg === 0) {
+      await S.say('王少爺', '又是來講井的？我已經聽夠了！');
+      await S.say('王少爺', '你們知道我欠多少嗎？船沉了，船工的家屬要撫恤，債主天天上門。');
+      await S.say('王少爺', '阿公那時候是有錢，才能大方。我現在連自己家都快保不住了！');
+      await S.say('王少爺', '一口井的水錢……能撐一天是一天。');
+      await S.say('xinghe:think', '……他也不是壞人。');
+      await S.say('yungui:normal', '窮了，人就會把手握緊。很正常。');
+      const c = await S.choice(['巷子裡的人，也許會想幫你。', '那封吧，跟我們無關。']);
+      if (c === 1) {
+        await S.say('baizhi:sad', '……井會難過的。');
+        await S.say('', '（也許該再想想。）');
+        return;
+      }
+      await S.say('王少爺', '幫我？他們連自己都顧不了！');
+      S.quest('q_halfwell', 1);
+      wellState();
+      S.objective('問問巷子裡的人：井邊阿婆、牛舌餅阿嬸、打更阿福伯');
+      return;
+    }
+    if (stg === 1) { await S.say('王少爺', '……你們還在問？問了也沒用啦。'); return; }
+    await S.say('王少爺', '外面怎麼這麼吵……？');
+  }
+
+  // ============================================================================================ 舊港・墓仔埔 lukang_shore (36×24)
+  const SH = (() => {
+    const g = grid(36, 24, 'm');
+    g.rect(0, 0, 36, 1, 'X');
+    g.rect(0, 0, 4, 24, '~'); g.rect(4, 0, 3, 24, '-');
+    g.rect(26, 0, 10, 24, 's');
+    g.rect(8, 1, 22, 8, ':');                 // 墓仔埔
+    g.rect(12, 10, 14, 2, 's'); g.rect(20, 12, 6, 6, 's');
+    g.rect(0, 23, 36, 1, '~');
+    g.rect(35, 0, 1, 24, 'R'); g.rect(35, 11, 1, 2, 's');
+    return g.rows();
+  })();
+  G.Maps.define('lukang_shore', {
+    name: '鹿港舊港',
+    subtitle: '墓仔埔',
+    place: 'lukang',
+    bgm: 'night',
+    start: [34, 12],
+    light: { ambient: 0.7, color: '#060a1c', playerR: 220 },
+    particles: ['mist', { type: 'wind', density: 0.6 }],
+    tiles: SH,
+    objects: [
+      { t: 'grave', x: 10, y: 2, v: 0 }, { t: 'grave', x: 13, y: 2, v: 1 }, { t: 'grave', x: 16, y: 3, v: 2 }, { t: 'grave', x: 19, y: 2, v: 0 },
+      { t: 'grave', x: 22, y: 3, v: 1 }, { t: 'grave', x: 25, y: 2, v: 2 }, { t: 'grave', x: 11, y: 5, v: 1 }, { t: 'grave', x: 14, y: 6, v: 0 },
+      { t: 'grave', x: 18, y: 6, v: 2 }, { t: 'grave', x: 23, y: 6, v: 0 }, { t: 'grave', x: 27, y: 5, v: 1 }, { t: 'grave', x: 9, y: 7, v: 2 },
+      { t: 'tree_dead', x: 8, y: 2 }, { t: 'tree_dead', x: 21, y: 4 }, { t: 'tree_dead', x: 28, y: 8 }, { t: 'tree_dead', x: 15, y: 9 },
+      { t: 'bones', x: 17, y: 5 }, { t: 'stone_lantern', x: 29, y: 2 },
+      { t: 'boat_small', x: 8, y: 15 }, { t: 'boat_small', x: 13, y: 19 }, { t: 'boat_small', x: 5, y: 9 },
+      { t: 'reeds', x: 9, y: 13 }, { t: 'reeds', x: 11, y: 16 }, { t: 'reeds', x: 7, y: 20 }, { t: 'reeds', x: 18, y: 20 }, { t: 'reeds', x: 24, y: 19 },
+      { t: 'reeds', x: 16, y: 14 }, { t: 'dock_post', x: 6, y: 12 }, { t: 'dock_post', x: 6, y: 17 }, { t: 'driftwood', x: 28, y: 18 },
+    ],
+    chests: [
+      { id: 'c5_04', x: 26, y: 2, item: 'c5_coin_sword' },
+      { id: 'c5_05', x: 10, y: 15, item: 'leicha', n: 3 },
+    ],
+    enemies: [
+      { id: 'sh_js1', troop: 't_c5_shore_a', x: 15, y: 4, art: 'jiangshi', radius: 3, chase: 4 },
+      { id: 'sh_js2', troop: 'lukang_4', x: 22, y: 8, art: 'jiangshi', radius: 3, chase: 4 },
+      { id: 'sh_hg1', troop: 'lukang_3', x: 12, y: 13, art: 'hanged_ghost', radius: 3, chase: 3 },
+      { id: 'sh_hg2', troop: 't_c5_shore_b', x: 20, y: 17, art: 'hanged_ghost', radius: 3, chase: 3 },
+    ],
+    events: [
+      { id: 'c5_shore_in', trigger: 'auto', once: true, run: async (S) => {
+        await S.say('', '淤積的舊港道。擱淺的舢舨半埋在泥裡，北邊是一片墓仔埔。');
+        if (hasActor('yungui')) await S.say('yungui:serious', '……這裡的屍氣很重。小心會跳的東西。');
+      } },
+    ],
+    warps: [{ x: 35, y: 11, h: 2, to: 'lukang', tx: 1, ty: 32, tdir: 'right' }],
+  });
+
   // @@C5-CONTINUE@@
 })();
