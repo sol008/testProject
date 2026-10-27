@@ -520,7 +520,9 @@ G.Animal3D = (() => {
   // with a rolled-in margin strip at the moving edge (dark "eyeliner" rim). upper=true: the edge is the lower boundary.
   function addLid(parts, F, r, bone, upper, edgeFn, farB, am, mFn, rimCol) {
     const nu = 14, nv = 6;
-    const dirAt = (a, b) => [sin(a) * cos(b), sin(b), cos(a) * cos(b)];
+    // (a, b) = (across, pitch about the eye's x axis): a rotation of the lid bone about x shifts b uniformly, so a
+    // closing lid sweeps the whole eye opening (no uncovered crescents at the corners)
+    const dirAt = (a, b) => [sin(a), cos(a) * sin(b), cos(a) * cos(b)];
     const base = parts.grid(nu, nv, (u, v) => {
       const a = (u * 2 - 1) * am, e = edgeFn(a);
       const b = upper ? lerp(e, farB, v * v) : lerp(e, farB, v * v);
@@ -1164,11 +1166,11 @@ G.Animal3D = (() => {
     // eyelids (inside the body mesh so they share the coat shader) and ears
     const rimC = hex(pal.rim);
     for (const e of plan.eyes) {
-      const am = 0.95;
+      const am = 1.3;
       // open-state lid edges sit on the rim of the exposed eye dome (cat eye: arched upper, flatter lower lid)
       const lu = plan.lid ? plan.lid.up : 0.5, ld = plan.lid ? plan.lid.dn : -0.5;
-      addLid(body, e.F, e.r * 1.025, 'lidU' + e.sx, true, (a) => lu + 0.12 * (1 - (a / am) ** 2) + 0.05 * e.s * a, 1.35, am, mAt, rimC);
-      addLid(body, e.F, e.r * 1.02, 'lidD' + e.sx, false, (a) => ld - 0.06 * (1 - (a / am) ** 2) + 0.06 * e.s * a, -1.3, am, mAt, rimC);
+      addLid(body, e.F, e.r * 1.025, 'lidU' + e.sx, true, (a) => lu + 0.12 * (1 - (a / am) ** 2) + 0.05 * e.s * a, 2.1, am, mAt, rimC);
+      addLid(body, e.F, e.r * 1.02, 'lidD' + e.sx, false, (a) => ld - 0.06 * (1 - (a / am) ** 2) + 0.06 * e.s * a, -1.9, am, mAt, rimC);
     }
     const inner = hex(pal.inner), innerD = mixc(hex(pal.inner), hex('#6a3a3c'), 0.35);
     for (const e of plan.ears) {
@@ -2566,8 +2568,8 @@ G.Animal3D = (() => {
       for (const e of this.eyeInfo) {
         const s = e.sx;
         const up = clamp(Rd(P, 'lidU' + s), -0.4, 1.05), dn = clamp(Rd(P, 'lidD' + s), -0.3, 1);
-        B['lidU' + s].quaternion.setFromAxisAngle(e.x, up * 0.62);
-        B['lidD' + s].quaternion.setFromAxisAngle(e.x, -dn * 0.34);
+        B['lidU' + s].quaternion.setFromAxisAngle(e.x, up * 1.02);
+        B['lidD' + s].quaternion.setFromAxisAngle(e.x, -dn * 0.3);
         const q = this._tmp.q.setFromAxisAngle(e.y, clamp(Rd(P, 'eyeY'), -0.4, 0.4));
         B['eye' + s].quaternion.setFromAxisAngle(e.x, clamp(Rd(P, 'eyeP'), -0.3, 0.3)).premultiply(q);
       }
