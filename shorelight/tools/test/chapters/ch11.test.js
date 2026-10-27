@@ -113,14 +113,14 @@ class Run {
     await this.page.evaluate(() => { G.lastError = null; });
   }
   // watch the ending to the title screen, holding the skip key through the credits
-  async toTitle(ms = 20 * 60000) {
+  async toTitle(ms = (R3D ? 150 : 20) * 60000) { // --3d: SwiftShader runs ~10-20× slower
     const t0 = Date.now();
     let held = false, lastLog = Date.now();
     while (Date.now() - t0 < ms) {
       const top = await this.page.evaluate(() => { const t = G.Scenes.top(); return t && t.constructor ? t.constructor.name : ''; });
       if (top === 'CreditsScene' && !held) { await this.shot('credits', true); await this.page.keyboard.down('ControlLeft'); held = true; }
       if (top !== 'CreditsScene' && held) { await this.page.keyboard.up('ControlLeft'); held = false; }
-      if (top === 'GameOverScene') throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
+      if (/GameOver/.test(top)) throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
       if (top === 'TitleScene') { if (held) await this.page.keyboard.up('ControlLeft'); return true; }
       if (Date.now() - lastLog > 60000) {
         lastLog = Date.now();
