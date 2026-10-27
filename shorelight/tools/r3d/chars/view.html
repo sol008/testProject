@@ -45,7 +45,21 @@ setTimeout(function () {
   const anim = q.get('anim') || 'idle', ctx = q.get('ctx') || 'battle';
   const VY = [0, -Math.PI / 4, -Math.PI / 2, Math.PI, Math.PI / 2, Math.PI * 3 / 4, -Math.PI * 3 / 4, Math.PI / 4];
   const items = [];
-  for (const id of ids) for (let v = 0; v < views; v++) for (let f = 0; f < strip; f++) {
+  const animList = q.get('anims') ? q.get('anims').split(',') : null, tList = q.get('ts') ? q.get('ts').split(',').map(Number) : null;
+  if (animList) for (const id of ids) animList.forEach((an, ai) => {
+    const inst = G.Char3D.create(id, { context: ctx });
+    inst.setFacing(VY[0] + num('yawoff', 0) * Math.PI / 180);
+    items.push({ id, inst, t: tList ? tList[ai] : T0, anim: an, label: id + ' ' + an });
+    scene.add(inst.root);
+  });
+  const exprList = q.get('exprs') ? q.get('exprs').split(',') : null;
+  if (exprList) for (const id of ids) exprList.forEach((ex) => {
+    const inst = G.Char3D.create(id, { context: ctx });
+    inst.setFacing(VY[0] + num('yawoff', 0) * Math.PI / 180);
+    items.push({ id, inst, t: T0, expr: ex, label: ex });
+    scene.add(inst.root);
+  });
+  if (!animList && !exprList) for (const id of ids) for (let v = 0; v < views; v++) for (let f = 0; f < strip; f++) {
     const inst = G.Char3D.create(id, { context: ctx });
     if (!inst) { console.error('no char', id); continue; }
     inst.setFacing(VY[v] + num('yawoff', 0) * Math.PI / 180);
@@ -61,8 +75,10 @@ setTimeout(function () {
     const ins = it.inst;
     const spd = num('speed', anim === 'walk' ? 2.2 : anim === 'jog' ? 4.2 : anim === 'run' ? 6.9 : 0);
     if (spd > 0) { ins.setMove(spd); ins.speed = spd; }
+    else if (it.anim) { if (it.anim !== 'idle') ins.play(it.anim, { loop: q.get('loop') !== '0' }); }
     else if (anim !== 'idle') ins.play(anim, { loop: q.get('loop') !== '0' });
     if (q.get('expr')) ins.setExpression(q.get('expr'));
+    if (it.expr) { ins.setExpression(it.expr); ins.blink.next = 99; }
     if (q.get('talk')) ins.talk(true);
     if (look) ins.lookAt(look.clone().add(ins.root.position));
     ins.fidgetT = 1e9;

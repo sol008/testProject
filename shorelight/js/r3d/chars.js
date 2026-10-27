@@ -931,7 +931,8 @@ G.Char3D = (() => {
     const nu = o.nu || (full ? 28 : 14), nv = o.nv || max(4, round(len / 0.07));
     const segs = o.segs || clamp(round(len / 0.22), 1, 4);
     const nCh = o.chains || (full ? 8 : 3);
-    const legClear = P.hipSep + P.thighR * 1.15 + 0.03 * s;
+    const legR = o.noClear ? P.thighR : (B.flags.legR || P.thighR * 1.15); // outer radius of the (trousered) legs
+    const legClear = P.hipSep + legR + 0.03 * s;
     const flare = o.flare != null ? o.flare : 0.25;
     const infl = o.inflate || 0.02;
     // rest surface point at (θ, t)
@@ -941,7 +942,7 @@ G.Char3D = (() => {
       const rTopX = a[0], rTopZ = a[2];
       // hem radius: flared and never inside the legs' swing volume
       const hx = Math.sign(sin(th)) * max(abs(rTopX) * (1 + flare * 0.9), abs(sin(th)) * legClear) ;
-      const hz = Math.sign(cos(th)) * max(abs(rTopZ) * (1 + flare * 1.1) + flare * 0.05 * s, abs(cos(th)) * (0.12 + flare * 0.08) * s * (cos(th) > 0 ? 1.15 : 1.0));
+      const hz = Math.sign(cos(th)) * max(abs(rTopZ) * (1 + flare * 1.1) + flare * 0.05 * s, abs(cos(th)) * max((0.12 + flare * 0.08) * s, legR + 0.05 * s) * (cos(th) > 0 ? 1.15 : 1.0));
       const e = pow(t, o.curve || 0.85);
       const x = lerp(rTopX, hx, e), z = lerp(rTopZ, hz, e);
       let y = lerp(a[1], yHem, t);
@@ -1168,7 +1169,9 @@ G.Char3D = (() => {
     // ---- trousers / legs
     const bt = S.bottom.type;
     let legSkin0 = 1.0; // fraction along the leg where skin becomes visible
-    const tr = { pants: 1.0, wide: 1.0, cropped: 0.72, shorts: 0.36, bare: 0 }[bt] != null ? { pants: 1.0, wide: 1.0, cropped: 0.72, shorts: 0.36, bare: 0 }[bt] : 1;
+    let tr = { pants: 1.0, wide: 1.0, cropped: 0.72, shorts: 0.36, bare: 0 }[bt] != null ? { pants: 1.0, wide: 1.0, cropped: 0.72, shorts: 0.36, bare: 0 }[bt] : 1;
+    const bloused = !!S.leggings && (bt === 'wide' || bt === 'pants') && S.shoes.type !== 'boots';
+    if (bloused) tr = 0.66; // trousers bloused over the leg wraps (綁腿)
     if (bt !== 'bare') {
       const tcol = S.bottom.color;
       const wide = bt === 'wide' ? 1 : bt === 'pants' ? 0 : 0.5;
@@ -1186,13 +1189,15 @@ G.Char3D = (() => {
           const body = legProfile(P, clamp(tt, 0, 1));
           const w0 = body + 0.014 * s + wide * (0.045 * s * sstep(0.2, 1, tt) + 0.02 * s);
           const hem = bt === 'wide' ? 0.06 * s : bt === 'pants' ? 0.01 * s : 0.03 * s;
-          const r = tt > 0.85 && bt !== 'pants' ? w0 + hem * sstep(0.85, 1, tt) * 0 : w0;
+          let r = w0;
+          if (bloused && tt > tr - 0.12) r = lerp(w0, legProfile(P, tr) + 0.02 * s, sstep(tr - 0.03, tr, tt)) + 0.012 * s * sin(clamp((tt - (tr - 0.14)) / 0.12, 0, 1) * PI);
           const top = sstep(0.12, -0.08, tt); const rr = lerp(r, P.thighR * 0.92, top); return { rx: rr, ry: rr * 1.05, ao: 1 };
         }, (t) => legW(B, SD, lerp(-0.12, t1, t)), { nv: 14, up: [0, 0, 1] });
       }
       // seat / pelvis panel joining the legs (visible under short jackets)
       torsoShell(B, { rect, yTop: P.waistY + 0.02 * s, yBot: P.legTop - 0.06 * s, inflate: shirtInfl * 0.8, nu: 20, nv: 5, uvf: (u, v) => [u, v * 0.15] });
       legSkin0 = tr;
+      B.flags.legR = P.thighR * 1.05 + 0.014 * s + (bt === 'wide' ? 0.065 * s : bt === 'pants' ? 0.0 : 0.032 * s);
     }
     // bare legs
     const shoe = S.shoes.type;
@@ -1295,7 +1300,8 @@ G.Char3D = (() => {
         const chest = ringAt(R, P.chestY - 0.03 * s);
         const looseK = robe ? 0.55 : 0.25;
         const rr = Object.assign({}, r0, { rx: lerp(r0.rx, max(r0.rx, chest.rx * 0.98), looseK), rf: lerp(r0.rf, max(r0.rf, chest.rf * 0.98), looseK), rb: lerp(r0.rb, max(r0.rb, chest.rb), looseK) });
-        hemShell(B, { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6, legBlend: robe ? 0.42 : 0.22, hitR: (robe ? 0.045 : 0.035) * s,
+        B.flags.jacket = { yT, yH: hemY };
+        B.flags.jacket.hs = hemShell(B, { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6, legBlend: robe ? 0.5 : 0.42, hitR: (robe ? 0.05 : 0.04) * s,
           top: (th) => torsoPt(rr, th, inflT * 2.1), uvf: (u, v) => [u, kTorso + v * (1 - kTorso)], stiff: robe ? 2.4 : 3.0, grav: 0.4,
           topW: (th) => [[B.b('hips'), 1]] });
       }
@@ -1411,8 +1417,22 @@ G.Char3D = (() => {
         Pn.aoEdges(g, x, y, w, h, 0.2, 0.1);
       });
       const inf = waistInfl + 0.006 * s;
-      hemShell(B, { name: 'apron', rect: arect, yTop: yT, yHem: yH, inflate: inf, flare: 0.05, th0: -1.15, th1: 1.15, chains: 3, nu: 12, stiff: 2.6, grav: 0.5, rigidTop: 0.06, legBlend: 0.3,
-        top: (th) => torsoPt(ringAt(R, yT), th, inf + 0.004 * s), curve: 0.7 });
+      const jac = B.flags.jacket;
+      // flat front panel laid over whatever is beneath (jacket hem or trousers), hanging straight below it
+      const apSurf = (th, t) => {
+        const y = lerp(yT, yH, t);
+        let p;
+        if (jac && jac.hs && y <= jac.yT) {
+          const tj = clamp((jac.yT - y) / (jac.yT - jac.yH), 0, 1);
+          const q = jac.hs.surf(th, tj);
+          p = [q[0], y, q[2]];
+        } else p = torsoPt(ringAt(R, y), th, inf);
+        const n = [sin(th), 0, cos(th)];
+        const front = max(p[2], 0.0);
+        return [p[0] * 0.96 + n[0] * 0.012 * s, y, front + 0.014 * s + (1 - cos(th)) * 0.006 * s];
+      };
+      hemShell(B, { name: 'apron', rect: arect, yTop: yT, yHem: yH, inflate: inf, flare: 0.05, th0: -0.95, th1: 0.95, chains: 3, nu: 12, stiff: 2.6, grav: 0.5, rigidTop: 0.06, legBlend: 0.8, hitR: 0.03 * s, noClear: true,
+        surf: apSurf });
     }
     // ---- skirt
     if (S.skirt) {
@@ -1426,7 +1446,7 @@ G.Char3D = (() => {
         Pn.aoEdges(g, x, y, w, h, 0.25, 0.15);
       });
       const inf = (robe && hemY < yT ? 0.04 : 0.016) * s;
-      hemShell(B, { name: 'skirt', rect: srect, yTop: yT, yHem: yH, inflate: inf, flare: 0.25 + (sk.flare || 0.3) * 0.8, chains: 8, stiff: 2.2, grav: 0.45, rigidTop: 0.05, legBlend: 0.36, hitR: 0.04 * s });
+      hemShell(B, { name: 'skirt', rect: srect, yTop: yT, yHem: yH, inflate: inf, flare: 0.25 + (sk.flare || 0.3) * 0.8, chains: 8, stiff: 2.2, grav: 0.45, rigidTop: 0.05, legBlend: 0.45, hitR: 0.045 * s });
     }
     // ---- cape / mantle
     if (S.cape) buildCape(B, S.cape);
@@ -1946,10 +1966,10 @@ G.Char3D = (() => {
     brow(sg, st) {
       const g = this.g, F = this.F, a = this.a, b = this.b;
       const ew = F.ew * a * 1000;
-      const X = sg * F.eyeX * a, Y = (F.eyeY + F.browY + (st.browY || 0) * 0.08 - F.browLow * 0.05) * b;
+      const X = sg * F.eyeX * a, Y = (F.eyeY + F.browY + (st.browY || 0) * 0.12 - F.browLow * 0.05) * b;
       this.at(X, Y, sg);
       const ang = F.browAng + (st.browAng || 0);        // + = inner end raised (sad), − = inner lowered (angry)
-      const inY = -ang * 3.2, outY = ang * 1.0 + 0.6;
+      const inY = -ang * 6.0, outY = ang * 1.6 + 0.6;
       const w = F.browW * (st.browW || 1);
       g.fillStyle = F.browCol;
       g.beginPath();
@@ -1985,7 +2005,7 @@ G.Char3D = (() => {
         if (curve > 0.5) { g.strokeStyle = rgba(lipLine, 0.6); g.lineWidth = (0.45) * this.lw; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * w * 1.02, cy - 0.6); g.lineTo(s * w * 1.12, cy + 0.6); g.stroke(); } }
         return;
       }
-      const h = 1.2 + open * 7.5;
+      const h = 1.4 + open * 10;
       const ww = w * (st.round ? 0.62 : 1);
       const p = new Path2D();
       p.moveTo(-ww, cy);
@@ -3974,10 +3994,10 @@ G.Char3D = (() => {
   const EXPR = {
     neutral: {},
     smile: { squint: 0.4, browY: 0.5, curve: 0.85, mOpen: 0.0, browAng: 0.08 },
-    laugh: { happy: 1, browY: 0.6, curve: 1, mOpen: 0.65 },
+    laugh: { happy: 1, browY: 0.7, curve: 1, mOpen: 0.85, mouthW: 1.2, blush: 0.4 },
     sad: { browAng: 0.75, browY: 0.1, droop: 0.28, curve: -0.6, lookY: -0.4 },
-    angry: { browAng: -0.85, browY: -0.4, droop: 0.12, squint: 0.25, curve: -0.55, mOpen: 0.12, mouthW: 0.85 },
-    surprised: { browY: 1.4, open: 1.12, irisK: 0.82, pupil: 0.8, curve: 0, mOpen: 0.5, round: 1, browArch: 0.4 },
+    angry: { browAng: -1.0, browY: -0.5, droop: 0.15, squint: 0.3, curve: -0.6, mOpen: 0.25, mouthW: 0.95 },
+    surprised: { browY: 1.6, open: 1.15, irisK: 0.78, pupil: 0.75, curve: 0, mOpen: 0.75, round: 1, browArch: 0.5 },
     shy: { blush: 1, droop: 0.22, browAng: 0.4, curve: 0.35, lookX: -0.45, lookY: -0.45, mouthW: 0.7 },
     pain: { happy: 0, open: 0.32, squint: 0.7, browAng: 0.8, browY: -0.3, curve: -0.6, mOpen: 0.35, mouthW: 1.1 },
     closed: { open: 0, curve: 0.1 },

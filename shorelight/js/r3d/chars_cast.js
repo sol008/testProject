@@ -297,7 +297,7 @@
       held: null, hip: ['pipe', 'tally'], weapon: 'oar', sash: null, belt: { color: '#5a3a24' },
     },
     body3d: { H: 1.64, head: 0.252, headW: 0.196, headD: 0.205, neckLen: 0.035, neckR: 0.056, legTop: 0.8, sh: 0.19, chestW: 0.168, chestF: 0.11, waistW: 0.165, waistF: 0.13, hipW: 0.165, belly: 0.8, stoop: 0.75, armR: 0.05, foreR: 0.043, thighR: 0.085, calfR: 0.058, palm: 1.15 },
-    face3d: { eyeStyle: 'dot', iris: '#2a1c16', ew: 0.17, eyeY: -0.04, browW: 2.0, browAng: -0.35, browArch: 0.05, browBushy: 1, browCol: CB.frost, browLow: 0.3, noseRed: '#e07868', nose: 1.5, ears: 1.35, chin: 0.62, jaw: 0.95, cheek: 0.05, mouth: 'frown', restCurve: -0.35, wrinkles: 1.2, blush: 0.25 },
+    face3d: { eyeStyle: 'dot', iris: '#2a1c16', ew: 0.2, eyeY: -0.06, browW: 2.7, browAng: -0.22, browArch: 0.0, browBushy: 1.5, browCol: '#ece8e0', browLow: 0.1, noseRed: '#e07868', nose: 1.5, ears: 1.35, chin: 0.62, jaw: 0.95, cheek: 0.05, mouth: 'frown', restCurve: -0.35, wrinkles: 1.2, blush: 0.25 },
     expr: 'grumpy',
     style: { rest: { upperArmL: [-2, 0, 4], upperArmR: [-2, 0, -4], foreArmL: [-8, 0, 0], foreArmR: [-8, 0, 0] } },
   });
