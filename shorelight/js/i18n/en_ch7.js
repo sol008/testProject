@@ -462,7 +462,7 @@ G.I18N.add({
   '我們不要碰它。那不是我們該送的路，是他們家、他們族裡的事。': 'We shouldn\'t touch it. That isn\'t a road for us to guide him down. It belongs to his family, to his people.',
   '嗯。我們把東西帶回去就好。': 'Mm. We\'ll just take these things back.',
   '把皮帽和獵刀帶回 Voyu 的家': 'Bring the leather cap and the hunting knife back to Voyu\'s home',
-  '鏡頭緩緩上搖：紅檜神木的樹幹像一面牆，樹皮的紋路如流水。': 'Your gaze climbs slowly upward: the trunk of the sacred red cypress is like a wall, its bark rippling like running water.',
+  '視線緩緩上移：紅檜神木的樹幹像一面牆，樹皮的紋路如流水。': 'Your gaze climbs slowly upward: the trunk of the sacred red cypress is like a wall, its bark rippling like running water.',
   '好大……這比九份的整條豎崎路還要高吧？': 'It\'s huge… it\'s taller than the whole of Shuqi Road back in Jiufen, isn\'t it?',
   '它在這裡站了三千年。我們的祖先來之前，它就在這裡了。': 'It\'s stood here three thousand years. It was here before our ancestors came.',
   '三千年。它看過的朝代，大概比藤婆還多。': 'Three thousand years. It\'s probably seen more dynasties than Granny Teng.',

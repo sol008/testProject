@@ -1800,7 +1800,7 @@
     S.flag('ch7_shenmu');
     spawn(S, { id: 'voyu_f', sprite: 'tsou_m', x: G.mapScene.player.x + 1, y: G.mapScene.player.y + 1, dir: 'up', name: 'Voyu' });
     await S.camera(16, 9, 1.2);
-    await S.say('', '鏡頭緩緩上搖：紅檜神木的樹幹像一面牆，樹皮的紋路如流水。');
+    await S.say('', '視線緩緩上移：紅檜神木的樹幹像一面牆，樹皮的紋路如流水。');
     await S.lines([
       ['xinghe:surprise', '好大……這比九份的整條豎崎路還要高吧？'],
       ['Voyu', '它在這裡站了三千年。我們的祖先來之前，它就在這裡了。'],
