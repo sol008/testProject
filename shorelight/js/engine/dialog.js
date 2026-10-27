@@ -216,8 +216,11 @@ G.Dialog = (() => {
       for (let i = log.length - 1 - this.scroll; i >= 0 && y > 90; i--) {
         const e = log[i];
         const lines = G.Render.wrap(ctx, e.text, G.W - 360);
-        y -= lines.length * 32 + 18;
-        if (e.name) G.Render.text(ctx, e.name, 80, y, { size: 22, color: '#ffcf8a' });
+        // long (English) speaker names wrap inside the 160px name column instead of running into the text
+        const nameLines = e.name ? G.Render.wrap(ctx, e.name, 160) : [];
+        y -= Math.max(lines.length * 32, nameLines.length * 28) + 18;
+        if (nameLines.length === 1) G.Render.text(ctx, e.name, 80, y, { size: 22, color: '#ffcf8a' });
+        else if (nameLines.length) G.Render.drawLines(ctx, nameLines, 80, y, 28, '#ffcf8a');
         ctx.font = G.font(22); ctx.textBaseline = 'top';
         G.Render.drawLines(ctx, lines, 250, y, 32, '#e8e0cc');
       }
