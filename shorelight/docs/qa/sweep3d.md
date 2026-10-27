@@ -280,3 +280,85 @@ hardware is several times faster.
 | zhuqian_mifen | 16×10 | interior | OK | 10586 | 64 | 152894 |  |
 | zhuqian_pharmacy | 12×9 | interior | OK | 616 | 52 | 167396 |  |
 | zhuqian_smith | 12×9 | interior | OK | 849 | 56 | 164860 |  |
+
+## Batching
+
+**What.** [`js/r3d/batch.js`](../../js/r3d/batch.js) (`G.Batch3D`) draws repeated static map objects as
+`THREE.InstancedMesh`es. It answers O1. It is **on by default**; `?nobatch` turns it off, and `sweep.js --nobatch`
+sweeps without it. Map3D calls it once from `syncObjects(initial)` and every frame after `syncObjects`.
+
+- **Opaque and alpha-tested meshes** (trunks, leaves, culms, blades, rocks): one InstancedMesh per model mesh per
+  16×16-tile chunk. A group needs at least 2 objects of the same model variant. Each instance matrix is the exact
+  world matrix the per-object mesh had, including the `spin()` yaw, and the InstancedMesh stays at identity. So the
+  wind shader's `modelMatrix × instanceMatrix` origin is the same float32 value: same sway phase, same colour hash.
+  The occluder/canopy cutout (`addCutout`) and `windify` patches are registered as instancing-safe (`markInstSafe`);
+  a material with any other shader patch keeps its object unbatched.
+- **Blended ground decals:** nature decal materials differ only in their 256² map. All decals of one geometry are
+  drawn by one map-wide InstancedMesh from a power-of-two texture atlas, with a per-instance `aTile` offset. The
+  tiles are aligned, so every mip level of a tile equals that level of the original map. Instances are sorted back to
+  front like the renderer's own sort (view depth, ties by mesh id), so overlapping decals blend in the same order.
+- **Exact blend order.** Two things were needed for the order to match:
+  - A decal that overlaps a blended mesh drawn separately, at the same renderOrder, cannot join the group. That
+    mesh may be a conditional object's decal or a non-nature prop decal. The decal stays its own mesh inside the
+    proxy (`ownDecals`), and so does every group decal it touches, transitively.
+  - Static objects that are not batched themselves (one per chunk, or models with points/lights) still lend their
+    decal to the group (`decalOnly`).
+  - All nodes are created in map order, so mesh ids match the unbatched view. The ids matter because decals in one
+    tile row have exactly equal depth, and the renderer breaks those ties by id.
+- **Lifecycle.** Each batched object keeps an invisible proxy in `view.nodes`, with the same `o` / `sig` / `def`, the
+  pre-pose AABB for the tall-occluder test, and an empty child for `update()`. When an object is removed or
+  replaced, hidden, or turns dynamic (`o.alpha`, `spirit`, `if`), its instances are removed and it gets an
+  ordinary node from then on. This was checked on sugarcane_night: a fade gets cloned faded materials; `if` and
+  spirit objects are hidden; a removed object leaves no node.
+- **Never batched:**
+  - objects with `if:`, `spirit`, `illusion` or `o.alpha`;
+  - models with an `update()` that does real per-object animation (only `batch: true` models, whose update is the
+    wind tick plus the one-time `spin()` pose, qualify);
+  - models with lights, points, sprites, lines, skinned or morphed meshes, or 2D billboards;
+  - characters, monsters and actors.
+- **Not done:** the optional distant-NPC LOD (O2). It would change how NPCs look, so it is not "clearly safe" and
+  stays open.
+
+**Measured** with [`batch_ab.js`](../../tools/r3d/sweep/batch_ab.js). Each map is built 3 times in one page: off,
+off again, then on. The clock is frozen, `Math.random` is seeded and 8 fixed-dt frames are rendered (r3lite,
+480×270 drawing buffer). Draw calls and triangles come from the last frame.
+
+- **Build** is the warm `G.Map3D` constructor time: "off2" against "on". The first, cold build of each map
+  (13–33 s) is dominated by model building, which is the same in both modes.
+- **Δpx** is the share of pixels that differ by more than 8/255 between the off and on images, and the largest
+  single difference.
+- **noise** is the same figure between the two off builds: the A/B's own nondeterminism, such as camera and
+  particles.
+
+| map | kind | draw calls off → on | triangles off → on | build ms off → on | batched objs | decal-only objs | own decals | Δpx > 8 % / max | noise > 8 % |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| sugarcane_night | heavy (bamboo) | 494 → **64** (−87 %) | 375k → 483k | 2543 → 2734 | 280 | 0 | 0 | 0.012 / 44 | 0 |
+| tiger_lair | heavy forest | 312 → **203** (−35 %) | 331k → 514k | 2751 → 2612 | 316 | 0 | 314 | 0.019 / 81 | 0 |
+| mistforest_n | heavy forest | 258 → **156** (−40 %) | 278k → 416k | 3147 → 2965 | 477 | 52 | 0 | 0.034 / 138 | 0 |
+| mistforest_s | heavy forest | 259 → **195** (−25 %) | 283k → 349k | 2602 → 3018 | 441 | 2 | 439 | 0.063 / 98 | 0.024 |
+| alishan_trail | heavy forest | 223 → **175** (−22 %) | 232k → 361k | 2592 → 2529 | 242 | 56 | 0 | 0.040 / 186 | 0.014 |
+| linto | heavy forest | 231 → **120** (−48 %) | 331k → 557k | 3037 → 3186 | 175 | 3 | 47 | 0.042 / 178 | 0 |
+| wuzhi_trail | heavy forest | 210 → **142** (−32 %) | 268k → 406k | 3105 → 2259 | 549 | 43 | 0 | 0.022 / 188 | 0 |
+| jiufen | town | 154 → 155 (+1 %) | 270k → 278k | 2249 → 2374 | 15 | 33 | 0 | 0.046 / 121 | 0 |
+| anping_tower | 23 actors | 91 → 90 (−1 %) | 353k → 353k | 2540 → 2284 | 0 | 3 | 0 | 0.119 / 186 | 0.063 |
+| lukang | ordinary | 90 → 89 (−1 %) | 187k → 187k | 3127 → 2475 | 2 | 8 | 0 | 2.165 / 222 | 0.711 |
+| hengchun | ordinary | 102 → 98 (−4 %) | 251k → 252k | 2691 → 1127 | 12 | 30 | 0 | 0.043 / 134 | 0 |
+| fc_inn | ordinary (interior) | 60 → 60 | 192k → 192k | 47 → 55 | 0 | 0 | 0 | 0.140 / 224 | 0.024 |
+
+**Reading the table:**
+- **Draw calls.** The heavy maps drop by 22–87 %. sugarcane_night falls from 6× the median to below it.
+  Ordinary maps, towns and interiors barely change: there is little to batch.
+- **Triangles go up** on forest maps by 25–70 %. An InstancedMesh is culled as a whole (per chunk) rather than per
+  plant, so off-screen plants of a visible chunk are submitted too. The vertex cost is cheap next to the saved
+  calls, and the CPU-side win is the point.
+- **Build time** is unchanged within run-to-run noise.
+- **Pixels: the images are the same.** The remaining differences are isolated pixels on alpha-tested leaf edges.
+  The vertex position is `view × (instance × p)` on the GPU instead of `(view × world) × p`, a float32 rounding
+  difference of about 10⁻³ px. These pixels are 0.01–0.06 % of the image on the forest maps. That is the same order
+  as fc_inn and anping_tower, which batch nothing, and as the off/off2 noise. lukang's 2.2 % is a sub-pixel shift of
+  every edge, including unbatched characters and water; it comes from its camera (off/off2 is already 0.7 %).
+  Before the decal fixes, the cross-type decal blend order produced 0.13 % (sugarcane_night) and 0.42 % (tiger_lair)
+  of visible differences in the litter.
+- **Own decals.** tiger_lair and mistforest_s keep 314 and 439 decals as their own meshes. A few conditional (`if:`)
+  bamboos stay individual, and their decals overlap the whole connected bamboo-forest litter carpet, so instancing
+  those decals would change their blend order.
