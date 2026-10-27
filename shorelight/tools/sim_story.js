@@ -380,15 +380,16 @@ function setup(env, F, lvShift) {
   for (const k of ['tut_gauge', 'tut_element', 'tut_guest', 'tut_guard', 'tut_guard_hint', 'tut_combo', 'tut_item', 'tut_ultimate']) G.state.flags[k] = true;
   // --test: the chapter playthrough test's conditions (its level boosts, the gear it equips, the auto-battle AI)
   const T = G.__testMode ? (F.test || {}) : null;
-  const pool = T ? (T.shops || []) : (F.shops || []).slice();
+  const realGear = T && G.__testGear === 'real';
+  const pool = T && !realGear ? (T.shops || []) : (F.shops || []).slice();
   const lvOf = (cid) => (T && T.lv != null ? (typeof T.lv === 'object' ? T.lv[cid] : T.lv) : (typeof F.lv === 'object' ? F.lv[cid] : F.lv));
   for (const cid of F.party) {
     const lv = Math.max(1, lvOf(cid) + (lvShift || 0));
     const m = G.Party.create(cid, lv);
     for (const sk of (F.skills && F.skills[cid]) || []) G.Party.learnSkill(cid, sk);
-    const gifts = T ? (T.gifts && T.gifts[cid]) || [] : (F.gifts && F.gifts[cid]) || [];
+    const gifts = T && !realGear ? (T.gifts && T.gifts[cid]) || [] : (F.gifts && F.gifts[cid]) || [];
     const cand = pool.concat(Object.values(m.equip).filter(Boolean)).concat(gifts);
-    if (T && T.gearMaxCh != null) { // ch9 test's gearUp(): best atk+def+mag item of chapter <= N per slot
+    if (T && !realGear && T.gearMaxCh != null) { // ch9 test's gearUp(): best atk+def+mag item of chapter <= N per slot
       for (const slot of ['weapon', 'armor', 'head', 'feet']) {
         let best = null;
         for (const [iid, it] of Object.entries(G.Data.items)) {
@@ -400,10 +401,10 @@ function setup(env, F, lvShift) {
       }
     }
     for (const slot of SLOTS) {
-      const gearSrc = T ? T.gear : F.gear;
+      const gearSrc = T && !realGear ? T.gear : F.gear;
       const fixed = gearSrc && gearSrc[cid] && gearSrc[cid][slot];
       if (fixed !== undefined) { m.equip[slot] = fixed; continue; }
-      if (T) continue; // tests keep what they were given
+      if (T && !realGear) continue; // tests keep what they were given
       const noShopAcc = G.__noacc && slot === 'acc';
       const b = bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id) && !(noShopAcc && pool.includes(id))), slot);
       if (b) m.equip[slot] = b;
@@ -411,7 +412,7 @@ function setup(env, F, lvShift) {
     const st = G.Party.stats(cid); m.hp = st.mhp; m.mp = st.mmp;
     G.state.party.push(cid);
   }
-  const inv = T ? Object.assign({}, F.inv || {}) : kitFrom(G, pool, F);
+  const inv = T ? Object.assign({}, G.__testKit || {}, T.inv || {}, F.inv || {}) : kitFrom(G, pool, F);
   for (const [id, n] of Object.entries(inv)) G.Inv.add(id, n);
   if (F.pre) F.pre(G, env);
 }
@@ -485,7 +486,9 @@ async function main() {
   G.__ai = makeAI(G, opt('ai', 'smart'));
   G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
   G.__testMode = !!opt('test');
-  if (G.__testMode) G.__ai = makeAI(G, 'auto');
+  if (opt('testkit')) G.__testKit = JSON.parse(opt('testkit'));
+  G.__testGear = opt('testgear', null);
+  if (G.__testMode && opt('testai', 'auto') === 'auto') G.__ai = makeAI(G, 'auto');
   // --set "enemyId:hp*1.3,atk*1.2/otherId:spd*0.9" — try stat multipliers without editing the data
   if (opt('set')) for (const part of String(opt('set')).split('/')) {
     const [eid, mods] = part.split(':');

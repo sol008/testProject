@@ -142,11 +142,14 @@ G.Char3D = (() => {
   // ================================================================================== geometry builder
   // Vertices carry: position, normal, uv (rect-local, remapped after atlas packing), skin weights, AO (vertex colour).
   class Geo {
-    constructor() { this.p = []; this.n = []; this.uv = []; this.rect = []; this.w = []; this.ao = []; this.ix = []; this.count = 0; }
+    constructor() { this.p = []; this.n = []; this.uv = []; this.rect = []; this.w = []; this.ao = []; this.ix = []; this.count = 0; this.fc = null; }
     v(x, y, z, nx, ny, nz, u, v, rect, W, ao = 1) {
       this.p.push(x, y, z); this.n.push(nx, ny, nz); this.uv.push(u, v); this.rect.push(rect); this.w.push(W); this.ao.push(ao);
+      if (this.fc) this.fc.push(0, 0, 0); // optional per-vertex face coords (head mesh: SDF face shadow), filled by grid()
       return this.count++;
     }
+    // face-coordinate attribute (x: sin(longitude), y: head-normalised height, z: face weight) for the face shader
+    faceAttr() { const THREE = TH(); return new THREE.BufferAttribute(new Float32Array(this.fc || new Array(this.count * 3).fill(0)), 3); }
     t(a, b, c) { this.ix.push(a, b, c); }
     // remap uv through rect table → THREE.BufferGeometry
     build(rects, S, flipV = true) {
@@ -203,10 +206,10 @@ G.Char3D = (() => {
   // opts.closed: u wraps (column nu duplicates column 0 for the UV seam but shares its normal).
   // opts.normal(u, v, p) optional analytic normal override (e.g. smooth ellipsoid normals for faces).
   function grid(G, nu, nv, rect, f, opts = {}) {
-    const P = [], Wt = [], AO = [];
+    const P = [], Wt = [], AO = [], FC = [];
     for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
       const r = f(i / nu, j / nv);
-      P.push(r.p); Wt.push(r.w); AO.push(r.ao != null ? r.ao : 1);
+      P.push(r.p); Wt.push(r.w); AO.push(r.ao != null ? r.ao : 1); FC.push(r.fc || null);
     }
     const idx = (i, j) => j * (nu + 1) + i;
     const base = G.count;
@@ -228,7 +231,9 @@ G.Char3D = (() => {
       if (opts.flip) n = [-n[0], -n[1], -n[2]];
       if (opts.normal) n = opts.normal(i / nu, j / nv, p, n);
       const l = hypot(n[0], n[1], n[2]) || 1;
-      G.v(p[0], p[1], p[2], n[0] / l, n[1] / l, n[2] / l, opts.uvf ? opts.uvf(i / nu, j / nv)[0] : i / nu, opts.uvf ? opts.uvf(i / nu, j / nv)[1] : j / nv, rect, Wt[idx(i, j)], AO[idx(i, j)]);
+      const vi = G.v(p[0], p[1], p[2], n[0] / l, n[1] / l, n[2] / l, opts.uvf ? opts.uvf(i / nu, j / nv)[0] : i / nu, opts.uvf ? opts.uvf(i / nu, j / nv)[1] : j / nv, rect, Wt[idx(i, j)], AO[idx(i, j)]);
+      const fc = FC[idx(i, j)];
+      if (fc && G.fc) { G.fc[vi * 3] = fc[0]; G.fc[vi * 3 + 1] = fc[1]; G.fc[vi * 3 + 2] = fc[2]; }
     }
     for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
       const a = base + idx(i, j), b = base + idx(i + 1, j), c = base + idx(i, j + 1), d = base + idx(i + 1, j + 1);
@@ -567,11 +572,60 @@ G.Char3D = (() => {
       uShadowTint: { value: new THREE.Color(opts.shadowTint || 0xb8a8d8) },
       uGhost: { value: 0 }, uGhostCol: { value: new THREE.Color(0xbfe0ff) }, uGlow: { value: new THREE.Color(0x000000) },
     };
+    const face = !!opts.faceSDF;
+    if (face) { U.uFaceSDF = { value: opts.faceSDF }; U.uFaceOn = { value: 1 }; U.uFaceShade = { value: opts.faceShade != null ? opts.faceShade : 0.6 }; }
     m.userData.u = U;
     const prev = m.onBeforeCompile;
     m.onBeforeCompile = (sh, r) => {
       if (prev) prev(sh, r);
       Object.assign(sh.uniforms, U);
+      if (face) {
+        // Stylised SDF face shadow (Genshin-style): on the face the direct-light term ignores N·L. The light's
+        // horizontal angle around the head (0 = from the front, 1 = from behind) is compared with a threshold map
+        // over face coordinates, mirrored so +X faces the light. The map is shaped so the shadow sweeps the far cheek
+        // and jaw first, flips across the eye in one step and stops at the nose line, so no terminator ever cuts
+        // through the eye, nose or mouth. Elsewhere (ears, sides, under the jaw) the face weight fades to normal toon.
+        sh.vertexShader = sh.vertexShader
+          .replace('#include <common>', '#include <common>\nattribute vec3 aFace; varying vec3 vFace; varying vec3 vHF; varying vec3 vHR; varying vec3 vHU;')
+          .replace('#include <skinnormal_vertex>', `#include <skinnormal_vertex>
+            vFace = aFace;
+            #ifdef USE_SKINNING
+              vHF = normalize( normalMatrix * ( skinMatrix * vec4( 0.0, 0.0, 1.0, 0.0 ) ).xyz );
+              vHR = normalize( normalMatrix * ( skinMatrix * vec4( 1.0, 0.0, 0.0, 0.0 ) ).xyz );
+              vHU = normalize( normalMatrix * ( skinMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );
+            #else
+              vHF = normalize( normalMatrix * vec3( 0.0, 0.0, 1.0 ) ); vHR = normalize( normalMatrix * vec3( 1.0, 0.0, 0.0 ) ); vHU = normalize( normalMatrix * vec3( 0.0, 1.0, 0.0 ) );
+            #endif`);
+        sh.fragmentShader = sh.fragmentShader.replace('#include <gradientmap_pars_fragment>', `
+          #ifdef USE_GRADIENTMAP
+            uniform sampler2D gradientMap;
+          #endif
+          uniform sampler2D uFaceSDF; uniform float uFaceOn; uniform float uFaceShade;
+          varying vec3 vFace; varying vec3 vHF; varying vec3 vHR; varying vec3 vHU;
+          vec3 getGradientIrradiance( vec3 normal, vec3 lightDirection ) {
+            float dotNL = dot( normal, lightDirection );
+            #ifdef USE_GRADIENTMAP
+              float toonV = texture2D( gradientMap, vec2( dotNL * 0.5 + 0.5, 0.0 ) ).r;
+            #else
+              float toonV = dotNL > 0.0 ? 1.0 : 0.6;
+            #endif
+            float w = clamp( vFace.z, 0.0, 1.0 ) * uFaceOn;
+            if ( w < 0.002 ) return vec3( toonV );
+            vec3 F = normalize( vHF ), R = normalize( vHR ), Up = normalize( vHU );
+            float lr = dot( lightDirection, R ), lf = dot( lightDirection, F ), lu = dot( lightDirection, Up );
+            float hl = length( vec2( lr, lf ) );
+            float ang = acos( clamp( lf / max( hl, 1e-4 ), -1.0, 1.0 ) ) / PI;
+            ang = mix( 0.22, ang, smoothstep( 0.06, 0.3, hl ) );            // light from straight above: mostly lit
+            ang = mix( ang, 1.0, smoothstep( -0.35, -0.85, lu ) );          // light from below: shadowed
+            float X = vFace.x * ( lr >= 0.0 ? 1.0 : -1.0 );
+            float sdf = texture2D( uFaceSDF, vec2( X * 0.5 + 0.5, vFace.y * 0.5 + 0.5 ) ).r;
+            float lit = smoothstep( ang - 0.025, ang + 0.025, sdf );
+            // soft form inside the lit area (cheek / jaw roundness from the smooth face normals), no hard terminator
+            float form = 0.9 + 0.1 * smoothstep( -0.4, 0.7, dotNL );
+            float faceV = mix( uFaceShade, 1.0, lit ) * mix( 1.0, form, lit );
+            return vec3( mix( toonV, faceV, w ) );
+          }`);
+      }
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', '#include <common>\nuniform vec3 uShadowTint, uGhostCol, uGlow; uniform float uGhost;')
         .replace('#include <opaque_fragment>', `
@@ -589,10 +643,58 @@ G.Char3D = (() => {
           }
           #include <opaque_fragment>`);
     };
-    m.customProgramCacheKey = () => 'toonrim|char';
+    m.customProgramCacheKey = () => (face ? 'toonrim|char|face' : 'toonrim|char');
     return m;
   }
   C.charMat = charMat;
+
+  // SDF face-shadow threshold map (see charMat). Texel = the light angle (0 front … 1 behind) up to which that face
+  // point stays lit, for light arriving from the +X side. Built per face layout (eye / nose / mouth heights), cached.
+  const sdfCache = new Map();
+  function faceSDFTex(F) {
+    const key = [F.eyeY, F.noseY, F.mouthY, F.eyeX, F.ew].map((v) => round(v * 100)).join(',');
+    if (sdfCache.has(key)) return sdfCache.get(key);
+    const THREE = TH(), N = 96;
+    const eyeIn = max(0.05, F.eyeX - F.ew * 1.05), eyeOut = min(0.97, F.eyeX + F.ew * 1.25);
+    // per-row profiles: [|X| (0 centre … 1 side), threshold] for the far side (threshold ≤ 0.5)
+    const prof = {
+      cheek: [[0, 0.5], [0.1, 0.48], [0.3, 0.44], [0.55, 0.36], [0.78, 0.24], [0.92, 0.14], [1, 0.07]],
+      eye: [[0, 0.5], [eyeIn * 0.7, 0.47], [eyeIn, 0.44], [eyeOut * 0.92, 0.42], [eyeOut, 0.34], [min(0.99, eyeOut + 0.06), 0.18], [1, 0.07]],
+      chin: [[0, 0.5], [0.2, 0.45], [0.45, 0.36], [0.7, 0.24], [0.9, 0.12], [1, 0.06]],
+    };
+    const pl = (pts, x) => { for (let i = 1; i < pts.length; i++) if (x <= pts[i][0]) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; return lerp(y0, y1, clamp((x - x0) / ((x1 - x0) || 1), 0, 1)); } return pts[pts.length - 1][1]; };
+    const far = (ax, Y) => {
+      const eB = sstep(F.eyeY - 0.2, F.eyeY - 0.11, Y) * (1 - sstep(F.eyeY + 0.2, F.eyeY + 0.3, Y));
+      const cB = sstep(F.mouthY + 0.12, F.mouthY - 0.22, Y);
+      let v = pl(prof.cheek, ax);
+      v = lerp(v, pl(prof.chin, ax), cB);
+      v = lerp(v, pl(prof.eye, ax), eB);
+      // nose cast shadow: a narrow wedge on the far side of the nose, appearing only for strong side light
+      const nB = sstep(F.noseY - 0.05, F.noseY + 0.02, Y) * (1 - sstep(F.noseY + 0.12, F.noseY + 0.22, Y));
+      const nX = sstep(0.0, 0.025, ax) * (1 - sstep(0.07 + 0.05 * sstep(F.noseY + 0.15, F.noseY, Y), 0.16, ax));
+      v = min(v, lerp(v, 0.31, nB * nX));
+      return v;
+    };
+    const raw = new Float32Array(N * N);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const X = (i + 0.5) / N * 2 - 1, Y = (j + 0.5) / N * 2 - 1;
+      raw[j * N + i] = X <= 0 ? far(-X, Y) : 1 - far(X, Y);
+    }
+    // small blur (keeps the sweep smooth between rows)
+    const data = new Uint8Array(N * N * 4);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      let s = 0, n = 0;
+      for (let dj = -2; dj <= 2; dj++) for (let di = -1; di <= 1; di++) { const jj = clamp(j + dj, 0, N - 1), ii = clamp(i + di, 0, N - 1); s += raw[jj * N + ii]; n++; }
+      const v = round(clamp(s / n, 0, 1) * 255), o = (j * N + i) * 4;
+      data[o] = data[o + 1] = data[o + 2] = v; data[o + 3] = 255;
+    }
+    const tx = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+    tx.magFilter = THREE.LinearFilter; tx.minFilter = THREE.LinearFilter; tx.generateMipmaps = false;
+    tx.wrapS = tx.wrapT = THREE.ClampToEdgeWrapping; tx.needsUpdate = true; tx.shared = true;
+    sdfCache.set(key, tx);
+    return tx;
+  }
+  C.faceSDFTex = faceSDFTex;
 
   // ================================================================================== export (filled in below)
   C._internal = { Geo, grid, tube, blob, Atlas, wmix, normW, vadd, vsub, vsc, vlen, vnorm, vcross, vdot, vlerp, spline, sstep, lerp, clamp, rng, hex2rgb, rgb2hex, shade, mixc, rgba, lum, shadowOf, normalize };
@@ -1867,19 +1969,24 @@ G.Char3D = (() => {
   function headDeform(B, n, F) {
     const P = B.P, a = P.headW / 2, b = P.head / 2, c = P.headD / 2;
     const [nx, ny, nz] = n;
-    // width profile: full cranium, tapering jaw to a small chin
-    const wk = ny > -0.12 ? 1 - 0.05 * sstep(0.55, 1, ny) : spline([-1, -0.9, -0.74, -0.52, -0.3, -0.12], [F.chin * 0.8, F.chin, lerp(F.chin, F.jaw, 0.62), F.jaw, 0.97, 1], ny);
-    let x = nx * a * wk * (1 + F.cheek * exp(-pow((ny + 0.38) / 0.22, 2)) * (nz > 0 ? 1 : 0.3));
+    // width profile (C1-smooth, no jaw corner): full cranium → cheekbones → soft jaw → narrow rounded chin
+    const jawT = sstep(-0.1, -0.78, ny), chinT = sstep(-0.45, -1.0, ny);
+    const wk = ny > 0 ? 1 - 0.05 * sstep(0.55, 1, ny) : 1 - (1 - F.jaw) * jawT - max(0, F.jaw - F.chin) * chinT * chinT;
+    let x = nx * a * wk * (1 + F.cheek * exp(-pow((ny + 0.36) / 0.22, 2)) * lerp(0.3, 1, sstep(-0.2, 0.35, nz)));
     let y = ny * b;
     let z;
     if (nz >= 0) {
-      z = nz * c * (1 - 0.1 * sstep(0.4, 1, nz) * sstep(-0.6, 0.3, ny)); // flatter face plane
-      // chin forward, under-jaw
-      z += c * 0.18 * sstep(-0.55, -1, ny) * nz;
-      // nose
-      z += c * 0.075 * F.nose * exp(-pow(nx / 0.1, 2) - pow((ny - F.noseY) / 0.13, 2)) * sstep(0.7, 0.95, nz);
-      // brow ridge (very subtle) & lips
+      z = nz * c * (1 - 0.06 * sstep(0.3, 1, nz) * sstep(-0.6, 0.3, ny)); // slightly flatter face plane
+      // chin forward (rounded, slightly pointed), under-jaw
+      z += c * 0.16 * sstep(-0.5, -1, ny) * nz;
+      // nose: a ridge from between the eyes to a small tip, falling back fast under the tip (reads in ¾ / profile)
+      const nb = F.eyeY + 0.03, nt = F.noseY, along = clamp((nb - ny) / ((nb - nt) || 1), 0, 1);
+      const nh = ny > nb ? 0.3 * exp(-pow((ny - nb) / 0.07, 2)) : ny >= nt ? lerp(0.3, 1, pow(along, 1.4)) : exp(-pow((nt - ny) / 0.05, 2));
+      const sig = lerp(0.045, 0.085, along) * (F.noseW || 1);
+      z += c * (F.noseH != null ? F.noseH : (P.fem || P.kid ? 0.085 : 0.11)) * F.nose * nh * exp(-pow(nx / sig, 2)) * sstep(0.7, 0.92, nz);
+      // brow ridge (very subtle), soft muzzle under the mouth
       z += c * 0.02 * exp(-pow((ny - (F.eyeY + 0.2)) / 0.06, 2)) * sstep(0.6, 0.95, nz);
+      z += c * 0.022 * exp(-pow((ny - F.mouthY) / 0.12, 2) - pow(nx / 0.28, 2)) * sstep(0.6, 0.95, nz);
     } else {
       z = nz * c * 1.06 * (1 - 0.42 * sstep(-0.25, -0.95, ny));
     }
@@ -1897,49 +2004,59 @@ G.Char3D = (() => {
     return vadd(p, vsc(nn, off));
   }
   C.headPt = headPt;
+  // Head grid parametrisation, front-weighted: more columns across the face (θ ≈ 0) and more rows from the brow to
+  // the chin, so the jaw contour, nose ridge and cheeks stay smooth at the same triangle count.
+  const headTh = (u) => { const w = (u - 0.5) * 2; return PI * (0.62 * w + 0.38 * w * w * w); };
+  const headPh = (v) => { const A = 0.42, v0 = 0.62, s0 = sin(-TAU * v0); return PI * (v - A / TAU * (sin(TAU * (v - v0)) - s0)); };
   function buildHead(B) {
     const P = B.P, F = B.F;
     const hb = B.b('head');
     const a = P.headW / 2, b = P.head / 2, c = P.headD / 2;
     const W = [[hb, 1]];
-    // main head: 36 × 26
-    grid(B.HG, 36, 26, 0, (u, v) => {
-      const th = (u - 0.5) * TAU, ph = v * PI;
+    B.HG.fc = B.HG.fc || [];
+    const [NU, NV] = B.hero ? [44, 32] : [36, 26];
+    grid(B.HG, NU, NV, 0, (u, v) => {
+      const th = headTh(u), ph = headPh(v);
       const n = [sin(ph) * sin(th), cos(ph), sin(ph) * cos(th)];
       const p = headDeform(B, n, F);
       const ao = 1 - 0.3 * sstep(-0.6, -1, n[1]) * (n[2] < 0.5 ? 1 : 0.3);
-      return { p, w: W, ao };
+      // face coords for the SDF face shadow: x = sin(longitude) (+ = character's left), y = head height, z = weight
+      const fw = (1 - sstep(1.2, 1.65, abs(th))) * sstep(-0.93, -0.84, n[1]);
+      return { p, w: W, ao, fc: [sin(th), n[1], fw] };
     }, {
       closed: true, flip: false,
-      // anime faces: shade with smooth ellipsoid normals (no nose/jaw shading noise)
+      // anime faces: smooth ellipsoid normals (no nose / jaw shading noise); the direct light on the face comes from
+      // the SDF face-shadow map (charMat faceSDF), these normals only drive the soft form, rim and sky fill
       normal: (u, v, p, gn) => {
-        const th = (u - 0.5) * TAU, ph = v * PI;
+        const th = headTh(u), ph = headPh(v);
         const n = [sin(ph) * sin(th), cos(ph), sin(ph) * cos(th)];
         const en = vnorm([n[0] / a, n[1] / b * 0.85, n[2] / c]);
         const g = vnorm(gn);
-        const k = n[2] > 0.2 && n[1] > -0.8 ? 0.8 : 0.35;
+        const k = n[2] > 0.2 && n[1] > -0.8 ? 0.85 : 0.4;
         let nn = vnorm(vlerp(g, en, k));
-        // face plate: bias toward a forward/up normal so the toon terminator never crosses the features
         const fw = sstep(0.25, 0.75, n[2]) * sstep(-0.95, -0.6, n[1]) * (1 - sstep(0.55, 0.9, n[1]));
-        if (fw > 0) nn = vnorm(vlerp(nn, vnorm([n[0] * 0.35, 0.2, 1]), fw * 0.75));
+        if (fw > 0) nn = vnorm(vlerp(nn, vnorm([n[0] * 0.5, 0.15, 1]), fw * 0.45));
         return nn;
       },
       uvf: (u, v) => {
-        const th = (u - 0.5) * TAU, ph = v * PI;
+        const th = headTh(u), ph = headPh(v);
         return [0.5 + 0.5 * sin(th / 2), (1 - cos(ph)) / 2];
       },
     });
-    // ears
-    for (const sg of [1, -1]) {
-      const th = sg * 1.55, ph = acos(clamp(F.eyeY - 0.12, -1, 1));
-      const base = headPt(B, th, ph, -0.004);
-      const s = (F.ears || 1) * (P.age ? 1.15 : 1);
-      blob(B.HG, 10, 8, 0, vadd(base, [0, 0, -0.008 * P.s]), [1, 1, 1], W, {
+    // ears: small, set between eye and nose height just behind the jaw line, pressed close to the head (the hair
+    // covers them where the design shows it); the inner bowl reads from vertex AO (darker centre, lighter rim)
+    if (F.ears !== 0) for (const sg of [1, -1]) {
+      const th = sg * 1.6, ph = acos(clamp((F.eyeY + F.noseY) * 0.5 + 0.02, -1, 1));
+      const base = headPt(B, th, ph, -0.0035 * P.s);
+      const s = (F.ears || 1) * (P.age ? 1.12 : 1);
+      blob(B.HG, 10, 8, 0, vadd(base, [0, 0, -0.004 * P.s]), [1, 1, 1], W, {
         deform: (n) => {
-          const x = n[0] * 0.012 * s * P.s, y = n[1] * b * 0.3 * s, z = n[2] * c * 0.2 * s;
-          return [x * cos(0.25 * sg) + sg * abs(n[0]) * 0.006 + (n[1] > 0 ? sg * 0.004 * n[1] : 0), y, z - (n[1] > 0 ? 0.004 * n[1] : 0)];
+          const y = n[1] * b * 0.19 * s, z = n[2] * c * 0.125 * s * (n[1] > 0 ? 1 : 0.8);
+          const x = n[0] * 0.0065 * s * P.s + sg * (0.0035 * abs(n[0]) + 0.004 * max(0, n[1]) + 0.002 * max(0, -n[2])) * P.s;
+          return [x, y, z - y * 0.28]; // top tilted back
         },
-        uvf: () => [0.5 + sg * 0.42, 0.55],
+        ao: (n) => 0.76 + 0.24 * min(1, (n[1] * n[1] + n[2] * n[2]) * 1.6),
+        uvf: () => [0.5 + sg * 0.3, 0.6],
       });
     }
   }
@@ -4073,6 +4190,8 @@ G.Char3D = (() => {
     const hgeo = B.HG.build(null, 1);
     let ogeo = null;
     try { ogeo = THREE.BufferGeometryUtils.mergeGeometries([geo, hgeo], false); } catch (e) { ogeo = geo; }
+    hgeo.setAttribute('aFace', B.HG.faceAttr()); // after the outline merge (the body has no face coords)
+    const faceSDF = C.faceSDFTex(B.F);
     // skeleton data
     const defs = B.bones.map((b) => ({ name: b.name, parent: b.parent, pos: b.pos }));
     const inverses = defs.map((d) => new THREE.Matrix4().makeTranslation(-d.pos[0], -d.pos[1], -d.pos[2]));
@@ -4086,7 +4205,7 @@ G.Char3D = (() => {
     const outlineCol = new THREE.Color(S.outline || mixc(S.hair.color || '#2a2026', '#1a1218', 0.6));
     const omesh = G.R3M.outline(tmp, { width: 0.0011 * (look && look.outlineK || 1), color: outlineCol });
     const T = {
-      id, S, P: B.P, F: B.F, B, geo, hgeo, ogeo, map, emap, defs, inverses, clips, fam, hold,
+      id, S, P: B.P, F: B.F, B, geo, hgeo, ogeo, map, emap, faceSDF, defs, inverses, clips, fam, hold,
       chains: B.chains, colliders: B.colliders, lights: B.lights, flags: B.flags, hero,
       outlineMat: omesh.material, faceSize: hero ? 512 : 256,
       height: (B.P.crown + (S.hat ? 0.06 : 0)) * (S.size || 1),
@@ -4271,7 +4390,7 @@ G.Char3D = (() => {
       const glow = S.glow;
       this.bodyMat = C.charMat({ map: T.map, emissiveMap: T.emap, vertexColors: true, rim: glow ? 0.55 : 0.3, rimColor: glow || 0xfff0e0, shadowTint: 0xb4a6d8 });
       this.face = new C.FacePainter({ F: Object.assign({}, T.F), P: T.P }, T.faceSize);
-      this.faceMat = C.charMat({ map: this.face.tex, rim: glow ? 0.5 : 0.25, rimColor: glow || 0xfff0e0, shadowTint: 0xd8a8b0, side: THREE.FrontSide });
+      this.faceMat = C.charMat({ map: this.face.tex, rim: glow ? 0.5 : 0.25, rimColor: glow || 0xfff0e0, shadowTint: 0xd8a8b0, side: THREE.FrontSide, faceSDF: T.faceSDF, faceShade: T.F.faceShade });
       this.body = new THREE.SkinnedMesh(T.geo, this.bodyMat); this.body.name = 'charBody';
       this.head = new THREE.SkinnedMesh(T.hgeo, this.faceMat); this.head.name = 'charHead';
       this.outline = new THREE.SkinnedMesh(T.ogeo, T.outlineMat); this.outline.name = 'charOutline';
