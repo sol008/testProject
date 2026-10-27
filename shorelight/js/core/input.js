@@ -11,7 +11,7 @@ G.Input = (() => {
     ShiftLeft: 'run', ShiftRight: 'run',
     KeyC: 'menu', KeyM: 'menu', Tab: 'menu',
     KeyQ: 'pgup', KeyE: 'pgdn', PageUp: 'pgup', PageDown: 'pgdn',
-    KeyF: 'auto', KeyL: 'log',
+    KeyF: 'auto', KeyL: 'log', ControlLeft: 'skip', ControlRight: 'skip', MetaLeft: 'skip',
     F2: 'debug',
   };
   const held = {};

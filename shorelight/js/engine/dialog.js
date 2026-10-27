@@ -1,0 +1,270 @@
+// Dialogue system: portrait dialogue box with typewriter, choices, narration, backlog, auto & skip.
+'use strict';
+G.Names = {
+  xinghe: '沈星河', baizhi: '白芷', hongying: '洛紅纓', yungui: '雲歸', tuanzi: '糰子',
+  chenbo: '陳伯', yexuan: '夜玄', qingfeng: '洛青鋒', qingfeng_mask: '鬼面', qingxu: '清虛真人',
+  moya: '墨鴉', tengpo: '藤婆', nianer: '夜念', abing: '阿炳伯', agan: '阿柑姨', xiaojin: '小金',
+  atu: '阿土伯', alian: '阿蓮', linto: '林投姐', lantern_mother: '燈母',
+};
+// short display names used in dialogue (players know them)
+G.ShortNames = { xinghe: '星河', hongying: '紅纓', qingfeng: '青鋒' };
+
+G.Dialog = (() => {
+  const D = {};
+  const log = [];
+  D.log = log;
+  const BOX = { x: 36, y: G.H - 222, w: G.W - 72, h: 196 };
+
+  function parseWho(who) {
+    if (!who) return { id: null, expr: 'normal', name: '' };
+    let [id, expr] = String(who).split(':');
+    expr = expr || 'normal';
+    const known = G.Names[id];
+    let name = known ? (G.ShortNames[id] || known) : id;
+    if (id === '?') name = '？？？';
+    return { id: known ? id : null, expr, name };
+  }
+
+  class DialogScene {
+    constructor() {
+      this.opaque = false;
+      this.lines = null;
+      this.shown = 0;
+      this.done = false;
+      this.resolve = null;
+      this.idle = 0;
+      this.alpha = 0;
+      this.closing = false;
+      this.portraitX = 0;
+      this.autoT = 0;
+      this.mode = 'say';
+    }
+    setLine(who, text, o, resolve) {
+      const w = parseWho(who);
+      const prevId = this.who && this.who.id;
+      this.who = w;
+      this.text = text;
+      this.opts = o || {};
+      this.resolve = resolve;
+      this.shown = 0;
+      this.done = false;
+      this.idle = 0;
+      this.autoT = 0;
+      this.closing = false;
+      if (w.id !== prevId) this.portraitX = w.id ? -60 : 0;
+      this.hasPortrait = !!(w.id && G.Portraits && G.Portraits.has(w.id) && !this.opts.noPortrait);
+      const ctx = G.ctx;
+      ctx.save();
+      ctx.font = G.font(this.opts.size || 27);
+      const tx = this.hasPortrait ? 300 : 40;
+      this.textX = BOX.x + tx;
+      this.lines = G.Render.wrap(ctx, text, BOX.w - tx - 40);
+      ctx.restore();
+      this.total = G.Render.countGlyphs(this.lines);
+      log.push({ name: w.name, text });
+      if (log.length > 200) log.shift();
+    }
+    update(dt) {
+      const I = G.Input;
+      if (this.alpha < 1 && !this.closing) this.alpha = Math.min(1, this.alpha + dt * 6);
+      this.portraitX += (0 - this.portraitX) * Math.min(1, dt * 12);
+      if (I.pressed('log')) { G.Scenes.push(new BacklogScene()); return; }
+      if (I.pressed('auto')) { G.settings.autoAdvance = !G.settings.autoAdvance; G.UI.toast(G.settings.autoAdvance ? '自動播放：開' : '自動播放：關'); }
+      if (!this.resolve) {
+        // waiting for next line from the script; close if none arrives
+        this.idle += dt;
+        if (this.idle > 0.05) {
+          this.alpha -= dt * 8;
+          if (this.alpha <= 0) G.Scenes.pop(this);
+        }
+        I.pressed('ok'); I.clicked();
+        return;
+      }
+      const speeds = [25, 40, 65, 140, 9999];
+      const cps = speeds[G.U.clamp(G.settings.textSpeed, 0, 4)];
+      const skipping = I.held('skip');
+      if (!this.done) {
+        const before = Math.floor(this.shown);
+        this.shown += dt * (skipping ? 9999 : cps);
+        if (Math.floor(this.shown) > before && Math.floor(this.shown) % 3 === 0 && cps < 999) G.Audio.sfx('text');
+        if (this.shown >= this.total) { this.shown = this.total; this.done = true; }
+        if (I.pressed('ok') || I.clicked()) { this.shown = this.total; this.done = true; }
+      } else {
+        this.autoT += dt;
+        const autoGo = G.settings.autoAdvance && this.autoT > 1.2 + this.total * 0.04;
+        if (I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06)) {
+          const r = this.resolve;
+          this.resolve = null;
+          this.idle = 0;
+          r();
+        }
+      }
+    }
+    draw(ctx) {
+      if (this.alpha <= 0 || !this.lines) return;
+      const t = G.time;
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      // portrait
+      if (this.hasPortrait) {
+        const pw = 330, ph = 380;
+        G.Portraits.draw(ctx, this.who.id, this.who.expr, BOX.x - 10 + this.portraitX, BOX.y + BOX.h - ph - 4, pw, ph, t, {});
+      }
+      UI_box(ctx, this.hasPortrait);
+      // name plate
+      if (this.who.name) {
+        const nx = this.hasPortrait ? BOX.x + 290 : BOX.x + 30;
+        ctx.font = G.font(24, true);
+        const nw = ctx.measureText(this.who.name).width + 44;
+        const g = ctx.createLinearGradient(nx, BOX.y - 22, nx, BOX.y + 14);
+        g.addColorStop(0, '#8a2f24'); g.addColorStop(1, '#561a14');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.roundRect(nx, BOX.y - 22, nw, 40, 6); ctx.fill();
+        ctx.strokeStyle = G.UI.GOLD; ctx.lineWidth = 1.5; ctx.stroke();
+        G.Render.text(ctx, this.who.name, nx + nw / 2, BOX.y - 15, { size: 24, bold: true, align: 'center', color: '#fbe7b8' });
+      }
+      ctx.font = G.font(this.opts.size || 27);
+      ctx.textBaseline = 'top';
+      G.Render.drawLines(ctx, this.lines, this.textX, BOX.y + 36, 40, this.opts.color || '#f6efdc', Math.floor(this.shown));
+      if (this.done && this.resolve) {
+        // advance indicator: little bobbing lantern
+        G.UI.lanternIcon(ctx, BOX.x + BOX.w - 40, BOX.y + BOX.h - 32 + Math.sin(t * 5) * 3, 8, t);
+      }
+      if (G.settings.autoAdvance) G.Render.text(ctx, 'AUTO', BOX.x + BOX.w - 90, BOX.y + 12, { size: 15, color: '#ffd97a' });
+      ctx.restore();
+    }
+  }
+
+  function UI_box(ctx, withPortrait) {
+    G.UI.panel(ctx, BOX.x + (withPortrait ? 250 : 0), BOX.y, BOX.w - (withPortrait ? 250 : 0), BOX.h, {
+      top: 'rgba(20,26,46,0.92)', bottom: 'rgba(8,10,22,0.95)',
+    });
+  }
+
+  class ChoiceScene {
+    constructor(options, resolve, o = {}) {
+      this.opts = o;
+      this.list = new G.UI.List(options.map((l) => ({ label: l })), { rows: Math.min(6, options.length), rowH: 50 });
+      this.resolve = resolve;
+      this.alpha = 0;
+      this.options = options;
+      const ctx = G.ctx;
+      ctx.font = G.font(25);
+      this.w = Math.max(280, ...options.map((s) => ctx.measureText(s).width + 90));
+      this.h = this.list.rows * 50 + 36;
+      this.x = G.W - this.w - 60;
+      this.y = BOX.y - this.h - 24;
+      if (o.center) { this.x = (G.W - this.w) / 2; this.y = (G.H - this.h) / 2; }
+    }
+    update(dt) {
+      this.alpha = Math.min(1, this.alpha + dt * 6);
+      const r = this.list.update();
+      if (r === 'ok') { G.Scenes.pop(this); this.resolve(this.list.idx); }
+      else if (r === 'cancel' && this.opts.cancel != null) { G.Scenes.pop(this); this.resolve(this.opts.cancel); }
+    }
+    draw(ctx) {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      G.UI.panel(ctx, this.x, this.y, this.w, this.h);
+      this.list.draw(ctx, this.x + 20, this.y + 18, this.w - 30, G.time, { size: 25 });
+      ctx.restore();
+    }
+  }
+
+  class BacklogScene {
+    constructor() { this.scroll = 0; }
+    update() {
+      const I = G.Input;
+      if (I.pressed('cancel') || I.pressed('log') || I.pressed('ok')) { G.Scenes.pop(this); return; }
+      if (I.repeat('up')) this.scroll = Math.min(log.length - 1, this.scroll + 1);
+      if (I.repeat('down')) this.scroll = Math.max(0, this.scroll - 1);
+    }
+    draw(ctx) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(4,6,14,0.88)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      G.Render.text(ctx, '對話紀錄', 60, 36, { size: 30, color: G.UI.GOLD_L });
+      let y = G.H - 80;
+      ctx.font = G.font(22);
+      for (let i = log.length - 1 - this.scroll; i >= 0 && y > 90; i--) {
+        const e = log[i];
+        const lines = G.Render.wrap(ctx, e.text, G.W - 360);
+        y -= lines.length * 32 + 18;
+        if (e.name) G.Render.text(ctx, e.name, 80, y, { size: 22, color: '#ffcf8a' });
+        ctx.font = G.font(22); ctx.textBaseline = 'top';
+        G.Render.drawLines(ctx, lines, 250, y, 32, '#e8e0cc');
+      }
+      G.UI.hints(ctx, [['↑↓', '捲動'], ['L', '關閉']]);
+      ctx.restore();
+    }
+  }
+
+  // Full-screen narration: lines fade in one by one over a dark veil
+  class NarrateScene {
+    constructor(lines, resolve, o) {
+      this.lines = lines; this.resolve = resolve; this.o = o || {};
+      this.t = 0; this.idx = 0; this.lineT = 0; this.alpha = 0; this.closing = false;
+    }
+    update(dt) {
+      this.t += dt; this.lineT += dt;
+      if (!this.closing) this.alpha = Math.min(1, this.alpha + dt * 2);
+      else { this.alpha -= dt * 2; if (this.alpha <= 0) { G.Scenes.pop(this); this.resolve(); } return; }
+      const I = G.Input;
+      const adv = I.pressed('ok') || I.clicked() || (I.held('skip') && this.lineT > 0.1) || (G.settings.autoAdvance && this.lineT > 2.5);
+      if (adv) {
+        if (this.lineT < 0.9) this.lineT = 0.9;
+        else if (this.idx < this.lines.length - 1) { this.idx++; this.lineT = 0; }
+        else this.closing = true;
+      }
+    }
+    draw(ctx) {
+      ctx.save();
+      ctx.globalAlpha = this.alpha * (this.o.veil == null ? 0.82 : this.o.veil);
+      ctx.fillStyle = '#03040a';
+      ctx.fillRect(0, 0, G.W, G.H);
+      ctx.globalAlpha = this.alpha;
+      const n = this.idx + 1;
+      const lh = 50;
+      const y0 = G.H / 2 - (this.lines.length * lh) / 2;
+      for (let i = 0; i < n; i++) {
+        const a = i === this.idx ? Math.min(1, this.lineT / 0.9) : 1;
+        G.Render.text(ctx, this.lines[i], G.W / 2, y0 + i * lh + (1 - a) * 8, {
+          size: this.o.size || 30, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
+        });
+      }
+      ctx.restore();
+    }
+  }
+
+  let scene = null;
+  D.say = function (who, text, o) {
+    return new Promise((res) => {
+      if (!scene || !G.Scenes.has(scene)) {
+        scene = new DialogScene();
+        G.Scenes.push(scene);
+      } else if (G.Scenes.top() !== scene) {
+        // something else is on top; bring dialog to top
+        G.Scenes.pop(scene);
+        G.Scenes.push(scene);
+      }
+      scene.setLine(who, text, o, res);
+    });
+  };
+  D.choice = function (options, o = {}) {
+    return new Promise((res) => {
+      G.Scenes.push(new ChoiceScene(options, res, o));
+    });
+  };
+  D.narrate = function (lines, o) {
+    return new Promise((res) => {
+      if (scene && G.Scenes.has(scene)) { G.Scenes.pop(scene); scene = null; }
+      G.Scenes.push(new NarrateScene([].concat(lines), res, o));
+    });
+  };
+  D.close = function () {
+    if (scene && G.Scenes.has(scene)) G.Scenes.pop(scene);
+    scene = null;
+  };
+  D.isOpen = () => !!(scene && G.Scenes.has(scene));
+  return D;
+})();
