@@ -155,6 +155,7 @@ G.Mapx = G.Mapx || {};
       this.interactTarget = null;
       this.invuln = 0;
       this.stepCount = 0;
+      if (this.initMech) this.initMech();
     }
 
     buildNpcs() {
@@ -171,7 +172,7 @@ G.Mapx = G.Mapx || {};
         this.npcs.push(a);
       }
       // keep scripted (spawned) actors
-      for (const id in old) if (old[id].spawned && !this.npcs.includes(old[id])) this.npcs.push(old[id]);
+      for (const id in old) if ((old[id].spawned || old[id].guard) && !this.npcs.includes(old[id])) this.npcs.push(old[id]);
     }
 
     buildEnemies() {
@@ -285,6 +286,7 @@ G.Mapx = G.Mapx || {};
     // ---------------- update ----------------
     enter() {
       this.banner = 0.001;
+      if (this.def.place) G.World.visit(this.def.place);
       const bgm = val(this.def.bgm);
       if (bgm) G.Music.play(bgm);
       else if (bgm === null) G.Music.stop(1);
@@ -307,6 +309,7 @@ G.Mapx = G.Mapx || {};
       this.updateFollowers(dt);
       for (const n of this.npcs) this.updateNpc(n, dt, busy);
       for (const e of this.enemies) this.updateEnemy(e, dt, busy);
+      if (this.updateMech) this.updateMech(dt, busy);
       // camera
       const [tx, ty] = this.clampCam(...this.camTarget());
       const k = Math.min(1, dt * (this.cam.speed || 7));
@@ -342,6 +345,9 @@ G.Mapx = G.Mapx || {};
           this.shiftFollowers(p.x, p.y);
           p.startMove(nx, ny);
           G.state.dir = d;
+        } else if (this.tryPush && this.tryPush(nx, ny, dx, dy)) {
+          this.shiftFollowers(p.x, p.y);
+          p.startMove(nx, ny);
         } else {
           p.phase += dt * 0.3; // shuffle
         }
@@ -524,6 +530,7 @@ G.Mapx = G.Mapx || {};
 
     // ---------------- NPC / enemy AI ----------------
     updateNpc(n, dt, busy) {
+      if (n.guard && this.updateGuard) { this.updateGuard(n, dt, busy); return; }
       if (n.moving) {
         if (n.updateMove(dt)) { if (n.onArrive) { const r = n.onArrive; n.onArrive = null; r(); } }
         return;
@@ -596,6 +603,7 @@ G.Mapx = G.Mapx || {};
       if (G.Script.busy()) return;
       G.Script.run(async (S) => {
         const res = await S.battle(e.def.troop, { mode, enemyActor: e });
+        if (res === 'error') { this.enemies = this.enemies.filter((x) => x !== e); return; }
         if (res === 'win') {
           this.enemies = this.enemies.filter((x) => x !== e);
           if (e.def.respawn === false) G.state.flags[e.key] = true;
@@ -633,6 +641,7 @@ G.Mapx = G.Mapx || {};
         }
       }
       if (this.def.drawGround) this.def.drawGround(ctx, t, this);
+      if (this.drawMechFloor) this.drawMechFloor(ctx, t);
       // drawables
       const list = [];
       const vis = this.visionOn();

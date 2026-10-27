@@ -934,17 +934,23 @@ G.Battle = (() => {
         if (this.active === p) G.UI.cursor(ctx, x - 4, y - 4, cw - 12, 84, t, true);
         G.Render.text(ctx, p.name, x + 14, y + 2, { size: 22, color: p.dead ? '#8a7a7a' : '#fff0d0' });
         G.Render.text(ctx, 'Lv' + p.lv, x + cw - 30, y + 6, { size: 15, align: 'right', color: '#c9b893' });
-        G.UI.bar(ctx, x + 14, y + 34, cw - 46, 12, p.hp / p.mhp, '#7ae08a', '#2a9a4a');
-        G.Render.text(ctx, `${p.hp}/${p.mhp}`, x + cw - 34, y + 30, { size: 14, align: 'right', color: '#f0f0f0' });
-        G.UI.bar(ctx, x + 14, y + 52, (cw - 46) * 0.6, 9, p.mp / Math.max(1, p.mmp), '#8ac8ff', '#3a6ad8');
-        G.Render.text(ctx, String(p.mp), x + 14 + (cw - 46) * 0.6 + 6, y + 48, { size: 13, color: '#bcd8ff' });
+        const lowHp = p.hp > 0 && p.hp < p.mhp * 0.3;
+        G.UI.bar(ctx, x + 14, y + 34, cw - 120, 12, p.hp / p.mhp, lowHp ? '#ffb07a' : '#7ae08a', lowHp ? '#c8502a' : '#2a9a4a');
+        G.Render.text(ctx, String(p.hp), x + cw - 34, y + 30, { size: 17, bold: true, align: 'right', color: lowHp ? '#ffb07a' : '#f0f0f0' });
+        G.UI.bar(ctx, x + 14, y + 52, cw - 120, 9, p.mp / Math.max(1, p.mmp), '#8ac8ff', '#3a6ad8');
+        G.Render.text(ctx, String(p.mp), x + cw - 34, y + 48, { size: 15, align: 'right', color: '#bcd8ff' });
         // 劍意 gauge
         const full = p.gauge >= 100;
-        G.UI.bar(ctx, x + 14, y + 68, cw - 46, 6, p.gauge / 100, full ? '#fff0a0' : '#ffd060', full ? '#ff9a2a' : '#c8902a');
+        G.UI.bar(ctx, x + 14, y + 68, cw - 120, 6, p.gauge / 100, full ? '#fff0a0' : '#ffd060', full ? '#ff9a2a' : '#c8902a');
         if (full) G.Render.text(ctx, '劍意', x + cw - 34, y + 58, { size: 13, align: 'right', color: `rgba(255,230,140,${0.6 + 0.4 * Math.sin(t * 8)})` });
       });
       // timeline
       const tl = this.timeline(8);
+      const tag = (u) => {
+        if (u.side !== 'enemy') return '';
+        const same = this.enemies.filter((e) => e.name === u.name);
+        return same.length > 1 ? 'ABCDEF'[same.indexOf(u)] : '';
+      };
       const tx = G.W / 2 - (tl.length * 54) / 2, ty = 14;
       G.UI.plate(ctx, tx - 14, ty - 4, tl.length * 54 + 22, 58, 0.55, 12);
       tl.forEach((u, i) => {
@@ -956,6 +962,8 @@ G.Battle = (() => {
         ctx.lineWidth = i === 0 ? 2.5 : 1;
         ctx.beginPath(); ctx.roundRect(x, y + (i === 0 ? 0 : 6), 46, i === 0 ? 50 : 40, 8); ctx.fill(); ctx.stroke();
         G.Render.text(ctx, u.name.slice(0, 1), x + 23, y + (i === 0 ? 10 : 12), { size: i === 0 ? 26 : 22, align: 'center', color: '#fff4dc' });
+        const tg = tag(u);
+        if (tg) G.Render.text(ctx, tg, x + 40, y + (i === 0 ? 30 : 32), { size: 13, bold: true, align: 'center', color: '#ffd97a' });
         ctx.restore();
       });
       // boss bar
@@ -1446,6 +1454,10 @@ G.Battle = (() => {
 
   // ------------------------------------------------------------------ API
   B.start = function (troopId, o = {}) {
+    if (typeof troopId !== 'object' && !(G.Data.troops && G.Data.troops[troopId])) {
+      console.warn('Battle: unknown troop', troopId);
+      return Promise.resolve('error');
+    }
     return new Promise((res) => {
       const stateBefore = JSON.stringify(G.state);
       G.Dialog.close();

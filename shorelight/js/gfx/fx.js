@@ -79,11 +79,8 @@ G.FX = (() => {
           for (const q of g.parts) {
             const a = g.name === 'dust' ? 0.25 : 0.5 + 0.5 * Math.sin(q.ph * 3);
             const r = g.name === 'dust' ? 1.5 : 3;
-            const gr = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r * 4);
-            gr.addColorStop(0, U.rgba(q.c, a));
-            gr.addColorStop(1, U.rgba(q.c, 0));
-            ctx.fillStyle = gr;
-            ctx.fillRect(q.x - r * 4, q.y - r * 4, r * 8, r * 8);
+            ctx.globalAlpha = a;
+            ctx.drawImage(FX.glowSprite(q.c), q.x - r * 4, q.y - r * 4, r * 8, r * 8);
           }
           break;
         case 'sparkles':
@@ -388,6 +385,22 @@ G.FX = (() => {
   }
   FX.LanternGet = LanternGet;
 
+  // cached radial glow sprites by colour (much cheaper than per-particle gradients)
+  const glowCache = {};
+  FX.glowSprite = function (c) {
+    let g = glowCache[c];
+    if (!g) {
+      g = document.createElement('canvas');
+      g.width = g.height = 32;
+      const x = g.getContext('2d');
+      const gr = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+      gr.addColorStop(0, c); gr.addColorStop(0.35, U.rgba(c.length === 7 ? c : '#ffffff', 0.6)); gr.addColorStop(1, U.rgba(c.length === 7 ? c : '#ffffff', 0));
+      x.fillStyle = gr; x.fillRect(0, 0, 32, 32);
+      glowCache[c] = g;
+    }
+    return g;
+  };
+
   // ---------------------------------------------------------------- generic particle burst (battle & field)
   class Burst {
     constructor(o) {
@@ -426,10 +439,7 @@ G.FX = (() => {
         if (k <= 0) continue;
         ctx.globalAlpha = Math.min(1, k * 1.5);
         if (p.shape === 'dot') {
-          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2);
-          g.addColorStop(0, p.c); g.addColorStop(1, U.rgba(p.c.length === 7 ? p.c : '#ffffff', 0));
-          ctx.fillStyle = g;
-          ctx.fillRect(p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4);
+          ctx.drawImage(FX.glowSprite(p.c), p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4);
         } else if (p.shape === 'shard') {
           ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
           ctx.fillStyle = p.c;

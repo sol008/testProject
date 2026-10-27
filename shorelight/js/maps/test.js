@@ -52,8 +52,13 @@ G.Maps.define('sandbox', {
     { t: 'well', x: 7, y: 13 },
     { t: 'water_lantern', x: 24, y: 9 },
     { t: 'water_lantern', x: 26, y: 12 },
+    { t: 'crate', x: 10, y: 12, push: true },
   ],
   chests: [{ id: 'c1', x: 9, y: 3, gold: 100 }],
+  guards: [{ id: 'g1', sprite: 'temple_guard', path: [[2, 16], [9, 16]], view: 4, pause: 1 }],
+  hides: [{ x: 5, y: 15, w: 1, h: 1 }],
+  checkpoint: [8, 9, 'down'],
+  winds: [{ x: 13, y: 15, w: 4, h: 3, dir: 'right', period: 3, dur: 1.2 }],
   npcs: [
     { id: 'old', sprite: 'old_m', x: 6, y: 8, dir: 'down', name: '阿伯', wander: 2, talk: ['少年仔，這裡是測試用的地方啦。', '要不要去海邊看看水燈？'] },
     {
@@ -67,7 +72,7 @@ G.Maps.define('sandbox', {
     },
   ],
   enemies: [
-    { id: 'e1', troop: 'test_troop', x: 18, y: 15, art: 'mosina' },
+    { id: 'e1', troop: 'mine_1', x: 18, y: 15, art: 'mosina' },
   ],
   events: [
     { trigger: 'action', x: 11, y: 2, w: 2, h: 1, run: async (S) => { await S.say('', '石階通往山上的金礦。'); } },

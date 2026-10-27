@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — monster preview (monsters.js)</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.6; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="bar">?ids=a,b · states=a,b|none · zoom=2 · t=1.2 (freeze) · st=0.3 (freeze state time) · phase=2</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/monsters.js"></script>
+<script>
+'use strict';
+(() => {
+  const NAMES = {
+    sea_wisp: '海霧魂', water_ghost: '水鬼', ghost_lantern: '鬼燈籠', mine_bat: '礦坑蝙蝠', miner_ghost: '礦工魂',
+    sand_crab: '沙蟹精', water_ghost_king: '水鬼王', mosina: '魔神仔', mushroom_imp: '蕈精', bamboo_spirit: '竹精',
+    bamboo_viper: '青竹絲', boar_demon: '山豬精', macaque_demon: '獼猴精', tiger_granny: '虎姑婆', yin_soldier: '陰兵',
+    stone_monkey: '石猴', rat_demon: '鼠精', river_wraith: '河伯怨靈', paper_effigy: '紙紮人', chair_spirit: '椅仔姑',
+    jiangshi: '殭屍', paper_servant: '紙人', hanged_ghost: '吊死鬼', bone_general: '骷髏將', grudge_maid: '怨婢', grudge_feast: '怨宴',
+  };
+  const q = new URLSearchParams(location.search);
+  const zoom = parseFloat(q.get('zoom') || '1');
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const stFreeze = q.has('st') ? parseFloat(q.get('st')) : null;
+  const phase = q.has('phase') ? parseInt(q.get('phase'), 10) : undefined;
+  const all = Object.keys(G.Monsters.defs);
+  const ids = q.get('ids') ? q.get('ids').split(',').filter((i) => all.includes(i)) : all;
+  const big = (id) => (G.Monsters.defs[id] || {}).h >= 230;
+  const normal = ids.filter((id) => !big(id));
+  const bosses = ids.filter(big);
+  const sq = q.get('states');
+  const stateIds = (sq === 'none' ? [] : sq ? sq.split(',') : (q.get('ids') ? ids : ['ghost_lantern', 'jiangshi', 'tiger_granny'])).filter((i) => all.includes(i));
+  const W = Math.max(Math.round(1600 / zoom), stateIds.some(big) ? 6 * 430 : stateIds.length ? 6 * 230 : 0);
+  const cellW = 230, cellH = 290, bossW = 470, bossH = 470;
+  const cols = Math.max(1, Math.floor(W / cellW));
+  const bcols = Math.max(1, Math.floor(W / bossW));
+  // state cells: [label, state, st (frozen), variant]
+  const states = [['idle', 'idle', 0, 0], ['attack', 'attack', 0.36, 0], ['hurt', 'hurt', 0.06, 0], ['cast', 'cast', 0.7, 0], ['variant 1', 'idle', 0, 1], ['variant 2', 'idle', 0, 2]];
+  const items = [];
+  let y = 46;
+  normal.forEach((id, i) => items.push({ id, x: (i % cols) * cellW + cellW / 2, y: y + Math.floor(i / cols) * cellH + cellH - 44 }));
+  if (normal.length) y += Math.ceil(normal.length / cols) * cellH + 16;
+  bosses.forEach((id, i) => items.push({ id, x: (i % bcols) * bossW + bossW / 2, y: y + Math.floor(i / bcols) * bossH + bossH - 44 }));
+  if (bosses.length) y += Math.ceil(bosses.length / bcols) * bossH + 16;
+  const stateTop = y + 4;
+  stateIds.forEach((id) => {
+    const b = big(id);
+    const cw = b ? 430 : 230, ch = b ? 450 : 260;
+    states.forEach((s, j) => items.push({ id, x: j * cw + cw / 2, y: y + ch - 30, sub: s[0], state: s[1], st: s[2], variant: s[3] }));
+    y += ch + 8;
+  });
+  const H = y + 30;
+  const cv = document.getElementById('cv');
+  cv.width = W * zoom; cv.height = H * zoom;
+  const ctx = cv.getContext('2d');
+  let lastMs = 0;
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#161a2a'); bg.addColorStop(1, '#090b11');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e8d9b0'; ctx.font = G.font(22, true); ctx.textAlign = 'left';
+    ctx.fillText('彼岸燈 · 妖怪圖鑑 (monsters.js) — ' + all.length + ' monsters', 14, 30);
+    ctx.fillStyle = '#8890a8'; ctx.font = G.font(12);
+    ctx.fillText('draw ' + lastMs.toFixed(2) + ' ms / frame (' + items.length + ' sprites)', W - 260, 30);
+    if (stateIds.length) { ctx.fillStyle = '#3a4058'; ctx.fillRect(0, stateTop, W, 1); }
+    const tA = performance.now();
+    for (const it of items) {
+      const d = G.Monsters.defs[it.id];
+      ctx.fillStyle = 'rgba(0,0,0,0.42)';
+      ctx.beginPath(); ctx.ellipse(it.x, it.y, d.w * 0.42, 10, 0, 0, Math.PI * 2); ctx.fill();
+      let st = 0;
+      if (it.state && it.state !== 'idle') st = stFreeze != null ? stFreeze : freeze != null ? it.st : (t * 0.9) % 1.2;
+      try {
+        G.Monsters.draw(ctx, it.id, it.x, it.y, t, { state: it.state || 'idle', st, variant: it.variant || 0, phase });
+      } catch (e) { console.error(it.id, e); }
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.strokeRect(it.x - d.w / 2, it.y - d.h, d.w, d.h);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#e8d9b0'; ctx.font = G.font(14, true);
+      ctx.fillText((NAMES[it.id] || '') + '  ' + it.id, it.x, it.y + 22);
+      ctx.fillStyle = '#7d88a3'; ctx.font = G.font(11);
+      ctx.fillText((it.sub ? it.sub + ' · ' : '') + d.w + '×' + d.h, it.x, it.y + 36);
+    }
+    lastMs = performance.now() - tA;
+    window.__lastMs = lastMs;
+    if (freeze == null) requestAnimationFrame(frame);
+    else window.__done = true;
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

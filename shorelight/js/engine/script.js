@@ -226,6 +226,8 @@ G.Script = (() => {
       G.UI.toast('好好休息了一晚，全員完全恢復。', { icon: 'lantern' });
       return true;
     },
+    travel(from, to, o) { G.Dialog.close(); return G.World.travel(from, to, o); },
+    visit(place) { G.World.visit(place); },
     saveMenu() { return new Promise((res) => G.Scenes.push(new G.SaveScene('save', res))); },
     menu() { return new Promise((res) => { const m = new G.MenuScene(); m.onClose = res; G.Scenes.push(m); }); },
     refresh() { map() && map().refresh(); },

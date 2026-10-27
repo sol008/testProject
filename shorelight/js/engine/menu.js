@@ -47,13 +47,14 @@
         { label: '隊伍', k: 'party', icon: 'charm' },
         { label: '任務', k: 'quests', icon: 'letter' },
         { label: '心燈', k: 'lanterns', icon: 'lantern' },
+        { label: '地圖', k: 'world', icon: 'scroll' },
         { label: '圖鑑', k: 'bestiary', icon: 'mushroom' },
         { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.mapScene.def.noSave) },
         { label: '讀檔', k: 'load', icon: 'key' },
         { label: '設定', k: 'settings', icon: 'fan' },
         { label: '回標題', k: 'title', icon: 'hat' },
       ];
-      this.list = new UI().List(this.items, { rows: this.items.length, rowH: 46 });
+      this.list = new UI().List(this.items, { rows: this.items.length, rowH: 42 });
       this.sub = null;
     }
     update(dt) {
@@ -77,6 +78,7 @@
         case 'quests': this.sub = new QuestPanel(back); break;
         case 'lanterns': this.sub = new LanternPanel(back); break;
         case 'bestiary': this.sub = new BestiaryPanel(back); break;
+        case 'world': G.Scenes.push(new G.WorldMapScene()); break;
         case 'save': G.Scenes.push(new SaveScene('save', () => {})); break;
         case 'load': G.Scenes.push(new SaveScene('load', () => {})); break;
         case 'settings': G.Scenes.push(new SettingsScene()); break;
@@ -93,15 +95,15 @@
       ctx.fillStyle = 'rgba(4,6,14,0.62)';
       ctx.fillRect(0, 0, G.W, G.H);
       // left menu
-      UI().panel(ctx, 30, 30, 230, this.items.length * 46 + 30);
-      this.list.draw(ctx, 40, 45, 214, t, { size: 23, focus: !this.sub });
+      UI().panel(ctx, 30, 20, 230, this.items.length * 42 + 24);
+      this.list.draw(ctx, 40, 32, 214, t, { size: 22, focus: !this.sub });
       // info plate
-      UI().panel(ctx, 30, G.H - 130, 230, 100, { ornament: false });
-      R().text(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 118, { size: 20, color: '#fff0d0' });
-      R().text(ctx, '時間 ' + U.fmtTime(G.state.playtime), 48, G.H - 88, { size: 17, color: '#c9b893' });
-      R().text(ctx, '錢財 ' + G.state.gold + ' 文', 48, G.H - 64, { size: 17, color: '#ffe08a' });
-      UI().lanternIcon(ctx, 220, G.H - 76, 9, t);
-      R().text(ctx, String(G.Lanterns.count()), 236, G.H - 88, { size: 20, color: '#ffd9a0' });
+      UI().panel(ctx, 30, G.H - 106, 230, 96, { ornament: false });
+      R().text(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, { size: 20, color: '#fff0d0' });
+      R().text(ctx, '時間 ' + U.fmtTime(G.state.playtime), 48, G.H - 68, { size: 17, color: '#c9b893' });
+      R().text(ctx, '錢財 ' + G.state.gold + ' 文', 48, G.H - 44, { size: 17, color: '#ffe08a' });
+      UI().lanternIcon(ctx, 220, G.H - 56, 9, t);
+      R().text(ctx, String(G.Lanterns.count()), 236, G.H - 68, { size: 20, color: '#ffd9a0' });
       if (this.sub) this.sub.draw(ctx, t);
       else {
         // party overview
