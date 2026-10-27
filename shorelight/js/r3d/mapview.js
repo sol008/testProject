@@ -1,8 +1,8 @@
 // Map3D: real-time 3D presentation of a MapScene (the 2D MapScene stays the source of truth for gameplay).
 // Builds terrain (baked painted ground + displaced banks), extruded walls with camera-side cutaway, water,
 // sky / fog / sun / moon, dynamic point lights, 3D models (or 2D-art billboards), 3D characters (or sprite
-// billboards), world particles, a decal layer for maps' 2D drawGround/drawOver hooks, and an orbit-step
-// diorama camera. Contract: docs/CONTRACTS_3D.md.
+// billboards), world particles, a ground decal + screen overlay for maps' 2D drawGround/drawOver hooks (SplitCtx),
+// and an orbit-step diorama camera. Contract: docs/CONTRACTS_3D.md ("2D map hooks in 3D").
 'use strict';
 G.Map3D = (() => {
   const TT = G.TILE;
@@ -638,12 +638,23 @@ G.Map3D = (() => {
       }
     }
 
-    // ------------------------------------------------------------------ decal layer for 2D map hooks
+    // ------------------------------------------------------------------ 2D map hooks: ground decal + screen overlay
+    // drawGround / drawMechFloor / drawOver (def- and instance-level) run every frame through a SplitCtx: world-space
+    // drawing lands on a canvas texture laid over the ground; screen-space drawing (after ctx.translate(cam.x, cam.y),
+    // ms.screenSpace(), setTransform/resetTransform, or rects that fill the view) goes to the 2D overlay canvas above
+    // the 3D frame. See docs/CONTRACTS_3D.md "2D map hooks in 3D".
+    hookCount() {
+      const ms = this.ms;
+      const mech = !!(ms.drawMechFloor && ((this.def.winds && this.def.winds.length) || ms.npcs.some((n) => n.guard)));
+      return ms.hooks('drawGround').length + ms.hooks('drawOver').length + (mech ? 1 : 0);
+    }
     buildDecals() {
-      const d = this.def, ms = this.ms;
-      this.hasDecals = !!(d.drawGround || d.drawOver || ms.drawMechFloor);
-      if (!this.hasDecals) return;
-      const T = THREE;
+      this.hasDecals = this.hookCount() > 0;
+      if (this.hasDecals) this.ensureDecal();
+    }
+    ensureDecal() {
+      if (this.decal) return;
+      const T = THREE, ms = this.ms;
       const S = Math.min(32, Math.floor(4096 / Math.max(ms.w, ms.h)));
       this.decalS = S;
       this.decalCanvas = document.createElement('canvas');
@@ -655,20 +666,35 @@ G.Map3D = (() => {
       this.decal = new T.Mesh(geo, mat);
       this.decal.position.set(ms.w / 2, 0.035, ms.h / 2);
       this.decal.renderOrder = 3;
+      this.decal.visible = false;
       this.scene.add(this.decal);
     }
-    updateDecals() {
-      if (!this.hasDecals) return;
-      const g = this.decalCanvas.getContext('2d'), ms = this.ms, d = this.def, t = ms.t;
+    // screen: the 2D overlay context (MapScene.draw3d passes its ctx; G.ctx otherwise)
+    updateDecals(screen) {
+      const ms = this.ms, t = ms.t;
+      if (!this.hookCount()) { if (this.decal && this.decal.visible) this.clearDecal(); return; }
+      this.ensureDecal();
+      this.hasDecals = true;
+      const sp = this.split || (this.split = new SplitCtx(this));
+      const ctx = sp.begin(screen || G.ctx);
+      try {
+        sp.phase = 'ground';
+        for (const f of ms.hooks('drawGround')) f(ctx, t, ms);
+        if (ms.drawMechFloor) ms.drawMechFloor(ctx, t);
+        sp.phase = 'over';
+        for (const f of ms.hooks('drawOver')) f(ctx, t, ms);
+      } catch (e) { G.warnOnce('map hook ' + this.def.id, e); }
+      const drew = sp.end();
+      // upload only when something was drawn (this frame or the last one, which must be cleared away)
+      if (drew || this.decal.visible) this.decalTex.needsUpdate = true;
+      this.decal.visible = drew;
+    }
+    clearDecal() {
+      const g = this.decalCanvas.getContext('2d');
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, this.decalCanvas.width, this.decalCanvas.height);
-      g.setTransform(this.decalS / TT, 0, 0, this.decalS / TT, 0, 0);
-      try {
-        if (d.drawGround) d.drawGround(g, t, ms);
-        if (ms.drawMechFloor) ms.drawMechFloor(g, t);
-        if (d.drawOver) d.drawOver(g, t, ms);
-      } catch (e) { G.warnOnce('decal ' + d.id, e); }
       this.decalTex.needsUpdate = true;
+      this.decal.visible = false;
     }
 
     // ------------------------------------------------------------------ camera
@@ -734,7 +760,8 @@ G.Map3D = (() => {
     }
 
     // ------------------------------------------------------------------ per-frame
-    frame() {
+    // ctx2d: the 2D overlay context of this frame (screen-space output of the 2D map hooks is drawn there)
+    frame(ctx2d) {
       const now = G.time;
       const dt = this._last != null ? Math.min(0.05, Math.max(0, now - this._last)) : 1 / 60;
       this._last = now;
@@ -762,7 +789,7 @@ G.Map3D = (() => {
       this.placeCamera();
       this.updateLights();
       this.updateParticles();
-      this.updateDecals();
+      this.updateDecals(ctx2d);
       this.updateCutout();
       // billboards & animated models
       for (const [, node] of this.nodes) {
@@ -780,7 +807,7 @@ G.Map3D = (() => {
       this.post.hue = psy > 0 ? Math.sin(this.t * 0.3) * 0.35 * psy : 0;
       this.post.sat = 1.06 + psy * 0.5;
       if (G.Env3D && G.Env3D.update) { try { G.Env3D.update(this, dt); } catch (e) { G.warnOnce('env3d update', e); } }
-      if (this.def.update3d) { try { this.def.update3d(this, dt, THREE); } catch (e) { G.warnOnce('update3d ' + this.def.id, e); } }
+      for (const f of ms.hooks('update3d')) { try { f(this, dt, THREE); } catch (e) { G.warnOnce('update3d ' + this.def.id, e); } }
       G.R3.setView(this);
       G.R3.render(dt);
     }
@@ -819,6 +846,118 @@ G.Map3D = (() => {
       if (G.R3.view === this) G.R3.view = null;
     }
   }
+
+  // ------------------------------------------------------------------ SplitCtx
+  // A CanvasRenderingContext2D stand-in handed to 2D map hooks in 3D. State and path calls go to both targets:
+  //   W — the ground decal canvas (world px → decal px), S — the 2D overlay canvas with the 2D camera transform
+  //   (device scale × translate(-cam)), so world px land where the 2D renderer would put them on screen.
+  // Each draw call goes to ONE of them: S when the hook is in screen mode (it called translate(cam.x, cam.y) —
+  // the chapters' screenSpace/hud2d idiom —, ms.screenSpace(), setTransform or resetTransform; the mode is saved and
+  // restored with save()/restore()), or when a rect/image covers the whole view along one axis from a screen edge
+  // (full-screen tints, vignettes, edge fades drawn at cam.x/cam.y). Everything else is world space → W.
+  // In the 'ground' phase (drawGround, drawMechFloor) a solid full-view fill is spread over the whole decal instead
+  // (a ground tint), since the 2D view rectangle means nothing on the 3D ground.
+  const SPLIT_DRAW = new Set(['fill', 'stroke', 'fillRect', 'strokeRect', 'clearRect', 'fillText', 'strokeText', 'drawImage', 'putImageData', 'drawFocusIfNeeded']);
+  const SPLIT_QUERY = new Set(['measureText', 'getTransform', 'isPointInPath', 'isPointInStroke', 'getImageData', 'getLineDash', 'createLinearGradient', 'createRadialGradient', 'createConicGradient', 'createPattern', 'createImageData', 'getContextAttributes', 'isContextLost']);
+  const SPLIT_SYNC = ['fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineJoin', 'miterLimit', 'font', 'textAlign', 'textBaseline', 'globalAlpha', 'globalCompositeOperation', 'shadowBlur', 'shadowColor', 'shadowOffsetX', 'shadowOffsetY', 'filter', 'imageSmoothingEnabled'];
+  class SplitCtx {
+    constructor(view) {
+      this.view = view;
+      this.fns = Object.create(null);
+      this.phase = 'over';
+      const self = this;
+      this.proxy = new Proxy({}, {
+        get(_, k) {
+          if (k === '__split') return self;
+          const f = self.fns[k];
+          if (f) return f;
+          const v = self.S[k];
+          if (typeof v === 'function') return (self.fns[k] = self.wrap(k));
+          return v;
+        },
+        set(_, k, v) { self.S[k] = v; self.W[k] = v; return true; },
+        has(_, k) { return k in self.S; },
+      });
+    }
+    begin(screen) {
+      const v = this.view, ms = v.ms;
+      this.S = screen; this.W = v.decalCanvas.getContext('2d');
+      const W = this.W, S = this.S;
+      if (this.drewLast !== false) { W.setTransform(1, 0, 0, 1, 0, 0); W.clearRect(0, 0, v.decalCanvas.width, v.decalCanvas.height); }
+      S.save(); W.save();
+      for (const k of SPLIT_SYNC) { try { W[k] = S[k]; } catch (e) { /* unsupported prop */ } }
+      W.setLineDash([]); S.setLineDash([]);
+      this.dev = S.getTransform();
+      this.devInv = this.dev.inverse();
+      const [cx, cy] = ms.cam2d || [ms.cam.x, ms.cam.y];
+      this.cx = cx; this.cy = cy;
+      S.translate(-cx, -cy);
+      this.k = v.decalS / TT;
+      W.setTransform(this.k, 0, 0, this.k, 0, 0);
+      this.mode = false; this.stack = [];
+      this.worldOps = 0; this.screenOps = 0;
+      return this.proxy;
+    }
+    end() {
+      this.S.restore(); this.W.restore();
+      this.stack.length = 0;
+      this.drewLast = this.worldOps > 0;
+      return this.drewLast;
+    }
+    // decal transform matching a screen-ctx transform M: W = Wbase × T(cam) × dev⁻¹ × M
+    worldFor(M) { return new DOMMatrix([this.k, 0, 0, this.k, 0, 0]).translateSelf(this.cx, this.cy).multiplySelf(this.devInv).multiplySelf(M); }
+    markScreen() { this.S.setTransform(this.dev); this.W.setTransform(this.worldFor(this.dev)); this.mode = true; }
+    isCam(x, y) {
+      if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5) return false; // a no-op translate is not a camera cancel
+      const c = this.view.ms.cam, near = (a, b) => Math.abs(a - b) <= 1.01;
+      return (near(x, c.x) && near(y, c.y)) || (near(x, this.cx) && near(y, this.cy));
+    }
+    // does the rect (in current user space) cover the whole view along one axis, starting at a screen edge?
+    coversView(x, y, w, h) {
+      if (![x, y, w, h].every(Number.isFinite)) return false;
+      const m = this.devInv.multiply(this.S.getTransform());
+      if (Math.abs(m.b) > 1e-6 || Math.abs(m.c) > 1e-6) return false;
+      let x0 = m.a * x + m.e, x1 = m.a * (x + w) + m.e, y0 = m.d * y + m.f, y1 = m.d * (y + h) + m.f;
+      if (x0 > x1) [x0, x1] = [x1, x0];
+      if (y0 > y1) [y0, y1] = [y1, y0];
+      const L = x0 <= 2, R = x1 >= G.W - 2, T = y0 <= 2, B = y1 >= G.H - 2;
+      return (L && R && (T || B)) || (T && B && (L || R));
+    }
+    wrap(k) {
+      const self = this;
+      switch (k) {
+        case 'save': return () => { self.S.save(); self.W.save(); self.stack.push(self.mode); };
+        case 'restore': return () => { self.S.restore(); self.W.restore(); if (self.stack.length) self.mode = self.stack.pop(); };
+        case 'translate': return (x, y) => { self.S.translate(x, y); self.W.translate(x, y); if (!self.mode && self.isCam(x, y)) self.mode = true; };
+        case 'setTransform': return (...a) => { self.S.setTransform(...a); self.W.setTransform(self.worldFor(self.S.getTransform())); self.mode = true; };
+        case 'resetTransform': return () => { self.S.resetTransform(); self.W.setTransform(self.worldFor(new DOMMatrix())); self.mode = true; };
+        case 'reset': return () => {}; // would wipe the whole UI canvas
+        default:
+      }
+      if (SPLIT_QUERY.has(k)) return (...a) => self.S[k](...a);
+      if (!SPLIT_DRAW.has(k)) return (...a) => { self.S[k](...a); self.W[k](...a); };
+      const rectOf = k === 'fillRect' || k === 'strokeRect' || k === 'clearRect' ? (a) => a
+        : k === 'drawImage' ? (a) => (a.length >= 9 ? a.slice(5, 9) : a.length >= 5 ? a.slice(1, 5) : [a[1], a[2], a[0] && a[0].width, a[0] && a[0].height]) : null;
+      return (...a) => {
+        let screen = self.mode;
+        if (!screen && rectOf) {
+          const r = rectOf(a);
+          if (self.coversView(r[0], r[1], r[2], r[3])) {
+            if (self.phase !== 'ground') screen = true;
+            else if ((k === 'fillRect' && typeof self.W.fillStyle === 'string') || k === 'clearRect') {
+              // ground tint: cover the whole decal
+              const W = self.W, cv = self.view.decalCanvas;
+              W.save(); W.setTransform(1, 0, 0, 1, 0, 0); W[k](0, 0, cv.width, cv.height); W.restore();
+              self.worldOps++;
+              return;
+            }
+          }
+        }
+        if (screen) { self.S[k](...a); self.screenOps++; } else { self.W[k](...a); self.worldOps++; }
+      };
+    }
+  }
+  Map3D.SplitCtx = SplitCtx;
 
   function paintWaterNormal(g, w, h) {
     // tileable ripple normal map from summed sine waves
