@@ -1414,4 +1414,9 @@ G.I18N.add({
   '走！': 'Run!',
   // 雲歸的蕈譜: 雲芝
   '雲歸的蕈譜記下了一格：雲芝': 'Yun Gui\'s mushroom log fills a space: Cloud Polypore',
+  // ---- item placement pass (docs/qa/item_placement.md): 小米酒 from Abus, the 夢藤 key item
+  '還有這個，小米酒。山上冷，輕輕抿一口就好。': 'And this—millet wine. It\'s cold up the mountain. Just a small sip.',
+  '藤婆從屋後割下一段金綠色的夢藤，放進星河手裡。': 'Granny Teng cuts a length of gold-green Dream Vine from behind the hut and puts it in Xinghe\'s hand.',
+  '入夢禮的藥引。準備好了，你自己拿來給我。自己要走的門，自己帶鑰匙。': 'The key ingredient for the dreaming rite. When you\'re ready, bring it to me yourself. A door you mean to walk through, you carry the key to yourself.',
+  '星河把夢藤交給藤婆。她把藤折成三段，丟進火邊的陶壺裡。': 'Xinghe hands the Dream Vine to Granny Teng. She snaps it into three pieces and drops them into the clay pot by the fire.',
 });

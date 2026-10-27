@@ -145,7 +145,9 @@ overrides for resizable things (houses, walls, fences), `color`, `text` (sign te
 **nature.js types:** `tree_pine, tree_banyan (big 3x3), tree_camphor, tree_maple, tree_dead,
 tree_sakura (山櫻花), tree_cypress (giant 紅檜 2x2), tree_betel (檳榔 palm), tree_banana, tree_fern
 (筆筒樹 tree fern), pandanus (林投), bamboo (dense clump), bush, flowers, tallgrass, reeds, lotus (on
-water, non-solid? solid), rock_small, rock_big (2x2), mushroom_glow (cluster, glowing, anim), mushroom_giant
+water, non-solid? solid), rock_small, rock_big (2x2), mushroom_glow (cluster, glowing, anim), mushroom_harvest
+(pickable mushroom_glow: golden sparkle while ready, dim buds when o.picked — bool or fn(o), read with
+G.Objects.flag(o, 'picked'); 3D twin in js/r3d/nature.js), mushroom_giant
 (2x2 glowing giant mushroom, lights), crystal (glowing), lily (彼岸花 cluster, non-solid), vine_curtain,
 stump, log, cliff_waterfall (2x3 animated), geometry_pillar (psychedelic, anim), jewel_flower (一息界, anim)`.
 

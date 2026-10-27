@@ -1242,6 +1242,8 @@
       { t: 'boat_small', x: 7, y: 20 },
       { t: 'wang_boat', x: 16, y: 24, water: true },
       { t: 'driftwood', x: 24, y: 17 }, { t: 'seaweed', x: 26, y: 19 }, { t: 'seaweed', x: 12, y: 20 },
+      // 潮音笛 (白芷's, ch10 tier): the Kuroshio washed it up on the west end of the beach — kept for her return
+      H.crate('shore_w', 0, 22, [['fl_chaoyin', 1]], { line: '灘頭西端，一個被黑潮推上岸的木箱。箱縫裡傳出細細的、像潮聲一樣的笛音。' }),
     ];
     for (let x = ORC.LINE_X0; x <= ORC.LINE_X1; x += 2) objs.push({ t: 'rock_small', x, y: ORC.LINE_Y, interact: ['低矮的界石，一顆一顆排成一線。', '界石以北，是達悟人的家。'] });
     const isNight = (st) => st.vars.c10_orchid_time === 'night';
@@ -1567,6 +1569,8 @@
       { t: 'driftwood', x: 6, y: 24, tag: 'oar2', label: '撿起', if: (st) => !st.flags.c10_oar2,
         interact: async (S) => { S.flag('c10_oar2'); H.removeObj('oar2'); await S.give('c10_oar', 1); await S.say('hongying:normal', '又一支。應該是 Syaman 的。'); } },
       H.crate('reef', 29, 12, [['c10_seasalt', 2], ['huanhunxiang', 1]], { line: '被沖上礁盤的漂流木箱。不是這座島的東西。' }),
+      // 黑潮鱗甲 (ch10 tier armour) in the west pocket of the flats, past the second crab
+      H.crate('reef_w', 7, 22, [['ar_heichao', 1]], { line: '卡在礁縫裡的漂流木箱，裡面疊著一件用大魚鱗片綴成的甲。' }),
     ];
     G.Maps.define('orchid_reef', {
       name: '蘭嶼・礁盤', subtitle: '低潮時露出的珊瑚礁', place: 'orchid', bgm: 'orchid',
@@ -1906,6 +1910,7 @@
       light: { ambient: 0.05, color: '#203048' },
       particles: ['wind', 'leaves'],
       tiles: g.rows(), objects: clean2,
+      chests: [{ id: 'baosangA', x: 0, y: 0, item: 'shijia', n: 3 }], // NW corner of the north field: 台東's 釋迦
       npcs: [
         { id: 'bs_runner', sprite: 'puyuma_m', name: '巴拉冠青年', x: 30, y: 16, dir: 'left', talk: (S) => H.runnerTalk(S) },
         { id: 'bs_runner2', sprite: 'c10_puyuma_boy', name: '巴拉冠青年', x: 29, y: 10, dir: 'down', wander: 2, talk: ['我是這一級最慢的。……可是我耐跑！跑到最後的一定是我！'] },
@@ -2461,6 +2466,7 @@
       light: { ambient: 0.42, color: '#1a1430', tint: 'rgba(255,150,90,0.12)', playerR: 180 },
       particles: ['lanterns', 'wind'],
       tiles: g.rows(), objects: clean,
+      chests: [{ id: 'huilanA', x: 30, y: 5, item: 'fn_huanglong' }], // beside the 福德廟 (ch10 tier fan, under the 頭城 shop's)
       npcs: [
         { id: 'hl_shop', sprite: 'shopkeeper_f', name: '阿和嫂', x: 13, y: 7, dir: 'down', talk: async (S) => {
           const lines = ['洄瀾，就是水在這裡打轉的意思。溪水出海，海水又推回來，轉啊轉。', '七月初一開鬼門，我們豎燈篙。燈越高，好兄弟越看得到這裡有普渡。'];

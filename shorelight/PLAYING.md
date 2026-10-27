@@ -40,6 +40,36 @@ Windows、Linux 或 Mac 皆可：用 Google Chrome（或 Edge、Brave）開啟�
 | 快進對話 | 按住 Ctrl 或 ⌘ | — |
 | 全螢幕 | ⌘F（Mac）/ F11 / Alt+Enter，或 設定 → 全螢幕 | — |
 
+### 自動戰鬥（F）
+
+戰鬥中按 **F**（手把 Back / Select）切換自動戰鬥，畫面左下會顯示「自動戰鬥中（F 關閉）」；再按一次 F 就回到手動。開著的話，之後的戰鬥也會自動進行。
+
+自動戰鬥像一位細心的玩家：
+
+- 有人倒下先**復活**（復活仙術，沒人會時用復活道具）；**白芷**負責補血（她不在時由雲歸、星河接手），有人快撐不住而補血來不及時，任何人都會用**回復道具**；治療者真氣不夠時喝真氣道具（頭目戰）；同伴被定身、睡著或治療者被封印時會解除。
+- 看到敵人**蓄力**、頭上冒「！」，或畫面提示「伏低」「防禦」「穩住」時會**防禦**；提示點名某人（例如海蛇「牠朝星河游過去了！」）時，只有那個人防禦。
+- 照著**畫面提示**行動：提示要用的招式（「渡魂謠」「千燈」）、林投姐訴說時靜靜聽、冥燈護法的燈印用護燈訣或防禦、先打清虛背上的冥燈印、餵孤魂眾……
+- 頭目戰開場先上一定生效的增減益（迷魂扇、天罡破法、蓄勢、月霧護身曲、甘霖），劍意滿了放絕技，合擊划算時用合擊；其餘時候選期望傷害最高的招式（五行相剋、弱點與抗性、命中、暴擊、全體招式），真氣花在值得的地方。
+- **一般戰鬥會省著打**：劍意絕技留給頭目（除非隊伍陷入危機）、真氣用得比較省，道具只在緊急時用便宜的。不會逃跑。
+
+**設定 → 自動戰鬥：保守／標準／積極**
+
+| 風格 | 補血時機（單體／全體） | 回復道具 | 預告大招時防禦 | 真氣 |
+|---|---|---|---|---|
+| 保守 | 低於 55%／兩人低於 65% | 有人低於 40% | 氣血 95% 以下的人都防禦 | 省；治療者保留 40% |
+| **標準**（預設） | 低於 45%／兩人低於 60% | 有人低於 32% | 氣血 80% 以下的人與治療者 | 適中；治療者保留 30% |
+| 積極 | 低於 35%／兩人低於 50% | 有人低於 25% | 只有氣血一半以下的人 | 大方；治療者保留 20%；一般戰鬥也放絕技 |
+
+保守最穩、打得最久；積極最快，但比較容易有人倒下。
+
+**設定 → 自動戰鬥・使用道具：開（預設）／關**
+
+- **開**：只用回復類道具——氣血、真氣、復活、解除異常。**從不**使用關鍵道具、沒有售價的稀有道具（劇情中別人送的禮物，如小米酒、阿里鳳鳳、媽祖餅），也不丟攻擊道具（鞭炮、符）。唯一例外是孤魂眾一戰的「普渡供品」，畫面提示要餵時才用。
+- **頭目戰**：可以用包包裡的回復品（挑剛好夠用的那一個）。**一般戰鬥**：只在有人快倒下、又沒有人能用仙術補血時，用**便宜**的道具（售價不超過 40＋30×章節，例如第一章 70 文、第六章 220 文、第十章 340 文）；不喝真氣道具；復活道具只在只剩一人時才用。
+- **關**：完全不用道具（復活、補血都只靠仙術）。
+
+在「普通」難度、照劇情的等級與商店裝備、帶著一般的回復與復活道具時，標準設定的自動戰鬥大多能第一次就打贏頭目（模擬約 8～10 成）；關掉「使用道具」會明顯變難。重要的頭目戰還是親自指揮最保險。
+
 ### 語言（中文 / English）
 
 - 標題畫面選單中有 **English / 繁體中文** 選項，可隨時切換。
@@ -121,6 +151,36 @@ On Windows, Linux or macOS: open **`index.html`** from the folder in Google Chro
 | Dialogue log | L | — |
 | Fast-forward text | Hold Ctrl or ⌘ | — |
 | Full screen | ⌘F (Mac) / F11 / Alt+Enter, or Settings → Full screen | — |
+
+### Auto-battle (F)
+
+Press **F** in battle (gamepad Back / Select) to toggle auto-battle; the bottom left of the screen shows "Auto-battle (F to stop)". Press F again to take control back. While it is on, later battles are fought automatically too.
+
+Auto-battle plays like a careful player:
+
+- **Revives** a fallen member first (a revive skill, or a revive item when nobody can cast one). **Baizhi** is the healer (Yungui, then Xinghe when she is not there); when someone is about to fall and the healer cannot act in time, anyone uses a **healing item**. The healer drinks an MP item when she runs dry (boss fights), and stunned or sleeping allies — or a sealed healer — are cured.
+- **Guards** when a big attack is telegraphed: an enemy winding up, a 「！」 over its head, or an on-screen warning to get down / guard / brace. If the warning names someone (the Tide-Sick Serpent "is swimming toward Xinghe!"), only that member guards.
+- **Follows the battle's on-screen hints**: the skill a hint names (Song of Crossing, A Thousand Lanterns), listening to Sister Lintou's lament, covering the Nether Lamp Warden's lamp mark with Lantern Ward or a guard, breaking the seal on Master Qingxu's back first, feeding the Forsaken Throng …
+- In boss fights it opens with the buffs and debuffs that always land, uses ultimates when the Will gauge is full and combos when they pay off; otherwise it picks the move with the best expected damage (the five-element cycle, weaknesses and resistances, hit and crit, area attacks) and spends MP where it is worth it.
+- **Ordinary fights are fought frugally**: ultimates are saved for bosses (unless the party is in trouble), MP is spent more carefully, and only cheap items are used, only in an emergency. It never flees.
+
+**Settings → Auto-battle: Cautious / Standard / Aggressive**
+
+| Style | Heals at (one / group) | Healing items | Guards against a telegraphed blow | MP |
+|---|---|---|---|---|
+| Cautious | below 55% / two below 65% | someone below 40% | everyone below 95% HP | thrifty; the healer keeps 40% |
+| **Standard** (default) | below 45% / two below 60% | someone below 32% | members below 80% HP and the healer | moderate; the healer keeps 30% |
+| Aggressive | below 35% / two below 50% | someone below 25% | only members below half HP | generous; the healer keeps 20%; ultimates in ordinary fights too |
+
+Cautious is the safest and slowest; Aggressive is the fastest but members fall more often.
+
+**Settings → Auto-battle: Use Items — ON (default) / OFF**
+
+- **ON**: restoratives only — HP, MP, revive and status cures. It **never** uses key items, rare items that have no shop price (story gifts such as Millet Wine, Alivongvong or Mazu Cakes), or attack items (firecrackers, talismans). The one exception is the Pudu Offerings of the Forsaken Throng fight, used when the on-screen hint says to feed them.
+- **Boss fights**: any restorative in the bag (the smallest one that does the job). **Ordinary fights**: only when someone is about to fall and nobody can heal with a skill, and only **cheap** items (price at most 40 + 30 × chapter: 70 in chapter 1, 220 in chapter 6, 340 in chapter 10); no MP items; a revive item only when one member is left standing.
+- **OFF**: no items at all (healing and revives come from skills only).
+
+On Normal difficulty, at the level and shop gear the story gives you and with the usual healing and revive items, Standard auto-battle wins most boss fights on the first try (about 80–100 % in simulation); turning items off makes them clearly harder. For the big story bosses, taking the controls yourself is still the safest choice.
 
 ### Language (中文 / English)
 

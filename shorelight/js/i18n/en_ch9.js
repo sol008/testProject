@@ -1238,4 +1238,9 @@ G.I18N.add({
   '那就再闔起來。……貧道要睡了。': 'Then it closes again. …This humble priest is going to sleep.',
   '雲歸靠著珊瑚礁打起了呼。芋圓伸出前腳碰了碰一朵蕈，看它闔起來，又碰了一次。': 'Yun Gui leans against the coral and starts to snore. Yuyuan reaches out a paw, touches a mushroom, watches it close—and touches it again.',
   '雲歸的蕈譜記下了一格：潮汐蕈': 'Yun Gui\'s mushroom log fills a space: Tide Mushroom',
+  // ---- item placement pass (docs/qa/item_placement.md): 海龍伯's 鯨骨劍
+  '昨晚海邊那些藍火，是你們送走的吧？阿蕊都跟我講了。': 'Those blue fires on the beach last night—you\'re the ones who sent them off, eh? Rui told me everything.',
+  '我少年時，旗後海邊擱淺過一隻大鯨。全庄的人顧了牠三天三夜，牠還是走了。': 'When I was a boy, a great whale beached itself here at Qihou. The whole village sat with it three days and three nights, and still it passed.',
+  '牠留下來的骨頭，我嵌了鋼，打成一支劍。泡了幾十年海水，一點鏽都沒有。': 'I set steel into the bone it left behind and forged a sword. Decades in seawater, and not a speck of rust.',
+  '我老了，拿不動了。海上的事，交給拿得動的人。': 'I\'m old—I can\'t lift it anymore. What happens at sea belongs to those who still can.',
 });

@@ -756,12 +756,12 @@ G.Mapx = G.Mapx || {};
       // lighting
       const lc = this.lightCfg;
       if (lc && (lc.ambient > 0 || lc.tint)) G.FX.lighting(ctx, this, camX, camY, t);
-      this.drawHints(ctx, t, (e) => ({ x: (e.x + (e.w || 1) / 2) * T - camX, y: e.y * T - camY - 6 }));
       this.particles.drawScreen(ctx);
       // psychedelic overlay
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy);
       if (val(this.def.vignette) !== false) G.FX.vignette(ctx, lc && lc.ambient > 0.3 ? 0.55 : 0.32);
+      this.drawHints(ctx, t, (e) => ({ x: (e.x + (e.w || 1) / 2) * T - camX, y: e.y * T - camY - 6 }));
       this.drawScreenHooks(ctx, t);
       this.drawHud(ctx, t);
     }
@@ -800,11 +800,11 @@ G.Mapx = G.Mapx || {};
         else { const [fx, fy] = this.frontCell(); s = v.toScreen(fx + 0.5, 1.2, fy + 0.5); }
         this.drawPrompt(ctx, it, t, s);
       }
-      this.drawHints(ctx, t, (e) => v.toScreen(e.x + (e.w || 1) / 2, 1.15, e.y + (e.h || 1) / 2));
       this.particles.drawScreen(ctx);
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy * 0.55);
       v.drawHookLayer(ctx); // screen-space output of drawGround/drawOver (see Map3D SplitCtx)
+      this.drawHints(ctx, t, (e) => v.toScreen(e.x + (e.w || 1) / 2, 1.15, e.y + (e.h || 1) / 2));
       this.drawScreenHooks(ctx, t);
       this.drawHud(ctx, t);
     }
@@ -905,7 +905,7 @@ G.Mapx = G.Mapx || {};
       ctx.restore();
     }
 
-    // Floating hint tags (screen space, above the lighting): an action event with `hint` (true, or fn(state) → bool)
+    // Floating hint tags (screen space, over the lighting and screen fx): an action event with `hint` (true, or fn(state) → bool)
     // shows a small tag with its label while the player is within e.hintR tiles (default 4) — for the few usable
     // spots among look-alike decor (ch2 grove 採集 mushrooms). Hidden during scripts and while the Z prompt is on it.
     // at(e) → {x, y, visible?}: screen point just above the event's cells.

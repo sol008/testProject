@@ -1263,4 +1263,7 @@ G.I18N.add({
 // point-of-no-return hint (docs/qa/points_of_no_return.md)
 G.I18N.add({
   '（小聲）……在別人的家裡，規矩是大家一起守的。他們都看著呢。': '(Quietly) …In someone else\'s home, everyone keeps the rules together. They\'re watching.',
+  // ---- item placement pass (docs/qa/item_placement.md): driftwood crates
+  '灘頭西端，一個被黑潮推上岸的木箱。箱縫裡傳出細細的、像潮聲一樣的笛音。': 'At the west end of the beach, a crate the Kuroshio pushed ashore. A thin flute note, like the sound of the tide, seeps through its seams.',
+  '卡在礁縫裡的漂流木箱，裡面疊著一件用大魚鱗片綴成的甲。': 'A driftwood crate wedged in a crack in the reef. Folded inside is armor stitched from the scales of a great fish.',
 });

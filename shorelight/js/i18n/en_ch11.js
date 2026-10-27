@@ -1233,4 +1233,13 @@ G.I18N.add({
   '前方的海平線，出現一道紅色的岸。岸的盡頭，一座白色的巨塔，頂端的光虛弱地明滅。': 'On the horizon ahead appears a red shore. At its far end stands a great white tower, the light at its top flickering weakly.',
   '……彼岸。': '…The Far Shore.',
   '阿木': 'Mu',  // 阿木伯's water lantern label (bare 木 would read as the Wood element)
+  // ---- item placement pass (docs/qa/item_placement.md): 唐山客的家書, 陳伯's heart-lantern gift, 萬象遊戲 rematches
+  '破船的船腹裡，一個用油紙包了好幾層的信封。信封上的字，寫著海峽對岸的一個地址。': 'In the belly of the wreck, an envelope wrapped in layer after layer of oilpaper. On it is written an address on the far side of the strait.',
+  '……臭小子，你回頭看。': '…Brat. Look behind you.',
+  '花原上，一盞、兩盞……一路上點過的心燈，從星河的胸口飄了出來，繞著渡口的槳轉了一圈。': 'Across the fields, one, then two… every heart lantern lit along the way drifts out of Xinghe\'s chest and circles once around the oar at the landing.',
+  '這些燈，都記得你。它們託我把這個交給你。': 'These lights all remember you. They asked me to give you this.',
+  '燈火落在陳伯的手心，織成一件輕得像沒有重量的衣裳，和一盞小小的蓮花燈。': 'The lights settle into Uncle Chen\'s palm and weave themselves into a robe that seems to weigh nothing, and a tiny lotus lamp.',
+  '再玩一次？贏了的話，給你們別的故事裡的東西！': 'Play again? If you win, we\'ll give you something from another story!',
+  '好，再來！': 'Okay, again!',
+  '這次給你們別的故事裡的東西！在那個故事裡，你們也走到這裡了喔！': 'This time you get something from another story! In that story, you made it here too!',
 });

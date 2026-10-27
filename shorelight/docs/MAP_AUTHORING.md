@@ -96,6 +96,10 @@ Party ~10+ levels above `lv` → enemy ignores the player.
 - `auto` runs as soon as the map is idle and `if` is true. Always guard with a flag (or `once`) to avoid loops.
 - `touch` fires when the player steps on any cell in the rect. `action` fires when facing the rect + Z.
 - `once: true` auto-sets an internal flag. `spirit: true` → only with 靈視.
+- `hint: true` (or `st => bool`) on an `action` event shows a small floating tag with its `label` while the player
+  is within `hintR` tiles (default 4) — for the one usable spot among look-alike decor (ch2 grove 採集 clumps,
+  ch7 雲芝). Pair it with an object that looks the part, e.g. `{ t: 'mushroom_harvest', x, y, picked: () => bool }`
+  (sparkles while ready, a dim mound of buds once `picked` — a bool or a live getter).
 
 ### Warps
 ```js

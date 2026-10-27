@@ -1271,6 +1271,9 @@
       { id: 'c11_04', x: 7, y: 12, gold: 1000, item: 'lingxun', n: 2 },
       { id: 'c11_05', x: 44, y: 23, item: 'c11_ac_fisher', n: 1 },
       { id: 'c11_06', x: 43, y: 31, item: 'huanhundan', n: 1 },
+      { id: 'c11_18', x: 39, y: 29, item: 'key_homeletter', n: 1, run: async (S) => { // beside the holed wreck
+        await S.say('', '破船的船腹裡，一個用油紙包了好幾層的信封。信封上的字，寫著海峽對岸的一個地址。');
+      } },
     ],
     npcs: [
       { id: 'fl_ghost_fisher', sprite: 'ghost_m', name: '迷路的漁夫魂', x: 24, y: 14, dir: 'down', ghost: true, if: (st) => !st.flags.ch11_fisher_gone, talk: (S) => H.ghostFisher(S) },
@@ -1691,6 +1694,7 @@
       { id: 'c11_14', x: 6, y: 14, item: 'c11_higan_tea', n: 3 },
       { id: 'c11_15', x: 11, y: 30, item: 'huanhundan', n: 2 },
       { id: 'c11_16', x: 43, y: 30, item: 'c11_lamp_oil', n: 3 },
+      { id: 'c11_17', x: 55, y: 3, item: 'hd_xingguan', n: 1 }, // the far NE corner of the field, under the open sky
     ],
     lights: (st) => [{ x: 27, y: 1, r: 260, color: dawnShore(st) ? '#fff4dc' : '#ffe0b0', flicker: dawnShore(st) ? 0.05 : 0.6 }, { x: 30, y: 12, r: 120, color: '#ffe6b0', flicker: 0.15 }],
     npcs: [
@@ -1837,6 +1841,7 @@
     drawGround: (ctx, t, ms) => H.p3Draw(ctx, t, ms) });
   // 4F 火之層
   tower(4, { name: '燈塔四樓・火之層', up: 'farshore_tower_5', echo: (S) => H.c11_21(S),
+    chests: [{ id: 'c11_t4', x: 4, y: 7, item: 'ft_bulian', n: 1, if: (st) => !!st.flags.ch11_tower_4 }], // after the echo
     enemies: [{ id: 't4a', troop: 'tower_3', x: 16, y: 14, art: 'inner_demon', variant: 1, lv: 43, radius: 2 }] });
   // 5F 燈之層 + 她的記憶 + 千年燈塔守
   const MEM = [
@@ -3518,6 +3523,18 @@
 
   // ---------------------------------------------------------------- 彼岸花原 NPCs & 11-17
   H.chenboShore = async (S) => {
+    // 心燈 reward: with as many 心燈 as the true ending needs, the lights the party lit come back as 燈火羽衣 + 蓮花燈墜
+    if (G.Lanterns.count() >= G.Lanterns.THRESHOLD && !F('ch11_lantern_gift')) {
+      S.flag('ch11_lantern_gift');
+      await L(S, [
+        ['chenbo:think', '……臭小子，你回頭看。'],
+        ['', '花原上，一盞、兩盞……一路上點過的心燈，從星河的胸口飄了出來，繞著渡口的槳轉了一圈。'],
+        ['chenbo:smile', '這些燈，都記得你。它們託我把這個交給你。'],
+        ['', '燈火落在陳伯的手心，織成一件輕得像沒有重量的衣裳，和一盞小小的蓮花燈。'],
+      ]);
+      await S.give('ar_dengyi', 1); // 取得：第十一章・彼岸花原 陳伯（心燈達真結局門檻 14 盞）
+      await S.give('ac_lianhua', 1); // 取得：第十一章・彼岸花原 陳伯（心燈達真結局門檻 14 盞）
+    }
     if (G.Inv.has('c11_ac_old_tassel') && !F('ch11_tassel')) {
       S.flag('ch11_tassel');
       return L(S, [['chenbo:surprise', '……這是我的。二十年前，掉進海裡的。'], ['chenbo:smile', '你留著吧。槳穗，是讓槳不要忘記回家的路。']]);
@@ -4206,6 +4223,12 @@
   H.tongziTalk = async (S, i) => {
     if (!F('ch11_tongzi_met')) return tz(S, '嘻嘻！');
     if (i === 1 && !F('ch11_tongzi_game')) return H.tongziAsk(S);
+    if (i === 1 && tzWins() < TZ_ROUNDS) {
+      await tz(S, '再玩一次？贏了的話，給你們別的故事裡的東西！');
+      const c = await S.choice(['好，再來！', '下次吧。'], { cancel: 1 });
+      if (c === 0) await H.tongziGame(S);
+      return;
+    }
     const say = [['紅色的花最想要光！'], ['你們好會玩！再玩一次？下次就是剛剛！'], ['燈芯呀燈芯，北邊！北邊！']][i];
     return tz(S, say[0]);
   };
@@ -4255,13 +4278,30 @@
       },
     };
   }
+  // prizes per win: the first is 萬象鈴 + 無名之色; two rematches (offered by the middle child) hand over "things from
+  // other stories" — the heroes' weapons as another telling of this night might have made them (optional, ch11 tier)
+  const TZ_ROUNDS = 3;
+  const tzWins = () => V().ch11_tz_wins || (F('ch11_tongzi_game') ? 1 : 0);
   H.tongziGame = async (S) => {
     const r = await S.battle('t11_tongzi', tongziHooks());
     if (r === 'win') {
       await S.say('', '童子們笑得在地上打滾，變成一陣彩色的紙屑。');
       await tz(S, '你們贏了！你們好會玩！');
-      await tz(S, '給你們這個！它不值錢，所以它很珍貴！');
-      if (!F('ch11_tongzi_game')) { await S.give('c11_ac_wanxiang_bell', 1); await S.give('c11_mat_nameless', 1); }
+      const n = tzWins();
+      if (n === 0) {
+        await tz(S, '給你們這個！它不值錢，所以它很珍貴！');
+        await S.give('c11_ac_wanxiang_bell', 1); await S.give('c11_mat_nameless', 1);
+      } else if (n < TZ_ROUNDS) {
+        await tz(S, '這次給你們別的故事裡的東西！在那個故事裡，你們也走到這裡了喔！');
+        if (n === 1) {
+          await S.give('sp_qingfeng', 1); // 取得：第十一章・一息界 萬象遊戲（第二次獲勝）
+          await S.give('fn_wanfa', 1); // 取得：第十一章・一息界 萬象遊戲（第二次獲勝）
+        } else {
+          await S.give('sw_dengxin', 1); // 取得：第十一章・一息界 萬象遊戲（第三次獲勝）
+          await S.give('fl_shorelight', 1); // 取得：第十一章・一息界 萬象遊戲（第三次獲勝）
+        }
+      }
+      V().ch11_tz_wins = n + 1;
       S.flag('ch11_tongzi_game');
     } else if (r === 'lose') {
       G.Party.healAll();
