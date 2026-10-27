@@ -10,6 +10,21 @@ const path = require('path');
   const errs = [];
   p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 300)); });
   p.on('pageerror', (e) => errs.push('PAGEERR ' + e.message));
+  // per-shot instance params (w, h, door, text, lit, still, blue …): "id:o.w=6&o.door=-1"
+  await p.addInitScript(() => {
+    let g;
+    Object.defineProperty(window, 'G', { configurable: true, get: () => g, set(v) {
+      g = v; let M;
+      Object.defineProperty(v, 'Models', { configurable: true, get: () => M, set(m) {
+        M = m; const create = m.create;
+        m.create = function (id, o) {
+          const q = new URLSearchParams(location.search), extra = {};
+          for (const [k, val] of q) if (k.startsWith('o.')) extra[k.slice(2)] = val === 'false' ? false : val === 'true' ? true : isNaN(+val) ? val : +val;
+          return create.call(this, id, Object.assign({}, o, extra));
+        };
+      } });
+    } });
+  });
   const shots = [];
   for (const spec of ids.split(',')) {
     const [id, extra = ''] = spec.split(':');
