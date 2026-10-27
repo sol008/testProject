@@ -6,7 +6,37 @@ The 3D view reads the scene every frame and presents it. With 3D off, the origin
 
 Screenshots are in `docs/r3d_reports/battle/`. They are half resolution (`?r3lite`, no post chain) unless the name ends in `_full`.
 
-<!-- RESULTS -->
+## Results (after merging `claude/magical-davinci-kp4fhq`, which includes the balance pass)
+| check | result |
+|---|---|
+| `tools/test/validate.js` | 0 errors (15 warnings, unrelated) |
+| `tools/test/unit.js` | 60 / 60 pass |
+| `tools/r3d/battle/hooks.test.js` (vm contract test of every `view3d` hook) | OK: 4 battles won; every hook fired; constructor count == dispose count |
+| 3D auto-battle sweep (`sweep.js`, one troop per backdrop, r3lite) | 38 / 39 troop-backed backdrops won (the open one is `breath`, below), **0 console errors** across all runs |
+| e2e `--quick` (2D path) | the battle sweep passed (shore_5, forest_4, boss_tiger, mine_5 won). The run hit its time limit during the map sweep. 4 maps soft-lock in scripted events (mist_loop, mist_grove, taixu, citygod_vision). I re-ran mist_loop and citygod_vision on the base commit without the battle work, and they fail the same way there; mist_grove and taixu were not re-run on the base. None of these events involves a battle. |
+| cinematic tour (`tour.js boss_tiger`, r3lite) | every step captured: intro, command, target, melee, spell, ultimate cut-in, finisher, victory, ink (below) |
+
+**How the sweep was run.** Under SwiftShader at 1–5 fps, a battle runs about 16× slower than real time, so the sweep ran in three passes:
+1. A plain pass, then a resume with `--skip`: 29 wins between them. Three boss fights (hengchun, orchid, taroko) went past the 15-minute budget.
+2. A pass with `--fragile` (enemies start at 15% HP) over the rest: 9 wins, including those three bosses, plus `breath`, which is still open (below).
+
+A probe of hengchun showed the battle steadily progressing (turns, heals, revives, a cut-in) with no stall and no errors. It is just long.
+
+**Open items:**
+- **`boss_wuxiang` (final boss, `breath`).** It did not finish within 15 minutes even with `--fragile`, and produced no console errors. I was stopped before the probe finished, so the cause is still open: a long fight, or something that blocks the result in 3D. This needs a check on real hardware.
+- **Full-chain tour (`--full`).** The run happened while the sweep was using the single SwiftShader GPU process, and every screenshot timed out (0 console errors). It still needs a run on its own or on a real GPU.
+
+**Fixes from this round:** the windcave mouth is now a soft glow instead of a hard white disc, the billboard hit flash is capped so the art stays readable, and the tour's enemy-turn step now gets through manual mode.
+
+![sweep](battle/sweep_sheet.jpg)
+
+| | |
+|---|---|
+| ![](battle/tour_02_establish.jpg) establishing | ![](battle/tour_03_command.jpg) command |
+| ![](battle/tour_05_runup.jpg) melee run-up | ![](battle/tour_07_impact.jpg) melee impact |
+| ![](battle/tour_12_spell_impact.jpg) spell impact | ![](battle/tour_14_cutin.jpg) 劍意 cut-in |
+| ![](battle/tour_16_ult_impact.jpg) ultimate impact | ![](battle/tour_18_finisher.jpg) finisher slow-mo |
+| ![](battle/tour_19_victory.jpg) victory | ![](battle/tour_20_ink.jpg) ink outro |
 
 ## Architecture
 
