@@ -100,6 +100,13 @@ async function fightEnemy(id) {
   await idle();
   return ok;
 }
+// the gear a player buys in 竹塹 (打鐵舖 / 藍衫裁縫) — the test skips the shops, so equip it directly
+async function equipCh4() {
+  await ev(() => {
+    const W = { xinghe: 'sw_jiujiang', baizhi: 'fl_shange', hongying: 'sp_zhujie', yungui: 'fn_zhugu' };
+    for (const id in W) Object.assign(G.state.members[id].equip, { weapon: W[id], armor: 'ar_hakka', head: 'hd_huabu', feet: 'ft_muji' });
+  });
+}
 async function levelTo(lv) { await ev((lv) => { for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) G.Story.ensureLevel(id, lv); }, lv); }
 async function shot(name) {
   if (!SHOTS) return;
@@ -170,6 +177,7 @@ async function mainPath(browser) {
   check('米粉湯 ×2', (await count('mifentang')) >= 2);
   check('q_ch4_main stage 0', (await ev(() => G.Quests.stage('q_ch4_main'))) === 0);
   check('visited 竹塹 on the world map', await ev(() => G.World.visited('hsinchu')));
+  await equipCh4();
   await shot('01_coast');
   // the road north is closed
   await stepOn(13, 1);
@@ -431,6 +439,7 @@ async function sides(browser) {
   await page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'zhuqian_coast' && G.state.flags.ch4_start, null, { timeout: 90000 });
   await idle();
   await levelTo(15);
+  await equipCh4();
   await ev(() => { const f = G.state.flags; f.ch4_enter_city = f.ch4_citygod_visit = f.ch4_jiaobei_done = f.ch4_citygod_vision = true; G.Inv.add('key_ledger', 1); });
 
   // ---- S2 九降風裡的阿母 (part 1: three battles in a row at night)

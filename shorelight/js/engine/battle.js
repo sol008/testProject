@@ -865,7 +865,7 @@ G.Battle = (() => {
       if (this.o.bgmAfter === null) G.Music.stop(0.6);
       else if (this.o.bgmAfter !== undefined) G.Music.play(this.o.bgmAfter);
       else if (this.prevBgm && this.prevBgm !== 'victory') G.Music.play(this.prevBgm, { fade: 0.6 });
-      else if (G.mapScene) G.Music.play(G.Mapx.val(G.mapScene.def.bgm));
+      else if (G.mapScene) { const b = G.Mapx.val(G.mapScene.def.bgm); if (b) G.Music.play(b); else G.Music.stop(0.6); }
       await G.Render.fadeTo(0, 0.45);
       this.resolve(r);
     }

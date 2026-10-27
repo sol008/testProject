@@ -467,6 +467,8 @@ async function partA(browser, from) {
   for (let i = i0; i < SEGMENTS.length; i++) {
     console.log(`  -- segment ${SEGMENTS[i]}`);
     const t0 = Date.now();
+    // the run skips random encounters: catch up to the level a segment run starts at
+    if (i > i0) await ev((lv) => { for (const m of G.Party.active()) while (m.lv < lv) G.Party.addExpTo(m, G.Party.expToNext(m.lv), []); }, SEG_START[SEGMENTS[i]].lv);
     await ({ start: seg_start, banping: seg_banping, donggang: seg_donggang, yard: seg_yard, hengchun: seg_hengchun, eluanbi: seg_eluanbi, end: seg_end })[SEGMENTS[i]]();
     console.log(`  -- segment ${SEGMENTS[i]} took ${((Date.now() - t0) / 1000).toFixed(0)} s`);
   }

@@ -108,7 +108,7 @@
     c9_es_belly: { name: '山腹', desc: '肚子裡的半座山壓了下來。', mp: 0, type: 'phys', elem: 'earth', target: 'enemies', power: 1.0, fx: 'earth_big', sfx: 'earth' },
     c9_es_gorge: { name: '狼吞虎嚥', desc: '', mp: 0, type: 'heal', elem: null, target: 'self', power: 1.0, fx: 'heal', sfx: 'hit' },
     c9_es_plague_breath: { name: '瘟息', desc: '綠火從咳嗽的嘴裡噴了出來。', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 0.95, status: { id: 'poison', chance: 0.6, turns: 3 }, fx: 'poison', sfx: 'poison' },
-    c9_es_fever_touch: { name: '高燒之手', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemy', power: 1.55, status: { id: 'magDown', chance: 0.5, turns: 3 }, fx: 'dark', sfx: 'dark' },
+    c9_es_fever_touch: { name: '高燒之手', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemy', power: 1.35, status: { id: 'magDown', chance: 0.5, turns: 3 }, fx: 'dark', sfx: 'dark' },
     c9_es_summon_plague: { name: '咳出瘟鬼', desc: '一陣劇咳，又一隻瘟鬼滾了出來。', mp: 0, type: 'special', elem: null, target: 'self', power: 0, summon: ['plague_ghost_v1'], fx: 'summon', sfx: 'ghost' },
     c9_es_fever_fire: { name: '疫火', desc: '', mp: 0, type: 'mag', elem: 'fire', target: 'enemy', power: 1.2, status: { id: 'poison', chance: 0.3, turns: 3 }, fx: 'fire', sfx: 'fire' },
     c9_es_cough: { name: '群咳', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, buffs: [{ stat: 'atk', amt: -0.3, turns: 2 }], fx: 'debuff', sfx: 'debuff' },
@@ -173,7 +173,7 @@
   });
   defE('c9_plague_chief', {
     name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 31, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 8.5, atk: 1.85, mag: 2.0, def: 1.15, spd: 1.15, exp: 7, gold: 6 },
+    m: { hp: 8, atk: 1.8, mag: 1.75, def: 1.1, spd: 1.1, exp: 7, gold: 6 },
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
     drops: [['c9_baicaogao', 1]],
     desc: '數十隻瘟鬼疊成的駝背身影。咳嗽聲像一整個村子在咳。',
@@ -486,7 +486,7 @@
     return async (sc) => {
       const chief = sc.enemies.find((e) => e.id === 'c9_plague_chief');
       if (!chief) return;
-      let p2 = false, critNext = false, noBreath = 0;
+      let p2 = false, critNext = false, noBreath = 0, summons = 0;
       const smalls = () => sc.enemies.filter((e) => !e.dead && e !== chief);
       const dmg = sc.damage.bind(sc);
       sc.damage = (tg, d, o = {}) => {
@@ -503,7 +503,8 @@
         if (e === chief) {
           const tgt = () => [U.pick(sc.alive('party'))];
           if (cmd.skill === 'c9_es_plague_breath' && noBreath > 0) cmd = { kind: 'skill', skill: 'c9_es_fever_touch', targets: tgt() };
-          else if (cmd.skill === 'c9_es_summon_plague' && smalls().length >= 2) cmd = { kind: 'skill', skill: 'c9_es_fever_touch', targets: tgt() };
+          else if (cmd.skill === 'c9_es_summon_plague' && (smalls().length >= 2 || summons >= 2)) cmd = { kind: 'skill', skill: 'c9_es_fever_touch', targets: tgt() };
+          if (cmd.skill === 'c9_es_summon_plague') summons++;
           if (noBreath > 0) noBreath--;
         }
         return cmd;
