@@ -1473,6 +1473,443 @@
     update(node, o, t) { tick(t); },
   });
 
+  // =================================================================================================
+  // guardians, flags, tombs, fire
+  // =================================================================================================
+  // scaled sphere ("blob") — the sculpting primitive for carved figures
+  const blob = (g, mat, p, s, c, o = {}) => mk(g, G3.sphere(1, o.ws || 8, o.hs || 5), mat, Object.assign({ p, s, c }, o));
+  // ring of mane curls 鬃捲 around a head centre, in the x-y plane (facing +z)
+  function curls(g, mat, cx, cy, cz, R, n, r, c, o = {}) {
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * TAU;
+      if (o.skipBottom && sin(a) < -0.55) continue;
+      blob(g, mat, [cx + cos(a) * R, cy + sin(a) * R * (o.sy || 1), cz + (o.dz || 0)], [r, r, r * 0.8], c, { ws: 5, hs: 4 });
+    }
+  }
+
+  // ---------------------------------------------------------------- statue_lion 石獅 (v0 male: paw on 繡球, mouth open; v1 female: cub, mouth closed)
+  def('statue_lion', {
+    key: (o) => k(lay(o).v, !!o.flip),
+    build(o) {
+      const v = lay(o).v, side = o.flip ? -1 : 1, g = new THREE.Group(), S = MAT('stone');
+      const C = '#b6b2a5', L2 = '#c8c4b8', D = '#7e7a6e';
+      // 須彌座 pedestal with a recessed carved panel
+      mk(g, G3.rbox(0.66, 0.1, 0.54, 0.025), S, { c: '#a29d90' });
+      mk(g, G3.rbox(0.52, 0.16, 0.42, 0.02), S, { p: [0, 0.1, 0], c: '#b0ab9e' });
+      for (const s of [-1, 1]) mk(g, G3.box(0.36, 0.1, 0.012), S, { p: [0, 0.13, s * 0.212], c: '#8e897e', ao: 0.8 });
+      for (const s of [-1, 1]) mk(g, G3.box(0.012, 0.1, 0.3), S, { p: [s * 0.262, 0.13, 0], c: '#8e897e', ao: 0.8 });
+      mk(g, G3.rbox(0.62, 0.08, 0.52, 0.025), S, { p: [0, 0.26, 0], c: '#c2bdb0', top: ['#7a8a5a', 0.15] });
+      const y0 = 0.34;
+      // haunches, hind paws, torso, chest
+      for (const s of [-1, 1]) { blob(g, S, [s * 0.13, y0 + 0.14, -0.08], [0.15, 0.15, 0.19], C); blob(g, S, [s * 0.15, y0 + 0.035, 0.06], [0.07, 0.045, 0.1], C); }
+      blob(g, S, [0, y0 + 0.3, -0.03], [0.17, 0.26, 0.16], C, { r: [-0.25, 0, 0] });
+      blob(g, S, [0, y0 + 0.36, 0.08], [0.15, 0.17, 0.12], L2);
+      // front legs (one raised onto the ball / cub)
+      for (const s of [-1, 1]) {
+        const up = s === side;
+        const top = V3(s * 0.1, y0 + 0.38, 0.1), foot = up ? V3(s * 0.13, y0 + (v === 0 ? 0.2 : 0.15), 0.22) : V3(s * 0.1, y0 + 0.04, 0.17);
+        const len = top.distanceTo(foot), mid = top.clone().add(foot).multiplyScalar(0.5);
+        const leg = G3.cyl(0.05, 0.058, len, 9); leg.translate(0, -len / 2, 0);
+        const m = mk(g, leg, S, { p: [mid.x, mid.y, mid.z], c: C });
+        m.quaternion.setFromUnitVectors(V3(0, 1, 0), top.clone().sub(foot).normalize());
+        blob(g, S, [foot.x, foot.y, foot.z + 0.01], [0.065, 0.045, 0.08], L2);
+        for (let t = -1; t <= 1; t++) blob(g, S, [foot.x + t * 0.03, foot.y - 0.005, foot.z + 0.08], [0.02, 0.02, 0.02], L2, { ws: 4, hs: 3 });
+      }
+      if (v === 0) { // embroidered ball 繡球 with ribbon
+        blob(g, S, [side * 0.13, y0 + 0.09, 0.22], [0.09, 0.09, 0.09], L2, { ws: 12, hs: 8 });
+        mk(g, G3.torus(0.09, 0.012, 4, 14), S, { p: [side * 0.13, y0 + 0.09, 0.22], r: [0.4, 0.6, 0], c: D });
+        mk(g, G3.torus(0.09, 0.012, 4, 14), S, { p: [side * 0.13, y0 + 0.09, 0.22], r: [-0.4, -0.5, 1.2], c: D });
+      } else { // cub playing under the paw
+        blob(g, S, [side * 0.13, y0 + 0.06, 0.18], [0.07, 0.06, 0.09], L2);
+        blob(g, S, [side * 0.1, y0 + 0.1, 0.27], [0.052, 0.05, 0.05], L2);
+        curls(g, S, side * 0.1, y0 + 0.1, 0.25, 0.05, 6, 0.018, C);
+      }
+      // head, face, mane
+      const hy = y0 + 0.6, hz = 0.07;
+      curls(g, S, 0, hy + 0.01, hz - 0.06, 0.19, 14, 0.062, C);
+      curls(g, S, 0, hy + 0.02, hz - 0.13, 0.08, 4, 0.065, C);
+      blob(g, S, [0, hy, hz], [0.17, 0.16, 0.15], L2, { ws: 10, hs: 7 });
+      mk(g, G3.rbox(0.17, 0.09, 0.1, 0.035), S, { p: [0, hy - 0.11, hz + 0.12], c: L2 });
+      blob(g, S, [0, hy - 0.035, hz + 0.21], [0.045, 0.032, 0.03], C);
+      for (const s of [-1, 1]) {
+        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.12], [0.042, 0.042, 0.035], '#dedad0', { ws: 9, hs: 6 });
+        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.152], [0.016, 0.016, 0.01], '#5e5a50', { ws: 6, hs: 4 });
+        mk(g, G3.rbox(0.085, 0.025, 0.045, 0.01), S, { p: [s * 0.065, hy + 0.1, hz + 0.12], r: [0, 0, -s * 0.25], c: C });
+        blob(g, S, [s * 0.15, hy + 0.12, hz - 0.02], [0.04, 0.03, 0.025], C, { ws: 6, hs: 4 });
+      }
+      if (v === 0) {
+        mk(g, G3.cbox(0.12, 0.05, 0.03), S, { p: [0, hy - 0.16, hz + 0.155], c: '#4a463e', ao: 0.7 });
+        for (const s of [-1, 1]) mk(g, G3.cbox(0.02, 0.025, 0.02), S, { p: [s * 0.04, hy - 0.145, hz + 0.17], c: '#e4e0d4' });
+        mk(g, G3.rbox(0.14, 0.04, 0.09, 0.015), S, { p: [0, hy - 0.22, hz + 0.12], c: L2 });
+      } else mk(g, G3.rbox(0.13, 0.03, 0.08, 0.012), S, { p: [0, hy - 0.17, hz + 0.13], c: D });
+      curls(g, S, 0, hy - 0.24, hz + 0.09, 0.05, 3, 0.032, C, { sy: 0.5 });
+      // collar with bell, tail curls
+      mk(g, G3.torus(0.13, 0.016, 4, 16), S, { p: [0, y0 + 0.45, 0.04], r: [PI / 2 - 0.35, 0, 0], c: D });
+      blob(g, S, [0, y0 + 0.4, 0.17], [0.034, 0.034, 0.034], L2);
+      for (let i = 0; i < 3; i++) blob(g, S, [0, y0 + 0.22 + i * 0.09, -0.19 - i * 0.015], [0.05, 0.045, 0.04], C, { ws: 7, hs: 5 });
+      return tagged(bake(g, { ao: 0.4, aoH: 0.4 }));
+    },
+  });
+
+  // ---------------------------------------------------------------- wind_lion 風獅爺 (Kinmen): standing, grinning, red cape
+  def('wind_lion', {
+    build() {
+      const g = new THREE.Group(), S = MAT('stone'), C = '#c8b890', L2 = '#d6caa8';
+      mk(g, G3.rbox(0.52, 0.14, 0.44, 0.03), S, { c: '#a8987a', top: ['#7a8a5a', 0.15] });
+      mk(g, G3.rbox(0.42, 0.06, 0.36, 0.02), S, { p: [0, 0.14, 0], c: '#b8a888' });
+      const y0 = 0.2;
+      for (const s of [-1, 1]) {
+        mk(g, G3.cyl(0.065, 0.075, 0.3, 9), S, { p: [s * 0.09, y0, 0], c: C });
+        blob(g, S, [s * 0.09, y0 + 0.03, 0.06], [0.075, 0.045, 0.1], L2);
+      }
+      blob(g, S, [0, y0 + 0.5, 0], [0.18, 0.25, 0.15], C);
+      blob(g, S, [0, y0 + 0.43, 0.1], [0.12, 0.14, 0.06], L2);
+      for (const s of [-1, 1]) {
+        const sh = V3(s * 0.16, y0 + 0.64, 0.02), hd = V3(s * 0.06, y0 + 0.44, 0.16);
+        const len = sh.distanceTo(hd), mid = sh.clone().add(hd).multiplyScalar(0.5);
+        const arm = G3.cyl(0.045, 0.05, len, 8); arm.translate(0, -len / 2, 0);
+        mk(g, arm, S, { p: [mid.x, mid.y, mid.z], c: C }).quaternion.setFromUnitVectors(V3(0, 1, 0), sh.clone().sub(hd).normalize());
+        blob(g, S, [hd.x, hd.y, hd.z], [0.048, 0.042, 0.045], L2);
+      }
+      const hy = y0 + 0.88, hz = 0.03;
+      curls(g, S, 0, hy, hz - 0.05, 0.2, 14, 0.06, C);
+      curls(g, S, 0, hy + 0.02, hz - 0.12, 0.11, 7, 0.06, C);
+      blob(g, S, [0, hy, hz], [0.185, 0.17, 0.16], L2);
+      for (const s of [-1, 1]) {
+        blob(g, S, [s * 0.07, hy + 0.035, hz + 0.13], [0.046, 0.046, 0.035], '#f2ece0', { ws: 9, hs: 6 });
+        blob(g, S, [s * 0.07, hy + 0.035, hz + 0.163], [0.02, 0.02, 0.01], '#2a2418', { ws: 6, hs: 4 });
+        mk(g, G3.rbox(0.09, 0.025, 0.04, 0.01), S, { p: [s * 0.07, hy + 0.085, hz + 0.13], r: [0, 0, -s * 0.3], c: '#8a7a5a' });
+      }
+      blob(g, S, [0, hy - 0.03, hz + 0.17], [0.05, 0.035, 0.035], '#b8a47e');
+      // wide grin: red mouth, white teeth
+      mk(g, G3.rbox(0.18, 0.05, 0.05, 0.02), S, { p: [0, hy - 0.12, hz + 0.12], c: '#9a3428' });
+      for (let i = -2; i <= 2; i++) mk(g, G3.cbox(0.022, 0.018, 0.02), S, { p: [i * 0.03, hy - 0.087, hz + 0.15], c: '#f2ece0' });
+      // red cape 紅披風, tied at the throat
+      const cape = new THREE.CylinderGeometry(0.15, 0.27, 0.6, 12, 6, true, PI / 2 + 0.25, PI - 0.5); cape.translate(0, -0.3, 0);
+      mk(g, cape, MAT('cloth', 'wave'), { p: [0, y0 + 0.72, -0.01], c: '#c8322a', wave: { axis: 'y', from: y0 + 0.72, to: y0 + 0.12, amp: 0.05, ph: 0.8 } });
+      blob(g, MAT('cloth', 'wave'), [0, y0 + 0.69, 0.13], [0.04, 0.035, 0.03], '#c8322a');
+      for (const s of [-1, 1]) mk(g, G3.cbox(0.05, 0.13, 0.012), MAT('cloth', 'wave'), { p: [s * 0.03, y0 + 0.62, 0.15], r: [0.1, 0, s * 0.25], c: '#b02a22', wave: { axis: 'y', from: y0 + 0.69, to: y0 + 0.55, amp: 0.02, ph: 1.7 } });
+      return tagged(bake(g, { ao: 0.4 }));
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // ---------------------------------------------------------------- banner 旗: tall pole, crossbar, flag with flame-teeth edge 火焰邊
+  function bannerTex(col, edge, txt) {
+    return TEX('banner:' + col + edge + txt, 256, 768, (g, w, h) => {
+      const r = rng(hashStr(txt + col));
+      const bw = 200, bh = 700;
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = edge;
+      const n = 12; // free-side teeth
+      g.beginPath(); g.moveTo(bw - 2, 0);
+      for (let i = 0; i < n; i++) { g.lineTo(w - 4, (i + 0.5) * bh / n); g.lineTo(bw - 2, (i + 1) * bh / n); }
+      g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(0, bh - 2); // bottom teeth
+      for (let i = 0; i < 4; i++) { g.lineTo((i + 0.5) * bw / 4, h - 4); g.lineTo((i + 1) * bw / 4, bh - 2); }
+      g.closePath(); g.fill();
+      g.fillStyle = col; g.fillRect(0, 0, bw, bh);
+      const gr = g.createLinearGradient(0, 0, bw, 0); gr.addColorStop(0, 'rgba(0,0,0,0.22)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.06)'); gr.addColorStop(1, 'rgba(0,0,0,0.12)');
+      g.fillStyle = gr; g.fillRect(0, 0, bw, bh);
+      for (let i = 0; i < 1500; i++) { g.fillStyle = `rgba(0,0,0,${r() * 0.07})`; g.fillRect(r() * bw, r() * bh, 1 + r() * 10, 1); }
+      g.fillStyle = edge; g.fillRect(0, 0, 14, bh); g.fillRect(0, 0, bw, 10);
+      for (let y = 30; y < bh; y += 60) { g.fillStyle = '#2a1a10'; g.beginPath(); g.arc(7, y, 4, 0, TAU); g.fill(); } // pole rings
+      inkFit(g, txt, bw / 2 + 6, bh / 2, bw * 0.72, bh * 0.8, '#fff0c0', { max: 150, shadow: true });
+    }, 0, { wrap: false });
+  }
+  def('banner', {
+    key: (o) => { const L = lay(o); return k(L.col, L.edge, L.txt); },
+    build(o) {
+      const L = lay(o), g = new THREE.Group(), W = MAT('wood'), px = -0.2;
+      for (const s of [-1, 1]) mk(g, G3.rbox(0.07, 0.5, 0.22, 0.015), MAT('stone'), { p: [px + s * 0.075, 0, 0], c: '#a8a397', top: ['#7a8a5a', 0.2] });
+      mk(g, G3.rod(0.016, 0.24, 6), W, { p: [px, 0.38, 0], r: [0, PI / 2, 0], c: '#3a2a1a' });
+      mk(g, G3.cyl(0.035, 0.045, 2.78, 9), W, { p: [px, 0, 0], c: '#7a5434' });
+      mk(g, G3.rod(0.02, 0.6, 6), W, { p: [px + 0.28, 2.56, 0], c: '#4a3020' });
+      mk(g, G3.sphere(0.045, 9, 7), MAT('metal'), { p: [px, 2.84, 0], c: '#d8a840' });
+      mk(g, G3.cyl(0.0, 0.03, 0.12, 6), MAT('metal'), { p: [px, 2.86, 0], c: '#d8a840' });
+      const fw = 0.56, fh = 1.5;
+      const pl = new THREE.PlaneGeometry(fw, fh, 8, 12); pl.translate(px + 0.035 + fw / 2, 2.54 - fh / 2, 0);
+      mk(g, pl, TMAT('banner:' + L.col + L.edge + L.txt, bannerTex(L.col, L.edge, L.txt), { alphaTest: 0.5, roughness: 0.9, side: THREE.DoubleSide }, 'wave'),
+        { wave: { axis: 'x', from: px + 0.035, to: px + 0.035 + fw, amp: 0.1, ph: 0.3 } });
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // ---------------------------------------------------------------- pilgrim_flag 進香旗: red pole, triangular 令旗 with serrated border, bell and 香火袋
+  function pflagTex(text, col) {
+    return TEX('pflag:' + text + col, 256, 256, (g, w, h) => {
+      const fw = w - 6, fh = h;
+      const lerp2 = (a, b, t) => a + (b - a) * t;
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = '#c8302a';
+      const n = 12;
+      g.beginPath(); g.moveTo(0, 0);
+      for (let i = 0; i < n; i++) { const u1 = (i + 0.5) / n, u2 = (i + 1) / n; g.lineTo(lerp2(0, fw, u1) + 8, lerp2(0, fh / 2, u1) - 12); g.lineTo(lerp2(0, fw, u2), lerp2(0, fh / 2, u2)); }
+      for (let i = 0; i < n; i++) { const u1 = (i + 0.5) / n, u2 = (i + 1) / n; g.lineTo(lerp2(fw, 0, u1) + 8, lerp2(fh / 2, fh, u1) + 12); g.lineTo(lerp2(fw, 0, u2), lerp2(fh / 2, fh, u2)); }
+      g.closePath(); g.fill();
+      const tri = (ins) => { g.beginPath(); g.moveTo(ins, ins * 1.4); g.lineTo(fw - ins * 2.2, fh / 2); g.lineTo(ins, fh - ins * 1.4); g.closePath(); };
+      tri(22); const gr = g.createLinearGradient(0, 0, fw, 0); gr.addColorStop(0, col); gr.addColorStop(1, new THREE.Color(col).multiplyScalar(0.85).getStyle()); g.fillStyle = gr; g.fill();
+      tri(30); g.strokeStyle = '#c8302a'; g.lineWidth = 3; g.stroke();
+      const cs = chars(text);
+      inkFit(g, text, 62, fh / 2, 60, min(fh * 0.66, cs.length * 56), '#1a1a1a', { max: 56 });
+    }, 0, { wrap: false });
+  }
+  def('pilgrim_flag', {
+    key: (o) => k(o.text || '進香', o.color || '#f1c232'),
+    build(o) {
+      const text = String(o.text || '進香'), col = o.color || '#f1c232';
+      const g = new THREE.Group(), px = -0.06, top = 2.62;
+      mk(g, G3.rbox(0.26, 0.14, 0.26, 0.02), MAT('stone'), { p: [px, 0, 0], c: '#8a8278' });
+      mk(g, G3.cyl(0.022, 0.028, top, 8), MAT('lacquer'), { p: [px, 0.1, 0], c: '#b8281e' });
+      mk(g, G3.cyl(0.03, 0.03, 0.05, 8), MAT('metal'), { p: [px, top + 0.05, 0], c: '#e2b04a' });
+      mk(g, G3.lathe([[0.0, 0], [0.035, 0.02], [0.03, 0.08], [0.0, 0.18]], 6), MAT('metal'), { p: [px, top + 0.1, 0], c: '#e2b04a' });
+      const fw = 0.72, fh = 0.74;
+      const pl = new THREE.PlaneGeometry(fw, fh, 8, 6); pl.translate(px + 0.025 + fw / 2, top - fh / 2, 0);
+      mk(g, pl, TMAT('pflag:' + text + col, pflagTex(text, col), { alphaTest: 0.5, roughness: 0.9, side: THREE.DoubleSide }, 'wave'),
+        { wave: { axis: 'x', from: px + 0.025, to: px + 0.025 + fw, amp: 0.08, ph: 1.1 } });
+      // bell + incense pouch on a red cord (sway)
+      const PS = MAT('plain', 'sway'), piv = [px - 0.02, top - 0.04, 0];
+      mk(g, G3.cyl(0.004, 0.004, 0.2, 3), PS, { p: [px - 0.07, top - 0.24, 0], r: [0, 0, -0.25], c: '#c8302a', sway: [...piv, 0.5], cast: false });
+      mk(g, G3.lathe([[0, 0], [0.03, 0.0], [0.028, 0.02], [0.02, 0.045], [0, 0.05]], 8), PS, { p: [px - 0.12, top - 0.3, 0], c: '#e2b04a', sway: [...piv, 0.5] });
+      mk(g, G3.cyl(0.004, 0.004, 0.32, 3), PS, { p: [px - 0.02, top - 0.36, 0], r: [0, 0, 0.15], c: '#c8302a', sway: [...piv, 1.4], cast: false });
+      mk(g, G3.rbox(0.075, 0.1, 0.03, 0.01), PS, { p: [px - 0.07, top - 0.46, 0], c: '#d23a2c', sway: [...piv, 1.4] });
+      mk(g, G3.box(0.04, 0.012, 0.032), PS, { p: [px - 0.07, top - 0.4, 0], c: '#f0c75a', sway: [...piv, 1.4] });
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // ---------------------------------------------------------------- grave 墓 (v0 Taiwanese horseshoe tomb, v1 weathered old stone, v2 wooden marker)
+  function tombTex(kind) {
+    return TEX('tomb:' + kind, 256, 384, (g, w, h) => {
+      g.clearRect(0, 0, w, h);
+      if (kind === 0) {
+        ink(g, '金浦', w / 2, 46, 40, '#a8261c', { vertical: false });
+        inkFit(g, '顯考陳公之墓', w / 2, h * 0.58, 70, h * 0.66, '#a8261c', { spacing: 1.02 });
+        inkFit(g, '民國', w * 0.18, h * 0.45, 26, 70, '#a8261c');
+        inkFit(g, '孝男立', w * 0.82, h * 0.7, 26, 100, '#a8261c');
+      } else if (kind === 1) {
+        inkFit(g, '之墓', w / 2, h * 0.55, 80, h * 0.5, 'rgba(40,40,34,0.75)', { dry: true });
+      } else inkFit(g, '故人之墓', w / 2, h * 0.5, 70, h * 0.84, 'rgba(20,12,8,0.85)');
+    }, 0, { wrap: false });
+  }
+  function tuftTex() {
+    return TEX('tuft', 128, 128, (g, w, h) => {
+      const r = rng(5);
+      for (let i = 0; i < 60; i++) {
+        const x = 10 + r() * 108, l = 40 + r() * 80, bend = (r() - 0.5) * 40;
+        g.strokeStyle = `rgb(${70 + r() * 60},${110 + r() * 60},${40 + r() * 30})`; g.lineWidth = 2 + r() * 3;
+        g.beginPath(); g.moveTo(x, h); g.quadraticCurveTo(x + bend * 0.3, h - l * 0.6, x + bend, h - l); g.stroke();
+      }
+    }, 0, { wrap: false });
+  }
+  function tufts(g, pts, s = 1) {
+    const mat = TMAT('tuft', tuftTex(), { alphaTest: 0.45, roughness: 1, side: THREE.DoubleSide });
+    for (const [x, z, k2] of pts) for (const a of [0, PI / 2]) mk(g, decal(0.22 * s * (k2 || 1), 0.16 * s * (k2 || 1)), mat, { p: [x, 0, z], r: [0, a + x * 3, 0], c: '#ffffff', cast: false });
+  }
+  def('grave', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group(), S = MAT('stone'), T = MAT('turf');
+      const text = (kind, w2, h2, p, extra) => mk(g, decal(w2, h2), TMAT('tomb:' + kind, tombTex(kind), { alphaTest: 0.35, roughness: 0.9 }), Object.assign({ p, cast: false }, extra));
+      if (v === 0) {
+        blob(g, T, [0, 0, -0.14], [0.4, 0.26, 0.32], '#8fa86a', { ws: 14, hs: 8 });
+        // horseshoe 墓手 wall round the mound, arm posts at the front
+        const n = 9;
+        for (let i = 0; i < n; i++) {
+          const a = lerp(-0.25, PI + 0.25, i / (n - 1)), x = cos(a) * 0.44, z = -0.12 - sin(a) * 0.36;
+          mk(g, G3.rbox(0.15, 0.17, 0.1, 0.02), S, { p: [x, 0, z], r: [0, PI / 2 - a, 0], c: '#a8a498', top: ['#7a8a5a', 0.3] });
+        }
+        for (const s of [-1, 1]) { mk(g, G3.rbox(0.1, 0.26, 0.1, 0.02), S, { p: [s * 0.44, 0, 0.22], c: '#a8a498' }); blob(g, S, [s * 0.44, 0.28, 0.22], [0.045, 0.04, 0.045], '#bab6aa'); mk(g, G3.box(0.06, 0.12, 0.3), S, { p: [s * 0.44, 0, 0.06], c: '#9a968a' }); }
+        // 墓碑 with arched top + red inscription
+        mk(g, G3.box(0.32, 0.4, 0.07), S, { p: [0, 0, 0.05], c: '#c4bfb2' });
+        const cap = new THREE.CylinderGeometry(0.16, 0.16, 0.07, 14, 1, false, -PI / 2, PI); cap.rotateX(PI / 2); projUV(cap);
+        mk(g, cap, S, { p: [0, 0.4, 0.05], c: '#c4bfb2' });
+        mk(g, G3.box(0.4, 0.06, 0.12), S, { p: [0, 0, 0.05], c: '#9a968a' });
+        text(0, 0.26, 0.42, [0, 0.03, 0.087]);
+        // altar slab 墓桌 with incense burner; 后土 tablet; joss paper 墓紙 held down by pebbles on the mound
+        mk(g, G3.rbox(0.34, 0.05, 0.16, 0.012), S, { p: [0, 0.1, 0.27], c: '#b4b0a4' });
+        for (const s of [-1, 1]) mk(g, G3.box(0.05, 0.1, 0.12), S, { p: [s * 0.12, 0, 0.27], c: '#9a968a' });
+        mk(g, G3.cyl(0.04, 0.035, 0.05, 10), S, { p: [0, 0.15, 0.27], c: '#6a5a3a' });
+        for (let i = -1; i <= 1; i++) mk(g, G3.cyl(0.003, 0.003, 0.13, 3), MAT('plain'), { p: [i * 0.012, 0.18, 0.27], r: [0, 0, i * 0.15], c: '#a8322a', cast: false });
+        mk(g, G3.rbox(0.09, 0.16, 0.045, 0.012), S, { p: [-0.33, 0, 0.3], c: '#a8a498' });
+        const r = rng(9);
+        for (let i = 0; i < 6; i++) {
+          const a = r() * TAU, d = r() * 0.22, x = cos(a) * d * 1.2, z = -0.16 + sin(a) * d;
+          const y = 0.26 * Math.sqrt(max(0, 1 - (x / 0.4) ** 2 - ((z + 0.14) / 0.32) ** 2));
+          mk(g, G3.cbox(0.08, 0.004, 0.1), MAT('plain'), { p: [x, y + 0.004, z], r: [-(z + 0.14) * 1.4, r() * 3, x * 1.2], c: i % 3 ? '#e0c050' : '#c83a2a', cast: false });
+          blob(g, S, [x, y + 0.012, z], [0.018, 0.012, 0.016], '#8a867c', { ws: 5, hs: 4 });
+        }
+        tufts(g, [[-0.38, -0.42], [0.36, -0.4], [0.47, 0.32], [-0.46, 0.36], [0.2, 0.42, 0.7], [-0.15, -0.5, 0.8]]);
+      } else if (v === 1) {
+        blob(g, T, [0, 0, -0.08], [0.34, 0.12, 0.3], '#7f9a5e');
+        const st = new THREE.Group(); st.position.set(0.02, 0, 0.08); st.rotation.set(-0.08, 0.15, -0.14); g.add(st);
+        mk(st, G3.box(0.24, 0.42, 0.08), S, { c: '#9a9a8c', top: ['#5e7a3e', 0.5] });
+        const cap = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12, 1, false, -PI / 2, PI); cap.rotateX(PI / 2); projUV(cap);
+        mk(st, cap, S, { p: [0, 0.42, 0], c: '#9a9a8c', top: ['#5e7a3e', 0.6] });
+        mk(st, decal(0.2, 0.36), TMAT('tomb:1', tombTex(1), { alphaTest: 0.35, roughness: 0.9 }), { p: [0, 0.04, 0.041], cast: false });
+        mk(st, G3.cbox(0.006, 0.16, 0.004), MAT('plain'), { p: [0.05, 0.36, 0.042], r: [0, 0, 0.3], c: '#2a2a24', cast: false }); // crack
+        for (let i = 0; i < 4; i++) blob(g, S, [-0.3 + i * 0.2, 0.01, 0.3 - (i % 2) * 0.55], [0.05, 0.03, 0.04], '#8a867c', { ws: 6, hs: 4 });
+        tufts(g, [[-0.2, 0.25], [0.25, 0.3], [0.3, -0.2], [-0.32, -0.25], [0.0, 0.38, 0.8], [-0.12, -0.38], [0.16, 0.15, 0.6]], 1.1);
+      } else {
+        blob(g, T, [0, 0, -0.06], [0.3, 0.14, 0.26], '#8a7458');
+        const W = MAT('wood');
+        mk(g, G3.box(0.11, 0.62, 0.035), W, { p: [0, 0, 0.18], r: [0.04, 0, 0.03], c: '#9a8668' });
+        const tip = new THREE.ConeGeometry(0.078, 0.07, 4); tip.rotateY(PI / 4); tip.scale(1, 1, 0.32); tip.translate(0, 0.035, 0); projUV(tip);
+        mk(g, tip, W, { p: [0.018, 0.62, 0.205], r: [0.04, 0, 0.03], c: '#9a8668' });
+        mk(g, decal(0.09, 0.42), TMAT('tomb:2', tombTex(2), { alphaTest: 0.35, roughness: 0.9 }), { p: [0.006, 0.14, 0.2], r: [0.04, 0, 0.03] });
+        const r = rng(4);
+        for (let i = 0; i < 5; i++) mk(g, G3.cbox(0.07, 0.003, 0.08), MAT('plain'), { p: [-0.3 + r() * 0.6, 0.004, 0.18 + r() * 0.25], r: [0, r() * 3, 0], c: '#e0c060', cast: false });
+        for (const [x, z] of [[-0.2, 0.25], [0.25, 0.32]]) blob(g, MAT('stone'), [x, 0.01, z], [0.05, 0.035, 0.04], '#8a8478', { ws: 6, hs: 4 });
+        tufts(g, [[-0.3, -0.25], [0.32, -0.2], [0.3, 0.38, 0.8], [-0.36, 0.36, 0.7]]);
+      }
+      return tagged(bake(g, { ao: 0.35 }));
+    },
+  });
+
+  // ---------------------------------------------------------------- coffin 棺木 on trestles: lofted lacquer body, flared head board, 壽 medallion
+  function shouTex() {
+    return TEX('shou', 256, 256, (g, w, h) => {
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = '#a8261c'; g.beginPath(); g.arc(w / 2, h / 2, w * 0.45, 0, TAU); g.fill();
+      g.strokeStyle = '#e8c060'; g.lineWidth = 8; g.stroke();
+      g.lineWidth = 2; g.beginPath(); g.arc(w / 2, h / 2, w * 0.38, 0, TAU); g.stroke();
+      ink(g, '壽', w / 2, h / 2 + 4, 140, '#f2cb68', { dry: false });
+    }, 0, { wrap: false });
+  }
+  def('coffin', {
+    build() {
+      const g = new THREE.Group(), LQ = MAT('lacquer'), W = MAT('wood');
+      // body: box section with crisp (doubled) corners, taller and wider toward the head (+x)
+      const N = 10, x0 = -0.9, x1 = 0.84, by = 0.42;
+      const hb = (u) => lerp(0.28, 0.38, u), hw = (u) => lerp(0.22, 0.29, u), lt = (u) => lerp(0.1, 0.17, Math.pow(u, 1.5));
+      const bodySec = [[-1, 0], [-1, 0], [1, 0], [1, 0], [1.03, 1], [1.03, 1], [-1.03, 1], [-1.03, 1]];
+      const lidSec = [[-1, 0], [-1, 0], [1, 0], [1, 0], [1, 0.42], [1, 0.42], [0.72, 0.84], [0.36, 0.97], [0, 1], [-0.36, 0.97], [-0.72, 0.84], [-1, 0.42], [-1, 0.42]];
+      const rb = [], rl = [];
+      for (let i = 0; i <= N; i++) {
+        const u = i / N, x = lerp(x0, x1, u);
+        rb.push(bodySec.map(([z, y]) => [x, by + y * hb(u), z * hw(u)]));
+        const xl = lerp(x0 - 0.06, x1 + 0.1, u);
+        rl.push(lidSec.map(([z, y]) => [xl, by + hb(u) + y * lt(u), z * (hw(u) + 0.035)]));
+      }
+      mk(g, G3.loft(rb, 'flip', true), LQ, { c: '#3a1410' });
+      mk(g, G3.loft(rl, 'flip', true), LQ, { c: '#4a1a12' });
+      // red band near the head, end boards (the head board flares up 翹頭), 壽 medallion
+      const bu = 0.78, bx = lerp(x0, x1, bu);
+      mk(g, G3.box(0.05, hb(bu) + 0.004, hw(bu) * 2 + 0.07), LQ, { p: [bx, by - 0.002, 0], c: '#a8261c' });
+      mk(g, G3.rbox(0.05, hb(0) + lt(0) + 0.04, hw(0) * 2 + 0.08, 0.015), LQ, { p: [x0 - 0.03, by - 0.02, 0], c: '#2a0e0a' });
+      const hbH = hb(1) + lt(1) + 0.07;
+      const hd = G3.rbox(0.05, hbH, hw(1) * 2 + 0.07, 0.02);
+      { const P = hd.attributes.position; for (let i = 0; i < P.count; i++) { const y = P.getY(i) / hbH; P.setZ(i, P.getZ(i) * (0.94 + 0.12 * y)); } hd.computeVertexNormals(); }
+      mk(g, hd, LQ, { p: [x1 + 0.09, by - 0.03, 0], c: '#2a0e0a' });
+      mk(g, decal(0.26, 0.26), TMAT('shou', shouTex(), { alphaTest: 0.4, roughness: 0.4 }), { p: [x1 + 0.118, by + 0.12, 0], r: [0, PI / 2, 0], cast: false });
+      // trestles 板凳
+      for (const x of [-0.52, 0.52]) {
+        mk(g, G3.box(0.1, 0.06, 0.66, 'z'), W, { p: [x, by - 0.06, 0], c: '#6a4a2c' });
+        for (const s of [-1, 1]) for (const f of [-1, 1]) mk(g, G3.box(0.05, by - 0.02, 0.05), W, { p: [x + f * 0.03, 0, s * 0.26], r: [0, 0, -f * 0.12], c: '#4a3220' });
+        mk(g, G3.box(0.04, 0.04, 0.5, 'z'), W, { p: [x, 0.14, 0], c: '#4a3220' });
+      }
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- bones (non-solid scatter)
+  def('bones', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group(), P = MAT('plain'), B = '#e2dac4', r = rng(17 + v);
+      const longBone = (x, z, len, a) => {
+        const sub = new THREE.Group(); sub.position.set(x, 0.022, z); sub.rotation.y = a; g.add(sub);
+        mk(sub, G3.rod(0.014, len, 6), P, { c: B });
+        for (const s of [-1, 1]) for (const d of [-1, 1]) blob(sub, P, [s * len / 2, 0, d * 0.012], [0.022, 0.02, 0.02], B, { ws: 6, hs: 4 });
+      };
+      longBone(-0.2, 0.14, 0.32, 0.3 + v); longBone(0.14, 0.2, 0.26, -0.6); longBone(0.2, -0.1, 0.22, 1.2 + v);
+      for (let i = 0; i < 4; i++) mk(g, G3.torus(0.09, 0.008, 3, 10, PI * 0.8), P, { p: [-0.28 + i * 0.05, 0.012, -0.08], r: [PI / 2, 0, 0.5 + r() * 0.3], c: '#d8d0b8' });
+      // skull
+      const sx = v ? 0.12 : -0.05, sz = v ? -0.06 : 0.0;
+      const sk = new THREE.Group(); sk.position.set(sx, 0, sz); sk.rotation.set(0.25, v ? -0.7 : 0.4, 0.15); g.add(sk);
+      blob(sk, P, [0, 0.07, 0], [0.07, 0.065, 0.085], '#efe8d4');
+      mk(sk, G3.rbox(0.07, 0.04, 0.05, 0.012), P, { p: [0, 0.015, 0.06], c: B });
+      for (const s of [-1, 1]) blob(sk, P, [s * 0.027, 0.07, 0.068], [0.02, 0.022, 0.012], '#2a2018');
+      blob(sk, P, [0, 0.045, 0.082], [0.008, 0.012, 0.006], '#2a2018');
+      return tagged(bake(g, { ao: 0.5, aoH: 0.1 }));
+    },
+  });
+
+  // ---------------------------------------------------------------- firepit: stone ring, charred logs, ember bed, live flames + sparks
+  const rock = (r, seed) => { const g = new THREE.IcosahedronGeometry(r, 0); const p = g.attributes.position, rr = rng(seed); for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) * (0.8 + rr() * 0.35), p.getY(i) * (0.6 + rr() * 0.3), p.getZ(i) * (0.8 + rr() * 0.35)); const f = G3.flat(g); return projUV(f); };
+  function addFlames(g, x, y, z, hs, kind = 'warm') {
+    hs.forEach((h, i) => {
+      const fl = G3.lathe([[0, 0], [h * 0.22, h * 0.12], [h * 0.2, h * 0.38], [h * 0.1, h * 0.72], [0, h]], 9, 'native');
+      const a = i * 2.3;
+      mk(g, fl, flameMat(kind), { p: [x + (i ? cos(a) * h * 0.18 : 0), y, z + (i ? sin(a) * h * 0.18 : 0)], vc: [i * 0.27 + 0.1, 0.4 + i * 0.13, h], cast: false });
+    });
+  }
+  def('firepit', {
+    build() {
+      const g = new THREE.Group(), S = MAT('stone');
+      for (let i = 0; i < 11; i++) { const a = i / 11 * TAU; mk(g, rock(0.09 + (i % 3) * 0.015, i + 3), S, { p: [cos(a) * 0.34, 0.04, sin(a) * 0.3], r: [0, a, 0], c: i % 2 ? '#8a867c' : '#77736a' }); }
+      mk(g, G3.cyl(0.27, 0.29, 0.02, 14), S, { c: '#3a3430' });
+      mk(g, G3.cyl(0.19, 0.21, 0.022, 12), GLOW('ember', null, 2.5), { p: [0, 0.01, 0], c: '#ff5a18', grad: [0.4, 1], noAO: true });
+      for (let i = 0; i < 7; i++) { const a = i * 0.9; mk(g, rock(0.035, 40 + i), GLOW('ember', null, 2.5), { p: [cos(a) * 0.13, 0.03, sin(a) * 0.12], c: i % 2 ? '#a83a10' : '#2a0e04', noAO: true }); }
+      const W = MAT('wood');
+      for (let i = 0; i < 4; i++) {
+        const a = i * PI / 2 + 0.4, sub = new THREE.Group(); sub.position.set(cos(a) * 0.13, 0.03, sin(a) * 0.13); sub.rotation.set(0, -a, 0); g.add(sub);
+        const log = new THREE.Group(); log.rotation.z = 0.6; sub.add(log);
+        mk(log, G3.cyl(0.04, 0.045, 0.34, 7), W, { p: [0, -0.06, 0], r: [0, 0, PI / 2], c: '#5a3a22' });
+        mk(log, G3.cyl(0.04, 0.04, 0.06, 7), GLOW('ember', null, 2.5), { p: [-0.28, -0.06, 0], r: [0, 0, PI / 2], c: '#3a1206', noAO: true });
+      }
+      addFlames(g, 0, 0.03, 0, [0.52, 0.38, 0.34]);
+      g.add(particles('sparks', 12, 0, 0.25, 0, 7));
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+    lights() { return [{ x: 0, y: 0.5, z: 0, color: '#ff9a40', intensity: 1.6, distance: 6, flicker: 0.6 }]; },
+  });
+
+  // ---------------------------------------------------------------- drum_rack 廟鼓 on a red lacquer stand
+  function drumheadTex() {
+    return TEX('drumhead', 256, 256, (g, w, h) => {
+      const r = rng(23);
+      const gr = g.createRadialGradient(w * 0.45, h * 0.42, 6, w / 2, h / 2, w / 2);
+      gr.addColorStop(0, '#f6ecd2'); gr.addColorStop(0.75, '#dcc8a0'); gr.addColorStop(1, '#9a7a52');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      blotch(g, w, h, r, 12, '120,90,50', 0.12, 10, 40);
+      g.strokeStyle = 'rgba(160,40,30,0.55)'; g.lineWidth = 5; g.beginPath(); g.arc(w / 2, h / 2, w * 0.2, 0, TAU); g.stroke();
+      ink(g, '鼓', w / 2, h / 2 + 3, 62, 'rgba(160,40,30,0.7)', { dry: true });
+    }, 0, { wrap: false });
+  }
+  def('drum_rack', {
+    build() {
+      const g = new THREE.Group(), LQ = MAT('lacquer'), red = '#9a2a1e';
+      const cy = 0.86, R = 0.33, Lz = 0.46;
+      for (const s of [-1, 1]) {
+        for (const f of [-1, 1]) mk(g, G3.box(0.06, 1.12, 0.06), LQ, { p: [s * 0.42, 0, f * 0.24], r: [-f * 0.17, 0, 0], c: red });
+        mk(g, G3.box(0.07, 0.06, 0.5, 'z'), LQ, { p: [s * 0.42, 0.3, 0], c: red });
+        mk(g, G3.box(0.08, 0.06, 0.22, 'z'), LQ, { p: [s * 0.42, 1.08, 0], c: '#7a1e14' });
+        mk(g, G3.box(0.16, 0.05, 0.08), LQ, { p: [s * 0.33, cy - 0.05, 0], c: '#7a1e14' }); // cradle arms
+      }
+      for (const f of [-1, 1]) mk(g, G3.box(0.84, 0.05, 0.05, 'x'), LQ, { p: [0, 0.22, f * 0.2], c: '#7a1e14' });
+      // drum: bulging barrel along z, hide heads, two rings of brass studs
+      const pts = []; for (let j = 0; j <= 8; j++) { const u = j / 8; pts.push([R * (0.86 + 0.14 * sin(PI * u)), (u - 0.5) * Lz]); }
+      const drum = G3.lathe(pts, 22); drum.rotateX(PI / 2);
+      mk(g, drum, LQ, { p: [0, cy, 0], c: '#b03224' });
+      for (const s of [-1, 1]) {
+        const head = new THREE.CircleGeometry(R * 0.86, 24); if (s < 0) head.rotateY(PI);
+        mk(g, head, TMAT('drumhead', drumheadTex(), { roughness: 0.8 }), { p: [0, cy, s * (Lz / 2 + 0.002)] });
+        for (let i = 0; i < 22; i++) { const a = i / 22 * TAU; mk(g, G3.sphere(0.012, 5, 4), MAT('metal'), { p: [cos(a) * R * 0.875, cy + sin(a) * R * 0.875, s * (Lz / 2 - 0.03)], c: '#e8c060' }); }
+        mk(g, G3.torus(R * 0.87, 0.01, 3, 24), MAT('metal'), { p: [0, cy, s * (Lz / 2 - 0.005)], c: '#8a6a2a' });
+      }
+      // two drumsticks resting in a holder
+      for (const d of [-1, 1]) {
+        mk(g, G3.cyl(0.014, 0.016, 0.42, 6), LQ, { p: [0.47 + d * 0.02, 0.32, 0.12], r: [0.25, 0, -0.18 + d * 0.06], c: '#8a6a42' });
+        mk(g, G3.sphere(0.026, 7, 5), LQ, { p: [0.53 + d * 0.02, 0.73, 0.22], c: '#8a2a1e' });
+      }
+      return tagged(bake(g));
+    },
+  });
+
   // exported for the test harness / other teams
   G.Props3D = Object.assign(G.Props3D || {}, { street: true, bake, mk, G3, MAT, GLOW, TMAT, TEX, TX, ink, inkFit, addLantern, flameMat, particles, lay });
 })();
