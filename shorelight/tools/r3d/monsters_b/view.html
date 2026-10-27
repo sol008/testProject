@@ -60,7 +60,18 @@ setTimeout(function () {
   const views = num('views', 1), frames = num('frames', 1), dtF = num('dt', 0.15);
   const anim = q.get('anim') || 'idle', T0 = num('t', 0.5), phase = num('phase', 1);
   const items = [];
-  for (const id of ids) for (let f = 0; f < frames; f++) for (let v = 0; v < views; v++) {
+  // set=clip:t,clip:t… → one copy per entry (clip sheet)
+  const SET = q.get('set') ? q.get('set').split(',').map((e) => { const [a, t] = e.split(':'); return { a, t: parseFloat(t || '0.5') }; }) : null;
+  if (SET) for (const id of ids) for (const e of SET) {
+    let inst = null;
+    try { inst = G.Mon3D.create(id, { context: 'battle', phase }); } catch (er) { console.error('build failed', id, er); }
+    if (!inst) continue;
+    inst.setFacing(num('ryaw', 0) * Math.PI / 180);
+    if (e.a === 'walk') inst.setMove(4.2); else if (e.a !== 'idle') inst.play(e.a, { loop: false });
+    items.push({ id, inst, obj: inst.root, T: e.t, label: e.a + ' ' + e.t });
+    scene.add(inst.root);
+  }
+  if (!SET) for (const id of ids) for (let f = 0; f < frames; f++) for (let v = 0; v < views; v++) {
     let inst = null;
     try { inst = q.get('fallback') === '1' ? G.Models.monsterBillboard(id, { height: G.Monsters.get(id).h / 64 }) : G.Mon3D.create(id, { context: q.get('ctx') || 'battle', phase }); } catch (e) { console.error('build failed', id, e); }
     if (!inst) continue;

@@ -1064,7 +1064,7 @@ G.Mon3D = G.Mon3D || {
       const u = k.u, h = pulse(u, 0, 0.08, 0.2, 1.0);
       k.r('body', -0.32 * h, 0, sin(k.ct * 50) * 0.04 * h); k.p('body', sin(k.ct * 60) * 0.03 * h * k.h, 0, -0.18 * h * k.h * 0.5);
       k.r('head', -0.3 * h, 0, 0.1 * h);
-      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, u)) * 1.2);
+      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, u)) * 0.75);
     },
     die(k) {
       const u = k.u, st = sm(0, 0.25, u), fall = sm(0.2, 0.7, u);
@@ -1305,7 +1305,7 @@ G.Mon3D = G.Mon3D || {
       const U = this.U;
       U.uFlash.value = fx.flash;
       U.uDiss.value = clamp(fx.diss);
-      U.uGlow.value = (def.glowBase || 1) * (1 + fx.glow) * (this.phase > 1 ? (def.phaseGlow || 1.25) : 1);
+      U.uGlow.value = (def.glowBase || 1) * (1 + fx.glow * (def.glowGain != null ? def.glowGain : 0.5)) * (this.phase > 1 ? (def.phaseGlow || 1.25) : 1);
       U.uPsy.value.w = (def.psy ? def.psy[3] : 1) * (1 + fx.psy * 0.6);
       const op = this.opacity * (1 - (fx.diss >= 0.999 ? 1 : 0));
       U.uOpac.value = op;
@@ -1555,7 +1555,7 @@ G.Mon3D = G.Mon3D || {
       k.r('body', -0.25 * h, 0.1 * h, 0); k.p('body', 0, -0.03 * h, -0.2 * h);
       k.r('chest', -0.25 * h); k.r('head', -0.4 * h, 0, 0.15 * h);
       for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.5 * h, 0, s * 0.5 * h); k.r('fore' + L, -0.6 * h); }
-      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, u)) * 1.2);
+      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, u)) * 0.75);
     },
     die(k, o = {}) {
       const u = k.u, st = sm(0, 0.2, u), fall = sm(0.2, 0.65, u);
@@ -2096,7 +2096,7 @@ G.Mon3D = G.Mon3D || {
       k.r('head', -0.45 * up, 0, 0); k.r('jaw', 0.7 * up); k.p('body', 0, 0.1 * up, 0);
       k.fx.glow += 1.8 * up; k.fx.psy += up;
     },
-    hurt(k, c) { const h = pulse(k.u, 0, 0.08, 0.2, 1); c.neck.forEach((b) => k.r(b, -0.12 * h, 0, sin(k.ct * 50) * 0.05 * h)); k.r('head', -0.4 * h); k.r('jaw', 0.5 * h); k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, k.u)) * 1.2); },
+    hurt(k, c) { const h = pulse(k.u, 0, 0.08, 0.2, 1); c.neck.forEach((b) => k.r(b, -0.12 * h, 0, sin(k.ct * 50) * 0.05 * h)); k.r('head', -0.4 * h); k.r('jaw', 0.5 * h); k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, k.u)) * 0.75); },
     die(k, c) {
       const u = k.u, fall = sm(0.15, 0.75, u);
       c.neck.forEach((b, i) => k.r(b, 0.25 * fall + sin(k.ct * 30) * 0.03 * (1 - fall), 0, 0.12 * fall * (i % 2 ? 1 : -1)));
@@ -2124,13 +2124,13 @@ G.Mon3D = G.Mon3D || {
     }
   }
   // water ripple disk (sea creatures surfacing)
-  function waterDisk(R, r, at = [0, 0.02, 0], col = 0x2a6a80) {
+  function waterDisk(R, r, at = [0, 0.02, 0], col = 0x2a6a80, m = 'water') {
     const g = idx(new THREE.RingGeometry(r * 0.15, r, 40, 3));
     g.rotateX(-PI / 2);
     // radial UVs (u around, v outward) so the scrolling ripple cell reads as rings
     const p = g.attributes.position, uv = g.attributes.uv;
     for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); uv.setXY(i, (atan2(z, x) / TAU + 1) % 1 * 6, Math.hypot(x, z) / r * 3); }
-    R.add(g, { m: 'water', c: (v) => Rig.mix(col, 0x9ad8e8, sm(0.85, 1.0, Math.hypot(v.x - at[0], v.z - at[2]) / r)), cell: 'water', at, rep: [1, 1] });
+    R.add(g, { m, c: (v) => Rig.mix(col, 0x9ad8e8, sm(0.85, 1.0, Math.hypot(v.x - at[0], v.z - at[2]) / r)), cell: 'water', at, rep: [1, 1] });
   }
 
   // ============================================================================ 蛇影 serpent_shade
@@ -2450,7 +2450,7 @@ G.Mon3D = G.Mon3D || {
       R.add(GEO.ext([[-0.025, 0], [0.025, 0], [0.03, 0.85], [0, 0.98], [-0.03, 0.85]], 0.012, 0.004), { b: 'sword', m: 'glow', c: 0xd060ff, cell: 'blank', at: [0.3, 0.92, 0.14], rot: [1.35, 0, 0] });
       R.add(GEO.box(0.14, 0.03, 0.04, 0.01), { b: 'sword', c: INK2, cell: 'metal', at: [0.3, 0.92, 0.14], rot: [1.35, 0, 0] });
       // kaleidoscope halo (psy) and orbiting mirror shards
-      R.add(GEO.plane(0.84, 0.84), { b: 'halo', m: 'add', c: 0xb090ff, cell: 'mandala', decal: true, at: [0, 1.9, -0.25] });
+      R.add(GEO.plane(0.62, 0.62), { b: 'halo', m: 'add', c: 0x5a4890, cell: 'mandala', decal: true, at: [0, 1.9, -0.25] });
       R.add(GEO.tor(0.44, 0.012, 6, 40), { b: 'halo', m: 'glow', c: 0xff80e0, cell: 'blank', at: [0, 1.9, -0.24] });
       R.bone('shards', 'body', [0, 1.3, 0]);
       for (let i = 0; i < 7; i++) {
@@ -3099,7 +3099,7 @@ G.Mon3D = G.Mon3D || {
   // the Wind Demon: a storm-skinned torso on a howling tornado, bone mask, the broken lantern burning in its chest.
   // Phase 2: the lantern bursts red, the tornado widens and the swallowed souls whirl out.
   defB('wind_demon', {
-    h: 4.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0xb8e8ff, wide: 1.3, phaseGlow: 1.5,
+    h: 4.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0xb8e8ff, wide: 1.3, phaseGlow: 1.5, glowGain: 0.25,
     build(R) {
       biped(R, { hip: 2.0, chest: 2.75, neck: 3.4, head: 3.65, sw: 0.72, sy: 3.25, arm: 1.5, hw: 0.2, armOut: 0.25, legs: false, cz: 0.05 });
       R.bone('spin', 'body', [0, 0.0, 0]);
@@ -3300,7 +3300,8 @@ G.Mon3D = G.Mon3D || {
         R.add(GEO.lumpy(GEO.sph(0.15 + r() * 0.08, 0.1, 0.15, 10, 8), 0.2, 4, i), { b, c: FOAM, cell: 'plain', at: [x * 0.92, base.y + 0.14 - xn * xn * 0.62, base.z + (b === 'w4' ? 0.05 : -0.05) - xn * xn * 0.3] });
       }
       // foam skirt at the base
-      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; R.add(GEO.lumpy(GEO.sph(0.25, 0.1, 0.22, 10, 6), 0.2, 4, i + 20), { b: 'body', c: Rig.mix(FOAM, 0xa8d8e8, r()), cell: 'plain', at: [cos(a) * 0.9, 0.08, -0.4 + sin(a) * 0.55] }); }
+      for (let i = 0; i < 7; i++) { const a = i / 7 * TAU + 0.3; R.add(GEO.lumpy(GEO.sph(0.3, 0.07, 0.24, 10, 6), 0.25, 4, i + 20), { b: 'body', c: Rig.mix(FOAM, 0xa8d8e8, r()), cell: 'plain', at: [cos(a) * 0.95, 0.04, -0.4 + sin(a) * 0.6] }); }
+      waterDisk(R, 1.5, [0, 0.02, -0.3], 0x1e6a7a);
       // drowned faces pressed into the water (wailing)
       const faces = [[-0.45, 1.2, 'w1', 0.32], [0.3, 1.5, 'w2', 0.28], [-0.1, 0.65, 'w1', 0.26], [0.55, 0.85, 'w1', 0.22], [-0.55, 1.9, 'w2', 0.22]];
       faces.forEach(([x, y, b, sz], i) => {
@@ -3514,6 +3515,7 @@ G.Mon3D = G.Mon3D || {
       R.fx({ mode: 'wander', n: 16, at: [0, 0.3, -0.6], box: [6, 0.4, 8], col: [0xe0f0f8], size: 1.4, speed: 0.2, p: [0.6, 0.2, 1], blend: 'normal' });
       R.light({ b: 'body', at: [0, 2.2, 0.2], color: '#ffc860', i: 1.2, r: 8, flicker: 0.1 });
     },
+    always(k) { k.r('body', 0, 0.6, 0); },
     idle(k) {
       // slow vast breathing; swells passing along the body; the tail lifts and settles
       const b = sin(k.t * 0.5);
@@ -3749,9 +3751,9 @@ G.Mon3D = G.Mon3D || {
 
   // place a small eye sphere on a surface point facing outward (eyeball decal on its front)
   function eyeAt(R, b, p, n, r, o = {}) {
-    const g = GEO.sph(r, r, r * 0.8, 12, 10);
+    const g = GEO.sph(r, r, r * 0.8, 10, 8);
     R.add(g, { b, m: o.m || 'glow', c: o.c || 0x8a8a8a, cell: o.cell || 'eyeball', uvp: 'z', at: p, rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().normalize()), 'YXZ'); return [e.x, e.y, e.z]; })() });
-    if (o.lid !== false) R.add(GEO.tor(r * 1.02, r * 0.18, 5, 14), { b, m: o.lidM || 'psy', c: o.lidC || 0x8070b0, cell: 'blank', at: p, rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().normalize()), 'YXZ'); return [e.x, e.y, e.z]; })() });
+    if (o.lid !== false) R.add(GEO.tor(r * 1.02, r * 0.18, 4, 12), { b, m: o.lidM || 'psy', c: o.lidC || 0x8070b0, cell: 'blank', at: p, rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().normalize()), 'YXZ'); return [e.x, e.y, e.z]; })() });
   }
 
   // ============================================================================ 百眼 hundred_eye
@@ -3824,7 +3826,7 @@ G.Mon3D = G.Mon3D || {
   // playing. A faceted prism in a turning heptagonal cage. Phase 2 (夜玄 opens his jar: 「念兒……再等爹一下。」): the cage
   // unfolds into a second, larger lattice and the prism blazes.
   defB('jewel_child', {
-    h: 2.6, outline: 0, rim: 0.5, psy: [3.0, 7, 0.25, 1.15], phaseGlow: 1.5,
+    h: 2.6, outline: 0, rim: 0.5, psy: [3.0, 7, 0.25, 1.15], phaseGlow: 1.5, glowGain: 0.25,
     build(R) {
       R.bone('body', 'root', [0, 1.5, 0]);
       R.bone('gem', 'body', [0, 1.5, 0]);
@@ -3832,11 +3834,11 @@ G.Mon3D = G.Mon3D || {
       R.bone('cage2', 'body', [0, 1.5, 0]);
       R.bone('limbs', 'body', [0, 1.5, 0]);
       // the prism: stretched faceted octahedron with an inner icosahedral core
-      const gem = GEO.faceted(GEO.oct(0.48)); GEO.warp(gem, (v) => { v.y *= 1.25; v.x *= 1.05; });
+      const gem = GEO.faceted(GEO.oct(0.62)); GEO.warp(gem, (v) => { v.y *= 1.2; v.x *= 1.05; });
       R.add(gem, { b: 'gem', m: 'psy', c: 0x9a90c0, cell: 'blank', at: [0, 1.5, 0] });
-      R.add(GEO.faceted(GEO.ico(0.26, 0)), { b: 'gem', m: 'glow', c: 0xd0c0ff, cell: 'blank', at: [0, 1.5, 0] });
+      R.add(GEO.faceted(GEO.ico(0.3, 0)), { b: 'gem', m: 'glow', c: 0x8070a0, cell: 'blank', at: [0, 1.5, 0] });
       // little face on the front facets
-      R.add(GEO.plane(0.36, 0.36), { b: 'gem', m: 'cut', c: 0xffffff, cell: 'jewelface', decal: true, at: [0, 1.46, 0.33], rot: [-0.1, 0, 0] });
+      R.add(GEO.plane(0.44, 0.44), { b: 'gem', m: 'cut', c: 0xffffff, cell: 'jewelface', decal: true, at: [0, 1.46, 0.42], rot: [-0.1, 0, 0] });
       // floating gem hands and feet
       for (const [x, y, z, s] of [[-0.6, 1.25, 0.15, 0.1], [0.6, 1.25, 0.15, 0.1], [-0.25, 0.75, 0.1, 0.09], [0.25, 0.75, 0.1, 0.09]]) R.add(GEO.faceted(GEO.oct(s)), { b: 'limbs', m: 'psy', c: 0xa0a0d0, cell: 'blank', at: [x, y, z], s: [1, 1.4, 1] });
       // heptagonal cage: two rings + verticals, glowing struts
@@ -3850,7 +3852,7 @@ G.Mon3D = G.Mon3D || {
       cage('cage', 0.95, 0.75, 0x60a070, 0.012);
       const p2 = R.phaseBone('cageP', 'cage2', [0, 1.5, 0], 2);
       cage(p2, 1.45, 1.05, 0xb060c0, 0.015);
-      R.add(GEO.plane(2.4, 2.4), { b: 'cage', m: 'add', c: 0x504080, cell: 'mandala', decal: true, at: [0, 1.5, -0.6] });
+      R.add(GEO.plane(2.2, 2.2), { b: 'cage', m: 'add', c: 0x30285a, cell: 'mandala', decal: true, at: [0, 1.5, -0.6] });
       R.fx({ mode: 'orbit', n: 30, at: [0, 1.5, 0], box: [0.1, 1.0, 0.1], col: [0xff80c0, 0x80ffe0, 0xffff80, 0x80a0ff], size: 0.06, speed: 1.2, p: [1.0, 0.6, 1] });
       R.fx({ mode: 'wander', n: 16, at: [0, 1.5, 0], box: [2, 2, 2], col: [0xffffff], size: 0.04, speed: 1.5, p: [0.4, 1, 1] });
       R.light({ b: 'gem', at: [0, 1.5, 0.6], color: '#c0a0ff', i: 0.8, r: 3.5, flicker: 0.15 });
@@ -3882,7 +3884,7 @@ G.Mon3D = G.Mon3D || {
   // to lose: iridescent mirror skin, a mandala where the face was, mirror shards wheeling around it.
   const WX = {};
   defB('wuxiang', {
-    h: 6.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0x8ab0ff, wide: 1.5, scroll: 0.12, psy: [1.1, 9, 0.1, 1.2], phaseGlow: 1.35, ao: 0.4, edge: [1.6, 0.6, 0.3],
+    h: 6.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0x8ab0ff, wide: 1.5, glowGain: 0.2, scroll: 0.12, psy: [1.1, 9, 0.1, 1.2], phaseGlow: 1.35, ao: 0.4, edge: [1.6, 0.6, 0.3],
     build(R) {
       R.bone('body', 'root', [0, 0.2, 0]);
       R.bone('mass', 'body', [0, 2.2, -0.2]);
@@ -3958,7 +3960,7 @@ G.Mon3D = G.Mon3D || {
       const sh = R.phaseBone('shards', 'body', [0, 3.0, 0], 3);
       for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, rr = 3.2 + (i % 3) * 0.4; R.add(GEO.oct(0.22 + r() * 0.15), { b: sh, m: 'psy', c: 0xd0c8ff, cell: 'blank', at: [cos(a) * rr, 2.2 + sin(i * 2.1) * 1.6, sin(a) * rr], s: [0.35, 1.8, 0.12], rot: [r(), a, r()] }); }
       // the black sea it rises from, with a line of drifting lanterns
-      waterDisk(R, 5.2, [0, 0.02, 0.4], 0x060a14);
+      waterDisk(R, 5.2, [0, 0.02, 0.4], 0x0a1222, 'soft');
       for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, rr = 3.4 + (i % 2) * 0.6; lantern('root', [cos(a) * rr, 0.12, sin(a) * rr + 0.4], [1.4, 1.4, 1.4]); }
       R.fx({ mode: 'rise', n: 50, at: [0, 2.0, 0.4], box: [5, 3, 4], col: [LAN, 0xffc080], size: 0.12, speed: 0.3, p: [3.0, 0.5, 1] });
       R.fx({ mode: 'fall', n: 40, at: [0, 4.5, 0.6], box: [3.5, 2, 2.5], col: [0x02040a, 0x101828], size: 0.12, speed: 0.6, p: [3.5, 0.2, 1], blend: 'normal' });
