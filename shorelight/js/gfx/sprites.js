@@ -1596,9 +1596,7 @@
     stick(c, 0, L * 0.9, 2.4 * t, '#2a2230', lw);
     const [dx, dy] = worldDown(c);
     const hx = L * 0.97, hy = 0;
-    c.beginPath(); c.moveTo(L * 0.88, 0); c.quadraticCurveTo(L * 1.02, 0, L * 1.0 - dy * 3 * t * 0, 0); stroke(c, '#d6b25a', 0.1);
-    c.beginPath(); c.moveTo(L * 0.86, 0); c.quadraticCurveTo(L * 0.98 + dx * -2 * t, dy * -2 * t, hx + dx * 3 * t + (dy > 0 ? 0 : 0), hy + dy * 3 * t);
-    void 0;
+    c.beginPath(); c.moveTo(L * 0.86, 0); c.quadraticCurveTo(L * 1.02 - dx * 2 * t, -dy * 2 * t, hx + dx * 3 * t, hy + dy * 3 * t);
     stroke(c, ol('#d6b25a'), 2.6 * t); stroke(c, '#d6b25a', 1.6 * t);
     ball(c, L * 0.9, 0, 2 * t, '#d6b25a', lw * 0.6);
     const lx = hx + dx * 11 * t, ly = hy + dy * 11 * t;

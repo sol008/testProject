@@ -38,12 +38,14 @@
   window.__errors = [];
   window.addEventListener('error', (e) => window.__errors.push(String(e.message)));
 
-  // bench: bake time + mean live draw time per id
-  if (q.has('bench')) {
-    const off = document.createElement('canvas'); off.width = 1280; off.height = 720;
+  // bench: bake time + live draw time per id (ms, best and mean of 6 chunks); runs before the display loop
+  if (q.has('bench')) (async () => {
+    const off = document.createElement('canvas'); off.width = 1280 * S; off.height = 720 * S;
     const octx = off.getContext('2d');
     const res = {};
     for (const id of ids) {
+      await new Promise((r) => setTimeout(r, 0));
+      octx.setTransform(S, 0, 0, S, 0, 0);
       const t0 = performance.now(); G.Backdrops.preload(id); const bake = performance.now() - t0;
       for (let i = 0; i < 10; i++) G.Backdrops.draw(octx, id, i * 0.1); // warm sprite caches
       octx.getImageData(0, 0, 1, 1);
@@ -59,7 +61,8 @@
     }
     window.__bench = res;
     console.log(JSON.stringify(res));
-  }
+    requestAnimationFrame(frame);
+  })();
 
   cv.addEventListener('click', (e) => {
     if (single) return;
@@ -94,7 +97,7 @@
     });
     if (freeze == null) requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  if (!q.has('bench')) requestAnimationFrame(frame);
 })();
 </script>
 </body>

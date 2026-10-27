@@ -65,12 +65,12 @@
         }),
       },
       {
-        name: '海霧幽光', en: 'Sea-mist Phantom', style: 'water', expr: 'normal', bg: ['#a8d8e8', '#d0c8f0'], accent: '#9ad8f0',
+        name: '海霧幽光', en: 'Sea-mist Phantom', style: 'water', expr: 'normal', bg: ['#2a6a8a', '#6a6aa8'], bgA: 0.85, accent: '#9ad8f0',
         desc: '強調「燈靈」本質：長髮像在水中漂浮、髮尾化成光點，身形下緣半透明。眼神有點恍惚、像隨時會被海風吹散。',
         spec: bz({
           eye: { iris: IRIS.paleGold, droop: 0.06, lid: 0.92 },
           hair: { base: '#eef4fa', dark: '#a8c0e0', light: '#ffffff', line: '#8aa0c8', hi: '#ffffff' },
-          ghost: { tint: '#cfeeff', amt: 0.16, fade: 230, glow: '#bfe8ff' },
+          ghost: { tint: '#cfeeff', amt: 0.1, fade: 236, glow: '#bfe8ff' },
           aura(c) { AC.aura(c, '#bfeaff', 0.35, 180); },
           back(c, S) { HB.float(c, S, { tip: 'rgba(210,240,255,0.15)' }); },
           body(c, S) {
@@ -94,7 +94,7 @@
         desc: '中元夏夜感：銀髮編成側辮垂在胸前、紅繩穿辮，頭上一盞小蓮花水燈；白衣配珊瑚紅領與腰帶，明亮可愛、色彩跳。',
         spec: bz({
           hair: { base: '#e2eaf8', dark: '#8ca2d2', light: '#ffffff', line: '#6a80b0', hi: '#ffffff' },
-          eye: { h: 1.05, irisH: 1.05 },
+          faceOpt: { eyeH: 39, round: 0.3 }, eye: { h: 1.05, irisH: 1.05, slant: -0.03 },
           back(c, S) { HB.bob(c, S, { len: 40 }); },
           body(c, S) {
             OF.robe(c, S, { col: '#fbf6f2', colL: '#ffffff', colD: '#d8ccc8', line: '#8a7a78', X: [4, 154], collar: [{ col: '#f07a80', line: '#8a2a30', w: 7 }, { col: '#ffffff', line: '#b0a0a0', w: 4 }] });
@@ -171,7 +171,7 @@
         name: '彼岸花燈', en: 'Spider-lily Lamp of the Far Shore', style: 'donghua', expr: 'serious', bg: ['#1a060c', '#4a0a18'], accent: '#ff4a5a', rim: '#ffd0d0',
         desc: '大膽詮釋「彼岸」面：銀髮髮尾漸層成彼岸花紅，鬢邊一朵發光的曼珠沙華；黑底紅襟長衣、緋金眼眸、紅瓣飄落。神秘又危險的美。',
         spec: bz({
-          eye: { iris: ['#5a0a10', '#c03030', '#ffb060', '#fff0c0'], slant: 0.05 },
+          eye: { iris: ['#5a0a10', '#c03030', '#ffb060', '#fff0c0'], slant: 0.11, h: 0.9, lashMul: 1.2 },
           skin: { base: '#fff2ee', mid: '#f6dcd6' },
           hair: { base: '#f2eef4', dark: '#c86a7a', light: '#ffffff', line: '#8a5068', hi: '#ffffff' },
           aura(c) { AC.aura(c, '#ff5a6a', 0.18, 170); },
@@ -208,7 +208,7 @@
           acc(c) {
             AC.lantern(c, -62, 34, 0.7, {});
             c.strokeStyle = '#d8b25a'; c.lineWidth = 1; c.beginPath(); c.moveTo(-62, 24); c.lineTo(-62, 34); c.stroke();
-            AC.cordWrap(c, -60, -76, '#d0283a', -0.4);
+            AC.bow(c, -56, -84, '#d0283a', 0.75);
           },
         }),
       },
@@ -216,7 +216,7 @@
         name: '墨韻燈靈', en: 'Ink-wash Lamp Spirit', style: 'ink', expr: 'normal', bg: ['#a0c8d8', '#222'], inkAccent: true,
         desc: '水墨版：極長的髮如一筆濃淡墨暈開，素白衣只留紅繩與燈籠一點紅。留白多、意境重，適合做章節插畫或開場圖。',
         spec: bz({
-          eye: { droop: 0.05 },
+          eye: { droop: 0.05, lid: 0.86 },
           hair: { base: '#d8dce4', dark: '#6a7488', light: '#ffffff', line: '#4a5468', hi: '#ffffff' },
           back(c, S) { HB.long(c, S, { len: 220, w: 1.12, wf: 1.05 }); },
           body(c, S) {
@@ -235,7 +235,7 @@
         name: '燈母遺珠', en: 'Heir of the Lantern Mother', style: 'classic', expr: 'normal', bg: ['#2a1a3a', '#6a4a2a'], accent: '#ffd070',
         desc: '神性最高的版本：高髻戴金蓮冠、兩側垂步搖，額間一點火焰花鈿，身後一圈燈籠光環；白金褙子層層疊疊。適合真結局或覺醒形態。',
         spec: bz({
-          eye: { iris: ['#8a5a0a', '#e0a020', '#ffe070', '#ffffff'] },
+          eye: { iris: ['#8a5a0a', '#e0a020', '#ffe070', '#ffffff'], lid: 0.9, irisW: 0.96 },
           hair: { base: '#f4f2f0', dark: '#c8b8a0', light: '#ffffff', line: '#9a8a70', hi: '#ffffff' },
           aura(c) { AC.halo(c, { r: 108, lanterns: 5, col: '#f2d27a' }); },
           back(c, S) { HB.long(c, S, { len: 210 }); },

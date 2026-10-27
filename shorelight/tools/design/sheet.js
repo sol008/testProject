@@ -54,8 +54,8 @@
     const r = U.seeded(opt.seed || 5);
     if (st === 'water') {
       c.fillStyle = '#f4ecdc'; c.fillRect(0, 0, w, h);
-      blotch(c, w * 0.5, h * 0.42, 220, bg[0], 0.35, opt.seed);
-      blotch(c, w * 0.3, h * 0.75, 140, bg[1], 0.28, (opt.seed || 1) + 7);
+      blotch(c, w * 0.5, h * 0.42, 220, bg[0], opt.bgA || 0.35, opt.seed);
+      blotch(c, w * 0.3, h * 0.75, 140, bg[1], (opt.bgA || 0.35) * 0.8, (opt.seed || 1) + 7);
       grain(c, w, h, 0.25, opt.seed);
       return;
     }
@@ -206,7 +206,7 @@
       ch.options.forEach((opt, i) => {
         opt.seed = opt.seed || (i + 1) * 17 + ch.id.length;
         if (opt.spec && !opt.spec.seed) opt.spec.seed = opt.seed;
-        if (opt.spec && opt.spec.ring === undefined) opt.spec.ring = { a: opt.style === 'water' ? 0.3 : opt.style === 'cel' ? 0.75 : 0.5 };
+        if (opt.spec && opt.spec.ring === undefined) opt.spec.ring = opt.style === 'ink' ? null : { a: opt.style === 'water' ? 0.3 : opt.style === 'cel' ? 0.75 : 0.5 };
         const card = document.createElement('div'); card.className = 'card s-' + opt.style;
         const art = renderCard(opt, opt.accent || ch.accent);
         const num = String(i + 1).padStart(2, '0');

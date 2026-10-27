@@ -32,3 +32,12 @@ Deities are never depicted (temple interiors show only altar silhouettes; palanq
   signboard (text, v:1 red), bench 2x1 (w), fence_wood/fence_bamboo 3x1 (w; w:1,h:N vertical), laundry 2x1 (ends solid),
   boat_small 2x1, boat_ferry 3x2, dock_post, water_lantern (non-solid, text), sky_lantern (over, non-solid, v, text, alt),
   statue_lion (v, flip), wind_lion, banner (color, edge, text), grave (v 0–2), coffin 2x1, bones (non-solid), firepit, totem, loom, drum_rack, bell_tower 2x2.
+
+## Terrain (js/gfx/tiles.js)
+- Walls 2 cells thick (top cell = ceiling/top, lower cell = 50px face under a 14px top strip); floors below/beside walls get AO shadow.
+- `cliff` top uses the grass texture: put grass north of cliffs to avoid a seam.
+- `stairs` run north–south (up = north), curbs where W/E neighbours are not stairs.
+- `bridge_h` spans E–W, `bridge_v` N–S; may be several cells wide; water under it is taken from neighbouring water.
+- `dock` / `deck` with water to the south draw a wooden beam & posts in the water cell. `rail` auto-connects.
+- Solid: all water types except `shallow` and `marsh` (wadeable); `black_sea` solid; `field_rice` solid (walk on ridges — use path/dirt between paddies).
+- Soft spill edges: grass/path/dirt/sand/coral/lily/moss blend outward; stone/brick/marble/slate/basalt never spill; interiors don't receive spill.

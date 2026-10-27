@@ -285,16 +285,14 @@
   };
   // two hair loops (雙環髻) standing up on the crown
   HF.loops = (c, S, o = {}) => {
-    const H = S.hair;
-    for (const [x, y, a, s] of [[-40, -110, -0.5, 1], [14, -116, 0.35, 0.9]]) {
-      c.save(); c.translate(x, y); c.rotate(a); c.scale(s, s);
-      c.beginPath();
-      c.moveTo(-10, 4); c.bezierCurveTo(-34, -30, -10, -66, 4, -60); c.bezierCurveTo(22, -52, 18, -20, 10, 4);
-      c.lineTo(2, 2); c.bezierCurveTo(8, -18, 10, -44, 2, -48); c.bezierCurveTo(-10, -52, -22, -26, -2, 4); c.closePath();
-      const g = c.createLinearGradient(0, -60, 0, 4); g.addColorStop(0, U.mix(H.base, H.light, 0.3)); g.addColorStop(1, H.dark);
-      c.fillStyle = g; c.fill(); c.strokeStyle = H.line; c.lineWidth = 1.3; c.stroke();
-      c.restore();
+    const K = S.K, s = o.s || 1;
+    // each loop = a lock that leaves the crown, arcs up and tucks back in (leaves a hole)
+    for (const [x, y, d] of [[-44, -100, -1], [8, -108, 1]]) {
+      const sp = [x, y, x + d * 6 - 26 * s, y - 64 * s, x + d * 6 + 26 * s, y - 70 * s, x + d * 4 + 8, y - 2];
+      K.lock(c, sp, 15 * s, { p: 0.15, bulge: 0.1, w0: 1, strands: 2, rootLine: 0 });
     }
+    // knot at the base of the loops
+    K.mass(c, (c) => { ell(c, -16, -106, 26, 12, -0.1); }, { y0: -118, y1: -94 });
   };
 
   // ================================================================== OUTFITS (body-local)
@@ -971,11 +969,13 @@
   // floating 披帛 shawl ribbon behind the shoulders (body-local)
   AC.pibo = (c, o = {}) => {
     const col = o.col || '#dff0ff';
-    for (const [sp, w] of [[[-60, 104, -140, 90, -150, 30, -130, -60], 20], [[50, 100, 130, 96, 150, 40, 140, -30], 16]]) {
-      ribbonPath(c, sp, w, { p: 0.15, bulge: 0.6, w0: 0.8 });
-      const g = c.createLinearGradient(sp[0], sp[1], sp[6], sp[7]); g.addColorStop(0, U.rgba(col, 0.95)); g.addColorStop(1, U.rgba(col, 0.25));
-      c.fillStyle = g; c.fill(); c.strokeStyle = U.rgba(o.line || '#8aa8c8', 0.7); c.lineWidth = 1; c.stroke();
-    }
+    // one long scarf arching behind the back from hip to hip, plus a fluttering end
+    const sp = [-150, 210, -176, 40, 160, 30, 140, 210];
+    ribbonPath(c, sp, 22, { p: 0, bulge: 0.15, w0: 1, n: 30 });
+    const g = c.createLinearGradient(0, 30, 0, 210); g.addColorStop(0, U.rgba(col, 0.5)); g.addColorStop(1, U.rgba(col, 0.9));
+    c.fillStyle = g; c.fill(); c.strokeStyle = U.rgba(o.line || '#8aa8c8', 0.7); c.lineWidth = 1; c.stroke();
+    ribbonPath(c, [-128, 150, -150, 110, -170, 120, -176, 80], 12, { p: 0.4, bulge: 0.3, w0: 1 });
+    c.fillStyle = U.rgba(col, 0.75); c.fill(); c.stroke();
   };
   // a bowl of 芋圓 held in front (body-local)
   AC.taroBowl = (c, x, y) => {

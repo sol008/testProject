@@ -111,6 +111,8 @@ G.Mapx = G.Mapx || {};
           this.terrain[yy * this.w + xx] = legend[ch] || 'grass';
         }
       }
+      // pre-build tile textures now (during the transition fade) instead of on first draw
+      if (G.Tiles.warm) { try { G.Tiles.warm([...new Set(this.terrain)]); } catch (e) { G.warnOnce('tiles warm', e); } }
       // objects
       this.objects = [];
       const addObj = (o) => {
