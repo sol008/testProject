@@ -192,7 +192,7 @@
         case 'mx': { const X1 = nv('x'); const A = g(n.c[0], X1, y, z); return { c: `${X1}=Math.abs(${x});\n` + A.c, d: A.d, m: A.m }; }
         case 'disp': { const A = g(n.c[0], x, y, z); const d = nv('d'); return { c: A.c + `\n${d}=${A.d}+${xf(a[0])}(${x},${y},${z});`, d, m: A.m }; }
         case 'bound': { const [cx, cy, cz, r] = a; const A = g(n.c[0], x, y, z); const d = nv('d'), m = nv('m');
-          return { c: `{const bd=Math.sqrt((${x}-${f(cx)})*(${x}-${f(cx)})+(${y}-${f(cy)})*(${y}-${f(cy)})+(${z}-${f(cz)})*(${z}-${f(cz)}))-${f(r)};if(bd>${f(0.25 * r)}){${d}=bd;${m}=0;}else{\n${A.c}\n${d}=${A.d};${m}=${A.m};}}`, d, m }; }
+          return { c: `{const bd=Math.sqrt((${x}-${f(cx)})*(${x}-${f(cx)})+(${y}-${f(cy)})*(${y}-${f(cy)})+(${z}-${f(cz)})*(${z}-${f(cz)}))-${f(r)};if(bd>${f(0.25 * r + 0.12)}){${d}=bd-0.1;${m}=0;}else{\n${A.c}\n${d}=${A.d};${m}=${A.m};}}`, d, m }; }
         case 'fluff': { const [amp, freq, sharp, off, sy, mask] = a; const A = g(n.c[0], x, y, z); const d = nv('d');
           const mk = mask ? xf(mask) : null;
           return { c: A.c + `\nif(${A.d}>${f(amp * 2.2)})${d}=${A.d}-${f(amp)};else{const w=${mk ? `${mk}(${x},${y},${z})` : '1'};if(w<=0)${d}=${A.d};else{const nn=H.vnoise(${x}*${f(freq)}+${f(off)},${y}*${f(freq * sy)}+${f(off * 0.7)},${z}*${f(freq)}-${f(off)});const bb=Math.pow(Math.min(Math.max(nn*1.25-0.1,0),1),${f(sharp)});${d}=${A.d}-${f(amp)}*bb*w;}}`, d, m: A.m };
