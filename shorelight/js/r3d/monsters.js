@@ -728,7 +728,7 @@
           geo.setIndex(keep);
         }
         const tmp = new T.SkinnedMesh(geo, this.matBody); tmp.bind(this.skeleton, this.body.bindMatrix);
-        this.outline = G.R3M.outline(tmp, { width: spec.outlineW != null ? spec.outlineW : 0.0032, color: spec.outlineCol || shade(p.line || '#2a2026', -0.35) });
+        this.outline = G.R3M.outline(tmp, { width: spec.outlineW != null ? spec.outlineW : 0.0026, color: spec.outlineCol || shade(p.line || '#2a2026', -0.35) });
         this.outline.frustumCulled = false; this.outline.name = 'outline';
         this.model.add(this.outline); this.outline.bind(this.skeleton, this.body.bindMatrix);
         this.outlineGeo = geo !== this.body.geometry ? geo : null;
@@ -1145,8 +1145,9 @@
   // finial, yellow 符 talisman on the forehead (spring paper), stiff outstretched arms, queue braid, hopping.
   defC('jiangshi', {
     height: 1.95, fill: 0.93, radius: 0.35, shadow: 0.36, rimColor: '#c8ffd0',
-    pal: { skin: '#9fb89a', skinD: '#5d7a62', robe: '#1f2a52', robeD: '#0e1430', robeL: '#3a4a86', trim: '#d9b45a', hat: '#2a2a2e', tassel: '#c8242c', talis: '#f2d36a', ink: '#b3121c', eye: '#f4ffb0', line: '#121520', magic: '#9cff7a' },
-    vars: [{ h: 115, s: 0.9, keep: ['talis', 'ink', 'eye', 'trim'] }, { h: 50, s: 1.2, l: 0.02, keep: ['talis', 'ink', 'eye'] }],
+    // palette & variants follow js/gfx/monsters.js (2D 'badge' gold → trim here)
+    pal: { skin: '#a8c4a0', skinD: '#5a7a5a', robe: '#1e2a4a', robeD: '#0a1024', robeL: '#4a5a8a', trim: '#c8a24a', hat: '#1a1a1a', tassel: '#c8202a', talis: '#f2d24a', ink: '#c0181a', eye: '#e8ffd0', line: '#0a0c14', magic: '#b8ff8a' },
+    vars: [{ h: 110, s: 0.9, keep: ['skin', 'skinD', 'talis', 'ink', 'hat', 'tassel', 'eye', 'trim'] }, { h: -150, s: 1.2, l: -0.02, keep: ['talis', 'ink', 'hat', 'trim'], set: { eye: '#ff6a5a', magic: '#ff6a5a' } }],
     slots: {
       skin(g, w, h, p, R) { Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 40, 8, 30, 0.35, R); Paint.mottle(g, w, h, '#c9d8b4', 20, 6, 20, 0.25, R); Paint.strokes(g, w, h, shade(p.skinD, -0.2), 30, 30, PI / 2, 1, 0.25, R, 1.5); },
       face: { size: 4, paint(g, w, h, p, R) {
@@ -1637,8 +1638,8 @@
       // ghost flame: the flame flares huge, paper glows white-hot
       cast(P, t, k) {
         const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k));
-        P.rootM(0, 0.2 * u + 0.12, 0, -0.1 * u, t * 2 * u); P.s('f0', 0.6 * u, 1.2 * u, 0.6 * u).s('f1', 0.3 * u, 0.6 * u, 0.3 * u);
-        P.s('body', 0.06 * u * sin(t * 20), 0); P.ch('glow', 1.8 * u); P.ch('fx_cast', u); P.ch('fx_embers', u * 4);
+        P.rootM(0, 0.2 * u + 0.12, 0, -0.1 * u, t * 2 * u); P.s('f0', 0.35 * u, 0.6 * u, 0.35 * u).s('f1', 0.2 * u, 0.35 * u, 0.2 * u);
+        P.s('body', 0.06 * u * sin(t * 20), 0); P.ch('glow', 1.0 * u); P.ch('fx_cast', u); P.ch('fx_embers', u * 4);
       },
       // lantern glare: eyes blaze, paper bulges
       special(P, t, k) {
@@ -1855,7 +1856,7 @@
         const A = atk(k, 0.3, 0.45, 0.62);
         this.idle(P, t * 1.4, k, C);
         for (const [s, S] of SIDES) P.r('w0' + S, 0, -s * 0.6 * A.s, s * 0.8 * A.a - s * 0.3 * A.s);
-        P.rootM(0, 0.25 * A.a - 0.35 * A.s, 0.45 * A.s, -0.2 * A.a + 0.6 * A.s); P.r('jaw', 0.6 * A.s + 0.2 * A.a).r('head', 0.3 * A.s);
+        P.rootM(0, 0.2 * A.a - 0.22 * A.s, 0.32 * A.s, -0.2 * A.a + 0.5 * A.s); P.r('jaw', 0.6 * A.s + 0.2 * A.a).r('head', 0.3 * A.s);
       },
       // screech → bat swarm
       cast(P, t, k, C) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); this.idle(P, t * 1.8, k, C); P.r('head', -0.6 * u).r('jaw', 0.7 * u); P.rootM(0, 0.15 * u, -0.1 * u, -0.3 * u); P.ch('fx_cast', u); P.ch('glow', u * 1.5); },
@@ -1869,7 +1870,7 @@
       enter(P, t, k, C) { this.idle(P, t * 1.5, k, C); const u = 1 - E.outC(seg(k, 0, 0.8)); P.rootM(0, 1.2 * u, -0.5 * u, 0.3 * u); P.ch('fade', u * 0.8); },
     },
     dur: { attack: 0.95, cast: 1.4 },
-    shadowZ: 0.6, shadowX: 1.6,
+    overlayReplace: 1, shadowZ: 0.6, shadowX: 1.6,
   });
 
   // ===================================================================================================
@@ -2258,8 +2259,8 @@
       // whip-slash with the cane arm, bamboo spikes erupt from the ground
       attack(P, t, k) {
         const A = atk(k, 0.32, 0.45, 0.65);
-        P.r('shR', -1.6 * A.a + 1.0 * A.s, 0, -0.6 * A.a + 0.3 * A.s).r('armR', -0.4 * A.a + 0.3 * A.s).r('handR', 0.4 * A.s);
-        P.r('chest', -0.1 * A.a + 0.2 * A.s, 0.3 * A.a - 0.4 * A.s).r('spine', 0, 0.2 * A.a - 0.2 * A.s);
+        P.r('shR', -2.4 * A.a + 1.2 * A.s, 0, -0.9 * A.a + 0.5 * A.s).r('armR', -0.8 * A.a + 0.5 * A.s).r('handR', 0.8 * A.s);
+        P.r('chest', -0.15 * A.a + 0.25 * A.s, 0.5 * A.a - 0.6 * A.s).r('spine', 0, 0.3 * A.a - 0.3 * A.s).r('head', 0, -0.3 * A.a + 0.3 * A.s);
         P.rootM(0, 0, 0.15 * A.s, 0.12 * A.s); P.ch('fx_spikes', bump(k, 0.44, 0.6) * 3);
       },
       // 沙沙 rustle: shivers, leaves whirl
@@ -2427,7 +2428,7 @@
       // head-down charge with a tusk hook at the end
       attack(P, t, k) {
         const A = atk(k, 0.35, 0.5, 0.66), hook = bump(k, 0.46, 0.66);
-        P.rootM(0, 0, -0.15 * A.a + 0.6 * A.s, 0.1 * A.a - 0.05 * A.s);
+        P.rootM(0, 0, -0.15 * A.a + 0.42 * A.s, 0.1 * A.a - 0.05 * A.s);
         P.r('neck', 0.3 * A.a + 0.2 * A.s - 0.5 * hook).r('head', 0.2 * A.a - 0.5 * hook);
         for (const [s, S] of SIDES) { P.r('legF' + S, 0.3 * A.a - 0.4 * A.s).r('legB' + S, -0.4 * A.a + 0.4 * A.s).r('kneeB' + S, 0.5 * A.a); }
         P.ch('fx_dust', bump(k, 0.3, 0.6) * 3); P.ch('fx_snort', A.a * 2);
@@ -2470,7 +2471,10 @@
     }
     return J;
   }
-  const monkeyClips = (stone) => ({
+  const monkeyClips = (stone) => {
+  // the stone monkey's plinth is skinned to root, so its body motion is applied at the hips instead
+  const RM = (P, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sq = 0) => (stone ? P.p('hips', x, y, z).r('hips', rx, ry, rz) : P.rootM(x, y, z, rx, ry, rz, sq));
+  return {
     idle(P, t) {
       breathe(P, t, 1.2);
       const scratch = max(0, sin(t * 0.7)) ** 8;
@@ -2478,15 +2482,15 @@
       for (const [s, S] of SIDES) P.r('knee' + S, 0.25).r('leg' + S, -0.12);
       if (!stone) P.r('shL', -1.4 * scratch, 0, 0.6 * scratch).r('armL', -1.4 * scratch).r('handL', sin(t * 20) * 0.3 * scratch);
       P.r('shR', -0.2 + sin(t * 1.1) * 0.05).r('armR', -0.6);
-      P.rootM(0, abs(sin(t * (stone ? 1 : 2.4))) * 0.01, 0, 0.08, 0, sin(t * 0.8) * 0.03);
+      RM(P, 0, abs(sin(t * (stone ? 1 : 2.4))) * 0.01, 0, 0.08, 0, sin(t * 0.8) * 0.03);
       for (let i = 1; i < 5; i++) P.r('tl' + i, sin(t * 1.5 - i * 0.6) * 0.15, sin(t * 1.1 - i * 0.5) * 0.2);
     },
     // loping knuckle-walk
-    move(P, ph) { const a = ph * TAU; for (const [s, S] of SIDES) { const o = s > 0 ? 0 : PI; P.r('leg' + S, -0.5 * sin(a + o)).r('knee' + S, 0.4 + 0.4 * max(0, sin(a + o + 1))).r('sh' + S, -0.8 + 0.5 * sin(a + o + PI)); } P.rootM(0, abs(sin(a)) * 0.04, 0, 0.45); P.r('head', -0.4); },
+    move(P, ph) { const a = ph * TAU; for (const [s, S] of SIDES) { const o = s > 0 ? 0 : PI; P.r('leg' + S, -0.5 * sin(a + o)).r('knee' + S, 0.4 + 0.4 * max(0, sin(a + o + 1))).r('sh' + S, -0.8 + 0.5 * sin(a + o + PI)); } RM(P, 0, abs(sin(a)) * 0.04, 0, 0.45); P.r('head', -0.4); },
     // leap and swipe (macaque) / overhead stone fist (stone)
     attack(P, t, k) {
       const A = atk(k, 0.32, 0.46, 0.64), air = bump(k, 0.3, 0.55);
-      P.rootM(0, air * (stone ? 0.1 : 0.3), -0.05 * A.a + 0.4 * A.s, -0.15 * A.a + 0.3 * A.s);
+      RM(P, 0, air * (stone ? 0.1 : 0.3), -0.05 * A.a + 0.4 * A.s, -0.15 * A.a + 0.3 * A.s);
       P.r('shR', -2.4 * A.a + 1.4 * A.s, 0, -0.3 * A.a).r('armR', -0.6 * A.a + 0.3 * A.s).r('handR', 0.5 * A.s);
       P.r('shL', -1.0 * A.a + 0.4 * A.s, 0, 0.4 * A.a);
       for (const [s, S] of SIDES) P.r('knee' + S, 0.8 * A.a).r('leg' + S, -0.5 * A.a);
@@ -2496,14 +2500,17 @@
     // throw: wind up the right arm, hurl
     cast(P, t, k) { const A = atk(k, 0.4, 0.55, 0.7); P.r('shR', -2.6 * A.a + 1.0 * A.s, 0, -0.5 * A.a).r('armR', -0.9 * A.a).r('chest', 0, 0.4 * A.a - 0.4 * A.s); P.r('head', 0, 0.2 * A.a); P.ch('glow', A.s); P.ch('fx_throw', bump(k, 0.5, 0.6) * 4); },
     // taunt: jumps up and down, slaps chest, tail whips
-    special(P, t, k) { const u = bump(k, 0.05, 0.95), j = abs(sin(t * 9)); P.rootM(0, j * 0.12 * u, 0, 0, sin(t * 4.5) * 0.4 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.6 * u * (0.6 + 0.4 * sin(t * 18 + s)), 0, s * 0.3 * u); P.r('head', -0.3 * u).r('tl3', sin(t * 12) * 0.6 * u); P.ch('fx_cast', u); },
+    special(P, t, k) { const u = bump(k, 0.05, 0.95), j = abs(sin(t * 9)); RM(P, 0, j * 0.12 * u, 0, 0, sin(t * 4.5) * 0.4 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.6 * u * (0.6 + 0.4 * sin(t * 18 + s)), 0, s * 0.3 * u); P.r('head', -0.3 * u).r('tl3', sin(t * 12) * 0.6 * u); P.ch('fx_cast', u); },
     hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.ch('fx_hit', (1 - k) * 2); },
     die(P, t, k, C) {
-      if (stone) { const u = E.inQ(seg(k, 0, 0.3)); P.rootM(0, 0, 0, 0.2 * u); P.ch('flash', 0.3 * bump(k, 0.1, 0.3)); P.ch('dissolve', E.inQ(seg(k, 0.25, 1))); P.ch('fx_death', bump(k, 0.2, 0.9) * 3); P.ch('glow', 2 * bump(k, 0, 0.4)); return; }
+      if (stone) { const u = E.inQ(seg(k, 0, 0.3)); RM(P, 0, 0, 0, 0.2 * u); P.ch('flash', 0.3 * bump(k, 0.1, 0.3)); P.ch('dissolve', E.inQ(seg(k, 0.25, 1))); P.ch('fx_death', bump(k, 0.2, 0.9) * 3); P.ch('glow', 2 * bump(k, 0, 0.4)); return; }
       GEN.die(P, t, k, C);
     },
-    enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.6)), land = bump(k, 0.55, 0.85); P.rootM(0, 1.5 * u * u, 0, 0, 0, 0, -0.15 * land); for (const [s, S] of SIDES) P.r('knee' + S, 0.9 * land).r('leg' + S, -0.5 * land); },
-  });
+    enter(P, t, k) {
+      if (stone) { const u = bump(k, 0, 0.8); P.ch('glow', 2.5 * u); P.ch('flash', 0.25 * bump(k, 0.45, 0.6)); RM(P, sin(t * 40) * 0.01 * u, 0, 0); P.ch('fx_cast', u); return; } // the statue wakes
+      const u = 1 - E.outC(seg(k, 0, 0.6)), land = bump(k, 0.55, 0.85); P.rootM(0, 1.5 * u * u, 0, 0, 0, 0, -0.15 * land); for (const [s, S] of SIDES) P.r('knee' + S, 0.9 * land).r('leg' + S, -0.5 * land); },
+  };
+  };
 
   defC('macaque_demon', {
     height: 1.42, fill: 0.92, radius: 0.33, shadow: 0.36, rimColor: '#fff0d8',
@@ -2939,7 +2946,7 @@
       // stiff shuffling glide, arms hanging
       move(P, ph) { const a = sin(ph * TAU); P.rootM(0, abs(a) * 0.02, 0, 0, a * 0.1, a * 0.06); for (const [s, S] of SIDES) P.r('leg' + S, -0.15 * a * s); },
       // paper-edge slash
-      attack(P, t, k) { const A = atk(k, 0.3, 0.42, 0.6); P.rootM(0, 0, 0.3 * A.s, 0, -0.5 * A.a + 0.8 * A.s); P.r('shR', -1.4 * A.a + 0.6 * A.s, 0, -0.6 * A.a + 1.2 * A.s).r('handR', 0.5 * A.s); P.r('head', 0, 0, 0.6 * A.s); P.ch('fx_cut', bump(k, 0.38, 0.55) * 4); },
+      attack(P, t, k) { const A = atk(k, 0.3, 0.42, 0.6); P.rootM(0, 0, 0.3 * A.s, 0, -0.5 * A.a + 0.8 * A.s); P.r('shR', -2.2 * A.a + 1.0 * A.s, 0, -1.0 * A.a + 1.6 * A.s).r('armR', -0.6 * A.a).r('handR', 0.5 * A.s); P.r('head', 0, 0, 0.6 * A.s); P.rootM(0, 0.06 * bump(k, 0.3, 0.5), 0); P.ch('fx_cut', bump(k, 0.38, 0.55) * 4); },
       // paper stare: the painted eyes glow and the head turns 180° then back
       cast(P, t, k) { const u = sm(0, 0.2, k) * (1 - sm(0.85, 1, k)); P.r('head', 0, PI * E.ioQ(bump(k, 0.05, 0.8)), 0.3 * u); P.ch('glow', 2.5 * u); P.ch('fx_cast', bump(k, 0.4, 0.8) * 2); },
       hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(0, 0, -0.1 * u, -0.2 * u); P.r('head', 0.4 * u, 0, 0.6 * u).r('chest', -0.3 * u); P.s('chest', -0.1 * u, 0, -0.2 * u); P.ch('fx_ash', 3 * u); },
@@ -3670,7 +3677,7 @@
         P.r('jaw', 0.5 * air).ch('fx_dust', land * 3);
       },
       // lullaby (e_tiger_lullaby): sways side to side humming, glowing notes drift out
-      cast(P, t, k) { const u = sm(0, 0.25, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0, 0, 0, 0, sin(t * 3) * 0.12 * u); P.r('head', 0, 0, sin(t * 3) * 0.2 * u).r('jaw', 0.1 * u); for (const [s, S] of SIDES) P.r('sh' + S, -0.8 * u, 0, -s * 0.2 * u).r('arm' + S, -1.2 * u); P.ch('fx_notes', u * 3); P.ch('glow', u); },
+      cast(P, t, k) { const u = sm(0, 0.25, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0, 0, 0, 0, sin(t * 3) * 0.12 * u); P.r('head', 0, 0, sin(t * 3) * 0.2 * u).r('jaw', 0.1 * u); P.r('shL', -0.9 * u, 0, 0.3 * u).r('armL', -0.9 * u).r('handL', sin(t * 3) * 0.4 * u); P.r('spine', -0.08 * u); P.ch('fx_notes', u * 3); P.ch('glow', u); },
       hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.r('jaw', 0.4 * (1 - k)); },
       // the disguise slips off as she collapses; the scarf flutters down
       die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.5)); P.rootM(0, 0, -0.1, -0.15 * u, 0, 0.1 * u, -0.25 * u); P.r('sc0', -1.0 * u).r('head', 0.4 * u).r('jaw', 0.4 * u); for (const [s, S] of SIDES) P.r('knee' + S, 0.9 * u).r('leg' + S, -0.6 * u); P.ch('dissolve', E.inQ(seg(k, 0.4, 1))); P.ch('fx_death', bump(k, 0.35, 1) * 2); },
