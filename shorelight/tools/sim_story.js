@@ -271,8 +271,25 @@ async function main() {
     for (const m of mods.split(',')) { const [k, f] = m.split('*'); e[k] = Math.round(e[k] * +f); }
   }
   const { FIGHTS } = require('./sim_story_fights');
-  const fights = FIGHTS(G);
+  let fights = FIGHTS(G);
   if (opt('shops')) { printShops(env); return; }
+  // --model normal|minimal|thorough: each boss at the state tools/sim_economy.js expects that player to have there —
+  // its whole level (lv.fraction rounded down), the gear it could afford, the consumables it bought (none if it could
+  // not afford the chapter's kit). Only the bosses of the model are run. --modelfile f.json: a saved model() result.
+  if (opt('model')) {
+    const style = String(opt('model'));
+    const M = opt('modelfile') ? JSON.parse(fs.readFileSync(opt('modelfile'), 'utf8')) : require('./sim_economy').model();
+    const rec = {};
+    for (const b of M.bosses) if (b.style === style) rec[b.id] = b;
+    fights = fights.filter((F) => rec[F.id]).map((F) => {
+      const b = rec[F.id], lv = Math.floor(b.lvf);
+      const gear = {};
+      for (const cid of F.party) gear[cid] = Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, b.gear[cid] || {});
+      const lvs = typeof F.lv === 'object' ? Object.fromEntries(Object.keys(F.lv).map((c) => [c, lv + (F.lv[c] - Math.min(...Object.values(F.lv)))])) : lv;
+      return Object.assign({}, F, { lv: lvs, gear, inv: Object.assign({}, b.kit || {}, F.inv || {}), kit: { heal: [0, 0], mp: 0, revive: 0 }, __model: b });
+    });
+    console.log(`--model ${style}: ${fights.length} bosses at the level / gear / kit of tools/sim_economy.js`);
+  }
   if (opt('trace')) {
     const F = fights.find((f) => f.id === opt('trace'));
     G.__trace = [];
@@ -296,7 +313,8 @@ async function main() {
     const L = G.__testMode && F.test && F.test.lv != null ? F.test.lv : F.lv;
     const lv = typeof L === 'object' ? Object.values(L).join('/') : L;
     const tag = R.err ? 'ERROR ' + R.err : (F.scripted ? 'scripted' : (R.win < 0.6 ? 'HARD' : R.win > 0.97 && R.koAny < 0.03 ? 'TRIVIAL' : ''));
-    console.log(`${F.id.padEnd(22)} ch${String(F.ch).padEnd(3)} L${String(lv).padEnd(9)} win ${(R.win / R.n * 100).toFixed(0).padStart(3)}%  rounds ${R.rounds.toFixed(1).padStart(4)}  KO ${(R.koAny * 100).toFixed(0).padStart(3)}%  items ${R.items.toFixed(1)}  guard ${R.guards.toFixed(1)}  HP ${(R.hpLeft * 100).toFixed(0).padStart(3)}%  ${F.party.map((p) => p.slice(0, 2)).join('')}  ${tag}`);
+    const mb = F.__model ? `  [model: BALANCE Lv${F.__model.lvBalance}, gear ${Math.round(F.__model.coverage * 100)}%${F.__model.kitFull ? ', kit' : ', no kit'}]` : '';
+    console.log(`${F.id.padEnd(22)} ch${String(F.ch).padEnd(3)} L${String(lv).padEnd(9)} win ${(R.win / R.n * 100).toFixed(0).padStart(3)}%  rounds ${R.rounds.toFixed(1).padStart(4)}  KO ${(R.koAny * 100).toFixed(0).padStart(3)}%  items ${R.items.toFixed(1)}  guard ${R.guards.toFixed(1)}  HP ${(R.hpLeft * 100).toFixed(0).padStart(3)}%  ${F.party.map((p) => p.slice(0, 2)).join('')}  ${tag}${mb}`);
     if (opt('verbose')) console.log(describe(env, F, lvShift));
     json.push({ id: F.id, ch: F.ch, name: F.name, lv: F.lv, party: F.party, win: R.win / R.n, koAny: R.koAny, rounds: R.rounds, items: R.items, hpLeft: R.hpLeft, err: R.err });
   }

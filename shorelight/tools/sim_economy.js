@@ -119,6 +119,7 @@ const REWARDS = {
 const BACKTRACK = 1.3;      // normal player: ~1.3 × the critical-path steps
 const THOROUGH = 1.5;       // thorough player: every symbol enemy ~1.5 times (BALANCE.md cross-check)
 const CHEST_NEAR = { normal: 6, minimal: 2 };
+const KIT_RESTOCK = 0.4;   // after a chapter's first boss, each boss restocks ~40 % of the kit
 
 
 // ------------------------------------------------------------------------------------------------ the game
@@ -323,8 +324,10 @@ function model(o = {}) {
           // weapons, armour, head/feet, accessories, the biggest gain per coin first — with the gold carried
           const before = p.gold;
           const kit = kitOf(G, F);
+          // the chapter's first boss: the whole kit; later bosses: restock what a fight uses up (~40 %)
+          const kitNeed = Math.round(kit.cost * (kitBought ? KIT_RESTOCK : 1));
           let kitCost = 0;
-          if (!kitBought && p.gold >= kit.cost * 0.5) { kitCost = Math.min(kit.cost, p.gold); p.gold -= kitCost; kitBought = true; }
+          if (p.gold >= kitNeed) { kitCost = kitNeed; p.gold -= kitCost; kitBought = true; }
           const wants = [];
           let wantCost = 0;
           for (const cid of F.party) {
@@ -352,8 +355,8 @@ function model(o = {}) {
           }
           r.spentGear += spent; r.spentKit += kitCost; r.wantedGear += wantCost;
           const b = { id: st.boss, name: F.name, ch: C.ch, style: s, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv,
-            lv: p.lv, lvf: lvf(p), goldBefore: before, wantCost, spent, kitCost, kitFull: kitCost >= kit.cost, missing,
-            gear: Object.fromEntries(F.party.map((cid) => [cid, Object.assign({}, wearOf(p, cid))])), kit: kitCost >= kit.cost ? kit.inv : {} };
+            lv: p.lv, lvf: lvf(p), goldBefore: before, wantCost, spent, kitCost, kitFull: kitCost > 0 || !kit.cost, missing,
+            gear: Object.fromEntries(F.party.map((cid) => [cid, Object.assign({}, wearOf(p, cid))])), kit: kitCost > 0 ? kit.inv : {} };
           // coverage: the share (by price) of the boss's BALANCE.md gear the party wears, a slot at least as good counting
           let balV = 0, haveV = 0;
           for (const cid of F.party) {
