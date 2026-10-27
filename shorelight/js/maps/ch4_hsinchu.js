@@ -110,7 +110,7 @@
   addSkill('e_wd_lull', { name: '風歇', desc: '風勢忽然一歇——破綻！', mp: 0, type: 'buff', elem: null, target: 'self', power: 0, buffs: [{ stat: 'def', amt: -0.3, turns: 2 }], fx: 'debuff', sfx: 'wind' });
   addSkill('e_wd_summon', { name: '萬聲呼喚', desc: '風裡的人，被叫出來了。', mp: 0, type: 'special', elem: null, target: 'self', power: 0, summon: ['e_wind_drowned', 'e_wind_drowned'], fx: 'summon', sfx: 'ghost' });
   addSkill('e_wd_wail', { name: '萬聲哭嚎', desc: '留下來……留下來……', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 0.9, status: { id: 'seal', chance: 0.2, turns: 2 }, fx: 'ghost', sfx: 'ghost' });
-  addSkill('e_wd_storm', { name: '九降・亂流', desc: '整座風穴的風，同時撲了過來。', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 1.4, delay: 1.2, buffs: [{ stat: 'spd', amt: -0.3, turns: 2 }], fx: 'wind', sfx: 'wind' });
+  addSkill('e_wd_storm', { name: '九降・亂流', desc: '整座風穴的風，同時撲了過來。', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 1.2, delay: 1.2, buffs: [{ stat: 'spd', amt: -0.3, turns: 2 }], fx: 'wind', sfx: 'wind' });
 
   // enemies — same construction as js/data/enemies.js (level curve × multipliers)
   function edef(id, d) {
@@ -172,7 +172,7 @@
   });
   edef('e_wind_demon', {
     name: '風魔', art: 'wind_demon', lv: 18, elem: 'wood', weak: ['metal'], resist: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 17.5, atk: 2.7, mag: 2.6, def: 1.15, spd: 1.4, exp: 7, gold: 8 },
+    m: { hp: 16.5, atk: 2.35, mag: 2.3, def: 1.15, spd: 1.35, exp: 7, gold: 8 },
     skills: [['e_wd_gust', 3], ['e_wind_howl', 2], ['e_wd_headwind', 1]],
     phases: [
       {
@@ -185,7 +185,7 @@
         at: 0.3, phase: 3, msg: '風魔的胸口裂開，長明燈露了出來！',
         lines: [['', '風魔的胸口裂開，那盞龜裂的長明燈完全露了出來。燈罩上，貼著半張燒焦的黃符。'], ['yungui:surprise', '師父的封符……還在撐！'], ['hongying:serious', '燈芯露出來了——就是現在！'], ['xinghe:serious', '白芷，等一下交給妳了！'], ['baizhi:serious', '嗯！']],
         buffs: [{ stat: 'def', amt: -0.3, turns: 99 }],
-        skills: [['e_wd_inhale', 2], ['e_wd_gust', 2], ['e_wd_vortex', 1]],
+        skills: [['e_wd_inhale', 1], ['e_wd_gust', 2], ['e_wd_vortex', 1]],
       },
     ],
     drops: [['ac_fenggu', 1]],
@@ -2194,7 +2194,7 @@
         talk: async (S) => { await S.say('細妹仔', night(G.state) ? '暗晡義民塚那邊有人唱歌……阿婆講，莫去吵佢。' : '伯公愛拜喔，伯公保佑山路平安。'); },
       },
       {
-        id: 'acheng', sprite: 'c4_saisiyat_m', name: '阿成', x: 31, y: 13, dir: 'down', if: (st) => !!st.flags.ch4_hakka_arrive && !st.flags.ch4_xiangtian_arrive && !night(st),
+        id: 'acheng', sprite: 'c4_saisiyat_m', name: '阿成', x: 31, y: 13, dir: 'down', if: (st) => !st.flags.ch4_xiangtian_arrive && !night(st),
         talk: async (S) => { await sayAll(S, '阿成', ['我是向天湖那邊的賽夏人。來換鹽，順便看阿福輸。', '這陣子的風不對。要上山，趁清早，中午前一定要下來。', '中午過後，風穴會先「吸氣」，然後「吐氣」——人是站不住的。']); },
       },
       { id: 'vf1', sprite: 'hakka_f', name: '庄裡的阿姆', x: 36, y: 24, dir: 'down', wander: 3, if: (st) => !night(st), talk: async (S) => { await S.say('庄裡的阿姆', broken(G.state) ? '這幾日風乾乾爽爽，菜脯曬得特別香。' : '今年个風，吹得菜脯都發霉咧。'); } },

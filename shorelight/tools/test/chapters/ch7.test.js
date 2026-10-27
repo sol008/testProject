@@ -325,7 +325,7 @@ const nextSeg = (seg) => SEGS[SEGS.indexOf(seg) + 1];
     // ---------------------------------------------------------------- 7-12 日月潭
     st = await act('follow the leopard to the lake', 'G.Debug.stepOn(15, 7)', { shot: '13_sunmoon' });
     check('7-12 Thao elder, white deer, Lalu respected, 杵音', st.map === 'sunmoon' && st.flags.ch7_thao_met && st.flags.ch7_white_deer && st.flags.ch7_lalu_respect && st.flags.ch7_chuyin);
-    check('Lalu is unreachable (deep water around the island)', await ev(() => { const m = G.mapScene; for (const [x, y] of [[23, 6], [27, 6], [25, 3], [25, 9]]) if (!m.solid[y * m.w + x]) return false; return true; }));
+    check('Lalu is unreachable (deep water around the island)', await ev(() => { const m = G.mapScene; const seen = new Uint8Array(m.w * m.h); const q = [[m.player.x, m.player.y]]; seen[m.player.y * m.w + m.player.x] = 1; while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, i = ny * m.w + nx; if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || seen[i] || m.solid[i]) continue; seen[i] = 1; q.push([nx, ny]); } } return !seen[6 * m.w + 25] && m.terrain[6 * m.w + 25] !== 'deepwater' && m.solid[10 * m.w + 25] === 1; }));
     st = await act('boat refusal', 'G.Debug.trigger("boats")');
     st = await act('7-12d rest → path in the mist', 'G.Debug.trigger("rest")', { choices: [0] });
     check('mist path (ch7_mist_path) → sunmoon_mist', st.flags.ch7_mist_path && st.map === 'sunmoon_mist');
