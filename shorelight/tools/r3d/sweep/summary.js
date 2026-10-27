@@ -8,7 +8,7 @@ const notes = process.argv[3] ? JSON.parse(fs.readFileSync(process.argv[3], 'utf
 const rows = fs.readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 // known noise: requests for optional files, the debug-only monster normal-sanitiser report, Chrome's readback hint
 const IGN = /PCFSoftShadowMap|requestfailed: .*(fontdata\.js|i18n\/en_ch)|mon3d-b .* degenerate verts/;
-const ODD_IGN = /: wide |^mural|^lantern_string|^red_lantern/; // wide canopies are by design; wall-mounted / hanging props float
+const ODD_IGN = /: wide |^mural|^lantern_string|^red_lantern|^c2_redcloth/; // wide canopies are by design; wall-mounted / hanging / tied-on props float
 const digest = { warned: {}, log: {}, fb: {}, odd: {} };
 const add = (m, k, id) => { (m[k] = m[k] || new Set()).add(id); };
 for (const r of rows) {
