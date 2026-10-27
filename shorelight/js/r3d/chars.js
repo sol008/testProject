@@ -1037,26 +1037,33 @@ G.Char3D = (() => {
     const poly = []; for (let i = 0; i <= n; i++) poly.push(vlerp(a, tip, i / n));
     // drape spring bone for wide / flowing sleeves
     let drapeIds = null;
+    const hang = o.hang || 0; // banner sleeves: the back of the sleeve hangs as a deep panel below a raised forearm
     if (o.drape > 0) {
       const e = P.upArm / L;
-      const head = vlerp(pts[1], pts[2], 0.35);
+      const head = vlerp(pts[1], pts[2], hang ? 0.15 : 0.35);
       const dirArm = vnorm(vsub(w, a));
-      const t2 = vadd(end, vadd(vsc(dirArm, 0.02), [0, -o.drape * 0.06 * s, 0]));
-      drapeIds = B.chain('sleeve' + S, 'foreArm' + S, [head, vlerp(head, t2, 0.55), t2], { stiff: 1.2, drag: 0.4, grav: 0.9, r: 0.03 * s, groups: ['leg', 'body'], kind: 'sleeve' });
+      const t2 = vadd(end, vadd(vsc(dirArm, 0.02), [0, -o.drape * 0.06 * s, -hang * 0.6]));
+      drapeIds = B.chain('sleeve' + S, 'foreArm' + S, [head, vlerp(head, t2, 0.55), t2], { stiff: hang ? 0.7 : 1.2, drag: 0.4, grav: hang ? 1.3 : 0.9, r: 0.03 * s, groups: ['leg', 'body'], kind: 'sleeve' });
     }
     const e = P.upArm / L;
+    const hangK = (t) => hang * sstep(0.3, 0.95, t);
     tube(B.G, poly, o.seg || 12, o.rect, (t) => {
       const tt = t * t1 * (1 + ext / L);
       let r = lerp(armProfile(P, min(1, tt)) + (o.r0 || 0.016) * s, o.r1 != null ? o.r1 : 0, sstep(0.2, 1, t) * (o.flare || 0));
       if (t < 0.16) r *= lerp(0.45, 1, sstep(0.0, 0.16, t));
       if (o.cuffR && t > 0.6) r = lerp(r, o.cuffR, sstep(0.6, 1, t) * (o.flare ? 1 : 0.6));
       if (o.roll && t > 0.88) r += o.roll * sin((t - 0.88) / 0.12 * PI) * s;
-      return { rx: r, ry: r * (o.flat || 0.96), oy: o.drape ? -o.drape * r * 0.25 * sstep(0.4, 1, t) : 0, ao: t > 0.97 ? 0.6 : 1 };
-    }, (t, fi) => {
+      const hk = hangK(t);
+      return { rx: r, ry: r * (o.flat || 0.96) + hk * 0.5, oy: (o.drape ? -o.drape * r * 0.25 * sstep(0.4, 1, t) : 0) - hk * 0.5, ao: t > 0.97 ? 0.6 : 1 };
+    }, (t, fi, ang) => {
       const tt = t * t1;
       let W = armW(B, S, min(1, tt));
       if (t < 0.12) W = wmix(torsoW(B, vlerp(a, tip, t)), W, sstep(0.0, 0.12, t) * 0.6 + 0.4);
-      if (drapeIds) { const k = sstep(0.62, 1, t) * o.drape; W = wmix(W, [[drapeIds[t > 0.85 ? 1 : 0], 1]], k); }
+      if (drapeIds) {
+        let k = sstep(0.62, 1, t) * o.drape;
+        if (hang) k = max(k, sstep(0.25, 0.9, t) * sstep(0.2, -0.9, sin(ang || 0)) * 0.95); // back panel rides the drape chain
+        W = wmix(W, [[drapeIds[t > 0.85 || (hang && sin(ang || 0) < -0.5 && t > 0.6) ? 1 : 0], 1]], k);
+      }
       return W;
     }, { nv: o.nv || 10, linear: true, up: [0, 0, 1], uvf: (u, v) => [u, v] });
     return tip;
@@ -1091,18 +1098,36 @@ G.Char3D = (() => {
       if (top.emb) { const hy = y + h * 0.94; g.fillStyle = rgba(shade(top.emb, -0.2), 0.25); g.fillRect(x, hy - h * 0.035, w, h * 0.07); Pn.motif(g, x, x + w, hy, h * 0.06, top.emb, o.long ? 'cloud' : 'key'); }
       // hem piping
       g.fillStyle = trim; g.fillRect(x - 2, y + h - max(2, h * 0.018), w + 4, max(2, h * 0.018) + 2);
+      if (top.hemBand) { g.fillStyle = top.hemBand.color || trim; g.fillRect(x - 2, y + h * (1 - (top.hemBand.h || 0.05)), w + 4, h * (top.hemBand.h || 0.05)); }
+      // side slits (開衩): piped edges at the sides and the centre-back vent
+      if (o.slitY != null) {
+        const sy = V(o.slitY);
+        for (const th of [-PI / 2, PI / 2]) Pn.piping(g, [[U(th), sy], [U(th), y + h]], trim, pipeW * 1.6);
+        g.fillStyle = trim; g.fillRect(x - 1, sy, pipeW * 1.2, y + h - sy); g.fillRect(x + w - pipeW * 1.2 + 1, sy, pipeW * 1.2, y + h - sy);
+        if (top.toggles) for (const th of [-PI / 2, PI / 2]) for (const k of [0.15, 0.4]) Pn.knot(g, U(th), lerp(sy, y + h, k), pipeW * 1.1, top.toggles);
+      }
       const cl = top.closure;
       const yNeck = V(B.P.neckY), yArm = V(B.P.chestY + 0.02 * B.P.s), yWaist = V(B.P.waistY);
       if (cl === 'cross' || cl === 'open') {
-        // lapel band following the V edge, plus the overlapping panel edge down to the wearer's right
+        // lapel band following the V edge, plus the overlapping panel edge down to the wearer's right.
+        // top.lapel = { w (m), guard: '#hex' (護領 guard collar laid over the upper lapel), guardLen 0..1 } widens it.
+        const lp = top.lapel;
         g.fillStyle = trim;
-        const bw = max(3, d * 0.028);
+        const bw = lp ? max(4, d * (lp.w || 0.03)) : max(3, d * 0.028);
         g.beginPath();
         for (let i = 0; i <= 40; i++) { const th = -PI + TAU * i / 40; const yy = y + 0; g.rect(U(th) - 1, yy, w / 40 + 2, bw); }
         g.fill();
         if (cl === 'cross') {
           const tipTh = o.tipTh || -0.18, tipY = V(o.tipY, tipTh);
-          Pn.piping(g, [[U(tipTh), tipY], [U(-0.55), lerp(tipY, yWaist, 0.55)], [U(-0.95), yWaist + h * 0.03], [U(-1.05), y + h]], trim, bw * 0.8);
+          const lpts = [[U(tipTh), tipY], [U(-0.55), lerp(tipY, yWaist, 0.55)], [U(-0.95), yWaist + h * 0.03], [U(-1.05), y + h]];
+          Pn.piping(g, lpts, trim, bw * (lp ? 1.0 : 0.8));
+          if (lp && lp.guard) { // white guard collar over the neckline and the upper part of the crossing edge
+            g.fillStyle = lp.guard;
+            g.beginPath(); for (let i = 0; i <= 40; i++) { const th = -PI + TAU * i / 40; g.rect(U(th) - 1, y, w / 40 + 2, bw * 0.72); } g.fill();
+            const gl = lp.guardLen != null ? lp.guardLen : 0.45;
+            Pn.piping(g, [lpts[0], [lerp(lpts[0][0], lpts[1][0], min(1, gl * 1.8)), lerp(lpts[0][1], lpts[1][1], min(1, gl * 1.8))]], lp.guard, bw * 0.72);
+            g.fillStyle = rgba('#000000', 0.12); g.fillRect(x, y + bw * 0.72, w, max(1, bw * 0.06));
+          }
         } else {
           g.fillStyle = inner; g.fillRect(U(-0.12), y, U(0.12) - U(-0.12), h);
           Pn.texture(g, U(-0.12), y, U(0.12) - U(-0.12), h, 'cotton', 0.15);
@@ -1259,11 +1284,12 @@ G.Char3D = (() => {
       }
       if (shoe === 'boots') {
         const rectB = B.rect('shoe_boots', 0.25, 0.25, () => {});
-        const pts = [legPt(B, SD, 0.55), legPt(B, SD, 0.8), legPt(B, SD, 1.0)];
+        const bf = S.shoes.from || 0.55, bfl = S.shoes.flare || 1.08; // boot top (fraction hip→ankle) and top flare
+        const pts = [legPt(B, SD, bf), legPt(B, SD, lerp(bf, 1, 0.55)), legPt(B, SD, 1.0)];
         const wk = bt === 'wide' ? 0.03 : 0.0;
-        tube(B.G, pts, 11, B.rect('bootleg', 0.3, 0.3, (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, shCol, { weave: 'leather', folds: false }); g.fillStyle = shade(shCol, 0.25); g.fillRect(x, y, w, h * 0.08); Pn.aoEdges(g, x, y, w, h, 0, 0.3); }),
-          (t) => { const r = legProfile(P, lerp(0.55, 1, t)) + (0.018 + wk * (1 - t)) * s; return { rx: r * (t < 0.1 ? 1.08 : 1), ry: r * 1.06 }; },
-          (t) => legW(B, SD, lerp(0.55, 1.0, t)), { nv: 6, up: [0, 0, 1] });
+        tube(B.G, pts, 11, B.rect('bootleg', 0.3, 0.3, (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, shCol, { weave: 'leather', folds: false }); g.fillStyle = S.shoes.band || shade(shCol, 0.25); g.fillRect(x - 2, y - 2, w + 4, h * (S.shoes.band ? 0.12 : 0.08) + 2); Pn.aoEdges(g, x, y, w, h, 0, 0.3); }),
+          (t) => { const r = legProfile(P, lerp(bf, 1, t)) + (0.018 + wk * (1 - t)) * s; return { rx: r * (t < 0.1 ? bfl : 1), ry: r * 1.06 * (t < 0.1 ? lerp(1, bfl, 0.7) : 1) }; },
+          (t) => legW(B, SD, lerp(bf, 1.0, t)), { nv: 6, up: [0, 0, 1] });
       }
     }
     // ---- upper garment
@@ -1289,7 +1315,7 @@ G.Char3D = (() => {
       const hasHem = hemY < P.legTop + 0.03 * s;
       const totalH = yNeckTop - hemY;
       const key = 'top';
-      const jo = { key, yTop: yNeckTop, yBot: hemY, edge, tipTh, tipY, long: robe, patch: S.patch };
+      const jo = { key, yTop: yNeckTop, yBot: hemY, edge, tipTh, tipY, long: robe, patch: S.patch, slitY: hasHem && top.slits ? jacketBot : null };
       // one rect for the whole garment: torso part maps to v∈[0, kTorso], hem part to [kTorso, 1]
       const kTorso = (yNeckTop - jacketBot) / totalH;
       const rect = B.rect(key, 2 * PI * (P.chestW + 0.02) * 1.05, totalH, paintJacket(B, top, jo));
@@ -1303,9 +1329,19 @@ G.Char3D = (() => {
         const looseK = robe ? 0.55 : 0.25;
         const rr = Object.assign({}, r0, { rx: lerp(r0.rx, max(r0.rx, chest.rx * 0.98), looseK), rf: lerp(r0.rf, max(r0.rf, chest.rf * 0.98), looseK), rb: lerp(r0.rb, max(r0.rb, chest.rb), looseK) });
         B.flags.jacket = { yT, yH: hemY };
-        B.flags.jacket.hs = hemShell(B, { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6, legBlend: robe ? 0.5 : 0.42, hitR: (robe ? 0.05 : 0.04) * s,
+        const hemO = { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6, legBlend: robe ? 0.5 : 0.42, hitR: (robe ? 0.05 : 0.04) * s,
           top: (th) => torsoPt(rr, th, inflT * 2.1), uvf: (u, v) => [u, kTorso + v * (1 - kTorso)], stiff: robe ? 2.4 : 3.0, grav: 0.4,
-          topW: (th) => [[B.b('hips'), 1]] });
+          topW: (th) => [[B.b('hips'), 1]] };
+        if (top.slits) {
+          // 開衩: side slits → the skirt is three panels (front, and the back halves meeting at a centre-back vent), each
+          // on its own chains, so the legs open the slits when walking / in a stance. top.slits: gap half-angle (rad) or true.
+          const g = typeof top.slits === 'number' ? top.slits : 0.07;
+          const panels = [['robeF', -PI / 2 + g, PI / 2 - g, robe ? 4 : 3, 16], ['robeL', PI / 2 + g, PI, 2, 9], ['robeR', -PI, -PI / 2 - g, 2, 9]];
+          for (const [name, th0, th1, chains, nu] of panels) {
+            const hs = hemShell(B, Object.assign({}, hemO, { name, th0, th1, chains, nu, uvf: (u, v) => [lerp(th0, th1, u) / TAU + 0.5, kTorso + v * (1 - kTorso)] }));
+            if (!B.flags.jacket.hs) B.flags.jacket.hs = hs; // its surf() is valid at any θ (used by aprons)
+          }
+        } else B.flags.jacket.hs = hemShell(B, hemO);
       }
       // inner layer visible in the V / open front
       if (cl === 'cross' || cl === 'open') {
@@ -1327,8 +1363,13 @@ G.Char3D = (() => {
           Pn.cloth(g, x, y, w, h, top.color, { weave: fabricOf(top.color), seed: B.id + 's', nfolds: 6 });
           if (top.bands && sl !== 'short') for (const b of top.bands) if (b.at < 0.4) { /* bands mostly on the body */ }
           const cuff = top.cuff || top.trim;
-          const cw = sl === 'flow' ? 0.14 : sl === 'wide' ? 0.1 : sl === 'rolled' ? 0.16 : 0.06;
+          const cw = top.cuffW || (sl === 'flow' || sl === 'banner' ? 0.14 : sl === 'wide' ? 0.1 : sl === 'rolled' ? 0.16 : 0.06);
           if (cuff) { g.fillStyle = cuff; g.fillRect(x - 2, y + h * (1 - cw), w + 4, h * cw + 2); g.fillStyle = rgba('#000', 0.18); g.fillRect(x - 2, y + h * (1 - cw), w + 4, max(1, h * 0.008)); }
+          if (top.cuff2) { // turned-back cuff: a second contrast band (反摺袖口) inside the first
+            g.fillStyle = top.cuff2; g.fillRect(x - 2, y + h * (1 - cw * 0.42), w + 4, h * cw * 0.22);
+            g.fillStyle = rgba('#000', 0.12); g.fillRect(x - 2, y + h * (1 - cw * 0.2), w + 4, max(1, h * 0.006));
+          }
+          if (top.sleeveStripe) { g.fillStyle = top.sleeveStripe; g.fillRect(x + w * 0.47, y, w * 0.06, h * (1 - cw)); } // piping along the outer seam
           if (top.emb && (sl === 'wide' || sl === 'flow')) Pn.motif(g, x, x + w, y + h * (1 - cw * 0.5), h * cw * 0.5, top.emb, 'cloud');
           if (top.ext) { g.fillStyle = top.ext; g.fillRect(x - 2, y + h * 0.985, w + 4, h * 0.02); }
           Pn.aoEdges(g, x, y, w, h, 0.15, 0.2);
@@ -1337,6 +1378,7 @@ G.Char3D = (() => {
           if (sl === 'long') sleeve(B, SD, { rect: srect, t1: 1, r0: 0.018 * s, ext: 0.012 * s, cuffR: P.wristR + 0.026 * s, flare: 0 });
           else if (sl === 'wide') sleeve(B, SD, { rect: srect, t1: 1, r0: 0.022 * s, ext: 0.03 * s, flare: 1, r1: 0.075 * s, drape: 0.5 });
           else if (sl === 'flow') sleeve(B, SD, { rect: srect, t1: 1, r0: 0.026 * s, ext: 0.07 * s, flare: 1, r1: 0.125 * s, drape: 1, seg: 14, nv: 12, flat: 0.9 });
+          else if (sl === 'banner') sleeve(B, SD, { rect: srect, t1: 1, r0: 0.03 * s, ext: 0.05 * s, flare: 1, r1: (top.sleeveR || 0.1) * s, drape: 1, seg: 16, nv: 14, flat: 0.9, hang: (top.hang || 0.17) * s });
           else if (sl === 'rolled') sleeve(B, SD, { rect: srect, t1: sleeveEnd, r0: 0.02 * s, roll: 0.012 });
           else if (sl === 'short') sleeve(B, SD, { rect: srect, t1: sleeveEnd, r0: 0.02 * s, roll: 0.006 });
         }
@@ -1353,7 +1395,13 @@ G.Char3D = (() => {
         if (v.bands) Pn.bandsAcross(g, x, y, w, h, v.bands);
         const tc = v.trim || shade(v.color, -0.35);
         g.fillStyle = tc; g.fillRect(x - 2, y + h * 0.95, w + 4, h * 0.06);
-        if (v.open !== false || bare) {
+        if (v.closure === 'yizi') { // 一字襟 (巴圖魯坎肩): a straight button row across the upper chest + buttoned side seams
+          const U = (th) => x + (th / TAU + 0.5) * w, pw = max(1.5, d * 0.012), yy = y + h * (v.rowAt || 0.2);
+          Pn.piping(g, [[U(-1.35), yy], [U(1.35), yy]], tc, pw * 1.4);
+          const n = v.buttons || 9;
+          for (let i = 0; i < n; i++) Pn.knot(g, U(lerp(-1.15, 1.15, i / (n - 1))), yy, pw * 1.25, i % 2 && v.button2 ? v.button2 : (v.button || '#c99a48'));
+          for (const th of [-1.45, 1.45]) { Pn.piping(g, [[U(th), yy], [U(th), y + h]], tc, pw); for (let k = 1; k < 4; k++) Pn.knot(g, U(th), lerp(yy, y + h, k / 4), pw * 1.1, v.button || '#c99a48'); }
+        } else if (v.open !== false || bare) {
           const U = (th) => x + (th / TAU + 0.5) * w;
           g.fillStyle = tc; g.fillRect(U(-0.2), y, U(-0.13) - U(-0.2), h); g.fillRect(U(0.13), y, U(0.2) - U(0.13), h);
         } else { // 馬褂-style centre closure with knots
@@ -1413,11 +1461,56 @@ G.Char3D = (() => {
       const yT = P.waistY + 0.005 * s, yH = max(0.12, P.legTop - (ap.len || 0.6) * legLen * 0.95);
       const arect = B.rect('apron', 0.55, yT - yH, (g, x, y, w, h) => {
         Pn.cloth(g, x, y, w, h, ap.color, { weave: 'linen', seed: B.id + 'ap' });
-        g.fillStyle = shade(ap.color, -0.25); g.fillRect(x - 2, y - 2, w + 4, h * 0.06);
+        g.fillStyle = ap.band || shade(ap.color, -0.25); g.fillRect(x - 2, y - 2, w + 4, h * 0.06);
         if (ap.stains) for (const st of ap.stains) { g.fillStyle = rgba(st.color, st.a || 0.5); g.beginPath(); g.ellipse(x + st.x * w, y + st.y * h, st.r * w, st.r * w * 0.8, 0, 0, TAU); g.fill(); }
         if (ap.pocket) { g.strokeStyle = rgba(shade(ap.color, -0.4), 0.8); g.lineWidth = max(1, w * 0.008); g.setLineDash([3, 2]); g.strokeRect(x + w * 0.36, y + h * 0.18, w * 0.28, h * 0.24); g.setLineDash([]); }
+        if (ap.stitch) { // running-stitch border just inside the hem
+          g.strokeStyle = ap.stitch; g.lineWidth = max(1, w * 0.007); g.setLineDash([max(2, w * 0.02), max(2, w * 0.016)]);
+          g.beginPath(); g.moveTo(x + w * 0.06, y + h * 0.9); g.quadraticCurveTo(x + w * 0.5, y + h * 0.95, x + w * 0.94, y + h * 0.9); g.stroke(); g.setLineDash([]);
+        }
+        if (ap.emb) { // embroidered flowers (挑花) in a row above the hem
+          const n = ap.embN || 3;
+          for (let i = 0; i < n; i++) {
+            const cx = x + w * (0.5 + (i - (n - 1) / 2) * 0.17), cy = y + h * 0.8, r = w * 0.032;
+            g.fillStyle = ap.emb;
+            for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; g.beginPath(); g.ellipse(cx + cos(a) * r * 0.62, cy + sin(a) * r * 0.62, r * 0.48, r * 0.26, a, 0, TAU); g.fill(); }
+            g.fillStyle = shade(ap.emb, -0.3); g.beginPath(); g.arc(cx, cy, r * 0.28, 0, TAU); g.fill();
+          }
+        }
+        if (ap.trim) { g.fillStyle = ap.trim; g.fillRect(x - 2, y, max(2, w * 0.018), h); g.fillRect(x + w - max(2, w * 0.018), y, max(2, w * 0.018) + 2, h); }
         Pn.aoEdges(g, x, y, w, h, 0.2, 0.1);
       });
+      // 圍身裙 bib: a flat panel from the waist up over the chest, hung from the neck (optionally by a silver chain)
+      if (ap.bib) {
+        const yB = P.neckY - (ap.bibDrop || 0.07) * s, bw = ap.bibW || 0.62;
+        const brect = B.rect('apronBib', 0.3, yB - yT, (g, x, y, w, h) => {
+          Pn.cloth(g, x, y, w, h, ap.color, { weave: 'linen', folds: false, seed: B.id + 'apb' });
+          if (ap.stitch) { g.strokeStyle = ap.stitch; g.lineWidth = max(1, w * 0.012); g.setLineDash([max(2, w * 0.03), max(2, w * 0.025)]); g.beginPath(); g.moveTo(x + w * 0.1, y + h * 0.12); g.quadraticCurveTo(x + w * 0.5, y + h * 0.2, x + w * 0.9, y + h * 0.12); g.stroke(); g.setLineDash([]); }
+          if (ap.trim) { g.fillStyle = ap.trim; g.fillRect(x - 2, y, max(2, w * 0.03), h); g.fillRect(x + w - max(2, w * 0.03), y, max(2, w * 0.03) + 2, h); }
+          g.fillStyle = shade(ap.color, 0.12); g.fillRect(x - 2, y - 2, w + 4, h * 0.05);
+          Pn.aoEdges(g, x, y, w, h, 0.05, 0.3);
+        });
+        const binf = (S.top && (S.top.closure === 'side' || S.top.closure === 'center') ? 0.026 : 0.022) * s;
+        grid(B.G, 8, 6, brect, (u, v) => {
+          const y = lerp(yB, yT + 0.01 * s, v);
+          const th = (u - 0.5) * 2 * bw * lerp(0.8, 1.0, v);
+          const p = torsoPt(ringAt(R, y), th, binf + 0.002 * s * v);
+          return { p: [p[0] * 0.97, p[1], max(p[2], 0.02 * s)], w: torsoW(B, p) };
+        }, { flip: false });
+        if (ap.chain) { // silver neck chain: from the bib's top corners up and round the back of the neck, with a clasp plate
+          const crect = B.rect('apronChain', 0, 0, (g, x, y, w, h) => { const gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, shade(ap.chain, -0.3)); gr.addColorStop(0.5, shade(ap.chain, 0.4)); gr.addColorStop(1, shade(ap.chain, -0.2)); g.fillStyle = gr; g.fillRect(x - 2, y - 2, w + 4, h + 4); }, { px: [12, 12] });
+          const pts = [];
+          for (let i = 0; i <= 18; i++) {
+            const t = i / 18, th = lerp(-bw * 0.8, -(TAU - bw * 0.8), t); // from the right top corner round the back to the left one
+            const y = lerp(yB, P.neckY + 0.004 * s, sin(t * PI) ** 0.4);
+            const p = torsoPt(ringAt(R, clamp(y, P.legTop, P.neckY)), th, binf + 0.008 * s);
+            pts.push(p);
+          }
+          tube(B.G, pts, 4, crect, () => ({ rx: 0.0028 * s }), (t) => [[B.b('chest'), 0.75], [B.b('neck'), 0.25 * sin(t * PI)]], { nv: 36, up: [0, 1, 0] });
+          const cp = torsoPt(ringAt(R, yB), 0, binf + 0.004 * s);
+          blob(B.G, 6, 4, crect, cp, [0.014 * s, 0.008 * s, 0.003 * s], torsoW(B, cp));
+        }
+      }
       const inf = waistInfl + 0.006 * s;
       const jac = B.flags.jacket;
       // flat front panel laid over whatever is beneath (jacket hem or trousers), hanging straight below it
@@ -1457,7 +1550,7 @@ G.Char3D = (() => {
     if (S.scarf) buildScarf(B, S.scarf);
     if (S.beads) buildBeads(B, S.beads);
     if (S.bag) buildBag(B, S.bag);
-    if (S.bracers) for (const SD of ['L', 'R']) {
+    if (S.bracers) for (const SD of S.bracers.side ? [S.bracers.side] : ['L', 'R']) {
       const BR = S.bracers;
       const rect = clothRect(B, 'bracer', 0.2, 0.2, BR.color, { weave: BR.cloth ? 'cotton' : 'leather', folds: !!BR.cloth, after: (g, x, y, w, h) => {
         if (BR.tapes) { g.fillStyle = BR.tapes; g.fillRect(x - 2, y + h * 0.02, w + 4, h * 0.09); g.fillRect(x - 2, y + h * 0.86, w + 4, h * 0.09); g.fillStyle = rgba('#000', 0.15); g.fillRect(x - 2, y + h * 0.1, w + 4, h * 0.02); }
@@ -1468,7 +1561,7 @@ G.Char3D = (() => {
       tube(B.G, [a, b], 10, rect, (t) => { const r = armProfile(P, lerp(e + (1 - e) * 0.35, 1, t)) + (sl === 'long' ? 0.03 : 0.012) * s; return { rx: r, ry: r * 0.95 }; }, () => [[B.b('foreArm' + SD), 1]], { nv: 3, linear: true, up: [0, 0, 1] });
     }
     if (S.bracelet) {
-      const SD = 'R';
+      const SD = S.bracelet.side || 'R';
       const rect = clothRect(B, 'bracelet', 0.05, 0.05, S.bracelet.color, { folds: false });
       const pts = armPts(B, SD), c = vlerp(pts[1], pts[2], 0.97);
       tube(B.G, [vsub(c, vsc(vnorm(vsub(pts[2], pts[1])), 0.004)), vadd(c, vsc(vnorm(vsub(pts[2], pts[1])), 0.004))], 10, rect, () => ({ rx: P.wristR + 0.006 * s, ry: P.wristR + 0.005 * s }), () => [[B.b('foreArm' + SD), 1]], { nv: 1, linear: true, up: [0, 0, 1] });
@@ -1543,8 +1636,8 @@ G.Char3D = (() => {
 
   function buildBelt(B, be, infl) {
     const P = B.P, s = P.s, R = torsoRings(P);
-    const wv = 0.03 * s, yC = P.waistY - 0.012 * s;
-    const rect = B.rect('belt', 2 * PI * (P.waistW + 0.04), 0.04, (g, x, y, w, h) => {
+    const wv = (be.w || 0.03) * s, yC = P.waistY - 0.012 * s + (be.dy || 0) * s;
+    const rect = B.rect('belt', 2 * PI * (P.waistW + 0.04), wv * 1.3, (g, x, y, w, h) => {
       Pn.cloth(g, x, y, w, h, be.color, { weave: 'leather', folds: false });
       g.strokeStyle = rgba(shade(be.color, 0.3), 0.5); g.setLineDash([2, 2]); g.lineWidth = 1;
       g.beginPath(); g.moveTo(x, y + h * 0.2); g.lineTo(x + w, y + h * 0.2); g.moveTo(x, y + h * 0.8); g.lineTo(x + w, y + h * 0.8); g.stroke(); g.setLineDash([]);
@@ -1557,7 +1650,10 @@ G.Char3D = (() => {
     if (be.buckle) {
       const brect = B.rect('buckle', 0.05, 0.05, (g, x, y, w, h) => { g.fillStyle = be.buckle; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.strokeStyle = shade(be.buckle, -0.4); g.lineWidth = max(1, w * 0.12); g.strokeRect(x + w * 0.2, y + h * 0.2, w * 0.6, h * 0.6); g.fillStyle = rgba('#fff', 0.35); g.fillRect(x, y, w, h * 0.25); }, { minPx: 8 });
       const p = torsoPt(ringAt(R, yC), 0, infl + 0.012 * s);
-      blob(B.G, 8, 6, brect, p, [0.028 * s, 0.022 * s, 0.008 * s], torsoW(B, p), { deform: (n) => [Math.sign(n[0]) * pow(abs(n[0]), 0.5) * 0.026 * s, Math.sign(n[1]) * pow(abs(n[1]), 0.5) * 0.02 * s, n[2] * 0.008 * s] });
+      if (be.round) { // round brass boss buckle (武俠 belts)
+        const br = be.round * s;
+        blob(B.G, 12, 6, brect, vadd(p, [0, 0, 0.002 * s]), [br, br, 0.008 * s], torsoW(B, p), { deform: (n) => [n[0] * br, n[1] * br, n[2] * 0.009 * s * (n[2] > 0 ? 1 : 0.4)] });
+      } else blob(B.G, 8, 6, brect, p, [0.028 * s, 0.022 * s, 0.008 * s], torsoW(B, p), { deform: (n) => [Math.sign(n[0]) * pow(abs(n[0]), 0.5) * 0.026 * s, Math.sign(n[1]) * pow(abs(n[1]), 0.5) * 0.02 * s, n[2] * 0.008 * s] });
     }
   }
 
@@ -2445,14 +2541,17 @@ G.Char3D = (() => {
   }
   function ponytail(B, lockR, W, H, capOff) {
     const P = B.P, s = P.s;
-    const tie = headPt(B, PI, 0.62, capOff * 1.8);
+    // H.tiePh: tie height (φ from the crown; 0.62 = back of the head, ~0.25 = crown-high 高馬尾), H.arch: how far the
+    // tail fountains up/back before falling (m), H.sweep: sideways drift of the tail (m, + = wearer's left)
+    const tie = headPt(B, PI, H.tiePh != null ? H.tiePh : 0.62, capOff * 1.8);
     B._tieAt = tie;
     const len = (H.len || 0.4) * P.crown * 0.95;
     const p0 = vadd(tie, [0, 0.01 * s, -0.02 * s]);
-    const pts = [p0, vadd(p0, [0, 0.0, -0.06 * s]), vadd(p0, [0, -0.08 * s, -0.1 * s])];
+    const ar = (H.arch || 0) * s, swp = (H.sweep || 0) * s;
+    const pts = [p0, vadd(p0, [swp * 0.1, ar * 0.6, -0.06 * s - ar * 0.4]), vadd(p0, [swp * 0.25, -0.08 * s + ar * 0.5, -0.1 * s - ar * 0.9])];
     const steps = 4;
-    for (let i = 1; i <= steps; i++) { const t = i / steps; const y = p0[1] - 0.08 * s - (len - 0.08 * s) * t; pts.push([0, y, min(backZ(B, y, 0.03), -0.1 * s - P.headD * 0.4)]); }
-    const ids = B.chain('tail', 'head', pts, { stiff: 0.55, drag: 0.22, grav: 0.85, r: 0.035 * s, groups: ['body', 'head'], kind: 'hair' });
+    for (let i = 1; i <= steps; i++) { const t = i / steps; const y = pts[2][1] - (len - 0.08 * s) * t; pts.push([swp * (0.25 + 0.75 * t), y, min(backZ(B, y, 0.03), -0.1 * s - P.headD * 0.4 - ar * (1 - t))]); }
+    const ids = B.chain('tail', 'head', pts, { stiff: H.stiff || 0.55, drag: 0.22, grav: 0.85, r: 0.035 * s, groups: ['body', 'head'], kind: 'hair' });
     const np = pts.length;
     const Wf = (t) => { const f = t * (np - 1), seg = clamp(f, 0, ids.length - 1e-4), si = floor(seg), sf = seg - si; const w = [[ids[si], 1 - sf * 0.5]]; if (si + 1 < ids.length) w.push([ids[si + 1], sf * 0.5]); return w; };
     for (let k = 0; k < 3; k++) {
@@ -2509,6 +2608,23 @@ G.Char3D = (() => {
       const fr = C._internal.clothRect(B, 'flower' + fc, 0.04, 0.04, fc, { folds: false });
       for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; blob(B.G, 6, 4, fr, vadd(at, [cos(a) * 0.011 * s, sin(a) * 0.011 * s, 0.004]), [0.009 * s, 0.009 * s, 0.004 * s], W); }
       blob(B.G, 6, 4, C._internal.clothRect(B, 'flowerc', 0.03, 0.03, '#f6e070', { folds: false }), vadd(at, [0, 0, 0.007]), [0.005 * s, 0.005 * s, 0.004 * s], W);
+    } else if (pin.type === 'comb') { // 梳篦: an arched jade comb pushed into the hair, optional red-string tails
+      const cc = pin.color || '#9fd3bd';
+      const cr = C._internal.clothRect(B, 'comb' + cc, 0.04, 0.04, cc, { folds: false, weave: 'silk', after: (g, x, y, w, h) => { const gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, rgba('#ffffff', 0.45)); gr.addColorStop(0.5, rgba('#ffffff', 0)); gr.addColorStop(1, rgba('#1a4a3a', 0.3)); g.fillStyle = gr; g.fillRect(x, y, w, h); } });
+      const nrm = vnorm(vsub(at, B.P.headC));
+      const side = vnorm(vcross([0, 1, 0], nrm)), up = vnorm(vcross(nrm, side));
+      const wC = (pin.w || 0.05) * s, hC = (pin.h || 0.022) * s;
+      grid(B.G, 10, 2, cr, (u, v) => { const a = (u - 0.5) * PI; const r = lerp(0.35, 1, v); return { p: vadd(at, vadd(vadd(vsc(side, sin(a) * wC * 0.5 * r), vsc(up, (cos(a) * r - 0.2) * hC)), vsc(nrm, 0.004 * s * (1 - v) + 0.002 * s))), w: W }; }, {});
+      grid(B.G, 10, 1, cr, (u, v) => { const a = (u - 0.5) * PI; return { p: vadd(at, vadd(vadd(vsc(side, sin(a) * wC * 0.5), vsc(up, (cos(a) - 0.2) * hC)), vsc(nrm, 0.002 * s + v * 0.005 * s))), w: W }; }, {});
+      if (pin.string) {
+        const sr = C._internal.clothRect(B, 'tie' + pin.string, 0.05, 0.05, pin.string, { folds: false });
+        for (const k of [-1, 1]) {
+          const p0 = vadd(at, vadd(vsc(side, k * wC * 0.3), vsc(nrm, 0.006 * s)));
+          const pts = [p0, vadd(p0, vadd(vsc(side, k * 0.006), [0, -0.05 * s, 0])), vadd(p0, vadd(vsc(side, k * 0.01), [0, -0.1 * s, -0.005]))];
+          const ids = B.chain('combStr' + (k > 0 ? 'a' : 'b'), 'head', pts, { stiff: 0.6, drag: 0.3, grav: 1.0, r: 0.006, groups: ['head'], kind: 'ribbon' });
+          tube(B.G, pts, 4, sr, () => ({ rx: 0.0022 * s }), (t) => [[ids[t < 0.5 ? 0 : 1], 1]], { nv: 6 });
+        }
+      }
     } else { // gold hairpin (簪): a rod with a small ornament
       const gc = pin.color || '#e0b84a';
       const gr = C._internal.clothRect(B, 'gold' + gc, 0.04, 0.04, gc, { folds: false, weave: 'silk', after: (g, x, y, w, h) => { g.fillStyle = rgba('#fff', 0.4); g.fillRect(x, y, w, h * 0.3); } });
@@ -2808,6 +2924,10 @@ G.Char3D = (() => {
       g.fillStyle = '#c8372b'; g.font = `bold ${round(h * 0.34)}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('長', x + w * 0.25, y + h * 0.36); g.fillText('明', x + w * 0.25, y + h * 0.68); g.fillText('長', x + w * 0.75, y + h * 0.36); g.fillText('明', x + w * 0.75, y + h * 0.68);
       if (e) { e.fillStyle = '#5ab8e8'; e.fillRect(x - 2, y - 2, w + 4, h + 4); e.fillStyle = '#aef0ff'; e.fillRect(x, y + h * 0.25, w, h * 0.5); } },
   };
+  SW.gourd = (g, x, y, w, h) => { const gr = g.createLinearGradient(x, y, x + w, y + h); gr.addColorStop(0, '#e0a858'); gr.addColorStop(0.5, '#c48a3c'); gr.addColorStop(1, '#8a5a24'); g.fillStyle = gr; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = rgba('#fff', 0.25); g.fillRect(x, y + h * 0.2, w, h * 0.1); };
+  SW.talisman = (g, x, y, w, h) => { g.fillStyle = '#f2d060'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = '#c8372b'; g.fillRect(x + w * 0.4, y + h * 0.1, w * 0.2, h * 0.8); g.fillRect(x + w * 0.15, y + h * 0.3, w * 0.7, h * 0.06); };
+  SW.sachet = (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, '#e8c860', { weave: 'silk', folds: false }); g.strokeStyle = '#b8862a'; g.lineWidth = 1; for (let i = 1; i < 5; i++) { g.beginPath(); g.moveTo(x + w * i / 5, y); g.lineTo(x + w * i / 5, y + h); g.stroke(); } };
+  SW.catcharm = (g, x, y, w, h) => { g.fillStyle = '#e8b878'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = '#4a3020'; g.fillRect(x + w * 0.45, y + h * 0.4, w * 0.035, h * 0.12); g.fillRect(x + w * 0.52, y + h * 0.4, w * 0.035, h * 0.12); g.fillStyle = '#d06a6a'; g.fillRect(x + w * 0.49, y + h * 0.56, w * 0.025, h * 0.05); };
   const EMISSIVE_SW = ['lantern', 'soul', 'blue', 'ember', 'celadon', 'teal', 'paperBlue'];
   function sw(B, k) { return B.rect('sw_' + k, 0, 0, SW[k] || SW.wood, { px: k === 'paperBlue' || k === 'soul' || k === 'lantern' ? [48, 48] : [24, 24], emissive: EMISSIVE_SW.includes(k) }); }
   C.swatch = sw; C.SW = SW;
@@ -2985,7 +3105,16 @@ G.Char3D = (() => {
       case 'plaque': K.cyl([0, 0, -0.05], [0, 0, 0.5], 0.012, 0.012, 'red', 6); K.box([0, 0, 0.62], 0.012, 0.12, 0.1, 'lacq'); break;
       case 'grass': case 'fiber': for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; K.path([[cos(a) * 0.01, sin(a) * 0.01, -0.06], [cos(a) * 0.02, sin(a) * 0.02, 0.15], [cos(a) * 0.05, sin(a) * 0.05 - 0.04, 0.32]], (t) => 0.005 * (1 - t), item === 'grass' ? 'green' : 'fiber', 3); } break;
       case 'flute': K.cyl([0, 0, -0.18], [0, 0, 0.3], 0.011, 0.011, look.mat || 'jade', 8); for (let k = 0; k < 6; k++) K.ball([0, 0.01, -0.05 + k * 0.05], 0.003, 'dark', 1, 1, 1, 3); K.cyl([0, 0, 0.27], [0, 0, 0.29], 0.013, 0.013, 'gold', 8);
-        if (look.tassel) K.path([[0, 0, -0.18], [0, -0.06, -0.19], [0, -0.13, -0.2]], (t) => 0.004 + 0.004 * t, look.tassel, 4); break;
+        if (look.tassel) K.path([[0, 0, -0.18], [0, -0.06, -0.19], [0, -0.13, -0.2]], (t) => 0.004 + 0.004 * t, look.tassel, 4);
+        if (look.tag) { // red-string jade tag (「白芷」) swinging from the flute's foot on a spring chain
+          const t0 = K.T([0, -0.004, -0.175]);
+          const ids = B.chain('fluteTag' + bone, bone, [t0, vadd(t0, [0, -0.06, 0]), vadd(t0, [0, -0.1, 0])], { stiff: 0.5, drag: 0.3, grav: 1.2, r: 0.01, groups: [], kind: 'prop' });
+          tube(B.G, [t0, vadd(t0, [0, -0.06, 0])], 4, sw(B, 'red'), () => ({ rx: 0.0022 }), (t) => [[t < 0.15 ? B.b(bone) : ids[0], 1]], { nv: 3, linear: true });
+          const K2 = kit(B, ids[1], vadd(t0, [0, -0.082, 0]));
+          K2.box([0, 0, 0], 0.011, 0.018, 0.005, look.tag === true ? 'jade' : look.tag);
+          K2.path([[0, -0.02, 0], [0, -0.04, 0], [0, -0.058, 0]], (t) => 0.003 + 0.004 * t, 'tassel', 4);
+        }
+        break;
       default: K.box([0, 0, 0.04], 0.02, 0.02, 0.04, 'wood');
     }
   }
@@ -3063,7 +3192,17 @@ G.Char3D = (() => {
     const o = vadd(B.pos(bone), [0, 0, (i >= 2 ? -0.05 : 0.03) * s]);
     const ch = B.chain('hip' + i, bone, [o, vadd(o, [0, -0.07, 0])], { stiff: 2.5, drag: 0.5, grav: 1, r: 0.04, groups: ['leg'], kind: 'prop' });
     const K = kit(B, ch[0], vadd(o, [0, -0.02, 0]));
-    if (item === 'gourd') { K.path([[0, 0.03, 0], [0, -0.01, 0]], 0.003, 'red', 3); K.ball([0, -0.05, 0], 0.032, 'wood', 1, 1, 1); K.ball([0, -0.11, 0], 0.045, 'wood', 1, 1.05, 1); }
+    const look = (B.S.props3d || {})['hip_' + item] || {};
+    if (item === 'gourd') { K.path([[0, 0.03, 0], [0, -0.01, 0]], 0.003, 'red', 3); K.ball([0, -0.05, 0], 0.032, look.mat || 'wood', 1, 1, 1); K.ball([0, -0.11, 0], 0.045, look.mat || 'wood', 1, 1.05, 1); if (look.cord) { K.cyl([0, -0.078, 0], [0, -0.07, 0], 0.024, 0.024, 'red', 8); K.path([[0.02, -0.075, 0.012], [0.03, -0.11, 0.03], [0.028, -0.15, 0.035]], 0.0025, 'red', 3); } }
+    else if (item === 'talisman') { // 符袋: leather pouch with a yellow talisman slip sticking out of its mouth
+      K.path([[0, 0.02, 0], [0, -0.02, 0]], 0.003, 'leather', 3);
+      K.ball([0, -0.065, 0.004], 0.046, 'leather', 1, 1.0, 0.55); K.cyl([0, -0.03, 0.004], [0, -0.022, 0.004], 0.034, 0.03, 'dark', 8, { flat: 0.6 });
+      K.box([0.012, -0.012, 0.014], 0.011, 0.045, 0.0015, 'talisman');
+    }
+    else if (item === 'charm') { // a round yellow sachet and a little cat-face charm (紅纓 secretly loves cute things)
+      K.path([[0, 0.02, 0], [0, -0.03, 0]], 0.002, 'red', 3); K.ball([0, -0.065, 0], 0.03, 'sachet', 1, 1.15, 0.5);
+      K.path([[0.03, 0.0, 0.01], [0.034, -0.1, 0.012]], 0.0015, 'red', 3); K.ball([0.034, -0.118, 0.012], 0.014, 'catcharm', 1, 0.9, 0.5);
+    }
     else if (item === 'pouch') { K.ball([0, -0.06, 0], 0.045, 'leather', 1, 1.1, 0.6); K.cyl([0, -0.015, 0], [0, -0.03, 0], 0.03, 0.03, 'red', 8); }
     else if (item === 'jade') { K.path([[0, 0.02, 0], [0, -0.05, 0]], 0.002, 'red', 3); K.ball([0, -0.075, 0], 0.025, 'jade', 1, 1.2, 0.35); K.path([[0, -0.1, 0], [0, -0.16, 0]], (t) => 0.003 + 0.006 * t, 'tassel', 4); }
     else if (item === 'knife') { const K2 = kit(B, bone, vadd(o, [0, -0.05, 0.02]), [1, 0, 0], [0, 0, 1], [0, -1, 0]); K2.cyl([0, 0, -0.05], [0, 0, 0.2], 0.018, 0.012, 'leather', 6, { flat: 0.5 }); K2.cyl([0, 0, -0.12], [0, 0, -0.05], 0.012, 0.012, 'dark', 5); }

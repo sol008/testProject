@@ -193,21 +193,53 @@
     }
   }
 
-  // ================================================================================================ 沈星河
-  // Party pick pending (docs/design/v2/xinghe_sheet.png). Canon look from the story bible: messy short top knot with
-  // loose strands, warm brown eyes, indigo short jacket over a white inner shirt, rolled sleeves, dark trousers, straw
-  // sandals, red string bracelet, 「螢火」 sword on the back.
-  look('xinghe', 'canon', {
+  // ================================================================================================ 沈星河 (FINAL: v2 #07 螢火劍客, docs/design/v2/xinghe.md §07)
+  // The Firefly Swordsman, 7.4 heads, the tallest/leanest/sharpest cut: crown-high ponytail tied with a red cord
+  // (wuxia), centre-parted fringe with long sideburn locks; narrow long face, long upturned amber eyes with firelight,
+  // sword brows, pressed lips. Charcoal 大襟 long tunic to the knee (right overlap, ember piping, side slits, ember
+  // flame-tongue embroidery at the hem) over a dark-red inner collar; long ember scarf (one end down the chest, one
+  // trailing); wide leather belt with a round brass boss; leather bracers; black trousers tucked into tall riding
+  // boots; 「螢火」 drawn with an ember glow along the edge, its lacquer scabbard slung at the left hip; red string on
+  // the left wrist (the sword-finger hand).
+  const XH = { char: '#2a2a31', ember: '#e0672a', scarf: '#d9622a', leather: '#5b3a26', brass: '#c99a3e', skin: '#e2ae88', hair: '#161317', boot: '#4e3626' };
+  function xingheHem(g, x, y, w, h, d, U, V) { // ember flame tongues rising from the hem band (front + back)
+    const by = y + h - max(2, h * 0.018);
+    for (const c0 of [0, PI]) for (let k = -2; k <= 2; k++) {
+      if (c0 === PI && k === 0) continue; // no flame on the centre-back seam
+      let th = c0 + k * 0.32; if (th > PI) th -= TAU;
+      const cx = U(th), fh = h * (0.085 + 0.03 * ((k + 5) % 2)), fw = w * 0.012;
+      g.fillStyle = XH.ember;
+      g.beginPath(); g.moveTo(cx - fw, by); g.quadraticCurveTo(cx - fw * 0.6, by - fh * 0.5, cx + fw * 0.5, by - fh); g.quadraticCurveTo(cx + fw * 0.2, by - fh * 0.45, cx + fw, by); g.closePath(); g.fill();
+    }
+    g.fillStyle = XH.ember; g.fillRect(x - 2, by - max(1.5, h * 0.006), w + 4, max(1.5, h * 0.008));
+  }
+  look('xinghe', 'v2_07', {
     spec: {
-      hair: { style: 'messy', color: '#221e28', sheen: '#5a5a78', back: 'short', knot: 'topknot', tie: '#b8322c', locks: 0.55, vol: 1.15 },
-      top: { color: '#34477e', len: 0.2, closure: 'cross', inner: '#f4f0e6', trim: '#1f2a52', sleeve: 'rolled' },
-      sash: { color: '#7a4f34', w: 2.8, tails: true },
-      bottom: { type: 'pants', color: '#2a2732' }, leggings: { color: '#d8cfba', bands: '#8a3a2a' },
-      shoes: { type: 'sandal', color: '#cfae72' }, bracelet: { color: '#e0302a' }, back: 'sword', weapon: 'sword',
+      body: 'adult', skin: XH.skin, eyes: '#9a521c',
+      hair: { style: 'center', part: 0, color: XH.hair, sheen: '#4c4a62', back: 'ponytail', len: 0.36, tie: '#c8432b', tiePh: 0.22, arch: 0.08, sweep: 0.22, stiff: 0.9, locks: 0.95, vol: 1.12, bangLen: 0.06, bangSpread: 1.1 },
+      hat: null,
+      top: { color: XH.char, len: 0.46, closure: 'side', inner: '#6e2420', trim: XH.ember, sleeve: 'long', cuff: XH.char, slits: 0.07, hemArt: xingheHem },
+      scarf: { color: XH.scarf, trim: '#b8481c', tail: 0.7, front: 0.26, w: 0.042, sweep: 1.0 },
+      belt: { color: XH.leather, buckle: XH.brass, w: 0.05, round: 0.024 }, bracers: { color: XH.leather, from: 0.45, side: 'R' },
+      bottom: { type: 'pants', color: '#1f1f25' }, shoes: { type: 'boots', color: XH.boot, sole: '#241a14', from: 0.47, flare: 1.14, band: '#4c382c' },
+      sash: null, leggings: null, back: null, held: null,
+      bracelet: { color: '#e0302a', side: 'L' }, hip: ['sword'], weapon: 'sword', aura: '#ff9a3c',
     },
-    face3d: { eyeStyle: 'round', iris: '#7a4626', irisLight: '#c88a50', browW: 1.5, browArch: 0.25, lash: 0.15, chin: 0.42, jaw: 0.86, mouth: 'smile', restCurve: 0.3 },
-    props3d: { sword: { glow: 'ember', tassel: true, guard: 'bronze' }, back_sword: { scab: 'lacq' } },
-    style: { rest: { head: [0, 0, -2], chest: [-1, 0, 0] } },
+    body3d: { H: 1.76, head: 0.226, headW: 0.172, headD: 0.19, legTop: 0.91, sh: 0.176, chestW: 0.146, waistW: 0.118, hipW: 0.138, armR: 0.044, foreR: 0.037, thighR: 0.07, calfR: 0.048 },
+    face3d: { eyeStyle: 'sharp', ew: 0.31, eh: 0.4, tilt: 0.42, iris: '#9a521c', irisLight: '#ffb050', lash: 0.3, browW: 1.75, browArch: 0.18, browAng: -0.32, browCol: '#141116',
+      chin: 0.33, jaw: 0.8, cheek: 0.0, mouth: 'flat', restCurve: -0.08, mouthW: 0.15, blush: 0.05 },
+    expr: 'determined',
+    props3d: { sword: { glow: 'ember', blade: 'steel', guard: 'bronze', pommel: 'bronze', grip: 'dark', tassel: true } },
+    style: { rest: { head: [-2, 0, 0], chest: [-2, 0, 0] } },
+    clips: {
+      // the sheet pose (card art / select screen): 螢火 drawn low and angled at the ground, left hand in 劍指 at the chest
+      sheet: () => ({ dur: 3, loop: true, k: [
+        { t: 0, hp: [0, -0.01, 0], h: [0, -6, 0], sp: [0, 2, 0], ch: [-2, 6, 0], nk: [0, -4, 0], hd: [-2, -6, -2], fL: [0.03, 0, 0.02], fR: [-0.03, 0, -0.02], fLy: -6, fRy: 10,
+          hR: [-0.27, 0.86, 0.12], hRd: [-0.5, -0.72, 0.42], hRm: 'on', hL: [0.06, 1.3, 0.22], hLr: [-70, 30, 20], hLm: 'on' },
+        { t: 1.5, ch: [-0.5, 6, 0], hp: [0, -0.016, 0], hR: [-0.27, 0.855, 0.12], hL: [0.06, 1.305, 0.22] },
+        { t: 3, hp: [0, -0.01, 0], ch: [-2, 6, 0], hR: [-0.27, 0.86, 0.12], hL: [0.06, 1.3, 0.22] },
+      ] }),
+    },
   });
 
   // ================================================================================================ 白芷

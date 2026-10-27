@@ -275,7 +275,7 @@
     desc: '用鎖鏈、魂罐與熄不掉的長明燈拼成的獄卒。沒有頭，胸口是一只空空的罐子。' });
   mkEnemy('c11_jar', { name: '魂罐', art: 'ghost_lantern', variant: 2, scale: 1.1, lv: 40, elem: 'water', m: { hp: 0.75, atk: 0.1, def: 0.8, spd: 0.5, exp: 0.3, gold: 0 },
     skills: [['e11_jar_hum', 1]], desc: '肩上與背上的魂罐。裡面的魂在替它擋刀。' });
-  mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.02,
+  mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.025,
     m: { hp: 10, atk: 2.15, mag: 2.05, def: 1.2, spd: 1.0, exp: 7, gold: 0 },
     skills: [['e11_kun_swallow', 3], ['e_kun_spout', 4], ['e11_kun_roll', 3]],
     drops: [], desc: '黑水溝的老守者。吞下迷路的魂，馱著游到彼岸再吐出來。燈暗了，牠找不到岸。' });
@@ -3214,7 +3214,7 @@
       },
       onTurn: async (b, u) => {
         const kun = foe(b, 'c11_kun');
-        if (u.id === 'c11_kun_tumor' && kun && !kun.diving) b.healUnit(kun, 500);
+        if (u.id === 'c11_kun_tumor' && kun && !kun.diving) b.healUnit(kun, 300);
         if (b._swal && u === b.party[0]) {
           const s = b._swal, m = G.state.members[s.id];
           const st = G.Party.stats(s.id);

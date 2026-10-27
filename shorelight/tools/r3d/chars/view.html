@@ -8,6 +8,7 @@
     anim=idle|walk|jog|run|<clip>   t=seconds (time sampled)   strip=n (n frames across [t0, t0+span])  span=s
     speed=m/s (locomotion override)  ctx=map|battle   expr=<expression>  talk=1  look=x,y,z
     cam=full|close|face|game  yaw=deg pitch=deg  bg=#hex night=1  ground=0  labels=0  cols=n  spacing=m
+    wind=x,y,z (spring wind, world units; e.g. 2.5,0,-1 makes scarves / ponytails trail to the character's left-back)
 -->
 <script>window.G_VIEWER = true;</script>
 <script src="../../../js/core/util.js"></script>
@@ -81,6 +82,7 @@ setTimeout(function () {
     if (it.expr) { ins.setExpression(it.expr); ins.blink.next = 99; }
     if (q.get('talk')) ins.talk(true);
     if (look) ins.lookAt(look.clone().add(ins.root.position));
+    if (q.get('wind') && ins.springs) ins.springs.wind.set(...q.get('wind').split(',').map(Number)); // world m/s² push on hair/ribbons/cloth
     ins.fidgetT = 1e9;
     const steps = Math.round(it.t * 60);
     const home = ins.root.position.clone();
