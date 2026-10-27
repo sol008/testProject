@@ -128,7 +128,7 @@ function FIGHTS() {
       party: [XH], lv: 1, shops: [], kit: { heal: [0, 0], mp: 0, revive: 0 }, scripted: true },
 
     // ============================================================== ch1 九份燈火
-    { id: 'c1_foreman', test: { lv: 3 }, ch: 1, file: 'ch1', name: '工頭魂・金貴仔 (1-7)', troop: 't_c1_foreman', opts: "{ intro: (b) => foremanIntro(b) }",
+    { id: 'c1_foreman', test: { lv: 4 }, ch: 1, file: 'ch1', name: '工頭魂・金貴仔 (1-7)', troop: 't_c1_foreman', opts: "{ intro: (b) => foremanIntro(b) }",
       party: [XH], lv: 3, shops: S1a, kit: { heal: [3, 3], mp: 0, revive: 0 } },
     { id: 'c1_shore_ghost', test: { lv: 4 }, ch: 1, file: 'ch1', name: '遲疑的水鬼 (1-13)', troop: 't_c1_shore_ghost', opts: "{ intro: (b) => hesitateIntro(b) }",
       party: [XH], lv: 4, shops: S1, kit: { heal: [3, 3], mp: 0, revive: 0 } },
@@ -185,7 +185,7 @@ function FIGHTS() {
     { id: 'c6_linto', test: { lv: 21, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '林投姐 (3-11)', troop: 't_c6_linto_boss', opts: 'lintoRules()',
       party: FOUR, lv: 22, shops: S6, gifts: yinghuo, tactics: tLinto },
     { id: 'c6_moya', test: { lv: 22, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '墨鴉 (caught while sneaking)', troop: 't_c6_moya', opts: 'moyaRules()', party: FOUR, lv: 22, shops: S6, gifts: yinghuo },
-    { id: 'c6_netherlamp', test: { lv: 23, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '冥燈護法 (萬燈閣)', troop: 't_c6_netherlamp', opts: 'netherRules()',
+    { id: 'c6_netherlamp', test: { lv: 25, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '冥燈護法 (萬燈閣)', troop: 't_c6_netherlamp', opts: 'netherRules()',
       party: FOUR, lv: 23, shops: S6, gifts: yinghuo, tactics: tNether },
     { id: 'c6_yexuan', test: { lv: 23, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '夜玄 (forced loss)', troop: 't_c6_yexuan_loss', opts: 'yexuanRules()',
       party: FOUR, lv: 23, shops: S6, gifts: yinghuo, scripted: true, winIf: (r) => r.result === 'lose' },
