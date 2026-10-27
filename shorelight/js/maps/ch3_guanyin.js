@@ -1071,7 +1071,7 @@
         } },
       { id: 'gy_woodcutter', sprite: 'woodcutter', name: '樵夫', x: 14, y: 47, dir: 'right', wander: 1,
         talk: ['上山喔？路邊土地公的供品，攏總被偷咬！一定是山頂那個醉茫茫的道士。', '伊講伊是「替土地公試味道」。你信不信？我不信。'] },
-      { id: 'gy_quarryman', sprite: 'miner', name: '採石工 阿石', x: 21, y: 44, dir: 'down',
+      { id: 'gy_quarryman', sprite: 'miner', name: '採石工阿石', x: 21, y: 44, dir: 'down',
         talk: async (S) => {
           if (F('ch3_monkeyking')) {
             if (!F('ch3_whetstone')) { S.flag('ch3_whetstone'); await S.say('阿石', '石頭不跑了！多謝！這塊磨刀石給你。'); await S.give('c3_whetstone', 1); return; }
@@ -1272,7 +1272,7 @@
     await S.say('hongying:surprise', '（好俊的輕功……）');
     await S.jump('c3_yg_roof', 6);
     await S.say('yungui:smile', '……酒還沒醒。剛剛那一下是運氣。');
-    await S.say('yungui:normal', '在下雲歸，太虛觀道士。');
+    await S.say('yungui:normal', '貧道雲歸，太虛觀道士。');
     if (yy) {
       S.face('c3_yg_roof', 'yuyuan');
       await S.say('yungui:normal', '這隻貓，欠我三塊紅龜粿。記帳。');
