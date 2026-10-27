@@ -286,7 +286,7 @@
           const dp = sh.deep || E.shadeOf(sd, 0.8);
           const deepT = sstep(0.45, 0.55, ao) * (m.deepAmt != null ? m.deepAmt : 0.7);
           r = mix(r, dp[0], deepT); g = mix(g, dp[1], deepT); b = mix(b, dp[2], deepT);
-          if (sh.hi) { const hiT = sstep(0.0, 0.04, ndl - (m.hiAt || 0.78)) * lit; r = mix(r, sh.hi[0], hiT); g = mix(g, sh.hi[1], hiT); b = mix(b, sh.hi[2], hiT); }
+          if (sh.hi) { const hiT = sstep(0.0, 0.04, ndl - (m.hiAt || 0.78)) * lit * (m.hiAmt != null ? m.hiAmt : 1); r = mix(r, r * 0.45 + sh.hi[0] * 0.55, hiT); g = mix(g, g * 0.45 + sh.hi[1] * 0.55, hiT); b = mix(b, b * 0.45 + sh.hi[2] * 0.55, hiT); }
           if (sh.spec) {
             const hx = L[0] + vx, hy = L[1] + vy, hz = L[2] + vz; const hl = sqrt(hx * hx + hy * hy + hz * hz); const ndh = (nx * hx + ny * hy + nz * hz) / hl;
             const sp = sstep(0.0, 0.015, ndh - (m.specAt || 0.985)) * sh.spec; r = mix(r, 1, sp); g = mix(g, 1, sp); b = mix(b, 1, sp);
@@ -335,7 +335,7 @@
       let r = 0, g = 0, b = 0, a = 0, gr = 0, gg = 0, gb = 0, cnt = 0, idv = 0;
       for (let y = 0; y < ss; y++) for (let x = 0; x < ss; x++) {
         const k = (j * ss + y) * W + (i * ss + x); if (!hit[k]) continue; idv = hit[k];
-        const al = col[4 * k + 3]; let cr = col[4 * k], cg = col[4 * k + 1], cb = col[4 * k + 2]; const e = ink[k];
+        const al = col[4 * k + 3]; let cr = col[4 * k], cg = col[4 * k + 1], cb = col[4 * k + 2]; const e = ink[k] * (al < 1 ? al : 1);
         if (e) { cr = mix(cr, lin[3 * k], e); cg = mix(cg, lin[3 * k + 1], e); cb = mix(cb, lin[3 * k + 2], e); }
         const al2 = e ? max(al, e) : al;
         r += cr * al2; g += cg * al2; b += cb * al2; a += al2; gr += emi[3 * k]; gg += emi[3 * k + 1]; gb += emi[3 * k + 2]; cnt++;

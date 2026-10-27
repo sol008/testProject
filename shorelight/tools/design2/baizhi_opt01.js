@@ -219,7 +219,7 @@
     model: '衣褲為簡潔大形，滾邊／盤扣以貼圖＋少量凸起表現；長髮為 3 片大髮束（後髮、左側臉框髮、耳後）；髮梢消散與指尖微光為 shader。',
     palette: [[C.jacket, '月白水藍', 'jacket'], [C.pipe, '黑滾邊', 'piping'], [C.hair, '烏黑髮', 'jet-black hair'], [C.skin, '膚', 'skin'], [C.red, '紅線', 'red string'], [C.jade, '玉牌', 'jade'], [C.shoe, '繡鞋紅', 'shoes']],
     callouts: [
-      { zh: '大裪衫・右衽大襟', en: 'Hoklo side-fastened jacket', at: [-30, -316] },
+      { zh: '大裪衫・右衽大襟', en: 'Hoklo side-fastened jacket', at: [-36, -308] },
       { zh: '寬滾邊＋盤扣', en: 'broad black piping, frog buttons', at: [-44, -262] },
       { zh: '紅繩玉牌繫襟扣', en: 'jade tag on red string at the lapel', at: [-20, -282] },
       { zh: '九份芋圓', en: 'first bowl of taro balls', at: [0, -212] },

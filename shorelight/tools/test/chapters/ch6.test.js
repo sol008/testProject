@@ -141,6 +141,17 @@ class Session {
       m.enemies = [];
     });
   }
+  // the debug party starts in its starting gear; give it what a player would own by now (shop stock of ch5–6)
+  async gear() {
+    await this.ev(() => {
+      const kit = { xinghe: ['sw_qixing', 'c6_brocade_m'], baizhi: ['fl_baiyu', 'c6_brocade_f'], hongying: ['sp_qilin', 'c6_brocade_f'], yungui: ['fn_qixing', 'c6_brocade_m'] };
+      for (const id in kit) {
+        if (!G.state.members[id]) continue;
+        for (const it of kit[id].concat(['hd_yuguan', 'ft_lupi'])) { G.Inv.add(it, 1); G.Party.equip(id, G.Data.items[it].type, it); }
+      }
+      G.Inv.add('xumingsan', 6); G.Inv.add('huanhunxiang', 4); G.Party.healAll();
+    });
+  }
   async drain() {
     const e = await this.page.evaluate(() => { const r = __qa.errs.slice(); __qa.errs.length = 0; const le = G && G.lastError; if (G) G.lastError = null; return { r, le: le ? String(le.stack || le) : null }; }).catch(() => ({ r: [], le: null }));
     for (const x of e.r) (FOREIGN.test(x) && !/ch6_tainan/.test(x) ? this.notes : this.errors).push(x);
@@ -155,7 +166,9 @@ const test = (id, name, fn) => tests.push({ id, name, fn });
 
 // ------------------------------------------------------------------ the critical path
 test('main', '主線：startch=6 → 鹽水 → 蜂炮夜 → 府城 → 做十六歲 → 林投姐 → 潛行 → 萬燈閣 → 夜玄 → 第七章', async (s) => {
-  await s.open('?debug&qa2d&startch=6');
+  await s.open('?debug&qa2d&startch=6', false);
+  await s.until('G.mapScene && G.mapScene.def', 120);
+  await s.gear();
   await s.idle(120);
   assert(await s.map() === 'yanshui', 'intro ends in 鹽水 (map ' + await s.map() + ')');
   assert((await s.flags('ch6_start', 'ch6_arrive_ys')).every(Boolean), 'intro flags');
@@ -273,6 +286,7 @@ test('yuelao', '3-8 大天后宮・月老（笑筊）', async (s) => {
 
 test('stealth', '潛行規則：光暗視野、量表、大甕、糰子、煙火、傀儡定身、被抓 → 檢查點', async (s) => {
   await s.open('?debug&qa2d&map=palace_dock&lv=22&chapter=6&flags=ch6_s1_tut,ch6_infiltrate');
+  await s.gear();
   await s.ff(0.5);
   const st = await s.ev(() => { const m = G.mapScene; return { c: !!m.c6, guards: m.npcs.filter((n) => n.guard).length, puppets: m.c6 && m.c6.puppets.length }; });
   assert(st.c && st.guards === 2 && st.puppets === 1, 'stealth init ' + JSON.stringify(st));
@@ -302,11 +316,12 @@ test('stealth', '潛行規則：光暗視野、量表、大甕、糰子、煙火
   await s.until('__qa.top() === "BattleScene"', 20, 0.25);
   await s.idle(300);
   assert(await s.ev(() => G.mapScene.def.id === 'palace_dock' && G.mapScene.player.x === 4 && G.mapScene.player.y === 15 && G.state.vars.ch6_s1_spotted === false), 'back at the checkpoint (fresh attempt)');
-  assert(await s.ev(() => { const g = G.mapScene.npcs.find((n) => n.id === 'g2'); return g && g.x === 18 && g.y === 7; }), 'guards reset');
+  assert(await s.ev(() => { const g = G.mapScene.npcs.find((n) => n.id === 'g2'); return g && g.y === 7 && g.c6 && g.c6.mode === 'patrol' && g.c6.meter < 0.2; }), 'guards reset');
 });
 
 test('moya', '潛行 S2：被墨鴉抓到 → 墨鴉再戰（一次）', async (s) => {
   await s.open('?debug&qa2d&map=palace_hall&lv=23&chapter=6&flags=ch6_s2_in,ch6_infiltrate');
+  await s.gear();
   await s.ff(0.5);
   await s.ev(() => { const m = G.mapScene; const g = m.npcs.find((n) => n.id === 'moya'); g.setCell(20, 25); g.dir = 'left'; g.pauseT = 5; m.player.setCell(19, 25); });
   await s.until('__qa.top() === "BattleScene"', 20, 0.25);

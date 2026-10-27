@@ -10,7 +10,7 @@
     title: '芋圓', sub: 'Yuyuan — chubby blue-grey tabby · adopts 星河 · earth-element body-block assist · 10 design options · v2',
     blurb: '一隻什麼都不怕、什麼都不屑的胖灰虎斑貓，已經決定星河歸他管。造型身份固定依客戶照片：藍灰虎斑短毛、銀色毛尖、額頭 M 字紋、圓臉腮幫、大立耳、橄欖綠圓眼、長白鬍鬚、厚重麵包體型。十款只變化姿勢、護身符與配件（平安符、紅繩、銅鈴、虎頭繡…）與奇幻處理。',
   };
-  const BASE = { coat: 'tabby', b: { R: 0.19, fat: 1.25 }, head: { cheek: 1.15, earSize: 1.12, earFlare: 18, skullW: 1.04 }, eye: { lid: 0.34, flatLid: true, pupil: 'slit', pw: 0.16, tilt: 0.04, w: 0.21, h: 0.2 }, face: { mouth: 'w' }, body: { fur: 0.006, furF: 40 } };
+  const BASE = { coat: 'tabby', b: { R: 0.19, fat: 1.25 }, head: { cheek: 1.15, earSize: 1.25, earFlare: 16, skullW: 1.04 }, eye: { lid: 0.34, flatLid: true, pupil: 'slit', pw: 0.16, tilt: 0.04, w: 0.21, h: 0.2 }, face: { mouth: 'w' }, body: {} };
   const merge = (a, b) => { const o = Object.assign({}, a); for (const k in b) o[k] = (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && typeof b[k] !== 'function') ? Object.assign({}, a[k] || {}, b[k]) : b[k]; return o; };
 
   D.push({

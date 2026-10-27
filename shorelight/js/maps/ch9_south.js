@@ -263,6 +263,12 @@
     S.particles(G.Mapx.val(m.def.particles));
     if (o.bgm !== false) { const b = G.Mapx.val(m.def.bgm); if (b) S.bgm(b); }
   }
+  // the 3D field view bakes sky / sun / fog when a map is built: after a time-of-day change mid-map, reload it
+  async function reloadFor3d(S) {
+    const m = G.mapScene;
+    if (!m || !m.view3d) return;
+    await S.warp(m.def.id, m.player.x, m.player.y, m.player.dir, { reload: true, fade: 0.4 });
+  }
   // 距關鬼門 countdown
   function days(S, n) {
     const v = V();
@@ -2343,7 +2349,8 @@
     await S.say('chenbo:serious', '起錨——');
     await S.travel(PORTS[from].place, PORTS[to].place, { label: '王船順著潮水，帆是滿的。' });
     V().ch9_port = to;
-    await S.warp('wangboat_deck', 10, 7, 'up');
+    V().ch9_deck_night = false;
+    await S.warp('wangboat_deck', 10, 7, 'up', { reload: true });
     S.toast(`王船泊在${PORTS[to].name}`, 'lantern');
   }
   async function helmTalk(S) {
@@ -2488,8 +2495,9 @@
   // C9-16 繞過南岬（章末）
   async function chapterEnd(S) {
     V().ch9_deck_night = true; V().ch9_deck_dawn = true;
-    await S.travel('eluanbi', 'taitung', { label: '黎明前，王船繞過南岬。' });
-    await S.warp('wangboat_deck', 18, 6, 'right');
+    await S.fadeOut(0.8);
+    await S.narrate(['黎明前，王船駛離鵝鑾鼻。'], { veil: 1 });
+    await S.warp('wangboat_deck', 18, 6, 'right', { fade: 0.01, reload: true });
     S.setPos('player', 17, 6, 'right'); S.gather();
     S.setPos('hongying', 15, 7, 'right'); S.setPos('yungui', 14, 4, 'right'); S.setPos('tuanzi', 19, 7, 'right');
     S.bgm('voyage');
@@ -2729,6 +2737,7 @@
     await S.fadeOut(0.8);
     await S.narrate(['入夜。風更大了，風聲裡夾著哭聲。', '東門的城牆上，傳來細細的月琴聲。'], { veil: 1 });
     relight(S);
+    if (G.mapScene && G.mapScene.view3d) await S.warp('hengchun', G.mapScene.player.x, G.mapScene.player.y, 'down', { reload: true, fade: 0.01, stayDark: true });
     await S.fadeIn(0.8);
     S.objective('登上東門城牆（東門旁的石階）');
   }
@@ -2960,6 +2969,27 @@
     ],
     drawGround: (ctx, t, m) => {
       const s = st();
+      // 滲穴: a dark pit with a ragged grass lip
+      for (const [x, y] of LP_HOLES) {
+        const cx = x * T + 32, cy = y * T + 34;
+        ctx.save();
+        ctx.fillStyle = '#4a6a34'; ctx.fillRect(x * T, y * T, T, T);
+        const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, 30);
+        g.addColorStop(0, '#05040a'); g.addColorStop(0.7, '#1a1410'); g.addColorStop(1, 'rgba(40,52,28,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, 30, 24, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+      // 沙溝: a deep sand trough
+      ctx.save();
+      for (let y = 9; y <= 26; y++) for (let x = 37; x <= 42; x++) {
+        if (m.terrainAt(x, y) !== 'void') continue;
+        const d = Math.min(x - 36, 43 - x);
+        ctx.fillStyle = d <= 1 ? '#6a5234' : d === 2 ? '#4e3c26' : '#3a2c1c';
+        ctx.fillRect(x * T, y * T, T, T);
+        ctx.fillStyle = 'rgba(240,210,150,0.12)';
+        for (let k = 0; k < 3; k++) ctx.fillRect(x * T + ((U.hash(x, y, k) * 64 + t * 12) % 60), y * T + 10 + k * 18, 6, 2);
+      }
+      ctx.restore();
       if (!lpCalm(s)) {
         // lee shelter hints
         ctx.save(); ctx.fillStyle = 'rgba(20,30,60,0.16)';
@@ -3100,6 +3130,7 @@
     S.objective('收集剩下的名字（可選），回恆春東門城牆');
     S.bgm('south');
     S.cameraFollow();
+    await reloadFor3d(S);
   }
 
   // =====================================================================================================
@@ -3326,6 +3357,7 @@
     S.quest('q_ch9_main', 6);
     S.objective('穿過龍坑海蝕洞，把火帶到海邊的王船（東邊的小徑）');
     relight(S, { bgm: false });
+    await reloadFor3d(S);
   }
 
   // =====================================================================================================
@@ -3504,7 +3536,7 @@
   function lkHud(ctx, m, t) {
     if (F('ch9_cave_cleared')) return;
     const v = V();
-    const x = 30, y = 30, f = v.flame == null ? 100 : v.flame;
+    const x = 30, y = G.H - 84, f = v.flame == null ? 100 : v.flame;
     G.UI.plate(ctx, x, y, 300, 44, 0.6, 20);
     G.UI.lanternIcon(ctx, x + 24, y + 22, 9, t);
     G.Render.text(ctx, '燈火', x + 42, y + 9, { size: 20, color: '#ffe0a0' });

@@ -71,7 +71,7 @@
   }
   function shaft() {
     const top = U(0, -UH * 1.3), hand0 = [44, -300];
-    part(ribbon([top, [hand0[0], hand0[1] + 24]], 1.8), '#8a6a3a', { lw: 1.2, rimW: 0.6 });
+    part(ribbon([top, [hand0[0], hand0[1] + 24]], 2.4), '#7a5a2e', { lw: 1.3, rimW: 0.6 });
   }
   function skirt() {
     // pleated skirt whose hem fades — she is growing translucent as she remembers

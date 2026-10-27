@@ -2995,5 +2995,4 @@
     await G.Story.next(S, 6);
   }
 
-  // @@C5-CONTINUE@@
 })();

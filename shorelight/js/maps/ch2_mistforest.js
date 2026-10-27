@@ -431,6 +431,19 @@
   }
 
   // ------------------------------------------------------------------ shared helpers
+  // followers never resolve an awaited S.move (the engine only fires onArrive for the leader & NPCs): poll instead
+  async function fmove(S, id, path) {
+    const a = S.actor(id);
+    if (!a) return;
+    S.move(id, path, { wait: false });
+    for (let i = 0; i < 400 && (a.queue.length || a.moving); i++) await S.wait(0.05);
+  }
+  async function fwalk(S, id, x, y) {
+    const a = S.actor(id);
+    if (!a) return;
+    const dx = x - a.x, dy = y - a.y;
+    await fmove(S, id, (dx > 0 ? 'R' : 'L').repeat(Math.abs(dx)) + (dy > 0 ? 'D' : 'U').repeat(Math.abs(dy)));
+  }
   async function sayAll(S, who, lines) { for (const l of lines) await S.say(who, l); }
   async function savePrompt(S, text) {
     if (text) await S.say('', text);
@@ -1058,7 +1071,7 @@
     await S.say('xinghe:think', '「可見陰陽之隔」……意思是吃了，就看得到平常看不到的東西？');
     await S.say('xinghe:think', '說不定……就看得穿魔神仔的迷陣？');
     await S.say('baizhi:think', '「心靜者見真」。');
-    await S.move('baizhi', 'R', { wait: true });
+    await fmove(S, 'baizhi', 'R');
     S.face('baizhi', 'up');
     await S.say('', '（白芷蹲下，看著一朵藍紫色的小蕈。蕈傘下的光，一明一暗地照在她臉上。）');
     await S.say('baizhi:smile', '我想，我可以心靜。');
@@ -1073,7 +1086,7 @@
     // sit by the pond on the old log
     S.hideFollowers(false);
     await S.move('player', 'LD');
-    await S.move('baizhi', 'LLLD');
+    await fmove(S, 'baizhi', 'LLLD');
     for (const f of ms.followers) if (f.id !== 'baizhi') { f.setCell(16, 8); f.dir = 'down'; }
     S.face('player', 'down'); S.face('baizhi', 'down');
     await S.say('', '（兩人在池邊的倒木旁坐下。只有蟲鳴，和蕈菇呼吸的光。）');
@@ -1420,7 +1433,7 @@
     }
     // 共通
     const bz = S.actor('baizhi');
-    if (bz) { bz.scripted = true; await S.walkTo('baizhi', 20, 22); S.face('baizhi', 'down'); }
+    if (bz) { await fwalk(S, 'baizhi', 20, 22); S.face('baizhi', 'down'); }
     await S.say('', '（白芷走向紅纓。）');
     await S.say('hongying:angry', '不准過來！');
     S.sfx('heal');
@@ -3284,7 +3297,7 @@
     await S.move('player', 'RRRRRRRRRRRU');
     S.face('player', 'up');
     const bz = S.actor('baizhi');
-    if (bz) { bz.scripted = true; await S.walkTo('baizhi', 11, 12); S.face('baizhi', 'up'); }
+    if (bz) { await fwalk(S, 'baizhi', 11, 12); S.face('baizhi', 'up'); }
     await S.say('baizhi:think', '星河。彩虹是什麼做的？');
     await S.say('xinghe:think', '水……跟光吧。');
     await S.say('baizhi:smile', '水，跟光。');

@@ -118,9 +118,9 @@
   function smoke(ctx, pts, w, o) {
     o = o || {};
     ctx.save();
-    K.taper(ctx, pts, w * 1.8, '#e8e2f4', { alpha: 0.28, w0: 0.2, w1: 0.6, blur: 3, noScale: true });
-    K.taper(ctx, pts, w, '#f6f2fb', { alpha: 0.55, w0: 0.2, w1: 0.5, noScale: true });
-    K.line(ctx, pts.map((q) => [q[0] - w * 0.2, q[1] - w * 0.1]), 1.2, '#b7a9d4', { alpha: 0.45 });
+    K.taper(ctx, pts, w * 2, '#e8e2f4', { alpha: 0.3, w0: 0.3, w1: 0.8, blur: 3, noScale: true });
+    K.taper(ctx, pts, w * 1.15, '#a99cc8', { alpha: 0.55, w0: 0.3, w1: 0.7, noScale: true });
+    K.taper(ctx, pts.map((q) => [q[0] - w * 0.15, q[1] - w * 0.12]), w * 0.85, '#f7f4fc', { alpha: 0.9, w0: 0.3, w1: 0.6, noScale: true });
     ctx.restore();
   }
   function violetBloom(ctx, x, y, r, seed) {
@@ -138,6 +138,51 @@
     K.part(ctx, p, { fill: MT.lf.base, line: MT.lf.line, lw: 1.2, fx: [{ dx: -s * 0.18, dy: 0, c: MT.lf.sh }, { dx: s * 0.1, dy: s * 0.1, c: MT.lf.hl, a: 0.6 }] });
     K.line(ctx, [[0, -1], [0, -s * 0.9]], 1, MT.lf.line, { alpha: 0.7 });
     ctx.restore();
+  }
+
+  // moss mantle: lumpy band along a top edge (pts left->right), thickness th; clipped to `clip`
+  function mossMantle(ctx, clip, pts, th, seed) {
+    const r = K.rng(seed || 7);
+    const s = K.sample(pts, false, 1, 10);
+    const lower = [];
+    for (let i = s.length - 1; i >= 0; i--) {
+      const q = s[i], t = i / (s.length - 1);
+      const bump = th * (0.55 + 0.45 * Math.sin(t * Math.PI)) * (0.75 + r() * 0.5);
+      lower.push([q[0] + (r() - 0.5) * 4, q[1] + bump]);
+    }
+    const top = s.map((q) => [q[0], q[1] - 6]);
+    const mp = K.S(top.concat(lower), true, 0.9);
+    K.clipDo(ctx, clip, (c) => {
+      K.cast(c, clip, mp, 2, 7, '#3a2a10', 0.55);
+      K.part(c, mp, {
+        fill: MT.mo.base, line: MT.mo.line, lw: 1.6,
+        fx: [{ dx: -8, dy: -5, c: MT.mo.sh }, { dx: 4, dy: 5, c: MT.mo.hl, a: 0.65 }],
+        inner: (cc) => {
+          for (let i = 0; i < s.length * 3; i++) {
+            const q = s[Math.floor(r() * s.length)];
+            cc.fillStyle = r() < 0.5 ? 'rgba(30,45,18,0.55)' : 'rgba(178,206,118,0.55)';
+            cc.beginPath(); cc.arc(q[0] + (r() - 0.5) * 10, q[1] + r() * th, 1 + r() * 2.2, 0, Math.PI * 2); cc.fill();
+          }
+          // lumps
+          for (let i = 1; i < lower.length - 1; i += 2) {
+            const q = lower[i];
+            K.part(cc, K.ell(q[0], q[1] - th * 0.35, th * 0.38, th * 0.26), { fill: 'rgba(0,0,0,0)', line: false, fx: [{ dx: 3, dy: 3, c: MT.mo.hl, a: 0.45 }, { dx: -3, dy: -2, c: MT.mo.sh, a: 0.5 }] });
+          }
+        },
+      });
+    });
+    return lower;
+  }
+  // hanging old-man's-beard lichen (松蘿) strands
+  function lichen(ctx, x, y, len, seed, n) {
+    const r = K.rng(seed || 3);
+    n = n || 5;
+    for (let i = 0; i < n; i++) {
+      const x0 = x + (r() - 0.5) * 12, L = len * (0.55 + r() * 0.6), sw = (r() - 0.5) * 8;
+      const pts = [[x0, y], [x0 + sw * 0.4, y + L * 0.35], [x0 - sw * 0.3, y + L * 0.7], [x0 + sw * 0.2, y + L]];
+      K.taper(ctx, pts, 4.6, '#55654a', { w0: 1, w1: 0.2, noScale: true });
+      K.taper(ctx, pts, 3, i % 2 ? '#b9c7a0' : '#a7b88c', { w0: 1, w1: 0.2, noScale: true });
+    }
   }
 
   // ------------------------------------------------------------------ props
@@ -178,13 +223,13 @@
     const sq = o.sq || 1; // horizontal squash for the side view loop
     const top = yTop;
     // shaft: two twisting strands
-    const shaft = K.P((p) => p.roundRect(x - 6.5, top + 40, 13, -top - 40, 6));
+    const shaft = K.P((p) => p.roundRect(x - 8, top + 40, 16, -top - 40, 7));
     K.toon(ctx, shaft, MT.vi, {
       s: 4, lw: 1.8,
       inner: (c) => {
         for (let y = top + 50; y < -10; y += 26) {
-          K.taper(c, [[x - 7, y], [x, y + 8], [x + 7, y + 15]], 2.6, MT.vi.sh2, { alpha: 0.85 });
-          K.line(c, [[x - 7, y - 3], [x, y + 5], [x + 7, y + 12]], 1, MT.vi.hl, { alpha: 0.7 });
+          K.taper(c, [[x - 9, y], [x, y + 9], [x + 9, y + 18]], 3, MT.vi.sh2, { alpha: 0.85 });
+          K.line(c, [[x - 9, y - 3.5], [x, y + 5.5], [x + 9, y + 14.5]], 1.2, MT.vi.hl, { alpha: 0.7 });
         }
         for (const ky of [top + 200, top + 420]) K.part(c, K.ell(x + 3, ky, 5, 7), { fill: MT.vi.sh, line: MT.vi.line, lw: 1 });
       },
@@ -196,25 +241,27 @@
       sp.push([x + Math.cos(a) * r * sq + 2 * sq, top + 6 - 30 + Math.sin(a) * r * -1 + 30 * (1 - t) * 0.0]);
     }
     const path = [[x, top + 60]].concat(sp);
-    K.taper(ctx, path, 14, MT.vi.line, { w0: 1, w1: 0.35, a: 0.05, b: 0.6, noScale: true });
-    K.taper(ctx, path, 10.5, MT.vi.base, { w0: 1, w1: 0.3, a: 0.05, b: 0.6, noScale: true });
+    K.taper(ctx, path, 18, MT.vi.line, { w0: 1, w1: 0.35, a: 0.05, b: 0.6, noScale: true });
+    K.taper(ctx, path, 14, MT.vi.base, { w0: 1, w1: 0.3, a: 0.05, b: 0.6, noScale: true });
     K.taper(ctx, path.map((q) => [q[0] - 1.5, q[1] - 1.5]), 3, MT.vi.hl, { w0: 1, w1: 0.2, a: 0.05, b: 0.6, alpha: 0.7, noScale: true });
     // tendril
     K.taper(ctx, [[x - 30 * sq, top - 10], [x - 46 * sq, top - 30], [x - 40 * sq, top - 52], [x - 30 * sq, top - 48]], 3, MT.vi.line, { w0: 1, w1: 0.2, noScale: true });
     // leaves
-    leaf(ctx, x + 34 * sq, top - 4, 22, 1.1);
-    leaf(ctx, x - 34 * sq, top + 10, 20, -1.3);
-    leaf(ctx, x + 6 * sq, top - 66, 18, 0.3);
-    leaf(ctx, x + 14 * sq, top + 46, 18, 2.2);
+    leaf(ctx, x + 42 * sq, top - 4, 26, 1.1);
+    leaf(ctx, x - 44 * sq, top + 10, 24, -1.3);
+    leaf(ctx, x + 8 * sq, top - 74, 22, 0.3);
+    leaf(ctx, x - 20 * sq, top - 70, 18, -0.6);
+    leaf(ctx, x + 16 * sq, top + 52, 20, 2.2);
     // gourd on a red cord
     if (o.gourd !== false) {
-      K.line(ctx, [[x + 28 * sq, top + 16], [x + 30 * sq, top + 40]], 1.6, '#b8292a');
-      gourd(ctx, x + 30 * sq, top + 42, 34);
+      K.line(ctx, [[x + 30 * sq, top + 18], [x + 32 * sq, top + 46]], 1.6, '#b8292a');
+      gourd(ctx, x + 32 * sq, top + 48, 38);
     }
     // blooms
-    violetBloom(ctx, x - 26 * sq, top - 30, 8, 3);
-    violetBloom(ctx, x + 22 * sq, top - 46, 7, 7);
-    violetBloom(ctx, x - 10 * sq, top + 30, 6, 9);
+    violetBloom(ctx, x - 32 * sq, top - 34, 10, 3);
+    violetBloom(ctx, x + 26 * sq, top - 54, 9, 7);
+    violetBloom(ctx, x - 14 * sq, top + 34, 7.5, 9);
+    violetBloom(ctx, x + 40 * sq, top + 22, 6.5, 11);
   }
 
   // ------------------------------------------------------------------ head (front / 3-4)
@@ -233,20 +280,20 @@
     const sk = MT.sk, ha = MT.ha;
 
     // --- bun (behind/above the crown), hairpin and dream-vine sprig
-    const bc = m(0.02, -0.07, -0.3);
-    const bun = K.ell(bc[0], bc[1], 0.27 * u, 0.17 * u);
+    const bc = m(0.0, -0.1, -0.3);
+    const bun = K.ell(bc[0], bc[1], 0.2 * u, 0.155 * u);
     K.toon(ctx, bun, ha, {
       s: 7, lw: 2,
       inner: (c) => {
-        for (let i = 0; i < 6; i++) K.line(c, [[bc[0] - 0.24 * u + i * 0.02 * u, bc[1] + 0.06 * u], [bc[0] - 0.05 * u + i * 0.03 * u, bc[1] - 0.12 * u], [bc[0] + 0.2 * u, bc[1] - 0.06 * u + i * 0.025 * u]], 1.1, ha.sh2, { alpha: 0.7 });
+        for (let i = 0; i < 4; i++) { const rr = (0.16 - i * 0.035) * u; c.strokeStyle = K.rgba(ha.sh2, 0.75); c.lineWidth = 1.2; c.beginPath(); c.arc(bc[0] + 0.01 * u * i, bc[1] + 0.01 * u * i, rr, Math.PI * 0.9, Math.PI * 2.2); c.stroke(); }
       },
     });
     // wooden hairpin across the bun
-    K.taper(ctx, [[bc[0] - 0.36 * u, bc[1] + 0.07 * u], [bc[0] + 0.38 * u, bc[1] - 0.1 * u]], 6, MT.vi.line, { w0: 0.6, w1: 1, noScale: true });
-    K.taper(ctx, [[bc[0] - 0.36 * u, bc[1] + 0.07 * u], [bc[0] + 0.38 * u, bc[1] - 0.1 * u]], 4, '#8a6238', { w0: 0.6, w1: 1, noScale: true });
-    K.part(ctx, K.circle(bc[0] + 0.39 * u, bc[1] - 0.1 * u, 4), { fill: C.jade, line: MT.jd.line, lw: 1 });
+    K.taper(ctx, [[bc[0] - 0.3 * u, bc[1] + 0.06 * u], [bc[0] + 0.32 * u, bc[1] - 0.1 * u]], 6, MT.vi.line, { w0: 0.6, w1: 1, noScale: true });
+    K.taper(ctx, [[bc[0] - 0.3 * u, bc[1] + 0.06 * u], [bc[0] + 0.32 * u, bc[1] - 0.1 * u]], 4, '#8a6238', { w0: 0.6, w1: 1, noScale: true });
+    K.part(ctx, K.circle(bc[0] + 0.33 * u, bc[1] - 0.1 * u, 4), { fill: C.jade, line: MT.jd.line, lw: 1 });
     // sprig of dream-vine (viewer's right of the bun)
-    const sg = m(0.22, 0.0, -0.3);
+    const sg = m(0.16, -0.06, -0.3);
     K.taper(ctx, [[sg[0], sg[1]], [sg[0] + 12, sg[1] - 14], [sg[0] + 24, sg[1] - 18], [sg[0] + 30, sg[1] - 30]], 2.6, MT.vi.base, { w0: 1, w1: 0.3, noScale: true });
     leaf(ctx, sg[0] + 18, sg[1] - 14, 13, 1.2);
     violetBloom(ctx, sg[0] + 28, sg[1] - 30, 5.5, 2);

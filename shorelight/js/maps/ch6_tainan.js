@@ -144,7 +144,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   defEnemy('c6_plague_mass', {
     name: '疫聚', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 21, elem: 'earth', weak: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 9.5, atk: 1.85, mag: 2.0, def: 1.1, spd: 0.95, exp: 5.5, gold: 5 },
+    m: { hp: 12, atk: 1.95, mag: 2.05, def: 1.1, spd: 0.95, exp: 5.5, gold: 5 },
     skills: [['c6_pm_cough', 3], ['c6_pm_fever', 2], ['c6_pm_drag', 2], ['c6_pm_gather', 1, 'hp<50']],
     phases: [{ at: 0.5, heal: 0.1, text: '灰霧裡又浮出了幾張臉——它在把整條街的哭聲吸回去。' }],
     drops: [['fengpao', 1]],
@@ -191,7 +191,7 @@
   E.c6_yexuan.hp = 999999; E.c6_yexuan.def = 999;
   defEnemy('c6_moya2', {
     name: '墨鴉', sprite: 'moya', lv: 23, elem: 'water', weak: ['earth'], boss: true, immune: BOSS_IMM,
-    m: { hp: 7.0, atk: 1.8, mag: 1.9, def: 1.0, spd: 1.55, exp: 5, gold: 7 },
+    m: { hp: 6.5, atk: 1.7, mag: 1.8, def: 1.0, spd: 1.5, exp: 5, gold: 7 },
     skills: [['c6_my_feathers', 3], ['c6_my_wings', 2], ['c6_my_peck', 2], ['c6_my_pride', 1, 'hp<50']],
     phases: [{ at: 0.5, lines: [['moya:angry', '我的羽毛！我新長的羽毛！']] }],
     drops: [['c6_crow_feather', 1]],

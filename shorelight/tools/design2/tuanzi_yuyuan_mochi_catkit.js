@@ -174,8 +174,8 @@
       if (lx < 0.03 * lw || (lx > 0.1 && lx < 0.1 + 0.05 * lw) || (lx > 0.24 && lx < 0.24 + 0.045 * lw)) return D;
     }
     if (z > -0.3 && y < 0.15 && ax > 0.42) { // mascara line + cheek swirl
-      if (segD(ax, y, 0.58, 0.0, 1.0, -0.1) < t * 1.1) return D;
-      if (segD(ax, y, 0.5, -0.24, 0.8, -0.3) < t || segD(ax, y, 0.8, -0.3, 0.95, -0.16) < t) return D;
+      if (segD(ax, y, 0.57, 0.0, 0.84, -0.06) < t * 0.95) return D;
+      if (segD(ax, y, 0.55, -0.22, 0.78, -0.27) < t * 0.85 || segD(ax, y, 0.78, -0.27, 0.9, -0.14) < t * 0.85) return D;
     }
     return null;
   };
@@ -200,7 +200,7 @@
       if (e === 'rim') { sh.base = coat === 'calico' && q[0] < 0 && q[1] / H.R > -0.1 ? cmix(c.grey, c.white, 0.5) : c.white; sh.shade = c.whiteShade || E.shadeOf(sh.base, 0.84); return; }
       const m = MARKS[coat](q, H, c, opt);
       let base = c.base;
-      if (coat === 'tabby') { const nn = E.fbm(x * 40, y * 40, z * 40, 2); base = cmix(cmix(c.base, c.baseDark, nn * 0.5), c.tick, sstep(0.62, 0.72, E.noise(x * 120, y * 120, z * 120)) * 0.6); }
+      if (coat === 'tabby') { base = cmix(c.base, c.baseDark, E.fbm(x * 9, y * 9, z * 9, 2) * 0.5); }
       else if (coat === 'leopard') base = cmix(c.base, c.baseDark, E.fbm(x * 30, y * 30, z * 30, 2) * 0.5);
       sh.base = m || base;
       if (m === c.white || (coat === 'calico' && m === c.white)) sh.shade = c.whiteShade || E.shadeOf(c.white, 0.84);
@@ -260,13 +260,14 @@
         if (spot && ctx.spotGlow && W.id > 0.55) sh.emit = ctx.spotGlow;
         if (!spot && wm > 0.5) sh.shade = E.shadeOf(c.white, 0.84);
       } else if (coat === 'tabby') {
-        const nn = E.fbm(x * 30, y * 30, z * 30, 2);
-        let base = cmix(cmix(c.base, c.baseDark, nn * 0.55), c.tick, sstep(0.6, 0.72, E.noise(x * 110, y * 110, z * 110)) * 0.55);
+        const nn = E.fbm(x * 9, y * 9, z * 9, 2);
+        const base = cmix(c.base, c.baseDark, nn * 0.5);
         const t = (x - ax[0]) * ux + (y - ax[1]) * uy + (z - ax[2]) * uz;
-        const warp = E.noise(x * 6, y * 6, z * 6) * 0.9 + ab(x) * 1.2;
-        const st = Math.sin((t * (ctx.stripeF || 26)) + warp * 3.0);
-        const flank = 1 - wm; let col = base;
-        if (st > 0.55 && flank > 0.4) col = cmix(base, c.spot, 0.75 * flank);
+        const warp = E.fbm(x * 7 + 3, y * 7, z * 7, 2) * 1.6 + ab(x) * 2.2 - Math.max(0, ny) * 0.8;
+        const st = Math.sin((t * (ctx.stripeF || 46)) + warp * 3.2);
+        const flank = (1 - wm) * sstep(-0.75, -0.3, ny); let col = base;
+        const sw = 0.52 + 0.25 * E.noise(x * 20, y * 20, z * 20);
+        if (st > sw && flank > 0.35) col = cmix(base, c.spot, 0.8 * flank);
         if (ab(x) < 0.03 && ny > 0.4) col = cmix(base, c.spot, 0.8); // spine line
         col = cmix(col, c.white, wm * 0.85);
         if (ctx.rosettes) { const W = E.worley(x * 7 + 1, y * 7 + 2, z * 7 + 3, 0.7); if (W.id > 0.72 && ab(x) > 0.1 && W.d > 0.16 && W.d < 0.26) { col = c.spot; if (ctx.rosetteGlow) sh.emit = ctx.rosetteGlow; } }
@@ -288,7 +289,7 @@
     return (x, y, z, nx, ny, nz, sh) => {
       if (coat === 'calico') { sh.base = c.white; sh.shade = E.shadeOf(c.white, 0.86); return; }
       if (coat === 'tabby') {
-        const base = cmix(c.base, c.baseDark, E.fbm(x * 30, y * 30, z * 30, 2) * 0.5); const bar = Math.sin(y * 70 + E.noise(x * 8, y * 8, z * 8) * 2) > 0.6 && y > 0.06 && y < (o.barTop || 0.32);
+        const base = cmix(c.base, c.baseDark, E.fbm(x * 9, y * 9, z * 9, 2) * 0.5); const bar = Math.sin(y * 70 + E.noise(x * 8, y * 8, z * 8) * 2) > 0.6 && y > 0.06 && y < (o.barTop || 0.32);
         const inner = ab(x) < (o.innerX || 0.06) ? 0.5 : 0; sh.base = bar ? cmix(c.spot, c.white, inner) : cmix(base, c.white, inner * 0.6 + (y < 0.05 ? 0.5 : 0)); return;
       }
       const base = cmix(c.base, c.baseDark, E.fbm(x * 18, y * 18, z * 18, 2) * 0.4); const W = E.worley(x * 18, y * 18, z * 18, 0.8);
@@ -308,7 +309,7 @@
       let col;
       if (coat === 'calico') { const ph = Math.sin(bt * 15 + E.noise(x * 8, y * 8, z * 8) * 3); col = bt > 0.9 ? c.white : ph > 0.2 ? c.grey : ph > -0.5 ? c.cream : cmix(c.grey, c.white, 0.3); sh.base = col; sh.shade = E.shadeOf(col, 0.82); }
       else {
-        const base = coat === 'tabby' ? cmix(c.base, c.baseDark, E.fbm(x * 30, y * 30, z * 30, 2) * 0.5) : cmix(c.base, c.baseDark, E.fbm(x * 18, y * 18, z * 18, 2) * 0.4);
+        const base = coat === 'tabby' ? cmix(c.base, c.baseDark, E.fbm(x * 9, y * 9, z * 9, 2) * 0.5) : cmix(c.base, c.baseDark, E.fbm(x * 18, y * 18, z * 18, 2) * 0.4);
         const n = o.rings || 7, tipT = o.tip || (coat === 'tabby' ? 0.9 : 0.88), from = o.from != null ? o.from : (coat === 'tabby' ? 0.05 : 0.38);
         col = base;
         if (bt > tipT) col = c.spot;
@@ -455,13 +456,14 @@
   // ================================================================== materials
   C.mats = function (S, coat, c, o = {}) {
     const line = c.line; const rim = c.rim;
-    S.mat('face', { base: c.base, line, grp: 1, rim });
-    S.mat('ear', { base: c.earBack, line, grp: 1, rim });
+    const fx = { hi: c.tick || null, hiAt: 0.72, deepAmt: 0.45 };
+    S.mat('face', Object.assign({ base: c.base, line, grp: 1, rim }, fx));
+    S.mat('ear', { base: c.earBack, line, grp: 1, rim, deepAmt: 0.4 });
     S.mat('nose', { base: c.nose, line: cmix(c.nose, [0, 0, 0], 0.6), grp: 2, spec: 0.8, specAt: 0.975 });
-    S.mat('fur', { base: c.base, line, grp: 1, rim });
-    S.mat('leg', { base: c.base, line, grp: 1, rim });
-    S.mat('paw', { base: c.white, line, grp: 1, rim });
-    S.mat('tail', { base: c.base, line, grp: 1, rim });
+    S.mat('fur', Object.assign({ base: c.base, line, grp: 1, rim }, fx));
+    S.mat('leg', Object.assign({ base: c.base, line, grp: 1, rim }, fx));
+    S.mat('paw', { base: c.white, line, grp: 1, rim, deepAmt: 0.45 });
+    S.mat('tail', Object.assign({ base: c.base, line, grp: 1, rim }, fx));
   };
 
   // ================================================================== full cat assembly
@@ -512,6 +514,30 @@
   };
   // 八卦 octagon pendant
   C.LIB.bagua = (S, m, x, y, z, r = 0.045, pitch = 75) => { const pts = []; for (let i = 0; i < 8; i++) { const a = (i + 0.5) * Math.PI / 4; pts.push([Math.cos(a) * r, Math.sin(a) * r]); } return S.t(S.r(S.extrude(m, 0, 0, 0, pts, r * 0.12, r * 0.06), 0, 0, 0, pitch - 90, 0, 0), x, y, z); };
+
+  // ================================================================== decals (2D canvas → sampler) & planar UVs
+  // C.decal(w,h,draw) → sample(u,v) returns [r,g,b,a] (0..1) or null when transparent. u,v in 0..1 (v down)
+  C.decal = function (w, h, draw) {
+    const cv = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+    const g = cv.getContext('2d'); draw(g, w, h); const d = g.getImageData(0, 0, w, h).data; const out = [0, 0, 0, 0];
+    return (u, v) => {
+      if (u < 0 || v < 0 || u >= 1 || v >= 1) return null; const i = (Math.floor(v * h) * w + Math.floor(u * w)) * 4; if (d[i + 3] < 8) return null;
+      out[0] = d[i] / 255; out[1] = d[i + 1] / 255; out[2] = d[i + 2] / 255; out[3] = d[i + 3] / 255; return out;
+    };
+  };
+  C.FONT = '"LXGW WenKai TC", "Noto Serif TC", serif';
+  // vertical text decal (CJK top→bottom), e.g. talismans / tablets
+  C.textDecal = (text, col, w = 64, h = 160, o = {}) => C.decal(w, h, (g) => {
+    if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, w, h); }
+    if (o.border) { g.strokeStyle = o.border; g.lineWidth = o.bw || 4; g.strokeRect(o.bi || 5, o.bi || 5, w - 2 * (o.bi || 5), h - 2 * (o.bi || 5)); }
+    g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; const chars = [...text]; const fs = o.fs || Math.min(w * 0.8, (h * 0.86) / chars.length);
+    g.font = `${o.bold ? 'bold ' : ''}${fs}px ${C.FONT}`; const y0 = h / 2 - (chars.length - 1) * fs * (o.lh || 1) / 2;
+    chars.forEach((ch, i) => g.fillText(ch, w / 2, y0 + i * fs * (o.lh || 1)));
+    if (o.extra) o.extra(g, w, h);
+  });
+  // planar uv mapping for a flat prop: centre, euler rot (same as used for the prop), half sizes → (u,v) 0..1, plus local z
+  C.planeUV = (cx, cy, cz, rot, hw, hh) => { const fr = E.frame(cx, cy, cz, ...rot); const o = [0, 0, 0]; return (x, y, z) => { const l = fr(x, y, z); o[0] = 0.5 + l[0] / (2 * hw); o[1] = 0.5 - l[1] / (2 * hh); o[2] = l[2]; return o; }; };
+  C.applyDecal = (sh, smp, u, v, mixShade = 0.75) => { const s = smp(u, v); if (!s) return false; const c = [s[0], s[1], s[2]]; sh.base = cmix(sh.base, c, s[3]); sh.shade = E.shadeOf(sh.base, mixShade); return true; };
 
   G.CATKIT = C;
 })(typeof window !== 'undefined' ? window : self);
