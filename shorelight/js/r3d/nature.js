@@ -90,15 +90,20 @@
   // opts: { strength (m of tip sway at full gust), height (m: height where the bend reaches 1), flex (exponent, 1.5..3),
   //         flutter (m: leaf jitter amplitude), radial (extra bend for parts far from the trunk axis, per m),
   //         var: [r,g,b] colour variation amplitude per instance (multiplicative), trans: 0..1 translucency/wrap,
-  //         transColor, grass: bool (instanced blades: whole height bends, bend uses instance origin) }
+  //         transColor, grass: bool (instanced blades: whole height bends, bend uses instance origin),
+  //         hang: y (hanging parts: bend grows downward from y), pulse: 0..1 (emissive breathing), pulseSpeed,
+  //         hue: radians (emissive hue swing), hueRate (rad/s continuous hue cycling), vglow: k (vertex colour → emissive),
+  //         irid: k (view-angle rainbow fresnel, psychedelic spirit materials) }
   Wind.windify = function (mat, opts = {}) {
     if (mat.userData.wind) { Object.assign(mat.userData.wind, opts); return mat; }
-    const o = Object.assign({ strength: 0.12, height: 4, flex: 2, flutter: 0, radial: 0, var: [0.08, 0.08, 0.05], trans: 0, transColor: 0xd8ff8a, push: 0 }, opts);
+    const o = Object.assign({ strength: 0.12, height: 4, flex: 2, flutter: 0, radial: 0, var: [0.08, 0.08, 0.05], trans: 0, transColor: 0xd8ff8a, hang: 0, pulse: 0, pulseSpeed: 1.6, hue: 0, hueRate: 0, vglow: 0, irid: 0 }, opts);
     mat.userData.wind = o;
     const U = {
       uWS: { value: o.strength }, uWH: { value: o.height }, uWFx: { value: o.flex }, uWFl: { value: o.flutter }, uWRad: { value: o.radial },
       uVar: { value: new T.Vector3(o.var[0], o.var[1], o.var[2]) }, uTrans: { value: o.trans }, uTransCol: { value: new T.Color(o.transColor) },
+      uWHang: { value: o.hang }, uGlow: { value: new T.Vector4(o.pulse, o.pulseSpeed, o.hue, o.hueRate) }, uVGlow: { value: o.vglow }, uIrid: { value: o.irid },
     };
+    const fx = o.pulse || o.hue || o.hueRate || o.vglow || o.irid;
     mat.userData.windU = U;
     const prev = mat.onBeforeCompile;
     const inst = !!o.grass;
@@ -107,7 +112,7 @@
       Object.assign(sh.uniforms, Wind.uniforms, U, inst ? Nature.grassU : {});
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', `#include <common>
-          uniform float uWT, uWGust, uWAmp, uWS, uWH, uWFx, uWFl, uWRad; uniform vec3 uWDir;
+          uniform float uWT, uWGust, uWAmp, uWS, uWH, uWFx, uWFl, uWRad, uWHang; uniform vec3 uWDir;
           ${inst ? 'uniform vec3 uPlayer; uniform float uGrassFar; uniform vec3 uCamPos;' : ''}
           varying float vNVar; varying float vNH;`)
         .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -119,7 +124,7 @@
             vec3 org = (wm * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
             float ph = dot(org.xz, vec2(0.371, 0.613));
             vNVar = fract(sin(dot(org.xz, vec2(12.9898, 78.233))) * 43758.5453);
-            float hy = max(transformed.y, 0.0);
+            float hy = uWHang > 0.0 ? max(uWHang - transformed.y, 0.0) : max(transformed.y, 0.0);
             vNH = hy / uWH;
             float h = clamp(hy / uWH, 0.0, 1.6);
             float bend = pow(h, uWFx) + uWRad * length(transformed.xz) * h;
@@ -151,7 +156,9 @@
           }`);
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', `#include <common>
-          uniform vec3 uVar; uniform float uTrans; uniform vec3 uTransCol; varying float vNVar; varying float vNH;`)
+          uniform vec3 uVar; uniform float uTrans; uniform vec3 uTransCol; varying float vNVar; varying float vNH;
+          ${fx ? `uniform float uWT, uVGlow, uIrid; uniform vec4 uGlow;
+          vec3 natHue(vec3 c, float a){ const vec3 k = vec3(0.57735); float ca = cos(a); return c*ca + cross(k,c)*sin(a) + k*dot(k,c)*(1.0-ca); }` : ''}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
           { float k = vNVar * 2.0 - 1.0; float k2 = fract(vNVar * 7.13) * 2.0 - 1.0;
             diffuseColor.rgb *= 1.0 + vec3(uVar.x * k + uVar.z * k2, uVar.y * k, uVar.z * k - uVar.x * k2 * 0.5); }`)
@@ -165,9 +172,24 @@
             reflectedLight.directDiffuse += directionalLights[0].color * diffuseColor.rgb * uTrans * (wrap * 0.45 + back * uTransCol * 0.9);
           }
           #endif`);
+      if (fx) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          {
+            float ph = vNVar * 6.2832;
+            #ifdef USE_COLOR
+              totalEmissiveRadiance += vColor.rgb * uVGlow;
+            #endif
+            totalEmissiveRadiance *= 1.0 + uGlow.x * sin(uWT * uGlow.y + ph);
+            float ha = uGlow.z * sin(uWT * 0.7 + ph) + uGlow.w * uWT + ph * step(0.001, uGlow.w);
+            totalEmissiveRadiance = max(natHue(totalEmissiveRadiance, ha), 0.0);
+            if (uIrid > 0.0) {
+              float fr = 1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0);
+              vec3 rb = 0.5 + 0.5 * cos(6.2832 * (fr * 1.4 + uWT * 0.12 + vNVar + vec3(0.0, 0.33, 0.67)));
+              totalEmissiveRadiance += rb * pow(fr, 1.6) * uIrid;
+            }
+          }`);
     };
     const prevKey = mat.customProgramCacheKey;
-    mat.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|wind' + (inst ? 'G' : ''); };
+    mat.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|wind' + (inst ? 'G' : '') + (fx ? 'F' : ''); };
     mat.needsUpdate = true;
     return mat;
   };
@@ -2260,6 +2282,394 @@
         for (let k = 2; k < 8; k += 3) blob(acc, pts[k].clone().add(V3(0, 0.012, 0)), 0.018, 0.012, 0.018, cB, { ws: 6, hs: 4, shade: true });
       }
       return K.merge(K.group(meshOf(acc, m, { cast: false })));
+    },
+  });
+
+  // =====================================================================================================
+  // SPIRIT FLORA — bioluminescent fungi, crystals, sacred geometry, jewel flowers, glowing vines
+  // =====================================================================================================
+  // GPU-animated floating motes (spores, sparkles, mist): no per-frame CPU work. Add AFTER K.merge (not a mesh).
+  // o: { n, r (radius), h (height), y0, color, size (px at 10 m), speed, swirl, seed, blend }
+  function motes(o) {
+    const r = RNG(o.seed || 1), n = o.n || 24;
+    const pos = new Float32Array(n * 3), sd = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const a = r() * TAU, d = sqrt(r()) * o.r; pos[i * 3] = cos(a) * d; pos[i * 3 + 1] = (o.y0 || 0) + r() * o.h; pos[i * 3 + 2] = sin(a) * d; sd[i] = r(); }
+    const g = new T.BufferGeometry();
+    g.setAttribute('position', new T.BufferAttribute(pos, 3));
+    g.setAttribute('seed', new T.BufferAttribute(sd, 1));
+    g.boundingSphere = new T.Sphere(V3(0, (o.y0 || 0) + o.h / 2, 0), o.r + o.h);
+    const key = 'motes_' + [o.color, o.size, o.speed, o.swirl, o.h, o.y0, o.blend, o.mist ? 1 : 0].join('_');
+    const m = cmat(key, () => new T.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: o.blend === 'normal' ? T.NormalBlending : T.AdditiveBlending, fog: false,
+      uniforms: { uWT: Wind.uniforms.uWT, uCol: { value: new T.Color(o.color || '#aef') }, uSize: { value: o.size || 6 }, uSpeed: { value: o.speed || 0.15 }, uH: { value: o.h }, uY0: { value: o.y0 || 0 }, uSwirl: { value: o.swirl || 0.3 }, uTex: { value: G.R3M.glowTex() } },
+      vertexShader: `attribute float seed; uniform float uWT, uSize, uSpeed, uH, uY0, uSwirl; varying float vA;
+        void main(){
+          vec3 p = position; float t = uWT * uSpeed + seed * 7.0;
+          float y = mod(p.y - uY0 + t * uH * 0.25, uH); p.y = uY0 + y;
+          p.x += sin(uWT * 0.7 + seed * 20.0) * uSwirl; p.z += cos(uWT * 0.6 + seed * 13.0) * uSwirl;
+          float life = y / uH; vA = smoothstep(0.0, 0.15, life) * (1.0 - smoothstep(0.7, 1.0, life)) * (0.6 + 0.4 * sin(uWT * 3.0 + seed * 40.0));
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_PointSize = uSize * ${o.mist ? '(1.0 + life * 2.5)' : '1.0'} * 10.0 / max(-mv.z, 0.5);
+          gl_Position = projectionMatrix * mv; }`,
+      fragmentShader: `uniform vec3 uCol; uniform sampler2D uTex; varying float vA;
+        void main(){ vec4 t = texture2D(uTex, gl_PointCoord); gl_FragColor = vec4(uCol * t.rgb, t.a * vA); }`,
+    }));
+    const pts = new T.Points(g, m);
+    pts.frustumCulled = true; pts.renderOrder = 5; pts.castShadow = false;
+    return pts;
+  }
+  // a soft additive glow card (fake volumetric halo), faces up-ish; added after merge
+  function halo(rad, color, y, k = 0.6) {
+    const m = cmat('halo_' + color + k, () => new T.MeshBasicMaterial({ map: G.R3M.glowTex(), color: new T.Color(color).multiplyScalar(k), transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false }));
+    const g = new T.PlaneGeometry(rad * 2, rad * 2); g.rotateX(-PI / 2);
+    const h = new T.Mesh(g, m); h.position.y = y; h.renderOrder = 4; h.castShadow = false; h.receiveShadow = false;
+    return h;
+  }
+  // glowing spirit material: lit surface + emissive (map or vertex colours), pulsing / hue-swinging per instance
+  function glowMat(key, o) {
+    return cmat('glow_' + key, () => {
+      const m = G.R3M.env(Object.assign({ color: 0xffffff, vertexColors: true, roughness: 0.5, emissive: 0x000000, emissiveIntensity: 1 }, o.params || {}));
+      Wind.windify(m, Object.assign({ height: 1, strength: 0, var: [0.04, 0.04, 0.04] }, o.fx || {}));
+      return m;
+    });
+  }
+  // mushroom cap texture: radial-ish (lathe u around, v along profile 0 = rim underside … 1 = top centre)
+  function capTex(key, P) {
+    return tex('cap_' + key, 256, 256, (g, w, h) => {
+      const r = RNG(P.seed || 9);
+      const gr = g.createLinearGradient(0, h, 0, 0);
+      gr.addColorStop(0, P.gill); gr.addColorStop(0.32, P.gill); gr.addColorStop(0.36, P.rim); gr.addColorStop(0.5, P.a); gr.addColorStop(1, P.b);
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      // gill lines on the underside band
+      g.strokeStyle = rgba(P.gillLine, 0.6); g.lineWidth = 1.5;
+      for (let x = 0; x < w; x += 6) { g.beginPath(); g.moveTo(x, h); g.lineTo(x, h * 0.68); g.stroke(); }
+      // glowing spots on the dome
+      for (let i = 0; i < (P.spots || 18); i++) {
+        const x = r() * w, y = r() * h * 0.5, R0 = 4 + r() * 9;
+        for (const dx of [-w, 0, w]) { const s2 = g.createRadialGradient(x + dx, y, 0, x + dx, y, R0); s2.addColorStop(0, P.spot); s2.addColorStop(0.6, P.spot); s2.addColorStop(1, rgba(P.spot, 0)); g.fillStyle = s2; g.beginPath(); g.ellipse(x + dx, y, R0, R0 * 0.7, 0, 0, TAU); g.fill(); }
+      }
+    }, { wrap: true });
+  }
+  // cap: lathe dome with an in-curled rim and a gill underside → one draw call, emissive map = colour map
+  function capGeo(R, H, o = {}) {
+    const pts = [];
+    const steps = 8;
+    // underside: from stem to rim (v 0 → 0.34)
+    pts.push(new T.Vector2(R * 0.18, -H * 0.05));
+    pts.push(new T.Vector2(R * 0.6, -H * 0.12));
+    pts.push(new T.Vector2(R * 0.97, -H * 0.06));
+    // rim lip
+    pts.push(new T.Vector2(R * 1.02, H * 0.03));
+    // dome
+    for (let i = 1; i <= steps; i++) { const a = i / steps * PI / 2; pts.push(new T.Vector2(cos(a) * R * (1 - 0.02 * i), sin(a) * H * (o.flat ? 0.7 : 1) + H * 0.03)); }
+    const g = new T.LatheGeometry(pts, o.seg || 14);
+    return g;
+  }
+  function addGeo(acc, geo, mtx, col) {
+    geo = geo.index ? geo : geo;
+    const P = geo.attributes.position, N = geo.attributes.normal, UV = geo.attributes.uv, b0 = acc.count;
+    const nm = new T.Matrix3().getNormalMatrix(mtx), v = V3(), n = V3();
+    for (let i = 0; i < P.count; i++) {
+      v.set(P.getX(i), P.getY(i), P.getZ(i)).applyMatrix4(mtx);
+      n.set(N.getX(i), N.getY(i), N.getZ(i)).applyMatrix3(nm).normalize();
+      const c = typeof col === 'function' ? col(P.getY(i), i) : col || [1, 1, 1];
+      acc.v(v.x, v.y, v.z, n.x, n.y, n.z, UV ? UV.getX(i) : 0, UV ? UV.getY(i) : 0, c[0], c[1], c[2]);
+    }
+    if (geo.index) { const ix = geo.index.array; for (let k = 0; k < ix.length; k += 3) acc.tri(b0 + ix[k], b0 + ix[k + 1], b0 + ix[k + 2]); }
+    else for (let k = 0; k < P.count; k += 3) acc.tri(b0 + k, b0 + k + 1, b0 + k + 2);
+    geo.dispose();
+  }
+  const M4 = (x, y, z, rx = 0, ry = 0, rz = 0, s = 1) => new T.Matrix4().compose(V3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(rx, ry, rz)), V3(s, s, s));
+
+  const SHROOM = [
+    { a: '#1fd8c0', b: '#7affe8', rim: '#e8fff8', gill: '#0e6a7a', gillLine: '#c0fff0', spot: '#f0ffb0', light: '#6affd8', stem: '#cfeff0' },
+    { a: '#8a3ae8', b: '#d08aff', rim: '#ffe0ff', gill: '#3a1a8a', gillLine: '#ff9af0', spot: '#7affe8', light: '#c07bff', stem: '#e8dcff' },
+    { a: '#e83aa0', b: '#ff9ad0', rim: '#fff0c0', gill: '#7a1a5a', gillLine: '#ffd060', spot: '#a0f0ff', light: '#ff7ad0', stem: '#ffe0f0' },
+  ];
+  function shroomMats(v) {
+    const P = SHROOM[v];
+    const ct = capTex('shroom' + v, Object.assign({ seed: 61 + v }, P));
+    const cap = cmat('shroomcap' + v, () => {
+      const m = G.R3M.env({ map: ct, emissiveMap: ct, color: 0xd8d8d8, emissive: 0xffffff, emissiveIntensity: 0.95, roughness: 0.35, vertexColors: true });
+      return Wind.windify(m, { height: 1.2, strength: 0.02, pulse: 0.35, pulseSpeed: 1.3, hue: 0.45, var: [0.03, 0.03, 0.03] });
+    });
+    const stem = glowMat('shroomstem' + v, { params: { color: new T.Color(P.stem), roughness: 0.6, emissive: new T.Color(P.light), emissiveIntensity: 0.12 }, fx: { height: 1.2, strength: 0.02, pulse: 0.3, vglow: 0.0 } });
+    return { cap, stem, P };
+  }
+  function mushroomInto(capAcc, stemAcc, r, base, h, R, lean) {
+    const top = base.clone().add(V3(lean.x * h, h, lean.z * h));
+    const sp = [];
+    for (let i = 0; i <= 5; i++) { const t = i / 5; sp.push(V3(lerp(base.x, top.x, t * t), base.y + h * t, lerp(base.z, top.z, t * t))); }
+    tube(stemAcc, sp, sp.map((_, i) => lerp(R * 0.26, R * 0.17, i / 5) * (i === 0 ? 1.35 : 1)), { seg: 8, ao: (p, t) => [lerp(0.7, 1, t), lerp(0.7, 1, t), lerp(0.75, 1, t)] });
+    // ring (annulus) on taller stems
+    addGeo(capAcc, capGeo(R, R * 0.62, { seg: 14 }), M4(top.x, top.y, top.z, lean.z * 0.6, r() * TAU, -lean.x * 0.6));
+  }
+  G.Models.define('mushroom_glow', {
+    variants: 3,
+    occluder: false,
+    update(node, o, t) { Wind.tick(t); },
+    lights(o) { return [{ x: 0, y: 0.45, z: 0.1, color: SHROOM[(o.v || 0) % 3].light, intensity: 1.3, distance: 3.2, flicker: 0.15 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3100 + v * 11);
+      const { cap, stem, P } = shroomMats(v);
+      const ca = new Acc(), st = new Acc();
+      const n = 4 + v;
+      for (let i = 0; i < n; i++) {
+        const big = i === 0;
+        const a = r() * TAU, d = big ? 0.06 : 0.12 + r() * 0.25;
+        const h = big ? 0.68 : 0.18 + r() * 0.28, R = big ? 0.3 : 0.08 + r() * 0.08;
+        mushroomInto(ca, st, r, V3(cos(a) * d, -0.02, sin(a) * d), h, R, V3(r.pm(0.25), 0, r.pm(0.25)));
+      }
+      // mossy mound
+      const mound = new Acc();
+      boulder(mound, V3(0, -0.03, 0), { r: [0.4, 0.09, 0.36], base: 0.6, seed: 70 + v, noise: 0.35, detail: 2, facet: 0.1, tint: [0.35, 0.6, 0.42] });
+      const out = K.merge(K.group(meshOf(ca, cap), meshOf(st, stem), meshOf(mound, glowMat('moss_glow', { params: { color: 0x3a6a3a, roughness: 1, emissive: 0x062a1e, emissiveIntensity: 0.6 }, fx: { pulse: 0.2 } }))));
+      out.add(motes({ n: 18, r: 0.45, h: 1.3, y0: 0.15, color: P.light, size: 5, speed: 0.12, swirl: 0.12, seed: 5 + v }));
+      out.add(halo(0.9, P.light, 0.03, 0.35));
+      return out;
+    },
+  });
+  // mushroom_giant (2×2): solid south row = stem; the vast cap shelters the walkable north row
+  G.Models.define('mushroom_giant', {
+    variants: 3,
+    occluder: true,
+    update(node, o, t) { Wind.tick(t); },
+    lights(o) { const c = ['#5ff0ff', '#b88aff', '#ff7ad0'][(o.v || 0) % 3]; return [{ x: 0, y: 3.0, z: 0, color: c, intensity: 1.6, distance: 7, flicker: 0.1 }, { x: 0, y: 0.6, z: 0.6, color: '#d8c8ff', intensity: 0.8, distance: 3, flicker: 0.05 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3200 + v * 11);
+      const { cap, stem, P } = shroomMats(v);
+      const ca = new Acc(), st = new Acc();
+      // great stem rising from the south row, leaning north so the cap centres over the footprint
+      const base = V3(0, -0.05, 0.55), H = 3.1, R = 1.45;
+      const top = V3(0, H, -0.05);
+      const sp = [];
+      for (let i = 0; i <= 8; i++) { const t = i / 8; sp.push(V3(sin(t * 3 + v) * 0.08, lerp(base.y, top.y, t), lerp(base.z, top.z, sstep(0, 1, t)))); }
+      tube(st, sp, sp.map((_, i) => { const t = i / 8; return 0.32 - t * 0.08 + 0.25 * pow(1 - t, 5); }), { seg: 14, flute: { n: 6, amp: 0.25, h: 0.8, y0: -0.05 }, lump: 0.08, ao: (p) => { const k = sstep(0, 1.4, p.y); return [lerp(0.6, 1, k), lerp(0.62, 1, k), lerp(0.7, 1, k)]; } });
+      // skirt (annulus) hanging under the cap
+      const sk = new T.CylinderGeometry(0.33, 0.55, 0.35, 14, 1, true);
+      addGeo(st, sk, M4(top.x, top.y - 0.55, top.z));
+      addGeo(ca, capGeo(R, R * 0.55, { seg: 20 }), M4(top.x, top.y, top.z, 0.05, v, 0));
+      // glowing drips hanging from the rim
+      for (let k = 0; k < 14; k++) {
+        const a = k / 14 * TAU + r.pm(0.2), p = top.clone().add(V3(cos(a) * R * 0.95, -0.05, sin(a) * R * 0.95));
+        const L = 0.15 + r() * 0.45;
+        tube(ca, [p, p.clone().add(V3(0, -L * 0.6, 0)), p.clone().add(V3(0, -L, 0))], [0.02, 0.012, 0.004], { seg: 4, ao: () => [1.2, 1.2, 1.2] });
+      }
+      // a few small companions at the foot
+      for (let i = 0; i < 4; i++) { const a = 0.3 + i * 1.5, d = 0.55 + r() * 0.3; mushroomInto(ca, st, r, V3(cos(a) * d, -0.02, 0.4 + sin(a) * d * 0.6), 0.2 + r() * 0.3, 0.09 + r() * 0.08, V3(r.pm(0.3), 0, r.pm(0.3))); }
+      const out = K.merge(K.group(meshOf(ca, cap), meshOf(st, stem)));
+      out.add(motes({ n: 40, r: 1.4, h: 3.2, y0: 0.2, color: P.light, size: 6, speed: 0.08, swirl: 0.25, seed: 9 + v }));
+      out.add(halo(2.2, P.light, 0.03, 0.3));
+      return out;
+    },
+  });
+
+  // ---- crystal: faceted prisms bursting from a dark rock matrix --------------------------------------
+  const CRY = [
+    { body: '#3ad0ff', tip: '#e8ffff', glow: '#7ff4ff' },
+    { body: '#9a5aff', tip: '#ffe0ff', glow: '#c79cff' },
+    { body: '#ffa040', tip: '#fff4c0', glow: '#ffc27a' },
+  ];
+  function prism(acc, base, dir, L, w, sides, cBase, cTip, r) {
+    const d = dir.clone().normalize();
+    let nr = abs(d.y) < 0.9 ? V3(0, 1, 0).cross(d).normalize() : V3(1, 0, 0).cross(d).normalize();
+    const bn = d.clone().cross(nr);
+    const sh = 0.72 + r() * 0.12; // shoulder
+    const ring = (t, s) => { const out = []; for (let k = 0; k < sides; k++) { const a = k / sides * TAU + 0.3; out.push(base.clone().addScaledVector(d, L * t).addScaledVector(nr, cos(a) * w * s).addScaledVector(bn, sin(a) * w * s)); } return out; };
+    const r0 = ring(-0.1, 0.9), r1 = ring(sh, 1), tip = base.clone().addScaledVector(d, L);
+    const face = (a, b, c, ca, cb, cc) => {
+      const fn = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+      const i0 = acc.v(a.x, a.y, a.z, fn.x, fn.y, fn.z, 0, 0, ...ca), i1 = acc.v(b.x, b.y, b.z, fn.x, fn.y, fn.z, 1, 0, ...cb), i2 = acc.v(c.x, c.y, c.z, fn.x, fn.y, fn.z, 1, 1, ...cc);
+      acc.tri(i0, i1, i2);
+    };
+    const mid = cBase.map((x, i) => lerp(x, cTip[i], 0.55));
+    for (let k = 0; k < sides; k++) {
+      const k2 = (k + 1) % sides;
+      face(r0[k], r0[k2], r1[k2], cBase, cBase, mid); face(r0[k], r1[k2], r1[k], cBase, mid, mid);
+      face(r1[k], r1[k2], tip, mid, mid, cTip);
+    }
+  }
+  G.Models.define('crystal', {
+    variants: 3,
+    occluder: false,
+    update(node, o, t) { Wind.tick(t); },
+    lights(o) { return [{ x: 0, y: 0.7, z: 0.1, color: CRY[(o.v || 0) % 3].glow, intensity: 1.3, distance: 3.6, flicker: 0.08 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3300 + v * 13), C0 = CRY[v];
+      const m = glowMat('crystal' + v, { params: { color: 0xffffff, roughness: 0.15, metalness: 0.1, flatShading: true }, fx: { vglow: 0.7, pulse: 0.3, pulseSpeed: 1.1, irid: 0.45, hue: 0.25 } });
+      const acc = new Acc();
+      const cb = col3(C0.body).map((x) => x * 0.25), ct = col3(C0.body).map((x, i) => lerp(x, col3(C0.tip)[i], 0.35));
+      for (let i = 0; i < 7; i++) {
+        const big = i === 2;
+        const a = (i - 3) * 0.32 + r.pm(0.2), az = r() * TAU;
+        const dir = V3(sin(a) * cos(az) * 1.2, 1, sin(a) * sin(az) * 1.2);
+        const bx = V3((i - 3) * 0.07 + r.pm(0.05), 0.05, r.pm(0.12));
+        prism(acc, bx, dir, big ? 1.15 : 0.35 + r() * 0.45, big ? 0.13 : 0.05 + r() * 0.05, 6, cb, ct, r);
+      }
+      const rock = new Acc();
+      boulder(rock, V3(0, 0.02, 0), { r: [0.42, 0.18, 0.36], seed: 80 + v, noise: 0.3, detail: 1, facet: 0.8, tint: [0.45, 0.42, 0.55] });
+      const out = K.merge(K.group(meshOf(acc, m), meshOf(rock, rockMat('basalt'))));
+      out.add(motes({ n: 12, r: 0.45, h: 1.4, y0: 0.2, color: C0.glow, size: 4, speed: 0.1, swirl: 0.1, seed: 13 + v }));
+      out.add(halo(0.8, C0.glow, 0.03, 0.4));
+      return out;
+    },
+  });
+
+  // ---- geometry_pillar: rune-carved octagonal plinth; nested sacred solids float and counter-rotate above it
+  function runeTex() {
+    return tex('runes', 512, 128, (g, w, h) => {
+      g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+      const r = RNG(91);
+      g.strokeStyle = '#fff'; g.lineWidth = 4; g.lineCap = 'round';
+      for (let i = 0; i < 16; i++) {
+        const x0 = i * 32 + 6;
+        g.beginPath();
+        for (let k = 0; k < 4; k++) { const x = x0 + r() * 20, y = 30 + r() * 68; k ? g.lineTo(x, y) : g.moveTo(x, y); }
+        g.stroke();
+        g.beginPath(); g.arc(x0 + 10, 64, 4 + r() * 5, 0, TAU); g.stroke();
+      }
+      g.fillStyle = '#fff'; g.fillRect(0, 8, w, 3); g.fillRect(0, h - 11, w, 3);
+    }, { wrap: true });
+  }
+  function edgeTubes(acc, geo, mtx, rad, col) {
+    const eg = new T.EdgesGeometry(geo, 1);
+    const P = eg.attributes.position;
+    for (let i = 0; i < P.count; i += 2) {
+      const a = V3(P.getX(i), P.getY(i), P.getZ(i)).applyMatrix4(mtx), b = V3(P.getX(i + 1), P.getY(i + 1), P.getZ(i + 1)).applyMatrix4(mtx);
+      tube(acc, [a, b], [rad, rad], { seg: 4, ao: () => col });
+    }
+    for (let i = 0; i < P.count; i++) blob(acc, V3(P.getX(i), P.getY(i), P.getZ(i)).applyMatrix4(mtx), rad * 2.2, rad * 2.2, rad * 2.2, col, { ws: 6, hs: 4 });
+    eg.dispose(); geo.dispose();
+  }
+  G.Models.define('geometry_pillar', {
+    variants: 3,
+    noClone: false,
+    update(node, o, t) {
+      Wind.tick(t);
+      const g1 = node.getObjectByName('geoA'), g2 = node.getObjectByName('geoB');
+      const ph = ((o.x || 0) * 1.7 + (o.y || 0) * 2.3) % 6;
+      if (g1) { g1.rotation.set(t * 0.31 + ph, t * 0.5, t * 0.17); g1.position.y = 1.85 + sin(t * 1.1 + ph) * 0.06; }
+      if (g2) { g2.rotation.set(-t * 0.23, -t * 0.7 + ph, t * 0.29); g2.position.y = 1.85 + sin(t * 1.1 + ph) * 0.06; }
+    },
+    lights(o) { return [{ x: 0, y: 1.9, z: 0, color: '#c8a0ff', intensity: 1.4, distance: 5, flicker: 0.1 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3400 + v * 7);
+      const stoneM = cmat('pillar_stone', () => { const m = G.R3M.env({ map: stoneTex('granite', ROCK.granite), color: 0x8a82a8, vertexColors: true, roughness: 0.8, emissiveMap: runeTex(), emissive: 0xffffff, emissiveIntensity: 1.6 }); return Wind.windify(m, { strength: 0, pulse: 0.5, pulseSpeed: 2.2, hueRate: 0.7 }); });
+      const st = new Acc();
+      // tiers: octagonal prisms; only the middle band's uv hits the rune strip (others map to its black area)
+      const tiers = [[0.42, 0, 0.22], [0.34, 0.22, 0.32], [0.27, 0.54, 0.36]];
+      tiers.forEach(([w, y, h], i) => {
+        const g = new T.CylinderGeometry(w * 0.92, w, h, 8, 1);
+        const uv = g.attributes.uv;
+        for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 2, i === 1 ? 0.1 + uv.getY(k) * 0.8 : 0.0 + uv.getY(k) * 0.02 + 0.002);
+        addGeo(st, g, M4(0, y + h / 2, 0, 0, PI / 8), (yy) => [lerp(0.7, 1, (yy + h / 2) / h), lerp(0.7, 1, (yy + h / 2) / h), lerp(0.75, 1, (yy + h / 2) / h)]);
+      });
+      // capstone dish
+      addGeo(st, new T.CylinderGeometry(0.32, 0.22, 0.08, 8, 1), M4(0, 0.94, 0, 0, PI / 8), [1, 1, 1]);
+      const out = K.merge(K.group(meshOf(st, stoneM)));
+      // floating geometry (separate animated children)
+      const gm = glowMat('sacred' + v, { params: { color: 0x221a33, roughness: 0.2, metalness: 0.4 }, fx: { vglow: 1.6, hueRate: 0.6, irid: 0.6, pulse: 0.3 } });
+      const cA = [col3('#c8a0ff'), col3('#7affe8'), col3('#ffd070')][v], cB = [col3('#7affe8'), col3('#ff9af0'), col3('#c8a0ff')][v];
+      const aAcc = new Acc(), bAcc = new Acc();
+      const outer = [new T.IcosahedronGeometry(0.4, 0), new T.DodecahedronGeometry(0.38, 0), new T.OctahedronGeometry(0.42, 0)][v];
+      edgeTubes(aAcc, outer, new T.Matrix4(), 0.012, cA);
+      // star tetrahedron (merkaba) inside
+      const tet = new T.TetrahedronGeometry(0.24, 0);
+      edgeTubes(bAcc, tet, new T.Matrix4(), 0.01, cB);
+      edgeTubes(bAcc, new T.TetrahedronGeometry(0.24, 0), new T.Matrix4().makeRotationX(PI), 0.01, cB);
+      blob(bAcc, V3(0, 0, 0), 0.07, 0.07, 0.07, [3, 3, 3], { ws: 10, hs: 8 });
+      const A = meshOf(aAcc, gm, { cast: false, name: 'geoA' }), B = meshOf(bAcc, gm, { cast: false, name: 'geoB' });
+      A.position.y = B.position.y = 1.85;
+      out.add(A, B);
+      // light column (additive gradient cylinder)
+      const colM = cmat('lightcol', () => new T.MeshBasicMaterial({ map: tex('lightcol', 8, 128, (g, w, h) => { const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,0.0)'); gr.addColorStop(0.15, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }), color: new T.Color('#b890ff').multiplyScalar(0.28), transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false }));
+      const colG = new T.CylinderGeometry(0.22, 0.3, 2.4, 16, 1, true); colG.translate(0, 0.98 + 1.2, 0);
+      const col = new T.Mesh(colG, colM); col.renderOrder = 4; col.castShadow = false;
+      out.add(col);
+      out.add(motes({ n: 26, r: 0.5, h: 2.2, y0: 0.9, color: '#d0b0ff', size: 4, speed: 0.12, swirl: 0.15, seed: 21 + v }));
+      return out;
+    },
+  });
+
+  // ---- jewel_flower: crystalline stem + faceted gem bloom that slowly turns, hue-cycling ----------------
+  G.Models.define('jewel_flower', {
+    variants: 3,
+    occluder: false,
+    update(node, o, t) {
+      Wind.tick(t);
+      const b = node.getObjectByName('bloom');
+      if (b) { const ph = ((o.x || 0) * 3.1 + (o.y || 0) * 1.3) % 6; b.rotation.y = t * 0.35 + ph; b.position.y = b.userData.y0 + sin(t * 1.5 + ph) * 0.03; }
+    },
+    lights(o) { return [{ x: 0, y: 0.8, z: 0, color: '#ffd0ff', intensity: 1, distance: 2.6, flicker: 0.12 }]; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3500 + v * 7);
+      const wind = { height: 0.9, strength: 0.05, flex: 1.5 };
+      const sm = glowMat('jewelstem', { params: { color: 0x2a8a7a, roughness: 0.25, metalness: 0.2, emissive: 0x0a4a40, emissiveIntensity: 1 }, fx: Object.assign({ irid: 0.35, pulse: 0.2 }, wind) });
+      const st = new Acc();
+      const sp = [V3(0, -0.02, 0), V3(-0.05, 0.3, 0.02), V3(-0.02, 0.55, 0), V3(0, 0.72, 0)];
+      tube(st, sp, [0.025, 0.02, 0.018, 0.015], { seg: 6, ao: () => [1, 1, 1] });
+      for (const s of [-1, 1]) { const pts = archPts(V3(0, 0.14, 0), V3(s, 0.5, 0.2 * s), 0.3, 5, 0.6); ribbon(st, pts, [0.01, 0.05, 0.06, 0.04, 0.005], { fold: 0.4, ao: () => [0.6, 1.2, 1] }); }
+      const out = K.merge(K.group(meshOf(st, sm)));
+      const gm = glowMat('jewel' + v, { params: { color: 0xffffff, roughness: 0.1, metalness: 0.3, flatShading: true }, fx: { vglow: 0.9, hueRate: 0.8, irid: 0.6, pulse: 0.2 } });
+      const bl = new Acc();
+      const pc = [col3('#ff40c0'), col3('#30c8ff'), col3('#ffb020')][v], pt = pc.map((x) => x * 1.6 + 0.15);
+      for (let ring = 0; ring < 2; ring++) for (let k = 0; k < 7; k++) {
+        const a = k / 7 * TAU + ring * 0.45, op = ring ? 0.45 : 0.85;
+        prism(bl, V3(0, 0, 0), V3(cos(a) * op, 1 - ring * 0.2, sin(a) * op), 0.27 - ring * 0.07, 0.045, 4, pc.map((x) => x * 0.35), pt, r);
+      }
+      prism(bl, V3(0, -0.02, 0), V3(0, 1, 0), 0.12, 0.03, 5, [1.5, 1.4, 0.6], [2, 2, 1.5], r);
+      const B = meshOf(bl, gm, { cast: false, name: 'bloom' });
+      B.position.y = B.userData.y0 = 0.74;
+      out.add(B);
+      out.add(motes({ n: 10, r: 0.3, h: 1.0, y0: 0.4, color: '#ffd0ff', size: 4, speed: 0.15, swirl: 0.12, seed: 31 + v }));
+      out.add(halo(0.6, '#ff9af0', 0.03, 0.3));
+      return out;
+    },
+  });
+
+  // ---- vine_curtain (w×1, walk-through): mossy bough at the top, vines hanging, heart leaves; v1/v2 glowing bulbs
+  G.Models.define('vine_curtain', {
+    variants: 3,
+    key: (o) => String(o.w || 1),
+    update(node, o, t) { Wind.tick(t); },
+    lights(o) { const v = (o.v || 0) % 3; return v ? [{ x: 0, y: 1.3, z: 0.1, color: v === 1 ? '#7affe0' : '#ff9af0', intensity: 1, distance: 2.4 + (o.w || 1) * 0.6, flicker: 0.1 }] : []; },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(3600 + v * 7), W = o.w || 1;
+      const TOP = 2.9;
+      const wind = { height: 2.6, strength: 0.22, flex: 1.6, hang: TOP, flutter: 0.03 };
+      const vm = grassMat('vines', wind);
+      const lm = leafMat('vine_leaf', leafAtlas('heartleaf', { seed: 121, shape: 'oval', n: 26, L: 34, W: 20, R: 80, mass: false, dark: '#1e4a1e', mid: '#2e6a2a', light: '#4e9a3a', hi: '#a8d870' }), Object.assign({}, wind, { trans: 0.6 }));
+      const bm = barkMat('vine_bough', BARKS.camphor);
+      const vines = new Acc(), leaves = new Acc(), bough = new Acc(), bulbs = new Acc();
+      // bough spanning the width (slightly beyond), mossy
+      const bp = [];
+      for (let i = 0; i <= 6; i++) { const t = i / 6; bp.push(V3(-W / 2 - 0.2 + (W + 0.4) * t, TOP + sin(t * PI) * 0.12 + r.pm(0.03), -0.25 + sin(t * 5) * 0.05)); }
+      tube(bough, bp, bp.map(() => 0.1 + r() * 0.02), { seg: 7, lump: 0.15, ao: () => [0.8, 0.95, 0.7] });
+      const n = Math.round(9 * W);
+      for (let i = 0; i < n; i++) {
+        const x = -W / 2 + (i + 0.5) / n * W + r.pm(0.05), z = -0.25 + r.pm(0.15);
+        const L = 1.6 + r() * 1.0;
+        const pts = [];
+        for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push(V3(x + sin(t * 4 + i) * 0.06, TOP - L * t, z + cos(t * 3 + i) * 0.05 + t * 0.15)); }
+        // vine: thin twisted ribbon pair
+        for (const rot of [0, PI / 2]) ribbon(vines, pts, pts.map(() => 0.012), { up: V3(cos(rot), 0, sin(rot)), keepSide: true, ao: (p, t) => [lerp(0.22, 0.3, t), lerp(0.4, 0.55, t), lerp(0.12, 0.18, t)] });
+        for (let k = 1; k <= 8; k++) {
+          if (r() < 0.25) continue;
+          const p = pts[k];
+          clump(leaves, r, p.clone().add(V3(r.pm(0.05), 0, 0.03)), 0.13, { cards: 2, C: p.clone().add(V3(0, 0, -0.3)), Rn: V3(0.3, 0.3, 0.3), sphere: 0.4, size: 0.26, spread: 0.3 });
+        }
+        if (v && r() < 0.55) {
+          const p = pts[8];
+          blob(bulbs, p.clone().add(V3(0, -0.04, 0)), 0.035, 0.05, 0.035, v === 1 ? col3('#7affe0') : col3('#ff9af0'), { ws: 8, hs: 6 });
+        }
+      }
+      // moss tufts on the bough
+      for (let i = 0; i < 4 * W; i++) { const p = bp[1 + r.int(5)]; clump(leaves, r, p.clone().add(V3(r.pm(0.2), 0.1, 0)), 0.12, { cards: 2, C: p, Rn: V3(0.2, 0.2, 0.2), flat: 0.5, sphere: 0.6, tint: [0.8, 1, 0.7] }); }
+      const g = K.group(meshOf(bough, bm), meshOf(vines, vm, { cast: true }), meshOf(leaves, lm));
+      if (bulbs.i.length) g.add(meshOf(bulbs, glowMat('vinebulb' + v, { params: { color: 0xffffff, roughness: 0.3 }, fx: Object.assign({ vglow: 2.2, pulse: 0.45, pulseSpeed: 2.0 }, wind) }), { cast: false }));
+      const out = K.merge(g);
+      if (v) out.add(motes({ n: 10 * W, r: 0.5 * W, h: 2.0, y0: 0.3, color: v === 1 ? '#7affe0' : '#ff9af0', size: 3.5, speed: 0.06, swirl: 0.15, seed: 41 + v }));
+      return out;
     },
   });
 })();
