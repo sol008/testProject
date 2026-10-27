@@ -609,7 +609,7 @@
       if (tg !== boss) return dmgFn(tg, dmg, o);
       const fromParty = !o.attacker || o.attacker.side === 'party';
       if (fromParty && dmg > 0) {
-        if (R.armor > 0) dmg = Math.max(1, Math.round(dmg * 0.5));
+        if (R.armor > 0) dmg = Math.max(1, Math.round(dmg * 0.6));
         else if (R.exposed > 0 || R.p3) dmg = Math.round(dmg * 1.3);
       }
       dmgFn(tg, dmg, o);

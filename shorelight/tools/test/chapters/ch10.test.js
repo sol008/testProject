@@ -5,7 +5,7 @@
 //   node tools/test/chapters/ch10.test.js --shots    # also save screenshots to tools/test/out/ch10/
 //   node tools/test/chapters/ch10.test.js --headed
 //   node tools/test/chapters/ch10.test.js --realtime # no extra logic steps (slow headless)
-//   node tools/test/chapters/ch10.test.js --from hualien   # main path from a later segment (orchid|taitung|hualien|toucheng)
+//   node tools/test/chapters/ch10.test.js --from hualien   # main path from a later segment (orchid|taitung|hualien|toucheng); --to <segment> stops after it
 //   node tools/test/chapters/ch10.test.js --only main      # only tests whose name contains the word
 //   node tools/test/chapters/ch10.test.js --3d       # keep the WebGL renderer on (slow headless)
 //
@@ -142,9 +142,11 @@ function api(page) {
   return A;
 }
 
+const SKIP = (() => { const i = argv.indexOf('--skip'); return i >= 0 ? argv[i + 1] : null; })();
 const ONLY = (() => { const i = argv.indexOf('--only'); return i >= 0 ? argv[i + 1] : null; })();
 async function test(browser, name, fn) {
   if (ONLY && !name.includes(ONLY)) return;
+  if (SKIP && name.includes(SKIP)) return;
   const { ctx, page } = await newPage(browser);
   const A = api(page);
   const t0 = Date.now();
@@ -165,6 +167,7 @@ async function test(browser, name, fn) {
 const SEGS = ['orchid', 'taitung', 'hualien', 'toucheng'];
 const FROM = (() => { const i = argv.indexOf('--from'); return i >= 0 ? argv[i + 1] : 'orchid'; })();
 const SEG = Math.max(0, SEGS.indexOf(FROM));
+const TO = (() => { const i = argv.indexOf('--to'); return i >= 0 ? SEGS.indexOf(argv[i + 1]) : 3; })();
 async function preset(A, seg) {
   await A.run(`
     const F = ['ch10_orchid_arrive', 'ch10_orchid_rules', 'ch10_reef_open', 'ch10_reef_done', 'ch10_serpent_defeated', 'ch10_chuanyan', 'ch10_tao_xindeng'];
@@ -204,7 +207,7 @@ async function mainPath(A) {
   await A.shot('01_deck');
 
   // ---- 蘭嶼
-  if (SEG <= 0) {
+  if (SEG <= 0 && TO >= 0) {
   segT('orchid');
   await A.talk('chenbo', ['出航', '蘭嶼', '不停留']);
   assert((await A.map()) === 'orchid_shore', 'landed on 蘭嶼');
@@ -239,7 +242,7 @@ async function mainPath(A) {
   }
 
   // ---- 台東
-  if (SEG <= 1) {
+  if (SEG <= 1 && TO >= 1) {
   segT('taitung');
   if (FROM === 'taitung') await preset(A, 1);
   await A.talk('chenbo', ['出航', '寶桑', '不停留']);
@@ -277,7 +280,7 @@ async function mainPath(A) {
   }
 
   // ---- 花蓮
-  if (SEG <= 2) {
+  if (SEG <= 2 && TO >= 2) {
   segT('hualien');
   if (FROM === 'hualien') await preset(A, 2);
   if ((await A.map()) !== 'wangboat_deck_east') await A.trigger('boat', ['回王船']);
@@ -317,6 +320,8 @@ async function mainPath(A) {
   assert(await A.flag('ch10_freed_muntjac'), 'muntjac freed');
   await A.interact('gz_c');
   await A.step(26, 18);
+  // the auto-battle AI does not play the stone-armour gimmick well: extra levels for the colossus fight only
+  await A.ev(() => { for (const id of G.state.party) G.Story.ensureLevel(id, 44); G.Party.healAll(); });
   await A.step(22, 10);
   await A.waitFor(() => G.state.flags.ch10_rainbow_seen, 240000, 'C10-13/14');
   await A.idle();
@@ -331,7 +336,7 @@ async function mainPath(A) {
   }
 
   // ---- 頭城
-  if (SEG <= 3) {
+  if (SEG <= 3 && TO >= 3) {
   segT('toucheng');
   if (FROM === 'toucheng') await preset(A, 3);
   await A.talk('chenbo', ['出航', '頭城', '不停留']);
@@ -365,10 +370,10 @@ async function mainPath(A) {
   assert(v.xunjing === 6 && v.days_to_gate === 0, '巡境 6 / days 0');
   assert(await A.ev(() => G.state.party.includes('yungui') && G.state.members.yungui.skills.includes('yg_pudu')), 'yg_pudu learned');
   const lv = await A.ev(() => G.state.party.map((id) => G.state.members[id].lv));
-  segT(null);
   log('    party levels at the end of ch10:', lv.join('/'), ' 心燈:', await A.ev(() => Object.keys(G.state.lanterns).join(',')));
-}
   }
+  segT(null);
+}
 
 // ------------------------------------------------------------------ mechanics in isolation
 const MAPQ = (map, x, y, flags = '') => `?debug&map=${map}&x=${x}&y=${y}&lv=36&party=xinghe,hongying,yungui&chapter=10&flags=yuyuan_joined,mochi_joined${flags ? ',' + flags : ''}`;
