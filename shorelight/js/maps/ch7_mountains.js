@@ -2075,6 +2075,7 @@
     ];
     G.Maps.define('bunun_house_in', M({
       name: 'Biung 的家', subtitle: '石板屋裡的火塘', place: 'yushan',
+      interior: true, // 3D: slate floor is not in Map3D's interior-floor set; without this it got the outdoor sky / sea of clouds
       bgm: (st) => (st.flags.ch7_bunun_shelter && !st.flags.ch7_pasibutbut_heard ? null : 'mountain'),
       start: [6, 7],
       light: { ambient: 0.5, color: '#180c08', playerR: 150 },
