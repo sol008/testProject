@@ -279,7 +279,7 @@ G.I18N.add({
   '鹽水客棧': 'Yanshui Inn',
   '客棧老闆娘': 'Innkeeper',
   '住客': 'Guest',
-  '我從台南來做生意，每年元宵都住這。': 'I come up from Tainan on business. Every Lantern Festival I stay here.',
+  '我從府城來做生意，每年元宵都住這。': 'I come up from Tainan on business. Every Lantern Festival I stay here.',
   '老闆娘說窗仔要關緊——去年有一支炮飛進來，把我的帽子燒了一個洞。': 'The innkeeper says to latch the shutters tight—last year a rocket flew in and burned a hole in my hat.',
   '元宵・午後': 'Lantern Festival · Afternoon',
   '元宵・黃昏': 'Lantern Festival · Dusk',

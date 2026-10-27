@@ -1324,7 +1324,7 @@
       ]),
       npcs: [
         { id: 'ys_innkeeper', sprite: 'shopkeeper_f', name: '客棧老闆娘', x: 6, y: 3, dir: 'down', talk: (S, n) => Sc.yanshuiInn(S, n) },
-        { id: 'ys_guest', sprite: 'merchant', name: '住客', x: 10, y: 5, dir: 'down', talk: ['我從台南來做生意，每年元宵都住這。', '老闆娘說窗仔要關緊——去年有一支炮飛進來，把我的帽子燒了一個洞。'] },
+        { id: 'ys_guest', sprite: 'merchant', name: '住客', x: 10, y: 5, dir: 'down', talk: ['我從府城來做生意，每年元宵都住這。', '老闆娘說窗仔要關緊——去年有一支炮飛進來，把我的帽子燒了一個洞。'] },
       ],
       warps: [{ x: 6, y: 9, w: 2, to: 'yanshui', tx: 25, ty: 17, tdir: 'down', door: true }],
     };

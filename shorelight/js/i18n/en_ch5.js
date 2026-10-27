@@ -378,7 +378,7 @@ G.I18N.add({
   '角落掛著一盞褪色的兔子燈。紙已發黃，一隻耳朵垂下來。': 'A faded rabbit lantern hangs in the corner. Its paper has yellowed, and one ear droops.',
   '（燈籠舖。天花板掛滿紅燈籠，暖光像糖漿一樣。施燈師正在糊一盞燈，頭也不抬。）': '(The lantern shop. Red lanterns cover the ceiling, their warm light thick as syrup. Master Shi is pasting a lantern and doesn\'t look up.)',
   '要買燈就自己挑，要訂燈下個月再來。': 'If you\'re buying, pick one yourself. If you\'re ordering, come back next month.',
-  '老師傅，一個月前，一個姓清虛的道士訂了一盞燈。': 'Master, a month ago a Taoist named Qingxu ordered a lantern.',
+  '老師傅，一個月前，一個叫清虛的道士訂了一盞燈。': 'Master, a month ago a Taoist named Qingxu ordered a lantern.',
   '（抬頭，推了推眼鏡）……喔，那個長鬍子的。燈骨我紮好了，紙也糊好了。': '(Looking up, pushing up his spectacles) …Oh, the one with the long beard. I\'ve tied the frame and pasted the paper.',
   '可是他說——燈上的字，要讓「那家的人」自己寫。他寫不得。': 'But he said—the character on the lantern had to be written by someone from "that family" themselves. He couldn\'t write it.',
   '（他從架上取下一盞未寫字的白燈籠，骨架方正，紙面潔淨。）': '(He takes down a blank white lantern from the shelf, its frame square and true, its paper spotless.)',
