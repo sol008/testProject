@@ -195,7 +195,8 @@
       const gr = g.createLinearGradient(0, 0, 0, h);
       gr.addColorStop(0, 'rgba(40,20,10,0.25)'); gr.addColorStop(0.45, 'rgba(40,20,10,0)'); gr.addColorStop(0.85, 'rgba(255,240,220,0)'); gr.addColorStop(1, 'rgba(255,236,210,0.35)');
       g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      for (let i = 0; i < 40; i++) { const x = r() * w, l = h * (0.25 + r() * 0.5), ww = 2 + r() * 6; g.fillStyle = `rgba(30,14,6,${0.08 + r() * 0.14})`; wrap(w, h, x, 0, ww, (X) => { g.fillRect(X, 0, ww, l); g.beginPath(); g.arc(X + ww / 2, l, ww / 2, 0, PI); g.fill(); }); }
+      blotch(g, w, h, r, 14, '255,240,220', 0.12, 10, 40);
+      for (let i = 0; i < 16; i++) { const x = r() * w, l = h * (0.2 + r() * 0.35), ww = 4 + r() * 10; g.fillStyle = `rgba(30,14,6,${0.05 + r() * 0.07})`; wrap(w, h, x, 0, ww, (X) => { g.fillRect(X, 0, ww, l); g.beginPath(); g.arc(X + ww / 2, l, ww / 2, 0, PI); g.fill(); }); }
       g.fillStyle = 'rgba(255,240,220,0.5)'; g.fillRect(0, h * 0.86, w, 2);
       speckle(g, w, h, r, 900, '40,20,10', 0.1, 0.35, 1, 2);
     }, 0),
@@ -610,9 +611,9 @@
         }
         g.setAttribute('aWave', new THREE.BufferAttribute(a, 3));
       }
-      const k = m.material.uuid + (m.castShadow ? 'c' : '');
-      if (!buckets.has(k)) buckets.set(k, { mat: m.material, cast: m.castShadow, depth: m.userData.depth, geos: [] });
-      buckets.get(k).geos.push(g);
+      const k = m.material.uuid; // one bucket per material (a non-casting sliver is not worth a draw call)
+      if (!buckets.has(k)) buckets.set(k, { mat: m.material, cast: false, geos: [] });
+      const bk = buckets.get(k); bk.cast = bk.cast || m.castShadow; bk.geos.push(g);
     });
     const out = new THREE.Group();
     for (const b of buckets.values()) {
@@ -1029,6 +1030,447 @@
       f.rotation.y = 0.12 * sin(t * 0.21 + s);
     },
     lights() { return [{ x: 0, y: 0.35, z: 0.1, color: '#ffb060', intensity: 1.1, distance: 3.6, flicker: 0.35 }]; },
+  });
+
+  // =================================================================================================
+  // market & street furniture
+  // =================================================================================================
+  // red ink stamp on a transparent canvas (crate stencils, sack prints)
+  function stampTex(label, color = '#8a1e14') {
+    return TEX('stamp:' + label + color, 128, 128, (g, w, h) => {
+      ink(g, label, w / 2, h / 2, chars(label).length > 1 ? 52 : 86, color, { vertical: chars(label).length > 1 });
+      // stencil gaps / worn print
+      const r = rng(hashStr(label));
+      g.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(0,0,0,${0.3 + r() * 0.5})`; g.fillRect(r() * w, r() * h, 2 + r() * 8, 1 + r() * 3); }
+      g.globalCompositeOperation = 'source-over';
+    }, 0, { wrap: false });
+  }
+  const STAMP = (label, color) => TMAT('stamp:' + label + (color || ''), stampTex(label, color), { alphaTest: 0.3, roughness: 0.9 });
+  // flat decal plane facing +z, optionally bent round a cylinder of radius bend
+  function decal(w, h, bend) {
+    const p = new THREE.PlaneGeometry(w, h, bend ? 6 : 1, 1); p.translate(0, h / 2, 0);
+    if (bend) { const a = p.attributes.position; for (let i = 0; i < a.count; i++) a.setZ(i, -a.getX(i) * a.getX(i) / (2 * bend)); p.computeVertexNormals(); }
+    return p;
+  }
+
+  // ---------------------------------------------------------------- barrel 木桶 (bamboo-hooped staves)
+  const barrelR = (R, u) => R * (0.86 + 0.14 * sin(PI * u));
+  function addBarrel(g, x, z, R, H, o = {}) {
+    const pts = []; for (let j = 0; j <= 8; j++) pts.push([barrelR(R, j / 8), j / 8 * H]);
+    mk(g, G3.lathe(pts, 16, 'native'), MAT('staves'), { p: [x, 0, z], c: o.col || '#8a5a32', r: [0, o.ry || 0, 0] });
+    const rt = barrelR(R, 1) - 0.012;
+    if (o.open) {
+      mk(g, G3.cyl(rt, rt, 0.01, 16), MAT('water'), { p: [x, H - 0.08, z], c: '#1c3440', noAO: true });
+      mk(g, G3.cyl(rt * 0.3, rt * 0.3, 0.004, 10), MAT('water'), { p: [x - rt * 0.3, H - 0.07, z + rt * 0.2], c: '#5a7a88', noAO: true });
+    } else {
+      mk(g, G3.cyl(rt, rt, 0.025, 16), MAT('wood'), { p: [x, H - 0.045, z], c: o.col || '#8a5a32' });
+      for (const dz of [-rt / 3, rt / 3]) mk(g, G3.box(rt * 1.8, 0.004, 0.006), MAT('wood'), { p: [x, H - 0.02, z + dz], c: '#2a1608' });
+    }
+    for (const f of [0.14, 0.5, 0.86]) {
+      if (f === 0.5 && H < 0.5) continue;
+      mk(g, G3.torus(barrelR(R, f) + 0.004, 0.016, 4, 18), MAT('weave'), { p: [x, f * H, z], r: [PI / 2, 0, 0], c: '#b8a068' });
+    }
+  }
+  def('barrel', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group();
+      if (v === 0) addBarrel(g, 0, 0, 0.3, 0.72);
+      else if (v === 1) { addBarrel(g, -0.1, -0.05, 0.28, 0.64, { open: true, col: '#7e5230' }); addBarrel(g, 0.27, 0.22, 0.16, 0.34, { col: '#9a6a3a', ry: 1 }); }
+      else { addBarrel(g, 0.13, -0.17, 0.23, 0.56, { col: '#7a4e2c', ry: 0.5 }); addBarrel(g, -0.15, 0.17, 0.25, 0.6, { ry: 2 }); }
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- crate 木箱 (planks, battens, brace, nails, stencil)
+  function addCrate(g, x, z, w, h, d, label, o = {}) {
+    const sub = new THREE.Group(); sub.position.set(x, o.y || 0, z); sub.rotation.y = o.ry || 0; g.add(sub);
+    const W = MAT('wood'), c = o.col || '#a07448', dark = '#5a3a1e', rows = 3, gap = 0.01;
+    const rh = (h - 0.02) / rows;
+    const r = rng(hashStr(label || 'c') + (w * 100 | 0));
+    const tone = () => { const t = new THREE.Color(c); t.offsetHSL(0, 0, (r() - 0.5) * 0.08); return '#' + t.getHexString(); };
+    for (let i = 0; i < rows; i++) {
+      for (const s of [-1, 1]) {
+        mk(sub, G3.box(w - 0.05, rh - gap, 0.02, 'x'), W, { p: [0, 0.01 + i * rh, s * (d / 2 - 0.01)], c: tone() });
+        mk(sub, G3.box(0.02, rh - gap, d - 0.05, 'z'), W, { p: [s * (w / 2 - 0.01), 0.01 + i * rh, 0], c: tone() });
+      }
+    }
+    for (let i = 0; i < 3; i++) mk(sub, G3.box(w - 0.02, 0.022, d / 3 - gap, 'x'), W, { p: [0, h - 0.022, (i - 1) * d / 3], c: tone() });
+    // corner posts, horizontal battens, diagonal braces, nails
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) mk(sub, G3.box(0.045, h, 0.045), W, { p: [sx * (w / 2 - 0.0225), 0, sz * (d / 2 - 0.0225)], c: dark });
+    for (const s of [-1, 1]) for (const y of [0, h - 0.055]) mk(sub, G3.box(w - 0.09, 0.055, 0.02, 'x'), W, { p: [0, y, s * (d / 2 + 0.008)], c: '#7a5432' });
+    const bl = Math.hypot(w - 0.12, h - 0.13), ba = Math.atan2(h - 0.13, w - 0.12);
+    for (const s of [-1, 1]) mk(sub, G3.cbox(bl, 0.05, 0.018, 'x'), W, { p: [0, h / 2, s * (d / 2 + 0.01)], r: [0, 0, s * ba], c: '#7a5432' });
+    for (const s of [-1, 1]) for (const sx of [-1, 1]) for (const y of [0.028, h - 0.028]) mk(sub, G3.cbox(0.012, 0.012, 0.006), W, { p: [sx * (w / 2 - 0.07), y, s * (d / 2 + 0.019)], c: '#1a1410', cast: false });
+    if (label) for (const s of [1, -1]) mk(sub, decal(min(w, h) * 0.72, min(w, h) * 0.72), STAMP(label), { p: [0, h * 0.5 - min(w, h) * 0.36, s * (d / 2 + 0.0215)], r: [0, s > 0 ? 0 : PI, 0], cast: false });
+  }
+  function addSack(g, x, z, w, h, d, o = {}) {
+    mk(g, G3.rbox2(w, h, d, min(w, h, d) * 0.42), MAT('cloth'), { p: [x, o.y || 0, z], r: [0, o.ry || 0, o.rz || 0], c: o.col || '#d8c8a0' });
+    // tied neck + red cord
+    mk(g, G3.cyl(w * 0.12, w * 0.2, h * 0.22, 7), MAT('cloth'), { p: [x + (o.neck || 0), (o.y || 0) + h * 0.86, z], r: [0, 0, o.rz || 0], c: o.col || '#d8c8a0' });
+    if (o.label) mk(g, decal(min(w, h) * 0.7, min(w, h) * 0.7, d * 0.6), STAMP(o.label), { p: [x, (o.y || 0) + h * 0.5 - min(w, h) * 0.35, z + d / 2 + 0.006], r: [0, 0, o.rz || 0], cast: false });
+  }
+  def('crate', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group();
+      if (v === 0) addCrate(g, 0, 0, 0.68, 0.52, 0.6, '茶');
+      else if (v === 1) { addCrate(g, 0, 0.04, 0.7, 0.46, 0.62, '米'); addCrate(g, -0.02, -0.02, 0.48, 0.32, 0.42, null, { y: 0.46, ry: 0.22, col: '#8a6440' }); }
+      else { addCrate(g, -0.14, -0.02, 0.52, 0.42, 0.52, '鹽', { ry: -0.1 }); addSack(g, 0.27, 0.1, 0.32, 0.38, 0.28, { label: '米', rz: -0.08 }); }
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- jar 酒甕 / 醋 / 水缸
+  function labelTex(ch) {
+    return TEX('label:' + ch, 128, 128, (g, w, h) => {
+      g.save(); g.translate(w / 2, h / 2); g.rotate(PI / 4);
+      g.fillStyle = '#c8281e'; g.fillRect(-w * 0.34, -h * 0.34, w * 0.68, h * 0.68);
+      g.strokeStyle = '#e8b04a'; g.lineWidth = 3; g.strokeRect(-w * 0.3, -h * 0.3, w * 0.6, h * 0.6);
+      g.rotate(-PI / 4);
+      ink(g, ch, 0, 2, 52, '#120402', { dry: false });
+      g.restore();
+    }, 0, { wrap: false });
+  }
+  function addJar(g, x, z, R, H, o = {}) {
+    const pts = [[R * 0.52, 0], [R * 0.78, H * 0.06], [R * 0.97, H * 0.28], [R, H * 0.45], [R * 0.9, H * 0.66], [R * 0.62, H * 0.84], [R * 0.42, H * 0.92], [R * 0.47, H * 0.97], [R * 0.45, H], [R * 0.38, H * 0.99], [R * 0.37, H * 0.9]];
+    mk(g, G3.lathe(pts, 18, 'native'), MAT('ceramic'), { p: [x, 0, z], c: o.col || '#6e3c1e', r: [0, o.ry || 0, 0] });
+    if (o.cloth) {
+      mk(g, G3.lathe([[R * 0.62, H * 0.86], [R * 0.56, H * 0.93], [R * 0.52, H * 1.0], [R * 0.4, H * 1.06], [R * 0.15, H * 1.1], [0, H * 1.11]], 12), MAT('cloth'), { p: [x, 0, z], c: '#c8342a' });
+      mk(g, G3.torus(R * 0.47, 0.008, 4, 14), MAT('plain'), { p: [x, H * 0.95, z], r: [PI / 2, 0, 0], c: '#e8c070' });
+    } else mk(g, G3.cyl(R * 0.37, R * 0.37, 0.004, 12), MAT('plain'), { p: [x, H * 0.93, z], c: '#140a06', noAO: true });
+    if (o.label) mk(g, decal(R * 0.9, R * 0.9, R), TMAT('label:' + o.label, labelTex(o.label), { alphaTest: 0.4, roughness: 0.75 }), { p: [x, H * 0.47 - R * 0.45, z + R + 0.004], cast: false });
+  }
+  def('jar', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group();
+      if (v === 0) addJar(g, 0, 0, 0.3, 0.7, { cloth: true, label: '酒' });
+      else if (v === 1) {
+        addJar(g, 0.15, -0.18, 0.2, 0.46, { col: '#5a3a24', cloth: true });
+        addJar(g, -0.13, 0.08, 0.25, 0.56, { label: '醋', col: '#7a4422' });
+        addJar(g, 0.27, 0.26, 0.13, 0.28, { col: '#8a5a32' });
+      } else {
+        // wide open water vat 水缸 with a gourd ladle 水瓢
+        const pts = [[0.3, 0], [0.37, 0.06], [0.43, 0.26], [0.45, 0.44], [0.47, 0.48], [0.45, 0.5], [0.41, 0.48], [0.4, 0.3], [0.36, 0.1]];
+        mk(g, G3.lathe(pts, 22, 'native'), MAT('ceramic'), { c: '#6a5a4a' });
+        mk(g, G3.cyl(0.405, 0.405, 0.006, 20), MAT('water'), { p: [0, 0.4, 0], c: '#1a3440', noAO: true });
+        mk(g, G3.lathe([[0, -0.06], [0.04, -0.055], [0.07, -0.03], [0.075, 0], [0.068, 0.004], [0.06, -0.025], [0, -0.05]], 10), MAT('wood'), { p: [0.24, 0.5, 0.12], r: [0.35, 0, -0.25], c: '#a8804e' });
+        mk(g, G3.rod(0.012, 0.5, 6), MAT('wood'), { p: [0.4, 0.55, -0.02], r: [0, 0.6, 0.35], c: '#8a6a42' });
+      }
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- basket 竹籃 with goods (taro / fish / oranges / greens)
+  function addBasket(g, x, z, R, H, kind, seed) {
+    const r = rng(seed);
+    mk(g, G3.lathe([[R * 0.62, 0.005], [R * 0.7, 0.012], [R * 0.9, H * 0.6], [R, H], [R * 0.96, H], [R * 0.85, H * 0.55], [R * 0.6, 0.02], [0, 0.02]], 16), MAT('weave'), { p: [x, 0, z], c: '#d0b07a' });
+    mk(g, G3.torus(R, 0.014, 4, 18), MAT('weave'), { p: [x, H, z], r: [PI / 2, 0, 0], c: '#b8955a' });
+    mk(g, G3.torus(R * 0.64, 0.012, 4, 14), MAT('weave'), { p: [x, 0.01, z], r: [PI / 2, 0, 0], c: '#8a6a3a' });
+    const P = MAT('plain');
+    const n = { 0: 11, 1: 8, 2: 13, 3: 22 }[kind];
+    for (let i = 0; i < n; i++) {
+      const a = r() * TAU, d = Math.sqrt(r()) * R * 0.72, px = x + cos(a) * d, pz = z + sin(a) * d;
+      const py = H * 0.72 + (1 - d / R) * H * 0.45 + r() * 0.02;
+      if (kind === 0) mk(g, G3.sphere(1, 7, 5), P, { p: [px, py, pz], s: [0.055, 0.045, 0.045], r: [0, r() * 3, r()], c: r() < 0.5 ? '#8a6a7a' : '#6a4a3e' });
+      else if (kind === 1) {
+        const ry = a + PI / 2 + (r() - 0.5);
+        mk(g, G3.sphere(1, 8, 5), P, { p: [px, py, pz], s: [0.12, 0.028, 0.035], r: [0, ry, 0], c: r() < 0.5 ? '#b8c4cc' : '#9aa8b4' });
+        mk(g, G3.cyl(0.0, 0.03, 0.06, 4), P, { p: [px + cos(ry) * 0.12, py, pz - sin(ry) * 0.12], r: [0, ry, PI / 2], c: '#7a8a96' });
+      } else if (kind === 2) {
+        mk(g, G3.sphere(0.042, 7, 5), P, { p: [px, py, pz], c: r() < 0.7 ? '#e8861e' : '#f0a030' });
+        mk(g, G3.cbox(0.012, 0.012, 0.012), P, { p: [px, py + 0.042, pz], c: '#3a6a22', cast: false });
+      } else mk(g, G3.sphere(1, 6, 4), P, { p: [px, py, pz], s: [0.06, 0.014, 0.028], r: [r() * 0.6, r() * TAU, r() * 0.4], c: r() < 0.5 ? '#4e7e34' : '#7aa850' });
+    }
+  }
+  def('basket', {
+    key: (o) => k(lay(o).v),
+    build(o) {
+      const v = lay(o).v, g = new THREE.Group();
+      addBasket(g, 0.17, -0.2, 0.2, 0.2, v, 3 + v);
+      addBasket(g, -0.1, 0.1, 0.27, 0.24, v, 7 + v);
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- cart 手推車 with rice sacks and a wine jar
+  function addWheel(g, x, y, z) {
+    const W = MAT('wood'), R = 0.34;
+    mk(g, G3.torus(R - 0.02, 0.028, 4, 16), W, { p: [x, y, z], c: '#7a5434' });
+    mk(g, G3.torus(R + 0.006, 0.014, 3, 16), MAT('plain'), { p: [x, y, z], c: '#3a3634' }); // iron tyre
+    mk(g, G3.cyl(0.06, 0.06, 0.1, 10), W, { p: [x, y, z - 0.05], r: [PI / 2, 0, 0], c: '#5a3a22' });
+    for (let k2 = 0; k2 < 8; k2++) mk(g, G3.cbox(0.03, R * 0.95, 0.03), W, { p: [x + cos(k2 * PI / 4) * R * 0.48, y + sin(k2 * PI / 4) * R * 0.48, z], r: [0, 0, k2 * PI / 4 - PI / 2], c: '#6a4a2a' });
+  }
+  def('cart', {
+    build() {
+      const g = new THREE.Group(), W = MAT('wood');
+      // bed: planks along x, side boards, end board
+      const bx0 = -0.88, bx1 = 0.5, by = 0.42, bw = 0.7;
+      for (let i = 0; i < 5; i++) mk(g, G3.box(bx1 - bx0, 0.035, bw / 5 - 0.008, 'x'), W, { p: [(bx0 + bx1) / 2, by, -bw / 2 + (i + 0.5) * bw / 5], c: i % 2 ? '#a37a4e' : '#94704a' });
+      for (const s of [-1, 1]) {
+        mk(g, G3.box(bx1 - bx0, 0.12, 0.03, 'x'), W, { p: [(bx0 + bx1) / 2, by + 0.035, s * (bw / 2 + 0.01)], c: '#6a4628' });
+        mk(g, G3.box(1.62, 0.055, 0.055, 'x'), W, { p: [0.1, by - 0.055, s * 0.3], c: '#5a3a22' }); // shafts → handles
+        mk(g, G3.rod(0.022, 0.28, 6), W, { p: [0.84, by - 0.03, s * 0.3], c: '#3a2416' });
+        for (const x of [bx0 + 0.05, -0.2, bx1 - 0.05]) mk(g, G3.box(0.04, 0.16, 0.04), W, { p: [x, by + 0.03, s * (bw / 2 + 0.03)], c: '#5a3a22' });
+        mk(g, G3.box(bx1 - bx0, 0.03, 0.03, 'x'), W, { p: [(bx0 + bx1) / 2, by + 0.18, s * (bw / 2 + 0.03)], c: '#6a4628' });
+      }
+      mk(g, G3.box(0.03, 0.18, bw + 0.06, 'z'), W, { p: [bx0 - 0.01, by + 0.03, 0], c: '#6a4628' });
+      // axle, wheels, prop leg under the handles
+      mk(g, G3.box(0.07, 0.07, 0.98, 'z'), W, { p: [-0.2, 0.31, 0], c: '#4a3020' });
+      for (const s of [-1, 1]) addWheel(g, -0.2, 0.34, s * 0.46);
+      for (const s of [-1, 1]) mk(g, G3.box(0.045, 0.37, 0.045), W, { p: [0.62, 0, s * 0.3], r: [0, 0, 0.08], c: '#4a3020' });
+      // load
+      addSack(g, -0.6, -0.14, 0.36, 0.3, 0.3, { y: by + 0.03, label: '米', rz: 0.05 });
+      addSack(g, -0.25, -0.13, 0.36, 0.3, 0.3, { y: by + 0.03, label: '米', rz: -0.06 });
+      addSack(g, -0.42, 0.04, 0.34, 0.27, 0.28, { y: by + 0.3, label: '米', rz: 0.1, col: '#e0d2ae' });
+      addSack(g, -0.55, 0.18, 0.3, 0.26, 0.26, { y: by + 0.03, col: '#cbb890' });
+      const jg = new THREE.Group(); jg.position.y = by + 0.03; g.add(jg); addJar(jg, 0.2, 0.12, 0.13, 0.32, { cloth: true });
+      mk(g, G3.tube([V3(-0.05, by + 0.32, -0.36), V3(-0.3, by + 0.62, 0), V3(-0.55, by + 0.32, 0.36)], 0.008, 12, 4), MAT('plain'), { c: '#c8b070', cast: false }); // lashing rope
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- stall 夜市攤 (awning, valance, counter banner, pot of 芋圓, lantern)
+  const AWN = [['#c8342a', '#f0e6cf'], ['#2c3d6e', '#e8e0cc'], ['#3d7a5a', '#f0e6cf']];
+  // atlas: v 0.5..1 awning stripes · v 0.375..0.5 scalloped valance · v 0..0.375 counter banner with text
+  function stallTex(v, text) {
+    const [c1, c2] = AWN[v];
+    return TEX('stall:' + v + text, 512, 512, (g, w, h) => {
+      const r = rng(hashStr(text) + v);
+      g.clearRect(0, 0, w, h);
+      const n = 12;
+      for (let i = 0; i < n; i++) { g.fillStyle = i % 2 ? c2 : c1; g.fillRect(i * w / n, 0, w / n + 1, 256); }
+      const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(0,0,0,0.12)'); gr.addColorStop(1, 'rgba(255,255,255,0.08)');
+      g.fillStyle = gr; g.fillRect(0, 0, w, 256);
+      for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(0,0,0,${r() * 0.06})`; g.fillRect(r() * w, r() * 256, 1 + r() * 8, 1); }
+      // valance: scallops alternate colours, gold braid along the top
+      const m = 16;
+      for (let i = 0; i < m; i++) {
+        g.fillStyle = i % 2 ? c2 : c1;
+        g.beginPath(); g.moveTo(i * w / m, 256); g.lineTo((i + 1) * w / m, 256); g.lineTo((i + 1) * w / m, 290);
+        g.quadraticCurveTo((i + 0.5) * w / m, 330, i * w / m, 290); g.closePath(); g.fill();
+      }
+      g.fillStyle = '#e8b53a'; g.fillRect(0, 256, w, 7); g.fillStyle = 'rgba(80,40,0,0.5)'; g.fillRect(0, 263, w, 2);
+      // banner
+      g.fillStyle = c2; g.fillRect(0, 320, w, 192);
+      g.strokeStyle = c1; g.lineWidth = 10; g.strokeRect(10, 330, w - 20, 172);
+      g.lineWidth = 3; g.strokeRect(24, 344, w - 48, 144);
+      for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(0,0,0,${r() * 0.06})`; g.fillRect(r() * w, 320 + r() * 192, 1 + r() * 8, 1); }
+      const n2 = chars(text).length, size = min(118, (w - 80) / (n2 * 1.08));
+      ink(g, text, w / 2, 416, size, c1 === '#f0e6cf' ? '#2a1a10' : c1, { vertical: false });
+    }, 0, { wrap: false });
+  }
+  function regionUV(geo, v0, v1) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, v0 + uv.getY(i) * (v1 - v0)); return geo; }
+  def('stall', {
+    key: (o) => { const L = lay(o); return k(L.v, L.text, L.lit); },
+    build(o) {
+      const L = lay(o), g = new THREE.Group(), W = MAT('wood'), B = MAT('bamboo'), PS = MAT('plain', 'sway');
+      const text = String(L.text || '芋圓');
+      const cloth = TMAT('stall:' + L.v + text, stallTex(L.v, text), { alphaTest: 0.5, roughness: 0.95, side: THREE.DoubleSide }, 'wave');
+      // poles
+      for (const sx of [-1, 1]) for (const [z, hh] of [[0.44, 2.06], [-0.44, 2.28]]) mk(g, G3.cyl(0.032, 0.036, hh, 7), B, { p: [sx * 0.93, 0, z], c: '#c2b46a' });
+      for (const z of [0.44, -0.44]) mk(g, G3.rod(0.022, 1.96, 6), B, { p: [0, z > 0 ? 2.02 : 2.24, z], c: '#b0a45e' });
+      // awning: sloping, slightly sagging cloth
+      const aw = new THREE.PlaneGeometry(2.12, 1.2, 10, 4);
+      const ap = aw.attributes.position;
+      for (let i = 0; i < ap.count; i++) {
+        const x = ap.getX(i), t = (ap.getY(i) + 0.6) / 1.2; // 0 back … 1 front
+        ap.setXYZ(i, x, lerp(2.3, 2.03, t) - 0.035 * sin(PI * (x / 2.12 + 0.5)) * sin(PI * t), lerp(-0.52, 0.66, t));
+      }
+      aw.computeVertexNormals(); regionUV(aw, 0.5, 1);
+      mk(g, aw, cloth, { noAO: true, c: '#ffffff' });
+      // valance along the front edge (waves)
+      const va = new THREE.PlaneGeometry(2.14, 0.2, 18, 2); va.translate(0, 1.93, 0.665); regionUV(va, 0.375, 0.5);
+      mk(g, va, cloth, { noAO: true, c: '#ffffff', wave: { axis: 'y', from: 2.03, to: 1.83, amp: 0.035, ph: 0.5 } });
+      // counter
+      mk(g, G3.box(1.84, 0.74, 0.42, 'x'), W, { p: [0, 0.04, 0.22], c: '#6a4a2c' });
+      for (let i = 0; i < 5; i++) mk(g, G3.box(1.86, 0.135, 0.02, 'x'), W, { p: [0, 0.06 + i * 0.145, 0.44], c: i % 2 ? '#7a5634' : '#6e4c2e' });
+      mk(g, G3.box(1.98, 0.045, 0.52, 'x'), W, { p: [0, 0.78, 0.2], c: '#9a7048' });
+      for (const sx of [-1, 1]) mk(g, G3.box(0.06, 0.04, 0.48), W, { p: [sx * 0.9, 0, 0.22], c: '#3a2616' });
+      const bn = new THREE.PlaneGeometry(1.16, 0.43, 8, 2); bn.translate(0, 0.43, 0.457); regionUV(bn, 0, 0.375);
+      mk(g, bn, cloth, { c: '#ffffff', wave: { axis: 'y', from: 0.64, to: 0.21, amp: 0.012, ph: 2 } });
+      // pot of taro balls with ladle, bowl stacks, chopstick tube, cutting board
+      const ty = 0.825;
+      mk(g, G3.lathe([[0.17, 0], [0.2, 0.03], [0.205, 0.2], [0.215, 0.21], [0.19, 0.21], [0.18, 0.05], [0, 0.04]], 16), PS, { p: [-0.55, ty, 0.2], c: '#a8a8b0' });
+      mk(g, G3.cyl(0.185, 0.185, 0.01, 16), PS, { p: [-0.55, ty + 0.17, 0.2], c: '#d8c49a', noAO: true });
+      const r = rng(5);
+      for (let i = 0; i < 14; i++) { const a = r() * TAU, d = Math.sqrt(r()) * 0.15; mk(g, G3.sphere(0.018, 6, 4), PS, { p: [-0.55 + cos(a) * d, ty + 0.18, 0.2 + sin(a) * d], c: ['#b89aa8', '#e8c070', '#a0c080', '#e8e0d0'][i % 4], noAO: true }); }
+      mk(g, G3.rod(0.008, 0.36, 5), PS, { p: [-0.48, ty + 0.27, 0.2], r: [0, 0.4, 0.75], c: '#5a3c24' });
+      const bowl = () => G3.lathe([[0, 0], [0.035, 0], [0.06, 0.03], [0.075, 0.055], [0.07, 0.056], [0.055, 0.032], [0, 0.008]], 12);
+      for (let i = 0; i < 4; i++) mk(g, bowl(), PS, { p: [0.0, ty + i * 0.022, 0.25], c: '#f2ede0' });
+      mk(g, G3.torus(0.073, 0.004, 3, 14), PS, { p: [0.0, ty + 0.12, 0.25], r: [PI / 2, 0, 0], c: '#3a6aa0' });
+      for (const [bx, bz] of [[0.3, 0.3], [0.48, 0.18]]) {
+        mk(g, bowl(), PS, { p: [bx, ty, bz], c: '#f2ede0' });
+        mk(g, G3.torus(0.073, 0.004, 3, 14), PS, { p: [bx, ty + 0.054, bz], r: [PI / 2, 0, 0], c: '#3a6aa0' });
+        mk(g, G3.cyl(0.06, 0.06, 0.006, 10), PS, { p: [bx, ty + 0.042, bz], c: '#9a7aa0', noAO: true });
+      }
+      mk(g, G3.cyl(0.035, 0.035, 0.14, 8), B, { p: [0.72, ty, 0.3], c: '#b0a45e' });
+      for (let i = 0; i < 6; i++) mk(g, G3.cyl(0.004, 0.004, 0.24, 3), W, { p: [0.71 + (i % 3) * 0.01, ty, 0.29 + floor(i / 3) * 0.012], r: [0.05 * (i - 3), 0, 0.04 * (i - 2)], c: '#c8a878', cast: false });
+      mk(g, G3.box(0.36, 0.03, 0.24), W, { p: [0.62, ty, 0.08], r: [0, 0.2, 0], c: '#c49a68' });
+      // stool behind
+      mk(g, G3.cyl(0.14, 0.14, 0.04, 10), W, { p: [0.3, 0.42, -0.28], c: '#8a6440' });
+      for (let i = 0; i < 4; i++) mk(g, G3.box(0.035, 0.42, 0.035), W, { p: [0.3 + cos(i * PI / 2 + 0.7) * 0.1, 0, -0.28 + sin(i * PI / 2 + 0.7) * 0.1], c: '#5a3c24' });
+      // lantern under the front-right corner of the awning
+      addLantern(g, { x: 0.78, y: 1.52, z: 0.6, R: 0.12, H: 0.24, col: '#d42f25', lit: L.lit, pivot: [0.78, 1.84, 0.6], ph: 1.3 });
+      g.add(particles('steam', 7, -0.55, ty + 0.2, 0.2, 3));
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
+    lights(o) { return lay(o).lit ? [{ x: 0.78, y: 1.5, z: 0.6, color: '#ff8a46', intensity: 1, distance: 3.6, flicker: 0.2 }, { x: -0.3, y: 1.7, z: 0.3, color: '#ffc890', intensity: 0.6, distance: 3, flicker: 0.05 }] : []; },
+  });
+
+  // ---------------------------------------------------------------- signboard 立牌 (brush calligraphy on both faces)
+  function signTex(text, red) {
+    return TEX('sign:' + text + (red ? 'r' : ''), 384, 512, (g, w, h) => {
+      const r = rng(hashStr(text));
+      const bg = red ? '#a3241e' : '#e8dcbc', fg = red ? '#ffe7b0' : '#1e140e';
+      const cw = w * 2 / 3;
+      g.fillStyle = bg; g.fillRect(0, 0, cw, h);
+      for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(${red ? '40,0,0' : '120,90,50'},${0.04 + r() * 0.08})`; const x = r() * cw; g.fillRect(x, 0, 1 + r() * 3, h); }
+      blotch(g, cw, h, r, 8, red ? '60,0,0' : '120,90,50', 0.12, 20, 70);
+      g.strokeStyle = red ? 'rgba(255,220,150,0.6)' : 'rgba(80,40,20,0.5)'; g.lineWidth = 3; g.strokeRect(14, 14, cw - 28, h - 28);
+      inkFit(g, text, cw / 2, h / 2, cw * 0.68, h * 0.86, fg, { spacing: 1.1, shadow: red });
+      g.fillStyle = '#3a2418'; g.fillRect(cw, 0, w - cw, h); // edge cell
+    }, 0, { wrap: false });
+  }
+  def('signboard', {
+    key: (o) => { const L = lay(o); return k(L.text, o.v === 1); },
+    build(o) {
+      const L = lay(o), g = new THREE.Group(), W = MAT('wood');
+      const text = String(L.text || '客棧'), n = max(1, chars(text).length), red = o.v === 1;
+      const bh = max(0.62, n * 0.2 + 0.2), y0 = 0.72, bw = 0.34;
+      for (const s of [-1, 1]) {
+        mk(g, G3.rbox(0.13, 0.08, 0.13, 0.02), MAT('stone'), { p: [s * 0.21, 0, 0], c: '#8a857a' });
+        mk(g, G3.box(0.07, y0 + bh + 0.1, 0.07), W, { p: [s * 0.21, 0.02, 0], c: '#4a3220' });
+      }
+      const board = new THREE.BoxGeometry(bw, bh, 0.045); board.translate(0, bh / 2, 0);
+      { const uv = board.attributes.uv; for (let i = 0; i < uv.count; i++) { const f = floor(i / 4); if (f < 4) uv.setX(i, 2 / 3 + uv.getX(i) / 3); else uv.setX(i, uv.getX(i) * 2 / 3); } }
+      mk(g, board, TMAT('sign:' + text + red, signTex(text, red), { roughness: 0.7 }), { p: [0, y0, 0] });
+      for (const y of [y0 - 0.04, y0 + bh]) mk(g, G3.box(0.48, 0.045, 0.06, 'x'), W, { p: [0, y, 0], c: '#3a2418' });
+      // little tiled cap 頂蓋
+      for (const s of [-1, 1]) mk(g, G3.cbox(0.56, 0.025, 0.14, 'x'), W, { p: [0, y0 + bh + 0.115, s * 0.055], r: [s * 0.45, 0, 0], c: '#33343c' });
+      mk(g, G3.rod(0.018, 0.6, 6), W, { p: [0, y0 + bh + 0.145, 0], c: '#22232a' });
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- fences (wood: posts + rails; bamboo: stakes + lashed rails)
+  function fenceBuild(o, bamboo) {
+    const L = lay(o), vert = L.h > 1 && L.w === 1, len = vert ? L.h : L.w;
+    const g = new THREE.Group(), r = rng(len * 31 + (bamboo ? 7 : 3));
+    if (!bamboo) {
+      const W = MAT('wood'), n = max(2, round(len / 0.55) + 1);
+      for (let i = 0; i < n; i++) {
+        const x = lerp(-len / 2 + 0.07, len / 2 - 0.07, i / (n - 1)), hh = 0.72 + (r() - 0.5) * 0.06;
+        const c = new THREE.Color('#7a6650').offsetHSL(0, (r() - 0.5) * 0.05, (r() - 0.5) * 0.06);
+        mk(g, G3.box(0.085, hh, 0.085), W, { p: [x, 0, 0], r: [(r() - 0.5) * 0.04, 0, (r() - 0.5) * 0.05], c: '#' + c.getHexString() });
+        const cap = new THREE.ConeGeometry(0.062, 0.06, 4); cap.rotateY(PI / 4); cap.translate(0, 0.03, 0); projUV(cap);
+        mk(g, cap, W, { p: [x, hh, 0], c: '#8a7660' });
+      }
+      for (const y of [0.3, 0.56]) {
+        mk(g, G3.box(len - 0.04, 0.07, 0.035, 'x'), W, { p: [0, y, 0.058], r: [0, 0, (r() - 0.5) * 0.02], c: '#8a7458' });
+        for (let i = 0; i < n; i++) { const x = lerp(-len / 2 + 0.07, len / 2 - 0.07, i / (n - 1)); mk(g, G3.cbox(0.012, 0.012, 0.006), W, { p: [x, y + 0.035, 0.078], c: '#1a1410', cast: false }); }
+      }
+    } else {
+      const B = MAT('bamboo'), n = max(3, floor(len / 0.105));
+      for (let i = 0; i < n; i++) {
+        const x = lerp(-len / 2 + 0.05, len / 2 - 0.05, i / (n - 1)), rad = 0.022 + r() * 0.01, hh = 0.74 + (i % 2) * 0.07 + r() * 0.08;
+        const c = new THREE.Color('#b4b46a').lerp(new THREE.Color('#86964a'), r() * 0.7);
+        mk(g, G3.cyl(rad, rad * 1.05, hh, 6), B, { p: [x, 0, (r() - 0.5) * 0.02], r: [0, r() * 3, (r() - 0.5) * 0.04], c: '#' + c.getHexString() });
+      }
+      for (const y of [0.3, 0.6]) {
+        mk(g, G3.rod(0.02, len - 0.02, 6), B, { p: [0, y, 0.045], c: '#a8a05a' });
+        for (let i = 1; i < n; i += 3) { const x = lerp(-len / 2 + 0.05, len / 2 - 0.05, i / (n - 1)); mk(g, G3.torus(0.028, 0.006, 3, 8), MAT('plain'), { p: [x, y, 0.03], r: [0, PI / 2, 0.6], c: '#8a7048', cast: false }); }
+      }
+    }
+    if (vert) g.rotation.y = -PI / 2;
+    const out = new THREE.Group(); out.add(g);
+    return tagged(bake(out));
+  }
+  for (const [id, bam] of [['fence_wood', false], ['fence_bamboo', true]]) def(id, { key: (o) => { const L = lay(o); return k(L.w, L.h); }, build: (o) => fenceBuild(o, bam) });
+
+  // ---------------------------------------------------------------- bench (v1 = granite slab)
+  def('bench', {
+    key: (o) => k(lay(o).w, o.v === 1),
+    build(o) {
+      const L = lay(o), W = L.w, g = new THREE.Group(), len = W - 0.12;
+      const legs = [-(len / 2 - 0.16), len / 2 - 0.16]; if (W > 2) legs.push(0);
+      if (o.v === 1) {
+        const S = MAT('stone');
+        mk(g, G3.rbox(len, 0.1, 0.4, 0.025, 'x'), S, { p: [0, 0.34, 0], c: '#c8c3b6', top: ['#7a8a5a', 0.15] });
+        for (const x of legs) mk(g, G3.rbox(0.26, 0.35, 0.32, 0.03), S, { p: [x, 0, 0], c: '#a29d90' });
+      } else {
+        const Wd = MAT('wood');
+        for (let i = 0; i < 3; i++) mk(g, G3.box(len, 0.035, 0.115, 'x'), Wd, { p: [0, 0.42, (i - 1) * 0.125], c: i % 2 ? '#a87a4e' : '#9a6e44' });
+        for (const s of [-1, 1]) mk(g, G3.box(len - 0.1, 0.07, 0.025, 'x'), Wd, { p: [0, 0.35, s * 0.15], c: '#6a4628' });
+        for (const x of legs) {
+          for (const s of [-1, 1]) mk(g, G3.box(0.06, 0.42, 0.06), Wd, { p: [x, 0, s * 0.15], r: [-s * 0.08, 0, 0], c: '#5a3c24' });
+          mk(g, G3.box(0.04, 0.05, 0.34, 'z'), Wd, { p: [x, 0.12, 0], c: '#4a3220' });
+        }
+        mk(g, G3.box(len - 0.3, 0.04, 0.04, 'x'), Wd, { p: [0, 0.12, 0], c: '#4a3220' });
+      }
+      return tagged(bake(g));
+    },
+  });
+
+  // ---------------------------------------------------------------- laundry 曬衣竿: bamboo pole on forked posts, waving clothes
+  const CLOTHES = ['#2c3d6e', '#f0ece2', '#c8342a', '#d9a23a', '#6a8a9a', '#f0ece2'];
+  // atlas cells: 0 大襟衫 side-fastened shirt · 1 trousers · 2 long cloth / towel (white, tinted per item)
+  function laundryTex() {
+    return TEX('laundry', 768, 256, (g, w, h) => {
+      const r = rng(77);
+      const shade = (x0) => { const gr = g.createLinearGradient(x0, 0, x0 + 256, 0); gr.addColorStop(0, 'rgba(0,0,0,0.18)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.1)'); gr.addColorStop(1, 'rgba(0,0,0,0.22)'); return gr; };
+      const fill = (x0, path) => {
+        g.save(); path(); g.fillStyle = '#f4f1ea'; g.fill(); g.clip();
+        g.fillStyle = shade(x0); g.fillRect(x0, 0, 256, h);
+        for (let i = 0; i < 9; i++) { const x = x0 + 30 + r() * 196; g.fillStyle = `rgba(0,0,0,${0.06 + r() * 0.08})`; g.fillRect(x, 0, 3 + r() * 6, h); } // hanging folds
+        for (let y = 0; y < h; y += 3) { g.fillStyle = 'rgba(0,0,0,0.04)'; g.fillRect(x0, y, 256, 1); }
+        g.restore();
+      };
+      // shirt: sleeves out, curved 大襟 front opening with knot buttons
+      fill(0, () => { g.beginPath(); g.moveTo(70, 6); g.lineTo(186, 6); g.lineTo(252, 26); g.lineTo(250, 92); g.lineTo(196, 86); g.lineTo(196, 250); g.lineTo(60, 250); g.lineTo(60, 86); g.lineTo(6, 92); g.lineTo(4, 26); g.closePath(); });
+      g.strokeStyle = 'rgba(30,20,10,0.55)'; g.lineWidth = 4; g.beginPath(); g.moveTo(112, 8); g.quadraticCurveTo(160, 40, 168, 110); g.lineTo(168, 248); g.stroke();
+      g.fillStyle = 'rgba(30,20,10,0.6)'; for (const [x, y] of [[132, 22], [156, 60], [168, 120], [168, 170]]) { g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(60, 86, 136, 4);
+      // trousers: wide legs, folded waist band
+      fill(256, () => { g.beginPath(); g.moveTo(256 + 58, 4); g.lineTo(256 + 198, 4); g.lineTo(256 + 214, 252); g.lineTo(256 + 140, 252); g.lineTo(256 + 128, 110); g.lineTo(256 + 116, 252); g.lineTo(256 + 42, 252); g.closePath(); });
+      g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(256 + 58, 4, 140, 26);
+      // long cloth with woven stripes near the ends
+      fill(512, () => { g.beginPath(); g.rect(512 + 50, 2, 156, 252); });
+      g.fillStyle = 'rgba(160,40,30,0.55)'; for (const y of [210, 226]) g.fillRect(512 + 50, y, 156, 6);
+      g.fillStyle = 'rgba(255,255,255,0.4)'; for (let x = 512 + 52; x < 512 + 206; x += 6) g.fillRect(x, 248, 2, 8);
+    }, 0, { wrap: false });
+  }
+  def('laundry', {
+    key: (o) => k(lay(o).w),
+    build(o) {
+      const L = lay(o), Wd = L.w, g = new THREE.Group(), B = MAT('bamboo');
+      const px = Wd / 2 - 0.12, py = 1.8;
+      for (const s of [-1, 1]) {
+        mk(g, G3.cyl(0.07, 0.09, 0.1, 8), MAT('stone'), { p: [s * px, 0, 0], c: '#8a857a' });
+        mk(g, G3.cyl(0.03, 0.035, py - 0.04, 7), B, { p: [s * px, 0.02, 0], r: [0, 0, s * 0.02], c: '#c2b46a' });
+        for (const f of [-1, 1]) mk(g, G3.cyl(0.018, 0.022, 0.22, 6), B, { p: [s * px, py - 0.12, 0], r: [f * 0.42, 0, 0], c: '#b8aa60' });
+        mk(g, G3.torus(0.035, 0.008, 3, 8), MAT('plain'), { p: [s * px, py - 0.1, 0], r: [PI / 2, 0, 0], c: '#6a5030', cast: false });
+      }
+      mk(g, G3.rod(0.022, Wd - 0.05, 7), B, { p: [0, py, 0], c: '#b0a45e' });
+      const n = max(2, floor((Wd * 64 - 24) / 24));
+      const mat = TMAT('laundry', laundryTex(), { alphaTest: 0.5, roughness: 0.95, side: THREE.DoubleSide }, 'wave');
+      const size = [[0.6, 0.56], [0.4, 0.72], [0.34, 0.7]];
+      const r = rng(Wd * 13);
+      for (let i = 0; i < n; i++) {
+        const kind = i % 3, [w, h] = size[kind];
+        const x = lerp(-px + 0.3, px - 0.3, n > 1 ? i / (n - 1) : 0.5);
+        const pl = new THREE.PlaneGeometry(w, h, 4, 6); pl.translate(0, -h / 2, 0);
+        const uv = pl.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setX(j, (kind + uv.getX(j)) / 3);
+        const top = py - 0.01;
+        mk(g, pl, mat, { p: [x, top, 0.005], r: [0, (r() - 0.5) * 0.3, 0], c: CLOTHES[(i * 2 + Wd) % CLOTHES.length], wave: { axis: 'y', from: top, to: top - h, amp: 0.07, ph: i * 1.3, pow: 1.3 } });
+        for (const s of [-1, 1]) mk(g, G3.cbox(0.018, 0.05, 0.03), MAT('plain'), { p: [x + s * w * 0.32, top - 0.005, 0.02], c: '#a8865a', cast: false });
+      }
+      return tagged(bake(g));
+    },
+    update(node, o, t) { tick(t); },
   });
 
   // exported for the test harness / other teams
