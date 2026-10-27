@@ -276,7 +276,7 @@ function makeAI(G, mode) {
     if (pct(u) < 0.2 && !healer && !healItems().length && alive.length > 1 && !F.noGuard) return { kind: 'defend' };
 
     // 9. boss openers: buffs / debuffs that are certain to land (data `buffs` skip the status roll)
-    if (boss && !u.st.seal && !nearlyDone) {
+    if (boss && !u.st.seal && !nearlyDone && !G.__plain) {
       const tryS = (k, cond, tg) => (usable.includes(k) && cond ? cmdFor(sc, u, k, null, tg) : null);
       const anyBossNot = (st) => foes.filter((e) => isMain(sc, e)).some((e) => !e.st[st]);
       const r = tryS('yg_mihun', anyBossNot('atkDown') && bossE.hp > bossE.mhp * 0.25, bossE)
@@ -382,7 +382,8 @@ function setup(env, F, lvShift) {
     for (const slot of SLOTS) {
       const fixed = F.gear && F.gear[cid] && F.gear[cid][slot];
       if (fixed !== undefined) { m.equip[slot] = fixed; continue; }
-      const b = bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id)), slot);
+      const noShopAcc = G.__noacc && slot === 'acc';
+      const b = bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id) && !(noShopAcc && pool.includes(id))), slot);
       if (b) m.equip[slot] = b;
     }
     const st = G.Party.stats(cid); m.hp = st.mhp; m.mp = st.mmp;
@@ -460,6 +461,7 @@ async function main() {
   if (env.errors.length) console.log('load errors:\n  ' + env.errors.join('\n  '));
   const { G } = env;
   G.__ai = makeAI(G, opt('ai', 'smart'));
+  G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
   const { FIGHTS } = require('./sim_story_fights');
   const fights = FIGHTS(G);
   if (opt('shops')) { printShops(env); return; }

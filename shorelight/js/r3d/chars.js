@@ -1740,7 +1740,7 @@ G.Char3D = (() => {
     // the wrap: a fat ring, a touch lower at the front
     const ring = [];
     for (let i = 0; i <= 20; i++) { const th = (i / 20) * TAU; ring.push([sin(th) * rN * 1.04, yN - 0.014 * s * max(0, cos(th)), cos(th) * rN + 0.004 * s]); }
-    tube(B.G, ring, 8, rect, () => ({ rx: 0.017 * s, ry: 0.026 * s }), () => [[B.b('chest'), 0.55], [B.b('neck'), 0.45]], { nv: 40, up: [0, 1, 0], uvf: (u, v) => [v, u * 0.5] });
+    tube(B.G, ring, 8, rect, () => ({ rx: 0.014 * s, ry: 0.024 * s }), () => [[B.b('chest'), 0.55], [B.b('neck'), 0.45]], { nv: 40, up: [0, 1, 0], uvf: (u, v) => [v, u * 0.5] });
     // knot at the wearer's right of the throat
     const kth = -0.42;
     const kp = [sin(kth) * rN * 1.15, yN - 0.03 * s, cos(kth) * rN * 1.15 + 0.008 * s];
