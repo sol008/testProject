@@ -65,10 +65,13 @@ G.Script = (() => {
       if (typeof path === 'string') {
         for (const ch of path.replace(/\s/g, '')) if (DIRS[ch]) steps.push(DIRS[ch]);
       } else for (const [d, n] of path) for (let i = 0; i < n; i++) steps.push(d);
+      // a custom speed applies to this move only (restored when the last step lands)
+      const prevSpeed = a.speed;
       if (o.speed) a.speed = o.speed;
       a.scripted = true;
       const promises = steps.map((d) => new Promise((res) => a.queue.push({ dir: d, res, ghost: o.ghost })));
       const all = Promise.all(promises).then(() => {
+        if (o.speed && a.speed === o.speed) a.speed = prevSpeed;
         if (a === m.player) { G.state.x = a.x; G.state.y = a.y; G.state.dir = a.dir; }
       });
       if (!steps.length) return Promise.resolve();
