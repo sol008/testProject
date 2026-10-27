@@ -11,15 +11,6 @@ const path = require('path');
   const errs = [];
   p.on('console', (m) => { if (m.type() === 'error' || (m.type() === 'warning' && /animal|Animal|THREE/.test(m.text()))) errs.push(m.type() + ': ' + m.text().slice(0, 400)); });
   p.on('pageerror', (e) => errs.push('PAGEERR ' + e.message + '\n' + (e.stack || '').slice(0, 500)));
-  // test-only shim: the merged base's mapview.js calls MapScene.hooks(), which map.js does not define yet
-  await p.addInitScript(() => {
-    const iv = setInterval(() => {
-      if (window.G && G.MapScene && !G.MapScene.prototype.hooks) {
-        G.MapScene.prototype.hooks = function (name) { const out = []; const d = this.def || {}; if (typeof d[name] === 'function') out.push(d[name].bind(d)); if (typeof this[name] === 'function' && name !== 'hooks') out.push(this[name].bind(this)); return out; };
-        clearInterval(iv);
-      }
-    }, 5);
-  });
   const qs = `debug&r3lite&map=${map}&party=xinghe,baizhi&flags=mochi_joined,yuyuan_joined${extra ? '&' + extra : ''}`;
   await p.goto('file://' + path.resolve(__dirname, '../../../index.html') + '?' + qs, { waitUntil: 'load', timeout: 120000 });
   await p.waitForTimeout(9000);
