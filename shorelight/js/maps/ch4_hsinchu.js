@@ -1990,7 +1990,11 @@
       // subtle hint: only a win earns 德興伯's 山歌竹笛 (giving up loses it for good)
       await S.say('庄民', '細妹，莫放棄！唱贏阿福个人，德興伯有好東西相送喔！');
       const c = await S.choice(['再唱一遍', '認輸']);
-      if (c === 1) break;
+      if (c === 1) {
+        // confirm: giving up loses 山歌竹笛 for good
+        await S.say('hongying:think', '……真的不唱了？德興伯的東西，輸了就沒有了喔。');
+        if ((await S.choice(['再唱一遍', '還是認輸'])) === 1) break;
+      }
     }
     if (win) {
       await S.say('', '最後一個音落下。風好像停了一瞬。');
@@ -3483,6 +3487,14 @@
     ],
     events: [
       { id: 'hall_hint', trigger: 'touch', x: 21, y: 33, w: 3, h: 1, once: true, run: async (S) => { await S.say('baizhi:think', '兩邊的風在吵架。只留中間那一道，它就能好好地說話了。'); } },
+      // clue for the 靈視-only chest c4_23 behind the illusion rock at 37,30
+      {
+        id: 'c4_23_clue', trigger: 'touch', x: 34, y: 25, w: 3, h: 1, once: true, if: (st) => !st.opened['wind_cave_2:c4_23'],
+        run: async (S) => {
+          S.emote('mochi', '?');
+          await S.say('', '（麻糬朝走廊南端的小石頭嗅了嗅，尾巴一甩——石頭的影子，好像有點透光。）');
+        },
+      },
       { id: 'echo_hint', trigger: 'touch', x: 34, y: 11, w: 3, h: 1, once: true, run: async (S) => { await S.say('baizhi:think', '想留下的聲音，是冷的。想離開的聲音……有一點暖。'); } },
       ...[[34, 4, 0], [36, 4, 0], [24, 4, 1], [10, 4, 2], [14, 4, 2]].map(([x, y, f]) => ({ id: `echo_${x}`, trigger: 'touch', x, y, run: async (S) => { await echoLoop(S, f); } })),
       { id: 'echo_done', trigger: 'touch', x: 7, y: 3, w: 1, h: 1, if: (st) => !st.flags.ch4_cave_echo, run: async (S) => { S.flag('ch4_cave_echo'); S.sfx('switch'); } },

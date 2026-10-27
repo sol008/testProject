@@ -1299,4 +1299,7 @@ G.I18N.add({
   '……今暗，我想去伙房，請滿妹婆再教我一次擂茶。': '…Tonight I want to go back to the farmhouse and ask Granny Manmei to teach me leicha again.',
   '（麻糬盯著東邊角落那塊石頭，鬍鬚一動一動。石頭後面，隱約有風「叮、叮」地響。）': '(Mochi stares at the rock in the east corner, whiskers twitching. From behind it comes a faint ting… ting… of wind.)',
   '……肉眼看是石頭。開了靈視，說不定就不是了。': '…To the naked eye it\'s a rock. With spirit sight, maybe it isn\'t.',
+  '……真的不唱了？德興伯的東西，輸了就沒有了喔。': '…You\'re really giving up? If you lose, Uncle Dexing\'s prize is gone for good.',
+  '還是認輸': 'Concede anyway',
+  '（麻糬朝走廊南端的小石頭嗅了嗅，尾巴一甩——石頭的影子，好像有點透光。）': '(Mochi sniffs at the small rock at the south end of the passage and flicks its tail. The rock\'s shadow looks… a little see-through.)',
 });

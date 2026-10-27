@@ -667,6 +667,11 @@
       // subtle hint: the soldiers' 心燈 only starts if the party goes tonight (docs/qa/points_of_no_return.md)
       await S.say('baizhi:think', '……那個鼓聲，好像只有今晚會響。');
       c = await S.choice(['去紅毛城看看', '先睡覺']);
+      if (c === 1) {
+        // confirm: sleeping now loses the soldiers' 心燈 for good
+        await S.say('baizhi:sad', '……真的不去嗎？他好像在等誰。過了今晚，大概就聽不到了。');
+        c = await S.choice(['還是去看看', '睡吧，明天還要趕路']);
+      }
     }
     if (c === 0) {
       S.flag('ch3_night_free');

@@ -140,7 +140,7 @@ async function mainPath(r) {
   // 3-2 inn night → sleep
   await r.step(13, 10);
   r.check(await r.map() === 'tamsui_inn', 'entered 淡水客棧');
-  await r.choices([0, 1]);
+  await r.choices([0, 1, 1]);              // 住宿 → 先睡覺 → confirm sleep
   await r.talk('ts_innkeeper');
   await r.flags(['ch3_inn'], '3-2');
   r.check(await r.item('c3_riceball') === 3, 'got 紅纓的飯糰 ×3');

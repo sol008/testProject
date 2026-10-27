@@ -480,7 +480,7 @@ async function missWindow(r) {
   await waitMap(r, 'tamsui');
   await r.walk(13, 10);
   await r.mark();
-  await r.choices([0, '先睡覺']);
+  await r.choices([0, '先睡覺', '睡吧']);
   await r.talk('ts_innkeeper');
   r.check(await r.seen(/只有今晚/), 'the hint was shown before the choice');
   r.check(await r.ev(() => G.state.vars.c3_ts) === 'morning', 'slept until morning');

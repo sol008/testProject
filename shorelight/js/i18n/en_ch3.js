@@ -1246,4 +1246,7 @@ G.I18N.add({
   '要用靈視才看得見吧。': 'We\'ll need Spirit Sight to see it, then.',
   '草叢深處，好像有什麼東西……只是肉眼看不清楚。': 'Something seems to be deep in the grass… but ordinary eyes can\'t make it out.',
   '這裡……有迪亞哥的氣息。要是有七彩靈蕈開啟靈視就好了。淡水的雜貨店好像有賣。': 'Diego\'s presence lingers here… If only we had a Seven-Hued Spirit Mushroom for Spirit Sight. I think the general store in Tamsui sells them.',
+  '……真的不去嗎？他好像在等誰。過了今晚，大概就聽不到了。': '…We\'re really not going? He sounds like he\'s waiting for someone. After tonight, I don\'t think we\'ll hear him again.',
+  '還是去看看': 'Let\'s go after all',
+  '睡吧，明天還要趕路': 'Sleep — we travel tomorrow',
 });
