@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>2D interior art reference</title>
+<style>html,body{margin:0;background:#3a3530;color:#eee;font:12px system-ui}</style></head><body>
+<!-- Draws the 2D G.Objects art of the given ids large, as a reference for the 3D models.
+     ?ids=a,b,c&s=3&v=0&t=1.2 -->
+<canvas id="c"></canvas>
+<script src="../../../js/core/util.js"></script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.warn(k, e));</script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/tiles.js"></script>
+<script src="../../../js/gfx/objects.js"></script>
+<script src="../../../js/gfx/objects2.js"></script>
+<script src="../../../js/gfx/interior.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const ids = (q.get('ids') || '').split(',').filter(Boolean);
+const S = +(q.get('s') || 3), v = +(q.get('v') || 0), t = +(q.get('t') || 1.2);
+const cellW = 3 * 64, cellH = 4.2 * 64, cols = Math.max(1, Math.floor(1280 / (cellW * S / 1.5)));
+const cv = document.getElementById('c');
+const colsN = Math.min(ids.length, Math.floor(1280 / (cellW * S / 2)));
+cv.width = 1280; cv.height = 720;
+const g = cv.getContext('2d');
+const per = Math.ceil(ids.length / 2) || 1;
+const cw = 1280 / per, ch = 360;
+ids.forEach((id, i) => {
+  const d = G.Objects.get(id); if (!d) return;
+  const cx = (i % per) * cw, cy = Math.floor(i / per) * ch;
+  const sc = Math.min(cw / ((d.w + 1) * 64), ch / ((d.h + 3) * 64));
+  g.save(); g.translate(cx + cw / 2 - d.w * 32 * sc, cy + ch - 30 - d.h * 64 * sc); g.scale(sc, sc);
+  g.strokeStyle = 'rgba(255,255,0,.5)'; g.lineWidth = 1 / sc; g.strokeRect(0, 0, d.w * 64, d.h * 64);
+  try { d.draw(g, 0, 0, { t: id, x: 0, y: 0, v, w: d.w, h: d.h }, t); } catch (e) { console.error(id, e); }
+  g.restore();
+  g.fillStyle = '#fff'; g.fillText(id + ' ' + d.w + 'x' + d.h + (d.solid ? ' solid' : ''), cx + 4, cy + ch - 10);
+});
+window.__ready = true;
+</script></body></html>
