@@ -744,4 +744,369 @@
       decal: { seed: 6, core: '#2a1018', litter: ['#ffb2cc', '#ffd0e0', '#ec7fa8'], nLitter: 300, litterSize: 3.2 },
     }),
   });
+
+  // =====================================================================================================
+  // shared: recursive branching (dead tree, snags, banyan limbs)
+  // =====================================================================================================
+  // o: { segLen, wiggle, pull, pullK, taper, depth, kids(depth) -> n, spread (rad), lenK, radK, seg, ao, texW, minR }
+  function branchRec(acc, r, p0, dir, len, rad, depth, o, tips) {
+    const steps = max(2, Math.round(len / (o.segLen || 0.35)));
+    const pts = limbPts(r, p0, dir, len, steps, { wiggle: o.wiggle || 0.12, pull: o.pull, pullK: o.pullK || 0 });
+    const rads = taperR(pts.length, rad, rad * (o.taper || 0.55), 1);
+    tube(acc, pts, rads, { seg: max(3, (o.seg || 8) - depth * 2), ao: o.ao, texW: o.texW || 0.4, cap: depth >= (o.depth || 3) });
+    const end = pts[pts.length - 1], edir = end.clone().sub(pts[pts.length - 2]).normalize();
+    if (depth >= (o.depth || 3) || rad < (o.minR || 0.012)) { tips.push({ p: end, dir: edir, depth }); return; }
+    const n = o.kids ? o.kids(depth, r) : 2 + r.int(2);
+    for (let k = 0; k < n; k++) {
+      const f = k === n - 1 ? 1 : lerp(0.35, 0.9, (k + r()) / n);
+      const idx = clamp(Math.round(f * (pts.length - 1)), 1, pts.length - 1);
+      const p = pts[idx];
+      const d = k === n - 1 ? edir.clone() : pts[idx].clone().sub(pts[idx - 1]).normalize();
+      // rotate away from the parent by `spread` around a random perpendicular axis
+      const ax = V3(r.pm(1), r.pm(1), r.pm(1)).cross(d).normalize();
+      d.applyAxisAngle(ax, (o.spread || 0.6) * (k === n - 1 ? 0.4 : 1) * (0.7 + r() * 0.6));
+      if (o.up) d.y += o.up;
+      d.normalize();
+      branchRec(acc, r, p, d, len * (o.lenK || 0.7) * (0.8 + r() * 0.4), rads[idx] * (o.radK || 0.75), depth + 1, o, tips);
+    }
+  }
+
+  const BARKS2 = {
+    pine: { seed: 27, style: 'plates', dark: '#5a2e1e', mid: '#7e4630', light: '#a2654a', hi: '#c98c6a', line: '#2a120a', vfreq: 2 },
+    dead: { seed: 29, style: 'fibre', dark: '#77737a', mid: '#99959c', light: '#bdb9c0', hi: '#e2dee4', line: '#45424a', vfreq: 1 },
+    cypress: { seed: 31, style: 'fibre', dark: '#6a2e1c', mid: '#8e4428', light: '#b0603c', hi: '#d68a5e', line: '#381608', vfreq: 1, moss: '#56743a' },
+    snag: { seed: 33, style: 'fibre', dark: '#8a8790', mid: '#aeabb4', light: '#cfccd4', hi: '#f0eef4', line: '#55525a', vfreq: 1 },
+    juniper: { seed: 35, style: 'fibre', dark: '#5a4840', mid: '#7a6558', light: '#a99383', hi: '#d8cabd', line: '#2e221c', vfreq: 1.2 },
+    banyan: { seed: 37, style: 'smooth', dark: '#5a5448', mid: '#7a7262', light: '#9c947f', hi: '#c4bca4', line: '#2e2a22', moss: '#5a7a34' },
+  };
+
+  // =====================================================================================================
+  // tree_pine 台灣二葉松 — straight red-plated trunk, tiered cloud-pads of needles (niwaki-like silhouette)
+  // =====================================================================================================
+  defTree('tree_pine', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(400 + v * 131);
+      const H = 6.4 * (1 + r.pm(0.06));
+      const wind = { height: H, strength: 0.12, flex: 2.4 };
+      const bmat = barkMat('tree_pine', BARKS2.pine, wind);
+      const P = [
+        { seed: 61, shape: 'needle', n: 70, L: 30, dark: '#173a2f', mid: '#255443', light: '#3f7b5b', hi: '#8cc094', massR: 0.62 },
+        { seed: 62, shape: 'needle', n: 70, L: 30, dark: '#1c3c22', mid: '#2e5a32', light: '#4f8448', hi: '#9cc884', massR: 0.62 },
+        { seed: 63, shape: 'needle', n: 70, L: 30, dark: '#163638', mid: '#24504e', light: '#3c766a', hi: '#84b8a6', massR: 0.62 },
+      ][v];
+      const lmat = leafMat('tree_pine' + v, leafAtlas('tree_pine' + v, P), Object.assign({}, wind, { flutter: 0.02, trans: 0.35 }));
+      const bark = new Acc(), leaf = new Acc();
+      const ao = barkAO([0.6, 0.55, 0.45], 0.6);
+      const bend = V3(r.pm(0.3), 0, r.pm(0.3));
+      const trunk = [];
+      for (let i = 0; i <= 10; i++) { const t = i / 10; trunk.push(V3(bend.x * sin(t * PI * 0.9) * 0.8, -0.15 + t * (H - 0.4), bend.z * sin(t * PI * 0.9) * 0.8)); }
+      tube(bark, trunk, taperR(trunk.length, 0.2, 0.04, 0.9), { seg: 9, ao, flute: { n: 4, amp: 0.3, h: 0.4 }, texW: 0.45, lump: 0.08 });
+      for (let i = 0; i < 4; i++) {
+        const a = i / 4 * TAU + r.pm(0.5);
+        const pts = limbPts(r, V3(cos(a) * 0.08, 0.15, sin(a) * 0.08), V3(cos(a), -0.6, sin(a)), 0.55, 4, { pull: V3(0, -1, 0), pullK: 0.1 });
+        tube(bark, pts, taperR(pts.length, 0.09, 0.015), { seg: 5, ao });
+      }
+      const trunkAt = (y) => { const t = clamp((y + 0.15) / (H - 0.4), 0, 1); return V3(bend.x * sin(t * PI * 0.9) * 0.8, y, bend.z * sin(t * PI * 0.9) * 0.8); };
+      // tiers of branches ending in cloud pads
+      const tiers = 6;
+      let az = r() * TAU;
+      for (let i = 0; i < tiers; i++) {
+        const f = i / (tiers - 1);
+        const y = lerp(2.4, H - 1.0, f) + r.pm(0.1);
+        const nb = i < 1 ? 3 : 2;
+        for (let b = 0; b < nb; b++) {
+          az += 2.4 + r.pm(0.3);
+          const L = lerp(1.9, 0.7, f) * (0.8 + r() * 0.35);
+          const p0 = trunkAt(y);
+          const d = V3(cos(az), 0.12 + r() * 0.15, sin(az));
+          const pts = limbPts(r, p0, d, L, 5, { wiggle: 0.18, pull: V3(0, 1, 0), pullK: 0.05 });
+          tube(bark, pts, taperR(pts.length, lerp(0.08, 0.04, f), 0.015), { seg: 5, ao, texW: 0.3 });
+          // pad: flat wide clump over the branch tip (+ a smaller one mid-branch)
+          const tip = pts[pts.length - 1];
+          const padR = lerp(0.85, 0.5, f) * (0.85 + r() * 0.3);
+          for (const [pp, k] of (i < 2 ? [[tip, 1], [pts[2], 0.6]] : [[tip, 1]])) {
+            const c = pp.clone().add(V3(0, 0.12, 0));
+            const Rn = V3(padR * k * 1.2, padR * k * 0.45, padR * k * 1.2);
+            clump(leaf, r, c, padR * k, { cards: k === 1 ? 12 : 7, C: c.clone().add(V3(0, -0.25, 0)), Rn, sphere: 0.75, clumpN: 0.2, flat: 0.7, spread: 0.55, size: padR * k * 1.3 });
+          }
+        }
+      }
+      // crown tuft
+      const topP = trunkAt(H - 0.45);
+      clump(leaf, r, topP.clone().add(V3(0, 0.25, 0)), 0.55, { cards: 9, C: topP, Rn: V3(0.6, 0.45, 0.6), sphere: 0.7, flat: 0.3 });
+      const g = K.group(meshOf(bark, bmat), meshOf(leaf, lmat));
+      const out = K.merge(g);
+      out.add(decal('tree_pine', { seed: 7, core: '#1a1408', litter: ['#8a5a32', '#6a4a2a', '#a0703a'], nLitter: 140, litterSize: 4 }, 1.7));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // tree_dead — bare gnarled silver-grey tree (no foliage; a few strands of hanging old-man's-beard lichen)
+  // =====================================================================================================
+  defTree('tree_dead', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(500 + v * 77);
+      const H = 3.6 * (1 + r.pm(0.1));
+      const wind = { height: H, strength: 0.04, flex: 2 };
+      const bmat = barkMat('tree_dead', BARKS2.dead, wind);
+      const bark = new Acc(), tips = [];
+      const ao = barkAO([0.55, 0.52, 0.5], 0.5);
+      const lean = V3(r.pm(0.35), 1, r.pm(0.35)).normalize();
+      // trunk with a twist; splits into 2–3 gnarled leaders
+      const tpts = limbPts(r, V3(0, -0.15, 0), lean, H * 0.42, 6, { wiggle: 0.12 });
+      tube(bark, tpts, taperR(tpts.length, 0.2, 0.13), { seg: 9, ao, flute: { n: 3, amp: 0.4, h: 0.6 }, lump: 0.25, lumpSeed: 9 + v, texW: 0.5 });
+      for (let i = 0; i < 4; i++) {
+        const a = i / 4 * TAU + r.pm(0.6);
+        const pts = limbPts(r, V3(cos(a) * 0.08, 0.15, sin(a) * 0.08), V3(cos(a), -0.5, sin(a)), 0.7, 4, { pull: V3(0, -1, 0), pullK: 0.12, wiggle: 0.2 });
+        tube(bark, pts, taperR(pts.length, 0.1, 0.015), { seg: 5, ao });
+      }
+      const top = tpts[tpts.length - 1];
+      const nL = 2 + (v % 2);
+      for (let i = 0; i < nL; i++) {
+        const a = i / nL * TAU + r.pm(0.5);
+        const d = V3(cos(a) * 0.7, 1, sin(a) * 0.7).normalize();
+        branchRec(bark, r, top, d, H * 0.38, 0.11, 0, {
+          segLen: 0.22, wiggle: 0.28, taper: 0.6, depth: 3, spread: 0.75, lenK: 0.66, radK: 0.72, seg: 7, ao, up: 0.05, minR: 0.01,
+          kids: (dpt) => (dpt < 1 ? 3 : 2),
+        }, tips);
+      }
+      // a broken limb stub
+      const sp = tpts[3];
+      tube(bark, limbPts(r, sp, V3(r.pm(1), 0.3, r.pm(1)), 0.45, 3, {}), [0.08, 0.07, 0.06, 0.05], { seg: 6, ao, cap: true });
+      const g = K.group(meshOf(bark, bmat));
+      // hanging lichen strands (松蘿) on some tips — thin pale-green ribbons
+      const lich = new Acc();
+      for (const t of tips) if (r() < 0.35) for (let k = 0; k < 3; k++) {
+        const L = 0.2 + r() * 0.35, p = t.p.clone().add(V3(r.pm(0.06), -0.02, r.pm(0.06))), a0 = r() * PI;
+        const ex = cos(a0) * 0.012, ez = sin(a0) * 0.012;
+        const a = lich.v(p.x - ex, p.y, p.z - ez, 0, 0, 1, 0, 1), b = lich.v(p.x + ex, p.y, p.z + ez, 0, 0, 1, 1, 1);
+        const c2 = lich.v(p.x + r.pm(0.04), p.y - L, p.z + r.pm(0.04), 0, 0, 1, 0.5, 0);
+        lich.tri(a, c2, b);
+      }
+      if (lich.i.length) g.add(meshOf(lich, cmat('lichen', () => Wind.windify(G.R3M.env({ color: 0xa8b890, side: T.DoubleSide, roughness: 1 }), { height: H, strength: 0.06, flutter: 0.05 }))));
+      const out = K.merge(g);
+      out.add(decal('tree_dead', { seed: 9, core: '#1c1a16', litter: ['#6c6870', '#8a8676', '#5a5040'], nLitter: 60, litterSize: 5 }, 1.2));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // tree_cypress 紅檜 (2×2) — giant buttressed red trunk, layered sprays, a silver lightning snag above the crown
+  // =====================================================================================================
+  defTree('tree_cypress', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(600 + v * 59);
+      const H = 10.5 * (1 + r.pm(0.05));
+      const wind = { height: H, strength: 0.14, flex: 2.6 };
+      const bmat = barkMat('tree_cypress', BARKS2.cypress, wind);
+      const smat = barkMat('tree_cypress_snag', BARKS2.snag, wind);
+      const P = [
+        { seed: 71, shape: 'scale', n: 46, L: 46, W: 18, dark: '#173a32', mid: '#26584a', light: '#3d7c63', hi: '#86c09a', massR: 0.6 },
+        { seed: 72, shape: 'scale', n: 46, L: 46, W: 18, dark: '#1a3a2a', mid: '#2a5a3e', light: '#447e52', hi: '#8cc08a', massR: 0.6 },
+        { seed: 73, shape: 'scale', n: 46, L: 46, W: 18, dark: '#163634', mid: '#245452', light: '#3a7870', hi: '#7cb4a8', massR: 0.6 },
+      ][v];
+      const lmat = leafMat('tree_cypress' + v, leafAtlas('tree_cypress' + v, P), Object.assign({}, wind, { flutter: 0.025, trans: 0.4 }));
+      const bark = new Acc(), snag = new Acc(), leaf = new Acc();
+      const ao = barkAO([0.55, 0.5, 0.42], 1.4, { h: 2.2, k: 0.5, c: [0.55, 0.72, 0.4] });
+      // massive fluted trunk
+      const tpts = [];
+      for (let i = 0; i <= 12; i++) { const t = i / 12; tpts.push(V3(sin(t * 2.2 + v) * 0.12, -0.3 + t * (H - 1.2), cos(t * 1.7 + v) * 0.1)); }
+      const rads = tpts.map((p, i) => { const t = i / 12; return lerp(0.62, 0.2, pow(t, 0.9)) + 0.35 * pow(1 - t, 6); });
+      tube(bark, tpts, rads, { seg: 16, ao, flute: { n: 7, amp: 0.55, h: 2.4, ph: v }, lump: 0.1, texW: 0.55, texH: 1.6 });
+      // buttress roots
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * TAU + v + r.pm(0.2);
+        const p0 = V3(cos(a) * 0.5, 0.9, sin(a) * 0.5);
+        const pts = limbPts(r, p0, V3(cos(a), -0.9, sin(a)), 1.5 + r() * 0.4, 5, { pull: V3(0, -1, 0), pullK: 0.08, wiggle: 0.12 });
+        tube(bark, pts, taperR(pts.length, 0.3, 0.03, 0.8), { seg: 6, ao, texW: 0.4 });
+      }
+      const trunkAt = (y) => { const t = clamp((y + 0.3) / (H - 1.2), 0, 1); return V3(sin(t * 2.2 + v) * 0.12, y, cos(t * 1.7 + v) * 0.1); };
+      // limbs: thick, near-horizontal, upturned ends carrying flat spray layers
+      const nL = 13;
+      let az = r() * TAU;
+      for (let i = 0; i < nL; i++) {
+        const f = i / (nL - 1);
+        const y = lerp(4.0, H - 1.2, f);
+        az += 2.39 + r.pm(0.4);
+        const L = lerp(3.0, 1.1, f) * (0.8 + r() * 0.4);
+        const p0 = trunkAt(y);
+        const pts = limbPts(r, p0, V3(cos(az), 0.25, sin(az)), L, 6, { wiggle: 0.2, pull: V3(0, 1, 0), pullK: 0.06 });
+        tube(bark, pts, taperR(pts.length, lerp(0.17, 0.08, f), 0.02), { seg: 6, ao, texW: 0.35 });
+        const tip = pts[pts.length - 1];
+        const padR = lerp(1.25, 0.8, f) * (0.85 + r() * 0.3);
+        for (const [pp, k] of [[tip, 1], [pts[3], 0.7]]) {
+          const c = pp.clone().add(V3(0, 0.15, 0));
+          clump(leaf, r, c, padR * k, { cards: k === 1 ? 14 : 8, C: c.clone().add(V3(0, -0.2, 0)), Rn: V3(padR * k * 1.15, padR * k * 0.5, padR * k * 1.15), sphere: 0.7, clumpN: 0.2, flat: 0.5, spread: 0.6, size: padR * k * 1.25 });
+        }
+      }
+      // silver snag: the old lightning-struck leader, rising bare above the crown
+      const sTop = trunkAt(H - 1.25);
+      const tips = [];
+      branchRec(snag, r, sTop, V3(r.pm(0.15), 1, r.pm(0.15)).normalize(), 1.9, 0.14, 0, { segLen: 0.3, wiggle: 0.14, taper: 0.5, depth: 2, spread: 0.9, lenK: 0.45, radK: 0.6, seg: 7, kids: () => 2, ao: () => 1 }, tips);
+      // ferns at the foot (re-using the spray atlas as low fronds)
+      for (let i = 0; i < 6; i++) {
+        const a = r() * TAU, d = 0.9 + r() * 0.5;
+        const c = V3(cos(a) * d, 0.25, sin(a) * d);
+        clump(leaf, r, c, 0.35, { cards: 4, C: c.clone().add(V3(0, -0.3, 0)), Rn: V3(0.4, 0.3, 0.4), flat: 0.4, sphere: 0.6, tint: [0.95, 1.1, 0.85] });
+      }
+      const g = K.group(meshOf(bark, bmat), meshOf(snag, smat), meshOf(leaf, lmat));
+      const out = K.merge(g);
+      out.add(decal('tree_cypress', { seed: 11, core: '#141a0c', litter: ['#5a3a20', '#7a5030', '#4a6a2a', '#3a5a2a'], nLitter: 220, litterSize: 5 }, 2.4));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // tree_banyan 榕樹 (3×3) — fused, twisting trunks; vast low dome; curtains of aerial roots; prop-root pillars
+  // footprint solid cells: centre + the whole south row (2D solidAt 000/010/111). The north row stays walkable.
+  // =====================================================================================================
+  defTree('tree_banyan', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(700 + v * 41);
+      const H = 7.2 * (1 + r.pm(0.05));
+      const wind = { height: H, strength: 0.1, flex: 2.4, radial: 0.04 };
+      const bmat = barkMat('tree_banyan', BARKS2.banyan, wind);
+      const P = [
+        { seed: 81, shape: 'oval', n: 110, L: 24, W: 11, dark: '#1a4029', mid: '#2c6037', light: '#4d8c43', hi: '#9cc86a' },
+        { seed: 82, shape: 'oval', n: 110, L: 24, W: 11, dark: '#1c4422', mid: '#306432', light: '#56903e', hi: '#a8cc6c' },
+        { seed: 83, shape: 'oval', n: 110, L: 24, W: 11, dark: '#183c2e', mid: '#285a42', light: '#46845a', hi: '#90c08a' },
+      ][v];
+      const lmat = leafMat('tree_banyan' + v, leafAtlas('tree_banyan' + v, P), Object.assign({}, wind, { flutter: 0.03, trans: 0.5 }));
+      const bark = new Acc(), leaf = new Acc();
+      const ao = barkAO([0.55, 0.52, 0.42], 1.0, { h: 1.2, k: 0.35, c: [0.6, 0.72, 0.42] });
+      // fused trunk: 5 strands twisting around each other
+      const ns = 5, trunkTop = 3.0;
+      const crown = [];
+      for (let s = 0; s < ns; s++) {
+        const a0 = s / ns * TAU, pts = [];
+        for (let i = 0; i <= 10; i++) {
+          const t = i / 10, a = a0 + t * 1.6, rad = lerp(0.42, 0.22, t);
+          pts.push(V3(cos(a) * rad, -0.2 + t * (trunkTop + 0.2), sin(a) * rad - 0.05));
+        }
+        tube(bark, pts, taperR(pts.length, 0.34, 0.2, 0.7), { seg: 8, ao, lump: 0.15, lumpSeed: s, texW: 0.45 });
+        crown.push(pts[pts.length - 1]);
+      }
+      // root flare
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * TAU + r.pm(0.3);
+        const pts = limbPts(r, V3(cos(a) * 0.45, 0.5, sin(a) * 0.45), V3(cos(a), -0.8, sin(a)), 1.2 + r() * 0.5, 5, { pull: V3(0, -1, 0), pullK: 0.1, wiggle: 0.18 });
+        tube(bark, pts, taperR(pts.length, 0.22, 0.03), { seg: 6, ao });
+      }
+      // canopy dome
+      const C = V3(0, H * 0.7, 0.1), R = V3(3.5, 1.35, 3.2);
+      // big horizontal limbs spreading toward the dome rim
+      const limbs = [];
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * TAU + r.pm(0.3);
+        const p0 = crown[i % ns];
+        const tgt = V3(C.x + cos(a) * R.x * 0.85, C.y - 0.4 + r.pm(0.3), C.z + sin(a) * R.z * 0.85);
+        const pts = limbPts(r, p0, tgt.clone().sub(p0), tgt.distanceTo(p0), 7, { wiggle: 0.15, pull: V3(0, 1, 0), pullK: 0.02 });
+        limbs.push(pts);
+        tube(bark, pts, taperR(pts.length, 0.22, 0.05, 0.8), { seg: 7, ao, texW: 0.4 });
+      }
+      // clusters
+      const cps = canopyPoints(r, C, R, 38, { bottom: 0.45, inner: 0.55, minD: 0.85 });
+      for (const c of cps) {
+        let best = null, bd = 1e9;
+        for (const L of limbs) for (let i = 2; i < L.length; i++) { const d = L[i].distanceTo(c); if (d < bd) { bd = d; best = L[i]; } }
+        if (best && bd > 0.3) { const pts = limbPts(r, best, c.clone().sub(best), bd * 0.85, 3, { wiggle: 0.15 }); tube(bark, pts, taperR(pts.length, 0.05, 0.012), { seg: 4, ao }); }
+        clump(leaf, r, c, 0.95 * (0.85 + r() * 0.3), { cards: 13, C, Rn: R, sphere: 0.55, clumpN: 0.5, outward: 0.45, up: 0.35, tint: r.pick([[1, 1, 1], [1, 1, 1], [1.05, 1.05, 0.9], [0.92, 0.98, 1.0]]) });
+      }
+      for (const c of canopyPoints(r, C, R.clone().multiplyScalar(0.6), 8, { bottom: 0.3, inner: 0, minD: 0.5 })) clump(leaf, r, c, 1.1, { cards: 5, C, Rn: R, sphere: 0.85 });
+      // aerial roots: strands dropping from the limbs; some reach the soil and thicken into pillar roots
+      const pillars = [V3(-1.0, 0, 1.05), V3(1.05, 0, 1.0), V3(0.05, 0, 1.25)];
+      for (const pl of pillars) {
+        let best = null, bd = 1e9;
+        for (const L of limbs) for (let i = 2; i < L.length; i++) { const d = abs(L[i].x - pl.x) + abs(L[i].z - pl.z); if (d < bd) { bd = d; best = L[i]; } }
+        const top = best.clone(); const pts = [];
+        for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(lerp(top.x, pl.x, sstep(0, 0.6, t)) + sin(t * 9) * 0.04, lerp(top.y, -0.15, t), lerp(top.z, pl.z, sstep(0, 0.6, t)) + cos(t * 7) * 0.04)); }
+        tube(bark, pts, pts.map((_, i) => lerp(0.07, 0.17, pow(i / 8, 2))), { seg: 7, ao, lump: 0.2 });
+        // bundle of thin strands twisting around each pillar
+        for (let k = 0; k < 3; k++) {
+          const ph = k / 3 * TAU, sp = [];
+          for (let i = 0; i <= 8; i++) { const t = i / 8; const p = pts[i]; sp.push(V3(p.x + cos(ph + t * 5) * 0.12, p.y, p.z + sin(ph + t * 5) * 0.12)); }
+          tube(bark, sp, sp.map(() => 0.025), { seg: 4, ao });
+        }
+      }
+      for (const L of limbs) for (let i = 2; i < L.length; i++) {
+        if (r() < 0.55) continue;
+        const p = L[i];
+        const n = 2 + r.int(3);
+        const reachAll = r() < 0.18;
+        for (let k = 0; k < n; k++) {
+          const q = p.clone().add(V3(r.pm(0.18), -0.05, r.pm(0.18)));
+          const reach = reachAll && k < 2;
+          const L2 = reach ? q.y + 0.1 : (q.y - 0.4) * (0.25 + r() * 0.55);
+          const pts = [], sw = r.pm(0.12), ph = r() * 6;
+          for (let s2 = 0; s2 <= 6; s2++) { const t = s2 / 6; pts.push(V3(q.x + sin(t * 3 + ph) * 0.04 + sw * t * t, q.y - L2 * t, q.z + cos(t * 2.5 + ph) * 0.04 + sw * 0.5 * t * t)); }
+          tube(bark, pts, taperR(pts.length, reach ? 0.035 : 0.02, reach ? 0.045 : 0.004), { seg: reach ? 5 : 3, ao });
+        }
+      }
+      const g = K.group(meshOf(bark, bmat), meshOf(leaf, lmat));
+      const out = K.merge(g);
+      out.add(decal('tree_banyan', { seed: 13, core: '#141a0c', litter: ['#6a6a2a', '#8a7a34', '#4a5a24', '#9a6a2a'], nLitter: 260, litterSize: 4 }, 3.4));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // tree_cedar_snow 玉山圓柏 — wind-bent, twisted juniper; flattened layers swept leeward, capped with snow
+  // =====================================================================================================
+  defTree('tree_cedar_snow', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(800 + v * 23);
+      const H = 3.4 * (1 + r.pm(0.08));
+      const wind = { height: H, strength: 0.06, flex: 2 };
+      const bmat = barkMat('tree_cedar_snow', BARKS2.juniper, wind);
+      const P = [
+        { seed: 91, shape: 'scale', n: 50, L: 40, W: 16, dark: '#1d3d3e', mid: '#2e5a55', light: '#4b7f73', hi: '#9ac4b0', massR: 0.62 },
+        { seed: 92, shape: 'scale', n: 50, L: 40, W: 16, dark: '#22403a', mid: '#335e50', light: '#52826a', hi: '#a0c8a8', massR: 0.62 },
+        { seed: 93, shape: 'scale', n: 50, L: 40, W: 16, dark: '#1c3844', mid: '#2c5460', light: '#4a7a84', hi: '#98c0c8', massR: 0.62 },
+      ][v];
+      const lmat = leafMat('tree_cedar_snow' + v, leafAtlas('tree_cedar_snow' + v, P), Object.assign({}, wind, { flutter: 0.012, trans: 0.3 }));
+      const snowM = cmat('snow_cap', () => Wind.windify(G.R3M.env({ color: 0xf2f6ff, roughness: 0.55, vertexColors: true }), Object.assign({}, wind, { var: [0.02, 0.02, 0.02] })));
+      const bark = new Acc(), leaf = new Acc(), snow = new Acc();
+      const ao = barkAO([0.7, 0.7, 0.72], 0.4);
+      const lee = V3(1, 0, 0.25).normalize(); // prevailing wind bends the tree east
+      // twisted, bent trunk
+      const tpts = [];
+      for (let i = 0; i <= 9; i++) { const t = i / 9; tpts.push(V3(lee.x * pow(t, 1.6) * H * 0.55 + sin(t * 5) * 0.06, -0.15 + t * H * 0.7, lee.z * pow(t, 1.6) * H * 0.55 + cos(t * 4) * 0.05)); }
+      tube(bark, tpts, taperR(tpts.length, 0.2, 0.06, 0.8), { seg: 9, ao, lump: 0.3, lumpSeed: 4 + v, flute: { n: 3, amp: 0.4, h: 0.8 }, texW: 0.35 });
+      // a bleached dead limb pointing upwind
+      branchRec(bark, r, tpts[4], V3(-1, 0.6, -0.2).normalize(), 0.9, 0.06, 0, { segLen: 0.18, wiggle: 0.3, depth: 1, spread: 0.7, lenK: 0.6, radK: 0.6, seg: 5, kids: () => 2, ao }, []);
+      // layered pads: flattened, elongated leeward
+      const layers = 5;
+      for (let i = 0; i < layers; i++) {
+        const f = i / (layers - 1);
+        const base = tpts[clamp(Math.round(lerp(3, 9, f)), 0, 9)];
+        const L = lerp(1.1, 0.5, f);
+        const c = base.clone().add(lee.clone().multiplyScalar(L * 0.5)).add(V3(r.pm(0.15), 0.1, r.pm(0.15)));
+        const pts = limbPts(r, base, lee.clone().add(V3(r.pm(0.4), 0.15, r.pm(0.4))), L, 3, { wiggle: 0.2 });
+        tube(bark, pts, taperR(pts.length, 0.05, 0.015), { seg: 4, ao });
+        const Rn = V3(L * 0.95, 0.32, L * 0.7);
+        clump(leaf, r, c, L * 0.65, { cards: 12, C: c.clone().add(V3(0, -0.1, 0)), Rn, sphere: 0.7, clumpN: 0.15, flat: 0.6, spread: 0.8, size: L * 0.9 });
+        // snow cap: lumpy flattened half-dome sitting on the pad
+        const sg = new T.SphereGeometry(1, 10, 6, 0, TAU, 0, PI * 0.5);
+        const pos = sg.attributes.position, nrm = sg.attributes.normal;
+        const nz = vnoise(50 + i + v * 7);
+        for (let k = 0; k < pos.count; k++) {
+          let x = pos.getX(k), y = pos.getY(k), z = pos.getZ(k);
+          const bump = 0.8 + 0.45 * nz(x * 2 + 5, z * 2 + 5);
+          const edge = 0.62 + 0.3 * nz(x * 3 + 9, z * 3 + 1);
+          x *= Rn.x * edge; z *= Rn.z * edge; y = y * 0.13 * bump + 0.04;
+          const sx = c.x + x, sy = c.y + y, sz = c.z + z;
+          const ny = nrm.getY(k);
+          const idx = snow.v(sx, sy, sz, nrm.getX(k) * 0.6, ny + 0.4, nrm.getZ(k) * 0.6, 0, 0, lerp(0.82, 1, ny), lerp(0.88, 1, ny), 1);
+        }
+        const base0 = snow.count - pos.count;
+        const ix = sg.index.array;
+        for (let k = 0; k < ix.length; k += 3) snow.tri(base0 + ix[k], base0 + ix[k + 1], base0 + ix[k + 2]);
+      }
+      const g = K.group(meshOf(bark, bmat), meshOf(leaf, lmat), meshOf(snow, snowM));
+      const out = K.merge(g);
+      out.add(decal('tree_cedar_snow', { seed: 15, core: '#e8eef8', litter: ['#ffffff', '#dfe8f4'], nLitter: 80, litterSize: 7 }, 1.6));
+      return out;
+    },
+  });
 })();
