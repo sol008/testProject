@@ -857,18 +857,23 @@
         if (inParty('yungui')) await S.say('yungui:think', '異鄉之魂，認不得歸路。……書上也提過這種事，可惜沒寫解法。');
         await S.say('xinghe:think', '有沒有什麼……能讓你們想起家的東西？');
         await S.say('迪亞哥', '我有一枚扇貝殼。是在家鄉的海灘撿的。我死的時候握在手裡……後來不見了。');
+        await S.say('迪亞哥', '大概掉在城外西北角，那兩座沒有字的墓旁邊的草叢裡。可是活人的眼睛……看不見我們的東西。');
+        await S.say('baizhi:think', '要用靈視才看得見吧。');
         await S.say('彼得', '我有一個小風車，木頭刻的。我爹刻給我的。前幾年被一隻……黑白的鳥叼走了。');
         await S.say('xinghe:smile', '交給我們。');
         S.cameraFollow();
         S.quest('q_tamsui_soldiers', 1);
         S.objective('找到迪亞哥的扇貝殼、彼得的小風車');
       } },
-      { id: 'fort_scallop', trigger: 'action', x: 3, y: 5, label: '草叢', if: (st) => !st.inv.c3_scallop && !st.flags.ch3_soldiers_done, run: async (S) => {
+      { id: 'fort_scallop', trigger: 'action', x: 2, y: 4, w: 3, h: 2, label: '草叢', if: (st) => !st.inv.c3_scallop && !st.flags.ch3_soldiers_done, run: async (S) => {
         if (!vis()) {
           await S.say('', '草叢沙沙作響。');
-          if (S.hasItem('lingxun') && G.Quests.stage('q_tamsui_soldiers') >= 1) {
+          if (S.hasItem('lingxun')) {
+            await S.say('', '草叢深處，好像有什麼東西……只是肉眼看不清楚。');
             const c = await S.choice(['吃一朵七彩靈蕈，開啟靈視', '算了'], { cancel: 1 });
             if (c === 0) { S.take('lingxun', 1); S.vision(60); S.sfx('magic'); await S.say('', '眼前的顏色開始呼吸……草叢深處，有什麼在發著微光。'); }
+          } else if (G.Quests.stage('q_tamsui_soldiers') >= 1) {
+            await S.say('baizhi:think', '這裡……有迪亞哥的氣息。要是有七彩靈蕈開啟靈視就好了。淡水的雜貨店好像有賣。');
           }
           return;
         }
@@ -894,10 +899,11 @@
     drawOver: (ctx, t, m) => {
       // scallop glint (only with 靈視)
       if (m.visionOn() && !G.state.inv.c3_scallop && !F('ch3_soldiers_done')) {
-        const x = 3.5 * T, y = 5.6 * T, a = 0.55 + 0.35 * Math.sin(t * 4);
-        const g = ctx.createRadialGradient(x, y, 2, x, y, 30);
+        const x = 3.5 * T, y = 5.6 * T, a = 0.75 + 0.25 * Math.sin(t * 4);
+        const g = ctx.createRadialGradient(x, y, 2, x, y, 44);
         g.addColorStop(0, `rgba(255,240,200,${a})`); g.addColorStop(1, 'rgba(255,220,160,0)');
-        ctx.fillStyle = g; ctx.fillRect(x - 30, y - 30, 60, 60);
+        ctx.fillStyle = g; ctx.fillRect(x - 44, y - 44, 88, 88);
+        ctx.fillStyle = `rgba(255,255,240,${a})`; for (let k = 0; k < 4; k++) { const ang = t * 1.5 + k * Math.PI / 2; ctx.fillRect(x + Math.cos(ang) * 14 - 1.5, y + Math.sin(ang) * 14 - 1.5, 3, 3); }
       }
     },
   });

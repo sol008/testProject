@@ -1234,4 +1234,13 @@ G.I18N.add({
 G.I18N.add({
   '……那個鼓聲，好像只有今晚會響。': '…I think that drum only sounds tonight.',
   '……貼了符，她就永遠看不到這齣戲了。': '…If the talisman goes on, she\'ll never get to see the show.',
+  // ---- item placement pass (docs/qa/item_placement.md): 照魂鏡 key item, 貓毛球 chest
+  '……師父不在，觀裡也沒人了。鎮觀之寶，總不能留在這裡等鬼面來拿。': '…Master is gone, and there\'s no one left at the temple. I can\'t leave its greatest treasure here for Ghost Mask to take.',
+  '雲歸把古鏡從鏡架上取下來，用道袍的下襬仔細包好，交給星河。': 'Yun Gui lifts the old mirror from its stand, wraps it carefully in the hem of his robe, and hands it to Xinghe.',
+  '你拿著。貧道的手要拿酒葫蘆。': 'You carry it. This humble Taoist\'s hands are for the wine gourd.',
+  '……那、那是我收的！麻糬掉的毛，丟掉很可惜嘛！不准笑！': '…Th-those are mine! Mochi\'s shedding fur—it seemed a waste to throw it out! Don\'t you dare laugh!',
+  '大概掉在城外西北角，那兩座沒有字的墓旁邊的草叢裡。可是活人的眼睛……看不見我們的東西。': 'I think I dropped it in the grass by the two nameless graves, in the northwest corner outside the fort. But living eyes… cannot see what belongs to us.',
+  '要用靈視才看得見吧。': 'We\'ll need Spirit Sight to see it, then.',
+  '草叢深處，好像有什麼東西……只是肉眼看不清楚。': 'Something seems to be deep in the grass… but ordinary eyes can\'t make it out.',
+  '這裡……有迪亞哥的氣息。要是有七彩靈蕈開啟靈視就好了。淡水的雜貨店好像有賣。': 'Diego\'s presence lingers here… If only we had a Seven-Hued Spirit Mushroom for Spirit Sight. I think the general store in Tamsui sells them.',
 });
