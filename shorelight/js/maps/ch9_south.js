@@ -182,14 +182,14 @@
   for (const [pid, pname] of PUFFS) {
     defE(pid, {
       name: pname, art: 'wind_sprite', variant: 2, scale: 1.3, lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood'], immune: BOSS_IMM,
-      m: { hp: 1.15, atk: 1.27, mag: 1.46, spd: 1.7, exp: 0.6, gold: 0.4 }, // sim_story: was hp 1 atk 1 mag 1.15 spd 1.35
+      m: { hp: 1.1, atk: 1.15, mag: 1.3, spd: 1.55, exp: 0.6, gold: 0.4 }, // sim_story: was hp 1 atk 1 mag 1.15 spd 1.35
       skills: [['c9_es_gust', 2], ['c9_es_namecall', 2]], drops: [],
       desc: '落山風靈散開成的風團，胸口纏著一個發光的名字。',
     });
   }
   defE('c9_fallwind', {
     name: '落山風靈', art: 'fallwind', lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.6, atk: 2.55, mag: 2.55, def: 1.1, spd: 1.6, exp: 7, gold: 7 }, // sim_story: was hp 7.5 atk/mag 2.0 spd 1.25
+    m: { hp: 8.2, atk: 2.3, mag: 2.3, def: 1.1, spd: 1.45, exp: 7, gold: 7 }, // sim_story: was hp 7.5 atk/mag 2.0 spd 1.25
     skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]],
     phases: [{ at: 0.5, summon: ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'], skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]] }],
     drops: [['c9_mat_fengshi', 1], ['c9_hd_fenggu', 1]],

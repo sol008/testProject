@@ -82,6 +82,7 @@ class Run {
   async talk(id) { await this.page.evaluate((id) => G.Debug.talk(id), id); await this.idle(); }
   async trigger(id) { await this.page.evaluate((id) => G.Debug.trigger(id), id); await this.idle(); }
   async step(x, y) { await this.page.evaluate(([x, y]) => G.Debug.stepOn(x, y), [x, y]); await this.page.waitForTimeout(120); await this.idle(); }
+  async stepGo(x, y) { await this.page.evaluate(([x, y]) => G.Debug.stepOn(x, y), [x, y]); }
   async interactObj(t, x, y) {
     await this.page.evaluate(([t, x, y]) => {
       const o = G.mapScene.objects.find((ob) => ob.t === t && ob.x === x && ob.y === y);
@@ -111,12 +112,18 @@ class Run {
   // watch the ending to the title screen, holding the skip key through the credits
   async toTitle(ms = 20 * 60000) {
     const t0 = Date.now();
-    let held = false;
+    let held = false, lastLog = Date.now();
     while (Date.now() - t0 < ms) {
       const top = await this.page.evaluate(() => { const t = G.Scenes.top(); return t && t.constructor ? t.constructor.name : ''; });
       if (top === 'CreditsScene' && !held) { await this.shot('credits', true); await this.page.keyboard.down('ControlLeft'); held = true; }
       if (top !== 'CreditsScene' && held) { await this.page.keyboard.up('ControlLeft'); held = false; }
+      if (top === 'GameOverScene') throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
       if (top === 'TitleScene') { if (held) await this.page.keyboard.up('ControlLeft'); return true; }
+      if (Date.now() - lastLog > 60000) {
+        lastLog = Date.now();
+        console.log('    … ' + await this.page.evaluate(() => `${G.mapScene && G.mapScene.def.id} top=${G.Scenes.top() && G.Scenes.top().constructor.name} ` +
+          ['ch11_reunion', 'ch11_yexuan_p1', 'ch11_yexuan', 'ch11_nianer', 'ch11_wuxiang_1', 'ch11_wuxiang_2', 'ch11_wuxiang', 'ch11_done', 'ending_true', 'ending_normal'].filter((k) => G.state.flags[k]).join(',')));
+      }
       await this.page.waitForTimeout(250);
     }
     throw new Error(`[${this.label}] never reached the title screen: ${await this.where()}`);
@@ -341,7 +348,7 @@ const SEGMENTS = {
   },
   true: async (R) => {
   await R.levelTo(48);
-  await R.step(19, 6);
+  await R.stepGo(19, 6);                            // the ending runs to the title screen: don't wait for map idle
   // ---- 燈心: reunion → 夜玄 ×2 → 夜念 → 無相 ×3 → E-00 → 真結局 → credits → stinger → title
   await R.toTitle();
   const fin = await R.ev(() => ({ f: G.state.flags, party: G.state.party.slice(), n: G.Lanterns.count(), th: G.Lanterns.THRESHOLD }));
@@ -359,10 +366,10 @@ const SEGMENTS = {
     const keep = ['lantern_penghu_weir', 'lantern_tangshan', 'lantern_baizhi_memory', 'xd_atu_watch'];
     for (const id of Object.keys(G.state.lanterns)) if (!keep.includes(id)) delete G.state.lanterns[id];
   });
-  await R.levelTo(48);
+  await R.levelTo(50);
   await R.script("await S.warp('breath_realm', 19, 7, 'up', { reload: true });");
   check('B: lanterns below the threshold', await R.ev(() => G.Lanterns.count() < G.Lanterns.THRESHOLD));
-  await R.step(19, 6);
+  await R.stepGo(19, 6);                            // the ending runs to the title screen: don't wait for map idle
   await R.toTitle();
   const fin = await R.ev(() => ({ f: G.state.flags, n: G.Lanterns.count() }));
   check(`B: lanterns ${fin.n} < 14 → 普通結局`, !!fin.f.ending_normal && !fin.f.ending_true);

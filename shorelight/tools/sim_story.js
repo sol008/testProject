@@ -42,9 +42,10 @@ function loadGame(seed) {
   // inert timers: battle pose resets / drum loops must not keep node alive or fire mid-battle
   ctx.setTimeout = () => 0; ctx.setInterval = () => 0; ctx.clearTimeout = () => {}; ctx.clearInterval = () => {};
   const errors = [];
-  for (const rel of indexScripts()) {
+  const GROOT = process.env.SIM_ROOT || ROOT; // SIM_ROOT: run against another checkout (e.g. a git archive of the old data)
+  for (const rel of indexScripts(GROOT)) {
     if (rel === 'js/core/fontdata.js' || rel === 'js/main.js') continue;
-    const file = path.join(ROOT, rel);
+    const file = path.join(GROOT, rel);
     if (!fs.existsSync(file)) continue;
     let code = fs.readFileSync(file, 'utf8');
     const m = /js\/maps\/(ch\d+)_[a-z]+\.js$/.exec(rel);

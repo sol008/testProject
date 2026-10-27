@@ -140,7 +140,8 @@
   function earrings(B, o) {
     const P = B.P, s = P.s, F = B.F;
     for (const sg of o.sides || [1, -1]) {
-      const lobe = C.headPt(B, sg * 1.52, acos(clamp(F.eyeY - 0.36, -1, 1)), 0.004 * s);
+      // the lobe of the (small, tucked) ear: see buildHead (ear centre between eye and nose height)
+      const lobe = C.headPt(B, sg * 1.6, acos(clamp((F.eyeY + F.noseY) * 0.5 + 0.02 - 0.16 * (F.ears || 1), -1, 1)), 0.006 * s);
       const L = (o.len || 0.045) * s;
       const pts = [lobe, vadd(lobe, [0, -L * 0.6, 0]), vadd(lobe, [0, -L, 0])];
       const ids = B.chain('ear' + (sg > 0 ? 'L' : 'R'), 'head', pts, { stiff: 0.6, drag: 0.3, grav: 1.2, r: 0.006, groups: [], kind: 'prop' });
@@ -258,8 +259,8 @@
   look('baizhi', 'v2_02', {
     spec: {
       body: 'female', skin: BZ.skin, eyes: '#4b2c20',
-      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.5, locks: 1.75, locksSide: 'R', tie: BZ.red, knot: 'halfup', knotPh: 0.36, loop: true,
-        pins: [{ type: 'comb', color: BZ.jade, th: 1.15, ph: 0.45, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
+      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.52, locks: 1.75, locksSide: 'R', tuck: 'L', tie: BZ.red, knot: 'halfup', knotPh: 0.36, loop: true,
+        pins: [{ type: 'comb', color: BZ.jade, th: 1.15, ph: 0.45, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.14, bangLen: -0.02, bangSpread: 1.35, bangW: 1.25, front: 1.1, temple: 0.12 },
       hat: null,
       top: { color: BZ.shirt, len: 0.72, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.3, slits: 0.06, button: BZ.cream },
       apron: { color: BZ.apron, len: 0.62, bib: true, bibDrop: 0.075, bibW: 0.6, chain: '#c8ccd6', stitch: '#d8b860', emb: '#e8788a', embN: 3, band: '#1e1d2b', trim: '#4a5a82' },

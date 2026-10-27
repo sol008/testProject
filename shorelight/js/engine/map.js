@@ -895,14 +895,17 @@ G.Mapx = G.Mapx || {};
         ctx.save();
         ctx.globalAlpha = Math.max(0, a);
         const x = 40, y = 40;
-        const g = ctx.createLinearGradient(x, 0, x + 460, 0);
-        g.addColorStop(0, 'rgba(6,8,18,0.8)'); g.addColorStop(1, 'rgba(6,8,18,0)');
+        // long (English) place names: the backing gradient grows with the name, and the name shrinks past ~800px
+        const nm = G.Render.fit(ctx, this.map.name, 800, { size: 40, minSize: 30 });
+        const bw = Math.max(460, nm.w + 120);
+        const g = ctx.createLinearGradient(x, 0, x + bw, 0);
+        g.addColorStop(0, 'rgba(6,8,18,0.8)'); g.addColorStop(Math.min(0.75, (nm.w + 40) / bw), 'rgba(6,8,18,0.6)'); g.addColorStop(1, 'rgba(6,8,18,0)');
         ctx.fillStyle = g;
-        ctx.fillRect(x - 10, y - 6, 470, 82);
+        ctx.fillRect(x - 10, y - 6, bw + 10, 82);
         ctx.fillStyle = G.UI.GOLD; ctx.fillRect(x - 10, y - 6, 3, 82);
-        G.Render.text(ctx, this.map.name, x + 12, y + 2, { size: 40, color: '#fbeec8', glow: 'rgba(255,190,100,0.6)', glowBlur: 16 });
+        G.Render.text(ctx, nm.str, x + 12, y + 2 + (40 - nm.size) / 2, { size: nm.size, color: '#fbeec8', glow: 'rgba(255,190,100,0.6)', glowBlur: 16 });
         const sub = val(this.def.subtitle) || (G.Chapters && G.Chapters[G.state.chapter]) || '';
-        if (sub) G.Render.text(ctx, sub, x + 14, y + 52, { size: 18, color: '#cbbf9e' });
+        if (sub) G.Render.textClip(ctx, sub, x + 14, y + 52, 800, { size: 18, color: '#cbbf9e' });
         ctx.restore();
       }
       // objective tracker
