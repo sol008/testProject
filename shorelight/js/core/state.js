@@ -5,6 +5,7 @@ G.Data = G.Data || {};
 G.settings = (() => {
   const navLang = (navigator.language || 'en').toLowerCase();
   const def = { music: 0.6, sfx: 0.8, textSpeed: 2, battleSpeed: 1, difficulty: 'normal', quality: 'high', runDefault: false, autoAdvance: false,
+    autoStyle: 'normal', autoItems: true, // auto-battle (F): 保守 safe / 標準 normal / 積極 bold, 使用道具 (js/engine/autobattle.js)
     lang: navLang.startsWith('zh') ? 'zh' : 'en' };
   try {
     const s = JSON.parse(localStorage.getItem('shorelight_settings') || '{}');

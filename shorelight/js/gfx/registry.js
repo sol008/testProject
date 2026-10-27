@@ -19,6 +19,8 @@ G.Objects = {
   defs: {},
   define(type, def) { this.defs[type] = Object.assign({ w: 1, h: 1, solid: true }, def); },
   get(type) { return this.defs[type]; },
+  // a boolean instance param that may be a live getter: o[k] = value | fn(o) → value (e.g. mushroom_harvest's `picked`)
+  flag(o, k) { const v = o[k]; return !!(typeof v === 'function' ? v(o) : v); },
   draw(ctx, o, px, py, t) {
     const d = this.defs[o.t];
     if (d && d.draw) d.draw(ctx, px, py, o, t);

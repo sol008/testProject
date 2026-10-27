@@ -756,6 +756,7 @@ G.Mapx = G.Mapx || {};
       // lighting
       const lc = this.lightCfg;
       if (lc && (lc.ambient > 0 || lc.tint)) G.FX.lighting(ctx, this, camX, camY, t);
+      this.drawHints(ctx, t, (e) => ({ x: (e.x + (e.w || 1) / 2) * T - camX, y: e.y * T - camY - 6 }));
       this.particles.drawScreen(ctx);
       // psychedelic overlay
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
@@ -799,6 +800,7 @@ G.Mapx = G.Mapx || {};
         else { const [fx, fy] = this.frontCell(); s = v.toScreen(fx + 0.5, 1.2, fy + 0.5); }
         this.drawPrompt(ctx, it, t, s);
       }
+      this.drawHints(ctx, t, (e) => v.toScreen(e.x + (e.w || 1) / 2, 1.15, e.y + (e.h || 1) / 2));
       this.particles.drawScreen(ctx);
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy * 0.55);
@@ -901,6 +903,43 @@ G.Mapx = G.Mapx || {};
       G.Render.text(ctx, 'Z', x - w / 2 + 14, y - 25, { size: 13, bold: true, align: 'center', color: '#1a1a1a', shadow: false });
       G.Render.text(ctx, label, x - w / 2 + 28, y - 27, { size: 17, color: '#f6ead0', shadow: false });
       ctx.restore();
+    }
+
+    // Floating hint tags (screen space, above the lighting): an action event with `hint` (true, or fn(state) → bool)
+    // shows a small tag with its label while the player is within e.hintR tiles (default 4) — for the few usable
+    // spots among look-alike decor (ch2 grove 採集 mushrooms). Hidden during scripts and while the Z prompt is on it.
+    // at(e) → {x, y, visible?}: screen point just above the event's cells.
+    drawHints(ctx, t, at) {
+      if (G.Script.busy()) return;
+      const p = this.player, it = this.interactTarget;
+      const pcx = p.px / T, pcy = (p.py + 8) / T - 0.5;
+      for (const e of this.def.events || []) {
+        if (!e.hint || e.trigger !== 'action' || !this.eventOk(e)) continue;
+        if (typeof e.hint === 'function' && !e.hint(G.state)) continue;
+        if (it && it.kind === 'event' && it.ev === e && !p.moving) continue;
+        const R = e.hintR || 4;
+        const d = Math.hypot(pcx - (e.x + (e.w || 1) / 2), pcy - (e.y + (e.h || 1) / 2));
+        const a = U.clamp(R + 0.5 - d, 0, 1);
+        if (a <= 0) continue;
+        const s = at(e);
+        if (!s || s.visible === false) continue;
+        const label = e.label || '調查';
+        const x = s.x, y = s.y + Math.sin(t * 2.2 + e.x) * 2.5;
+        ctx.save();
+        ctx.globalAlpha = a * 0.9;
+        ctx.font = G.font(14);
+        const w = G.Render.measure(ctx, label) + 30;
+        ctx.fillStyle = 'rgba(12,18,26,0.62)';
+        ctx.beginPath(); ctx.roundRect(x - w / 2, y - 24, w, 22, 11); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,232,160,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - 4, y - 2); ctx.lineTo(x, y + 3); ctx.lineTo(x + 4, y - 2); ctx.fillStyle = 'rgba(12,18,26,0.62)'; ctx.fill();
+        // twinkle glyph
+        const gx = x - w / 2 + 12, gy = y - 13, gs = 4.5 + Math.sin(t * 4 + e.y) * 1.2;
+        ctx.fillStyle = '#ffe9a8';
+        ctx.beginPath(); ctx.moveTo(gx, gy - gs); ctx.quadraticCurveTo(gx, gy, gx + gs, gy); ctx.quadraticCurveTo(gx, gy, gx, gy + gs); ctx.quadraticCurveTo(gx, gy, gx - gs, gy); ctx.quadraticCurveTo(gx, gy, gx, gy - gs); ctx.fill();
+        G.Render.text(ctx, label, x - w / 2 + 21, y - 22, { size: 14, color: '#f4ecd2', shadow: false });
+        ctx.restore();
+      }
     }
 
     drawHud(ctx, t) {

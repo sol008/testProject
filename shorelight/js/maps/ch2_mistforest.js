@@ -31,6 +31,8 @@
   const qStage = (id) => G.Quests.stage(id);
   const qDone = (id) => G.Quests.isDone(id);
   const qActive = (id) => qStage(id) >= 0 && !qDone(id);
+  // event `hint` for 紅櫻's kitchen ingredients: tag the spot only while the quest still needs that item
+  const kitchenNeeds = (item) => (st) => qActive('q_hy_kitchen') && !(st.inv && st.inv[item]);
   const avgLv = () => { const a = G.Party.active(); return a.length ? Math.round(a.reduce((s, m) => s + m.lv, 0) / a.length) : 5; };
   const JIUFEN = 'jiufen';   // chapter 1's town (another builder's file) — only used when it is loaded
 
@@ -1298,6 +1300,8 @@
     await tutorial('tut_lingshi');
     G.Tweens.to(fx, { line: 0 }, dur(6));
   }
+  // picked this visit (ms.c2picked lives on the map instance, so the clumps regrow on the next visit)
+  const grovePicked = (i) => { const ms = MS(); return !!(ms && ms.c2picked && ms.c2picked[i]); };
   async function harvest(S, i) {
     const ms = MS();
     ms.c2picked = ms.c2picked || {};
@@ -1316,10 +1320,11 @@
     psychedelic: (st) => (st.vars.c2_psy != null ? st.vars.c2_psy : 0.15),
     tiles: rows(MGR.g), deco: rows(MGR.d),
     lights: () => MUSH.map(([x, y], i) => ({ x, y, r: 150, color: hueAt(i, G.time), flicker: 0.15 }))
-      .concat([{ x: 14.5, y: 10, r: 300, color: hueAt(3, G.time * 0.6), flicker: 0.05 }], HARVEST.map(([x, y], i) => ({ x, y, r: 110, color: hueAt(i + 4, G.time), flicker: 0.2 }))),
+      .concat([{ x: 14.5, y: 10, r: 300, color: hueAt(3, G.time * 0.6), flicker: 0.05 }], HARVEST.flatMap(([x, y], i) => (grovePicked(i) ? [] : [{ x, y, r: 110, color: hueAt(i + 4, G.time), flicker: 0.2 }]))),
     objects: [
       ...MUSH.map(([x, y]) => ({ t: 'mushroom_glow', x, y })),
-      ...HARVEST.map(([x, y], i) => ({ t: 'mushroom_glow', x, y, v: i })),
+      // the 3 pickable clumps: sparkle while ready, a dim mound of buds once picked (see mushroom_harvest)
+      ...HARVEST.map(([x, y], i) => ({ t: 'mushroom_harvest', x, y, v: i, picked: () => grovePicked(i) })),
       { t: 'mushroom_giant', x: 14, y: 10 },
       { t: 'grave', x: 15, y: 7, v: 1, label: '調查', interact: async (S) => {
         await S.narrate(['此地有蕈，七色而光，名曰七彩靈蕈。', '非毒非藥。食半朵，可見陰陽之隔。', '心靜者見真，心亂者見魔。慎之。', '　　　　　　　　　太虛觀　清虛　題'], { veil: 0.86, color: '#d8f0c8' });
@@ -1342,7 +1347,7 @@
     ],
     events: [
       { id: 'vision', trigger: 'auto', if: (st) => !st.flags.ch2_lingshi, run: grove25 },
-      ...HARVEST.map(([x, y], i) => ({ id: 'harvest' + i, trigger: 'action', x, y, label: '採集', run: (S) => harvest(S, i) })),
+      ...HARVEST.map(([x, y], i) => ({ id: 'harvest' + i, trigger: 'action', x, y, label: '採集', hint: () => !grovePicked(i), run: (S) => harvest(S, i) })),
     ],
     warps: [
       { x: 29, y: 14, h: 2, to: 'mist_loop', tx: 3, ty: 15, tdir: 'right' },
@@ -1674,7 +1679,7 @@
         await S.warp('mistforest_s', 27, 6, 'left');
       } },
       { id: 'duel', trigger: 'touch', x: 14, y: 20, w: 12, h: 1, once: true, if: (st) => !!st.flags.ch2_maze_solved && !st.flags.ch2_duel, run: duel28 },
-      { id: 'shansu', trigger: 'action', x: 4, y: 32, label: '採集', run: async (S) => {
+      { id: 'shansu', trigger: 'action', x: 4, y: 32, label: '採集', hint: kitchenNeeds('c2_shansu'), run: async (S) => {
         await S.say('', '一叢山蘇，葉子像鳥巢一樣捲在一起。嫩芽可以吃。');
         if (qActive('q_hy_kitchen') && !S.hasItem('c2_shansu')) { await S.give('c2_shansu', 1); return; }
         if (!qActive('q_hy_kitchen')) await S.say('xinghe:think', '……現在摘了也不知道要拿來做什麼。');
@@ -2569,8 +2574,8 @@
       { id: 'reunion', trigger: 'auto', if: (st) => !!st.flags.ch2_pingxi_arrive && !!st.vars.c2_ashan && PQ(st) !== 3, run: (S) => reunion(S, true) },
       { id: 'night', trigger: 'auto', if: (st) => !!st.flags.ch2_tiger_beaten && !st.flags.ch2_tiandeng_night, run: night216 },
       { id: 'typhoon', trigger: 'auto', if: (st) => !!st.flags.ch2_tiandeng_night && !st.flags.ch2_dawn, run: typhoon217 },
-      { id: 'shrimp', trigger: 'action', x: 7, y: 26, w: 2, h: 1, label: '翻石頭', if: Q(2), run: shrimpSpot },
-      { id: 'shoot', trigger: 'action', x: 43, y: 5, label: '採集', run: shootSpot },
+      { id: 'shrimp', trigger: 'action', x: 7, y: 26, w: 2, h: 1, label: '翻石頭', if: Q(2), hint: (st) => kitchenNeeds('c2_shrimp')(st) && !!st.flags.ch2_shrimp_hint, run: shrimpSpot },
+      { id: 'shoot', trigger: 'action', x: 43, y: 5, label: '採集', hint: kitchenNeeds('c2_bamboo_shoot'), run: shootSpot },
       { id: 'ashan_door', trigger: 'action', x: 41, y: 19, label: '敲門', run: async (S) => {
         await S.say('阿山嫂', qDone('q_woodcutter') ? '他在裡面睡得跟豬一樣。恩人不要進去，會被打呼聲嚇到。' : '家裡亂糟糟的，不好意思讓恩人進來。');
       } },
@@ -3021,7 +3026,7 @@
     ],
     events: [
       { id: 'alan', trigger: 'touch', x: 9, y: 19, w: 6, h: 1, once: true, run: alan212 },
-      { id: 'shoot', trigger: 'action', x: 31, y: 35, label: '採集', run: shootSpot },
+      { id: 'shoot', trigger: 'action', x: 31, y: 35, label: '採集', hint: kitchenNeeds('c2_bamboo_shoot'), run: shootSpot },
     ],
     warps: [
       { x: 0, y: 30, h: 2, to: 'pingxi', tx: 46, ty: 12, tdir: 'left' },

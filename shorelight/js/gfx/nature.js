@@ -1952,6 +1952,70 @@
         });
       },
     });
+
+    // mushroom_harvest: a pickable 七彩靈蕈 clump among the decor ones (ch2 grove, ch7 雲芝). Same clump art, but
+    // while ready it breathes brighter, wears a warm halo and sends up twinkling golden motes; once taken
+    // (o.picked: bool, or fn(o) → bool for live state, read via G.Objects.flag) it is a dim moss mound with
+    // a few pale buds — clearly picked, clearly growing back. The 「採集」 tag is the event's `hint` (engine).
+    const buds = (v) => spr('mushh_b' + v, 120, 80, 60, 60, (x) => {
+      const r = R(3190 + v);
+      gshadow(x, 2, 2, 30, 8, 0.4, '10,8,30');
+      x.fillStyle = '#1a3028'; x.fill(scallopP(0, 2, 34, 8, 12, 0.35, r));
+      for (let i = 0; i < 26; i++) { x.fillStyle = r() < 0.5 ? '#26483a' : '#30604a'; ell(x, (r() - 0.5) * 50, 2 + (r() - 0.5) * 9, 1.6, 1.1); x.fill(); }
+      // the stubs where the clump was cut, and new buds pushing up
+      for (const mm of layout(v).slice(0, 3)) { x.fillStyle = '#bfb2d2'; ell(x, mm.x * 0.8, mm.y + 1, mm.rw * 0.32, mm.rw * 0.16); x.fill(); x.strokeStyle = '#3a2e52'; x.lineWidth = 1; x.stroke(); }
+      for (let i = 0; i < 4; i++) {
+        const bx = (r() - 0.5) * 40, by = (r() - 0.5) * 8, h = 5 + r() * 6, rw = 3 + r() * 2.5;
+        mushStem(x, bx, by + 2, bx, by - h, rw * 0.45, r);
+        mushCap(x, bx, by - h, rw, rw * 0.7, 180 + i * 50, r, false);
+      }
+      // wash the buds out so they read as not-yet-glowing
+      x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(30,36,52,0.45)'; x.fillRect(-60, -60, 120, 80);
+    });
+    const halo = spr('mushh_halo', 160, 120, 80, 70, (x) => {
+      const g = x.createRadialGradient(0, -16, 0, 0, -16, 70);
+      g.addColorStop(0, 'rgba(255,246,200,0.55)'); g.addColorStop(0.35, 'rgba(255,226,140,0.22)'); g.addColorStop(1, 'rgba(255,210,120,0)');
+      x.fillStyle = g; x.beginPath(); x.ellipse(0, -16, 70, 54, 0, 0, TAU); x.fill();
+    });
+    // 4-point twinkle
+    const star = (ctx, x, y, s, a) => {
+      ctx.fillStyle = `rgba(255,250,220,${a.toFixed(3)})`;
+      ctx.beginPath(); ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s); ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s); ctx.fill();
+    };
+    def('mushroom_harvest', {
+      w: 1, h: 1, solid: false, anim: true,
+      lights: (o) => (G.Objects.flag(o, 'picked')
+        ? [{ dx: 32, dy: 44, r: 50, color: '#5a7a6a', flicker: 0.05 }]
+        : [{ dx: 32, dy: 36, r: 130, color: '#fff0b8', flicker: 0.25 }]),
+      draw(ctx, px, py, o, t) {
+        const v = vary(o, 3), bx = px + 32, by = py + 52, ph = hseed(o, 4);
+        if (G.Objects.flag(o, 'picked')) {
+          blit(ctx, buds(v), bx, by);
+          additive(ctx, () => blit(ctx, halo, bx, by + 8, 0.08 + 0.05 * sin(t * 0.9 + ph * 9)));
+          return;
+        }
+        const u = t * 0.08 + ph, pulse = 0.5 + 0.5 * sin(t * 2.6 + ph * 9);
+        additive(ctx, () => blit(ctx, halo, bx, by, 0.45 + 0.4 * pulse));
+        blit(ctx, base(v), bx, by);
+        additive(ctx, () => blitHue(ctx, glows(v), bx, by, u, 0.85 + 0.15 * pulse));
+        blitHue(ctx, caps(v), bx, by, u);
+        additive(ctx, () => {
+          blitHue(ctx, glows(v), bx, by, u, 0.35 * pulse);
+          // rising golden motes, larger and slower than the decor clumps' spores
+          for (let i = 0; i < 6; i++) {
+            const k = ((t * 0.22 + i / 6 + ph) % 1);
+            const sx = bx + (U.hash(i, o.x | 0, 9) - 0.5) * 46 + sin(t * 1.1 + i * 2.3) * 7, sy = by - 18 - k * 70;
+            const a = sin(k * PI) * (0.6 + 0.4 * sin(t * 7 + i * 3));
+            star(ctx, sx, sy, 2.2 + 1.6 * sin(k * PI), a);
+          }
+          // glints on the caps
+          for (const mm of layout(v).slice(0, 3)) {
+            const tw = max(0, sin(t * 2.1 + mm.hue));
+            if (tw > 0.2) star(ctx, bx + mm.x + mm.lean + mm.rw * 0.3, by + mm.y - mm.h - mm.rw * 0.5, 2 + 4 * tw, tw * 0.95);
+          }
+        });
+      },
+    });
   }
   {
     // giant glowing mushroom (2x2). Stem in the bottom row (solid); the cap shelters the top row.

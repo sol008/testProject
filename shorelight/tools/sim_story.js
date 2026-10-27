@@ -6,7 +6,8 @@
 //   node tools/sim_story.js --only c9_fallwind,c10_colossus     selected fights (ids or substrings)
 //   node tools/sim_story.js --ch 9              one chapter
 //   node tools/sim_story.js --lv -2             every fight with the party 2 levels lower (sensitivity)
-//   node tools/sim_story.js --ai auto           the engine's own auto-battle (no items / guard) instead of the smart AI
+//   node tools/sim_story.js --ai auto           the in-game auto-battle (F; js/engine/autobattle.js) instead of the
+//                                               battle bot; --autostyle safe|normal|bold, --autoitems off = its settings
 //   node tools/sim_story.js --verbose           per-fight party setup (levels, gear, inventory)
 //   node tools/sim_story.js --json out.json     also write the results as JSON
 //   node tools/sim_story.js --shops             list the shop goods found in each chapter file
@@ -261,6 +262,10 @@ async function main() {
   if (env.errors.length) console.log('load errors:\n  ' + env.errors.join('\n  '));
   const { G } = env;
   G.__ai = makeAI(G, opt('ai', 'smart'));
+  // --ai auto plays the in-game auto-battle (js/engine/autobattle.js) with the player's settings:
+  // --autostyle safe|normal|bold (自動戰鬥 保守/標準/積極, default normal), --autoitems off (使用道具 關)
+  G.settings.autoStyle = String(opt('autostyle', 'normal'));
+  G.settings.autoItems = opt('autoitems', 'on') !== 'off';
   G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
   G.__testMode = !!opt('test');
   if (opt('testkit')) G.__testKit = JSON.parse(opt('testkit'));

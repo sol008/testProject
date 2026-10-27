@@ -146,7 +146,8 @@ G.Battle = (() => {
     }
     tween(o, p, sec, e) { return G.Tweens.to(o, p, sec / (G.settings.battleSpeed || 1), e); }
 
-    say(text, sec = 1.1) { this.msg = { text, t: 0, life: sec }; }
+    // msgAt: the action count when the message went up (the auto-battle AI treats warnings as fresh for ~2 actions)
+    say(text, sec = 1.1) { this.msg = { text, t: 0, life: sec }; this.msgAt = this.acts || 0; }
     banner(text, color) { this.skillBanner = { text, t: 0, color }; }
 
     // ---------------------------------------------------------------- main loop
@@ -297,7 +298,15 @@ G.Battle = (() => {
         .map((s) => s);
     }
 
+    // auto-battle (F): the party AI of js/engine/autobattle.js, which follows the player's settings (自動戰鬥 style,
+    // 使用道具); basicAutoCommand is the fallback if that module is missing or throws
     autoCommand(u) {
+      if (G.AutoBattle) {
+        try { const c = G.AutoBattle.command(this, u); if (c) return c; } catch (e) { G.warnOnce('autobattle', e); }
+      }
+      return this.basicAutoCommand(u);
+    }
+    basicAutoCommand(u) {
       const d = G.Data.skills;
       const skills = (u.m.skills || []).filter((id) => d[id] && !d[id].combo && !d[id].ultimate && !d[id].hidden && d[id].type !== 'special' && d[id].mp <= u.mp && !u.st.seal);
       const hurt = this.alive('party').filter((p) => p.hp < p.mhp * 0.4);
@@ -444,6 +453,9 @@ G.Battle = (() => {
 
     // ---------------------------------------------------------------- execution
     async execute(u, cmd) {
+      // read by the auto-battle AI (js/engine/autobattle.js): action count, each enemy's last command (wind-ups)
+      this.acts = (this.acts || 0) + 1;
+      if (u.side === 'enemy') (this.lastCmd || (this.lastCmd = new Map())).set(u, cmd);
       if (cmd.kind === 'defend') {
         u.st.guard = 1;
         u.pose = 'guard'; u.poseT = 0;

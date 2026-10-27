@@ -2338,7 +2338,8 @@
     g.obj('signboard', 12, 11, { text: '藤' });
     g.obj('signboard', 5, 14, { text: '藤' });
     g.obj('signboard', 33, 11, { text: '藤' });
-    g.obj('mushroom_glow', 8, 20);
+    // 雲芝 (七仙蕈, event 'yunzhi') grows in this clump: sparkles until taken, among ~35 look-alike decor clumps
+    g.obj('mushroom_harvest', 8, 20, { picked: () => !!G.state.flags.mush_ch7 });
     g.obj('mushroom_glow', 9, 19); g.obj('mushroom_glow', 9, 21);
     g.reserve(7, 19, 3, 3); g.reserve(26, 38, 1, 1); g.reserve(36, 4, 1, 1);
     for (const [x, y] of [[25, 34], [13, 18], [33, 18], [20, 7]]) g.reserve(x - 1, y - 1, 3, 3);
@@ -2399,7 +2400,7 @@
         { id: 'sb', trigger: 'action', x: 33, y: 11, label: '木牌', run: readSign('sb') },
         { id: 'loopA', trigger: 'touch', x: 4, y: 15, w: 3, h: 1, run: loopBack('sa') },
         { id: 'loopB', trigger: 'touch', x: 32, y: 12, w: 3, h: 1, run: loopBack('sb') },
-        { id: 'yunzhi', trigger: 'action', x: 8, y: 20, label: '調查', if: (st) => !st.flags.mush_ch7, run: async (S) => {
+        { id: 'yunzhi', trigger: 'action', x: 8, y: 20, label: '調查', hint: true, if: (st) => !st.flags.mush_ch7, run: async (S) => {
           S.emote('yuyuan', '?');
           await S.lines([
             ['', '芋圓湊過去聞了聞發光的菇叢，打了一個噴嚏。菇叢裡有一朵，形狀像一朵小小的雲。'],
