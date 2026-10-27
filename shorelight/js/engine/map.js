@@ -27,7 +27,7 @@ G.Maps.DECO = {
   S: 'sky_lantern', h: 'coconut_palm', i: 'tree_cedar_snow', z: 'basalt', q: 'rock_marble',
 };
 
-G.Mapx = {};
+G.Mapx = G.Mapx || {};
 
 (function () {
   const T = G.TILE;
@@ -164,14 +164,14 @@ G.Mapx = {};
       this.npcs = [];
       for (const d of this.def.npcs || []) {
         if (d.if && !d.if(st)) continue;
-        if (old[d.id] && !old[d.id].scripted) { this.npcs.push(old[d.id]); continue; }
+        if (old[d.id] && !old[d.id].spawned) { this.npcs.push(old[d.id]); continue; }
         const pos = val(d.pos) || [d.x, d.y];
         const a = new Actor(Object.assign({}, d, { x: pos[0], y: pos[1], homeX: pos[0], homeY: pos[1], def: d, speed: d.speed || 2.2 }));
         a.wanderT = U.rand(1, 4);
         this.npcs.push(a);
       }
       // keep scripted (spawned) actors
-      for (const id in old) if (old[id].scripted && !this.npcs.includes(old[id])) this.npcs.push(old[id]);
+      for (const id in old) if (old[id].spawned && !this.npcs.includes(old[id])) this.npcs.push(old[id]);
     }
 
     buildEnemies() {
