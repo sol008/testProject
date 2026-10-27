@@ -61,6 +61,46 @@ G.Batch3D = (() => {
   const meshSig = (n) => [n.geometry.uuid, mats(n).map(uid).join(','),
     n.castShadow ? 1 : 0, n.receiveShadow ? 1 : 0, n.renderOrder, uid(n.customDepthMaterial), uid(n.customDistanceMaterial),
     n.frustumCulled ? 1 : 0, n.layers.mask].join(':');
+  // nature decals (mat.userData.decal: same material but for the map) of one geometry share a group, drawn from a
+  // texture atlas of their maps; any other blended mesh groups by its own geometry + material
+  const pow2 = (x) => x > 0 && (x & (x - 1)) === 0;
+  const atlasable = (n) => !Array.isArray(n.material) && n.material.userData.decal && n.material.map && n.material.map.image &&
+    n.material.map.image.width === n.material.map.image.height && pow2(n.material.map.image.width);
+  const blendSig = (n) => (atlasable(n) ? 'decal' + n.material.map.image.width + '|' + meshSig(n).replace(n.material.uuid, '') : meshSig(n));
+
+  // one material + texture atlas for a decal group's maps (all the same power-of-two size, tiles aligned to it, so
+  // every mip level of a tile equals that level of the original map): instance attribute aTile picks the tile
+  function atlasMaterial(src, maps) {
+    const T = THREE, S = maps[0].image.width;
+    let g = 1;
+    while (g * g < maps.length) g *= 2;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = g * S;
+    const cx = cv.getContext('2d');
+    const tiles = new Map();
+    maps.forEach((m, i) => {
+      const x = i % g, y = (i / g) | 0;
+      cx.drawImage(m.image, x * S, y * S);
+      tiles.set(m, [x / g, m.flipY ? 1 - (y + 1) / g : y / g]); // canvas rows run down, flipY textures' v runs up
+    });
+    const tx = new T.CanvasTexture(cv);
+    for (const k of ['colorSpace', 'flipY', 'anisotropy', 'magFilter', 'minFilter', 'generateMipmaps', 'premultiplyAlpha', 'wrapS', 'wrapT']) tx[k] = maps[0][k];
+    tx.needsUpdate = true;
+    const mat = src.clone();
+    mat.userData = {};
+    mat.map = tx;
+    if (src.userData.cutout) G.R3M.addCutout(mat);
+    const prev = mat.onBeforeCompile, scale = 1 / g;
+    mat.onBeforeCompile = function (sh, r) {
+      if (prev && prev !== T.Material.prototype.onBeforeCompile) prev.call(this, sh, r);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute vec2 aTile;')
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\nvMapUv = vMapUv * ' + scale.toFixed(6) + ' + aTile;\n#endif');
+    };
+    const prevKey = mat.customProgramCacheKey;
+    mat.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|atlas' + g; };
+    return { mat, tiles };
+  }
 
   // group: { t, src: [Mesh] (one per InstancedMesh), meshes: [InstancedMesh], slots: [slot], transparent }
   // slot: one object's instance in a group { e, grp, idx, mats: [Matrix4 per mesh], z: sort point, id: tie-break }
@@ -72,7 +112,7 @@ G.Batch3D = (() => {
       this.group.name = 'batch3d';
       this.groups = [];
       this.entries = [];
-      this.stats = { objects: 0, batches: 0, meshes: 0, ownDecals: 0, released: 0 };
+      this.stats = { objects: 0, batches: 0, meshes: 0, ownDecals: 0, decalOnly: 0, released: 0 };
     }
 
     // build from the map's objects: returns the set of objects drawn by this batch
@@ -84,7 +124,7 @@ G.Batch3D = (() => {
         if (!n.isMesh || !blended(n) || !shown(n, holder)) return;
         if (!n.geometry.boundingSphere) n.geometry.computeBoundingSphere();
         const s = n.geometry.boundingSphere;
-        blends.push({ n, c: s.center.clone().applyMatrix4(n.matrixWorld), r: s.radius * n.matrixWorld.getMaxScaleOnAxis(), sig: meshSig(n) });
+        blends.push({ n, c: s.center.clone().applyMatrix4(n.matrixWorld), r: s.radius * n.matrixWorld.getMaxScaleOnAxis(), sig: blendSig(n) });
       });
       const all = []; // every object's node, in map order: { o, holder, box (when posed) }
       for (const o of ms.objects) {
@@ -102,6 +142,12 @@ G.Batch3D = (() => {
         if (!isFinite(box.max.y)) box.makeEmpty();
         if (d.pose) { try { d.pose(model, o); } catch (e) { addBlends(holder); continue; } holder.updateMatrixWorld(true); }
         addBlends(holder);
+        // its plain blended meshes (decals) may join a decal group even when the rest of the model is not batched
+        it.bl = [];
+        holder.traverse((n) => {
+          if (n.isMesh && blended(n) && shown(n, holder) && !n.isInstancedMesh && !n.isSkinnedMesh && !n.morphTargetInfluences &&
+            n.onBeforeRender === THREE.Object3D.prototype.onBeforeRender && mats(n).every(safeMat)) it.bl.push(n);
+        });
         const ps = pieces(holder);
         if (!ps) continue;
         it.ps = ps;
@@ -112,10 +158,11 @@ G.Batch3D = (() => {
         cand.get(key).push(it);
       }
       // A blended mesh (ground decal) can join a map-wide instanced group only if nothing blended that is drawn
-      // separately overlaps it: a decal of another material, or one that stays per-object. Otherwise the group, drawn
-      // as one object, would change their blend order. Repeat until no instanced decal touches an outsider.
+      // separately overlaps it at the same renderOrder (the renderer sorts by renderOrder before depth): a mesh of
+      // another group, or one that stays per-object. Otherwise the group, drawn as one object, would change their
+      // blend order. Repeat until no instanced decal touches an outsider.
       const inst = new Set();
-      for (const items of cand.values()) if (items.length >= B.MIN) for (const it of items) for (const n of it.ps) if (blended(n)) inst.add(n);
+      for (const it of all) if (it.bl) for (const n of it.bl) inst.add(n);
       if (inst.size) {
         const cell = Math.max(1, 2 * Math.max(...blends.map((b) => b.r))), grid = new Map();
         const ck = (x, z) => x + ',' + z;
@@ -127,7 +174,7 @@ G.Batch3D = (() => {
         const near = (a) => {
           const out = [], gx = Math.floor(a.c.x / cell), gz = Math.floor(a.c.z / cell);
           for (let x = gx - 1; x <= gx + 1; x++) for (let z = gz - 1; z <= gz + 1; z++) {
-            for (const b of grid.get(ck(x, z)) || []) if (b !== a && a.c.distanceTo(b.c) < a.r + b.r) out.push(b);
+            for (const b of grid.get(ck(x, z)) || []) if (b !== a && b.n.renderOrder === a.n.renderOrder && a.c.distanceTo(b.c) < a.r + b.r) out.push(b);
           }
           return out;
         };
@@ -155,6 +202,14 @@ G.Batch3D = (() => {
           // not batched: the node syncObjects would build (posed early, which update() would do on its first frame)
           if (it.box) it.holder.userData.box = it.box;
           view.nodes.set(it.o, it.holder); view.scene.add(it.holder);
+          // … but its decals may still be drawn by a decal group: the holder then serves as the entry's proxy
+          const dl = (it.bl || []).filter((n) => inst.has(n));
+          if (!dl.length) continue;
+          const e = { o: it.o, proxy: it.holder, slots: [] };
+          for (const n of dl) { n.parent.remove(n); e.slots.push(this.decalSlot(e, n, trans)); }
+          for (const s of e.slots) s.grp.slots.push(s);
+          this.entries.push(e);
+          this.stats.decalOnly++;
           continue;
         }
         const grp = it.grp;
@@ -177,11 +232,7 @@ G.Batch3D = (() => {
             this.stats.ownDecals++;
             continue;
           }
-          const k = meshSig(n);
-          let tg = trans.get(k);
-          if (!tg) trans.set(k, (tg = { t: it.o.t, src: [n], meshes: [], slots: [], transparent: true }));
-          // the renderer sorts blended objects by their bounding-sphere centre, ties by mesh id (creation order)
-          e.slots.push({ e, grp: tg, mats: [n.matrixWorld.clone()], z: n.geometry.boundingSphere.center.clone().applyMatrix4(n.matrixWorld), id: n.id });
+          e.slots.push(this.decalSlot(e, n, trans));
         }
         for (const s of e.slots) s.grp.slots.push(s);
         this.entries.push(e);
@@ -190,8 +241,18 @@ G.Batch3D = (() => {
         done.add(it.o);
       }
       for (const grp of [...opaque, ...trans.values()]) {
+        const maps = grp.transparent ? [...new Set(grp.slots.map((x) => x.map))] : [];
+        if (maps.length > 1 && atlasable(grp.src[0])) {
+          // several decal maps: one atlas material, tile offsets as an instance attribute on a private geometry
+          const { mat, tiles } = atlasMaterial(grp.src[0].material, maps);
+          const geo = grp.src[0].geometry.clone();
+          grp.tileAttr = new THREE.InstancedBufferAttribute(new Float32Array(grp.slots.length * 2), 2);
+          geo.setAttribute('aTile', grp.tileAttr);
+          for (const x of grp.slots) x.tile = tiles.get(x.map);
+          grp.own = { mat, geo };
+        }
         for (const src of grp.src) {
-          const im = new THREE.InstancedMesh(src.geometry, src.material, grp.slots.length);
+          const im = new THREE.InstancedMesh(grp.own ? grp.own.geo : src.geometry, grp.own ? grp.own.mat : src.material, grp.slots.length);
           im.name = 'batch:' + grp.t;
           im.castShadow = src.castShadow; im.receiveShadow = src.receiveShadow; im.renderOrder = src.renderOrder;
           im.frustumCulled = src.frustumCulled; im.layers.mask = src.layers.mask;
@@ -211,7 +272,20 @@ G.Batch3D = (() => {
       return done;
     }
 
-    write(grp, i) { const s = grp.slots[i]; s.idx = i; for (let k = 0; k < grp.meshes.length; k++) grp.meshes[k].setMatrixAt(i, s.mats[k]); }
+    // a blended mesh's instance in its map-wide group (made on first use). The renderer sorts blended objects by
+    // their bounding-sphere centre, ties by mesh id (creation order): the slot keeps both.
+    decalSlot(e, n, trans) {
+      const k = blendSig(n);
+      let tg = trans.get(k);
+      if (!tg) trans.set(k, (tg = { t: e.o.t, src: [n], meshes: [], slots: [], transparent: true }));
+      return { e, grp: tg, map: n.material.map, mats: [n.matrixWorld.clone()], z: n.geometry.boundingSphere.center.clone().applyMatrix4(n.matrixWorld), id: n.id };
+    }
+
+    write(grp, i) {
+      const s = grp.slots[i]; s.idx = i;
+      for (let k = 0; k < grp.meshes.length; k++) grp.meshes[k].setMatrixAt(i, s.mats[k]);
+      if (grp.tileAttr) { grp.tileAttr.setXY(i, s.tile[0], s.tile[1]); grp.tileAttr.needsUpdate = true; }
+    }
     flush(grp) {
       for (const im of grp.meshes) {
         im.count = grp.slots.length; im.instanceMatrix.needsUpdate = true;
@@ -279,7 +353,10 @@ G.Batch3D = (() => {
     // frees the instance buffers; geometry / materials are shared with the model cache and are left to G.R3.dispose
     // (Map3D.dispose), as for per-object nodes
     dispose() {
-      for (const grp of this.groups) for (const im of grp.meshes) im.dispose();
+      for (const grp of this.groups) {
+        for (const im of grp.meshes) im.dispose();
+        if (grp.own) { grp.own.geo.dispose(); grp.own.mat.map.dispose(); grp.own.mat.dispose(); }
+      }
       this.groups.length = 0; this.entries.length = 0;
     }
   }

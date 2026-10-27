@@ -471,6 +471,8 @@
   function decalMat(key, P) {
     return cmat('decal_' + key, () => {
       const m = G.R3M.env({ map: decalTex(key, P), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      // decal materials differ only in their map: G.Batch3D may draw them all from one texture atlas
+      m.userData.decal = true;
       return m;
     });
   }
