@@ -2176,3 +2176,410 @@
     cadence: 1.2,
   });
 })();
+
+// ----------------------------------------------------------------------------------------------------- batch: forest beasts & stone
+(() => {
+  const K = G.Mon3D.kit, defC = G.Mon3D._defC;
+  const { Paint, GEN, E, atk, bump, seg, sm, clamp, lerp, shade, mix, rgba } = K;
+  const { humanRig, limb, claw, breathe, FX, FY, v3, nrm, SIDES } = K.H;
+  const TAU = Math.PI * 2, PI = Math.PI, sin = Math.sin, cos = Math.cos, abs = Math.abs, min = Math.min, max = Math.max;
+  const furSlot = (base, dark, light, n = 260) => (g, w, h, p, R) => { Paint.fill(g, w, h, p[base]); Paint.mottle(g, w, h, p[dark], 30, 8, 30, 0.35, R); Paint.strokes(g, w, h, p[dark], n, 12, PI / 2, 1.4, 0.45, R, 0.6); Paint.strokes(g, w, h, p[light], n / 2, 9, PI / 2, 1, 0.35, R, 0.6); };
+  // bamboo culm: v runs along the culm, nodes every 1/n
+  const caneSlot = (n) => (g, w, h, p, R) => {
+    Paint.hgrad(g, w, h, [0, p.caneD, 0.35, p.cane, 0.55, p.caneL, 0.8, p.cane, 1, p.caneD]);
+    Paint.strokes(g, w, h, p.caneD, 50, 60, PI / 2, 1, 0.25, R, 0.02);
+    for (let i = 0; i <= n; i++) { const y = (i / n) * h; g.fillStyle = p.node; g.fillRect(0, y - 4, w, 8); g.fillStyle = rgba(p.caneL, 0.7); g.fillRect(0, y + 4, w, 2); }
+    Paint.mottle(g, w, h, '#e8f0b0', 8, 6, 16, 0.25, R);
+  };
+
+  // ===================================================================================================
+  // 竹精 bamboo_spirit — a century-old bamboo grove gone sentient: a bundle of culms lashed with rope for a torso,
+  // a cut-culm head with carved glowing eyes, jointed cane limbs, leaf-frond hands; leaves whisper and fall.
+  defC('bamboo_spirit', {
+    height: 2.0, fill: 0.93, radius: 0.32, shadow: 0.34, rimColor: '#f0ffd0',
+    pal: { cane: '#8cc04a', caneD: '#3e6a24', caneL: '#d8f09a', node: '#5a8a2e', leaf: '#5aa63e', leafD: '#22501c', leafL: '#b0e07a', rope: '#c8a464', eye: '#d6ff8a', hollow: '#1a2a10', line: '#1e3812', magic: '#c8ff8a' },
+    vars: [{ h: -50, s: 0.8, l: 0.02, keep: ['rope'], set: { eye: '#ffe08a' } }, { h: 150, s: 0.7, l: -0.05, keep: ['rope'], set: { eye: '#ff8ae0' } }],
+    slots: {
+      cane: caneSlot(3), cane1: caneSlot(1),
+      head: { size: 4, paint(g, w, h, p, R) {
+        caneSlot(2)(g, w, h, p, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.08), y = FY(h, 0.6); g.fillStyle = p.hollow; g.beginPath(); g.ellipse(x, y, 20, 14, s * -0.2, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 11, 8, 0, 0, TAU); g.fill(); }
+        const mx = FX(w, 0.5), my = FY(h, 0.36); g.fillStyle = p.hollow; g.beginPath(); g.ellipse(mx, my, 26, 9, 0, 0, TAU); g.fill();
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.08), y = FY(h, 0.6); const gr = g.createRadialGradient(x, y, 0, x, y, 14); gr.addColorStop(0, p.eye); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(x - 14, y - 14, 28, 28); } } },
+      hollow(g, w, h, p) { Paint.fill(g, w, h, p.hollow); g.strokeStyle = p.caneL; g.lineWidth = 10; g.strokeRect(0, 0, w, h); },
+      rope(g, w, h, p, R) { Paint.fill(g, w, h, p.rope); g.strokeStyle = shade(p.rope, -0.4); g.lineWidth = 3; for (let x = -h; x < w; x += 12) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h * 0.5, h); g.stroke(); } },
+      leaf(g, w, h, p, R) {
+        g.clearRect(0, 0, w, h);
+        for (let i = 0; i < 3; i++) { const cx = w * (0.25 + i * 0.25); const gr = g.createLinearGradient(cx - 20, 0, cx + 20, 0); gr.addColorStop(0, p.leafD); gr.addColorStop(0.5, i === 1 ? p.leafL : p.leaf); gr.addColorStop(1, p.leafD);
+          g.fillStyle = gr; g.beginPath(); g.moveTo(cx, 0); g.quadraticCurveTo(cx + 34, h * 0.4, cx, h); g.quadraticCurveTo(cx - 34, h * 0.4, cx, 0); g.fill(); g.strokeStyle = rgba(p.leafL, 0.8); g.lineWidth = 2; g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, h); g.stroke(); }
+      },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 0.95, chest: 1.38, neck: 1.5, head: 1.55, shY: 1.42, sh: 0.2, up: 0.3, fore: 0.3, arm1: [0.5, -1, 0.1], arm2: [0.2, -0.6, 0.8], lx: 0.09, knee: 0.5 });
+      // head: thick cut culm, slanted open top
+      B.tube([[0, 1.52, 0], [0, 1.78, 0], [0, 1.95, 0]], [0.13, 0.13, 0.13], { w: 'head', slot: 'head', seg: 20, cap0: true });
+      const top = new THREE.CircleGeometry(0.125, 20); top.rotateX(-PI / 2 + 0.35);
+      B.geo(top, { at: [0, 1.94, 0], w: 'head', slot: 'hollow' });
+      for (let i = 0; i < 3; i++) { const a = -0.6 + i * 0.6; B.bone('lf' + i, 'head', [sin(a) * 0.12, 1.92, -0.06]); B.strip([[sin(a) * 0.12, 1.92, -0.06], [sin(a) * 0.25, 2.12, -0.1]], 0.2, { bones: ['lf' + i, 'lf' + i], slot: 'leaf', side: [cos(a), 0, 0.3] }); }
+      // torso: bundle of 5 culms lashed with rope
+      const R = K.rng(5);
+      for (let i = 0; i < 5; i++) { const a = (i / 5) * TAU, r = 0.1; B.tube([[sin(a) * r, 0.88 - R() * 0.06, cos(a) * r * 0.8], [sin(a) * r * 1.1, 1.2, cos(a) * r * 0.85], [sin(a) * r, 1.45 + R() * 0.06, cos(a) * r * 0.8]], 0.075, { bones: ['hips', 'spine', 'chest'], slot: 'cane', seg: 10, cap0: true, cap1: 0.3 }); }
+      for (const y of [1.0, 1.32]) B.tube([[0.2, y, 0], [0, y, 0.18], [-0.2, y, 0], [0, y, -0.18], [0.2, y, 0]], 0.025, { w: y < 1.1 ? 'hips' : 'chest', slot: 'rope', seg: 6, sub: 3, flat: [1, 1] });
+      // shoulder yoke culm
+      B.tube([[-0.24, 1.42, 0], [0.24, 1.42, 0]], 0.055, { bones: ['shR', 'shL'], slot: 'cane1', seg: 8, cap0: true, cap1: true });
+      // limbs: canes with node knobs; leaf-frond hands
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.045, 0.04, 0.035], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'cane' });
+        B.ell(J['el' + S], [0.05, 0.035, 0.05], { w: 'arm' + S, slot: 'cane1' });
+        B.bone('fr' + S, 'hand' + S, v3(J['hand' + S], [0, -0.02, 0.02]));
+        for (let i = 0; i < 3; i++) { const a = (i - 1) * 0.6; B.strip([v3(J['hand' + S], [0, 0, 0]), v3(J['hand' + S], [s * sin(a) * 0.12 + s * 0.04, -0.2, cos(a) * 0.06 + 0.04])], 0.12, { bones: ['fr' + S, 'fr' + S], slot: 'leaf', side: [cos(a), 0, -s * sin(a)] }); }
+        limb(B, J['hip' + S], J['knee' + S], J['foot' + S], [0.06, 0.055, 0.05], ['leg' + S, 'knee' + S, 'foot' + S], { slot: 'cane' });
+        B.ell(J['knee' + S], [0.065, 0.045, 0.065], { w: 'knee' + S, slot: 'cane1' });
+        // root-feet
+        for (let i = 0; i < 3; i++) { const a = (i - 1) * 0.7; B.tube([[s * 0.09, 0.08, 0], [s * 0.09 + sin(a) * 0.14, 0.01, cos(a) * 0.14]], [0.025, 0.008], { w: 'foot' + S, slot: 'cane1', seg: 5 }); }
+      }
+    },
+    springs: [0, 1, 2].map((i) => ({ chain: ['lf' + i], tip: [0, 0.2, -0.04], k: 70, d: 5, g: 1, wind: 3, max: 0.6 })).concat(SIDES.map(([s, S]) => ({ chain: ['fr' + S], tip: [0, -0.2, 0.04], k: 60, d: 5, g: 2, wind: 2, max: 0.7 }))),
+    fx: {
+      leaves: { n: 12, rate: 2, at: [0, 1.6, 0], box: [0.6, 0.6, 0.4], vel: [0.1, -0.1, 0], velR: [0.2, 0.1, 0.2], g: 0.4, life: [1.5, 2.6], size: [0.07, 0.11], color: ['#b0e07a', '#5aa63e'], add: false, shape: 1, swirl: 4, swirlA: 0.8 },
+      spikes: { n: 30, rate: 0, burstRate: 60, at: [0, 0.05, 0.8], box: [1.2, 0.05, 0.6], vel: [0, 1.6, 0], velR: [0.2, 0.4, 0.2], g: 4, life: [0.4, 0.7], size: [0.08, 0.14], color: ['#d8f09a', '#3e6a24'], add: false, shape: 1 },
+      cast: { n: 40, rate: 0, burstRate: 50, at: [0, 1.0, 0], ring: 0.6, box: [0, 1.2, 0], vel: [0, 0.4, 0], velR: [0.2, 0.3, 0.2], life: [1, 1.6], size: [0.07, 0.12], color: ['#c8ff8a', '#3e6a24'], add: false, shape: 1, swirl: 6, swirlA: 2.5 },
+      death: { n: 40, rate: 0, burstRate: 40, at: [0, 1.0, 0], box: [0.5, 1.6, 0.4], vel: [0, 0.2, 0], velR: [0.5, 0.3, 0.5], g: 0.5, life: [1.2, 2], size: [0.08, 0.12], color: ['#b0e07a', '#8a7a32'], add: false, shape: 1, swirl: 5, swirlA: 1.5 },
+    },
+    clips: {
+      // creaking sway like a culm in wind
+      idle(P, t) {
+        P.rootM(0, 0, 0, sin(t * 0.9) * 0.03, 0, sin(t * 0.7) * 0.04);
+        P.r('spine', 0, 0, sin(t * 0.7 + 0.5) * 0.04).r('chest', 0, sin(t * 0.5) * 0.06, sin(t * 0.7 + 1) * 0.04).r('head', sin(t * 0.8) * 0.05, sin(t * 0.4) * 0.2, sin(t * 0.7 + 1.5) * 0.05);
+        for (const [s, S] of SIDES) P.r('sh' + S, sin(t * 0.9 + s) * 0.08, 0, s * sin(t * 0.7) * 0.05).r('hand' + S, sin(t * 1.3 + s) * 0.15);
+      },
+      move(P, ph) { const a = sin(ph * TAU); for (const [s, S] of SIDES) { P.r('leg' + S, -0.35 * a * s).r('knee' + S, max(0, 0.6 * a * s)).r('sh' + S, 0.25 * a * s); } P.rootM(0, abs(cos(ph * TAU)) * 0.03, 0, 0.05, 0, a * 0.05); },
+      // whip-slash with the cane arm, bamboo spikes erupt from the ground
+      attack(P, t, k) {
+        const A = atk(k, 0.32, 0.45, 0.65);
+        P.r('shR', -1.6 * A.a + 1.0 * A.s, 0, -0.6 * A.a + 0.3 * A.s).r('armR', -0.4 * A.a + 0.3 * A.s).r('handR', 0.4 * A.s);
+        P.r('chest', -0.1 * A.a + 0.2 * A.s, 0.3 * A.a - 0.4 * A.s).r('spine', 0, 0.2 * A.a - 0.2 * A.s);
+        P.rootM(0, 0, 0.15 * A.s, 0.12 * A.s); P.ch('fx_spikes', bump(k, 0.44, 0.6) * 3);
+      },
+      // 沙沙 rustle: shivers, leaves whirl
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.rootM(sin(t * 30) * 0.01 * u, 0.04 * u, 0, sin(t * 25) * 0.02 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.0 * u, 0, s * 0.8 * u).r('hand' + S, sin(t * 20 + s) * 0.3 * u); P.r('head', -0.2 * u); P.ch('fx_cast', u); P.ch('glow', u); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.ch('fx_leaves', (1 - k) * 6); },
+      // splits and topples like a felled culm
+      die(P, t, k) { const u = E.inQ(seg(k, 0, 0.55)); P.rootM(0, 0, 0, -0.2 * u, 0, 1.4 * u); P.r('head', 0, 0, 0.5 * u).r('shL', 0, 0, 0.5 * u); P.ch('dissolve', E.inQ(seg(k, 0.45, 1))); P.ch('fx_death', bump(k, 0.4, 1) * 2); },
+      // grows up from the ground
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.85)); P.rootM(0, 0, 0, 0, 0, 0, -0.9 * u); P.ch('fx_leaves', bump(k, 0.3, 1) * 5); },
+    },
+    dur: { attack: 1.05, cast: 1.5, die: 1.8, enter: 1.3 },
+    overlayReplace: 0.7,
+  });
+
+  // ===================================================================================================
+  // 青竹絲 bamboo_viper — the 赤尾青竹絲 green pit viper: luminous green scales, white lateral stripe, red tail tip,
+  // golden slit eyes; coiled with the head raised, it sways, flicks its tongue and strikes.
+  const VIPER_N = 14;
+  defC('bamboo_viper', {
+    height: 1.0, fill: 0.92, radius: 0.5, shadow: 0.6, rimColor: '#e8ffb0', shadowX: 1.3,
+    pal: { body: '#5fd23a', bodyD: '#1f7a2a', bodyL: '#d8ff9a', belly: '#e8f8a0', stripe: '#ffffff', tail: '#e8402e', eye: '#ffd23a', tongue: '#e0344a', line: '#0e3a14', magic: '#a8ff6a' },
+    vars: [{ h: -60, s: 1.1, keep: ['tail', 'tongue', 'stripe'], set: { eye: '#ff6a3a' } }, { h: 150, s: 0.9, l: -0.05, keep: ['tongue', 'stripe'], set: { tail: '#ffd23a' } }],
+    slots: {
+      // u around the body (0.5 = top/back at a0 offset), v along: tail (0) → head (1)
+      scale: { size: 4, paint(g, w, h, p, R) {
+        Paint.hgrad(g, w, h, [0, p.belly, 0.18, p.belly, 0.24, p.stripe, 0.27, p.bodyD, 0.5, p.body, 0.73, p.bodyD, 0.76, p.stripe, 0.82, p.belly, 1, p.belly]);
+        Paint.scales(g, w, h, p.bodyD, p.bodyL, 14, 9, 0.5);
+        g.fillStyle = rgba(p.belly, 0.6); for (let y = 0; y < h; y += 10) { g.fillRect(0, y, w * 0.17, 2); g.fillRect(w * 0.83, y, w * 0.17, 2); }
+        // red tail tip (bottom of canvas = v 0 = tail)
+        const gr = g.createLinearGradient(0, h, 0, h * 0.8); gr.addColorStop(0, p.tail); gr.addColorStop(0.6, p.tail); gr.addColorStop(1, rgba(p.tail, 0)); g.fillStyle = gr; g.fillRect(0, h * 0.8, w, h * 0.2);
+      } },
+      head(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.bodyL, 0.5, p.body, 1, p.bodyD]); Paint.scales(g, w, h, p.bodyD, p.bodyL, 18, 12, 0.45); },
+      belly(g, w, h, p) { Paint.fill(g, w, h, p.belly); },
+      eye: { size: 1, paint: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#100800', p.eye, 0.18), emit: (g, w, h, p) => Paint.eye(g, w, h, shade(p.eye, -0.5), '#000', shade(p.eye, -0.5), 0.18) },
+      tongue(g, w, h, p) { Paint.fill(g, w, h, p.tongue); },
+    },
+    build(B, p) {
+      // path: coil (tail tip inside) → rising neck → head
+      const pts = [];
+      for (let i = 0; i < 9; i++) { const u = i / 8, a = -1.2 + u * TAU * 1.05, r = lerp(0.12, 0.42, u); pts.push([cos(a) * r, 0.07 + u * 0.04, sin(a) * r - 0.05]); }
+      pts.push([0.15, 0.2, 0.3], [0.05, 0.42, 0.24], [0, 0.62, 0.2], [0, 0.76, 0.26], [0, 0.82, 0.36]);
+      const names = [];
+      pts.forEach((pt, i) => { const n = 's' + i; B.bone(n, i ? 's' + (i - 1) : 'root', pt); names.push(n); });
+      B.bone('head', names[names.length - 1], [0, 0.82, 0.36]); B.bone('jaw', 'head', [0, 0.8, 0.4]);
+      B.bone('tg0', 'head', [0, 0.8, 0.5]); B.bone('tg1', 'tg0', [0, 0.8, 0.6]);
+      const rad = (u) => 0.012 + 0.07 * sm(0, 0.35, u) * (1 - 0.25 * sm(0.8, 1, u));
+      B.tube(pts, rad, { bones: names, slot: 'scale', seg: 12, sub: 4, cap0: true, a0: PI / 2, up: [0, 1, 0], flat: [1, 0.85] });
+      // head: wedge (pit viper triangle)
+      B.ell([0, 0.83, 0.42], [0.075, 0.045, 0.1], { w: 'head', slot: 'head', seg: 14, rings: 10, deform: (v) => { const k = (v.z - 0.42) / 0.1; v.x *= 1 + max(0, -k) * 0.45; } });
+      B.ell([0, 0.81, 0.43], [0.06, 0.02, 0.085], { w: 'jaw', slot: 'belly', seg: 12, rings: 6 });
+      for (const [s, S] of SIDES) { B.eye('eye' + S, 'head', [s * 0.06, 0.85, 0.44], 0.018, { rz: 0.9 }); B.ell([s * 0.06, 0.865, 0.44], [0.022, 0.008, 0.022], { w: 'head', slot: 'head' }); }
+      // forked tongue
+      for (const s of [-1, 1]) B.tube([[0, 0.8, 0.5], [0, 0.8, 0.58], [s * 0.02, 0.8, 0.64]], [0.006, 0.005, 0.002], { bones: ['tg0', 'tg1', 'tg1'], slot: 'tongue', seg: 4, outline: false });
+      this._n = names.length;
+    },
+    fx: {
+      cast: { n: 30, rate: 0, burstRate: 40, bone: 'head', at: [0, 0, 0.1], box: [0.1, 0.1, 0.1], vel: [0, 0.2, 0.8], velR: [0.3, 0.2, 0.3], life: [0.6, 1.1], size: [0.08, 0.14], grow: 1.5, color: ['#c8ff7a', '#3a7a20'], alpha: 0.5, add: false },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.2, 0], box: [0.8, 0.2, 0.8], vel: [0, 0.5, 0], velR: [0.3, 0.3, 0.3], life: [0.8, 1.5], size: [0.05, 0.08], color: ['#d8ff9a', '#5fd23a'], twinkle: 8, shape: 3 },
+    },
+    tick(C) { C.state.tongue = (C.state.tongue || 0); },
+    clips: {
+      // travelling S-wave down the neck, coils breathe, tongue flicks
+      idle(P, t) {
+        for (let i = 0; i < VIPER_N; i++) { const w = i / VIPER_N; P.r('s' + i, 0, sin(t * 2 - i * 0.6) * 0.06 * w, sin(t * 1.4 - i * 0.5) * 0.04 * w); }
+        P.r('s10', sin(t * 1.3) * 0.08, sin(t * 0.9) * 0.15).r('head', sin(t * 1.7) * 0.1, sin(t * 1.1) * 0.2);
+        const fl = max(0, sin(t * 5)) * (sin(t * 0.9) > 0.3 ? 1 : 0);
+        P.p('tg0', 0, 0, -0.08 + 0.08 * fl).s('tg0', -0.9 + 0.9 * fl).r('tg1', sin(t * 40) * 0.4 * fl);
+      },
+      // slither: big lateral waves through the whole body
+      move(P, ph) { for (let i = 0; i < VIPER_N; i++) P.r('s' + i, 0, sin(ph * TAU - i * 0.8) * 0.18, 0); P.rootM(0, 0, 0, 0, 0, 0); },
+      // coil back (S-loaded neck), strike forward, fangs open
+      attack(P, t, k) {
+        const A = atk(k, 0.38, 0.47, 0.6);
+        P.r('s9', -0.3 * A.a + 0.4 * A.s).r('s10', 0.4 * A.a - 0.3 * A.s).r('s11', -0.5 * A.a + 0.2 * A.s).r('s12', 0.4 * A.a + 0.2 * A.s).r('s13', 0.2 * A.a + 0.1 * A.s);
+        P.p('s11', 0, 0, 0.25 * A.s).p('s12', 0, -0.05 * A.s, 0.2 * A.s);
+        P.r('jaw', 0.9 * A.s + 0.3 * A.a).r('head', -0.2 * A.a + 0.3 * A.s);
+        P.rootM(0, 0, 0.1 * A.s);
+      },
+      // venom spray hiss
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.r('s12', -0.3 * u).r('head', -0.3 * u).r('jaw', 0.8 * u); P.ch('fx_cast', u); },
+      special(P, t, k, C) { this.attack(P, t, k, C); },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.r('s11', -0.4 * u).r('s12', -0.3 * u, 0.4 * u * sin(t * 30)).r('head', 0, 0.5 * u); },
+      // collapses and uncoils
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.5)); P.r('s9', 0.5 * u).r('s10', 0.6 * u).r('s11', 0.5 * u).r('s12', 0.3 * u).r('head', 0, 0, 1.2 * u); for (let i = 0; i < 9; i++) P.r('s' + i, 0, -0.06 * u, 0); P.ch('dissolve', E.inQ(seg(k, 0.4, 1))); P.ch('fx_death', bump(k, 0.4, 1) * 2); },
+      // drops down out of the bamboo, then rears up
+      enter(P, t, k) { const u = 1 - E.outBack(seg(k, 0, 0.8)); P.r('s10', 0.8 * u).r('s11', 0.6 * u).r('s12', 0.5 * u); P.rootM(0, 0, 0, 0, 0, 0, -0.3 * clamp(u, 0, 1)); P.ch('dissolve', 1 - sm(0, 0.3, k)); },
+    },
+    dur: { attack: 0.8, cast: 1.2 },
+    cadence: 1.4,
+  });
+
+  // ===================================================================================================
+  // 山豬精 boar_demon — a tusked mountain boar spirit: hulking shoulders, a bristle crest along the spine, scarred hide
+  // with glowing ember cracks, burning eyes; charges like a landslide.
+  defC('boar_demon', {
+    height: 1.35, fill: 0.93, radius: 0.8, shadow: 0.75, shadowX: 1.6, rimColor: '#ffd0a0',
+    pal: { fur: '#5a4234', furD: '#24160e', furL: '#9a7a5e', mane: '#2e1c14', snout: '#c89482', snoutD: '#7a4a40', tusk: '#f4ead2', hoof: '#2a2020', eye: '#ff5a2a', ember: '#ff8a3a', line: '#1a0c06', magic: '#ff9a4a' },
+    vars: [{ h: 0, s: 0.4, l: 0.08, keep: ['tusk', 'eye', 'ember'], set: { ember: '#8ae0ff', eye: '#8ae0ff', magic: '#8ae0ff' } }, { h: -20, s: 1.6, l: -0.04, keep: ['tusk'], set: { eye: '#ffe23a', ember: '#ffd23a' } }],
+    slots: {
+      hide: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.furD, 0.4, p.fur, 1, p.furL]);
+        Paint.strokes(g, w, h, p.furD, 900, 18, PI / 2 + 0.4, 1.6, 0.5, R, 0.4); Paint.strokes(g, w, h, p.furL, 300, 12, PI / 2 + 0.4, 1, 0.35, R, 0.4);
+        Paint.cracks(g, w, h, shade(p.ember, -0.2), 8, 120, 5, 0.9, K.rng(41));
+      }, emit(g, w, h, p) { Paint.cracks(g, w, h, p.ember, 8, 120, 5, 0.9, K.rng(41)); } },
+      mane(g, w, h, p, R) { g.clearRect(0, 0, w, h); for (let x = 0; x < w; x += 6) { g.strokeStyle = R() > 0.5 ? p.mane : p.furD; g.lineWidth = 7; g.beginPath(); g.moveTo(x, h); g.lineTo(x + (R() - 0.5) * 10, h * (0.05 + R() * 0.3)); g.stroke(); } },
+      snout(g, w, h, p) { Paint.fill(g, w, h, p.snout); const cx = w / 2, cy = h / 2; g.fillStyle = p.snoutD; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 22, cy, 12, 18, 0, 0, TAU); g.fill(); } },
+      tusk(g, w, h, p) { Paint.vgrad(g, w, h, [0, '#ffffff', 0.6, p.tusk, 1, shade(p.tusk, -0.4)]); },
+      hoof(g, w, h, p) { Paint.fill(g, w, h, p.hoof); },
+      eye: { size: 1, paint: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#200400', '#200400'), emit: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#000', '#000') },
+    },
+    build(B, p) {
+      B.bone('body', 'root', [0, 0.78, -0.1]);
+      B.bone('chest', 'body', [0, 0.84, 0.3]);
+      B.bone('neck', 'chest', [0, 0.82, 0.5]);
+      B.bone('head', 'neck', [0, 0.72, 0.68]);
+      B.bone('jaw', 'head', [0, 0.6, 0.8]);
+      B.bone('tail0', 'body', [0, 0.82, -0.62]); B.bone('tail1', 'tail0', [0, 0.7, -0.68]);
+      for (const [s, S] of SIDES) B.bone('ear' + S, 'head', [s * 0.13, 0.9, 0.62]);
+      // barrel body: hulking shoulders taper to the rump
+      B.ell([0, 0.78, -0.05], [0.36, 0.38, 0.65], { w: B.keyW([[-0.4, 'body'], [0.25, 'chest']], 2), slot: 'hide', seg: 26, rings: 16, deform: (v) => { const k = (v.z + 0.05) / 0.65; v.y += max(0, k) * 0.12 * sm(0.6, 1.1, v.y); v.x *= 1 + max(0, k) * 0.12; } });
+      // head: wedge skull to a flat snout disk
+      B.tube([[0, 0.82, 0.48], [0, 0.74, 0.7], [0, 0.66, 0.92]], [0.24, 0.17, 0.1], { bones: ['neck', 'head', 'head'], slot: 'hide', seg: 16, flat: [1, 0.95] });
+      B.ell([0, 0.65, 0.96], [0.1, 0.085, 0.04], { w: 'head', slot: 'snout', seg: 14, rings: 8 });
+      B.ell([0, 0.58, 0.82], [0.1, 0.04, 0.12], { w: 'jaw', slot: 'hide', seg: 10, rings: 6 });
+      for (const [s, S] of SIDES) {
+        B.tube([[s * 0.07, 0.6, 0.86], [s * 0.13, 0.66, 0.92], [s * 0.15, 0.78, 0.88]], [0.025, 0.02, 0.004], { w: 'jaw', slot: 'tusk', seg: 7 });
+        B.eye('eye' + S, 'head', [s * 0.12, 0.8, 0.74], 0.028, { rz: 0.6, rot: [0, s * 0.6, 0] });
+        B.geo(new THREE.ConeGeometry(0.07, 0.16, 6), { at: [s * 0.15, 0.92, 0.62], rot: [-0.6, 0, -s * 0.6], scale: [1, 1, 0.5], w: 'ear' + S, slot: 'hide' });
+      }
+      // bristle crest along the spine (cards)
+      for (let i = 0; i < 9; i++) { const z = lerp(0.55, -0.45, i / 8); const y = 0.8 + 0.38 * Math.sqrt(max(0, 1 - ((z + 0.05) / 0.68) ** 2)) + (z > 0 ? 0.08 : 0); B.strip([[0, y - 0.04, z], [0, y + 0.16 - i * 0.008, z - 0.06]], 0.2, { w: z > 0.2 ? 'chest' : 'body', slot: 'mane', side: [0, 0, 1] }); }
+      // legs (stocky): hip/shoulder → knee → hoof
+      for (const [s, S] of SIDES) for (const [n, z, par] of [['F', 0.32, 'chest'], ['B', -0.42, 'body']]) {
+        const hp = [s * 0.22, 0.7, z], kn = [s * 0.23, 0.36, z + (n === 'F' ? 0.03 : -0.05)], ft = [s * 0.22, 0.06, z + 0.02];
+        B.bone('leg' + n + S, par, hp); B.bone('knee' + n + S, 'leg' + n + S, kn); B.bone('foot' + n + S, 'knee' + n + S, ft);
+        B.tube([hp, kn, ft], [0.13, 0.07, 0.055], { bones: ['leg' + n + S, 'knee' + n + S, 'foot' + n + S], slot: 'hide', seg: 10 });
+        B.tube([v3(ft, [0, 0.02, 0]), v3(ft, [0, -0.06, 0.03])], [0.06, 0.07], { w: 'foot' + n + S, slot: 'hoof', seg: 8, cap1: 0.3 });
+      }
+      B.tube([[0, 0.82, -0.62], [0, 0.7, -0.68], [0, 0.6, -0.66]], [0.03, 0.02, 0.01], { bones: ['tail0', 'tail1', 'tail1'], slot: 'hide', seg: 6 });
+    },
+    springs: [{ chain: ['tail0', 'tail1'], tip: [0, -0.1, 0.02], k: 50, d: 5, g: 3, max: 1 }].concat(SIDES.map(([s, S]) => ({ chain: ['ear' + S], tip: [s * 0.04, 0.1, -0.06], k: 120, d: 8, g: 0, max: 0.4 }))),
+    fx: {
+      embers: { n: 16, rate: 5, at: [0, 0.9, 0], box: [0.6, 0.5, 1.0], vel: [0, 0.4, 0], velR: [0.1, 0.2, 0.1], life: [0.8, 1.6], size: [0.03, 0.06], color: ['#ffe0a0', '#ff5a2a'], twinkle: 9, shape: 3 },
+      snort: { n: 20, rate: 0, burstRate: 30, bone: 'head', at: [0, -0.07, 0.3], box: [0.05, 0.05, 0.05], vel: [0, 0.1, 0.5], velR: [0.25, 0.1, 0.2], life: [0.5, 1], size: [0.1, 0.18], grow: 2, color: ['#ffffff', '#a89888'], alpha: 0.4, add: false },
+      dust: { n: 30, rate: 0, burstRate: 40, at: [0, 0.05, -0.2], box: [0.8, 0.05, 1.2], vel: [0, 0.4, -0.4], velR: [0.3, 0.2, 0.3], life: [0.6, 1.2], size: [0.2, 0.35], grow: 1.5, color: ['#c8b090', '#6a5a40'], alpha: 0.4, add: false },
+      cast: { n: 30, rate: 0, burstRate: 40, at: [0, 0.9, 0], box: [0.8, 0.6, 1.2], vel: [0, 0.8, 0], velR: [0.3, 0.3, 0.3], life: [0.6, 1.2], size: [0.04, 0.08], color: ['#ffe0a0', '#ff5a2a'], twinkle: 9, shape: 3 },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.6, 0], box: [0.8, 0.6, 1.2], vel: [0, 0.6, 0], velR: [0.3, 0.3, 0.3], life: [0.8, 1.6], size: [0.05, 0.09], color: ['#ffe0a0', '#ff5a2a'], twinkle: 8, shape: 3 },
+    },
+    tick(C) { C.glowBase = 1 + 0.3 * sin(C.t * 2.1); },
+    clips: {
+      idle(P, t) {
+        const br = sin(t * 1.6);
+        P.s('body', 0.015 * br, 0.02 * br, 0).r('neck', sin(t * 0.7) * 0.05 + 0.05, sin(t * 0.4) * 0.15).r('head', sin(t * 1.9) * 0.05).r('jaw', max(0, sin(t * 3)) * 0.05);
+        // pawing the ground with one forefoot every few seconds
+        const paw = max(0, sin(t * 1.2)) ** 6;
+        P.r('legFR', -0.4 * paw).r('kneeFR', 0.8 * paw).r('footFR', -0.3 * paw);
+        P.ch('fx_snort', max(0, sin(t * 0.8)) ** 20 * 3);
+      },
+      // gallop
+      move(P, ph) {
+        const a = ph * TAU;
+        for (const [s, S] of SIDES) { const o = s > 0 ? 0 : 0.6; P.r('legF' + S, 0.5 * sin(a + o)).r('kneeF' + S, max(0, -0.8 * sin(a + o + 1))); P.r('legB' + S, 0.5 * sin(a + PI + o)).r('kneeB' + S, max(0, 0.7 * sin(a + PI + o + 1))); }
+        P.rootM(0, abs(sin(a)) * 0.06, 0, sin(a) * 0.06); P.r('neck', -sin(a) * 0.08);
+      },
+      // head-down charge with a tusk hook at the end
+      attack(P, t, k) {
+        const A = atk(k, 0.35, 0.5, 0.66), hook = bump(k, 0.46, 0.66);
+        P.rootM(0, 0, -0.15 * A.a + 0.6 * A.s, 0.1 * A.a - 0.05 * A.s);
+        P.r('neck', 0.3 * A.a + 0.2 * A.s - 0.5 * hook).r('head', 0.2 * A.a - 0.5 * hook);
+        for (const [s, S] of SIDES) { P.r('legF' + S, 0.3 * A.a - 0.4 * A.s).r('legB' + S, -0.4 * A.a + 0.4 * A.s).r('kneeB' + S, 0.5 * A.a); }
+        P.ch('fx_dust', bump(k, 0.3, 0.6) * 3); P.ch('fx_snort', A.a * 2);
+      },
+      // war cry: rears, embers flare
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0.1 * u, -0.1 * u, -0.45 * u); P.r('neck', -0.4 * u).r('jaw', 0.5 * u); for (const [s, S] of SIDES) P.r('legF' + S, -0.8 * u).r('kneeF' + S, 1.0 * u); P.ch('glow', 2 * u); P.ch('fx_cast', u); },
+      special(P, t, k, C) { this.attack(P, t, k, C); P.ch('glow', bump(k, 0.3, 0.8) * 2); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.ch('fx_snort', (1 - k) * 3); },
+      // keels over onto its side
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.5)); P.rootM(0, 0.1 * bump(k, 0, 0.3), 0, 0, 0, 1.45 * u); for (const [s, S] of SIDES) { P.r('legF' + S, 0.3 * u).r('legB' + S, -0.3 * u); } P.r('jaw', 0.4 * u); P.ch('dissolve', E.inQ(seg(k, 0.5, 1))); P.ch('fx_death', bump(k, 0.45, 1) * 2); P.ch('glow', -0.9 * u); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.7)); P.rootM(0, 0, -1.5 * u, 0.05); P.ch('fx_dust', bump(k, 0, 0.8) * 3); },
+    },
+    dur: { attack: 1.15, cast: 1.4, enter: 1.1 },
+    cadence: 1.2,
+  });
+
+  // ===================================================================================================
+  // Monkeys share an anatomy: 獼猴精 macaque_demon (grey-brown fur, pink face, stolen peach, talisman scrap on the back)
+  // and 石猴 stone_monkey (andesite body with glowing magma cracks and moss, squatting on a carved plinth).
+  function monkeyBuild(B, p, stone) {
+    const J = humanRig(B, { hip: 0.62, chest: 0.98, neck: 1.1, head: 1.16, headZ: 0.08, chestZ: 0.04, neckZ: 0.06, shY: 1.0, sh: 0.2, up: 0.3, fore: 0.3, arm1: [0.3, -1, 0.2], arm2: [0.05, -0.6, 1], lx: 0.12, knee: 0.4, kneeZ: 0.16, kneeX: 1.3 });
+    const base = stone ? 0.18 : 0;
+    if (stone) { for (const b of B.bones) if (b.name !== 'root') { b.userData.abs.y += base; } B.byName.hips.position.y += base; B.byName.hips.userData.rest.y += base; for (const k in J) J[k][1] += base; }
+    const sl = stone ? 'stone' : 'fur';
+    const tl = [[0, 0.62, -0.18], [0, 0.45, -0.4], [0, 0.55, -0.62], [0, 0.82, -0.66], [0, 0.98, -0.55]].map((q) => [q[0], q[1] + base, q[2]]);
+    tl.forEach((q, i) => B.bone('tl' + i, i ? 'tl' + (i - 1) : 'hips', q));
+    B.tube(tl, [0.06, 0.05, 0.04, 0.035, 0.02], { bones: ['tl0', 'tl1', 'tl2', 'tl3', 'tl4'], slot: sl, seg: 8, cap1: true });
+    // body: pot-bellied, hunched
+    B.ell([0, 0.8 + base, 0], [0.22, 0.28, 0.21], { w: B.keyW([[0.65 + base, 'hips'], [0.85 + base, 'spine'], [1.0 + base, 'chest']]), slot: sl, seg: 20, rings: 14, deform: (v) => { v.z += sm(0.85 + base, 1.1 + base, v.y) * 0.05; } });
+    // head: round skull, flat face disc, muzzle
+    B.ell([0, 1.24 + base, 0.1], [0.15, 0.15, 0.14], { w: 'head', slot: stone ? 'stone' : 'fur', seg: 20, rings: 14 });
+    B.ell([0, 1.22 + base, 0.2], [0.11, 0.12, 0.06], { w: 'head', slot: 'face', seg: 18, rings: 12 });
+    B.ell([0, 1.16 + base, 0.25], [0.06, 0.045, 0.045], { w: 'head', slot: stone ? 'stone' : 'faceP', seg: 10, rings: 8 });
+    for (const [s, S] of SIDES) {
+      B.ell([s * 0.15, 1.25 + base, 0.08], [0.035, 0.045, 0.02], { w: 'head', slot: stone ? 'stone' : 'faceP', rot: [0, s * 0.5, 0] });
+      limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.07, 0.055, 0.045], ['sh' + S, 'arm' + S, 'hand' + S], { slot: sl });
+      claw(B, S, s, J['hand' + S], [0.05, -0.6, 1], { size: 0.06, n: 4, curl: 0.8, slot: stone ? 'stone' : 'hand', nail: false });
+      limb(B, J['hip' + S], J['knee' + S], J['foot' + S], [0.09, 0.07, 0.05], ['leg' + S, 'knee' + S, 'foot' + S], { slot: sl });
+      B.ell(v3(J['foot' + S], [0, -0.02, 0.07]), [0.06, 0.035, 0.11], { w: 'foot' + S, slot: stone ? 'stone' : 'hand' });
+    }
+    return J;
+  }
+  const monkeyClips = (stone) => ({
+    idle(P, t) {
+      breathe(P, t, 1.2);
+      const scratch = max(0, sin(t * 0.7)) ** 8;
+      P.r('head', sin(t * 0.9) * 0.1 + 0.05, sin(t * (stone ? 0.3 : 1.3)) * (stone ? 0.15 : 0.35), sin(t * 0.6) * 0.1);
+      for (const [s, S] of SIDES) P.r('knee' + S, 0.25).r('leg' + S, -0.12);
+      if (!stone) P.r('shL', -1.4 * scratch, 0, 0.6 * scratch).r('armL', -1.4 * scratch).r('handL', sin(t * 20) * 0.3 * scratch);
+      P.r('shR', -0.2 + sin(t * 1.1) * 0.05).r('armR', -0.6);
+      P.rootM(0, abs(sin(t * (stone ? 1 : 2.4))) * 0.01, 0, 0.08, 0, sin(t * 0.8) * 0.03);
+      for (let i = 1; i < 5; i++) P.r('tl' + i, sin(t * 1.5 - i * 0.6) * 0.15, sin(t * 1.1 - i * 0.5) * 0.2);
+    },
+    // loping knuckle-walk
+    move(P, ph) { const a = ph * TAU; for (const [s, S] of SIDES) { const o = s > 0 ? 0 : PI; P.r('leg' + S, -0.5 * sin(a + o)).r('knee' + S, 0.4 + 0.4 * max(0, sin(a + o + 1))).r('sh' + S, -0.8 + 0.5 * sin(a + o + PI)); } P.rootM(0, abs(sin(a)) * 0.04, 0, 0.45); P.r('head', -0.4); },
+    // leap and swipe (macaque) / overhead stone fist (stone)
+    attack(P, t, k) {
+      const A = atk(k, 0.32, 0.46, 0.64), air = bump(k, 0.3, 0.55);
+      P.rootM(0, air * (stone ? 0.1 : 0.3), -0.05 * A.a + 0.4 * A.s, -0.15 * A.a + 0.3 * A.s);
+      P.r('shR', -2.4 * A.a + 1.4 * A.s, 0, -0.3 * A.a).r('armR', -0.6 * A.a + 0.3 * A.s).r('handR', 0.5 * A.s);
+      P.r('shL', -1.0 * A.a + 0.4 * A.s, 0, 0.4 * A.a);
+      for (const [s, S] of SIDES) P.r('knee' + S, 0.8 * A.a).r('leg' + S, -0.5 * A.a);
+      P.r('head', -0.25 * A.a + 0.2 * A.s);
+      P.ch('fx_hit', bump(k, 0.45, 0.55) * 4);
+    },
+    // throw: wind up the right arm, hurl
+    cast(P, t, k) { const A = atk(k, 0.4, 0.55, 0.7); P.r('shR', -2.6 * A.a + 1.0 * A.s, 0, -0.5 * A.a).r('armR', -0.9 * A.a).r('chest', 0, 0.4 * A.a - 0.4 * A.s); P.r('head', 0, 0.2 * A.a); P.ch('glow', A.s); P.ch('fx_throw', bump(k, 0.5, 0.6) * 4); },
+    // taunt: jumps up and down, slaps chest, tail whips
+    special(P, t, k) { const u = bump(k, 0.05, 0.95), j = abs(sin(t * 9)); P.rootM(0, j * 0.12 * u, 0, 0, sin(t * 4.5) * 0.4 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.6 * u * (0.6 + 0.4 * sin(t * 18 + s)), 0, s * 0.3 * u); P.r('head', -0.3 * u).r('tl3', sin(t * 12) * 0.6 * u); P.ch('fx_cast', u); },
+    hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.ch('fx_hit', (1 - k) * 2); },
+    die(P, t, k, C) {
+      if (stone) { const u = E.inQ(seg(k, 0, 0.3)); P.rootM(0, 0, 0, 0.2 * u); P.ch('flash', 0.3 * bump(k, 0.1, 0.3)); P.ch('dissolve', E.inQ(seg(k, 0.25, 1))); P.ch('fx_death', bump(k, 0.2, 0.9) * 3); P.ch('glow', 2 * bump(k, 0, 0.4)); return; }
+      GEN.die(P, t, k, C);
+    },
+    enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.6)), land = bump(k, 0.55, 0.85); P.rootM(0, 1.5 * u * u, 0, 0, 0, 0, -0.15 * land); for (const [s, S] of SIDES) P.r('knee' + S, 0.9 * land).r('leg' + S, -0.5 * land); },
+  });
+
+  defC('macaque_demon', {
+    height: 1.42, fill: 0.92, radius: 0.33, shadow: 0.36, rimColor: '#fff0d8',
+    pal: { fur: '#7a7058', furD: '#3a3428', furL: '#b8ae90', face: '#d8a088', faceD: '#9a6050', faceL: '#f6ccb4', hand: '#5a4a40', eye: '#ffb02a', peach: '#ff9a7a', leafc: '#5aa04a', line: '#1e1a12', talis: '#f0d24a', ink: '#c0281a', magic: '#ffc24a' },
+    vars: [{ h: 190, s: 0.6, l: -0.04, keep: ['face', 'faceD', 'faceL', 'peach', 'leafc', 'talis', 'ink'], set: { eye: '#8af0ff' } }, { h: -30, s: 1.8, l: -0.06, keep: ['face', 'faceD', 'faceL', 'peach', 'leafc', 'talis', 'ink'], set: { eye: '#ff3a3a' } }],
+    slots: {
+      fur: furSlot('fur', 'furD', 'furL'),
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.faceL, 0.5, p.face, 1, p.faceD]); Paint.mottle(g, w, h, p.faceD, 30, 8, 30, 0.3, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.1), y = FY(h, 0.6); g.fillStyle = p.faceD; g.beginPath(); g.ellipse(x, y, 34, 26, 0, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 20, 17, 0, 0, TAU); g.fill(); g.fillStyle = '#1a0800'; g.beginPath(); g.arc(x, y, 7, 0, TAU); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x - 6, y - 6, 4, 0, TAU); g.fill(); }
+        g.strokeStyle = p.faceD; g.lineWidth = 8; g.beginPath(); g.moveTo(FX(w, 0.38), FY(h, 0.73)); g.quadraticCurveTo(FX(w, 0.5), FY(h, 0.69), FX(w, 0.62), FY(h, 0.73)); g.stroke(); // brow ridge
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.1), y = FY(h, 0.6); g.fillStyle = shade(p.eye, -0.55); g.beginPath(); g.ellipse(x, y, 20, 17, 0, 0, TAU); g.fill(); } } },
+      faceP(g, w, h, p) { Paint.fill(g, w, h, p.face); g.fillStyle = p.faceD; g.beginPath(); g.ellipse(w * 0.44, h * 0.45, 8, 6, 0, 0, TAU); g.ellipse(w * 0.56, h * 0.45, 8, 6, 0, 0, TAU); g.fill(); g.strokeStyle = '#4a2018'; g.lineWidth = 4; g.beginPath(); g.moveTo(w * 0.3, h * 0.7); g.quadraticCurveTo(w * 0.5, h * 0.62, w * 0.7, h * 0.7); g.stroke(); },
+      hand(g, w, h, p) { Paint.fill(g, w, h, p.hand); },
+      peach(g, w, h, p) { Paint.vgrad(g, w, h, [0, '#fff0c0', 0.5, p.peach, 1, shade(p.peach, -0.35)]); },
+      leafc(g, w, h, p) { Paint.fill(g, w, h, p.leafc); },
+      talis(g, w, h, p) { Paint.fill(g, w, h, p.talis); g.strokeStyle = p.ink; g.lineWidth = 7; g.beginPath(); g.moveTo(w * 0.3, h * 0.2); g.lineTo(w * 0.7, h * 0.2); g.moveTo(w / 2, h * 0.1); g.lineTo(w / 2, h * 0.85); g.moveTo(w * 0.3, h * 0.5); g.lineTo(w * 0.7, h * 0.45); g.stroke(); },
+    },
+    build(B, p) {
+      const J = monkeyBuild(B, p, false);
+      // stolen peach in the right hand
+      B.ell(v3(J.handR, [0, -0.06, 0.08]), [0.07, 0.075, 0.07], { w: 'handR', slot: 'peach', seg: 12, rings: 9 });
+      B.geo(new THREE.ConeGeometry(0.03, 0.07, 4), { at: v3(J.handR, [0.02, 0.02, 0.1]), rot: [0.4, 0, -0.8], scale: [1, 1, 0.3], w: 'handR', slot: 'leafc' });
+      // talisman scrap stuck between the shoulder blades (spring)
+      B.bone('tal', 'chest', [0.06, 1.02, -0.2]);
+      B.strip([[0.06, 1.04, -0.2], [0.07, 0.88, -0.22]], 0.1, { bones: ['tal', 'tal'], slot: 'talis', side: [1, 0, 0.2] });
+      // ruff of lighter fur on the cheeks
+      for (const s of [-1, 1]) B.ell([s * 0.1, 1.18, 0.12], [0.06, 0.08, 0.06], { w: 'head', slot: 'fur', tint: '#d0c8b0' });
+    },
+    springs: [{ chain: ['tl1', 'tl2', 'tl3'], tip: [0, 0.16, 0.1], k: 45, d: 5, g: 1, max: 0.8 }, { chain: ['tal'], tip: [0, -0.16, 0], k: 70, d: 6, g: 2, wind: 1.5, max: 0.6 }],
+    fx: {
+      hit: { n: 16, rate: 0, burstRate: 30, bone: 'handR', box: [0.1, 0.1, 0.1], vel: [0, 0.5, 0.6], velR: [0.5, 0.5, 0.5], g: 2, life: [0.3, 0.6], size: [0.04, 0.07], color: ['#ffffff', '#ffc24a'], shape: 3 },
+      throw: { n: 12, rate: 0, burstRate: 30, bone: 'handR', box: [0.05, 0.05, 0.05], vel: [0, 1, 2], velR: [0.3, 0.3, 0.3], g: 4, life: [0.5, 0.8], size: [0.08, 0.12], color: ['#ff9a7a', '#c84a2a'], add: false, shape: 0 },
+      cast: { n: 20, rate: 0, burstRate: 30, bone: 'head', at: [0, 0.2, 0], box: [0.3, 0.1, 0.3], vel: [0, 0.6, 0], velR: [0.4, 0.2, 0.4], life: [0.4, 0.8], size: [0.05, 0.08], color: ['#ffe28a', '#ffc24a'], shape: 3, twinkle: 12 },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.8, 0], box: [0.5, 0.9, 0.4], vel: [0, 0.6, 0], velR: [0.3, 0.3, 0.3], life: [0.8, 1.5], size: [0.05, 0.08], color: ['#ffe28a', '#b8ae90'], twinkle: 8, shape: 3 },
+    },
+    clips: monkeyClips(false),
+    dur: { attack: 0.9, cast: 1.1, special: 1.5, enter: 1.0 },
+    cadence: 1.2,
+  });
+
+  defC('stone_monkey', {
+    height: 1.42, fill: 0.92, radius: 0.36, shadow: 0.4, rimColor: '#ffe8c8', bands: 3,
+    pal: { stone: '#8a8a84', stoneD: '#3e3e3c', stoneL: '#d0cec2', moss: '#5a8a3a', mossL: '#9ac45a', crack: '#ff8a2a', eye: '#ffb03a', line: '#1e1e1c', magic: '#ffa23a' },
+    vars: [{ h: 30, s: 2.5, l: -0.05, keep: ['moss', 'mossL'], set: { crack: '#7af0ff', eye: '#7af0ff', magic: '#7af0ff' } }, { h: 0, s: 1, l: -0.18, set: { crack: '#c86aff', eye: '#e8aaff', magic: '#c86aff', moss: '#3a3a5a', mossL: '#6a6a9a' } }],
+    slots: {
+      stone: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.stoneL, 0.5, p.stone, 1, p.stoneD]); Paint.speck(g, w, h, p.stoneD, 1400, 3, 0.4, R); Paint.speck(g, w, h, p.stoneL, 800, 2, 0.5, R);
+        Paint.mottle(g, w, h, p.moss, 14, 10, 40, 0.65, R); Paint.mottle(g, w, h, p.mossL, 10, 6, 20, 0.5, R);
+        Paint.cracks(g, w, h, shade(p.crack, -0.3), 12, 140, 4, 0.95, K.rng(43));
+      }, emit(g, w, h, p) { Paint.cracks(g, w, h, p.crack, 12, 140, 4, 0.95, K.rng(43)); } },
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.stoneL, 0.5, p.stone, 1, p.stoneD]); Paint.speck(g, w, h, p.stoneD, 1000, 3, 0.4, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.1), y = FY(h, 0.6); g.fillStyle = p.stoneD; g.beginPath(); g.ellipse(x, y, 30, 24, 0, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 16, 12, 0, 0, TAU); g.fill(); }
+        Paint.cracks(g, w, h, shade(p.crack, -0.3), 4, 100, 3, 0.9, K.rng(44));
+      }, emit(g, w, h, p, R) { Paint.cracks(g, w, h, p.crack, 4, 100, 3, 0.9, K.rng(44)); for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.1), y = FY(h, 0.6); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 16, 12, 0, 0, TAU); g.fill(); } } },
+      plinth(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.stoneL, 1, p.stoneD]); Paint.speck(g, w, h, p.stoneD, 600, 3, 0.4, R); g.strokeStyle = rgba(p.stoneD, 0.8); g.lineWidth = 4; g.strokeRect(10, 10, w - 20, h - 20); g.strokeRect(24, 24, w - 48, h - 48); Paint.mottle(g, w, h, p.moss, 6, 10, 30, 0.6, R); },
+    },
+    build(B, p) {
+      monkeyBuild(B, p, true);
+      // carved plinth (static, on root)
+      B.geo(new THREE.BoxGeometry(0.75, 0.18, 0.6, 1, 1, 1), { at: [0, 0.09, 0], w: 'root', slot: 'plinth', smooth: false });
+      B.geo(new THREE.BoxGeometry(0.82, 0.04, 0.66), { at: [0, 0.02, 0], w: 'root', slot: 'plinth', smooth: false });
+    },
+    // the crack network glows — emissive painted to match the albedo cracks (same RNG sequence)
+    init(C) { },
+    springs: [],
+    fx: {
+      hit: { n: 20, rate: 0, burstRate: 40, bone: 'handR', box: [0.1, 0.1, 0.1], vel: [0, 0.6, 0.5], velR: [0.6, 0.5, 0.6], g: 5, life: [0.3, 0.7], size: [0.05, 0.09], color: ['#c8c4b8', '#5e5e58'], add: false, shape: 1 },
+      throw: { n: 12, rate: 0, burstRate: 30, bone: 'handR', box: [0.05, 0.05, 0.05], vel: [0, 1, 2], velR: [0.3, 0.3, 0.3], g: 4, life: [0.5, 0.8], size: [0.1, 0.14], color: ['#8a8a84', '#3e3e3c'], add: false, shape: 1 },
+      cast: { n: 30, rate: 0, burstRate: 40, at: [0, 0.8, 0], box: [0.5, 0.9, 0.4], vel: [0, 0.6, 0], velR: [0.2, 0.3, 0.2], life: [0.5, 1], size: [0.03, 0.06], color: ['#ffe0a0', '#ff8a2a'], shape: 3, twinkle: 10 },
+      death: { n: 40, rate: 0, burstRate: 50, at: [0, 0.9, 0], box: [0.5, 0.9, 0.4], vel: [0, 0.8, 0], velR: [0.6, 0.4, 0.6], g: 4, life: [0.6, 1.2], size: [0.08, 0.14], color: ['#a8a8a0', '#3e3e3c'], add: false, shape: 1 },
+      embers: { n: 10, rate: 3, at: [0, 0.9, 0], box: [0.4, 0.7, 0.3], vel: [0, 0.3, 0], velR: [0.05, 0.1, 0.05], life: [0.8, 1.4], size: [0.025, 0.045], color: ['#ffe0a0', '#ff8a2a'], shape: 3, twinkle: 10 },
+    },
+    tick(C) { C.glowBase = 0.8 + 0.4 * (0.5 + 0.5 * sin(C.t * 2.2)); },
+    clips: monkeyClips(true),
+    dur: { attack: 1.0, cast: 1.2, special: 1.4, die: 1.6, enter: 1.0 },
+    cadence: 0.9,
+  });
+})();
