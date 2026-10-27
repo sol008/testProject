@@ -52,8 +52,21 @@ class Run {
     await p.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: 30000 });
   }
   ev(fn, arg) { return this.page.evaluate(fn, arg); }
+  // wait (slow machines!) until a predicate on the page holds, then for the game to settle
+  async until(fn, arg, ms = 600000) {
+    await this.page.waitForFunction(fn, arg, { timeout: ms, polling: 250 });
+    await this.idle();
+  }
   async idle(ms = 180000) {
-    const ok = await this.page.evaluate((t) => G.Debug.idle(t), ms);
+    // idle must hold for ~0.6 s (auto events start a frame after the previous script ends)
+    const ok = await this.page.evaluate((t) => new Promise((res) => {
+      const t0 = Date.now(); let since = 0;
+      const iv = setInterval(() => {
+        const idle = !G.Script.busy() && G.Scenes.top() === G.mapScene && G.Render.fade.a < 0.05;
+        if (!idle) since = 0; else if (!since) since = Date.now();
+        if ((since && Date.now() - since > 600) || Date.now() - t0 > t) { clearInterval(iv); res(idle); }
+      }, 50);
+    }), ms);
     if (!ok) throw new Error(`[${this.label}] not idle: ${await this.where()}`);
   }
   where() { return this.page.evaluate(() => `map=${G.mapScene && G.mapScene.def.id} top=${G.Scenes.top() && G.Scenes.top().constructor.name} busy=${G.Script.busy()} fade=${G.Render.fade.a.toFixed(2)}`); }
@@ -117,7 +130,7 @@ async function runTrue(browser) {
   await R.open('?debug&startch=11&autoplay=1');
   await R.ev(() => { G.settings.battleSpeed = 8; });
   // 11-01 → 11-02 → 11-03 (title card, deck, Magong, temple)
-  await R.idle();
+  await R.until(() => G.state.flags.ch11_magong && G.mapScene && G.mapScene.def.id === 'penghu_tianhou');
   check('A: chapter set to 11', await R.ev(() => G.state.chapter === 11));
   check('A: 11-01 ch11_start', await R.flag('ch11_start'));
   check('A: 11-02 ch11_magong', await R.flag('ch11_magong'));

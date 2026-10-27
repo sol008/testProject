@@ -1008,7 +1008,7 @@
       { x: 40, y: 25, r: 90, color: '#ffc070', flicker: 0.25 }, { x: 36, y: 31, r: 80, color: '#ffc070', flicker: 0.2 },
     ]),
     npcs: [
-      { id: 'ph_ajin', sprite: 'temple_keeper', name: '阿進伯', x: 13, y: 6, dir: 'left', if: stA, talk: [['阿進伯', '來廟裡坐。媽祖婆等恁足久矣。']] },
+      { id: 'ph_ajin', sprite: 'temple_keeper', name: '阿進伯', x: 13, y: 6, dir: 'left', if: (st) => st.flags.ch11_start && !st.flags.ch11_tianhou, talk: [['阿進伯', '來廟裡坐。媽祖婆等恁足久矣。']] },
       { id: 'ph_atian', sprite: 'c11_atian', name: '阿添伯', x: 16, y: 2, dir: 'up', fixedDir: true, if: (st) => !st.flags.ch11_weir_3 && !dawnPenghu(st), talk: (S) => H.atian(S) },
       { id: 'ph_agui', sprite: 'fisher_f', name: '阿桂', pos: (st) => (stA(st) ? [20, 3] : [20, 6]), dir: 'left', if: (st) => !dawnPenghu(st), talk: (S) => H.agui(S) },
       { id: 'ph_cat', sprite: 'cat', name: '澎湖的貓', x: 18, y: 6, dir: 'down', if: (st) => !dawnPenghu(st), talk: (S) => H.cat(S) },
