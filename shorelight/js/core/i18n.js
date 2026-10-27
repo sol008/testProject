@@ -43,7 +43,11 @@ G.I18N = (() => {
           return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }).join('');
         templates.push({ re: new RegExp('^' + pattern + '$', 's'), src: k, dst: v, kinds });
-      } else { dict.set(k, v); if (cd) cd.set(k, v); }
+      } else if (cd) {
+        // a chapter's wording never replaces shared UI/data text; it only fills gaps in the shared table
+        cd.set(k, v);
+        if (!dict.has(k)) dict.set(k, v);
+      } else dict.set(k, v);
     }
     memo.clear();
   };
