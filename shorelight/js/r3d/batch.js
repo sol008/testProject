@@ -20,7 +20,8 @@
 // is removed from the batch and the object gets an ordinary per-object node from then on.
 'use strict';
 G.Batch3D = (() => {
-  const B = { enabled: !/[?&]nobatch\b/.test(location.search), CH: 16, MIN: 2 };
+  // OFF by default until verified on every map; opt in with ?batch
+  const B = { enabled: /[?&]batch\b/.test(location.search), CH: 16, MIN: 2 };
 
   B.staticObj = (o) => !o.if && !o.spirit && !o.illusion && o.alpha == null && !o.noBatch;
   B.staticDef = (d) => !!d && !d.noClone && !d.noBatch && (!d.update || d.batch === true);
