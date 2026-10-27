@@ -100,7 +100,7 @@ class Run {
       if (!o || o.open) return false;
       m.openChest(o);
       return true;
-    }, id);
+    }, id).then(async (ok) => { await this.idle(); return ok; });
   }
   async finish() {
     const le = await this.ev(() => G.lastError && String(G.lastError.stack || G.lastError)).catch(() => null);
@@ -183,6 +183,15 @@ async function mainPath(r) {
   r.check(await r.ev(() => G.state.members.yungui.lv) >= 11, '雲歸 level ≥ 11');
   r.check(await r.item('c3_taixu_key') === 1 && await r.item('c3_mush_book') === 1, 'got 太虛觀鑰匙 & 雲歸蕈譜');
   await r.shot('taixu_after_raid');
+  await mainBangka(r, false);
+}
+// second half of the main path (艋舺 → 南門). Standalone segment: `node ch3.test.js main-bangka`
+async function mainBangka(r, standalone) {
+  if (standalone) {
+    await r.open('?debug&map=taixu&x=13&y=19&lv=12&chapter=3&party=xinghe,baizhi,hongying,yungui&flags=mochi_joined,yuyuan_joined,ch3_start,ch3_inn,ch3_ferry,ch3_fog_done,ch3_yungui_met,ch3_mirror,ch3_legend,ch3_roof_talk,ch3_guimian_raid,ch3_yungui_join');
+    await r.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'taixu', null, { timeout: 60000 });
+    await r.idle();
+  }
   // down the mountain (shortcut) → ferry to 艋舺
   await r.choices([0]);
   await r.step(13, 21);
@@ -434,6 +443,7 @@ async function trailExtras(r) {
   const browser = await chromium.launch();
   const t0 = Date.now();
   await session('main', browser, mainPath);
+  if (ONLY.some((w) => w === 'main-bangka')) await session('main-bangka', browser, (r) => mainBangka(r, true));
   await session('soldiers', browser, soldiers);
   await session('bangka-side', browser, bangkaSide);
   await session('trail-extras', browser, trailExtras);

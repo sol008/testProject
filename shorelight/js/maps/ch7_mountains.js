@@ -804,6 +804,7 @@
     const listed = spots.map((s) => s[0]);
     for (const f of m.followers) if (!listed.includes(f.id)) { f.setCell(m.player.x, m.player.y); f.dir = m.player.dir; f.queue = []; }
   }
+  // NOTE: S.move on a *follower* never resolves (MapScene.updateFollowers ignores onArrive) — always use { wait: false }.
   // spawn helper that is idempotent (re-running a scene never doubles an actor)
   function spawn(S, d) { S.remove(d.id); return S.spawn(d); }
   // simple mesmerising aura under the party in the vision realm
@@ -984,7 +985,8 @@
       ['', '廟前的石階上，麻糬一動不動地坐著，望著海的方向。牠脖子上還繫著白芷綁的那條紅繩。'],
       ['', '芋圓一聲不吭地爬上星河的肚子，把自己攤成一片灰色的毛毯。'],
     ]);
-    await S.move('yuyuan', 'U');
+    S.move('yuyuan', 'U', { wait: false });
+    await S.wait(0.4);
     S.emote('yuyuan', '♥');
     await S.lines([
       ['xinghe:hurt', '……芋圓……你好重……'],
@@ -2769,7 +2771,8 @@
     ]);
     await G.Tweens.to(C7, { riteK: 1 }, 2.0, 'linear');
     await S.say('', '火星飛上天，在空中連成一條一條細線，線又交織成網格，網格又開出一朵朵幾何的花，然後花一層一層向內折疊。');
-    await S.move('hongying', 'L');
+    S.move('hongying', 'L', { wait: false });
+    await S.wait(0.4);
     await S.lines([
       ['', '紅纓忽然翻身，抓過身邊的木桶，劇烈地吐了起來。'],
       ['tengpo:normal', '（不中斷吟唱的語氣）吐吧，孩子。'],
@@ -4790,7 +4793,8 @@
       ['', '他的背上，嵌著一盞藍黑色的長明燈，燈火冰冷地燃燒，細細的黑色絲線從燈上延伸出來，扎進他的四肢。'],
       ['yungui:surprise', '……師父！'],
     ]);
-    await S.move('yungui', 'UUU');
+    S.move('yungui', 'UUU', { wait: false });
+    await S.wait(1.0);
     await S.lines([
       ['', '雲歸衝上前。清虛真人緩緩抬起頭。他的雙眼全是藍黑色的火。'],
       ['qingxu:serious', '…………雲歸。'],
@@ -4863,7 +4867,8 @@
     await S.fadeActor('qingxu', 0, 1.5);
     S.remove('qingxu');
     await S.wait(1.5);
-    await S.move('yuyuan', 'RU');
+    S.move('yuyuan', 'RU', { wait: false });
+    await S.wait(0.6);
     await S.lines([
       ['', '芋圓走過去，用頭輕輕頂了頂雲歸的手。雲歸一把抱住芋圓，把臉埋進牠的毛裡。'],
       ['yungui:cry', '……………………'],

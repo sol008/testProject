@@ -4,6 +4,10 @@
 //   node tools/test/chapters/ch7.test.js            # full run
 //   node tools/test/chapters/ch7.test.js --shots    # also save screenshots to tools/test/out/ch7/
 //   node tools/test/chapters/ch7.test.js --headed
+//   node tools/test/chapters/ch7.test.js --from s6_trials   # resume from a checkpoint written by an earlier run
+//   node tools/test/chapters/ch7.test.js --only s4_yushan   # run one segment (needs its checkpoint)
+// Segments: s1_shrine_bear s2_tsou s3_forest s4_yushan s5_cloud_rite s6_trials s7_xinghe_heart s8_sunmoon s9_shrine_end s10_extra
+// Checkpoints: tools/test/out/ch7/checkpoints/<segment>.json. The 3D renderer is disabled (render3d:false, ?r3lite).
 //
 // 1. opens index.html?debug&startch=7 with G.Debug.setAutoplay(true) (dialogue auto-advances, choices take
 //    G.Debug.choices or 0, minigames succeed, battles auto-fight) and fast-forwards the game loop deterministically;
@@ -21,8 +25,16 @@ const ROOT = path.resolve(__dirname, '..', '..', '..');
 const BASE = 'file://' + path.join(ROOT, 'index.html');
 const OUT = path.join(ROOT, 'tools', 'test', 'out', 'ch7');
 const SHOTS = process.argv.includes('--shots');
+// segments: --from <seg> resumes from the checkpoint saved by a previous run; --only <seg> runs one segment
+const SEGS = ['s1_shrine_bear', 's2_tsou', 's3_forest', 's4_yushan', 's5_cloud_rite', 's6_trials', 's7_xinghe_heart', 's8_sunmoon', 's9_shrine_end', 's10_extra'];
+const optv = (k) => { const i = process.argv.indexOf('--' + k); return i >= 0 ? process.argv[i + 1] : null; };
+const ONLY = optv('only');
+const FROM = ONLY || optv('from') || SEGS[0];
+if (!SEGS.includes(FROM)) { console.log('unknown segment ' + FROM + ' (one of ' + SEGS.join(', ') + ')'); process.exit(2); }
+const want = (seg) => (ONLY ? seg === ONLY : SEGS.indexOf(seg) >= SEGS.indexOf(FROM));
+const CKPT = path.join(ROOT, 'tools', 'test', 'out', 'ch7', 'checkpoints');
 const HEADED = process.argv.includes('--headed');
-if (SHOTS) fs.mkdirSync(OUT, { recursive: true });
+fs.mkdirSync(CKPT, { recursive: true });
 
 const IGNORE = [/ERR_FILE_NOT_FOUND/, /Failed to load resource/, /favicon/, /willReadFrequently/, /AudioContext/, /GL Driver/, /THREE\./, /WebGL/];
 const BAD_WARN = [/\[shorelight\]/, /unknown item/, /no actor/, /Battle: unknown troop/, /unknown song/, /not registered/i, /missing art/i];
@@ -110,6 +122,13 @@ async function drainErrors() {
   if (e.le) errors.push('G.lastError: ' + e.le);
 }
 
+async function checkpoint(next) {
+  if (!next) return;
+  const snap = await ev(() => ({ state: JSON.parse(JSON.stringify(G.state)), map: G.mapScene.def.id, x: G.mapScene.player.x, y: G.mapScene.player.y, dir: G.mapScene.player.dir }));
+  fs.writeFileSync(path.join(CKPT, next + '.json'), JSON.stringify(snap));
+}
+const nextSeg = (seg) => SEGS[SEGS.indexOf(seg) + 1];
+
 (async () => {
   const t0 = Date.now();
   const browser = await chromium.launch({ headless: !HEADED });
@@ -133,16 +152,31 @@ async function drainErrors() {
   });
 
   try {
-    await page.goto(BASE + '?debug&startch=7&r3lite&flags=yuyuan_joined,mochi_joined', { timeout: 0 });
-    await page.waitForFunction(() => window.G && G.Debug && G.Scenes, null, { timeout: 0 });
-    await ev(() => { G.Audio.unlock = () => {}; G.Debug.setAutoplay(true); });
-    await page.waitForFunction(() => G.mapScene && G.mapScene.def && G.mapScene.def.id === 'sugar_shrine', null, { timeout: 0, polling: 500 });
-    console.log('\n第七章 雲山入夢 — playthrough');
-    let st = await state();
-    check('chapter set to 7, party 星河/紅纓/雲歸 (no 白芷)', st.chapter === 7 && st.party.join() === 'xinghe,hongying,yungui', st.party.join());
-    check('芋圓 & 麻糬 follow (麻糬 even while 白芷 is away)', await ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id))));
-    check('燈芯 starts at 80 and scales 星河 max HP', st.flags.ch7_flame === 80 && st.xinghe.mhp === Math.floor(st.xinghe.flat * 0.8), JSON.stringify(st.xinghe));
+    let st;
+    if (FROM === SEGS[0]) {
+      await page.goto(BASE + '?debug&startch=7&r3lite&flags=yuyuan_joined,mochi_joined', { timeout: 0 });
+      await page.waitForFunction(() => window.G && G.Debug && G.Scenes, null, { timeout: 0 });
+      await ev(() => { G.Audio.unlock = () => {}; G.Debug.setAutoplay(true); });
+      await page.waitForFunction(() => G.mapScene && G.mapScene.def && G.mapScene.def.id === 'sugar_shrine', null, { timeout: 0, polling: 500 });
+      console.log('\n第七章 雲山入夢 — playthrough');
+      st = await state();
+      check('chapter set to 7, party 星河/紅纓/雲歸 (no 白芷)', st.chapter === 7 && st.party.join() === 'xinghe,hongying,yungui', st.party.join());
+      check('芋圓 & 麻糬 follow (麻糬 even while 白芷 is away)', await ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id))));
+      check('燈芯 starts at 80 and scales 星河 max HP', st.flags.ch7_flame === 80 && st.xinghe.mhp === Math.floor(st.xinghe.flat * 0.8), JSON.stringify(st.xinghe));
+    } else {
+      const file = path.join(CKPT, FROM + '.json');
+      if (!fs.existsSync(file)) throw new Error('no checkpoint for ' + FROM + ' — run the earlier segments first');
+      const snap = JSON.parse(fs.readFileSync(file, 'utf8'));
+      await page.goto(BASE + `?debug&map=${snap.map}&x=${snap.x}&y=${snap.y}&r3lite`, { timeout: 0 });
+      await page.waitForFunction(() => window.G && G.mapScene && G.mapScene.def, null, { timeout: 0, polling: 500 });
+      await ev((sn) => { G.Audio.unlock = () => {}; G.Debug.setAutoplay(true); G.Script.reset(); G.state = Object.assign(G.newState(), sn.state); G.Mapx.goto(sn.map, sn.x, sn.y, sn.dir); }, snap);
+      await ev(() => __qa.settle(60));
+      console.log(`\n第七章 雲山入夢 — resumed at ${FROM}`);
+      st = await state();
+    }
 
+    { const cur = 's1_shrine_bear';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-1 甘蔗田
     st = await act('7-1 opening', '0', { shot: '01_sugar_shrine' });
     check('7-1 opening done (ch7_intro, ch7_cart)', st.flags.ch7_intro && st.flags.ch7_cart);
@@ -162,6 +196,10 @@ async function drainErrors() {
     check('燈芯: battle −2 and story −4 applied', st.flags.ch7_flame === hpBefore - 6, `${hpBefore} → ${st.flags.ch7_flame}`);
     check('星河 HP never exceeds the scaled max', st.xinghe.hp <= st.xinghe.mhp && st.xinghe.mhp === Math.floor(st.xinghe.flat * st.flags.ch7_flame / 100));
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's2_tsou';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-3 鄒族大社
     st = await act('7-3 tsou welcome', 'G.Debug.stepOn(23, 0)', { shot: '03_tsou_night' });
     check('7-3 kuba fire (ch7_tsou_welcome, ch7_tasan_told)', st.map === 'tsou_hosa' && st.flags.ch7_tsou_welcome && st.flags.ch7_tasan_told);
@@ -178,6 +216,10 @@ async function drainErrors() {
     st = await act('Voyu asks (心燈 13)', 'G.Debug.talk("voyu")');
     check('心燈 13 accepted (ch7_sq_pasuya = 1)', st.flags.ch7_sq_pasuya === 1 && st.quests.q_ch7_pasuya);
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's3_forest';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-4 神木・雲海 + 霧谷
     st = await act('to the forest', 'G.Debug.stepOn(12, 0)');
     check('alishan_forest reached', st.map === 'alishan_forest');
@@ -203,6 +245,10 @@ async function drainErrors() {
     st = await act('to 玉山', 'G.Debug.stepOn(21, 0)');
     check('yushan_trail reached, Voyu farewell', st.map === 'yushan_trail' && st.flags.ch7_yushan_enter);
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's4_yushan';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-5 / 7-6 玉山・布農
     st = await act('upper slope', 'G.Debug.stepOn(21, 27)', { choices: [0] });
     check('upper slope entered (no return)', st.flags.ch7_upper);
@@ -213,6 +259,10 @@ async function drainErrors() {
     check('黑鵯紅羽, 小米糕 ×3, 醃山肉 ×2', st.inv.c7_ac_hongyu && st.inv.c7_xiaomigao === 3 && st.inv.c7_yanrou === 2);
     check('farewell → 雲霧林', st.flags.ch7_bunun_farewell && st.map === 'cloud_forest');
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's5_cloud_rite';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-7 雲霧林
     st = await act('雲芝', 'G.Debug.trigger("yunzhi")');
     check('雲歸 tastes the 雲芝 (mush_ch7, 七仙蕈 counter, 雲芝)', st.flags.mush_ch7 && st.inv.mat_yunzhi && (await ev(() => G.state.vars.tuanzi_mush)) >= 1);
@@ -234,6 +284,10 @@ async function drainErrors() {
       want(0.7); m.draw(G.ctx); const b = m.solid[by * m.w + bx];
       return a === 1 && b === 0;
     }));
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's6_trials';
+    if (want(cur)) {
     // 紅纓之境
     st = await act('to 紅纓之境', 'G.Debug.stepOn(2, 20)', { shot: '09_vision_hongying' });
     check('vision_hongying', st.map === 'vision_hongying');
@@ -248,6 +302,10 @@ async function drainErrors() {
     check('P7-2 solved (1-5-9), trial of 雲歸, 慢看 learned; east gate opens', st.flags.ch7_yg_solved && st.flags.ch7_trial_yungui && st.flags.ch7_east_open && st.map === 'vision_hub');
     const sk = await ev(() => ({ hy: G.state.members.hongying.skills.includes('hy_fangshou'), yg: G.state.members.yungui.skills.includes('yg_mankan') }));
     check('passives learned with S.learn (hy_fangshou, yg_mankan)', sk.hy && sk.yg);
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's7_xinghe_heart';
+    if (want(cur)) {
     // 星河之境
     st = await act('to 星河之境', 'G.Debug.stepOn(36, 20)', { shot: '11_vision_xinghe' });
     st = await act('wrong note', 'G.Debug.trigger("note_gong")');
@@ -260,6 +318,10 @@ async function drainErrors() {
     check('7-11 dawn: 藤心結, 雲霧藥草包, 雲豹之紋', st.flags.ch7_dawn_after && st.inv.c7_ac_tengxin && st.inv.c7_key_leopard && st.map === 'tengpo_hut');
     check('芋圓 & 麻糬 follow again after the dream', !st.flags.yuyuan_hidden && !st.flags.mochi_hidden && (await ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id)))));
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's8_sunmoon';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-12 日月潭
     st = await act('follow the leopard to the lake', 'G.Debug.stepOn(15, 7)', { shot: '13_sunmoon' });
     check('7-12 Thao elder, white deer, Lalu respected, 杵音', st.map === 'sunmoon' && st.flags.ch7_thao_met && st.flags.ch7_white_deer && st.flags.ch7_lalu_respect && st.flags.ch7_chuyin);
@@ -273,6 +335,10 @@ async function drainErrors() {
     st = await act('enter 燈母祠', 'G.Debug.stepOn(15, 0)', { shot: '14_lamp_shrine' });
     check('lamp_shrine', st.map === 'lamp_shrine');
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's9_shrine_end';
+    if (want(cur)) {
     // ---------------------------------------------------------------- 7-14 燈母祠
     for (const k of [1, 2, 3]) await act('mural ' + k, `G.Debug.trigger("m${k}")`);
     await act('wrong lamp (金 first)', 'G.Debug.trigger("wx_metal")');
@@ -290,6 +356,10 @@ async function drainErrors() {
     check('both chapter-7 心燈 counted by G.Lanterns', st.lanterns.includes('lantern_tsou_hunter') && st.lanterns.includes('lantern_lamp_murals'));
     console.log(`  party levels at the end: ${st.lv.join(', ')}`);
 
+      await checkpoint(nextSeg(cur));
+    } }
+    { const cur = 's10_extra';
+    if (want(cur)) {
     // ---------------------------------------------------------------- separate: flame floor / game-over text / map loads
     await ev(() => { G.Debug.setAutoplay(true); });
     const extra = await ev(async () => {
@@ -319,6 +389,8 @@ async function drainErrors() {
       return bad;
     });
     check('all 21 chapter-7 maps construct & draw', !mapsOk.length, mapsOk.join('; '));
+    }
+    }
   } catch (e) {
     check('test driver', false, e.stack || e.message);
   }

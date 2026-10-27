@@ -400,7 +400,10 @@ G.Mapx = G.Mapx || {};
     updateFollowers(dt) {
       const run = G.Input.held('run') !== !!G.settings.runDefault;
       for (const f of this.followers) {
-        if (f.moving) f.updateMove(dt, run && !G.Script.busy() ? 1.65 : (this.player.scripted ? 1 : 1));
+        if (f.moving) {
+          // scripted moves on followers (S.move) resolve on arrival
+          if (f.updateMove(dt, run && !G.Script.busy() ? 1.65 : 1) && f.onArrive) { const r = f.onArrive; f.onArrive = null; r(); }
+        }
         else if (f.queue.length) this.stepQueue(f);
         else f.phase = 0;
       }
