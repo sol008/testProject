@@ -2768,7 +2768,7 @@
       S.toast('雲歸的蕈譜改名為《臺灣七仙蕈譜》。', 'scroll');
       S.quest('q_tuanzi_mush', 'done');
     } else {
-      S.quest('q_tuanzi_mush', 1);
+      S.quest('q_tuanzi_mush', 9);
       await L(S, [['yungui:sad', '還差幾種……'], ['', '麻糬用尾巴拍了拍他的手。'], ['yungui:normal', '……沒關係。蕈不會跑。']]);
     }
   };
@@ -5774,6 +5774,8 @@
     // level floor = the progression table's ch11 start (G.Data.progression lv[0] = 38), like every other chapter entry
     const lv0 = ((G.Data.progression || []).find((p) => p.ch === 11) || { lv: [38] }).lv[0];
     const lv = Math.max(avgLv(), lv0);
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = G.state.quests.q_tuanzi_mush; if (q && !q.done && !G.state.flags.mush_7) q.stage = 8; }
     for (const id of ['xinghe', 'hongying', 'yungui']) {
       if (!G.state.members[id]) G.Party.create(id, lv);
       G.Story.ensureLevel(id, lv);
