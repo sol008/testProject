@@ -474,7 +474,7 @@ G.Map3D = (() => {
     syncObjects(initial) {
       const ms = this.ms;
       // repeated static objects (plants, trees, rocks …) → instanced batches with proxy nodes (js/r3d/batch.js)
-      if (initial && !this.batch && G.Batch3D) this.batch = G.Batch3D.attach(this);
+      if (initial && !this.batch && G.Batch3D && G.Batch3D.enabled) this.batch = G.Batch3D.attach(this);  // off until batching is verified
       const seen = new Set();
       for (const o of ms.objects) {
         seen.add(o);
