@@ -351,6 +351,18 @@ isolated edge pixels. Batched trees and bamboo cast and receive the same shadows
 the stock depth material, as the per-object meshes did. In `--full` mode `renderer.info` counts only the final
 post-processing pass, so draw calls come from the r3lite runs.
 
+**Full sweep with batching on.** `sweep.js` was rerun over all 175 maps.
+- **Clean:** 0 page errors, 0 console errors, 0 `G.warnOnce` keys, 0 failed requests, 0 NaN bounds and 0 billboard
+  fallbacks.
+- **Console output:** only the known `mon3d-b … degenerate verts` diagnostic (O6, 38 maps) and one headless
+  AudioContext autoplay notice.
+- **Coverage:** 113 maps batch something, 5403 objects in total.
+- **Draw calls:** the median goes 79 → 76 and the maximum 494 → 204 (tiger_lair; then mistforest_s 197, bangka 188,
+  alishan_trail 187).
+- **Medians:** 189k triangles and 5.5 s build.
+- **Placement outliers:** batched objects take the pre-spin AABB, so they report fewer of the "wide canopy" notes.
+  alishan_trail has 14 against 96 with `--nobatch`; none of the notes is new.
+
 **Reading the table:**
 - **Draw calls.** The heavy maps drop by 22–87 %. sugarcane_night falls from 6× the median to below it.
   Ordinary maps, towns and interiors barely change: there is little to batch.
