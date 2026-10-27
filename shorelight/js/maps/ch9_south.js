@@ -173,7 +173,7 @@
   });
   defE('c9_plague_chief', {
     name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 32, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 10, atk: 2.0, mag: 2.2, def: 1.15, spd: 1.2, exp: 7, gold: 6 },
+    m: { hp: 8.5, atk: 1.85, mag: 2.0, def: 1.15, spd: 1.15, exp: 7, gold: 6 },
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
     drops: [['c9_baicaogao', 1]],
     desc: '數十隻瘟鬼疊成的駝背身影。咳嗽聲像一整個村子在咳。',
@@ -490,7 +490,7 @@
       const smalls = () => sc.enemies.filter((e) => !e.dead && e !== chief);
       const dmg = sc.damage.bind(sc);
       sc.damage = (tg, d, o = {}) => {
-        if (tg === chief && smalls().length) d = Math.max(1, Math.round(d * 0.6));
+        if (tg === chief && smalls().length) d = Math.max(1, Math.round(d * 0.7));
         if (critNext && o.attacker && o.attacker.id === 'xinghe' && tg.side === 'enemy') {
           critNext = false;
           if (!o.crit) { d = Math.round(d * 1.5); o = Object.assign({}, o, { crit: true }); }
@@ -533,7 +533,7 @@
       sc.startTurn = async (u) => {
         if (p2 && u === chief && !chief.dead) {
           for (const p of sc.alive('party')) {
-            const d = Math.min(p.hp - 1, Math.max(1, Math.round(p.mhp * 0.03)));
+            const d = Math.min(p.hp - 1, Math.max(1, Math.round(p.mhp * 0.02)));
             if (d > 0) dmg(p, d, { color: '#ff9a6a', noGauge: true });
           }
           sc.say('高燒的熱氣燒灼著每個人……', 1.0);

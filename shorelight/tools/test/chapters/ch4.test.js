@@ -55,8 +55,14 @@ const flag = (k) => ev((k) => !!G.state.flags[k], k);
 const count = (id) => ev((id) => G.Inv.count(id), id);
 const pos = () => ev(() => [G.mapScene.player.x, G.mapScene.player.y]);
 async function stepOn(x, y) { await ev(([x, y]) => G.Debug.stepOn(x, y), [x, y]); await page.waitForTimeout(120); await idle(); }
-async function trigger(id) { await ev((id) => G.Debug.trigger(id), id); await idle(); }
-async function talk(id) { await ev((id) => G.Debug.talk(id), id); await idle(); }
+// scripts are raced against a timeout so a stuck script fails the test instead of hanging it
+async function runScript(kind, id) {
+  const r = await ev(([kind, id]) => Promise.race([G.Debug[kind](id).then(() => 'ok'), new Promise((res) => setTimeout(() => res('TIMEOUT'), 150000))]), [kind, id]);
+  if (r !== 'ok') throw new Error(`${kind}(${id}) did not finish: ` + JSON.stringify(await ev(() => ({ map: G.mapScene.def.id, top: G.Scenes.stack.map((s) => s.constructor.name) }))));
+  await idle();
+}
+async function trigger(id) { await runScript('trigger', id); }
+async function talk(id) { await runScript('talk', id); }
 async function choices(list) { await ev((l) => { G.Debug.choices = l.slice(); }, list); }
 async function warp(map, x, y, dir = 'down') { await ev(([m, x, y, d]) => G.Script.run((S) => S.warp(m, x, y, d)), [map, x, y, dir]); await page.waitForTimeout(150); await idle(); }
 async function interactObj(t, x, y) {

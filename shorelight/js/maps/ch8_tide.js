@@ -67,6 +67,12 @@
     m.cam.speed = speed;
     await S.wait(sec);
   }
+  // move a party follower: map.js updateFollowers() never calls the step's onArrive, so an awaited S.move on a
+  // follower never resolves — move without waiting and wait for the walk time instead
+  async function moveF(S, id, path, speed = 2) {
+    S.move(id, path, { wait: false, speed });
+    await S.wait(path.length / speed + 0.15);
+  }
   // narration lines in the dialogue box (stage directions the player should read)
   async function nar(S, lines) { for (const l of [].concat(lines)) await S.say('', l); }
   // inner voices: small text, no portrait
@@ -2323,7 +2329,7 @@
     await S.say('qingfeng:smile', '等今年鬼月結束，潮水全部倒過來——他們就會全部想起來。');
     await S.say('qingfeng:smile', '到時候，我們就可以回鹿港。回家。四個人。');
     await nar(S, '紅纓一步一步走向那個穿綢衫的女人。她的手在發抖。');
-    await S.move('hongying', 'UU', { speed: 0.9 });
+    await moveF(S, 'hongying', 'UU', 0.9);
     await S.say('hongying:cry', '……娘。');
     S.face('mother', 'hongying');
     await nar(S, '那女人轉過頭。她的眼睛是灰色的，像起霧的玻璃。她看著紅纓，就像看著一根柱子。');
@@ -2498,7 +2504,7 @@
     await nar(S, '觀潮台上，歸潮者們一個接一個停止了動作。光鏈斷了，他們身上的藍光開始一點一點地剝落。');
     await nar(S, '紅纓跪在地上，抱著青鋒。他的胸口有一個黑色的洞，邊緣在冒著冰冷的煙。海水從他的傷口滲出來。');
     await S.say('hongying:cry', '哥……哥……雲歸！雲歸，救他！');
-    await S.move('yungui', 'RRRUUU', { speed: 3.2 });
+    await moveF(S, 'yungui', 'RRRUUU', 3.2);
     S.setPos('yungui', 13, 7, 'right');
     await nar(S, '雲歸跑過來，跪下，手按在青鋒胸口。他的手在發抖。他看了一眼傷口，然後抬頭看紅纓。他什麼都沒說。');
     await S.wait(1.4);

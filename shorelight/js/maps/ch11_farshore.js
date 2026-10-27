@@ -5491,7 +5491,7 @@
     await S.warp('ending_badouzi', 11, 9, 'down', { fade: 0, noAutosave: true });
     S.hideFollowers(true);
     await S.fadeIn(1.2);
-    S.spawn({ id: 'mc_e', sprite: 'mochi', x: 13, y: 10, dir: 'down' });
+    S.spawn({ id: 'mc_e', sprite: 'mochi', x: 13, y: 9, dir: 'down' });
     await L(S, [['', '八斗子的海邊。放水燈頭的隊伍剛走過，海面上漂滿了水燈。'], ['', '礁石最前面，坐著一隻三色貓。這一年，每一個晚上，麻糬都坐在同一個地方，看著同一個方向。'], ['', '星河蹲在水邊，把一盞小水燈放進海裡。水燈上，綁著一條藍色的穗子。']]);
     const wl = addObj({ t: 'water_lantern', x: 11, y: 10 });
     for (let i = 0; i < 3; i++) { await pause(S, 0.5); if (wl) wl.y++; }

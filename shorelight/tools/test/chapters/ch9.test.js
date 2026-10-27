@@ -254,7 +254,12 @@ async function partA(browser) {
   await choices(['取下']); await interact(36, 8);
   check('龍目 pair ①＋④ (ch9_part_eye)', (await flag('ch9_part_eye')) && (await count('c9_key_eye')) === 1);
   await shot('11_yard_parts');
-  // C9-07b 瘟鬼頭 → C9-08 launch → deck
+  // C9-07b 瘟鬼頭 → C9-08 launch → deck (go back out and rest at the inn first, as a player would)
+  await stepOn(21, 31);
+  await choices(['住宿']);
+  await talk('dg_inn');
+  await stepOn(46, 9);
+  console.log('       party levels: ' + (await ev(() => G.Party.active().map((m) => m.id + ' L' + m.lv).join(', '))));
   await stepOn(20, 16);
   check('C9-07b 瘟鬼頭 defeated (ch9_shipyard_clear)', await flag('ch9_shipyard_clear'));
   check('C9-08 王船出港 (ch9_wangboat_launch)', await flag('ch9_wangboat_launch'));
@@ -296,6 +301,7 @@ async function partA(browser) {
   await shot('15_longpan');
   await stepOn(43, 18);
   check('名字光⑦ 阿財仔 (across the sand bridge)', await flag('ch9_name_7'));
+  console.log('       party levels: ' + (await ev(() => G.Party.active().map((m) => m.id + ' L' + m.lv).join(', '))));
   await stepOn(20, 7);
   check('C9-12 落山風靈 defeated (ch9_fallwind_defeated)', await flag('ch9_fallwind_defeated'));
   v = await vars();
@@ -354,6 +360,7 @@ async function partA(browser) {
   check('first 咾咕石火盆 lit', await flag('ch9_lkbz_0'));
   for (const [x, y] of [[5, 5], [39, 18], [40, 30]]) await interact(x, y);
   check('three 燈塔日誌殘頁 (vars.ch9_logs = 3)', (await vars()).ch9_logs === 3 && (await count('c9_key_log')) === 3);
+  console.log('       party levels: ' + (await ev(() => G.Party.active().map((m) => m.id + ' L' + m.lv).join(', '))));
   await stepOn(20, 38);
   check('C9-15 潮病鰻王 (ch9_cave_cleared, ch9_lighthouse_flame)', (await flag('ch9_cave_cleared')) && (await flag('ch9_lighthouse_flame')));
   check('護燈 command removed after the battle', await ev(() => !G.state.members.xinghe.skills.includes('c9_guard_lamp')));

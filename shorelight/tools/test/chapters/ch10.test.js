@@ -4,6 +4,7 @@
 //   node tools/test/chapters/ch10.test.js            # full run
 //   node tools/test/chapters/ch10.test.js --shots    # also save screenshots to tools/test/out/ch10/
 //   node tools/test/chapters/ch10.test.js --headed
+//   node tools/test/chapters/ch10.test.js --realtime # no extra logic steps (slow headless)
 //   node tools/test/chapters/ch10.test.js --3d       # keep the WebGL renderer on (slow headless)
 //
 // 1. Main path from ?debug&startch=10 with G.Debug autoplay: every story beat of the screenplay up to the
@@ -71,6 +72,22 @@ function api(page) {
       await page.goto(BASE + q);
       await page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: 30000 });
       await ev(() => { G.Debug.setAutoplay(true); G.Debug.log.length = 0; });
+      // headless canvas drawing is slow (a few fps): advance the game logic with extra fixed steps between frames
+      // (same update sequence as js/main.js / tools/test/e2e.js ff()); drawing still happens on rAF
+      if (!argv.includes('--realtime')) await ev(() => {
+        if (window.__turbo) return;
+        window.__turbo = setInterval(() => {
+          for (let i = 0; i < 3; i++) {
+            try {
+              const dt = 0.05;
+              G.time += dt; G.Input.update(dt); G.Timers.update(dt); G.Tweens.update(dt); G.Render.updateFx(dt); G.UI.updateToasts(dt);
+              G.Scenes.update(dt);
+              if (G.state && G.inGame) G.state.playtime += dt;
+              G.Input.endFrame();
+            } catch (e) { G.lastError = e; console.error('turbo step: ' + (e && e.stack || e)); }
+          }
+        }, 12);
+      });
     },
     async waitFor(expr, timeout = 90000, what) {
       try { await page.waitForFunction(expr, null, { timeout, polling: 100 }); }
