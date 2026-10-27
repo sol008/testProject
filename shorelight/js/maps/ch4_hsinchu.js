@@ -1485,6 +1485,8 @@
     await S.say('yungui:think', '師父也往東邊去了。');
     await S.say('baizhi:think', '燈，也有歸期……是什麼意思呢。');
     await S.say('xinghe:normal', '……大概是說，迷路的燈也能回家吧。');
+    // clue for 心燈⑪: 阿順伯's night watch opens now, but nothing sent the player back to the north coast
+    if (!F('ch4_mifen_defend')) await S.say('hongying:think', '……風裡有人叫名字，北郊米粉寮的阿順伯也說過。出東門前，回去看看他吧？');
     S.quest('q_ch4_main', 1);
     S.objective('出東門迎曦門，經柿樹坪前往五指山');
   }
@@ -1804,7 +1806,7 @@
       { id: 'c4_406', trigger: 'auto', if: (st) => !st.flags.ch4_road, run: scene406 },
       { id: 'bogong', trigger: 'action', x: 12, y: 17, w: 2, h: 2, label: '參拜', run: async (S) => { await savePrompt(S, '伯公——客家人這樣稱呼土地公。大樟樹下的小小伯公壇，擺著一碗清水、三顆柿子。'); } },
       {
-        id: 'clue1', trigger: 'action', x: 31, y: 8, w: 2, h: 1, label: '調查', if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
+        id: 'clue1', trigger: 'action', x: 31, y: 8, w: 2, h: 1, label: '調查', hint: (st) => !st.flags.ch4_pc_1, if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
         run: async (S) => {
           await S.say('', '每一個被咬過的柿餅上，都有一排細細的齒痕。');
           await S.say('yungui:normal', '芋圓是一口吞的，不會留這種齒痕。');
@@ -1813,11 +1815,11 @@
         },
       },
       {
-        id: 'clue2', trigger: 'action', x: 36, y: 12, w: 1, h: 1, label: '調查', if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
+        id: 'clue2', trigger: 'action', x: 36, y: 12, w: 1, h: 1, label: '調查', hint: (st) => !st.flags.ch4_pc_2, if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
         run: async (S) => { await S.say('', '柿霜白粉上，一串小小的四爪腳印，往竹林去。'); await persimmonClue(S, 2); },
       },
       {
-        id: 'clue3', trigger: 'action', x: 40, y: 10, w: 1, h: 1, label: '調查', if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
+        id: 'clue3', trigger: 'action', x: 40, y: 10, w: 1, h: 1, label: '調查', hint: (st) => !st.flags.ch4_pc_3, if: (st) => G.Quests.stage('q_persimmon') >= 0 && !st.flags.ch4_persimmon_done,
         run: async (S) => {
           await S.say('', '沿路掉了好多柿蒂。');
           await S.say('baizhi:think', '像是有人一邊走一邊吃，還把蓋子丟掉。');
@@ -2108,6 +2110,8 @@
     await S.say('xinghe:angry', '不用了謝謝！');
     await S.say('hongying:laugh', '哈哈哈！');
     if (!F('ch4_yimin_done')) await S.say('baizhi:think', '……義民塚那位阿哥，還在等人回歌吧。');
+    // clue for 紅纓's 擂茶 retry (伙房, at night, after the lamp): otherwise nothing brings the player back at night
+    if (F('ch4_leicha_lesson') && !F('ch4_leicha_hongying')) await S.say('hongying:shy', '……今暗，我想去伙房，請滿妹婆再教我一次擂茶。');
   }
   // S5 山歌擂台・道士篇
   async function duelYungui(S) {
@@ -3296,7 +3300,16 @@
           await S.warp('wind_cave_2', 22, 37, 'up', { color: '#e8f4ff' });
         },
       },
-      { id: 's6', trigger: 'action', x: 37, y: 2, w: 1, h: 1, label: '調查', spirit: true, if: (st) => !st.flags.mush_ch4, run: s6Mushroom },
+      // clue for the 靈視-only crevice (illusion rock at 35,2): 麻糬 notices it on entering the north-east chamber
+      {
+        id: 's6_clue', trigger: 'touch', x: 28, y: 7, w: 7, h: 1, once: true, if: (st) => !st.flags.mush_ch4,
+        run: async (S) => {
+          S.emote('mochi', '?');
+          await S.say('', '（麻糬盯著東邊角落那塊石頭，鬍鬚一動一動。石頭後面，隱約有風「叮、叮」地響。）');
+          await S.say('yungui:think', '……肉眼看是石頭。開了靈視，說不定就不是了。');
+        },
+      },
+      { id: 's6', trigger: 'action', x: 37, y: 2, w: 1, h: 1, label: '調查', spirit: true, hint: true, if: (st) => !st.flags.mush_ch4, run: s6Mushroom },
     ],
     warps: [{ x: 20, y: 43, to: 'wuzhi_trail', tx: 19, ty: 4, tdir: 'down' }],
   });

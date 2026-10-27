@@ -127,7 +127,7 @@
     q_fubo: { name: '顧門的福伯', desc: '福伯在洛家大門顧了三年。他說，走之前好想吃一片牛舌餅。', lantern: true,
       stages: ['買一片牛舌餅給福伯。（不見天街的牛舌餅攤）', '把牛舌餅交給福伯。'] },
     q_halfwell: { name: '半邊井', desc: '九曲巷的半邊井，一半在王家牆內，一半在牆外。王少爺要把外面那半邊封起來。', lantern: true,
-      stages: ['找王少爺談談半邊井。（九曲巷・王家側門）', '問問巷子裡的人：井邊阿婆、牛舌餅阿嬸、打更的阿福伯。', '等天黑，打更阿福伯要去敲鑼。'] },
+      stages: ['找王少爺談談半邊井。（九曲巷・王家側門）', '問問巷子裡的人：井邊阿婆、不見天街的牛舌餅阿嬸、土地公廟前打更的阿福伯。', '等天黑，打更阿福伯要去敲鑼。'] },
   });
   if (!D.quests.q_tuanzi_mush) {
     D.quests.q_tuanzi_mush = { name: '雲歸的蕈譜', desc: '雲歸想把臺灣的靈蕈畫成一本蕈譜。可是每一種，都先被他自己「為了研究」吃掉了。',
@@ -826,6 +826,7 @@
   ];
   const wellState = () => (G.state.vars.c5_well = G.state.vars.c5_well || {});
   const gateClosed = (s) => time5(s) === 2 && !s.flags.ch5_gate_open;
+  const wellCanStart = () => !!G.state.flags.ch5_mazu && !G.state.quests.q_halfwell;
 
   G.Maps.define('lukang_jiuqu', {
     name: '九曲巷',
@@ -870,6 +871,7 @@
       } },
       { id: 'lk_granny_well', sprite: 'old_f', name: '井邊阿婆', x: 17, y: 17, dir: 'up', talk: (S) => grannyTalk(S) },
       { id: 'lk_mason', sprite: 'villager_m2', name: '泥水師傅', x: 19, y: 17, dir: 'up', if: (s) => !s.flags.ch5_well_done, talk: async (S) => {
+        if (wellCanStart()) { await wellStart(S); return; }
         await S.say('泥水師傅', '阿婆，我也是拿人錢做事。王少爺說天光前要封好。');
         await S.say('泥水師傅', '唉，砌這個牆，我心肝也艱苦。我細漢也是喝這口井的水大漢的。');
       } },
@@ -885,7 +887,7 @@
     ],
     events: [
       { id: 'c5_alley', trigger: 'touch', x: 3, y: 3, w: 1, h: 2, if: (s) => !s.flags.ch5_alley, run: (S) => sceneAlley(S) },
-      { id: 'c5_well_start', trigger: 'touch', x: 15, y: 16, w: 1, h: 5, if: (s) => s.flags.ch5_mazu && !G.state.quests.q_halfwell, run: (S) => wellStart(S) },
+      { id: 'c5_well_start', trigger: 'touch', x: 15, y: 16, w: 1, h: 5, if: () => wellCanStart(), run: (S) => wellStart(S) },
       { id: 'c5_well_night', trigger: 'auto', if: (s) => G.Quests.stage('q_halfwell') === 2 && !G.Quests.isDone('q_halfwell') && time5(s) === 2, run: (S) => wellNight(S) },
       { id: 'c5_well_look', trigger: 'action', x: 18, y: 15, label: '半邊井', run: async (S) => {
         await S.say('', '一口井，被王家的紅磚牆從中間穿過——一半在牆內，一半在牆外。');
@@ -1069,6 +1071,7 @@
     const w = wellState();
     const stg = G.Quests.stage('q_halfwell');
     if (flag('ch5_well_done')) { await S.say('井邊阿婆', '這口井，我還要再挑六十年。'); return; }
+    if (wellCanStart()) { await wellStart(S); return; }   // missed the touch strip (e.g. came in by the long alley)
     if (stg === 1 && !w.granny) {
       await S.say('井邊阿婆', '王家的事？……三十年前，王家的店仔失火。');
       await S.say('井邊阿婆', '巷子裡的人排成一排，從這口井一桶一桶傳水，傳到天亮。把火滅了。');
@@ -1458,7 +1461,7 @@
       await S.say('王少爺', '幫我？他們連自己都顧不了！');
       S.quest('q_halfwell', 1);
       wellState();
-      S.objective('問問巷子裡的人：井邊阿婆、牛舌餅阿嬸、打更阿福伯');
+      S.objective('問問巷子裡的人：井邊阿婆、不見天街的牛舌餅阿嬸、土地公廟前打更的阿福伯');
       return;
     }
     if (stg === 1) { await S.say('王少爺', '……你們還在問？問了也沒用啦。'); return; }
@@ -1551,13 +1554,13 @@
     npcs: [
       { id: 'fubo', sprite: 'servant_old', name: '福伯', ghost: true, x: 9, y: 6, dir: 'down',
         pos: (s) => (s.flags.ch5_unmask ? [12, 7] : [9, 6]),
-        if: (s) => !s.flags.ch5_fubo_done && !s.flags.ch5_rest && (!s.flags.ch5_enter || s.flags.ch5_unmask) && s.flags.ch5_gate,
+        if: (s) => !s.flags.ch5_fubo_done && !s.flags.ch5_rest && !s.vars.c5_inn_scene && (!s.flags.ch5_enter || s.flags.ch5_unmask) && s.flags.ch5_gate,
         talk: (S) => fuboTalk(S) },
     ],
     events: [
       { id: 'c5_gate_first', trigger: 'auto', if: (s) => !s.flags.ch5_gate, run: (S) => sceneGate(S) },
       { id: 'c5_gate_enter', trigger: 'auto', if: (s) => s.flags.ch5_lamp && !s.flags.ch5_enter, run: (S) => sceneEnter(S) },
-      { id: 'c5_fubo_1', trigger: 'auto', if: (s) => s.flags.ch5_unmask && !s.quests.q_fubo && !s.flags.ch5_rest, run: (S) => fuboStep1(S) },
+      { id: 'c5_fubo_1', trigger: 'auto', if: (s) => s.flags.ch5_unmask && !s.quests.q_fubo && !s.flags.ch5_rest && !s.vars.c5_inn_scene, run: (S) => fuboStep1(S) },
       { id: 'c5_gate_well', trigger: 'action', x: 4, y: 8, label: '井', run: async (S) => {
         await S.say('', '門前的井早就乾了。井底只有落葉。');
       } },
@@ -1847,7 +1850,7 @@
       } },
       { id: 'c5_mem3', trigger: 'touch', x: 19, y: 15, w: 2, h: 1, if: (s) => s.flags.ch5_mirrors && !s.flags.ch5_boss, run: (S) => sceneMem3(S) },
       // 麻糬 sniffs out the 憶蕈 at the banyan's roots (cross-chapter 蕈譜 quest; it starts the quest if ch3's 杉皮蕈 was missed)
-      { id: 'c5_mush', trigger: 'action', x: 11, y: 4, label: '憶蕈', if: (s) => !s.flags.mush_ch5 && s.flags.ch5_enter, run: (S) => sceneMush(S) },
+      { id: 'c5_mush', trigger: 'action', x: 11, y: 4, label: '憶蕈', hint: true, if: (s) => !s.flags.mush_ch5 && s.flags.ch5_enter, run: (S) => sceneMush(S) },
       { id: 'c5_pipe', trigger: 'action', x: 7, y: 11, label: '調查', run: async (S) => {
         await S.say('', '福伯的房間。桌上擺著一支舊煙斗，和一個牛舌餅的空盒子。盒子擦得乾乾淨淨。');
         if (hasActor('hongying')) await S.say('hongying:sad', '……他把空盒子都留著。');
@@ -2827,7 +2830,7 @@
     // started (its 心燈 is counted, not named). Waiting keeps the inn's auto event quiet until the map is re-entered.
     if (!(await S.pointOfNoReturn({ chapter: 5,
       intro: [['蔡頭家', '客官要歇睏了？天就要光了。']],
-      quests: ['q_fubo', 'q_halfwell'],
+      quests: ['q_fubo', 'q_halfwell', { id: 'q_tuanzi_mush', open: (st) => !st.flags.mush_ch5 }],   // 憶蕈 closes too
       lanterns: { lantern_fubo: 'q_fubo', lantern_halfwell: 'q_halfwell' } }))) { ms.c5innAsked = true; return; }
     G.state.vars.c5_inn_scene = true;
     await S.fadeOut(0.8);
