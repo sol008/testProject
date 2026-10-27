@@ -1260,3 +1260,7 @@ G.I18N.add({
   '第十章　後山巡境　完': 'End of Chapter 10: Beyond the Back Mountains',
   '黑潮北上': 'North on the Kuroshio',
 });
+// point-of-no-return hint (docs/qa/points_of_no_return.md)
+G.I18N.add({
+  '（小聲）……在別人的家裡，規矩是大家一起守的。他們都看著呢。': '(Quietly) …In someone else\'s home, everyone keeps the rules together. They\'re watching.',
+});

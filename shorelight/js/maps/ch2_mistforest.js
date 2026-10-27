@@ -3336,7 +3336,12 @@
       } },
       { id: 'cage1', trigger: 'action', x: 4, y: 19, label: '打開竹籠', if: (st) => !st.flags.ch2_cage1, run: cage1 },
       { id: 'cage2', trigger: 'action', x: 27, y: 18, label: '打開竹籠', if: (st) => !st.flags.ch2_cage2, run: cage2 },
-      { id: 'boss', trigger: 'touch', x: 14, y: 10, w: 4, h: 1, once: true, if: (st) => bothCages(st) && !st.flags.ch2_tiger_beaten, run: boss215 },
+      { id: 'boss', trigger: 'touch', x: 14, y: 10, w: 4, h: 1, once: true, if: (st) => bothCages(st) && !st.flags.ch2_tiger_beaten, run: async (S, e) => {
+        // point of no return: after 虎姑婆 the story runs through 天燈之夜 to 七月十七 — 溪蝦 can only be caught on the 16th
+        if (!(await S.pointOfNoReturn({ chapter: 2, event: e, back: 'D',
+          quests: [{ id: 'q_hy_kitchen', open: () => !G.Inv.has('c2_shrimp') }] }))) return;
+        await boss215(S);
+      } },
     ],
     warps: [{ x: 14, y: 31, w: 4, to: 'tiger_lair', tx: 25, ty: 2, tdir: 'down' }],
     onUpdate: (dt, ms) => forestTick(dt, ms),
@@ -3487,7 +3492,10 @@
       { id: 'ahe', sprite: 'boatman', name: '船伕阿河', x: 25, y: 21, dir: 'up', talk: async (S) => {
         await S.say('阿河', '要去淡水？上船吧——等你們準備好再叫我。');
         const c = await S.choice(['出發', '等一下'], { cancel: 1 });
-        if (c === 0) await depart219(S);
+        // point of no return: the boat to 淡水 ends chapter 2
+        if (c === 0 && await S.pointOfNoReturn({ chapter: 2,
+          quests: ['q_woodcutter', 'q_letter', 'q_hy_kitchen'],
+          lanterns: { xd_woodcutter: 'q_woodcutter', xd_letter: 'q_letter' } })) await depart219(S);
       } },
     ],
     events: [

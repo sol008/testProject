@@ -1230,3 +1230,8 @@ G.I18N.add({
   '最後一種「玄武蕈」，長在澎湖六角形的玄武岩柱上。麻糬會先找到它。（開啟靈視）': 'The last, the "Basalt Mushroom," grows on the hexagonal basalt columns of Penghu. Mochi will find it first. (use Spirit Sight)',
   '蕈譜又多了一格。下一種七仙蕈，在旅途更遠的地方……': 'Another entry in the almanac. The next Immortal Mushroom lies farther along the journey…',
 });
+// point-of-no-return hints (docs/qa/points_of_no_return.md)
+G.I18N.add({
+  '……那個鼓聲，好像只有今晚會響。': '…I think that drum only sounds tonight.',
+  '……貼了符，她就永遠看不到這齣戲了。': '…If the talisman goes on, she\'ll never get to see the show.',
+});

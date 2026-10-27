@@ -796,6 +796,66 @@ test('map/script: a cutscene pan (S.camera) left in place is released to the pla
   A.ok(ms.cam.tx == null && !ms.cam.hold, 'cameraFollow() clears the hold');
 });
 
+test('story: S.pointOfNoReturn names open side quests, counts unlit 心燈, asks only when something is open', async ({ G, ctx, run }) => {
+  // content scripts are skipped by fresh(): load only the story module (the helper) and the shared UI dictionary
+  for (const f of ['js/story/story.js', 'js/i18n/en_ui.js']) run(require('fs').readFileSync(path.join(ROOT, f), 'utf8'));
+  G.ctx = ctx.document.createElement('canvas').getContext('2d');
+  Object.assign(G.Data.quests, {
+    qa_side: { name: 'QA支線', lantern: true, desc: 'd', stages: ['a'] },
+    qa_chore: { name: 'QA小事', desc: 'd', stages: ['a'] },
+    qa_never: { name: 'QA未接', lantern: true, desc: 'd', stages: ['a'] },
+  });
+  if (!G.Maps.get('qa_pnr')) G.Maps.define('qa_pnr', { name: 'QA', start: [3, 3], tiles: Array(8).fill('.'.repeat(10)) });
+  G.Party.join('qa_hero', 1);
+  G.Mapx.goto('qa_pnr', 3, 3, 'down');
+  const S = G.Script.S;
+  const step = async (sec) => { for (let t = 0; t < sec; t += 0.05) { G.Input.update(0.05); G.Timers.update(0.05); G.Tweens.update(0.05); G.Scenes.update(0.05); G.Input.endFrame(); await null; } };
+  const said = [];
+  const say = G.Dialog.say;
+  G.Dialog.say = (w, t, o) => { said.push(t); return say.call(G.Dialog, w, t, o); };
+  const o = { quests: ['qa_side', 'qa_chore', 'qa_never'], lanterns: { qa_l1: 'qa_side', qa_l2: 'qa_never', qa_l3: { quest: null, can: () => false } } };
+  // nothing open (lanterns lit, quests never started): no prompt at all
+  for (const id of ['qa_l1', 'qa_l2']) G.Lanterns.add(id, id);
+  let r = null;
+  S.pointOfNoReturn(o).then((v) => { r = v; });
+  await step(0.2);
+  A.eq(r, true); A.eq(said.length, 0, 'no warning when nothing is open');
+  // qa_side open (named, 心燈), qa_chore done (skipped), qa_never never started + its lantern unlit (counted)
+  delete G.state.lanterns.qa_l1; delete G.state.lanterns.qa_l2;
+  G.Quests.set('qa_side', 0); G.Quests.done('qa_chore');
+  const open = G.Story.openContent(o);
+  A.deep(open.quests.map((q) => q.id), ['qa_side']);
+  A.deep(open.lanterns, ['qa_l2'], 'qa_l1 belongs to an open quest (named), qa_l3 is out of reach (can() false)');
+  G.Debug.setAutoplay(true);
+  G.Debug.choices = [];
+  r = null;
+  S.pointOfNoReturn(o).then((v) => { r = v; });
+  await step(3);
+  A.eq(r, true, '「繼續」 is the first option, so autoplay carries on');
+  A.eq(said[0], '前方將無法回頭。尚有未完成的事：QA支線（心燈）、這一帶還有 1 盞心燈未點亮。確定要繼續嗎？');
+  // 「再等等」: false, a `once` event is re-armed and the player steps back
+  const ev = { id: 'qa_gate', once: true };
+  G.state.flags[G.mapScene.evKey(ev)] = true;
+  G.Debug.choices = ['再等等'];
+  r = null;
+  S.pointOfNoReturn(Object.assign({ event: ev, back: 'D' }, o)).then((v) => { r = v; });
+  await step(3);
+  A.eq(r, false);
+  A.eq(G.state.flags[G.mapScene.evKey(ev)], false, 'once event re-armed');
+  A.eq(G.mapScene.player.y, 4, 'player stepped back');
+  // English: the list is built from translated pieces and the frame is one template
+  G.settings.lang = 'en';
+  G.I18N.add({ QA支線: 'QA errand' });
+  said.length = 0;
+  G.Debug.choices = [];
+  S.pointOfNoReturn(o);
+  await step(3);
+  A.eq(G.I18N.t(said[0]), "There's no turning back past this point. Still unfinished: QA errand (heart lantern); heart lanterns still unlit around here: 1. Go on anyway?");
+  G.settings.lang = 'zh';
+  G.Dialog.say = say;
+  G.Debug.setAutoplay(false);
+});
+
 // ------------------------------------------------------------------ content-driven sanity
 test('content: every character can be created at lv 1..50 with finite positive stats', ({ G }) => {
   const real = Object.keys(G.Data.chars).filter((id) => !id.startsWith('qa_'));

@@ -1497,6 +1497,8 @@
     await H.fmove(S, 'yuyuan', 'L', { speed: 1.5 });
     S.emote('yuyuan', '♪');
     await S.say('', '（吃完飯，芋圓偷偷摸摸地爬向飛魚曬架……）');
+    // subtle hint: this is one of the trust checks behind the 拼板舟 心燈
+    await S.say('yungui:think', '（小聲）……在別人的家裡，規矩是大家一起守的。他們都看著呢。');
     const c = await S.choice(['抓住芋圓', '假裝沒看到']);
     if (c === 0) {
       await S.say('xinghe:angry', '芋圓！規矩第一條！');
@@ -3470,6 +3472,10 @@
       const r = await G.Mini.mash({ title: '練習・油柱', hint: '連按 Z 往上爬！（練習，不計輸贏）', time: 12, need: 36, rivals: [{ name: '阿坤', rate: 3.4 }] });
       await S.say('阿坤', r ? '不錯喔！手很穩！' : '牛油很滑吧？爬三下就要抹一次！');
     } else if (c === 1) {
+      // point of no return: 普渡 → 搶孤 → 關鬼門 runs straight into chapter 11
+      if (!(await S.pointOfNoReturn({ chapter: 10,
+        quests: ['q_c10_tatala', 'q_c10_race', 'q_c10_luohanjiao'],
+        lanterns: { xd_tao_tatala: 'q_c10_tatala', xd_luohanjiao: 'q_c10_luohanjiao' } }))) return;
       await S.say('阿坤', '好！七月廿九夜，普渡完就搶孤！');
       await S.fadeOut(1.0);
       V().c10_tc_time = 'pudu';

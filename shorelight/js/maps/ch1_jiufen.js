@@ -1958,7 +1958,13 @@
       { id: 'raid_salt', trigger: 'touch', x: 18, y: 15, w: 3, once: true, if: (st) => phase(st) === 'P4' && st.flags.ch1_night_raid, run: (S) => raidSalt(S) },
       { id: 'raid_finale', trigger: 'touch', x: 18, y: 4, w: 3, once: true, if: (st) => phase(st) === 'P4' && st.flags.ch1_night_raid, run: (S) => raidFinale(S) },
       // 1-24
-      { id: 'depart', trigger: 'touch', x: 18, y: 40, w: 3, once: true, if: (st) => st.flags.ch1_yuyuan && st.flags.mochi_joined && !st.flags.ch1_done, run: (S) => scene24(S) },
+      { id: 'depart', trigger: 'touch', x: 18, y: 40, w: 3, once: true, if: (st) => st.flags.ch1_yuyuan && st.flags.mochi_joined && !st.flags.ch1_done, run: async (S, e) => {
+        // point of no return: leaving 九份 ends chapter 1 (docs/qa/points_of_no_return.md)
+        if (!(await S.pointOfNoReturn({ chapter: 1, event: e, back: 'U',
+          quests: ['q_atu_watch', 'q_ahuang', 'q_xingmu'],
+          lanterns: { xd_atu_watch: 'q_atu_watch', xd_ahuang: 'q_ahuang' } }))) return;
+        await scene24(S);
+      } },
       { id: 'depart_gate', trigger: 'touch', x: 18, y: 40, w: 3, if: (st) => st.flags.ch1_yuyuan && !st.flags.mochi_joined, run: async (S) => {
         await S.say('xinghe:think', '……出發之前，先去聽雨樓跟鄭頭家說一聲吧。他早上好像在找我們。');
         await S.move('player', 'U');

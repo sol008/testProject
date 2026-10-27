@@ -1928,6 +1928,9 @@
           await S.say('', '前方地勢險峻，碎石坡一路往上。進入後將無法折返。');
           if ((F().ch7_sq_pasuya || 0) >= 1 && !S.has('ch7_heartlamp_tsou')) await S.say('xinghe:think', '……Voyu 拜託的事，還沒有給他答覆。');
           if (await S.choice(['繼續往上走', '先回頭'], { cancel: 1 }) !== 0) { await S.move('player', 'D'); return; }
+          // point of no return: no way back to 阿里山古道 / 鄒族大社 / 神木林 after this
+          if (!(await S.pointOfNoReturn({ chapter: 7, back: 'D',
+            quests: ['q_ch7_pasuya', 'q_ch7_salt'], lanterns: { lantern_tsou_hunter: 'q_ch7_pasuya' } }))) return;
           S.flag('ch7_upper');
           S.light({ ambient: 0.45, color: '#2a1840', playerR: 220 });
           S.bgm('mountain');
@@ -4735,6 +4738,9 @@
             return false;
           }
           if (await S.choice(['推開巨門', '再準備一下'], { cancel: 1 }) !== 0) { await S.move('player', 'D'); return false; }
+          // point of no return: 祠心 runs straight to the end of chapter 7
+          if (!(await S.pointOfNoReturn({ chapter: 7, back: 'D',
+            quests: ['q_ch7_murals'], lanterns: { lantern_lamp_murals: 'q_ch7_murals' } }))) return false;
           return true;
         } },
       ],

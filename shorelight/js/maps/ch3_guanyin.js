@@ -664,6 +664,8 @@
     let c = 1;
     if (!F('ch3_soldiers_done')) {
       await S.say('xinghe:normal', '……要去看看嗎？');
+      // subtle hint: the soldiers' 心燈 only starts if the party goes tonight (docs/qa/points_of_no_return.md)
+      await S.say('baizhi:think', '……那個鼓聲，好像只有今晚會響。');
       c = await S.choice(['去紅毛城看看', '先睡覺']);
     }
     if (c === 0) {
@@ -1901,6 +1903,10 @@
     await S.say('', '離開艋舺後，本地未完成的委託將無法再接。');
     const c = await S.choice(['出發，往竹塹', '再等一下'], { cancel: 1 });
     if (c !== 0) { await S.move('player', 'U'); return; }
+    // point of no return: chapter 3 ends here (淡水 stays reachable by ferry until then, so the soldiers count too)
+    if (!(await S.pointOfNoReturn({ chapter: 3, back: 'U',
+      quests: ['q_tamsui_soldiers', 'q_alian', 'q_xiaomei', 'q_feud'],
+      lanterns: { lantern_alian: 'q_alian', lantern_xiaomei: 'q_xiaomei', lantern_feud: 'q_feud' } }))) return;
     S.flag('ch3_done');
     S.quest('q_ch3_main', 'done');
     await S.fadeOut(1.2);
@@ -2506,6 +2512,8 @@
     await S.say('', '（雲歸摸出一張黃符。符上硃砂未乾。）');
     await S.say('yungui:serious', '封印符。貼上去，她會被請回去。秀蘭姑娘能醒過來。');
     await S.say('yungui:normal', '這是最安全的做法。……我不逼你們。');
+    // subtle hint: sealing her loses the 心燈「椅仔姑與花旦」
+    await S.say('baizhi:sad', '……貼了符，她就永遠看不到這齣戲了。');
     const c = await S.choice(['讓雲歸貼符，請她走', '問問秀蘭姑娘自己怎麼想']);
     if (c === 0) {
       await S.say('xinghe:sad', '……麻煩你了，雲歸。');

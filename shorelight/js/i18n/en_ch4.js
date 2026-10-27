@@ -1289,3 +1289,7 @@ G.I18N.add({
   '%s輕輕響了一聲。風車穩穩地轉著。': 'The %s rings softly. The windmill turns steadily.',
   '住一晚 %s 文。': 'A night\'s stay is %s coins.',
 });
+// point-of-no-return hint (docs/qa/points_of_no_return.md)
+G.I18N.add({
+  '細妹，莫放棄！唱贏阿福个人，德興伯有好東西相送喔！': 'Don\'t give up, lass! Whoever out-sings A-Fu gets something special from Uncle Dexing!',
+});

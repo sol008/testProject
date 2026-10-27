@@ -2822,15 +2822,12 @@
   async function innScene(S) {
     const ms = G.mapScene;
     if (G.state.vars.c5_inn_scene) return;
-    const pend = [];
-    if (!G.Quests.isDone('q_fubo')) pend.push('福伯');
-    if (G.state.quests.q_halfwell && !G.Quests.isDone('q_halfwell')) pend.push('半邊井');
-    if (pend.length) {
-      await S.say('蔡頭家', '客官要歇睏了？天就要光了。');
-      await S.say('', '（休息之後，故事會往前推進。還沒辦完的事，可能就來不及了。）');
-      const c = await S.choice(['休息', '還有事要辦'], { cancel: 1 });
-      if (c !== 0) { ms.c5innAsked = true; return; }
-    }
+    // point of no return: resting runs straight through 冬至 and 除夕 into chapter 6. Also warns when 半邊井 was never
+    // started (its 心燈 is counted, not named). Waiting keeps the inn's auto event quiet until the map is re-entered.
+    if (!(await S.pointOfNoReturn({ chapter: 5,
+      intro: [['蔡頭家', '客官要歇睏了？天就要光了。']],
+      quests: ['q_fubo', 'q_halfwell'],
+      lanterns: { lantern_fubo: 'q_fubo', lantern_halfwell: 'q_halfwell' } }))) { ms.c5innAsked = true; return; }
     G.state.vars.c5_inn_scene = true;
     await S.fadeOut(0.8);
     setTime(S, 3);

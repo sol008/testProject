@@ -2242,7 +2242,8 @@
     if (!S.has('ch6_yanshui')) return;
     await S.say('林伯', '轎夫都準備好了。你們呢？');
     const c = await S.choice(['開始吧。（蜂炮夜）', '再等一下'], { cancel: 1 });
-    if (c === 0) await Sc.beehive(S);
+    // point of no return: 阿義 leaves the main street once the 蜂炮夜 starts (his 心燈 quest must be started before)
+    if (c === 0 && await S.pointOfNoReturn({ chapter: 6, lanterns: { lantern_yanshui: 'q_yanshui_mother' } })) await Sc.beehive(S);
     else await S.say('林伯', '好。時辰到之前，記得衣服穿厚，斗笠戴好。');
   };
 
@@ -2488,7 +2489,8 @@
       await S.say('客棧老闆娘', '今暗看炮辛苦了！房間留給你們了——今年元宵，算我請客。');
       if (S.has('ch6_ayi_met') && !S.has('ch6_yanshui_done')) await S.say('yungui:think', '……大疫塚那邊，好像還有放不下的人。要先去看看嗎？');
       const c = await S.choice(['休息到天亮（前往府城）', '再逛一下'], { cancel: 1 });
-      if (c === 0) await Sc.toFucheng(S);
+      // point of no return: 鹽水 is a one-time map (an unstarted 阿義 quest was already closed by the 蜂炮夜)
+      if (c === 0 && await S.pointOfNoReturn({ chapter: 6, quests: ['q_yanshui_mother'] })) await Sc.toFucheng(S);
       return;
     }
     await S.say('客棧老闆娘', '今暗住我這，窗仔要關緊。炮會從窗仔飛進來。真的。');

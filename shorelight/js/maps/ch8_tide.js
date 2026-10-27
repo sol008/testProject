@@ -1733,6 +1733,8 @@
     await S.say('蚵殼阿嬤', '長明宮的人說，再等等，他就會想起來。');
     await S.say('蚵殼阿嬤', '可是你們說，我是不是傻？我覺得……他不是想回來。');
     await S.say('蚵殼阿嬤', '他只是……被人叫回來了。');
+    // subtle hint: only the honest answer leads to her 心燈
+    await S.say('hongying:think', '（小聲）……阿嬤要的不是安慰，是一句實話吧。');
     const c = await S.choice(['「阿嬤，您不傻。」', '「他會想起來的。」']);
     S.quest('q_ch8_oyster', 0);
     if (c === 0) {
@@ -1792,6 +1794,9 @@
     }
     const c = await S.choice(['出發，往南', '再等一下'], { cancel: 1 });
     if (c !== 0) { await S.move('player', 'L'); return; }
+    // point of no return: chapter 8 ends (蚵殼阿嬤's 心燈 is handed over at dawn, back on the beach)
+    if (!(await S.pointOfNoReturn({ chapter: 8, back: 'L',
+      quests: [{ id: 'q_ch8_oyster', lantern: (st) => st.flags.ch8_sq_oyster === 1 }] }))) return;
     await S.say('chenbo:normal', '走吧。王船不會自己來找我們。');
     await S.say('hongying:normal', '……嗯。');
     S.quest('q_ch8_tide', 'done');
@@ -2115,7 +2120,12 @@
     ],
     warps: [
       { x: 19, y: 43, w: 3, h: 1, to: 'anping', tx: 21, ty: 4, tdir: 'down' },
-      { x: 19, y: 1, w: 3, h: 1, to: 'anping_tower', tx: 12, ty: 18, tdir: 'up' },
+      { x: 19, y: 1, w: 3, h: 1, to: 'anping_tower', tx: 12, ty: 18, tdir: 'up', run: async (S) => {
+        // point of no return: the 觀潮台 runs on to dawn; 蚵殼阿嬤's 心燈 can only start before it (if met in 安平)
+        if (await S.pointOfNoReturn({ chapter: 8, lanterns: { lantern_oyster_grandma: { quest: 'q_ch8_oyster', can: (st) => !!st.flags.ch8_anping } } })) return true;
+        await S.move('player', 'D');
+        return false;
+      } },
     ],
     events: [
       { id: 'intro', trigger: 'auto', if: (st) => !st.flags.ch8_fort_intro, run: fortIntro },

@@ -1081,6 +1081,10 @@
   async function scene418(S) {
     const c = await S.choice(['前往鹿港', '再等一下'], { cancel: 1 });
     if (c !== 0) return false;
+    // point of no return: leaving 竹塹 ends chapter 4 (the caller steps the player back when they wait)
+    if (!(await S.pointOfNoReturn({ chapter: 4,
+      quests: ['q_yimin', 'q_mifen', 'q_persimmon', 'q_leicha', 'q_shange_yungui'],
+      lanterns: { lantern_yimin: 'q_yimin', lantern_mifen_mother: 'q_mifen' } }))) return false;
     await S.fadeOut(0.6);
     S.bgm('pingxi');
     S.hideFollowers(true);
@@ -1981,6 +1985,8 @@
       }
       if (mine > theirs) { win = true; break; }
       await S.say('阿福', '哈！這局係𠊎贏！');
+      // subtle hint: only a win earns 德興伯's 山歌竹笛 (giving up loses it for good)
+      await S.say('庄民', '細妹，莫放棄！唱贏阿福个人，德興伯有好東西相送喔！');
       const c = await S.choice(['再唱一遍', '認輸']);
       if (c === 1) break;
     }

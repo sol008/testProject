@@ -1791,7 +1791,7 @@
         ...(o.events || []),
       ],
       warps: [
-        { x: 11, y: 3, to: o.up, tx: o.upX || 11, ty: o.upY || 20, tdir: 'up', if: upOk },
+        { x: 11, y: 3, to: o.up, tx: o.upX || 11, ty: o.upY || 20, tdir: 'up', if: upOk, run: o.upRun },
         n === 1 ? { x: 10, y: 21, w: 3, to: 'farshore_field', tx: 27, ty: 4, tdir: 'down', door: true }
           : { x: 11, y: 21, to: 'farshore_tower_' + (n - 1), tx: 11, ty: 5, tdir: 'down' },
       ],
@@ -1844,6 +1844,12 @@
   ];
   tower(5, { name: '燈塔五樓・燈之層', up: 'farshore_tower_top', upX: 7, upY: 11, echo: (S) => H.c11_22(S),
     upOk: (st) => !!st.flags.ch11_warden,
+    // point of no return: 燈心之門 runs on to the finale; the memory lamps stay on this floor
+    upRun: async (S) => {
+      if (await S.pointOfNoReturn({ chapter: 11, quests: ['q_baizhi_memory'], lanterns: { lantern_baizhi_memory: 'q_baizhi_memory' } })) return true;
+      S.setPos('player', 11, 4, 'down');
+      return false;
+    },
     blocked: '石階口，站著一具高大的青銅守燈人。',
     bgm: (st) => (st.flags.ch11_tower_5 && !st.flags.ch11_warden ? 'farshore' : 'lighthouse'),
     chests: [{ id: 'c11_t5', x: 14, y: 4, item: 'huanhundan', n: 2, run: async (S) => { await S.give('c11_lamp_oil', 2); } }],
@@ -2222,10 +2228,12 @@
       const c = await S.choice(['出航（出航後無法返回澎湖）', '在船艙休息', '再等一下'], { cancel: 2 });
       if (c === 1) { await cabinRest(S); return; }
       if (c !== 0) { await S.say('chenbo:normal', '想做什麼就去做。我在這裡等。'); return; }
-      if (!F('ch11_weir_done') && F('ch11_tianhou')) {
-        await S.say('', '麻糬望著媽宮的方向，輕輕叫了一聲。'); await S.say('yungui:think', '……石滬那邊，還有人在哭。');
-        if (await S.choice(['還是出航', '等一下'], { cancel: 1 }) !== 0) return;
+      // point of no return: 澎湖 is left behind for good (the shared warning lists what is still open there)
+      const penghu = { chapter: 11, quests: ['q_penghu_weir', 'q_ch11_treasure'], lanterns: { lantern_penghu_weir: 'q_penghu_weir' } };
+      if (!F('ch11_weir_done') && F('ch11_tianhou') && G.Story.openContent(penghu).any) {
+        penghu.intro = [['', '麻糬望著媽宮的方向，輕輕叫了一聲。'], ['yungui:think', '……石滬那邊，還有人在哭。']];
       }
+      if (!(await S.pointOfNoReturn(penghu))) return;
       await H.c11_11(S);
       return;
     }
@@ -2242,7 +2250,11 @@
     else if (a === 'save') await S.saveMenu();
     else if (a === 'kun') { await seaEncounter(S); await H.c11_14(S); }
     else if (a === 'ts') { await seaEncounter(S); await H.tangshan1(S); }
-    else if (a === 'fog') await H.c11_15(S);
+    else if (a === 'fog') {
+      // point of no return: the 溺魂暗流 (and the 唐山阿伯's 心燈) is only reachable before the 無光之霧
+      if (await S.pointOfNoReturn({ chapter: 11,
+        lanterns: { lantern_tangshan: { quest: 'q_tangshan', can: () => G.Inv.has('c11_blacktide_chart') && !F('ch11_tangshan_met') } } })) await H.c11_15(S);
+    }
   };
 
   // ---------------------------------------------------------------- 11-02 媽宮・潮停

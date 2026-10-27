@@ -478,6 +478,14 @@ G.I18N.add({
   // ------------------------------------------------------------------ heart lantern fanfare (fx.js)
   '已點亮的心燈：%s': 'Heart lanterns lit: %s',
 
+  // ------------------------------------------------------------------ point-of-no-return warning (story.js G.Story.pointOfNoReturn)
+  // the %s list is assembled from already-translated pieces ('; '-separated in English)
+  '前方將無法回頭。尚有未完成的事：%s。確定要繼續嗎？': "There's no turning back past this point. Still unfinished: %s. Go on anyway?",
+  '（心燈）': ' (heart lantern)',
+  '這一帶還有 %s 盞心燈未點亮': 'heart lanterns still unlit around here: %s',
+  '繼續': 'Go on',
+  '再等等': 'Not yet',
+
   // ------------------------------------------------------------------ story bootstrap & credits
   '（未完待續）': '(To be continued)',
   '下一章正在趕工中……': 'The next chapter is still being written…',

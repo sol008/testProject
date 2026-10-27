@@ -2388,7 +2388,10 @@
     if (k === 'south') { await capeBlocked(S); return; }
     if (k === 'east') {
       const ok = await S.choice(['出航（之後將無法再回到南部海域）', '再等等'], { cancel: 1 });
-      if (ok === 0) await chapterEnd(S);
+      // point of no return: the 王船 rides the 黑潮 north and never comes back to the southern ports
+      if (ok === 0 && await S.pointOfNoReturn({ chapter: 9,
+        quests: ['q_ch9_banping', 'q_ch9_names', 'q_ch9_lighthouse'],
+        lanterns: { xd_banpingshan: 'q_ch9_banping', xd_yueqin_names: 'q_ch9_names', xd_lighthouse_home: 'q_ch9_lighthouse' } })) await chapterEnd(S);
       return;
     }
     await sail(S, k);

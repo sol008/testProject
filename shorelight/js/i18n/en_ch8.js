@@ -981,3 +981,7 @@ G.I18N.add({
   '三月・北港迎媽祖': 'Third Month · Welcoming Mazu at Beigang',
   '下了山，沿著溪往海口去……': 'Down from the mountains, following the river toward the sea…',
 });
+// point-of-no-return hint (docs/qa/points_of_no_return.md)
+G.I18N.add({
+  '（小聲）……阿嬤要的不是安慰，是一句實話吧。': '(Quietly) …She isn\'t asking to be comforted. She wants the truth.',
+});
