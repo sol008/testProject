@@ -7,8 +7,10 @@
 #
 # The zip unpacks to one folder, Shorelight/, containing exactly what the game needs: index.html, css/, every
 # script index.html loads (js/**, incl. the bundled font js/core/fontdata.js), the macOS launcher (executable),
-# PLAYING.md, LICENSES.txt, fonts/OFL.txt, and electron-main.js + package.json for building the optional desktop app.
-# Never included: tools/ (tests, previews, build scripts), docs/, design sources, screenshots/, node_modules/, dist/.
+# PLAYING.md, LICENSES.txt, fonts/OFL.txt, electron-main.js + package.json for building the optional desktop app, and the
+# strategy guide GUIDE/攻略.html (self-contained) + GUIDE/攻略.md (+ GUIDE/img/ for the Markdown) from docs/guide/
+# (rebuild it first with `node tools/guide/build_guide.js` when the game data changed).
+# Never included: tools/ (tests, previews, build scripts), the rest of docs/, design sources, screenshots/, node_modules/, dist/.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -65,6 +67,16 @@ fi
 # 3. launcher, docs, licenses, optional Electron wrapper
 cp "Play Shorelight.command" PLAYING.md LICENSES.txt electron-main.js package.json "$STAGE/"
 mkdir -p "$STAGE/fonts" && cp fonts/OFL.txt "$STAGE/fonts/"
+
+# 3b. strategy guide 《彼岸燈 完全攻略》 next to PLAYING.md
+if [ -f docs/guide/guide_zh.html ]; then
+  mkdir -p "$STAGE/GUIDE"
+  cp docs/guide/guide_zh.html "$STAGE/GUIDE/攻略.html"
+  [ -f docs/guide/guide_zh.md ] && cp docs/guide/guide_zh.md "$STAGE/GUIDE/攻略.md"
+  if [ -d docs/guide/img ]; then mkdir -p "$STAGE/GUIDE/img" && cp docs/guide/img/*.* "$STAGE/GUIDE/img/" 2>/dev/null || true; fi
+else
+  echo "  ! docs/guide/guide_zh.html not found — run: node tools/guide/build_guide.js (shipping without the guide)" >&2
+fi
 
 # 4. normalise permissions (the launcher must stay executable inside the zip) and drop OS junk
 find "$STAGE" -type d -exec chmod 755 {} +

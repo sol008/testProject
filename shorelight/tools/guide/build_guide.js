@@ -272,8 +272,6 @@ function parseBalance() {
     return { ch: +r[0], bossLv: [bl[0], bl[1] || bl[0]], minimal: lv(r[2]), normal: lv(r[3]), thorough: lv(r[4]),
       gold: { minimal: gold[0], normal: gold[1], thorough: gold[2] }, normalEntryGold: parseInt(ent[0], 10), fieldFights: parseFloat(ent[1]) };
   });
-  const results = tableAfter('| Fight | Ch | Lv |').length ? null : null;
-  void results;
   const resRows = (() => {
     const i = md.indexOf('| Fight | Ch | Lv |');
     const out = [];
@@ -336,6 +334,17 @@ const addSrc = (id, s) => { (SOURCES[id] = SOURCES[id] || []); if (!SOURCES[id].
 for (const sh of SHOPS) { for (const id of sh.items) addSrc(id, `${CH_SHORT(sh.ch)}・${sh.title}`); for (const id of sh.cond) addSrc(id, `${CH_SHORT(sh.ch)}・${sh.title}（限時）`); }
 for (const ch of CHS) for (const c of CHESTS[ch]) if (c.item) addSrc(c.item, `${CH_SHORT(ch)}・${c.mapName}寶箱`);
 for (const id in G.Data.enemies) { if (ENEMY_CH[id] == null) continue; for (const dr of G.Data.enemies[id].drops || []) addSrc(dr.item, `掉落：${G.Data.enemies[id].name}（${Math.round(dr.rate * 100)}%）`); }
+// story / event gifts: any quoted mention of an item id in a chapter script (definitions and the debug-only
+// "standalone start" kits excluded) means the story hands it over somewhere
+const STORY_ITEMS = new Set();
+for (const ch of CHS) {
+  for (const line of D.src[ch].split('\n')) {
+    if (/const (?:kit|gear) = \{|for \(const \[it, n\] of \[\[/.test(line)) continue;
+    for (const m of line.matchAll(/'([a-z0-9_]+)'(?!\s*,\s*\{)/g)) if (G.Data.items[m[1]]) STORY_ITEMS.add(m[1]);
+  }
+}
+for (const c of Object.values(G.Data.chars)) for (const v of Object.values(c.equip || {})) if (v) STORY_ITEMS.add(v);
+const obtainable = (id) => !!(SOURCES[id] || STORY_ITEMS.has(id));
 
 // =====================================================================================================================
 // 3. formatting helpers
@@ -485,7 +494,7 @@ TABLES.enemies = (arg) => {
   return list.length ? mdTable(ENEMY_HEAD, enemyRows(list), ['l', 'r', 'r', 'c', 'l', 'l', 'r', 'r', 'l']) : '（本章沒有一般敵人。）';
 };
 TABLES.items = (type) => {
-  const ids = Object.keys(G.Data.items).filter((id) => G.Data.items[id].type === type && !/^qa_|^test_/.test(id) && (ITEM_CH[id] != null || G.Data.items[id].ch != null));
+  const ids = Object.keys(G.Data.items).filter((id) => G.Data.items[id].type === type && !/^qa_|^test_/.test(id) && (ITEM_CH[id] != null || G.Data.items[id].ch != null) && obtainable(id));
   const chOf = (id) => (ITEM_CH[id] != null ? ITEM_CH[id] : G.Data.items[id].ch);
   ids.sort((a, b) => chOf(a) - chOf(b) || (G.Data.items[a].price || 0) - (G.Data.items[b].price || 0));
   const equip = ['weapon', 'armor', 'head', 'feet', 'acc'].includes(type);
@@ -494,8 +503,8 @@ TABLES.items = (type) => {
     const src = (SOURCES[id] || []).slice(0, 3).join('；') + ((SOURCES[id] || []).length > 3 ? '…' : '');
     if (type === 'key') return [it.name, CH_SHORT(chOf(id)), it.desc || ''];
     if (type === 'material') return [it.name, CH_SHORT(chOf(id)), it.price ? fmtN(Math.floor(it.price / 2)) : '—', it.desc || ''];
-    return equip ? [it.name, CH_SHORT(chOf(id)), whoStr(it), itemEffect(it), it.price ? fmtN(it.price) : '—', src || '劇情／任務']
-      : [it.name, CH_SHORT(chOf(id)), itemEffect(it), it.price ? fmtN(it.price) : '—', src || '劇情／任務'];
+    return equip ? [it.name, CH_SHORT(chOf(id)), whoStr(it), itemEffect(it), it.price ? fmtN(it.price) : '—', src || '劇情／事件']
+      : [it.name, CH_SHORT(chOf(id)), itemEffect(it), it.price ? fmtN(it.price) : '—', src || '劇情／事件'];
   });
   if (type === 'key') return mdTable(['名稱', '章', '說明'], rows);
   if (type === 'material') return mdTable(['名稱', '章', '賣價（文）', '說明'], rows, ['l', 'l', 'r', 'l']);
@@ -560,16 +569,34 @@ TABLES.gear = (cid) => {
   }
   return mdTable(['章', ...Object.values(SLOT)], rows);
 };
+TABLES.exclusive = (cid) => {
+  const ids = Object.keys(G.Data.items).filter((id) => { const it = G.Data.items[id]; return it.who && it.who.length === 1 && it.who[0] === cid && SLOT[it.type] && (ITEM_CH[id] != null || it.ch != null) && obtainable(id); });
+  const chOf = (id) => (ITEM_CH[id] != null ? ITEM_CH[id] : G.Data.items[id].ch);
+  ids.sort((a, b) => chOf(a) - chOf(b) || (G.Data.items[a].price || 0) - (G.Data.items[b].price || 0));
+  return mdTable(['章', '裝備', '欄位', '能力', '價格', '取得'], ids.map((id) => {
+    const it = G.Data.items[id];
+    return [CH_SHORT(chOf(id)), it.name, SLOT[it.type], itemEffect(it), it.price ? fmtN(it.price) : '—', (SOURCES[id] || []).join('；') || (Object.values(G.Data.chars).some((c) => Object.values(c.equip || {}).includes(id)) ? '初始裝備' : '劇情／事件')];
+  }), ['l', 'l', 'l', 'l', 'r', 'l']);
+};
 TABLES.combos = () => {
   const rows = Object.entries(G.Data.skills).filter(([, s]) => s.combo).map(([, s]) => [s.name, s.combo.map(CHAR_NAME).join('＋'), s.mp + '（每人）', s.comboLv ? 'Lv ' + s.comboLv : '—', skillEffect(s), s.desc || '']);
   return mdTable(['合擊', '成員', '真氣', '需要等級', '效果', '說明'], rows);
 };
-TABLES.cats = () => {
-  const s = G.Data.skills.bz_maomi;
+TABLES.cats = (arg) => {
+  const s = G.Data.skills[arg || 'bz_maomi'];
   const tot = s.outcomes.reduce((a, o) => a + (o.w || 1), 0);
   const catName = { yuyuan: '芋圓', mochi: '麻糬', both: '芋圓＋麻糬' };
   const rows = s.outcomes.map((o) => { const k = G.Data.skills[o.skill]; return [catName[o.cat] || o.cat, k.name, `${Math.round((o.w / tot) * 1000) / 10}%`, skillEffect(k), o.text]; });
   return mdTable(['出場', '招式', '機率', '效果', '戰鬥訊息'], rows, ['l', 'l', 'r', 'l', 'l']);
+};
+TABLES.exp = () => {
+  const rows = [];
+  let tot = 0;
+  const cum = {};
+  for (let lv = 1; lv < 50; lv++) { cum[lv] = tot; tot += G.Party.expToNext(lv); }
+  cum[50] = tot;
+  for (let lv = 5; lv <= 50; lv += 5) rows.push(['Lv ' + lv, lv < 50 ? fmtN(G.Party.expToNext(lv)) : '（上限）', fmtN(cum[lv])]);
+  return mdTable(['等級', '升下一級所需經驗', '從 Lv1 累計'], rows, ['l', 'r', 'r']);
 };
 TABLES.statuses = () => mdTable(['狀態', '效果'], [
   ['中毒', '每回合開始時損失最大生命的 6%。'],
@@ -591,7 +618,7 @@ TABLES.difficulty = () => mdTable(['項目', '劇情', '普通', '困難'], [
 ], ['l', 'r', 'r', 'r']);
 TABLES.progression = () => mdTable(['章', '標題', '區域等級', '隊伍', '頭目設計等級'], G.Data.progression.map((p) => {
   const b = BAL.levels.find((l) => l.ch === p.ch);
-  return [CH_SHORT(p.ch), CH_TITLE(p.ch).replace(/^\S+　/, ''), `${p.lv[0]}–${p.lv[1]}`, p.party.map(CHAR_NAME).join('、'), b ? (b.bossLv[0] === b.bossLv[1] ? b.bossLv[0] : b.bossLv.join('–')) : '—'];
+  return [CH_SHORT(p.ch), CH_TITLE(p.ch).replace(/^\S+　/, ''), p.lv[0] === p.lv[1] ? String(p.lv[0]) : `${p.lv[0]}–${p.lv[1]}`, p.party.map(CHAR_NAME).join('、'), b ? (b.bossLv[0] === b.bossLv[1] ? b.bossLv[0] : b.bossLv.join('–')) : '—'];
 }));
 TABLES.lanterns = () => {
   const Q = G.Data.quests;
@@ -832,8 +859,6 @@ const CH_PLACES = (() => {
 function chartRoute(hl) {
   const W = 520, H = 700;
   const lon0 = 118.75, lon1 = 122.15, lat0 = 25.45, lat1 = 21.75;
-  const kx = W / (lon1 - lon0), ky = H / (lat0 - lat1), k = Math.min(kx, ky / Math.cos(23.5 * Math.PI / 180) * 1) ;
-  void k;
   const sx = (W - 20) / (lon1 - lon0), sy = sx / Math.cos(23.7 * Math.PI / 180);
   const P = (lon, lat) => [10 + (lon - lon0) * sx, 10 + (lat0 - lat) * sy];
   const Hh = Math.ceil(20 + (lat0 - lat1) * sy);
@@ -1000,7 +1025,7 @@ function mdToHtml(md, ctx) {
     const para = [];
     while (i < lines.length && lines[i].trim() && !(para.length && blockStart(lines[i].trim()))) para.push(lines[i++]);
     const pt = joinLines(para);
-    if (/^<img [^>]*>$/.test(inline(pt))) out.push(`<p class="pic">${inline(pt)}</p>`);
+    if (/^<img [^>]*>$/.test(inline(pt))) out.push(`<p class="pic${/src="img\/portrait_/.test(inline(pt)) ? ' portrait-wrap' : ''}">${inline(pt)}</p>`);
     else out.push(`<p>${inline(pt)}</p>`);
   }
   return out.join('\n');
@@ -1034,6 +1059,7 @@ function assemble() {
 function expand(md) {
   const raw = [];
   const charts = [];
+  const figIds = new Set();
   const htmlSrc = [], mdOut = [];
   for (const line of md.split('\n')) {
     const m = /^\s*<!--\s*(chart|table|include):([\w:-]+)\s*-->\s*$/.exec(line);
@@ -1043,7 +1069,10 @@ function expand(md) {
     const f = chartById(m[2]);
     if (!f) continue;
     charts.push(f);
-    raw.push(`<figure class="chart-fig" id="fig-${f.id}"><figcaption><span class="fig-title">${esc(f.title)}</span><span class="fig-sub">${esc(f.sub)}</span></figcaption>${f.svg}` +
+    let fid = 'fig-' + f.id, k = 2;
+    while (figIds.has(fid)) fid = 'fig-' + f.id + '-' + k++;
+    figIds.add(fid);
+    raw.push(`<figure class="chart-fig" id="${fid}"><figcaption><span class="fig-title">${esc(f.title)}</span><span class="fig-sub">${esc(f.sub)}</span></figcaption>${f.svg}` +
       (f.tableMd ? `\n@@TABLE:${raw.length}@@` : '') + '</figure>');
     if (f.tableMd) f.rawIndex = raw.length - 1;
     htmlSrc.push('', `@@RAW:${raw.length - 1}@@`, '');

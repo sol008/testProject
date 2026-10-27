@@ -99,7 +99,9 @@ blockquote.tip { border-left-color: var(--tip-line); background: var(--tip); }
 blockquote p { margin: .3em 0; }
 p.pic { text-align: center; }
 main img { max-width: 100%; height: auto; border-radius: 10px; box-shadow: var(--shadow); }
-img.portrait { float: right; width: 220px; margin: 0 0 12px 18px; box-shadow: none; }
+p.portrait-wrap { float: right; width: 230px; margin: 4px 0 12px 20px; }
+p.portrait-wrap img { box-shadow: none; border-radius: 14px; background: linear-gradient(180deg, var(--th), transparent); }
+main h1, main h2 { clear: both; }
 pre { background: var(--code); padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 14px; line-height: 1.55; }
 pre code { background: none; padding: 0; }
 
@@ -153,7 +155,7 @@ details.chart-data > summary { cursor: pointer; color: var(--muted); font-size: 
   .toc { position: static; max-height: none; }
   .toc-box:not([open]) { padding-bottom: 10px; }
   .char-card { grid-template-columns: minmax(0, 1fr); }
-  img.portrait { float: none; display: block; margin: 0 auto 12px; width: 180px; }
+  p.portrait-wrap { float: none; width: 180px; margin: 0 auto 12px; }
 }
 @media (max-width: 560px) {
   body { font-size: 15.5px; }
