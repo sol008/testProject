@@ -283,7 +283,7 @@ for (const [id, it] of Object.entries(items)) {
     if (u.damage && !['enemy', 'enemies'].includes(u.target)) warn('items', `${id}: damage item targets '${u.target}'`, w());
     const effects = ['heal', 'healPct', 'mp', 'mpPct', 'revive', 'cure', 'status', 'buffs', 'damage', 'vision', 'fieldRun', 'gauge'];
     if (!effects.some((k) => u[k] != null)) warn('items', `${id}: use{} has no effect the engine understands (${Object.keys(u).join(',')})`, w());
-    if (u.revive && u.target !== 'deadAlly') warn('items', `${id}: revive item targets '${u.target}' (expected deadAlly)`, w());
+    if (u.revive && u.target !== 'deadAlly' && u.target !== 'allies') warn('items', `${id}: revive item targets '${u.target}' (expected deadAlly, or allies for a whole-party revive)`, w());
   }
 }
 
