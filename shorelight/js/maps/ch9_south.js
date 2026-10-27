@@ -1988,6 +1988,8 @@
     await xunjingShow(S, 0);
     await S.say('添丁伯', '（遠遠地）出巡要穿號衣，千歲爺才認得是自己人——');
     await S.give('c9_ar_haoyi', 3);
+    // the rudder, the sail and the dragon eyes are on the 王船 now (令旗 and 巡境圖 stay with the party for the 巡境)
+    for (const k of ['c9_key_rudder', 'c9_key_sail', 'c9_key_eye']) S.take(k, 99);
     S.flag('ch9_wangboat_launch');
     V().ch9_port = 'donggang';
     V().ch9_deck_night = false;
