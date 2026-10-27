@@ -1017,6 +1017,7 @@
         // candle glow visible through the door
         mk(g, G3.cbox(0.06, 0.08, 0.06), GLOW('ember', null, 2.5), { p: [0, 0.16, 0], c: '#ffd080', noAO: true });
       }, { ao: 0 });
+      fl.scale.setScalar(1.2); // story prop: a touch larger than life so the surname plaque reads from the game camera
       root.add(fl);
       return tagged(root);
     },
@@ -1140,8 +1141,8 @@
     mk(g, G3.lathe(pts, 18, 'native'), MAT('ceramic'), { p: [x, 0, z], c: o.col || '#6e3c1e', r: [0, o.ry || 0, 0] });
     if (o.cloth) {
       mk(g, G3.lathe([[R * 0.62, H * 0.86], [R * 0.56, H * 0.93], [R * 0.52, H * 1.0], [R * 0.4, H * 1.06], [R * 0.15, H * 1.1], [0, H * 1.11]], 12), MAT('cloth'), { p: [x, 0, z], c: '#c8342a' });
-      mk(g, G3.torus(R * 0.47, 0.008, 4, 14), MAT('plain'), { p: [x, H * 0.95, z], r: [PI / 2, 0, 0], c: '#e8c070' });
-    } else mk(g, G3.cyl(R * 0.37, R * 0.37, 0.004, 12), MAT('plain'), { p: [x, H * 0.93, z], c: '#140a06', noAO: true });
+      mk(g, G3.torus(R * 0.47, 0.008, 4, 14), MAT('cloth'), { p: [x, H * 0.95, z], r: [PI / 2, 0, 0], c: '#e8c070' });
+    } else mk(g, G3.cyl(R * 0.37, R * 0.37, 0.004, 12), MAT('ceramic'), { p: [x, H * 0.93, z], c: '#140a06', noAO: true });
     if (o.label) mk(g, decal(R * 0.9, R * 0.9, R), TMAT('label:' + o.label, labelTex(o.label), { alphaTest: 0.4, roughness: 0.75 }), { p: [x, H * 0.47 - R * 0.45, z + R + 0.004], cast: false });
   }
   def('jar', {
@@ -1201,7 +1202,7 @@
   function addWheel(g, x, y, z) {
     const W = MAT('wood'), R = 0.34;
     mk(g, G3.torus(R - 0.02, 0.028, 4, 16), W, { p: [x, y, z], c: '#7a5434' });
-    mk(g, G3.torus(R + 0.006, 0.014, 3, 16), MAT('plain'), { p: [x, y, z], c: '#3a3634' }); // iron tyre
+    mk(g, G3.torus(R + 0.006, 0.014, 3, 16), W, { p: [x, y, z], c: '#2e2a28' }); // iron tyre
     mk(g, G3.cyl(0.06, 0.06, 0.1, 10), W, { p: [x, y, z - 0.05], r: [PI / 2, 0, 0], c: '#5a3a22' });
     for (let k2 = 0; k2 < 8; k2++) mk(g, G3.cbox(0.03, R * 0.95, 0.03), W, { p: [x + cos(k2 * PI / 4) * R * 0.48, y + sin(k2 * PI / 4) * R * 0.48, z], r: [0, 0, k2 * PI / 4 - PI / 2], c: '#6a4a2a' });
   }
@@ -1229,7 +1230,7 @@
       addSack(g, -0.42, 0.04, 0.34, 0.27, 0.28, { y: by + 0.3, label: '米', rz: 0.1, col: '#e0d2ae' });
       addSack(g, -0.55, 0.18, 0.3, 0.26, 0.26, { y: by + 0.03, col: '#cbb890' });
       const jg = new THREE.Group(); jg.position.y = by + 0.03; g.add(jg); addJar(jg, 0.2, 0.12, 0.13, 0.32, { cloth: true });
-      mk(g, G3.tube([V3(-0.05, by + 0.32, -0.36), V3(-0.3, by + 0.62, 0), V3(-0.55, by + 0.32, 0.36)], 0.008, 12, 4), MAT('plain'), { c: '#c8b070', cast: false }); // lashing rope
+      mk(g, G3.tube([V3(-0.05, by + 0.32, -0.36), V3(-0.3, by + 0.62, 0), V3(-0.55, by + 0.32, 0.36)], 0.008, 12, 4), MAT('cloth'), { c: '#c8b070', cast: false }); // lashing rope
       return tagged(bake(g));
     },
   });
@@ -1454,7 +1455,7 @@
         mk(g, G3.cyl(0.07, 0.09, 0.1, 8), MAT('stone'), { p: [s * px, 0, 0], c: '#8a857a' });
         mk(g, G3.cyl(0.03, 0.035, py - 0.04, 7), B, { p: [s * px, 0.02, 0], r: [0, 0, s * 0.02], c: '#c2b46a' });
         for (const f of [-1, 1]) mk(g, G3.cyl(0.018, 0.022, 0.22, 6), B, { p: [s * px, py - 0.12, 0], r: [f * 0.42, 0, 0], c: '#b8aa60' });
-        mk(g, G3.torus(0.035, 0.008, 3, 8), MAT('plain'), { p: [s * px, py - 0.1, 0], r: [PI / 2, 0, 0], c: '#6a5030', cast: false });
+        mk(g, G3.torus(0.035, 0.008, 3, 8), B, { p: [s * px, py - 0.1, 0], r: [PI / 2, 0, 0], c: '#6a5030', cast: false });
       }
       mk(g, G3.rod(0.022, Wd - 0.05, 7), B, { p: [0, py, 0], c: '#b0a45e' });
       const n = max(2, floor((Wd * 64 - 24) / 24));
@@ -1468,7 +1469,7 @@
         const uv = pl.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setX(j, (kind + uv.getX(j)) / 3);
         const top = py - 0.01;
         mk(g, pl, mat, { p: [x, top, 0.005], r: [0, (r() - 0.5) * 0.3, 0], c: CLOTHES[(i * 2 + Wd) % CLOTHES.length], wave: { axis: 'y', from: top, to: top - h, amp: 0.07, ph: i * 1.3, pow: 1.3 } });
-        for (const s of [-1, 1]) mk(g, G3.cbox(0.018, 0.05, 0.03), MAT('plain'), { p: [x + s * w * 0.32, top - 0.005, 0.02], c: '#a8865a', cast: false });
+        for (const s of [-1, 1]) mk(g, G3.cbox(0.018, 0.05, 0.03), B, { p: [x + s * w * 0.32, top - 0.005, 0.02], c: '#a8865a', cast: false });
       }
       return tagged(bake(g));
     },
@@ -1535,7 +1536,7 @@
       blob(g, S, [0, hy - 0.035, hz + 0.21], [0.045, 0.032, 0.03], C);
       for (const s of [-1, 1]) {
         blob(g, S, [s * 0.065, hy + 0.06, hz + 0.12], [0.042, 0.042, 0.035], '#dedad0', { ws: 7, hs: 5 });
-        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.152], [0.016, 0.016, 0.01], '#5e5a50', { ws: 6, hs: 4 });
+        blob(g, S, [s * 0.065, hy + 0.06, hz + 0.152], [0.016, 0.016, 0.01], '#5e5a50', { ws: 5, hs: 3 });
         mk(g, G3.cbox(0.09, 0.028, 0.05), S, { p: [s * 0.068, hy + 0.105, hz + 0.125], r: [0, 0, s * 0.3], c: C });
         blob(g, S, [s * 0.15, hy + 0.12, hz - 0.02], [0.04, 0.03, 0.025], C, { ws: 6, hs: 4 });
       }
@@ -1627,8 +1628,8 @@
       mk(g, G3.rod(0.016, 0.24, 6), W, { p: [px, 0.38, 0], r: [0, PI / 2, 0], c: '#3a2a1a' });
       mk(g, G3.cyl(0.035, 0.045, 2.78, 9), W, { p: [px, 0, 0], c: '#7a5434' });
       mk(g, G3.rod(0.02, 0.6, 6), W, { p: [px + 0.28, 2.56, 0], c: '#4a3020' });
-      mk(g, G3.sphere(0.045, 9, 7), MAT('metal'), { p: [px, 2.84, 0], c: '#d8a840' });
-      mk(g, G3.cyl(0.0, 0.03, 0.12, 6), MAT('metal'), { p: [px, 2.86, 0], c: '#d8a840' });
+      mk(g, G3.sphere(0.045, 9, 7), W, { p: [px, 2.84, 0], c: '#e0b048' });
+      mk(g, G3.cyl(0.0, 0.03, 0.12, 6), W, { p: [px, 2.86, 0], c: '#e0b048' });
       const fw = 0.56, fh = 1.5;
       const pl = new THREE.PlaneGeometry(fw, fh, 8, 12); pl.translate(px + 0.035 + fw / 2, 2.54 - fh / 2, 0);
       mk(g, pl, TMAT('banner:' + L.col + L.edge + L.txt, bannerTex(L.col, L.edge, L.txt), { alphaTest: 0.5, roughness: 0.9, side: THREE.DoubleSide }, 'wave'),
@@ -1734,13 +1735,13 @@
         mk(g, G3.rbox(0.34, 0.05, 0.16, 0.012), S, { p: [0, 0.1, 0.27], c: '#b4b0a4' });
         for (const s of [-1, 1]) mk(g, G3.box(0.05, 0.1, 0.12), S, { p: [s * 0.12, 0, 0.27], c: '#9a968a' });
         mk(g, G3.cyl(0.04, 0.035, 0.05, 10), S, { p: [0, 0.15, 0.27], c: '#6a5a3a' });
-        for (let i = -1; i <= 1; i++) mk(g, G3.cyl(0.003, 0.003, 0.13, 3), MAT('plain'), { p: [i * 0.012, 0.18, 0.27], r: [0, 0, i * 0.15], c: '#a8322a', cast: false });
+        for (let i = -1; i <= 1; i++) mk(g, G3.cyl(0.003, 0.003, 0.13, 3), S, { p: [i * 0.012, 0.18, 0.27], r: [0, 0, i * 0.15], c: '#a8322a', cast: false });
         mk(g, G3.rbox(0.09, 0.16, 0.045, 0.012), S, { p: [-0.33, 0, 0.3], c: '#a8a498' });
         const r = rng(9);
         for (let i = 0; i < 6; i++) {
           const a = r() * TAU, d = r() * 0.22, x = cos(a) * d * 1.2, z = -0.16 + sin(a) * d;
           const y = 0.26 * Math.sqrt(max(0, 1 - (x / 0.4) ** 2 - ((z + 0.14) / 0.32) ** 2));
-          mk(g, G3.cbox(0.08, 0.004, 0.1), MAT('plain'), { p: [x, y + 0.004, z], r: [-(z + 0.14) * 1.4, r() * 3, x * 1.2], c: i % 3 ? '#e0c050' : '#c83a2a', cast: false });
+          mk(g, G3.cbox(0.08, 0.004, 0.1), S, { p: [x, y + 0.004, z], r: [-(z + 0.14) * 1.4, r() * 3, x * 1.2], c: i % 3 ? '#e0c050' : '#c83a2a', cast: false });
           blob(g, S, [x, y + 0.012, z], [0.018, 0.012, 0.016], '#8a867c', { ws: 5, hs: 4 });
         }
         tufts(g, [[-0.38, -0.42], [0.36, -0.4], [0.47, 0.32], [-0.46, 0.36], [0.2, 0.42, 0.7], [-0.15, -0.5, 0.8]]);
@@ -1751,7 +1752,7 @@
         const cap = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12, 1, false, -PI / 2, PI); cap.rotateX(PI / 2); projUV(cap);
         mk(st, cap, S, { p: [0, 0.42, 0], c: '#9a9a8c', top: ['#5e7a3e', 0.6] });
         mk(st, decal(0.2, 0.36), TMAT('tomb:1', tombTex(1), { alphaTest: 0.35, roughness: 0.9 }), { p: [0, 0.04, 0.041], cast: false });
-        mk(st, G3.cbox(0.006, 0.16, 0.004), MAT('plain'), { p: [0.05, 0.36, 0.042], r: [0, 0, 0.3], c: '#2a2a24', cast: false }); // crack
+        mk(st, G3.cbox(0.006, 0.16, 0.004), S, { p: [0.05, 0.36, 0.042], r: [0, 0, 0.3], c: '#2a2a24', cast: false }); // crack
         for (let i = 0; i < 4; i++) blob(g, S, [-0.3 + i * 0.2, 0.01, 0.3 - (i % 2) * 0.55], [0.05, 0.03, 0.04], '#8a867c', { ws: 6, hs: 4 });
         tufts(g, [[-0.2, 0.25], [0.25, 0.3], [0.3, -0.2], [-0.32, -0.25], [0.0, 0.38, 0.8], [-0.12, -0.38], [0.16, 0.15, 0.6]], 1.1);
       } else {
@@ -1762,8 +1763,8 @@
         mk(g, tip, W, { p: [0.018, 0.62, 0.205], r: [0.04, 0, 0.03], c: '#9a8668' });
         mk(g, decal(0.09, 0.42), TMAT('tomb:2', tombTex(2), { alphaTest: 0.35, roughness: 0.9 }), { p: [0.006, 0.14, 0.2], r: [0.04, 0, 0.03] });
         const r = rng(4);
-        for (let i = 0; i < 5; i++) mk(g, G3.cbox(0.07, 0.003, 0.08), MAT('plain'), { p: [-0.3 + r() * 0.6, 0.004, 0.18 + r() * 0.25], r: [0, r() * 3, 0], c: '#e0c060', cast: false });
-        for (const [x, z] of [[-0.2, 0.25], [0.25, 0.32]]) blob(g, MAT('stone'), [x, 0.01, z], [0.05, 0.035, 0.04], '#8a8478', { ws: 6, hs: 4 });
+        for (let i = 0; i < 5; i++) mk(g, G3.cbox(0.07, 0.003, 0.08), W, { p: [-0.3 + r() * 0.6, 0.004, 0.18 + r() * 0.25], r: [0, r() * 3, 0], c: '#e0c060', cast: false });
+        for (const [x, z] of [[-0.2, 0.25], [0.25, 0.32]]) blob(g, W, [x, 0.01, z], [0.05, 0.035, 0.04], '#8a8478', { ws: 6, hs: 4 });
         tufts(g, [[-0.3, -0.25], [0.32, -0.2], [0.3, 0.38, 0.8], [-0.36, 0.36, 0.7]]);
       }
       return tagged(bake(g, { ao: 0.35 }));
