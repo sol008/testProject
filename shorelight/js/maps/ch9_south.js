@@ -813,7 +813,7 @@
       { t: 'stone_lantern', x: 21, y: 3 }, { t: 'stone_lantern', x: 24, y: 3 },
       { t: 'lamp_post', x: 19, y: 9 }, { t: 'lamp_post', x: 35, y: 9 },
       { t: 'red_lantern', x: 29, y: 18 }, { t: 'red_lantern', x: 35, y: 19 },
-      { t: 'signboard', x: 21, y: 31, text: '往東港', interact: ['路牌：「沿沙洲往南──東港」。'], label: '看' },
+      { t: 'signboard', x: 21, y: 31, text: '往東港', interact: ['路牌：「沿沙洲往南——東港」。'], label: '看' },
     ],
     chests: [
       { id: 'qh_hill', x: 26, y: 2, item: 'c9_xiancaodong', n: 3 },

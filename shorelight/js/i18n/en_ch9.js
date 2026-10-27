@@ -239,7 +239,7 @@ G.I18N.add({
   '港內的水看起來平，一艘竹筏正慢慢渡過去。': 'The water inside the harbor looks calm. A bamboo raft is slowly poling its way across.',
   '眺望': 'Look out',
   '往東港': 'To Donggang',
-  '路牌：「沿沙洲往南──東港」。': 'A signpost: "South along the sandbar — Donggang."',
+  '路牌：「沿沙洲往南——東港」。': 'A signpost: "South along the sandbar — Donggang."',
   '看': 'Read',
   '船夫阿水': 'A-Shui the Boatman',
   '聽講金萬伯把水窟仔打開了？夭壽，太陽打西邊出來喔。': 'Heard Uncle Jinwan unlocked his cistern? Good grief. Sun must be rising in the west.',
