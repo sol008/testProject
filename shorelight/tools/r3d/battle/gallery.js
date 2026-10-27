@@ -51,9 +51,9 @@ const ALL = ['slash', 'slash_multi', 'claw', 'claw_multi', 'bite', 'thrust', 'fi
       return v.fx.play(id, u, targets, sk);
     }, id);
     await L.hold(page, Math.max(0.05, T * 0.55));
-    let f = path.join(out, `${id}_a.png`); await page.screenshot({ path: f }); files.push({ id, k: 'build', f });
+    let f = path.join(out, `${id}_a.png`); await L.snap(page, f); files.push({ id, k: 'build', f });
     await L.hold(page, T * 0.45 + 0.12);
-    f = path.join(out, `${id}_b.png`); await page.screenshot({ path: f }); files.push({ id, k: 'impact', f });
+    f = path.join(out, `${id}_b.png`); await L.snap(page, f); files.push({ id, k: 'impact', f });
     await L.hold(page, 1.6);
     await page.evaluate(() => { const s = G.Scenes.top(); for (const e of s.enemies) { e.alpha = 1; e.dead = false; e.st = {}; } for (const p of s.party) p.st = {}; });
     console.log(id, 'T=' + T.toFixed(2));

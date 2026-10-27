@@ -30,10 +30,22 @@ async function hold(page, sec, timeout = 240000) {
   const t0 = await page.evaluate(() => G.Battle3D.current ? G.Battle3D.current.rt : 0);
   await until(page, (t) => !G.Battle3D.current || G.Battle3D.current.rt >= t, t0 + sec, timeout);
 }
+// freeze the whole game (logic timers, tweens, scene updates and the 3D view's clock) — screenshots under SwiftShader
+// take seconds, and without this the capture would land long after the moment we waited for
+async function freeze(page, on) {
+  await page.evaluate((on) => {
+    if (!window.__frzPatched) {
+      window.__frzPatched = true;
+      for (const [obj, k] of [[G.Timers, 'update'], [G.Tweens, 'update'], [G.Scenes, 'update']]) { const f = obj[k].bind(obj); obj[k] = (dt) => (window.__frz ? undefined : f(dt)); }
+    }
+    window.__frz = on; G.Battle3D.freeze = on;
+  }, on);
+}
+async function snap(page, f) { await freeze(page, true); await page.waitForTimeout(150); await page.screenshot({ path: f }); await freeze(page, false); }
 async function shot(page, dir, name) {
   fs.mkdirSync(dir, { recursive: true });
   const f = path.join(dir, name + '.png');
-  await page.screenshot({ path: f });
+  await snap(page, f);
   console.log('shot', f);
   return f;
 }
@@ -50,7 +62,7 @@ async function command(page, cmd) {
     s.ui.done(out);
   }, cmd);
 }
-module.exports = { open, waitBattle, sc, until, hold, shot, command, ROOT };
+module.exports = { open, waitBattle, sc, until, hold, shot, snap, freeze, command, ROOT };
 // wait for the next view event of kind k, scanning from a persistent cursor (events that fired while we were busy
 // taking a screenshot are not missed); returns the event and moves the cursor past it
 async function nextEvent(page, k, timeout = 240000, filter = null) {

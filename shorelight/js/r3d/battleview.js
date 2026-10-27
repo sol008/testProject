@@ -233,6 +233,7 @@ G.Battle3D = (() => {
       this.lightK = this.arena.lightK || 1;
       for (const [, uv] of this.units) uv.lastPose = null;
     }
+    hideHud() { return !!(this.intro && this.intro.t < this.intro.dur * 0.7) || !!this.ink; }
     // battle-time seconds the scene should wait before the first turn (the intro shot length; snappier in auto-battle)
     introWait() { const boss = this.director.kind === 'boss' || this.director.shot && this.director.shot.kind === 'boss'; const real = boss ? 2.6 : this.bs.auto ? 1.0 : 1.7; return real * this.speed(); }
     unitView(u) { return this.units.get(u) || null; }
@@ -509,8 +510,9 @@ G.Battle3D = (() => {
     // ---------------------------------------------------------------- per frame
     frame() {
       const now = G.time;
-      const rdt = this._last != null ? Math.min(0.05, Math.max(0, now - this._last)) : 1 / 60;
+      let rdt = this._last != null ? Math.min(0.05, Math.max(0, now - this._last)) : 1 / 60;
       this._last = now;
+      if (G.Battle3D.freeze) rdt = 0; // test hook: hold the presentation still while a screenshot is taken
       const sp = this.speed();
       // presentation time: battle speed × hit-stop × slow-mo
       let ts = 1;

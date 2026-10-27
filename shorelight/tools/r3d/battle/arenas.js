@@ -28,7 +28,7 @@ const fs = require('fs');
       await page.evaluate((c) => { G.Battle3D.current.debugCam = c; }, views[k]);
       await L.hold(page, 0.25);
       const f = path.join(out, `${id}_${k}.png`);
-      await page.screenshot({ path: f });
+      await L.snap(page, f);
       files.push({ id, k, f });
     }
     console.log(id, ((Date.now() - t0) / 1000).toFixed(1) + 's');

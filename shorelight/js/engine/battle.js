@@ -998,7 +998,7 @@ G.Battle = (() => {
       v.frame();
       v.drawOverlay(ctx, t);
       if (this.overlayK > 0) G.FX.vision(ctx, t, Math.min(1, this.overlayK) * 0.4);
-      if (!this.cutin) this.drawHud(ctx, t);
+      if (!this.cutin && !v.hideHud()) this.drawHud(ctx, t);
       if (this.cutin) v.drawCutin(ctx, t);
       this.drawMsg(ctx);
       if (this.vic) this.drawVictory(ctx, t);
