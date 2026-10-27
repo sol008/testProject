@@ -1586,7 +1586,7 @@
           if (r() < 0.2 && row === 0) { lantern(g, x + 0.08, y0, 0, 0.08, 0.02, col, { shape: 'folded' }); x += 0.18; continue; }
           const rw = 0.06 + r() * 0.04, rh = Math.min(avail * 0.42, rw * (0.8 + r() * 0.6));
           const shape = ['round', 'round', 'long', 'drum', 'palace'][(r() * 5) | 0];
-          lantern(g, x + rw, y0 + 0.02, (r() - 0.5) * 0.06, rw, shape === 'long' ? Math.min(avail * 0.45, rw * 1.5) : rh, col, { shape, motif: MOTIFS[(r() * 4) | 0], lit: r() < 0.22 });
+          lantern(g, x + rw, y0 + 0.02, (r() - 0.5) * 0.06, rw, shape === 'long' ? Math.min(avail * 0.45, rw * 1.5) : rh, col, { shape, motif: MOTIFS[(r() * 4) | 0], lit: r() < 0.22, seg: 8 });
           x += rw * 2 + 0.03;
         }
       }
