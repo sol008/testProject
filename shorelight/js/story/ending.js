@@ -74,8 +74,9 @@ G.Ending = (() => {
         const y = y0 + i * this.lineH;
         if (y < -60 || y > G.H + 40) return;
         const a = U.clamp(Math.min((y + 20) / 140, (G.H - y) / 140), 0, 1);
-        if (line.startsWith('#')) G.Render.text(ctx, G.T(line).replace(/^#/, ''), G.W / 2, y, { size: i === 0 ? 52 : 24, align: 'center', color: i === 0 ? '#fff3dc' : '#e0c890', alpha: a, glow: i === 0 ? 'rgba(255,170,90,0.7)' : null, glowBlur: 20 });
-        else if (line) G.Render.text(ctx, line, G.W / 2, y, { size: 26, align: 'center', color: '#f6ead0', alpha: a });
+        // (credit lines are fitted to the screen width: some English cast / lantern lines are very long)
+        if (line.startsWith('#')) G.Render.textClip(ctx, G.T(line).replace(/^#/, ''), G.W / 2, y, G.W - 80, { size: i === 0 ? 52 : 24, align: 'center', color: i === 0 ? '#fff3dc' : '#e0c890', alpha: a, glow: i === 0 ? 'rgba(255,170,90,0.7)' : null, glowBlur: 20 });
+        else if (line) G.Render.textClip(ctx, line, G.W / 2, y, G.W - 80, { size: 26, minSize: 16, align: 'center', color: '#f6ead0', alpha: a });
       });
       ctx.restore();
       if (this.endT) {

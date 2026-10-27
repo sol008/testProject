@@ -1685,7 +1685,7 @@ G.GameOverScene = class GameOverScene {
     ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, G.H);
     G.UI.lanternIcon(ctx, G.W / 2, 250, 22 * (0.9 + fl * 0.1), t);
     G.Render.text(ctx, '燈火將熄', G.W / 2, 330, { size: 56, align: 'center', color: '#e8d8c0', glow: 'rgba(255,120,60,0.5)', glowBlur: 20 });
-    G.Render.text(ctx, '但只要還有人記得，就不算結束。', G.W / 2, 404, { size: 22, align: 'center', color: '#a89880' });
+    G.Render.textClip(ctx, '但只要還有人記得，就不算結束。', G.W / 2, 404, G.W - 120, { size: 22, align: 'center', color: '#a89880' });
     G.UI.panel(ctx, G.W / 2 - 150, 460, 300, this.list.items.length * 50 + 24, { ornament: false });
     this.list.draw(ctx, G.W / 2 - 136, 472, 280, t, { size: 24 });
     ctx.restore();
