@@ -360,10 +360,10 @@
     if (sh === 'needle') {
       // pine needle tuft: fan of thin strokes
       g.lineCap = 'round';
-      const k = 9;
+      const k = 13;
       for (let i = 0; i < k; i++) {
-        const a = (i / (k - 1) - 0.5) * 1.3;
-        g.strokeStyle = i % 3 === 0 ? tip : base; g.lineWidth = 2.6;
+        const a = (i / (k - 1) - 0.5) * 1.5;
+        g.strokeStyle = i % 3 === 0 ? tip : base; g.lineWidth = 2.2;
         g.beginPath(); g.moveTo(0, 6); g.quadraticCurveTo(sin(a) * len * 0.5, -len * 0.4, sin(a) * len, -len * cos(a) * 0.9); g.stroke();
       }
       g.restore(); return;
@@ -718,11 +718,20 @@
     out.add(decal(cfg.id, cfg.decal, max(R.x, R.z) * 1.05));
     return out;
   }
+  // Per-instance yaw (set once, on the first update) for footprints that are rotation-symmetric, so repeated
+  // trees / plants / rocks never read as clones. Skipped when the map sets o.rot3d itself.
+  function spin(node, o) {
+    if (node.userData.natSpun || o.rot3d) return;
+    node.userData.natSpun = true;
+    const h = Math.sin((o.x || 0) * 127.1 + (o.y || 0) * 311.7) * 43758.5453;
+    node.rotation.y = (h - Math.floor(h)) * TAU;
+  }
+  Nature.spin = spin;
   function defTree(id, def) {
     G.Models.define(id, Object.assign({
       variants: 3,
       occluder: true,
-      update(node, o, t) { Wind.tick(t); },
+      update(node, o, t) { Wind.tick(t); spin(node, o); },
     }, def));
   }
 
@@ -819,9 +828,9 @@
       const wind = { height: H, strength: 0.12, flex: 2.4 };
       const bmat = barkMat('tree_pine', BARKS2.pine, wind);
       const P = [
-        { seed: 61, shape: 'needle', n: 70, L: 30, dark: '#173a2f', mid: '#255443', light: '#3f7b5b', hi: '#8cc094', massR: 0.62 },
-        { seed: 62, shape: 'needle', n: 70, L: 30, dark: '#1c3c22', mid: '#2e5a32', light: '#4f8448', hi: '#9cc884', massR: 0.62 },
-        { seed: 63, shape: 'needle', n: 70, L: 30, dark: '#163638', mid: '#24504e', light: '#3c766a', hi: '#84b8a6', massR: 0.62 },
+        { seed: 61, shape: 'needle', n: 110, L: 40, dark: '#173a2f', mid: '#255443', light: '#3f7b5b', hi: '#8cc094', massR: 0.5 },
+        { seed: 62, shape: 'needle', n: 110, L: 40, dark: '#1c3c22', mid: '#2e5a32', light: '#4f8448', hi: '#9cc884', massR: 0.5 },
+        { seed: 63, shape: 'needle', n: 110, L: 40, dark: '#163638', mid: '#24504e', light: '#3c766a', hi: '#84b8a6', massR: 0.5 },
       ][v];
       const lmat = leafMat('tree_pine' + v, leafAtlas('tree_pine' + v, P), Object.assign({}, wind, { flutter: 0.02, trans: 0.35 }));
       const bark = new Acc(), leaf = new Acc();
@@ -841,8 +850,8 @@
       let az = r() * TAU;
       for (let i = 0; i < tiers; i++) {
         const f = i / (tiers - 1);
-        const y = lerp(H * 0.38, H - 0.9, f) + r.pm(0.1);
-        const nb = i < 1 ? 3 : 2;
+        const y = lerp(H * 0.42, H - 0.8, f) + r.pm(0.1);
+        const nb = i < 2 ? 2 : 1;
         for (let b = 0; b < nb; b++) {
           az += 2.4 + r.pm(0.3);
           const L = lerp(1.6, 0.6, f) * (0.8 + r() * 0.35);
@@ -852,11 +861,11 @@
           tube(bark, pts, taperR(pts.length, lerp(0.08, 0.04, f), 0.015), { seg: 5, ao, texW: 0.3 });
           // pad: flat wide clump over the branch tip (+ a smaller one mid-branch)
           const tip = pts[pts.length - 1];
-          const padR = lerp(0.85, 0.5, f) * (0.85 + r() * 0.3);
-          for (const [pp, k] of (i < 2 ? [[tip, 1], [pts[2], 0.6]] : [[tip, 1]])) {
-            const c = pp.clone().add(V3(0, 0.12, 0));
-            const Rn = V3(padR * k * 1.2, padR * k * 0.45, padR * k * 1.2);
-            clump(leaf, r, c, padR * k, { cards: k === 1 ? 12 : 7, C: c.clone().add(V3(0, -0.25, 0)), Rn, sphere: 0.75, clumpN: 0.2, flat: 0.7, spread: 0.55, size: padR * k * 1.3 });
+          const padR = lerp(0.82, 0.48, f) * (0.85 + r() * 0.3);
+          for (const [pp, k] of [[tip, 1]]) {
+            const c = pp.clone().add(V3(0, 0.1, 0));
+            const Rn = V3(padR * k * 1.2, padR * k * 0.4, padR * k * 1.2);
+            clump(leaf, r, c, padR * k, { cards: 11, C: c.clone().add(V3(0, -0.25, 0)), Rn, sphere: 0.75, clumpN: 0.2, flat: 0.7, spread: 0.55, size: padR * k * 1.3 });
           }
         }
       }
@@ -952,7 +961,7 @@
       }
       const trunkAt = (y) => { const t = clamp((y + 0.3) / (H - 1.2), 0, 1); return V3(sin(t * 2.2 + v) * 0.12, y, cos(t * 1.7 + v) * 0.1); };
       // limbs: thick, near-horizontal, upturned ends carrying flat spray layers
-      const nL = 13;
+      const nL = 17;
       let az = r() * TAU;
       for (let i = 0; i < nL; i++) {
         const f = i / (nL - 1);
@@ -1346,7 +1355,7 @@
         const a = r() * TAU, c = top.clone().add(V3(cos(a) * 0.14, 0.05, sin(a) * 0.14));
         for (let j = 0; j < 14; j++) blob(mc, c.clone().add(V3(r.pm(0.1), -r() * 0.25, r.pm(0.1))), 0.035, 0.045, 0.035, nutC, { ws: 6, hs: 4, shade: true });
       }
-      frondCrown(fr, r, cs[2], 8, 1.9, { W: 0.36, droop: 1.0, lift: 0.55 });
+      frondCrown(fr, r, cs[2], 11, 2.1, { W: 0.4, droop: 1.1, lift: 0.5 });
       const g = K.group(meshOf(bark, bmat), meshOf(mc, misc), meshOf(fr, fmat));
       const out = K.merge(g);
       out.add(decal('tree_betel', { seed: 17, core: '#1a1a10' }, 0.9));
@@ -1548,7 +1557,7 @@
   }
   G.Models.define('bamboo', {
     variants: 3,
-    update(node, o, t) { Wind.tick(t); },
+    update(node, o, t) { Wind.tick(t); spin(node, o); },
     build(o, K) {
       const v = o.v || 0, r = RNG(1300 + v * 53);
       const H = 5.0 * (1 + r.pm(0.08));
@@ -1567,11 +1576,11 @@
         const rad = 0.045 + r() * 0.025;
         tube(cu, pts, taperR(pts.length, rad, rad * 0.35), { seg: 6, texW: 0.3, texH: 0.42 + r() * 0.08, ao: (p) => { const k = sstep(0, 1.5, p.y); return [lerp(0.55, 1, k), lerp(0.55, 1, k), lerp(0.5, 1, k)]; } });
         // leaf sprays along the upper culm (pointing outward / drooping)
-        for (let k = 4; k <= 10; k++) {
-          if (r() < 0.25) continue;
+        for (let k = 6; k <= 10; k++) {
+          if (r() < 0.35) continue;
           const p = pts[k];
-          const c = p.clone().add(V3(cos(a + r.pm(1.5)) * 0.25, -0.05, sin(a + r.pm(1.5)) * 0.25));
-          clump(lf, r, c, 0.42 + r() * 0.15, { cards: 6, C: V3(0, H * 0.7, 0), Rn: V3(1.6, H * 0.4, 1.6), sphere: 0.4, clumpN: 0.4, up: -0.2, spread: 0.6 });
+          const c = p.clone().add(V3(cos(a + r.pm(1.5)) * 0.22, -0.08, sin(a + r.pm(1.5)) * 0.22));
+          clump(lf, r, c, 0.34 + r() * 0.12, { cards: 5, C: V3(0, H * 0.7, 0), Rn: V3(1.6, H * 0.4, 1.6), sphere: 0.4, clumpN: 0.4, up: -0.2, spread: 0.6 });
         }
       }
       // culm sheaths & fallen leaves around the base
@@ -1638,7 +1647,7 @@
     }
   }
   function defPlant(id, def) {
-    G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o, t) { Wind.tick(t); } }, def));
+    G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o, t) { Wind.tick(t); spin(node, o); } }, def));
   }
   const C = (hexs) => col3(hexs);
 
@@ -1742,11 +1751,9 @@
         const tip = blade(acc, base, a, h, 0.12, 0.012, 4, C('#4a6a2a'), C('#8a9a4a'), { taper: false });
         for (let k = 0; k < 4; k++) blade(acc, base.clone().add(V3(0, 0.15 + k * 0.2, 0)), a + k * 2.1, 0.45 + r() * 0.2, 0.9, 0.035, 4, C('#3a6a24'), C('#a0b850'), { wide: true });
         // panicle: chunky foxtail made of overlapping grain lumps along a nodding arc
-        const pts = archPts(tip, V3(cos(a) * 0.5, 0.6, sin(a) * 0.5), 0.36, 6, 2.6, { lin: true });
-        for (let k = 1; k < pts.length; k++) {
-          const t = k / (pts.length - 1), rr = 0.045 * sin(clamp(t * 1.1 + 0.15, 0, 1) * PI) + 0.012;
-          blob(acc, pts[k], rr, rr * 1.2, rr, head.map((x) => x * (0.85 + r() * 0.25)), { ws: 6, hs: 4, shade: true });
-        }
+        const pts = archPts(tip, V3(cos(a) * 0.5, 0.6, sin(a) * 0.5), 0.38, 10, 2.6, { lin: true });
+        const hc = head.map((x) => x * (0.85 + r() * 0.25));
+        tube(acc, pts, pts.map((_, k) => { const t = k / (pts.length - 1); return 0.008 + 0.04 * sin(clamp(t * 1.05 + 0.1, 0, 1) * PI); }), { seg: 6, lump: 0.55, lumpSeed: i + v * 7, cap: true, ao: (p, t) => [hc[0] * lerp(0.7, 1.1, t), hc[1] * lerp(0.7, 1.1, t), hc[2] * lerp(0.7, 1.05, t)] });
       }
       return K.merge(K.group(meshOf(acc, m)));
     },
@@ -1868,18 +1875,19 @@
           const a = r() * TAU, d = sqrt(r()) * 0.3, base = V3(cos(a) * d, 0, sin(a) * d), h = 0.45 + r() * 0.22;
           const tip = blade(acc, base, a, h, 0.06, 0.008, 3, C('#4a7a2a'), C('#6a9a3a'), { taper: false });
           for (let f = 0; f < 4; f++) {
-            const fa = f / 4 * TAU + r.pm(0.3), fd = V3(cos(fa), 0.25, sin(fa)).normalize();
-            const c0 = tip.clone().addScaledVector(fd, 0.02);
+            const fa = f / 4 * TAU + r.pm(0.3), fd = V3(cos(fa), 0.55, sin(fa)).normalize();
+            const c0 = tip.clone().addScaledVector(fd, 0.03);
+            const e1 = V3(0, 1, 0).cross(fd).normalize(), e2 = fd.clone().cross(e1).normalize();
             for (let k = 0; k < 6; k++) {
-              // narrow petal arching outward and curling back
-              const pa = fa + (k / 6 - 0.5) * 1.6, pd = V3(cos(pa), 0.5, sin(pa)).normalize();
-              const pts = archPts(c0, pd, 0.11, 3, 3.0, { lin: true });
-              ribbon(pet, pts, [0.006, 0.012, 0.004], { ao: (p, t) => [lerp(deep[0], red[0], t + 0.4), lerp(deep[1], red[1], t), lerp(deep[2], red[2], t)], fold: 0.3 });
+              // narrow wavy petal flaring out around the flower axis and curling back
+              const pa = k / 6 * TAU, pd = fd.clone().multiplyScalar(0.35).addScaledVector(e1, cos(pa)).addScaledVector(e2, sin(pa)).normalize();
+              const pts = archPts(c0, pd, 0.085, 4, 1.6, { lin: true });
+              ribbon(pet, pts, [0.004, 0.009, 0.008, 0.003], { twist: 0.8, ao: (p, t) => [lerp(deep[0], red[0], t + 0.4), lerp(deep[1], red[1], t), lerp(deep[2], red[2], t)] });
             }
-            // stamens: long thin upswept filaments
-            for (let k = 0; k < 3; k++) {
-              const sa = fa + r.pm(0.9), pts = archPts(c0, V3(cos(sa) * 0.7, 0.9, sin(sa) * 0.7), 0.16, 3, 0.6);
-              ribbon(pet, pts, [0.0015, 0.0015, 0.0025], { ao: () => red });
+            // stamens: long filaments sweeping forward and up beyond the petals
+            for (let k = 0; k < 2; k++) {
+              const sd = fd.clone().addScaledVector(e1, r.pm(0.5)).addScaledVector(e2, 0.3 + r() * 0.4).normalize(), pts = archPts(c0, sd, 0.15, 3, -0.8);
+              ribbon(pet, pts, [0.0018, 0.0018, 0.003], { ao: () => red });
             }
           }
         }
@@ -1947,7 +1955,7 @@
     }, { wrap: true });
   }
   const ROCK = {
-    granite: { seed: 3, dark: '#5e5a52', light: '#a8a294', speckle: 0.05, cracks: 12, contrast: 1.4 },
+    granite: { seed: 3, dark: '#6a645a', light: '#aea696', speckle: 0.04, cracks: 7, contrast: 1.2, crack: '#3a342c' },
     marble: { seed: 5, dark: '#c8c8c4', light: '#f4f4f0', vein: '#6a6a70', cracks: 3, contrast: 0.9, crack: '#8a8a90' },
     basalt: { seed: 7, dark: '#38383a', light: '#6c6a68', pits: 260, cracks: 6, contrast: 1.2, crack: '#0a0a0a' },
     wood: null,
@@ -2005,7 +2013,7 @@
     g.dispose();
   }
   const MOSS = { k: 0.85, col: [0.32, 0.5, 0.18] };
-  function defRock(id, def) { G.Models.define(id, Object.assign({ variants: 3, occluder: false }, def)); }
+  function defRock(id, def) { G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o) { spin(node, o); } }, def)); }
   const rockDecal = (key, rad) => decal('rock_' + key, { seed: 31, core: '#141410' }, rad);
 
   defRock('rock_small', {
@@ -2137,6 +2145,7 @@
   };
   G.Models.define('stump', {
     variants: 3,
+    update(node, o) { spin(node, o); },
     build(o, K) {
       const v = o.v || 0, r = RNG(2300 + v * 7);
       const bark = new Acc(), top = new Acc(), mc = new Acc();
@@ -2237,7 +2246,7 @@
   G.Models.define('lotus', {
     variants: 3,
     occluder: false,
-    update(node, o, t) { Wind.tick(t); },
+    update(node, o, t) { Wind.tick(t); spin(node, o); },
     build(o, K) {
       const v = o.v || 0, r = RNG(2600 + v * 7);
       const wind = { height: 0.8, strength: 0.04, flex: 1.5 };
@@ -2278,9 +2287,9 @@
     occluder: false,
     build(o, K) {
       const v = o.v || 0, r = RNG(2700 + v * 7);
-      const m = plainMat('kelp', 0xffffff, null, { roughness: 0.42, side: T.DoubleSide, envMapIntensity: 0.4 });
+      const m = plainMat('kelp', 0xffffff, null, { roughness: 0.5, side: T.DoubleSide, envMapIntensity: 0.25 });
       const acc = new Acc();
-      const cA = col3(['#3a3a14', '#2a3a1a', '#4a3a1a'][v]), cB = col3(['#7a6a24', '#5a7a2a', '#8a6a2a'][v]);
+      const cA = col3(['#5a4a1a', '#3e5222', '#6a4a1e'][v]), cB = col3(['#a08a34', '#7a9a3a', '#b08838'][v]);
       for (let i = 0; i < 6; i++) {
         const a = r() * TAU, p0 = V3(r.pm(0.3), 0.015, r.pm(0.3)), pts = [];
         let p = p0.clone(), d = V3(cos(a), 0, sin(a));
@@ -2414,7 +2423,7 @@
   G.Models.define('mushroom_glow', {
     variants: 3,
     occluder: false,
-    update(node, o, t) { Wind.tick(t); },
+    update(node, o, t) { Wind.tick(t); spin(node, o); },
     lights(o) { return [{ x: 0, y: 0.45, z: 0.1, color: SHROOM[(o.v || 0) % 3].light, intensity: 1.3, distance: 3.2, flicker: 0.15 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3100 + v * 11);
@@ -2499,7 +2508,7 @@
   G.Models.define('crystal', {
     variants: 3,
     occluder: false,
-    update(node, o, t) { Wind.tick(t); },
+    update(node, o, t) { Wind.tick(t); spin(node, o); },
     lights(o) { return [{ x: 0, y: 0.7, z: 0.1, color: CRY[(o.v || 0) % 3].glow, intensity: 1.3, distance: 3.6, flicker: 0.08 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3300 + v * 13), C0 = CRY[v];
@@ -2603,7 +2612,7 @@
     variants: 3,
     occluder: false,
     update(node, o, t) {
-      Wind.tick(t);
+      Wind.tick(t); spin(node, o);
       const b = node.getObjectByName('bloom');
       if (b) { const ph = ((o.x || 0) * 3.1 + (o.y || 0) * 1.3) % 6; b.rotation.y = t * 0.35 + ph; b.position.y = b.userData.y0 + sin(t * 1.5 + ph) * 0.03; }
     },
