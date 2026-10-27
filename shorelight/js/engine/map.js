@@ -651,11 +651,34 @@ G.Mapx = G.Mapx || {};
     }
 
     // ---------------- drawing ----------------
+    // Map draw hooks (def-level, then instance-level: ms.drawGround = fn): drawGround / drawOver (world px, 2D camera
+    // applied), drawScreen (screen coords), update3d (3D only). In 3D, drawGround/drawOver go through Map3D's SplitCtx
+    // (ground decal + screen overlay). Contract: docs/CONTRACTS_3D.md "2D map hooks in 3D".
+    hooks(name) {
+      const a = this.def[name], b = Object.prototype.hasOwnProperty.call(this, name) ? this[name] : null;
+      const out = [];
+      if (typeof a === 'function') out.push(a);
+      if (typeof b === 'function' && b !== a) out.push(b);
+      return out;
+    }
+    // the 2D camera of this frame (shake included, half-pixel snapped) — what world-space hooks are translated by
+    camFrame() {
+      const [sx, sy] = G.Render.shakeOffset();
+      this.cam2d = [Math.round((this.cam.x + sx) * 2) / 2, Math.round((this.cam.y + sy) * 2) / 2];
+      return this.cam2d;
+    }
+    // inside drawGround / drawOver: run fn(ctx) in screen coordinates (HUD meters, full-screen tints). Works in 2D
+    // (cancels the camera translate) and in 3D (routes the drawing to the overlay above the 3D frame).
+    screenSpace(ctx, fn) {
+      ctx.save();
+      if (ctx.__split) ctx.__split.markScreen();
+      else { const [cx, cy] = this.cam2d || [this.cam.x, this.cam.y]; ctx.translate(cx, cy); }
+      try { fn(ctx); } finally { ctx.restore(); }
+    }
     draw(ctx) {
       if (this.view3d && G.R3.enabled()) { this.draw3d(ctx); return; }
       const t = this.t;
-      const [sx, sy] = G.Render.shakeOffset();
-      const camX = Math.round((this.cam.x + sx) * 2) / 2, camY = Math.round((this.cam.y + sy) * 2) / 2;
+      const [camX, camY] = this.camFrame();
       ctx.save();
       ctx.fillStyle = val(this.def.bg) || '#05060a';
       ctx.fillRect(0, 0, G.W, G.H);
@@ -676,7 +699,7 @@ G.Mapx = G.Mapx || {};
           else this.fallbackTile(ctx, id, cx * T, cy * T);
         }
       }
-      if (this.def.drawGround) this.def.drawGround(ctx, t, this);
+      for (const f of this.hooks('drawGround')) f(ctx, t, this);
       if (this.drawMechFloor) this.drawMechFloor(ctx, t);
       // drawables
       const list = [];
@@ -709,7 +732,7 @@ G.Mapx = G.Mapx || {};
       }
       if (this.strikeFx) this.drawStrike(ctx);
       this.particles.drawWorld(ctx, camX, camY);
-      if (this.def.drawOver) this.def.drawOver(ctx, t, this);
+      for (const f of this.hooks('drawOver')) f(ctx, t, this);
       // emotes & interaction prompt in world space
       for (const a of [this.player, ...this.followers, ...this.npcs]) if (a.emote) this.drawEmote(ctx, a, t);
       if (this.interactTarget && !G.Script.busy() && !this.player.moving) this.drawPrompt(ctx, this.interactTarget, t);
@@ -723,13 +746,19 @@ G.Mapx = G.Mapx || {};
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy);
       if (val(this.def.vignette) !== false) G.FX.vignette(ctx, lc && lc.ambient > 0.3 ? 0.55 : 0.32);
+      this.drawScreenHooks(ctx, t);
       this.drawHud(ctx, t);
     }
+    drawScreenHooks(ctx, t) {
+      for (const f of this.hooks('drawScreen')) { ctx.save(); f(ctx, t, this); ctx.restore(); }
+    }
 
-    // 3D path: the WebGL layer renders the world; this draws the 2D overlay (prompts, emotes, HUD, screen fx)
+    // 3D path: the WebGL layer renders the world; this draws the 2D overlay (prompts, emotes, HUD, screen fx).
+    // v.frame(ctx) also runs the 2D map hooks: world-space output → ground decal, screen-space output → ctx.
     draw3d(ctx) {
       const t = this.t, v = this.view3d;
-      v.frame();
+      this.camFrame();
+      v.frame(ctx);
       if (this.strikeFx) {
         const p = this.player, s = v.actorScreen(p, 0.9);
         ctx.save(); ctx.translate(s.x - p.px, s.y - (p.py - 40)); this.drawStrike(ctx); ctx.restore();
@@ -757,6 +786,7 @@ G.Mapx = G.Mapx || {};
       this.particles.drawScreen(ctx);
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy * 0.55);
+      this.drawScreenHooks(ctx, t);
       this.drawHud(ctx, t);
     }
 
