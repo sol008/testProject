@@ -181,6 +181,8 @@ async function preset(A, seg) {
   `);
 }
 
+let segName = null, segStart = 0;
+function segT(name) { const now = Date.now(); if (segName) log(`    segment ${segName}: ${((now - segStart) / 1000).toFixed(0)}s`); segName = name; segStart = now; }
 async function mainPath(A) {
   await A.open('?debug&startch=10');
   await A.waitFor(() => G.mapScene && G.mapScene.def.id === 'wangboat_deck_east' && G.state.flags.ch10_start, 60000, 'C10-01 on the deck');
@@ -203,6 +205,7 @@ async function mainPath(A) {
 
   // ---- 蘭嶼
   if (SEG <= 0) {
+  segT('orchid');
   await A.talk('chenbo', ['出航', '蘭嶼', '不停留']);
   assert((await A.map()) === 'orchid_shore', 'landed on 蘭嶼');
   assert(await A.flag('ch10_orchid_arrive'), 'C10-02 done');
@@ -237,6 +240,7 @@ async function mainPath(A) {
 
   // ---- 台東
   if (SEG <= 1) {
+  segT('taitung');
   if (FROM === 'taitung') await preset(A, 1);
   await A.talk('chenbo', ['出航', '寶桑', '不停留']);
   assert((await A.map()) === 'baosang' && await A.flag('ch10_taitung_arrive'), 'C10-07 寶桑');
@@ -274,6 +278,7 @@ async function mainPath(A) {
 
   // ---- 花蓮
   if (SEG <= 2) {
+  segT('hualien');
   if (FROM === 'hualien') await preset(A, 2);
   if ((await A.map()) !== 'wangboat_deck_east') await A.trigger('boat', ['回王船']);
   assert((await A.map()) === 'wangboat_deck_east', 'deck');
@@ -289,7 +294,7 @@ async function mainPath(A) {
   await A.step(39, 10);
   assert((await A.map()) === 'huilan', 'back to 洄瀾');
   await A.trigger('dock', ['回王船']);
-  await A.talk('chenbo', ['出航', '清水', '不停留']);
+  await A.talk('chenbo', ['出航', '清水']); // same region as 洄瀾: no sea leg
   assert((await A.map()) === 'qingshui_cliffs', 'qingshui');
   await A.step(17, 16);
   assert(await A.flag('ch10_saved_watan'), 'saved Watan');
@@ -327,6 +332,7 @@ async function mainPath(A) {
 
   // ---- 頭城
   if (SEG <= 3) {
+  segT('toucheng');
   if (FROM === 'toucheng') await preset(A, 3);
   await A.talk('chenbo', ['出航', '頭城', '不停留']);
   assert(await A.flag('ch10_zhongyuan') && await A.flag('ch10_birthday'), 'C10-15');
@@ -359,6 +365,7 @@ async function mainPath(A) {
   assert(v.xunjing === 6 && v.days_to_gate === 0, '巡境 6 / days 0');
   assert(await A.ev(() => G.state.party.includes('yungui') && G.state.members.yungui.skills.includes('yg_pudu')), 'yg_pudu learned');
   const lv = await A.ev(() => G.state.party.map((id) => G.state.members[id].lv));
+  segT(null);
   log('    party levels at the end of ch10:', lv.join('/'), ' 心燈:', await A.ev(() => Object.keys(G.state.lanterns).join(',')));
 }
   }
