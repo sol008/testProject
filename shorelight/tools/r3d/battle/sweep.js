@@ -1,12 +1,15 @@
 // 3D battle sweep: auto-battle (×3) one troop per backdrop id (or the given troops) back-to-back in one page,
 // screenshot each fight once, and fail on any console error / page error / battle that does not finish.
-//   node tools/r3d/battle/sweep.js [troop,troop…] [--full] [--max N] [--skip troop,troop…]  (--skip resumes a timed-out run)
+//   node tools/r3d/battle/sweep.js [troop,troop…] [--full] [--max N] [--skip troop,troop…] [--fragile]
+//   --skip resumes a timed-out run; --fragile starts enemies at 15% HP (long boss fights under SwiftShader run ~16× slower
+//   than real time; phases, kills, finisher and victory are still exercised)
 const L = require('./lib');
 const path = require('path');
 const fs = require('fs');
 (async () => {
   const args = process.argv.slice(2);
   const full = args.includes('--full');
+  const fragile = args.includes('--fragile');
   const mI = args.indexOf('--max'); const max = mI >= 0 ? +args[mI + 1] : 999;
   const sI = args.indexOf('--skip'); const skip = sI >= 0 ? String(args[sI + 1] || '').split(',') : [];
   const only = (args.find((a, i) => !a.startsWith('--') && !/^\d+$/.test(a) && (sI < 0 || i !== sI + 1)) || '').split(',').filter(Boolean);
@@ -29,6 +32,7 @@ const fs = require('fs');
     let r = 'timeout';
     try {
       await L.until(page, () => G.Battle3D.current, null, 120000);
+      if (fragile) await page.evaluate(() => { for (const u of G.Scenes.top().enemies || []) u.hp = Math.max(1, Math.ceil(u.mhp * 0.15)); });
       await L.hold(page, 2.5);
       await L.snap(page, path.join(out, troop + '.png'));
       await L.until(page, () => window.__sw != null, null, 900000);
