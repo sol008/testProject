@@ -1105,4 +1105,11 @@ G.I18N.add({
   '鹽水蜂炮・府城元宵': 'Yanshui Beehive Rockets · Tainan Lantern Festival',
   '沿著海線官道南下……': 'Heading south along the coastal highway…',
   '茶': '茶 (tea)',
+  // side-quest discoverability (docs/qa/sidequests_ch6-8.md)
+  '……廟口那個阿義，今年第一次扛轎。他阿母，就是八年前那場瘟走的。': '…That boy A-Yi by the temple gate is carrying the palanquin for the first time this year. His mother died in that plague eight years ago.',
+  '起轎前，去廟口跟阿義講講話吧。那個囝仔，有話放在心裡八年了。': 'Before the palanquin sets out, go have a word with A-Yi at the temple gate. That boy has been holding something in for eight years.',
+  '腳下的濕沙裡，傳來細細的潮聲……可是這裡離海還很遠。': 'A faint sound of surf rises from the wet sand underfoot… but the sea is still far from here.',
+  '……有什麼長在這裡。肉眼看不見。': '…Something grows here. Not for the naked eye.',
+  '要是有七彩靈蕈就好了。府城的藥鋪……說不定有賣。': 'If only we had a Seven-Hued Spirit Mushroom. The apothecary in Tainan… might sell them.',
+  '大疫塚還有一個人沒有走。去看看，再到客棧休息': 'Someone at the Great Plague Mound hasn\'t moved on. Go see, then rest at the inn',
 });

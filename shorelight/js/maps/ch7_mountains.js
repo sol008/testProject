@@ -1129,6 +1129,8 @@
               ['老吳', '這少年家……要不要先在我寮裡歇一下？臉色真歹看。'],
             ]);
           }
+          // clue for 老吳的鹽: the quest only starts once a bag of salt is bought here
+          if (G.Quests.stage('q_ch7_salt') < 0 && !S.has('ch7_salt_given')) await S.say('老吳', '上山的話，帶一包粗鹽去吧。山上的人家煮飯都用得著，送給部落的阿姨，她們會很歡喜。');
           const c = await S.choice(['看看貨', '不用了'], { cancel: 1 });
           if (c === 0) {
             await S.shop(['c7_zhixue', 'jinchuang', 'xumingsan', 'c7_huiqi', 'jiedu', 'c7_xingshen', 'c7_salt', 'c7_sw_chitong', 'sp_hanyu', 'fn_yunhai', 'c7_ar_lieren', 'c7_ft_shanxing'], { title: '山腳交易寮' });
@@ -1419,6 +1421,7 @@
       ]);
       S.flag('ch7_sq_pasuya', 1);
       S.quest('q_ch7_pasuya', 0);
+      S.objective('到神木林西南的霧谷，替 Voyu 看一看');
       return;
     }
     if (S.has('ch7_morning')) { await S.say('Voyu', '神木林在北邊。我們從小就被帶去看那棵樹。'); return; }
@@ -1675,6 +1678,7 @@
     await S.say('Voyu 的母親', '我會好好記得他。記得，跟等，是不一樣的。');
     S.bgm('tribe');
     S.cameraFollow();
+    S.objective(S.has('ch7_seaofclouds') ? '從神木林北邊，往玉山山徑去' : '到神木林東邊的崖上看雲海');
   };
 
   // ================================================================================================ 1.5 alishan_forest 神木林・雲海

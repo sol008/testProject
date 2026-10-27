@@ -984,4 +984,8 @@ G.I18N.add({
 // point-of-no-return hint (docs/qa/points_of_no_return.md)
 G.I18N.add({
   '（小聲）……阿嬤要的不是安慰，是一句實話吧。': '(Quietly) …She isn\'t asking to be comforted. She wants the truth.',
+  // side-quest discoverability (docs/qa/sidequests_ch6-8.md)
+  '西邊的海灘上，一位剖蚵的阿嬤守著一顆大石頭。石頭上，坐著一個渾身濕透、一動也不動的老漁夫。': 'On the beach to the west, an old woman shucking oysters keeps watch beside a big rock. On the rock sits an old fisherman, soaked through, not moving at all.',
+  '……那個人，也是「走回來」的嗎？': '…Is he one of the ones who "walked back," too?',
+  '先去海邊看看蚵殼阿嬤，再與陳伯從安平東邊的路往南出發': 'First go see the Oyster Grandma on the beach, then head south with Uncle Chen by the road east of Anping',
 });
