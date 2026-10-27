@@ -18,12 +18,15 @@ G.R3M = (() => {
       uCutRadius: { value: 0.12 }, // radius in screen-height units
       uResolution: { value: new THREE.Vector2(1280, 720) },
       uTime: { value: 0 },
+      uCutFoliage: { value: 2.6 }, // radius multiplier for foliage materials (mat.userData.foliage): canopy fade
     };
     return M.cut;
   };
 
   // Patch a built-in material so fragments in front of the player, inside a screen-space circle around
   // him, dissolve with an ordered dither (industry-standard occluder cutout; depth/shadow passes unaffected).
+  // Foliage (mat.userData.foliage, set by nature.js leaf materials — read at compile time, so it may be set after
+  // this call) uses a larger hole (uCutFoliage × radius) so closed canopies of dense forests don't hide the player.
   M.addCutout = function (mat) {
     if (mat.userData.cutout) return mat;
     const U = M.cutUniforms();
@@ -32,12 +35,14 @@ G.R3M = (() => {
     mat.onBeforeCompile = function (sh, r) {
       if (prev) prev.call(this, sh, r);
       Object.assign(sh.uniforms, U);
+      const self = this && this.isMaterial ? this : mat;
+      sh.uniforms.uCutIsFol = { value: self.userData.foliage ? 1 : 0 };
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', '#include <common>\nvarying float vCutZ;')
         .replace('#include <project_vertex>', '#include <project_vertex>\nvCutZ = -mvPosition.z;');
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', `#include <common>
-          varying float vCutZ; uniform float uCutOn, uCutDepth, uCutRadius; uniform vec2 uCutCenter, uResolution;
+          varying float vCutZ; uniform float uCutOn, uCutDepth, uCutRadius, uCutFoliage, uCutIsFol; uniform vec2 uCutCenter, uResolution;
           float cutBayer(vec2 p){ vec2 q = mod(floor(p), 4.0); int i = int(q.x + q.y * 4.0);
             float m[16]; m[0]=0.;m[1]=8.;m[2]=2.;m[3]=10.;m[4]=12.;m[5]=4.;m[6]=14.;m[7]=6.;m[8]=3.;m[9]=11.;m[10]=1.;m[11]=9.;m[12]=15.;m[13]=7.;m[14]=13.;m[15]=5.;
             for (int k = 0; k < 16; k++) if (k == i) return (m[k] + 0.5) / 16.0; return 0.5; }`)
@@ -45,8 +50,10 @@ G.R3M = (() => {
           if (uCutOn > 0.5 && vCutZ < uCutDepth - 0.75) {
             vec2 suv = gl_FragCoord.xy / uResolution;
             vec2 d = (suv - uCutCenter) * vec2(uResolution.x / uResolution.y, 1.0);
-            float r = length(d) / uCutRadius;
-            if (r < 1.0) { float keep = 0.12 + 0.88 * smoothstep(0.55, 1.0, r); if (cutBayer(gl_FragCoord.xy) > keep) discard; }
+            float r = length(d) / (uCutRadius * mix(1.0, uCutFoliage, uCutIsFol));
+            // walls/props: 12 % dither residue in the core; foliage: clear core + half-dissolved ring (canopy fade)
+            float keep = uCutIsFol > 0.5 ? 0.5 * smoothstep(0.3, 0.6, r) + 0.5 * smoothstep(0.78, 1.0, r) : 0.12 + 0.88 * smoothstep(0.55, 1.0, r);
+            if (r < 1.0 && cutBayer(gl_FragCoord.xy) > keep) discard;
           }`);
     };
     const prevKey = mat.customProgramCacheKey;

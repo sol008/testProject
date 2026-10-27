@@ -1,7 +1,7 @@
 // 3D field-view sweep: load every map (or the ones given) with the 3D renderer on, record build time, draw calls,
 // triangles, console errors/warnings, G.warnOnce keys, billboard fallbacks and placement outliers; save one JPEG of
 // the 3D layer (the 2D UI canvas is hidden for the shot) per map.
-//   node tools/r3d/sweep/sweep.js --out=DIR [--resume] [--frames=24] [--list] [map ...]
+//   node tools/r3d/sweep/sweep.js --out=DIR [--resume] [--frames=24] [--list] [map | map:x,y ...]
 // One browser, one page, navigated map to map; viewport 960×540; ?r3lite. Results: DIR/<map>.json + DIR/<map>.jpg.
 const { chromium } = require('playwright');
 const path = require('path');
@@ -70,14 +70,17 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
   const maps = want.length ? want : all;
   console.log(`${maps.length} maps → ${opt.out}`);
 
-  for (const id of maps) {
-    const jf = path.join(opt.out, id + '.json');
+  for (const spec of maps) {
+    // spec: id or id:x,y (start tile)
+    const [id, xy] = spec.split(':');
+    const tag = xy ? id + '_' + xy.replace(',', '_') : id;
+    const jf = path.join(opt.out, tag + '.json');
     if (opt.resume && fs.existsSync(jf)) continue;
     log = [];
     const t0 = Date.now();
     let res = { id };
     try {
-      await p.goto(base + '?' + QS + '&map=' + id, { waitUntil: 'load', timeout: 120000 });
+      await p.goto(base + '?' + QS + '&map=' + id + (xy ? '&x=' + xy.split(',')[0] + '&y=' + xy.split(',')[1] : ''), { waitUntil: 'load', timeout: 120000 });
       await p.waitForFunction(() => window.__sweepView || (window.G && G.lastError), null, { timeout: 180000, polling: 200 });
       // let it render a number of frames (Env3D lerps, lazy builds, etc.)
       await p.waitForFunction((n) => {
@@ -89,17 +92,26 @@ const QS = 'debug&r3lite&party=xinghe,baizhi,hongying,yungui&lv=30&flags=mochi_j
     } catch (e) {
       res.fatal = String(e.message || e).slice(0, 400);
     }
-    // screenshot of the 3D layer only
+    // screenshot of the 3D layer only, from the default camera on the player (cutscenes may have moved it)
     try {
-      await p.evaluate(() => { if (window.G && G.canvas) G.canvas.style.visibility = 'hidden'; });
-      await p.screenshot({ path: path.join(opt.out, id + '.jpg'), type: 'jpeg', quality: 72, timeout: 120000 });
+      await p.evaluate(async () => {
+        if (window.G && G.canvas) G.canvas.style.visibility = 'hidden';
+        const v = window.__sweepView;
+        if (v && G.mapScene && G.mapScene.view3d === v) {
+          const ms = v.ms; ms.cam.tx = null; ms.cam.ty = null; ms.cam.follow = 'player';
+          v.snapCamera();
+          const f = v.__frames; const t0 = performance.now();
+          while (v.__frames < f + 2 && performance.now() - t0 < 20000) await new Promise((r) => setTimeout(r, 50));
+        }
+      });
+      await p.screenshot({ path: path.join(opt.out, tag + '.jpg'), type: 'jpeg', quality: 72, timeout: 120000 });
       await p.evaluate(() => { if (window.G && G.canvas) G.canvas.style.visibility = ''; });
     } catch (e) { res.shotErr = String(e.message).slice(0, 200); }
     res.log = [...new Set(log)];
     res.wallS = +((Date.now() - t0) / 1000).toFixed(1);
     fs.writeFileSync(jf, JSON.stringify(res, null, 1));
     const fb = res.fallbacks ? res.fallbacks.length : '?';
-    console.log(`${id.padEnd(28)} ${String(res.wallS).padStart(5)}s build ${res.buildMs}ms calls ${res.calls} tris ${res.tris} fb ${fb} log ${res.log.length} warn ${(res.warned || []).length}${res.fatal ? ' FATAL ' + res.fatal : ''}`);
+    console.log(`${tag.padEnd(28)} ${String(res.wallS).padStart(5)}s build ${res.buildMs}ms calls ${res.calls} tris ${res.tris} fb ${fb} log ${res.log.length} warn ${(res.warned || []).length}${res.fatal ? ' FATAL ' + res.fatal : ''}`);
   }
   await b.close();
 
