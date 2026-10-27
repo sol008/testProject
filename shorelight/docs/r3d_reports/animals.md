@@ -6,8 +6,8 @@ Branch `r3d-animals`. Owner files: `js/r3d/animals.js`, `tools/r3d/animals/*`, t
 
 | id | build | tris (body + eyes + hull + cards) | draw calls | notes |
 |---|---|---|---|---|
-| `yuyuan` 芋圓 | bespoke (hero) | 13.4k | 4 | blue-grey tabby, pick v2 #07 red silk bow collar |
-| `mochi` 麻糬 | bespoke (hero) | 13.6k | 4 | long-haired dilute calico, pick v2 #04 lantern-warm eye highlights |
+| `yuyuan` 芋圓 | bespoke (hero) | 14.8k | 4 | chubby loaf-bodied blue-grey tabby, half-lidded "judging" default, pick v2 #07 red silk bow collar |
+| `mochi` 麻糬 | bespoke (hero) | 13.2k | 4 | cloud-soft long-haired dilute calico, serene default, lynx tips, pick v2 #04 lantern-warm eye highlights |
 | `cat` | cat family | 7.5k | 4 | generic orange tabby |
 | `c2_light_leopard` | cat family (石虎 coat) | 7.0k | 3 (ghost: no outline) | spirit leopard cat, ghost shader |
 | `dog` 阿黃 | quadruped | 7.7k | 4 | yellow 台灣土狗, red collar, curled tail |
@@ -91,8 +91,30 @@ Branch `r3d-animals`. Owner files: `js/r3d/animals.js`, `tools/r3d/animals/*`, t
   - The only console error is the missing generated `js/core/fontdata.js`, which is not in the repo and not mine.
 - Builds take 0.4–1.8 s per id in SwiftShader and are cached per id (instances share geometry and textures).
 
+## Polish pass 2 (lead review against REFERENCES.md and the picked sheets)
+
+**芋圓**
+- Visibly chubby: fat 1.42 → 1.72, shorter and thicker legs, a bigger round head with fuller cheeks.
+- Keeps the stripes, silver ticking and the #07 bow. The default expression is `judging`.
+
+**麻糬**
+- **Soft fur.** The spiky cone tufts and most fur cards are gone. Instead, smooth-blended rounded puffs build a big chest ruff/mane, cheek fluff, britches, a belly fringe, flank floof and a big plumed tail.
+- **Soft patches.** Calico patch edges are soft in both the coat shader (`patchSoft`) and the face texture (blended weights).
+- **Colour layout.** Grey sits over her right eye and ear; cream/apricot over her left brow. Chest, legs and paws are white.
+- **Details.** Lynx ear-tip tufts and toe tufts on white mitten paws.
+- **Face.** The default expression is the new `serene` (soft half-lids, calm pupils).
+
+**Both / all animals**
+- Animal bodies no longer receive self-shadows. This is the usual toon convention; they still cast onto the ground.
+- The AO floor is raised for 麻糬.
+
+**Re-checked after the pass**
+- Budgets still hold.
+- 0 mm planted-paw drift at all gaits.
+- In-game 九份 run: no console errors, now running on the real `MapScene.hooks()` with the shim removed.
+
 ## Gaps / known issues
-- **Fur.** 麻糬's long coat uses sculpted clumps and cards. It reads as fluffy at game distance but is spiky in extreme close-ups; real shell fur was skipped to stay within the draw-call budget.
+- **Fur.** 麻糬's long coat is sculpted rounded puffs. It is soft and cloud-like, but it has no strand-level detail in extreme close-ups (no shell fur, to stay within the draw-call budget).
 - **Scope of polish.** Gait strips and clip key-poses for the two hero cats were reviewed frame by frame. The other species got one pass, and the buffalo's legs are still a little bent at idle.
 - **Expressions are geometric** (lids, pupils, ears, jaw, shader mouth). There are no per-expression face-texture swaps.
 - **Not modelled yet.** 芋圓's embroidered ball prop (pick #07) and 麻糬's water-lantern prop (pick #04) are scene props, not part of the pet. Hook: `inst.bone('handR')` / `bone('head')` attachment points exist.
@@ -100,7 +122,7 @@ Branch `r3d-animals`. Owner files: `js/r3d/animals.js`, `tools/r3d/animals/*`, t
 
 ## Hooks needed from other teams
 1. **Lead (`js/engine/map.js` / `js/r3d/mapview.js`).**
-   - On the merged base, `Map3D.hookCount()` calls `ms.hooks(...)`, which `MapScene` doesn't define, so the 3D map fails to build. My in-game test adds a test-only shim; please land the real `MapScene.prototype.hooks`.
+   - `MapScene.hooks()` has landed and my test shim is removed.
    - Following pets look small next to humans at the default camera (≈0.4 m tall). If design wants pets read bigger, scale them on the map: `inst.root.scale` is safe because the IK works in model space.
 2. **Map / engine.** Set `actor.anim3d = 'sit' | 'loaf' | 'sleep' | 'groom' | 'judge' | …` to pin a behaviour, for example 芋圓 sitting on pressure plates or 麻糬 in `sniff` near hidden spirit items. Leave it unset to let the idle brain run.
 3. **Battle team.**

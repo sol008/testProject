@@ -354,6 +354,7 @@ G.Animal3D = (() => {
       uGhost: { value: 0 }, cGhost: { value: new THREE.Color(opts.ghostTint || '#bfe8ff') },
       cGlow: { value: new THREE.Color(opts.glow || '#000000') }, uGlow: { value: opts.glow ? (opts.glowK || 0.35) : 0 },
       uFade: { value: 1 }, uTime: { value: 0 },
+      uPatchSoft: { value: opts.patchSoft != null ? opts.patchSoft : 0.04 }, uPatchN: { value: opts.patchN != null ? opts.patchN : 0.55 },
       uMouth: { value: 0 }, uMouthC: { value: new THREE.Vector2(0.5, 0.33) }, uMouthR: { value: new THREE.Vector2(0.04, 0.06) },
       cMouthIn: { value: new THREE.Color('#5a1e26') }, cTongue: { value: new THREE.Color('#e88a92') }, cLip: { value: new THREE.Color(P.line || '#2a2020') },
     };
@@ -379,7 +380,7 @@ G.Animal3D = (() => {
       sh.fragmentShader = defs + sh.fragmentShader
         .replace('#include <common>', `#include <common>
           uniform vec3 cBase, cBase2, cDark, cWhite, cPA, cPB, cGhost, cGlow;
-          uniform float uStripeW, uTick, uDetail, uScale, uGhost, uGlow, uFade, uTime;
+          uniform float uStripeW, uTick, uDetail, uScale, uGhost, uGlow, uFade, uTime, uPatchSoft, uPatchN;
           uniform sampler2D tFace; uniform sampler2D tCard;
           uniform float uMouth; uniform vec2 uMouthC, uMouthR; uniform vec3 cMouthIn, cTongue, cLip;
           varying vec3 vRest; varying vec4 vM; varying vec4 vS; varying vec4 vCol; varying vec3 vFace;
@@ -391,8 +392,8 @@ G.Animal3D = (() => {
             vec3 p = vRest * uScale;               // plan-space metres (pattern glued to the rest pose)
             vec3 c = mix(cBase, cBase2, (smoothstep(0.45, 0.85, an_vn(p * vec3(420.0, 150.0, 420.0))) * 0.7 + an_fbm(p * 30.0) * 0.3) * uTick * vS.w);
             // patches (calico / dilute patches) with ragged organic edges
-            float pa = smoothstep(0.46, 0.54, vM.y + (an_fbm(p * 22.0) - 0.5) * 0.55);
-            float pb = smoothstep(0.46, 0.54, vM.z + (an_fbm(p * 22.0 + 7.0) - 0.5) * 0.55);
+            float pa = smoothstep(0.5 - uPatchSoft, 0.5 + uPatchSoft, vM.y + (an_fbm(p * 22.0) - 0.5) * uPatchN);
+            float pb = smoothstep(0.5 - uPatchSoft, 0.5 + uPatchSoft, vM.z + (an_fbm(p * 22.0 + 7.0) - 0.5) * uPatchN);
             c = mix(c, cPA, pa); c = mix(c, cPB, pb);
             // tabby stripes: stripe coordinate warped by noise, broken into dashes on the flanks
             float sc = vS.x + (an_vn(p * 26.0) - 0.5) * 0.7 + (an_vn(p * 70.0) - 0.5) * 0.22;
@@ -648,13 +649,18 @@ G.Animal3D = (() => {
   FACE.calico = (x, y, z, c) => {
     const ax = abs(x);
     if (z > 0.55) { const nm = noseMark(x, y); if (nm) return nm === 2 ? c.nostril : c.nose; if (mouthMark(ax, y, 0.9)) return c.line; }
-    // white blaze + muzzle, grey over the cat's right eye/ear (x<0), cream patch over the left brow (x>0)
-    const n = (vnoise(x * 3 + 4, y * 3, z * 3) - 0.5) * 0.44;
-    const blaze = ax < 0.1 + max(0, -y + 0.1) * 0.55 + n * 0.3 && z > 0.2 && y < 0.6;
-    if (blaze || y < -0.18 + n * 0.3) return c.white;
-    if (x < 0) { if (y > -0.2 + n) return (y > 0.45 || ax > 0.55) ? mixc(c.grey, c.greyDark, 0.25) : c.grey; }
-    else { const cr = ((x - 0.32) / 0.38) ** 2 + ((y - 0.48) / 0.34) ** 2 + n; if (cr < 1 && z > -0.2) return c.cream; if (z < -0.1 && y > 0.2 + n) return mixc(c.grey, c.cream, 0.35); }
-    return c.white;
+    // soft-edged dilute patches: blue-grey over the cat's right eye and ear (x < 0), cream/apricot over the left brow
+    // (x > 0); white blaze, muzzle, chin and cheeks. Weights blend smoothly, like real fur.
+    const n = (vnoise(x * 3 + 4, y * 3, z * 3) - 0.5) * 0.3;
+    const blazeW = ax - (0.1 + max(0, -y + 0.1) * 0.5 + n * 0.25);
+    const white = max(smooth(0.05, -0.04, blazeW) * smooth(0.15, 0.25, z) * smooth(0.68, 0.55, y), smooth(-0.08, -0.24, y - n * 0.3));
+    const grey = (x < 0 ? smooth(-0.02, 0.06, -x) : 0) * smooth(-0.26, -0.1, y - n);
+    const cr = ((x - 0.32) / 0.4) ** 2 + ((y - 0.46) / 0.36) ** 2 + n;
+    const cream = (x > 0 ? smooth(1.1, 0.75, cr) * smooth(-0.3, -0.1, z) : 0) + (x > 0 && z < -0.1 ? smooth(0.1, 0.3, y + n) * 0.6 : 0);
+    let col = c.white;
+    col = mixc(col, (y > 0.45 || ax > 0.55) ? mixc(c.grey, c.greyDark, 0.2) : c.grey, grey);
+    col = mixc(col, c.cream, clamp(cream, 0, 1) * (1 - grey));
+    return mixc(col, c.white, white);
   };
   FACE.orange = (x, y, z, c) => FACE.tabby(x, y, z, c);
   FACE.leopard = (x, y, z, c) => {
@@ -838,19 +844,26 @@ G.Animal3D = (() => {
       P(cone(g('wrist'), g('hand'), 0.045 * u * lr, 0.043 * u * lr, Object.assign({}, LEGM, { bone: 'wrist' + sx, bc: 'hand' + sx, k: kl, region: 'lowleg' })));
       P(ell(V3.lerp(g('hand'), legs['F' + sx].toe, 0.38), [0.058 * u * lr, 0.042 * u * lr, 0.072 * u * lr], Object.assign({}, LEGM, { bone: 'hand' + sx, k: 0.018 * u, region: 'paw' })));
     }
-    // sculpted fur clumps (long hair): pointed round cones blended into the body: ruff, cheeks, britches, belly fringe
+    // long hair: soft rounded fur puffs that merge into a cloud-like silhouette (chest ruff/mane, cheek fluff,
+    // britches, belly fringe). Smooth-blended ellipsoids, no hard spikes.
     if (fl) {
-      const tuft = (base, dir, len, r, bone, region, extra) => {
-        const d = V3.norm(dir);
-        P(cone(base, V3.add(base, V3.mul(d, len)), r, r * 0.06, Object.assign({ bone, k: r * 0.45, region, white: 1, noHull: true, tuft: true }, extra || {})));
-      };
+      const puff = (c, r, bone, region, rot) => P(ell(c, r, { rot: rot || [0, 0, 0], bone, k: max(r[0], r[1]) * 0.9, region, white: 1, noHull: true, fluff: 0.003, flow: [0, -1, 0.2], clump: 22 }));
       const rc = k3(0, 0.44, 0.3), rr = 0.17 * (cfg.ruff || 1) * u;
-      for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) {
-        const a = (i / 8 - 0.5) * 2.6 + (row % 2) * 0.15, h = [0.55, 0.05, -0.45][row];
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 7; i++) {
+        const a = (i / 6 - 0.5) * 2.7 + (row % 2) * 0.2, h = [0.5, 0.0, -0.5][row];
         const nrm = V3.norm([sin(a), h, cos(a)]);
-        const base = V3.add(rc, [nrm[0] * rr * 0.95, nrm[1] * rr * 0.9, nrm[2] * rr * 0.8]);
-        tuft(base, V3.add(V3.mul(nrm, 0.7), [0, -1, 0.15]), (0.04 + 0.01 * hash3(i, row, 1)) * (row === 2 ? 1.15 : 1), 0.019, 'ruff', 'ruff');
+        const c = V3.add(rc, [nrm[0] * rr * 0.9, nrm[1] * rr * 0.85 - 0.004 * row, nrm[2] * rr * 0.85]);
+        const pr = (0.027 + 0.006 * hash3(i, row, 3)) * (row === 2 ? 1.1 : 1);
+        puff(c, [pr, pr * 1.15, pr * 0.9], 'ruff', 'ruff', [0.3, 0, 0]);
       }
+      for (const s of [1, -1]) { // cheek fluff, britches
+        const sx = s > 0 ? 'L' : 'R';
+        for (const [ty, tz, pr] of [[-0.2, 0.0, 0.3], [-0.42, 0.1, 0.27]]) puff([hc[0] + s * R * 0.92, hc[1] + ty * R, hc[2] + tz * R], [pr * R, pr * R * 1.1, pr * R], 'head', 'head');
+        const th = JP['thigh' + sx];
+        for (let i = 0; i < 3; i++) puff(V3.add(th, [s * 0.012, -0.03 - i * 0.02, -0.035 + i * 0.004]), [0.02, 0.022, 0.018], 'thigh' + sx, 'haunch');
+      }
+      for (let i = 0; i < 5; i++) puff([((i % 2) - 0.5) * 0.045, Y(0.3) * u, lerp(zH + 0.03, zS - 0.04, i / 4)], [0.03, 0.022, 0.034], 'belly', 'belly');
+      for (const s of [1, -1]) for (let i = 0; i < 3; i++) puff([s * 0.06 * sf, Y(0.36) * u, lerp(zH + 0.02, zS - 0.02, i / 2)], [0.024, 0.03, 0.035], i === 2 ? 'chest' : i === 1 ? 'spine1' : 'hips', 'torso'); // flank floof
     }
     // tail
     const tr0 = 0.05 * u * (cfg.tail && cfg.tail.r || 1), tr1 = tr0 * (cfg.tail && cfg.tail.taper != null ? cfg.tail.taper : 0.72);
@@ -865,27 +878,23 @@ G.Animal3D = (() => {
         const r = lerp(tr0, tr1, i / tN);
         for (let kk = 0; kk < 4; kk++) {
           const ang = kk / 4 * TAU + i * 0.7, dv = V3.add(V3.mul(side, cos(ang)), V3.mul(up, sin(ang)));
-          const base = V3.add(V3.lerp(a, b2, 0.5), V3.mul(dv, r * 0.7));
-          P(cone(base, V3.add(base, V3.add(V3.mul(dv, r * 1.1), V3.mul(ax, r * 1.4))), r * 0.55, r * 0.05, { bone: 'tail' + (i + 1), k: r * 0.5, region: 'tail', tailT: [i / tN, (i + 1) / tN], noHull: true, tuft: true }));
+          const cc = V3.add(V3.lerp(a, b2, 0.55), V3.mul(dv, r * 0.75));
+          const pr = r * (0.7 + 0.15 * hash3(i, kk, 5)) * (0.75 + 0.35 * sin(PI * min(1, (i + 0.5) / (tN - 0.5))));
+          P(ell(cc, [pr, pr, pr * 1.25], { bone: 'tail' + (i + 1), k: pr * 0.9, region: 'tail', tailT: [i / tN, (i + 1) / tN], noHull: true, fluff: 0.003, flow: ax, clump: 22 }));
         }
       }
     }
     const tailDir = V3.norm(V3.sub(tailP[tN], tailP[0]));
     const cheekWhere = (p) => p[1] < hc[1] - 0.12 * R && abs(p[0]) > 0.42 * R && p[2] < hc[2] + 0.45 * R;
     const FUR = fl ? {
-      ruff: { dens: 0.9, len: 0.05, w: 0.044, lift: 0.4, droop: 0.7, flow: [0, -1, 0.35] },
-      neck: { dens: 0.55, len: 0.042, w: 0.04, lift: 0.3, droop: 0.6, flow: [0, -0.8, -0.5], where: (p, n) => n[1] < 0.3 },
-      belly: { dens: 0.8, len: 0.042, w: 0.04, lift: 0.08, droop: 0.2, flow: [0, -1, -0.25], grav: 0.3, where: (p, n) => n[1] < -0.2 },
-      haunch: { dens: 0.6, len: 0.042, w: 0.04, lift: 0.18, droop: 0.5, flow: [0, -1, -0.7], where: (p, n) => n[2] < 0.2 },
-      tail: { dens: 1, len: 0.046, w: 0.042, lift: 0.55, droop: 0.4, flow: (p, n) => V3.add(tailDir, V3.mul(n, 0.1)), grav: 0.04 },
-      head: { dens: 1, len: 0.028, w: 0.03, lift: 0.55, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.7, -0.45], where: cheekWhere },
-      paw: { dens: 0.6, len: 0.014, w: 0.018, lift: 0.45, droop: 0.2, flow: [0, 0.1, 1], where: (p) => p[1] < 0.02 },
+      // only fine wisps on top of the sculpted puffs: cheek fringe and toe tufts
+      paw: { dens: 0.9, len: 0.013, w: 0.016, lift: 0.5, droop: 0.2, flow: [0, 0.2, 1], where: (p) => p[1] < 0.022 },
     } : {
       head: { dens: 0.75, len: 0.017, w: 0.018, lift: 0.7, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.6, -0.5], where: cheekWhere },
       neck: { dens: 0.25, len: 0.018, w: 0.02, lift: 0.3, droop: 0.4, flow: [0, -0.9, 0.3], where: (p) => p[2] > zS },
     };
     return {
-      fur: FUR, furMax: fl ? 120 : 70, whiskers: { col: cfg.whiskerCol || '#f7f5f0' },
+      fur: FUR, furMax: fl ? 90 : 70, whiskers: { col: cfg.whiskerCol || '#f7f5f0' },
       cfg, joints: J, JP, prims, legs, eyes, ears, hc, R, spY, zH, zS, tailN: tN,
       h: cfg.voxel || 0.0125, hullH: cfg.hullH || 0.019, warp: { c: hc, m: 2.4, R: R * 1.3 },
       springs: (S) => {
@@ -934,12 +943,14 @@ G.Animal3D = (() => {
         smooth(-0.3, 0.2, n[2]) * smooth(plan.zS - 0.02, plan.zS + 0.03, z) * smooth(plan.hc[1] - 0.2 * plan.R, plan.hc[1] - 0.45 * plan.R, y) * (1 - (reg.head || 0)));
       const under = smooth(-0.05, -0.45, n[1]);
       const low = smooth(spY - 0.035, spY - 0.075, y);
-      M.white = max(M.white, bib, under * (1 - (reg.tail || 0)), low * (1 - (reg.tail || 0)));
+      const front = ((reg.neck || 0) + (reg.ruff || 0)) * smooth(-0.35, 0.1, n[2]) + (reg.ruff || 0) * 0.6;
+      const legW = (reg.leg || 0) + (reg.lowleg || 0) + (reg.paw || 0) + (reg.shoulder || 0) * 0.8 + (reg.haunch || 0) * smooth(spY - 0.02, spY - 0.06, y);
+      M.white = max(M.white, bib, front, legW, under * (1 - (reg.tail || 0)), low * (1 - (reg.tail || 0)));
       // authored dilute-calico patches (reference: grey saddle + right shoulder, cream on the left flank / rump)
       const top = smooth(-0.35, 0.25, n[1]) * (1 - M.white);
       const blob = (cx, cy, cz, rx, ry, rz) => { const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2; return smooth(1.25, 0.6, d); };
       const sp = plan.spY, zs = plan.zS, zh = plan.zH;
-      const grey = max(blob(-0.012, sp + 0.03, lerp(zh, zs, 0.45), 0.07, 0.06, 0.075), blob(-0.05, sp + 0.01, zs - 0.01, 0.04, 0.05, 0.05), blob(0.02, sp + 0.02, zh - 0.02, 0.05, 0.05, 0.05));
+      const grey = max(blob(-0.012, sp + 0.035, lerp(zh, zs, 0.45), 0.07, 0.055, 0.08), blob(-0.045, sp + 0.03, zs - 0.03, 0.035, 0.04, 0.04), blob(0.02, sp + 0.025, zh - 0.02, 0.05, 0.05, 0.05));
       const cream = max(blob(0.06, sp - 0.005, lerp(zh, zs, 0.25), 0.045, 0.05, 0.06), blob(0.035, sp + 0.03, lerp(zh, zs, 0.72), 0.035, 0.035, 0.04));
       M.pa = max(M.pa, top * grey * (1 - (reg.tail || 0)) * (1 - (reg.head || 0)));
       M.pb = max(M.pb, top * cream * (1 - M.pa * 0.8) * (1 - (reg.tail || 0)) * (1 - (reg.head || 0)));
@@ -1155,7 +1166,7 @@ G.Animal3D = (() => {
       const x = mesh.pos[v * 3], y = mesh.pos[v * 3 + 1], z = mesh.pos[v * 3 + 2];
       const n = [mesh.nrm[v * 3], mesh.nrm[v * 3 + 1], mesh.nrm[v * 3 + 2]];
       const info = vertexInfo(plan, skinPrims, W, x, y, z, n);
-      info.M.ao = sdfAO(field, x, y, z, n[0], n[1], n[2], plan.h * 1.6);
+      info.M.ao = lerp(plan.cfg && plan.cfg.aoMin || 0, 1, sdfAO(field, x, y, z, n[0], n[1], n[2], plan.h * 1.6));
       body.vert([x, y, z], n, info.skin, info.M);
       vinfo.push(info);
     }
@@ -1179,6 +1190,14 @@ G.Animal3D = (() => {
         (p) => earBackM(plan, p, e), (u, v, edge) => mixc(innerD, inner, smooth(0.0, 0.6, edge) * 0.6 + v * 0.4));
     }
     plan.field = field;
+    const lynx = plan.cfg && plan.cfg.ear && plan.cfg.ear.lynx;
+    if (lynx) for (const e of plan.ears) { // lynx ear-tip tufts
+      const es = plan.cfg.ear.size || 1, H = (e.H || plan.R * 0.84 * es);
+      const tip = e.F.to([0, H * 0.94, -0.02 * H]);
+      const pts = [tip, e.F.to([0.02 * H * e.s, H * 1.16, -0.05 * H]), e.F.to([0.05 * H * e.s, H * (1.3 + 0.12 * lynx), -0.1 * H])];
+      const col = [...hex(pal.lynx || '#e9e4dc'), 1];
+      addTube(body, pts, [0.028 * H, 0.016 * H, 0.002 * H], 5, [['ear' + e.sx, 1]], (p) => { const m = M0(); m.col = col; m.rest = p; return m; });
+    }
     if (plan.parts) plan.parts(body, plan, mAt);
     if (plan.cfg && plan.cfg.bow) addCollarBow(body, plan, mAt);
     // fur cards + whiskers (separate alpha-tested mesh sharing the coat shader)
@@ -1771,8 +1790,8 @@ G.Animal3D = (() => {
   // ================================================================================== species → plan
   const PETS = {
     // values from the approved design kit (tools/design2/yuyuan.js, mochi.js BASE specs)
-    yuyuan: { judge: true, exprBase: 'judging', bow: { col: '#C8332E', dark: '#8E1F22' }, coat: 'tabby', R: 0.19, fat: 1.42, cheek: 1.15, skullW: 1.04, ear: { size: 1.25, flare: 0.28 }, eye: { yaw: 0.3, pupil: 0.2 }, tail: { len: 0.95, r: 1.1 }, scale: 1.5, leg: 0.94, legR: 1.05 },
-    mochi: { chirpy: true, voxel: 0.0135, hullH: 0.021, coat: 'calico', R: 0.2, fat: 1.32, cheek: 0.9, skullW: 1.02, ear: { size: 1.15, flare: 0.31, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42, hl: '#ffe2a8', hl2: '#ffc870' }, tail: { len: 1.1, r: 1.5, taper: 0.95, fluff: 0.012 }, fluff: 1, ruff: 1.1, scale: 1.55, leg: 0.97, legR: 1.05 },
+    yuyuan: { judge: true, exprBase: 'judging', bow: { col: '#C8332E', dark: '#8E1F22' }, coat: 'tabby', R: 0.19, head: 1.1, fat: 1.72, cheek: 1.45, skullW: 1.08, ear: { size: 1.15, flare: 0.3 }, eye: { yaw: 0.3, pupil: 0.2 }, tail: { len: 0.9, r: 1.25 }, scale: 1.5, leg: 0.8, legR: 1.2 },
+    mochi: { chirpy: true, aoMin: 0.6, exprBase: 'serene', patchSoft: 0.2, patchN: 0.3, voxel: 0.0145, hullH: 0.021, coat: 'calico', R: 0.2, fat: 1.45, cheek: 0.9, skullW: 1.02, ear: { size: 1.15, flare: 0.31, lynx: 1 }, eye: { yaw: 0.3, round: true, pupil: 0.42, hl: '#ffe2a8', hl2: '#ffc870' }, tail: { len: 1.1, r: 1.85, taper: 0.95, fluff: 0.006 }, fluff: 1, ruff: 1.3, scale: 1.55, leg: 0.97, legR: 1.05 },
     cat: { voxel: 0.0175, hullH: 0.024, coat: 'orange', R: 0.18, fat: 1.0, cheek: 0.5, ear: { size: 1.05, flare: 0.3 }, eye: { yaw: 0.32, pupil: 0.25 }, tail: { len: 1.05 }, scale: 1.45 },
     leopard: { voxel: 0.0165, hullH: 0.023, coat: 'leopard', R: 0.18, fat: 1.05, cheek: 0.6, ear: { size: 0.95, flare: 0.36, round: true }, eye: { yaw: 0.32, round: true, pupil: 0.5 }, tail: { len: 1.05, r: 1.2, taper: 0.85 }, scale: 1.45 },
   };
@@ -2120,7 +2139,8 @@ G.Animal3D = (() => {
     pain: { lidU: 0.75, lidD: 0.45, pupil: 0.2, ear: 0.7, earY: 0.5, jaw: 0.15 },
     closed: { lidU: 1, lidD: 0.35, pupil: 0.3, ear: 0, earY: 0.1, jaw: 0 },
     determined: { lidU: 0.3, lidD: 0.2, pupil: 0.2, ear: -0.3, earY: 0, jaw: 0 },
-    judging: { lidU: 0.5, lidD: 0.18, pupil: 0.12, ear: 0.05, earY: 0.35, jaw: 0 },
+    judging: { lidU: 0.52, lidD: 0.2, pupil: 0.12, ear: 0.05, earY: 0.35, jaw: 0 },
+    serene: { lidU: 0.3, lidD: 0.12, pupil: 0.42, ear: 0, earY: 0.05, jaw: 0 },
   };
 
   // extra clips for dogs / grazers (shared CLIPS table; positions scale with the plan's gait scale)
@@ -2253,11 +2273,11 @@ G.Animal3D = (() => {
       rootBone.updateMatrixWorld(true);
       this.skeleton = new THREE.Skeleton(this.bones);
       const pal = asset.pal, cfg = plan.cfg;
-      this.mat = coatMaterial(pal, { mouth: asset.mouth, faceTex: asset.faceTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint });
+      this.mat = coatMaterial(pal, { patchSoft: cfg.patchSoft, patchN: cfg.patchN, mouth: asset.mouth, faceTex: asset.faceTex, spots: cfg.coat === 'leopard', tick: cfg.coat === 'tabby' ? 0.55 : 0.25, stripeW: 0.3, ghostTint: (G.Sprites.spec(asset.id) || {}).ghostTint });
       this.body = new THREE.SkinnedMesh(asset.geo, this.mat);
       this.body.add(rootBone);
       this.body.bind(this.skeleton);
-      this.body.castShadow = true; this.body.receiveShadow = true;
+      this.body.castShadow = true; this.body.receiveShadow = false; // toon look: ramp shading, no self-shadow blotches
       this.eyeMat = eyeMaterial({ iris: pal.iris, iris2: pal.iris2, round: !!(cfg.eye && cfg.eye.round), irisR: cfg.eye && cfg.eye.irisR, pupilH: cfg.eye && cfg.eye.round ? 0.62 : 0.82, hl: cfg.eye && cfg.eye.hl, hl2: cfg.eye && cfg.eye.hl2 });
       this.eyes = new THREE.SkinnedMesh(asset.eyeGeo, this.eyeMat);
       this.eyes.bind(this.skeleton, this.body.bindMatrix);
@@ -2332,7 +2352,7 @@ G.Animal3D = (() => {
       this.clip = { name: key, def, t: 0, w: 0, fade: o.fade != null ? o.fade : 0.28, loop: o.loop != null ? o.loop : def.loop, onDone: o.onDone || null, explicit: true };
     }
     emote(k) { const d = EMOTES[k]; if (d) this.emotes.push({ d, t: 0 }); if (k === '♥' && !this.clip) this.play('slowblink'); }
-    setExpression(name) { const e = EXPR[name] || EXPR.neutral; this.exprName = name; Object.assign(this.exprT, e); }
+    setExpression(name) { const base = this.plan.cfg && this.plan.cfg.exprBase; const e = EXPR[(!name || name === 'neutral') && base ? base : name] || EXPR.neutral; this.exprName = name; Object.assign(this.exprT, e); }
     lookAt(v) { this.lookTarget = v ? v.clone() : null; }
     setOpacity(a, ghost) {
       this.opacity = a; this.ghost = !!ghost;
