@@ -247,6 +247,7 @@ G.FX = (() => {
     }
     const b = buf.getContext('2d');
     b.setTransform(1, 0, 0, 1, 0, 0);
+    b.clearRect(0, 0, buf.width, buf.height);  // a transparent 2D overlay (3D mode) must not accumulate
     b.drawImage(cv, 0, 0);
     ctx.save();
     // 1) breathing ripple: redraw in horizontal strips with sine offsets

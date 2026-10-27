@@ -75,7 +75,7 @@ G.R3 = (() => {
     renderer.toneMapping = T.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = !R.lite;
-    renderer.shadowMap.type = T.PCFSoftShadowMap;
+    renderer.shadowMap.type = T.PCFShadowMap;  // PCFSoftShadowMap is deprecated in r186
     R.renderer = renderer;
     R.buildComposer();
     R.resize();
