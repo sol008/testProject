@@ -123,6 +123,8 @@ Everything follows its chapter's usual points of no return (`docs/qa/points_of_n
 - `node tools/i18n/extract.js`: every new line has English (`en_ch3/7/9/10/11.js`). The few untranslated strings
   left in those buckets were there before. All item names and descriptions already had English in `en_data.js`.
 - `node tools/test/chapters/ch7.test.js`: 63/63. `node tools/test/chapters/ch3.test.js`: 4/4 sessions.
+  `node tools/test/chapters/ch9.test.js`: 136/136. Two earlier runs each failed one check: a 3D-sweep page-load timeout
+  while other browsers ran at the same time, and an autoplay party wipe on 龍磐. Neither was related to this change.
 - A browser check of each new script: 海龍伯, the 照魂鏡, the chest `run` lines, both crates, 陳伯's gift and the
   three 萬象遊戲 wins (battle stubbed). Each gives its item exactly once, with no page errors.
 - The guide is rebuilt (`node tools/guide/build_guide.js`). The 取得 column shows every new source.
