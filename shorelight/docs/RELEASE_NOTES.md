@@ -64,7 +64,7 @@
   - 陳伯 knowing 紅纓's family.
   - Hakka 着 vs 著.
 - 3D:
-  - Very dense plant maps (sugarcane_night) use many draw calls.
   - No shoreline mesh at sea-map edges.
   - Leaf shadows don't sway.
-- The F-key auto-battle can't beat bosses on normal; it has no item use. We can upgrade it to the smart battle AI if wanted.
+- 3D performance: instanced batching is now on by default. Dense plant maps use up to 87% fewer draw calls (sugarcane_night 494 → 64). Add `?nobatch` to the URL to compare.
+- F-key auto-battle is now the smart AI: 保守/標準/積極 styles, optional item use, about a 94% boss win rate.
