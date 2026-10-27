@@ -10,6 +10,8 @@
 //   node tools/test/full_chain.js --reload-at ch6       # boundary where the run reloads its save in a fresh page
 //   node tools/test/full_chain.js --out <dir>           # screenshots, saves, logs, report.json (default tools/test/out/chain)
 //   node tools/test/full_chain.js --check               # only load/compile the reused chapter drivers (no browser)
+//   node tools/test/full_chain.js --no-shop             # don't buy gear with the carried gold at chapter starts
+//   node tools/test/full_chain.js --retries 1           # on a wipe, press 重新挑戰 (logged) instead of failing at once
 //
 // How it works
 //   · The page starts at the real title screen (no ?debug), localStorage shorelight_settings = {"render3d":false},
@@ -27,6 +29,9 @@
 //   · Allowed, documented help: difficulty easy + the shared battle bot (tools/test/lib/battlebot.js, a "sensible player"
 //     that uses items), heals before bosses, and at each chapter start the party is raised to the expected start level
 //     (G.Data.progression[ch].lv[0]; docs/BALANCE.md did not exist when this was written).
+//   · Shopping (not a help: the player's own gold): at each chapter start the party buys, with the gold it really
+//     carries, the best gear per slot from the shops reachable by then (cumulative pools of tools/sim_story_fights.js,
+//     the ones docs/BALANCE.md was tuned with), as a player would — instead of the free gear the drivers equip.
 //   · At every chapter boundary: G.state.chapter must increment, no page errors / console errors / warnings, party /
 //     cats / quest log sanity; time per chapter, a screenshot at each chapter start, a real save (G.Save.write → slot 1)
 //     exported to <out>/saves/chNN.json (--from uses it through the title screen's 讀取進度 menu).
@@ -61,6 +66,8 @@ const OPT = {
   headed: argv.includes('--headed'),
   check: argv.includes('--check'),
   endings: !argv.includes('--no-endings'),
+  shop: !argv.includes('--no-shop'),
+  retries: +opt('retries', 0),
 };
 const SAVES = path.join(OPT.out, 'saves');
 fs.mkdirSync(SAVES, { recursive: true });
@@ -447,7 +454,23 @@ function watchdog(h) {
     if (st) {
       h.lastMap = st.map;
       if (st.lastError) { h.recordError('G.lastError', st.lastError); await h.ev(() => { G.lastError = null; }).catch(() => {}); }
-      if (st.gameover) { failing = true; reject(new ChainFail('GAME OVER (party wiped) on ' + st.map)); return; }
+      if (st.gameover) {
+        const last = await h.ev(() => (window.__chain.battles.slice(-1)[0] || {})).catch(() => ({}));
+        REPORT.wipes = REPORT.wipes || [];
+        REPORT.wipes.push({ ch: h.ch, map: st.map, troop: last.troop, names: last.names, lv: last.lv, retried: h.retriesLeft > 0 });
+        saveReport();
+        if (h.retriesLeft > 0) {
+          h.retriesLeft--;
+          log('WIPE', `ch${h.ch} party wiped by ${last.troop} (${(last.names || []).join('+')}) at ${(last.lv || []).join(' ')} — pressing 重新挑戰 (--retries, ${h.retriesLeft} left)`);
+          await h.page.waitForTimeout(1600);
+          await h.ev(() => { const t = G.Scenes.top(); if (t && t.list) t.list.idx = 0; });
+          await h.page.keyboard.press('Enter');
+          await h.page.waitForTimeout(1000);
+          since = Date.now();
+          return;
+        }
+        failing = true; reject(new ChainFail(`GAME OVER (party wiped) on ${st.map} by ${last.troop} (${(last.names || []).join('+')}) at ${(last.lv || []).join(' ')}`)); return;
+      }
       const s = JSON.stringify([st.map, st.pos, st.names, st.dlg, st.dbg, st.bt, st.flags, st.battles, st.cred, st.busy]);
       if (s !== sig) { sig = s; since = Date.now(); }
       if (Date.now() - lastLine > 30000) {
@@ -510,6 +533,55 @@ function sanity(n, s, prevMain) {
   if (prevMain && !s.quests.done.includes(prevMain)) p.push(`previous main quest ${prevMain} is not done`);
   if (s.gold < 0 || !Number.isFinite(s.gold)) p.push('gold is ' + s.gold);
   return p;
+}
+
+// ------------------------------------------------------------------------------------------------ shopping
+// gear a player can buy by the start of chapter N (cumulative shop pools of tools/sim_story_fights.js)
+const SHOP_POOL = { 1: 'S1a', 2: 'S2a', 3: 'S3a', 4: 'S4', 5: 'S5', 6: 'S6', 7: 'S7a', 8: 'S8a', 9: 'S9a', 10: 'S9', 11: 'S11' };
+async function shop(h, n) {
+  let SHOPS;
+  try { SHOPS = require(path.join(ROOT, 'tools', 'sim_story_fights.js')).SHOPS; } catch (e) { log('shop', 'no shop pools: ' + e.message); return null; }
+  const pool = SHOPS[SHOP_POOL[n]];
+  if (!pool) return null;
+  const r = await h.ev((pool) => {
+    // same per-slot score as tools/sim_story.js gearScore (casters value mag)
+    const score = (cid, it, slot) => {
+      const c = G.Data.chars[cid], s = it.stats || {}, caster = c.weapon === 'flute' || c.weapon === 'talisman';
+      if (slot === 'weapon') return caster ? (s.mag || 0) + (s.atk || 0) * 0.2 + (s.hp || 0) / 20 : (s.atk || 0) + (s.mag || 0) * 0.1 + (s.hp || 0) / 20;
+      const sp = [].concat(it.special || []);
+      return (s.def || 0) * 1.5 + (s.hp || 0) / 8 + (s.mp || 0) / 8 + (s.spd || 0) * 1.2 + (caster ? (s.mag || 0) : (s.atk || 0)) + (s.atk || 0) * 0.3 + (s.mag || 0) * 0.3 + (s.luk || 0) * 0.3
+        + sp.length * 4 + (it.immune ? 2 * it.immune.length : 0) + (it.resist ? 2 : 0);
+    };
+    const I = G.Data.items, bought = [], gold0 = G.state.gold;
+    const wants = [];
+    for (const cid of G.state.party.slice(0, 4)) {
+      const m = G.state.members[cid];
+      for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
+        const cur = m.equip[slot] && I[m.equip[slot]];
+        const curV = cur ? score(cid, cur, slot) : 0;
+        let best = null, bv = curV;
+        for (const id of pool) {
+          const it = I[id];
+          if (!it || it.type !== slot || !(it.price > 0) || (it.who && !it.who.includes(cid))) continue;
+          const v = score(cid, it, slot);
+          if (v > bv + 0.01) { bv = v; best = id; }
+        }
+        if (best) wants.push({ cid, slot, id: best, gain: bv - curV, price: I[best].price });
+      }
+    }
+    // weapons and armour first, then the biggest gain per coin
+    const order = { weapon: 0, armor: 1, head: 2, feet: 2, acc: 3 };
+    wants.sort((a, b) => order[a.slot] - order[b.slot] || b.gain / b.price - a.gain / a.price);
+    for (const w of wants) {
+      if (G.state.gold < w.price) continue;
+      G.state.gold -= w.price; G.Inv.add(w.id, 1); G.Party.equip(w.cid, w.slot, w.id);
+      bought.push(`${w.cid}.${w.slot}=${w.id}(${I[w.id].name},${w.price})`);
+    }
+    for (const cid of G.state.party) { const s = G.Party.stats(cid), mm = G.state.members[cid]; mm.hp = Math.min(mm.hp, s.mhp); mm.mp = Math.min(mm.mp, s.mmp); }
+    return { gold0, gold: G.state.gold, bought, skipped: wants.length - bought.length };
+  }, pool);
+  log('shop', `ch${n} (${SHOP_POOL[n]}): spent ${r.gold0 - r.gold} of ${r.gold0} gold — ${r.bought.join(' ') || 'nothing better on sale'}${r.skipped ? ` (${r.skipped} upgrade(s) unaffordable)` : ''}`);
+  return r;
 }
 
 // ------------------------------------------------------------------------------------------------ chapter adapters
@@ -733,6 +805,7 @@ async function main() {
           }
           log('reload', `fresh page + title → 讀取進度 → slot 1: state ${rec.reload.same ? 'identical' : 'DIFFERS in ' + rec.reload.diff.join(',')}`);
         }
+        if (OPT.shop) rec.shopping = await shop(h, n);
         // allowed help: raise the party to the chapter's expected start level
         if (prog) {
           const want = prog.lv[0];
@@ -749,6 +822,7 @@ async function main() {
       if (boundaryOnly) { rec.status = 'BOUNDARY'; delete rec.start; saveReport(); break; }
       // ---------------------------------------------------------- the chapter
       log('chain', `═════ chapter ${n} ═════`);
+      h.retriesLeft = OPT.retries;
       const wd = watchdog(h);
       h.watch = wd;
       let res;
