@@ -500,7 +500,7 @@ G.Env3D = (() => {
     }
     const uni = Object.assign({}, U, T.UniformsUtils.clone(T.UniformsLib.fog), {
       uShal: { value: shal }, uDeep: { value: deep }, uPar: { value: par },
-      uMainKind: { value: A.mainKind ? WATER_KIND[A.mainKind] : 1 }, uEdge: { value: A.edgeWater ? 1 : 0 },
+      uMainKind: { value: A.mainKind ? WATER_KIND[A.mainKind] : 1 }, uEdge: { value: A.edgeWater ? 1 : 0 }, uOutdoor: { value: view.outdoor ? 1 : 0 },
     });
     const low = QUAL() === 'low';
     const mat = new T.ShaderMaterial({
@@ -516,7 +516,7 @@ G.Env3D = (() => {
         #include <fog_pars_fragment>
         ${GLSL_COMMON}${GLSL_SKY}
         uniform sampler2D uRipple, uMapTex, uKindTex, uFlowTex;
-        uniform vec2 uMapSize, uWind; uniform vec3 uGlintDir, uAmb; uniform float uCloudShadow, uWindK, uMainKind, uEdge, uLightK, uShoreFoam;
+        uniform vec2 uMapSize, uWind; uniform vec3 uGlintDir, uAmb; uniform float uCloudShadow, uWindK, uMainKind, uEdge, uLightK, uShoreFoam, uOutdoor;
         uniform vec3 uShal[8], uDeep[8]; uniform vec4 uPar[16]; uniform vec4 uPL[12]; uniform vec3 uPLC[12];
         varying vec3 vW;
         vec2 rip(vec2 p){ return texture2D(uRipple, p).xy * 2.0 - 1.0; }
@@ -579,7 +579,7 @@ G.Env3D = (() => {
           float ndv = clamp(dot(N, V), 0.0, 1.0);
           float F = (0.03 + 0.97 * pow(1.0 - ndv, 4.0)) * P0.z;
           vec3 R = reflect(-V, N); R.y = abs(R.y);
-          vec3 sky = skyColor(R, 1.0) * (1.0 - 0.45 * uNight);
+          vec3 sky = uOutdoor > 0.5 ? skyColor(R, 1.0) * (1.0 - 0.45 * uNight) : uAmb * (0.25 + 0.2 * texture2D(uNoise, R.xz * 0.5).r);
           // ---- body colour (depth tint), crest scatter, caustics
           vec3 body = mix(kShal, kDeep, deepK);
           float cs = 1.0;
@@ -605,7 +605,7 @@ G.Env3D = (() => {
           float spk = step(0.82, texture2D(uNoise, p * 1.7 + vec2(uTime * 0.05, -uTime * 0.04)).b) * pow(nh, 18.0);
           spec += spk * 1.6 * (0.4 + uWindK);
           #endif
-          col += glC * spec * cs;
+          col += glC * spec * cs * uOutdoor;
           // ---- lantern / light reflections (pool lights)
           vec3 lr = vec3(0.0);
           for (int i = 0; i < 12; i++) {
@@ -636,7 +636,7 @@ G.Env3D = (() => {
             float pulse = 0.5 + 0.5 * sin(uTime * 0.7 + cid * 37.0);
             float spec2 = smoothstep(0.42, 0.62, cell) * smoothstep(0.62, 0.85, texture2D(uNoise, p * 0.9 - uTime * 0.01).b);
             float surf = (1.0 - smoothstep(-0.1, 0.9, sd)) * pow(0.5 + 0.5 * sin(sd * 7.0 - uTime * 0.9), 3.0);
-            float wisps = smoothstep(0.62, 0.8, texture2D(uNoise, p * 0.08 + vec2(uTime * 0.006, 0.0)).r) * 0.25;
+            float wisps = smoothstep(0.7, 0.85, texture2D(uNoise, p * 0.08 + vec2(uTime * 0.006, 0.0)).r) * 0.08;
             vec3 ph = mix(vec3(0.1, 0.9, 0.85), vec3(0.45, 0.6, 1.0), cid);
             col += ph * (spec2 * pulse * 1.1 + surf * 0.12 + wisps * (0.5 + 0.4 * pulse)) * blackW;
           }
