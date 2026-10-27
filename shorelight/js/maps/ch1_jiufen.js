@@ -4128,7 +4128,7 @@
     await Promise.all([lerpTo(moya, { offsetY: 0 }, 1.2, 'outCubic'), lerpTo(moya, { alpha: 1 }, 0.6)]);
     await S.say('', '一個披著鴉羽斗篷的身影，從茶樓屋頂輕飄飄地落下，站在石階上。');
     await S.say('moya:smug', '嘎嘎嘎……好歌，好歌。');
-    await S.say('moya:smug', '幾十年沒聽過了。渡魂謠——果然是妳。');
+    await S.say('moya:smug', '十八年沒聽過了。渡魂謠——果然是妳。');
     await S.say('xinghe:surprise', '你是……雞籠那個發符的！');
     await S.say('moya:smug', '府城長明宮，墨鴉。記住這個名字，鄉下小子。');
     await S.say('moya:smug', '雖然，你很快就什麼都不用記了。');

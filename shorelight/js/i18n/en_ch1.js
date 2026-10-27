@@ -1292,7 +1292,7 @@ G.I18N.add({
   '黑色的羽毛從天上飄落。石階兩側的藍色燈籠一起搖晃。': 'Black feathers drift down from the sky. The blue lanterns on both sides of the steps sway all at once.',
   '一個披著鴉羽斗篷的身影，從茶樓屋頂輕飄飄地落下，站在石階上。': 'A figure in a crow-feather cloak floats lightly down from the teahouse roof and lands on the steps.',
   '嘎嘎嘎……好歌，好歌。': 'Caw, caw, caw… A lovely song, a lovely song.',
-  '幾十年沒聽過了。渡魂謠——果然是妳。': 'I haven\'t heard it in decades. The Song of Crossing—so it IS you.',
+  '十八年沒聽過了。渡魂謠——果然是妳。': 'Eighteen years since I last heard that. The Song of Crossing—so it IS you.',
   '你是……雞籠那個發符的！': 'You\'re… the guy handing out talismans in Keelung!',
   '府城長明宮，墨鴉。記住這個名字，鄉下小子。': 'Mo Ya, of the Temple of Eternal Light in Tainan Prefecture. Remember that name, country boy.',
   '雖然，你很快就什麼都不用記了。': 'Not that you\'ll need to remember anything for much longer.',
