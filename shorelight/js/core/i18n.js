@@ -24,7 +24,7 @@ G.I18N = (() => {
   let memoCh = null;
   function scriptChapter() {
     const cs = typeof document !== 'undefined' && document.currentScript;
-    const m = cs && /en_ch(\d+)\.js/.exec(cs.src || '');
+    const m = cs && /en_ch(\d+)[a-z]?\.js/.exec(cs.src || '');
     return m ? +m[1] : null;
   }
 
