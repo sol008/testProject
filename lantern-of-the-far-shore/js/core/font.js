@@ -19,6 +19,6 @@ G.loadFonts = async function () {
   }
   await Promise.race([Promise.all(tasks), G.U.sleepReal(4000)]);
   try {
-    await Promise.race([document.fonts.load(G.font(20), '千燈劍緣'), G.U.sleepReal(1500)]);
+    await Promise.race([document.fonts.load(G.font(20), '彼岸燈'), G.U.sleepReal(1500)]);
   } catch (e) { /* ignore */ }
 };

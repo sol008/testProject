@@ -1,4 +1,4 @@
-// 千燈劍緣 — core utilities
+// 彼岸燈 — core utilities
 'use strict';
 const G = window.G = {
   W: 960,
