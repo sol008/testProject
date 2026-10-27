@@ -5,7 +5,11 @@
 //   hides:  [{ x, y, w, h }]       cells where the player cannot be seen (shadows, behind crates)
 //   checkpoint: [x, y, dir]        where the player is returned after being caught
 //   onCaught: async (S, guard) => {}   custom handler (default: battle guard.troop, then back to checkpoint)
-//   winds:  [{ x, y, w, h, dir: 'left', period: 3, dur: 1.2, phase: 0 }]
+//   winds:  [{ x, y, w, h, dir: 'left', period: 3, dur: 1.2, phase: 0, if }]
+//           while a gust blows (dur seconds of every period) the player standing in the zone is pushed one tile
+//           downwind between steps — also while holding a direction: stepping straight into the wind is blocked
+//           (MapScene.blocked), sideways steps are slowed and each one is followed by a push, steps with the wind
+//           are faster. Pinned against something downwind, the player may still move sideways.
 //   objects with { push: true } can be shoved one tile by walking into them;
 //   def.onPush(S, obj) is called after each push (check puzzle solutions there).
 'use strict';
@@ -17,7 +21,6 @@
   P.initMech = function () {
     const def = this.def;
     this.windT = 0;
-    this.windPushT = 0;
     for (const gd of def.guards || []) {
       if (gd.if && !gd.if(G.state)) continue;
       const a = new G.Mapx.Actor(Object.assign({ sprite: 'temple_guard', speed: gd.speed || 1.8 }, gd, {
@@ -117,26 +120,47 @@
     const per = w.period || 3, dur = w.dur == null ? 1.2 : w.dur;
     return ((this.windT + (w.phase || 0)) % per) < dur;
   };
-  P.updateMech = function (dt, busy) {
-    this.windT += dt;
-    const winds = this.def.winds;
-    if (!winds || busy) return;
-    const p = this.player;
-    this.windPushT -= dt;
-    for (const w of winds) {
+  // the gust blowing on cell (x, y) right now (first active zone containing it), or null
+  P.windAt = function (x, y) {
+    for (const w of this.def.winds || []) {
       if (w.if && !w.if(G.state)) continue;
       if (!this.windActive(w)) continue;
-      if (p.x >= w.x && p.x < w.x + (w.w || 1) && p.y >= w.y && p.y < w.y + (w.h || 1) && !p.moving && this.windPushT <= 0) {
-        const [dx, dy] = U.dirs[w.dir];
-        const nx = p.x + dx, ny = p.y + dy;
-        if (!this.blocked(nx, ny, p)) {
-          this.shiftFollowers(p.x, p.y);
-          p.startMove(nx, ny);
-          this.windPushT = 0.05;
-          if (Math.random() < 0.3) G.Audio.sfx('wind');
-        }
-      }
+      if (x >= w.x && x < w.x + (w.w || 1) && y >= w.y && y < w.y + (w.h || 1)) return w;
     }
+    return null;
+  };
+  // MapScene.blocked(x, y, player): the player cannot take a step straight against an active gust
+  P.windResists = function (nx, ny) {
+    const p = this.player;
+    const w = this.windAt(p.x, p.y);
+    if (!w) return false;
+    const [dx, dy] = U.dirs[w.dir];
+    return nx - p.x === -dx && ny - p.y === -dy;
+  };
+  // Called by MapScene.updatePlayer whenever the player is between steps (not moving, no script running) with the
+  // held input direction `d` (or null). Returns true when the wind pushed the player (the input is skipped this
+  // step). Sets player.stepMul for the step that follows (slowed sideways, faster with the wind).
+  P.windStep = function (d) {
+    const p = this.player;
+    const w = this.def.winds ? this.windAt(p.x, p.y) : null;
+    if (!w) { p.windOwed = false; return false; }
+    const [wx, wy] = U.dirs[w.dir];
+    if (this.blocked(p.x + wx, p.y + wy, p)) { p.windOwed = false; return false; } // pinned: free to edge sideways
+    if (d && !p.windOwed && d !== U.opposite[w.dir]) {
+      // a voluntary step: with the wind it is quick; sideways it is slow and owes the wind a push afterwards
+      p.windOwed = d !== w.dir;
+      p.stepMul = d === w.dir ? 1.25 : 0.7;
+      return false;
+    }
+    p.windOwed = false;
+    p.stepMul = 1.15;
+    this.shiftFollowers(p.x, p.y);
+    p.startMove(p.x + wx, p.y + wy);
+    if (Math.random() < 0.3) G.Audio.sfx('wind');
+    return true;
+  };
+  P.updateMech = function (dt) {
+    this.windT += dt; // pushes happen in windStep (between the player's steps)
   };
 
   // --------------------------------------------------------------- drawing (floor layer)

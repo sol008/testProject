@@ -486,7 +486,7 @@
           ly += size + 18;
         }
         // strike-through marks (zh only — positions are found by glyph)
-        if (ln && ln.strike && G.T(text) === text) {
+        if (ln && typeof ln === 'object' && Array.isArray(ln.strike) && G.T(text) === text) {
           ctx.save(); ctx.font = G.font(size);
           const chars = [...text];
           let cx = x + 44;

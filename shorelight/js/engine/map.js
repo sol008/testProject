@@ -278,6 +278,7 @@ G.Mapx = G.Mapx || {};
     blocked(x, y, self) {
       if (x < 0 || y < 0 || x >= this.w || y >= this.h) return true;
       if (this.solid[y * this.w + x]) return true;
+      if (self && self === this.player && this.def.winds && this.windResists && this.windResists(x, y)) return true; // no stepping into a gust
       for (const n of this.npcs) if (n !== self && n.visible && !n.through && this.npcActive(n) && n.x === x && n.y === y) return true;
       if (self && self !== this.player && this.player.x === x && this.player.y === y) return true;
       return false;
@@ -360,11 +361,14 @@ G.Mapx = G.Mapx || {};
       const run = I.held('run') !== !!G.settings.runDefault;
       const spd = run ? 1.65 : 1;
       if (p.moving) {
-        if (p.updateMove(dt, p.scripted ? 1 : spd)) this.onPlayerArrive();
+        if (p.updateMove(dt, p.scripted ? 1 : spd * (p.stepMul || 1))) this.onPlayerArrive();
       }
-      if (p.queue.length && !p.moving) { this.stepQueue(p); return; }
+      if (p.queue.length && !p.moving) { p.stepMul = 1; this.stepQueue(p); return; }
       if (busy || p.moving) return;
       const d = this.view3d ? this.view3d.remapDir(I.dir()) : I.dir();
+      p.stepMul = 1;
+      // map winds (mapmech.js): a gust pushes the player between steps, even while a direction is held
+      if (this.windStep && this.windStep(d)) { this.interactTarget = null; return; }
       if (d) {
         p.dir = d;
         const [dx, dy] = U.dirs[d];
