@@ -1173,7 +1173,9 @@ G.Char3D = (() => {
     const bloused = !!S.leggings && (bt === 'wide' || bt === 'pants') && S.shoes.type !== 'boots';
     if (bloused) tr = 0.66; // trousers bloused over the leg wraps (綁腿)
     if (bt !== 'bare') {
-      const tcol = S.bottom.color;
+      // under floor-length robes / skirts the trousers take the outer colour so a grazing knee never reads as a hole
+      const longOuter = (top.len || 0) > 0.6 ? top.color : (S.skirt && (S.skirt.len || 0) > 0.8 ? S.skirt.color : null);
+      const tcol = longOuter ? mixc(S.bottom.color, shade(longOuter, -0.15), 0.85) : S.bottom.color;
       const wide = bt === 'wide' ? 1 : bt === 'pants' ? 0 : 0.5;
       const rect = clothRect(B, 'pants', 0.5, P.legTop, tcol, { weave: 'cotton', seed: B.id + 'p', foldTop: 0.1, after: (g, x, y, w, h) => {
         if (S.bottom.cuff) { g.fillStyle = S.bottom.cuff; g.fillRect(x - 2, y + h * 0.93, w + 4, h * 0.08); }
@@ -4188,6 +4190,14 @@ G.Char3D = (() => {
         if (g) m.userData.u.uGhostCol.value.set(this.T.S.ghostTint || '#bfe0ff');
       }
       this.outline.visible = op > 0.9 && !g;
+      // translucent: depth-only prepass so only the front-most surface blends (no hair/back showing through)
+      if (op < 0.995 && !this.prepass) {
+        const THREE = window.THREE, dm = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.FrontSide });
+        this.prepass = [this.T.geo, this.T.hgeo].map((geo) => { const m = new THREE.SkinnedMesh(geo, dm); m.bind(this.skeleton, new THREE.Matrix4()); m.boundingSphere = this.body.boundingSphere; m.renderOrder = -2; m.castShadow = false; this.model.add(m); return m; });
+        this._dm = dm;
+      }
+      if (this.prepass) for (const m of this.prepass) m.visible = op < 0.995;
+      for (const m of [this.body, this.head]) m.renderOrder = op < 0.995 ? 1 : 0;
       this.body.castShadow = op > 0.5 && !g;
     }
     lights() {
@@ -4379,7 +4389,7 @@ G.Char3D = (() => {
       this.mixer.stopAllAction();
       this.mixer.uncacheRoot(this.model);
       this.face.tex.dispose();
-      this.bodyMat.dispose(); this.faceMat.dispose();
+      this.bodyMat.dispose(); this.faceMat.dispose(); if (this._dm) this._dm.dispose();
       this.skeleton.dispose();
     }
   }
