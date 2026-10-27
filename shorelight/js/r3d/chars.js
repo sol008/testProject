@@ -979,6 +979,14 @@ G.Char3D = (() => {
         return W;
       };
       let W = wmix(along(k0), along(k1), f);
+      const lb = o.legBlend != null ? o.legBlend : 0;
+      if (lb > 0) {
+        const y = lerp(yTop, yHem, t);
+        const tl = clamp((P.legTop - y) / (P.legTop - P.ankleY), 0, 1);
+        const fside = sstep(0.2, 0.8, 0.5 + 0.5 * sin(th));
+        const legMix = wmix(legW(B, 'R', tl), legW(B, 'L', tl), fside);
+        W = wmix(W, legMix, lb * sstep(0.06, 0.45, t) * (0.6 + 0.4 * abs(cos(th))));
+      }
       const topT = 1 - sstep(0.0, o.rigidTop || 0.12, t);
       if (topT > 0) W = wmix(W, o.topW ? o.topW(th) : [[B.b(o.parent || 'hips'), 1]], topT);
       return W;
@@ -1279,7 +1287,7 @@ G.Char3D = (() => {
         const chest = ringAt(R, P.chestY - 0.03 * s);
         const looseK = robe ? 0.55 : 0.25;
         const rr = Object.assign({}, r0, { rx: lerp(r0.rx, max(r0.rx, chest.rx * 0.98), looseK), rf: lerp(r0.rf, max(r0.rf, chest.rf * 0.98), looseK), rb: lerp(r0.rb, max(r0.rb, chest.rb), looseK) });
-        hemShell(B, { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6,
+        hemShell(B, { name: 'robe', rect, yTop: yT, yHem: hemY, inflate: inflT * 2.1, flare: robe ? 0.35 + (top.flare || 0) : 0.18, chains: robe ? 8 : 6, legBlend: robe ? 0.42 : 0.22, hitR: (robe ? 0.045 : 0.035) * s,
           top: (th) => torsoPt(rr, th, inflT * 2.1), uvf: (u, v) => [u, kTorso + v * (1 - kTorso)], stiff: robe ? 2.4 : 3.0, grav: 0.4,
           topW: (th) => [[B.b('hips'), 1]] });
       }
@@ -1395,7 +1403,7 @@ G.Char3D = (() => {
         Pn.aoEdges(g, x, y, w, h, 0.2, 0.1);
       });
       const inf = waistInfl + 0.006 * s;
-      hemShell(B, { name: 'apron', rect: arect, yTop: yT, yHem: yH, inflate: inf, flare: 0.05, th0: -1.15, th1: 1.15, chains: 3, nu: 12, stiff: 2.6, grav: 0.5, rigidTop: 0.06,
+      hemShell(B, { name: 'apron', rect: arect, yTop: yT, yHem: yH, inflate: inf, flare: 0.05, th0: -1.15, th1: 1.15, chains: 3, nu: 12, stiff: 2.6, grav: 0.5, rigidTop: 0.06, legBlend: 0.3,
         top: (th) => torsoPt(ringAt(R, yT), th, inf + 0.004 * s), curve: 0.7 });
     }
     // ---- skirt
@@ -1410,7 +1418,7 @@ G.Char3D = (() => {
         Pn.aoEdges(g, x, y, w, h, 0.25, 0.15);
       });
       const inf = (robe && hemY < yT ? 0.04 : 0.016) * s;
-      hemShell(B, { name: 'skirt', rect: srect, yTop: yT, yHem: yH, inflate: inf, flare: 0.25 + (sk.flare || 0.3) * 0.8, chains: 8, stiff: 2.2, grav: 0.45, rigidTop: 0.05 });
+      hemShell(B, { name: 'skirt', rect: srect, yTop: yT, yHem: yH, inflate: inf, flare: 0.25 + (sk.flare || 0.3) * 0.8, chains: 8, stiff: 2.2, grav: 0.45, rigidTop: 0.05, legBlend: 0.36, hitR: 0.04 * s });
     }
     // ---- cape / mantle
     if (S.cape) buildCape(B, S.cape);
@@ -1663,11 +1671,11 @@ G.Char3D = (() => {
     const darkHair = lum(hairC) < 0.45;
     const F = Object.assign({
       skin: S.skin, iris: S.eyes || '#4a3328', sheenIris: null,
-      ew: es.ew * (P.kid ? 1.28 : 1.2), eh: es.eh, tilt: es.tilt, irisR: es.iris, lidW: es.lid, lash: es.lash + (P.fem ? 0.25 : 0), low: es.low, dbl: es.dbl, droop: es.droop, happyBase: es.happy || 0, simple: es.simple || 0,
-      eyeX: P.kid ? 0.38 : 0.37, eyeY: P.kid ? -0.15 : P.age ? -0.05 : -0.07, gap: 0,
-      browW: br.w, browArch: br.arch, browAng: br.ang, browLow: br.low || 0, browCol: darkHair ? shade(hairC, -0.1) : mixc(hairC, '#4a3a30', P.age ? 0.25 : 0.5), browY: 0.16,
+      ew: es.ew * (P.kid ? 1.85 : 1.72), eh: es.eh, tilt: es.tilt, irisR: es.iris, lidW: es.lid, lash: es.lash + (P.fem ? 0.25 : 0), low: es.low, dbl: es.dbl, droop: es.droop, happyBase: es.happy || 0, simple: es.simple || 0,
+      eyeX: P.kid ? 0.43 : 0.42, eyeY: P.kid ? -0.15 : P.age ? -0.05 : -0.08, gap: 0,
+      browW: br.w * 1.35, browArch: br.arch, browAng: br.ang, browLow: br.low || 0, browCol: darkHair ? shade(hairC, -0.1) : mixc(hairC, '#4a3a30', P.age ? 0.25 : 0.5), browY: 0.16,
       lidCol: '#2a1c1e', lips: P.fem ? '#d46a72' : shade(S.skin, -0.35), lipTint: P.fem ? 0.45 : 0.15,
-      mouth: S.mouth || 'flat', mouthY: P.kid ? -0.56 : -0.6, mouthW: P.kid ? 0.13 : 0.15,
+      mouth: S.mouth || 'flat', mouthY: P.kid ? -0.56 : -0.6, mouthW: P.kid ? 0.15 : 0.17,
       noseY: P.kid ? -0.36 : -0.36, nose: P.age ? 1.2 : 1, blush: S.face && S.face.blush === false ? 0 : (P.fem || P.kid ? 0.5 : 0.18),
       wrinkles: P.age ? 1 : 0, marks: [], shaved: false,
       chin: P.fem ? 0.36 : P.kid ? 0.5 : P.belly ? 0.56 : 0.44, jaw: P.fem ? 0.8 : P.kid ? 0.9 : P.belly ? 0.95 : 0.88, cheek: P.kid ? 0.07 : P.fem ? 0.035 : 0.02,
@@ -1771,6 +1779,7 @@ G.Char3D = (() => {
       this.tex.generateMipmaps = true;
       this.key = '';
       this.a = B.P.headW / 2; this.b = B.P.head / 2;
+      this.lw = size <= 256 ? 2.3 : 1.5; // stroke widths are in mm; keep them ≥ ~2 texels
     }
     // metres on the face (X: + = character's left, Y: up, relative to head centre) → canvas px
     px(X, Y) {
@@ -1808,7 +1817,10 @@ G.Char3D = (() => {
         const [cx, cy] = this.px(0, b * (F.eyeY + 0.42));
         const gr2 = g.createLinearGradient(0, cy - N * 0.06, 0, cy + N * 0.05);
         gr2.addColorStop(0, rgba(shadowOf(F.skin, 0.25), 0.55)); gr2.addColorStop(1, rgba(F.skin, 0));
-        g.fillStyle = gr2; g.fillRect(N * 0.25, cy - N * 0.08, N * 0.5, N * 0.13);
+        g.save(); g.globalCompositeOperation = 'multiply';
+        const rg = g.createRadialGradient(N * 0.5, cy - N * 0.05, N * 0.02, N * 0.5, cy - N * 0.05, N * 0.24);
+        rg.addColorStop(0, rgba(shadowOf(F.skin, 0.12), 0.9)); rg.addColorStop(0.55, rgba(shadowOf(F.skin, 0.06), 0.5)); rg.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = rg; g.beginPath(); g.ellipse(N * 0.5, cy - N * 0.05, N * 0.24, N * 0.09, 0, 0, TAU); g.fill(); g.restore();
       }
       // blush
       const bl = clamp(F.blush + (st.blush || 0), 0, 1.4);
@@ -1818,7 +1830,7 @@ G.Char3D = (() => {
         const rg = g.createRadialGradient(0, 0, 0, 0, 0, r);
         rg.addColorStop(0, rgba('#ff7a8a', 0.32 * bl)); rg.addColorStop(1, rgba('#ff7a8a', 0));
         g.fillStyle = rg; g.beginPath(); g.ellipse(0, 0, r * 1.25, r * 0.7, 0, 0, TAU); g.fill();
-        if ((st.blush || 0) > 0.5) { g.strokeStyle = rgba('#e05a6a', 0.55); g.lineWidth = 0.5; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(i * 3 - 1.5, 1.5); g.lineTo(i * 3 + 1.5, -1.5); g.stroke(); } }
+        if ((st.blush || 0) > 0.5) { g.strokeStyle = rgba('#e05a6a', 0.55); g.lineWidth = (0.5) * this.lw; for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(i * 3 - 1.5, 1.5); g.lineTo(i * 3 + 1.5, -1.5); g.stroke(); } }
       }
       if (F.wrinkles) this.wrinkles(st);
       // eyes, brows
@@ -1853,12 +1865,12 @@ G.Char3D = (() => {
       g.lineCap = 'round'; g.lineJoin = 'round';
       if (open < 0.12 || happy > 0.6) {
         // closed / happy arcs
-        g.strokeStyle = lidCol; g.lineWidth = 1.4 * F.lidW;
+        g.strokeStyle = lidCol; g.lineWidth = (1.4 * F.lidW) * this.lw;
         g.beginPath();
         if (happy > 0.6) { g.moveTo(inX * 0.9, eh * 0.25); g.quadraticCurveTo(0, -eh * 0.75, outX * 0.95, eh * 0.15); }
         else { g.moveTo(inX * 0.95, eh * 0.05); g.quadraticCurveTo(0, eh * 0.55, outX, outY * 0.6 + eh * 0.05); }
         g.stroke();
-        if (F.lash > 0.3 && !(happy > 0.6)) { g.lineWidth = 0.9; g.beginPath(); g.moveTo(outX * 0.96, eh * 0.05 + outY * 0.6); g.lineTo(outX * 1.2, -eh * 0.12 + outY * 0.6); g.stroke(); }
+        if (F.lash > 0.3 && !(happy > 0.6)) { g.lineWidth = (0.9) * this.lw; g.beginPath(); g.moveTo(outX * 0.96, eh * 0.05 + outY * 0.6); g.lineTo(outX * 1.2, -eh * 0.12 + outY * 0.6); g.stroke(); }
         return;
       }
       const upper = new Path2D();
@@ -1879,11 +1891,11 @@ G.Char3D = (() => {
         const ig = g.createLinearGradient(0, iy - ir, 0, iy + ir);
         ig.addColorStop(0, shade(F.iris, -0.55)); ig.addColorStop(0.45, F.iris); ig.addColorStop(1, F.irisLight);
         g.fillStyle = ig; g.beginPath(); g.ellipse(ix, iy, irx, ir, 0, 0, TAU); g.fill();
-        g.strokeStyle = shade(F.iris, -0.6); g.lineWidth = 0.55; g.stroke();
+        g.strokeStyle = shade(F.iris, -0.6); g.lineWidth = (0.55) * this.lw; g.stroke();
         // pupil
         g.fillStyle = shade(F.iris, -0.75); g.beginPath(); g.ellipse(ix, iy + ir * 0.05, irx * 0.45 * (st.pupil || 1), ir * 0.5 * (st.pupil || 1), 0, 0, TAU); g.fill();
         // iris inner ring sparkle
-        g.strokeStyle = rgba(F.irisLight, 0.6); g.lineWidth = 0.35; g.beginPath(); g.ellipse(ix, iy + ir * 0.25, irx * 0.62, ir * 0.45, 0, 0.15 * PI, 0.85 * PI); g.stroke();
+        g.strokeStyle = rgba(F.irisLight, 0.6); g.lineWidth = (0.35) * this.lw; g.beginPath(); g.ellipse(ix, iy + ir * 0.25, irx * 0.62, ir * 0.45, 0, 0.15 * PI, 0.85 * PI); g.stroke();
         // highlights
         g.fillStyle = 'rgba(255,255,255,0.95)'; g.beginPath(); g.ellipse(ix - irx * 0.35 * sg, iy - ir * 0.42, irx * 0.3, ir * 0.24, -0.3 * sg, 0, TAU); g.fill();
         g.fillStyle = 'rgba(255,255,255,0.7)'; g.beginPath(); g.arc(ix + irx * 0.35 * sg, iy + ir * 0.35, irx * 0.13, 0, TAU); g.fill();
@@ -1898,8 +1910,8 @@ G.Char3D = (() => {
       g.restore();
       // upper lid line (thick, tapering, heavier at the outer corner) + lash flick
       g.strokeStyle = lidCol;
-      g.lineWidth = 0.9 * F.lidW; g.stroke(upper);
-      g.lineWidth = 1.6 * F.lidW;
+      g.lineWidth = (0.9 * F.lidW) * this.lw; g.stroke(upper);
+      g.lineWidth = (1.6 * F.lidW) * this.lw;
       const outer = new Path2D(); outer.moveTo(outX * 0.15, topY * 1.02); outer.bezierCurveTo(outX * 0.45, topY * 1.02, outX * 0.8, (topY + outY) * 0.55, outX * 1.02, outY); g.stroke(outer);
       if (F.lash > 0.05) {
         g.fillStyle = lidCol;
@@ -1908,16 +1920,16 @@ G.Char3D = (() => {
       }
       // lower lid
       if (F.low > 0) {
-        g.strokeStyle = rgba(lidCol, 0.55); g.lineWidth = 0.5;
+        g.strokeStyle = rgba(lidCol, 0.55); g.lineWidth = (0.5) * this.lw;
         g.beginPath(); g.moveTo(outX * 0.98, outY + 0.4); g.bezierCurveTo(outX * 0.6, botY * 0.82, outX * 0.05, botY * 1.02, inX * (0.2 + 0.5 * (1 - F.low)), botY * 0.95); g.stroke();
       }
       // double lid crease
       if (F.dbl > 0.05 && open > 0.6) {
-        g.strokeStyle = rgba(shade(F.skin, -0.45), 0.55 * F.dbl); g.lineWidth = 0.45;
+        g.strokeStyle = rgba(shade(F.skin, -0.45), 0.55 * F.dbl); g.lineWidth = (0.45) * this.lw;
         g.beginPath(); g.moveTo(inX * 0.35, topY - eh * 0.32); g.bezierCurveTo(outX * 0.2, topY - eh * 0.42, outX * 0.7, topY - eh * 0.3, outX * 0.98, outY - eh * 0.25); g.stroke();
       }
       if (F.eyeShadow) { g.globalCompositeOperation = 'multiply'; const es = g.createLinearGradient(0, topY - eh * 0.8, 0, topY + 1); es.addColorStop(0, rgba(F.eyeShadow, 0)); es.addColorStop(1, rgba(F.eyeShadow, 0.6)); g.fillStyle = es; g.fillRect(-ew * 1.1, topY - eh * 0.8, ew * 2.4, eh * 0.9); g.globalCompositeOperation = 'source-over'; }
-      if (F.bags) { g.strokeStyle = rgba(shade(F.skin, -0.4), 0.4 * F.bags); g.lineWidth = 0.5; g.beginPath(); g.moveTo(inX * 0.5, botY + eh * 0.35); g.quadraticCurveTo(0, botY + eh * 0.55, outX * 0.7, botY + eh * 0.25); g.stroke(); }
+      if (F.bags) { g.strokeStyle = rgba(shade(F.skin, -0.4), 0.4 * F.bags); g.lineWidth = (0.5) * this.lw; g.beginPath(); g.moveTo(inX * 0.5, botY + eh * 0.35); g.quadraticCurveTo(0, botY + eh * 0.55, outX * 0.7, botY + eh * 0.25); g.stroke(); }
     }
     brow(sg, st) {
       const g = this.g, F = this.F, a = this.a, b = this.b;
@@ -1933,13 +1945,13 @@ G.Char3D = (() => {
       g.quadraticCurveTo(-ew * 0.2, inY - 1.2 * w - F.browArch * 2.2 * (1 + (st.browArch || 0)), ew * 1.12, outY);
       g.quadraticCurveTo(-ew * 0.1, inY - 0.4 * w - F.browArch * 1.6, -ew * 0.95, inY - 0.55 * w);
       g.closePath(); g.fill();
-      if (F.browBushy) { g.strokeStyle = F.browCol; g.lineWidth = 0.6; for (let i = 0; i < 6; i++) { const x = -ew * 0.9 + i * ew * 0.38; g.beginPath(); g.moveTo(x, inY + 0.4); g.lineTo(x + 1.6, inY + (outY - inY) * (i / 6) + 2.4 * F.browBushy); g.stroke(); } }
+      if (F.browBushy) { g.strokeStyle = F.browCol; g.lineWidth = (0.6) * this.lw; for (let i = 0; i < 6; i++) { const x = -ew * 0.9 + i * ew * 0.38; g.beginPath(); g.moveTo(x, inY + 0.4); g.lineTo(x + 1.6, inY + (outY - inY) * (i / 6) + 2.4 * F.browBushy); g.stroke(); } }
     }
     nose(st) {
       const g = this.g, F = this.F, a = this.a, b = this.b;
       this.at(0, F.noseY * b);
       if (F.noseRed) { const rg = g.createRadialGradient(0, 0, 0, 0, 0, 5); rg.addColorStop(0, rgba(F.noseRed, 0.55)); rg.addColorStop(1, rgba(F.noseRed, 0)); g.fillStyle = rg; g.beginPath(); g.arc(0, 0.5, 5, 0, TAU); g.fill(); }
-      g.strokeStyle = rgba(shade(F.skin, -0.42), 0.85); g.lineWidth = 0.65 * (F.nose > 1.1 ? 1.2 : 1); g.lineCap = 'round';
+      g.strokeStyle = rgba(shade(F.skin, -0.42), 0.85); g.lineWidth = (0.65 * (F.nose > 1.1 ? 1.2 : 1)) * this.lw; g.lineCap = 'round';
       g.beginPath(); g.moveTo(-1.8 * F.nose, 0.9); g.quadraticCurveTo(-0.4, 1.7, 1.2 * F.nose, 0.9); g.stroke();
       g.fillStyle = rgba(shade(F.skin, -0.3), 0.5); g.beginPath(); g.ellipse(-2.2, -2.5, 0.9, 3.5, 0.25, 0, TAU); g.fill();
       g.fillStyle = rgba('#ffffff', 0.35); g.beginPath(); g.arc(0.6, -0.8, 0.7, 0, TAU); g.fill();
@@ -1954,10 +1966,10 @@ G.Char3D = (() => {
       g.lineCap = 'round'; g.lineJoin = 'round';
       const lipLine = shade(F.lips, -0.45);
       if (open < 0.06) {
-        g.strokeStyle = lipLine; g.lineWidth = 0.75;
+        g.strokeStyle = lipLine; g.lineWidth = (0.75) * this.lw;
         g.beginPath(); g.moveTo(-w, cy); g.quadraticCurveTo(0, cy + curve * 4.2 + (st.pout || 0) * 1.5, w, cy); g.stroke();
         if (F.lipTint > 0.1) { g.fillStyle = rgba(F.lips, F.lipTint); g.beginPath(); g.ellipse(0, 1.5 + curve * 1.5, w * 0.55, 1.4, 0, 0, TAU); g.fill(); }
-        if (curve > 0.5) { g.strokeStyle = rgba(lipLine, 0.6); g.lineWidth = 0.45; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * w * 1.02, cy - 0.6); g.lineTo(s * w * 1.12, cy + 0.6); g.stroke(); } }
+        if (curve > 0.5) { g.strokeStyle = rgba(lipLine, 0.6); g.lineWidth = (0.45) * this.lw; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * w * 1.02, cy - 0.6); g.lineTo(s * w * 1.12, cy + 0.6); g.stroke(); } }
         return;
       }
       const h = 1.2 + open * 7.5;
@@ -1971,11 +1983,11 @@ G.Char3D = (() => {
       if (open > 0.3 && !st.round) { g.fillStyle = '#fbf6f2'; g.fillRect(-ww, cy - h, ww * 2, h * 0.62); }
       g.fillStyle = '#d46a72'; g.beginPath(); g.ellipse(0, cy + h * 0.9, ww * 0.6, h * 0.45, 0, 0, TAU); g.fill();
       g.restore();
-      g.strokeStyle = lipLine; g.lineWidth = 0.6; g.stroke(p);
+      g.strokeStyle = lipLine; g.lineWidth = (0.6) * this.lw; g.stroke(p);
     }
     wrinkles(st) {
       const g = this.g, F = this.F, a = this.a, b = this.b;
-      g.strokeStyle = rgba(shade(F.skin, -0.4), 0.45 * F.wrinkles); g.lineWidth = 0.45; g.lineCap = 'round';
+      g.strokeStyle = rgba(shade(F.skin, -0.4), 0.45 * F.wrinkles); g.lineWidth = (0.45) * this.lw; g.lineCap = 'round';
       for (const sg of [-1, 1]) {
         this.at(sg * a * 0.66, b * (F.eyeY + 0.02), sg); // crow's feet
         for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(0.5, i * 1.6); g.lineTo(3.2, i * 2.4); g.stroke(); }
@@ -2020,7 +2032,7 @@ G.Char3D = (() => {
         }
       }
       if (pt.acc) {
-        g.strokeStyle = pt.acc; g.lineWidth = 1.6;
+        g.strokeStyle = pt.acc; g.lineWidth = (1.6) * this.lw;
         for (const sg of [-1, 1]) { this.at(sg * a * 0.55, b * (F.eyeY - 0.25), sg); g.beginPath(); g.moveTo(-6, -4); g.quadraticCurveTo(2, 2, -2, 10); g.stroke(); }
         this.at(0, b * 0.15); g.beginPath(); g.moveTo(-8, 0); g.lineTo(8, 0); g.stroke();
       }
@@ -2031,7 +2043,7 @@ G.Char3D = (() => {
       const col = 'rgba(40,52,78,0.8)';
       g.fillStyle = col;
       this.at(0, b * 0.36); g.fillRect(-3.2, -14, 6.4, 22);
-      g.strokeStyle = rgba('#283450', 0.55); g.lineWidth = 0.5; for (let i = -12; i < 8; i += 3) { g.beginPath(); g.moveTo(-3, i); g.lineTo(3, i + 2); g.stroke(); }
+      g.strokeStyle = rgba('#283450', 0.55); g.lineWidth = (0.5) * this.lw; for (let i = -12; i < 8; i += 3) { g.beginPath(); g.moveTo(-3, i); g.lineTo(3, i + 2); g.stroke(); }
       if (kind === 'truku_f') {
         g.fillStyle = col;
         for (const sg of [-1, 1]) {
@@ -2358,7 +2370,7 @@ G.Char3D = (() => {
     const pts = [p0, vadd(p0, [0, 0.0, -0.06 * s]), vadd(p0, [0, -0.08 * s, -0.1 * s])];
     const steps = 4;
     for (let i = 1; i <= steps; i++) { const t = i / steps; const y = p0[1] - 0.08 * s - (len - 0.08 * s) * t; pts.push([0, y, min(backZ(B, y, 0.03), -0.1 * s - P.headD * 0.4)]); }
-    const ids = B.chain('tail', 'head', pts, { stiff: 0.75, drag: 0.32, grav: 0.9, r: 0.035 * s, groups: ['body', 'head'], kind: 'hair' });
+    const ids = B.chain('tail', 'head', pts, { stiff: 0.55, drag: 0.22, grav: 0.85, r: 0.035 * s, groups: ['body', 'head'], kind: 'hair' });
     const np = pts.length;
     const Wf = (t) => { const f = t * (np - 1), seg = clamp(f, 0, ids.length - 1e-4), si = floor(seg), sf = seg - si; const w = [[ids[si], 1 - sf * 0.5]]; if (si + 1 < ids.length) w.push([ids[si + 1], sf * 0.5]); return w; };
     for (let k = 0; k < 3; k++) {
@@ -2722,7 +2734,7 @@ G.Char3D = (() => {
       lathe(prof, mat, seg = 12, nv = 6, opts = {}) { grid(B.G, seg, nv, sw(B, mat), (u, v) => { const th = (u - 0.5) * TAU, [r, h] = prof(v); return { p: T([sin(th) * r, h, cos(th) * r]), w: opts.W ? opts.W(v) : W }; }, { closed: true, flip: !!opts.flip }); },
       blade(len, w, mat, opts = {}) { // flat tapered blade along +z from z0
         const z0 = opts.z0 || 0;
-        grid(B.G, 4, 10, sw(B, mat), (u, v) => { const th = u * TAU; const z = z0 + v * len; const ww = w * (v < 0.8 ? 1 - v * 0.15 : (1 - v) / 0.2 * 0.85); const cx = cos(th), cy = sin(th); return { p: T([cx * ww, cy * (opts.th || 0.004) * (1 - v * 0.5), z + (v > 0.97 ? 0 : 0)]), w: W }; }, { closed: true });
+        grid(B.G, 4, 10, sw(B, mat), (u, v) => { const th = u * TAU; const z = z0 + v * len; const ww = w * (v < 0.8 ? 1 - v * 0.15 : (1 - v) / 0.2 * 0.85); const cx = cos(th), cy = sin(th); return { p: T([cy * (opts.th || 0.004) * (1 - v * 0.5), cx * ww, z]), w: W }; }, { closed: true });
       },
     };
     return K;
@@ -2910,8 +2922,10 @@ G.Char3D = (() => {
         const pts = []; for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push(C.torsoPt(C.ringAt(R, lerp(P.shoulderY + 0.005, P.waistY - 0.03, t)), lerp(0.62 * PI * 0.5, -0.62 * PI, t) + (t > 0.5 ? 0 : 0), 0.034 * s)); }
         tube(B.G, pts, 4, sw(B, 'leather'), () => ({ rx: 0.012 * s, ry: 0.003 }), (t) => I.torsoW(B, pts[min(12, round(t * 12))]), { nv: 20, up: [0, 0, 1] });
       } else {
-        const K = kit(B, 'back', vadd(c, [0, 0, -0.03]), [0, 0, 1], X, Y);
+        const K = kit(B, 'backWeap', vadd(c, [0, 0, -0.03]), [0, 0, 1], X, Y);
         K.cyl([0, -0.9, 0], [0, 0.85, 0], 0.016, 0.015, 'wood', 6);
+        K.cyl([0, 0.85, 0], [0, 0.9, 0], 0.02, 0.016, 'bronze', 6);
+        K.cyl([0, 0.9, 0], [0, 1.08, 0], 0.018, 0.002, 'steel', 4, { flat: 0.3 });
       }
     } else if (item === 'basket' || item === 'herbs') { // 背簍 back basket
       const K = kit(B, 'back', vadd(c, [0, -0.05, -0.1 * s]));
@@ -2998,6 +3012,7 @@ G.Char3D = (() => {
     for (const key in k) {
       if (key === 't' || key === 'e') continue;
       const v = k[key];
+      if (v === undefined || v === null) continue;
       if (ALIAS[key]) o['r.' + ALIAS[key]] = v;
       else if (PAIRS[key]) { o['r.' + PAIRS[key] + 'L'] = v; o['r.' + PAIRS[key] + 'R'] = [v[0], -v[1], -v[2]]; }
       else if (key.length >= 3 && PAIRS[key.slice(0, 2)] && (key[2] === 'L' || key[2] === 'R')) o['r.' + PAIRS[key.slice(0, 2)] + key[2]] = v;
@@ -3164,29 +3179,45 @@ G.Char3D = (() => {
         }
         rig.root.updateMatrixWorld(true);
       }
-      // hand IK targets: 'pole' (left hand on the right-hand weapon shaft at offset) or [x,y,z] root space
-      for (const S of ['L', 'R']) {
+      // hand IK: h{S}=[x,y,z] grip target (root space, m) with optional h{S}r=[x,y,z] (deg, YXZ) grip orientation
+      // (grip axis = local +Z: sword blade / spear shaft / flute), or h{S}=number → the other hand's weapon shaft at
+      // that distance (two-handed grips). Right hand first (the left may grip the right hand's weapon).
+      for (const S of ['R', 'L']) {
         const h = pose['h' + S];
-        if (h == null) continue;
-        let tgt, axis = null;
-        if (Array.isArray(h)) tgt = _v().fromArray(h).multiplyScalar(P.s);
-        else if (typeof h === 'number') {
-          const o = S === 'L' ? 'R' : 'L';
-          const grip = B['grip' + o];
-          const gq = worldQuat(grip);
-          axis = _v().set(0, 0, 1).applyQuaternion(gq);
-          tgt = worldPos(grip).add(axis.clone().multiplyScalar(h));
-        } else continue;
+        if (h == null || pose['h' + S + 'm'] === 'off') continue;
         const sg = S === 'L' ? 1 : -1;
-        const pole = _v().set(sg * 0.6, -0.4, -0.7).applyQuaternion(worldQuat(B.chest)).normalize();
-        // aim the wrist so the grip lands on the target (offset grip→wrist ≈ hand length × 0.42)
-        ik2(B['upperArm' + S], B['foreArm' + S], B['hand' + S], tgt, pole);
-        if (axis) {
-          // fist axis (local +z) along the shaft
-          const hq = worldQuat(B['hand' + S]);
-          const cur = _v().set(0, 0, 1).applyQuaternion(hq);
-          const dq = _q().setFromUnitVectors(cur, axis);
-          setWorldQuat(B['hand' + S], hq.premultiply(dq));
+        const pole = _v().set(sg * 0.7, -0.35, -0.6).applyQuaternion(worldQuat(B.chest)).normalize();
+        const hand = B['hand' + S], grip = B['grip' + S];
+        if (Array.isArray(h)) {
+          const tgt = _v().fromArray(h).multiplyScalar(P.s);
+          const r = pose['h' + S + 'r'], dv = pose['h' + S + 'd'];
+          if (r || dv) {
+            let Qh;
+            if (dv) { // grip axis direction (+ optional roll about it); the fist keeps its palm roughly toward the body
+              const dn = _v().fromArray(dv).normalize();
+              Qh = _q().setFromUnitVectors(_v().set(0, 0, 1), dn);
+              const roll = (pose['h' + S + 'roll'] || 0) * D;
+              if (roll) Qh.multiply(_q().setFromAxisAngle(_v().set(0, 0, 1), roll));
+            } else Qh = _q().setFromEuler(new THREE.Euler(r[0] * D, r[1] * D, r[2] * D, 'YXZ'));
+            const off = grip.position.clone().applyQuaternion(Qh);
+            ik2(B['upperArm' + S], B['foreArm' + S], hand, tgt.clone().sub(off), pole);
+            setWorldQuat(hand, Qh);
+          } else ik2(B['upperArm' + S], B['foreArm' + S], hand, tgt, pole);
+        } else if (typeof h === 'number') {
+          const o = S === 'L' ? 'R' : 'L';
+          const og = B['grip' + o];
+          const gq = worldQuat(og);
+          const axis = _v().set(0, 0, 1).applyQuaternion(gq);
+          const tgt = worldPos(og).add(axis.clone().multiplyScalar(h * P.s));
+          // fist around the shaft: local +Z along the shaft, palm facing the body
+          const hq0 = worldQuat(hand);
+          const cur = _v().set(0, 0, 1).applyQuaternion(hq0);
+          const Qh = hq0.clone().premultiply(_q().setFromUnitVectors(cur, axis));
+          const off = grip.position.clone().applyQuaternion(Qh);
+          ik2(B['upperArm' + S], B['foreArm' + S], hand, tgt.clone().sub(off), pole);
+          const hq = worldQuat(hand);
+          const cur2 = _v().set(0, 0, 1).applyQuaternion(hq);
+          setWorldQuat(hand, hq.premultiply(_q().setFromUnitVectors(cur2, axis)));
         }
         rig.root.updateMatrixWorld(true);
       }
@@ -3203,15 +3234,15 @@ G.Char3D = (() => {
     clip.userData = { loop: !!opts.loop, meta: opts.meta || {} };
     return clip;
   }
-  C.bake = bake; C.makeRig = makeRig; C.restPose = restPose;
+  C.bake = bake; C.makeRig = makeRig; C.restPose = restPose; C._ik = { ik2, worldQuat, worldPos, setWorldQuat, aimBone };
 
   // ------------------------------------------------------------------------------------------ procedural gait
   // p ∈ [0,1): left heel strike at 0, right at 0.5. Feet are planted while in stance and move back at exactly
   // stride/T relative to the hips → zero sliding when cadence = speed / stride.
   const GAITS = {
-    walk: { v: 2.2, stride: 1.62, duty: 0.6, lift: 0.085, bob: 0.022, sway: 0.022, hipYaw: 7, hipRoll: 3.5, chestYaw: -6, arm: 20, armOut: 0, elbow: 4, lean: 3, toeOff: 32, heel: 16, bounce: 0 },
-    jog: { v: 4.2, stride: 2.45, duty: 0.42, lift: 0.17, bob: 0.03, sway: 0.016, hipYaw: 10, hipRoll: 4, chestYaw: -9, arm: 34, armOut: 6, elbow: 62, lean: 8, toeOff: 42, heel: 10, bounce: 1 },
-    run: { v: 6.9, stride: 3.35, duty: 0.34, lift: 0.26, bob: 0.034, sway: 0.012, hipYaw: 12, hipRoll: 4.5, chestYaw: -12, arm: 48, armOut: 9, elbow: 82, lean: 14, toeOff: 50, heel: 6, bounce: 1 },
+    walk: { v: 2.2, stride: 1.56, duty: 0.6, lift: 0.08, bob: 0.02, sway: 0.022, hipYaw: 7, hipRoll: 3.5, chestYaw: -6, arm: 20, armOut: 0, elbow: 4, lean: 3, toeOff: 34, heel: 16, bounce: 0, twist: 4 },
+    jog: { v: 4.2, stride: 2.2, duty: 0.36, lift: 0.16, bob: 0.028, sway: 0.014, hipYaw: 9, hipRoll: 4, chestYaw: -9, arm: 28, armOut: 2, elbow: 76, lean: 8, toeOff: 44, heel: 8, bounce: 1, twist: 12 },
+    run: { v: 6.9, stride: 3.0, duty: 0.28, lift: 0.26, bob: 0.032, sway: 0.01, hipYaw: 11, hipRoll: 4.5, chestYaw: -12, arm: 40, armOut: 3, elbow: 86, lean: 13, toeOff: 52, heel: 4, bounce: 1, twist: 14 },
   };
   C.GAITS = GAITS;
   function gaitSampler(P, g, ctx = {}) {
@@ -3219,43 +3250,57 @@ G.Char3D = (() => {
     const stride = g.stride * s * (ctx.strideK || 1);
     const fem = P.fem;
     const hold = ctx.hold || 'none';
+    const aY = P.ankleY, dHeel = 0.062 * s, dBall = P.foot * 0.56 - 0.055 * s;
+    const Lmax = (P.legTop - P.ankleY) * 0.975;
+    // ankle position for a foot whose flat position is at z=F, pitched by `pitch` (deg, + = heel up) about heel or ball
+    const footRoll = (F, pitch, lift) => {
+      const th = pitch * D, c = cos(th), sn = sin(th);
+      if (lift > 1e-4 || abs(pitch) < 1e-3) return [aY + lift, F];
+      if (pitch > 0) return [aY * c + dBall * sn, F + dBall + (aY * sn - dBall * c)];     // pivot: ball of the foot
+      return [aY * c - dHeel * sn, F - dHeel + (aY * sn + dHeel * c)];                    // pivot: heel
+    };
     return (tt) => {
       const p = tt; // clip duration = 1 → phase
       const pose = { r: {}, pl: true };
-      const legs = {};
+      let hpMax = 1;
+      const D0 = stride * g.duty;       // distance the flat foot travels back during stance (= speed × contact time)
       for (const S of ['L', 'R']) {
         const ph = ((p + (S === 'R' ? 0.5 : 0)) % 1 + 1) % 1;
         const sg = S === 'L' ? 1 : -1;
-        let z, y = 0, pitch = 0, toe = 0;
-        const D0 = stride * g.duty;       // distance the foot travels back during stance
+        let F, lift = 0, pitch = 0, toe = 0, stance = false;
         if (ph < g.duty) {
+          stance = true;
           const u = ph / g.duty;
-          z = D0 / 2 - D0 * u;
-          // heel strike → flat → heel off (roll over the ball)
-          pitch = -g.heel * (1 - sstep(0, 0.18, u)) + g.toeOff * sstep(0.55, 1, u) * 0.85;
-          toe = -g.toeOff * 0.8 * sstep(0.6, 1, u);
-          // when the heel lifts the ankle rises (rolling over the ball)
-          y = sin(max(0, pitch) * D) * P.foot * 0.55;
-          if (pitch < 0) y = sin(-pitch * D) * 0.06 * s;
+          F = D0 / 2 - D0 * u;
+          // heel strike (toes up, rolling onto the flat foot) → flat → heel off (rolling over the ball)
+          pitch = -g.heel * (1 - sstep(0, 0.2, u)) + g.toeOff * pow(sstep(0.45, 1, u), 1.2);
+          if (g.bounce) pitch = -g.heel * (1 - sstep(0, 0.12, u)) + g.toeOff * pow(sstep(0.4, 1, u), 1.1);
+          toe = pitch > 0 ? -pitch : 0;
         } else {
           const u = (ph - g.duty) / (1 - g.duty);
           const e = u * u * (3 - 2 * u);
-          z = -D0 / 2 + D0 * (e * 1.0);
-          // swing: lift early (toe clearance) then reach
-          y = g.lift * s * pow(sin(PI * min(1, u * 1.08)), 1.25) * (1 - 0.35 * u);
-          pitch = lerp(g.toeOff * 0.7, -g.heel * 1.1, sstep(0.1, 0.95, u));
-          toe = -g.toeOff * 0.4 * (1 - sstep(0, 0.4, u));
+          F = -D0 / 2 + D0 * e;
+          lift = g.lift * s * pow(sin(PI * min(1, u * 1.05)), 1.3) * (1 - 0.3 * u);
+          // swing: toes trail, then the foot dorsiflexes to meet the ground heel-first
+          pitch = lerp(g.toeOff * 0.75, -g.heel * 1.1, sstep(0.05, 0.9, u));
+          toe = -g.toeOff * 0.35 * (1 - sstep(0, 0.35, u));
+          // swing foot starts from the rolled toe-off position: blend the pivot offset out over the first 20 %
+          const k0 = 1 - sstep(0, 0.22, u);
+          const r0 = footRoll(-D0 / 2, g.toeOff, 0);
+          lift += (r0[0] - aY) * k0; F += (r0[1] + D0 / 2) * k0;
         }
-        legs[S] = { z, y, pitch, toe, ph };
-        pose['f' + S] = [sg * -0.012 * s, y / s, z / s];
+        const [ay, az] = stance ? footRoll(F, pitch, 0) : [aY + lift, F];
+        pose['f' + S] = [sg * -0.012 * s / s, (ay - aY) / s, az / s];
         pose['f' + S + 'r'] = [pitch, 0, 0];
         pose['t' + S] = toe;
+        if (stance || lift < 0.03 * s) { const dz = az, dy = sqrt(max(0, Lmax * Lmax - dz * dz)); hpMax = min(hpMax, ay + dy - P.legTop); }
       }
       // hips: bob (2 per cycle), sway toward the stance foot, yaw with the swinging leg, roll (swing hip drops)
       const c2 = cos(4 * PI * (p - (g.bounce ? 0.0 : g.duty * 0.5)));
       const bob = g.bounce ? -c2 * g.bob : c2 * g.bob;
       const sway = g.sway * cos(TAU * (p - 0.25 + (g.bounce ? 0 : 0.0)));
-      pose.hp = [sway / s, (bob - (g.bounce ? 0.035 * s : 0.012 * s)) / s, 0];
+      const hy = min(bob - (g.bounce ? 0.04 * s : 0.012 * s), hpMax);
+      pose.hp = [sway / s, hy / s, 0];
       const yaw = -g.hipYaw * cos(TAU * p);
       const roll = g.hipRoll * sin(TAU * (p - 0.1));
       pose.r.hips = [g.lean * 0.4, yaw, roll];
@@ -3269,8 +3314,8 @@ G.Char3D = (() => {
         const ph = p + (S === 'L' ? 0.5 : 0) - 0.04;
         const sw = cos(TAU * ph); // +1 → arm forward
         const fwd = -g.arm * sw - g.arm * 0.15;
-        let ua = [fwd, sg * (g.bounce ? 6 : 0), sg * (g.armOut + (fem ? -2 : 0) + 2 * (1 - sw) * 0.5)];
-        let fa = [-g.elbow - (g.elbow * 0.3 + (g.bounce ? 10 : 7)) * max(0, sw), sg * (g.bounce ? 14 : 4), 0];
+        let ua = [fwd, -sg * g.twist, sg * (g.armOut + (fem ? -2 : 0) + 2 * (1 - sw) * 0.5)];
+        let fa = [-g.elbow - (g.bounce ? 14 : 7) * max(0, sw) + (g.bounce ? 8 : 0) * max(0, -sw), sg * 4, 0];
         let ha = [g.bounce ? -10 : 6 + 4 * sw, 0, -sg * 8];
         // held props constrain the arm that carries them
         const holds = S === 'R' ? hold : ctx.holdL || 'none';
@@ -3467,90 +3512,131 @@ G.Char3D = (() => {
   ] });
 
   // ---- battle (weapon families: blade, pole, fan, flute, none)
+  // Stances: hand grips are IK targets (root space, metres; character faces +Z, its right is −X) with weapon
+  // orientation h?r = [pitch, yaw, roll] (deg) of the grip axis; legs are planted IK; torso FK.
   function stance(c) {
     const f = c.fam;
-    if (f === 'pole') return { fL: [0.05, 0, 0.2], fR: [-0.04, 0, -0.17], fLy: -20, fRy: 28, hp: [0.01, -0.07, 0], h: [6, 28, 0], sp: [2, -8, 0], ch: [3, -12, 0], hd: [-4, -12, 0],
-      uaR: [-20, 10, -12], faR: [-58, -18, 0], haR: [-30, -10, 8], hL: 0.42, uaL: [-30, 0, 10], faL: [-60, 0, 0], tL: 0, tR: 0 };
-    if (f === 'fan') return { fL: [0.04, 0, 0.1], fR: [-0.03, 0, -0.1], fRy: 20, hp: [0, -0.035, 0], h: [3, 16, 0], ch: [-2, -8, 0], hd: [-2, -8, 0],
-      uaR: [-58, 18, -16], faR: [-70, -40, 0], haR: [-30, 20, 0], uaL: [-8, 0, 12], faL: [-30, 0, 0], haL: [10, 0, 0] };
-    if (f === 'flute') return { fL: [0.02, 0, 0.06], fR: [-0.02, 0, -0.06], hp: [0, -0.02, 0], h: [1, 10, 0], ch: [-2, -6, 0], hd: [-6, -4, -3],
-      uaR: [-48, 30, -10], faR: [-100, -50, 0], haR: [-20, -10, 0], uaL: [-30, -30, 14], faL: [-96, 40, 0], haL: [-10, 0, 0] };
-    if (f === 'blade') return { fL: [0.06, 0, -0.16], fR: [-0.02, 0, 0.18], fLy: -25, fRy: 10, hp: [-0.005, -0.075, 0], h: [6, -26, 0], sp: [3, 10, 0], ch: [4, 10, 0], hd: [-6, 16, 0],
-      uaR: [-44, -16, -10], faR: [-46, -10, 0], haR: [-40, 0, 14], uaL: [-12, 10, 28], faL: [-64, 20, 0], haL: [-10, 0, 0] };
-    return { fL: [0.05, 0, 0.12], fR: [-0.04, 0, -0.12], fRy: 15, hp: [0, -0.06, 0], h: [5, 15, 0], ch: [3, -10, 0], hd: [-3, -6, 0],
+    if (f === 'blade') return { fL: [0.05, 0, 0.15], fR: [-0.05, 0, -0.13], fLy: -8, fRy: 30, hp: [0, -0.08, 0], h: [6, -16, 0], sp: [2, 6, 0], ch: [4, 8, 0], nk: [0, 0, 0], hd: [-6, 4, 0],
+      hR: [-0.06, 1.04, 0.4], hRd: [0.05, 0.3, 1], hRm: 'on', hL: [0.3, 1.66, -0.02], hLm: 'on', haL: [-20, 0, 10] };
+    if (f === 'pole') return { fL: [0.07, 0, 0.22], fR: [-0.06, 0, -0.18], fLy: -20, fRy: 40, hp: [0.01, -0.06, 0], h: [4, -34, 0], sp: [2, 6, 0], ch: [0, 8, 0], nk: [0, 4, 0], hd: [-2, 14, 0],
+      hR: [-0.16, 1.0, -0.08], hRr: [-20, 10, 0], hRm: 'on', hL: 0.6, hLm: 'on' };
+    if (f === 'fan') return { fL: [0.04, 0, 0.1], fR: [-0.04, 0, -0.1], fRy: 22, hp: [0, -0.035, 0], h: [3, -14, 0], sp: [0, 0, 0], ch: [-2, 10, 0], nk: [0, 0, 0], hd: [-2, 4, 0],
+      hR: [-0.17, 1.32, 0.2], hRr: [-75, -15, 0], hRm: 'on', uaL: [18, -20, 14], faL: [-85, 35, 0], haL: [0, 0, 0] };
+    if (f === 'flute') return { fL: [0.02, 0, 0.05], fR: [-0.02, 0, -0.06], hp: [0, -0.015, 0], h: [1, -8, 0], sp: [0, 0, 0], ch: [-3, 4, 0], nk: [0, -4, 0], hd: [-4, -6, 6],
+      hR: [-0.2, 1.4, 0.13], hRr: [-4, 90, 0], hRm: 'on', hL: 0.11, hLm: 'on' };
+    return { fL: [0.05, 0, 0.12], fR: [-0.04, 0, -0.12], fRy: 15, hp: [0, -0.06, 0], h: [5, 15, 0], sp: [0, 0, 0], ch: [3, -10, 0], nk: [0, 0, 0], hd: [-3, -6, 0],
       uaL: [-40, -10, 12], faL: [-100, 20, 0], uaR: [-30, 10, -14], faR: [-110, -20, 0], haL: [-20, 0, 0], haR: [-20, 0, 0] };
   }
   C.stance = stance;
-  const breathe = (s, k = 1) => [Object.assign({ t: 0 }, s), Object.assign({ t: 0.9 }, { ch: [s.ch[0] + 2 * k, s.ch[1], s.ch[2]], hp: [s.hp[0], s.hp[1] - 0.008 * k, s.hp[2]] }), Object.assign({ t: 1.8 }, { ch: s.ch, hp: s.hp })];
+  const K = (t, base, o) => Object.assign({ t }, base || {}, o || {});
+  const offH = (h, d) => (Array.isArray(h) ? [h[0] + d[0], h[1] + d[1], h[2] + d[2]] : h);
+  const breathe = (s, k = 1) => [K(0, s), K(0.9, null, { ch: [s.ch[0] + 2 * k, s.ch[1], s.ch[2]], hp: [s.hp[0], s.hp[1] - 0.008 * k, s.hp[2]], hR: offH(s.hR, [0, -0.006 * k, 0]) }), K(1.8, null, { ch: s.ch, hp: s.hp, hR: s.hR })];
   L.bidle = (c) => ({ dur: 1.8, loop: true, k: breathe(stance(c)) });
-  L.ready = (c) => { const s = stance(c); return { dur: 0.55, k: [{ t: 0, hp: [0, 0, 0], h: [0, 0, 0], ch: [0, 0, 0], hd: [0, 0, 0], fL: [0, 0, 0], fR: [0, 0, 0], ua: [0, 0, 0], fa: [0, 0, 0], ha: [0, 0, 0] }, Object.assign({ t: 0.12 }, { hp: [0, 0.015, 0] }), Object.assign({ t: 0.38 }, s, { hp: [s.hp[0], s.hp[1] - 0.02, s.hp[2]] }), Object.assign({ t: 0.55 }, s)] }; };
-  // generic attack builder: anticipation (wind-up) → strike (fast) → follow-through (overshoot) → recovery to stance
+  L.ready = (c) => { const s = stance(c); const z = { hp: [0, 0, 0], h: [0, 0, 0], sp: [0, 0, 0], ch: [0, 0, 0], hd: [0, 0, 0], fL: [0, 0, 0], fR: [0, 0, 0] };
+    return { dur: 0.6, k: [K(0, z, { hRm: 'off', hLm: 'off' }), K(0.12, null, { hp: [0, 0.015, 0] }), K(0.2, s, { hp: [s.hp[0], s.hp[1] + 0.01, s.hp[2]] }), K(0.4, s, { hp: [s.hp[0], s.hp[1] - 0.025, s.hp[2]] }), K(0.6, s)] }; };
   function attackClip(c, v) {
-    const s = stance(c);
-    const f = c.fam;
-    let wind, strike, follow, dur;
-    if (f === 'blade') {
-      wind = { t: 0.2, hp: [0, -0.09, -0.06], h: [4, -48, 0], ch: [-4, 40, 0], hd: [-6, 30, 0], uaR: [-120, -20, -40], faR: [-60, -40, 0], haR: [-20, 0, 30], uaL: [-20, 20, 40], faL: [-40, 0, 0], fR: [-0.02, 0, 0.12] };
-      strike = { t: 0.3, hp: [0, -0.11, 0.18], h: [8, 30, 0], ch: [8, -34, 0], hd: [-2, -20, 0], uaR: [-70, 20, 10], faR: [-10, -10, 0], haR: [10, 0, -40], uaL: [-20, -10, 50], faL: [-30, 0, 0], fR: [-0.02, 0, 0.42], fL: [0.06, 0, -0.18] };
-      follow = { t: 0.42, h: [10, 44, 0], ch: [10, -44, 0], uaR: [-30, 30, 30], faR: [-6, 0, 0], haR: [20, 0, -50], hp: [0, -0.12, 0.2] };
-      dur = 1.05;
-      if (v === 2) { // upward cut + spin finish
-        wind = { t: 0.18, hp: [0, -0.11, 0.0], h: [10, 30, 0], ch: [12, -30, 0], uaR: [-20, 30, -10], faR: [-30, -20, 0], haR: [40, 0, -20], fR: [-0.02, 0, 0.22] };
-        strike = { t: 0.3, hp: [0, -0.02, 0.2], h: [-4, -40, 0], ch: [-10, 40, 0], hd: [-10, 20, 0], uaR: [-170, -20, -20], faR: [-10, 0, 0], haR: [-30, 0, 20], uaL: [-10, 0, 40], fR: [-0.02, 0, 0.36] };
-        follow = { t: 0.44, h: [-6, -50, 0], ch: [-12, 48, 0], uaR: [-176, -24, -30], hp: [0, -0.01, 0.22] };
-        dur = 1.1;
-      }
-    } else if (f === 'pole') {
-      wind = { t: 0.22, hp: [0.01, -0.09, -0.08], h: [4, 46, 0], ch: [0, -14, 0], hd: [-4, -22, 0], uaR: [-20, 30, -24], faR: [-40, -30, 0], haR: [-30, -20, 10], fL: [0.05, 0, 0.2] };
-      strike = { t: 0.32, hp: [0.0, -0.11, 0.24], h: [8, 6, 0], ch: [6, -6, 0], hd: [-6, 0, 0], uaR: [-70, 6, -10], faR: [-8, -6, 0], haR: [-60, 0, 0], fL: [0.05, 0, 0.5], fR: [-0.04, 0, -0.16] };
-      follow = { t: 0.44, hp: [0.0, -0.12, 0.27], uaR: [-74, 4, -8], faR: [-4, 0, 0] };
-      dur = 1.05;
-      if (v === 2) { // sweeping swing
-        wind = { t: 0.22, hp: [0, -0.09, 0], h: [4, 70, 0], ch: [4, 20, 0], uaR: [-80, 40, -40], faR: [-40, -40, 0], haR: [-30, -30, 0] };
-        strike = { t: 0.34, hp: [0, -0.1, 0.1], h: [6, -40, 0], ch: [6, -30, 0], uaR: [-80, -30, -10], faR: [-20, 0, 0], haR: [-40, 30, 0] };
-        follow = { t: 0.48, h: [6, -64, 0], ch: [6, -40, 0], uaR: [-60, -40, 10] };
-        dur = 1.15;
-      }
-    } else if (f === 'fan') {
-      wind = { t: 0.2, hp: [0, -0.04, -0.02], h: [2, 34, 0], ch: [-2, 20, 0], uaR: [-90, 60, -60], faR: [-60, -40, 0], haR: [0, 40, 0] };
-      strike = { t: 0.3, hp: [0, -0.06, 0.12], h: [4, -30, 0], ch: [4, -30, 0], uaR: [-80, -40, -10], faR: [-10, 0, 0], haR: [0, -40, 0], fR: [-0.03, 0, 0.1] };
-      follow = { t: 0.42, h: [4, -40, 0], uaR: [-60, -50, 10] };
-      dur = 0.95;
-    } else if (f === 'flute') {
-      wind = { t: 0.18, hp: [0, -0.04, -0.03], ch: [-6, 10, 0], uaR: [-120, 10, -20], faR: [-60, 0, 0] };
-      strike = { t: 0.28, hp: [0, -0.06, 0.14], ch: [8, -16, 0], uaR: [-60, -30, -10], faR: [-10, 0, 0], haR: [-30, 0, 0], fR: [-0.03, 0, 0.12] };
-      follow = { t: 0.4, uaR: [-40, -40, 0] };
-      dur = 0.95;
-    } else {
-      wind = { t: 0.2, hp: [0, -0.07, -0.05], h: [2, 30, 0], ch: [0, 20, 0], uaR: [-30, 40, -30], faR: [-130, 0, 0] };
-      strike = { t: 0.3, hp: [0, -0.08, 0.16], h: [4, -20, 0], ch: [4, -30, 0], uaR: [-88, 0, 0], faR: [-6, 0, 0], haR: [-10, 0, 0], fL: [0.05, 0, 0.3] };
-      follow = { t: 0.42, uaR: [-86, -6, 4] };
-      dur = 0.9;
+    const s = stance(c), f = c.fam;
+    let k, dur, hit;
+    if (f === 'blade' && v === 1) { // diagonal down-cut: blade cocked over the right shoulder → cuts down-left across the body
+      dur = 1.05; hit = 0.27;
+      k = [K(0, s),
+        K(0.16, null, { hR: [-0.3, 1.5, -0.04], hRd: [-0.25, 0.65, -0.75], h: [4, -40, 0], sp: [0, -12, 0], ch: [-4, -16, 0], hd: [-6, 22, 0], hp: [0, -0.1, -0.07], fR: [-0.05, 0, -0.17], hL: [0.18, 1.32, 0.42] }),
+        K(0.27, null, { hR: [0.08, 0.95, 0.52], hRd: [0.6, -0.65, 0.45], h: [10, 24, 0], sp: [6, 14, 0], ch: [12, 18, 0], hd: [0, -18, 0], hp: [0, -0.15, 0.24], fL: [0.05, 0, 0.44], fR: [-0.05, 0, -0.19], hL: [0.42, 1.42, -0.28] }),
+        K(0.38, null, { hR: [0.26, 0.8, 0.3], hRd: [0.75, -0.6, -0.15], ch: [14, 24, 0], hp: [0, -0.16, 0.25], hL: [0.45, 1.46, -0.32] }),
+        K(0.58, null, { hR: [0.22, 0.84, 0.33], hRd: [0.72, -0.55, -0.05], hp: [0, -0.145, 0.24], ch: [12, 20, 0] }),
+        K(0.9, s), K(1.05, s)];
+    } else if (f === 'blade') { // rising thrust
+      dur = 1.1; hit = 0.29;
+      k = [K(0, s),
+        K(0.18, null, { hR: [-0.18, 0.86, -0.06], hRd: [0.1, -0.1, 1], h: [4, -32, 0], ch: [6, -12, 0], hd: [-2, 14, 0], hp: [0, -0.14, -0.07], fR: [-0.05, 0, -0.17], hL: [0.28, 1.2, 0.2] }),
+        K(0.29, null, { hR: [-0.02, 1.32, 0.7], hRd: [0, 0.35, 1], h: [6, 10, 0], ch: [0, 4, 0], hd: [-4, -6, 0], hp: [0, -0.1, 0.27], fL: [0.05, 0, 0.5], hL: [0.36, 1.52, -0.3] }),
+        K(0.4, null, { hR: [0.0, 1.36, 0.74], hp: [0, -0.11, 0.29] }),
+        K(0.6, null, { hR: [-0.02, 1.32, 0.68], hp: [0, -0.1, 0.27] }),
+        K(0.95, s), K(1.1, s)];
+    } else if (f === 'pole' && v === 1) { // lunge thrust
+      dur = 1.1; hit = 0.3;
+      k = [K(0, s),
+        K(0.2, null, { hR: [-0.2, 1.0, -0.3], hRr: [-8, 4, 0], hp: [0, -0.1, -0.08], h: [4, -36, 0], ch: [0, 14, 0] }),
+        K(0.3, null, { hR: [-0.05, 1.08, 0.45], hRr: [-4, 0, 0], hp: [0, -0.13, 0.26], fL: [0.06, 0, 0.52], h: [8, -14, 0], ch: [6, 6, 0], hd: [-4, 2, 0] }),
+        K(0.42, null, { hR: [-0.04, 1.08, 0.5], hp: [0, -0.135, 0.28] }),
+        K(0.62, null, { hR: [-0.05, 1.07, 0.46], hp: [0, -0.13, 0.26] }),
+        K(0.95, s), K(1.1, s)];
+    } else if (f === 'pole') { // sweeping swing
+      dur = 1.15; hit = 0.34;
+      k = [K(0, s),
+        K(0.2, null, { hR: [-0.3, 1.05, -0.1], hRr: [-6, -70, 0], h: [4, -55, 0], ch: [0, -10, 0], hd: [0, 30, 0], hp: [0, -0.1, 0] }),
+        K(0.34, null, { hR: [0.05, 1.0, 0.3], hRr: [-4, 50, 0], h: [6, 20, 0], ch: [4, 14, 0], hd: [0, -10, 0], hp: [0, -0.13, 0.12] }),
+        K(0.46, null, { hR: [0.2, 1.0, 0.18], hRr: [-4, 85, 0], h: [6, 28, 0] }),
+        K(0.66, null, { hR: [0.18, 1.0, 0.2], hRr: [-4, 78, 0] }),
+        K(1.0, s), K(1.15, s)];
+    } else if (f === 'fan') { // flick strike (talisman / fan edge)
+      dur = 0.95; hit = 0.28;
+      k = [K(0, s),
+        K(0.18, null, { hR: [-0.38, 1.38, -0.02], hRr: [-60, -80, 0], h: [2, -30, 0], ch: [-2, -6, 0], hp: [0, -0.04, -0.03] }),
+        K(0.28, null, { hR: [0.12, 1.22, 0.5], hRr: [-80, 60, 0], h: [4, 20, 0], ch: [2, 16, 0], hp: [0, -0.06, 0.14], fR: [-0.04, 0, 0.0] }),
+        K(0.4, null, { hR: [0.28, 1.12, 0.34], hRr: [-70, 85, 0] }),
+        K(0.55, null, { hR: [0.26, 1.14, 0.34] }),
+        K(0.85, s), K(0.95, s)];
+      if (v === 2) { k[1] = K(0.18, null, { hR: [-0.12, 1.75, 0.0], hRr: [-150, 0, 0], ch: [-8, 0, 0], hp: [0, 0.01, -0.03] }); k[2] = K(0.28, null, { hR: [-0.04, 1.0, 0.5], hRr: [-20, 0, 0], ch: [10, 0, 0], hp: [0, -0.08, 0.14] }); k[3] = K(0.4, null, { hR: [-0.03, 0.92, 0.48] }); k[4] = K(0.55, null, { hR: [-0.04, 0.95, 0.46] }); }
+    } else if (f === 'flute') { // sharp note: inhale → burst (lean in, nod) → settle
+      dur = 0.95; hit = 0.3;
+      k = [K(0, s),
+        K(0.16, null, { ch: [-8, 4, 0], hd: [-10, -6, 6], hp: [0, 0.0, -0.03], sh: [0, 0, 4] }),
+        K(0.3, null, { ch: [8, 4, 0], hd: [10, -6, 6], hp: [0, -0.05, 0.08], sh: [0, 0, -2], fR: [-0.02, 0, 0.0], hR: offH(s.hR, [0, -0.02, 0.06]) }),
+        K(0.42, null, { ch: [6, 4, 0], hd: [6, -6, 6] }),
+        K(0.8, s), K(0.95, s)];
+    } else { // unarmed: right straight punch
+      dur = 0.9; hit = 0.3;
+      k = [K(0, s),
+        K(0.2, null, { hp: [0, -0.07, -0.05], h: [2, 30, 0], ch: [0, 20, 0], uaR: [-30, 40, -30], faR: [-130, 0, 0] }),
+        K(0.3, null, { hp: [0, -0.08, 0.16], h: [4, -20, 0], ch: [4, -30, 0], uaR: [-88, 0, 0], faR: [-6, 0, 0], haR: [-10, 0, 0], fL: [0.05, 0, 0.3] }),
+        K(0.42, null, { uaR: [-86, -6, 4] }),
+        K(0.75, s), K(0.9, s)];
     }
-    return { dur, k: [Object.assign({ t: 0 }, s), wind, strike, follow, Object.assign({ t: dur - 0.15 }, s, { hp: [s.hp[0], s.hp[1] - 0.01, s.hp[2]] }), Object.assign({ t: dur }, s)], meta: { hit: strike.t } };
+    return { dur, k, meta: { hit } };
   }
   L.attack = (c) => attackClip(c, 1);
   L.attack2 = (c) => attackClip(c, 2);
-  L.cast = (c) => { const s = stance(c); return { dur: 1.4, k: [Object.assign({ t: 0 }, s),
-    { t: 0.3, hp: [0, -0.1, -0.02], ch: [10, 0, 0], hd: [12, 0, 0], uaL: [-50, -30, 10], faL: [-110, 40, 0], haL: [-20, 0, 0] },
-    { t: 0.62, hp: [0, -0.06, 0.04], ch: [-10, -10, 0], hd: [-12, -6, 0], uaL: [-150, 0, 30], faL: [-20, 0, 0], haL: [-40, 0, 0] },
-    { t: 0.9, hp: [0, -0.06, 0.05], ch: [-8, -10, 0], uaL: [-148, 0, 28] },
-    Object.assign({ t: 1.25 }, s), Object.assign({ t: 1.4 }, s)], meta: { hit: 0.62 } }; };
-  L.skill = (c) => { const s = stance(c); const a = attackClip(c, 1); return { dur: 1.7, k: [Object.assign({ t: 0 }, s),
-    { t: 0.35, hp: [0, -0.16, -0.08], h: [10, 40, 0], ch: [14, 30, 0], hd: [10, 20, 0], ua: [-30, 0, 30], fa: [-90, 0, 0] },   // gather power
-    { t: 0.55, hp: [0, -0.17, -0.09], ch: [16, 32, 0] },
-    { t: 0.68, hp: [0, 0.02, 0.32], h: [-4, -40, 0], ch: [-10, -36, 0], hd: [-12, -20, 0], uaR: [-160, -30, -30], faR: [-10, 0, 0], uaL: [-40, 0, 70], faL: [-10, 0, 0], fR: [-0.02, 0, 0.5], fL: [0.05, 0, -0.2] },
-    { t: 0.85, hp: [0, -0.12, 0.34], h: [12, 20, 0], ch: [14, -20, 0], uaR: [-40, 30, 20], faR: [-6, 0, 0] },
-    { t: 1.0, hp: [0, -0.13, 0.34] },
-    Object.assign({ t: 1.5 }, s), Object.assign({ t: 1.7 }, s)], meta: { hit: 0.72 } }; };
-  L.hurt = (c) => { const s = stance(c); return { dur: 0.75, k: [Object.assign({ t: 0 }, s),
-    { t: 0.07, hp: [0, -0.05, -0.12], h: [-10, 0, 6], ch: [-16, 0, 6], hd: [-18, 6, 8], ua: [-20, 0, 34], fa: [-30, 0, 0], fL: [0.05, 0, 0.0] },
-    { t: 0.2, hp: [0, -0.1, -0.14], h: [8, 0, 2], ch: [14, 0, 0], hd: [12, 0, 0], ua: [-26, 0, 14], fa: [-50, 0, 0] },
-    Object.assign({ t: 0.55 }, s, { hp: [s.hp[0], s.hp[1] - 0.02, s.hp[2] - 0.03] }), Object.assign({ t: 0.75 }, s)] }; };
-  L.guard = (c) => { const s = stance(c); const g = { hp: [0, -0.11, -0.03], h: [8, 10, 0], ch: [12, -6, 0], hd: [10, 0, 0], uaR: [-70, -30, -20], faR: [-90, -10, 0], haR: [0, 0, 60], uaL: [-70, 30, 20], faL: [-110, 10, 0] };
-    return { dur: 1.6, loop: true, k: [Object.assign({ t: 0 }, s, g), { t: 0.8, ch: [13.5, -6, 0], hp: [0, -0.118, -0.03] }, Object.assign({ t: 1.6 }, g)] }; };
+  L.cast = (c) => { const s = stance(c); const fl = c.fam === 'flute';
+    if (fl) return { dur: 1.6, k: [K(0, s), K(0.35, null, { ch: [-6, 8, -4], hd: [-12, -2, 10], hp: [0, 0.01, 0] }), K(0.7, null, { ch: [-2, -4, 4], hd: [-4, -10, 2] }), K(0.95, null, { ch: [-7, 6, -3], hd: [-12, 0, 9], hp: [0, 0.015, 0] }), K(1.35, s), K(1.6, s)], meta: { hit: 0.7 } };
+    return { dur: 1.4, k: [K(0, s),
+      K(0.3, null, { hp: [0, -0.1, -0.02], ch: [10, 0, 0], hd: [12, 0, 0], uaL: [-50, -30, 10], faL: [-110, 40, 0], haL: [-20, 0, 0], hR: offH(s.hR, [0, -0.04, -0.02]) }),
+      K(0.62, null, { hp: [0, -0.06, 0.04], ch: [-10, -10, 0], hd: [-12, -6, 0], uaL: [-150, 0, 30], faL: [-20, 0, 0], haL: [-40, 0, 0], hR: offH(s.hR, [0, 0.0, 0.04]) }),
+      K(0.9, null, { hp: [0, -0.06, 0.05], ch: [-8, -10, 0], uaL: [-148, 0, 28] }),
+      K(1.25, s), K(1.4, s)], meta: { hit: 0.62 } }; };
+  L.skill = (c) => { const s = stance(c), f = c.fam;
+    if (f === 'blade') return { dur: 1.7, k: [K(0, s), // gather → spinning release → leaping down-cut
+      K(0.3, null, { hp: [0, -0.18, -0.05], hR: [-0.3, 0.9, -0.2], hRd: [-0.9, -0.1, -0.4], h: [8, -60, 0], ch: [10, -20, 0], hd: [6, 40, 0], hL: [0.3, 1.1, 0.35], fLy: 10, fRy: 50 }),
+      K(0.5, null, { hp: [0, -0.19, -0.05], hR: [-0.31, 0.89, -0.21] }),
+      K(0.62, null, { h: [4, 70, 0], ch: [-2, 30, 0], hd: [-6, -30, 0], hR: [0.1, 1.75, 0.15], hRd: [0.2, 0.9, -0.4], hp: [0, 0.02, 0.22], fL: [0.06, 0.12, 0.35], fR: [-0.05, 0.18, 0.0], fLy: 40, fRy: 50, hL: [0.35, 1.3, -0.3] }),
+      K(0.78, null, { h: [10, 16, 0], ch: [14, 10, 0], hd: [2, -8, 0], hR: [0.02, 0.78, 0.62], hRd: [0.1, -0.85, 0.5], hp: [0, -0.17, 0.34], fL: [0.05, 0, 0.5], fR: [-0.05, 0, 0.05], fLy: -8, fRy: 30, hL: [0.4, 1.45, -0.25] }),
+      K(0.9, null, { hR: [0.1, 0.68, 0.55], hp: [0, -0.19, 0.35] }),
+      K(1.1, null, { hR: [0.08, 0.72, 0.55], hp: [0, -0.17, 0.34] }),
+      K(1.5, s), K(1.7, s)], meta: { hit: 0.78 } };
+    if (f === 'pole') return { dur: 1.7, k: [K(0, s), // crouch → jump → overhead slam
+      K(0.3, null, { hp: [0, -0.2, -0.05], hR: [-0.2, 0.9, -0.2], hRr: [-40, 0, 0], ch: [14, 6, 0], h: [10, -20, 0] }),
+      K(0.5, null, { hp: [0, 0.18, 0.1], fL: [0.06, 0.25, 0.2], fR: [-0.05, 0.3, 0.0], hR: [-0.1, 1.65, 0.0], hRr: [-140, 0, 0], ch: [-12, 0, 0], h: [-6, -10, 0], hd: [-10, 0, 0] }),
+      K(0.62, null, { hp: [0, 0.22, 0.25], fL: [0.06, 0.3, 0.35], fR: [-0.05, 0.32, 0.1], hR: [-0.1, 1.72, 0.1], hRr: [-150, 0, 0] }),
+      K(0.75, null, { hp: [0, -0.15, 0.4], fL: [0.06, 0, 0.5], fR: [-0.05, 0, 0.1], hR: [-0.05, 0.9, 0.55], hRr: [25, 0, 0], ch: [16, 0, 0], h: [12, -10, 0], hd: [6, 0, 0] }),
+      K(0.88, null, { hp: [0, -0.18, 0.41], hR: [-0.05, 0.85, 0.56] }),
+      K(1.1, null, { hp: [0, -0.16, 0.4] }),
+      K(1.5, s), K(1.7, s)], meta: { hit: 0.75 } };
+    const a = attackClip(c, 1);
+    return { dur: 1.7, k: [K(0, s), K(0.35, null, { hp: [0, -0.14, -0.06], h: [10, 30, 0], ch: [14, 24, 0], hd: [10, 16, 0], ua: [-30, 0, 30], fa: [-90, 0, 0] }), K(0.55, null, { hp: [0, -0.15, -0.07], ch: [16, 26, 0] }),
+      K(0.68, null, { hp: [0, 0.0, 0.3], h: [-4, -36, 0], ch: [-10, -30, 0], hd: [-12, -16, 0], uaL: [-40, 0, 70], faL: [-10, 0, 0], fL: [0.05, 0, 0.45] }), K(0.85, null, { hp: [0, -0.1, 0.32], h: [10, 16, 0], ch: [12, -16, 0] }),
+      K(1.0, null, { hp: [0, -0.11, 0.32] }), K(1.5, s), K(1.7, s)], meta: { hit: 0.72 } }; };
+  L.hurt = (c) => { const s = stance(c); return { dur: 0.75, k: [K(0, s),
+    K(0.07, null, { hp: [0, -0.05, -0.12], h: [-10, 0, 6], ch: [-16, 0, 6], hd: [-18, 6, 8], uaL: [-20, 0, 34], faL: [-30, 0, 0], fL: [0.05, 0, 0.02], hR: offH(s.hR, [0, 0.04, -0.14]) }),
+    K(0.2, null, { hp: [0, -0.1, -0.14], h: [8, 0, 2], ch: [14, 0, 0], hd: [12, 0, 0], uaL: [-26, 0, 14], faL: [-50, 0, 0], hR: offH(s.hR, [0, -0.06, -0.12]) }),
+    K(0.55, s, { hp: [s.hp[0], s.hp[1] - 0.02, s.hp[2] - 0.03] }), K(0.75, s)] }; };
+  L.guard = (c) => { const s = stance(c), f = c.fam;
+    let g = { hp: [0, -0.11, -0.03], h: [8, 10, 0], ch: [12, -6, 0], hd: [10, 0, 0], uaR: [-70, -30, -20], faR: [-90, -10, 0], haR: [0, 0, 60], uaL: [-70, 30, 20], faL: [-110, 10, 0], hRm: 'off', hLm: 'off' };
+    if (f === 'blade') g = Object.assign({}, g, { hRm: 'on', hR: [-0.12, 1.4, 0.32], hRd: [1, 0.12, 0.05], hLm: 'on', hL: [0.16, 1.36, 0.3] });
+    if (f === 'pole') g = Object.assign({}, g, { hRm: 'on', hLm: 'on', hR: [-0.28, 1.2, 0.28], hRr: [-6, 90, 0], hL: 0.55 });
+    if (f === 'fan') g = Object.assign({}, g, { hRm: 'on', hR: [-0.02, 1.45, 0.3], hRr: [-90, 0, 0] });
+    return { dur: 1.6, loop: true, k: [K(0, s, g), K(0.8, null, { ch: [g.ch[0] + 1.5, g.ch[1], 0], hp: [0, -0.118, -0.03] }), K(1.6, null, { ch: g.ch, hp: g.hp })] }; };
   L.ko = (c) => ({ dur: 1.3, pl: false, k: [
-    { t: 0, hp: [0, -0.05, 0], h: [0, 0, 0], ch: [0, 0, 0], hd: [0, 0, 0], thL: [0, 0, 0], thR: [0, 0, 0], snL: [0, 0, 0], snR: [0, 0, 0] },
+    { t: 0, hp: [0, -0.05, 0], h: [0, 0, 0], ch: [0, 0, 0], hd: [0, 0, 0], thL: [0, 0, 0], thR: [0, 0, 0], snL: [0, 0, 0], snR: [0, 0, 0], ua: [0, 0, 0], fa: [0, 0, 0] },
     { t: 0.15, hp: [0, -0.12, -0.08], h: [-8, 0, 0], ch: [-18, 0, 4], hd: [-24, 0, 0], ua: [-30, 0, 40], fa: [-20, 0, 0] },
     { t: 0.45, hp: [0, -0.45, -0.05], h: [24, 0, 0], ch: [20, 0, 0], hd: [16, 0, 0], thL: [-70, 0, 6], thR: [-60, 0, -6], snL: [120, 0, 0], snR: [110, 0, 0], ua: [-10, 0, 10], fa: [-20, 0, 0] },
     { t: 0.75, hp: [0, -0.64, 0.12], h: [70, 0, -10], ch: [14, 0, 0], hd: [10, 20, 0], thL: [-40, 0, 10], thR: [-30, 0, -6], snL: [60, 0, 0], snR: [40, 0, 0], ua: [-60, 0, 30], fa: [-10, 0, 0] },
@@ -3561,26 +3647,33 @@ G.Char3D = (() => {
   L.revive = (c) => { const s = stance(c); return { dur: 1.5, pl: false, k: [
     { t: 0, hp: [0, -0.82, 0.34], h: [88, 0, -6], ch: [2, 0, 0], hd: [2, 34, 10], thL: [-20, 0, 8], thR: [-10, 0, -4], snL: [30, 0, 0], snR: [14, 0, 0], ftL: [40, 0, 0], ftR: [40, 0, 0], ua: [-80, 0, 20], fa: [-6, 0, 0] },
     { t: 0.5, hp: [0, -0.55, 0.06], h: [30, 0, 0], ch: [20, 0, 0], hd: [10, 0, 0], thL: [-90, 0, 6], thR: [-60, 0, -6], snL: [130, 0, 0], snR: [100, 0, 0], ftL: [0, 0, 0], ftR: [0, 0, 0], ua: [-30, 0, 20], fa: [-40, 0, 0] },
-    { t: 0.95, hp: [0, -0.16, 0], h: [10, 0, 0], ch: [6, 0, 0], hd: [-6, 0, 0], thL: [-30, 0, 2], thR: [-30, 0, -2], snL: [40, 0, 0], snR: [40, 0, 0], ua: [-10, 0, 14] },
+    { t: 0.95, hp: [0, -0.16, 0], h: [10, 0, 0], ch: [6, 0, 0], hd: [-6, 0, 0], thL: [-30, 0, 2], thR: [-30, 0, -2], snL: [40, 0, 0], snR: [40, 0, 0], ua: [-10, 0, 14], fa: [-20, 0, 0] },
     { t: 1.25, hp: [0, -0.06, 0], h: [s.h[0], s.h[1], 0], thL: [0, 0, 0], thR: [0, 0, 0], snL: [0, 0, 0], snR: [0, 0, 0] },
     { t: 1.5, hp: s.hp, h: s.h },
   ] }; };
-  L.victory = (c) => { const s = stance(c); const f = c.fam; const up = f === 'blade' || f === 'pole' ? { uaR: [-170, -10, -14], faR: [-6, 0, 0], haR: [-30, 0, 0] } : { uaR: [-150, 20, -30], faR: [-60, -30, 0] };
-    return { dur: 1.8, k: [Object.assign({ t: 0 }, s),
-      { t: 0.25, hp: [0, -0.1, 0], ch: [10, 0, 0], hd: [12, 0, 0] },
-      Object.assign({ t: 0.5, hp: [0, 0.04, 0], fL: [0.05, 0, 0.05], fR: [-0.05, 0, -0.05], h: [-4, -10, 0], ch: [-8, 10, 0], hd: [-10, 10, 0], uaL: [-10, 0, 20], faL: [-80, 30, 0] }, up),
-      { t: 0.65, hp: [0, 0.0, 0] }, { t: 1.8, hp: [0, 0.0, 0], ch: [-6, 10, 0] }] }; };
+  L.victory = (c) => { const s = stance(c), f = c.fam;
+    let up = { uaR: [-150, 20, -30], faR: [-60, -30, 0], hRm: 'off', hLm: 'off' };
+    if (f === 'blade') up = { hRm: 'on', hR: [-0.18, 1.94, 0.08], hRd: [-0.05, 1, 0.1], hLm: 'on', hL: [0.22, 1.05, 0.12] };
+    if (f === 'pole') up = { hRm: 'on', hR: [-0.26, 1.05, 0.12], hRr: [-86, 0, 0], hLm: 'off', uaL: [-10, 0, 20], faL: [-80, 30, 0] };
+    if (f === 'fan') up = { hRm: 'on', hR: [-0.1, 1.35, 0.25], hRr: [-80, 20, 0] };
+    if (f === 'flute') up = { hRm: 'on', hR: [-0.18, 1.0, 0.18], hRr: [-80, 10, 0], hLm: 'off', uaL: [-20, -20, 10], faL: [-80, 40, 0] };
+    return { dur: 1.8, k: [K(0, s),
+      K(0.25, null, { hp: [0, -0.1, 0], ch: [10, 0, 0], hd: [12, 0, 0] }),
+      K(0.5, null, Object.assign({ hp: [0, 0.03, 0], fL: [0.05, 0, 0.05], fR: [-0.05, 0, -0.05], h: [-4, -10, 0], sp: [0, 0, 0], ch: [-8, 10, 0], hd: [-10, 10, 0], uaL: [-10, 0, 20], faL: [-80, 30, 0] }, up)),
+      K(0.65, null, { hp: [0, 0.0, 0] }), K(1.8, null, { hp: [0, 0.0, 0], ch: [-6, 10, 0] })] }; };
   L.victory_loop = (c) => { const v = L.victory(c); const last = v.k.reduce((a, k) => Object.assign(a, k), {}); return { dur: 2, loop: true, k: [Object.assign({}, last, { t: 0 }), { t: 1, ch: [-7.5, 10, 0] }, Object.assign({}, last, { t: 2 })] }; };
-  L.item = (c) => { const s = stance(c); return { dur: 1.2, k: [Object.assign({ t: 0 }, s),
-    { t: 0.25, hp: [0, -0.04, 0], ch: [10, 0, 0], hd: [16, 0, 0], uaL: [-40, -20, 10], faL: [-120, 30, 0] },
-    { t: 0.55, ch: [-6, 0, 0], hd: [-10, 0, 0], uaL: [-130, -10, 20], faL: [-30, 0, 0], haL: [-30, 0, 0] },
-    { t: 0.75, uaL: [-128, -10, 18] },
-    Object.assign({ t: 1.05 }, s), Object.assign({ t: 1.2 }, s)], meta: { hit: 0.55 } }; };
-  L.dodge = (c) => { const s = stance(c); return { dur: 0.7, k: [Object.assign({ t: 0 }, s),
-    { t: 0.06, hp: [0, -0.1, 0.02] },
-    { t: 0.18, hp: [0, -0.03, -0.42], h: [-8, 0, 0], ch: [-10, 0, 0], fL: [0.05, 0.08, -0.15], fR: [-0.04, 0.12, -0.42], ua: [-20, 0, 30] },
-    { t: 0.32, hp: [0, -0.12, -0.38], h: [10, 0, 0], ch: [8, 0, 0], fL: [0.05, 0, -0.18], fR: [-0.04, 0, -0.46] },
-    Object.assign({ t: 0.7 }, s)] }; };
+  L.item = (c) => { const s = stance(c); return { dur: 1.2, k: [K(0, s, { hLm: s.hLm ? 'on' : 'off' }),
+    K(0.12, null, { hLm: 'off' }),
+    K(0.25, null, { hp: [0, -0.04, 0], ch: [10, 0, 0], hd: [16, 0, 0], uaL: [-40, -20, 10], faL: [-120, 30, 0] }),
+    K(0.55, null, { ch: [-6, 0, 0], hd: [-10, 0, 0], uaL: [-130, -10, 20], faL: [-30, 0, 0], haL: [-30, 0, 0] }),
+    K(0.75, null, { uaL: [-128, -10, 18] }),
+    K(1.05, s, { hLm: 'off' }), K(1.12, null, { hLm: s.hLm || 'off' }), K(1.2, s)], meta: { hit: 0.55 } }; };
+  L.dodge = (c) => { const s = stance(c); const back = [0, 0.02, -0.4]; return { dur: 0.7, k: [K(0, s),
+    K(0.06, null, { hp: [0, -0.1, 0.02] }),
+    K(0.18, null, { hp: [0, -0.03, -0.42], h: [-8, s.h[1], 0], ch: [-10, s.ch[1], 0], fL: [0.05, 0.08, -0.15], fR: [-0.04, 0.12, -0.42], hR: offH(s.hR, back), uaL: [-20, 0, 30] }),
+    K(0.32, null, { hp: [0, -0.12, -0.38], h: [10, s.h[1], 0], ch: [8, s.ch[1], 0], fL: [0.05, 0, -0.18], fR: [-0.04, 0, -0.46], hR: offH(s.hR, [0, -0.06, -0.38]) }),
+    K(0.7, s)] }; };
+  // battle run: locomotion carrying the drawn weapon (blade low at the side, pole trailing)
 
   // emote reactions (short, additive-feeling one-shots on top of locomotion idle)
   L.e_hop = (c) => ({ dur: 0.6, pl: false, k: [{ t: 0, hp: [0, 0, 0], thL: [0, 0, 0], thR: [0, 0, 0], snL: [0, 0, 0], snR: [0, 0, 0], ua: [0, 0, 0] }, { t: 0.1, hp: [0, -0.05, 0], thL: [-14, 0, 0], thR: [-14, 0, 0], snL: [28, 0, 0], snR: [28, 0, 0] }, { t: 0.22, hp: [0, 0.08, 0], thL: [-4, 0, 0], thR: [-4, 0, 0], snL: [8, 0, 0], snR: [8, 0, 0], ua: [-20, 0, 30], ftL: [20, 0, 0], ftR: [20, 0, 0] }, { t: 0.36, hp: [0, -0.03, 0], thL: [-10, 0, 0], thR: [-10, 0, 0], snL: [20, 0, 0], snR: [20, 0, 0], ftL: [0, 0, 0], ftR: [0, 0, 0] }, { t: 0.6, hp: [0, 0, 0], thL: [0, 0, 0], thR: [0, 0, 0], snL: [0, 0, 0], snR: [0, 0, 0], ua: [0, 0, 0] }] });
@@ -3712,6 +3805,7 @@ G.Char3D = (() => {
   C.template = template;
 
   // ------------------------------------------------------------------------------------------ springs
+  const AIR = { hair: 0.3, ribbon: 0.42, cloth: 0.1, sleeve: 0.12, feather: 0.3, flag: 0.45, tassel: 0.35, prop: 0.05 };
   class Springs {
     constructor(inst) {
       const THREE = window.THREE;
@@ -3745,6 +3839,7 @@ G.Char3D = (() => {
       this.wind = new THREE.Vector3();
     }
     reset() { this.init = false; }
+    shift(d) { for (const ch of this.chains) for (const J of ch.js) { J.tail.add(d); J.prev.add(d); } this.lastRoot.add(d); }
     worldQuatOf(m, out) { // rotation of a (uniformly scaled) world matrix
       const e = m.elements;
       const sx = hypot(e[0], e[1], e[2]) || 1;
@@ -3757,6 +3852,10 @@ G.Char3D = (() => {
       const root = this.inst.root;
       root.getWorldPosition(vA);
       if (this.init && vA.distanceTo(this.lastRoot) > 1.5) this.init = false;
+      // root displacement this frame: springs damp motion RELATIVE to the character (hair follows the body),
+      // with only a small 'air drag' fraction of the body velocity lost (so it trails a little when running)
+      const dRoot = this._dr || (this._dr = vA.clone().set(0, 0, 0));
+      if (this.init) dRoot.copy(vA).sub(this.lastRoot).divideScalar(dt > 1 / 45 ? 2 : 1); else dRoot.set(0, 0, 0);
       this.lastRoot.copy(vA);
       // colliders in world space
       for (const c of this.cols) {
@@ -3781,7 +3880,8 @@ G.Char3D = (() => {
           const L = J.len * scale;
           if (!this.init) { J.tail.copy(head).addScaledVector(restDir, L); J.prev.copy(J.tail); }
           for (let s = 0; s < steps; s++) {
-            const nx = vD.copy(J.tail).sub(J.prev).multiplyScalar(1 - dragK).add(J.tail);
+            const air = cfg.air != null ? cfg.air : AIR[cfg.kind] || 0.1;
+            const nx = vD.copy(J.tail).sub(J.prev).sub(dRoot).multiplyScalar(1 - dragK).addScaledVector(dRoot, 1 - air).add(J.tail);
             nx.addScaledVector(restDir, cfg.stiff * h * (lod ? 1.3 : 1));
             nx.y -= cfg.grav * h;
             if (this.wind.lengthSq() > 0 && cfg.kind !== 'prop') nx.addScaledVector(this.wind, h * (cfg.kind === 'cloth' ? 0.4 : 1));
@@ -3940,6 +4040,8 @@ G.Char3D = (() => {
       show('backWeap', !(battle && backIsWeapon));
     }
     setWeaponDrawn(on) { this.weaponDrawn = !!on; this.applyProps(); }
+    // move the character without disturbing its secondary motion (spring state is carried along)
+    shift(dx, dy, dz) { const d = new window.THREE.Vector3(dx, dy, dz); this.root.position.add(d); this.springs.shift(d); if (this.locks) for (const k in this.locks) this.locks[k].p.add(d); }
     // ---- contract API
     setFacing(yaw) { this.yaw = yaw; }
     setMove(speed) { this.targetSpeed = max(0, speed || 0); }
@@ -4113,6 +4215,8 @@ G.Char3D = (() => {
         e.set(X * 0.35, Y * 0.35, 0, 'YXZ'); q.setFromEuler(e); b.neck.quaternion.multiply(q);
         e.set(X * 0.55, Y * 0.5, 0, 'YXZ'); q.setFromEuler(e); b.head.quaternion.multiply(q);
       }
+      // --- runtime foot locking (removes residual slide in gait blend zones and while turning on the move)
+      this.footLock(dt, v);
       // ghosts float
       if (this.ghost) { this.model.position.y = 0.06 + 0.03 * sin(this.t * 2.1); }
       // --- springs
@@ -4123,6 +4227,32 @@ G.Char3D = (() => {
       } else this.springs.update(1 / 60, size, false);
       // --- face
       this.updateFace(dt, far, lyT, lpT);
+    }
+    footLock(dt, v) {
+      const THREE = window.THREE, IK = C._ik, b = this.bmap;
+      if (!this.locks) this.locks = { L: { on: false, w: 0, p: new THREE.Vector3() }, R: { on: false, w: 0, p: new THREE.Vector3() } };
+      let ow = 0; for (const o of this.overlays) ow += o.w;
+      const active = v > 0.25 && ow < 0.5 && abs(this.yawRate) < 4 && !this.lodFar && !this.ghost;
+      this.root.updateMatrixWorld(true);
+      const rootY = this.root.getWorldPosition(this._v3).y;
+      const aY = this.T.P.ankleY * this.size;
+      for (const S of ['L', 'R']) {
+        const Lk = this.locks[S];
+        const foot = b['foot' + S];
+        const A = IK.worldPos(foot);
+        const flat = active && A.y - rootY < aY + 0.01 * this.size;
+        if (flat && !Lk.on) { Lk.on = true; Lk.p.copy(A); }
+        if (!flat) Lk.on = false;
+        Lk.w += clamp((Lk.on ? 1 : 0) - Lk.w, -dt * 14, dt * 30);
+        if (Lk.w < 0.01) continue;
+        if (Lk.on && A.distanceTo(Lk.p) > 0.22 * this.size) { Lk.on = false; continue; }
+        const tgt = A.clone().lerp(new THREE.Vector3(Lk.p.x, A.y, Lk.p.z), Lk.w);
+        const fq = IK.worldQuat(foot);
+        const sg = S === 'L' ? 1 : -1;
+        const pole = new THREE.Vector3(sg * 0.12, 0, 1).applyQuaternion(IK.worldQuat(b.hips)).normalize();
+        IK.ik2(b['thigh' + S], b['shin' + S], foot, tgt, pole);
+        IK.setWorldQuat(foot, fq);
+      }
     }
     updateFace(dt, far, lyT, lpT) {
       const st = {};

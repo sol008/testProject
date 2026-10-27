@@ -55,7 +55,7 @@ setTimeout(function () {
   }
   const cols = num('cols', Math.min(items.length, strip > 1 ? strip : Math.ceil(Math.sqrt(items.length * 2.2))));
   const sp = num('spacing', 1.15);
-  items.forEach((it, i) => { it.inst.root.position.set((i % cols) * sp, 0, Math.floor(i / cols) * sp * 1.4); });
+  items.forEach((it, i) => { it.inst.root.position.set((i % cols) * sp, 0, Math.floor(i / cols) * sp * num('rowz', 1.4)); });
   const look = q.get('look') ? new THREE.Vector3(...q.get('look').split(',').map(Number)) : null;
   for (const it of items) {
     const ins = it.inst;
@@ -67,7 +67,10 @@ setTimeout(function () {
     if (look) ins.lookAt(look.clone().add(ins.root.position));
     ins.fidgetT = 1e9;
     const steps = Math.round(it.t * 60);
-    for (let s = 0; s < steps; s++) ins.update(1 / 60, 0, null);
+    const home = ins.root.position.clone();
+    const mv = q.get('move') === '1' ? spd : 0, fy = ins.yaw;
+    for (let s = 0; s < steps; s++) { if (mv) ins.root.position.add(new THREE.Vector3(Math.sin(fy), 0, Math.cos(fy)).multiplyScalar(mv / 60)); ins.update(1 / 60, 0, null); }
+    if (mv) { const d = home.clone().sub(ins.root.position); ins.shift(d.x, d.y, d.z); ins.update(0, 0, null); }
   }
   // camera
   const camMode = q.get('cam') || 'full';
@@ -79,6 +82,7 @@ setTimeout(function () {
   const cam = new THREE.PerspectiveCamera(fov, W / H, 0.02, 300);
   let target = ctr.clone(), dist;
   if (camMode === 'face') { const h = items[0].inst.height; target = items[0].inst.bmap.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); dist = num('dist', 0.9); }
+  else if (camMode === 'heads') { target.y = items[0].inst.bmap.head.getWorldPosition(new THREE.Vector3()).y + 0.08; dist = num('dist', 1.0) * Math.max(1, items.length * 0.32); }
   else if (camMode === 'close') { target.y = items[0].inst.height * 0.72; dist = num('dist', 2.0); }
   else if (camMode === 'game') { dist = num('dist', 15); target.y = 0.8; }
   else { const fitH = Math.max(size.y, size.x / (W / H)) * 1.08; dist = fitH / 2 / Math.tan(fov * Math.PI / 360) * num('dist', 1); target.y = size.y * 0.5 - 0.2; }
