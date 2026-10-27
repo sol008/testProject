@@ -1,0 +1,22 @@
+{
+  "name": "shorelight",
+  "productName": "彼岸燈 Shorelight",
+  "version": "1.0.0",
+  "description": "彼岸燈 Shorelight — a Traditional-Chinese xianxia RPG set in ancient Taiwan",
+  "main": "electron-main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.shorelight.game",
+    "productName": "Shorelight",
+    "mac": { "category": "public.app-category.role-playing-games", "target": ["dmg"] },
+    "files": ["index.html", "electron-main.js", "css/**", "js/**", "fonts/**"]
+  }
+}
