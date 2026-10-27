@@ -17,7 +17,9 @@ const fs = require('fs');
     else if (a.startsWith('--fx=')) opt.fx = +a.slice(5);
     else maps.push(a);
   }
-  if (!maps.length) maps.push('jiufen');
+  // default set: dusk town, rain, sea, river night, black sea, mountain/sea of clouds, snow, cave, interior, psychedelic, lanterns
+  if (!maps.length || maps[0] === 'set') maps.splice(0, maps.length, 'jiufen', 'jiufen@ch1_morning_after', 'orchid_shore', 'keelung_fest', 'pingxi',
+    'dream', 'alishan_forest:12,3@ch7_seaofclouds', 'yushan_trail', 'mine_1', 'longkeng_caves', 'jiufen_teahouse:8,4', 'breath_realm', 'mistforest_n', 'hengchun');
   fs.mkdirSync(opt.out, { recursive: true });
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   let bad = 0;
@@ -26,7 +28,7 @@ const fs = require('fs');
     const [, id, x, y, flags, vars] = m;
     const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
     const errs = [];
-    p.on('console', (msg) => { if (msg.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(msg.text()) || msg.type() === 'warning' && /\[shorelight\]|THREE/.test(msg.text())) errs.push(msg.type() + ': ' + msg.text().slice(0, 400)); });
+    p.on('console', (msg) => { if (msg.type() === 'error' && !/ERR_FILE_NOT_FOUND/.test(msg.text()) || msg.type() === 'warning' && /\[shorelight\]|THREE/.test(msg.text()) && !/PCFSoftShadowMap has been removed/.test(msg.text())) errs.push(msg.type() + ': ' + msg.text().slice(0, 400)); });
     p.on('pageerror', (e) => errs.push('PAGEERR ' + e.message));
     p.on('requestfailed', (r) => { if (!/fontdata\.js$|i18n\/en_ch\d+\.js$/.test(r.url())) errs.push('REQFAIL ' + r.url()); });
     let qs = 'debug&map=' + id + (opt.full ? '' : '&r3lite');
@@ -64,7 +66,7 @@ const fs = require('fs');
         env: v.env ? Object.keys(v.env.parts || {}).join(',') : '-' };
     }, opt.wait).catch((e) => ({ err: e.message }));
     const file = path.join(opt.out, spec.replace(/[^a-z0-9_]+/gi, '_') + (opt.full ? '_full' : '') + '.png');
-    await p.screenshot({ path: file });
+    await p.screenshot({ path: file, timeout: 900000 });
     console.log(`${spec}  ${((Date.now() - t0) / 1000).toFixed(0)}s  ${JSON.stringify(stats)}  -> ${path.relative(process.cwd(), file)}`);
     if (errs.length) { bad++; console.log('  ERRORS:\n  ' + [...new Set(errs)].slice(0, 15).join('\n  ')); }
     await p.close();

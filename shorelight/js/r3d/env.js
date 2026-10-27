@@ -579,7 +579,7 @@ G.Env3D = (() => {
           float ndv = clamp(dot(N, V), 0.0, 1.0);
           float F = (0.03 + 0.97 * pow(1.0 - ndv, 4.0)) * P0.z;
           vec3 R = reflect(-V, N); R.y = abs(R.y);
-          vec3 sky = skyColor(R, 1.0);
+          vec3 sky = skyColor(R, 1.0) * (1.0 - 0.45 * uNight);
           // ---- body colour (depth tint), crest scatter, caustics
           vec3 body = mix(kShal, kDeep, deepK);
           float cs = 1.0;
@@ -714,7 +714,7 @@ G.Env3D = (() => {
             if (eSp > 0.5) {
               if (eSp < 1.5) { // moss_glow: breathing bioluminescent speckles
                 float n = texture2D(uNoise, p * 0.55).b, pulse = 0.55 + 0.45 * sin(uTime * 0.9 + texture2D(uNoise, p * 0.07).r * 14.0);
-                em = vec3(0.25, 1.0, 0.72) * (smoothstep(0.58, 0.82, n) * 1.4 + eLum * 0.25) * pulse;
+                em = vec3(0.25, 1.0, 0.72) * (smoothstep(0.58, 0.82, n) * 1.4 + eLum * 0.25) * pulse * (0.3 + 0.7 * uNight);
               } else if (eSp < 2.5) { // spirit_floor: flowing veins of light
                 float w = texture2D(uNoise, p * 0.18 + vec2(0.0, uTime * 0.012)).a;
                 float vein = smoothstep(0.16, 0.0, w) * (0.6 + 0.4 * sin(uTime * 0.8 - p.y * 0.6));
@@ -951,7 +951,7 @@ G.Env3D = (() => {
     const sp = (o) => out.push(Object.assign({ n: 100, mode: 1, kind: 1, shape: 1, size: 0.05, speed: 1, y: [0, 6], box: [34, 0, 28], blend: 'add', alpha: 1, colors: ['#ffffff'] }, o));
     switch (name) {
       case 'rain':
-        sp({ n: 1400 * k, mode: 0, shape: 0, size: 0.016, speed: 15, y: [0, 13], box: [36, 0, 30], blend: 'normal', alpha: 0.42, colors: ['#c8d8f0', '#a8bfe0', '#e0eaf8'] });
+        sp({ n: 1400 * k, mode: 0, shape: 0, size: 0.03, speed: 15, y: [0, 13], box: [36, 0, 30], blend: 'normal', alpha: 0.5, colors: ['#c8d8f0', '#a8bfe0', '#e0eaf8'] });
         sp({ n: 260 * k, mode: 5, shape: 7, size: 0.14, y: [0, 1], box: [26, 0, 20], blend: 'normal', alpha: 0.55, colors: ['#dfe9f5'] });
         break;
       case 'snow':
@@ -982,11 +982,11 @@ G.Env3D = (() => {
         sp({ n: 170 * k, mode: 1, kind: 5, shape: 4, size: 0.22, y: [0.3, 4.5], colors: ['#ffffff'], alpha: 1.1 });
         break;
       case 'lanterns':
-        sp({ n: 46 * k, mode: 1, kind: 6, shape: 5, size: 0.5, speed: 0.45, y: [0, 15], box: [40, 0, 34], blend: 'normal', alpha: 1, colors: ['#ffffff'] });
+        sp({ n: 75 * k, mode: 1, kind: 6, shape: 5, size: 0.6, speed: 0.45, y: [0, 15], box: [40, 0, 34], blend: 'normal', alpha: 1, colors: ['#ffffff'] });
         break;
       case 'mist': {
         const c = (opts && opts.color) || null;
-        sp({ n: 16 * k + 6, mode: 3, shape: 6, size: 11, y: [0.7, 3.4], box: [46, 0, 40], blend: 'normal', alpha: ((opts && opts.alpha) || 0.16) * 1.6, colors: [c || S.mistColor || '#dce4f0'] });
+        sp({ n: 18 * k + 6, mode: 3, shape: 6, size: 10, y: [0.3, 1.5], box: [46, 0, 40], blend: 'normal', alpha: ((opts && opts.alpha) || 0.16) * 1.3, colors: [c || S.mistColor || '#dce4f0'] });
         break;
       }
       case 'wind':
@@ -1220,7 +1220,8 @@ G.Env3D = (() => {
     for (const l of ls) {
       if (l.player || k >= g.n) continue;
       c.set(l.color || '#ffb060');
-      const rad = clamp(l.r * 0.9, 1.2, 4.5) * (1 + Math.max(0, 1.2 - l.y) * 0.3);
+      if (l.y < 0.25) continue;
+      const rad = clamp(l.r * 0.6, 0.9, 3.2);
       g.P.setXYZW(k, l.x, 0, l.z, rad);
       g.Cc.setXYZ(k, c.r * (l.i || 1), c.g * (l.i || 1), c.b * (l.i || 1));
       k++;
@@ -1254,7 +1255,7 @@ G.Env3D = (() => {
           vec3 c = mix(uCDark, uCLit, lit * 0.7 + n * 0.45);
           c = mix(c, uHor, 0.25);
           c += uSunCol * pow(lit, 3.0) * 0.18 * (1.0 - uNight);
-          float a = smoothstep(0.2, 0.55, n) * 0.92 + 0.08;
+          float a = smoothstep(0.15, 0.5, n) * 0.25 + 0.75;
           gl_FragColor = vec4(c, a);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -1266,7 +1267,7 @@ G.Env3D = (() => {
     sea.renderOrder = 1;
     view.scene.add(sea);
     S.cloudSea = sea; S.statics.push(sea);
-    if (view.apron) view.apron.position.y = -9;
+    if (view.apron) { view.apron.position.y = -9; view.apron.material.color.copy(S.U.uHor.value).multiplyScalar(0.55); }
     // rock skirt so the plateau edge reads as cliffs dropping into the clouds
     const sk = new T.Group();
     const rock = G.R3M.env({ color: 0x4a4640, roughness: 1, cutout: false });
@@ -1318,7 +1319,7 @@ G.Env3D = (() => {
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
       fragmentShader: `uniform float uTime, uPsy; varying vec2 vUv;
         vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
-        void main(){ float a = (0.35 + 0.25 * sin(vUv.x * 62.83 + uTime * 0.4)) * uPsy * 0.55; gl_FragColor = vec4(hue(vUv.x + uTime * 0.03) * a, 1.0);
+        void main(){ float a = (0.35 + 0.25 * sin(vUv.x * 62.83 + uTime * 0.4)) * uPsy * 0.32; gl_FragColor = vec4(hue(vUv.x + uTime * 0.03) * a, 1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -1358,6 +1359,7 @@ G.Env3D = (() => {
     S.weather = { rain: 0, mist: 0, names: [] };
     buildWeatherCounts(view, S);
     applyMood(view, S, true);
+    S.U.uWet.value = S.weather.rain > 0 ? 1 : 0;
     safe('weather', () => buildWeather(view, S));
     S.parts.weather = S.weather.names.join('+') || 'none';
     safe('sky', () => setupSky(view, S)); if (view.outdoor) S.parts.sky = 1;
