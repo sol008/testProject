@@ -2353,7 +2353,7 @@
     await S.say('hongying:serious', '像你以前打醒我那樣。');
     await S.say('qingfeng:sad', '…………');
     await S.say('qingfeng:serious', '槍尖，還是太低了。');
-    const r = await S.battle('t_c8_qingfeng', Object.assign(qfBattleOpts(), { bgmAfter: null }));
+    const r = await S.battle('t_c8_qingfeng', Object.assign(qfBattleOpts(), { bgmAfter: 'tension' }));
     if (r !== 'win') return;
     // the fight's experience, given quietly (no fanfare over this scene)
     const tr = G.Data.troops.t_c8_qingfeng;
