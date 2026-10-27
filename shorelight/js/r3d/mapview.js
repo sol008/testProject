@@ -912,15 +912,18 @@ G.Map3D = (() => {
       const c = this.view.ms.cam, near = (a, b) => Math.abs(a - b) <= 1.01;
       return (near(x, c.x) && near(y, c.y)) || (near(x, this.cx) && near(y, this.cy));
     }
-    // does the rect (in current user space) cover the whole view along one axis, starting at a screen edge?
-    coversView(x, y, w, h) {
+    // does the rect (in current user space) cover the whole view along one axis, starting at a screen edge? Edges
+    // count when they sit within 128 px outside the screen (overscan), so big world-space images and beams that merely
+    // overlap the view are not taken for screen overlays. full: require the whole screen (used for drawImage).
+    coversView(x, y, w, h, full) {
       if (![x, y, w, h].every(Number.isFinite)) return false;
       const m = this.devInv.multiply(this.S.getTransform());
       if (Math.abs(m.b) > 1e-6 || Math.abs(m.c) > 1e-6) return false;
       let x0 = m.a * x + m.e, x1 = m.a * (x + w) + m.e, y0 = m.d * y + m.f, y1 = m.d * (y + h) + m.f;
       if (x0 > x1) [x0, x1] = [x1, x0];
       if (y0 > y1) [y0, y1] = [y1, y0];
-      const L = x0 <= 2, R = x1 >= G.W - 2, T = y0 <= 2, B = y1 >= G.H - 2;
+      const L = x0 <= 2 && x0 >= -128, R = x1 >= G.W - 2 && x1 <= G.W + 128, T = y0 <= 2 && y0 >= -128, B = y1 >= G.H - 2 && y1 <= G.H + 128;
+      if (full) return L && R && T && B;
       return (L && R && (T || B)) || (T && B && (L || R));
     }
     wrap(k) {
@@ -942,7 +945,7 @@ G.Map3D = (() => {
         let screen = self.mode;
         if (!screen && rectOf) {
           const r = rectOf(a);
-          if (self.coversView(r[0], r[1], r[2], r[3])) {
+          if (self.coversView(r[0], r[1], r[2], r[3], k === 'drawImage')) {
             if (self.phase !== 'ground') screen = true;
             else if ((k === 'fillRect' && typeof self.W.fillStyle === 'string') || k === 'clearRect') {
               // ground tint: cover the whole decal
