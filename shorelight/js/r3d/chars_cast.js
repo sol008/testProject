@@ -11,7 +11,8 @@
 // ({ extend: 'day', spec: {...} }) — 陳伯 wears his hidden 引魂人 gear in battle without a second body.
 //
 // Sources: docs/design/REFERENCES.md (白芷 face & hair, binding), docs/design/v2/*.md + sheets (final designs:
-// chenbo, yexuan, moya), docs/STORY_BIBLE.md, and the existing 2D specs for the party (final v2 picks pending).
+// chenbo, yexuan, moya; the party's client picks per docs/design/PICKS.md: 星河 #07, 白芷 #02, 紅纓 #01, 雲歸 #01),
+// docs/STORY_BIBLE.md. Party looks carry a `sheet` clip that reproduces the design card's pose (bench: anim=sheet).
 'use strict';
 (() => {
   const C = G.Char3D, I = C._internal;
