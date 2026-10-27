@@ -3717,55 +3717,79 @@
     S.gather();
     await S.camera(21, 2, 0.6);
     const m = G.mapScene;
-    m.objects.push({ t: 'basket', x: 23, y: 1, key: 'baby_basket', v: 1 });
+    const basket = { t: 'basket', x: 23, y: 1, key: 'baby_basket', v: 1, alpha: 1 };
+    m.objects.push(basket);
+    // the hum stops; only the sea is left while he looks
+    S.bgm(null, { fade: 2 });
     await S.lines([
       ['', '步道盡頭，海面上漂著一個破舊的竹籃。籃子在下沉。'],
       ['', '籃子裡是一個嬰兒。'],
       ['', '嬰兒沒有哭。海水已經漫過了他的臉。'],
-      ['xinghe:surprise', '……那是……我？'],
     ]);
+    await S.wait(1.2);
+    await S.say('xinghe:surprise', '……那是……我？');
     await S.move('player', 'URR');
     S.shake(2, 0.2);
-    await S.lines([
-      ['', '星河衝過去，伸手——手穿過了籃子。這是記憶，碰不到。'],
-      ['xinghe:cry', '不……不要……誰來……誰來救他！'],
-    ]);
+    await S.say('', '星河衝過去，伸手——手穿過了籃子。');
+    await S.wait(0.4);
+    S.shake(2, 0.2);
+    await S.say('xinghe:cry', '不……不要……誰來……誰來救他！');
+    S.sfx('water');
+    await G.Tweens.to(basket, { alpha: 0.35 }, 1.6, 'linear');
+    await S.wait(1.4);   // nobody comes
     S.sfx('bell');
     spawn(S, { id: 'lgirl', sprite: 'baizhi_spirit', x: 24, y: 2, dir: 'left', ghost: true });
     S.actor('lgirl').alpha = 0;
     C7.xhGirl = { x: 24, y: 2, a: 0 };
-    await Promise.all([S.fadeActor('lgirl', 1, 1.2), G.Tweens.to(C7.xhGirl, { a: 1 }, 1.2, 'linear')]);
+    await Promise.all([S.fadeActor('lgirl', 1, 2.0), G.Tweens.to(C7.xhGirl, { a: 1 }, 2.0, 'linear')]);
     await S.lines([
       ['', '光。從海底深處升起一道光。一個少女游上來——銀白的長髮在水中散開，赤足，身上的光像一盞燈。'],
-      ['', '她的臉是白芷的臉，但更透明、更遙遠，眼睛是純金的。'],
-      ['', '燈靈少女將嬰兒從水中抱起。嬰兒已經不動了。'],
+      ['', '她有白芷的臉。但更透明、更遙遠，眼睛是純金的。'],
+    ]);
+    G.Tweens.to(basket, { alpha: 1 }, 0.8, 'linear');
+    await S.say('', '燈靈少女將嬰兒從水中抱起。嬰兒已經不動了。');
+    await S.wait(1.2);
+    await S.lines([
       ['燈靈少女', '……來晚了。'],
       ['燈靈少女', '對不起。這片海太大了，我一個人，照不到每一個地方。'],
-      ['', '她低下頭，把額頭貼在嬰兒的額頭上。她的胸口浮出一點小小的火光，從她的身體裡飄出來，慢慢地，落進嬰兒的胸口。'],
     ]);
-    S.flash('#ffd890', 0.5, 0.5);
-    await G.Tweens.to(C7.xhGirl, { a: 0.55 }, 0.6, 'linear');
+    await S.wait(0.8);
+    await S.say('', '她低下頭，把額頭貼在嬰兒的額頭上。她的胸口浮出一點小小的火光，從她的身體裡飄出來，慢慢地，落進嬰兒的胸口。');
+    S.flash('#ffd890', 0.8, 0.5);
+    await G.Tweens.to(C7.xhGirl, { a: 0.55 }, 1.0, 'linear');
+    await S.say('', '她的光，暗了一分。');
+    await S.wait(1.6);   // silence: does it work?
     S.sfx('heal');
+    await S.say('', '……嬰兒咳了一聲，哭了出來。');
+    // the first sound of his life brings 白芷's theme back
+    S.bgm('love', { fade: 4 });
     await S.lines([
-      ['', '她的身體立刻黯淡了一分。嬰兒咳了一聲，哭了出來。'],
       ['燈靈少女', '……好。哭吧。會哭就好。'],
       ['燈靈少女', '這點光借你。不用還。'],
       ['', '她將嬰兒放進一盞漂過的水燈裡，輕輕一推。水燈逆著所有燈的方向，朝岸邊漂去。'],
-      ['燈靈少女', '去吧。去找一個會撿燈的人。'],
     ]);
+    S.face('lgirl', 'up');   // she watches the lantern go
+    await G.Tweens.to(basket, { alpha: 0 }, 1.4, 'linear');
     m.objects = m.objects.filter((o) => o.key !== 'baby_basket');
-    await S.lines([
-      ['', '星河站在原地，淚流滿面。'],
-      ['xinghe:cry', '是妳……一直都是妳……'],
-      ['xinghe:cry', '妳把自己的光分給我……然後自己一個人回到那片海上……'],
-      ['', '燈靈少女轉過頭。有那麼一瞬間，她好像看見了他。'],
-      ['燈靈少女', '……？'],
-    ]);
-    await Promise.all([S.fadeActor('lgirl', 0, 1.2), G.Tweens.to(C7.xhGirl, { a: 0 }, 1.2, 'linear')]);
+    await S.say('燈靈少女', '去吧。去找一個會撿燈的人。');
+    await S.wait(1.4);
+    await S.say('', '星河站在原地，淚流滿面。');
+    await S.say('xinghe:cry', '是妳……一直都是妳……');
+    await S.wait(0.8);
+    // what she told him the night she woke in the lantern shop (ch1)
+    await S.say('xinghe:cry', '……妳說，好冷。很長很長的冷。');
+    await S.wait(1.0);
+    S.face('lgirl', 'left');
+    await S.say('', '燈靈少女轉過頭。有那麼一瞬間，她好像看見了他。');
+    await S.wait(0.8);
+    await S.say('燈靈少女', '……？');
+    await S.wait(0.6);
+    await Promise.all([S.fadeActor('lgirl', 0, 2.0), G.Tweens.to(C7.xhGirl, { a: 0 }, 2.0, 'linear')]);
     S.remove('lgirl');
     C7.xhGirl = null;
     await S.say('', '她的身影化作光點散去。');
     // 7-10f 往昔的輪迴
+    S.bgm(null, { fade: 1.5 });
     S.sfx('water');
     await S.say('', '海面翻轉。星河腳下的光之步道向下延伸，像樓梯一樣通往更深、更舊的記憶。');
     await S.say('雲蛇', '「不只這一次。看。」');
@@ -3784,16 +3808,20 @@
     ]);
     await S.narrate(['書生在沙灘上醒來。他環顧四周，困惑地揉了揉眼睛，站起來，往陸地走去。他沒有回頭。', '提燈少女站在海上，看著他的背影，直到他走遠。她沒有哭。她提著燈，轉身走回黑海。'], { veil: 0.85 });
     await S.narrate(['剛才那個嬰兒的水燈，漂向八斗子。', '三幅畫面並排浮在空中：竹筏、帆船、水燈。'], { veil: 0.85 });
+    await S.wait(0.8);
     await S.lines([
       ['xinghe:think', '……每一次。'],
-      ['xinghe:sad', '每一次都是她。每一次都是那個人。'],
       ['xinghe:sad', '有時候我記得她，等了一輩子也沒等到；有時候我忘了她，連等都沒有。'],
-      ['xinghe:cry', '而她……每一次都是一個人。一個人提著燈，一個人回到海上。'],
-      ['xinghe:cry', '每一次……都是她一個人在發光。'],
-      ['hongying:cry', '（在他身後）星河……'],
-      ['yungui:serious', '……原來如此。燈靈每隔幾代就會回來一次，而每一次，都有一個人……'],
-      ['yungui:sad', '……愛上她。'],
     ]);
+    await S.wait(1.0);
+    await S.say('xinghe:cry', '每一次……都是她一個人在發光。');
+    await S.wait(0.8);
+    await S.lines([
+      ['hongying:cry', '星河……'],
+      ['yungui:serious', '……燈靈每隔幾代回來一次。而每一次，都有一個人……'],
+    ]);
+    await S.wait(0.6);
+    await S.say('yungui:sad', '……愛上她。');
     S.flag('ch7_cycles_seen');
     S.flag('lyric_ch7');
     G.state.vars.lyric_ch7 = '燈過黑水莫回頭，有人等你在岸頭';
