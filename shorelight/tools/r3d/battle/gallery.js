@@ -14,7 +14,7 @@ const ALL = ['slash', 'slash_multi', 'claw', 'claw_multi', 'bite', 'thrust', 'fi
   const troop = tI >= 0 ? args[tI + 1] : 'shore_5';
   const only = (args.find((a) => !a.startsWith('--') && a !== troop) || '').split(',').filter(Boolean);
   const ids = only.length ? only : ALL;
-  const out = path.join(L.ROOT, 'tools/r3d/battle/out', 'gallery' + (full ? '_full' : ''));
+  const out = path.join(L.ROOT, 'tools/r3d/battle/out', (process.env.GOUT || 'gallery') + (full ? '_full' : ''));
   fs.mkdirSync(out, { recursive: true });
   const { browser, page, errors } = await L.open({ troop, lv: 40, lite: !full });
   await L.waitBattle(page);

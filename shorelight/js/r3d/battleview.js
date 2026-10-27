@@ -410,7 +410,7 @@ G.Battle3D = (() => {
         d.y = 0; if (d.lengthSq() > 1e-6) d.normalize();
         const big = tg.side === 'enemy' && tg.boss;
         uv.knock.addScaledVector(d, (o.crit ? 0.45 : 0.25) * (big ? 0.3 : 1));
-        uv.glow('#ffffff', o.crit ? 1 : 0.7, 0.14);
+        uv.glow('#ffffff', (o.crit ? 1 : 0.7) * (uv.kind === 'bb' ? 0.55 : 1), 0.14);
       }
       const melee = this.action && this.action.melee;
       this.hitStop(o.crit ? 0.12 : melee ? 0.07 : 0.035);

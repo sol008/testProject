@@ -217,7 +217,7 @@ G.VFX3D = (() => {
       vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0); m=m*m;
       return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
     }`;
-  const OUT_GLSL = '#include <tonemapping_fragment>\n#include <colorspace_fragment>';
+  const OUT_GLSL = '\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n';
 
   const PARTICLE_VS = `
     uniform float uTime;
@@ -381,8 +381,8 @@ G.VFX3D = (() => {
       vec3 c = h > 0.5 ? mix(uB, uA, (h - 0.5) * 2.0) : mix(uC, uB, h * 2.0);
       float d = vNoise * 0.5 + 0.5;
       float keep = smoothstep(uDissolve - 0.08, uDissolve + 0.08, d);
-      float a = uAlpha * keep * mix(1.0, smoothstep(0.0, 0.6, 1.0 - fr), uRim);
-      c += uB * pow(fr, 3.0) * 1.5 * (1.0 - uDark);
+      float a = uAlpha * keep * mix(1.0, smoothstep(0.0, 0.6, 1.0 - fr), uRim) * (0.35 + 0.65 * smoothstep(0.0, 0.7, d));
+      c += uB * pow(fr, 3.0) * 0.6 * (1.0 - uDark);
       if (uDark > 0.5) { gl_FragColor = vec4(mix(uC, uB, pow(fr, 2.5)), a); }
       else gl_FragColor = vec4(c * a, a);
       ${OUT_GLSL}
@@ -593,12 +593,13 @@ G.VFX3D = (() => {
       const pal = o.pal || PAL.fire;
       const u = {
         uTime: { value: rnd(0, 10) }, uDisp: { value: o.disp != null ? o.disp : 0.28 }, uFreq: { value: o.freq || 1.6 },
-        uA: { value: new T.Color(pal[0]).multiplyScalar(o.k || 2.4) }, uB: { value: new T.Color(pal[1]).multiplyScalar(o.k || 2.0) }, uC: { value: new T.Color(o.dark ? pal[3] : pal[2]).multiplyScalar(o.dark ? 1 : (o.k || 1.6)) },
-        uAlpha: { value: 1 }, uHeat: { value: o.heat != null ? o.heat : 0.5 }, uDissolve: { value: 0 }, uRim: { value: o.rim || 0 }, uDark: { value: o.dark ? 1 : 0 },
+        uA: { value: new T.Color(pal[0]).multiplyScalar(Math.min(1.5, (o.k || 2.4) * 0.6)) }, uB: { value: new T.Color(pal[1]).multiplyScalar(Math.min(1.1, (o.k || 2.0) * 0.5)) }, uC: { value: new T.Color(o.dark ? pal[3] : pal[2]).multiplyScalar(o.dark ? 1 : 0.8) },
+        uAlpha: { value: 1 }, uHeat: { value: o.heat != null ? o.heat * 0.6 : 0.3 }, uDissolve: { value: 0 }, uRim: { value: o.rim != null ? o.rim : 0.7 }, uDark: { value: o.dark ? 1 : 0 },
       };
       const mat = new T.ShaderMaterial({ uniforms: u, vertexShader: ORB_VS, fragmentShader: ORB_FS, transparent: true, depthWrite: false, blending: o.dark ? T.NormalBlending : T.AdditiveBlending });
       const m = new T.Mesh(this.geo.orb, mat);
       m.position.copy(pos); m.renderOrder = o.dark ? 19 : 21;
+      u.uFreq.value = Math.min(u.uFreq.value, 1.8); u.uDisp.value = Math.min(u.uDisp.value, 0.3);
       this.scene.add(m);
       let t = 0; const dur = o.dur || 0.6, r0 = o.r0 != null ? o.r0 : 0.2, r1 = o.r1 || 1.4;
       const it = {
@@ -610,7 +611,7 @@ G.VFX3D = (() => {
           m.scale.setScalar(Math.max(0.01, s));
           if (o.follow) m.position.copy(o.follow());
           u.uDissolve.value = o.hold ? 0 : clamp((k - 0.35) / 0.65, 0, 1) * 1.05;
-          u.uHeat.value = (o.heat != null ? o.heat : 0.5) * (1 - k * 0.8);
+          u.uHeat.value = (o.heat != null ? o.heat * 0.6 : 0.3) * (1 - k * 0.8);
           u.uAlpha.value = o.hold ? 1 : 1 - Math.max(0, (k - 0.8) / 0.2);
           return o.hold ? !it.dead : t < dur;
         },
@@ -621,6 +622,9 @@ G.VFX3D = (() => {
     column(pos, o = {}) {
       const T = THREE;
       const pal = o.pal || PAL.holy;
+      // wide pillars stack many transparent layers on screen: keep them airy so the targets stay readable
+      const wide = (o.r0 != null ? o.r0 : 0.6) > 1.2;
+      if (wide) { o = Object.assign({}, o, { a: (o.a || 1) * 0.42, k: Math.min(o.k || 2.2, 1.4), streak: Math.max(o.streak != null ? o.streak : 0.8, 0.9) }); }
       const u = {
         uTime: { value: rnd(0, 5) }, uTwist: { value: o.twist || 0 }, uSpin: { value: o.spin || 0 }, uR0: { value: o.r0 != null ? o.r0 : 0.6 }, uR1: { value: o.r1 != null ? o.r1 : 0.6 }, uWave: { value: o.wave || 0 },
         uNoise: { value: this.noise }, uA: { value: new T.Color(pal[0]).multiplyScalar(o.k || 2.2) }, uB: { value: new T.Color(pal[1]).multiplyScalar(o.k || 1.6) },
@@ -740,7 +744,7 @@ G.VFX3D = (() => {
           return new T.Float32BufferAttribute(P, 3);
         };
         geo.setAttribute('position', ribbon(o.w || 0.045));
-        gGeo.setAttribute('position', ribbon((o.w || 0.045) * 5));
+        gGeo.setAttribute('position', ribbon((o.w || 0.045) * 3));
       };
       build();
       let t = 0, rb = 0; const dur = o.dur || 0.3;
@@ -749,7 +753,7 @@ G.VFX3D = (() => {
           t += dt; rb += dt;
           if (rb > 0.05) { rb = 0; build(); }
           const a = Math.max(0, 1 - t / dur) * (0.6 + 0.4 * Math.random());
-          mat.opacity = a; glowMat.opacity = a * 0.5;
+          mat.opacity = a; glowMat.opacity = a * 0.28;
           return t < dur;
         },
         dispose: () => { this.scene.remove(m, gm); geo.dispose(); gGeo.dispose(); mat.dispose(); glowMat.dispose(); },
@@ -786,7 +790,7 @@ G.VFX3D = (() => {
     // ---------------------------------------------------------------- unit helpers
     P(u, where) { return this.view.pos(u, where || 'chest'); }
     UV(u) { return this.view.unitView ? this.view.unitView(u) : null; }
-    glowUnit(u, color, amt, dur) { const uv = this.UV(u); if (uv && uv.glow) uv.glow(color, amt, dur); }
+    glowUnit(u, color, amt, dur) { const uv = this.UV(u); if (uv && uv.glow) uv.glow(color, amt * (uv.kind === 'bb' ? 0.45 : 1), dur); }
     sizeOf(u) { const uv = this.UV(u); return uv ? Math.max(0.6, uv.height / 1.7) : 1; }
     // direction from a toward b on the ground plane
     dirTo(a, b) { const d = this.P(b, 'feet').sub(this.P(a, 'feet')); d.y = 0; return d.lengthSq() > 1e-6 ? d.normalize() : new THREE.Vector3(-1, 0, 0); }
@@ -1104,7 +1108,7 @@ G.VFX3D = (() => {
     }
     spikes(feet, sc, n, h, pal) {
       const T = THREE;
-      const mat = new T.MeshStandardMaterial({ color: new T.Color(pal[2]).lerp(new T.Color('#8a7a68'), 0.4), roughness: 0.95, flatShading: true });
+      const mat = new T.MeshStandardMaterial({ color: new T.Color(pal[1]).lerp(new T.Color('#b8a890'), 0.45), roughness: 0.9, flatShading: true, emissive: new T.Color(pal[2]), emissiveIntensity: 0.25 });
       const g = new T.Group(); g.position.copy(feet);
       const sp = [];
       for (let i = 0; i < n; i++) {
@@ -1676,7 +1680,7 @@ G.VFX3D = (() => {
       for (let i = 0; i < n; i++) {
         const tx = this.cellTex(CELL[shape]);
         const m = new T.Sprite(new T.SpriteMaterial({ map: tx, color: new T.Color(color).multiplyScalar(2.2), blending: T.AdditiveBlending, depthWrite: false, transparent: true }));
-        const a = i / n * TAU; m.position.set(Math.cos(a) * 0.45 * sc, 0.1 * Math.sin(a * 2), Math.sin(a) * 0.45 * sc); m.scale.setScalar(0.3);
+        const a = i / n * TAU; m.position.set(Math.cos(a) * 0.5 * sc, 0.1 * Math.sin(a * 2), Math.sin(a) * 0.5 * sc); m.scale.setScalar(0.45 * Math.sqrt(sc));
         g.add(m);
       }
       return g;
