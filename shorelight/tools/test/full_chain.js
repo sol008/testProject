@@ -7,6 +7,7 @@
 //   node tools/test/full_chain.js --to ch3              # stop after chapter 3 (still writes the ch04 boundary save)
 //   node tools/test/full_chain.js --assist              # also apply the chapter tests' own assumptions: their mid-chapter
 //                                                       # level boosts and the free shop gear kits they equip (logged)
+//   node tools/test/full_chain.js --assist-from ch8      # strict up to ch7, --assist from ch8 on (one continuous run)
 //   node tools/test/full_chain.js --difficulty normal   # default: easy (the setting every chapter test uses)
 //   node tools/test/full_chain.js --reload-at ch6       # boundary where the run reloads its save in a fresh page
 //   node tools/test/full_chain.js --out <dir>           # screenshots, saves, logs, report.json (default tools/test/out/chain)
@@ -62,6 +63,7 @@ const OPT = {
   from: chNum(opt('from', null)) || 0,
   to: chNum(opt('to', null)) ?? 11,
   assist: argv.includes('--assist'),
+  assistFrom: chNum(opt('assist-from', null)),
   difficulty: opt('difficulty', 'easy'),
   reloadAt: opt('reload-at', 'ch6') === 'none' ? -1 : chNum(opt('reload-at', 'ch6')),
   out: path.resolve(opt('out', path.join(__dirname, 'out', 'chain'))),
@@ -176,8 +178,10 @@ const BALANCE = balanceTable();
 // the BALANCE.md row of a battle: same chapter, the fight name contains one of the enemies' names
 function balanceRow(b) {
   if (!b.boss && !/^t_/.test(b.troop)) return null;
-  const names = (b.names || []).map((n) => String(n).replace(/[·・].*$/, ''));
-  return BALANCE.find((r) => r.ch === b.ch && names.some((n) => n && r.fight.includes(n))) || null;
+  const lead = String((b.names || [])[0] || '');
+  if (!lead) return null;
+  const rows = BALANCE.filter((r) => r.ch === b.ch);
+  return rows.find((r) => r.fight.startsWith(lead)) || rows.find((r) => r.fight.startsWith(lead.replace(/[（(].*$/, ''))) || rows.find((r) => r.fight.includes(lead)) || null;
 }
 
 // choices a chapter test pre-loads before its debug start (consumed by the chapter's opening, i.e. by G.Story.next)
@@ -341,6 +345,8 @@ class Harness {
     await this.page.evaluate(s, arg).catch((e) => log('chain', 'init script failed: ' + e.message));
   }
   // ---------------------------------------------------------------- firewall
+  get assist() { return OPT.assist || (OPT.assistFrom != null && this.ch >= OPT.assistFrom); }
+  curMap() { return this.page.evaluate(() => (G.mapScene && G.mapScene.def ? G.mapScene.def.id : null)).catch(() => this.lastMap); }
   note(kind, detail) {
     const key = this.ch + '|' + kind;
     this.noteCount[key] = (this.noteCount[key] || 0) + 1;
@@ -367,17 +373,16 @@ class Harness {
       return this.page.evaluate(fn, arg);
     }
     // --assist: the chapter tests' own gear kits (free shop gear, with the items given in the same call) go through
-    if (cats.length && OPT.assist && cats.includes('gear') && cats.every((c) => c === 'gear' || c === 'items')) {
-      const a = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), assisted: true };
+    if (cats.length && this.assist && cats.includes('gear') && cats.every((c) => c === 'gear' || c === 'items')) {
+      const a = { ch: this.ch, map: await this.curMap(), cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), assisted: true };
       a.before = await this.page.evaluate(() => G.state.party.map((id) => id + ':' + Object.values(G.state.members[id].equip).filter(Boolean).join('/'))).catch(() => null);
       REPORT.assisted = (REPORT.assisted || []).concat([a]);
       log('ASSIST', `ch${this.ch} [${cats.join(',')}] driver gear kit applied (--assist): ${a.code.slice(0, 140)}`);
-      const r = await this.page.evaluate(fn, arg);
-      if (level) await this.levelAssumption(levelTarget(src, arg), 'driver level boost', src);
-      return r;
+      if (level) await this.levelAssumption(levelTarget(src, arg), 'driver level boost (with its gear kit)', src);
+      return this.page.evaluate(fn, arg);
     }
     if (cats.length) {
-      const b = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), arg: typeof arg === 'string' ? snippet(arg) : arg };
+      const b = { ch: this.ch, map: await this.curMap(), cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), arg: typeof arg === 'string' ? snippet(arg) : arg };
       if (cats.includes('items') || cats.includes('gear')) b.state = await this.page.evaluate(() => ({ gold: G.state.gold, equip: G.state.party.map((id) => id + ':' + Object.values(G.state.members[id].equip).filter(Boolean).join('/')) })).catch(() => null);
       REPORT.blocked.push(b);
       log('BLOCK', `ch${this.ch} [${cats.join(',')}] ${b.code.slice(0, 160)}${typeof arg === 'string' ? ' ‹' + snippet(arg).slice(0, 80) + '›' : ''}`);
@@ -397,13 +402,13 @@ class Harness {
   async levelAssumption(target, how, src) {
     const party = await this.partyLv();
     const min = party.length ? Math.min(...party.map((p) => p[1])) : 0;
-    const rec = { ch: this.ch, map: this.lastMap, how, assumed: target, party: party.map((p) => p.join(':')), min, deficit: target == null ? null : target - min, applied: false };
-    if (target != null && OPT.assist && target > min) {
+    const rec = { ch: this.ch, map: await this.curMap(), how, assumed: target, party: party.map((p) => p.join(':')), min, deficit: target == null ? null : target - min, applied: false };
+    if (target != null && this.assist && target > min) {
       await this.page.evaluate((lv) => { for (const id of G.state.party) G.Story.ensureLevel(id, lv); G.Party.healAll(); }, target);
       rec.applied = true;
     } else if (src != null) await this.page.evaluate(() => G.Party.healAll());
     REPORT.levels.push(rec);
-    log('LEVEL', `ch${this.ch} ${how}: assumed Lv${target ?? '?'}, party ${rec.party.join(' ')}${rec.deficit > 0 ? ` → ${rec.deficit} below` : ''}${rec.applied ? ' (applied: --assist)' : src != null ? ' (not applied; party healed)' : ''}`);
+    log('LEVEL', `ch${this.ch} ${how}: assumed Lv${target ?? '?'}, party ${rec.party.join(' ')}${rec.deficit > 0 ? ` → ${rec.deficit} below` : ''}${rec.applied ? ' (applied: assist)' : src != null ? ' (not applied; party healed)' : ''}`);
     saveReport();
   }
   // ---------------------------------------------------------------- game helpers
@@ -457,6 +462,10 @@ class Harness {
   // a fresh page that only has the saved game, loaded through the title screen: any key → 讀取進度 → slot
   async loadInFreshPage(file) {
     const s = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (this.page) {
+      const c = await this.page.evaluate(() => ({ b: window.__chain.battles.splice(0), w: window.__chain.wipes.splice(0) })).catch(() => ({ b: [], w: [] }));
+      this.carry = { b: (this.carry ? this.carry.b : []).concat(c.b), w: (this.carry ? this.carry.w : []).concat(c.w) };
+    }
     await this.newContext({ [s.key]: s.data });
     const k = this.page.keyboard;
     await this.page.waitForFunction(() => G.Scenes.top() && G.Scenes.top().stage === 'press', null, { timeout: 30000 });
@@ -794,7 +803,7 @@ async function main() {
       h.ch = n;
       const boundaryOnly = n > OPT.to;   // --to chN: still reach, check and save the next boundary
       const M = MODS[n];
-      const rec = REPORT.chapters[n] = { n, status: 'RUNNING', preset: M.preset, start: new Date().toISOString() };
+      const rec = REPORT.chapters[n] = { n, status: 'RUNNING', preset: M.preset, start: new Date().toISOString(), assist: OPT.assist || (OPT.assistFrom != null && n >= OPT.assistFrom) };
       const t0 = Date.now();
       // ---------------------------------------------------------- chapter start / boundary
       if (n === 0) {
@@ -870,7 +879,7 @@ async function main() {
         rec.sec = Math.round((Date.now() - t0) / 1000);
         rec.error = String(e && e.message || e).slice(0, 2000);
         rec.dump = await h.dump(`chapter ${n} failed: ${rec.error}`);
-        rec.battles = await h.ev(() => window.__chain.battles.slice()).catch(() => []);
+        rec.battles = (h.carry ? h.carry.b : []).concat(await h.ev(() => window.__chain.battles.slice()).catch(() => []));
         for (const b of rec.battles) REPORT.battles.push(Object.assign({ ch: n }, b));
         rec.wipes = await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []);
         for (const w of rec.wipes) (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w));
@@ -883,8 +892,9 @@ async function main() {
       rec.sec = Math.round((Date.now() - t0) / 1000);
       rec.checks = (res.checks || []).filter((c) => !c.ok);
       rec.checksTotal = res.total || (res.checks || []).length;
-      rec.battles = await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; });
-      rec.wipes = await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []);
+      rec.battles = (h.carry ? h.carry.b : []).concat(await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; }));
+      rec.wipes = (h.carry ? h.carry.w : []).concat(await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []));
+      h.carry = null;
       for (const w of rec.wipes) { (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w)); log('WIPE', `ch${n} party wiped by ${w.troop} (${(w.names || []).join('+')}) at ${(w.lv || []).join(' ')} on ${w.map} — retried (重新挑戰)`); }
       for (const b of rec.battles) {
         const row = balanceRow(b);
@@ -914,7 +924,7 @@ async function main() {
   log('summary', 'chapter  status  time   entry');
   for (const r of Object.values(REPORT.chapters)) {
     const e = r.entry && r.entry.party ? `${r.entry.party.map((m) => m.id[0] + m.lv).join(' ')} gold ${r.entry.gold} 心燈 ${r.entry.lanterns.length}` : '';
-    log('summary', `ch${pad(r.n)}     ${r.status.padEnd(6)} ${String(r.sec || '-').padStart(5)}s ${e}${r.error ? '  ✗ ' + r.error.split('\n')[0].slice(0, 120) : ''}`);
+    log('summary', `ch${pad(r.n)}     ${(r.status + (r.assist ? '(A)' : '')).padEnd(9)} ${String(r.sec || '-').padStart(5)}s ${e}${r.error ? '  ✗ ' + r.error.split('\n')[0].slice(0, 120) : ''}`);
   }
   if (REPORT.endings.true) log('summary', 'true ending: ' + JSON.stringify(REPORT.endings.true));
   if (REPORT.endings.normal) log('summary', 'normal ending: ' + JSON.stringify(REPORT.endings.normal));
