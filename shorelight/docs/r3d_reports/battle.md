@@ -23,7 +23,26 @@ Screenshots are in `docs/r3d_reports/battle/`. They are half resolution (`?r3lit
 A probe of hengchun showed the battle steadily progressing (turns, heals, revives, a cut-in) with no stall and no errors. It is just long.
 
 **Open items:**
-- **`boss_wuxiang` (final boss, `breath`).** It did not finish within 15 minutes even with `--fragile`, and produced no console errors. I was stopped before the probe finished, so the cause is still open: a long fight, or something that blocks the result in 3D. This needs a check on real hardware.
+- ~~**`boss_wuxiang` (final boss, `breath`).**~~ **Resolved: not a 3D hang.** The sweep runs the plain in-game auto-battle
+  on normal difficulty, which *loses* 無相 even at 15% HP (party wiped at view time 8.8 s, after the 0.7 / 0.35 phase changes).
+  A lost battle without `loseOk` parks on the Game Over screen (`C7GameOver`, the ch7 subclass), and `S.battle` only resolves
+  after a retry, so the sweep sat on its 900 s wait for a result that could not come, with no console errors. Its Game Over
+  check compared the class name to `'GameOverScene'` and missed the subclass. Measured with `bossprobe.js` (SwiftShader,
+  r3lite, 1–3 fps, so game time runs at about 0.1–0.2× real time):
+  | run | result |
+  |---|---|
+  | base code, in-game auto AI, `--fragile` | lose at 103 s → `C7GameOver`, `S.battle` pending |
+  | base code, chapter battle bot (easy), `--fragile` | **win** at 284 s, phases 1→3, ink outro, 0 errors |
+  | fixed code, chapter battle bot (easy), `--fragile` | **win** at 198 s, phases 1→3, 0 errors |
+
+  Fixes: the sweep now records a Game Over as `lose` straight away. As hardening, every 3D wait in the battle flow is
+  time-bounded (`BattleScene.wait3d` / `bounded` in battle.js): `introWait` (≤ 8 s battle time), `playFx` (impact time
+  clamped to 0–3 s; NaN / ∞ → 0.3 s; a throwing hook → 0.3 s), `beforeFinish` and the ink `outro` (≤ 3 s, then a warning).
+  Animation clips are fire-and-forget, so a missing clip never blocked a turn. `hooks.test.js` now also runs a deliberately
+  broken view (Infinity intro, NaN / 1e9 / throwing `playFx`, promises that never resolve) through shore_5 and every troop
+  with a phase boss (21, boss_wuxiang included). They all finish; without the fix the first one hangs.
+  `ch11.test.js --3d` runs the chapter test with the 3D renderer (SwiftShader; use with `--only`). `--only true --3d`
+  passes 7/7 in 2767 s: 夜玄 ×2, 夜念, 無相 ×3 (the ch11 scripted phases, HP floors and 無相之心), 真結局, credits and title, 0 errors.
 - **Full-chain tour (`--full`).** The run happened while the sweep was using the single SwiftShader GPU process, and every screenshot timed out (0 console errors). It still needs a run on its own or on a real GPU.
 
 **Fixes from this round:** the windcave mouth is now a soft glow instead of a hard white disc, the billboard hit flash is capped so the art stays readable, and the tour's enemy-turn step now gets through manual mode.
@@ -197,6 +216,7 @@ Ambient motes per theme: pollen, spores, embers, petals, wind streaks, souls.
 | `arenas.js [ids] [--full]` | every arena from two angles; contact sheets |
 | `sweep.js [troops] [--full]` | auto-battles one troop per backdrop back to back in one page; fails on console errors or unfinished battles |
 | `probe.js`, `probe2.js` | evaluate expressions or take a screenshot inside a running 3D battle |
+| `bossprobe.js [troop] [--fragile] [--nobot] [--2d]` | long-fight probe with the chapter battle bot: fps, round, actor, HP, phase, view events every 10 s; stops on a result or Game Over |
 
 `lib.js` freezes the game (timers, tweens, scene updates and the view clock) while it takes a screenshot. Under SwiftShader a screenshot takes seconds; without the freeze, every capture lands long after the moment it waited for.
 

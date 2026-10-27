@@ -5,7 +5,8 @@
 //   node tools/test/chapters/ch11.test.js --shots    # also screenshot every map / key moment → tools/test/out/ch11/
 //   node tools/test/chapters/ch11.test.js --from tower        # replay from the snapshot saved after segment 'field'
 //   node tools/test/chapters/ch11.test.js --only normal       # one segment (normal needs snap_breath.json)
-//   segments: temple magong flats xuanwu voyage field tower breath true normal  (3D renderer disabled; ch1–10 map files stubbed unless --all)
+//   node tools/test/chapters/ch11.test.js --only true --3d    # same, with the 3D renderer on (SwiftShader: slow — use with --only)
+//   segments: temple magong flats xuanwu voyage field tower breath true normal  (3D renderer disabled unless --3d; ch1–10 map files stubbed unless --all)
 //
 // Run A: ?debug&startch=11&autoplay — drives the critical path (every main event) and every side quest / 心燈,
 //        forces the heart-lantern count ≥ G.Lanterns.THRESHOLD (G.Lanterns.add) → 真結局「千燈」 → credits → stinger → title.
@@ -22,6 +23,7 @@ const BASE = 'file://' + path.join(ROOT, 'index.html');
 const OUT = path.join(ROOT, 'tools', 'test', 'out', 'ch11');
 const SHOTS = process.argv.includes('--shots');
 const ALL = process.argv.includes('--all');
+const R3D = process.argv.includes('--3d');
 const ONLY = (() => { const i = process.argv.indexOf('--only'); return i >= 0 ? process.argv[i + 1] : null; })();
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -39,8 +41,8 @@ class Run {
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
     await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
-    // 2D renderer for the playthrough (software WebGL in headless Chromium is far too slow for the 3D view)
-    await this.ctx.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
+    // 2D renderer for the playthrough (software WebGL in headless Chromium is far too slow for the 3D view) unless --3d
+    await this.ctx.addInitScript((r3d) => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: r3d, lang: 'zh' })); } catch (e) { /* ignore */ } }, R3D);
     this.page = await this.ctx.newPage();
     const p = this.page;
     // other chapters' map files are not needed by chapter 11; stub them (unless --all) so their work-in-progress can't fail this test
@@ -51,7 +53,7 @@ class Run {
       if (m.type() === 'warning' && /^\[shorelight\]/.test(t)) this.warns.push(t.slice(0, 300));
     });
     p.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 800)));
-    await p.goto(BASE + query);
+    await p.goto(BASE + query + (R3D ? '&r3lite' : '')); // --3d: half-resolution 3D, no post chain
     await p.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: 30000 });
   }
   ev(fn, arg) { return this.page.evaluate(fn, arg); }
@@ -111,14 +113,14 @@ class Run {
     await this.page.evaluate(() => { G.lastError = null; });
   }
   // watch the ending to the title screen, holding the skip key through the credits
-  async toTitle(ms = 20 * 60000) {
+  async toTitle(ms = (R3D ? 150 : 20) * 60000) { // --3d: SwiftShader runs ~10-20× slower
     const t0 = Date.now();
     let held = false, lastLog = Date.now();
     while (Date.now() - t0 < ms) {
       const top = await this.page.evaluate(() => { const t = G.Scenes.top(); return t && t.constructor ? t.constructor.name : ''; });
       if (top === 'CreditsScene' && !held) { await this.shot('credits', true); await this.page.keyboard.down('ControlLeft'); held = true; }
       if (top !== 'CreditsScene' && held) { await this.page.keyboard.up('ControlLeft'); held = false; }
-      if (top === 'GameOverScene') throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
+      if (/GameOver/.test(top)) throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
       if (top === 'TitleScene') { if (held) await this.page.keyboard.up('ControlLeft'); return true; }
       if (Date.now() - lastLog > 60000) {
         lastLog = Date.now();
@@ -432,7 +434,7 @@ async function play(browser, from, to) {
   let from = arg('--from') || 'temple', to = arg('--to') || 'normal';
   if (ONLY) { from = ONLY; to = ONLY; }
   if (!ORDER.includes(from) || !ORDER.includes(to)) { console.log('segments: ' + ORDER.join(' ')); process.exit(2); }
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(R3D ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {});
   try {
     await play(browser, from, to);
   } catch (e) {

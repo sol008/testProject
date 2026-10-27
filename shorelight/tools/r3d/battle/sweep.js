@@ -35,11 +35,13 @@ const fs = require('fs');
       if (fragile) await page.evaluate(() => { for (const u of G.Scenes.top().enemies || []) u.hp = Math.max(1, Math.ceil(u.mhp * 0.15)); });
       await L.hold(page, 2.5);
       await L.snap(page, path.join(out, troop + '.png'));
-      await L.until(page, () => window.__sw != null, null, 900000);
-      r = await page.evaluate(() => window.__sw);
-      await L.until(page, () => G.Scenes.top() === G.mapScene || G.Scenes.top().constructor.name === 'GameOverScene', null, 60000).catch(() => {});
+      // a lost battle (no loseOk) parks on the Game Over screen and S.battle only resolves after a retry: count that as
+      // 'lose' instead of waiting out the whole budget (it used to look like a 15-minute stall)
+      await L.until(page, () => window.__sw != null || G.Scenes.top().constructor.name.includes('GameOver'), null, 900000);
+      r = await page.evaluate(() => window.__sw != null ? window.__sw : 'lose');
+      await L.until(page, () => G.Scenes.top() === G.mapScene || G.Scenes.top().constructor.name.includes('GameOver'), null, 60000).catch(() => {});
       // game over → back to the map for the next fight
-      await page.evaluate(() => { const t = G.Scenes.top(); if (t && t.constructor.name === 'GameOverScene') { G.Scenes.pop(t); } });
+      await page.evaluate(() => { const t = G.Scenes.top(); if (t && t.constructor.name.includes('GameOver')) { G.Scenes.pop(t); } });
     } catch (e) { r = 'ERR ' + e.message.split('\n')[0]; }
     const errs = errors.slice(n0).filter((e) => !/ERR_FILE_NOT_FOUND/.test(e));
     const bg = await page.evaluate((t) => G.Data.troops[t].bg, troop);

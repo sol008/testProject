@@ -134,6 +134,16 @@ G.Battle = (() => {
     alive(side) { return (side === 'party' ? this.party : this.enemies).filter((u) => !u.dead); }
 
     wait(sec) { return G.Timers.wait(sec / (G.settings.battleSpeed || 1)); }
+    // 3D presentation waits are always bounded: a view hook that returns NaN / a huge time, never resolves or throws
+    // (a missing clip, a camera move that never ends, a draw path that stops running) can delay a turn but never hang it
+    wait3d(sec, max = 3) { return this.wait(Number.isFinite(sec) ? Math.min(Math.max(0, sec), max) : 0.3); }
+    bounded(p, sec, what) {
+      let done = false;
+      return Promise.race([
+        Promise.resolve(p).then(() => { done = true; }, (e) => { done = true; G.warnOnce('battle3d ' + what, e); }),
+        G.Timers.wait(sec).then(() => { if (!done) G.warnOnce('battle3d ' + what + ' timed out', null); }),
+      ]);
+    }
     tween(o, p, sec, e) { return G.Tweens.to(o, p, sec / (G.settings.battleSpeed || 1), e); }
 
     say(text, sec = 1.1) { this.msg = { text, t: 0, life: sec }; }
@@ -141,7 +151,7 @@ G.Battle = (() => {
 
     // ---------------------------------------------------------------- main loop
     async run() {
-      await this.wait(this.view3d ? this.view3d.introWait() : 0.9); // 3D: let the establishing / boss shot play
+      await (this.view3d ? this.wait3d(this.view3d.introWait(), 8) : this.wait(0.9)); // 3D: let the establishing / boss shot play
       const mode = this.o.mode;
       if (mode === 'advantage') this.say('先制攻擊！', 1.4);
       else if (mode === 'ambush') this.say('遭到偷襲！', 1.4);
@@ -772,7 +782,11 @@ G.Battle = (() => {
     }
 
     playFx(id, u, targets, s) {
-      if (this.view3d) return this.wait(this.view3d.playFx(id, u, targets, s)); // 3D: G.VFX3D returns the impact time
+      if (this.view3d) { // 3D: G.VFX3D returns the impact time
+        let T = 0.3;
+        try { T = this.view3d.playFx(id, u, targets, s); } catch (e) { G.warnOnce('battle3d playFx ' + id, e); }
+        return this.wait3d(T);
+      }
       const add = (f) => this.fx.push(f);
       const center = (tg) => [tg.x, tg.y - this.unitH(tg) * 0.5];
       const elemColor = {
@@ -842,7 +856,7 @@ G.Battle = (() => {
     async finish() {
       this.ui = null;
       const r = this.result || 'lose';
-      if (this.view3d) await this.view3d.beforeFinish(r); // 3D: finishing slow-mo, victory / defeat camera
+      if (this.view3d) await this.bounded(this.view3d.beforeFinish(r), 3, 'beforeFinish'); // 3D: finishing slow-mo, victory / defeat camera
       // write back party state
       const writeBack = () => {
         for (const p of this.party) {
@@ -875,7 +889,7 @@ G.Battle = (() => {
         await G.Render.fadeTo(0, 0.8);
         return;
       }
-      if (this.view3d) await this.view3d.outro(r); // 3D: ink-wash wipe back to the field
+      if (this.view3d) await this.bounded(this.view3d.outro(r), 3, 'outro'); // 3D: ink-wash wipe back to the field
       else await G.Render.fadeTo(1, 0.45, '#000');
       G.Scenes.pop(this);
       // bgmAfter: null = silence after the fight (scripted beat follows)
