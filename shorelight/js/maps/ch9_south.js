@@ -197,10 +197,10 @@
   });
   defE('c9_moray_king', {
     name: '潮病鰻王', art: 'moray', variant: 2, scale: 1.9, lv: 33, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 7, atk: 1.7, mag: 1.7, def: 1.1, spd: 1.1, exp: 7, gold: 7 },
-    skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1, 'ally_dead']],
+    m: { hp: 7.5, atk: 1.6, mag: 1.6, def: 1.1, spd: 1.1, exp: 8, gold: 8 },
+    skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1]],
     phases: [{ at: 0.4, phase: 2, text: '黑色的藤壺一片片剝落，鰻王的身體露出銀藍色——牠的動作反而更快了！',
-      skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep2', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1, 'ally_dead']] }],
+      skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep2', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1]] }],
     drops: [['c9_mat_manlin', 1]],
     desc: '比王船還長的海鰻，身上長滿黑色藤壺，眼睛混濁發白。牠不是兇，是病了。',
   });
@@ -226,7 +226,7 @@
   troop('t_c9_cave_a', ['moray_v1', 'moray_v1', 'c9_drowned'], 'cape');
   troop('t_c9_cave_b', ['sea_monster', 'c9_drowned', 'c9_drowned'], 'cape');
   troop('t_c9_cave_c', ['sea_monster', 'sea_monster', 'moray_v1'], 'cape');
-  troop('t_c9_moray_king', ['c9_moray_king', 'moray_v1'], 'sea', 'boss', { boss: true, flee: false });
+  troop('t_c9_moray_king', ['c9_moray_king'], 'sea', 'boss', { boss: true, flee: false });
 
   // encounter areas (for tools/sim_battle.js and other writers)
   Object.assign(D.areas || (D.areas = {}), {
@@ -681,7 +681,7 @@
       const ai = sc.aiCommand.bind(sc);
       sc.aiCommand = (e) => {
         const cmd = ai(e);
-        if (e === king && cmd.skill === 'c9_es_tide_rise' && (tides >= 1 || sc.enemies.some((x) => x !== king && !x.dead))) {
+        if (e === king && cmd.skill === 'c9_es_tide_rise' && (tides >= 2 || sc.enemies.some((x) => x !== king && !x.dead))) {
           return { kind: 'skill', skill: p2 ? 'c9_es_tailsweep2' : 'c9_es_tailsweep', targets: sc.alive('party') };
         }
         return cmd;
