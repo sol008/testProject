@@ -2747,6 +2747,26 @@ G.Mon3D = G.Mon3D || {
 
   // marble/stone block: rounded box, chipped (faceted lumpy)
   const block = (w, h, d, r = 0.06, amp = 0.03, seed = 1) => GEO.faceted(GEO.lumpy(GEO.box(w, h, d, r), amp, 3, seed));
+  // sculpted mass: a superellipsoid (e < 1 → squarer, 1 → ellipsoid) with taper, front bulge and chiselled noise,
+  // smooth-shaded. Reads as carved stone muscle rather than a box. o: { e, top (x/z scale at the top), bot, bulge, amp, seed }
+  const sculpt = (w, h, d, o = {}) => {
+    const e = o.e != null ? o.e : 0.55, g = GEO.sph(1, 1, 1, o.ws || 24, o.hs || 18);
+    const sp = (x) => Math.sign(x) * pow(abs(x), e);
+    GEO.warp(g, (v) => {
+      v.set(sp(v.x), sp(v.y), sp(v.z));
+      const t = (v.y + 1) / 2, k = lerp(o.bot != null ? o.bot : 1, o.top != null ? o.top : 1, t);
+      v.x *= k; v.z *= k;
+      if (o.bulge && v.z > 0) v.z += o.bulge * sin(t * PI) * (1 - v.x * v.x * 0.6);
+      v.x *= w / 2; v.y *= h / 2; v.z *= d / 2;
+    });
+    // chiselled: quantised low-frequency noise gives flat-ish carved planes, plus fine weathering
+    const s0 = o.seed || 1, amp = o.amp != null ? o.amp : 0.04;
+    GEO.warp(g, (v) => {
+      const n = fbm(v.x * 1.6 + s0, v.y * 1.6, v.z * 1.6) - 0.5, q = Math.round(n * 3) / 3;
+      const l = v.length() || 1; v.multiplyScalar(1 + (q * 0.7 + n * 0.3) * amp / l * 2);
+    });
+    return g;
+  };
   const CONSTRUCT = {
     idle(k, o = {}) {
       const b = sin(k.t * 1.4);
@@ -2957,12 +2977,12 @@ G.Mon3D = G.Mon3D || {
     h: 5.4, boss: true, outline: 0.003, rim: 0.4, rimColor: 0xa0f8ff, ao: 0.3, phaseGlow: 1.6, edge: [0.4, 1.8, 2.0],
     build(R) {
       biped(R, { hip: 2.0, chest: 3.0, neck: 3.9, head: 4.25, sw: 1.0, sy: 3.75, arm: 1.9, hw: 0.45, armOut: 0.15, cz: 0 });
-      const MB = 0xeef0f0, GREY = 0xc0c6cc, CY = 0x50f0ff, SICK = 0x0a0812;
-      const marble = (v) => { const n = fbm(v.x * 1.4, v.y * 1.4, v.z * 1.4); const sick = sm(0.6, 0.72, fbm(v.x * 2 + 9, v.y * 0.8, v.z * 2)) * sm(3.6, 2.0, v.y); return Rig.mix(Rig.mix(MB, GREY, sm(0.4, 0.75, n)), SICK, sick * 0.85); };
+      const MB = 0xe4e8e8, GREY = 0x9aa4ae, CY = 0x50f0ff, SICK = 0x0a0812;
+      const marble = (v) => { const n = fbm(v.x * 1.4, v.y * 1.4, v.z * 1.4); const sick = sm(0.6, 0.72, fbm(v.x * 2 + 9, v.y * 0.8, v.z * 2)) * sm(3.6, 2.0, v.y); return Rig.mix(Rig.mix(MB, GREY, sm(0.35, 0.7, n)), SICK, sick * 0.85); };
       // torso: chest block, belly block, pelvis
-      R.add(block(2.0, 1.25, 1.2, 0.2, 0.05, 1), { b: 'chest', c: marble, cell: 'marble', rep: [3, 2], at: [0, 3.3, 0] });
-      R.add(block(1.35, 0.7, 0.95, 0.15, 0.05, 2), { skin: byY('body', 'chest', 2.4, 2.9), c: marble, cell: 'marble', rep: [2, 1], at: [0, 2.55, 0] });
-      R.add(block(1.3, 0.55, 0.9, 0.15, 0.04, 3), { b: 'body', c: marble, cell: 'marble', rep: [2, 1], at: [0, 1.95, 0] });
+      R.add(sculpt(2.05, 1.35, 1.2, { e: 0.39, bot: 0.75, top: 1.0, bulge: 0.12, seed: 1, amp: 0.07 }), { b: 'chest', c: marble, cell: 'marble', rep: [3, 2], at: [0, 3.3, 0] });
+      R.add(sculpt(1.35, 0.8, 0.95, { e: 0.49, bot: 0.85, top: 1.05, seed: 2, amp: 0.07 }), { skin: byY('body', 'chest', 2.4, 2.9), c: marble, cell: 'marble', rep: [2, 1], at: [0, 2.55, 0] });
+      R.add(sculpt(1.35, 0.62, 0.92, { e: 0.39, bot: 0.8, seed: 3, amp: 0.07 }), { b: 'body', c: marble, cell: 'marble', rep: [2, 1], at: [0, 1.95, 0] });
       // heart-core
       R.add(GEO.ico(0.28, 1), { b: 'chest', m: 'glow', c: CY, cell: 'blank', at: [0, 3.35, 0.58] });
       R.add(GEO.tor(0.34, 0.05, 6, 16), { b: 'chest', c: GREY, cell: 'marble', at: [0, 3.35, 0.58] });
@@ -2974,23 +2994,29 @@ G.Mon3D = G.Mon3D || {
         glowLine(R, pts, 0.018, CY, { b: 'chest' });
       }
       // sickness weeping from seams (black drip cards) 
-      for (let i = 0; i < 8; i++) R.add(GEO.card(0.22, 0.4, 1, 2), { m: 'cut', b: i < 5 ? 'chest' : 'body', c: SICK, cell: 'drip', decal: true, at: [(r() - 0.5) * 1.6, i < 5 ? 2.75 : 1.75, 0.62], rot: [PI, 0, 0] });
+      for (let i = 0; i < 8; i++) { const x = (r() - 0.5) * (i < 5 ? 1.3 : 1.0); R.add(GEO.card(0.24, 0.45, 1, 2), { m: 'cut', b: i < 5 ? 'chest' : 'body', c: SICK, cell: 'drip', decal: true, at: [x, i < 5 ? 2.62 : 1.62, (i < 5 ? 0.6 : 0.46) - x * x * 0.15], rot: [-0.08, x * 0.4, 0] }); }
       // arms: boulder shoulders, block upper/fore arms, huge fists
       for (const s of [-1, 1]) {
         const L = sideL(s), A = R.B['arm' + L].pos, F = R.B['fore' + L].pos, H = R.B['hand' + L].pos;
-        R.add(block(0.75, 0.65, 0.75, 0.15, 0.05, s + 10), { b: 'arm' + L, c: marble, cell: 'marble', at: [A.x + s * 0.12, A.y + 0.05, 0] });
-        R.add(block(0.48, 0.85, 0.5, 0.1, 0.04, s + 11), { b: 'arm' + L, c: marble, cell: 'marble', at: [(A.x + F.x) / 2, (A.y + F.y) / 2, 0] });
-        R.add(block(0.5, 0.8, 0.52, 0.1, 0.04, s + 12), { b: 'fore' + L, c: marble, cell: 'marble', at: [(F.x + H.x) / 2, (F.y + H.y) / 2 + 0.05, 0.03] });
-        R.add(block(0.62, 0.62, 0.6, 0.12, 0.05, s + 13), { b: 'hand' + L, c: marble, cell: 'marble', at: [H.x, H.y - 0.15, H.z] });
+        R.add(sculpt(0.85, 0.7, 0.8, { e: 0.52, bot: 0.7, seed: s + 10, amp: 0.05 }), { b: 'arm' + L, c: marble, cell: 'marble', at: [A.x + s * 0.12, A.y + 0.05, 0] });
+        R.add(sculpt(0.52, 0.95, 0.54, { e: 0.45, top: 1.1, bot: 0.8, seed: s + 11, amp: 0.07 }), { b: 'arm' + L, c: marble, cell: 'marble', at: [(A.x + F.x) / 2, (A.y + F.y) / 2, 0] });
+        R.add(sculpt(0.56, 0.9, 0.56, { e: 0.45, top: 1.05, bot: 0.85, seed: s + 12, amp: 0.07 }), { b: 'fore' + L, c: marble, cell: 'marble', at: [(F.x + H.x) / 2, (F.y + H.y) / 2 + 0.05, 0.03] });
+        R.add(sculpt(0.66, 0.66, 0.62, { e: 0.36, bot: 0.85, seed: s + 13, amp: 0.05 }), { b: 'hand' + L, c: marble, cell: 'marble', at: [H.x, H.y - 0.15, H.z] });
         glowLine(R, [[A.x, A.y - 0.2, 0.26], [(A.x + F.x) / 2 + s * 0.05, (A.y + F.y) / 2, 0.26], [F.x, F.y + 0.1, 0.27]], 0.015, CY, { b: 'arm' + L });
         // legs: pillar blocks and feet
         const Lg = R.B['leg' + L].pos, S = R.B['shin' + L].pos;
-        R.add(block(0.6, 0.95, 0.62, 0.1, 0.04, s + 20), { b: 'leg' + L, c: marble, cell: 'marble', at: [Lg.x, (Lg.y + S.y) / 2, 0] });
-        R.add(block(0.56, 0.95, 0.6, 0.1, 0.04, s + 21), { b: 'shin' + L, c: marble, cell: 'marble', at: [S.x, S.y * 0.5 + 0.1, 0.04] });
-        R.add(block(0.7, 0.28, 0.9, 0.08, 0.03, s + 22), { b: 'foot' + L, c: marble, cell: 'marble', at: [S.x, 0.14, 0.12] });
+        R.add(sculpt(0.64, 1.05, 0.66, { e: 0.45, top: 1.1, bot: 0.85, seed: s + 20, amp: 0.07 }), { b: 'leg' + L, c: marble, cell: 'marble', at: [Lg.x, (Lg.y + S.y) / 2, 0] });
+        R.add(sculpt(0.6, 1.0, 0.62, { e: 0.45, top: 1.05, bot: 0.9, seed: s + 21, amp: 0.07 }), { b: 'shin' + L, c: marble, cell: 'marble', at: [S.x, S.y * 0.5 + 0.1, 0.04] });
+        R.add(sculpt(0.72, 0.32, 0.95, { e: 0.35, top: 0.85, seed: s + 22, amp: 0.03 }), { b: 'foot' + L, c: marble, cell: 'marble', at: [S.x, 0.14, 0.12] });
+        // rounded joint stones (elbow, knee) and a carved knuckle ridge break up the silhouette
+        R.add(GEO.lumpy(GEO.sph(0.27, 0.25, 0.27, 14, 10), 0.05, 3, s + 23), { b: 'fore' + L, c: marble, cell: 'marble', at: [F.x, F.y + 0.05, 0.02] });
+        R.add(GEO.lumpy(GEO.sph(0.3, 0.26, 0.3, 14, 10), 0.05, 3, s + 24), { b: 'shin' + L, c: marble, cell: 'marble', at: [S.x, S.y + 0.02, 0.1] });
+        R.add(GEO.tor(0.24, 0.06, 6, 14, PI), { b: 'hand' + L, c: GREY, cell: 'marble', at: [H.x, H.y - 0.25, H.z + 0.28], rot: [0, 0, PI] });
       }
-      // head: smaller block with visor slit eyes; a little tree on top
-      R.add(block(0.75, 0.62, 0.68, 0.12, 0.04, 30), { b: 'head', c: marble, cell: 'marble', at: [0, 4.25, 0.05] });
+      // collar of fitted stones around the neck
+      for (let i = 0; i < 7; i++) { const a = (i / 6 - 0.5) * 2.6; R.add(sculpt(0.32, 0.22, 0.26, { e: 0.39, seed: 50 + i, amp: 0.03 }), { b: 'chest', c: marble, cell: 'marble', at: [sin(a) * 0.62, 3.98 - abs(a) * 0.05, cos(a) * 0.28 - 0.05], rot: [0, a, 0] }); }
+      // head: carved helm-like head with visor slit eyes; a little tree on top
+      R.add(sculpt(0.72, 0.66, 0.7, { e: 0.42, bot: 0.8, bulge: 0.08, seed: 30, amp: 0.07 }), { b: 'head', c: marble, cell: 'marble', at: [0, 4.25, 0.05] });
       for (const s of [-1, 1]) R.add(GEO.box(0.16, 0.06, 0.04), { b: 'head', m: 'glow', c: CY, cell: 'blank', at: [s * 0.15, 4.3, 0.39] });
       R.add(GEO.lumpy(GEO.sph(0.32, 0.1, 0.3, 10, 6), 0.2, 5), { b: 'head', c: 0x4a7a2a, cell: 'moss', at: [0, 4.58, 0] });
       R.add(GEO.sweep([[0.05, 4.6, 0], [0.08, 4.85, -0.02], [0.02, 5.05, 0.03]], 0.035, { sides: 5 }), { b: 'head', c: 0x5a4a32, cell: 'bark' });
@@ -3189,10 +3215,36 @@ G.Mon3D = G.Mon3D || {
         R.add(GEO.sph(0.09, 0.035, 0.04, 8, 6), { b: 'head', m: 'glow', c: 0xfff0a0, cell: 'blank', at: [s * 0.17, 3.38, 1.18], rot: [0, s * 0.5, s * -0.2] });
         for (let i = 0; i < 4; i++) R.add(GEO.cone(0.03, 0.14, 5), { b: 'head', c: 0xf8f0d8, at: [s * (0.12 + i * 0.04), 3.12, 1.3 - i * 0.12], rot: [PI, 0, 0] });
       }
-      // grass-blade mane flaring back (spring-lagged cards)
-      for (let i = 0; i < 9; i++) {
-        const a = (i / 8 - 0.5) * 2.2;
-        strand(R, 'mane' + i, 'head', [[sin(a) * 0.25, 3.45, 0.75], [sin(a) * 0.55, 3.75 + cos(a) * 0.2, 0.35], [sin(a) * 0.85, 3.9 + cos(a) * 0.25, -0.15]], { r: 0.12, ell: [1, 0.15], c: Rig.mix(0xb8a050, 0xe8d890, i / 8), cell: 'frond', m: 'cut', k: 0.1, g: 0.15, tip: 0.35, up: [0, 0, 1] });
+      // a full mane of wind-whipped grass (芒草): ~40 wide blade cards in three layers fanning back from the brow,
+      // skinned to five spring chains so the whole mane streams and lags as one mass
+      const mch = [];
+      for (let c = 0; c < 5; c++) {
+        const a = (c / 4 - 0.5) * 2.0;
+        mch.push(R.chain('mn' + c, 'head', [[sin(a) * 0.22, 3.48, 0.7], [sin(a) * 0.6, 3.8 + cos(a) * 0.15, 0.25], [sin(a) * 0.95, 3.95 + cos(a) * 0.2, -0.3], [sin(a) * 1.2, 3.9 + cos(a) * 0.15, -0.85]]));
+        R.spring(mch[c].slice(1), { k: 0.1, drag: 0.12, g: 0.1, wind: 1.2 });
+      }
+      const mr = R.r;
+      // ring of clumps framing the face (radial, like a ruff), then layers streaming back over the crown and neck
+      const clump = (root, dir, len, wd, col, roll) => {
+        len *= 1.35; wd *= 1.3;
+        const g = GEO.card(wd, len, 2, 6);
+        GEO.warp(g, (v) => { const t = v.y / len; v.z -= t * t * 0.35; v.x *= 1 - t * 0.35; });
+        const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()), 'YXZ');
+        const ang = atan2(root.x, 0.5), cIdx = clamp(Math.round((ang / 1.3 + 0.5) * 4), 0, 4), ch = mch[cIdx], P = ch.map((nm) => R.B[nm].pos);
+        R.add(g, { m: 'cut', c: col, cell: 'kelp', decal: true, at: root.toArray(), rot: [e.x, e.y + roll, e.z],
+          skin: (p) => { let bi = 0, bd = 1e9; P.forEach((q, j) => { const d = q.distanceTo(p); if (d < bd) { bd = d; bi = j; } }); return bi === 0 ? [['head', 1]] : [[ch[bi], 0.7], [ch[bi - 1], 0.3]]; } });
+      };
+      const HC = new THREE.Vector3(0, 3.3, 0.85); // head centre
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * TAU, rd = new THREE.Vector3(cos(a), sin(a), 0);
+        const root = HC.clone().add(new THREE.Vector3(rd.x * 0.32, rd.y * 0.28, -0.18));
+        clump(root, rd.clone().multiplyScalar(1).add(new THREE.Vector3(0, 0.25, -0.55)), 0.75 + mr() * 0.3, 0.42, Rig.mix(Rig.mix(0x8a6a28, 0xd8b860, mr()), 0xf0e0a0, (rd.y + 1) * 0.2), (mr() - 0.5) * 0.6);
+      }
+      for (let layer = 0; layer < 3; layer++) for (let i = 0; i < 9; i++) {
+        const a = (i / 8 - 0.5) * 2.0 + (mr() - 0.5) * 0.15;
+        const root = new THREE.Vector3(sin(a) * 0.3, 3.45 - layer * 0.25, 0.6 - layer * 0.35);
+        const dir = new THREE.Vector3(sin(a) * 0.6, 0.35 - layer * 0.2, -1.0);
+        clump(root, dir, 1.2 + mr() * 0.4 - layer * 0.1, 0.5, Rig.mix(Rig.mix(0x7a5c22, 0xc8a850, mr()), 0xe8d890, layer * 0.2), (mr() - 0.5) * 0.5);
       }
       // long arms with sickle claws
       limbs(R, { arm: { r: (u) => 0.22 - u * 0.08, c: dune, cell: 'sand', rep: [2, 4] } });
