@@ -1803,7 +1803,7 @@
         { id: 'deadC1', trigger: 'touch', x: 5, y: 11, h: 2, run: (S) => Sc.deadEnd(S, 'C') },
         { id: 'deadC2', trigger: 'touch', x: 25, y: 11, h: 2, run: (S) => Sc.deadEnd(S, 'C') },
         { id: 'boss', trigger: 'touch', x: 14, y: 9, w: 2, if: (st) => !st.flags.ch6_linto_done, run: (S) => Sc.lintoBoss(S) },
-        { id: 'mush', trigger: 'touch', x: 22, y: 21, w: 2, h: 2, spirit: true, if: (st) => st.flags.mush_1 && !st.flags.mush_ch6, run: (S) => Sc.mushroom(S) },
+        { id: 'mush', trigger: 'touch', x: 22, y: 21, w: 2, h: 2, spirit: true, if: (st) => !st.flags.mush_ch6, run: (S) => Sc.mushroom(S) },
         { id: 'gate', trigger: 'touch', x: 33, y: 4, w: 5, h: 2, if: (st) => st.flags.ch6_linto_done && !st.flags.ch6_infiltrate, run: (S) => Sc.waterGate(S) },
         { id: 'graves', trigger: 'action', x: 14, y: 31, label: '看', run: async (S) => {
           await S.say('', '三座沒有名字的墳。墳前插著幾根燒完的香，不知道是誰來拜的。');
@@ -3092,7 +3092,7 @@
     await S.say('xinghe:laugh', '那是你自己說的吧！');
     await S.say('', '雲歸靠著林投樹坐下，打起了呼。芋圓嗅了嗅剩下的蕈，嫌棄地走開了。');
     V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
-    if (G.Quests.stage('q_tuanzi_mush') < 2) S.quest('q_tuanzi_mush', 2);
+    S.quest('q_tuanzi_mush', 9);
     S.toast('雲歸的蕈譜記下了一格：潮音蕈', 'scroll');
   };
 
@@ -3632,6 +3632,8 @@
   // =================================================================================================== chapter entry
   G.Story.ch6 = async (S) => {
     S.chapter(6);
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = G.state.quests.q_tuanzi_mush; if (q && !q.done && !G.state.flags.mush_ch6) q.stage = 5; }
     for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) {
       if (!G.state.members[id]) G.Party.join(id, 19);
       else { if (!G.state.party.includes(id)) G.Party.join(id); G.Story.ensureLevel(id, 19); }

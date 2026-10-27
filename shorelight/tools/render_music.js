@@ -6,7 +6,7 @@
 // after the master compressor at the default music volume 0.6), notes, peak polyphony, and the loop-seam checks
 // (periodicity of the next loop, sample jump at the cut vs the signal's 99.9th-percentile step, RMS either side).
 // --wav writes DIR/<id>.wav = one steady-state loop (seamlessly loopable); --preview N writes DIR/<id>_preview.wav
-// (the first N s as heard in game, 2 s fade-out) and, when ffmpeg is on PATH, .mp3 and .ogg encodes of it.
+// (N s as heard in game from the song's start, or from --from id=sec; 2 s fade-out) and, when ffmpeg is on PATH, .mp3 and .ogg encodes of it.
 'use strict';
 const path = require('path');
 const fs = require('fs');
@@ -20,6 +20,8 @@ const out = path.resolve(opt('out', path.join(__dirname, 'out_music')));
 const loops = +opt('loops', 2);
 const preview = +opt('preview', 0);
 const wantWav = !!opt('wav', false);
+// --from ending=46,title=10 : where each preview starts (seconds into the song)
+const previewFrom = Object.fromEntries(String(opt('from', '')).split(',').filter(Boolean).map((kv) => { const [k, v] = kv.split('='); return [k, +v]; }));
 const page_url = 'file://' + path.resolve(opt('page', path.join(__dirname, 'render_music.html')));
 
 (async () => {
@@ -46,7 +48,9 @@ const page_url = 'file://' + path.resolve(opt('page', path.join(__dirname, 'rend
       fs.writeFileSync(r.wav, Buffer.from(b64, 'base64'));
     }
     if (preview) {
-      const b64 = await page.evaluate((n) => wavB64(0, n, 2), preview);
+      const from = previewFrom[id] || 0;
+      const b64 = await page.evaluate(([a, n]) => wavB64(a, a + n, 2), [from, preview]);
+      r.previewFrom = from;
       const pw = path.join(out, id + '_preview.wav');
       fs.writeFileSync(pw, Buffer.from(b64, 'base64'));
       r.preview = [pw];

@@ -3159,7 +3159,7 @@
     await S.give('mat_fengxun', 1);
     V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
     S.flag('mush_ch4');
-    S.quest('q_tuanzi_mush', Math.max(2, G.Quests.stage('q_tuanzi_mush')));
+    S.quest('q_tuanzi_mush', 9);
   }
   G.Maps.define('wind_cave_1', {
     name: '五指山風穴', subtitle: '風道', place: 'hsinchu', bgm: (st) => (broken(st) ? 'mountain' : 'wind'), start: [20, 42],
@@ -3234,7 +3234,7 @@
           await S.warp('wind_cave_2', 22, 37, 'up', { color: '#e8f4ff' });
         },
       },
-      { id: 's6', trigger: 'action', x: 37, y: 2, w: 1, h: 1, label: '調查', spirit: true, if: (st) => !!st.flags.mush_1 && !st.flags.mush_ch4, run: s6Mushroom },
+      { id: 's6', trigger: 'action', x: 37, y: 2, w: 1, h: 1, label: '調查', spirit: true, if: (st) => !st.flags.mush_ch4, run: s6Mushroom },
     ],
     warps: [{ x: 20, y: 43, to: 'wuzhi_trail', tx: 19, ty: 4, tdir: 'down' }],
   });
@@ -3562,6 +3562,8 @@
   // =====================================================================================================
   G.Story.ch4 = async (S) => {
     S.chapter(4);
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = G.state.quests.q_tuanzi_mush; if (q && !q.done && !G.state.flags.mush_ch4) q.stage = 3; }
     const lv = 13;
     for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) {
       if (!G.state.members[id]) G.Party.create(id, lv);

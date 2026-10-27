@@ -1221,4 +1221,12 @@ G.I18N.add({
   '到太虛觀中庭找雲歸': 'Find Yun Gui in the courtyard of Taixu Temple',
   '淡水・觀音山・艋舺　八月初七': 'Tamsui · Mt. Guanyin · Bangka, the 7th of the 8th Month',
   '沿著基隆河谷順流而下，來到河口的淡水……': 'Down the Keelung River valley to the river mouth at Tamsui…',
+  // 雲歸的蕈譜 (q_tuanzi_mush): where the next 七仙蕈 grows
+  '古書說，有一種石耳只長在終年有風的岩壁上，風一吹會「叮」地響。五指山風穴的深處……（開啟靈視）': 'The old texts tell of a rock-ear that grows only on cliffs where the wind never stops, and chimes when the wind blows. Deep in the Wuzhi Wind Cave… (use Spirit Sight)',
+  '憶蕈長在有很多回憶的老房子裡。鹿港洛家老宅的榕樹氣根間，麻糬好像聞到了什麼。': 'Memory mushrooms grow in old houses full of memories. Among the banyan\'s aerial roots in the old Luo house in Lukang, Mochi seems to smell something.',
+  '潮音蕈長在海邊的沙地上，靠近時聽得見潮聲。府城外的林投林……（開啟靈視）': 'The tidesong mushroom grows in seaside sand; come close and you hear the tide. The Screwpine Grove outside the prefectural city… (use Spirit Sight)',
+  '雲芝長在雲霧繚繞的森林裡，混在發光的菇叢之間，形狀像一朵小小的雲。': 'Cloud polypore grows in forests wrapped in mist, hidden among the glowing mushroom clumps—shaped like a tiny cloud.',
+  '台灣尾的龍坑，海水退去的珊瑚礁上，長著一種跟著潮汐開合的蕈。': 'At Longkeng, the tail of Formosa, a mushroom that opens and closes with the tide grows on the coral the sea leaves bare.',
+  '最後一種「玄武蕈」，長在澎湖六角形的玄武岩柱上。麻糬會先找到它。（開啟靈視）': 'The last, the "Basalt Mushroom," grows on the hexagonal basalt columns of Penghu. Mochi will find it first. (use Spirit Sight)',
+  '蕈譜又多了一格。下一種七仙蕈，在旅途更遠的地方……': 'Another entry in the almanac. The next Immortal Mushroom lies farther along the journey…',
 });

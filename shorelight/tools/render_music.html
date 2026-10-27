@@ -54,7 +54,8 @@
         if (c.swing) { const q = e.s % 4; if (q === 2) t += c.swing; else if (q === 1 || q === 3) t += c.swing * 0.5; }
         if (t > h || t >= endT) return;
         const humanT = e.perc ? 0.003 : 0.008;
-        const tt = Math.max(0, t + (rnd() - 0.5) * humanT);
+        // snapped to the sample grid so loop k+1 starts every note on exactly the frame loop k did (+ loop length)
+        const tt = Math.round(Math.max(0, t + (rnd() - 0.5) * humanT) * sr) / sr;
         const vol = e.vol * (0.94 + rnd() * 0.12);
         for (const m of e.m) {
           G.Audio.playNote(e.inst, tt, m, e.d, vol, e.rev, dry, wet, e.x);

@@ -10,6 +10,9 @@
 //   node tools/sim_story.js --verbose           per-fight party setup (levels, gear, inventory)
 //   node tools/sim_story.js --json out.json     also write the results as JSON
 //   node tools/sim_story.js --shops             list the shop goods found in each chapter file
+//   node tools/sim_story.js --model normal      every boss at the state tools/sim_economy.js expects a normal player to
+//                                               have there (level, gear it could afford, its consumables); also
+//                                               --model minimal | thorough, --modelfile f.json (a saved model)
 //
 // Unlike tools/sim_battle.js (a re-implementation of the CONTRACTS formulas over js/data/* only), this loads the
 // whole game (index.html script order, via tools/test/load.js' sandbox) and runs G.Battle.Scene itself with every

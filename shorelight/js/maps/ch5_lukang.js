@@ -248,6 +248,8 @@
     s.flags.mochi_hidden = false; s.flags.yuyuan_hidden = false;
     s.vars.ch5_time = 0;
     s.vars.c5_mem = 0;
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = s.quests.q_tuanzi_mush; if (q && !q.done && !s.flags.mush_ch5) q.stage = 4; }
     await S.titleCard(G.Chapters[5], '鹿港・冬至前一日');
     await S.travel('hsinchu', 'lukang', { label: '沿著海線官道南下，東北季風一路推著背……' });
     S.quest('q_ch5_main', 0);
@@ -1776,7 +1778,7 @@
       // 後院
       { t: 'tree_banyan', x: 8, y: 2 }, { t: 'well', x: 14, y: 3 }, { t: 'table', x: 18, y: 3 },
       { t: 'chair', x: 17, y: 3, dir: 'right' }, { t: 'chair', x: 19, y: 3, dir: 'left' },
-      { t: 'mushroom_glow', x: 11, y: 4, if: (s) => !!s.flags.mush_1 && !s.flags.mush_ch5 }, { t: 'stump', x: 23, y: 4 }, { t: 'tree_dead', x: 28, y: 2 },
+      { t: 'mushroom_glow', x: 11, y: 4, if: (s) => !s.flags.mush_ch5 }, { t: 'stump', x: 23, y: 4 }, { t: 'tree_dead', x: 28, y: 2 },
       { t: 'jar', x: 36, y: 2 }, { t: 'rock_small', x: 31, y: 5 }, { t: 'tallgrass', x: 25, y: 5, if: ruin }, { t: 'tallgrass', x: 6, y: 5, if: ruin },
       // 下人房
       { t: 'bed_mat', x: 2, y: 8 }, { t: 'bed_mat', x: 4, y: 8 }, { t: 'bed_mat', x: 6, y: 8 },
@@ -1843,8 +1845,8 @@
         if (hasActor('yungui')) await S.say('yungui:think', '……這股氣是從上面壓下來的。二樓的什麼地方，把這屋子的光都鎖住了。');
       } },
       { id: 'c5_mem3', trigger: 'touch', x: 19, y: 15, w: 2, h: 1, if: (s) => s.flags.ch5_mirrors && !s.flags.ch5_boss, run: (S) => sceneMem3(S) },
-      // 麻糬 sniffs out the 憶蕈 at the banyan's roots (cross-chapter 蕈譜 quest, needs ch3's mush_1)
-      { id: 'c5_mush', trigger: 'action', x: 11, y: 4, label: '憶蕈', if: (s) => s.flags.mush_1 && !s.flags.mush_ch5 && s.flags.ch5_enter, run: (S) => sceneMush(S) },
+      // 麻糬 sniffs out the 憶蕈 at the banyan's roots (cross-chapter 蕈譜 quest; it starts the quest if ch3's 杉皮蕈 was missed)
+      { id: 'c5_mush', trigger: 'action', x: 11, y: 4, label: '憶蕈', if: (s) => !s.flags.mush_ch5 && s.flags.ch5_enter, run: (S) => sceneMush(S) },
       { id: 'c5_pipe', trigger: 'action', x: 7, y: 11, label: '調查', run: async (S) => {
         await S.say('', '福伯的房間。桌上擺著一支舊煙斗，和一個牛舌餅的空盒子。盒子擦得乾乾淨淨。');
         if (hasActor('hongying')) await S.say('hongying:sad', '……他把空盒子都留著。');
@@ -2111,7 +2113,7 @@
     await S.say('', '（雲歸倒在榕樹下打呼。麻糬在他臉旁邊坐下，替他守著。）');
     S.flag('mush_ch5');
     G.state.vars.tuanzi_mush = (G.state.vars.tuanzi_mush || 0) + 1;
-    S.quest('q_tuanzi_mush', 1);
+    S.quest('q_tuanzi_mush', 9);
     G.UI.toast('雲歸的蕈譜記下一格：{y}憶蕈{/}', { icon: 'mushroom' });
     regroup(S);
   }

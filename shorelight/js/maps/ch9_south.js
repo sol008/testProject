@@ -3427,6 +3427,28 @@
     for (const [who, text] of L.after) await S.say(who, text);
     if (n === 3) { S.quest('q_ch9_lighthouse', 1); S.toast('支線：把日誌殘頁交給燈室裡的湯先生', 'scroll'); }
   }
+  // 雲歸的蕈譜 (q_tuanzi_mush, cross-chapter): 七仙蕈之六「潮汐蕈」 — 台灣尾, on the coral in the middle of 龍坑, right on
+  // the way down to the beach. The sixth in the book, so 澎湖's 玄武蕈 (ch11) can complete the seven.
+  async function mushTide(S) {
+    S.emote('mochi', '!');
+    await S.say('', '麻糬在珊瑚礁上停下來，鼻子貼著一個積水的小坑，尾巴輕輕擺。');
+    await S.say('', '坑邊的珊瑚上，長著一圈小小的白蕈。海水湧進來，蕈傘就闔上；海水退出去，又慢慢打開。');
+    await S.say('yungui:surprise', '……潮汐蕈。古書說，它長在台灣尾，跟著海呼吸。');
+    await S.say('yungui:serious', '貧道先畫。……畫完了。為了研究，必須親口嚐一朵。');
+    await S.say('hongying:smug', '你每次都這樣說。');
+    await S.say('', '雲歸已經吃了。他的瞳孔，跟著遠處的浪一開、一闔。');
+    S.vision(12);
+    await S.say('yungui:serious', '……貧道明白了。');
+    await S.say('yungui:serious', '海來的時候，它不躲，只是把自己闔起來。海走了，它再打開。');
+    await S.say('yungui:serious', '不是不怕。是知道海一定會走。');
+    await S.say('xinghe:think', '……可是海也一定會再來吧。');
+    await S.say('yungui:serious', '那就再闔起來。……貧道要睡了。');
+    await S.say('', '雲歸靠著珊瑚礁打起了呼。芋圓伸出前腳碰了碰一朵蕈，看它闔起來，又碰了一次。');
+    S.flag('mush_ch9');
+    V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
+    S.quest('q_tuanzi_mush', 9);
+    S.toast('雲歸的蕈譜記下了一格：潮汐蕈', 'scroll');
+  }
   G.Maps.define('longkeng_caves', {
     name: '龍坑', subtitle: '海蝕洞', place: 'eluanbi', start: [21, 3],
     bgm: (s) => (s.flags.ch9_cave_cleared ? 'sea' : 'night'),
@@ -3461,6 +3483,7 @@
       LK_BZ.forEach(([x, y], i) => out.push({ t: s.flags['ch9_lkbz_' + i] ? 'brazier' : 'cauldron', x, y, label: s.flags['ch9_lkbz_' + i] ? '取火' : '點燃', interact: async (S) => { await lkBrazier(S, i); } }));
       LK_LOGS.forEach((L, i) => out.push({ t: 'paper_stack', x: L.x, y: L.y, if: (st2) => !st2.flags['ch9_log_' + (i + 1)], label: '拾起', interact: async (S) => { await lkLog(S, i); } }));
       out.push({ t: 'wang_boat', x: 18, y: 42, water: true, solid: false, z: -200 });
+      if (!s.flags.mush_ch9) out.push({ t: 'mushroom_glow', x: 23, y: 19, solid: false }, { t: 'mushroom_glow', x: 23, y: 20, solid: false });
       return out;
     },
     chests: [
@@ -3483,6 +3506,7 @@
     ],
     events: [
       { id: 'lk_boss', trigger: 'touch', x: 16, y: 38, w: 12, h: 1, if: (s) => !s.flags.ch9_cave_cleared, run: async (S) => { await morayBoss(S); } },
+      { id: 'lk_mush', trigger: 'action', x: 23, y: 19, w: 1, h: 2, label: '調查', if: (s) => !s.flags.mush_ch9, run: async (S) => { await mushTide(S); } },
       { id: 'lk_beach', trigger: 'touch', x: 8, y: 41, w: 28, h: 1, if: (s) => !!s.flags.ch9_cave_cleared, run: async (S) => { await S.say('', '小舢舨在浪裡等著。'); await boardDeck(S); } },
     ],
     warps: [{ x: 21, y: 0, w: 2, to: 'eluanbi', tx: 34, ty: 23, tdir: 'up' }],
@@ -3695,6 +3719,8 @@
   G.Story.ch9 = async (S) => {
     S.chapter(9);
     prepareParty();
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = G.state.quests.q_tuanzi_mush; if (q && !q.done && !G.state.flags.mush_ch9) q.stage = 7; }
     const v = V();
     v.xunjing = v.xunjing || 0;
     nameCount(); logCount();

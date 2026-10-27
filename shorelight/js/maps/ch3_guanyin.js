@@ -226,7 +226,17 @@
       stages: ['頂郊的阿水伯、下郊的阿旺伯。到底是誰先放火？（問問吳廟公、剝皮寮老茶店、土地公廟前的阿興）', '帶兩位阿伯去阿興家。'],
       doneText: '下輩子，他們要做同一條船的。' },
     q_tuanzi_mush: { name: '雲歸的蕈譜', desc: '台灣頭到台灣尾，七個所在各長一種「七仙蕈」。七種都吃過的人，會看見世上所有的顏色。',
-      stages: ['青草阿伯說，七仙蕈只在古書殘頁上見過。', '第一種「杉皮蕈」長在剝皮寮後面福州杉的老皮上，月光一照會發光。（夜裡，開啟靈視）', '蕈譜第一格：杉皮蕈。下一種七仙蕈，在更南邊的地方……'] },
+      // stage = where the next one grows: each chapter's opening points the log at its own 七仙蕈 (ch4 3, ch5 4, ch6 5,
+      // ch7 6, ch9 7, ch11 8); a find sets 9 until the next chapter. The seven: ch3 剝皮寮 · ch4 五指山風穴 · ch5 洛家老宅 ·
+      // ch6 林投林 · ch7 雲霧林 · ch9 龍坑 · ch11 澎湖 (玄武蕈 completes the quest when the other six are in the book).
+      stages: ['青草阿伯說，七仙蕈只在古書殘頁上見過。', '第一種「杉皮蕈」長在剝皮寮後面福州杉的老皮上，月光一照會發光。（夜裡，開啟靈視）', '蕈譜第一格：杉皮蕈。下一種七仙蕈，在更南邊的地方……',
+        '古書說，有一種石耳只長在終年有風的岩壁上，風一吹會「叮」地響。五指山風穴的深處……（開啟靈視）',
+        '憶蕈長在有很多回憶的老房子裡。鹿港洛家老宅的榕樹氣根間，麻糬好像聞到了什麼。',
+        '潮音蕈長在海邊的沙地上，靠近時聽得見潮聲。府城外的林投林……（開啟靈視）',
+        '雲芝長在雲霧繚繞的森林裡，混在發光的菇叢之間，形狀像一朵小小的雲。',
+        '台灣尾的龍坑，海水退去的珊瑚礁上，長著一種跟著潮汐開合的蕈。',
+        '最後一種「玄武蕈」，長在澎湖六角形的玄武岩柱上。麻糬會先找到它。（開啟靈視）',
+        '蕈譜又多了一格。下一種七仙蕈，在旅途更遠的地方……'] },
   });
 
   // ------------------------------------------------------------------ shared scripted bits
@@ -3014,6 +3024,9 @@
   G.Story.ch3 = async (S) => {
     S.chapter(3);
     const st = G.state;
+    // 平溪 / 霧林 side quests can only be finished there (紅纓's kitchen is opened by a main-story morning scene): one
+    // left unfinished leaves the quest log with chapter 2
+    for (const q of ['q_hy_kitchen', 'q_woodcutter', 'q_letter']) if (st.quests[q] && !st.quests[q].done) delete st.quests[q];
     // party: 星河・白芷・紅纓 (+ the pets 芋圓・麻糬 since ch1); 雲歸 joins alone after the 鬼面 raid
     if (!st.flags.ch3_yungui_join && st.party.includes('yungui')) { G.Party.leave('yungui'); delete st.members.yungui; }
     for (const id of ['xinghe', 'baizhi', 'hongying']) {

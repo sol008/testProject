@@ -1412,4 +1412,6 @@ G.I18N.add({
   '再準備一下': 'Not yet',
   '知道了。': 'Understood.',
   '走！': 'Run!',
+  // 雲歸的蕈譜: 雲芝
+  '雲歸的蕈譜記下了一格：雲芝': 'Yun Gui\'s mushroom log fills a space: Cloud Polypore',
 });

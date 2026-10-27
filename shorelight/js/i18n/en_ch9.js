@@ -1224,4 +1224,18 @@ G.I18N.add({
   '星河握緊了手上的紅繩手環。': 'Xinghe grips the red string bracelet on his wrist.',
   '（白芷，等我。）': '(Bai Zhi, wait for me.)',
   '到旗後天后宮打聽王船的消息': 'Ask at the Qihou Temple of the Heavenly Queen for news of the King Boat',
+  // 雲歸的蕈譜：七仙蕈之六「潮汐蕈」(龍坑)
+  '麻糬在珊瑚礁上停下來，鼻子貼著一個積水的小坑，尾巴輕輕擺。': 'Mochi stops on the coral, nose pressed to a little pool of seawater, tail swaying gently.',
+  '坑邊的珊瑚上，長著一圈小小的白蕈。海水湧進來，蕈傘就闔上；海水退出去，又慢慢打開。': 'On the coral around the pool grows a ring of tiny white mushrooms. When the sea surges in, their caps close; when it ebbs, they slowly open again.',
+  '……潮汐蕈。古書說，它長在台灣尾，跟著海呼吸。': '…The tide mushroom. The old texts say it grows at the tail of Formosa and breathes with the sea.',
+  '貧道先畫。……畫完了。為了研究，必須親口嚐一朵。': 'This humble priest will sketch it first. …Done. For research, I must taste one myself.',
+  '你每次都這樣說。': 'You say that every time.',
+  '雲歸已經吃了。他的瞳孔，跟著遠處的浪一開、一闔。': 'Yun Gui has already eaten it. His pupils open and close with the distant waves.',
+  '……貧道明白了。': '…This humble priest understands.',
+  '海來的時候，它不躲，只是把自己闔起來。海走了，它再打開。': 'When the sea comes, it doesn\'t hide. It just closes itself up. When the sea goes, it opens again.',
+  '不是不怕。是知道海一定會走。': 'Not because it isn\'t afraid. Because it knows the sea will always go.',
+  '……可是海也一定會再來吧。': '…But the sea will always come back too, won\'t it.',
+  '那就再闔起來。……貧道要睡了。': 'Then it closes again. …This humble priest is going to sleep.',
+  '雲歸靠著珊瑚礁打起了呼。芋圓伸出前腳碰了碰一朵蕈，看它闔起來，又碰了一次。': 'Yun Gui leans against the coral and starts to snore. Yuyuan reaches out a paw, touches a mushroom, watches it close—and touches it again.',
+  '雲歸的蕈譜記下了一格：潮汐蕈': 'Yun Gui\'s mushroom log fills a space: Tide Mushroom',
 });

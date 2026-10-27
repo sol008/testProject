@@ -3409,6 +3409,9 @@
   G.Story.ch2 = async (S) => {
     S.chapter(2);
     const st = G.state;
+    // 九份's side quests can only be finished in 九份 (a main-story scene opens 阿土伯's watch): one left unfinished
+    // leaves the quest log with chapter 1 instead of staying open for the rest of the game
+    for (const q of ['q_atu_watch', 'q_ahuang', 'q_xingmu']) if (st.quests[q] && !st.quests[q].done) delete st.quests[q];
     // 紅纓 joins after the duel (the debug chapter start puts her in the party — take her out again)
     if (!st.flags.ch2_hongying_join && st.party.includes('hongying')) { G.Party.leave('hongying'); delete st.members.hongying; }
     for (const id of ['xinghe', 'baizhi']) {

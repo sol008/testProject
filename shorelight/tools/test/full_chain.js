@@ -15,6 +15,13 @@
 //   node tools/test/full_chain.js --no-shop             # don't buy gear with the carried gold at chapter starts
 //   node tools/test/full_chain.js --trace               # per-action battle HP log, dumped on a failure
 //   node tools/test/full_chain.js --retries 1           # on a wipe, press 重新挑戰 (logged) instead of failing at once
+//   node tools/test/full_chain.js --encounters          # play as a NORMAL player, not a driver that skips the field:
+//                                                       # the roaming / random encounters tools/sim_economy.js expects
+//                                                       # that player to fight (exp + gold, per chapter, split at the
+//                                                       # bosses) are paid before each boss and at the chapter boundary,
+//                                                       # all logged [encounters]. --from a save made without it: a one-
+//                                                       # time catch-up to the model's normal player at that boundary.
+//   node tools/test/full_chain.js --help                # this text
 //
 // How it works
 //   · The page starts at the real title screen (no ?debug), localStorage shorelight_settings = {"render3d":false},
@@ -57,6 +64,11 @@ const BATTLEBOT = path.join(__dirname, 'lib', 'battlebot.js');
 
 // ------------------------------------------------------------------------------------------------ options
 const argv = process.argv.slice(2);
+if (argv.includes('--help') || argv.includes('-h')) {
+  const head = fs.readFileSync(__filename, 'utf8').split('\n').slice(1).filter((l) => l.startsWith('//'));
+  console.log(head.slice(0, head.findIndex((l) => l.startsWith('// How it works'))).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+  process.exit(0);
+}
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
 const chNum = (s) => (s == null ? null : +String(s).replace(/^ch/i, ''));
 const OPT = {
@@ -75,8 +87,11 @@ const OPT = {
   shop: !argv.includes('--no-shop'),
   retries: +opt('retries', 0),
   trace: argv.includes('--trace'),
+  encounters: argv.includes('--encounters'),
 };
 const SAVES = path.join(OPT.out, 'saves');
+// --encounters: the progression model (tools/sim_economy.js) and its per-chapter encounter schedule (set in main)
+let ECON = null, ENC = null, ENC_PAGE = null;
 fs.mkdirSync(SAVES, { recursive: true });
 
 // ------------------------------------------------------------------------------------------------ logging
@@ -258,8 +273,10 @@ class Harness {
       window.__battleBot = { difficulty: diff };
     }, [Object.entries(seed || {}), OPT.difficulty]);
     await this.ctx.addInitScript({ path: BATTLEBOT });
-    await this.ctx.addInitScript(([speed, choices, retries]) => {
-      window.__chain = { speed, battles: [], next: [], lastError: [], retries, wipes: [] };
+    await this.ctx.addInitScript(([speed, choices, retries, encSched]) => {
+      window.__chain = { speed, battles: [], next: [], lastError: [], retries, wipes: [], enc: [], encSched: encSched && encSched.sched, bossShops: encSched && encSched.shops };
+      // eslint-disable-next-line no-eval
+      if (encSched) window.__chainShop = eval('(' + encSched.shopSrc + ')');
       const iv = setInterval(() => {
         if (!(window.G && G.Story && G.Story.next && G.Debug && G.Debug.setAutoplay && G.Battle && G.Battle.start)) return;
         clearInterval(iv);
@@ -288,6 +305,31 @@ class Harness {
         const bs = G.Battle.start;
         G.Battle.start = function (troop) {
           const id = typeof troop === 'string' ? troop : (troop && troop.id) || '(inline troop)';
+          // --encounters: the field fights a normal player meets on the way to this boss (tools/sim_economy.js), paid
+          // once (recorded in the save, so a reload never pays twice)
+          const sch = __chain.encSched && __chain.encSched[G.state.chapter];
+          const shopAt = __chain.bossShops && __chain.bossShops[id];
+          if (sch) {
+            const paid = G.state.vars.__chain_enc = G.state.vars.__chain_enc || {};
+            for (const b of sch.before) {
+              const key = G.state.chapter + ':' + b.troop;
+              if (b.troop !== id || paid[key]) continue;
+              paid[key] = 1;
+              const lv0 = G.state.party.map((p) => (G.state.members[p] ? G.state.members[p].lv : 0));
+              G.Party.gainExp(b.exp); G.state.gold += b.gold;
+              __chain.enc.push({ ch: G.state.chapter, when: 'before ' + id, exp: b.exp, gold: b.gold, fights: b.fights, maps: b.maps, lv: lv0.join('/') + ' → ' + G.state.party.map((p) => (G.state.members[p] ? G.state.members[p].lv : 0)).join('/') });
+            }
+          }
+          // ... and the shopping a normal player does in the town before a boss: the consumable kit and the gear of the
+          // shops docs/BALANCE.md says are reachable there (tools/sim_story_fights.js), with the party's own gold
+          if (shopAt && window.__chainShop) {
+            const done = G.state.vars.__chain_shop = G.state.vars.__chain_shop || {};
+            if (!done[id]) {
+              done[id] = 1;
+              const r = window.__chainShop(shopAt);
+              __chain.enc.push({ ch: G.state.chapter, shop: true, when: 'shopping before ' + id, gold0: r.gold0, gold: G.state.gold, bought: r.bought, kitBought: r.kitBought, missing: r.missing });
+            }
+          }
           const T = G.Data.troops && G.Data.troops[id];
           const rec = { troop: id, boss: !!(T && T.boss), names: T ? (T.enemies || []).map((e) => (G.Data.enemies[e] ? G.Data.enemies[e].name : e)) : [], ch: G.state.chapter, map: G.mapScene && G.mapScene.def && G.mapScene.def.id,
             lv: G.state.party.slice(0, 4).map((p) => (G.state.members[p] ? p + ':' + G.state.members[p].lv : p)), diff: G.settings.difficulty, at: Date.now() };
@@ -300,7 +342,7 @@ class Harness {
           return p;
         };
       }, 2);
-    }, [OPT.speed, OPENING_CHOICES, OPT.retries]);
+    }, [OPT.speed, OPENING_CHOICES, OPT.retries, ENC_PAGE]);
     if (OPT.trace) await this.ctx.addInitScript(() => {
       window.__chainTrace = [];
       setInterval(() => {
@@ -463,6 +505,7 @@ class Harness {
   async loadInFreshPage(file) {
     const s = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (this.page) {
+      await drainEncounters(this);
       const c = await this.page.evaluate(() => ({ b: window.__chain.battles.splice(0), w: window.__chain.wipes.splice(0) })).catch(() => ({ b: [], w: [] }));
       this.carry = { b: (this.carry ? this.carry.b : []).concat(c.b), w: (this.carry ? this.carry.w : []).concat(c.w) };
     }
@@ -529,6 +572,67 @@ function watchdog(h) {
   return { promise: p, stop: () => clearInterval(iv), reset: () => { since = Date.now(); } };
 }
 
+// ------------------------------------------------------------------------------------------------ --encounters
+// What a NORMAL player gets from the field fights the chapter drivers skip (they clear or avoid roaming enemies). The
+// amounts are the model's (tools/sim_economy.js: roaming enemies within reach of each map's critical path × 1.3 for
+// backtracking, the maps' step encounters, half of ch10's optional sea fights) for the chain's difficulty. In the page,
+// the part met on the way to a boss is paid when that boss's battle starts; here, at each chapter boundary, the rest of
+// the previous chapter (after its last boss, and any boss the drivers never fought). Every payment is logged.
+async function drainEncounters(h) {
+  const list = await h.page.evaluate(() => (window.__chain && window.__chain.enc ? window.__chain.enc.splice(0) : [])).catch(() => []);
+  for (const e of list) {
+    (REPORT.encounters = REPORT.encounters || []).push(e);
+    if (e.shop) log('shop', `ch${e.ch} ${e.when}: kit ${e.kitBought.join(' ') || '-'} · gear ${e.bought.join(' ') || 'nothing better'} · gold left ${e.gold}${e.missing.length ? ' · could not afford ' + e.missing.join(' ') : ''}`);
+    else log('encounters', `ch${e.ch} ${e.when}: +${e.exp} exp, +${e.gold} gold (${e.fights} field fights on ${e.maps.join(', ')}) · party Lv ${e.lv}`);
+  }
+}
+async function encounterBoundary(h, n) {
+  await drainEncounters(h);
+  const state = await h.ev(() => ({ paid: Object.keys(G.state.vars.__chain_enc || {}), gold: G.state.gold }));
+  if (n === OPT.from && !state.paid.length && n > 1) {
+    // a save made without --encounters: one catch-up to the model's normal player at this boundary — its level, and
+    // its wealth (gold + the price of the gear it wears), so the chain's own shopping can turn the gold into gear
+    const m = ECON.chapters.find((r) => r.ch === n).styles.normal;
+    const keys = [];
+    for (const c of ENC) if (c.ch < n) { keys.push('rest:' + c.ch); for (const b of c.before) keys.push(c.ch + ':' + b.troop); }
+    const r = await h.ev(([lv, goldIn, wearIn, keys]) => {
+      const I = G.Data.items, val = (id) => (id && I[id] && I[id].price > 0 ? I[id].price : 0);
+      const ids = G.state.party.filter((id) => G.state.members[id]);
+      const have = G.state.gold + ids.reduce((a, id) => a + Object.values(G.state.members[id].equip).reduce((b, e) => b + val(e), 0), 0);
+      const want = goldIn + ids.reduce((a, id) => a + Object.values(wearIn[id] || {}).reduce((b, e) => b + val(e), 0), 0);
+      const lv0 = ids.map((id) => G.state.members[id].lv);
+      for (const id of ids) G.Story.ensureLevel(id, lv);
+      const add = Math.max(0, want - have);
+      G.state.gold += add;
+      const paid = G.state.vars.__chain_enc = G.state.vars.__chain_enc || {};
+      for (const k of keys) paid[k] = 1;
+      return { have, want, add, lv0, lv: ids.map((id) => G.state.members[id].lv), gold: G.state.gold };
+    }, [m.lvIn, m.goldIn, m.wearIn, keys]);
+    const e = { ch: n, when: 'catch-up at the resume save', ...r };
+    (REPORT.encounters = REPORT.encounters || []).push(e);
+    log('encounters', `ch${n} resume save was made without --encounters → catch-up to the model's normal player at the ch${n} boundary: wealth (gold + worn gear at shop prices) ${r.have} → ${r.want} (+${r.add} gold, now ${r.gold}), party Lv ${r.lv0.join('/')} → ${r.lv.join('/')}`);
+    return;
+  }
+  const prev = ENC.find((c) => c.ch === n - 1);
+  if (!prev) return;
+  const due = prev.before.filter((b) => !state.paid.includes(prev.ch + ':' + b.troop)).map((b) => ({ key: prev.ch + ':' + b.troop, when: `boundary (before ${b.troop}, never fought)`, ...b }));
+  if (!state.paid.includes('rest:' + prev.ch) && prev.rest.fights > 0) due.push({ key: 'rest:' + prev.ch, when: 'boundary (after the last boss)', ...prev.rest });
+  for (const d of due) {
+    const r = await h.ev(([d]) => {
+      const lv0 = G.state.party.map((p) => G.state.members[p].lv);
+      const paid = G.state.vars.__chain_enc = G.state.vars.__chain_enc || {};
+      paid[d.key] = 1;
+      G.Party.gainExp(d.exp); G.state.gold += d.gold;
+      return lv0.join('/') + ' → ' + G.state.party.map((p) => G.state.members[p].lv).join('/');
+    }, [d]);
+    const e = { ch: prev.ch, when: d.when, exp: d.exp, gold: d.gold, fights: d.fights, maps: d.maps, lv: r };
+    (REPORT.encounters = REPORT.encounters || []).push(e);
+    log('encounters', `ch${prev.ch} ${d.when}: +${d.exp} exp, +${d.gold} gold (${d.fights} field fights on ${d.maps.join(', ')}) · party Lv ${r}`);
+  }
+  // mark the previous chapter as paid even when it had nothing left (a --from save then knows it was made with the option)
+  await h.ev((k) => { const paid = G.state.vars.__chain_enc = G.state.vars.__chain_enc || {}; paid[k] = 1; }, 'rest:' + prev.ch);
+}
+
 // ------------------------------------------------------------------------------------------------ boundary checks
 async function snapshot(h) {
   return h.ev(() => {
@@ -580,6 +684,56 @@ function sanity(n, s, prevMain) {
   return p;
 }
 
+// runs IN THE PAGE (also installed as window.__chainShop for the pre-boss shopping of --encounters): with the gold the
+// party carries, buy `kit` (consumables up to the counts given — a careful player's heals, MP items and revives) and
+// then the best gear per slot from `pool`
+function shopInPage({ pool, kit }) {
+  const kitBought = [];
+  for (const [id, n] of Object.entries(kit || {})) {
+    const it = G.Data.items[id];
+    if (!it || !(it.price > 0)) continue;
+    const k = Math.min(n - G.Inv.count(id), Math.floor(G.state.gold / it.price));
+    if (k <= 0) continue;
+    G.state.gold -= k * it.price; G.Inv.add(id, k); kitBought.push(`${id}×${k}`);
+  }
+  // same per-slot score as tools/sim_story.js gearScore (casters value mag)
+  const score = (cid, it, slot) => {
+    const c = G.Data.chars[cid], s = it.stats || {}, caster = c.weapon === 'flute' || c.weapon === 'talisman';
+    if (slot === 'weapon') return caster ? (s.mag || 0) + (s.atk || 0) * 0.2 + (s.hp || 0) / 20 : (s.atk || 0) + (s.mag || 0) * 0.1 + (s.hp || 0) / 20;
+    const sp = [].concat(it.special || []);
+    return (s.def || 0) * 1.5 + (s.hp || 0) / 8 + (s.mp || 0) / 8 + (s.spd || 0) * 1.2 + (caster ? (s.mag || 0) : (s.atk || 0)) + (s.atk || 0) * 0.3 + (s.mag || 0) * 0.3 + (s.luk || 0) * 0.3
+      + sp.length * 4 + (it.immune ? 2 * it.immune.length : 0) + (it.resist ? 2 : 0);
+  };
+  const I = G.Data.items, bought = [], gold0 = G.state.gold;
+  const wants = [];
+  for (const cid of G.state.party.slice(0, 4)) {
+    const m = G.state.members[cid];
+    for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
+      const cur = m.equip[slot] && I[m.equip[slot]];
+      const curV = cur ? score(cid, cur, slot) : 0;
+      let best = null, bv = curV;
+      for (const id of pool) {
+        const it = I[id];
+        if (!it || it.type !== slot || !(it.price > 0) || (it.who && !it.who.includes(cid))) continue;
+        const v = score(cid, it, slot);
+        if (v > bv + 0.01) { bv = v; best = id; }
+      }
+      if (best) wants.push({ cid, slot, id: best, gain: bv - curV, price: I[best].price });
+    }
+  }
+  // weapons and armour first, then the biggest gain per coin
+  const order = { weapon: 0, armor: 1, head: 2, feet: 2, acc: 3 };
+  wants.sort((a, b) => order[a.slot] - order[b.slot] || b.gain / b.price - a.gain / a.price);
+  for (const w of wants) {
+    if (G.state.gold < w.price) continue;
+    G.state.gold -= w.price; G.Inv.add(w.id, 1); G.Party.equip(w.cid, w.slot, w.id);
+    bought.push(`${w.cid}.${w.slot}=${w.id}(${I[w.id].name},${w.price})`);
+  }
+  for (const cid of G.state.party) { const s = G.Party.stats(cid), mm = G.state.members[cid]; mm.hp = Math.min(mm.hp, s.mhp); mm.mp = Math.min(mm.mp, s.mmp); }
+  const missing = wants.filter((w) => !bought.some((b) => b.startsWith(w.cid + '.' + w.slot + '=')));
+  return { gold0, gold: G.state.gold, bought, kitBought, skipped: missing.length, wantCost: wants.reduce((a, w) => a + w.price, 0), missing: missing.map((w) => `${w.cid}.${w.slot}=${w.id}(${w.price})`) };
+}
+
 // ------------------------------------------------------------------------------------------------ shopping
 // gear a player can buy by the start of chapter N (cumulative shop pools of tools/sim_story_fights.js)
 const SHOP_POOL = { 1: 'S1a', 2: 'S2a', 3: 'S3a', 4: 'S4', 5: 'S5', 6: 'S6', 7: 'S7a', 8: 'S8a', 9: 'S9a', 10: 'S9', 11: 'S11' };
@@ -588,44 +742,7 @@ async function shop(h, n) {
   try { SHOPS = require(path.join(ROOT, 'tools', 'sim_story_fights.js')).SHOPS; } catch (e) { log('shop', 'no shop pools: ' + e.message); return null; }
   const pool = SHOPS[SHOP_POOL[n]];
   if (!pool) return null;
-  const r = await h.ev((pool) => {
-    // same per-slot score as tools/sim_story.js gearScore (casters value mag)
-    const score = (cid, it, slot) => {
-      const c = G.Data.chars[cid], s = it.stats || {}, caster = c.weapon === 'flute' || c.weapon === 'talisman';
-      if (slot === 'weapon') return caster ? (s.mag || 0) + (s.atk || 0) * 0.2 + (s.hp || 0) / 20 : (s.atk || 0) + (s.mag || 0) * 0.1 + (s.hp || 0) / 20;
-      const sp = [].concat(it.special || []);
-      return (s.def || 0) * 1.5 + (s.hp || 0) / 8 + (s.mp || 0) / 8 + (s.spd || 0) * 1.2 + (caster ? (s.mag || 0) : (s.atk || 0)) + (s.atk || 0) * 0.3 + (s.mag || 0) * 0.3 + (s.luk || 0) * 0.3
-        + sp.length * 4 + (it.immune ? 2 * it.immune.length : 0) + (it.resist ? 2 : 0);
-    };
-    const I = G.Data.items, bought = [], gold0 = G.state.gold;
-    const wants = [];
-    for (const cid of G.state.party.slice(0, 4)) {
-      const m = G.state.members[cid];
-      for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
-        const cur = m.equip[slot] && I[m.equip[slot]];
-        const curV = cur ? score(cid, cur, slot) : 0;
-        let best = null, bv = curV;
-        for (const id of pool) {
-          const it = I[id];
-          if (!it || it.type !== slot || !(it.price > 0) || (it.who && !it.who.includes(cid))) continue;
-          const v = score(cid, it, slot);
-          if (v > bv + 0.01) { bv = v; best = id; }
-        }
-        if (best) wants.push({ cid, slot, id: best, gain: bv - curV, price: I[best].price });
-      }
-    }
-    // weapons and armour first, then the biggest gain per coin
-    const order = { weapon: 0, armor: 1, head: 2, feet: 2, acc: 3 };
-    wants.sort((a, b) => order[a.slot] - order[b.slot] || b.gain / b.price - a.gain / a.price);
-    for (const w of wants) {
-      if (G.state.gold < w.price) continue;
-      G.state.gold -= w.price; G.Inv.add(w.id, 1); G.Party.equip(w.cid, w.slot, w.id);
-      bought.push(`${w.cid}.${w.slot}=${w.id}(${I[w.id].name},${w.price})`);
-    }
-    for (const cid of G.state.party) { const s = G.Party.stats(cid), mm = G.state.members[cid]; mm.hp = Math.min(mm.hp, s.mhp); mm.mp = Math.min(mm.mp, s.mmp); }
-    const missing = wants.filter((w) => !bought.some((b) => b.startsWith(w.cid + '.' + w.slot + '=')));
-    return { gold0, gold: G.state.gold, bought, skipped: missing.length, wantCost: wants.reduce((a, w) => a + w.price, 0), missing: missing.map((w) => `${w.cid}.${w.slot}=${w.id}(${w.price})`) };
-  }, pool);
+  const r = await h.ev(shopInPage, { pool });
   log('shop', `ch${n} (${SHOP_POOL[n]}): spent ${r.gold0 - r.gold} of ${r.gold0} gold — ${r.bought.join(' ') || 'nothing better on sale'}${r.skipped ? ` — ${r.skipped} upgrade(s) unaffordable; the full kit would cost ${r.wantCost} gold (has ${r.gold0})` : ''}`);
   return r;
 }
@@ -784,6 +901,23 @@ async function main() {
   log('chain', 'chapter drivers loaded: ' + Object.values(MODS).map((M) => `ch${M.n}${M.preset.query ? ' (' + M.preset.query + ')' : ''}`).join(', '));
   if (OPT.check) { log('chain', '--check: drivers load and compile'); return 0; }
 
+  if (OPT.encounters) {
+    const E = require(path.join(ROOT, 'tools', 'sim_economy.js'));
+    const diff = OPT.difficulty === 'easy' ? 'easy' : OPT.difficulty === 'hard' ? 'hard' : 'normal';
+    ECON = E.model({ diff });
+    ENC = E.encounterSchedule({ diff });
+    const sched = Object.fromEntries(ENC.map((c) => [c.ch, { before: c.before.map((b) => ({ troop: b.troop, exp: b.exp, gold: b.gold, fights: b.fights, maps: b.maps })) }]));
+    // pre-boss shopping: each boss's shops (cumulative pools of tools/sim_story_fights.js) and the sim's consumable kit
+    const { kitFrom } = require(path.join(ROOT, 'tools', 'sim_story.js'));
+    const EG = E.game().G;
+    const shops = {};
+    for (const F of require(path.join(ROOT, 'tools', 'sim_story_fights.js')).FIGHTS(EG)) {
+      if (F.scripted || shops[F.troop] || !(F.shops || []).length) continue;
+      shops[F.troop] = { pool: F.shops, kit: kitFrom(EG, F.shops, F) };
+    }
+    ENC_PAGE = { sched, shops, shopSrc: shopInPage.toString() };
+    for (const c of ENC) log('encounters', `model (${diff}) ch${c.ch}: ${c.before.map((b) => `before ${b.troop} +${b.exp} exp +${b.gold} gold`).concat(c.rest.fights ? [`rest +${c.rest.exp} exp +${c.rest.gold} gold`] : []).join(' · ')}`);
+  }
   const balance = fs.existsSync(path.join(ROOT, 'docs', 'BALANCE.md'));
   log('chain', `options ${JSON.stringify(OPT)}; chapter-start level = G.Data.progression lv[0]${balance ? ` (docs/BALANCE.md: same table; ${BALANCE.length} per-fight levels loaded)` : ''}`);
   const browser = await chromium.launch({ headless: !OPT.headed });
@@ -812,6 +946,7 @@ async function main() {
         rec.entry = { title: true };
       } else {
         await h.idle();
+        if (OPT.encounters) await encounterBoundary(h, n);
         const s = await snapshot(h);
         rec.entry = s;
         const prevMain = MODS[n - 1] && (await h.ev((q) => (G.Data.quests[q] ? q : null), `q_ch${n - 1}_main`));
@@ -895,6 +1030,7 @@ async function main() {
       rec.sec = Math.round((Date.now() - t0) / 1000);
       rec.checks = (res.checks || []).filter((c) => !c.ok);
       rec.checksTotal = res.total || (res.checks || []).length;
+      if (OPT.encounters) await drainEncounters(h);
       rec.battles = (h.carry ? h.carry.b : []).concat(await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; }));
       rec.wipes = (h.carry ? h.carry.w : []).concat(await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []));
       h.carry = null;

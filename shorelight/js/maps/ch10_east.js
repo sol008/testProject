@@ -382,7 +382,7 @@
   });
   enemy('c10_tide_wraith_big', {
     name: '大潮怨', art: 'tide_grudge', variant: 2, scale: 1.45, lv: 36, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 4.4, atk: 1.95, mag: 1.9, def: 1.1, spd: 1.1, exp: 14.5, gold: 22.6 },
+    m: { hp: 4.4, atk: 1.95, mag: 1.9, def: 1.1, spd: 1.1, exp: 36.2, gold: 22.6 },
     skills: [['c10_es_undertow', 3], ['c10_es_homesick', 2], ['e_tg_wave', 1], ['c10_es_pull', 1, 'hp<70']],
     phases: [{ at: 0.5, text: '潮怨：「……回……回唐山……回不去……就在這裡……」', skills: [['c10_es_homesick', 3], ['c10_es_undertow', 2], ['c10_es_pull', 1]] }],
     drops: [['c10_baicao', 1]],

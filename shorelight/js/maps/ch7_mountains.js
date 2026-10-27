@@ -828,6 +828,8 @@
   G.Story.ch7 = async (S) => {
     S.chapter(7);
     const st = G.state;
+    // 雲歸的蕈譜 (q_tuanzi_mush): the quest log points at this chapter's 七仙蕈 (stage texts in ch3)
+    { const q = st.quests.q_tuanzi_mush; if (q && !q.done && !st.flags.mush_ch7) q.stage = 6; }
     // party: 星河 紅纓 雲歸 (+ the cats 芋圓 & 麻糬 follow). 白芷 is away (taken across the strait).
     if (st.party.includes('baizhi')) G.Party.leave('baizhi');
     const avg = G.Party.active().length ? Math.round(G.Party.active().reduce((a, m) => a + m.lv, 0) / G.Party.active().length) : 23;
@@ -2409,6 +2411,8 @@
           S.flag('mush_ch7');
           G.state.vars.tuanzi_mush = (G.state.vars.tuanzi_mush || 0) + 1;
           await S.give('mat_yunzhi', 1);
+          S.quest('q_tuanzi_mush', 9);
+          S.toast('雲歸的蕈譜記下了一格：雲芝', 'scroll');
         } },
       ],
       warps: [

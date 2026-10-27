@@ -442,7 +442,8 @@ G.Map3D = (() => {
         let node = this.nodes.get(o);
         if (node && node.userData.sig !== this.objSig(o)) { this.scene.remove(node); this.nodes.delete(o); node = null; }
         if (!node) { node = this.objNode(o); this.nodes.set(o, node); this.scene.add(node); }
-        const on = ms.objActive(o);
+        // o.alpha (2D globalAlpha): 0 = invisible blocker / not yet faded in; 0..1 is faded in frame()
+        const on = ms.objActive(o) && !(o.alpha != null && o.alpha <= 0.01);
         node.visible = on;
       }
       for (const [o, node] of this.nodes) if (!seen.has(o)) { this.scene.remove(node); this.nodes.delete(o); }
@@ -542,7 +543,7 @@ G.Map3D = (() => {
     collectLights() {
       const ms = this.ms, out = [];
       for (const o of ms.objects) {
-        if (!ms.objActive(o)) continue;
+        if (!ms.objActive(o) || (o.alpha != null && o.alpha <= 0.01)) continue;
         const md = G.Models.defs[o.t];
         const fp = this.footprint(o);
         if (md && md.lights) {
@@ -762,18 +763,46 @@ G.Map3D = (() => {
     }
 
     // ------------------------------------------------------------------ occluder cutout
-    updateCutout() {
+    updateCutout(dt) {
       const U = G.R3M.cutUniforms();
       const P = this.ms.player;
       const p = new THREE.Vector3(P.px / TT, 0.9, (P.py + 8) / TT - 0.5);
       const v = p.clone().project(this.camera);
       U.uCutCenter.value.set(v.x * 0.5 + 0.5, v.y * 0.5 + 0.5);
       U.uCutDepth.value = p.clone().applyMatrix4(this.camera.matrixWorldInverse).z * -1;
-      U.uCutRadius.value = 0.11 * (15 / ((this.camCfg.dist || 15) * (this.zoom || 1)));
+      // a tall model (two-storey shophouse, temple roof, big tree) between camera and player widens the hole, so a
+      // roof doesn't swallow the hero behind a 1 m porthole; foliage keeps about its own (already larger) radius
+      const target = this.tallOccluder(p) ? 2.1 : 1;
+      this.cutBoost = this.cutBoost == null ? target : this.cutBoost + (target - this.cutBoost) * Math.min(1, (dt || 0.016) * 5);
+      U.uCutRadius.value = 0.11 * (15 / ((this.camCfg.dist || 15) * (this.zoom || 1))) * this.cutBoost;
+      U.uCutFoliage.value = Math.max(1.2, 2.6 / this.cutBoost);
       U.uCutOn.value = P.visible && !this.ms.def.noCutout3d ? 1 : 0;
       const r = G.R3.renderer;
       if (r) { const s = r.getDrawingBufferSize(new THREE.Vector2()); U.uResolution.value.copy(s); }
       U.uTime.value = this.t;
+    }
+    // does a tall object (cached world AABB, top > 2.6 m) cross the camera → player-chest segment in front of him?
+    tallOccluder(p) {
+      const cam = this.camera.position;
+      const ray = this._cutRay || (this._cutRay = new THREE.Ray());
+      ray.origin.copy(cam);
+      ray.direction.copy(p).sub(cam);
+      const len = ray.direction.length();
+      ray.direction.multiplyScalar(1 / len);
+      const hit = this._cutHit || (this._cutHit = new THREE.Vector3());
+      for (const [, node] of this.nodes) {
+        if (!node.visible) continue;
+        let b = node.userData.box;
+        if (!b) {
+          b = node.userData.box = new THREE.Box3();
+          try { b.setFromObject(node); } catch (e) { b.makeEmpty(); }
+          if (!isFinite(b.max.y)) b.makeEmpty();
+        }
+        if (b.isEmpty() || b.max.y < 2.6) continue;
+        if (b.containsPoint(p)) continue; // standing inside its footprint box (under eaves / a canopy): foliage cutout does it
+        if (ray.intersectBox(b, hit) && hit.distanceTo(cam) < len - 0.6) return true;
+      }
+      return false;
     }
 
     // ------------------------------------------------------------------ per-frame
@@ -807,19 +836,24 @@ G.Map3D = (() => {
       this.updateLights();
       this.updateParticles();
       this.updateDecals(ctx2d);
-      this.updateCutout();
+      this.updateCutout(dt);
       // billboards & animated models
       for (const [, node] of this.nodes) {
         if (!node.visible) continue;
         const o = node.userData.o, md = node.userData.def;
         if (md && md.update) { try { md.update(node.children[0], o, this.t, dt); } catch (e) { G.warnOnce('mupd ' + o.t, e); } }
         if (node.children[0] && node.children[0].userData.fallback) node.children[0].traverse((n) => { if (n.userData.billboard) n.rotation.y = this.yaw; });
-        if (o.spirit) node.traverse((n) => {
-          if (!n.material || n.userData.outline || Array.isArray(n.material)) return;
-          // materials are shared between instances of a model: give spirit objects their own copy before fading
-          if (!n.userData.spiritMat) { n.material = n.material.clone(); n.userData.spiritMat = true; n.material.transparent = true; }
-          n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3);
-        });
+        const fade = (o.spirit ? 0.7 + 0.25 * Math.sin(this.t * 3) : 1) * (o.alpha != null ? Math.min(1, o.alpha) : 1);
+        if (fade < 0.999 || node.userData.faded) {
+          node.userData.faded = true;
+          node.traverse((n) => {
+            if (!n.material || n.userData.outline || Array.isArray(n.material)) return;
+            // materials are shared between instances of a model: give faded objects their own copy first
+            if (!n.userData.spiritMat) { n.material = n.material.clone(); n.userData.spiritMat = true; n.userData.baseOp = n.material.opacity; n.userData.baseTr = n.material.transparent; }
+            n.material.transparent = fade < 0.999 || n.userData.baseTr;
+            n.material.opacity = n.userData.baseOp * fade;
+          });
+        }
       }
       if (G.Nature3D && G.Nature3D.update) { try { G.Nature3D.update(this, dt); } catch (e) { G.warnOnce('nature3d update', e); } }
       else if (G.Wind3D && G.Wind3D.update) G.Wind3D.update(dt);

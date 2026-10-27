@@ -3,9 +3,11 @@
 //
 //   node tools/sim_economy.js                 per-chapter table (normal / minimal / thorough) + per-boss check
 //   node tools/sim_economy.js --maps          per-map critical path, roaming enemies met, chests on the way
-//   node tools/sim_economy.js --bosses        per-boss level and gold for each style vs docs/BALANCE.md
-//   node tools/sim_economy.js --json out.json the whole model as JSON
+//   node tools/sim_economy.js --json out.json the whole model as JSON (per boss: level, gear worn, kit — the input of
+//                                             `node tools/sim_story.js --model normal|minimal|thorough`)
 //   node tools/sim_economy.js --diff easy     exp ×1.2 (the playthrough tests / full_chain play on easy)
+//   node tools/sim_economy.js --schedule      the normal player's encounter exp / gold per chapter, split at the bosses
+//                                             (what tools/test/full_chain.js --encounters applies)
 //
 // The data is the game's own (loaded like tools/sim_story.js: index.html order in a Node vm). What is modelled:
 //
@@ -13,31 +15,35 @@
 //                   docs/BALANCE.md marked with their sim id); exp / gold = the troop's enemies (G.Data.enemies), none
 //                   for a fight that ends by script without `rewards: true`.
 //   Encounters      roaming (symbol) enemies, G.Maps.defs[id].enemies. For every main-path map the critical path is
-//                   the union of the shortest walkable paths (the real collision grid, G.MapScene.solid) from the
-//                   arrival warp to every other warp of the map (dead ends: to the farthest story event). An enemy is
-//                   MET when its home cell is within its chase range (default 4) of that path — it walks to the player.
-//                     normal   fights every enemy met, × 1.3 for backtracking (respawning enemies are met again on
-//                              re-entry; enemies with respawn:false only once). The user-side assumption: a typical
-//                              player walks ~1.3 × the critical-path steps.
-//                     minimal  flees every roaming fight (0).
+//                   the union of the shortest walks (the real collision grid, G.MapScene.solid; a gate that is closed
+//                   now costs 25 steps) from the arrival warp to every other warp and to every story / puzzle spot
+//                   (touch and action events, inspectable objects). An enemy is MET when its home is within its chase
+//                   range (default 4) + wander radius (≤ 2) of that path — it walks to the player.
+//                     normal   fights every enemy met, × 1.3 for backtracking (a typical player walks ~1.3 × the
+//                              critical-path steps; respawning enemies are met again on re-entry; respawn:false once),
+//                              plus the maps' step encounters (暗雷: rate × path cells on that terrain × 1.3) and half
+//                              of ch10's optional sea fights; ch11's black-tide boarding at its rate.
+//                     minimal  flees every roaming / random fight (0).
 //                     thorough every roaming enemy of every map of the chapter (side maps too), × 1.5 (BALANCE.md's
-//                              cross-check: each symbol enemy fought ~1.5 times).
+//                              cross-check: each symbol enemy fought ~1.5 times), all sea fights.
 //                   Not counted: stealth guards / rescue posts (chase 0), enemies that are story fights.
 //   Chests          normal: chests within 10 steps of the critical path on main-path maps (and every chest of the
 //                   chapter's towns); minimal: within 4 steps; thorough: all. Gold counts as gold; gear found in a chest
 //                   is worn when it is better; consumables found pay for part of the next consumable restock.
-//   Side quests     REWARDS below (gold and gear per quest, read from the chapter scripts): normal does half of the
-//                   心燈 (lantern) quests of a chapter (the cheaper half is not assumed: the average), minimal none,
-//                   thorough all side quests.
+//   Side quests     REWARDS below (the gold of each quest, read from the chapter scripts — the others give items):
+//                   normal does half of the 心燈 (lantern) quests of a chapter, minimal none, thorough all.
 //   Levels          each chapter opening's level floor (G.Story.chN ensureLevel), then the exp of everything before
 //                   each boss, per active member (G.Party.gainExp: every active member gets the full troop exp).
-//   Gear & spending the gear docs/BALANCE.md assumes at each boss (best item per slot from the shops reachable before
-//                   it — tools/sim_story_fights.js — the same choice as sim_story.js) bought the first time it is
-//                   needed, plus a consumable restock per boss (the sim's kit: 5 + 3 heals, 3 MP items, 2 revives,
-//                   bought once per chapter at the chapter's prices). Selling old gear (half price) is not counted.
+//   Gear & spending before each boss: first the consumable kit of tools/sim_story.js (5 + 3 heals, 3 MP items,
+//                   2 revives from the shops reachable there; the whole kit at a chapter's first boss, KIT_RESTOCK
+//                   of it at the others; what is short of gold is bought in part), then the gear docs/BALANCE.md assumes
+//                   (best item per slot from those shops — the same choice as sim_story.js): weapons, armour, head /
+//                   feet, accessories, the biggest gain per coin first, keeping the next restock in reserve. A
+//                   side-grade (armour / accessory < UPGRADE_MIN better) is bought last, with gold to spare. Selling
+//                   old gear (half price) is not counted. `coverage` = the share (by price) of the boss's BALANCE gear
+//                   the party has (a worn item at least as good).
 //
-// Exported for tools/test/full_chain.js (`--encounters`): model() → per chapter the normal player's expected
-// encounter exp and gold, split by boss (what is met before each boss of the chapter, and the rest of the chapter).
+// Exported for tools/test/full_chain.js (--encounters): model(), encounterSchedule() and mapInfo().
 'use strict';
 const path = require('path');
 
@@ -54,7 +60,7 @@ const path = require('path');
 const STORY = [
   { ch: 0, floor: 1, steps: [] },
   { ch: 1, floor: 2, side: [], steps: [
-    { map: 'mine_1' }, { map: 'mine_2', to: 'foreman' }, { troop: 't_c1_foreman', boss: 'c1_foreman' },
+    { map: 'mine_1' }, { map: 'mine_2' }, { troop: 't_c1_foreman', boss: 'c1_foreman' },
     { map: 'badouzi' }, { troop: 't_c1_shore_ghost' },
     { map: 'jiufen' }, { troop: 'jiufen_3' }, { troop: 'jiufen_4' }, { troop: 'jiufen_1' }, { troop: 't_c1_moya', boss: 'c1_moya' }, { troop: 't_c1_ghost_king', boss: 'c1_ghost_king' },
   ] },
@@ -301,6 +307,7 @@ function model(o = {}) {
       const r = row.styles[s] = { goldIn: p.gold, storyExp: 0, storyGold: 0, encExp: 0, encGold: 0, encFights: 0, chestGold: 0, questGold: 0, spentGear: 0, spentKit: 0, wantedGear: 0, bosses: [] };
       floorTo(p, C.floor);
       r.lvIn = p.lv;
+      r.wearIn = JSON.parse(JSON.stringify(p.wear));
       // chests (main-path maps: those near the path; town maps: all; thorough: every chest of the chapter) and quests
       // are credited at the chapter start: a player picks them up on the way, and shops in the chapter's towns
       const townMaps = chMaps.filter((id) => !(G.Maps.defs[id].enemies || []).length && !(C.side || []).includes(id));
@@ -358,6 +365,7 @@ function model(o = {}) {
           continue;
         }
         const F = st.boss && fights[st.boss];
+        if (F && s === 'normal') row.encounters.push({ boss: st.boss, troop: st.troop });
         if (F && st.noShop && lastBoss[s]) {
           // a fight that follows the previous boss with no shop in between (the finale): same gear and kit
           const b = Object.assign({}, lastBoss[s], { id: st.boss, name: F.name, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv,
@@ -464,30 +472,22 @@ function model(o = {}) {
 }
 
 // expected encounter rewards of the normal player, per chapter, split at the bosses (for full_chain --encounters):
-// [{ ch, before: { <boss troop>: { exp, gold, maps } }, rest: { exp, gold, maps } }]
+// [{ ch, before: [{ troop, boss, exp, gold, fights, maps }], rest: { exp, gold, fights, maps } }] — `before` = what is
+// met on the way to that boss (since the previous one), `rest` = after the chapter's last boss
 function encounterSchedule(o = {}) {
-  const { G } = game();
-  const diffK = o.diff === 'easy' ? 1.2 : 1;
   const out = [];
-  for (const C of STORY) {
-    if (!C.steps.length) continue;
-    const sch = { ch: C.ch, before: [], rest: { exp: 0, gold: 0, fights: 0, maps: [] } };
+  for (const row of model(o).chapters) {
+    const sch = { ch: row.ch, before: [], rest: null };
     let acc = { exp: 0, gold: 0, fights: 0, maps: [] };
-    for (const st of C.steps) {
-      if (st.map) {
-        const mi = mapInfo(st.map);
-        for (const e of mi.enemies) {
-          if (e.story || !e.met) continue;
-          const k = e.respawn ? BACKTRACK : 1;
-          acc.exp += e.exp * k * diffK; acc.gold += e.gold * k; acc.fights += k;
-        }
-        acc.maps.push(st.map);
-      } else if (st.boss && acc.maps.length) {
-        sch.before.push({ troop: st.troop, boss: st.boss, exp: Math.round(acc.exp), gold: Math.round(acc.gold), fights: +acc.fights.toFixed(1), maps: acc.maps });
+    for (const e of row.encounters) {
+      if (e.boss) {
+        if (acc.fights > 0) sch.before.push(Object.assign({ troop: e.troop, boss: e.boss }, acc, { fights: +acc.fights.toFixed(1) }));
         acc = { exp: 0, gold: 0, fights: 0, maps: [] };
+        continue;
       }
+      acc.exp += e.exp; acc.gold += e.gold; acc.fights += e.fights; acc.maps.push(e.map || 'sea:' + e.sea);
     }
-    sch.rest = { exp: Math.round(acc.exp), gold: Math.round(acc.gold), fights: +acc.fights.toFixed(1), maps: acc.maps };
+    sch.rest = Object.assign({}, acc, { fights: +acc.fights.toFixed(1) });
     out.push(sch);
   }
   return out;
@@ -500,6 +500,13 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? (args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : true) : d; };
   const diff = opt('diff', 'normal');
+  if (opt('schedule')) {
+    for (const c of encounterSchedule({ diff })) {
+      for (const b of c.before) console.log(`ch${c.ch} before ${b.troop.padEnd(18)} +${b.exp} exp +${b.gold} gold (${b.fights} fights: ${b.maps.join(', ')})`);
+      if (c.rest.fights) console.log(`ch${c.ch} rest of the chapter      +${c.rest.exp} exp +${c.rest.gold} gold (${c.rest.fights} fights: ${c.rest.maps.join(', ')})`);
+    }
+    process.exit(0);
+  }
   if (opt('maps')) {
     for (const C of STORY) for (const st of C.steps) if (st.map) {
       const mi = mapInfo(st.map);
