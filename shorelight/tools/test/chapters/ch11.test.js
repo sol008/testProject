@@ -406,7 +406,8 @@ async function play(browser, from, to) {
     } else if (!R) {
       R = await openFrom(browser, 'A', ORDER[i - 1]);
     }
-    await R.ev(() => { G.settings.battleSpeed = 8; });
+    // the autoplay battle AI barely heals: run the fights on 'easy' so the story path, not the dice, is what gets tested
+    await R.ev(() => { G.settings.battleSpeed = 8; G.settings.difficulty = 'easy'; });
     const ts = Date.now();
     await SEGMENTS[seg](R);
     await R.health(seg);
