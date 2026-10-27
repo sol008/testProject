@@ -11,6 +11,7 @@
 //   node tools/test/full_chain.js --out <dir>           # screenshots, saves, logs, report.json (default tools/test/out/chain)
 //   node tools/test/full_chain.js --check               # only load/compile the reused chapter drivers (no browser)
 //   node tools/test/full_chain.js --no-shop             # don't buy gear with the carried gold at chapter starts
+//   node tools/test/full_chain.js --trace               # per-action battle HP log, dumped on a failure
 //   node tools/test/full_chain.js --retries 1           # on a wipe, press 重新挑戰 (logged) instead of failing at once
 //
 // How it works
@@ -35,8 +36,10 @@
 //   · At every chapter boundary: G.state.chapter must increment, no page errors / console errors / warnings, party /
 //     cats / quest log sanity; time per chapter, a screenshot at each chapter start, a real save (G.Save.write → slot 1)
 //     exported to <out>/saves/chNN.json (--from uses it through the title screen's 讀取進度 menu).
-//   · Endings: in 彼岸燈塔 5F, before 她的記憶 (the last optional 心燈 before the finale), the run saves to slot 2, plays the
-//     true ending 「千燈」, then reloads slot 2 in a fresh page, skips the memories and plays the normal ending 「彼岸」.
+//   · Endings: in 一息界, right before the step that starts the finale (燈心 → ending), the run saves to slot 2, plays
+//     the true ending 「千燈」 to the title screen, then reloads slot 2 in a fresh page and plays the normal ending 「彼岸」.
+//     The ending is decided only by G.Lanterns.count() >= THRESHOLD; when the carried count is already above it, the
+//     ch11 driver's own lantern removal is let through for that one segment and logged as FORCED.
 //   · Robustness: timestamped progress lines; fail fast on Game Over or 3 min without progress (dumps G.Scenes.names(),
 //     the map and the busy state); one browser at a time.
 'use strict';
@@ -68,6 +71,7 @@ const OPT = {
   endings: !argv.includes('--no-endings'),
   shop: !argv.includes('--no-shop'),
   retries: +opt('retries', 0),
+  trace: argv.includes('--trace'),
 };
 const SAVES = path.join(OPT.out, 'saves');
 fs.mkdirSync(SAVES, { recursive: true });
@@ -249,8 +253,8 @@ class Harness {
       window.__battleBot = { difficulty: diff };
     }, [Object.entries(seed || {}), OPT.difficulty]);
     await this.ctx.addInitScript({ path: BATTLEBOT });
-    await this.ctx.addInitScript(([speed, choices]) => {
-      window.__chain = { speed, battles: [], next: [], lastError: [] };
+    await this.ctx.addInitScript(([speed, choices, retries]) => {
+      window.__chain = { speed, battles: [], next: [], lastError: [], retries, wipes: [] };
       const iv = setInterval(() => {
         if (!(window.G && G.Story && G.Story.next && G.Debug && G.Debug.setAutoplay && G.Battle && G.Battle.start)) return;
         clearInterval(iv);
@@ -259,6 +263,20 @@ class Harness {
           __chain.next.push({ n, at: Date.now() });
           if (choices[n]) G.Debug.choices = choices[n].slice();
           return next.call(this, S, n);
+        };
+        // --retries: a wipe takes the Game Over screen's own 重新挑戰 path (state restored, same battle again) — in the
+        // page, before any driver can see the GameOverScene
+        const push = G.Scenes.push;
+        G.Scenes.push = function (sc) {
+          if (G.GameOverScene && sc instanceof G.GameOverScene && sc.troopId != null && sc.stateBefore && __chain.retries > 0) {
+            __chain.retries--;
+            const last = __chain.battles[__chain.battles.length - 1] || {};
+            __chain.wipes.push({ troop: sc.troopId, names: last.names, lv: last.lv, ch: G.state.chapter, map: G.mapScene && G.mapScene.def && G.mapScene.def.id, at: Date.now() });
+            G.state = Object.assign(G.newState(), JSON.parse(sc.stateBefore));
+            G.Battle.start(sc.troopId, sc.o).then(sc.resolve);
+            return sc;
+          }
+          return push.apply(this, arguments);
         };
         const sa = G.Debug.setAutoplay;
         G.Debug.setAutoplay = function (on) { sa.call(this, on); if (on) G.settings.battleSpeed = __chain.speed; };
@@ -277,7 +295,18 @@ class Harness {
           return p;
         };
       }, 2);
-    }, [OPT.speed, OPENING_CHOICES]);
+    }, [OPT.speed, OPENING_CHOICES, OPT.retries]);
+    if (OPT.trace) await this.ctx.addInitScript(() => {
+      window.__chainTrace = [];
+      setInterval(() => {
+        const t = window.G && G.Scenes && G.Scenes.top();
+        if (!t || !t.party || !t.enemies) return;
+        const f = (u) => `${u.id}:${u.hp}/${u.mhp}${u.dead ? 'X' : ''}${Object.keys(u.st || {}).length ? '[' + Object.keys(u.st).join('+') + ']' : ''}`;
+        const line = `r${t.rounds} ${t.party.map(f).join(' ')} | ${t.enemies.map(f).join(' ')}${t.msg && t.msg.text ? ' «' + t.msg.text + '»' : ''}`;
+        if (window.__chainTrace[window.__chainTrace.length - 1] !== line) window.__chainTrace.push(line);
+        if (window.__chainTrace.length > 400) window.__chainTrace.splice(0, 100);
+      }, 100);
+    });
     this.page = await this.ctx.newPage();
     this.page.on('console', (m) => {
       const ty = m.type();
@@ -328,6 +357,12 @@ class Harness {
     const level = LEVEL.test(src);
     if (!cats.length && !level) {
       for (const [k, re] of Object.entries(NOTES)) if (re.test(src)) this.note(k);
+      return this.page.evaluate(fn, arg);
+    }
+    if (cats.length && this.allowForced && cats.every((c) => this.allowForced.includes(c)) && !level) {
+      const f = { ch: this.ch, map: this.lastMap, cats, code: snippet(typeof fn === 'function' ? fn.toString() : String(fn)), forced: true };
+      REPORT.forced = (REPORT.forced || []).concat([f]);
+      log('FORCED', `ch${this.ch} [${cats.join(',')}] let through: ${f.code.slice(0, 160)}`);
       return this.page.evaluate(fn, arg);
     }
     if (cats.length) {
@@ -392,7 +427,7 @@ class Harness {
       pos: G.mapScene && [G.mapScene.player.x, G.mapScene.player.y], busy: G.Script.busy(), fade: G.Render.fade.a, chapter: G.state.chapter,
       dialog: G.Dialog.log.slice(-6).map((l) => (l.name || '') + '：' + l.text), debugLog: G.Debug.log.slice(-8), choices: G.Debug.choices.slice(),
       party: G.state.party.map((id) => { const m = G.state.members[id]; return m ? `${id} Lv${m.lv} ${m.hp}HP` : id; }),
-      battles: (window.__chain.battles || []).slice(-3), lastError: G.lastError ? String(G.lastError.stack || G.lastError).slice(0, 800) : null,
+      battles: (window.__chain.battles || []).slice(-3), trace: (window.__chainTrace || []).slice(-60), lastError: G.lastError ? String(G.lastError.stack || G.lastError).slice(0, 800) : null,
     })).catch((e) => ({ dumpFailed: e.message }));
     log('DUMP', reason);
     log('DUMP', JSON.stringify(d, null, 1));
@@ -457,18 +492,8 @@ function watchdog(h) {
       if (st.gameover) {
         const last = await h.ev(() => (window.__chain.battles.slice(-1)[0] || {})).catch(() => ({}));
         REPORT.wipes = REPORT.wipes || [];
-        REPORT.wipes.push({ ch: h.ch, map: st.map, troop: last.troop, names: last.names, lv: last.lv, retried: h.retriesLeft > 0 });
+        REPORT.wipes.push({ ch: h.ch, map: st.map, troop: last.troop, names: last.names, lv: last.lv, retried: false });
         saveReport();
-        if (h.retriesLeft > 0) {
-          h.retriesLeft--;
-          log('WIPE', `ch${h.ch} party wiped by ${last.troop} (${(last.names || []).join('+')}) at ${(last.lv || []).join(' ')} — pressing 重新挑戰 (--retries, ${h.retriesLeft} left)`);
-          await h.page.waitForTimeout(1600);
-          await h.ev(() => { const t = G.Scenes.top(); if (t && t.list) t.list.idx = 0; });
-          await h.page.keyboard.press('Enter');
-          await h.page.waitForTimeout(1000);
-          since = Date.now();
-          return;
-        }
         failing = true; reject(new ChainFail(`GAME OVER (party wiped) on ${st.map} by ${last.troop} (${(last.names || []).join('+')}) at ${(last.lv || []).join(' ')}`)); return;
       }
       const s = JSON.stringify([st.map, st.pos, st.names, st.dlg, st.dbg, st.bt, st.flags, st.battles, st.cred, st.busy]);
@@ -578,9 +603,10 @@ async function shop(h, n) {
       bought.push(`${w.cid}.${w.slot}=${w.id}(${I[w.id].name},${w.price})`);
     }
     for (const cid of G.state.party) { const s = G.Party.stats(cid), mm = G.state.members[cid]; mm.hp = Math.min(mm.hp, s.mhp); mm.mp = Math.min(mm.mp, s.mmp); }
-    return { gold0, gold: G.state.gold, bought, skipped: wants.length - bought.length };
+    const missing = wants.filter((w) => !bought.some((b) => b.startsWith(w.cid + '.' + w.slot + '=')));
+    return { gold0, gold: G.state.gold, bought, skipped: missing.length, wantCost: wants.reduce((a, w) => a + w.price, 0), missing: missing.map((w) => `${w.cid}.${w.slot}=${w.id}(${w.price})`) };
   }, pool);
-  log('shop', `ch${n} (${SHOP_POOL[n]}): spent ${r.gold0 - r.gold} of ${r.gold0} gold — ${r.bought.join(' ') || 'nothing better on sale'}${r.skipped ? ` (${r.skipped} upgrade(s) unaffordable)` : ''}`);
+  log('shop', `ch${n} (${SHOP_POOL[n]}): spent ${r.gold0 - r.gold} of ${r.gold0} gold — ${r.bought.join(' ') || 'nothing better on sale'}${r.skipped ? ` — ${r.skipped} upgrade(s) unaffordable; the full kit would cost ${r.wantCost} gold (has ${r.gold0})` : ''}`);
   return r;
 }
 
@@ -677,51 +703,48 @@ function towerParts(M) {
 }
 async function runCh11(h, M) {
   const Run = M.get('Run'), SEG = M.get('SEGMENTS');
-  const T = towerParts(M);
   const mkRun = (label) => { const R = new Run(h.fakeBrowser, label); R.page = h.proxy; R.ctx = h.ctxFake; return R; };
   const R = mkRun('A');
-  for (const seg of ['temple', 'magong', 'flats', 'xuanwu', 'voyage', 'field']) {
+  for (const seg of ['temple', 'magong', 'flats', 'xuanwu', 'voyage', 'field', 'tower', 'breath']) {
     log('ch11', 'segment ' + seg);
+    h.watch && h.watch.reset();
     await SEG[seg](R);
     await R.health(seg);
   }
-  log('ch11', "segment tower (1F–5F, up to 她的記憶)");
-  await T.a(R);
-  // ---- the finale branch: save before the last optional 心燈 (she 4-3 她的記憶)
+  // ---- the finale branch: 一息界, the light reaches the seat; the next step starts 燈心 → ending (count-based)
   const branchFile = path.join(SAVES, 'ch11_branch.json');
   const meta = await h.save(2, branchFile);
   const L = meta.lanterns, TH = await h.ev(() => G.Lanterns.THRESHOLD);
-  REPORT.endings.branch = { lanterns: L, threshold: TH, lanternIds: await h.ev(() => Object.keys(G.state.lanterns)), map: await h.ev(() => G.mapScene.def.id) };
-  log('ch11', `finale branch saved: 心燈 ${L} / threshold ${TH} — 她的記憶 adds 1 → true needs ${L + 1} ≥ ${TH}, normal needs ${L} < ${TH}`);
-  await h.shot('ch11_branch_5F');
+  REPORT.endings.branch = { lanterns: L, threshold: TH, lanternIds: await h.ev(() => Object.keys(G.state.lanterns)), map: await h.ev(() => G.mapScene.def.id), lv: await h.partyLv() };
+  log('ch11', `finale branch saved (slot 2): 心燈 ${L} / threshold ${TH} → this save leads to ${L >= TH ? '千燈 (true)' : '彼岸 (normal)'} as it stands`);
+  await h.shot('ch11_branch');
   saveReport();
   if (!OPT.endings) return { checks: okList(M.get('results')) };
-  // ---- true ending: collect the six memories, the warden, 一息界, the finale
+  const fin = (k) => h.ev((k) => ({ f: ['ending_true', 'ending_normal', 'game_clear', 'cleared_true', 'cleared_normal', 'ch11_done', 'ch11_reunion', 'ch11_yexuan', 'ch11_nianer', 'ch11_wuxiang', 'qiandeng'].reduce((a, x) => { a[x] = !!G.state.flags[x]; return a; }, {}),
+    n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()), lv: G.state.party.map((id) => id + ':' + G.state.members[id].lv) }), k);
+  // ---- true ending
   const tTrue = Date.now();
-  log('ch11', 'TRUE route: 她的記憶 → 千年燈塔守 → 一息界 → 燈心 → 千燈');
-  await T.mem(R);
-  await T.b(R);
-  await SEG.breath(R); await R.health('breath');
+  log('ch11', 'TRUE route: 燈心 → 夜玄 → 夜念 → 無相 → 千燈 → credits → title');
   h.watch && h.watch.reset();
   await SEG.true(R); await R.health('true');
-  const fin = await h.ev(() => ({ f: { ending_true: !!G.state.flags.ending_true, ending_normal: !!G.state.flags.ending_normal, game_clear: !!G.state.flags.game_clear, cleared_true: !!G.state.flags.cleared_true }, n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()), lv: G.state.party.map((id) => id + ':' + G.state.members[id].lv) }));
-  REPORT.endings.true = Object.assign({ sec: Math.round((Date.now() - tTrue) / 1000) }, fin);
-  log('ch11', 'TRUE route finished: ' + JSON.stringify(fin));
+  REPORT.endings.true = Object.assign({ sec: Math.round((Date.now() - tTrue) / 1000) }, await fin());
+  log('ch11', 'TRUE route finished: ' + JSON.stringify(REPORT.endings.true));
   await h.shot('ending_true_title');
   saveReport();
-  // ---- normal ending: reload the branch save in a fresh page, leave 她的記憶 alone
+  // ---- normal ending: the same save in a fresh page. The ending is decided only by G.Lanterns.count() >= THRESHOLD:
+  // with L >= TH no player action left can lead to 彼岸, so the driver's own lantern removal (ch11.test.js 'normal') is
+  // let through — the ONE forced state change of the run, logged as FORCED.
   const tNorm = Date.now();
-  log('ch11', 'NORMAL route: reload the branch save in a fresh page, skip 她的記憶 → 彼岸');
+  log('ch11', 'NORMAL route: reload the branch save in a fresh page → 彼岸');
   await h.loadInFreshPage(branchFile);
   h.watch && h.watch.reset();
   const R2 = mkRun('B');
   await h.ev(() => G.Debug.setAutoplay(true));
-  await T.b(R2);
-  await SEG.breath(R2); await R2.health('breath (B)');
-  await SEG.normal(R2); await R2.health('normal');
-  const fin2 = await h.ev(() => ({ f: { ending_true: !!G.state.flags.ending_true, ending_normal: !!G.state.flags.ending_normal, game_clear: !!G.state.flags.game_clear, cleared_normal: !!G.state.flags.cleared_normal }, n: G.Lanterns.count(), top: G.Scenes.nameOf(G.Scenes.top()) }));
-  REPORT.endings.normal = Object.assign({ sec: Math.round((Date.now() - tNorm) / 1000) }, fin2);
-  log('ch11', 'NORMAL route finished: ' + JSON.stringify(fin2));
+  h.allowForced = L >= TH ? ['lanterns'] : null;
+  try { await SEG.normal(R2); } finally { h.allowForced = null; }
+  await R2.health('normal');
+  REPORT.endings.normal = Object.assign({ sec: Math.round((Date.now() - tNorm) / 1000), forcedLanternRemoval: L >= TH }, await fin());
+  log('ch11', 'NORMAL route finished: ' + JSON.stringify(REPORT.endings.normal));
   await h.shot('ending_normal_title');
   return { checks: okList(M.get('results')) };
 }
@@ -822,7 +845,6 @@ async function main() {
       if (boundaryOnly) { rec.status = 'BOUNDARY'; delete rec.start; saveReport(); break; }
       // ---------------------------------------------------------- the chapter
       log('chain', `═════ chapter ${n} ═════`);
-      h.retriesLeft = OPT.retries;
       const wd = watchdog(h);
       h.watch = wd;
       let res;
@@ -839,6 +861,8 @@ async function main() {
         rec.dump = await h.dump(`chapter ${n} failed: ${rec.error}`);
         rec.battles = await h.ev(() => window.__chain.battles.slice()).catch(() => []);
         for (const b of rec.battles) REPORT.battles.push(Object.assign({ ch: n }, b));
+        rec.wipes = await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []);
+        for (const w of rec.wipes) (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w));
         rec.checks = okList((() => { try { return M.get('results'); } catch (_) { return []; } })()).filter((c) => !c.ok);
         log('FAIL', `chapter ${n}: ${rec.error.split('\n')[0]}`);
         status = 1;
@@ -849,6 +873,8 @@ async function main() {
       rec.checks = (res.checks || []).filter((c) => !c.ok);
       rec.checksTotal = res.total || (res.checks || []).length;
       rec.battles = await h.ev(() => { const b = window.__chain.battles.slice(); window.__chain.battles.length = 0; return b; });
+      rec.wipes = await h.ev(() => window.__chain.wipes.splice(0)).catch(() => []);
+      for (const w of rec.wipes) { (REPORT.wipes = REPORT.wipes || []).push(Object.assign({ retried: true }, w)); log('WIPE', `ch${n} party wiped by ${w.troop} (${(w.names || []).join('+')}) at ${(w.lv || []).join(' ')} on ${w.map} — retried (重新挑戰)`); }
       for (const b of rec.battles) {
         const row = balanceRow(b);
         if (row) { b.balance = row; const lv = b.lv.map((x) => +String(x).split(':')[1]).filter(Boolean); b.lvGap = Math.min(...lv) - row.lv; }
