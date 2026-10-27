@@ -641,7 +641,7 @@ G.Battle = (() => {
       }
       tg.hp = Math.max(0, tg.hp - dmg);
       // HP floor: some story bosses cannot fall until a finisher skill lands (o.hpFloor: {enemyId: fraction}, o.finishers: [skillIds])
-      const floorK = tg.side === 'enemy' && this.o.hpFloor && this.o.hpFloor[tg.id];
+      const floorK = tg.side === 'enemy' && this.o.hpFloor ? this.o.hpFloor[tg.id] : null;  // never a party member
       if (floorK != null && !(o.skillId && (this.o.finishers || []).includes(o.skillId))) {
         tg.hp = Math.max(tg.hp, Math.ceil(tg.mhp * floorK));
         if (tg.hp <= Math.ceil(tg.mhp * floorK) && !tg.floorHit) { tg.floorHit = true; if (this.o.onFloor) this.floorEvent = tg; }
