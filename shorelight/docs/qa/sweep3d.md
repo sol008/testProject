@@ -76,7 +76,8 @@ Verified as already fixed: the env report's `G.FX.vision` buffer clear (fx.js), 
   `InstancedMesh` per 16×16 ground chunk (keeps culling), bake the `spin()` yaw into the instance matrix, and keep the
   holder nodes as invisible proxies for `objActive` / removal. `windify` already supports `instanceMatrix`.
 
-  Not done here: it touches object lifecycle, so it is not an "easy" fix.
+  Not done here: it touches object lifecycle, so it is not an "easy" fix. **Addressed later by G.Batch3D: see
+  [Batching](#batching).**
 - **O2 Triangle outliers come from characters.** Each Char3D is ≈18k triangles, so interiors with 6–8 NPCs reach
   200–330k, and anping_tower (23 actors) reaches 461k. A field-context LOD (no outline hull and lower-segment hair
   for NPCs more than 10 m away) would halve this.
