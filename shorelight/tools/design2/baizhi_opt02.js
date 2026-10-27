@@ -16,6 +16,7 @@
     const b = P2(0.3, 0.05);
     line(curve([b, [b[0] + 3, b[1] + 8], [b[0] + 1, b[1] + 16]]), C.red, 1.6);
   } });
+  B.HD02 = HD; // exposed for the in-game portrait bake (tools/design2/baizhi_portrait.html)
   function loopBun() {
     // 半紮 half-up loop at the back of the crown (the rest of the hair stays down)
     inHead(R, 0, () => {

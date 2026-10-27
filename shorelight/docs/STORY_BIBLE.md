@@ -76,7 +76,9 @@ vision realms, and helping each other across.
 - Look (client reference, see docs/design/REFERENCES.md): very long straight jet-black hair with a blue-black
   sheen, mostly worn down, slightly off-centre part; soft oval face; dark-brown almond eyes; a calm, dreamy,
   upward-drifting gaze and a faint knowing smile; a small beauty mark on her right cheek beside the nose; a long
-  drop earring; red string at the wrist; jade tag; a faint glow at the edges. Costume per the chosen v2 design.
+  drop earring; red string at the wrist; jade tag; a faint glow at the edges. **Costume (client pick, v2 #02 藍衫笛歌):**
+  an indigo Hakka 藍衫 to mid-calf with wide, turned-back light-blue cuffs, a dark 圍身裙 apron with a silver chain, black
+  trousers and cloth shoes; hair half-up with a jade comb and red string; jade flute (red-string jade tag tied to its end).
 - Companion: **麻糬 (Mochi)**, a big, very fluffy long-haired dilute calico cat from a 九份 teahouse. She
   senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks (糰子's opposite).
   In battle she is a water-element support assist (healing purr). On the field she sniffs out hidden spirit items.

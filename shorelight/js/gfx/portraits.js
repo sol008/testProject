@@ -1289,11 +1289,12 @@
   // ---------------- 白芷 Bai Zhi
   define('baizhi', {
     face: 'f',
-    faceOpt: { blush: 0.22 },
+    faceOpt: { blush: 0.18, eyeW: 38, eyeH: 29, slant: 0.09, chinY: 84 }, // softer almond eyes, oval face (reference)
     skin: Object.assign({}, SKIN.fair, { base: '#fff0e8', mid: '#fadcd0' }),
-    eye: { iris: ['#7a4a12', '#c98b2c', '#ffd77a', '#fff1b8'], lash: '#4a3640', whiteShade: '#b9c4e6' },
-    brow: { color: '#8c88a4', th: 0.9, halo: false },
-    hair: { base: '#e7edf6', dark: '#9fb0d2', light: '#ffffff', line: '#7f8db4', hi: '#ffffff' },
+    // client pick v2 #02 藍衫笛歌 + face/hair reference (docs/design/REFERENCES.md, docs/design/PICKS.md)
+    eye: { iris: ['#2a1810', '#4a3024', '#7a5238', '#c8a080'], lash: '#1e1418', whiteShade: '#c4c4d8' },
+    brow: { color: '#2a2228', th: 0.95, halo: false },
+    hair: { base: '#1d1b24', dark: '#0e0d14', light: '#46506e', line: '#08070c', hi: '#8a9cc4' },
     rimCol: '#e8fbff',
     aura(c) {
       const g = c.createRadialGradient(0, 10, 20, 0, 20, 145);
@@ -1318,34 +1319,29 @@
       K.lock(c, [56, -40, 76, 30, 64, 110, 74, 196], 26, { p: 0.4 });
     },
     body(c, S) {
-      // 褙子: pale aqua outer with straight parallel front bands over a cross-collar inner
-      S.robe(c, { sw: 106, swf: 94, y: 120, col: '#e3f4f3', colL: '#f4fbfb', colD: '#b9d9dc', line: '#7fa5b0', nl: -20, nr: 24 });
+      // indigo Hakka 藍衫, right-overlap 大襟 with light-blue piping, white inner collar
+      S.robe(c, { sw: 106, swf: 94, y: 120, col: '#36598a', colL: '#4a70a2', colD: '#26426a', line: '#182a48', nl: -20, nr: 24 });
       S.crossCollar(c, {
         L: [-18, 94], R: [22, 94], X: [4, 150],
-        layers: [{ col: '#cfe9ec', line: '#86aab4', w: 5 }, { col: '#fbfdff', line: '#9bb8c4', w: 5 }],
+        layers: [{ col: '#a9c9e6', line: '#5a7aa0', w: 6 }, { col: '#f4efe6', line: '#9aa4b4', w: 4 }],
         skin: S.skin.base, skinShade: S.skin.shade, trimW: 6,
       });
-      // 褙子 front bands
-      for (const [x0, x1, dir] of [[-30, -46, -1], [32, 50, 1]]) {
-        c.beginPath();
-        c.moveTo(x0, 96); c.bezierCurveTo(x0 + dir * 4, 130, x1, 160, x1 - dir * 2, 200);
-        c.lineTo(x1 + dir * 14, 200); c.bezierCurveTo(x1 + dir * 14, 160, x0 + dir * 16, 128, x0 + dir * 12, 98);
-        c.closePath();
-        c.fillStyle = '#a6d8da'; c.fill(); c.strokeStyle = '#5f97a3'; c.lineWidth = 1.3; c.stroke();
-        // sea-foam embroidery
-        c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 1.1;
-        for (let k = 0; k < 5; k++) {
-          const yy = 110 + k * 18, xx = U.lerp(x0, x1, (yy - 94) / 106) + dir * 6;
-          c.beginPath(); c.arc(xx, yy, 3.2, Math.PI * 0.9, Math.PI * 2.1); c.stroke();
-          c.beginPath(); c.arc(xx + dir * 3, yy + 6, 2, Math.PI, Math.PI * 2); c.stroke();
-        }
-      }
-      // shoulder embroidery: foam waves
-      c.strokeStyle = 'rgba(110,180,195,0.55)'; c.lineWidth = 1.2;
-      for (let k = 0; k < 5; k++) {
-        c.beginPath(); c.arc(-96 + k * 9, 150 + (k % 2) * 4, 5, Math.PI, TAU); c.stroke();
-        c.beginPath(); c.arc(64 + k * 8, 156 + (k % 2) * 4, 4, Math.PI, TAU); c.stroke();
-      }
+      // 大襟 side closure line sweeping to the wearer's right, with 盤扣 knot buttons
+      c.strokeStyle = '#a9c9e6'; c.lineWidth = 4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(22, 112); c.bezierCurveTo(40, 120, 58, 132, 70, 152); c.lineTo(72, 200); c.stroke();
+      c.strokeStyle = '#182a48'; c.lineWidth = 1; c.stroke();
+      c.fillStyle = '#e8ecf2';
+      for (const [x, y] of [[36, 118], [56, 132], [71, 160]]) { ell(c, x, y, 2.6, 2); c.fill(); c.strokeStyle = '#3a4a64'; c.lineWidth = 0.8; c.stroke(); }
+      // 圍身裙 apron bib with silver neck chain
+      c.beginPath();
+      c.moveTo(-46, 200); c.lineTo(-40, 164); c.quadraticCurveTo(4, 156, 46, 164); c.lineTo(52, 200); c.closePath();
+      c.fillStyle = '#2b2a3a'; c.fill(); c.strokeStyle = '#141320'; c.lineWidth = 1.3; c.stroke();
+      c.strokeStyle = 'rgba(169,201,230,0.55)'; c.lineWidth = 1.4;
+      c.beginPath(); c.moveTo(-38, 170); c.quadraticCurveTo(4, 162, 44, 170); c.stroke();
+      c.strokeStyle = '#d4dae4'; c.lineWidth = 1.5; c.setLineDash([2.2, 1.6]);
+      c.beginPath(); c.moveTo(-40, 166); c.bezierCurveTo(-34, 130, -14, 104, -8, 96); c.stroke();
+      c.beginPath(); c.moveTo(46, 166); c.bezierCurveTo(40, 130, 24, 106, 18, 98); c.stroke();
+      c.setLineDash([]);
     },
     front(c, S) {
       const K = S.K;
@@ -1380,29 +1376,26 @@
       K.strand(c, [-62, -40, -86, 0, -78, 40], 1, null, 0.6);
     },
     acc(c, S) {
-      // red string tie + lantern hairpin on the near side
-      const x = -70, y = -44;
       c.save();
-      c.strokeStyle = '#8a6a2a'; c.lineWidth = 2.4; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(x + 2, y - 2); c.lineTo(x + 14, y - 18); c.stroke();
-      c.strokeStyle = '#f0d070'; c.lineWidth = 1; c.stroke();
-      // lantern
-      const lg = c.createRadialGradient(x, y + 6, 1, x, y + 6, 11);
-      lg.addColorStop(0, '#ffe7a0'); lg.addColorStop(0.5, '#f05a3c'); lg.addColorStop(1, '#a8202a');
-      ell(c, x, y + 7, 7, 8.5); c.fillStyle = lg; c.fill();
-      c.strokeStyle = '#6a1018'; c.lineWidth = 1.1; c.stroke();
-      c.fillStyle = '#d9a640'; c.fillRect(x - 4, y - 2.5, 8, 2.5); c.fillRect(x - 4, y + 15, 8, 2.5);
-      c.strokeStyle = '#c33'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x, y + 17); c.lineTo(x, y + 25); c.stroke();
-      c.strokeStyle = 'rgba(120,20,30,0.5)'; c.lineWidth = 0.8;
-      c.beginPath(); c.moveTo(x, y - 1); c.lineTo(x, y + 15); c.stroke();
-      // red string tied around the side lock (wrapped twice, small bow)
-      c.strokeStyle = '#d0283a'; c.lineWidth = 2.2; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(-80, 110); c.quadraticCurveTo(-68, 116, -56, 108); c.stroke();
-      c.beginPath(); c.moveTo(-80, 116); c.quadraticCurveTo(-68, 122, -56, 114); c.stroke();
+      // half-up tie at the back of the crown: red string wraps + jade comb
+      c.strokeStyle = '#c3303a'; c.lineWidth = 2.4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(-74, -64); c.quadraticCurveTo(-66, -56, -58, -66); c.stroke();
+      c.beginPath(); c.moveTo(-76, -58); c.quadraticCurveTo(-67, -50, -58, -60); c.stroke();
       c.lineWidth = 1.6;
-      c.beginPath(); c.moveTo(-68, 117); c.quadraticCurveTo(-78, 124, -74, 134); c.stroke();
-      c.beginPath(); c.moveTo(-67, 117); c.quadraticCurveTo(-62, 128, -66, 138); c.stroke();
-      c.fillStyle = '#d0283a'; ell(c, -68, 117, 2.6, 2.2); c.fill();
+      c.beginPath(); c.moveTo(-66, -54); c.quadraticCurveTo(-76, -40, -72, -26); c.stroke();
+      c.beginPath(); c.moveTo(-65, -54); c.quadraticCurveTo(-60, -40, -63, -30); c.stroke();
+      const jg = c.createLinearGradient(-84, -86, -60, -70);
+      jg.addColorStop(0, '#c8eedd'); jg.addColorStop(0.5, '#9fd3bd'); jg.addColorStop(1, '#5fa88c');
+      c.beginPath(); c.moveTo(-86, -76); c.quadraticCurveTo(-72, -94, -56, -82); c.lineTo(-58, -76); c.quadraticCurveTo(-72, -86, -82, -72); c.closePath();
+      c.fillStyle = jg; c.fill(); c.strokeStyle = '#3c7a64'; c.lineWidth = 1; c.stroke();
+      // long drop earring (dark bead + jade drop) below the ear
+      c.strokeStyle = '#c9a24a'; c.lineWidth = 1.1;
+      c.beginPath(); c.moveTo(-66, 34); c.lineTo(-66, 52); c.stroke();
+      c.fillStyle = '#1a1a22'; ell(c, -66, 54, 2.6, 2.6); c.fill();
+      c.beginPath(); c.moveTo(-66, 57); c.lineTo(-66, 66); c.stroke();
+      c.fillStyle = '#9fd3bd'; ell(c, -66, 71, 3, 5); c.fill(); c.strokeStyle = '#3c7a64'; c.lineWidth = 0.8; c.stroke();
+      // beauty mark on her right (near) cheek beside the nose
+      c.fillStyle = 'rgba(70,40,36,0.85)'; ell(c, 4, 30, 1.6, 1.5); c.fill();
       c.restore();
     },
     live(c, t) {
@@ -2885,4 +2878,43 @@
     },
   });
 
+})();
+
+// ---------------------------------------------------------------- baked image portraits
+// Characters whose final art is baked from the design sheets (G.PortraitImages[id] = { expr: dataURL, expr_blink: … },
+// e.g. js/gfx/portraits_baizhi.js) are drawn from images: same box fitting / flip / dim / alpha contract, with blinking.
+(function () {
+  const vec = G.Portraits.draw;
+  const imgs = {};
+  function img(id, key) {
+    const set = G.PortraitImages && G.PortraitImages[id];
+    if (!set || !set[key]) return null;
+    const k = id + '|' + key;
+    if (!imgs[k]) { imgs[k] = new Image(); imgs[k].src = set[key]; }
+    return imgs[k].complete && imgs[k].naturalWidth ? imgs[k] : null;
+  }
+  G.Portraits.draw = function (ctx, id, expr, x, y, w, h, t, o = {}) {
+    const set = G.PortraitImages && G.PortraitImages[id];
+    if (!set) return vec.apply(this, arguments);
+    let e = expr && set[expr] ? expr : 'normal';
+    // blink: ~0.13 s every 3.2–5 s (per-character phase)
+    const per = 4.1, ph = ((t || 0) + 1.7) % per;
+    const blink = ph < 0.13 && set[e + '_blink'];
+    const im = img(id, blink ? e + '_blink' : e) || img(id, e);
+    if (!im) { img(id, 'normal'); return; } // decoding — draw nothing for a frame
+    const sc = Math.min(w / 300, h / 340);
+    const dw = 300 * sc, dh = 340 * sc;
+    const breathe = 1 + Math.sin((t || 0) * 1.6) * 0.004;
+    ctx.save();
+    ctx.globalAlpha *= o.alpha != null ? o.alpha : 1;
+    if (o.dim) ctx.filter = 'brightness(0.55) saturate(0.7)';
+    ctx.translate(x + w / 2, y + h);
+    if (o.flip) ctx.scale(-1, 1);
+    ctx.scale(1, breathe);
+    ctx.drawImage(im, -dw / 2, -dh, dw, dh);
+    ctx.restore();
+  };
+  // pre-decode
+  G.Portraits.preloadImages = function () { for (const id in (G.PortraitImages || {})) for (const k in G.PortraitImages[id]) img(id, k); };
+  if (G.PortraitImages) setTimeout(G.Portraits.preloadImages, 0);
 })();

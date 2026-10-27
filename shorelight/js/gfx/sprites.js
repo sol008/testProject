@@ -2661,13 +2661,14 @@
     bottom: { type: 'pants', color: '#2d2a34' }, shoes: { type: 'sandal', color: '#cfae72' },
     bracelet: { color: '#e0302a' }, back: 'sword', weapon: 'sword', aura: '#ff9a3c',
   });
-  define('baizhi', { // 白芷: very long silver-white hair (blue sheen) tied low with red string, lantern hairpin, pale aqua-white layered dress, faint glow
-    body: 'female', skin: SK.fair, eyes: '#d9a440', eyeStyle: 'soft', brows: 'soft',
-    hair: { style: 'center', color: '#e8f0f8', sheen: '#9cc4ee', back: 'lowtie', len: 0.78, tie: '#d83a3a', locks: 1.15, pins: [{ type: 'lantern' }] },
-    top: { color: '#e4f4f3', len: 0.86, closure: 'open', inner: '#fbfefe', trim: '#9ed6d4', sleeve: 'wide', cuff: '#bfe6e4', emb: '#8fcfd0' },
-    skirt: { color: '#c9eceb', len: 1.0, flare: 0.5, trim: '#a6dcdc' },
-    sash: { color: '#9fd2d8', w: 2.6, tails: true },
-    shoes: { type: 'cloth', color: '#d8eef0' }, hip: ['jade'],
+  define('baizhi', { // 白芷 — client pick v2 #02 藍衫笛歌: long black hair half-up (jade comb, red string), indigo Hakka 藍衫 to mid-calf
+    // with turned-back light-blue cuffs, dark 圍身裙 apron, black trousers, cloth shoes, jade flute (docs/design/v2/baizhi.md)
+    body: 'female', skin: '#f3dccb', eyes: '#4a3024', eyeStyle: 'soft', brows: 'soft', mouth: 'smile',
+    hair: { style: 'side', color: '#17151c', sheen: '#3a4a6a', back: 'long', len: 0.8, knot: 'halfup', tie: '#c3303a', locks: 1.2, pins: [{ type: 'gold', color: '#9fd3bd' }] },
+    top: { color: '#36598a', len: 0.78, closure: 'side', inner: '#f4efe6', trim: '#a9c9e6', sleeve: 'wide', cuff: '#a9c9e6' },
+    apron: { color: '#2b2a3a', len: 0.7 },
+    bottom: { type: 'pants', color: '#1e1d26' },
+    shoes: { type: 'cloth', color: '#2b2a3a' }, hip: ['jade'],
     glow: '#bfe8ff', weapon: 'flute', aura: '#7fd3ff',
   });
   define('hongying', { // 洛紅纓: black high ponytail with long red ribbon, crimson short robe, black leather vest & arm guards, white trousers, boots, red-tassel spear

@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>白芷 portrait bake</title>
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style></head>
+<body>
+<canvas id="cv"></canvas>
+<script src="baizhi_lib.js"></script>
+<script src="baizhi_helpers.js"></script>
+<script src="baizhi_opt02.js"></script>
+<script>
+// Bakes the in-game dialogue portrait of 白芷 (client pick v2 #02) from the exact design-sheet drawing.
+// ?expr=<name>&blink=1&k=<pixel scale>   canonical box 300x340 (bottom-aligned bust), transparent background.
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const expr = q.get('expr') || 'normal', blink = q.get('blink') === '1', k = parseFloat(q.get('k') || '2');
+  await document.fonts.ready;
+  const D = BZ.DESIGNS.find((d) => d.n === 2);
+  const F = BZ.HD02.F;
+  const base = JSON.parse(JSON.stringify({ eye: F.eye, brow: F.brow, mouth: F.mouth, blush: F.blush }));
+  const E = {
+    normal: {},
+    smile: { eye: { halfLid: 0.26 }, mouth: { type: 'smile', w: 0.07 } },
+    laugh: { eye: { closed: 'happy' }, mouth: { type: 'open', open: 0.05, w: 0.075 }, blush: 0.6 },
+    sad: { eye: { halfLid: 0.34, irisDy: 0.012 }, brow: { tilt: 0.022, arch: 0.006 }, mouth: { type: 'soft', w: 0.055 } },
+    cry: { eye: { halfLid: 0.4, irisDy: 0.014 }, brow: { tilt: 0.026, arch: 0.004 }, mouth: { type: 'soft', w: 0.05 }, tears: true },
+    angry: { eye: { halfLid: 0.12 }, brow: { tilt: -0.03, arch: 0.004 }, mouth: { type: 'soft', w: 0.05 } },
+    surprise: { eye: { h: 0.132, halfLid: 0.0 }, brow: { y: 0.44, arch: 0.024 }, mouth: { type: 'o', open: 0.035, w: 0.05 } },
+    think: { eye: { lookX: 0.042, irisDy: -0.016, halfLid: 0.2 }, brow: { tilt: 0.008 }, mouth: { type: 'soft', w: 0.05 } },
+    shy: { eye: { lookX: -0.03, irisDy: 0.01, halfLid: 0.32 }, brow: { tilt: 0.014 }, mouth: { type: 'smile', w: 0.055 }, blush: 1.0, blushLines: true },
+    hurt: { eye: { closed: true }, brow: { tilt: 0.028, arch: 0.004 }, mouth: { type: 'open', open: 0.025, w: 0.05 } },
+    serious: { eye: { halfLid: 0.14 }, brow: { tilt: -0.012 }, mouth: { type: 'soft', w: 0.055 } },
+    smug: { eye: { halfLid: 0.38, lookX: 0.03 }, mouth: { type: 'smile', w: 0.075 } },
+  }[expr] || {};
+  F.eye = Object.assign({}, base.eye, E.eye || {});
+  F.brow = Object.assign({}, base.brow, E.brow || {});
+  F.mouth = Object.assign({}, base.mouth, E.mouth || {});
+  F.blush = E.blush != null ? E.blush : base.blush;
+  F.blushLines = !!E.blushLines;
+  if (blink && !F.eye.closed) F.eye.closed = true;
+  const W = 300, H = 340, S = 2.55;           // design units → portrait px
+  const cv = document.getElementById('cv'), c = cv.getContext('2d');
+  cv.width = W * k; cv.height = H * k;
+  c.scale(k, k);
+  BZ.G.base = k;
+  const crownY = -428, top = 22;              // crown placed 22px below the box top
+  BZ.drawFigureLayer(c, D, W / 2 + 6, top - crownY * S, S, S);
+  if (E.tears) {
+    const P2 = BZ.HD02.P2;
+    for (const [x, len] of [[-0.2, 0.2], [0.2, 0.14]]) {
+      const [tx, ty] = P2(x, 0.66);
+      const sx = W / 2 + 6 + tx * S, sy = top + (ty - crownY) * S;
+      const g = c.createLinearGradient(0, sy, 0, sy + len * 60 * S);
+      g.addColorStop(0, 'rgba(210,235,255,0.95)'); g.addColorStop(1, 'rgba(210,235,255,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(sx, sy + len * 30 * S, 2.2, len * 30 * S, 0, 0, 7); c.fill();
+    }
+  }
+  document.body.dataset.ready = '1';
+})().catch((e) => { document.body.dataset.error = String(e && e.stack || e); document.body.dataset.ready = '1'; });
+</script>
+</body></html>
