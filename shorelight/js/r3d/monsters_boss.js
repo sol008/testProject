@@ -3010,5 +3010,253 @@ G.Mon3D = G.Mon3D || {
       },
     }),
   });
+
+  // ============================================================================ wind helpers
+  // tornado funnel: translucent lathe + spiral streak bands, all on a spinning bone
+  function funnel(R, bone, o) {
+    const pts = [];
+    for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([o.r0 + (o.r1 - o.r0) * pow(t, o.pow || 1.6), lerp(o.y0, o.y1, t)]); }
+    R.add(GEO.lathe(pts, 20), { b: bone, m: 'ghost', c: o.c, cell: 'wave', rep: [3, 2], at: [0, 0, 0] });
+    const n = o.bands || 3;
+    for (let k = 0; k < n; k++) {
+      const P = [];
+      for (let i = 0; i <= 24; i++) { const t = i / 24, a = t * TAU * (o.turns || 2.2) + k * TAU / n, r = (o.r0 + (o.r1 - o.r0) * pow(t, o.pow || 1.6)) * 1.08; P.push([cos(a) * r, lerp(o.y0, o.y1, t), sin(a) * r]); }
+      R.add(GEO.sweep(P, (u) => (o.bw || 0.03) * (0.4 + u), { sides: 4, ell: [1, 0.3], n: 60 }), { b: bone, m: o.bandM || 'soft', c: o.bandC || 0xffffff, cell: 'blankA', rep: [1, 1] });
+    }
+  }
+  const WIND = {
+    idle(k, o = {}) {
+      const b = sin(k.t * 1.5);
+      k.p('body', sin(k.t * 0.9) * 0.05, 0.05 + b * 0.05, 0); k.r('body', 0.05, sin(k.t * 0.6) * 0.1, sin(k.t * 0.9) * 0.05);
+      k.r('chest', b * 0.03); k.r('head', sin(k.t * 0.7) * 0.05, sin(k.t * 0.4) * 0.2, 0);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.2 + sin(k.t * 1.3 + s) * 0.12, 0, s * (o.out || 0.35)); k.r('fore' + L, -0.5 + sin(k.t * 1.5 + s) * 0.1); }
+    },
+  };
+
+  // ============================================================================ 九降風精 wind_sprite
+  // A sprite of the 九降風 (Hsinchu's ninth-month wind): a puff of cloud with a cross little face over a whirl of air and leaves.
+  defB('wind_sprite', {
+    h: 2.0, outline: 0.003, rim: 0.5, rimColor: 0xd0f0ff, shadow: true,
+    build(R) {
+      R.bone('body', 'root', [0, 0.9, 0]);
+      R.bone('head', 'body', [0, 1.45, 0]);
+      R.bone('spin', 'body', [0, 0.1, 0]);
+      for (const s of [-1, 1]) R.bone('arm' + sideL(s), 'head', [s * 0.42, 1.3, 0]);
+      // cloud head
+      const g = GEO.lumpy(GEO.sph(0.48, 0.42, 0.42, 20, 16), 0.12, 2.6, 3);
+      R.add(g, { b: 'head', c: (v) => Rig.mix(0xb8d4ec, 0xffffff, sm(1.2, 1.7, v.y)), cell: 'plain', at: [0, 1.48, 0] });
+      for (const [x, y, z, r] of [[-0.35, 1.62, 0.05, 0.22], [0.33, 1.66, -0.05, 0.25], [0.0, 1.82, -0.05, 0.25], [-0.15, 1.3, 0.2, 0.18]]) R.add(GEO.lumpy(GEO.sph(r, r * 0.85, r, 12, 10), 0.1, 3, x * 9), { b: 'head', c: 0xf0f8ff, cell: 'plain', at: [x, y, z] });
+      // face: big eyes, determined brows, little open mouth
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.07, 0.09, 0.03, 12, 8), { b: 'head', c: 0x1a2a40, cell: 'plain', at: [s * 0.14, 1.5, 0.42] });
+        R.add(GEO.sph(0.022, 0.022, 0.01, 6, 4), { b: 'head', c: 0xffffff, cell: 'plain', at: [s * 0.14 - 0.02, 1.53, 0.45] });
+        R.add(GEO.box(0.12, 0.022, 0.02, 0.008), { b: 'head', c: 0x1a2a40, cell: 'plain', at: [s * 0.15, 1.63, 0.41], rot: [0, 0, s * 0.35] });
+      }
+      R.add(GEO.sph(0.035, 0.045, 0.02, 8, 6), { b: 'head', c: 0x3a1a2a, cell: 'plain', at: [0, 1.38, 0.43] });
+      // little cloud arms
+      for (const s of [-1, 1]) R.add(GEO.lumpy(GEO.sph(0.12, 0.1, 0.1, 10, 8), 0.12, 4), { b: 'arm' + sideL(s), c: 0xf0f8ff, cell: 'plain', at: [s * 0.55, 1.25, 0.05] });
+      // whirlwind body and a 注連-style rope charm
+      funnel(R, 'spin', { y0: 0.1, y1: 1.2, r0: 0.05, r1: 0.42, c: 0xc8e4f8, bands: 3, turns: 2, bw: 0.025 });
+      R.add(GEO.tor(0.3, 0.025, 6, 20), { b: 'body', c: 0xd8c090, cell: 'rope', at: [0, 1.05, 0], rot: [PI / 2, 0, 0] });
+      R.add(GEO.card(0.08, 0.2, 1, 1), { m: 'cut', b: 'body', c: 0xffffff, cell: 'paper', decal: true, at: [0.22, 0.85, 0.22], rot: [0, 0.8, 0] });
+      R.fx({ mode: 'swirl', n: 16, at: [0, 0.1, 0], box: [0.05, 0.05, 0.05], col: [0xc08040, 0x8a6a30, 0xa0b040], size: 0.09, speed: 0.6, p: [0.6, 1.3, 1.5], blend: 'normal' });
+      R.fx({ mode: 'swirl', n: 20, at: [0, 0.1, 0], box: [0.05, 0.05, 0.05], col: [0xe0f4ff], size: 0.05, speed: 0.9, p: [0.5, 1.2, 1.6] });
+    },
+    always(k) { k.r('spin', 0, -k.t * 6, 0); },
+    idle(k) { WIND.idle(k); k.r('arm' + 'L', 0, 0, sin(k.t * 2) * 0.2); k.r('armR', 0, 0, -sin(k.t * 2) * 0.2); },
+    move(k) { k.p('body', 0, 0.1, 0); k.r('body', 0.3, 0, sin(k.t * 4) * 0.08); },
+    clips: {
+      attack(k) {
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.p('body', 0, 0.1 * back, -0.2 * back + 0.7 * hit); k.r('body', -0.3 * back + 0.5 * hit); k.s('head', -0.1 * back + 0.12 * hit, 0.15 * back - 0.08 * hit, -0.1 * back + 0.12 * hit);
+        k.fx.glow += hit;
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); k.p('body', 0, 0.3 * up, 0); k.s('spin', 0.5 * up); k.r('armL', 0, 0, -0.8 * up); k.r('armR', 0, 0, 0.8 * up); k.fx.glow += up; },
+      hurt: (k) => GEN.hurt(k), die: (k) => GEN.die(k), special: (k) => GEN.special(k), enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 風魔 wind_demon (boss)
+  // A cracked ever-burning lantern in the 五指山 wind-cave swallowed too many lost souls, knotted with the 九降風 and became
+  // the Wind Demon: a storm-skinned torso on a howling tornado, bone mask, the broken lantern burning in its chest.
+  // Phase 2: the lantern bursts red, the tornado widens and the swallowed souls whirl out.
+  defB('wind_demon', {
+    h: 4.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0xb8e8ff, wide: 1.3, phaseGlow: 1.5,
+    build(R) {
+      biped(R, { hip: 2.0, chest: 2.75, neck: 3.4, head: 3.65, sw: 0.72, sy: 3.25, arm: 1.5, hw: 0.2, armOut: 0.25, legs: false, cz: 0.05 });
+      R.bone('spin', 'body', [0, 0.0, 0]);
+      const SK = 0x3e4a64, SK2 = 0x6a7a98, BONE = 0xdfe4ea, ICE = 0x9ae8ff;
+      const storm = (v) => Rig.mix(SK, SK2, sm(0.4, 0.7, fbm(v.x * 2, v.y * 2, v.z * 2)));
+      torso(R, { y0: 1.9, y1: 3.4, r: (t) => 0.55 + 0.25 * sm(0.2, 0.7, t) - 0.3 * sm(0.8, 1, t), depth: 0.75, c: storm, cell: 'streak' === 'x' ? 'skin' : 'skin', rep: [3, 2] });
+      R.add(GEO.lumpy(GEO.sph(0.62, 0.42, 0.45, 18, 12), 0.08, 2.5), { b: 'chest', c: storm, cell: 'skin', rep: [3, 2], at: [0, 3.05, 0.0] });
+      // broken lantern in the chest (red paper, split ribs, flame inside)
+      R.add(GEO.lathe([[0.001, -0.22], [0.16, -0.2], [0.24, -0.08], [0.26, 0.05], [0.22, 0.18], [0.12, 0.24], [0.001, 0.25]], 12), { b: 'chest', m: 'glow', c: 0xff7040, cell: 'lantern', rep: [3, 1], at: [0, 2.75, 0.45] });
+      R.add(GEO.tor(0.27, 0.025, 6, 16), { b: 'chest', c: 0x3a2a1a, cell: 'wood', at: [0, 2.75, 0.45], rot: [PI / 2, 0, 0] });
+      glowLine(R, [[0.05, 2.98, 0.63], [0.0, 2.85, 0.68], [0.07, 2.72, 0.7], [0.0, 2.6, 0.67]], 0.02, 0x1a0a08, { m: 'body' });
+      // bone mask with horns, ice-blue eyes, fanged maw
+      R.add(GEO.lumpy(GEO.sph(0.38, 0.36, 0.36, 16, 12), 0.05, 3), { b: 'head', c: storm, cell: 'skin', at: [0, 3.65, 0.08] });
+      faceShell(R, 'windmask', [0, 3.7, 0.1], 0.4, 0.33, 0.38, { b: 'head', c: BONE, wide: 1.1, t0: 0.3, tl: 1.4 });
+      R.bone('jaw', 'head', [0, 3.5, 0.2]);
+      R.add(GEO.sph(0.3, 0.12, 0.28, 14, 8), { b: 'jaw', c: BONE, cell: 'stone', at: [0, 3.38, 0.28] });
+      R.add(GEO.sph(0.25, 0.1, 0.24, 12, 6), { b: 'jaw', c: 0xffffff, cell: 'maw', uvp: 'y', at: [0, 3.45, 0.3] });
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.06, 0.04, 0.03, 8, 6), { b: 'head', m: 'glow', c: ICE, cell: 'blank', at: [s * 0.15, 3.76, 0.43] });
+        R.add(GEO.sweep([[s * 0.28, 3.88, -0.05], [s * 0.5, 4.1, -0.15], [s * 0.55, 4.35, -0.35], [s * 0.45, 4.5, -0.55]], (u) => 0.08 * (1 - u * 0.9), { sides: 8 }), { b: 'head', c: BONE, cell: 'stone' });
+        for (let i = 0; i < 3; i++) R.add(GEO.cone(0.035, 0.14, 5), { b: 'jaw', c: 0xf4f0e0, at: [s * (0.08 + i * 0.07), 3.46, 0.48 - i * 0.05] });
+      }
+      // wild mane of wind streaks swept back (additive streak cards) — spring-lagged
+      for (let i = 0; i < 5; i++) strand(R, 'mane' + i, 'head', [[(i - 2) * 0.15, 3.95, -0.1], [(i - 2) * 0.22, 4.0, -0.5], [(i - 2) * 0.3, 3.9, -0.95]], { r: 0.1, ell: [1, 0.2], c: 0x8aa8d0, cell: 'streak', m: 'soft', k: 0.08, g: -0.2, tip: 0.3 });
+      // huge arms with claws
+      limbs(R, { arm: { r: (u) => 0.24 - u * 0.08, c: storm, cell: 'skin', rep: [2, 3] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s), H = R.B['hand' + L].pos;
+        R.add(GEO.lumpy(GEO.sph(0.38, 0.3, 0.34, 14, 10), 0.08, 3), { b: 'arm' + L, c: storm, cell: 'skin', at: [s * 0.8, 3.25, 0] });
+        R.add(GEO.lumpy(GEO.sph(0.2, 0.22, 0.18, 10, 8), 0.06, 4), { b: 'hand' + L, c: storm, cell: 'skin', at: [H.x, H.y - 0.05, H.z] });
+        for (let i = 0; i < 4; i++) R.add(GEO.sweep([[H.x + (i - 1.5) * 0.08 * s, H.y - 0.1, H.z + 0.08], [H.x + (i - 1.5) * 0.11 * s, H.y - 0.35, H.z + 0.2], [H.x + (i - 1.5) * 0.12 * s, H.y - 0.5, H.z + 0.12]], (u) => 0.035 * (1 - u * 0.9), { sides: 5 }), { b: 'hand' + L, c: BONE, cell: 'stone' });
+        R.add(GEO.tor(0.18, 0.04, 6, 14), { b: 'fore' + L, c: 0xd8c090, cell: 'rope', at: R.B['fore' + L].pos.toArray(), rot: [PI / 2, 0, 0] });
+      }
+      // tornado lower body
+      funnel(R, 'spin', { y0: 0.0, y1: 2.15, r0: 0.18, r1: 0.75, c: 0x8aa0c8, bands: 4, turns: 2.5, bw: 0.06, pow: 1.4 });
+      const pb = R.phaseBone('wide', 'spin', [0, 0, 0], 2);
+      funnel(R, pb, { y0: 0.0, y1: 1.6, r0: 0.6, r1: 1.4, c: 0x6a80b0, bands: 3, turns: 1.6, bw: 0.08, pow: 1 });
+      R.fx({ mode: 'swirl', n: 40, at: [0, 0.05, 0], box: [0.1, 0.1, 0.1], col: [0xd8ecff, 0xa0c8f0], size: 0.08, speed: 0.6, p: [0.9, 2.2, 1.0] });
+      R.fx({ mode: 'orbit', n: 16, at: [0, 2.6, 0], box: [0.1, 1.2, 0.1], col: [0xc0f0ff, 0xffffff], size: 0.16, speed: 0.7, p: [1.5, 0.5, 1] });
+      R.fx({ mode: 'swirl', n: 24, at: [0, 0.05, 0], box: [0.1, 0.1, 0.1], col: [0x8a6a40, 0x6a5a30], size: 0.1, speed: 0.4, p: [1.0, 1.5, 1.2], blend: 'normal' });
+      R.light({ b: 'chest', at: [0, 2.75, 0.8], color: '#ff8050', i: 1.3, r: 5, flicker: 0.35 });
+    },
+    always(k) { k.r('spin', 0, -k.t * 5, 0); },
+    onPhase(inst, n) { inst.U.uHue.value = n > 1 ? -0.25 : 0; },
+    idle(k) { WIND.idle(k, { out: 0.45 }); k.r('jaw', 0.15 + 0.1 * sin(k.t * 1.3)); k.r('head', -0.1); },
+    move(k) { k.p('body', 0, 0.1, 0); k.r('body', 0.25, 0, sin(k.t * 3) * 0.06); },
+    clips: humClips({
+      attack(k) {
+        // raking claw swipe
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.42), hit = pulse(u, 0.36, 0.46, 0.6, 0.95);
+        k.r('body', 0, 0.5 * back - 0.6 * hit, 0); k.p('body', 0, 0, 0.6 * hit);
+        k.r('armR', -1.4 * back - 0.6 * hit, 0, 1.0 * back - 0.6 * hit); k.r('foreR', -1.0 * back); k.r('jaw', 0.6 * hit);
+        k.fx.glow += hit;
+      },
+      cast(k) { HUM.cast(k, { float: 0.2 }); k.r('jaw', 0.8 * pulse(k.u, 0.05, 0.35, 0.75, 1)); k.s('spin', 0.3 * pulse(k.u, 0.05, 0.35, 0.75, 1)); },
+      special(k) {
+        // tempest roar: rises, arms flung wide, tornado swells
+        const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1);
+        k.p('body', 0, 0.5 * up, 0); k.r('chest', -0.3 * up); k.r('head', -0.4 * up); k.r('jaw', 1.0 * up);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -1.2 * up, 0, s * 1.2 * up); }
+        k.s('spin', 0.5 * up); k.fx.glow += 2.5 * up;
+      },
+    }),
+  });
+
+  // ============================================================================ 落山風靈 fallwind (boss)
+  // The 落山風 that roars down from the Central Range onto 恆春 every winter: a sand-gold beast rising from a whirl of dust,
+  // a mane of wind-whipped grass, long claws. It means no harm — the tide-sickness made it forget when to stop.
+  // Phase 2: the dust storm thickens; the mane flares and its eyes blaze.
+  defB('fallwind', {
+    h: 4.7, boss: true, outline: 0.003, rim: 0.45, rimColor: 0xffe8b0, wide: 1.3, phaseGlow: 1.5,
+    build(R) {
+      biped(R, { hip: 1.4, chest: 2.4, neck: 3.1, head: 3.25, sw: 0.62, sy: 2.85, arm: 1.75, hw: 0.2, armOut: 0.3, legs: false, cz: 0.25, nz: 0.35, hz: 0.75 });
+      R.bone('spin', 'root', [0, 0, 0]);
+      R.bone('jaw', 'head', [0, 3.15, 0.95]);
+      const SAND = 0xd0a868, SAND2 = 0x9a7840, GOLD = 0xf0d090;
+      const dune = (v) => Rig.mix(SAND2, SAND, sm(0.35, 0.7, fbm(v.x * 2.2, v.y * 2.2 - 3, v.z * 2.2)));
+      // hunched body rising out of the dust, tapering into the vortex
+      torso(R, { y0: 0.6, y1: 2.95, r: (t) => 0.75 - 0.25 * t + 0.25 * sm(0.4, 0.75, t) - 0.25 * sm(0.85, 1, t), depth: 0.85, c: dune, cell: 'sand', rep: [3, 3], z: 0.08 });
+      R.add(GEO.lumpy(GEO.sph(0.75, 0.55, 0.6, 18, 12), 0.12, 2.2, 5), { b: 'chest', c: dune, cell: 'sand', rep: [3, 2], at: [0, 2.55, 0.0] });
+      // long head: sloped skull, glowing slit eyes, fanged jaw
+      const hd = GEO.lumpy(GEO.sph(0.36, 0.3, 0.55, 16, 12), 0.05, 3); GEO.warp(hd, (v) => { if (v.z > 0) v.y -= v.z * 0.25; });
+      R.add(hd, { b: 'head', c: dune, cell: 'sand', at: [0, 3.3, 0.85] });
+      R.add(GEO.sph(0.3, 0.12, 0.45, 14, 8), { b: 'jaw', c: dune, cell: 'sand', at: [0, 3.08, 0.98] });
+      R.add(GEO.sph(0.26, 0.08, 0.4, 12, 6), { b: 'jaw', c: 0xffffff, cell: 'maw', uvp: 'y', at: [0, 3.14, 1.0] });
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.09, 0.035, 0.04, 8, 6), { b: 'head', m: 'glow', c: 0xfff0a0, cell: 'blank', at: [s * 0.17, 3.38, 1.18], rot: [0, s * 0.5, s * -0.2] });
+        for (let i = 0; i < 4; i++) R.add(GEO.cone(0.03, 0.14, 5), { b: 'head', c: 0xf8f0d8, at: [s * (0.12 + i * 0.04), 3.12, 1.3 - i * 0.12], rot: [PI, 0, 0] });
+      }
+      // grass-blade mane flaring back (spring-lagged cards)
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 8 - 0.5) * 2.2;
+        strand(R, 'mane' + i, 'head', [[sin(a) * 0.25, 3.45, 0.75], [sin(a) * 0.55, 3.75 + cos(a) * 0.2, 0.35], [sin(a) * 0.85, 3.9 + cos(a) * 0.25, -0.15]], { r: 0.12, ell: [1, 0.15], c: Rig.mix(0xb8a050, 0xe8d890, i / 8), cell: 'frond', m: 'cut', k: 0.1, g: 0.15, tip: 0.35, up: [0, 0, 1] });
+      }
+      // long arms with sickle claws
+      limbs(R, { arm: { r: (u) => 0.22 - u * 0.08, c: dune, cell: 'sand', rep: [2, 4] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s), H = R.B['hand' + L].pos;
+        R.add(GEO.lumpy(GEO.sph(0.32, 0.28, 0.3, 12, 8), 0.08, 3), { b: 'arm' + L, c: dune, cell: 'sand', at: [s * 0.68, 2.85, 0.25] });
+        R.add(GEO.lumpy(GEO.sph(0.16, 0.18, 0.16, 10, 8), 0.06, 4), { b: 'hand' + L, c: dune, cell: 'sand', at: [H.x, H.y, H.z] });
+        for (let i = 0; i < 3; i++) R.add(GEO.sweep([[H.x + (i - 1) * 0.1 * s, H.y - 0.08, H.z + 0.08], [H.x + (i - 1) * 0.12 * s, H.y - 0.45, H.z + 0.35], [H.x + (i - 1) * 0.1 * s, H.y - 0.55, H.z + 0.6]], (u) => 0.045 * (1 - u * 0.9), { sides: 5 }), { b: 'hand' + L, c: 0xf0e8d0, cell: 'stone' });
+      }
+      // dust vortex and pool
+      funnel(R, 'spin', { y0: 0.02, y1: 1.3, r0: 1.4, r1: 0.7, c: 0xc8a868, bands: 4, turns: 1.4, bw: 0.07, pow: 1, bandC: 0xf0d8a0 });
+      R.add(GEO.cyl(1.6, 1.8, 0.04, 28), { b: 'root', m: 'soft', c: 0x8a6a3a, cell: 'blankA', at: [0, 0.02, 0] });
+      const pb = R.phaseBone('storm', 'spin', [0, 0, 0], 2);
+      funnel(R, pb, { y0: 0.0, y1: 3.0, r0: 1.9, r1: 2.3, c: 0xb89860, bands: 5, turns: 1.2, bw: 0.1, pow: 1, bandC: 0xffe8b0 });
+      R.fx({ mode: 'swirl', n: 50, at: [0, 0.05, 0], box: [0.2, 0.1, 0.2], col: [0xc8a060, 0xe0c080, 0x9a7840], size: 0.22, speed: 0.4, p: [1.6, 1.6, 0.8], blend: 'normal' });
+      R.fx({ mode: 'swirl', n: 30, at: [0, 0.05, 0], box: [0.2, 0.1, 0.2], col: [0xfff0c0], size: 0.05, speed: 0.7, p: [1.3, 2.4, 1.0] });
+      R.fx({ mode: 'wander', n: 10, at: [0, 3.6, 0.4], box: [1.6, 0.8, 1.2], col: [0xd8c070], size: 0.06, speed: 1.2, p: [0.6, 0.5, 1] });
+    },
+    always(k) { k.r('spin', 0, -k.t * 2.5, 0); },
+    idle(k) {
+      WIND.idle(k, { out: 0.5 }); k.r('body', 0.2); k.r('jaw', 0.2 + 0.15 * sin(k.t * 1.1)); k.r('head', 0.1, sin(k.t * 0.5) * 0.3, 0);
+      k.r('armL', -0.5); k.r('armR', -0.5); k.r('foreL', -0.8); k.r('foreR', -0.8);
+    },
+    move(k) { k.p('body', 0, 0.1, 0.1); k.r('body', 0.4, 0, sin(k.t * 3) * 0.06); },
+    clips: humClips({
+      attack(k) {
+        // double claw rake
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.42), hit = pulse(u, 0.36, 0.46, 0.62, 0.95);
+        k.r('body', -0.2 * back + 0.5 * hit); k.p('body', 0, 0.2 * back, 0.6 * hit);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -2.2 * back + 0.2 * hit, 0, s * (0.8 * back - 0.4 * hit)); k.r('fore' + L, -0.4 * back); }
+        k.r('jaw', 0.7 * hit); k.fx.glow += hit;
+      },
+      cast(k) { HUM.cast(k, { float: 0.3 }); k.r('jaw', 0.9 * pulse(k.u, 0.05, 0.35, 0.75, 1)); },
+      special(k) {
+        // downslope gale: rears back, then lunges with the whole storm
+        const u = k.u, up = pulse(u, 0.05, 0.4, 0.4, 0.52), go = pulse(u, 0.45, 0.58, 0.72, 1);
+        k.r('body', -0.5 * up + 0.7 * go); k.p('body', 0, 0.5 * up, 1.0 * go); k.r('jaw', 1.0 * up);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -2.6 * up, 0, s * 0.9 * up); }
+        k.s('spin', 0.6 * go); k.fx.glow += 2 * (up + go);
+      },
+    }),
+  });
+
+  // ============================================================================ 霧精 fog_spirit
+  // Mist of the 阿里山 sea of clouds that should have lifted at dawn — the tide's breath climbed the mountain and it can't.
+  defB('fog_spirit', {
+    h: 2.2, outline: 0, rim: 0.6, rimColor: 0xffffff, ao: 0.1,
+    build(R) {
+      R.bone('body', 'root', [0, 0.9, 0]);
+      R.bone('head', 'body', [0, 1.45, 0]);
+      for (const s of [-1, 1]) R.bone('arm' + sideL(s), 'body', [s * 0.45, 1.15, 0.05]);
+      const W = 0xf4f8fc, B = 0xc8d4e4;
+      // soft body of overlapping lumps (no outline, translucent rim): bright head, wispy lower body
+      R.add(GEO.lumpy(GEO.sph(0.42, 0.45, 0.4, 20, 16), 0.1, 2.4, 2), { b: 'head', c: (v) => Rig.mix(B, W, sm(1.1, 1.6, v.y)), cell: 'plain', at: [0, 1.45, 0] });
+      for (const [x, y, z, r] of [[-0.3, 1.2, 0.05, 0.3], [0.3, 1.18, -0.05, 0.3], [0, 1.05, 0.1, 0.32], [0.1, 1.72, -0.1, 0.25]]) R.add(GEO.lumpy(GEO.sph(r, r * 0.9, r, 12, 10), 0.12, 3, x * 7 + y), { b: y > 1.5 ? 'head' : 'body', c: W, cell: 'plain', at: [x, y, z] });
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.065, 0.085, 0.03, 12, 8), { b: 'head', c: 0x2a3a5a, cell: 'plain', at: [s * 0.13, 1.5, 0.4] });
+        R.add(GEO.sph(0.022, 0.022, 0.01, 6, 4), { b: 'head', m: 'glow', c: 0xb0e0ff, cell: 'blank', at: [s * 0.13 - 0.015, 1.53, 0.43] });
+        R.add(GEO.lumpy(GEO.sph(0.16, 0.13, 0.13, 10, 8), 0.15, 4), { b: 'arm' + sideL(s), c: W, cell: 'plain', at: [s * 0.55, 1.1, 0.08] });
+      }
+      R.add(GEO.sph(0.035, 0.045, 0.02, 8, 6), { b: 'head', c: 0x2a3a5a, cell: 'plain', at: [0, 1.37, 0.41] });
+      // ghostly skirt of mist
+      wispTail(R, { y0: 0.95, r: 0.42, c: 0xdce8f4, pts: [[0, 0.95, 0], [0.02, 0.65, -0.05], [0.08, 0.38, -0.15], [0.18, 0.15, -0.3]] });
+      R.fx({ mode: 'wander', n: 26, at: [0, 0.6, 0], box: [1.6, 1.0, 1.2], col: [0xf0f6fc, 0xdce8f4], size: 0.7, speed: 0.3, p: [0.4, 0.3, 1], blend: 'normal' });
+      R.fx({ mode: 'wander', n: 14, at: [0, 1.2, 0], box: [1.2, 1.2, 1.0], col: [0xc0e8ff], size: 0.04, speed: 0.6, p: [0.3, 1, 1] });
+    },
+    idle(k) {
+      const b = sin(k.t * 1.2);
+      k.p('body', sin(k.t * 0.7) * 0.06, 0.1 + b * 0.08, 0); k.s('head', b * 0.03, -b * 0.03, b * 0.03); k.s('body', -b * 0.03, b * 0.04, -b * 0.03);
+      k.p('armL', 0, sin(k.t * 1.4) * 0.08, 0); k.p('armR', 0, sin(k.t * 1.4 + 1.5) * 0.08, 0);
+    },
+    move(k) { k.p('body', 0, 0.15, 0); k.r('body', 0.3, 0, 0); k.s('body', -0.05, 0.08, 0.1); },
+    clips: {
+      attack(k) {
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.s('body', 0.15 * back - 0.1 * hit, -0.15 * back + 0.15 * hit, 0.2 * hit); k.p('body', 0, 0.05 * back, 0.7 * hit); k.p('armR', 0, 0.2 * back, 0.4 * hit);
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('head', 0.15 * up); k.s('body', 0.25 * up); k.p('body', 0, 0.2 * up, 0); k.fx.glow += up; },
+      hurt(k) { GEN.hurt(k); k.s('body', 0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7), -0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7), 0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7)); },
+      die(k) { const u = k.u; k.s('body', 0.6 * sm(0.1, 1, u), -0.4 * sm(0.1, 1, u), 0.6 * sm(0.1, 1, u)); k.p('body', 0, -0.3 * sm(0.2, 1, u), 0); k.fx.diss = max(k.fx.diss, sm(0.2, 1, u)); },
+      special: (k) => GEN.special(k), enter: (k) => GEN.enter(k),
+    },
+  });
   /* END */
 })();
