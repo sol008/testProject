@@ -350,6 +350,12 @@ G.I18N.add({
   '劇情': 'Story',
   '困難': 'Hard',
   '預設奔跑': 'Always Run',
+  // auto-battle settings (js/engine/autobattle.js)
+  '自動戰鬥': 'Auto-battle',
+  '保守': 'Cautious',
+  '標準': 'Standard',
+  '積極': 'Aggressive',
+  '自動戰鬥・使用道具': 'Auto-battle: Use Items',
   '關': 'OFF',
   '開': 'ON',
   '自動存檔': 'Autosave',

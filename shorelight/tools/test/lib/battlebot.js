@@ -1,9 +1,13 @@
 // 彼岸燈 — a "sensible player" battle policy, shared by tools/sim_story.js (balance simulator) and the chapter
 // playthrough tests (tools/test/chapters/chN.test.js).
 //
-// The in-game auto-battle (G.Battle.Scene.prototype.autoCommand) never uses items, never guards and heals late, so it
-// cannot beat bosses tuned for a real player (docs/BALANCE.md). The playthrough tests check the story flow, not the
-// balance, so they load this file into the page (context/page.addInitScript({ path })) and fight with it instead:
+// The bosses were balanced against this policy (docs/BALANCE.md). The in-game auto-battle (F) is a port of it —
+// js/engine/autobattle.js (G.AutoBattle), with the player's settings (style, 使用道具), cheaper item use outside boss
+// fights and the per-fight hints built in — and reaches about the same win rates (`sim_story.js --ai auto`). This file
+// is kept as the tests' own fixed policy (it does not call G.AutoBattle) so that tuning the in-game AI never changes
+// what the chapter tests did when they last passed; makeAI(G, 'auto') plays the in-game AI instead.
+// The playthrough tests check the story flow, not the balance; they load this file into the page
+// (context/page.addInitScript({ path })) and fight with it:
 //   · revive (skill, else item), heal with skills (designated healer) or items when someone is in danger, MP items for
 //     the healer, cure a stuck healer / stunned ally;
 //   · guard when a big blow is telegraphed (an enemy wind-up skill — type 'special' on itself —, a `…charge` flag on the

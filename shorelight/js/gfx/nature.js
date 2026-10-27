@@ -2006,7 +2006,7 @@
             const k = ((t * 0.22 + i / 6 + ph) % 1);
             const sx = bx + (U.hash(i, o.x | 0, 9) - 0.5) * 46 + sin(t * 1.1 + i * 2.3) * 7, sy = by - 18 - k * 70;
             const a = sin(k * PI) * (0.6 + 0.4 * sin(t * 7 + i * 3));
-            star(ctx, sx, sy, 2.2 + 1.6 * sin(k * PI), a);
+            star(ctx, sx, sy, 2.6 + 2.2 * sin(k * PI), a);
           }
           // glints on the caps
           for (const mm of layout(v).slice(0, 3)) {

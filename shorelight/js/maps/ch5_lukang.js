@@ -1816,6 +1816,7 @@
       { id: 'c5_08', x: 14, y: 16, gold: 600, item: 'sp_hutou', run: async (S) => {
         if (hasActor('hongying')) await S.say('hongying:sad', '……洛家的虎頭槍。爹說，等我出嫁那天才給我。');
       } },
+      { id: 'c5_12', x: 7, y: 2, item: 'ac_rongye' }, // 後院, under the old banyan (same corner as 憶蕈): 榕葉結
     ],
     lights: (s) => {
       const out = [];

@@ -10,6 +10,9 @@
 //              (story / chest / gift only).
 //   ch         chapter from which the item is meant to be available (shops / chests / drops). Data hint
 //              for map writers and tools/sim_battle.js; the engine does not need it.
+//   noSource   'reason' — deliberately not obtainable in normal play (debug kits, hidden equipment slots).
+//              Every other item must have a shop, chest, drop or script give somewhere:
+//              node tools/guide/build_guide.js --check-items lists the ones that do not (docs/qa/item_placement.md).
 //   use.heal   fixed HP amount (9999 = full). use.mp fixed MP. use.revive = fraction of max HP on revive.
 //   use.damage fixed damage per target (× element multiplier), ignores defence — throwables.
 //   use.status {id, chance, turns} applied to the target(s). use.buffs like skills.
@@ -188,7 +191,8 @@ G.Data.items = {
   key_yinhunling: { name: '引魂令', desc: '陳伯交給星河的令牌，引魂人的信物。持有它的人，迷途的魂會願意聽他說話。', type: 'key', price: 0, ch: 1, icon: 'key' },
   key_watch: { name: '阿土伯的懷錶', desc: '舊金礦坑裡找到的懷錶，停在礦坑崩塌的那一刻。', type: 'key', price: 0, ch: 1, icon: 'watch' },
   key_jadetag: { name: '白芷的玉牌', desc: '刻著「白芷」二字的玉牌。背面有一道看不清的燈紋。', type: 'key', price: 0, ch: 1, icon: 'jade' },
-  key_oar: { name: '引魂槳', desc: '陳伯的槳。槳面刻滿了被渡過的名字。', type: 'key', price: 0, ch: 9, icon: 'key' },
+  // 陳伯 keeps his oar to the end (引魂槳・渡 in ch10, the 王船 in ch11): only the debug standalone starts hand it over
+  key_oar: { name: '引魂槳', desc: '陳伯的槳。槳面刻滿了被渡過的名字。', type: 'key', price: 0, ch: 9, icon: 'key', noSource: 'debug only — the ?debug&startch=9 / 10 standalone kits' },
   key_skylantern: { name: '天燈', desc: '平溪的天燈，四面寫滿了願望。', type: 'key', price: 0, ch: 2, icon: 'lantern' },
   key_sonletter: { name: '兒子的家書', desc: '平溪老夫婦的兒子寫的信，一直沒有寄到。', type: 'key', price: 0, ch: 2, icon: 'letter' },
   key_mirror: { name: '照魂鏡', desc: '太虛觀的古鏡，能照出魂魄的本相。', type: 'key', price: 0, ch: 3, icon: 'gem' },

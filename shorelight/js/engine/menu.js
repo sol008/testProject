@@ -705,6 +705,9 @@
         { k: 'textSpeed', label: '文字速度', type: 'enum', opts: [0, 1, 2, 3, 4], names: ['很慢', '慢', '普通', '快', '瞬間'] },
         { k: 'battleSpeed', label: '戰鬥速度', type: 'enum', opts: [1, 1.5, 2, 3], names: ['×1', '×1.5', '×2', '×3'] },
         { k: 'difficulty', label: '難度', type: 'enum', opts: ['easy', 'normal', 'hard'], names: ['劇情', '普通', '困難'] },
+        // auto-battle (F in battle): js/engine/autobattle.js reads both
+        { k: 'autoStyle', label: '自動戰鬥', type: 'enum', opts: ['safe', 'normal', 'bold'], names: ['保守', '標準', '積極'] },
+        { k: 'autoItems', label: '自動戰鬥・使用道具', type: 'enum', opts: [true, false], names: ['開', '關'] },
         { k: 'runDefault', label: '預設奔跑', type: 'enum', opts: [false, true], names: ['關', '開'] },
         { k: 'autosave', label: '自動存檔', type: 'enum', opts: [true, false], names: ['開', '關'] },
         { k: 'autoAdvance', label: '對話自動播放', type: 'enum', opts: [false, true], names: ['關', '開'] },
@@ -743,22 +746,22 @@
       const t = this.t;
       ctx.save();
       ctx.fillStyle = 'rgba(4,6,14,0.85)'; ctx.fillRect(0, 0, G.W, G.H);
-      // 14 rows: 42px each so the panel ends above the two key-help lines (at 46px the last row sat on top of them)
-      const RH = 42;
+      // 42px rows while they fit; more rows shrink so the panel still ends above the two key-help lines (16 rows: 36px)
+      const RH = Math.min(42, Math.floor(576 / this.rows.length)), ty = RH >= 40 ? 8 : 6;
       UI().panel(ctx, 240, 30, 800, this.rows.length * RH + 44, { title: '設定' });
       this.rows.forEach((row, i) => {
         const y = 58 + i * RH;
         if (i === this.idx) UI().cursor(ctx, 256, y, 768, RH - 4, t, true);
-        R().textFit(ctx, row.label, 290, y + 8, 330, { size: 22, color: '#fff0d0' });
+        R().textFit(ctx, row.label, 290, y + ty, 330, { size: 22, color: '#fff0d0' });
         let v = '';
         if (row.type === 'vol') {
-          UI().bar(ctx, 640, y + 12, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
+          UI().bar(ctx, 640, y + ty + 4, 260, 14, G.settings[row.k], '#ffd97a', '#c8902a');
           v = Math.round(G.settings[row.k] * 100) + '%';
         } else if (row.type === 'enum') {
           const j = row.opts.indexOf(G.settings[row.k]);
           v = '◀ ' + (row.names[j < 0 ? 0 : j]) + ' ▶';
         } else v = 'Z 切換';
-        R().text(ctx, v, 1000, y + 8, { size: 21, align: 'right', color: '#ffd97a' });
+        R().text(ctx, v, 1000, y + ty, { size: 21, align: 'right', color: '#ffd97a' });
       });
       R().textFit(ctx, '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑', 640, G.H - 50, 1180, { size: 16, align: 'center', color: '#9c947f' });
       R().textFit(ctx, 'F 自動（戰鬥/對話）　L 對話紀錄　按住 Ctrl 快進　E 戰鬥速度　F11 全螢幕', 640, G.H - 27, 1180, { size: 16, align: 'center', color: '#9c947f' });

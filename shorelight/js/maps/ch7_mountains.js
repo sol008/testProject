@@ -138,11 +138,11 @@
   // hidden slot items (never in the inventory)
   item('c7_flame_wick', {
     name: '燈芯將盡', desc: '借來的燈火日漸黯淡。最大氣血隨燈芯降低。', type: 'key', price: 0, ch: 7, icon: 'lantern',
-    stats: { get hp() { return C7.flamePenalty(); } },
+    stats: { get hp() { return C7.flamePenalty(); } }, noSource: 'hidden equipment slot equip.c7flame (C7.applyFlame), never in the inventory',
   });
   item('c7_heart_fire', {
     name: '心火', desc: '用十八年的每一個人點起來的火。最大氣血提升，火屬性傷害提升。', type: 'key', price: 0, ch: 7, icon: 'lantern',
-    stats: { get hp() { return C7.pctHp(0.08); } },
+    stats: { get hp() { return C7.pctHp(0.08); } }, noSource: 'hidden equipment slot equip.c7heart (C7.applyFlame), never in the inventory',
   });
   // key items & materials
   item('c7_key_cap', { name: '褪色的皮帽', desc: '一頂鄒族獵人的皮帽，帽上的羽毛已經褪色。', type: 'key', price: 0, ch: 7, icon: 'hat' });
@@ -1094,7 +1094,7 @@
     g.obj('log', 18, 8);
     g.obj('signboard', 26, 40, { text: '阿里山' });
     g.reserve(9, 40, 4, 2); g.reserve(10, 38, 1, 1); g.reserve(4, 27, 1, 1); g.reserve(5, 26, 2, 3); g.reserve(41, 10, 1, 1); g.reserve(39, 9, 3, 3);
-    g.reserve(18, 6, 10, 6); g.reserve(20, 9, 3, 2);
+    g.reserve(18, 6, 10, 6); g.reserve(20, 9, 3, 2); g.reserve(2, 14, 1, 1);
     const enemies = [[14, 30], [32, 30], [34, 15], [11, 14], [37, 6], [38, 36]];
     for (const [x, y] of enemies) g.reserve(x - 1, y - 1, 3, 3);
     // forest: camphor / fern / bamboo below the river, cypress & fern in the misty north
@@ -1115,6 +1115,7 @@
         { id: 'c7_at_a', x: 9, y: 40, item: 'c7_zhixue', n: 3 },
         { id: 'c7_at_b', x: 4, y: 27, item: 'ar_yunwen' },
         { id: 'c7_at_c', x: 41, y: 10, item: 'c7_huiqi', n: 2 },
+        { id: 'c7_at_o', x: 2, y: 14, item: 'sw_hantie' }, // west cypress nook off the north path (atk 57, under ch7 shop swords)
       ],
       npcs: [
         { id: 'laowu', sprite: 'merchant', name: '老吳', x: 10, y: 38, dir: 'down', talk: async (S) => {
@@ -1884,7 +1885,7 @@
     g.rect(41, 21, 3, 3, '=', ['X']);
     g.obj('rock_big', 6, 2, { if: (st) => !st.flags.ch7_bunun_farewell });
     g.obj('rock_big', 38, 22, { if: (st) => !st.flags.ch7_biung });
-    g.reserve(5, 1, 4, 4); g.reserve(37, 21, 4, 3); g.reserve(18, 22, 6, 4); g.reserve(36, 32, 1, 1); g.reserve(35, 31, 3, 3); g.reserve(39, 3, 3, 3);
+    g.reserve(5, 1, 4, 4); g.reserve(37, 21, 4, 3); g.reserve(18, 22, 6, 4); g.reserve(36, 32, 1, 1); g.reserve(35, 31, 3, 3); g.reserve(39, 3, 3, 3); g.reserve(2, 3, 1, 1);
     for (const [x, y] of [[28, 42], [12, 34], [33, 14], [10, 10], [26, 5]]) g.reserve(x - 1, y - 1, 3, 3);
     g.scatter(['tree_pine', 'tree_pine', 'tree_cedar_snow', 'bush'], 120, { area: [2, 27, 40, 23], gap: 0 });
     g.scatter(['rock_small', 'tallgrass', 'silvergrass', 'flowers'], 30, { area: [2, 27, 40, 23] });
@@ -1897,7 +1898,8 @@
       lights: lightsWith([]),
       particles: [{ type: 'wind', density: 0.5 }, { type: 'snow', density: 0.12 }, { type: 'mist', density: 0.6 }],
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_ys_e', x: 36, y: 32, gold: 1000, item: 'c7_ac_tiegu' }, { id: 'c7_ys_f', x: 40, y: 4, item: 'c7_sw_chixia' }],
+      chests: [{ id: 'c7_ys_e', x: 36, y: 32, gold: 1000, item: 'c7_ac_tiegu' }, { id: 'c7_ys_f', x: 40, y: 4, item: 'c7_sw_chixia' },
+        { id: 'c7_ys_p', x: 2, y: 3, item: 'ft_bangtui' }], // NW scree nook below the upper exit
       npcs: [],
       enemies: [
         { id: 'ys1', troop: 't_c7_peak2', x: 28, y: 42, art: 'fog_spirit', variant: 1, lv: 24, radius: 3 },
@@ -2290,6 +2292,8 @@
     await S.say('Abus', '這是醃肉跟小米糕，路上吃。不要拒絕，在山上拒絕食物是不吉利的。');
     await S.give('c7_xiaomigao', 3);
     await S.give('c7_yanrou', 2);
+    await S.say('Abus', '還有這個，小米酒。山上冷，輕輕抿一口就好。');
+    await S.give('xiaomijiu', 2); // 取得：第七章・Biung 的家（Abus 送行）
     await S.lines([
       ['Biung', '往西北的雲霧林，我帶你們到林子邊緣。'],
       ['Biung', '那個老婆婆……我爺爺小時候她就是那個樣子。我們獵人不太往那裡走。'],
@@ -2341,7 +2345,7 @@
     // 雲芝 (七仙蕈, event 'yunzhi') grows in this clump: sparkles until taken, among ~35 look-alike decor clumps
     g.obj('mushroom_harvest', 8, 20, { picked: () => !!G.state.flags.mush_ch7 });
     g.obj('mushroom_glow', 9, 19); g.obj('mushroom_glow', 9, 21);
-    g.reserve(7, 19, 3, 3); g.reserve(26, 38, 1, 1); g.reserve(36, 4, 1, 1);
+    g.reserve(7, 19, 3, 3); g.reserve(26, 38, 1, 1); g.reserve(36, 4, 1, 1); g.reserve(4, 30, 1, 1); g.reserve(32, 21, 1, 1);
     for (const [x, y] of [[25, 34], [13, 18], [33, 18], [20, 7]]) g.reserve(x - 1, y - 1, 3, 3);
     g.scatter(['mushroom_glow', 'tallgrass', 'flowers', 'vine_curtain', 'mushroom_glow'], 70, { on: ',g' });
     g.scatter(['tree_fern', 'stump', 'rock_small', 'log'], 22, { on: ',g' });
@@ -2374,7 +2378,9 @@
       lights: lightsWith([]),
       particles: [{ type: 'mist', density: 2.0 }, { type: 'motes', density: 0.8 }, { type: 'rain', density: 0.06 }],
       tiles: g.rows(), objects: g.objs,
-      chests: [{ id: 'c7_cf_g', x: 26, y: 38, gold: 1000, item: 'c7_yunwu', n: 2 }, { id: 'c7_cf_h', x: 36, y: 4, item: 'c7_fn_qinglan' }],
+      chests: [{ id: 'c7_cf_g', x: 26, y: 38, gold: 1000, item: 'c7_yunwu', n: 2 }, { id: 'c7_cf_h', x: 36, y: 4, item: 'c7_fn_qinglan' },
+        // the two wrong-way branches (west of sign s1, east of sign s2; both loop back) each hide a charm against 幻境
+        { id: 'c7_cf_q', x: 4, y: 30, item: 'hd_yunjin' }, { id: 'c7_cf_r', x: 32, y: 21, item: 'ac_qingxin' }],
       enemies: [
         { id: 'cf1', troop: 't_c7_cloud', x: 25, y: 34, art: 'serpent_shade', lv: 25, radius: 2 },
         { id: 'cf2', troop: 't_c7_cloud2', x: 13, y: 18, art: 'mushroom_imp', variant: 2, lv: 25, radius: 2 },
@@ -2713,7 +2719,10 @@
       ['tengpo:think', '……見過。不只一次。'],
       ['xinghe:surprise', '不只一次？'],
       ['tengpo:normal', '進去了，你就知道了。孩子，天要黑了。去洗把臉。'],
+      ['', '藤婆從屋後割下一段金綠色的夢藤，放進星河手裡。'],
+      ['tengpo:serious', '入夢禮的藥引。準備好了，你自己拿來給我。自己要走的門，自己帶鑰匙。'],
     ]);
+    await S.give('key_dreamvine', 1); // 取得：第七章・藤婆小屋（入夢禮前）
     S.remove('tp');
     S.refresh();
     S.objective('準備好了，就和藤婆說話（入夢禮）');
@@ -2752,6 +2761,12 @@
       ['yungui:think', '…………'],
       ['yungui:sad', '我想知道，我是不是讓他失望了。'],
       ['tengpo:normal', '好。'],
+    ]);
+    if (S.hasItem('key_dreamvine')) {
+      await S.say('', '星河把夢藤交給藤婆。她把藤折成三段，丟進火邊的陶壺裡。');
+      S.take('key_dreamvine', 1);
+    }
+    await S.lines([
       ['', '藤婆從火邊的陶壺裡倒出三小碗濃稠的深褐色湯汁。蒸氣帶著泥土、樹皮和某種苦澀的甜味。'],
       ['tengpo:serious', '夢藤湯。一口喝完，不要停。'],
       ['', '星河接過碗。手在抖。'],

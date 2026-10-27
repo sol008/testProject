@@ -433,6 +433,7 @@
     }
     G.Party.leave('baizhi');
     G.state.party = ['xinghe', 'hongying', 'yungui'].concat(G.state.party.filter((p) => !['xinghe', 'hongying', 'yungui'].includes(p)));
+    // standalone start (?debug&startch=9): best gear up to chapter 8 + the keepsakes (not item sources for the guide)
     if (!F('ch8_end')) {
       const best = (id, slot) => {
         let b = null;
@@ -819,6 +820,7 @@
       { id: 'qh_hill', x: 26, y: 2, item: 'c9_xiancaodong', n: 3 },
       { id: 'qh_pandanus', x: 4, y: 29, item: 'shimuyu', n: 2 },
       { id: 'qh_lane', x: 37, y: 31, gold: 600 },
+      { id: 'qh_boats', x: 4, y: 1, item: 'sp_shaya' }, // behind the beached boats, NW corner of the beach
     ],
     lights: (s) => (qhNight(s) ? [{ x: 21, y: 16, r: 220, color: '#ffb060', flicker: 0.2 }, { x: 31, y: 14, r: 150, color: '#ffb060' }, { x: 32, y: 20, r: 150, color: '#ffc070' }, { x: 13, y: 12, r: 120, color: '#ffb060' }] : []),
     npcs: [
@@ -839,11 +841,25 @@
         await S.say('阿蕊姨', '網破了要補，人心破了也要補。補網我會，補人心我就不會了。');
         await S.say('阿蕊姨', '最近晚上海面有藍色的火，一點一點往岸上走。我男人說是漁火，我看不是。');
       } },
-      { id: 'qh_fisher_old', sprite: 'fisherman', name: '海龍伯', x: 7, y: 6, dir: 'down', if: (s) => !qhNight(s), talk: [
-        '旗後人出海，看天、看雲、看水色。今年的水色不對，黑裡帶青，像死人臉。',
-        '南邊的水是好的。黑潮那條，暖的、藍的，飛魚一群一群跟著來。',
-        '同樣叫「黑」，西邊那條黑水溝收人命，東邊那條黑潮送魚來。海也有兩張臉啦。',
-      ] },
+      { id: 'qh_fisher_old', sprite: 'fisherman', name: '海龍伯', x: 7, y: 6, dir: 'down', if: (s) => !qhNight(s), talk: async (S) => {
+        // after the night beach: the old fisherman's whalebone sword (鯨骨劍, a little above the ch9 shop sword)
+        if (F('ch9_qihou_night_done') && !F('ch9_whalebone')) {
+          S.flag('ch9_whalebone');
+          await S.lines([
+            ['海龍伯', '昨晚海邊那些藍火，是你們送走的吧？阿蕊都跟我講了。'],
+            ['海龍伯', '我少年時，旗後海邊擱淺過一隻大鯨。全庄的人顧了牠三天三夜，牠還是走了。'],
+            ['海龍伯', '牠留下來的骨頭，我嵌了鋼，打成一支劍。泡了幾十年海水，一點鏽都沒有。'],
+            ['海龍伯', '我老了，拿不動了。海上的事，交給拿得動的人。'],
+          ]);
+          await S.give('sw_jinggu', 1); // 取得：第九章・旗後 海龍伯（夜灘之後）
+          return;
+        }
+        await S.lines([
+          ['海龍伯', '旗後人出海，看天、看雲、看水色。今年的水色不對，黑裡帶青，像死人臉。'],
+          ['海龍伯', '南邊的水是好的。黑潮那條，暖的、藍的，飛魚一群一群跟著來。'],
+          ['海龍伯', '同樣叫「黑」，西邊那條黑水溝收人命，東邊那條黑潮送魚來。海也有兩張臉啦。'],
+        ]);
+      } },
       { id: 'qh_kid', sprite: 'child_m', name: '阿全', x: 26, y: 18, dir: 'left', wander: 2, if: (s) => !qhNight(s), talk: async (S) => {
         await S.say('阿全', '你的貓好胖！牠會游泳嗎？');
         S.emote('yuyuan', '💢');
@@ -2171,6 +2187,7 @@
       { id: 'wy_sword', x: 1, y: 19, item: 'c9_sw_xunhai' },
       { id: 'wy_loft', x: 41, y: 2, item: 'c9_aicao', n: 1, run: async (S) => { await S.give('shimuyu', 3); } },
       { id: 'wy_east', x: 42, y: 19, item: 'c9_ac_jinzhi' },
+      { id: 'wy_hall', x: 1, y: 22, item: 'ft_talang' }, // 工寮, west corner: a shipwright's deck boots
     ],
     lights: (s) => {
       const out = [{ x: 21, y: 24, r: 180, color: '#ffb060', flicker: 0.2 }, { x: 8, y: 23, r: 110, color: '#ffb060' }];
@@ -3451,6 +3468,7 @@
     V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
     S.quest('q_tuanzi_mush', 9);
     S.toast('雲歸的蕈譜記下了一格：潮汐蕈', 'scroll');
+    await S.give('mat_haixun', 1); // 取得：第九章・龍坑 七仙蕈（雲歸的蕈譜）
   }
   G.Maps.define('longkeng_caves', {
     name: '龍坑', subtitle: '海蝕洞', place: 'eluanbi', start: [21, 3],
@@ -3494,6 +3512,7 @@
       { id: 'lk_fu', x: 8, y: 21, item: 'c9_fn_chaoyin' },
       { id: 'lk_salve', x: 9, y: 36, item: 'c9_baicaogao', n: 2 },
       { id: 'lk_pin', x: 34, y: 37, item: 'hd_shanhu' },
+      { id: 'lk_flute', x: 40, y: 21, item: 'fl_coral' }, // NE side cave (log page 2): kept for 白芷's return
     ],
     lights: (s) => {
       const out = [];

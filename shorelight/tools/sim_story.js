@@ -8,6 +8,10 @@
 //   node tools/sim_story.js --lv -2             every fight with the party 2 levels lower (sensitivity)
 //   node tools/sim_story.js --ai auto           the in-game auto-battle (F; js/engine/autobattle.js) instead of the
 //                                               battle bot; --autostyle safe|normal|bold, --autoitems off = its settings
+//   node tools/sim_story.js --notactics         the battle bot without the per-fight hints of sim_story_fights.js (the
+//                                               browser bot of the chapter tests; --ai auto never uses them anyway)
+//   node tools/sim_story.js --areas [a,b]       the js/data areas' field troops + bosses (sim_battle.js's list) through
+//                                               the real engine (level/gear/kit per area; items + their gold per fight)
 //   node tools/sim_story.js --verbose           per-fight party setup (levels, gear, inventory)
 //   node tools/sim_story.js --json out.json     also write the results as JSON
 //   node tools/sim_story.js --shops             list the shop goods found in each chapter file
@@ -95,7 +99,7 @@ function headless(G) {
       const tg = cmd && cmd.targets ? cmd.targets.map((t) => t && (t.id + ':' + t.hp)).join(',') : '';
       G.__trace.push(`r${this.rounds} ${u.id}(${u.hp}/${u.mhp} mp${u.mp}) ${cmd ? cmd.kind + ' ' + (cmd.skill || cmd.item || '') : '-'} -> ${tg}`);
     }
-    if (u.side === 'party' && cmd && cmd.kind === 'item') this.__items = (this.__items || 0) + 1;
+    if (u.side === 'party' && cmd && cmd.kind === 'item') { this.__items = (this.__items || 0) + 1; this.__itemGold = (this.__itemGold || 0) + ((G.Data.items[cmd.item] || {}).price || 0); }
     if (u.side === 'party' && cmd && cmd.kind === 'defend') this.__guards = (this.__guards || 0) + 1;
     return exec.call(this, u, cmd);
   };
@@ -202,7 +206,7 @@ async function battleOnce(env, F, troop, optsSrc) {
   G.__top = null;
   const p = G.Battle.start(troop, opts || {});
   const sc = G.__top;
-  if (sc) sc.__fight = G.__testMode ? {} : F; // the browser bot has no per-fight hints
+  if (sc) sc.__fight = G.__testMode || G.__noTactics ? {} : F; // the browser bot has no per-fight hints (--notactics)
   p.then((r) => { done = true; res = r; }, (e) => { done = true; res = 'error:' + (e && e.stack); });
   for (let i = 0; i < 3 && !done; i++) await new Promise((r) => setImmediate(r));
   return { done, res, sc };
@@ -221,14 +225,14 @@ async function runOnce(env, F, lvShift) {
   if (!done) return { result: 'hung', sc };
   const party = sc ? sc.party : [];
   return {
-    result: res, sc, rounds: sc ? sc.rounds : 0, ko: sc ? sc.__ko || 0 : 0, items: sc ? sc.__items || 0 : 0, guards: sc ? sc.__guards || 0 : 0,
+    result: res, sc, rounds: sc ? sc.rounds : 0, ko: sc ? sc.__ko || 0 : 0, items: sc ? sc.__items || 0 : 0, itemGold: sc ? sc.__itemGold || 0 : 0, guards: sc ? sc.__guards || 0 : 0,
     hpLeft: party.length ? party.reduce((a, p) => a + (p.dead ? 0 : p.hp), 0) / party.reduce((a, p) => a + p.mhp, 0) : 0,
     alive: party.filter((p) => !p.dead).length, size: party.length,
   };
 }
 
 async function runFight(env, F, n, lvShift) {
-  const R = { n, win: 0, lose: 0, other: 0, rounds: 0, koAny: 0, ko: 0, items: 0, guards: 0, hpLeft: 0, err: null };
+  const R = { n, win: 0, lose: 0, other: 0, rounds: 0, koAny: 0, ko: 0, items: 0, itemGold: 0, guards: 0, hpLeft: 0, err: null };
   for (let i = 0; i < n; i++) {
     let r;
     try { r = await runOnce(env, F, lvShift); } catch (e) { R.err = String(e && e.stack).split('\n').slice(0, 4).join(' | '); break; }
@@ -236,10 +240,10 @@ async function runFight(env, F, n, lvShift) {
     if (typeof r.result === 'string' && r.result.startsWith('error:')) { R.err = r.result.slice(0, 400); break; }
     const won = F.winIf ? F.winIf(r, env.G) : r.result === 'win';
     if (won) R.win++; else if (r.result === 'lose' || F.winIf) R.lose++; else R.other++;
-    R.rounds += r.rounds; R.ko += r.ko; R.koAny += r.ko > 0 ? 1 : 0; R.items += r.items; R.guards += r.guards; R.hpLeft += r.hpLeft;
+    R.rounds += r.rounds; R.ko += r.ko; R.koAny += r.ko > 0 ? 1 : 0; R.items += r.items; R.itemGold += r.itemGold || 0; R.guards += r.guards; R.hpLeft += r.hpLeft;
   }
   const m = R.win + R.lose + R.other || 1;
-  for (const k of ['rounds', 'ko', 'koAny', 'items', 'guards', 'hpLeft']) R[k] /= m;
+  for (const k of ['rounds', 'ko', 'koAny', 'items', 'itemGold', 'guards', 'hpLeft']) R[k] /= m;
   R.n = m;
   return R;
 }
@@ -266,7 +270,7 @@ async function main() {
   // --autostyle safe|normal|bold (自動戰鬥 保守/標準/積極, default normal), --autoitems off (使用道具 關)
   G.settings.autoStyle = String(opt('autostyle', 'normal'));
   G.settings.autoItems = opt('autoitems', 'on') !== 'off';
-  G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
+  G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc'); G.__noTactics = !!opt('notactics');
   G.__testMode = !!opt('test');
   if (opt('testkit')) G.__testKit = JSON.parse(opt('testkit'));
   G.__testGear = opt('testgear', null);
@@ -278,6 +282,7 @@ async function main() {
     if (!e) { console.log('--set: unknown enemy ' + eid); continue; }
     for (const m of mods.split(',')) { const [k, f] = m.split('*'); e[k] = Math.round(e[k] * +f); }
   }
+  if (opt('areas')) { await runAreas(env, opt('areas') === true ? null : String(opt('areas')), +opt('n', 100)); return; }
   const { FIGHTS } = require('./sim_story_fights');
   let fights = FIGHTS(G);
   if (opt('shops')) { printShops(env); return; }
@@ -327,6 +332,38 @@ async function main() {
     json.push({ id: F.id, ch: F.ch, name: F.name, lv: F.lv, party: F.party, win: R.win / R.n, koAny: R.koAny, rounds: R.rounds, items: R.items, hpLeft: R.hpLeft, err: R.err });
   }
   if (opt('json')) fs.writeFileSync(opt('json'), JSON.stringify(json, null, 1));
+}
+
+// --areas [id,id]: the js/data areas' field troops and bosses (the list tools/sim_battle.js simulates with its formula
+// re-implementation and its own party AI) through the real engine, with the AI of --ai. Party = the area's party, level =
+// the area's low level for field troops and its top level for bosses (sim_battle's levelFor), gear = the best item per
+// slot with item.ch <= the area's chapter, kit = kitFrom() over the buyable consumables of chapters <= the area's, story
+// skills as in sim_battle (STORY). "gold" = shop value of the consumables used per fight.
+const AREA_STORY = { xh_xinhuo_ran: 'shrine', xh_xinhuo_zhao: 'shrine', xh_xinhuo_bumie: 'shrine', yg_taixu: 'beigang', hy_luojia: 'dagou', c_qiandeng: 'breath' };
+async function runAreas(env, only, n) {
+  const { G } = env;
+  const AR = G.Data.areas, order = Object.keys(AR);
+  console.log(`js/data areas through the real engine — ${opt('ai', 'smart')} AI${opt('ai') === 'auto' ? ` (${G.settings.autoStyle}, items ${G.settings.autoItems ? 'on' : 'off'})` : ''}, n=${n} (bosses ×2)`);
+  console.log('  ★ = boss; items/gold = consumables used per fight and their shop value');
+  const tot = { trash: { n: 0, win: 0, items: 0, gold: 0 }, boss: { n: 0, win: 0, items: 0, gold: 0 } };
+  for (const aid of order) {
+    const a = AR[aid];
+    if (only && !only.split(',').includes(aid)) continue;
+    const pool = Object.keys(G.Data.items).filter((id) => { const it = G.Data.items[id]; return (it.ch || 0) <= a.ch && (it.type !== 'use' || it.price > 0); });
+    const skills = {};
+    for (const [sk, from] of Object.entries(AREA_STORY)) if (order.indexOf(aid) >= order.indexOf(from)) for (const c of a.party) if ((G.Data.chars[c].learn || []).some((l) => l.skill === sk)) (skills[c] = skills[c] || []).push(sk);
+    const rows = [];
+    for (const tid of a.troops.concat(a.bosses)) {
+      if (!G.Data.troops[tid]) continue;
+      const boss = !!G.Data.troops[tid].boss;
+      const F = { id: tid, ch: a.ch, troop: tid, party: a.party, lv: boss ? a.lv[1] : a.lv[0], shops: pool, skills, kit: { heal: [5, 3], mp: 3, revive: 2 } };
+      const R = await runFight(env, F, boss ? n * 2 : n, 0);
+      const t = tot[boss ? 'boss' : 'trash']; t.n++; t.win += R.win / R.n; t.items += R.items; t.gold += R.itemGold;
+      rows.push(`  ${(boss ? '★' : ' ') + tid.padEnd(22)} L${String(F.lv).padEnd(3)} win ${(R.win / R.n * 100).toFixed(0).padStart(3)}%  rounds ${R.rounds.toFixed(1).padStart(4)}  KO ${(R.koAny * 100).toFixed(0).padStart(3)}%  items ${R.items.toFixed(2)}  gold ${R.itemGold.toFixed(0).padStart(4)}  guard ${R.guards.toFixed(1)}  HP ${(R.hpLeft * 100).toFixed(0).padStart(3)}%${R.err ? '  ERROR ' + R.err : ''}`);
+    }
+    console.log(`[ch${a.ch}] ${a.name} (${aid}) L${a.lv[0]}–${a.lv[1]} ${a.party.join(',')}\n${rows.join('\n')}`);
+  }
+  for (const [k, t] of Object.entries(tot)) if (t.n) console.log(`${k.padEnd(6)} ${t.n} troops: avg win ${(t.win / t.n * 100).toFixed(0)}%  items ${(t.items / t.n).toFixed(2)} (${(t.gold / t.n).toFixed(0)} gold) per fight`);
 }
 
 function printShops(env) {

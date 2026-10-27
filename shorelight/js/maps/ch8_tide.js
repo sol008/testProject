@@ -1954,6 +1954,8 @@
     chests: [
       { id: 'c8_ap_oyster', x: 6, y: 26, gold: 1000, item: 'shimuyu', n: 2 },
       { id: 'c8_ap_shrine', x: 26, y: 8, gold: 1000, item: 'c8_jianshi' },
+      { id: 'c8_ap_tide', x: 4, y: 33, item: 'ar_bishui' }, // SW tide line below the oyster beach
+      { id: 'c8_ap_ne', x: 43, y: 0, item: 'fn_leiting' }, // NE corner past the east road
     ],
     npcs: [
       { id: 'disciple', sprite: 'temple_guard', name: '長明宮弟子', x: 21, y: 17, dir: 'down', if: (st) => !apDawn(st), talk: talkDisciple },

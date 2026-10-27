@@ -2457,16 +2457,17 @@
   });
   // mushroom_harvest: a pickable clump (2D twin in js/gfx/nature.js). Two states, toggled per frame from o.picked
   // (bool or live getter, G.Objects.flag): 'ready' = the mushroom_glow clump with brighter, faster-pulsing caps,
-  // golden twinkling motes and a warm halo; 'picked' = cut stubs and a few pale, barely glowing buds on the mound.
+  // golden twinkling motes and a warm halo; 'picked' = cut stubs and a few pale buds on a plain, unlit mound.
   function harvestMats(v) {
     const P = SHROOM[v];
     const ct = capTex('shroom' + v, Object.assign({ seed: 61 + v }, P));
     const cap = cmat('harvcap' + v, () => {
-      const m = G.R3M.env({ map: ct, emissiveMap: ct, color: 0xe8e8e8, emissive: 0xffffff, emissiveIntensity: 1.45, roughness: 0.3, vertexColors: true });
+      const m = G.R3M.env({ map: ct, emissiveMap: ct, color: 0xe8e8e8, emissive: 0xffffff, emissiveIntensity: 1.05, roughness: 0.3, vertexColors: true });
       return Wind.windify(m, { height: 1.2, strength: 0.02, pulse: 0.6, pulseSpeed: 2.4, hue: 0.45, var: [0.03, 0.03, 0.03] });
     });
     const bud = glowMat('harvbud', { params: { color: new T.Color('#9a90a8'), roughness: 0.7, emissive: new T.Color('#5a6a78'), emissiveIntensity: 0.18 }, fx: { pulse: 0.15 } });
-    return { cap, bud, P };
+    const moss = glowMat('harvmoss', { params: { color: new T.Color('#24402c'), roughness: 1, emissive: 0x000000, emissiveIntensity: 0 } });
+    return { cap, bud, moss, P };
   }
   G.Models.define('mushroom_harvest', {
     variants: 3,
@@ -2478,11 +2479,8 @@
       ud.picked = picked;
       node.traverse((n) => { if (n.userData.harv) n.visible = n.userData.harv === (picked ? 'picked' : 'ready'); });
     },
-    lights(o) {
-      return G.Objects.flag(o, 'picked')
-        ? [{ x: 0, y: 0.2, z: 0.1, color: '#5a7a6a', intensity: 0.4, distance: 1.4, flicker: 0.05 }]
-        : [{ x: 0, y: 0.5, z: 0.1, color: '#fff0b8', intensity: 1.9, distance: 3.8, flicker: 0.25 }];
-    },
+    // picked: no light at all (Map3D gives every light a halo sprite, which would read as still glowing)
+    lights(o) { return G.Objects.flag(o, 'picked') ? [] : [{ x: 0, y: 0.55, z: 0.1, color: '#e8c878', intensity: 1.1, distance: 3.2, flicker: 0.25 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3100 + v * 11);
       const { cap, stem, P } = shroomMats(v);
@@ -2500,22 +2498,21 @@
       }
       const ready = K.merge(K.group(meshOf(ca, hm.cap), meshOf(st, stem)));
       ready.add(motes({ n: 18, r: 0.45, h: 1.3, y0: 0.15, color: P.light, size: 5, speed: 0.12, swirl: 0.12, seed: 5 + v }));
-      ready.add(motes({ n: 12, r: 0.4, h: 1.6, y0: 0.25, color: '#fff2b8', size: 9, speed: 0.16, swirl: 0.18, seed: 21 + v }));
-      ready.add(halo(1.15, '#ffe8a0', 0.03, 0.55));
+      ready.add(motes({ n: 12, r: 0.4, h: 1.6, y0: 0.25, color: '#ffe9a0', size: 8, speed: 0.16, swirl: 0.18, seed: 21 + v }));
+      ready.add(halo(0.95, '#ffe0a0', 0.03, 0.18));
       ready.userData.harv = 'ready';
       // picked: stubs where the stems were cut + small pale buds
       const sa = new Acc(), ba = new Acc(), bs = new Acc();
       for (const [b, R] of cut.slice(0, 3)) tube(sa, [b, b.clone().add(V3(0, 0.05, 0))], [R * 0.3, R * 0.27], { seg: 8, ao: () => [0.9, 0.9, 0.95] });
       for (let i = 0; i < 4; i++) { const a = i * 1.7 + r() * 0.6, d = 0.1 + r() * 0.2; mushroomInto(ba, bs, r, V3(cos(a) * d, -0.02, sin(a) * d), 0.06 + r() * 0.06, 0.04 + r() * 0.025, V3(r.pm(0.2), 0, r.pm(0.2))); }
-      const picked = K.merge(K.group(meshOf(ba, hm.bud), meshOf(bs, hm.bud), meshOf(sa, stem)));
-      picked.add(halo(0.5, '#6a8a7a', 0.03, 0.25));
-      picked.userData.harv = 'picked';
-      picked.visible = false;
+      // the mossy mound: glowing under a ready clump, plain and dark once picked
       const mound = new Acc();
       boulder(mound, V3(0, -0.03, 0), { r: [0.4, 0.09, 0.36], base: 0.6, seed: 70 + v, noise: 0.35, detail: 2, facet: 0.1, tint: [0.35, 0.6, 0.42] });
-      const out = K.merge(K.group(meshOf(mound, glowMat('moss_glow', { params: { color: 0x3a6a3a, roughness: 1, emissive: 0x062a1e, emissiveIntensity: 0.6 }, fx: { pulse: 0.2 } }))));
-      out.add(ready, picked);
-      return out;
+      const picked = K.merge(K.group(meshOf(ba, hm.bud), meshOf(bs, hm.bud), meshOf(sa, stem), meshOf(mound, hm.moss)));
+      picked.userData.harv = 'picked';
+      picked.visible = false;
+      ready.add(K.merge(K.group(meshOf(mound, glowMat('moss_glow', { params: { color: 0x3a6a3a, roughness: 1, emissive: 0x062a1e, emissiveIntensity: 0.6 }, fx: { pulse: 0.2 } })))));
+      return K.group(ready, picked);
     },
   });
   // mushroom_giant (2×2): solid south row = stem; the vast cap shelters the walkable north row

@@ -728,6 +728,9 @@
       { id: 'ts_guest', sprite: 'villager_m', name: '住客', x: 5, y: 6, dir: 'up', talk: ['我是從艋舺來收樟腦的。艋舺那邊才叫熱鬧，一府二鹿三艋舺嘛。', '不過最近艋舺到處掛長明燈，看了心裡毛毛的。'] },
     ],
     warps: [{ x: 6, y: 9, to: 'tamsui', tx: 13, ty: 11, tdir: 'down', door: true }],
+    chests: [{ id: 'c3_16', x: 12, y: 7, item: 'ac_tuanzi', run: async (S) => { // the bed corner: 紅纓's secret stash
+      if (inParty('hongying')) await S.say('hongying:shy', '……那、那是我收的！麻糬掉的毛，丟掉很可惜嘛！不准笑！');
+    } }],
   });
 
   // ------------------------------------------------------------------ 紅毛城 tamsui_fort (24×18)
@@ -1073,6 +1076,7 @@
       { id: 'c3_04', x: 34, y: 38, item: 'c3_sw_guanyin' },
       { id: 'c3_05', x: 4, y: 32, item: 'huanhundan' },
       { id: 'c3_06', x: 30, y: 19, item: 'lingxun' },
+      { id: 'c3_15', x: 36, y: 46, item: 'mat_yueguang', n: 2 }, // NE corner of the lower slope, in the bamboo
     ],
     npcs: [
       { id: 'gy_boatman', sprite: 'boatman', name: '阿海伯', x: 21, y: 53, dir: 'up',
@@ -1473,7 +1477,8 @@
       { t: 'drum_rack', x: 20, y: 12 }, { t: 'well', x: 6, y: 17 }, { t: 'plant_pot', x: 11, y: 7, v: 1 }, { t: 'plant_pot', x: 15, y: 7, v: 2 },
       { t: 'bench', x: 15, y: 18 }, { t: 'tree_pine', x: 3, y: 13 }, { t: 'tree_pine', x: 24, y: 18 },
     ],
-    chests: [{ id: 'c3_07', x: 3, y: 3, item: 'c3_ft_cloudboots', spirit: true }],
+    chests: [{ id: 'c3_07', x: 3, y: 3, item: 'c3_ft_cloudboots', spirit: true },
+      { id: 'c3_14', x: 26, y: 2, item: 'fu_lei', n: 3 }], // NE corner behind the camphor: the temple's mass-produced thunder talismans
     npcs: [
       { id: 'c3_yg_npc', sprite: 'yungui', name: '雲歸', x: 13, y: 9, dir: 'down', portrait: 'yungui',
         if: (st) => st.flags.ch3_legend && !st.flags.ch3_roof_talk,
@@ -1537,7 +1542,7 @@
       { t: 'altar', x: 7, y: 2 }, { t: 'brazier', x: 5, y: 2 }, { t: 'brazier', x: 10, y: 2 },
       { t: 'mural', x: 2, y: 1, v: 1 }, { t: 'mural', x: 12, y: 1, v: 1 },
       { t: 'pillar', x: 4, y: 4 }, { t: 'pillar', x: 11, y: 4 }, { t: 'pillar', x: 4, y: 8 }, { t: 'pillar', x: 11, y: 8 },
-      { t: 'mirror_stand', x: 8, y: 4 },
+      { t: 'mirror_stand', x: 8, y: 4, if: (st) => !st.flags.ch3_mirror_taken },
       { t: 'red_lantern', x: 2, y: 2 }, { t: 'red_lantern', x: 13, y: 2 }, { t: 'bookshelf', x: 1, y: 6 }, { t: 'incense_burner', x: 13, y: 6 },
     ],
     lights: [{ x: 8, y: 4, r: 160, color: '#9ae8ff', flicker: 0.15 }],
@@ -1593,9 +1598,17 @@
         S.remove('c3_yg');
         await S.warp('taixu_room', 6, 6, 'up', { fade: 0, stayDark: true });
       } },
-      { id: 'th_mirror_look', trigger: 'action', x: 8, y: 4, label: '照魂鏡', if: (st) => st.flags.ch3_mirror, run: async (S) => {
+      { id: 'th_mirror_look', trigger: 'action', x: 8, y: 4, label: '照魂鏡', if: (st) => st.flags.ch3_mirror && !st.flags.ch3_mirror_taken, run: async (S) => {
         await S.say('', '古銅大鏡。鏡面上有一道細細的裂紋。');
         await S.say('', '鏡中的自己，胸口亮著一點小小的火。');
+        // once 雲歸 has joined he takes the temple's treasure along (key item 照魂鏡)
+        if (!F('ch3_yungui_join') || !inParty('yungui')) return;
+        await S.say('yungui:serious', '……師父不在，觀裡也沒人了。鎮觀之寶，總不能留在這裡等鬼面來拿。');
+        await S.say('', '雲歸把古鏡從鏡架上取下來，用道袍的下襬仔細包好，交給星河。');
+        await S.say('yungui:smug', '你拿著。貧道的手要拿酒葫蘆。');
+        S.flag('ch3_mirror_taken');
+        await S.give('key_mirror', 1); // 取得：第三章・太虛觀正殿（雲歸入隊後調查照魂鏡）
+        S.refresh();
       } },
       { id: 'th_altar', trigger: 'action', x: 7, y: 2, w: 2, h: 1, label: '參拜', run: async (S) => { await S.say('', '三清神案。香煙裊裊，燭火安靜地跳動。'); } },
     ],

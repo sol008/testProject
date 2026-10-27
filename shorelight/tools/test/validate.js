@@ -359,7 +359,7 @@ function unreadFields(table, label, file, skip = []) {
   }
 }
 unreadFields(skills, 'skill', F.skills, ['ch', 'comboLv']);
-unreadFields(items, 'item', F.items, ['ch']);
+unreadFields(items, 'item', F.items, ['ch', 'noSource']);
 unreadFields(Object.fromEntries(Object.entries(items).filter(([, v]) => v.use).map(([k, v]) => [k, v.use])), 'item.use', F.items);
 unreadFields(enemies, 'enemy', F.enemies, ['desc']);
 unreadFields(chars, 'character', F.chars, ['joinLv', 'desc']);

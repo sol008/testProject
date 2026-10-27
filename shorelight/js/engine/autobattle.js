@@ -9,6 +9,8 @@
 //   4. play the battle's on-screen hint: a skill named in 「…」 (e.g. 「渡魂謠」, the combo 「千燈」)
 //   5. heal items when a member is in danger and the healer cannot act before the enemies do
 //   6. MP item for the healer (boss fights)            7. cure a stuck healer / stunned or sleeping ally
+//  7b. what a story boss's rules show on screen (A.FIGHTS: the 燈印 mark, 林投姐's 泣訴, 孤魂眾's hunger, the lamp
+//      to break first …) — the per-fight hints the balance simulator's player follows (tools/sim_story_fights.js)
 //   8. guard against a telegraphed blow (an enemy wind-up, a 「！」 charge flag, an on-screen 伏低/防禦/穩住 warning —
 //      only the member a warning names, if it names one)          9. last stand: guard when no one can heal
 //  10. boss openers that always land (迷魂扇, 天罡破法, 蓄勢, 月霧護身曲, 甘霖)
@@ -60,10 +62,10 @@ G.AutoBattle = (() => {
       const hit = Math.max(0.6, Math.min(0.99, 0.95 - (eff(tg, 'spd') - eff(u, 'spd')) / 400));
       const crit = Math.min(1, 0.05 + (u.luk || 0) / 500 + (u.st.trance ? 0.3 : 0) + (s.crit || 0) + (hasSp(u, 'critUp') ? 0.12 : 0));
       d *= hit * (1 + crit * 0.5);
-      if (tg.diving) d = 0;
-    } else d = power * mag * 2 * 50 / (50 + (eff(tg, 'def') * 0.3 + eff(tg, 'mag') * 0.7));
+    } else d =power * mag * 2 * 50 / (50 + (eff(tg, 'def') * 0.3 + eff(tg, 'mag') * 0.7));
     d *= sc.elemFactor(s.elem || null, tg);
     if (tg.st.guard) d *= 0.5;
+    if (tg.diving || tg.submerged) d = 0; // under water: every hit misses (ch10 海蛇)
     return d;
   }
   // expected damage of skill s by u on target tg (or the whole side), capped by the HP left
@@ -75,12 +77,77 @@ G.AutoBattle = (() => {
     return tg ? Math.min(tg.hp, oneHit(sc, u, s, tg, avg) * hits) : 0;
   }
   const isMain = (sc, e) => e.boss || e.mhp >= Math.max(...sc.enemies.map((x) => x.mhp));
+
+  // ---------------------------------------------------------------- what a story fight shows on screen
+  // Boss fights whose rules put a hint on screen (a message, a HUD counter, a mark over a member) that a player is
+  // meant to act on. Matched by enemy id; read only what the screen shows (the chapter's battle state, sc.c6 / sc.c10,
+  // the 燈火 meter). focus: enemies the battle says to break first; tactics(sc, u, h) → a command or null;
+  // valueMod(sc, u, skill, target, value) → the damage value adjusted for the fight's rules.
+  const XH = 'xinghe', BZ = 'baizhi', YG = 'yungui';
+  A.FIGHTS = [
+    { ids: ['c7_dark_seal'], focus: ['c7_dark_seal'] },                 // 清虛: 「打燈」— break the seal on his back
+    { ids: ['c8_tide_wick'], focus: ['c8_tide_wick'] },                 // 百手: the wicks feed it
+    { ids: ['c11_kun_tumor'], focus: ['c11_kun_tumor'] },               // 鯤: the tumours heal it
+    { ids: ['e_wind_drowned'], tactics: (sc, u, h) =>                   // 風魔: ferry the drowned souls
+      (u.id === BZ && h.usable.includes('bz_duhun') && sc.alive('enemy').some((e) => e.id === 'e_wind_drowned') ? h.cmdFor('bz_duhun') : null) },
+    { ids: ['c6_linto'], tactics: (sc, u, h) => {                       // 林投姐: 「選擇『防禦』，靜靜聽她講完」
+      const st = sc.c6;
+      if (st && st.window) return { kind: 'defend' };
+      if (u.id === BZ && h.usable.includes('bz_duhun') && sc.alive('party').every((p) => pct(p) > 0.5)) return h.cmdFor('bz_duhun');
+      return null;
+    } },
+    { ids: ['c6_netherlamp'], tactics: (sc, u, h) => {                  // 冥燈護法: 燈印 over a member (防禦、或用護燈訣護住他)
+      const st = sc.c6, mk = st && st.mark;
+      if (mk && !mk.guarded && mk.u && !mk.u.dead) {
+        if (mk.u === u && mk.n <= 1) return { kind: 'defend' };
+        if (u.id === XH && h.usable.includes('xh_hudeng')) return h.cmdFor('xh_hudeng', mk.u);
+        if (mk.u === u) return { kind: 'defend' };
+      }
+      if (u.id === BZ && h.usable.includes('bz_duhun') && sc.alive('enemy').some((e) => e.id.startsWith('c6_soul_jar_')) && sc.alive('party').every((p) => pct(p) > 0.45)) return h.cmdFor('bz_duhun');
+      return null;
+    } },
+    { ids: ['c9_moray_king'], tactics: (sc, u, h) => {                  // 鰻王: keep the lamp (燈火) alight
+      const v = G.state.vars;
+      return u.id === XH && v.flame != null && v.flame <= 25 && h.usable.includes('c9_guard_lamp') ? h.cmdFor('c9_guard_lamp') : null;
+    } },
+    { ids: ['tide_serpent'], tactics: (sc, u) => {                      // 海蛇: 「牠朝○○游過去了！（防禦可以撐住）」
+      const boss = sc.enemies.find((e) => e.id === 'tide_serpent');
+      return boss && boss.submerged && sc.msg && String(sc.msg.text || '').includes(u.name) ? { kind: 'defend' } : null;
+    } },
+    { ids: ['gorge_colossus'], valueMod: (sc, u, s, t, v) => {          // 石巨靈: wood cracks the stone armour
+      const R = sc.c10;
+      if (!R) return v;
+      if (R.armor > 0 && !R.p3) v *= s.elem === 'wood' ? 1.6 : 0.6;
+      else if (R.exposed > 0 || R.p3) v *= 1.3;
+      if (s.elem === 'fire' && R.melt < 2) v *= 1.15;
+      return v;
+    } },
+    { ids: ['c10_guhun_horde'], tactics: (sc, u, h) => {                // 孤魂眾: feed them (普渡 / the offerings the town gave)
+      const R = sc.c10, boss = sc.enemies.find((e) => e.id === 'c10_guhun_horde' && !e.dead);
+      if (!R || !boss || R.hunger <= 30 || !(R.hunger >= 70 || boss.hp < boss.mhp * 0.55)) return null;
+      if (u.id === YG && h.usable.includes('yg_pudu')) return h.cmdFor('yg_pudu');
+      if (A.itemsOn() && G.Inv.count('c10_pudu_offering') > 0) return { kind: 'item', item: 'c10_pudu_offering', targets: [boss] };
+      return null;
+    } },
+  ];
+  const NONE = {};
+  function fightOf(sc) {
+    // looked up again whenever the enemy list grows (adds summoned by a phase)
+    if (sc.autoFightN === sc.enemies.length) return sc.autoFight || NONE;
+    const ids = new Set(sc.enemies.map((e) => e.id));
+    const hit = A.FIGHTS.filter((f) => f.ids.some((id) => ids.has(id)));
+    const F = hit.length ? Object.assign({}, ...hit, { focus: [].concat(...hit.map((f) => f.focus || [])) }) : null;
+    sc.autoFight = F; sc.autoFightN = sc.enemies.length;
+    return F || NONE;
+  }
   function pickTarget(sc, u, s, avg) {
     const foes = sc.alive('enemy');
+    const F = fightOf(sc);
     let best = null, bv = -1;
     for (const f of foes) {
       let v = expDmg(sc, u, s, f, avg);
       if (v <= 0) continue;
+      if (F.focus && F.focus.includes(f.id)) v *= 3;
       // finish what can be finished; adds that die in ~2 hits come first, otherwise the main enemy
       if (f.hp <= v) v += f.mhp * 0.25 + 50;
       else if (!isMain(sc, f) && f.hp <= v * 2.2) v *= 1.4;
@@ -281,6 +348,12 @@ G.AutoBattle = (() => {
         if (ci) return itemCmd(sc, ci, stuck);
       }
     }
+    // 7b. what this story fight's rules show on screen (A.FIGHTS)
+    const F = fightOf(sc);
+    if (F.tactics) {
+      const c = F.tactics(sc, u, { usable, cmdFor: (id, tg) => cmdFor(sc, u, id, null, tg) });
+      if (c) return c;
+    }
     // 8. guard against a telegraphed blow
     const tel = telegraph(sc);
     if (tel) {
@@ -311,13 +384,14 @@ G.AutoBattle = (() => {
     const atkVal = expDmg(sc, u, atkSk, atkT);
     const kmp = atkVal / (boss ? ST.kmpBoss : ST.kmpTrash);
     const reserve = iAmHealer ? u.mmp * (boss ? ST.reserveBoss : ST.reserveTrash) : 0;
-    let best = { kind: 'attack', targets: [atkT] }, bv = atkVal;
+    let best = { kind: 'attack', targets: [atkT] }, bv = F.valueMod ? F.valueMod(sc, u, atkSk, atkT, atkVal) : atkVal;
     for (const k of usable) {
       const s = SK()[k];
       if (s.type !== 'phys' && s.type !== 'mag') continue;
       if (u.mp - (s.mp || 0) < reserve) continue;
       const t = s.target === 'enemy' ? pickTarget(sc, u, s) : null;
       let v = expDmg(sc, u, s, t) * (s.delay ? 1 / s.delay : 1) - (s.mp || 0) * kmp;
+      if (F.valueMod) v = F.valueMod(sc, u, s, t, v);
       if (s.buffs && s.buffs.some((b) => b.amt < 0) && t && isMain(sc, t)) v *= 1.15;
       if (v > bv) { bv = v; best = cmdFor(sc, u, k, null, t); }
     }

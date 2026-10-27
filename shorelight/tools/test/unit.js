@@ -694,6 +694,48 @@ test('battle: auto-battle ultimate with revive:true also targets KO\'d allies (c
   A.ok(cmd.targets.includes(b), 'KO\'d ally missing from targets — auto-battle ultimate never revives (battle.js cmdForSkill uses alive(\'party\') for target allies; manual CommandUI uses sc.party)');
 });
 
+// auto-battle AI (js/engine/autobattle.js): items follow 使用道具, boss vs ordinary fights, rare / key items never
+function autoSetup(G, boss) {
+  const sc = scene(G);
+  const a = unit(G, { id: 'qa_hero', name: '甲', m: { skills: [] }, wait: 50 });
+  const b = unit(G, { id: 'qa_mage', name: '乙', m: { skills: [] }, hp: 50, wait: 50 });
+  const e = unit(G, { side: 'enemy', id: 'qa_e', name: '敵', boss, hp: 5000, mhp: 5000, wait: 10 });
+  Object.assign(sc, { party: [a, b], enemies: [e], troop: { boss, enemies: ['qa_e'] } });
+  G.state.chapter = 1;
+  G.Data.items.qa_elixir = { name: 'QA丹', type: 'use', price: 900, icon: 'pill', use: { target: 'ally', heal: 400 } };
+  G.Data.items.qa_gift = { name: 'QA禮', type: 'use', price: 0, icon: 'food', use: { target: 'ally', heal: 9999 } };
+  return { sc, a, b };
+}
+test('autobattle: heal items — boss fights use the kit, ordinary fights only cheap ones, never gifts / with 使用道具 off', ({ G }) => {
+  const AB = G.AutoBattle;
+  A.ok(AB && AB.command, 'G.AutoBattle.command missing (js/engine/autobattle.js not loaded before battle.js?)');
+  let { sc, a, b } = autoSetup(G, true);
+  G.Inv.add('qa_elixir', 1);
+  let c = AB.command(sc, a);
+  A.eq(c.kind, 'item', 'boss fight: a member at 10% HP should get a heal item'); A.eq(c.item, 'qa_elixir'); A.ok(c.targets[0] === b);
+  ({ sc, a, b } = autoSetup(G, false));
+  c = AB.command(sc, a);
+  A.ok(c.kind !== 'item', 'ordinary fight: a 900-gold item must not be used in chapter 1');
+  G.Inv.add('qa_potion', 2);
+  c = AB.command(sc, a);
+  A.eq(c.kind, 'item'); A.eq(c.item, 'qa_potion', 'ordinary fight: the cheap item is fine in an emergency');
+  G.settings.autoItems = false;
+  try { c = AB.command(sc, a); A.ok(c.kind !== 'item', '使用道具 off: no items'); } finally { G.settings.autoItems = true; }
+  G.Inv.remove('qa_potion', 2); G.Inv.remove('qa_elixir', 1); G.Inv.add('qa_gift', 1); G.Inv.add('qa_key', 1);
+  ({ sc, a, b } = autoSetup(G, true));
+  c = AB.command(sc, a);
+  A.ok(c.kind !== 'item', 'story gifts (no shop price) and key items are never used');
+});
+test('autobattle: an on-screen warning that names a member makes only that member guard', ({ G }) => {
+  const { sc, a, b } = autoSetup(G, true);
+  b.hp = b.mhp;
+  sc.acts = 5; sc.say('牠朝乙游過去了！（防禦可以撐住）', 2);
+  A.eq(G.AutoBattle.command(sc, b).kind, 'defend', 'the named member guards');
+  A.ok(G.AutoBattle.command(sc, a).kind !== 'defend', 'the others keep fighting');
+  sc.acts = 9; // two actions later the warning is stale
+  A.ok(G.AutoBattle.command(sc, b).kind !== 'defend');
+});
+
 // ------------------------------------------------------------------ dialogue / menus (logic level, no rendering)
 function pump(G, scene, sec, dt = 0.05) { for (let t = 0; t < sec; t += dt) { G.Input.update(dt); G.Timers.update(dt); G.Tweens.update(dt); G.Scenes.update(dt); G.Input.endFrame(); } }
 test('dialog: pressing OK advances a single-page line (no auto/skip)', async ({ G, ctx }) => {

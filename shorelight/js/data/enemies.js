@@ -549,7 +549,7 @@ G.Data.enemyCurve = function (L) {
   });
   base('stone_guardian', {
     name: '石像衛', art: 'stone_guardian', lv: 27, elem: 'earth', m: { hp: 1.4, atk: 1.1, def: 1.6, spd: 0.75 },
-    skills: [['e_statue_smash', 3], ['e_guard', 1]], drops: [['fenglisu', 0.2]],
+    skills: [['e_statue_smash', 3], ['e_guard', 1]], drops: [['fenglisu', 0.2], ['c7_mat_jingang', 0.3]], // 金剛石屑: ch7 燈母祠
     desc: '燈母祠的石像守衛，守了不知幾百年。它不認得你——但它記得上一個來的人，也有一點像你。',
   });
   base('lamp_moth', {
@@ -609,7 +609,7 @@ G.Data.enemyCurve = function (L) {
   // =================================================================================== 9 王船南行
   base('greed_ghost', {
     name: '貪鬼', art: 'greed_ghost', lv: 31, elem: 'metal', m: { hp: 1.1, atk: 1.0, mag: 1.0, spd: 1.0, gold: 3 },
-    skills: [['e_greed_grab', 3], ['e_greed_coins', 2]], drops: [['wuyuzi', 0.15], ['ac_jinqian', 0.02]],
+    skills: [['e_greed_grab', 3], ['e_greed_coins', 2]], drops: [['wuyuzi', 0.15], ['ac_jinqian', 0.02], ['c9_mat_qiandai', 0.25]], // 錢袋: ch9 半屏山腹
     desc: '半屏山傳說裡那些「兩碗免錢」就吃了兩碗的人。貪心把山挖走了一半，也把他們的魂留在了山腳。',
   });
   base('moray', {
@@ -649,7 +649,7 @@ G.Data.enemyCurve = function (L) {
 
   base('sea_monster', {
     name: '海妖', art: 'sea_monster', lv: 34, elem: 'water', m: { hp: 1.2, atk: 1.0, mag: 1.2, spd: 1.0 },
-    skills: [['e_sea_tentacle', 3], ['e_sea_song', 1], ['e_ghost_touch', 1]], drops: [['yinghuaxia', 0.1]],
+    skills: [['e_sea_tentacle', 3], ['e_sea_song', 1], ['e_ghost_touch', 1]], drops: [['yinghuaxia', 0.1], ['c9_mat_shanhusui', 0.3]], // 珊瑚碎: ch9 龍坑
     desc: '從黑潮深處被潮病逼上來的怪物。牠的歌聲很美，因為那是牠從溺水者那裡學來的。',
   });
   troop('cape_1', ['sea_monster'], 'cape', 'battle2');

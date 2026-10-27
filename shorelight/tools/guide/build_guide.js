@@ -348,17 +348,77 @@ const addSrc = (id, s) => { (SOURCES[id] = SOURCES[id] || []); if (!SOURCES[id].
 for (const sh of SHOPS) { for (const id of sh.items) addSrc(id, `${CH_SHORT(sh.ch)}・${sh.title}`); for (const id of sh.cond) addSrc(id, `${CH_SHORT(sh.ch)}・${sh.title}（限時）`); }
 for (const ch of CHS) for (const c of CHESTS[ch]) if (c.item) addSrc(c.item, `${CH_SHORT(ch)}・${c.mapName}寶箱`);
 for (const id in G.Data.enemies) { if (ENEMY_CH[id] == null) continue; for (const dr of G.Data.enemies[id].drops || []) addSrc(dr.item, `掉落：${G.Data.enemies[id].name}（${Math.round(dr.rate * 100)}%）`); }
-// story / event gifts: any quoted mention of an item id in a chapter script (definitions and the debug-only
-// "standalone start" kits excluded) means the story hands it over somewhere
+// story / event gifts: an item handed over by a chapter script — S.give('id'), G.Inv.add('id'), giveSilent('id'), a loot
+// table entry `item: 'id'` (半屏山腹, bundles) or a ch10 driftwood crate H.crate('key', x, y, [['id', n], …]). Mentions in
+// conditions (S.hasItem, S.take, G.Inv.has …) do not count, and neither do the debug-only "standalone start" blocks
+// (an `if (…) {` block with a comment saying "standalone" in the three lines above it: ch7 kit, ch9 / ch10 gear).
+// A give can name its source for the 取得 column with a trailing comment: `await S.give('id', 1); // 取得：第N章・…`.
+// Crates are listed like chests. Items that are deliberately not obtainable carry `noSource: '<reason>'` in their data.
+function blockSpans(s) { // [open, close) of every {...} block, strings / comments / template literals skipped
+  const spans = [];
+  const stack = [];
+  for (let k = 0; k < s.length; k++) {
+    const c = s[k];
+    if (c === '\'' || c === '"' || c === '`') { const q = c; k++; while (k < s.length && s[k] !== q) { if (s[k] === '\\') k++; k++; } continue; }
+    if (c === '/' && s[k + 1] === '/') { while (k < s.length && s[k] !== '\n') k++; continue; }
+    if (c === '/' && s[k + 1] === '*') { k = s.indexOf('*/', k + 2) + 1; continue; }
+    if (c === '{') stack.push(k);
+    else if (c === '}' && stack.length) spans.push([stack.pop(), k + 1]);
+  }
+  return spans;
+}
+function debugSpans(s) {
+  return blockSpans(s).filter(([o]) => {
+    const lineStart = s.lastIndexOf('\n', o) + 1;
+    if (!/^\s*if \(/.test(s.slice(lineStart, o))) return false;
+    let p = lineStart - 1;
+    for (let n = 0; n < 3 && p > 0; n++) p = s.lastIndexOf('\n', p - 1);
+    return /\/\/.*standalone/i.test(s.slice(Math.max(0, p), lineStart));
+  });
+}
 const STORY_ITEMS = new Set();
+const GIVE_RE = /S\.give\(\s*'([a-z0-9_]+)'|G\.Inv\.add\(\s*'([a-z0-9_]+)'|giveSilent\(\s*'([a-z0-9_]+)'|\bitem:\s*'([a-z0-9_]+)'/g;
 for (const ch of CHS) {
-  for (const line of D.src[ch].split('\n')) {
-    if (/const (?:kit|gear) = \{|for \(const \[it, n\] of \[\[/.test(line)) continue;
-    for (const m of line.matchAll(/'([a-z0-9_]+)'(?!\s*,\s*\{)/g)) if (G.Data.items[m[1]]) STORY_ITEMS.add(m[1]);
+  const s = D.src[ch];
+  const dbg = debugSpans(s);
+  const inDebug = (i) => dbg.some(([a, b]) => i > a && i < b);
+  for (const m of s.matchAll(GIVE_RE)) {
+    const id = m[1] || m[2] || m[3] || m[4];
+    if (!G.Data.items[id] || inDebug(m.index)) continue;
+    STORY_ITEMS.add(id);
+    const eol = s.indexOf('\n', m.index);
+    const lbl = /\/\/\s*取得：\s*(.+?)\s*$/.exec(s.slice(m.index, eol < 0 ? s.length : eol));
+    if (lbl) addSrc(id, lbl[1]);
+  }
+  for (const m of s.matchAll(/H\.crate\(\s*'[^']+',\s*\d+,\s*\d+,\s*\[(\[[^\n]*?\])\]/g)) {
+    if (inDebug(m.index)) continue;
+    const def = [...s.slice(0, m.index).matchAll(/G\.Maps\.define\(\s*'([a-z0-9_]+)'/g)].pop();
+    const mapName = def && G.Maps.defs[def[1]] ? G.Maps.defs[def[1]].name : '';
+    for (const q of m[1].matchAll(/\['([a-z0-9_]+)'/g)) {
+      if (!G.Data.items[q[1]]) continue;
+      STORY_ITEMS.add(q[1]);
+      addSrc(q[1], `${CH_SHORT(ch)}・${mapName}漂流木箱`);
+    }
   }
 }
 for (const c of Object.values(G.Data.chars)) for (const v of Object.values(c.equip || {})) if (v) STORY_ITEMS.add(v);
 const obtainable = (id) => !!(SOURCES[id] || STORY_ITEMS.has(id));
+// node tools/guide/build_guide.js --check-items : list the items nothing hands out (exit 1 if any)
+if (ARGS.includes('--check-items')) {
+  const IT = G.Data.items;
+  const chOf = (id) => (ITEM_CH[id] != null ? ITEM_CH[id] : IT[id].ch);
+  const missing = Object.keys(IT).filter((id) => !obtainable(id) && !IT[id].noSource);
+  const marked = Object.keys(IT).filter((id) => IT[id].noSource);
+  for (const id of marked) console.log(`  not obtainable by design: ${id} ${IT[id].name} — ${IT[id].noSource}${obtainable(id) ? ' (but a source exists!)' : ''}`);
+  for (const id of missing) console.log(`  UNOBTAINABLE: ${id} ${IT[id].name} (${IT[id].type}, ${CH_SHORT(chOf(id))}, ${itemEffectPlain(IT[id])}, ${IT[id].price || 0} 文)`);
+  console.log(`${Object.keys(IT).length} items · ${missing.length} unobtainable · ${marked.length} marked noSource`);
+  process.exit(missing.length ? 1 : 0);
+}
+function itemEffectPlain(it) {
+  if (it.use) return JSON.stringify(it.use);
+  return [statsStrRaw(it.stats), it.elem && 'elem:' + it.elem, it.special && [].concat(it.special).join('/'), it.resist && 'resist:' + it.resist.join('/'), it.immune && 'immune:' + it.immune.join('/')].filter(Boolean).join(' ');
+}
+function statsStrRaw(st) { return st ? Object.entries(st).filter(([, v]) => typeof v === 'number' && v).map(([k, v]) => `${k}${v > 0 ? '+' : ''}${v}`).join(' ') : ''; }
 
 // =====================================================================================================================
 // 3. formatting helpers

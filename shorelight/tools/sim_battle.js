@@ -18,6 +18,8 @@
 // It only knows js/data/*. For the bosses and scripted fights of the chapter files (their own enemies, troops and
 // battle rule hooks) use tools/sim_story.js, which runs the real battle engine headless with every chapter loaded and a
 // sensible-player AI (tools/test/lib/battlebot.js); results and the tuning behind them are in docs/BALANCE.md.
+// The party AI below is this file's own; the in-game auto-battle (F, js/engine/autobattle.js) needs the real engine:
+// `node tools/sim_story.js --ai auto --areas` runs this file's area troops and bosses with it.
 'use strict';
 const fs = require('fs');
 const path = require('path');
