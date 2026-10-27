@@ -1,84 +1,82 @@
 {
- "when": "2026-10-27T19:07:53.349Z",
- "pass": 0,
- "fail": 4,
+ "when": "2026-10-27T19:46:22.980Z",
+ "pass": 4,
+ "fail": 0,
  "skip": 0,
  "results": [
   {
-   "id": "map:mist_loop",
-   "name": "map mist_loop: loads, renders, NPC dialogue & events run",
-   "status": "fail",
-   "msg": "soft-lock in event 'exit_s': script busy with nothing on screen for 15s (actors: none)",
-   "ms": 72728,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 56.9ms/frame (p95 324.4ms) > 16ms"
-   ]
-  },
-  {
    "id": "map:citygod_vision",
    "name": "map citygod_vision: loads, renders, NPC dialogue & events run",
-   "status": "fail",
-   "msg": "soft-lock in event 'c4_405': script busy with nothing on screen for 15s (actors: none)",
-   "ms": 93823,
+   "status": "pass",
+   "msg": "",
+   "ms": 90121,
    "errors": [],
    "warnings": [
-    "slow: update+draw averages 33.0ms/frame (p95 158.6ms) > 16ms"
+    "slow: update+draw averages 25.7ms/frame (p95 150.3ms) > 16ms"
    ]
   },
   {
-   "id": "map:mist_grove",
-   "name": "map mist_grove: loads, renders, NPC dialogue & events run",
-   "status": "fail",
-   "msg": "soft-lock in event 'vision': script busy with nothing on screen for 15s (actors: none)",
-   "ms": 298869,
+   "id": "map:mist_loop",
+   "name": "map mist_loop: loads, renders, NPC dialogue & events run",
+   "status": "pass",
+   "msg": "",
+   "ms": 129029,
    "errors": [],
    "warnings": [
-    "slow: update+draw averages 124.6ms/frame (p95 509.9ms) > 16ms"
+    "slow: update+draw averages 40.9ms/frame (p95 191.2ms) > 16ms"
    ]
   },
   {
    "id": "map:taixu",
    "name": "map taixu: loads, renders, NPC dialogue & events run",
-   "status": "fail",
-   "msg": "soft-lock in event 'tx_gate_down': script busy with nothing on screen for 15s (actors: none)",
-   "ms": 318125,
+   "status": "pass",
+   "msg": "",
+   "ms": 121170,
    "errors": [],
    "warnings": [
-    "slow: update+draw averages 63.0ms/frame (p95 565.1ms) > 16ms",
-    "map-entry script left the map; NPC checks use a fresh load",
-    "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio  (×2)"
+    "slow: update+draw averages 34.7ms/frame (p95 286.3ms) > 16ms"
+   ]
+  },
+  {
+   "id": "map:mist_grove",
+   "name": "map mist_grove: loads, renders, NPC dialogue & events run",
+   "status": "pass",
+   "msg": "",
+   "ms": 177785,
+   "errors": [],
+   "warnings": [
+    "slow: update+draw averages 83.6ms/frame (p95 293.5ms) > 16ms"
    ]
   }
  ],
  "perf": [
   {
    "map": "mist_grove",
-   "rafAvg": 79.44,
-   "rafMax": 316.7,
-   "cpuAvg": 124.59,
-   "cpuP95": 509.9
-  },
-  {
-   "map": "taixu",
-   "rafAvg": 97.78,
-   "rafMax": 849.9,
-   "cpuAvg": 63.05,
-   "cpuP95": 565.1
+   "rafAvg": 57.78,
+   "rafMax": 83.4,
+   "cpuAvg": 83.57,
+   "cpuP95": 293.5
   },
   {
    "map": "mist_loop",
-   "rafAvg": 63.05,
-   "rafMax": 299.9,
-   "cpuAvg": 56.89,
-   "cpuP95": 324.4
+   "rafAvg": 48.05,
+   "rafMax": 149.9,
+   "cpuAvg": 40.9,
+   "cpuP95": 191.2
+  },
+  {
+   "map": "taixu",
+   "rafAvg": 56.94,
+   "rafMax": 183.4,
+   "cpuAvg": 34.73,
+   "cpuP95": 286.3
   },
   {
    "map": "citygod_vision",
-   "rafAvg": 57.22,
+   "rafAvg": 43.05,
    "rafMax": 133.4,
-   "cpuAvg": 33.04,
-   "cpuP95": 158.6
+   "cpuAvg": 25.74,
+   "cpuP95": 150.3
   }
  ],
  "bootErrors": []

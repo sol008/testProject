@@ -154,7 +154,12 @@ async function testCritical(browser, open) {
   const prints = await s.ev(() => G.mapScene.objects.filter((o) => o.t === 'c2_footprint' && G.mapScene.objActive(o)).length);
   assert(prints > 4, 'footprints should be visible under 靈視 (' + prints + ')');
   await s.shot('04_footprints');
-  for (const [x, y] of [[23, 9], [11, 19], [11, 19]]) { await step(s, x, y); await s.idle(); }
+  for (const [x, y] of [[23, 9], [11, 19], [11, 19]]) {
+    await step(s, x, y); await s.idle();
+    // a loop-back is a same-map warp (the object list is kept): the next leg's prints must still show, in 2D and 3D
+    const leg = await s.ev(() => ({ step: G.state.vars.loopStep, n: G.mapScene.objects.filter((o) => o.t === 'c2_footprint' && G.mapScene.objActive(o)).length }));
+    assert(leg.n > 4, 'footprints for loopStep ' + leg.step + ' should be visible after looping back (' + leg.n + ')');
+  }
   await step(s, 0, 9);
   await s.onMap('mistforest_s');
   assert((await s.flags()).ch2_maze_solved, '2-6 solved');
@@ -268,6 +273,15 @@ async function testMaze(browser, open) {
   assert(await s.ev(() => G.state.vars.loopStep === 1 && G.mapScene.player.x === 1), 'E is step 1 (arrives at the west side)');
   await step(s, 23, 9); await s.idle();
   assert(await s.ev(() => G.state.vars.loopStep === 0), 'a wrong turn resets the maze');
+  // safety net: the 3rd wrong turn makes 麻糬 (or 白芷) name the next exit; 靈視 running out mid-maze is called out
+  await s.ev(() => { const S = G.Script.S, say = S.say; window.__said = []; S.say = function (who, text) { window.__said.push(text); return say.apply(this, arguments); }; });
+  for (let i = 0; i < 2; i++) { await step(s, 0, 9); await s.idle(); }
+  assert(await s.ev(() => G.state.vars.c2_wrong === 3 && G.state.vars.loopStep === 0), 'three wrong turns counted');
+  assert(await s.ev(() => window.__said.some((t) => /東邊/.test(t))), 'the 3rd wrong turn points east: ' + JSON.stringify(await s.ev(() => window.__said)));
+  await s.ev(() => G.Script.S.vision(0.3));
+  await s.page.waitForFunction(() => !(G.state.vars.vision > 0), null, { timeout: 20000 });
+  await s.idle();
+  assert(await s.ev(() => !G.state.vars.c2_sightLost && window.__said.includes('啊，腳印……不見了！')), '靈視 running out in the maze is called out');
   await step(s, 11, 0);
   await s.onMap('mistforest_n');
   assert(await s.ev(() => G.mapScene.player.y === 42), 'north exit returns to 霧林・北');

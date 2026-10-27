@@ -268,6 +268,24 @@
     try { G.Objects.get('c2_footprint').draw(g, 0, 0, { dir: o.dir, kind: o.kind, seq: 0, x: 0, y: 0, fade: 1 }, Math.PI / 2 / 2.4); } catch (e) { G.warnOnce('c2_footprint paint', e); }
     return c;
   }
+  let _halo = null, _haloGeo = null;
+  function haloTex() {
+    if (_halo) return _halo;
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.45, 'rgba(255,255,255,0.45)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+    _halo = R.canvasTex(c); _halo.shared = true;
+    return _halo;
+  }
+  function haloGeo() {
+    if (_haloGeo) return _haloGeo;
+    _haloGeo = new T.PlaneGeometry(1.5, 1.5);
+    _haloGeo.rotateX(-Math.PI / 2);
+    return _haloGeo;
+  }
   def('c2_footprint', {
     key: (o) => (o.kind || 'child') + ':' + (o.dir || 'right'),
     build(o) {
@@ -286,6 +304,12 @@
       p.name = 'print';
       const out = new T.Group();
       out.add(p);
+      if (glow) { // a soft additive pool of spirit light under each print: reads against the maze's grey-green mist
+        const h = new T.Mesh(haloGeo(), new T.MeshBasicMaterial({ map: haloTex(), transparent: true, depthWrite: false, toneMapped: false, fog: false,
+          blending: T.AdditiveBlending, color: new T.Color('#7fc8ff'), opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -1 }));
+        h.position.set(0, 0.02, 0.03); h.renderOrder = 2; h.name = 'halo';
+        out.add(h);
+      }
       if (o.kind === 'shoe') { // the shoe itself has some volume
         const s = new T.Mesh(new T.SphereGeometry(0.1, 10, 6), cm('shoe', () => R.env({ color: 0x5a3a5a, roughness: 0.8 })));
         s.scale.set(1.15, 0.38, 0.5); s.position.set(0, 0.035, 0.03); s.rotation.y = -0.6; s.castShadow = true;
@@ -308,7 +332,10 @@
       // never dimmer than ~0.7: the prints are the way out of the maze and must read through the fog at any moment
       p.material.opacity = Math.min(1, (0.8 + 0.2 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade) * Math.max(0.85, hold));
       const halo = node.getObjectByName('halo');
-      if (halo) halo.material.opacity = p.material.opacity * 0.55;
+      if (halo) {
+        if (!halo.userData.own) { halo.material = halo.material.clone(); halo.userData.own = true; }
+        halo.material.opacity = p.material.opacity * 0.55;
+      }
     },
     lights: () => [], // the print glows by itself; a pool light + halo per print read as floating blobs on maze paths
   });
