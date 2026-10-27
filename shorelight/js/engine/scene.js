@@ -20,8 +20,10 @@ G.Scenes = (() => {
       return S.push(s);
     },
     has: (s) => stack.includes(s),
+    frame: 0, // number of update() calls so far (main loop and test fast-forward loops alike)
     update(dt) {
       // only the top scene receives input/update; scenes below may request background updates
+      S.frame++;
       const top = S.top();
       for (let i = 0; i < stack.length - 1; i++) if (stack[i].bgUpdate) stack[i].bgUpdate(dt);
       if (top) top.update(dt);

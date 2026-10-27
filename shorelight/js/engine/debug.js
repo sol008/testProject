@@ -114,16 +114,37 @@ G.Debug.stepOn = function (x, y, dir) {
   p.onArrive = null;
   m.onPlayerArrive();
 };
-// wait until no script is running and no overlay scene is open (resolves with true, or false on timeout)
-G.Debug.idle = function (timeoutMs = 60000) {
+// an auto event on the current map whose conditions hold right now: MapScene.checkAuto starts it on the next update,
+// so the map is not really idle yet (e.g. one auto event's script just ended and the next one is about to begin)
+G.Debug.pendingAuto = function () {
+  const m = G.mapScene;
+  if (!m || !m.def || G.Scenes.top() !== m) return null;
+  for (const e of m.def.events || []) if (e.trigger === 'auto' && m.eventOk(e)) return e;
+  return null;
+};
+// idle right now: no script running, the map is the top scene, no fade, and no auto event about to fire
+G.Debug.idleNow = function () {
+  const top = G.Scenes.top();
+  return !G.Script.busy() && !!top && top === G.mapScene && G.Render.fade.a < 0.05 && !G.Debug.pendingAuto();
+};
+// wait until the game is idle (see idleNow) and has STAYED idle across `frames` scene updates (default 2), so the gap
+// between two chained scripts never reads as idle. Resolves true, 'gameover', or false on timeout.
+// opts: { frames: 2 }. If the game loop is not advancing at all, ~1 s of uninterrupted idleness also counts.
+G.Debug.idle = function (timeoutMs = 60000, opts = {}) {
+  const need = opts.frames == null ? 2 : opts.frames;
   const t0 = Date.now();
+  let since = null; // { frame, at } of the first observation in the current idle streak
   return new Promise((res) => {
-    const iv = setInterval(() => {
+    let iv = null;
+    const check = () => {
       const top = G.Scenes.top();
-      const idle = !G.Script.busy() && top === G.mapScene && G.Render.fade.a < 0.05;
-      const over = !!(G.GameOverScene && top instanceof G.GameOverScene);
-      if (over) { clearInterval(iv); res('gameover'); return; }
-      if (idle || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(idle); }
-    }, 100);
+      if (G.GameOverScene && top instanceof G.GameOverScene) { clearInterval(iv); res('gameover'); return true; }
+      if (!G.Debug.idleNow()) since = null;
+      else if (!since) since = { frame: G.Scenes.frame, at: Date.now() };
+      const stable = !!since && (G.Scenes.frame - since.frame >= need || Date.now() - since.at >= 1000);
+      if (stable || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(stable); return true; }
+      return false;
+    };
+    if (!check()) iv = setInterval(check, 25);
   });
 };
