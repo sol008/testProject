@@ -979,7 +979,7 @@ G.I18N.add({
   '……還是缺了幾個。不要緊。': '…Still a few missing. It\'s all right.',
   '我記得幾個，就唱幾個。剩下的，我慢慢想，想到我死。': 'However many I remember, that\'s how many I\'ll sing. The rest, I\'ll keep trying to recall, till the day I die.',
   '少年仔，你身上那股火……我看過一次。': 'Young man, that fire in you… I\'ve seen it once before.',
-  '十八年前，中元的前幾天。黑潮帶著一個白頭髮的查某囡仔，漂到南灣。': 'Eighteen years ago, a few days before the Ghost Festival. The Kuroshio carried a girl with white hair to Nanwan.',
+  '十八年前，中元的前幾天。黑潮帶著一個長頭髮的查某囡仔，漂到南灣。': 'Eighteen years ago, a few days before the Ghost Festival. The Kuroshio carried a long-haired girl to Nanwan.',
   '她全身濕淋淋，站在沙灘上，唱了一段我從沒聽過的歌。': 'She was soaked through, standing on the beach, singing a song I\'d never heard before.',
   '唱完，她就走進海裡，往北去了。我以為是我老眼昏花。': 'When she finished, she walked into the sea and headed north. I thought my old eyes were playing tricks on me.',
   '可是那段歌，我記到今天。月琴配不出來，太乾淨了。': 'But that song, I remember to this day. I can\'t find the chords for it on the yueqin. It\'s too clean.',

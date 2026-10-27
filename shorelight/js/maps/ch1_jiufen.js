@@ -2115,7 +2115,7 @@
   async function azhuTalk(S) {
     const p = phase();
     if (p === 'P5') {
-      await S.say('阿珠', '昨暝我在窗戶縫偷看喔。那個白頭髮的姊姊在唱歌。');
+      await S.say('阿珠', '昨暝我在窗戶縫偷看喔。那個長頭髮的姊姊在唱歌。');
       await S.say('阿珠', '好好聽。水鬼都哭了。');
     } else if (p === 'P3') {
       await S.say('阿珠', '阿母說今暝不帶我去雞籠，說小孩子去海邊會被抓交替。');
