@@ -288,23 +288,52 @@
     },
   });
 
-  // ================================================================================================ 洛紅纓
-  // v2 option 01 「洛家槍·承」 (faithful-historical canon refit; final pick pending): Qing arrow-sleeve robe in clan
-  // crimson under a black leather 巴圖魯 vest with a one-line button row, brass belt, laced leather bracers, moon-white
-  // fitted trousers, soft black riding boots, crown-high ponytail with a red silk ribbon, red-tassel spear.
-  look('hongying', 'opt01', {
+  // ================================================================================================ 洛紅纓 (FINAL: v2 #01 洛家槍・承, docs/design/v2/hongying.md §01)
+  // The clan look made real, 7.3 heads: crown-high ponytail (as tall as a spear tassel) tied with a big red silk bow and a
+  // red ribbon running down it, side-swept fringe with face-framing locks; sharp amber-brown eyes, fierce brows, a
+  // confident half-smile. Clan-crimson Qing 箭袖袍 to the knee with darker roundel (團紋) figuring, white stand collar,
+  // black hem band, side slits edged black with brass toggles; black leather 巴圖魯坎肩 with the 一字襟 brass-and-red button
+  // row across the chest; wide black belt with a round brass boss; laced black leather bracers over horse-hoof cuffs;
+  // moon-white fitted trousers; black soft riding boots with a crimson top band; a yellow sachet and a little cat charm
+  // at the hip (she secretly loves cute things); the red-tassel 洛家槍 (on the back in the field, in hand in battle).
+  const HY = { crimson: '#b0242c', leather: '#2a1d20', moon: '#e9e0d0', brass: '#c99a48', skin: '#f3d3bd', hair: '#21181f', red: '#c8323a' };
+  function hongyingRobe(g, x, y, w, h) { // 團紋 roundels in a darker crimson over the robe body
+    const R0 = min(w * 0.022, h * 0.03);
+    g.strokeStyle = rgba(shade(HY.crimson, -0.32), 0.75); g.lineWidth = max(1, R0 * 0.18);
+    for (let r = 0; r < 12; r++) for (let c = 0; c < 26; c++) {
+      const cx = x + (c + (r % 2) * 0.5) / 26 * w, cy = y + h * (0.36 + r * 0.05);
+      if (cy > y + h * 0.93) continue;
+      g.beginPath(); g.arc(cx, cy, R0, 0, TAU); g.stroke(); g.beginPath(); g.arc(cx, cy, R0 * 0.45, 0, TAU); g.stroke();
+    }
+  }
+  look('hongying', 'v2_01', {
     spec: {
-      hair: { style: 'side', color: '#1d161c', sheen: '#5a4a62', back: 'ponytail', len: 0.5, tie: '#d8282a', ribbon: true },
-      top: { color: '#b0242c', len: 0.34, closure: 'side', inner: '#f2ece2', trim: '#6a1218', sleeve: 'long', cuff: '#2a1d20', button: '#c99a48' },
-      vest: { color: '#2a1d20', trim: '#c99a48', len: 0.04, open: false },
-      belt: { color: '#2a1d20', buckle: '#c99a48' }, bracers: { color: '#2a1d20' },
-      bottom: { type: 'pants', color: '#e9e0d0' }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a' },
-      back: 'spear', weapon: 'spear',
+      body: 'female', skin: HY.skin, eyes: '#b4581c',
+      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.1, sweep: 0.04, stiff: 0.8, bow: 1.05, ribbon: true, ribbonLen: 0.56, locks: 0.7, vol: 1.1 },
+      hat: null,
+      top: { color: HY.crimson, len: 0.5, closure: 'side', inner: HY.moon, trim: HY.leather, collarColor: HY.moon, sleeve: 'long', cuff: '#1d1416', slits: 0.07, toggles: HY.brass,
+        hemBand: { color: HY.leather, h: 0.035 }, hemArt: hongyingRobe },
+      vest: { color: HY.leather, trim: '#3a2a2c', len: 0.03, open: false, closure: 'yizi', button: HY.brass, button2: HY.red, buttons: 9, rowAt: 0.17 },
+      belt: { color: HY.leather, buckle: HY.brass, w: 0.05, round: 0.022 }, bracers: { color: HY.leather, from: 0.42 },
+      bottom: { type: 'pants', color: HY.moon }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a', from: 0.56, flare: 1.1, band: HY.crimson },
+      sash: null, skirt: null, apron: null,
+      hip: ['charm'], back: 'spear', weapon: 'spear', aura: '#ffd36a',
     },
-    face3d: { eyeStyle: 'sharp', iris: '#5a2a22', irisLight: '#b0603a', browW: 1.45, lash: 0.6, chin: 0.36, jaw: 0.8, restCurve: -0.05 },
+    body3d: { sh: 0.158, chestW: 0.134, waistW: 0.104, armR: 0.037, foreR: 0.031 },
+    face3d: { eyeStyle: 'sharp', ew: 0.27, eh: 0.6, iris: '#a8501c', irisLight: '#e89a50', lash: 0.65, browW: 1.55, browAng: -0.2, browArch: 0.2, browCol: '#1d161c',
+      chin: 0.36, jaw: 0.8, mouth: 'smirk', restCurve: 0.18, lips: '#d46a72', lipTint: 0.4, blush: 0.25 },
     expr: 'determined',
-    props3d: { spear: { tasselMat: 'tassel' } },
+    props3d: { spear: { tasselMat: 'tassel', grip: 0.46 } },
     style: { rest: { chest: [-3, 0, 0], head: [-2, 0, 0], upperArmL: [0, 0, 3], upperArmR: [0, 0, -3] } },
+    clips: {
+      // the sheet pose: spear planted upright in the right hand, left fist on the hip, weight on the left leg
+      sheet: () => ({ dur: 3, loop: true, k: [
+        { t: 0, hp: [0.015, -0.005, 0], h: [0, 4, -2], sp: [0, -2, 1], ch: [-3, -4, 1], nk: [0, 2, 0], hd: [-2, 6, 3], fL: [0.02, 0, 0.01], fR: [-0.05, 0, 0.0], fRy: 12,
+          hR: [-0.3, 0.98, 0.07], hRd: [0, 1, 0.02], hRm: 'on', hL: [0.21, 1.0, -0.03], hLr: [0, -90, 90], hLm: 'on' },
+        { t: 1.5, ch: [-2, -4, 1], hp: [0.015, -0.01, 0] },
+        { t: 3, ch: [-3, -4, 1], hp: [0.015, -0.005, 0] },
+      ] }),
+    },
   });
 
   // ================================================================================================ 雲歸
