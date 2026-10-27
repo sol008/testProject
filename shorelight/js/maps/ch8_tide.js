@@ -2711,10 +2711,12 @@
     S.chapter(8);
     // party: 星河、紅纓、雲歸 (+ the cats 芋圓 & 麻糬; 麻糬 only follows while 白芷 is in the party). 白芷 is away (taken to 玄武嶼 at the end of ch6).
     if (G.state.party.includes('baizhi')) S.leave('baizhi');
+    // level floor = the progression table's ch8 start (G.Data.progression lv[0] = 27), like every other chapter entry
+    const lv0 = ((G.Data.progression || []).find((p) => p.ch === 8) || { lv: [27] }).lv[0];
     for (const id of ['xinghe', 'hongying', 'yungui']) {
-      if (!G.state.members[id]) G.Party.join(id, 25);
+      if (!G.state.members[id]) G.Party.join(id, lv0);
       else if (!G.state.party.includes(id)) G.Party.join(id);
-      G.Story.ensureLevel(id, 25);
+      G.Story.ensureLevel(id, lv0);
     }
     const order = ['xinghe', 'hongying', 'yungui'];
     G.state.party = order.concat(G.state.party.filter((p) => !order.includes(p)));
