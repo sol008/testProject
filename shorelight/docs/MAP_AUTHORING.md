@@ -154,7 +154,12 @@ Minigames (js/engine/minigames.js): `await G.Mini.timing({...})`, `await G.Mini.
 ## Extra hooks (added later)
 - Map `onUpdate: (dt, mapScene, busy) => {}` runs every frame (custom mechanics: noise meters, timed windows,
   lit/dark zones — read `mapScene.player.x/y`, start scripts with `G.Script.run`). Pair with `drawOver(ctx, t, mapScene)`
-  (world space, above actors) and `drawGround(ctx, t, mapScene)` (world space, below actors) for visuals.
+  (world space, above actors) and `drawGround(ctx, t, mapScene)` (world space, below actors) for visuals, and
+  `drawScreen(ctx, t, mapScene)` (screen coordinates, under the HUD) for full-screen overlays and meters. Inside
+  drawGround/drawOver use `mapScene.screenSpace(ctx, (c) => …)` for screen-space bits. How these behave with the 3D
+  view on (ground decal vs. screen overlay): docs/CONTRACTS_3D.md "2D map hooks in 3D".
+- Map `winds`: during a gust the player is pushed one tile downwind between steps, even while holding a direction;
+  stepping straight into the wind is blocked, sideways steps are slowed (details in js/engine/mapmech.js).
 - `S.battle(troop, { guests: ['yungui'], turnLimit: 6, turnLimitResult: 'win', loseOk: true, mode: 'ambush' })`:
   `guests` fight this battle only (created at the party's average level if they have never joined);
   `turnLimit` ends the battle after N rounds with `turnLimitResult`.

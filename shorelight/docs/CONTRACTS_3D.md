@@ -143,7 +143,49 @@ scale: as in 2D (`G.Monsters.get(id).w/h` px ÷ 64 ≈ units; bosses large). The
 ## Views & hooks
 - `G.Map3D` (mapview.js) builds terrain, walls, water, objects, actors and lights from a MapScene. Map defs may add
   `cam3d: { pitch, dist, fov, yaw }`, `interior: bool`, `sky3d: '#hex'`, `build3d(view, THREE)`,
-  `update3d(view, dt, THREE)` and `noCutout3d`.
+  `update3d(view, dt, THREE)` and `noCutout3d`. `update3d` may also be set on the map instance (`ms.update3d = fn`);
+  def and instance hooks both run, every 3D frame, before the render.
+
+### 2D map hooks in 3D (drawGround / drawOver / drawScreen)
+Map defs **and map instances** (`G.mapScene.drawOver = fn`) may define these; def first, then instance. The same code
+runs in 2D and 3D, so write it once in 2D terms:
+
+| hook | 2D | 3D (field view on) |
+|---|---|---|
+| `drawGround(ctx, t, ms)` | world px (2D camera applied), under objects/actors | **ground decal**: a canvas texture laid over the whole map at y≈0.035 (1 tile = `view.decalS` px), drawn under actors, occluded by walls/models |
+| `ms.drawMechFloor` (winds, guard cones) | as drawGround | ground decal |
+| `drawOver(ctx, t, ms)` | world px, above actors (before emotes, lighting, HUD) | world-space drawing → ground decal; **screen-space drawing → the 2D overlay canvas, composited over the 3D frame** |
+| `drawScreen(ctx, t, ms)` | screen coords, after lighting/vignette, under the HUD | same, on the overlay over the 3D frame |
+| `update3d(view, dt, THREE)` | — | every frame before render (3D props/billboards for upright things) |
+
+In 3D, drawGround/drawOver get a `SplitCtx` (js/r3d/mapview.js) instead of a real context. It behaves like a
+CanvasRenderingContext2D (state, paths, gradients, `G.Render.text` all work) and routes **each draw call** to the
+ground decal or to the screen overlay:
+- **Screen space** when the hook is in screen mode: after `ctx.translate(ms.cam.x, ms.cam.y)` (the `screenSpace` /
+  `hud2d` idiom; raw or half-pixel-rounded camera, shake included), after `ms.screenSpace(ctx, fn)`, or after
+  `ctx.setTransform(...)` / `ctx.resetTransform()` (e.g. `setTransform(G.S, 0, 0, G.S, 0, 0)`). The mode is part of the
+  save()/restore() state. On the overlay, world px still map through the 2D camera (`x - cam.x`), so a full-screen
+  gradient built at `cam.x + G.W / 2` lands at the screen centre.
+- **Screen space** for a `fillRect` / `strokeRect` / `clearRect` / `drawImage` whose rectangle spans the whole view
+  along one axis starting at a screen edge — full-screen tints (`fillRect(cam.x - 40, cam.y - 40, G.W + 80, G.H + 80)`),
+  vignettes, edge fades, letterbox bars, a whole-map darkness fill.
+- **Ground decal** for everything else (glows, decals, chalk marks, rune circles, puddles, rockfall shadows, a hull
+  rim, sprites drawn at world positions).
+- In drawGround (and drawMechFloor), a solid-colour full-view `fillRect`/`clearRect` tints the **whole decal** instead
+  (the 2D view rectangle has no meaning on the 3D ground).
+
+Consequences and rules for chapter authors:
+- Prefer `ms.screenSpace(ctx, (c) => …)` (or the explicit `drawScreen` hook) for HUD meters and full-screen overlays;
+  the `ctx.translate(ms.cam.x, ms.cam.y)` idiom also works. Don't also draw the same HUD from `update3d` on `G.ctx` —
+  screen-space drawOver output already reaches the screen in 3D and it would be drawn twice.
+- Upright things (apparitions, figures, lantern heads, a big sprite "standing" on a roof ridge) flatten onto the
+  ground decal. Skip them in the 2D hook when `ms.view3d` is set and mirror them in `update3d` with models / billboards
+  / `G.Char3D` (see ch1's `sync3d`, ch9's `view3d`). Actor `offsetY` (px, negative = up) is already a 3D lift of
+  `-offsetY / 64` units, and `jumpY`/`jump` lift too, so roof-ridge actors need no hook.
+- Composite modes ('lighter', 'overlay', 'soft-light', 'multiply') on the overlay blend against the transparent UI
+  layer, not the 3D pixels, so they act like normal alpha over the 3D frame; keep such overlays subtle.
+- The decal texture is only uploaded on frames where something world-space was drawn (or must be cleared).
+
 - `G.Env3D` (env.js), if present, is called by Map3D: `G.Env3D.decorate(view)` after build and
   `G.Env3D.update(view, dt)` every frame. Its interface: `view.scene`, `view.ms` (MapScene: `terrain`, `w`, `h`,
   `def`, `objects`, `player`), `view.camera`, `view.dark` (0 day … 0.95 night), `view.outdoor`, `view.interior`,
