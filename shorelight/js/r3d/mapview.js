@@ -366,14 +366,17 @@ G.Map3D = (() => {
     buildWater() {
       const T = THREE, ms = this.ms;
       const counts = {};
-      let any = 0, edge = false;
+      let any = 0, rim = 0;
       for (let cy = 0; cy < ms.h; cy++) for (let cx = 0; cx < ms.w; cx++) {
         const id = ms.terrain[cy * ms.w + cx];
         if (!this.isWater(id)) continue;
         any++; counts[id] = (counts[id] || 0) + 1;
-        if (cx === 0 || cy === 0 || cx === ms.w - 1 || cy === ms.h - 1) edge = true;
+        if (cx === 0 || cy === 0 || cx === ms.w - 1 || cy === ms.h - 1) rim++;
       }
       if (!any) return;
+      // open sea beyond the map only when a real share of the border is water: a river or creek leaving the map
+      // through one or two edge cells must not turn the whole world outside the map into ocean
+      const edge = rim / Math.max(1, 2 * (ms.w + ms.h) - 4) > 0.12;
       const main = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
       const col = new T.Color(WATER_COL[main] != null ? WATER_COL[main] : 0x2f6f96);
       const nrm = G.R3M.tex('waternrm', 256, 256, paintWaterNormal, { wrap: true, srgb: false });

@@ -425,7 +425,8 @@
     });
   }
   // persimmon fruit hung on fallback trees (tree_camphor) — drawn over the crowns
-  function drawPersimmons(ctx, trees, ripe) {
+  function drawPersimmons(ctx, trees, ripe, ms) {
+    if (ms && ms.view3d && G.R3 && G.R3.enabled()) return; // 3D: real fruit in the crowns (persimmons3d)
     for (const [x, y] of trees) {
       const cx = x * T + T / 2, cy = (y + 1) * T - 150;
       for (let i = 0; i < 16; i++) {
@@ -438,6 +439,29 @@
         ctx.fillStyle = '#3a5a1a'; ctx.fillRect(fx - 1, fy - 8, 3, 3);
       }
     }
+  }
+  // 3D field view (update3d): the same 16 fruit per tree on the camphor crown's outer shell (crown ≈ 2.9 m up)
+  function persimmons3d(view, trees, ripe) {
+    const T3 = window.THREE;
+    let s = view.__pers;
+    if (s && s.ripe === ripe) return;
+    if (s) { view.scene.remove(s.mesh); s.mesh.geometry.dispose(); s.mesh.material.dispose(); }
+    const mesh = new T3.InstancedMesh(new T3.SphereGeometry(0.085, 8, 6), new T3.MeshStandardMaterial({ roughness: 0.4 }), trees.length * 16);
+    const m4 = new T3.Matrix4(), col = new T3.Color();
+    let k = 0;
+    for (const [x, y] of trees) {
+      for (let i = 0; i < 16; i++) {
+        const a = U.hash(x, y + i, 11) * Math.PI * 2, p = 0.35 + U.hash(x + i, y, 12) * 1.0;
+        const bad = !ripe && U.hash(x, i, 13) < 0.45;
+        m4.makeTranslation(x + 0.5 + Math.cos(a) * Math.sin(p) * 1.4, 2.9 + Math.cos(p) * 1.05, y + 0.5 + Math.sin(a) * Math.sin(p) * 1.4);
+        mesh.setMatrixAt(k, m4);
+        mesh.setColorAt(k, col.set(bad ? '#4a2a1a' : '#f07a1a'));
+        k++;
+      }
+    }
+    mesh.castShadow = true;
+    view.scene.add(mesh);
+    view.__pers = { mesh, ripe };
   }
   if (G.Sprites && G.Sprites.define && !(G.Sprites.has && G.Sprites.has('c4_manmei'))) {
     G.Sprites.define('c4_manmei', { base: 'hakka_f', body: 'elderf', eyeStyle: 'line', hair: { style: 'back', color: '#b4b0aa', knot: 'bun' }, hat: null, held: 'cane' });
@@ -1555,14 +1579,8 @@
   });
 
   // ----------------------------------------------------------------------- 1-4 citygod_vision 城隍幻境
-  function drawVision(ctx, t) {
-    const cx = 8 * T + T / 2;
-    ctx.save();
-    // the warm, unseeable light (no deity is depicted)
-    let g = ctx.createRadialGradient(cx, 1.6 * T, 10, cx, 1.6 * T, 5.5 * T);
-    g.addColorStop(0, 'rgba(255,236,190,0.95)'); g.addColorStop(0.35, 'rgba(255,210,140,0.45)'); g.addColorStop(1, 'rgba(255,200,120,0)');
-    ctx.fillStyle = g; ctx.fillRect(cx - 6 * T, 0, 12 * T, 5 * T);
-    const fig = (x, foot, h, w, body, glow, text) => {
+  // the two tall figures (七爺 / 八爺) drawn standing at (x, foot); shared by the 2D hook and the 3D cards
+  function visionFig(ctx, t, x, foot, h, w, body, glow, text) {
       const gl = ctx.createRadialGradient(x, foot - h * 0.5, 10, x, foot - h * 0.5, h * 0.75);
       gl.addColorStop(0, U.rgba(glow, 0.5)); gl.addColorStop(0.6, U.rgba(glow, 0.18)); gl.addColorStop(1, U.rgba(glow, 0));
       ctx.fillStyle = gl; ctx.fillRect(x - h, foot - h * 1.3, h * 2, h * 1.6);
@@ -1577,11 +1595,23 @@
       ctx.fillRect(x - hw / 2, foot - h * 0.86 - hh, hw, hh);
       ctx.globalAlpha = 1;
       for (let i = 0; i < text.length; i++) G.Render.text(ctx, text[i], x, foot - h * 0.86 - hh + 2 + i * (hh / text.length), { size: Math.max(10, hh / text.length - 1), align: 'center', color: '#c8382a', shadow: false });
-    };
-    fig(5.5 * T, 7.6 * T, 4.4 * T, 1.7 * T, '#f2f0ea', '#ffffff', '一見大吉');
-    fig(11.5 * T, 7.6 * T, 2.7 * T, 1.9 * T, '#22202a', '#6a6a90', '天下太平');
-    // floating ledger with fading names
-    const bx = cx, by = 5.2 * T + Math.sin(t * 1.4) * 6;
+  }
+  const VISION_FIGS = [[5.5, 4.4, 1.7, '#f2f0ea', '#ffffff', '一見大吉'], [11.5, 2.7, 1.9, '#22202a', '#6a6a90', '天下太平']];
+  function drawVision(ctx, t, ms) {
+    const cx = 8 * T + T / 2;
+    const in3d = !!(ms && ms.view3d && G.R3 && G.R3.enabled()); // 3D: figures + ledger stand upright (vision3d)
+    ctx.save();
+    // the warm, unseeable light (no deity is depicted)
+    let g = ctx.createRadialGradient(cx, 1.6 * T, 10, cx, 1.6 * T, 5.5 * T);
+    g.addColorStop(0, 'rgba(255,236,190,0.95)'); g.addColorStop(0.35, 'rgba(255,210,140,0.45)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+    ctx.fillStyle = g; ctx.fillRect(cx - 6 * T, 0, 12 * T, 5 * T);
+    if (in3d) { ctx.restore(); return; }
+    for (const [fx, h, w, body, glow, text] of VISION_FIGS) visionFig(ctx, t, fx * T, 7.6 * T, h * T, w * T, body, glow, text);
+    drawLedger(ctx, t, cx, 5.2 * T + Math.sin(t * 1.4) * 6);
+    ctx.restore();
+  }
+  // floating ledger with fading names
+  function drawLedger(ctx, t, bx, by) {
     ctx.fillStyle = 'rgba(255,240,200,0.18)'; ctx.beginPath(); ctx.ellipse(bx, by + 50, 90, 18, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#efe2c0'; ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(bx - 70, by - 26); ctx.lineTo(bx, by - 20); ctx.lineTo(bx + 70, by - 26); ctx.lineTo(bx + 70, by + 26); ctx.lineTo(bx, by + 32); ctx.lineTo(bx - 70, by + 26); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -1594,13 +1624,37 @@
       ctx.fillStyle = 'rgba(255,248,220,0.9)'; ctx.save(); ctx.translate(bx + 40, by + 70 + Math.sin(t * 3) * 10); ctx.rotate(Math.sin(t * 2) * 0.4);
       ctx.fillRect(-16, -20, 32, 40); ctx.restore();
     }
-    ctx.restore();
+  }
+  // 3D field view (update3d): the figures as upright camera-facing cards, the ledger floating at chest height
+  function vision3d(view) {
+    const T3 = window.THREE;
+    let s = view.__c4v;
+    if (!s) {
+      s = view.__c4v = { cards: [] };
+      const card = (w, h, paint, x, y, z) => {
+        const c = U.makeCanvas(w, h);
+        paint(c.getContext('2d'));
+        const m = new T3.Mesh(new T3.PlaneGeometry(w / T, h / T), new T3.MeshBasicMaterial({ map: G.R3M.canvasTex(c), transparent: true, depthWrite: false, side: T3.DoubleSide, fog: false }));
+        m.position.set(x, y, z); m.renderOrder = 4;
+        view.scene.add(m);
+        s.cards.push(m);
+        return m;
+      };
+      for (const [fx, h, w, body, glow, text] of VISION_FIGS) {
+        const H = h * T;
+        card(2 * H, 1.6 * H, (g) => visionFig(g, 0, H, 1.3 * H, H, w * T, body, glow, text), fx, 0.5 * h, 7.6);
+      }
+      s.ledger = card(220, 200, (g) => drawLedger(g, 0, 110, 70), 8.5, 1.5, 6.4);
+    }
+    for (const m of s.cards) m.rotation.y = view.yaw;
+    s.ledger.position.y = 1.5 + Math.sin(view.t * 1.4) * 0.09;
   }
   G.Maps.define('citygod_vision', {
     name: '城隍幻境', subtitle: '簿上之名，有來無到', place: 'hsinchu', bgm: null, start: [8, 9], noSave: true, autosave: false,
     light: { ambient: 0.5, color: '#2a2010' }, particles: [{ type: 'motes', density: 0.8 }, 'sparkles'],
     tiles: (() => { const g = new Grid(16, 12, ' '); g.rect(2, 2, 12, 9, '*'); return g.rows(); })(),
-    drawGround: (ctx, t) => drawVision(ctx, t),
+    drawGround: (ctx, t, ms) => drawVision(ctx, t, ms),
+    update3d: (view) => vision3d(view),
     events: [{ id: 'c4_405', trigger: 'auto', if: (st) => !st.flags.ch4_citygod_vision, run: scene405 }],
     warps: [{ x: 8, y: 10, to: 'zhuqian_citygod', tx: 10, ty: 11, tdir: 'up', if: (st) => !!st.flags.ch4_citygod_vision }],
   });
@@ -1672,7 +1726,8 @@
     light: (st) => (broken(st) ? { ambient: 0.05 } : { ambient: 0.15, color: '#2a2418' }),
     particles: (st) => (broken(st) ? ['leaves', { type: 'wind', density: 0.3 }] : ['leaves', { type: 'wind', density: 1 }, { type: 'motes', density: 0.3 }]),
     tiles: roadTiles, objects: roadObjects,
-    drawOver: (ctx) => drawPersimmons(ctx, ROAD_PERS, broken(G.state)),
+    drawOver: (ctx, t, ms) => drawPersimmons(ctx, ROAD_PERS, broken(G.state), ms),
+    update3d: (view) => persimmons3d(view, ROAD_PERS, broken(G.state)),
     drawGround: (ctx) => {
       if (!F('ch4_persimmon_clues')) return;
       const x = 41 * T + T / 2, y = 17 * T + T * 0.55;
@@ -2099,7 +2154,8 @@
     light: (st) => (night(st) ? { ambient: 0.6, color: '#0a1030', playerR: 240 } : broken(st) ? { ambient: 0.05 } : { ambient: 0.12, color: '#2a2418' }),
     particles: (st) => (night(st) ? ['fireflies', { type: 'wind', density: broken(st) ? 0.2 : 0.6 }] : broken(st) ? ['leaves'] : ['leaves', { type: 'wind', density: 0.8 }]),
     tiles: villageTiles, objects: villageObjects,
-    drawOver: (ctx) => drawPersimmons(ctx, [[40, 3], [44, 5], [47, 3], [49, 10]], broken(G.state)),
+    drawOver: (ctx, t, ms) => drawPersimmons(ctx, [[40, 3], [44, 5], [47, 3], [49, 10]], broken(G.state), ms),
+    update3d: (view) => persimmons3d(view, [[40, 3], [44, 5], [47, 3], [49, 10]], broken(G.state)),
     lights: (st) => (night(st) ? [{ x: 23, y: 11, r: 200, color: '#ff9a4a', flicker: 0.3 }, { x: 7, y: 17, r: 140, color: '#ffb060', flicker: 0.3 }, { x: 39, y: 16, r: 140, color: '#ffb060', flicker: 0.3 }] : []),
     npcs: [
       {
