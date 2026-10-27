@@ -40,6 +40,7 @@ G.Map3D = (() => {
       this.buildDecals();
       this.terrainSnap = ms.terrain.slice();
       if (G.Env3D && G.Env3D.decorate) { try { G.Env3D.decorate(this); } catch (e) { G.warnOnce('env3d decorate', e); } }
+      if (G.Nature3D && G.Nature3D.scatterGrass) { try { this.grass = G.Nature3D.scatterGrass(this); } catch (e) { G.warnOnce('nature3d grass', e); } }
       if (this.def.build3d) { try { this.def.build3d(this, THREE); } catch (e) { G.warnOnce('build3d ' + this.def.id, e); } }
       this.snapCamera();
     }
@@ -815,6 +816,8 @@ G.Map3D = (() => {
           n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3);
         });
       }
+      if (G.Nature3D && G.Nature3D.update) { try { G.Nature3D.update(this, dt); } catch (e) { G.warnOnce('nature3d update', e); } }
+      else if (G.Wind3D && G.Wind3D.update) G.Wind3D.update(dt);
       if (this.waterU) this.waterU.value = this.t;
       if (this.sky) this.sky.material.uniforms.time.value = this.t;
       // psychedelic grade
