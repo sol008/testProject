@@ -242,6 +242,22 @@
     lights: (o) => [{ dx: 32, dy: 56 - 284, r: 220, color: o.blue ? '#8ab8ff' : '#ffcf7a', flicker: 0.25 }],
   });
 
+  // a monster drawn on the map as a y-sorted prop (cutscenes; never starts a battle)
+  G.Objects.define('c10_monster_show', {
+    w: 1, h: 1, solid: true, anim: true,
+    draw(ctx, px, py, o, t) {
+      const md = G.Monsters.get(o.art);
+      const sc = o.scale || (md ? U.clamp(110 / md.h, 0.25, 0.7) : 0.5);
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(px + 32, py + 54, 26 * sc / 0.5, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.translate(px + 32, py + 56 + Math.sin(t * 3 + o.x) * 2);
+      if (o.flip) ctx.scale(-1, 1);
+      ctx.scale(sc, sc);
+      G.Monsters.draw(ctx, o.art, 0, 0, t, { state: 'idle', variant: o.variant || 0 });
+      ctx.restore();
+    },
+  });
+
   // chapter sprites (spec format documented in js/gfx/sprites.js)
   if (G.Sprites && G.Sprites.define) {
     G.Sprites.define('c10_tao_child', { base: 'tao_m', body: 'child', mouth: 'smile', hair: { style: 'tuft', color: '#1a1614', back: 'short' } });
@@ -885,15 +901,12 @@
     ms.computeSolid();
     return inst;
   };
-  // decorative (non-interactive) monsters shown during a cutscene: [[x, y, art, variant], ...]; [] clears them
+  // decorative (non-interactive) monsters shown during a cutscene: [[x, y, art, variant, scale], ...]; [] clears them
   H.monsters = (list) => {
     const ms = G.mapScene;
-    ms.enemies = ms.enemies.filter((e) => !e.c10show);
-    for (const [x, y, art, variant] of list) {
-      const a = new G.Mapx.Actor({ id: 'show_' + x + '_' + y, x, y, dir: 'left', def: { art, variant, chase: 0, radius: 0, troop: 't_c10_reef_a' }, c10show: true, stun: 0, homeX: x, homeY: y });
-      a.wanderT = 999; a.stun = 0;
-      ms.enemies.push(a);
-    }
+    ms.objects = ms.objects.filter((o) => o.tag !== 'c10show');
+    for (const [x, y, art, variant, scale] of list) ms.objects.push({ t: 'c10_monster_show', x, y, art, variant: variant || 0, scale, tag: 'c10show', key: 'show' + x + ',' + y, v: 0 });
+    ms.computeSolid();
   };
   H.removeObj = (tag) => { const ms = G.mapScene; ms.objects = ms.objects.filter((o) => o.tag !== tag); ms.computeSolid(); };
   H.hurtParty = (frac) => {
@@ -2371,5 +2384,712 @@
     S.gather();
     V().c10_port = 'amis';
     H.objective(S, '繼續北上，前往花蓮（海灘的舢舨可回王船）');
+  };
+
+  // =================================================================================================
+  // MAP: huilan 洄瀾（花蓮）— 七月初一，開鬼門
+  // =================================================================================================
+  (function huilan() {
+    const W = 36, HH = 28;
+    const g = new Grid(W, HH, '.');
+    g.rect(0, 0, W, 2, 'X');
+    g.blob(30, 4, 5, 2, ',', 71);
+    g.line([[0, 3], [10, 3], [10, 17]], '=', 2);
+    g.line([[0, 12], [31, 12]], '=', 2);
+    g.line([[20, 13], [20, 17]], '=', 2);
+    g.line([[26, 7], [26, 12]], '=', 2);
+    g.band(0, W - 1, (x) => 17 + Math.sin(x * 0.5) * 0.6, () => 20, 's');
+    g.band(0, W - 1, (x) => 20 + Math.sin(x * 0.4 + 2) * 0.6, () => 21, '-');
+    g.rect(0, 21, W, 3, '~'); g.rect(0, 24, W, 4, 'w');
+    g.rect(20, 18, 2, 5, 'k');
+    const objs = [
+      { t: 'shophouse', x: 12, y: 4, door: 1, text: '雜貨' },
+      { t: 'shophouse', x: 12, y: 9, door: 1, text: '武具', v: 1, w: 4 },
+      { t: 'house_minnan', x: 19, y: 7, text: '客棧', v: 1 },
+      { t: 'signboard', x: 24, y: 10, text: '客棧' },
+      { t: 'shrine_small', x: 28, y: 5, text: '福德廟' },
+      { t: 'c10_denggao', x: 26, y: 5 },
+      { t: 'incense_burner', x: 28, y: 7 }, { t: 'stone_lantern', x: 31, y: 7 },
+      { t: 'house_minnan', x: 2, y: 6, v: 0 },
+      { t: 'stall', x: 15, y: 14, text: '宵夜' }, { t: 'well', x: 24, y: 14 },
+      { t: 'bamboo', x: 0, y: 4 }, { t: 'bamboo', x: 7, y: 5 }, { t: 'tree_banana', x: 8, y: 9 }, { t: 'tree_betel', x: 33, y: 9 }, { t: 'tree_banana', x: 33, y: 14 },
+      { t: 'lantern_string', x: 12, y: 13, w: 6, lift: 0 },
+      { t: 'barrel', x: 17, y: 6 }, { t: 'crate', x: 11, y: 7 }, { t: 'jar', x: 4, y: 10 }, { t: 'cart', x: 27, y: 13 },
+      { t: 'boat_small', x: 22, y: 21 }, { t: 'boat_small', x: 12, y: 22 }, { t: 'dock_post', x: 19, y: 21 }, { t: 'fishing_net', x: 6, y: 17 },
+      { t: 'red_lantern', x: 13, y: 7, hang: true }, { t: 'red_lantern', x: 22, y: 10, hang: true },
+    ];
+    const deco = [];
+    scatter(deco, g, 'tallgrass', [0, 4, 36, 13], ['.', ','], 0.05, 72);
+    const occ = objs.flatMap((o) => cellsOf(o.x, o.y, o.w || (G.Objects.get(o.t) || {}).w || 1, o.h || (G.Objects.get(o.t) || {}).h || 1));
+    const clean = objs.concat(clearCells(deco, [...occ, ...cellsOf(13, 7, 1, 1), ...cellsOf(13, 12, 1, 1), ...cellsOf(21, 10, 3, 2), ...cellsOf(25, 6, 3, 2)]));
+    G.Maps.define('huilan', {
+      name: '洄瀾', subtitle: '水在這裡打轉的港', place: 'taroko',
+      bgm: (st) => (st.flags.ch10_hualien_arrive ? 'south' : 'night'),
+      start: [22, 16],
+      light: { ambient: 0.42, color: '#1a1430', tint: 'rgba(255,150,90,0.12)', playerR: 180 },
+      particles: ['lanterns', 'wind'],
+      tiles: g.rows(), objects: clean,
+      npcs: [
+        { id: 'hl_shop', sprite: 'shopkeeper_f', name: '阿和嫂', x: 13, y: 7, dir: 'down', talk: async (S) => {
+          const lines = ['洄瀾，就是水在這裡打轉的意思。溪水出海，海水又推回來，轉啊轉。', '七月初一開鬼門，我們豎燈篙。燈越高，好兄弟越看得到這裡有普渡。'];
+          await S.say('阿和嫂', lines[(V().c10_ahe_i = ((V().c10_ahe_i || 0) + 1)) % 2]);
+          await S.shop(['shimuyu', 'c10_qiyuwan', 'c10_xiaomigao', 'huanhunxiang', 'c10_baicao', 'c10_fanshu', 'c10_quxiefu', 'xiangbao', 'jiedu', 'mashu'], { title: '洄瀾雜貨' });
+        } },
+        { id: 'hl_arms', sprite: 'villager_m2', name: '武具舖老闆', x: 13, y: 12, dir: 'down', talk: async (S) => {
+          await S.say('武具舖老闆', '這陣子海上不平靜，來買槍的人變多了。');
+          await S.shop(['c10_sp_huilan', 'c10_ar_shiwen', 'c10_hd_zhubian', 'c10_ft_lupi'], { title: '洄瀾武具' });
+        } },
+        { id: 'hl_inn', sprite: 'maid', name: '客棧夥計', x: 22, y: 11, dir: 'down', talk: async (S) => {
+          await S.say('客棧夥計', '住一晚一百一十文。開鬼門了，晚上早點睡比較好。');
+          await S.inn(110, { who: '客棧夥計' });
+        } },
+        { id: 'hl_old', sprite: 'old_m', name: '豎燈篙的老人', x: 26, y: 7, dir: 'down', talk: ['燈篙要豎直、要高。不然好兄弟找不到路，在外面亂走。', '今年的好兄弟多啊……海上一直來。'] },
+        { id: 'hl_fisher', sprite: 'fisherman', name: '漁夫', x: 17, y: 17, dir: 'down', wander: 2, talk: ['溪口的水，這幾天是黑的。魚都不見了。', '王船停在港外，那麼大一艘，大家都在看。'] },
+        { id: 'hl_kid', sprite: 'child_f', name: '囝仔', x: 6, y: 13, dir: 'right', wander: 2, talk: ['阿嬤說，鬼門開了，晚上不要吹口哨。'] },
+      ],
+      warps: [{ x: 0, y: 3, h: 2, to: 'truku_village', tx: 37, ty: 10, tdir: 'left' }],
+      events: [
+        { id: 'c10_11', trigger: 'auto', if: (st) => !st.flags.ch10_hualien_arrive, run: (S) => H.c10_11(S) },
+        { id: 'dock', trigger: 'action', x: 20, y: 23, w: 2, label: '舢舨', run: async (S) => {
+          const c = await S.choice(['划舢舨回王船', '留在洄瀾'], { cancel: 1 });
+          if (c === 0) await H.toDeck(S);
+        } },
+        { id: 'denggao', trigger: 'action', x: 26, y: 5, label: '調查', run: async (S) => {
+          await S.say('', '高高的燈篙。竹竿頂上掛著燈，在暮色裡亮著。');
+        } },
+      ],
+    });
+  })();
+
+  H.c10_11 = async (S) => {
+    V().c10_place = 'taroko'; V().c10_port = 'huilan';
+    S.quest('q_c10_main', 2);
+    H.days(29);
+    S.bgm('night');
+    H.place(S, 24, 10, 'up');
+    S.setPos('hongying', 23, 10, 'up'); S.setPos('yungui', 25, 10, 'up'); S.setPos('tuanzi', 24, 11, 'up');
+    await S.narrate(['七月初一。開鬼門。'], { veil: 1 });
+    await S.camera(26, 6, 0.01);
+    const helpers = [[25, 8], [27, 8], [26, 9]];
+    helpers.forEach(([x, y], i) => S.spawn({ id: 'hp' + i, sprite: i === 2 ? 'fisherman' : 'villager_m', x, y, dir: 'up' }));
+    S.setPos('hl_old', 24, 7, 'right');
+    await S.fadeIn(0.6);
+    await S.say('', '（小港的廟前，幾個人合力豎起一根高高的竹竿，竿頂掛著燈。）');
+    await S.say('豎燈篙的老人', '起——！');
+    S.shake(2, 0.3); S.sfx('push');
+    await S.say('', '（燈篙立直。燈在暮色中亮起。）');
+    S.sfx('lantern');
+    await S.say('豎燈篙的老人', '燈篙要高。好兄弟才看得到這裡有普渡，不會在外面亂走。');
+    helpers.forEach((c, i) => S.remove('hp' + i));
+    S.cameraFollow();
+    await S.say('xinghe:think', '……一年了。');
+    await S.say('hongying:normal', '嗯？');
+    await S.say('xinghe:normal', '去年七月，在九份，白芷就是那時候出現的。');
+    await S.say('hongying:sad', '……還有一個月。');
+    S.setPos('hl_shop', 13, 8, 'right');
+    await S.walkTo('hl_shop', 21, 9);
+    S.face('hl_shop', 'right');
+    await S.say('', '（阿和嫂從店裡出來，指著西邊的山。）');
+    await S.say('阿和嫂', '你們是那艘王船的人？山上太魯閣族的人在找會處理「不乾淨東西」的人。');
+    await S.say('阿和嫂', '說是溪水倒流，黑的，海水灌進峽谷裡去了。');
+    S.setPos('hl_shop', 13, 7, 'down'); S.setPos('hl_old', 26, 7, 'down');
+    S.flag('ch10_hualien_arrive');
+    S.bgm('south');
+    S.gather();
+    H.objective(S, '到山上的太魯閣族部落（洄瀾西邊的山路）');
+  };
+
+  // =================================================================================================
+  // MAP: truku_village 太魯閣族部落（立霧溪口上方的台地）
+  // =================================================================================================
+  (function truku() {
+    const W = 40, HH = 32;
+    const g = new Grid(W, HH, '.');
+    g.rect(0, 0, W, 3, 'X');
+    g.rect(0, 3, 2, 29, 'X');
+    g.blob(8, 8, 5, 3, ',', 81); g.blob(28, 6, 6, 2, ',', 82);
+    g.line([[3, 13], [37, 13]], ':', 2);
+    g.line([[37, 10], [39, 10]], ':', 2);
+    g.line([[37, 10], [37, 13]], ':', 2);
+    g.line([[19, 13], [19, 9]], ':', 2);
+    g.line([[24, 14], [24, 19]], ':', 2);
+    g.line([[24, 19], [31, 19]], ':', 2);
+    // the terrace edge: below it the river mouth and the sea
+    g.rect(2, 21, W - 2, 1, 'X');
+    g.band(2, W - 1, () => 22, () => 32, 'r');
+    g.band(30, W - 1, (x) => 22 + (x - 30) * 0.4, () => 32, '~');
+    g.rect(2, 22, 6, 10, 'X'); g.rect(8, 22, 3, 3, 'X');
+    g.rect(39, 3, 1, 7, 'X'); g.rect(39, 12, 1, 9, 'X');
+    const objs = [
+      { t: 'slate_house', x: 4, y: 4, door: 1 }, { t: 'granary', x: 10, y: 4 }, { t: 'slate_house', x: 22, y: 3, door: 1 }, { t: 'slate_house', x: 30, y: 8, door: 1 },
+      { t: 'slate_house', x: 13, y: 6, door: 1, tag: 'iwanhouse' },
+      { t: 'loom', x: 16, y: 10 }, { t: 'firepit', x: 18, y: 11 },
+      { t: 'millet_rack', x: 8, y: 10 }, { t: 'granary', x: 27, y: 15 }, { t: 'slate_house', x: 3, y: 15, door: 1 },
+      { t: 'tree_pine', x: 2, y: 4 }, { t: 'tree_camphor', x: 35, y: 4 }, { t: 'tree_pine', x: 3, y: 19 }, { t: 'tree_pine', x: 33, y: 15 }, { t: 'tree_camphor', x: 12, y: 18 },
+      { t: 'bamboo', x: 26, y: 10 }, { t: 'bamboo', x: 36, y: 15 }, { t: 'tree_maple', x: 20, y: 17 }, { t: 'tree_pine', x: 9, y: 16 },
+      { t: 'fence_wood', x: 22, y: 7 }, { t: 'basket', x: 12, y: 10 }, { t: 'jar', x: 11, y: 7 }, { t: 'stump', x: 15, y: 16 },
+      { t: 'rainbow_arch', x: 27, y: 23, w: 8, h: 3, if: (st) => !!st.vars.c10_rainbow },
+    ];
+    const deco = [];
+    scatter(deco, g, 'tallgrass', [2, 3, 37, 18], ['.', ','], 0.05, 83);
+    scatter(deco, g, 'flowers', [2, 3, 37, 18], ['.', ','], 0.025, 84);
+    const occ = objs.flatMap((o) => cellsOf(o.x, o.y, o.w || (G.Objects.get(o.t) || {}).w || 1, o.h || (G.Objects.get(o.t) || {}).h || 1));
+    const clean = objs.concat(clearCells(deco, [...occ, ...cellsOf(14, 9, 6, 6), ...cellsOf(28, 17, 6, 4)]));
+    const time = (st) => st.vars.c10_truku_time;
+    G.Maps.define('truku_village', {
+      name: '太魯閣族部落', subtitle: '立霧溪口上方的台地', place: 'taroko',
+      bgm: (st) => (time(st) === 'night' ? null : time(st) === 'dawn' ? 'mountain' : 'mountain'),
+      start: [36, 12],
+      light: (st) => (time(st) === 'night' ? { ambient: 0.62, color: '#060a1e', playerR: 170 } : time(st) === 'dawn' ? { ambient: 0.16, color: '#2a2440', tint: 'rgba(255,190,140,0.18)' } : { ambient: 0.05, color: '#203048' }),
+      particles: (st) => (time(st) === 'night' ? ['embers'] : ['leaves', 'mist']),
+      tiles: g.rows(), objects: clean,
+      lights: (st) => (time(st) === 'night' ? [{ x: 18, y: 11, r: 300, color: '#ffa850', flicker: 0.45 }] : []),
+      npcs: [
+        { id: 'tk_iwan', sprite: 'truku_elder', name: 'Iwan', x: 15, y: 10, dir: 'down', fixedDir: true, talk: (S) => H.iwanTalk(S), if: (st) => !time(st) },
+        { id: 'tk_watan', sprite: 'c10_truku_m', name: 'Watan', x: 17, y: 13, dir: 'down', talk: (S) => H.watanTalk(S), if: (st) => !time(st) && (!st.flags.ch10_truku_permission || st.flags.ch10_colossus_defeated) },
+        { id: 'tk_child', sprite: 'child_f', name: '部落孩子', x: 8, y: 14, dir: 'right', wander: 2, talk: ['奶奶的布是部落最漂亮的！你們看那個花紋，那是菱形，像眼睛。'], if: (st) => !time(st) },
+        { id: 'tk_man', sprite: 'c10_truku_m', name: '部落男子', x: 29, y: 12, dir: 'left', wander: 1, talk: ['峽谷是我們的獵場。外人進去，要有人帶。', '山上的事，問依旺奶奶。'], if: (st) => !time(st) },
+      ],
+      warps: [{ x: 39, y: 10, h: 2, to: 'huilan', tx: 1, ty: 3, tdir: 'right' }],
+      events: [
+        { id: 'c10_12', trigger: 'auto', if: (st) => st.flags.ch10_hualien_arrive && !st.flags.ch10_gaya_heard, run: (S) => H.c10_12(S) },
+        { id: 'c10_14', trigger: 'auto', if: (st) => st.flags.ch10_colossus_defeated && !st.flags.ch10_rainbow_seen, run: (S) => H.c10_14(S) },
+        { id: 'trail', trigger: 'touch', x: 31, y: 19, w: 1, h: 1, run: async (S) => {
+          if (!F('ch10_truku_permission')) { await S.say('', '往下是通往峽谷的小徑。那是太魯閣族的獵場。'); await S.move('player', 'L'); return; }
+          if (!F('ch10_colossus_defeated')) {
+            await S.say('Watan', '從這裡下去是懸崖，溪口現在全是黑水。我們從海那邊繞，王船停在清水斷崖下面。');
+            await S.move('player', 'L');
+            return;
+          }
+          const c = await S.choice(['沿獵徑下到峽谷', '留在部落'], { cancel: 1 });
+          if (c === 0) await S.warp('taroko_gorge', 25, 10, 'down');
+          else await S.move('player', 'L');
+        } },
+        { id: 'lookout', trigger: 'action', x: 31, y: 20, w: 3, label: '眺望', run: async (S) => {
+          await S.say('', '台地邊緣。往下看，立霧溪從峽谷裡流出來，注入大海。');
+          if (!F('ch10_colossus_defeated')) await S.say('', '溪水是黑的，表面結著一層白白的鹽殼。');
+          else await S.say('', '溪水是碧綠的。');
+        } },
+        { id: 'loomlook', trigger: 'action', x: 16, y: 10, label: '調查', run: async (S) => {
+          await S.say('', '水平背帶織布機。紅色的底，白色的菱形紋，一梭一梭織出來。');
+          await S.say('Iwan', '不要站在我的線上面。');
+        } },
+      ],
+    });
+  })();
+
+  H.iwanTalk = async (S) => {
+    if (F('ch10_xinghe_turn')) { await S.say('Iwan', 'Mhuway su。……這是謝謝的意思。我很少說，你們要記得。'); return; }
+    const lines = ['我在織布。不要站在我的線上面。', '織布跟做人一樣，一條線錯了，後面全部都要拆。'];
+    await S.say('Iwan', lines[(V().c10_iwan_i = ((V().c10_iwan_i || 0) + 1)) % 2]);
+  };
+  H.watanTalk = async (S) => {
+    if (F('ch10_xinghe_turn')) { await S.say('Watan', '你講的那個九份……有很多燈籠的山？我想看看。'); return; }
+    const lines = ['進獵場要守 Gaya。獵場是祖先傳下來的，不是隨便的山。', '打到的獵物要分。自己一個人吃的人，會被大家看不起。'];
+    await S.say('Watan', lines[(V().c10_watan_i = ((V().c10_watan_i || 0) + 1)) % 2]);
+  };
+
+  // ---------------------------------------------------------------- C10-12 Gaya 與彩虹橋
+  H.c10_12 = async (S) => {
+    S.bgm('mountain');
+    S.setPos('tk_watan', 16, 11, 'down');
+    H.place(S, 20, 13, 'left');
+    S.setPos('hongying', 21, 13, 'left'); S.setPos('yungui', 21, 14, 'left'); S.setPos('tuanzi', 20, 14, 'left');
+    await S.camera(16, 11, 0.01);
+    await S.say('', '（台地上，一位老婦人坐在家門前，腰上綁著織布機的背帶，一梭一梭地織布。她的臉頰上有深藍色的紋路，從耳邊延伸到嘴角。）');
+    await S.say('', '（一個背著弓的年輕人站在她旁邊。）');
+    S.cameraFollow();
+    await S.say('Watan', '奶奶，海那邊的人來了。');
+    await S.say('Iwan', '……我看到了。不要站在我的線上面。');
+    S.emote('player', '!');
+    await S.move('player', 'L');
+    await S.jump('player');
+    await S.say('', '（星河趕緊抬腳。他剛好踩在一條垂到地上的麻線上。）');
+    await S.say('xinghe:shy', '對、對不起！');
+    await S.say('Iwan', '（繼續織）你們從海上來。海上的東西，這陣子往河裡跑。');
+    await S.say('Iwan', '峽谷的水黑了。山羌不敢下去喝水，鳥也不叫了。');
+    await S.say('Iwan', '瓦旦說，峽谷裡站著一個大石頭的東西，把水堵住了。');
+    await S.say('xinghe:serious', '我們可以去處理。');
+    await S.say('Iwan', '峽谷是我們的獵場。外人進去，要守我們的規矩。');
+    await S.say('Iwan', '瓦旦帶你們。不要拿山上的東西。不要殺不用殺的動物。不要大聲。');
+    await S.say('xinghe:serious', '好。');
+    await S.say('', '（星河盯著 Iwan 的臉看。紅纓用手肘頂了他一下。）');
+    await S.say('hongying:angry', '（小聲）不要一直看人家的臉！');
+    await S.say('Iwan', '（笑了一下）讓他看。這是要給人看的。');
+    await S.say('Iwan', '這叫紋面。……你想問什麼就問吧。');
+    await S.say('xinghe:normal', '那……是怎麼來的？');
+    await S.say('Iwan', '我們女人，要會織布，織得好，才能有。');
+    await S.say('Iwan', '我十五歲那年，織出第一匹讓我媽媽點頭的布，才得到它。');
+    await S.say('Iwan', '男人要是能保護家人、能獨當一面的獵人，才能有。');
+    await S.say('hongying:surprise', '要「做到」才有……');
+    await S.say('Iwan', '我們有 Gaya。祖先留下來的規矩。');
+    await S.say('Iwan', '怎麼打獵、怎麼分肉、怎麼對待別人、怎麼對待山。照著 Gaya 活，就是好好活。');
+    await S.say('Iwan', '人死了以後，靈魂要走過一座彩虹橋，我們叫 Hakaw Utux。');
+    await S.say('Iwan', '祖靈在橋的那一頭等。照著 Gaya 好好活過的人，祖靈認得他，讓他過去。');
+    await S.say('Iwan', '紋面，就是讓祖靈認得的記號。');
+    S.face('player', 'down');
+    await S.say('', '（星河低頭看著自己的手。）');
+    await S.say('xinghe:sad', '……那，沒有記號的人呢？');
+    await S.say('Iwan', '（梭子停了）……你在擔心什麼？');
+    await S.say('xinghe:sad', '我……生下來就少了一樣東西。別人都有的東西。');
+    await S.say('', '（紅纓和雲歸對看一眼。）');
+    S.face('player', 'left');
+    await S.say('Iwan', '（看著星河很久）你先去峽谷。回來，再問我一次。');
+    S.face('tk_watan', 'up');
+    await S.say('', '（Watan 側耳聽著樹上一隻小鳥的叫聲。）');
+    S.sfx('sing');
+    await S.say('Watan', '……sisil 說，可以走。');
+    await S.say('xinghe:surprise', '小鳥說的？');
+    S.face('tk_watan', 'right');
+    await S.say('Watan', '我們出門打獵前，會聽 sisil 的叫聲。今天的聲音是好的。');
+    await S.say('Watan', '跟我走。王船停在清水斷崖下面，從海那邊繞進溪口。');
+    await S.say('', '（Iwan 從織布機上剪下一段麻線，繫在星河的手腕上。）');
+    await S.give('c10_permit', 1);
+    S.flag('ch10_gaya_heard'); S.flag('ch10_truku_permission');
+    S.refresh();
+    S.gather();
+    H.objective(S, '從清水斷崖進入峽谷（回王船，出航到「清水斷崖下」）');
+  };
+
+  // =================================================================================================
+  // MAP: qingshui_cliffs 清水斷崖（地城）— rockfall ledge (§5.4)
+  // =================================================================================================
+  const QS = { zone: [18, 15, 12, 4], lines: [20, 23, 27], alcoves: [[21, 14], [25, 14], [28, 14]], start: [17, 16, 'right'] };
+  (function qingshui() {
+    const W = 50, HH = 40;
+    const g = new Grid(W, HH, 'C');
+    // the sea to the west and south
+    for (let y = 0; y < HH; y++) { const e = 13 + Math.round(Math.sin(y * 0.35) * 1.5); for (let x = 0; x < e; x++) g.set(x, y, x < e - 3 ? 'w' : '~'); }
+    g.rect(0, 37, W, 3, 'w');
+    g.band(14, 34, () => 32, () => 37, 's');                          // gravel beach (landing)
+    g.band(14, 34, () => 36, () => 37, '-');
+    g.rect(17, 21, 3, 11, 'M');                                      // ledge up from the beach
+    g.rect(17, 19, 3, 2, 'M');                                       // ledge bend
+    g.rect(17, 15, 1, 4, 'M');                                       // up into the rockfall zone (west end)
+    g.rect(18, 15, 12, 4, 'M');                                      // rockfall zone 12x4
+    for (const [x, y] of QS.alcoves) g.set(x, y, 'v');
+    g.rect(30, 3, 3, 16, 'M');                                       // north ledge
+    g.rect(31, 0, 2, 3, 'M');                                        // to the river mouth
+    g.rect(22, 7, 8, 2, 'M');                                        // dead-end branch (chest)
+    g.rect(14, 22, 3, 10, '~'); g.rect(14, 19, 3, 3, '~'); g.rect(20, 22, 2, 9, 'C');
+    const objs = [
+      { t: 'rock_big', x: 26, y: 33 }, { t: 'rock_small', x: 31, y: 34 }, { t: 'driftwood', x: 23, y: 35 }, { t: 'rock_basalt', x: 17, y: 34 }, { t: 'rock_small', x: 33, y: 33 },
+      { t: 'boat_small', x: 22, y: 37 },
+      { t: 'rock_marble', x: 19, y: 21 }, { t: 'rock_marble', x: 29, y: 20 }, { t: 'rock_marble', x: 32, y: 11 }, { t: 'rock_marble', x: 30, y: 5 },
+      { t: 'cliff_waterfall', x: 34, y: 8 },
+      H.crate('qs_beach', 28, 35, [['shimuyu', 3]], { line: '被浪打上礫灘的木箱。' }),
+      H.crate('qs_ledge', 22, 7, [['c10_sp_duanya', 1]], { line: '卡在岩棚盡頭的木箱。不知道是哪艘沉船上的東西。' }),
+    ];
+    G.Maps.define('qingshui_cliffs', {
+      name: '清水斷崖', subtitle: '大理石崖壁直落深海', place: 'taroko', bgm: 'taroko',
+      start: [24, 34],
+      light: { ambient: 0.12, color: '#1a2030' },
+      particles: ['wind', 'mist'],
+      tiles: g.rows(), objects: objs,
+      drawGround: (ctx, t, ms) => rockfallDraw(ctx, t, ms),
+      npcs: [
+        { id: 'qs_watan', sprite: 'c10_truku_m', name: 'Watan', x: 18, y: 25, dir: 'up', pos: () => (F('ch10_saved_watan') ? [32, 4] : [18, 25]), if: () => !F('ch10_colossus_defeated'),
+          talk: ['山在乎的。山只是不說。', '（Watan 抬頭看著崖壁。）石頭會掉。看地上的影子。'] },
+      ],
+      enemies: [
+        { id: 'qs1', troop: 't_c10_cliff_b', x: 19, y: 28, art: 'cliff_spirit', lv: 36, radius: 1 },
+        { id: 'qs2', troop: 't_c10_cliff_a', x: 31, y: 12, art: 'cliff_spirit', lv: 36, radius: 2 },
+      ],
+      warps: [{ x: 31, y: 0, w: 2, to: 'taroko_gorge', tx: 21, ty: 53, tdir: 'up' }],
+      events: [
+        { id: 'qs_intro', trigger: 'auto', once: true, if: (st) => st.flags.ch10_truku_permission, run: (S) => H.qsIntro(S) },
+        { id: 'qs_fall', trigger: 'touch', x: 17, y: 15, w: 13, h: 4, if: (st) => !st.flags.ch10_saved_watan, run: (S) => H.qsSaveWatan(S) },
+        { id: 'boat', trigger: 'action', x: 22, y: 37, w: 2, label: '舢舨', run: async (S) => {
+          const c = await S.choice(['划舢舨回王船', '留在崖下'], { cancel: 1 });
+          if (c === 0) await H.toDeck(S);
+        } },
+      ],
+      onEnter: async () => { H.patch('c10rock', rockfallTick, rockfallHud); },
+    });
+  })();
+  function onLine(ms, x, y, L) {
+    const [zx, zy, zw, zh] = QS.zone;
+    return x === L && y >= zy && y < zy + zh;
+  }
+  function rockfallTick(ms, dt) {
+    if (G.Script.busy() || G.Scenes.top() !== ms) return;
+    const prev = ms.c10rf || 0;
+    ms.c10rf = prev + dt;
+    if (Math.floor(prev / 3) === Math.floor(ms.c10rf / 3)) return;
+    // impact on the line that was warned during the previous period
+    const L = QS.lines[Math.floor(prev / 3) % 3];
+    ms.c10hit = { x: L, t: 0 };
+    G.Audio.sfx('earth');
+    G.Render.doShake(4, 0.25);
+    const p = ms.player;
+    const safe = QS.alcoves.some(([ax, ay]) => ax === p.x && ay === p.y);
+    if (!safe && onLine(ms, p.x, p.y, L)) {
+      G.Script.run(async (S) => {
+        H.hurtParty(0.08);
+        S.shake(8, 0.5);
+        await S.say('', '落石砸了下來！被逼回了岩棚的起點。');
+        await S.warp('qingshui_cliffs', QS.start[0], QS.start[1], QS.start[2], { fade: 0.25 });
+      });
+    }
+  }
+  function rockfallDraw(ctx, t, ms) {
+    if (!ms.c10rock) return;
+    const [zx, zy, zw, zh] = QS.zone;
+    const per = (ms.c10rf || 0) % 3;
+    const L = QS.lines[Math.floor((ms.c10rf || 0) / 3) % 3];
+    if (per >= 2) {
+      const k = per - 2;
+      ctx.save();
+      for (let y = zy; y < zy + zh; y++) {
+        ctx.fillStyle = `rgba(20,10,10,${0.18 + 0.3 * k})`;
+        ctx.beginPath(); ctx.ellipse(L * T + 32, y * T + 34, 18 + 10 * k, 8 + 4 * k, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    // alcoves (safe) glow faintly
+    ctx.save();
+    for (const [ax, ay] of QS.alcoves) { ctx.strokeStyle = 'rgba(200,220,255,0.25)'; ctx.lineWidth = 2; ctx.strokeRect(ax * T + 6, ay * T + 6, T - 12, T - 12); }
+    ctx.restore();
+    if (ms.c10hit) {
+      ms.c10hit.t += 1 / 60;
+      const h = ms.c10hit;
+      if (h.t > 0.6) { ms.c10hit = null; return; }
+      ctx.save();
+      for (let y = zy; y < zy + zh; y++) {
+        const fall = Math.min(1, h.t * 5);
+        const yy = y * T + 30 - (1 - fall) * 260;
+        ctx.globalAlpha = 1 - Math.max(0, h.t - 0.3) * 3;
+        ctx.fillStyle = '#d8d2c4'; ctx.strokeStyle = '#6a645a'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(h.x * T + 18, yy); ctx.lineTo(h.x * T + 34, yy - 16); ctx.lineTo(h.x * T + 48, yy - 4); ctx.lineTo(h.x * T + 42, yy + 12); ctx.lineTo(h.x * T + 22, yy + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  function rockfallHud(ctx, ms) {
+    if (G.Script.busy()) return;
+    const p = ms.player;
+    const [zx, zy, zw, zh] = QS.zone;
+    if (p.x < zx - 2 || p.x > zx + zw + 1 || p.y < zy - 2 || p.y > zy + zh + 1) return;
+    hudPlate(ctx, 24, G.H - 70, 330, 44);
+    G.Render.text(ctx, '落石區：看地上的影子，躲進凹壁', 40, G.H - 60, { size: 18, color: '#f0e4c4' });
+  }
+
+  H.qsIntro = async (S) => {
+    V().c10_place = 'taroko'; V().c10_port = 'qingshui';
+    S.spawn({ id: 'qw', sprite: 'c10_truku_m', x: 25, y: 33, dir: 'up' });
+    S.remove('qs_watan');
+    await S.camera(25, 24, 1.2);
+    await S.say('', '（巨大的大理石崖壁從海裡直直升起，高得看不到頂。海是深到發黑的藍。）');
+    S.cameraFollow();
+    await S.say('tuanzi:surprise', '……本大爺覺得自己好小。');
+    await S.say('yungui:think', '我們每個人都很小。山不在乎。');
+    await S.say('Watan', '山在乎的。山只是不說。');
+    await S.say('Watan', '我走前面。上面的岩棚會落石，看地上的影子。');
+    S.remove('qw');
+    S.refresh();
+    H.objective(S, '沿崖邊的岩棚，進入溪口（北方）');
+  };
+  H.qsSaveWatan = async (S) => {
+    const p = G.mapScene.player;
+    S.remove('qs_watan');
+    S.spawn({ id: 'qw2', sprite: 'c10_truku_m', x: p.x + 1, y: p.y, dir: 'right' });
+    S.face('player', 'right');
+    S.shake(5, 0.6); S.sfx('earth');
+    await S.say('', '（一塊石頭從上方落下——）');
+    await S.move('player', 'R', { speed: 8 });
+    await S.move('qw2', 'D', { speed: 6 });
+    S.flash('#fff', 0.2, 0.5);
+    S.sfx('hit');
+    S.emote('player', '💢');
+    await S.say('', '（星河一把把 Watan 推開，自己被擦傷手臂。）');
+    S.face('qw2', 'up');
+    await S.say('Watan', '……你為什麼推我？');
+    await S.say('xinghe:laugh', '你在我前面啊。');
+    await S.say('Watan', '（沉默）……謝謝。');
+    H.hurtParty(0.03);
+    S.flag('ch10_saved_watan');
+    S.remove('qw2');
+    S.refresh();
+  };
+
+  // =================================================================================================
+  // MAP: taroko_gorge 太魯閣峽谷（地城）— salt dams (§5.5) and the 石巨靈
+  // =================================================================================================
+  const GZ = {
+    pools: [[23, 25], [27, 29], [31, 33], [35, 37]],   // row ranges of P0..P3
+    dams: [26, 30, 34],                                 // rows of dam ①②③
+    riverX: [19, 23], ledgeX: [24, 25],
+    entry: [17, 41, 'up'],
+  };
+  const gzState = () => (V().c10_gorge = V().c10_gorge || { d: [0, 0, 0], p: [1, 1, 1, 0] });
+  function gzSettle(st) {
+    for (let it = 0; it < 5; it++) {
+      st.p[3] = 0;
+      for (let k = 2; k >= 0; k--) if (st.d[k] && st.p[k] && !st.p[k + 1]) { st.p[k] = 0; st.p[k + 1] = 1; }
+    }
+    st.p[3] = 0;
+  }
+  function gzApply(ms) {
+    if (!ms || ms.def.id !== 'taroko_gorge') return;
+    const st = F('ch10_colossus_defeated') ? { d: [1, 1, 1], p: [0, 0, 0, 0] } : gzState();
+    const set = (x, y, id) => { ms.terrain[y * ms.w + x] = id; };
+    GZ.pools.forEach(([a, b], i) => {
+      for (let y = a; y <= b; y++) {
+        for (let x = GZ.riverX[0]; x <= GZ.riverX[1]; x++) set(x, y, st.p[i] ? 'river' : 'lake');
+        for (let x = GZ.ledgeX[0]; x <= GZ.ledgeX[1]; x++) set(x, y, st.p[i] ? 'river' : 'sand');
+      }
+    });
+    GZ.dams.forEach((y, k) => { for (let x = GZ.riverX[0]; x <= GZ.riverX[1]; x++) set(x, y, st.d[k] ? 'river' : 'snow_rock'); });
+    ms.computeSolid();
+  }
+  H.gzApply = gzApply;
+  H.melt = async (S, n) => {
+    const st = gzState();
+    if (st.d[n - 1]) { await S.say('', '這道鹽壩已經融開了。溪水從缺口流過去。'); return; }
+    await S.say('', ['鹽壩①。上游的水潭水位很高，白色的鹽殼把溪水堵住了。', '鹽壩②。白色的鹽殼把溪水堵住了。', '鹽壩③。最下游的一道鹽壩，下面就是往溪口的水。'][n - 1]);
+    const c = await S.choice(['用心火融開', '先不要'], { cancel: 1 });
+    if (c !== 0) return;
+    S.sfx('fire'); S.flash('#ffb060', 0.3, 0.5);
+    await S.say('', '（星河把手按在鹽殼上，心火一點一點燒進去——鹽殼裂開了。）');
+    if (st.p[n]) {
+      S.shake(8, 0.8); S.sfx('water');
+      await S.say('', '下游的水潭還滿著——上游的水衝下來，整片溪道都淹了！');
+      H.hurtParty(0.05);
+      V().c10_gorge = { d: [0, 0, 0], p: [1, 1, 1, 0] };
+      await S.warp('taroko_gorge', GZ.entry[0], GZ.entry[1], GZ.entry[2], { fade: 0.35 });
+      gzApply(G.mapScene);
+      await S.say('yungui:think', '下面還滿著，水沒地方去。……鹽壩又結起來了。');
+      await S.say('Watan', '水要往下走。先替它把下面的路開好。');
+      return;
+    }
+    st.d[n - 1] = 1; st.p[n - 1] = 0; st.p[n] = 1;
+    gzSettle(st);
+    S.sfx('water');
+    gzApply(G.mapScene);
+    await S.say('', '鹽壩融開了。上游的水流進下一個水潭，水位慢慢退了下來。');
+    if (st.d.every(Boolean)) await S.say('Watan', '水往下走了。東邊的岩棚露出來了。');
+  };
+  (function gorge() {
+    const W = 44, HH = 56;
+    const g = new Grid(W, HH, 'C');
+    // D — upstream pool (y 1..11)
+    g.rect(13, 1, 18, 10, 'M');
+    g.rect(15, 2, 14, 6, 'l');
+    g.rect(20, 8, 3, 2, 'r');
+    // C — the old hunting trail (single cell wide) above the void
+    g.rect(27, 12, 10, 10, ' ');
+    g.rect(26, 11, 1, 11, 'M');
+    g.rect(27, 15, 1, 1, 'M');
+    // B — 燕子口 (y 22..43): cave walls, river channel, west walkway, east ledge
+    g.rect(12, 22, 18, 22, 'C');
+    g.rect(16, 23, 3, 21, 'M');
+    g.rect(19, 22, 5, 22, 'r');
+    g.rect(24, 22, 2, 22, 'M');
+    g.rect(24, 21, 3, 1, 'M');
+    g.rect(26, 27, 2, 3, 'C'); g.set(26, 28, 'v');
+    g.rect(14, 35, 2, 5, 'M'); g.set(14, 37, 'q'); g.set(15, 38, 'q');
+    // A — river mouth (y 44..55)
+    g.rect(12, 44, 18, 12, 's');
+    g.rect(19, 44, 5, 6, 'r');
+    g.rect(18, 50, 7, 2, 'q');
+    g.blob(15, 47, 2, 2, 'q', 91); g.blob(27, 52, 2, 1.5, 'q', 92);
+    g.rect(20, 54, 3, 2, 'M');
+    const objs = [
+      { t: 'rock_marble', x: 14, y: 9 }, { t: 'rock_marble', x: 29, y: 3 }, { t: 'rock_big', x: 13, y: 2 }, { t: 'cliff_waterfall', x: 22, y: 0 },
+      { t: 'rock_marble', x: 25, y: 41 }, { t: 'rock_marble', x: 17, y: 42 }, { t: 'rock_big', x: 13, y: 48 }, { t: 'rock_marble', x: 27, y: 46 }, { t: 'rock_small', x: 15, y: 53 },
+      { t: 'driftwood', x: 25, y: 48 }, { t: 'rock_marble', x: 16, y: 30 },
+      H.crate('gz_a', 14, 45, [['c10_baicao', 2]], { line: 'Watan：那不是山的東西，是海帶來的。你們拿走，山會比較乾淨。', who: '' }),
+      H.crate('gz_b', 26, 28, [['c10_fn_yunjian', 1]], { line: '壺穴裡卡著一個被逆潮沖上來的木箱。' }),
+      H.crate('gz_c', 27, 15, [['c10_sw_heichao', 1]], { line: '崖邊卡著一個外來的木箱。' }),
+    ];
+    G.Maps.define('taroko_gorge', {
+      name: '太魯閣峽谷', subtitle: '被逆潮倒灌的峽谷', place: 'taroko',
+      bgm: 'taroko',
+      start: [21, 53],
+      light: (st) => (st.flags.ch10_colossus_defeated ? { ambient: 0.08, color: '#203040' } : { ambient: 0.24, color: '#101828' }),
+      particles: ['mist', 'motes'],
+      tiles: g.rows(), objects: objs,
+      pass: GZ.dams.map((y) => ({ x: GZ.riverX[0], y, w: 5, h: 1, solid: true })),
+      npcs: [
+        { id: 'gz_muntjac', sprite: 'c10_muntjac', name: '山羌', x: 14, y: 37, dir: 'right', fixedDir: true, if: () => !F('ch10_freed_muntjac') && !F('c10_muntjac_left'), talk: (S) => H.muntjac(S) },
+        { id: 'gz_watan', sprite: 'c10_truku_m', name: 'Watan', x: 24, y: 44, dir: 'up', if: () => !F('ch10_colossus_defeated'), talk: ['水要往下走。先替它把下面的路開好。', '鹽壩從西邊的岩棚碰得到。'] },
+      ],
+      enemies: [
+        { id: 'gz1', troop: 'taroko_1', x: 15, y: 50, art: 'cliff_spirit', variant: 1, lv: 37, radius: 2, if: () => !F('ch10_colossus_defeated') },
+        { id: 'gz2', troop: 'taroko_3', x: 25, y: 40, art: 'cliff_spirit', variant: 1, lv: 37, radius: 1, if: () => !F('ch10_colossus_defeated') },
+        { id: 'gz3', troop: 'taroko_4', x: 17, y: 32, art: 'fog_spirit', variant: 2, lv: 37, radius: 2, if: () => !F('ch10_colossus_defeated') },
+      ],
+      warps: [{ x: 20, y: 55, w: 3, to: 'qingshui_cliffs', tx: 31, ty: 1, tdir: 'down' }],
+      events: [
+        { id: 'gz_intro', trigger: 'auto', once: true, if: (st) => !st.flags.ch10_colossus_defeated, run: async (S) => {
+          await S.say('', '峽谷的溪水本應是碧綠的，下半段卻被逆潮倒灌成黑色，表面結著白色的鹽殼。');
+          await S.say('Watan', '那不是山的東西，是海帶來的。');
+        } },
+        { id: 'dam1', trigger: 'action', x: 19, y: GZ.dams[0], label: '鹽壩', run: (S) => H.melt(S, 1) },
+        { id: 'dam2', trigger: 'action', x: 19, y: GZ.dams[1], label: '鹽壩', run: (S) => H.melt(S, 2) },
+        { id: 'dam3', trigger: 'action', x: 19, y: GZ.dams[2], label: '鹽壩', run: (S) => H.melt(S, 3) },
+        { id: 'potholes', trigger: 'action', x: 15, y: 25, label: '調查', run: async (S) => {
+          await S.say('', '崖壁上布滿了圓形的壺穴，燕子在洞口進進出出。');
+        } },
+        { id: 'trail', trigger: 'touch', x: 26, y: 18, once: true, run: async (S) => {
+          await S.say('', '（Watan 走在最前。單格寬的路，左邊是直立的崖壁，右邊是深谷。）');
+          await S.say('Watan', '這條路，是我們祖先走出來的。');
+          await S.say('Watan', '他們沒有記號的時候，也是一步一步走過來的。');
+          await S.say('xinghe:think', '……');
+        } },
+        { id: 'boss', trigger: 'touch', x: 20, y: 10, w: 7, h: 1, if: (st) => !st.flags.ch10_colossus_defeated, run: (S) => H.colossus(S) },
+      ],
+      onEnter: async () => {
+        gzApply(G.mapScene);
+        if (!F('ch10_colossus_defeated')) H.monsters([[21, 7, 'gorge_colossus', 0, 0.42]]);
+      },
+    });
+  })();
+
+  H.muntjac = async (S) => {
+    await S.say('', '一隻山羌被困在白色的鹽殼裡，後腿動不了。牠看著你們，一動也不敢動。');
+    const c = await S.choice(['用心火融開鹽殼', '不管'], { cancel: 1 });
+    if (c !== 0) return;
+    S.sfx('fire');
+    await S.say('', '（星河小心地把手放在鹽殼上。鹽殼一點一點化開。）');
+    S.emote('gz_muntjac', '!');
+    await S.move('gz_muntjac', 'UU', { speed: 6 });
+    await S.say('', '（山羌掙脫了，看了隊伍一眼，跳上崖壁消失了。）');
+    S.remove('gz_muntjac');
+    await S.say('Watan', '……牠今天不是要被打的獵物。你做得對。');
+    S.flag('ch10_freed_muntjac');
+  };
+
+  H.colossus = async (S) => {
+    S.bgm('tension');
+    S.spawn({ id: 'cw', sprite: 'c10_truku_m', x: 24, y: 11, dir: 'up' });
+    await S.camera(21, 7, 0.8);
+    await S.say('', '（峽谷最窄處，一個由大理石塊與黑色鹽殼堆成的巨人，把溪水整個堵住。）');
+    await S.say('', '（它的胸口有一個空洞，洞裡塞滿了被推上來的溺魂的藍光。上游的水是碧綠的，下游是黑的。）');
+    await S.say('石巨靈', '……過……不……去……過……不……去……');
+    S.cameraFollow();
+    await S.say('yungui:serious', '它也在喊。被逆潮推上山的魂，找不到出海的路，全卡在它身體裡。');
+    await S.say('Watan', '它把山的水跟海的水分開了。下面的山羌、魚、鳥，都喝不到水。');
+    await S.say('xinghe:serious', '那就讓水過去。讓那些魂也過去。');
+    await S.battle('boss_colossus', { intro: H.colossusRules, bgmAfter: 'taroko' });
+    H.monsters([]);
+    S.shake(6, 1.2); S.sfx('earth');
+    await S.say('', '（石巨靈的身體一塊一塊崩落，落進潭裡。碧綠的溪水衝過缺口，把黑水往下游推去。）');
+    S.flag('ch10_colossus_defeated');
+    gzApply(G.mapScene);
+    H.lightsStart(21, 7, 30, 2, { vy: 30, vx: 0 });
+    await S.say('', '（胸口的藍光被水流帶著，一路往溪口、往海、往黑潮漂去。）');
+    S.particles(['motes', 'leaves']);
+    S.sfx('sing');
+    await S.say('', '（峽谷裡，鳥開始叫了。）');
+    H.lightsStop();
+    S.face('cw', 'up');
+    await S.say('Watan', '（看著水）……水回來了。');
+    await S.give('c10_marbleheart', 1);
+    await S.give('c10_ac_shiwen', 1);
+    H.days(25);
+    await S.say('Watan', '從這裡沿著上面的獵徑，可以直接回部落。走吧。');
+    S.remove('cw');
+    H.objective(S, '回到部落');
+    await S.fadeOut(1.0);
+    V().c10_truku_time = 'night';
+    await S.warp('truku_village', 20, 12, 'left', { fade: 0.01, stayDark: true });
+  };
+
+  // ---------------------------------------------------------------- C10-14 火堆旁・橋是走出來的
+  H.c10_14 = async (S) => {
+    if (V().c10_truku_time !== 'night') {
+      V().c10_truku_time = 'night';
+      await S.warp('truku_village', 20, 12, 'left', { reload: true, fade: 0.3, stayDark: true });
+    }
+    S.bgm(null);
+    S.spawn({ id: 'iwan_n', sprite: 'truku_elder', x: 17, y: 10, dir: 'down' });
+    S.spawn({ id: 'watan_n', sprite: 'c10_truku_m', x: 19, y: 10, dir: 'down' });
+    S.spawn({ id: 'chenbo_n', sprite: 'chenbo', x: 19, y: 12, dir: 'left' });
+    H.place(S, 17, 12, 'right');
+    S.setPos('hongying', 18, 13, 'up'); S.setPos('yungui', 17, 13, 'up'); S.setPos('tuanzi', 16, 12, 'right');
+    await S.camera(18, 11, 0.01);
+    await S.fadeIn(1.0);
+    await S.say('', '（火堆。Iwan 坐在火邊，Watan 在烤肉，分成一份一份。陳伯也上山來了，坐在一旁。）');
+    S.face('watan_n', 'iwan_n');
+    await S.say('', '（Watan 把最好的一份先給 Iwan，然後一份一份分給隊伍，最後才是自己。）');
+    S.face('watan_n', 'down');
+    await S.say('tuanzi:surprise', '本大爺也有？');
+    await S.say('Watan', '你也走了一樣的路。');
+    await S.say('tuanzi:cry', '……瓦旦是好人。');
+    await S.wait(1.0);
+    await S.say('', '（安靜了一會。）');
+    await S.say('Iwan', '孩子。你可以再問我一次了。');
+    await S.say('', '（星河看著火。）');
+    await S.say('xinghe:sad', '……我們那邊的說法是，每個人死了，都會變成一盞燈。');
+    await S.say('xinghe:sad', '燈會漂過海，漂到彼岸去。');
+    await S.say('xinghe:sad', '可是我沒有。我生下來的時候就死過一次了。是別人把她的火分了一點給我，我才活下來。');
+    await S.say('xinghe:sad', '所以我沒有自己的燈。');
+    await S.say('xinghe:cry', '如果我死了……是不是連橋都看不到？是不是哪裡都去不了？');
+    S.face('hongying', 'down');
+    await S.say('', '（紅纓轉過頭去。雲歸放下手上的肉。陳伯閉上眼睛。）');
+    await S.say('Iwan', '（輕輕笑了）孩子。');
+    S.bgm('love');
+    await S.say('Iwan', '我生下來的時候，臉上也什麼都沒有。');
+    await S.say('xinghe:surprise', '……');
+    await S.say('Iwan', '沒有人是帶著紋面出生的。');
+    await S.say('Iwan', '祖靈不看你生下來的時候有什麼。祂們看的是你這一輩子，怎麼走路。');
+    if (F('ch10_saved_watan')) await S.say('Iwan', '瓦旦說，你今天替他擋了石頭。');
+    if (F('ch10_freed_muntjac')) await S.say('Iwan', '你放了一隻山羌。不是你的獵物，你沒拿。');
+    if (F('ch10_tao_xindeng')) await S.say('Iwan', '你們身上有海那邊的人給的東西。他們不會隨便給人。');
+    await S.say('Iwan', '你守了我們的規矩。你沒有拿不是你的東西。');
+    await S.say('Iwan', '橋，是走出來的。不是生出來的。');
+    S.emote('player', '💧');
+    await S.say('', '（星河的眼淚掉下來。他低下頭，肩膀在抖。）');
+    S.face('hongying', 'up');
+    await S.say('hongying:cry', '（伸手，用力揉亂星河的頭髮）……笨蛋。哭什麼。');
+    await S.say('yungui:smile', '（遞上酒葫蘆）……喝一口。今天准你。');
+    await S.say('Iwan', '不過——');
+    await S.say('Iwan', '你們漢人過不過我們的彩虹橋，我就不知道了。');
+    await S.say('Iwan', '說不定你們有你們自己的橋。我沒去過，不亂說。');
+    await S.say('xinghe:laugh', '（一邊哭一邊笑）……依旺奶奶好誠實。');
+    await S.say('Iwan', '我只知道一件事。好好活的人，不管走哪一條路，路都會認得他。');
+    await S.say('chenbo:sad', '（低聲，自言自語）……我划了一輩子船，送別人過去。');
+    await S.say('chenbo:sad', '自己過不過得去，從來沒想過。');
+    S.face('iwan_n', 'chenbo_n');
+    await S.say('Iwan', '（看陳伯一眼）你也一樣。老人家，你的路也走得不錯。');
+    await S.say('chenbo:surprise', '……');
+    S.face('iwan_n', 'down');
+    await S.say('', '（Iwan 從織布機上剪下一段剛織好的布帶——紅色的底，織著白色的菱形紋。）');
+    await S.say('Iwan', '給那個沒有記號的孩子。');
+    await S.say('Iwan', '這不是紋面。這是我織的布。你綁著，記得今天。');
+    await S.give('c10_ac_iwan', 1);
+    await S.say('xinghe:serious', '（雙手接過）……Mhuway su。');
+    await S.say('Iwan', '（一愣，然後笑了）你學得很快。');
+    S.flag('ch10_xinghe_turn');
+    // dawn: the rainbow over the gorge mouth (look only)
+    await S.fadeOut(1.2);
+    S.remove('iwan_n'); S.remove('watan_n'); S.remove('chenbo_n');
+    V().c10_truku_time = 'dawn';
+    V().c10_rainbow = 1;
+    await S.warp('truku_village', 31, 19, 'down', { reload: true, fade: 0.01, stayDark: true });
+    S.spawn({ id: 'watan_d', sprite: 'c10_truku_m', x: 30, y: 18, dir: 'down' });
+    S.setPos('hongying', 32, 18, 'down'); S.setPos('yungui', 33, 19, 'down'); S.setPos('tuanzi', 30, 19, 'down');
+    S.bgm('mountain');
+    await S.camera(31, 23, 0.01);
+    await S.fadeIn(1.4);
+    await S.say('', '（峽谷口。昨夜下過一陣雨，溪水碧綠，水氣蒸騰。）');
+    S.sfx('lantern');
+    await S.say('', '（太陽一出來，一道彩虹從峽谷這一頭跨到那一頭。）');
+    await S.say('Watan', '……祖靈今天心情好。');
+    await S.say('xinghe:normal', '（看著彩虹，握著手腕上的織帶）');
+    await S.say('xinghe:serious', '（我會好好走。走到我能過去為止。）');
+    await S.say('xinghe:smile', '（……然後，把她也一起帶過去。）');
+    S.cameraFollow();
+    await H.xunjing(S, 5);
+    S.remove('watan_d');
+    S.flag('ch10_rainbow_seen');
+    S.quest('q_c10_main', 3);
+    V().c10_truku_time = undefined;
+    V().c10_rainbow = 0;
+    await S.fadeOut(0.6);
+    await S.warp('truku_village', 31, 18, 'up', { reload: true, fade: 0.01 });
+    S.gather();
+    H.objective(S, '回王船，乘黑潮北上前往頭城');
   };
 })();

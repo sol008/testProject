@@ -355,7 +355,7 @@
     else if (dest === 'bali') await boat(S, from, 'guanyin', '渡船往八里渡口……', 'guanyin_trail', 20, 52, 'up');
     else {
       if (!F('ch3_bangka_arrive')) await S.say('阿海伯', '上溯艋舺，順風半日。艋舺人講話較大聲，莫驚。');
-      await boat(S, from, 'bangka', '渡船逆著淡水河，上溯艋舺……', 'bangka', 7, 21, 'right');
+      await boat(S, from, 'bangka', '渡船逆著淡水河，上溯艋舺……', 'bangka', 7, 19, 'right');
     }
   }
 
@@ -1175,7 +1175,7 @@
     for (const [x, y, c] of [[4, 4, 'm'], [6, 4, 'm'], [4, 5, 'm'], [6, 5, 'm'], [19, 3, 't'], [25, 2, 'c'], [23, 4, 'u'], [26, 5, 'u'], [2, 12, 'B'], [1, 15, 'B'], [3, 18, 'u'], [25, 12, 'w'], [23, 13, 'w'], [1, 19, 'u'], [26, 19, 'u'], [18, 5, 'w']]) d[y][x] = c;
     return { tiles: rows(g), deco: d.map((r) => r.join('')) };
   })();
-  const ROOF_Y = -150;   // sprite offset so actors stand on the main hall's ridge (cutscenes)
+  const ROOF_Y = -255;   // sprite offset so actors stand on the main hall's ridge (cutscenes)
 
   async function yunguiIntro(S) { // 3-5
     S.flag('ch3_yungui_met');
@@ -1308,7 +1308,7 @@
     let r = await S.battle('t_c3_raid', { guests: ['yungui'], bgmAfter: 'tension' });
     for (let i = 0; i < 3; i++) S.remove('c3_yin' + i);
     await S.say('', '（陰兵化成了灰。下一刻，鐘樓上傳來一聲輕響。）');
-    const gm = S.spawn({ id: 'c3_gm', sprite: 'qingfeng_mask', x: 22, y: 17, dir: 'left' }); gm.offsetY = -150;
+    const gm = S.spawn({ id: 'c3_gm', sprite: 'qingfeng_mask', x: 22, y: 17, dir: 'left' }); gm.offsetY = -190;
     await S.camera(20, 15, 0.8);
     await S.say('', '（月光下，一個戴著猙獰鬼面具的劍客站在鐘樓頂。黑衣，背後披風破爛，手中一柄長劍。）');
     S.emote('hongying', '💢');
@@ -1418,6 +1418,8 @@
       { t: 'log', x: 2, y: 4 }, { t: 'log', x: 2, y: 5 }, { t: 'signboard', x: 7, y: 3, text: '閒人勿食' },
       { t: 'tree_maple', x: 2, y: 2 }, { t: 'stump', x: 8, y: 5 },
       { t: 'banner', x: 9, y: 6, color: '#3a5a8a', text: '道' }, { t: 'banner', x: 18, y: 6, color: '#3a5a8a', text: '德' },
+      { t: 'drum_rack', x: 20, y: 12 }, { t: 'well', x: 6, y: 17 }, { t: 'plant_pot', x: 11, y: 7, v: 1 }, { t: 'plant_pot', x: 15, y: 7, v: 2 },
+      { t: 'bench', x: 15, y: 18 }, { t: 'tree_pine', x: 3, y: 13 }, { t: 'tree_pine', x: 24, y: 18 },
     ],
     chests: [{ id: 'c3_07', x: 3, y: 3, item: 'c3_ft_cloudboots', spirit: true }],
     npcs: [
@@ -1616,6 +1618,622 @@
       { id: 'tr_jars', trigger: 'action', x: 1, y: 4, w: 1, h: 2, label: '調查', run: async (S) => { await S.say('', '罐子裡泡著奇形怪狀的蕈菇。標籤寫著：「鬼筆」「竹蓀」「？？？（勿再試）」。'); } },
     ],
     warps: [{ x: 6, y: 8, to: 'taixu', tx: 23, ty: 10, tdir: 'down', door: true }],
+  });
+
+  // =====================================================================================================
+  // 艋舺 bangka (56×44)
+  // =====================================================================================================
+  const BK = (() => {
+    const W = 56, H = 44;
+    const g = grid(W, H, ':');
+    fill(g, 0, 0, 5, H, 'r');                         // 淡水河
+    fill(g, 5, 1, 2, 41, 'k');                        // riverside boardwalk
+    fill(g, 2, 4, 3, 2, 'k'); fill(g, 2, 18, 3, 3, 'k'); fill(g, 2, 32, 3, 2, 'k');   // 北・中・南渡頭
+    fill(g, 5, 0, W - 5, 1, 'h'); fill(g, 8, 0, 2, 1, '=');                            // north edge + road to 舊渡頭
+    fill(g, 7, 5, 49, 2, '#');                        // 北街
+    fill(g, 7, 10, 49, 2, '#');                       // 主街
+    fill(g, 7, 15, 37, 2, '#');                       // 廟口街
+    fill(g, 7, 19, 8, 2, '#');                        // road to 中渡頭
+    fill(g, 14, 18, 30, 13, '%');                     // 龍山寺廟埕
+    fill(g, 7, 31, 19, 11, '.'); fill(g, 29, 31, 27, 11, '.');
+    fill(g, 26, 31, 3, 11, '=');                      // road to 南門
+    fill(g, 7, 34, 19, 1, '='); fill(g, 29, 34, 15, 1, '=');
+    fill(g, 44, 12, 12, 10, '.');                     // north-east green
+    fill(g, 44, 22, 12, 14, ':');                     // 八甲庄 ruins
+    for (const [x, y] of [[46, 24], [47, 24], [52, 26], [52, 27], [45, 31], [53, 33], [54, 33], [49, 34]]) set(g, x, y, 'R');
+    fill(g, 5, 43, W - 5, 1, 'h');
+    fill(g, 36, 12, 2, 3, ':');                       // 青草巷
+    const d = grid(W, H, ' ');
+    for (const [x, y, c] of [[46, 23, 'd'], [50, 25, 'd'], [54, 29, 'd'], [47, 33, 'd'], [44, 27, 'g'], [45, 28, 'g'], [51, 31, 'g'], [52, 32, 'g'], [48, 26, 'r'], [53, 24, 'g'], [44, 34, 'g'],
+      [46, 15, 'b'], [50, 13, 'c'], [53, 17, 'c'], [52, 20, 'u'], [45, 20, 'w'], [49, 19, 'w'], [53, 13, 'u'], [53, 2, 'c'], [54, 6, 'u'],
+      [9, 37, 'c'], [21, 38, 'c'], [12, 40, 'u'], [33, 38, 'c'], [41, 40, 'c'], [48, 38, 'c'], [53, 36, 'u'], [18, 36, 'w'], [37, 36, 'w'], [23, 33, 'u'], [31, 40, 'w'], [52, 40, 'c']]) d[y][x] = c;
+    return { W, H, tiles: rows(g), deco: d.map((r) => r.join('')) };
+  })();
+  const bkLight = (st) => {
+    const dd = bkDay(st);
+    if (dd === 1) return { ambient: 0.04, color: '#304050' };
+    if (dd === 2) return { ambient: 0.48, color: '#0a0e26', tint: 'rgba(200,210,255,0.1)', playerR: 220 };
+    return st.flags.ch3_theatre ? { ambient: 0.55, color: '#080c22', playerR: 220 } : { ambient: 0.3, color: '#3a1808', tint: 'rgba(255,150,80,0.2)', playerR: 200 };
+  };
+  const bkBgm = (st) => (bkDay(st) === 2 ? 'festival' : bkDay(st) === 0 && st.flags.ch3_theatre ? 'night' : 'city');
+  const bkParticles = (st) => (bkDay(st) === 1 ? ['leaves'] : bkDay(st) === 2 ? ['lanterns', 'fireflies'] : st.flags.ch3_theatre ? ['fireflies'] : ['motes']);
+  const festival = (st) => bkDay(st) === 2;
+
+  async function bkArrive(S) { // 3-10
+    S.flag('ch3_bangka_arrive');
+    V().ch3_day = 0;
+    S.light(bkLight(G.state));
+    await S.camera(14, 14, 0.1);
+    await S.fadeIn(0.8);
+    S.sfx('gong');
+    await S.camera(26, 14, 1.4);
+    await S.say('', '（渡船轉入河灣。岸上舟楫如林，船頭行的旗子一面接一面。人聲、叫賣聲、鑼聲。）');
+    S.cameraFollow();
+    await S.say('xinghe:laugh', '哇——！比九份熱鬧十倍！');
+    await S.say('yungui:normal', '一府二鹿三艋舺。你現在站在台灣第三熱鬧的地方。');
+    await S.say('baizhi:surprise', '第三？那第一和第二，不就熱鬧到會吵架了？');
+    await S.say('tuanzi:laugh', '吾聞到碗粿！還有肉粥！還有……（鼻子抽動）月餅！');
+    await S.say('hongying:think', '（看著碼頭）……這裡的長明燈，好多。');
+    S.sfx('ghost');
+    await S.say('', '（碼頭邊、主街上、商家屋簷下，處處掛著冷藍色的長明燈。極輕微的嗡鳴，此起彼落。）');
+    S.emote('baizhi', '💧');
+    await S.say('baizhi:sad', '（摀住耳朵）……好多聲音。在燈裡面……');
+    await S.say('xinghe:serious', '白芷？');
+    await S.say('baizhi:smile', '沒事。只是……這裡好多人，被留下來了。');
+    await S.say('yungui:serious', '先去龍山寺。');
+    S.objective(mainObj());
+  }
+
+  async function bkShow(S) { // 3-13 中秋夜・廟埕演戲 → 3-14 清虛真人的信
+    S.bgm('festival');
+    S.hideFollowers(false);
+    S.setPos('player', 37, 25, 'up'); S.setPos('baizhi', 35, 28, 'up'); S.setPos('hongying', 36, 24, 'left');
+    S.setPos('yungui', 33, 24, 'right'); S.setPos('tuanzi', 34, 25, 'up');
+    for (const f of G.mapScene.followers) f.scripted = true;
+    S.spawn({ id: 'c3_hong', sprite: 'merchant', x: 38, y: 26, dir: 'left' });
+    S.spawn({ id: 'c3_xiulan', sprite: 'actress', x: 35, y: 23, dir: 'down' });
+    for (const [i, [x, y, sp]] of [[33, 27, 'old_f'], [34, 28, 'villager_m'], [36, 29, 'villager_f2'], [33, 29, 'child_f'], [37, 28, 'old_m'], [32, 28, 'villager_f'], [38, 29, 'villager_m2'], [35, 30, 'child_m']].entries()) {
+      S.spawn({ id: 'c3_crowd' + i, sprite: sp, x, y, dir: 'up' });
+    }
+    await S.camera(35, 25, 0.1);
+    await S.fadeIn(1.0);
+    await S.say('', '（中秋夜。大月亮掛在龍山寺屋脊上。廟埕人山人海，賣文旦、月餅的攤子一路排開。）');
+    S.sfx('gong'); S.sfx('gong', 0.3); S.sfx('bell', 0.5);
+    await S.say('', '（戲棚亮起。鑼鼓：咚咚鏘。）');
+    await S.say('洪班主', '你們幾個聽好：星河管戲棚的燈！雲歸打鑼！紅纓——演一個家丁！');
+    await S.say('hongying:surprise', '家丁！？我？！');
+    await S.say('洪班主', '就站在那裡，拿著棍子，不要講話。');
+    S.emote('hongying', '💢');
+    await S.say('hongying:angry', '我可是洛家槍的——');
+    await S.say('洪班主', '不要講話！');
+    await S.say('tuanzi:smug', '吾呢？吾呢？');
+    await S.say('洪班主', '你……當道具。演一顆石頭。');
+    S.emote('tuanzi', '!');
+    await S.say('tuanzi:surprise', '！？');
+    await S.say('baizhi:think', '那我呢？');
+    await S.say('洪班主', '姑娘妳就坐在台下看。……看戲的人也是戲的一部分。');
+    const c = await S.choice(['操作戲棚燈（小遊戲）', '交給師傅們（略過）']);
+    let hits = 0;
+    if (c === 0) hits = await stageLights();
+    if (c === 0 && hits >= 5) {
+      await S.say('洪班主', '好！燈打得比我們老師傅還準！這是戲班的賞錢，還有這盒胭脂，給姑娘們。');
+      S.gold(200); await S.give('c3_ac_rouge', 1);
+    } else {
+      await S.say('洪班主', '也算勉強啦。來，賞錢拿去。');
+      S.gold(100);
+    }
+    if (F('ch3_yizigu_choice_b')) {
+      await S.say('', '（台上，秀蘭扮的祝英台開口。那聲音清亮、稚嫩，卻一字一句準得驚人。）');
+      S.sfx('sing');
+      await S.say('椅仔姑（英台）', '「山伯哥，你送我送到十八里……」');
+      await S.say('', '（台下的人聲漸漸靜了。阿婆們停下扇子。）');
+      await S.say('baizhi:smile', '星河……她唱得好開心。');
+      S.flash('#ffd8a0', 0.6, 0.25);
+      await S.say('xinghe:smile', '（操作燈籠，台上光線轉暖）嗯。');
+      S.sfx('gong');
+      await S.say('yungui:normal', '（敲鑼，難得沒有說笑）……');
+      await S.say('', '（紅纓站在台角當家丁，一動不動，眼眶卻紅了。）');
+      S.sfx('gong'); S.sfx('gong', 0.25); S.sfx('bell', 0.5);
+      await S.say('', '（戲到「樓台會」，英台唱完最後一句。滿場叫好。鑼鼓齊鳴。）');
+      S.spawn({ id: 'c3_yzg', sprite: spr('c3_yizigu', 'ghost_child'), x: 35, y: 24, dir: 'down', ghost: true });
+      S.actor('c3_yzg').alpha = 0;
+      await S.fadeActor('c3_yzg', 0.85, 0.8);
+      await S.say('', '（謝幕時，秀蘭的身體輕輕一晃。一個瘦小的影子從她身上浮起——只有隊伍看得見。）');
+      await S.say('', '（一個穿著舊衣的小姑娘，站在戲台中央，對著月亮和滿場觀眾，深深一鞠躬。）');
+      await S.jump('c3_yzg', 8);
+      await S.say('椅仔姑', '我看過戲了。我還站在戲台上了。');
+      await S.say('椅仔姑', '我不用再坐那張椅子了。');
+      await S.say('椅仔姑', '謝謝姊姊。謝謝。');
+      S.sfx('lantern');
+      await S.fadeActor('c3_yzg', 0, 1.2);
+      S.remove('c3_yzg');
+      await S.say('', '（她化成一點小小的光，飄過月亮。秀蘭落下淚來，對著天空福了一福。）');
+      await S.say('秀蘭', '……一路好走，小妹妹。下輩子，來我們戲班學戲。我不綁妳。');
+      await S.lantern('lantern_yizigu', '椅仔姑與花旦');
+      await S.say('baizhi:think', '星河，那個光……又進到你手裡了。');
+      await S.say('xinghe:think', '嗯……溫溫的。');
+    } else {
+      await S.say('', '（秀蘭扮英台。唱得很好，台下叫好。）');
+      S.sfx('gong'); S.sfx('gong', 0.3);
+      await S.say('', '（謝幕時，白芷看著觀眾席最後一排——那裡有一張翻倒的竹椅。）');
+      await S.say('baizhi:sad', '……她很想看的。');
+      await S.say('yungui:normal', '……我知道。');
+    }
+    S.flag('ch3_show_done');
+    // 3-14
+    S.spawn({ id: 'c3_wu', sprite: 'temple_keeper', x: 34, y: 27, dir: 'up' });
+    await S.move('c3_wu', 'U');
+    await S.say('', '（散戲。吳廟公走上前，遞出一封信。）');
+    await S.say('吳廟公', '雲歸，你師父的信。');
+    await S.give('key_letter', 1, { silent: true });
+    await S.say('', '（雲歸拆信。月光下，信紙上的字跡瀟灑而急促。）');
+    await S.say('清虛真人（信）', '「雲歸：我知你必定會來。看過艋舺的燈了嗎？」');
+    await S.say('清虛真人（信）', '「長明燈，不長明，是長囚。燈裡鎖著亡者，不讓他們過海。」');
+    await S.say('清虛真人（信）', '「我沿海路南下，先往竹塹。城隍爺的簿子，近來算不攏了。」');
+    await S.say('清虛真人（信）', '「我要一路查到府城。你若看了信還是要跟——」');
+    await S.say('清虛真人（信）', '「記得帶傘，竹塹風大。」');
+    await S.wait(0.6);
+    await S.say('yungui:smile', '……這老頭。明明知道我會跟。');
+    await S.say('yungui:sad', '（把信摺好，收進懷裡）……還交代我帶傘。');
+    await S.say('xinghe:serious', '竹塹。那就往南。');
+    await S.say('hongying:serious', '往南，也是往鹿港的方向。');
+    await S.say('baizhi:think', '「長囚」……燈裡的人，好想出來。');
+    if (F('ch3_alian_done')) await S.say('yungui:serious', '阿德就是被那種燈鎖著。我們親眼看見了。');
+    await S.say('吳廟公', '南門出去，順著海線走，三四日就到竹塹。今暗先歇。');
+    S.flag('ch3_letter');
+    S.quest('q_ch3_main', 6);
+    for (let i = 0; i < 8; i++) S.remove('c3_crowd' + i);
+    S.remove('c3_hong'); S.remove('c3_xiulan'); S.remove('c3_wu');
+    S.objective(mainObj());
+    S.toast('南門已開放。也可以到龍山寺正殿前賞月。', 'lantern');
+  }
+
+  async function bkMoon(S) { // 3-15 月下
+    S.flag('ch3_moon');
+    await S.fadeOut(0.8);
+    if (G.mapScene.def.id !== 'bangka') await S.warp('bangka', 27, 20, 'up', { fade: 0, stayDark: true });
+    S.hideFollowers(true);
+    const p = S.actor('player');
+    S.setPos('player', 26, 18, 'right'); p.offsetY = ROOF_Y;
+    const bz = S.spawn({ id: 'c3_bz', sprite: 'baizhi', x: 28, y: 18, dir: 'left' }); bz.offsetY = ROOF_Y;
+    S.spawn({ id: 'c3_yg', sprite: 'yungui', x: 26, y: 21, dir: 'up' });
+    S.spawn({ id: 'c3_tz', sprite: 'tuanzi', x: 27, y: 21, dir: 'up' });
+    S.spawn({ id: 'c3_hy', sprite: 'hongying', x: 29, y: 21, dir: 'up' });
+    await S.camera(27, 17, 0.1);
+    S.bgm('love', { fade: 1.5 });
+    await S.fadeIn(1.2);
+    await S.say('', '（龍山寺屋脊上。這次是星河和白芷。月亮圓得像一面鏡子。）');
+    await S.say('baizhi:smile', '星河，月亮好圓。');
+    await S.say('xinghe:smile', '中秋嘛。今天的月亮最圓。');
+    await S.say('baizhi:think', '為什麼最圓的月亮，要叫大家團圓？');
+    await S.say('xinghe:think', '嗯……因為看到它圓圓的，就會想起不在身邊的人吧。');
+    await S.say('baizhi:sad', '那……我也有不在身邊的人嗎？');
+    await S.say('baizhi:sad', '照魂鏡裡，好多光在往我這裡漂。他們都在等我。');
+    await S.say('xinghe:serious', '……');
+    S.face('player', 'up');
+    await S.say('xinghe:think', '（指著月亮——又急忙把手縮回來）');
+    await S.say('baizhi:laugh', '星河，你會被割耳朵。');
+    S.face('player', 'right');
+    await S.say('xinghe:laugh', '剛剛那下不算！……我是想說——');
+    await S.say('xinghe:serious', '不管鏡子照出什麼，現在妳在這裡，和我們一起看月亮。這個是真的。');
+    await S.say('baizhi:smile', '……嗯。這個是真的。');
+    if (F('ch3_alian_done') || F('ch3_yizigu_choice_b')) await S.say('', '（遠方河面上，幾點小小的光在月下漂向海口。）');
+    else await S.say('', '（沉默。河面上的月影，一晃一晃。）');
+    await S.say('baizhi:think', '星河，我們以後，也一起看下一次的月亮好不好？');
+    await S.say('xinghe:smile', '好啊。下一次、下下一次，都一起看。');
+    await S.move('c3_bz', 'L', { speed: 1.5 });
+    S.emote('player', '♥');
+    await S.say('', '（白芷微笑，靠在他肩上。星河僵住，耳朵紅了。下方傳來聲音——）');
+    await S.say('tuanzi:laugh', '雲歸！他們在屋頂上——唔唔！');
+    await S.say('yungui:smug', '（摀住糰子的嘴）噓。今晚沒有宵夜，不過可以看戲。');
+    S.emote('c3_hy', '💢');
+    await S.say('hongying:angry', '……你們兩個偷看什麼！（也在偷看）');
+    await S.fadeOut(1.0);
+    p.offsetY = 0;
+    for (const id of ['c3_bz', 'c3_yg', 'c3_tz', 'c3_hy']) S.remove(id);
+    S.hideFollowers(false);
+    S.setPos('player', 27, 19, 'down'); S.gather();
+    S.cameraFollow();
+    S.bgm('festival');
+    await S.fadeIn(0.8);
+  }
+
+  async function bkDepart(S) {
+    if (!F('ch3_moon')) await bkMoon(S);
+    await S.say('', '離開艋舺後，本地未完成的委託將無法再接。');
+    const c = await S.choice(['出發，往竹塹', '再等一下'], { cancel: 1 });
+    if (c !== 0) { await S.move('player', 'U'); return; }
+    S.flag('ch3_done');
+    S.quest('q_ch3_main', 'done');
+    await S.fadeOut(1.2);
+    G.Music.stop(1.2);
+    const n = lanternSummary();
+    await S.narrate(['第三章　觀音艋舺　完', `本章點亮的心燈：${n} 盞`], { veil: 1 });
+    await G.Story.next(S, 4);
+  }
+
+  // ---- 支線 4-2 阿蓮與阿德
+  async function alianTalk(S) {
+    if (!F('ch3_alian_1')) {
+      await S.say('alian:normal', '碗粿一碗六文……');
+      await S.say('baizhi:think', '姊姊，妳好累的樣子。');
+      await S.say('alian:sad', '……被看出來了。我翁婿阿德，去年颱風天在河裡翻船，沒回來。');
+      await S.say('alian:sad', '我怕他變成孤魂野鬼，花了三兩銀，向長明宮請了一盞長明燈，掛在他出事的舊渡頭。');
+      await S.say('alian:sad', '法師說，點著燈，他就永遠在我身邊，不會被忘記。');
+      await S.say('alian:cry', '可是從那以後，我夜夜夢見他。他說他好冷。他說「阿蓮，放我走」……');
+      await S.say('alian:cry', '是我做錯了什麼嗎？');
+      if (inParty('yungui')) await S.say('yungui:serious', '……舊渡頭，在哪？');
+      await S.say('alian:sad', '北邊……路的盡頭。白天什麼都看不到，暗時才……');
+      S.flag('ch3_alian_1');
+      S.quest('q_alian', 0);
+      S.objective('夜裡去北邊的舊渡頭看看');
+      return;
+    }
+    if (F('ch3_alian_2') && !F('ch3_alian_3')) {
+      await S.say('alian:surprise', '你們……見到他了？');
+      const c = await S.choice(['「他一直在河邊救人。他想走，是想好好地去等妳。」', '「燈裡有鎖魂符，妳不熄，我們幫妳熄。」']);
+      if (c === 1) {
+        await S.say('alian:angry', '那是我的燈！你們憑什麼！');
+        S.sfx('door');
+        await S.say('', '（阿蓮轉過身去，不再理人。）');
+        S.emote('hongying', '💢');
+        await S.say('hongying:angry', '（敲星河的頭）笨蛋，哪有人這樣講話的。');
+        await S.say('xinghe:hurt', '痛……');
+        return;
+      }
+      await S.say('alian:cry', '救人……那個傻瓜，死了還在救人……');
+      await S.say('alian:sad', '可是熄了燈，他就真的走了。我會忘記他的。我會連他的聲音都忘記。');
+      await S.say('baizhi:think', '阿蓮姊姊。妳記得他，是因為燈嗎？');
+      await S.say('alian:surprise', '……');
+      await S.say('baizhi:smile', '我什麼都記不得。可是我記得芋圓的味道、記得星河第一次跟我說話的聲音。');
+      await S.say('baizhi:smile', '那些不是燈幫我記得的。是我自己。');
+      await S.say('alian:cry', '……帶我去見他。');
+      S.flag('ch3_alian_3');
+      S.quest('q_alian', 2);
+      if (bkDay() === 1) {
+        await S.say('alian:sad', '天暗了，我在北邊路口等你們。');
+        S.objective('夜裡，陪阿蓮去舊渡頭');
+        return;
+      }
+      await S.fadeOut(0.8);
+      await S.warp('bangka_riverbank', 6, 9, 'left', { fade: 0, stayDark: true });
+      return;
+    }
+    if (F('ch3_alian_done')) {
+      await S.say('alian:smile', '碗粿，我現在少放一點鹽了。你們吃吃看。');
+      await S.shop(['c3_wanguo_lite'], { title: '阿蓮碗粿（少鹽）' });
+      return;
+    }
+    await S.say('alian:normal', '碗粿一碗六文……北邊的舊渡頭，暗時才看得到。');
+    await S.shop(['c3_wanguo'], { title: '阿蓮碗粿' });
+  }
+
+  // ---- 支線 4-4 頂下郊的兩個老人
+  async function feudTalk(S) {
+    if (!F('ch3_feud_1')) {
+      S.flag('ch3_feud_1');
+      S.sfx('hit'); S.shake(3, 0.3);
+      await S.say('', '（廢墟裡，兩個老鬼揪著對方的衣領，扭打成一團。附近的破瓦一片片飛起。）');
+      await S.say('阿水伯', '是你們下郊的人先放火！');
+      await S.say('阿旺伯', '放屁！是你們頂郊的人燒了八甲庄！我們整庄都燒光了！');
+      await S.say('阿水伯', '那是你們先攻過來！');
+      await S.say('阿旺伯', '是你們先搶碼頭！');
+      await S.say('xinghe:surprise', '兩位阿伯！停、停一下！');
+      await S.say('阿水伯', '少年仔閃開！這是頂郊和下郊的事！');
+      await S.say('yungui:think', '頂郊是三邑人，拜龍山寺；下郊是同安人，住八甲庄。為了碼頭生意，械鬥了一場。');
+      await S.say('yungui:normal', '輸的同安人，扛著城隍爺，搬到北邊的大稻埕去了。');
+      await S.say('阿旺伯', '我們不是輸！是讓！');
+      await S.say('阿水伯', '讓到大稻埕去，讓得真遠。');
+      await S.say('阿旺伯', '你！');
+      await S.say('hongying:think', '……四十年了，你們到底在吵什麼？');
+      await S.say('阿水伯', '吵到底是誰先放的火！');
+      await S.say('阿旺伯', '他承認了，我就去投胎！');
+      await S.say('阿水伯', '他承認了，我也去！');
+      await S.say('xinghe:sad', '（……那就是誰都不會走了。）');
+      S.quest('q_feud', 0);
+      return;
+    }
+    const ready = F('ch3_feud_clue') && F('ch3_feud_wu') && F('ch3_feud_tea');
+    if (!ready) {
+      await S.say('阿水伯', '是他先！');
+      await S.say('阿旺伯', '是他先！');
+      await S.say('xinghe:think', '（得先查清楚那一年的事……問問吳廟公、剝皮寮的老茶店、還有土地公廟前的阿興。）');
+      return;
+    }
+    await S.say('xinghe:serious', '兩位阿伯，跟我們走一趟。有人每年中元都在拜你們。一起拜。');
+    await S.say('阿水伯', '……拜我們？誰？');
+    await S.fadeOut(0.8);
+    await S.warp('bangka_xing', 6, 6, 'up', { fade: 0, stayDark: true });
+    S.spawn({ id: 'c3_ashui', sprite: spr('c3_ghost_ashui', 'ghost_m'), x: 5, y: 7, dir: 'up', ghost: true });
+    S.spawn({ id: 'c3_awang', sprite: spr('c3_ghost_awang', 'ghost_m'), x: 7, y: 7, dir: 'up', ghost: true });
+    S.spawn({ id: 'c3_xing', sprite: 'child_m', x: 6, y: 3, dir: 'up' });
+    await S.fadeIn(0.8);
+    await S.say('', '（阿興正踮腳，給神桌上兩塊牌位各插一炷香。）');
+    await S.say('阿興', '黃阿祖，林阿祖，吃飽未？吃飽了不要打架喔。');
+    await S.say('', '（兩個老鬼呆站在門口。）');
+    await S.say('阿水伯', '……黃。是我的姓。');
+    await S.say('阿旺伯', '……林。是我的。');
+    await S.say('阿水伯', '這囝仔……是我的曾孫？');
+    await S.say('阿旺伯', '也是我的。');
+    let fought = false;
+    for (;;) {
+      const opts = ['「你們吵了四十年，他只用一炷香，就把你們放在一起。」'];
+      if (!fought) opts.push('「到底是誰先放的火？今天說清楚！」');
+      opts.push('「算了，讓他們吵吧。」');
+      const c = await S.choice(opts);
+      const pick = opts[c];
+      if (pick.startsWith('「算了')) {
+        S.remove('c3_ashui'); S.remove('c3_awang'); S.remove('c3_xing');
+        await S.say('', '（兩個老鬼互瞪一眼，一前一後飄回了八甲庄。）');
+        return;
+      }
+      if (pick.startsWith('「到底')) {
+        fought = true;
+        await S.say('阿水伯', '對！今天說清楚！');
+        await S.say('阿旺伯', '來啊！');
+        await S.battle('t_c3_feud', { turnLimit: 3, turnLimitResult: 'win', loseOk: true, hpFloor: { c3_ghost_ashui: 0.001, c3_ghost_awang: 0.001 } });
+        S.sfx('hit');
+        await S.say('阿興', '（被打翻的香灰嚇哭）嗚哇——阿祖打架了——');
+        await S.say('', '（兩個老鬼同時僵住。）');
+        await S.say('hongying:angry', '……看看你們幹的好事。');
+        continue;
+      }
+      break;
+    }
+    await S.wait(0.8);
+    await S.say('阿水伯', '……我那暝，其實是去八甲庄救人的。我的好朋友住那邊。');
+    await S.say('阿旺伯', '……你的好朋友？');
+    await S.say('阿水伯', '一個同安人。跟我一起在碼頭扛米扛了十年。火燒起來，我衝進去找他。');
+    await S.say('阿水伯', '屋頂塌下來，就……什麼都不知道了。');
+    await S.say('阿旺伯', '……那暝，我也在找一個三邑人。在火裡。找到的時候，他被壓在樑下面。');
+    await S.say('阿旺伯', '我去拉他。樑太重了。');
+    await S.say('阿水伯', '……');
+    await S.say('阿旺伯', '……');
+    await S.say('阿水伯', '阿旺……是你？');
+    await S.say('阿旺伯', '你這個死老水……四十年，你沒認出我？');
+    await S.say('阿水伯', '你臉都燒成這樣，認個鬼啊！');
+    await S.say('阿旺伯', '你自己還不是！');
+    await S.say('', '（兩人抱頭痛哭，又笑。）');
+    await S.say('yungui:smile', '（解下葫蘆）兩位，喝一杯？米酒。太虛觀自釀的。');
+    await S.say('', '（三個人——兩鬼一道士——在神桌前對飲一杯。）');
+    await S.say('阿旺伯', '下輩子，換你做下郊。');
+    await S.say('阿水伯', '下輩子，我們做同一條船的。');
+    S.sfx('lantern');
+    await Promise.all([S.fadeActor('c3_ashui', 0, 1.2), S.fadeActor('c3_awang', 0, 1.2)]);
+    S.remove('c3_ashui'); S.remove('c3_awang');
+    await S.say('', '（兩人化成兩點光，並肩飄出門外，飄向河口。）');
+    S.face('c3_xing', 'down');
+    await S.say('阿興', '阿母！阿祖的香，燒得好旺喔！');
+    S.remove('c3_xing');
+    S.flag('ch3_feud_done');
+    S.quest('q_feud', 'done');
+    await S.lantern('lantern_feud', '頂下郊的兩個老人');
+    if (F('ch3_xiaomei_done')) await S.say('baizhi:sad', '那一年，也是小梅走丟的那一年。……吵架的人，最後都在火裡找朋友。');
+    await S.give('c3_sameboat_wine', 1);
+  }
+
+  G.Maps.define('bangka', {
+    name: '艋舺', place: 'bangka',
+    subtitle: (st) => (festival(st) ? '八月十五・中秋夜' : bkDay(st) === 1 ? '八月十五・一府二鹿三艋舺' : '八月十四・河港的黃昏'),
+    bgm: bkBgm, start: [7, 19],
+    light: bkLight, particles: bkParticles,
+    tiles: BK.tiles, deco: BK.deco,
+    objects: (st) => {
+      const fest = festival(st);
+      const o = [
+        // row 1 (北街 north side)
+        { t: 'shophouse', x: 9, y: 2, v: 0, text: '米行' }, { t: 'shophouse', x: 13, y: 2, v: 2, text: '布莊' }, { t: 'house_minnan', x: 18, y: 2, v: 0, door: -1 },
+        { t: 'shophouse', x: 24, y: 2, v: 1, text: '餅店' }, { t: 'shophouse', x: 29, y: 2, v: 3, text: '金紙' }, { t: 'shophouse', x: 33, y: 2, v: 0, text: '茶行' },
+        { t: 'house_minnan', x: 38, y: 2, v: 1, door: -1 }, { t: 'house_minnan', x: 44, y: 2, v: 0 }, { t: 'shrine_small', x: 50, y: 3, text: '福德正神' },
+        // row 2 (主街 north side)
+        { t: 'stall', x: 8, y: 7, text: '碗粿', counter: true }, { t: 'house_minnan', x: 10, y: 7, v: 1 },
+        { t: 'shophouse', x: 16, y: 7, v: 1, text: '船頭行' }, { t: 'shophouse', x: 21, y: 7, v: 2, text: '客棧' }, { t: 'shophouse', x: 26, y: 7, v: 3, text: '香舖' },
+        { t: 'shophouse', x: 31, y: 7, v: 0, text: '藥鋪' }, { t: 'shophouse', x: 36, y: 7, v: 1, text: '兵器' }, { t: 'house_minnan', x: 41, y: 7, v: 0, door: -1 },
+        { t: 'shophouse', x: 47, y: 7, v: 2, text: '當舖' }, { t: 'banner', x: 15, y: 9, color: '#c8402a', text: '船' },
+        // row 3 (廟口街 north side) & 青草巷
+        { t: 'shophouse', x: 9, y: 12, v: 3, text: '糕餅' }, { t: 'shophouse', x: 13, y: 12, v: 0, text: '漆器' }, { t: 'house_minnan', x: 17, y: 12, v: 1, door: -1 },
+        { t: 'shophouse', x: 32, y: 12, v: 2, text: '青草' }, { t: 'herbs_rack', x: 37, y: 12 }, { t: 'basket', x: 37, y: 13, v: 2 }, { t: 'basket', x: 37, y: 14, v: 1 },
+        { t: 'shophouse', x: 38, y: 12, v: 1, text: '布行' }, { t: 'signboard', x: 35, y: 15, text: '青草巷' },
+        // 龍山寺 & 廟埕
+        { t: 'temple', x: 24, y: 13, text: '龍山寺' }, { t: 'statue_lion', x: 24, y: 18 }, { t: 'statue_lion', x: 30, y: 18, flip: true },
+        { t: 'incense_burner', x: 27, y: 20 }, { t: 'stone_lantern', x: 22, y: 20 }, { t: 'stone_lantern', x: 32, y: 20 },
+        { t: 'pavilion', x: 34, y: 21 }, { t: 'banner', x: 33, y: 21, color: '#d8402a', text: '戲' }, { t: 'banner', x: 37, y: 21, color: '#d8402a', text: '班' },
+        { t: 'signboard', x: 38, y: 22, text: '後台', v: 1 },
+        { t: 'stall', x: 16, y: 22, text: '文旦', counter: true }, { t: 'stall', x: 19, y: 22, text: '月餅', counter: true }, { t: 'stall', x: 16, y: 26, text: '米粉湯', counter: true },
+        { t: 'stall', x: 10, y: 18, text: '長明燈', counter: true, v: 1 },
+        { t: 'bench', x: 21, y: 28 }, { t: 'bench', x: 31, y: 28 }, { t: 'well', x: 41, y: 26 },
+        // 長明燈 (cold blue) — far more than in 九份
+        { t: 'eternal_lamp', x: 7, y: 3 }, { t: 'eternal_lamp', x: 7, y: 17 }, { t: 'eternal_lamp', x: 7, y: 31 }, { t: 'eternal_lamp', x: 13, y: 11 },
+        { t: 'eternal_lamp', x: 44, y: 11 }, { t: 'eternal_lamp', x: 21, y: 18 }, { t: 'eternal_lamp', x: 33, y: 18 }, { t: 'eternal_lamp', x: 42, y: 29 }, { t: 'eternal_lamp', x: 25, y: 6 },
+        // lanterns
+        { t: 'lantern_string', x: 9, y: 10, w: 5, v: fest ? 1 : 0 }, { t: 'lantern_string', x: 17, y: 10, w: 5, v: fest ? 1 : 0 }, { t: 'lantern_string', x: 31, y: 10, w: 6, v: fest ? 1 : 0 },
+        { t: 'lantern_string', x: 39, y: 10, w: 5, v: 2 }, { t: 'lantern_string', x: 12, y: 5, w: 5, v: 0 }, { t: 'lantern_string', x: 27, y: 5, w: 5, v: 2 },
+        { t: 'lantern_string', x: 33, y: 20, w: 5, v: 1 }, { t: 'lantern_string', x: 15, y: 24, w: 6, v: fest ? 1 : 0 },
+        { t: 'red_lantern', x: 15, y: 4, hang: true }, { t: 'red_lantern', x: 26, y: 4, hang: true }, { t: 'red_lantern', x: 17, y: 9, hang: true }, { t: 'red_lantern', x: 23, y: 9, hang: true },
+        { t: 'red_lantern', x: 33, y: 9, hang: true }, { t: 'red_lantern', x: 38, y: 9, hang: true }, { t: 'red_lantern', x: 10, y: 14, hang: true }, { t: 'red_lantern', x: 34, y: 14, hang: true },
+        // docks & river
+        { t: 'boat_ferry', x: 0, y: 21 }, { t: 'boat_small', x: 0, y: 3 }, { t: 'boat_small', x: 2, y: 9 }, { t: 'boat_small', x: 0, y: 14 }, { t: 'boat_small', x: 2, y: 26 },
+        { t: 'boat_small', x: 0, y: 29 }, { t: 'boat_small', x: 2, y: 37 },
+        { t: 'dock_post', x: 2, y: 6 }, { t: 'dock_post', x: 2, y: 17 }, { t: 'dock_post', x: 2, y: 34 },
+        { t: 'crate', x: 8, y: 32 }, { t: 'crate', x: 8, y: 33 }, { t: 'barrel', x: 9, y: 33 }, { t: 'crate', x: 7, y: 12 }, { t: 'barrel', x: 8, y: 13 }, { t: 'crate', x: 8, y: 25 },
+        { t: 'barrel', x: 7, y: 26 }, { t: 'cart', x: 11, y: 16 }, { t: 'jar', x: 9, y: 9 }, { t: 'basket', x: 14, y: 9, v: 0 },
+        { t: 'signboard', x: 7, y: 21, text: '中渡頭' }, { t: 'signboard', x: 7, y: 7, text: '北渡頭' }, { t: 'signboard', x: 7, y: 35, text: '南渡頭' },
+        // south quarter & city wall
+        { t: 'house_minnan', x: 9, y: 36, v: 1, door: -1 }, { t: 'house_minnan', x: 15, y: 36, v: 0, door: -1 }, { t: 'house_minnan', x: 31, y: 36, v: 0, door: -1 },
+        { t: 'house_minnan', x: 38, y: 36, v: 1, door: -1 }, { t: 'laundry', x: 20, y: 36 }, { t: 'well', x: 23, y: 37 },
+        { t: 'city_wall', x: 7, y: 42, w: 19, v: 1 }, { t: 'gate_city', x: 26, y: 42, text: '南門' }, { t: 'city_wall', x: 29, y: 42, w: 27, v: 1 },
+        // 八甲庄 ruins
+        { t: 'grave', x: 50, y: 30, v: 2 }, { t: 'bones', x: 48, y: 31 }, { t: 'stump', x: 51, y: 28 }, { t: 'rock_small', x: 45, y: 26 },
+      ];
+      if (fest) o.push({ t: 'sky_lantern', x: 20, y: 16 }, { t: 'sky_lantern', x: 33, y: 26 }, { t: 'sky_lantern', x: 40, y: 19 }, { t: 'sky_lantern', x: 12, y: 27 },
+        { t: 'lantern_string', x: 23, y: 26, w: 6, v: 1 }, { t: 'lantern_string', x: 30, y: 30, w: 6, v: 1 });
+      return o;
+    },
+    chests: [{ id: 'c3_09', x: 7, y: 33, item: 'jiedu', n: 3 }],
+    npcs: [
+      { id: 'bk_ferry', sprite: 'boatman', name: '阿海伯', x: 4, y: 19, dir: 'right', talk: async (S) => { await S.say('阿海伯', '欲去佗位？'); await ferryMenu(S, 'bangka'); } },
+      { id: 'bk_alian', sprite: 'widow', portrait: 'alian', name: '阿蓮', x: 8, y: 6, dir: 'down', if: (st) => !(st.flags.ch3_alian_3 && !st.flags.ch3_alian_done), talk: alianTalk },
+      { id: 'bk_alian_wait', sprite: 'widow', portrait: 'alian', name: '阿蓮', x: 10, y: 1, dir: 'down', if: (st) => st.flags.ch3_alian_3 && !st.flags.ch3_alian_done,
+        talk: async (S) => {
+          if (!bkNight()) { await S.say('alian:sad', '天暗了再去。……他只有暗時才出來。'); return; }
+          await S.say('alian:serious', '……走吧。');
+          await S.fadeOut(0.8);
+          await S.warp('bangka_riverbank', 6, 9, 'left', { fade: 0, stayDark: true });
+        } },
+      { id: 'bk_lampseller', sprite: 'merchant', name: '阿標', x: 10, y: 17, dir: 'down',
+        talk: async (S) => {
+          if (F('ch3_alian_done')) { await S.say('阿標', '欸，你們是不是去動了北邊那盞燈？法師會知道的。'); return; }
+          await S.say('阿標', '長明燈，保平安、鎮亡魂！艋舺家家戶戶都掛，你們外地來的也買一盞吧！');
+          await S.say('阿標', '玄冥法師說了：亡者最怕被遺忘。點一盞長明燈，他們就永遠在你身邊。');
+          if (inParty('yungui')) await S.say('yungui:think', '永遠在你身邊……這話怎麼聽，都像一句咒。');
+        } },
+      { id: 'bk_boatman2', sprite: 'villager_m', name: '船夫', x: 6, y: 9, dir: 'down', wander: 1,
+        talk: async (S) => {
+          if (F('ch3_alian_1') && !F('ch3_alian_done')) { await S.say('船夫', '舊渡頭暗時有人從水裡把落水的人推上岸。救了三四個了。不是人，是鬼。好鬼。'); return; }
+          await S.say('船夫', '艋舺的船，一天進出上百艘。米、糖、樟腦出去；布、磚、杉木回來。');
+        } },
+      { id: 'bk_dockhand', sprite: 'villager_m2', name: '大頭', x: 18, y: 10, dir: 'down',
+        talk: ['艋舺的船頭行，載米、載糖、載樟腦出去，載布、載磚、載杉木回來。', '剝皮寮知道吧？福州杉運來，就在那裡剝樹皮。所以叫剝皮寮——不是剝人皮啦！'] },
+      { id: 'bk_scholar', sprite: 'scholar', name: '林夫子', x: 31, y: 25, dir: 'down',
+        talk: async (S) => {
+          await S.say('林夫子', '「艋舺」二字，原是凱達格蘭人的話，說的是獨木舟。');
+          await S.say('林夫子', '從前他們划著獨木舟，來這河邊和人交易番薯。後來漢人的大船也來了，才有今日的熱鬧。');
+          await S.say('林夫子', '「一府二鹿三艋舺」——府城第一，鹿港第二，就是咱艋舺第三。');
+          if (F('ch3_feud_done')) await S.say('林夫子', '聽說八甲庄那邊，暗時不再吵了。四十年了啊。');
+        } },
+      { id: 'bk_wendan', sprite: 'villager_f2', name: '賣文旦的阿姐', x: 16, y: 21, dir: 'down',
+        talk: async (S) => {
+          await S.say('賣文旦的阿姐', '中秋吃文旦，團團圓圓！一顆十文。');
+          if (inParty('baizhi') && !F('ch3_wendan_bz')) {
+            S.flag('ch3_wendan_bz');
+            await S.say('baizhi:think', '為什麼團圓要吃圓的東西？');
+            await S.say('賣文旦的阿姐', '啊……因為……月娘也是圓的？');
+          }
+          await S.shop(['c3_wendan'], { title: '文旦攤' });
+        } },
+      { id: 'bk_mooncake', sprite: 'shopkeeper_f', name: '餅店頭家娘', x: 19, y: 21, dir: 'down',
+        talk: async (S) => { await S.say('餅店頭家娘', '月餅！今年的綠豆椪，餡料包得滿滿！'); await S.shop(['c3_mooncake'], { title: '月餅攤' }); } },
+      { id: 'bk_mifen', sprite: 'villager_m', name: '米粉湯阿伯', x: 16, y: 25, dir: 'down',
+        talk: async (S) => { await S.say('米粉湯阿伯', '米粉湯配黑白切，艋舺人的早頓！暗頓也可以啦！'); await S.shop(['mifentang', 'c3_wanguo'], { title: '米粉湯攤' }); } },
+      { id: 'bk_kid1', sprite: 'child_m', name: '囝仔', x: 22, y: 25, dir: 'down', wander: 2,
+        talk: async (S) => {
+          await S.say('囝仔', '月娘月娘，莫用手指伊，會被割耳朵！');
+          if (F('ch3_kids_once') && !F('ch3_kids_twice') && inParty('baizhi')) {
+            S.flag('ch3_kids_twice');
+            await S.say('xinghe:normal', '……');
+            await S.say('', '（星河偷偷把手放下。）');
+            await S.say('baizhi:normal', '星河，你剛剛指了。');
+            await S.say('xinghe:surprise', '我沒有！');
+          }
+          S.flag('ch3_kids_once');
+        } },
+      { id: 'bk_kid2', sprite: 'child_f', name: '囡仔', x: 24, y: 27, dir: 'left', wander: 2, talk: ['中秋暗時要關椅仔姑……阿母說今年不准玩了。', '戲棚那邊，聽講花旦姊姊生病了。'] },
+      { id: 'bk_kid3', sprite: 'child_m', name: '囝仔', x: 20, y: 29, dir: 'up', wander: 2, talk: ['我們在玩「抓長明燈」！誰抓到燈誰當鬼！……咦，燈怎麼是冷的？'] },
+      { id: 'bk_storyteller', sprite: 'storyteller', name: '講古仙', x: 25, y: 24, dir: 'down',
+        talk: ['來來來，聽古！話說艋舺頭一回熱鬧起來，是因為河邊來了一艘獨木舟……', '頂郊、下郊拚那年，火燒了好幾暝。活著的人都和好了，死的人哪……', '欲聽下文？明仔暗擱來！'] },
+      { id: 'bk_pilgrim', sprite: 'pilgrim', name: '香客', x: 23, y: 21, dir: 'up', talk: ['觀音媽很靈的。我每年中秋都從大稻埕走過來拜。'] },
+      { id: 'bk_monk', sprite: 'monk', name: '雲遊僧', x: 29, y: 22, dir: 'down', wander: 1, talk: ['龍山寺的石材，多是對岸觀音山來的。觀音的石頭，供觀音。善哉。'] },
+      { id: 'bk_fishwife', sprite: 'fisher_f', name: '賣魚的阿嫂', x: 8, y: 27, dir: 'right', wander: 1, talk: ['新店溪的魚，淡水河的蝦，攏總新鮮！', '暗時莫去北邊的舊渡頭，那裡有物件。'] },
+      { id: 'bk_porter', sprite: 'villager_m2', name: '挑夫', x: 6, y: 13, dir: 'down', wander: 2, talk: ['嘿咻！這擔是杉木，要送去剝皮寮！'] },
+      { id: 'bk_oldman', sprite: 'old_m', name: '下棋的阿伯', x: 12, y: 29, dir: 'right', talk: ['將軍！……欸，你們擋到我的光了。'] },
+      { id: 'bk_oldwoman', sprite: 'old_f', name: '搖扇的阿婆', x: 30, y: 29, dir: 'up', talk: ['今年的戲，是《山伯英台》。老身看了五十年，每年都哭。'] },
+      { id: 'bk_noble', sprite: 'noble_m', name: '郊商', x: 40, y: 11, dir: 'left', wander: 2, talk: ['我是頂郊的郊商。這幾年生意好做多了——吵吵鬧鬧的，誰都賺不到錢。'] },
+      { id: 'bk_teagirl', sprite: 'tea_girl', name: '賣茶的姑娘', x: 34, y: 6, dir: 'down', talk: ['烏龍茶，來一杯！從石碇挑下來的！'] },
+      { id: 'bk_watch', sprite: 'villager_m', name: '更夫', x: 28, y: 11, dir: 'left', wander: 3, light: { r: 120, color: '#ffb060' }, if: (st) => bkNight(st) && st.flags.ch3_theatre,
+        talk: ['天乾物燥，小心火燭——', '這幾年暗時巡更，總覺得長明燈底下，有人在看我。'] },
+      { id: 'bk_dog', sprite: 'dog', name: '阿黃', x: 20, y: 31, dir: 'left', wander: 3, talk: ['汪！'] },
+      { id: 'bk_cat', sprite: 'cat', name: '貓', x: 8, y: 23, dir: 'down', wander: 1, talk: ['喵——（牠盯著糰子，尾巴豎得筆直。）'] },
+      { id: 'bk_chicken', sprite: 'chicken', name: '雞', x: 13, y: 38, dir: 'right', wander: 2, talk: ['咕咕咕。'] },
+      { id: 'bk_herbman', sprite: 'old_m', name: '青草阿伯', x: 36, y: 13, dir: 'down',
+        talk: async (S) => {
+          if (F('ch3_yungui_join') && !F('ch3_mush_start')) {
+            S.flag('ch3_mush_start');
+            await S.say('青草阿伯', '道長，你也是吃蕈的？那你聽過「七仙蕈」沒有？');
+            await S.say('yungui:surprise', '（眼睛第一次完全睜開）……七仙蕈。只在古書殘頁上見過。');
+            await S.say('青草阿伯', '台灣頭到台灣尾，七個所在，各長一種。七種都吃過的人——');
+            await S.say('tuanzi:surprise', '會怎樣？會怎樣？');
+            await S.say('青草阿伯', '會看見世上所有的顏色。……也有人說，從此不會再餓。');
+            await S.say('tuanzi:surprise', '！！！！！');
+            await S.say('tuanzi:serious', '雲歸。吾找到了吾的道。');
+            await S.say('yungui:normal', '你的道是吃。');
+            await S.say('tuanzi:serious', '吃就是道。');
+            await S.say('青草阿伯', '第一種，叫杉皮蕈，長在福州杉的老皮上。月光一照會發光。剝皮寮後面，杉木堆得像山。');
+            S.quest('q_tuanzi_mush', 1);
+            await S.say('', '（雲歸蕈譜的第一頁，出現了七個空格。）');
+            return;
+          }
+          await S.say('青草阿伯', '青草茶，退火！你們這些少年人，火氣大。尤其你。');
+          if (inParty('hongying') && !F('ch3_herb_hy')) { S.flag('ch3_herb_hy'); await S.say('hongying:angry', '誰火氣大！'); }
+          await S.say('青草阿伯', '青草巷就在龍山寺邊仔。拜完觀音，順便喝一杯，身心都清。');
+          await S.shop(['c3_herbtea', 'jinchuang', 'c3_qingxinlu', 'c3_ningshen', 'jiedu', 'huanhunxiang', 'lingxun'], { title: '青草巷' });
+        } },
+      { id: 'bk_xing', sprite: 'child_m', name: '阿興', x: 49, y: 5, dir: 'down', wander: 1,
+        talk: async (S) => {
+          if (F('ch3_feud_1') && !F('ch3_feud_done')) {
+            await S.say('阿興', '我阿母說，中元要拜兩個阿祖。一個姓黃，一個姓林。');
+            await S.say('xinghe:think', '兩個阿祖？');
+            await S.say('阿興', '對啊，黃阿祖是阿母那邊的，林阿祖是阿爸那邊的。阿母說，以前兩邊的人會打架。');
+            await S.say('阿興', '可是現在都在我們家的神桌上，一起吃拜拜。');
+            S.flag('ch3_feud_xing');
+            if (!F('ch3_feud_clue')) await S.say('xinghe:think', '（去阿興家問問他阿母吧。）');
+            return;
+          }
+          await S.say('阿興', '土地公伯仔，保佑我考第一名！……還有保佑阿母的病快點好。');
+        } },
+      { id: 'bk_ashui', sprite: spr('c3_ghost_ashui', 'ghost_m'), name: '阿水伯', x: 47, y: 28, dir: 'right', ghost: true, if: (st) => bkNight(st) && !st.flags.ch3_feud_done && st.flags.ch3_bangka_arrive, talk: feudTalk },
+      { id: 'bk_awang', sprite: spr('c3_ghost_awang', 'ghost_m'), name: '阿旺伯', x: 48, y: 28, dir: 'left', ghost: true, if: (st) => bkNight(st) && !st.flags.ch3_feud_done && st.flags.ch3_bangka_arrive, talk: feudTalk },
+      // festival crowd (中秋夜)
+      { id: 'bk_f1', sprite: 'villager_f', name: '看戲的阿嫂', x: 33, y: 26, dir: 'up', if: festival, talk: ['今年的英台，聲音好嫩！像十歲的囡仔！'] },
+      { id: 'bk_f2', sprite: 'villager_m', name: '看戲的阿兄', x: 36, y: 27, dir: 'up', if: festival, talk: ['好！好！（拍手）'] },
+      { id: 'bk_f3', sprite: 'old_f', name: '看戲的阿嬤', x: 38, y: 27, dir: 'up', if: festival, talk: ['山伯英台……唉，有情人哪。'] },
+      { id: 'bk_f4', sprite: 'child_f', name: '提燈的囡仔', x: 28, y: 26, dir: 'down', wander: 2, if: festival, light: { r: 90, color: '#ffb060' }, talk: ['我的燈籠是兔子形的！'] },
+      { id: 'bk_f5', sprite: 'villager_m2', name: '吃月餅的阿伯', x: 20, y: 24, dir: 'down', if: festival, talk: ['一口月餅一口茶，人生好命啊。'] },
+      { id: 'bk_f6', sprite: 'villager_f2', name: '賞月的姑娘', x: 25, y: 29, dir: 'up', wander: 1, if: festival, talk: ['月娘好圓……我阿兄在唐山，不知道他看得到同一個月娘沒有。'] },
+    ],
+    events: [
+      { id: 'bk_arrive', trigger: 'auto', if: (st) => !st.flags.ch3_bangka_arrive, run: bkArrive },
+      { id: 'bk_north', trigger: 'touch', x: 8, y: 0, w: 2, h: 1, run: async (S) => {
+        if (!F('ch3_alian_1')) { await S.say('', '北邊的小路通往舊渡頭。天色、人聲都遠了。……現在沒有理由去那裡。'); await S.move('player', 'D'); return; }
+        if (!bkNight()) { await S.say('baizhi:think', '白天的舊渡頭……阿德不會出來。等天暗再去吧。'); await S.move('player', 'D'); return; }
+        await S.warp('bangka_riverbank', 34, 7, 'left');
+      } },
+      { id: 'bk_south', trigger: 'touch', x: 27, y: 43, run: async (S) => {
+        if (!F('ch3_letter')) { await S.say('', '南門外，是往竹塹的海線大路。……現在還不是出發的時候。'); await S.move('player', 'U'); return; }
+        await bkDepart(S);
+      } },
+      { id: 'bk_backstage', trigger: 'touch', x: 38, y: 23, if: (st) => !st.flags.ch3_temple_met, run: async (S) => {
+        await S.say('', '戲班的人在後台忙進忙出。「閒人勿進！」'); await S.move('player', 'D');
+      } },
+      { id: 'bk_show', trigger: 'auto', if: (st) => festival(st) && st.flags.ch3_theatre && !st.flags.ch3_show_done, run: bkShow },
+      { id: 'bk_shrine', trigger: 'action', x: 50, y: 4, w: 2, h: 1, label: '參拜', run: async (S) => { await S.say('', '小小的土地公廟，香火很旺。供桌上擺著一盤月餅。'); } },
+      { id: 'bk_lions', trigger: 'action', x: 24, y: 18, label: '調查', run: async (S) => { await S.say('', '龍山寺前的石獅，用的是觀音山石。摸起來冰冰涼涼的。'); } },
+      { id: 'bk_burner', trigger: 'action', x: 27, y: 20, label: '調查', run: async (S) => { await S.say('', '天公爐裡香煙不斷。艋舺人來來去去，都會停下來拜一拜。'); } },
+      { id: 'bk_ruins', trigger: 'action', x: 46, y: 24, w: 2, h: 1, label: '調查', run: async (S) => { await S.say('', '燒焦的紅磚牆。四十年前，八甲庄在一夜之間燒成了灰。'); } },
+    ],
+    warps: [
+      { x: 12, y: 9, to: 'bangka_alian', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 22, y: 9, to: 'bangka_inn', tx: 6, ty: 8, tdir: 'up', door: true },
+      { x: 32, y: 9, to: 'bangka_herb', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 37, y: 9, to: 'bangka_armory', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 46, y: 4, to: 'bangka_xing', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 27, y: 17, to: 'bangka_longshan', tx: 13, ty: 19, tdir: 'up', door: true },
+      { x: 38, y: 23, to: 'bangka_theatre', tx: 9, ty: 10, tdir: 'up', door: true, if: (st) => !!st.flags.ch3_temple_met },
+      { x: 55, y: 10, h: 2, to: 'bangka_bopiliao', tx: 1, ty: 9, tdir: 'right' },
+    ],
+    drawOver: (ctx, t, m) => {
+      if (!festival(G.state)) return;
+      // the full moon, fixed in the sky (screen space, top right)
+      ctx.save(); ctx.translate(m.cam.x, m.cam.y);
+      const x = G.W - 170, y = 120;
+      const g = ctx.createRadialGradient(x, y, 20, x, y, 200);
+      g.addColorStop(0, 'rgba(255,250,225,0.5)'); g.addColorStop(1, 'rgba(255,250,225,0)');
+      ctx.fillStyle = g; ctx.fillRect(x - 200, y - 200, 400, 400);
+      ctx.fillStyle = 'rgba(255,248,220,0.95)';
+      ctx.beginPath(); ctx.arc(x, y, 46, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(220,210,180,0.35)';
+      ctx.beginPath(); ctx.arc(x - 12, y - 8, 10, 0, Math.PI * 2); ctx.arc(x + 14, y + 10, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    },
   });
 
   // @@END@@

@@ -1,15 +1,38 @@
 {
- "when": "2026-10-27T05:33:05.864Z",
- "pass": 7,
+ "when": "2026-10-27T05:46:20.732Z",
+ "pass": 4,
  "fail": 0,
  "skip": 0,
  "results": [
   {
-   "id": "newgame",
-   "name": "title: 新的旅程 starts the game (G.Story.newGame)",
+   "id": "map:tamsui",
+   "name": "map tamsui: loads, renders, NPC dialogue & events run",
    "status": "pass",
    "msg": "",
-   "ms": 11120,
+   "ms": 27329,
+   "errors": [],
+   "warnings": [
+    "slow: update+draw averages 29.4ms/frame (p95 148.4ms) > 16ms"
+   ]
+  },
+  {
+   "id": "map:dream",
+   "name": "map dream: loads, renders, NPC dialogue & events run",
+   "status": "pass",
+   "msg": "",
+   "ms": 55871,
+   "errors": [],
+   "warnings": [
+    "slow: update+draw averages 24.7ms/frame (p95 114.5ms) > 16ms",
+    "event girl (touch): script did not finish within 60s (top=Object)"
+   ]
+  },
+  {
+   "id": "map:tamsui_fort",
+   "name": "map tamsui_fort: loads, renders, NPC dialogue & events run",
+   "status": "pass",
+   "msg": "",
+   "ms": 6729,
    "errors": [],
    "warnings": []
   },
@@ -18,111 +41,39 @@
    "name": "map sandbox: loads, renders, NPC dialogue & events run",
    "status": "pass",
    "msg": "",
-   "ms": 10539,
+   "ms": 6665,
    "errors": [],
-   "warnings": [
-    "slow: update+draw averages 24.2ms/frame (p95 143.5ms) > 16ms"
-   ]
-  },
-  {
-   "id": "map:tamsui_fort",
-   "name": "map tamsui_fort: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 12870,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 30.6ms/frame (p95 187.4ms) > 16ms"
-   ]
-  },
-  {
-   "id": "map:tamsui_inn",
-   "name": "map tamsui_inn: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 25761,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 18.1ms/frame (p95 44.0ms) > 16ms"
-   ]
-  },
-  {
-   "id": "map:tamsui_fort_in",
-   "name": "map tamsui_fort_in: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 8772,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 17.3ms/frame (p95 8.5ms) > 16ms"
-   ]
-  },
-  {
-   "id": "map:tamsui",
-   "name": "map tamsui: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 44612,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 65.2ms/frame (p95 305.6ms) > 16ms"
-   ]
-  },
-  {
-   "id": "map:dream",
-   "name": "map dream: loads, renders, NPC dialogue & events run",
-   "status": "pass",
-   "msg": "",
-   "ms": 66901,
-   "errors": [],
-   "warnings": [
-    "slow: update+draw averages 34.2ms/frame (p95 162.7ms) > 16ms",
-    "event girl (touch): script did not finish within 90s"
-   ]
+   "warnings": []
   }
  ],
  "perf": [
   {
    "map": "tamsui",
-   "rafAvg": 48.61,
-   "rafMax": 133.3,
-   "cpuAvg": 65.22,
-   "cpuP95": 305.6
+   "rafAvg": 26.94,
+   "rafMax": 50,
+   "cpuAvg": 29.44,
+   "cpuP95": 148.4
   },
   {
    "map": "dream",
-   "rafAvg": 43.33,
-   "rafMax": 100,
-   "cpuAvg": 34.24,
-   "cpuP95": 162.7
+   "rafAvg": 27.22,
+   "rafMax": 50,
+   "cpuAvg": 24.66,
+   "cpuP95": 114.5
   },
   {
    "map": "tamsui_fort",
-   "rafAvg": 49.72,
-   "rafMax": 150.1,
-   "cpuAvg": 30.63,
-   "cpuP95": 187.4
+   "rafAvg": 19.17,
+   "rafMax": 33.4,
+   "cpuAvg": 14.07,
+   "cpuP95": 100.6
   },
   {
    "map": "sandbox",
-   "rafAvg": 25.27,
-   "rafMax": 50.1,
-   "cpuAvg": 24.2,
-   "cpuP95": 143.5
-  },
-  {
-   "map": "tamsui_inn",
-   "rafAvg": 36.94,
-   "rafMax": 83.3,
-   "cpuAvg": 18.09,
-   "cpuP95": 44
-  },
-  {
-   "map": "tamsui_fort_in",
-   "rafAvg": 34.17,
-   "rafMax": 100,
-   "cpuAvg": 17.25,
-   "cpuP95": 8.5
+   "rafAvg": 16.67,
+   "rafMax": 16.8,
+   "cpuAvg": 10.99,
+   "cpuP95": 59.3
   }
  ],
  "bootErrors": [

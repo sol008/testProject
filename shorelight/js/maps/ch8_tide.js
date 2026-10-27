@@ -243,7 +243,7 @@
     const g = mk(56, 44, '.');
     g.rect(9, 2, 38, 12, '%');                 // 朝天宮廟埕
     g.rect(1, 14, 48, 27, '#');                // 街區
-    g.rect(25, 41, 6, 3, '#');                 // 主街 → 南入口
+    g.rect(25, 14, 6, 30, '%');                // 主街（遶境路線）
     g.rect(49, 0, 3, 44, 's');                 // 河岸
     g.rect(49, 14, 3, 27, 'k');                // 渡頭木棧道
     g.rect(52, 0, 4, 44, 'r');                 // 北港溪
@@ -516,7 +516,7 @@
     { id: 'atian', sprite: 'child_m', name: '阿添', x: 22, y: 10, dir: 'left', if: notNight, talk: talkAtian },
     { id: 'gm', sprite: 'old_f', name: '進香的阿嬤', x: 29, y: 10, dir: 'down', if: notNight, talk: talkGrandma },
     { id: 'afu', sprite: 'child_m', name: '阿福', x: 32, y: 11, dir: 'down', wander: 2, if: bgDay, talk: talkAfu },
-    { id: 'afu2', sprite: 'child_m', name: '阿福', x: 28, y: 10, dir: 'down', if: (st) => bgDawn(st) && !!st.flags.ch8_dawn_done, talk: talkAfu },
+    { id: 'afu2', sprite: 'child_m', name: '阿福', x: 27, y: 11, dir: 'down', if: (st) => bgDawn(st) && !!st.flags.ch8_dawn_done, talk: talkAfu },
     { id: 'flagman', sprite: 'pilgrim', name: '老阿伯', x: 24, y: 21, dir: 'right', if: notNight, talk: talkFlagman },
     { id: 'husband', sprite: 'villager_m', name: '還願的丈夫', x: 21, y: 27, dir: 'right', if: notNight, talk: talkHusband },
     { id: 'wife', sprite: 'villager_f', name: '還願的妻子', x: 22, y: 27, dir: 'left', if: notNight, talk: talkWife },
@@ -696,7 +696,7 @@
     const pal2 = addObj(m, { t: 'palanquin', x: 24.5, y: 12, solid: false, over: true });
     await pan(S, 25, 16, 1.2, 0.8);
     await nar(S, '鑼鼓聲逼近。神轎的影子籠罩過來，從跪著的人龍上方緩緩經過。');
-    const pass = G.Tweens.to(pal2, { y: 25 }, 14, 'linear');
+    const pass = G.Tweens.to(pal2, { y: 25 }, 10, 'linear');
     const cam = setInterval(() => { const mm = MS(); if (mm && mm === m) { mm.cam.tx = pal2.x * T + T - G.W / 2; mm.cam.ty = (pal2.y + 1) * T - G.H / 2; mm.cam.speed = 2; } }, 50);
     try {
       await heart(S, 'xinghe', '……媽祖婆，我不太會拜拜。可是如果您聽得見——');
@@ -843,7 +843,6 @@
     }
     await S.say('進香的阿嬤', '……阿福？');
     await S.say('阿福', '阿嬤——！');
-    S.setPos('afu83', afu.x, afu.y);
     await S.walkTo('afu83', 28, 11, { speed: 3.4 });
     S.face('afu83', 'up');
     await nar(S, '阿福衝過去，撲進阿嬤懷裡。阿嬤跪在地上，緊緊抱著他，全身都在發抖。');
@@ -986,7 +985,6 @@
       { t: 'bed_mat', x: 6, y: 2 }, { t: 'bed_mat', x: 7, y: 2 }, { t: 'bed_mat', x: 8, y: 2 }, { t: 'bed_mat', x: 9, y: 2 },
       { t: 'bed_mat', x: 11, y: 6 }, { t: 'bed_mat', x: 12, y: 6 }, { t: 'bed_mat', x: 13, y: 6 }, { t: 'bed_mat', x: 14, y: 6 },
       { t: 'table', x: 3, y: 8 }, { t: 'chair', x: 2, y: 8 }, { t: 'chair', x: 4, y: 8 }, { t: 'basket', x: 1, y: 10 }, { t: 'jar', x: 14, y: 10 },
-      { t: 'altar', x: 6, y: 2, if: () => false },
     ],
     npcs: [
       {
@@ -1189,7 +1187,11 @@
   async function rescued(S, i, actorId) {
     const m = MS();
     if (actorId && m.actor(actorId)) await S.fadeActor(actorId, 0, 0.8);
-    S.flag('ch8_saved_' + i);
+    if (i === 1) S.flag('ch8_saved_1');
+    else if (i === 2) S.flag('ch8_saved_2');
+    else if (i === 3) S.flag('ch8_saved_3');
+    else if (i === 4) S.flag('ch8_saved_4');
+    else S.flag('ch8_saved_5');
     S.flag('ch8_saved', SAVED(G.state) + 1);
     if (i === 5) S.flag('ch8_afu_found');
     m.buildEnemies();
@@ -1517,5 +1519,1182 @@
     onEnter: async () => { installRiver(MS()); },
   });
 
-// @@CONTINUE@@
+  // ================================================================================== 安平 anping
+  const AP_SHOP = ['c8_xiajuan', 'c8_douhua', 'shimuyu', 'xumingsan', 'aiyu', 'huanhundan', 'c8_jianshi', 'c8_haifeng'];
+  const apDawn = (st) => !!st.flags.ch8_dawn;
+  const apNight = (st) => !!st.flags.ch8_night_ap && !st.flags.ch8_dawn;
+  const apDusk = (st) => !!st.flags.ch8_dusk_ap && !st.flags.ch8_night_ap;
+  function anpingTiles() {
+    const g = mk(44, 34, '#');
+    g.rect(0, 0, 4, 34, '~');                  // 台江的海
+    g.rect(4, 0, 5, 34, 's');                  // 沙灘
+    g.rect(9, 0, 35, 1, '.');
+    g.rect(9, 1, 35, 2, 'R');                  // 熱蘭遮舊城的紅磚城牆
+    g.rect(20, 1, 3, 2, '#');                  // 城門洞
+    g.rect(40, 3, 4, 11, '.'); g.rect(40, 21, 4, 13, '.');
+    g.rect(38, 15, 6, 5, '=');                 // 往府城的路
+    g.rect(9, 31, 31, 3, '.');
+    return g.rows();
+  }
+  // houses: [x, y, isInn]; each door gets a 劍獅 plaque (signboard fallback for the screenplay's sword_lion)
+  const AP_HOUSES = [[10, 5], [16, 5], [34, 5], [33, 12], [11, 19], [29, 19], [35, 19], [11, 26], [23, 26], [33, 26]];
+  const AP_OBJECTS = [
+    { t: 'gate_city', x: 20, y: 1, text: '熱蘭遮' },
+    { t: 'tree_banyan', x: 11, y: 0 }, { t: 'tree_banyan', x: 30, y: 0 }, { t: 'tree_banyan', x: 38, y: 0 }, { t: 'vine_curtain', x: 16, y: 2 },
+    { t: 'vine_curtain', x: 26, y: 2 },
+    ...AP_HOUSES.map(([x, y]) => ({ t: 'house_minnan', x, y })),
+    ...AP_HOUSES.map(([x, y], i) => ({ t: 'signboard', x: x + 3, y: y + 2, text: '劍獅', v: i % 2, solid: false, over: true })),
+    { t: 'house_minnan', x: 15, y: 12 }, { t: 'signboard', x: 20, y: 14, text: '安平客棧', v: 1 },
+    { t: 'shophouse', x: 19, y: 19, door: 1, text: '雜貨' },
+    { t: 'shrine_small', x: 25, y: 9, text: '土地公' }, { t: 'incense_burner', x: 24, y: 11 },
+    { t: 'stall', x: 23, y: 14, text: '蝦捲' }, { t: 'stall', x: 27, y: 14, text: '豆花' },
+    // beach: 蚵殼堆, 晾網
+    { t: 'rock_small', x: 6, y: 9 }, { t: 'rock_small', x: 7, y: 9 }, { t: 'rock_small', x: 6, y: 10 },
+    { t: 'rock_small', x: 5, y: 24 }, { t: 'rock_small', x: 6, y: 24 }, { t: 'rock_small', x: 7, y: 25 }, { t: 'rock_small', x: 5, y: 21 },
+    { t: 'laundry', x: 5, y: 15 }, { t: 'laundry', x: 5, y: 18 }, { t: 'fishing_net', x: 7, y: 29 }, { t: 'boat_small', x: 1, y: 6 },
+    { t: 'basket', x: 8, y: 23 }, { t: 'jar', x: 8, y: 10 },
+    // street life
+    { t: 'well', x: 22, y: 23 }, { t: 'barrel', x: 28, y: 17 }, { t: 'jar', x: 9, y: 13 }, { t: 'plant_pot', x: 32, y: 15 },
+    { t: 'lantern_string', x: 21, y: 16, w: 8, v: 0 }, { t: 'lamp_post', x: 37, y: 16 }, { t: 'lamp_post', x: 23, y: 4 },
+    { t: 'tree_banyan', x: 40, y: 5 }, { t: 'tree_pine', x: 41, y: 24 }, { t: 'tree_pine', x: 40, y: 29 }, { t: 'bush', x: 42, y: 11 },
+    { t: 'tree_pine', x: 12, y: 31 }, { t: 'tree_pine', x: 19, y: 32 }, { t: 'tree_pine', x: 30, y: 31 }, { t: 'bush', x: 36, y: 32 }, { t: 'flowers', x: 26, y: 31 },
+  ];
+  async function apIntro(S) {
+    S.flag('ch8_anping');
+    S.quest('q_ch8_tide', 4);
+    S.gather();
+    S.bgm('tainan');
+    await pan(S, 20, 10, 1.6, 1.4);
+    await nar(S, '安平的窄巷，家家戶戶的門楣上掛著咬著劍的獅子。');
+    S.cameraFollow();
+    await S.say('tuanzi:surprise', '獅子！每一家都有獅子！嘴巴還咬著劍！');
+    await S.say('yungui:normal', '劍獅。安平人用來擋煞的。');
+    await S.say('yungui:think', '不過……這幾天看起來，它們擋得很辛苦。');
+    await nar(S, '街上異常安靜。幾個婦人提著竹籃，往北邊的舊城方向張望。一個穿長明宮服飾的弟子站在街口宣講。');
+    await pan(S, 21, 17, 2, 0.8);
+    await S.say('長明宮弟子', '各位鄉親，不要怕！走回來的人，是你們的親人啊！');
+    await S.say('長明宮弟子', '玄冥法師說了，只要再等幾次潮水，他們的記憶就會回來！');
+    await S.say('hongying:angry', '……');
+    await S.say('yungui:normal', '（拉住她）洛姑娘，先忍著。現在打他，只會讓這裡的人更怕。');
+    await S.say('hongying:serious', '……我知道。');
+    await nar(S, '一位提著蝦捲的婦人經過，喃喃自語。');
+    await S.say('等待的家屬', '今天他會吃嗎……他以前最愛吃蝦捲了……');
+    await S.say('xinghe:sad', '……');
+    S.cameraFollow();
+    S.objective('打聽觀潮台的事。小廟的廟公也許知道怎麼上舊城。');
+  }
+  async function talkDisciple(S) {
+    const f = fl();
+    if (!f.ch8_disciple_1) {
+      S.flag('ch8_disciple_1');
+      await S.say('長明宮弟子', '各位鄉親，不要怕！走回來的人，是你們的親人啊！');
+      await S.say('長明宮弟子', '玄冥法師說了，只要再等幾次潮水，他們的記憶就會一點一點回來。');
+      await S.say('長明宮弟子', '長明燈照著他們，他們就不會再迷路。這是慈悲，是大慈悲！');
+      await S.say('hongying:angry', '慈悲？');
+      await S.say('yungui:normal', '洛姑娘，先忍著。現在打他，只會讓這裡的人更怕。');
+      return;
+    }
+    if (!f.ch8_qf_rumor) S.flag('ch8_qf_rumor');
+    await S.say('長明宮弟子', '……聽說，觀潮台上帶著那些人的，是法師身邊的年輕劍客。半張臉都是燒傷。');
+    await S.say('hongying:serious', '…………');
+  }
+  async function talkAxing(S) {
+    const f = fl();
+    if (f.ch8_dawn) { await S.say('阿興伯', '洛家少爺的身體，先安放在我廟裡。我會每天替他上香，等你們回來接他。'); return; }
+    const pool = [
+      ['安平人討海，門口都掛劍獅。獅子咬著劍，壞東西就不敢進門。'],
+      ['傳說很久以前，這裡駐紮的兵把盾牌掛在門口，盾牌上畫獅頭，插著劍。後來大家就學著掛。'],
+      ['你看每家的劍獅都不一樣。有的笑、有的兇，劍有的咬在左邊，有的在右邊，都有講究。'],
+    ];
+    for (const l of pool[rot('ch8_axing_n', 3)]) await S.say('阿興伯', l);
+    await S.say('阿興伯', '這幾天晚上，門口的劍獅……我看到它們在流汗。我活這麼久，第一次看到。');
+    if (!f.ch8_gate_open) {
+      await S.say('xinghe:serious', '阿伯，觀潮台要怎麼上去？');
+      await S.say('阿興伯', '……北邊舊城的城門洞。長明宮的人白天在那裡拉繩子，晚上才帶著燈上去。');
+      await S.say('阿興伯', '你們真要去，就等入夜吧。天一黑，他們全都上台去了，城門洞就沒人顧。');
+      await S.say('阿興伯', '少年仔……上面那些人，如果真的是誰家的親人，就讓他們好好走。');
+      S.flag('ch8_gate_open');
+      S.flag('ch8_dusk_ap');
+      S.quest('q_ch8_tide', 4);
+      await S.wait(0.4);
+      S.light({ ambient: 0.4, color: '#3a1a2a', playerR: 190 });
+      S.particles(['motes', { type: 'mist', color: '#c8b8c8', alpha: 0.14 }]);
+      S.bgm('tension');
+      await nar(S, '日頭漸漸西斜。海霧開始上岸。');
+      S.objective('入夜後到北邊的舊城遺址去（在客棧休息，或到城門洞前等候）');
+    }
+  }
+  async function toNight(S) {
+    await S.fadeOut(1.0);
+    S.flag('ch8_night_ap');
+    await S.warp('anping', 21, 5, 'up', { reload: true, fade: 0.01 });
+  }
+  async function gateTouch(S) {
+    const f = fl();
+    if (f.ch8_fort_enter) return;
+    if (!f.ch8_gate_open) {
+      await S.say('', '城門洞前拉著繩子，繩上掛著一排藍色的長明燈。燈下的石階被海水泡得發黑。');
+      await S.say('yungui:think', '長明宮的人顧著這裡。……先打聽一下，什麼時候能上去。');
+    } else if (!f.ch8_night_ap) {
+      await S.say('', '繩子還在，可是守的人已經不見了。遠處，舊城的最高處隱約有光。');
+      const c = await S.choice(['在這裡等到入夜', '先在附近準備'], { cancel: 1 });
+      if (c === 0) { await toNight(S); return; }
+    }
+    await S.move('player', 'D');
+  }
+  async function ev84b(S) {
+    S.flag('ch8_fort_enter');
+    S.quest('q_ch8_tide', 5);
+    S.gather();
+    S.bgm('tension');
+    await nar(S, '夜。海霧漫上岸。');
+    await pan(S, 21, 0, 1.2, 1.4);
+    S.flash('#2a4aff', 0.6, 0.35);
+    await nar(S, '遠處，舊城的最高處，一點藍黑色的光亮起。');
+    S.cameraFollow();
+    await S.say('xinghe:serious', '那就是觀潮台。');
+    await S.say('hongying:normal', '……');
+    await S.say('xinghe:think', '紅纓。');
+    await S.say('hongying:normal', '我沒事。');
+    await S.say('hongying:serious', '在靈境裡，我看到一個畫面。黑色的雷，還有一個人擋在我前面。');
+    await S.say('hongying:sad', '我一直告訴自己，那只是夢。');
+    await S.say('yungui:serious', '…………');
+    await S.say('xinghe:serious', '那就讓它只是夢。');
+    await S.say('xinghe:serious', '這一次，我們三個都在。不會讓任何人擋在任何人前面。');
+    await S.say('hongying:smile', '……笨蛋。你每次都說得這麼簡單。');
+    await S.say('hongying:serious', '走吧。');
+    S.objective('進入熱蘭遮舊城，登上觀潮台');
+    await S.warp('anping_fort', 20, 41, 'up');
+  }
+  // ---------------------------------------------------------------- 蚵殼阿嬤 (optional 心燈)
+  async function talkOyster(S) {
+    const f = fl();
+    if (f.ch8_dawn) {
+      if (f.ch8_oyster_done) { await S.say('蚵殼阿嬤', '粥吃完了喔？乖。路上小心。'); return; }
+      if (f.ch8_sq_oyster === 1) {
+        S.flag('ch8_oyster_done');
+        await nar(S, '蚵殼堆旁的石頭上，空無一人。石頭上，留著一小攤正在乾掉的海水。');
+        await S.say('蚵殼阿嬤', '昨晚，他變成一點光，飛走了。');
+        await S.say('蚵殼阿嬤', '飛走之前，他回頭看了我一眼。就一眼。');
+        await S.say('蚵殼阿嬤', '……四十年。那一眼，就夠了。');
+        await S.say('蚵殼阿嬤', '他往外飛的。往海的外面。……方向是對的，對不對？');
+        await S.say('xinghe:smile', '嗯。方向是對的。');
+        await S.say('蚵殼阿嬤', '那這鍋粥，你們幫我吃掉。他吃不到了，不要浪費。');
+        await S.give('shimuyu', 5);
+        S.flag('ch8_heartlamp_oyster');
+        S.quest('q_ch8_oyster', 'done');
+        await S.lantern('lantern_oyster_grandma', '蚵殼阿嬤');
+        return;
+      }
+      if (f.ch8_sq_oyster === -1) {
+        S.flag('ch8_oyster_done');
+        await S.say('蚵殼阿嬤', '他走了。昨晚，變成光走的。');
+        await S.say('蚵殼阿嬤', '我還煮了一鍋粥……說好要等他想起來的。');
+        await S.say('蚵殼阿嬤', '……算了。走了也好。少年仔，粥你們拿去吃吧。');
+        await S.give('shimuyu', 2);
+        S.quest('q_ch8_oyster', 'done');
+        return;
+      }
+      await S.say('蚵殼阿嬤', '昨晚好多光往海上飛……我尪也在裡面。我看到了。');
+      return;
+    }
+    if (f.ch8_sq_oyster) {
+      await S.say('蚵殼阿嬤', f.ch8_sq_oyster === 1 ? '舊城那邊……拜託你們了。' : '我明天再煮一鍋。他以前最愛吃我煮的粥。');
+      return;
+    }
+    await S.say('蚵殼阿嬤', '蚵仔要一個一個剖。剖了五十年，閉著眼睛都會剖。');
+    if (!f.ch8_anping) return;
+    await S.say('蚵殼阿嬤', '少年仔，要買蚵仔嗎？……啊，你們不是來買蚵仔的。');
+    await S.say('蚵殼阿嬤', '你們在看他。那是我尪。十年前出海，沒回來。');
+    await S.say('蚵殼阿嬤', '三天前，他自己走回來了。坐在那顆石頭上，就沒動過。');
+    await S.say('蚵殼阿嬤', '我每天煮虱目魚粥給他。他以前，一餐可以吃三碗。');
+    await S.say('蚵殼阿嬤', '……他一口都沒吃。');
+    await S.say('蚵殼阿嬤', '長明宮的人說，再等等，他就會想起來。');
+    await S.say('蚵殼阿嬤', '可是你們說，我是不是傻？我覺得……他不是想回來。');
+    await S.say('蚵殼阿嬤', '他只是……被人叫回來了。');
+    const c = await S.choice(['「阿嬤，您不傻。」', '「他會想起來的。」']);
+    S.quest('q_ch8_oyster', 0);
+    if (c === 0) {
+      await S.say('xinghe:sad', '阿嬤，您不傻。');
+      await S.say('蚵殼阿嬤', '……嗯。我知道。我跟他過了四十年，他想不想，我看得出來。');
+      await S.say('蚵殼阿嬤', '少年仔，你們要上去舊城那邊，對不對？');
+      await S.say('蚵殼阿嬤', '如果……如果上面有什麼東西，把他綁在這裡……');
+      await S.say('蚵殼阿嬤', '你們就幫我，讓他走吧。');
+      S.flag('ch8_sq_oyster', 1);
+    } else {
+      await S.say('xinghe:normal', '他會想起來的。');
+      await S.say('蚵殼阿嬤', '……是嗎。大家都這樣說。');
+      await S.say('蚵殼阿嬤', '那我明天再煮一鍋。');
+      S.flag('ch8_sq_oyster', -1);
+    }
+  }
+  async function talkReturnedFisher(S) {
+    await S.say('', '一個渾身濕透的老漁夫坐在石頭上。他一動不動地看著陸地上的某處。你叫他，他沒有回應。');
+    await S.say('xinghe:think', '……他的身體在這裡。可是裡面，空空的。');
+  }
+  async function talkFamily(S, i) {
+    if (fl().ch8_dawn) {
+      await S.say('等待的家屬', i === 0 ? '……昨晚那些人都變成光，飛走了。我兒子也是。' : '我哭了一整夜。可是……我覺得他是往對的方向走了。');
+      if (i === 0) await S.say('等待的家屬', '我哭了一整夜。可是……我覺得他是往對的方向走了。');
+      return;
+    }
+    const pool = [
+      '我兒子是去年出海沒回來的。昨晚……我好像在觀潮台上看到他了。',
+      '他沒有看我。可是長明宮的人說，再等幾天，他就會認得我了。',
+      '我每天晚上都去。帶著他最愛吃的蝦捲。他還沒吃。',
+    ];
+    await S.say('等待的家屬', pool[(i + rot('ch8_family_n', 3)) % 3]);
+  }
+  async function talkInnAp(S) {
+    const f = fl();
+    await S.say('安平客棧老闆', '這幾天晚上不要出門。……你們要出門？唉，那門我幫你們留著。');
+    const ok = await S.inn(90, { who: '安平客棧老闆' });
+    if (ok && f.ch8_gate_open && !f.ch8_night_ap && !f.ch8_fort_enter) {
+      await S.say('', '醒來的時候，窗外已經全黑了。');
+      await toNight(S);
+    }
+  }
+  async function talkSnackShop(S, who) {
+    if (who === 'amei') {
+      await S.say('阿梅', fl().ch8_dawn ? '昨晚……大家都在海邊哭。今天我多炸一點，給大家吃。' : rot('ch8_amei_n', 2) === 0 ? '安平蝦捲！鮮蝦用網紗油包起來，炸得金黃酥脆！' : '這幾天生意好差。大家晚上都跑去觀潮台，等死去的人回來。');
+    } else {
+      await S.say('老蔡', rot('ch8_cai_n', 2) === 0 ? '豆花要吃熱的還是冷的？加花生還是粉圓？' : '人心慌的時候，吃一碗豆花，甜甜的，就會比較定。');
+    }
+    await S.shop(AP_SHOP, { title: '安平小吃與雜貨' });
+  }
+  async function departAnping(S) {
+    const f = fl();
+    if (!f.ch8_end) {
+      await S.say('yungui:normal', '長明宮的人在府城到處搜查，現在進城太危險。');
+      await S.move('player', 'L');
+      return;
+    }
+    const c = await S.choice(['出發，往南', '再等一下'], { cancel: 1 });
+    if (c !== 0) { await S.move('player', 'L'); return; }
+    await S.say('chenbo:normal', '走吧。王船不會自己來找我們。');
+    await S.say('hongying:normal', '……嗯。');
+    S.quest('q_ch8_tide', 'done');
+    await S.narrate(['第八章　逆潮　完'], { veil: 1 });
+    await G.Story.next(S, 9);
+  }
+
+  // ---------------------------------------------------------------- 8-8 往外漂的燈
+  async function ev88(S) {
+    const m = MS();
+    S.flag('ch8_end_start');
+    S.bgm(null);
+    S.hideFollowers(true);
+    S.spawn({ id: 'hy88', sprite: 'hongying', x: 5, y: 14, dir: 'left' });
+    S.spawn({ id: 'yg88', sprite: 'yungui', x: 6, y: 27, dir: 'left' });
+    S.spawn({ id: 'tz88', sprite: 'tuanzi', x: 7, y: 27, dir: 'left' });
+    S.setPos('player', 12, 15, 'left');
+    await pan(S, 8, 14, 6, 0.2);
+    await nar(S, '黎明。安平的海灘。天空是灰白色的。');
+    await nar(S, '青鋒的遺體已被安置在小廟裡。廟公・阿興伯在廟前點香。');
+    await nar(S, '海灘上，紅纓抱著膝蓋坐著，看著海。她手裡握著那本劍譜。一整夜，她沒有說話。');
+    await nar(S, '星河從小巷裡走出來，手裡拿著一盞剛糊好的紙燈籠——竹篾削得很薄，紙糊得很平。他走到紅纓旁邊，坐下。');
+    await S.move('player', 'LLLLLL', { speed: 1.6 });
+    S.face('player', 'left');
+    await S.say('xinghe:normal', '……跟豆花攤的老蔡借了竹子，跟雜貨店買了紙。');
+    await S.say('xinghe:smile', '糊得有點醜。陳伯看到大概會罵人。');
+    await nar(S, '紅纓看著那盞燈籠。');
+    await S.say('xinghe:normal', '現在不是中元，放水燈好像不太對。');
+    await S.say('xinghe:serious', '可是我想……讓他知道，往外走是對的。');
+    await nar(S, '星河把毛筆遞給紅纓。紅纓接過筆，手在抖。她在燈籠上寫下：洛青鋒。');
+    await S.wait(1.0);
+    await nar(S, '寫完，她停住了。然後，在旁邊，又寫了兩個字：爹。娘。');
+    await S.say('hongying:sad', '…………');
+    S.sfx('lantern');
+    await nar(S, '星河點燃燈籠裡的蠟燭——用他掌心的心火。燈籠亮起暖黃色的光。');
+    const lan = addObj(m, { t: 'water_lantern', x: 5, y: 14, text: '洛', alpha: 0, solid: false });
+    await G.Tweens.to(lan, { alpha: 1 }, 0.8, 'linear');
+    await nar(S, '紅纓雙手捧著燈籠，走進淺灘，彎腰，把它放在水面上。');
+    S.move('hy88', 'L', { speed: 1.2 });
+    await G.Tweens.to(lan, { x: 3 }, 1.6, 'inOutQuad');
+    S.move('hy88', 'R', { speed: 1.2 });
+    await nar(S, '燈籠漂了一會兒，原地打轉——然後，一道細細的浪退下去，帶著它，往外，往大海的方向，一點一點漂遠。');
+    G.Tweens.to(lan, { x: -1.5 }, 9, 'linear').then(() => rmObj(m, lan));
+    await S.wait(1.2);
+    S.face('hy88', 'left');
+    await S.say('hongying:sad', '……方向對了。');
+    await S.say('xinghe:normal', '嗯。');
+    await S.say('hongying:sad', '……星河。');
+    await S.say('xinghe:normal', '嗯。');
+    await S.say('hongying:cry', '他最後說，想人又不會死。');
+    await S.say('hongying:cry', '……可是好痛。想他，好痛。');
+    await S.say('xinghe:sad', '嗯。');
+    await S.say('xinghe:sad', '會痛，是因為妳記得。');
+    await S.say('xinghe:sad', '我們不要忘記他。我們痛著，記得他。');
+    await nar(S, '紅纓把臉埋進膝蓋。星河沒有再說話，只是坐在她旁邊，看著那盞燈漂遠。');
+    await pan(S, 7, 25, 1.4, 1.2);
+    await nar(S, '遠處，雲歸站在沙灘的另一頭，抱著糰子，沒有走過來。');
+    await S.say('tuanzi:sad', '（小聲）……雲歸，我們不過去嗎？');
+    await S.say('yungui:sad', '（小聲）等一下。讓她再坐一下。');
+    await S.say('yungui:normal', '（小聲）……我在湖邊，也坐了很久。');
+    await S.fadeOut(1.4);
+    S.light({ ambient: 0.08, color: '#302828', tint: 'rgba(255,200,150,0.10)' });
+    S.particles(['motes', { type: 'mist', color: '#f0e8e0', alpha: 0.08 }]);
+    S.setPos('yg88', 7, 17, 'left'); S.setPos('tz88', 8, 17, 'left');
+    await pan(S, 6, 15, 6, 0.2);
+    await S.fadeIn(1.4);
+    S.bgm('love');
+    await nar(S, '稍晚，太陽升起。');
+    const boat = addObj(m, { t: 'boat_small', x: -2, y: 16, solid: false });
+    await nar(S, '海面上，一艘小船從晨霧中駛來。船頭站著一個佝僂的老人，手裡握著一支長長的木槳——槳身上刻著密密麻麻的符紋。');
+    await G.Tweens.to(boat, { x: 1 }, 3, 'outQuad');
+    await S.say('yungui:surprise', '……那是……');
+    await S.say('xinghe:surprise', '陳伯！');
+    S.spawn({ id: 'cb88', sprite: 'chenbo', x: 4, y: 16, dir: 'right' });
+    S.sfx('splash');
+    await nar(S, '小船靠岸。陳伯一瘸一拐地跳下船，差點摔倒，用引魂槳撐住。');
+    await S.say('chenbo:angry', '夭壽，這把老骨頭……');
+    S.face('cb88', 'player');
+    await nar(S, '陳伯抬起頭，看見星河。他看了很久。看見星河掌心那團穩定的火光。');
+    await S.say('chenbo:normal', '……臭小子。');
+    await S.say('chenbo:normal', '臉色，比在九份的時候好。');
+    await S.say('xinghe:cry', '老頭子……你的腳——');
+    await S.say('chenbo:angry', '我的腳不關你的事！');
+    await S.move('cb88', 'U', { speed: 1.2 });
+    S.face('cb88', 'hy88');
+    S.face('hy88', 'cb88');
+    await nar(S, '陳伯走過星河身邊，走到紅纓面前。紅纓抬起頭，眼睛紅腫。');
+    await nar(S, '陳伯什麼也沒說。他伸出粗糙的手，放在紅纓的頭頂上，輕輕地拍了兩下。');
+    await S.say('hongying:cry', '……陳伯……');
+    await S.say('chenbo:sad', '我在海上，看到那些往外漂的光了。');
+    await S.say('chenbo:sad', '其中有三點，走得特別慢，像是在等誰。');
+    await S.say('chenbo:normal', '……走得很好。妳哥哥，走得很好。');
+    await nar(S, '紅纓哭出聲來。陳伯的手，一直沒有拿開。');
+    await S.fadeOut(1.0);
+    await S.wait(0.6);
+    await S.fadeIn(1.0);
+    await S.say('chenbo:serious', '我都聽說了。玄武嶼，鬼門關上的時候。');
+    await S.say('yungui:serious', '我們得去澎湖。可是北港的船夫說，現在沒有船敢出海。');
+    await S.say('chenbo:serious', '不是不敢。是過不去。');
+    await S.say('chenbo:serious', '黑水溝已經不是活人的海了。潮在倒流，死人在上岸。');
+    await S.say('chenbo:serious', '一般的船開出去，會被死人拖下去。');
+    await S.say('xinghe:serious', '那要怎麼辦？');
+    await S.say('chenbo:serious', '要一艘死人肯抬的船。');
+    await S.say('chenbo:serious', '一艘死人不但不會拖它，還會替它拉縴、替它划槳的船。');
+    await S.say('yungui:think', '死人肯抬的船……');
+    await S.say('yungui:surprise', '……王船。');
+    await S.say('chenbo:normal', '對。王船。');
+    await S.say('chenbo:normal', '千歲爺巡海的船。好兄弟見了它，只會讓路，不會擋路。');
+    await S.say('chenbo:serious', '往南走。打狗、東港。東港的千歲爺，有一艘。');
+    await S.say('chenbo:serious', '借不借得到，就看你們的誠意，跟千歲爺的意思了。');
+    await S.say('xinghe:serious', '……我們去借。');
+    await S.say('chenbo:normal', '我跟你們一起去。王船要有人掌舵。整座島上，會在黑水上掌舵的人——');
+    await S.say('chenbo:smug', '只剩我這個老頭子了。');
+    await S.say('xinghe:smile', '……老頭子。');
+    await S.say('chenbo:angry', '幹嘛。');
+    await S.say('xinghe:smile', '藤婆說，你欠她一包菸草。五十年了。');
+    await S.say('chenbo:surprise', '…………');
+    await S.say('chenbo:angry', '那個老太婆還活著？！');
+    await S.say('chenbo:angry', '……五十年前的菸草還記得……夭壽……');
+    await S.say('yungui:smug', '她還說你以前很愛哭。');
+    S.emote('cb88', '💢');
+    await S.say('chenbo:angry', '💢 她亂講！');
+    await nar(S, '紅纓「噗」地一聲笑了出來。只有一下。然後她低下頭，用手背擦了擦眼睛。');
+    await S.say('hongying:smile', '……走吧。往南。');
+    await S.narrate(['四人一貓，與一個老船夫，站在安平的海灘上。', '身後是劍獅守著的家門；眼前是灰藍色的、往外流的海。'], { veil: 0.85 });
+    S.flag('ch8_chenbo_arrive'); S.flag('ch8_wangchuan_hint'); S.flag('ch8_end');
+    S.quest('q_ch8_tide', 6);
+    await S.fadeOut(0.8);
+    for (const id of ['hy88', 'yg88', 'tz88', 'cb88']) S.remove(id);
+    rmObj(m, boat);
+    S.hideFollowers(false);
+    S.objective('與陳伯一起，從安平東邊的路往南出發');
+    await S.warp('anping', 9, 16, 'right', { reload: true, fade: 0.01 });
+    S.gather();
+    await S.fadeIn(0.8);
+  }
+
+  G.Maps.define('anping', {
+    name: '安平', subtitle: (st) => (apDawn(st) ? '往外漂的燈' : '劍獅守著的港街'),
+    place: 'tainan',
+    bgm: (st) => (st.flags.ch8_end ? 'love' : apDawn(st) ? null : apNight(st) || apDusk(st) ? 'tension' : 'tainan'),
+    start: [41, 17],
+    light: (st) => (st.flags.ch8_end ? { ambient: 0.08, color: '#302828', tint: 'rgba(255,200,150,0.10)' }
+      : apDawn(st) ? { ambient: 0.22, color: '#28283a' } : apNight(st) ? { ambient: 0.65, color: '#061430', playerR: 200 }
+        : apDusk(st) ? { ambient: 0.4, color: '#3a1a2a', playerR: 190 } : { ambient: 0.1, color: '#201818' }),
+    particles: (st) => (apNight(st) ? [{ type: 'mist', color: '#9ab0d8', alpha: 0.18 }, 'motes'] : apDusk(st) ? ['motes', { type: 'mist', color: '#c8b8c8', alpha: 0.14 }] : ['motes', { type: 'mist', color: '#e8eef4', alpha: 0.06 }]),
+    lights: (st) => ((apNight(st) || apDusk(st)) ? [{ x: 21, y: 1, r: 200, color: '#4a7aff', flicker: 0.3 }, { x: 18, y: 15, r: 180, color: '#ffb060' }, { x: 25, y: 15, r: 170, color: '#ffb060', flicker: 0.3 }, { x: 25, y: 10, r: 150, color: '#ffcf8a', flicker: 0.3 }] : []).concat(orbLights(MS())),
+    drawOver: (ctx, t, m) => drawOrbs(ctx, t, m),
+    tiles: anpingTiles,
+    objects: AP_OBJECTS,
+    chests: [
+      { id: 'c8_ap_oyster', x: 6, y: 26, item: 'shimuyu', n: 2 },
+      { id: 'c8_ap_shrine', x: 26, y: 8, item: 'c8_jianshi' },
+    ],
+    npcs: [
+      { id: 'disciple', sprite: 'temple_guard', name: '長明宮弟子', x: 21, y: 17, dir: 'down', if: (st) => !apDawn(st), talk: talkDisciple },
+      { id: 'axing', sprite: 'temple_keeper', name: '阿興伯', x: 27, y: 10, dir: 'down', talk: talkAxing },
+      { id: 'amei', sprite: 'shopkeeper_f', name: '阿梅', x: 22, y: 14, dir: 'down', talk: (S) => talkSnackShop(S, 'amei') },
+      { id: 'cai', sprite: 'old_m', name: '老蔡', x: 29, y: 14, dir: 'down', talk: (S) => talkSnackShop(S, 'cai') },
+      { id: 'innkeeper_ap', sprite: 'merchant', name: '安平客棧老闆', x: 18, y: 15, dir: 'down', talk: talkInnAp },
+      { id: 'oyster', sprite: 'fisher_f', name: '蚵殼阿嬤', x: 8, y: 21, dir: 'left', talk: talkOyster },
+      { id: 'oyster_husband', sprite: 'fisherman', name: '老漁夫', x: 6, y: 21, dir: 'right', fixedDir: true, ghost: true, if: (st) => !st.flags.ch8_qingfeng_dead, talk: talkReturnedFisher },
+      { id: 'family1', sprite: 'villager_f2', name: '等待的家屬', x: 24, y: 18, dir: 'up', talk: (S) => talkFamily(S, 0) },
+      { id: 'family2', sprite: 'villager_m', name: '等待的家屬', x: 28, y: 23, dir: 'left', wander: 1, talk: (S) => talkFamily(S, 1) },
+      { id: 'family3', sprite: 'widow', name: '等待的家屬', x: 17, y: 23, dir: 'up', talk: (S) => talkFamily(S, 2) },
+      {
+        id: 'child_ap', sprite: 'child_f', name: '安平的孩子', x: 31, y: 16, dir: 'down', wander: 1,
+        talk: async (S) => {
+          await S.say('安平的孩子', '我家的劍獅是笑的。阿公說，笑的劍獅比較厲害，因為它不怕。');
+          if (fl().ch8_anping && !fl().ch8_dawn) await S.say('安平的孩子', '阿母叫我晚上不要出門。她說海會把人吃掉，又吐出來。');
+        },
+      },
+      { id: 'chenbo_ap', sprite: 'chenbo', name: '陳伯', portrait: 'chenbo', x: 39, y: 17, dir: 'left', if: (st) => !!st.flags.ch8_end, talk: departAnping },
+      { id: 'hy_shrine', sprite: 'villager_f', name: '上香的婦人', x: 23, y: 10, dir: 'right', if: apDawn, talk: say1('上香的婦人', ['廟裡躺著的那個少年，是你們的朋友吧？……阿興伯說，他是為了護著妹妹。']) },
+    ],
+    warps: [
+      {
+        x: 21, y: 1, to: 'anping_fort', tx: 20, ty: 41, tdir: 'up', if: (st) => !!st.flags.ch8_fort_enter && !st.flags.ch8_dawn,
+        // coming back after using the courtyard's 潮信石 returns you to the courtyard (sluice states are kept)
+        run: async (S) => { if (fl().ch8_crystal_return) { S.flag('ch8_crystal_return', false); await S.warp('anping_fort', 16, 18, 'down'); return false; } return true; },
+      },
+    ],
+    events: [
+      { id: 'intro', trigger: 'auto', if: (st) => !st.flags.ch8_anping, run: apIntro },
+      { id: 'gate', trigger: 'touch', x: 21, y: 2, if: (st) => !st.flags.ch8_fort_enter, run: gateTouch },
+      { id: 'night', trigger: 'auto', if: (st) => apNight(st) && !st.flags.ch8_fort_enter, run: ev84b },
+      { id: 'dawn88', trigger: 'auto', if: (st) => apDawn(st) && !st.flags.ch8_end_start, run: ev88 },
+      { id: 'east', trigger: 'touch', x: 43, y: 15, w: 1, h: 5, run: departAnping },
+      {
+        id: 'lions', trigger: 'action', x: 13, y: 7, label: '調查',
+        run: async (S) => {
+          await S.say('', '門楣上掛著一面木牌：獅子張著嘴，咬著一把劍。漆已經舊了，獅子的眼睛卻還很亮。');
+          if (fl().ch8_anping && !apDawn(G.state)) await S.say('', '木牌的邊緣，凝著一層細細的水珠。');
+        },
+      },
+    ],
+  });
+
+  // ================================================================================== 熱蘭遮舊城・潮閘 anping_fort (P8-2)
+  const GA = (st) => !!st.flags.ch8_gate_A, GB = (st) => !!st.flags.ch8_gate_B, GC = (st) => !!st.flags.ch8_gate_C;
+  const DRY1 = (st) => GA(st), DRY2 = (st) => GB(st), DRY3 = (st) => GC(st) && !GA(st);
+  function fortTiles(st) {
+    const g = mk(40, 44, 'R');
+    g.rect(10, 36, 20, 7, '#');                // 入口廣場
+    g.rect(19, 43, 3, 1, '#');
+    g.rect(10, 16, 20, 13, '%');               // 中庭
+    g.rect(4, 23, 6, 6, '#');                  // 西側小室
+    g.rect(33, 8, 6, 6, '#');                  // 東塔殘基
+    g.rect(35, 14, 4, 11, '#');
+    g.rect(15, 3, 11, 6, '#');                 // 石階前
+    g.rect(19, 1, 3, 2, 'H');                  // 往觀潮台的石階
+    // 水道 1 (south–north, x19..21 y29..35)
+    if (DRY1(st)) g.rect(19, 29, 3, 7, ':'); else { g.rect(19, 29, 3, 7, 'r'); g.rect(19, 29, 3, 1, '-'); g.rect(19, 35, 3, 1, '-'); }
+    // 水道 2 (west–east, x30..34 y19..21)
+    if (DRY2(st)) g.rect(30, 19, 5, 3, ':'); else { g.rect(30, 19, 5, 3, 'r'); g.rect(30, 19, 1, 3, '-'); g.rect(34, 19, 1, 3, '-'); }
+    // 水道 3 (south–north, x19..21 y9..15)
+    if (DRY3(st)) g.rect(19, 9, 3, 7, ':'); else { g.rect(19, 9, 3, 7, 'r'); g.rect(19, 9, 3, 1, '-'); g.rect(19, 15, 3, 1, '-'); }
+    return g.rows();
+  }
+  const blueLamp = (x, y) => ({ t: 'eternal_lamp', x, y, light: { r: 150, color: '#5a8aff', flicker: 0.2 } });
+  async function wheel(S, w) {
+    const on = !fl()['ch8_gate_' + w];
+    if (w === 'A') S.flag('ch8_gate_A', on);
+    else if (w === 'B') S.flag('ch8_gate_B', on);
+    else S.flag('ch8_gate_C', on);
+    const m = MS();
+    for (const o of m.objects) if (o.wheel === w) o.on = on;
+    S.sfx('switch'); S.sfx('push', 0.2); S.shake(3, 0.6);
+    await S.wait(0.3);
+    S.sfx('water', 0.1); S.sfx('splash', 0.5);
+    retile(m);
+    const names = { A: '南閘', B: '中閘', C: '東閘' };
+    await S.say('', on ? `${names[w]}的齒輪嘎嘎地轉開了。遠處傳來水往下退的聲音。` : `${names[w]}的齒輪嘎嘎地轉回去了。水聲又湧了上來。`);
+    const st = G.state;
+    const report = [DRY1(st) ? '水道一：乾' : '水道一：淹水', DRY2(st) ? '水道二：乾' : '水道二：淹水', DRY3(st) ? '水道三：乾' : '水道三：淹水'];
+    S.toast(report.join('　'), 'scroll');
+  }
+  const wheelObj = (w, x, y) => (st) => ({ t: 'switch', x, y, wheel: w, on: !!st.flags['ch8_gate_' + w], solid: true, label: '轉動水閘', interact: (S) => wheel(S, w) });
+  async function tooDeep(S, dir) {
+    await S.say('', '水太深了。');
+    await S.move('player', dir);
+  }
+  async function fortIntro(S) {
+    S.flag('ch8_fort_intro');
+    S.gather();
+    await pan(S, 20, 32, 1.4, 1.2);
+    await nar(S, '紅磚的城牆殘基，被巨大的榕樹氣根纏繞。水從地底湧上來，淹沒了通道。');
+    S.cameraFollow();
+    await S.say('yungui:think', '紅毛人的舊城。幾百年前建的，後來只剩下這些牆。');
+    await S.say('yungui:serious', '長明宮的人在這裡改了水道。他們讓潮水灌進來，引到觀潮台。');
+    await S.say('xinghe:serious', '要上去，得先把水排掉。');
+    S.objective('轉動水閘，排掉水道裡的水');
+  }
+  async function fortGuards(S) {
+    S.flag('ch8_fort_guards');
+    S.spawn({ id: 'fg1', sprite: 'temple_guard', x: 19, y: 22, dir: 'down' });
+    S.spawn({ id: 'fg2', sprite: 'temple_guard', x: 22, y: 22, dir: 'down' });
+    S.move('fg1', 'DD', { wait: false, speed: 2.4 });
+    await S.move('fg2', 'DD', { speed: 2.4 });
+    await S.say('長明宮衛', '什麼人？觀潮台是法師的聖地，閒人不得——');
+    S.emote('fg1', '!');
+    await S.say('長明宮衛', '……洛家的女人！少主有令，見到她，帶她上去！');
+    await S.say('hongying:serious', '「少主」？');
+    await S.say('長明宮衛', '青鋒少主說了，洛家的人都要回來團圓。妳也一樣！');
+    await S.say('hongying:angry', '……那就帶我去見他。用打的。');
+    await S.battle('t_c8_guards');
+    S.remove('fg1'); S.remove('fg2');
+  }
+  async function readNotes(S) {
+    await S.say('', '「引潮之法：東閘開，則北道通。唯南閘須閉——前路既開，退路自斷。」');
+    await S.say('', '最後一行，是另一個人的字：「退路，本來就不需要。」');
+    await S.say('yungui:think', '「前路既開，退路自斷」……要上去，得先把我們進來的路關掉。');
+    await S.say('hongying:sad', '「退路，本來就不需要」……這是哥的字。');
+    S.flag('ch8_notes_read');
+  }
+  async function tideStone(S, where) {
+    await S.say('', '一塊被海水磨圓的石頭，表面浮著淡淡的潮紋——「潮信石」。');
+    const c = await S.choice(['記錄旅程', '回到安平', '離開'], { cancel: 2 });
+    if (c === 0) await S.saveMenu();
+    else if (c === 1) {
+      if (where === 'yard') S.flag('ch8_crystal_return', true);
+      S.sfx('magic');
+      await S.warp('anping', 21, 4, 'down');
+    }
+  }
+  G.Maps.define('anping_fort', {
+    name: '熱蘭遮舊城', subtitle: '潮閘',
+    place: 'tainan',
+    bgm: 'tension',
+    start: [20, 41],
+    light: { ambient: 0.7, color: '#040c20', playerR: 210 },
+    particles: [{ type: 'mist', color: '#8aa0c8', alpha: 0.14 }, 'motes', { type: 'rain', density: 0.15 }],
+    tiles: fortTiles,
+    objects: (st) => [
+      blueLamp(11, 37), blueLamp(28, 37), blueLamp(10, 16), blueLamp(29, 16), blueLamp(15, 3), blueLamp(25, 3), blueLamp(33, 8), blueLamp(38, 24), blueLamp(4, 23),
+      wheelObj('A', 18, 36)(st), wheelObj('A', 18, 28)(st), wheelObj('B', 25, 18)(st), wheelObj('C', 37, 10)(st),
+      { t: 'crystal', x: 12, y: 38, label: '調查', interact: (S) => tideStone(S, 'entry') },
+      { t: 'crystal', x: 15, y: 17, label: '調查', interact: (S) => tideStone(S, 'yard') },
+      { t: 'tree_banyan', x: 19, y: 19 }, { t: 'tree_banyan', x: 11, y: 20 }, { t: 'tree_banyan', x: 26, y: 24 },
+      { t: 'vine_curtain', x: 13, y: 15 }, { t: 'vine_curtain', x: 24, y: 15 }, { t: 'vine_curtain', x: 34, y: 7 },
+      { t: 'rock_big', x: 25, y: 39 }, { t: 'barrel', x: 28, y: 41 }, { t: 'barrel', x: 10, y: 41 }, { t: 'crate', x: 11, y: 42 },
+      { t: 'rock_small', x: 16, y: 40 }, { t: 'crate', x: 4, y: 28 }, { t: 'barrel', x: 9, y: 23 }, { t: 'rock_big', x: 33, y: 12 },
+      { t: 'jar', x: 38, y: 13 }, { t: 'bones', x: 23, y: 7 }, { t: 'rock_small', x: 16, y: 7 }, { t: 'barrel', x: 28, y: 27 },
+    ],
+    chests: [
+      { id: 'c8_fort_p', x: 5, y: 25, item: 'huanhunxiang', n: 2 },
+      { id: 'c8_fort_q', x: 36, y: 12, item: 'c8_leiyin' },
+      { id: 'c8_fort_r', x: 20, y: 22, item: 'c8_cm_note', run: (S) => readNotes(S) },
+    ],
+    enemies: [
+      { id: 'fe1', troop: 't_c8_fort', x: 24, y: 40, art: 'drowned_soldier', variant: 1, radius: 3, chase: 4, lv: 28 },
+      { id: 'fe2', troop: 't_c8_fort2', x: 24, y: 25, sprite: 'temple_guard', radius: 3, chase: 4, lv: 28, if: (st) => !!st.flags.ch8_fort_guards },
+      { id: 'fe3', troop: 't_c8_fort', x: 36, y: 18, art: 'tide_grudge', variant: 1, radius: 3, chase: 4, lv: 28 },
+    ],
+    warps: [
+      { x: 19, y: 43, w: 3, h: 1, to: 'anping', tx: 21, ty: 4, tdir: 'down' },
+      { x: 19, y: 1, w: 3, h: 1, to: 'anping_tower', tx: 12, ty: 18, tdir: 'up' },
+    ],
+    events: [
+      { id: 'intro', trigger: 'auto', if: (st) => !st.flags.ch8_fort_intro, run: fortIntro },
+      { id: 'guards', trigger: 'touch', x: 10, y: 27, w: 20, h: 2, if: (st) => !st.flags.ch8_fort_guards, run: fortGuards },
+      { id: 'w1s', trigger: 'touch', x: 19, y: 35, w: 3, h: 1, if: (st) => !DRY1(st), run: (S) => tooDeep(S, 'D') },
+      { id: 'w1n', trigger: 'touch', x: 19, y: 29, w: 3, h: 1, if: (st) => !DRY1(st), run: (S) => tooDeep(S, 'U') },
+      { id: 'w2w', trigger: 'touch', x: 30, y: 19, w: 1, h: 3, if: (st) => !DRY2(st), run: (S) => tooDeep(S, 'L') },
+      { id: 'w2e', trigger: 'touch', x: 34, y: 19, w: 1, h: 3, if: (st) => !DRY2(st), run: (S) => tooDeep(S, 'R') },
+      { id: 'w3s', trigger: 'touch', x: 19, y: 15, w: 3, h: 1, if: (st) => !DRY3(st), run: (S) => tooDeep(S, 'D') },
+      { id: 'w3n', trigger: 'touch', x: 19, y: 9, w: 3, h: 1, if: (st) => !DRY3(st), run: (S) => tooDeep(S, 'U') },
+      {
+        id: 'hint_c', trigger: 'touch', x: 33, y: 8, w: 6, h: 6, once: true, if: (st) => !st.flags.ch8_notes_read,
+        run: async (S) => { await S.say('yungui:think', '這裡也有一座水閘。……各個水閘之間，好像是連在一起的。'); },
+      },
+    ],
+  });
+
+  // ================================================================================== 觀潮台 anping_tower
+  function towerTiles() {
+    const g = mk(24, 22, 'w');
+    g.rect(3, 1, 18, 19, '#');
+    g.rect(11, 20, 3, 2, 'H');
+    return g.rows();
+  }
+  // 逆潮燈: the scaled-up 長明燈 with a blue-black flame and four light-chains into the sea (drawn under actors)
+  function drawTideLamp(ctx, t, m) {
+    const f = fl();
+    const cx = 12 * T + T / 2, base = 5 * T - 4;
+    const top = base - 330;
+    if (!f.ch8_blast) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const ends = [[1, 0.3], [22.8, 0.3], [0.3, 13], [23.7, 13]];
+      for (const [ex, ey] of ends) {
+        const x2 = ex * T, y2 = ey * T;
+        for (let k = 0; k < 2; k++) {
+          ctx.strokeStyle = k ? 'rgba(160,190,255,0.65)' : 'rgba(40,70,200,0.35)';
+          ctx.lineWidth = k ? 2.5 : 10;
+          ctx.beginPath(); ctx.moveTo(cx, top + 60);
+          ctx.quadraticCurveTo((cx + x2) / 2, Math.max(top + 60, y2) + 70 + Math.sin(t * 1.3 + ex) * 12, x2, y2);
+          ctx.stroke();
+        }
+        // pulses running toward the sea
+        const ph = (t * 0.35 + ex * 0.13) % 1;
+        const px = cx + (x2 - cx) * ph, py = (top + 60) + (y2 - top - 60) * ph + Math.sin(ph * Math.PI) * 70;
+        const g = ctx.createRadialGradient(px, py, 0, px, py, 18);
+        g.addColorStop(0, 'rgba(190,210,255,0.9)'); g.addColorStop(1, 'rgba(60,90,255,0)');
+        ctx.fillStyle = g; ctx.fillRect(px - 18, py - 18, 36, 36);
+      }
+      ctx.restore();
+    }
+    const d = G.Objects.get('eternal_lamp');
+    ctx.save();
+    if (f.ch8_blast) {
+      // charred stump
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(cx, base, 70, 18, 0, 0, Math.PI * 2); ctx.fill();
+      const g = ctx.createLinearGradient(cx - 40, 0, cx + 40, 0);
+      g.addColorStop(0, '#3a3634'); g.addColorStop(0.5, '#5a5450'); g.addColorStop(1, '#221e1c');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(cx - 52, base); ctx.lineTo(cx - 40, base - 70); ctx.lineTo(cx - 18, base - 96); ctx.lineTo(cx - 4, base - 78); ctx.lineTo(cx + 14, base - 110); ctx.lineTo(cx + 40, base - 64); ctx.lineTo(cx + 52, base); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#120e0c'; ctx.lineWidth = 2; ctx.stroke();
+    } else {
+      ctx.translate(cx, base);
+      ctx.scale(2.5, 2.5);
+      if (d) d.draw(ctx, -T / 2, -T, { t: 'eternal_lamp', x: 12, y: 4, v: 0 }, t);
+      ctx.restore();
+      ctx.save();
+      // the blue-black flame
+      const fl2 = 1 + Math.sin(t * 7) * 0.06 + Math.sin(t * 11.3) * 0.04;
+      const g = ctx.createRadialGradient(cx, top + 40, 4, cx, top + 30, 90 * fl2);
+      g.addColorStop(0, 'rgba(230,240,255,0.95)'); g.addColorStop(0.25, 'rgba(70,110,255,0.85)'); g.addColorStop(0.6, 'rgba(20,20,70,0.6)'); g.addColorStop(1, 'rgba(0,0,20,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(cx, top + 30, 70 * fl2, 100 * fl2, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // transient effects: black lightning / heart-fire pillar / thunder
+  function fx(m, kind, o = {}) { m.c8fx = m.c8fx || []; m.c8fx.push(Object.assign({ kind, t: 0, dur: 1.2 }, o)); }
+  function drawTowerFx(ctx, t, m) {
+    drawOrbs(ctx, t, m);
+    if (!m.c8fx || !m.c8fx.length) return;
+    const dt = 1 / 60;
+    ctx.save();
+    for (const e of m.c8fx) {
+      e.t += dt;
+      const a = Math.max(0, 1 - e.t / e.dur);
+      if (e.kind === 'bolt') {
+        const [x1, y1] = [e.x1 * T + T / 2, e.y1 * T], [x2, y2] = [e.x2 * T + T / 2, e.y2 * T];
+        for (let k = 0; k < 2; k++) {
+          ctx.strokeStyle = k ? `rgba(200,160,255,${a})` : `rgba(10,0,20,${a})`;
+          ctx.lineWidth = k ? 2 : 9;
+          ctx.beginPath(); ctx.moveTo(x1, y1);
+          const n = 9;
+          for (let i = 1; i < n; i++) ctx.lineTo(x1 + (x2 - x1) * i / n + U.hash(i, Math.floor(e.t * 20), 3) * 34 - 17, y1 + (y2 - y1) * i / n + U.hash(i, Math.floor(e.t * 20), 5) * 34 - 17);
+          ctx.lineTo(x2, y2); ctx.stroke();
+        }
+      } else if (e.kind === 'pillar') {
+        const x = e.x * T + T / 2;
+        ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createLinearGradient(x - 60, 0, x + 60, 0);
+        g.addColorStop(0, 'rgba(255,120,40,0)'); g.addColorStop(0.5, `rgba(255,220,140,${0.85 * a})`); g.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 60, e.y * T - 520, 120, 560);
+        ctx.globalCompositeOperation = 'source-over';
+      } else if (e.kind === 'thunder') {
+        const x = e.x * T + T / 2;
+        ctx.strokeStyle = `rgba(230,210,255,${a})`; ctx.lineWidth = 5; ctx.shadowColor = '#b080ff'; ctx.shadowBlur = 20;
+        ctx.beginPath(); ctx.moveTo(x + 30, e.y * T - 700);
+        for (let i = 1; i <= 8; i++) ctx.lineTo(x + (U.hash(i, Math.floor(e.t * 15), 9) - 0.5) * 70, e.y * T - 700 + i * 85);
+        ctx.stroke(); ctx.shadowBlur = 0;
+      }
+    }
+    ctx.restore();
+    m.c8fx = m.c8fx.filter((e) => e.t < e.dur);
+  }
+  const RETURNED = [
+    ['rt1', 'villager_m', 5, 7], ['rt2', 'villager_f', 7, 11], ['rt3', 'fisherman', 5, 14], ['rt4', 'old_m', 8, 16], ['rt5', 'sailor', 16, 16],
+    ['rt6', 'villager_f2', 18, 12], ['rt7', 'child_m', 19, 8], ['rt8', 'old_f', 17, 5], ['rt9', 'villager_m2', 4, 17], ['rt10', 'ghost_m', 8, 5],
+    ['rt11', 'fisherman', 19, 15], ['rt12', 'villager_f', 4, 4], ['rt13', 'sailor', 9, 13], ['rt14', 'child_f', 16, 9],
+  ];
+  function qfBattleOpts() {
+    const said = {};
+    const say = async (lines) => { for (const [w, txt] of lines) await G.Dialog.say(w, txt); G.Dialog.close(); };
+    return {
+      intro: async (sc) => {
+        await say([['hongying:serious', '……閉嘴。這次換我教你。']]);
+        const qf = () => sc.enemies.find((e) => e.id === 'c8_qingfeng');
+        const wicksAlive = () => sc.enemies.some((e) => e.id === 'c8_tide_wick' && !e.dead);
+        // 青鋒 never dissolves: at 0 HP he kneels and the battle ends (→ 8-6b)
+        const kill0 = sc.kill.bind(sc);
+        sc.kill = (u) => {
+          if (u.id === 'c8_qingfeng') { u.hp = 1; u.pose = 'hurt'; sc.result = 'win'; sc.scriptedEnd = true; return; }
+          kill0(u);
+          if (u.id === 'hongying' && !said.hyDown) said.hyDown = 'pending';
+        };
+        // 借潮 (2% / living wick each turn) and the hesitation below 25%
+        const start0 = sc.startTurn.bind(sc);
+        sc.startTurn = async (u) => {
+          const skip = await start0(u);
+          if (skip || u.dead || u.id !== 'c8_qingfeng') return skip;
+          const n = sc.enemies.filter((e) => e.id === 'c8_tide_wick' && !e.dead).length;
+          if (n && u.hp < u.mhp) { sc.healUnit(u, Math.round(u.mhp * 0.02 * n)); await sc.wait(0.3); }
+          if (u.hp <= u.mhp * 0.25) {
+            if (!said.hes) { said.hes = true; await say([['qingfeng:hurt', '……手腕……不要僵……']]); sc.popText(u, '猶豫', '#c8d8ff'); await sc.wait(0.5); return true; }
+            if (Math.random() < 0.4) { sc.popText(u, '猶豫', '#c8d8ff'); await sc.wait(0.5); return true; }
+          }
+          return false;
+        };
+        // 紅纓's spear-tip is raised: her attacks on him always crit below 25%
+        const perf0 = sc.performSkill.bind(sc);
+        sc.performSkill = (u, s, targets, id) => {
+          const q = qf();
+          if (u.id === 'hongying' && q && targets.includes(q) && q.hp <= q.mhp * 0.25) s = Object.assign({}, s, { crit: 1 });
+          return perf0(u, s, targets, id);
+        };
+        // 「槍尖，太低了」 targets 紅纓 first
+        const ai0 = sc.aiCommand.bind(sc);
+        sc.aiCommand = (e) => {
+          const cmd = ai0(e);
+          if (cmd && cmd.skill === 'c8_e_qf_lowtip') { const hy = sc.party.find((p) => p.id === 'hongying' && !p.dead); if (hy) cmd.targets = [hy]; }
+          return cmd;
+        };
+        const ph0 = sc.checkPhases.bind(sc);
+        sc.checkPhases = async () => {
+          await ph0();
+          const q = qf();
+          if (!q || sc.result) return;
+          if (!said.p70 && q.hp <= q.mhp * 0.7) { said.p70 = true; await say([['qingfeng:angry', '妳不知道我這三年是怎麼過的！'], ['hongying:cry', '我知道！我每天都在恨你！每天都在想你！']]); }
+          if (!said.wicks && !wicksAlive()) { said.wicks = true; await say([['yungui:serious', '斷了！那盞燈沒辦法再把死人的力氣灌給他了！']]); }
+          if (!said.p50 && q.hp <= q.mhp * 0.5 && wicksAlive()) { said.p50 = true; sc.addStatus(q, 'atkUp', 4); }
+          if (!said.p40 && q.hp <= q.mhp * 0.4 && wicksAlive()) { said.p40 = true; await say([['yungui:serious', '那兩盞燈芯在替他續命——先打燈芯！']]); }
+          if (said.hyDown === 'pending') { said.hyDown = true; await say([['yungui:serious', '洛姑娘！起來——妳還沒說完！']]); }
+        };
+      },
+    };
+  }
+
+  // ---------------------------------------------------------------- 8-6a 歸潮者
+  async function ev86(S) {
+    const m = MS();
+    S.bgm(null);
+    S.gather();
+    S.setPos('player', 12, 18, 'up');
+    await pan(S, 12, 14, 1.2, 1.4);
+    await nar(S, '石階盡頭。夜。只有風聲與浪聲。');
+    await pan(S, 12, 5, 0.9, 1.5);
+    await nar(S, '觀潮台上，一座巨大的燈柱燃著藍黑色的火。四條光鏈從燈上延伸，沒入海中。');
+    await pan(S, 12, 11, 1.0, 1.2);
+    await nar(S, '平台上，站著數十個人。他們全身濕透，面朝陸地，一動不動，水從衣角一滴一滴落下。');
+    await nar(S, '老漁夫、年輕的水手、穿唐山衫的男人、抱著膝的孩子……其中，一男一女穿著褪了色的綢衫——那衣服的樣式，紅纓認得。');
+    S.cameraFollow();
+    await S.move('player', 'UUUUUUUU', { speed: 1.6 });
+    S.setPos('hongying', 13, 10, 'up'); S.setPos('yungui', 11, 11, 'up'); S.setPos('tuanzi', 12, 11, 'up');
+    await S.say('hongying:surprise', '………………');
+    await pan(S, 12, 7, 1.4, 0.8);
+    await nar(S, '燈柱前，一個穿黑衣的年輕人背對他們站著。他沒有戴面具。腰間佩著一把劍。');
+    await S.say('hongying:normal', '……哥。');
+    await S.wait(0.8);
+    S.face('qf', 'down');
+    await nar(S, '青鋒轉過身。右半邊臉是冷火燒過的疤。他比在鹿港時更瘦了，眼睛下面是很深的陰影——可是他的眼睛在發亮。那是一種讓人害怕的、充滿希望的光。');
+    await S.say('qingfeng:smile', '紅纓。妳來了。');
+    await S.say('qingfeng:smile', '妳看。');
+    S.move('qf', 'L', { speed: 1.2 }); S.face('qf', 'right');
+    await nar(S, '他側過身，讓出視線。那一男一女。');
+    await S.say('qingfeng:smile', '爹。娘。');
+    await S.say('qingfeng:smile', '他們回來了。三年了……他們回來了。');
+    await nar(S, '紅纓的槍尖，垂到了地上。');
+    await S.say('hongying:surprise', '……爹……娘……');
+    await S.say('xinghe:serious', '青鋒，他們——');
+    await S.say('qingfeng:serious', '我知道。他們還不太說話。');
+    await S.say('qingfeng:smile', '法師說，記憶會慢慢回來。潮水每漲一次，就會多想起一點。');
+    await S.say('qingfeng:smile', '等今年鬼月結束，潮水全部倒過來——他們就會全部想起來。');
+    await S.say('qingfeng:smile', '到時候，我們就可以回鹿港。回家。四個人。');
+    await nar(S, '紅纓一步一步走向那個穿綢衫的女人。她的手在發抖。');
+    await S.move('hongying', 'UU', { speed: 0.9 });
+    await S.say('hongying:cry', '……娘。');
+    S.face('mother', 'hongying');
+    await nar(S, '那女人轉過頭。她的眼睛是灰色的，像起霧的玻璃。她看著紅纓，就像看著一根柱子。');
+    S.face('mother', 'down');
+    await nar(S, '然後她微微側身，避開了紅纓伸出的手，就像避開一個陌生人。');
+    await S.wait(1.4);
+    await S.say('hongying:cry', '……她不認得我。');
+    await S.say('qingfeng:serious', '會認得的！只要再等——');
+    await S.say('hongying:cry', '哥，你看清楚！她連躲都躲得像在躲陌生人！');
+    await S.say('hongying:cry', '這不是娘！這只是……娘的樣子！');
+    await S.say('qingfeng:angry', '住口！');
+    S.sfx('metal'); S.flash('#c8e0ff', 0.3, 0.5);
+    await nar(S, '青鋒拔劍。劍光如水。');
+    await S.say('qingfeng:angry', '妳不懂。妳什麼都不懂。');
+    await S.say('qingfeng:angry', '三年。妳恨了我三年，可是妳至少還有一個可以恨的人。');
+    await S.say('qingfeng:angry', '我呢？我每天晚上閉上眼睛，都是那天晚上。都是我沒趕上的那一刻！');
+    await S.say('qingfeng:serious', '……法師給了我一個機會。一個把那天晚上「改回來」的機會。');
+    await S.say('qingfeng:serious', '誰都不准碰那盞燈。誰都不准。');
+    await S.say('hongying:cry', '…………');
+    await nar(S, '紅纓擦掉眼淚，重新舉起槍。槍尖對著哥哥。');
+    await S.say('hongying:serious', '……那我就打醒你。');
+    await S.say('hongying:serious', '像你以前打醒我那樣。');
+    await S.say('qingfeng:sad', '…………');
+    await S.say('qingfeng:serious', '槍尖，還是太低了。');
+    const r = await S.battle('t_c8_qingfeng', Object.assign(qfBattleOpts(), { bgmAfter: null }));
+    if (r !== 'win') return;
+    // the fight's experience, given quietly (no fanfare over this scene)
+    const tr = G.Data.troops.t_c8_qingfeng;
+    G.Party.gainExp(tr.enemies.reduce((a, id) => a + (G.Data.enemies[id].exp || 0), 0));
+    G.Party.healAll();
+    S.flag('ch8_qf_beaten');
+    await ev86b(S);
+  }
+
+  // ---------------------------------------------------------------- 8-6b 是誰家的孩子
+  async function ev86b(S) {
+    S.setPos('player', 12, 10, 'up'); S.setPos('hongying', 13, 9, 'up'); S.setPos('yungui', 11, 10, 'up'); S.setPos('tuanzi', 12, 11, 'up');
+    S.setPos('qf', 12, 8, 'down');
+    S.cameraFollow();
+    await pan(S, 12, 8, 6, 0.2);
+    await nar(S, '青鋒單膝跪地，劍插在石板上。他喘著氣，嘴角流著血。');
+    await S.say('qingfeng:hurt', '……妳的槍尖……抬起來了。');
+    await S.say('hongying:sad', '……是你教的。');
+    await nar(S, '青鋒撐著劍站起來。他沒有再看紅纓。他一步一步，走向那個穿綢衫的女人。');
+    await S.move('qf', 'R', { speed: 0.8 });
+    S.face('qf', 'right');
+    await S.say('qingfeng:normal', '娘。');
+    await S.wait(1.0);
+    await nar(S, '女人沒有反應。');
+    await S.say('qingfeng:smile', '娘，是我。青鋒。');
+    S.face('mother', 'qf');
+    await nar(S, '女人慢慢轉過頭。灰色的眼睛看著他。她的嘴唇動了動。');
+    await S.say('洛母（歸潮者）', '……青鋒……');
+    await nar(S, '青鋒的眼睛亮了。');
+    await S.say('qingfeng:surprise', '娘——！');
+    await S.say('洛母（歸潮者）', '……青鋒……');
+    await S.wait(0.8);
+    await S.say('洛母（歸潮者）', '……好聽的名字。');
+    await S.say('洛母（歸潮者）', '是誰家的孩子呀？');
+    S.bgm(null, { fade: 0.2 });
+    await S.wait(1.5);
+    await nar(S, '…………');
+    await S.wait(1.2);
+    await nar(S, '青鋒的笑容，還掛在臉上。只是一動也不動。');
+    S.face('mother', 'down');
+    await nar(S, '女人轉回頭，繼續看著陸地。然後，她開始哼歌。很輕、很慢的旋律，沒有歌詞。她的手在身前輕輕地、規律地拍著，像是懷裡抱著一個看不見的嬰兒。');
+    const dur = lullaby();
+    await S.wait(Math.min(1.5, dur || 0));
+    await S.say('hongying:cry', '（很小聲）……那是……娘哄我們睡覺的時候……');
+    await S.say('qingfeng:normal', '……我知道。');
+    await S.say('qingfeng:normal', '她的手記得。她的嘴記得。');
+    await S.say('qingfeng:sad', '……可是她不記得我。');
+    await nar(S, '青鋒伸出手，想碰母親的手。停在半空中。慢慢收回來。');
+    await S.wait(1.2);
+    await S.say('qingfeng:sad', '原來是這樣。');
+    await S.say('qingfeng:sad', '這不是娘。這只是娘留在海裡的……影子。');
+    await S.say('qingfeng:sad', '我把影子撈上岸，給它穿上娘的衣服，叫它「娘」。');
+    await S.say('qingfeng:cry', '……我到底在做什麼……');
+    await S.say('xinghe:sad', '青鋒……');
+    await S.say('qingfeng:serious', '法師沒有騙我。');
+    await S.say('qingfeng:serious', '……他自己也相信。他比誰都相信。');
+    await S.say('qingfeng:serious', '所以……這件事，要由我來結束。');
+    await S.move('qf', 'LUU', { speed: 1.2 });
+    S.face('qf', 'up');
+    await nar(S, '青鋒轉身，拔起劍，走向逆潮燈。他舉起劍，對準連接海面的光鏈。');
+    await S.say('qingfeng:serious', '這盞燈，是我親手點的。');
+    S.flag('ch8_qf_understands');
+    await ev86c(S);
+  }
+
+  // ---------------------------------------------------------------- 8-6c 黑雷
+  async function ev86c(S) {
+    const m = MS();
+    S.sfx('dark'); S.shake(5, 0.8);
+    S.light({ ambient: 0.8 });
+    const yx = S.spawn({ id: 'yx', sprite: 'yexuan', x: 12, y: 4, dir: 'down', ghost: true });
+    yx.alpha = 0;
+    G.Tweens.to(yx, { alpha: 0.85 }, 1.4, 'linear');
+    S.bgm('villain');
+    await pan(S, 12, 6, 1.4, 1.0);
+    await nar(S, '逆潮燈的火焰忽然暴漲。藍黑色的火在空中扭曲，凝成一個人形——一個穿著素白道袍、面容溫和的中年男人。他的身影是半透明的，像是從很遠的地方投射過來的。');
+    await S.say('yexuan:normal', '……青鋒。');
+    await S.say('qingfeng:surprise', '……法師。');
+    await S.say('yexuan:normal', '放下劍。');
+    await S.say('yexuan:sad', '你答應過我。我們要一起，把他們全部帶回來。');
+    await S.say('qingfeng:sad', '法師……他們不記得我。');
+    await S.say('yexuan:normal', '會記得的。');
+    await S.say('yexuan:sad', '念兒……念兒也還不太記得我。可是她會的。只要潮水全部倒流——');
+    await S.say('qingfeng:cry', '念兒也不記得你，對不對？');
+    await S.wait(1.0);
+    await nar(S, '夜玄的影子，沉默了。');
+    await S.say('qingfeng:cry', '你每天晚上對著那個罐子說話。她從來沒有回答過你，對不對？');
+    await S.say('yexuan:sad', '…………');
+    await S.say('yexuan:normal', '……青鋒，放下劍。');
+    // 紅纓 slips round the side of the lamp
+    S.move('hongying', 'RUUUU', { speed: 1.4 });
+    await nar(S, '趁著夜玄的影子與青鋒對峙，紅纓已經悄悄繞到燈柱側面。她咬著牙，舉槍刺向燈柱底座的光鏈。');
+    await S.wait(0.6);
+    S.setPos('hongying', 14, 5, 'left');
+    await S.say('hongying:angry', '——斷！');
+    await S.say('yexuan:surprise', '——別碰它！');
+    S.sfx('thunder');
+    S.flash('#ffffff', 0.5, 0.95);
+    fx(m, 'bolt', { x1: 12, y1: 4, x2: 14, y2: 5, dur: 2.2 });
+    await nar(S, '夜玄的影子本能地抬起手。一道黑色的雷光，從燈中射向紅纓。');
+    await S.wait(0.8);
+    await nar(S, '慢動作。紅纓轉頭，看見黑雷迎面而來。來不及閃。');
+    await S.move('qf', 'RU', { speed: 5 });
+    S.face('qf', 'left');
+    await nar(S, '一個背影，擋在了她的面前。張開雙臂。');
+    await S.wait(1.0);
+    await nar(S, '——靈境中的畫面，分毫不差。');
+    fx(m, 'bolt', { x1: 12, y1: 4, x2: 13, y2: 5, dur: 1.4 });
+    S.sfx('thunder'); S.sfx('death', 0.2);
+    S.flash('#ffffff', 0.6, 0.9); S.shake(10, 0.8);
+    await S.wait(1.0);
+    await nar(S, '黑雷貫穿了青鋒的胸口。');
+    await S.wait(1.2);
+    await S.say('hongying:surprise', '…………哥…………？');
+    S.setPos('qf', 14, 6, 'up');
+    S.setPos('hongying', 15, 6, 'left');
+    await nar(S, '青鋒的身體晃了一下，向後倒去。紅纓丟下槍，接住他，兩人一起跪倒在石板上。');
+    await S.say('yexuan:surprise', '……青……鋒……？');
+    await nar(S, '夜玄的影子僵在空中，舉起的手在發抖。');
+    await S.say('xinghe:angry', '——夜玄！！');
+    S.sfx('fire'); S.sfx('ultimate', 0.1);
+    fx(m, 'pillar', { x: 12, y: 10, dur: 2.4 });
+    fx(m, 'pillar', { x: 12, y: 5, dur: 2.4 });
+    S.flash('#ffd070', 0.7, 0.8);
+    await nar(S, '星河的心火從全身爆發，化成一道金紅色的火柱，直衝燈柱。同時，雲歸雙手結印，紫白色的雷光從天而降。');
+    await S.say('yungui:angry', '太虛——神雷！');
+    fx(m, 'thunder', { x: 12, y: 4, dur: 1.4 });
+    S.sfx('thunder'); S.sfx('shatter', 0.4);
+    S.flash('#e0d0ff', 0.6, 0.95); S.shake(14, 1.2);
+    S.flag('ch8_blast');
+    await S.wait(1.0);
+    await nar(S, '火與雷同時擊中逆潮燈。燈柱發出刺耳的碎裂聲，一道巨大的裂縫從底座延伸到頂端。四條光鏈同時斷裂。');
+    await nar(S, '夜玄的影子劇烈地閃爍。他的目光沒有看星河，沒有看雲歸。他一直看著倒在紅纓懷裡的青鋒。');
+    await S.say('yexuan:sad', '……我……不是……');
+    await S.fadeActor('yx', 0, 1.6);
+    S.remove('yx');
+    await nar(S, '影子消散。');
+    await ev86d(S);
+  }
+
+  // ---------------------------------------------------------------- 8-6d 洛家的兩個笨蛋 (slow; never rushed)
+  async function ev86d(S) {
+    const m = MS();
+    S.bgm('sad', { fade: 3 });
+    S.light({ ambient: 0.74, color: '#060a1a' });
+    await pan(S, 14, 6, 0.7, 1.5);
+    await nar(S, '觀潮台上，歸潮者們一個接一個停止了動作。光鏈斷了，他們身上的藍光開始一點一點地剝落。');
+    await nar(S, '紅纓跪在地上，抱著青鋒。他的胸口有一個黑色的洞，邊緣在冒著冰冷的煙。海水從他的傷口滲出來。');
+    await S.say('hongying:cry', '哥……哥……雲歸！雲歸，救他！');
+    await S.move('yungui', 'RRRUUU', { speed: 3.2 });
+    S.setPos('yungui', 13, 7, 'right');
+    await nar(S, '雲歸跑過來，跪下，手按在青鋒胸口。他的手在發抖。他看了一眼傷口，然後抬頭看紅纓。他什麼都沒說。');
+    await S.wait(1.4);
+    await S.say('hongying:cry', '……救他啊……你不是什麼符都會嗎……');
+    await S.say('yungui:sad', '…………洛姑娘。');
+    await S.wait(1.2);
+    await nar(S, '紅纓明白了。她把青鋒抱得更緊。');
+    await S.say('qingfeng:hurt', '……紅纓。');
+    await S.say('hongying:cry', '我在。我在這裡。');
+    await S.say('qingfeng:hurt', '……妳的槍……槍尖……');
+    await S.say('hongying:cry', '閉嘴……你這種時候還要說槍尖……');
+    await S.say('qingfeng:smile', '……妳看。');
+    await S.say('qingfeng:smile', '這一次……我擋到了。');
+    await S.say('hongying:cry', '…………');
+    await S.say('qingfeng:sad', '那天晚上……我什麼都沒擋到。');
+    await S.say('qingfeng:sad', '爹最後跟我說……「去找紅纓」。');
+    await S.say('qingfeng:sad', '我卻戴上面具……跑了三年……');
+    await S.say('qingfeng:smile', '……現在，找到了。');
+    await S.say('qingfeng:sad', '我一直想……把爹娘拉回來，就好像……那天晚上，我擋住了。');
+    await S.say('qingfeng:smile', '原來……不用拉回來。只要……擋這一次……就好了。');
+    await S.say('hongying:cry', '誰要你擋！誰要你擋啊！你這個笨蛋……！');
+    await S.say('qingfeng:smile', '……嗯。');
+    await S.say('qingfeng:smile', '洛家……兩個笨蛋。');
+    await S.wait(1.2);
+    await nar(S, '青鋒的手顫抖著，伸進自己的衣襟，拿出一本被血和海水浸透的薄冊子。封面上的字已經模糊：洛家劍譜。');
+    await S.say('qingfeng:normal', '……劍譜。娘教我的。');
+    await S.say('qingfeng:normal', '槍，是爹教妳的。劍，是娘教我的。');
+    await S.say('qingfeng:smile', '把它們……合起來。');
+    await S.say('qingfeng:smile', '這樣……洛家……就還在。');
+    await S.say('hongying:cry', '我不要劍譜……我要你……我只要你……');
+    await S.say('qingfeng:smile', '……紅纓。今年冬至……');
+    await S.say('hongying:cry', '……不要說……');
+    await S.say('qingfeng:smile', '麵線……還是要煮。');
+    await S.say('qingfeng:smile', '煮焦了……也沒關係。放在門檻上。');
+    await S.say('hongying:cry', '你又要說好吃……每一年都說好吃……騙子……');
+    await S.say('qingfeng:smile', '……沒騙妳。');
+    await S.wait(1.0);
+    await S.say('qingfeng:smile', '焦了。……但很好吃。');
+    await S.wait(1.4);
+    await nar(S, '紅纓說不出話。她從懷裡拿出那張摺得很舊的字條——「焦了。——但很好吃。」——緊緊攥在手心，哭得全身都在發抖。');
+    await S.wait(1.2);
+    // the parents' husks dissolve; two warm lights rise
+    await pan(S, 13, 7, 0.6, 1.2);
+    await nar(S, '平台上，那一男一女——青鋒與紅纓的父母——身上的藍光剝落殆盡。');
+    S.sfx('splash');
+    S.fadeActor('father', 0, 1.6); await S.fadeActor('mother', 0, 1.6);
+    await nar(S, '他們的身體化成兩攤海水，嘩啦一聲落在石板上。');
+    const o1 = orb(m, 10, 8, { vx: 0, vy: -10, life: 60, color: '#ffcf80', r: 12, lightR: 110 });
+    const o2 = orb(m, 14, 8, { vx: 0, vy: -10, life: 60, color: '#ffcf80', r: 12, lightR: 110 });
+    await S.wait(1.4);
+    await nar(S, '兩點小小的、溫暖的光，從海水中浮起。不是藍色的。是像燈籠一樣的、暖黃色的光。');
+    const qx = 14 * T + T / 2, qy = 6 * T - 40;
+    G.Tweens.to(o1, { x: qx - 30, y: qy - 50, vy: 0 }, 2.4, 'inOutQuad');
+    await G.Tweens.to(o2, { x: qx + 30, y: qy - 50, vy: 0 }, 2.4, 'inOutQuad');
+    o1.vy = 0; o2.vy = 0;
+    await nar(S, '那兩點光，飄到青鋒的上方，停住了。');
+    await S.say('qingfeng:surprise', '……啊。');
+    await S.say('qingfeng:smile', '……原來……他們在這裡。');
+    await S.say('qingfeng:smile', '他們……一直在這裡……等我。');
+    await S.say('qingfeng:smile', '洛青鋒……可以……跟著回家了。');
+    const o3 = orb(m, 14, 6, { vx: 0, vy: -6, life: 60, color: '#ffe0a0', r: 12, lightR: 110 });
+    await G.Tweens.to(o3, { y: qy - 70, vy: 0 }, 1.6, 'inOutQuad');
+    o3.vy = 0;
+    await nar(S, '青鋒的胸口，也浮起一點光。三點光，在紅纓的頭頂輕輕地繞了一圈。');
+    const hx = 15 * T + T / 2, hy = 6 * T - 120;
+    for (let k = 0; k < 3; k++) {
+      const a0 = (k / 3) * Math.PI * 2;
+      const o = [o1, o2, o3][k];
+      G.Tweens.to(o, { x: hx + Math.cos(a0) * 46, y: hy + Math.sin(a0) * 18 }, 1.6, 'inOutQuad');
+    }
+    await S.wait(1.7);
+    for (let k = 0; k < 3; k++) {
+      const a0 = (k / 3) * Math.PI * 2 + Math.PI;
+      G.Tweens.to([o1, o2, o3][k], { x: hx + Math.cos(a0) * 46, y: hy + Math.sin(a0) * 18 }, 1.6, 'inOutQuad');
+    }
+    await S.wait(1.7);
+    await nar(S, '青鋒抬起手。指尖碰到紅纓馬尾上那條紅緞帶，把一縷被海風吹亂的頭髮，塞回緞帶裡。');
+    await S.wait(1.0);
+    await S.say('qingfeng:smile', '……風大。頭髮……綁好。');
+    await S.wait(0.8);
+    await S.say('qingfeng:smile', '想我的時候……');
+    await S.wait(0.8);
+    await S.say('qingfeng:smile', '……想就好。');
+    await S.wait(1.0);
+    await S.say('qingfeng:smile', '想人……又不會死。');
+    await S.wait(1.5);
+    await nar(S, '青鋒閉上了眼睛。手垂了下去。');
+    await S.wait(1.5);
+    await nar(S, '…………');
+    // the three lights leave first, then all the returned follow — outward, toward the far shore
+    for (const o of [o1, o2, o3]) { o.vx = -10 + Math.random() * 6; o.vy = -16; o.t = 0; o.life = 14; }
+    await pan(S, 12, 4, 0.5, 1.5);
+    await nar(S, '三點光，慢慢地飄離了觀潮台，飄向大海——往外，往彼岸的方向。');
+    for (const [id, , x, y] of RETURNED) {
+      S.fadeActor(id, 0, 2.4);
+      orb(m, x, y, { vx: (x < 12 ? -1 : 1) * (6 + Math.random() * 10), vy: -18 - Math.random() * 10, life: 12, color: '#ffd890', r: 8, lightR: 70 });
+      await S.wait(0.12);
+    }
+    await nar(S, '觀潮台上其他的歸潮者，也一個接一個化成海水，一點一點暖黃色的光從水中升起，跟在那三點光後面，飄向海面。');
+    await nar(S, '上百點光，在夜色中，排成一條長長的、往外的路。');
+    await S.narrate(['方向是對的。'], { veil: 0.45 });
+    await pan(S, 14, 6, 0.6, 1.5);
+    await nar(S, '紅纓沒有再哭出聲。她低下頭，把自己的額頭，輕輕貼在青鋒的額頭上——那是他們小時候的習慣。');
+    await S.wait(1.5);
+    await nar(S, '很久。');
+    await S.wait(1.2);
+    S.emote('tuanzi', '💧', 2.5);
+    await nar(S, '星河站在幾步之外，拳頭握得發白，眼淚一直掉。雲歸背對著海，仰著頭。糰子趴在紅纓身邊，用頭輕輕頂著她的手臂，一下、一下。');
+    await S.wait(1.4);
+    S.flag('ch8_qingfeng_dead');
+    await S.fadeOut(2.4);
+    await S.give('key_jianpu', 1, { silent: true });
+    // 紅纓's second ultimate — no fanfare: the text appears quietly and quietly fades
+    const sfx0 = G.Audio.sfx;
+    G.Audio.sfx = () => {};
+    try { S.learn('hongying', 'hy_luojia'); } finally { G.Audio.sfx = sfx0; }
+    S.flag('ch8_jianpu');
+    await S.narrate(['獲得「洛家劍譜」。', '紅纓的奧義，變成了『洛家劍譜』。'], { veil: 1, size: 26, color: '#d8d0c0' });
+    await ev87(S);
+  }
+
+  // ---------------------------------------------------------------- 8-7 鬼門關上的時候
+  async function ev87(S) {
+    S.remove('qf');
+    S.setPos('player', 12, 9, 'up'); S.setPos('hongying', 13, 8, 'up'); S.setPos('yungui', 11, 9, 'up'); S.setPos('tuanzi', 12, 10, 'up');
+    S.light({ ambient: 0.8, color: '#04060e' });
+    S.particles(['wind', { type: 'mist', color: '#7088b0', alpha: 0.12 }]);
+    await pan(S, 12, 6, 6, 0.2);
+    await S.fadeIn(1.6);
+    await nar(S, '仍是夜。逆潮燈只剩一截焦黑的殘柱。海面很黑。');
+    S.bgm('villain');
+    await nar(S, '海的那一邊，傳來一個聲音。不是透過燈，而是從海面本身傳來，溫和、清晰、有禮，彷彿說話的人就站在身旁。');
+    const V = (txt) => S.say('yexuan', txt, { noPortrait: true, color: '#d8ccff' });
+    await V('……青鋒是個好孩子。');
+    await V('他在我那裡，每天晚上都練劍，練到天亮。我叫他休息。');
+    await V('他說：「法師，我怕我一睡著，就又趕不上了。」');
+    await S.wait(1.2);
+    await nar(S, '沉默。');
+    await V('我不會原諒自己。');
+    await V('但我也不會停下。');
+    await S.say('xinghe:angry', '你殺了他！你還要怎樣！');
+    await V('星河。燈籠舖的孩子。');
+    await V('你見過那些被遺忘的人嗎？我見過。我在海上，見過二十年。');
+    await V('他們一個人漂在黑水上，連自己的名字都不記得了，連自己愛過誰都不記得了。');
+    await V('你覺得那是慈悲。我覺得，那是世上最殘忍的事。');
+    await V('今晚的潮，只是第一次。它還會再來，一次比一次大。');
+    await V('當今年鬼月的最後一夜，鬼門關上的那一刻——');
+    await V('黑水將永遠倒流。所有的死者，都會帶著記憶，回到這座島上。');
+    await S.say('yungui:serious', '帶著記憶？剛才那些人，連自己的孩子都不認得！');
+    await V('因為燈還不夠亮。因為燈靈還沒有全部交給我。');
+    await S.say('xinghe:surprise', '……白芷！');
+    await V('她在玄武嶼。澎湖海上，一座黑色的島。我的長明宮，真正的那一座。');
+    await V('她很安全。她每天都在唱歌。');
+    S.bgm('love', { fade: 1.5 });
+    await nar(S, '海風中，極遠極遠的地方，傳來一段微弱的歌聲。渡魂謠。只有兩三句，就被浪聲吞沒了。');
+    await S.wait(1.5);
+    await S.say('xinghe:cry', '……白芷……');
+    S.bgm('villain', { fade: 1.5 });
+    await V('星河。你想見她，就來吧。');
+    await V('我會等你。');
+    await V('……就像二十年來，我等念兒一樣。');
+    S.bgm(null, { fade: 2 });
+    await nar(S, '聲音消失。海面恢復黑暗。只有浪聲。');
+    S.flag('ch8_deadline');
+    await S.wait(1.2);
+    await S.fadeOut(1.8);
+    S.flag('ch8_dawn');
+    S.quest('q_ch8_tide', 6);
+    if (fl().ch8_sq_oyster === 1) S.quest('q_ch8_oyster', 1);
+    await S.warp('anping', 12, 15, 'left', { fade: 0.01 });
+  }
+
+  G.Maps.define('anping_tower', {
+    name: '觀潮台', subtitle: '熱蘭遮舊城・最高處',
+    place: 'tainan', noSave: true, autosave: false,
+    bgm: null,
+    start: [12, 18],
+    light: (st) => ({ ambient: 0.75, color: '#040818', playerR: 170 }),
+    lights: (st) => (st.flags.ch8_blast ? [] : [{ x: 12, y: 1, r: 520, color: '#3a5aff', flicker: 0.25 }, { x: 12, y: 4, r: 260, color: '#6a8aff', flicker: 0.2 }]).concat(orbLights(MS()))
+      .concat((MS() && MS().c8fx && MS().c8fx.length) ? [{ x: 12, y: 5, r: 520, color: '#ffe0b0', flicker: 0.5 }] : []),
+    particles: ['wind', { type: 'mist', color: '#7088b0', alpha: 0.16 }, 'motes'],
+    tiles: towerTiles,
+    pass: [{ x: 11, y: 2, w: 3, h: 3, solid: true }],
+    drawGround: (ctx, t, m) => drawTideLamp(ctx, t, m),
+    drawOver: (ctx, t, m) => drawTowerFx(ctx, t, m),
+    objects: [
+      { t: 'stone_lantern', x: 3, y: 1 }, { t: 'stone_lantern', x: 20, y: 1 }, { t: 'stone_lantern', x: 3, y: 19 }, { t: 'stone_lantern', x: 20, y: 19 },
+      { t: 'rock_small', x: 4, y: 10 }, { t: 'rock_small', x: 20, y: 6 }, { t: 'bones', x: 18, y: 18 }, { t: 'rock_small', x: 6, y: 19 },
+    ],
+    npcs: [
+      ...RETURNED.map(([id, sprite, x, y]) => ({ id, sprite, name: '歸潮者', x, y, dir: 'down', fixedDir: true, ghost: true, if: (st) => !st.flags.ch8_qingfeng_dead, talk: say1('', ['渾身濕透的人，面朝陸地，一動不動。你叫他，他沒有回應。']) })),
+      { id: 'father', sprite: 'noble_m', name: '洛父（歸潮者）', x: 10, y: 8, dir: 'down', fixedDir: true, ghost: true, if: (st) => !st.flags.ch8_qingfeng_dead, talk: say1('', ['褪了色的綢衫。他的眼睛望著陸地，看不見眼前的人。']) },
+      { id: 'mother', sprite: 'noble_f', name: '洛母（歸潮者）', x: 14, y: 8, dir: 'down', ghost: true, if: (st) => !st.flags.ch8_qingfeng_dead, talk: say1('', ['褪了色的綢衫。她的眼睛是灰色的，像起霧的玻璃。']) },
+      { id: 'qf', sprite: 'qingfeng', name: '洛青鋒', portrait: 'qingfeng', x: 12, y: 6, dir: 'up', if: (st) => !st.flags.ch8_qingfeng_dead },
+    ],
+    warps: [{ x: 11, y: 21, w: 3, h: 1, to: 'anping_fort', tx: 20, ty: 4, tdir: 'down', if: (st) => !!st.flags.ch8_qingfeng_dead }],
+    events: [
+      { id: 'tower', trigger: 'auto', if: (st) => !st.flags.ch8_qf_beaten, run: ev86 },
+      { id: 'tower_resume', trigger: 'auto', if: (st) => !!st.flags.ch8_qf_beaten && !st.flags.ch8_dawn, run: ev86b },
+    ],
+  });
+
+  // ================================================================================== chapter entry
+  G.Story.ch8 = async (S) => {
+    S.chapter(8);
+    // party: 星河、紅纓、雲歸 (+糰子). 白芷 is away (taken to 玄武嶼 at the end of ch6).
+    if (G.state.party.includes('baizhi')) S.leave('baizhi');
+    for (const id of ['xinghe', 'hongying', 'yungui']) {
+      if (!G.state.members[id]) G.Party.join(id, 25);
+      else if (!G.state.party.includes(id)) G.Party.join(id);
+      G.Story.ensureLevel(id, 25);
+    }
+    const order = ['xinghe', 'hongying', 'yungui'];
+    G.state.party = order.concat(G.state.party.filter((p) => !order.includes(p)));
+    G.state.flags.tuanzi_hidden = false;
+    G.state.vars.objective = '';
+    await S.titleCard(G.Chapters[8], '三月・北港迎媽祖');
+    await S.travel('sunmoon', 'beigang', { label: '下了山，沿著溪往海口去……' });
+    await S.warp('beigang', 27, 41, 'up');
+  };
 })();

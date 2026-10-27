@@ -175,7 +175,7 @@
     name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 32, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
     m: { hp: 10, atk: 2.0, mag: 2.2, def: 1.15, spd: 1.2, exp: 7, gold: 6 },
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
-    drops: [['c9_ac_jinzhi', 1]],
+    drops: [['c9_baicaogao', 1]],
     desc: '數十隻瘟鬼疊成的駝背身影。咳嗽聲像一整個村子在咳。',
   });
   const PUFFS = [['c9_puff_a', '風團・水生'], ['c9_puff_b', '風團・阿九'], ['c9_puff_c', '風團・順德']];
@@ -1477,6 +1477,1023 @@
     S.remove('bp_old'); S.remove('bp_jinwan');
     await S.narrate(['金萬扶著山壁，一步一步走出了山腹。', '回旗後的路上，他一句話也沒說。手裡一直握著那只空碗。'], { veil: 1 });
     await S.warp('qihou', 15, 26, 'up', { fade: 0.01 });
+  }
+
+  // =====================================================================================================
+  // MAP 4 — donggang 東港
+  // =====================================================================================================
+  const dgNight = (s) => !!s.flags.ch9_jiaobei_done && !s.flags.ch9_shipyard_clear;
+  const dgDusk = (s) => !!s.flags.ch9_donggang_arrive && !s.flags.ch9_jiaobei_done;
+  G.Maps.define('donggang', {
+    name: '東港', subtitle: '東隆宮與王船廠', place: 'donggang',
+    bgm: (s) => (dgNight(s) ? 'night' : 'south'),
+    start: [16, 1],
+    light: (s) => (dgNight(s) ? { ambient: 0.6, color: '#0a0c24', playerR: 230 } : dgDusk(s) || !s.flags.ch9_donggang_arrive ? { ambient: 0.2, color: '#3a1a10' } : { ambient: 0 }),
+    particles: (s) => (dgNight(s) ? ['lanterns', { type: 'wind', density: 0.4 }] : [{ type: 'wind', density: 0.5 }]),
+    tiles: (() => {
+      const g = grid(56, 42, '.');
+      g.rect(0, 0, 5, 27, '~').rect(0, 27, 56, 15, '~').rect(0, 20, 56, 7, 's');
+      g.rect(2, 3, 4, 1, 'k').rect(2, 7, 4, 1, 'k');
+      g.rect(16, 0, 2, 20, '=').rect(6, 14, 48, 2, '=');
+      g.rect(15, 6, 17, 6, 'T').rect(22, 12, 2, 2, '=');
+      g.rect(40, 1, 14, 9, 'W').rect(46, 9, 2, 1, '_').rect(46, 10, 2, 4, '=');
+      g.rect(26, 16, 2, 4, '=');
+      g.rect(26, 26, 2, 2, 'k');
+      g.rect(5, 1, 1, 13, ':');
+      g.dots([[5, 20], [6, 21], [53, 21], [54, 22], [55, 20]], '-');
+      return g.rows();
+    })(),
+    deco: (() => {
+      const d = grid(56, 42, ' ');
+      d.dots([[38, 1], [38, 2], [38, 3], [39, 5]], 'B');
+      d.dots([[14, 4], [19, 18], [34, 21], [44, 22], [50, 23], [12, 23], [8, 24], [52, 13], [36, 12]], 'h');
+      d.dots([[32, 6], [32, 9], [14, 7], [14, 10], [30, 12], [15, 12]], 'u');
+      d.dots([[55, 5], [54, 7], [55, 9]], 't');
+      return d.rows();
+    })(),
+    objects: [
+      { t: 'temple', x: 20, y: 1, text: '東隆宮' },
+      { t: 'incense_burner', x: 23, y: 8, interact: async (S) => { await tiangong(S); }, label: '上香' },
+      { t: 'statue_lion', x: 21, y: 6 }, { t: 'statue_lion', x: 25, y: 6, flip: true },
+      { t: 'paifang', x: 21, y: 12, v: 1, text: '東隆宮' },
+      { t: 'lantern_string', x: 16, y: 6, w: 5 }, { t: 'lantern_string', x: 27, y: 6, w: 4 },
+      { t: 'pilgrim_flag', x: 15, y: 6, text: '代天巡狩', color: '#d8382a' }, { t: 'pilgrim_flag', x: 31, y: 6, text: '代天巡狩', color: '#d8382a' },
+      { t: 'red_lantern', x: 19, y: 11 }, { t: 'red_lantern', x: 28, y: 11 },
+      { t: 'house_minnan', x: 6, y: 0, v: 0 }, { t: 'house_minnan', x: 10, y: 0, w: 5, v: 1 },
+      { t: 'house_minnan', x: 33, y: 1, v: 0 },
+      { t: 'stall', x: 7, y: 5, text: '魚市', counter: true }, { t: 'stall', x: 10, y: 5, text: '櫻花蝦' },
+      { t: 'basket', x: 12, y: 6 }, { t: 'barrel', x: 6, y: 8 }, { t: 'crate', x: 6, y: 2 },
+      { t: 'boat_small', x: 1, y: 5, water: true }, { t: 'boat_small', x: 2, y: 9 }, { t: 'boat_small', x: 1, y: 12 },
+      { t: 'dock_post', x: 1, y: 3 }, { t: 'dock_post', x: 1, y: 7 },
+      { t: 'shophouse', x: 6, y: 9, v: 2, text: '雙糕潤' },
+      { t: 'shophouse', x: 10, y: 16, v: 1, text: '雜貨' },
+      { t: 'house_minnan', x: 18, y: 16, v: 0 }, { t: 'house_minnan', x: 28, y: 16, v: 1 },
+      { t: 'tree_banyan', x: 33, y: 16 },
+      { t: 'shophouse', x: 40, y: 16, v: 0, text: '客棧' },
+      { t: 'shophouse', x: 46, y: 16, v: 3, text: '鐵匠' },
+      { t: 'signboard', x: 45, y: 10, text: '王船廠', interact: ['「王船廠」。木棚裡傳出敲木頭的聲音，夾著一陣一陣的咳嗽。'], label: '看' },
+      { t: 'red_lantern', x: 48, y: 10 },
+      { t: 'log', x: 51, y: 10 }, { t: 'crate', x: 50, y: 11 }, { t: 'log', x: 52, y: 12 },
+      { t: 'lamp_post', x: 20, y: 13 }, { t: 'lamp_post', x: 37, y: 13 }, { t: 'lamp_post', x: 9, y: 13 },
+      { t: 'wang_boat', x: 24, y: 28, water: true, solid: false, z: -200, key: 'dg_wangboat', if: (s) => !!s.flags.ch9_wangboat_launch && s.vars.ch9_port === 'donggang' },
+      { t: 'dock_post', x: 25, y: 27 }, { t: 'dock_post', x: 28, y: 27 },
+      { t: 'driftwood', x: 40, y: 24 }, { t: 'rock_small', x: 11, y: 25 },
+    ],
+    chests: [
+      { id: 'dg_market', x: 3, y: 10, item: 'c9_shuanggaorun', n: 2 },
+      { id: 'dg_yard', x: 53, y: 10, item: 'c9_tiedingfu', n: 1 },
+      { id: 'dg_banyan', x: 36, y: 17, gold: 800 },
+    ],
+    lights: (s) => (dgNight(s) || dgDusk(s) ? [{ x: 23, y: 7, r: 260, color: '#ffb060', flicker: 0.25 }, { x: 46, y: 10, r: 120, color: '#9aff8a', flicker: 0.5 }, { x: 8, y: 12, r: 120, color: '#ffc070' }, { x: 41, y: 19, r: 120, color: '#ffc070' }] : []),
+    npcs: [
+      chenboNpc('donggang', [16, 1], (s) => !s.flags.ch9_shipyard_clear || !!s.flags.ch9_wangboat_launch),
+      { id: 'dg_ashan', sprite: 'old_m', name: '阿杉師', pos: (s) => (s.flags.ch9_wangboat_launch ? [31, 22] : [45, 11]), x: 45, y: 11, dir: 'down',
+        if: (s) => !s.flags.ch9_jiaobei_done || !!s.flags.ch9_wangboat_launch, talk: async (S) => {
+          if (F('ch9_wangboat_launch')) {
+            await S.say('阿杉師', '我造過的王船，都是一把火送走的。這是第一艘，我看著它自己走下海。');
+            await S.say('阿杉師', '你們要好好待它。船有眼睛，它會記得誰對它好。');
+            return;
+          }
+          await S.say('阿杉師', '咳……王船是用最好的杉木造的，龍骨一安，就不能隨便動。');
+          await S.say('阿杉師', '今年不是迎王的年。千歲爺卻在正月就降旨，要我們提早造船。我造了四十年船，第一次。');
+        } },
+      { id: 'dg_cake', sprite: 'shopkeeper_f', name: '雙糕潤阿嬸', x: 9, y: 12, dir: 'down', talk: async (S) => {
+        await S.say('雙糕潤阿嬸', '雙糕潤，東港的古早味！糯米、黑糖，一層一層蒸，像人生，有甜有軟。');
+        await S.shop(['c9_shuanggaorun', 'shimuyu', 'c9_qiyuwan', 'yinghuaxia'], { title: '雙糕潤' });
+      } },
+      { id: 'dg_shop', sprite: 'merchant', name: '雜貨店頭家', x: 13, y: 19, dir: 'down', talk: async (S) => {
+        await S.say('雜貨店頭家', '要去王船廠的話，驅瘟符多帶幾張。那裡最近不乾淨。');
+        await S.shop(['shimuyu', 'c9_xiancaodong', 'ezaijian', 'c9_aicao', 'huanhunxiang', 'c9_quwenfu'], { title: '東港雜貨' });
+      } },
+      { id: 'dg_inn', sprite: 'merchant', name: '客棧掌櫃', x: 43, y: 19, dir: 'down', talk: async (S) => {
+        await S.say('客棧掌櫃', '一晚九十文。迎王前後房間難訂，今年你們好運。');
+        await S.inn(90, { who: '客棧掌櫃' });
+      } },
+      { id: 'dg_smith', sprite: 'villager_m', name: '鐵匠阿鐵', x: 49, y: 19, dir: 'down', talk: async (S) => {
+        await S.say('鐵匠阿鐵', '造王船的鐵釘，都是我打的。順便打幾把槍給你們。');
+        await S.shop(['sp_polang', 'c9_sw_tiegu', 'c9_ar_yulin', 'c9_ft_baotie'], { title: '阿鐵打鐵店' });
+      } },
+      { id: 'dg_pole', sprite: 'villager_m2', name: '阿海仔', x: 28, y: 9, dir: 'left', wander: 2, if: (s) => !dgNight(s), talk: async (S) => {
+        if (F('ch9_wangboat_launch')) { await S.say('阿海仔', '我拉繩拉到手都起水泡了！值得！王船真的自己走下海！'); return; }
+        await S.say('阿海仔', '三年一科迎王，我們轎班的都要練。今年提早，我腿都練粗了！');
+      } },
+      { id: 'dg_old_f', sprite: 'old_f', name: '拜拜阿嬤', x: 21, y: 9, dir: 'right', talk: async (S) => {
+        await S.say('拜拜阿嬤', '少年仔，進廟先拜天公爐，再進去拜千歲爺。順序不要亂。');
+        await S.say('拜拜阿嬤', '擲筊要先講清楚你是誰、住哪裡、要問什麼。神明很忙，你要說清楚。');
+      } },
+      { id: 'dg_fisher', sprite: 'fisherman', name: '黑面仔', x: 6, y: 6, dir: 'left', talk: async (S) => {
+        await S.say('黑面仔', '最近南岬那邊過不去，落山風一直吹，吹到四月還不停。不正常。');
+        await S.say('黑面仔', '以前一入三月就停了。現在風裡面還有人在哭的聲音。');
+      } },
+      { id: 'dg_child', sprite: 'child_f', name: '細妹', x: 19, y: 13, dir: 'down', wander: 1, if: (s) => !dgNight(s), talk: async (S) => {
+        if (F('ch9_wangboat_launch')) { await S.say('細妹', '王船——要回來喔——我會一直等！'); return; }
+        await S.say('細妹', '阿母說王船要出海了。我要把我的糖藏好，到時候添給王船！');
+      } },
+      { id: 'dg_tourist', sprite: 'pilgrim', name: '進香客', x: 29, y: 7, dir: 'down', wander: 1, if: (s) => !dgNight(s), talk: ['我從屏東城走了兩天來的。聽說今年王船提早造，大家都說，一定有大事。'] },
+    ],
+    events: [
+      { id: 'dg_arrive', trigger: 'auto', if: (s) => !s.flags.ch9_donggang_arrive, run: async (S) => { await donggangArrive(S); } },
+      { id: 'dg_launch', trigger: 'auto', if: (s) => !!s.flags.ch9_shipyard_clear && !s.flags.ch9_wangboat_launch, run: async (S) => { await wangboatLaunch(S); } },
+      { id: 'dg_board', trigger: 'touch', x: 26, y: 27, w: 2, h: 1, if: (s) => !!s.flags.ch9_wangboat_launch && s.vars.ch9_port === 'donggang', run: async (S) => { await boardDeck(S); } },
+      { id: 'dg_north', trigger: 'touch', x: 16, y: 0, w: 2, h: 1, run: async (S) => {
+        if (F('ch9_wangboat_launch')) await S.say('chenbo:normal', '現在有船了，要回旗後就搭王船吧。');
+        else await S.say('chenbo:serious', '往北是回旗後的路。我們的事在東港。');
+        await S.move('player', 'D');
+      } },
+    ],
+    warps: [
+      { x: 23, y: 5, to: 'donglong_hall', tx: 9, ty: 11, tdir: 'up', door: true, run: async (S) => {
+        if (F('ch9_donggang_arrive') && !F('ch9_tiangong_incense')) {
+          S.face('dg_old_f', 'player');
+          await S.say('拜拜阿嬤', '少年仔！進廟先拜天公爐，再進去拜千歲爺。順序不要亂。');
+          await S.move('player', 'D');
+          return false;
+        }
+        return true;
+      } },
+      { x: 46, y: 9, w: 2, to: 'wangchuan_yard', tx: 21, ty: 28, tdir: 'up', door: true, run: async (S) => {
+        if (!F('ch9_jiaobei_done')) {
+          await S.say('', '王船廠的大門關著。裡面傳出一陣一陣的咳嗽聲。');
+          await S.say('阿杉師', '咳……外人不要進來，王船還沒造好。');
+          await S.move('player', 'D');
+          return false;
+        }
+        return true;
+      } },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 東隆宮正殿 ----
+  G.Maps.define('donglong_hall', {
+    name: '東隆宮', subtitle: '千歲爺正殿', place: 'donggang', bgm: 'temple', start: [9, 11],
+    light: { ambient: 0.15, color: '#2a1006' }, particles: [{ type: 'motes', density: 0.8 }],
+    tiles: (() => {
+      const g = grid(20, 14, 'E');
+      g.rect(1, 2, 18, 11, 'T').rect(9, 13, 2, 1, 'T');
+      g.rect(8, 6, 4, 5, 'c');
+      return g.rows();
+    })(),
+    objects: [
+      { t: 'altar', x: 5, y: 2 }, { t: 'altar', x: 9, y: 2 }, { t: 'altar', x: 13, y: 2 },
+      { t: 'banner', x: 4, y: 2, color: '#b0281e' }, { t: 'banner', x: 8, y: 2, color: '#c8a030' }, { t: 'banner', x: 11, y: 2, color: '#c8a030' }, { t: 'banner', x: 15, y: 2, color: '#b0281e' },
+      { t: 'pillar', x: 2, y: 2 }, { t: 'pillar', x: 17, y: 2 }, { t: 'pillar', x: 2, y: 10 }, { t: 'pillar', x: 17, y: 10 },
+      { t: 'incense_burner', x: 9, y: 5 },
+      { t: 'table', x: 12, y: 5 }, { t: 'divination_blocks', x: 12, y: 4 },
+      { t: 'rug', x: 8, y: 7, w: 3, h: 2 },
+      { t: 'eternal_lamp', x: 7, y: 2 }, { t: 'eternal_lamp', x: 12, y: 2 },
+      { t: 'mural', x: 2, y: 1, v: 2 }, { t: 'mural', x: 16, y: 1, v: 4 },
+      { t: 'drum', x: 3, y: 6 }, { t: 'bell', x: 16, y: 6 },
+    ],
+    npcs: [
+      chenboNpc('donglong_hall', [10, 11]),
+      { id: 'dg_keeper', sprite: 'temple_keeper', name: '添丁伯', x: 14, y: 5, dir: 'left', talk: async (S) => {
+        if (!F('ch9_jiaobei_done')) { await S.say('添丁伯', '少年仔，要拜拜？先到前面，跪上拜墊。'); return; }
+        await S.say('添丁伯', '拜拜不是做生意，是講心。你心誠，千歲爺就聽得到。');
+        await S.say('添丁伯', '老一輩講，溫府千歲生前也在海上遇過大風浪，所以祂最懂海上人的苦。');
+        await S.say('添丁伯', '王船出巡，船上載的是厄運、瘟疫、送不走的東西。你們這趟，是要把燈帶回來。');
+      } },
+    ],
+    events: [
+      { id: 'dl_c906', trigger: 'auto', if: (s) => !!s.flags.ch9_tiangong_incense && !s.flags.ch9_jiaobei_done, run: async (S) => { await jiaobeiScene(S); } },
+      { id: 'dl_pray', trigger: 'action', x: 9, y: 4, w: 2, h: 1, label: '參拜', run: async (S) => {
+        S.sfx('bell');
+        await S.say('', '金漆神龕、紅色帳幔，燭火靜靜地燒著。星河合掌，深深一拜。');
+      } },
+    ],
+    warps: [
+      { x: 9, y: 13, w: 2, to: 'donggang', tx: 23, ty: 6, tdir: 'down', door: true, run: async (S) => {
+        if (F('ch9_jiaobei_done') && !F('ch9_dg_nightfall')) {
+          S.flag('ch9_dg_nightfall');
+          await S.fadeOut(0.6);
+          await S.narrate(['走出東隆宮，天已經黑了。', '王船廠那邊，綠色的火光一明一滅。'], { veil: 1 });
+        }
+        return true;
+      } },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 東港 scripts ----
+  async function donggangArrive(S) {
+    S.flag('ch9_donggang_arrive');
+    S.setPos('player', 16, 2, 'down'); S.gather(); S.setPos('chenbo', 17, 1, 'down');
+    await S.move('player', 'DDD');
+    await S.say('', '傍晚的東港，街上人來人往，比旗後熱鬧，但大家都神色匆匆。');
+    await S.say('', '王船廠的方向，傳來咳嗽聲與敲木頭的聲音。');
+    await S.say('tuanzi:laugh', '喵！有甜的味道！是糯米！是黑糖！');
+    await S.say('yungui:normal', '雙糕潤。東港的古早點心。……我也想吃。');
+    await S.say('hongying:surprise', '你也會想吃甜的？');
+    await S.say('yungui:smug', '道士也是人。道士的胃，比道心誠實。');
+    await S.say('chenbo:angry', '先拜拜，再吃！');
+    await S.camera(23, 4, 1.2);
+    await S.say('', '金色的牌樓、燕尾脊上的剪黏龍，廟前的天公爐香煙不斷。');
+    await S.say('xinghe:surprise', '好氣派……');
+    S.cameraFollow();
+    await S.say('chenbo:serious', '進去之前聽好。不要大聲、不要亂摸、不要拿神明開玩笑。');
+    await S.say('chenbo:serious', '——糰子，說你。');
+    await S.say('tuanzi:shy', '本大爺很乖的……');
+    S.quest('q_ch9_main', 1);
+    S.objective('到東隆宮參拜，向千歲爺請求借王船');
+  }
+  async function tiangong(S) {
+    if (F('ch9_tiangong_incense') || !F('ch9_donggang_arrive')) {
+      await S.say('', '天公爐的香煙裊裊上升，飄向天空。');
+      return;
+    }
+    S.sfx('bell');
+    await S.say('', '星河點了三炷香，面向天空拜了三拜，把香插進天公爐。');
+    await S.say('拜拜阿嬤', '這樣就對了。拜過天公，再進去拜千歲爺。');
+    S.flag('ch9_tiangong_incense');
+  }
+  async function jiaobeiScene(S) {
+    S.bgm('temple');
+    S.setPos('player', 9, 9, 'up'); S.setPos('hongying', 8, 10, 'up'); S.setPos('yungui', 10, 10, 'up'); S.setPos('tuanzi', 9, 10, 'up'); S.setPos('chenbo', 11, 9, 'up');
+    await S.say('', '殿內燭火搖曳。添丁伯在供桌旁整理香枝。');
+    S.face('dg_keeper', 'player');
+    await S.say('添丁伯', '少年仔，要拜拜？……喔，陳渡！你這陣子跑哪去？');
+    await S.say('chenbo:normal', '添丁，我們來向千歲爺借一樣東西。');
+    await S.say('添丁伯', '借什麼？');
+    await S.say('xinghe:serious', '王船。');
+    S.bgm(null, { fade: 1.5 });
+    await S.say('', '添丁伯手上的香停住了。殿內很靜。');
+    await S.say('添丁伯', '……王船不是借的東西。王船是千歲爺出巡坐的。');
+    await S.say('添丁伯', '不過——今年正月起，千歲爺就一直要我們提早造船。');
+    await S.say('添丁伯', '說不定，祂等的就是你們。去問吧，用筊。');
+    S.bgm('temple');
+    await S.move('dg_keeper', 'L');
+    await S.say('', '添丁伯遞上一對筊杯。星河接過。');
+    await S.say('xinghe:surprise', '這、這怎麼用？');
+    await S.say('添丁伯', '雙手合起來捧著筊，先跟千歲爺稟報。你是誰、住哪裡、要問什麼。');
+    await S.say('添丁伯', '說完，往前輕輕一擲。一平一凸是聖筊，是允了。');
+    await S.say('添丁伯', '兩面平的是笑筊，千歲爺在笑，代表你問得不清楚。兩面凸的是陰筊，是不允。');
+    await S.say('添丁伯', '大事要連續三個聖筊才算數。');
+    await S.move('player', 'U');
+    await S.say('', '星河跪上拜墊。');
+    const c0 = await S.choice(['「千歲爺，借我王船！拜託！」', '先照廟公說的，好好稟報。']);
+    if (c0 === 0) {
+      await S.say('xinghe:serious', '千歲爺，借我王船！拜託！我要去救人！');
+      await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['xiao'], prompt: '「千歲爺，借我王船！」——按 Z 擲筊' });
+      await S.say('', '筊杯落地——兩面朝上，皆平。笑筊。');
+      await S.say('添丁伯', '哈哈哈！千歲爺笑你啦！');
+      await S.say('添丁伯', '你是誰、從哪來、救誰、去哪，一句都沒說。神明又不是賣船的。');
+      await S.say('hongying:smug', '……笨蛋。');
+      await S.say('xinghe:shy', '好啦好啦，重來。');
+    }
+    await S.camera(9, 6, 0.8);
+    await S.say('', '星河重新合掌，捧筊至額前。');
+    await S.say('xinghe:serious', '千歲爺在上。弟子沈星河，九份陳記燈籠舖的學徒。');
+    await S.say('xinghe:think', '生辰……弟子不知道。');
+    await S.say('xinghe:sad', '十八年前的中元夜，弟子躺在一盞水燈裡，從八斗子的海邊被撿回來。');
+    await S.say('添丁伯', '（低聲）那就這樣講。千歲爺比你清楚。');
+    await S.say('xinghe:serious', '有一個人，被帶到黑水溝的另一邊去了。她叫白芷。');
+    await S.say('xinghe:serious', '弟子懇請千歲爺借王船，讓弟子渡過黑水溝，帶她回來。');
+    await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['sheng'], prompt: '誠心稟報——按 Z 擲筊' });
+    S.sfx('bell');
+    await S.say('', '一平一凸。聖筊。');
+    await S.say('hongying:surprise', '！');
+    await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['sheng'], prompt: '第二擲——按 Z 擲筊' });
+    await S.say('', '聖筊。');
+    await S.say('tuanzi:surprise', '喵……！再一個！再一個！');
+    await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['yin'], prompt: '第三擲——按 Z 擲筊' });
+    S.bgm(null, { fade: 0.3 });
+    S.sfx('push');
+    await S.say('', '筊杯在地上轉了很久，停下——兩面皆凸。陰筊。');
+    await S.wait(0.8);
+    await S.say('', '殿內一片安靜。');
+    S.bgm('temple');
+    await S.say('hongying:angry', '為什麼！前面兩個都允了——');
+    await S.say('chenbo:serious', '紅纓。');
+    await S.say('hongying:sad', '……對不起。');
+    await S.say('添丁伯', '不要急。不是不肯，是還有話沒問到。');
+    await S.say('yungui:think', '神明不是當舖。借東西，有借東西的規矩。');
+    await S.say('yungui:think', '千歲爺允了兩次——「借」是允的。不允的，是「現在就去」。');
+    await S.say('添丁伯', '（點頭）千歲爺是代天巡狩。王船出海，向來不是只為一件事。');
+    await S.say('xinghe:think', '……巡狩。巡。');
+    let asked = false;
+    for (;;) {
+      const opts = asked ? ['「是要我們先做什麼事嗎？」'] : ['「是要我們先做什麼事嗎？」', '「是要我們添香油錢嗎？」'];
+      const c = await S.choice(opts);
+      if (c === 1) {
+        await S.say('xinghe:normal', '千歲爺，是要弟子添香油錢嗎？');
+        await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['yin'], prompt: '按 Z 擲筊' });
+        await S.say('', '陰筊。');
+        await S.say('添丁伯', '（苦笑）千歲爺不缺你這點錢啦。');
+        asked = true;
+        continue;
+      }
+      await S.say('xinghe:normal', '千歲爺，是要弟子們先替您做什麼事嗎？');
+      await G.Mini.jiaobei({ title: '擲筊', throws: 1, results: ['sheng'], prompt: '按 Z 擲筊' });
+      S.sfx('bell');
+      await S.say('', '聖筊。');
+      break;
+    }
+    await S.say('添丁伯', '那就要一件一件問了。');
+    await S.say('chenbo:think', '……王船出巡，是繞境。繞著境內走一圈，把厄運收上船。');
+    await S.say('chenbo:serious', '星河，你問祂，是不是要王船先繞境。繞的不是東港，是——');
+    await S.say('xinghe:surprise', '是整個島？');
+    S.flash('#ffd890', 0.4, 0.35);
+    await S.say('', '殿內的燭火，忽然齊齊一晃。');
+    await S.say('xinghe:serious', '千歲爺。弟子再稟一次。');
+    await S.say('xinghe:serious', '王船出海，先繞全島巡境——沿路收燈，幫被逆潮所害的人，');
+    await S.say('xinghe:serious', '等繞完一圈，才渡黑水溝。千歲爺是不是這個意思？');
+    await G.Mini.jiaobei({ title: '擲筊・三聖筊', throws: 3, results: ['sheng', 'sheng', 'sheng'], prompt: '「繞島巡境」——按 Z 擲筊' });
+    S.sfx('bell'); S.sfx('wind');
+    S.particles([{ type: 'motes', density: 1.6 }, { type: 'wind', density: 0.4 }]);
+    await S.say('', '第三個聖筊落定時，殿外傳來一陣風，香爐的煙全往南邊海的方向流去。');
+    S.sfx('wood');
+    await S.say('', '王船廠的方向，傳來一聲悠長的木頭鳴響。');
+    await S.say('添丁伯', '（深深一拜）……三聖筊。千歲爺允了。');
+    await S.say('添丁伯', '「繞島巡境」。王船要先繞台灣一圈，才渡黑水溝。');
+    await S.say('hongying:serious', '一圈……一百天之內？');
+    await S.say('chenbo:normal', '王船走的不是人的水路。順著潮，夠的。');
+    await S.say('yungui:smug', '而且南邊東邊的潮，是活的。順得很。');
+    await S.say('xinghe:serious', '好！繞就繞！反正——');
+    await S.say('xinghe:smile', '我本來就是從海上來的。繞自己的島一圈，也是應該的。');
+    await S.say('', '眾人向神龕三拜。星河將筊杯雙手放回供桌。');
+    await S.say('添丁伯', '這支令旗，你們帶著。王船出巡，令旗在，千歲爺就在。');
+    await S.give('c9_key_lingqi', 1);
+    await S.give('c9_key_xunjing', 1);
+    await S.say('添丁伯', '不過……王船還沒造好。舵、帆、龍目都還沒上。');
+    await S.say('添丁伯', '這陣子王船廠夜夜鬧，師傅一個一個病倒。你們今晚去看看。');
+    S.particles([{ type: 'motes', density: 0.8 }]);
+    S.flag('ch9_jiaobei_done'); S.flag('ch9_condition_xunjing');
+    days(S, 1);
+    S.quest('q_ch9_main', 2);
+    S.objective('夜裡到王船廠');
+    S.cameraFollow();
+  }
+
+  async function wangboatLaunch(S) {
+    // morning after the shipyard night
+    S.bgm('temple');
+    S.light({ ambient: 0.1, color: '#ffd8a0' });
+    S.particles([{ type: 'motes', density: 0.6 }]);
+    const m = G.mapScene;
+    const boat = { t: 'wang_boat', x: 43, y: 10, solid: false, z: -200, key: 'dg_launchboat' };
+    m.objects.push(boat);
+    S.setPos('player', 44, 14, 'up'); S.setPos('hongying', 43, 14, 'up'); S.setPos('yungui', 46, 14, 'up'); S.setPos('tuanzi', 45, 15, 'up'); S.setPos('chenbo', 47, 14, 'up');
+    S.spawn({ id: 'dg_l_ashan', sprite: 'old_m', x: 42, y: 13, dir: 'up' });
+    S.spawn({ id: 'dg_l_keeper', sprite: 'temple_keeper', x: 49, y: 13, dir: 'up' });
+    S.spawn({ id: 'dg_l_app', sprite: 'villager_m2', x: 50, y: 12, dir: 'left' });
+    await S.camera(46, 12, 0.6);
+    await S.say('', '清晨。王船廠的大門敞開，阿杉師與學徒把舵、帆、龍目一一裝上。');
+    await S.say('', '王船通身彩繪：船身綠紅相間，船頭兩側，是龍目的位置。');
+    await S.say('阿杉師', '龍目，要請廟公來點。');
+    await S.move('dg_l_keeper', 'LL');
+    await S.say('', '添丁伯持著朱筆與鏡子，在船頭前唸誦。鏡子把晨光反射到龍目上，朱筆在瞳仁點下。');
+    S.flash('#fff2c8', 0.5, 0.7);
+    await S.say('添丁伯', '開光點睛——');
+    S.sfx('wood'); S.shake(4, 0.6);
+    await S.say('', '龍目一點，整艘船輕輕一震，像睡醒的人吸了一口氣。');
+    await S.say('xinghe:surprise', '它……它動了。');
+    await S.say('阿杉師', '船有眼睛，就認得路了。');
+    // 添載
+    const folk = [['dg_f1', 'shopkeeper_f', 36, 15], ['dg_f2', 'child_f', 37, 14], ['dg_f3', 'villager_m2', 38, 15], ['dg_f4', 'old_f', 36, 14], ['dg_f5', 'villager_m', 35, 15], ['dg_f6', 'fisher_f', 34, 14]];
+    for (const [id, sp, x, y] of folk) S.spawn({ id, sprite: sp, x, y, dir: 'right' });
+    for (const [id] of folk) S.move(id, 'RRR', { wait: false, speed: 2.4 });
+    await S.say('', '街上的人陸續來了，每人手上捧著東西：米、鹽、柴、油、茶葉、糖、清水。');
+    await S.say('添丁伯', '添載！王船出巡，大家把東西添上船，讓千歲爺和船上的人路上不缺。');
+    await S.say('雙糕潤阿嬸', '雙糕潤，一籠。路上餓了吃。');
+    await S.say('tuanzi:cry', '阿嬸妳是好人！');
+    S.face('dg_f2', 'tuanzi');
+    await S.say('細妹', '我把我的糖添給王船！……我可以先吃一顆嗎？');
+    await S.say('hongying:shy', '（小聲）……好可愛。');
+    await S.say('細妹', '（把糖放到糰子面前）給王船的貓仔吃。');
+    await S.say('tuanzi:surprise', '本大爺是石虎！……謝謝。');
+    await S.say('轎班少年', '師傅！這隻貓仔要不要也添上去？');
+    S.emote('tuanzi', '💢');
+    await S.say('tuanzi:angry', '本大爺不是添載品！');
+    await S.say('yungui:smug', '可以考慮。');
+    S.emote('dg_f3', '♪'); S.emote('hongying', '♪');
+    // procession
+    await S.camera(23, 8, 1.0);
+    const pal = { t: 'palanquin', x: 22, y: 7, key: 'dg_palanquin' };
+    m.objects.push(pal);
+    const fc = { t: 'firecracker_tower', x: 17, y: 9, key: 'dg_fc1' }, fc2 = { t: 'firecracker_tower', x: 28, y: 9, key: 'dg_fc2' };
+    m.objects.push(fc, fc2);
+    S.spawn({ id: 'dg_bj1', sprite: 'bajiajiang', x: 20, y: 9, dir: 'down' }); S.spawn({ id: 'dg_bj2', sprite: 'bajiajiang', x: 25, y: 9, dir: 'down' });
+    S.bgm('procession');
+    S.particles(['embers', { type: 'petals', density: 0.8 }]);
+    S.sfx('gong'); S.shake(3, 0.5);
+    await S.say('', '神轎抬出廟門，轎班列隊，炮仗聲響起。');
+    await S.wait(0.6);
+    await S.camera(44, 12, 0.8);
+    await S.say('添丁伯', '拉王船——！');
+    const c = await S.choice(['一起拉繩', '在旁邊看']);
+    if (c === 1) {
+      await S.say('', '眾人站在路邊看。一個阿嬤把繩頭塞到星河手裡。');
+      await S.say('拜拜阿嬤', '少年仔，這是你們要坐的船，要自己拉。');
+    }
+    await S.say('', '數十條粗繩繫在王船兩側的木架上。東港男女老少拉著繩子，王船在滾木上一寸一寸往海灘移動。');
+    await S.say('hongying:laugh', '用力啊雲歸！你那根繩子是垂著的！');
+    await S.say('yungui:smug', '我在用「意念」拉。');
+    // pull the boat to the beach: road (43,10) → (38,13) → (24,21)
+    S.hideFollowers(true); S.show('chenbo', false);
+    S.cameraFollow('dg_l_app');
+    S.setPos('dg_l_app', 43, 15, 'left');
+    const pullers = ['player', 'dg_f1', 'dg_f3', 'dg_f5', 'dg_l_app'];
+    S.setPos('player', 42, 15, 'left'); S.setPos('dg_f1', 41, 16, 'left'); S.setPos('dg_f3', 40, 15, 'left'); S.setPos('dg_f5', 39, 16, 'left');
+    for (const id of pullers) S.move(id, [['left', 14], ['down', 5]], { wait: false, speed: 3.0 });
+    S.sfx('push');
+    await G.Tweens.to(boat, { x: 29, y: 12 }, 4.6, 'inOutQuad');
+    await G.Tweens.to(boat, { y: 20, x: 25 }, 2.0, 'inOutQuad');
+    await S.wait(0.3);
+    for (const id of pullers) { const a = S.actor(id); if (a) a.queue = []; }
+    S.cameraFollow('player');
+    S.setPos('player', 23, 22, 'right'); S.setPos('dg_l_keeper', 22, 20, 'right'); S.setPos('dg_l_ashan', 22, 21, 'right');
+    S.hideFollowers(false); S.show('chenbo', true);
+    S.setPos('hongying', 22, 23, 'right'); S.setPos('yungui', 23, 24, 'right'); S.setPos('tuanzi', 24, 24, 'up'); S.setPos('chenbo', 21, 22, 'right');
+    await S.camera(26, 22, 0.6);
+    S.bgm('temple', { fade: 1 });
+    await S.say('', '王船抵達海灘。浪一波一波打上船底。');
+    await S.say('添丁伯', '（揮令旗，唸）開——水——路——');
+    S.particles([]);
+    await S.wait(0.5);
+    S.sfx('wind');
+    await S.say('', '海面平靜得出奇。忽然一陣風從東隆宮方向吹來，王船的帆一下子鼓滿——');
+    await S.say('', '——但海邊的旗子、人的衣角，全都一動不動。');
+    await S.say('阿杉師', '（喃喃）……沒有風，帆是滿的。');
+    await S.say('添丁伯', '千歲爺上船了。');
+    await S.say('chenbo:serious', '……上船吧。');
+    await S.fadeOut(0.6);
+    boat.water = true; boat.x = 24; boat.y = 23;
+    S.setPos('player', 26, 24, 'right'); S.setPos('hongying', 27, 24, 'right'); S.setPos('yungui', 26, 25, 'right'); S.setPos('tuanzi', 27, 25, 'right'); S.setPos('chenbo', 24, 24, 'right');
+    await S.fadeIn(0.6);
+    await S.say('', '眾人登船。陳伯走到船尾，把手放在舵上，停了很久。');
+    await S.say('chenbo:sad', '三十年沒掌過舵了。');
+    await S.say('xinghe:normal', '陳伯？');
+    await S.say('chenbo:smile', '……還記得。手還記得。');
+    S.bgm('voyage');
+    S.particles(['embers', { type: 'petals', density: 0.6 }]);
+    S.sfx('gong');
+    const riders = ['player', 'hongying', 'yungui', 'tuanzi', 'chenbo'];
+    for (const id of riders) S.move(id, 'DDDDD', { wait: false, speed: 1.1, ghost: true });
+    await G.Tweens.to(boat, { y: 28 }, 4.5, 'inOutQuad');
+    for (const id of riders) { const a = S.actor(id); if (a) a.queue = []; }
+    S.spawn({ id: 'dg_l_girl', sprite: 'child_f', x: 27, y: 25, dir: 'down' });
+    await S.say('細妹', '（大喊）王船——要回來喔——');
+    await S.say('hongying:smile', '……會回來的。');
+    await S.camera(27, 32, 1.4);
+    await S.say('', '王船駛離東港。帆上「代天巡狩」四個字，迎著朝陽。');
+    await xunjingShow(S, 0);
+    await S.say('添丁伯', '（遠遠地）出巡要穿號衣，千歲爺才認得是自己人——');
+    await S.give('c9_ar_haoyi', 3);
+    S.flag('ch9_wangboat_launch');
+    V().ch9_port = 'donggang';
+    V().ch9_deck_night = false;
+    days(S, 2);
+    for (const id of ['dg_l_ashan', 'dg_l_keeper', 'dg_l_app', 'dg_bj1', 'dg_bj2', 'dg_l_girl', ...folk.map((f) => f[0])]) S.remove(id);
+    G.mapScene.objects = G.mapScene.objects.filter((o) => !['dg_launchboat', 'dg_palanquin', 'dg_fc1', 'dg_fc2'].includes(o.key));
+    await S.warp('wangboat_deck', 12, 6, 'right');
+    await deckFirst(S);
+  }
+
+  // =====================================================================================================
+  // MAP 5 — wangchuan_yard 王船廠之夜（地城）
+  // =====================================================================================================
+  const YZ = {
+    w: { x: 1, y: 8, w: 15, h: 12, flag: 'ch9_bz_w', bz: [14, 8], name: '木料場' },
+    n: { x: 1, y: 2, w: 42, h: 4, flag: 'ch9_bz_n', bz: [37, 2], name: '帆布坊' },
+    e: { x: 28, y: 8, w: 15, h: 12, flag: 'ch9_bz_e', bz: [41, 17], name: '彩繪間' },
+    c: { x: 17, y: 8, w: 10, h: 12, flag: null, name: '船台' },
+  };
+  const yzClear = (s, k) => (k === 'c' ? !!(s.flags.ch9_bz_w && s.flags.ch9_bz_n && s.flags.ch9_bz_e) : !!s.flags[YZ[k].flag]) || !!s.flags.ch9_shipyard_clear;
+  const yzAt = (x, y) => Object.keys(YZ).find((k) => { const z = YZ[k]; return x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h; });
+  const CART_HOME = [7, 8, 7];
+  const CART_Y = [10, 12, 14];
+  const cartPos = (s) => (s.vars.ch9_carts || CART_HOME);
+  const EYES = [
+    { dir: '→', side: '左', text: '瞳仁朝著「船頭」的方向。板子角落用金漆寫著「左龍目」。' },
+    { dir: '←', side: '', text: '瞳仁朝後看。眼神空空的，像在回頭找什麼。' },
+    { dir: '↑', side: '', text: '瞳仁往上翻，只看得見天。' },
+    { dir: '→', side: '右', text: '瞳仁朝著「船頭」的方向。板子角落用金漆寫著「右龍目」。' },
+    { dir: '↓', side: '', text: '瞳仁往下看，像在看自己的腳。' },
+    { dir: '→', side: '左', text: '瞳仁朝前，角落也寫著「左龍目」……靠近一看，眼白裡有細細的綠色血絲。' },
+  ];
+  const BOARD_TXT = ['壹', '貳', '參', '肆', '伍', '陸'];
+
+  async function yardBrazier(S, k) {
+    const z = YZ[k];
+    if (F(z.flag)) { await S.say('', '艾草在火盆裡燒著，苦苦的煙把瘴氣都趕開了。'); return; }
+    if (!S.hasItem('c9_aicao')) {
+      await S.say('', '一座冷掉的火盆。要是有艾草……');
+      await S.say('yungui:normal', '艾草用完了？工寮的學徒那裡還有。');
+      return;
+    }
+    S.take('c9_aicao', 1);
+    S.sfx('fire');
+    S.flag(z.flag);
+    relight(S, { bgm: false });
+    await S.say('', `把艾草束丟進火盆。火一下子竄了起來，苦苦的煙往四周散開——${z.name}的瘴氣慢慢散去了。`);
+    if (yzClear(st(), 'c')) { await S.say('', '三座火盆都點起來了。中央船台上的瘴氣，也跟著散了。'); }
+  }
+  async function pushCart(S, i) {
+    const m = G.mapScene;
+    const p = m.player;
+    const o = m.objects.find((ob) => ob.key === 'cart' + i);
+    if (!o) return;
+    if (p.y !== o.y || (p.dir !== 'left' && p.dir !== 'right')) { await S.say('', '推車卡在鐵軌上，只能沿著鐵軌左右推。'); return; }
+    const dx = p.dir === 'right' ? 1 : -1;
+    const nx = dx > 0 ? o.x + 2 : o.x - 1;
+    const ok = m.terrainAt(nx, o.y) === 'rail' && !m.solid[o.y * m.w + nx] && !(m.player.x === nx && m.player.y === o.y);
+    if (!ok) { S.sfx('buzz'); await S.say('', '推不動了——再過去就是軌道盡頭，或是被別的東西擋住了。'); return; }
+    o.x += dx;
+    o.key = 'cart' + i;
+    S.sfx('push');
+    const v = V(); v.ch9_carts = cartPos(st()).slice(); v.ch9_carts[i] = o.x;
+    m.computeSolid();
+    const clear = v.ch9_carts.every((x) => x !== 8 && x + 1 !== 8);
+    if (clear && !F('ch9_carts_clear')) { S.flag('ch9_carts_clear'); S.sfx('switch'); await S.say('', '三台推車都讓開了——中間那條通道，一路通到木料堆深處。'); }
+  }
+  async function eyeBoard(S, i) {
+    const e = EYES[i];
+    await S.say('', `第${BOARD_TXT[i]}面龍目板。${e.text}`);
+    if (F('ch9_part_eye')) return;
+    const c = await S.choice(['取下', '先不要'], { cancel: 1 });
+    if (c !== 0) return;
+    const v = V();
+    const good = i === 0 || i === 3;
+    if (!good) {
+      S.sfx('dark'); S.shake(6, 0.4);
+      await S.say('', '木板在手裡變得又濕又熱——板子化成了瘟鬼！');
+      v.ch9_eyePick = null;
+      const r = await S.battle('t_c9_plague_eye', { mode: 'ambush', bgmAfter: 'tension' });
+      if (r === 'win') await S.say('', '瘟鬼散去，木板又掛回了牆上。好像什麼都沒發生過。');
+      return;
+    }
+    if (v.ch9_eyePick == null || v.ch9_eyePick === i) {
+      v.ch9_eyePick = i;
+      S.sfx('item');
+      await S.say('', '取下了一面龍目。龍目要成對……還要另一面。');
+      return;
+    }
+    v.ch9_eyePick = null;
+    await takeEye(S);
+  }
+  async function takeEye(S) {
+    S.sfx('levelup');
+    await S.say('', '一對木刻的大眼睛，眼白、黑瞳、金邊，瞳仁望向前方。');
+    await S.say('xinghe:normal', '船的眼睛……原來船也要看得見路。');
+    await S.give('c9_key_eye', 1);
+    S.flag('ch9_part_eye');
+    await yardPartsCheck(S);
+  }
+  async function yardPartsCheck(S) {
+    if (F('ch9_part_rudder') && F('ch9_part_sail') && F('ch9_part_eye')) {
+      S.sfx('ghost');
+      await S.say('', '三件都找齊了。中央船台那邊，吹來一陣陰冷的風。');
+      S.objective('回到中央船台');
+    }
+  }
+
+  G.Maps.define('wangchuan_yard', {
+    name: '王船廠', subtitle: '夜裡的船台', place: 'donggang', start: [21, 28],
+    bgm: (s) => (s.flags.ch9_shipyard_clear ? 'south' : 'tension'),
+    light: (s) => (s.flags.ch9_shipyard_clear ? { ambient: 0.35, color: '#1a1408' } : { ambient: 0.65, color: '#06100a', playerR: 220 }),
+    particles: (s) => {
+      const out = [];
+      const miasma = ['w', 'n', 'e'].filter((k) => !yzClear(s, k)).length;
+      if (miasma) out.push({ type: 'mist', color: '#8ad070', alpha: 0.12 + miasma * 0.05, density: 0.6 + miasma * 0.3 });
+      if (s.flags.ch9_bz_w || s.flags.ch9_bz_n || s.flags.ch9_bz_e) out.push({ type: 'embers', density: 0.5 });
+      return out;
+    },
+    tiles: (() => {
+      const g = grid(44, 32, 'W');
+      g.rect(1, 2, 42, 4, '_').rect(4, 6, 1, 2, '_').rect(39, 6, 1, 2, '_');
+      g.rect(1, 8, 15, 12, '_').rect(17, 8, 10, 12, '_').rect(28, 8, 15, 12, '_');
+      g.set(16, 9, '_').set(27, 9, '_');
+      g.rect(21, 20, 2, 2, '_').rect(1, 22, 42, 8, '_').rect(21, 30, 2, 2, '_');
+      g.rect(3, 10, 12, 1, '+').rect(3, 12, 12, 1, '+').rect(3, 14, 12, 1, '+');
+      g.rect(3, 17, 12, 3, 'W');
+      g.rect(18, 10, 8, 5, ':');
+      return g.rows();
+    })(),
+    objects: (s) => {
+      const cp = cartPos(s);
+      const out = [
+        // west: timber piles between the rails, store behind
+        { t: 'log', x: 3, y: 11 }, { t: 'log', x: 5, y: 11 }, { t: 'crate', x: 7, y: 11 }, { t: 'crate', x: 9, y: 11 }, { t: 'log', x: 10, y: 11 }, { t: 'log', x: 12, y: 11 }, { t: 'barrel', x: 14, y: 11 },
+        { t: 'crate', x: 3, y: 13 }, { t: 'log', x: 4, y: 13 }, { t: 'barrel', x: 6, y: 13 }, { t: 'crate', x: 7, y: 13 }, { t: 'log', x: 9, y: 13 }, { t: 'crate', x: 11, y: 13 }, { t: 'log', x: 12, y: 13 }, { t: 'crate', x: 14, y: 13 },
+        { t: 'log', x: 3, y: 15 }, { t: 'log', x: 5, y: 15 }, { t: 'crate', x: 7, y: 15 }, { t: 'crate', x: 9, y: 15 }, { t: 'log', x: 10, y: 15 }, { t: 'log', x: 12, y: 15 }, { t: 'barrel', x: 14, y: 15 },
+        { t: 'crate', x: 3, y: 16 }, { t: 'log', x: 4, y: 16 }, { t: 'barrel', x: 6, y: 16 }, { t: 'crate', x: 7, y: 16 }, { t: 'log', x: 9, y: 16 }, { t: 'crate', x: 11, y: 16 }, { t: 'log', x: 12, y: 16 }, { t: 'crate', x: 14, y: 16 },
+        { t: 'crate', x: 5, y: 12 },
+        { t: 'stump', x: 1, y: 15 }, { t: 'stump', x: 15, y: 19 }, { t: 'crate', x: 2, y: 18 },
+        { t: 'signboard', x: 1, y: 9, text: '繩', label: '拉繩', interact: async (S) => {
+          const c = await S.choice(['拉重置繩（推車回到原位）', '算了'], { cancel: 1 });
+          if (c !== 0) return;
+          V().ch9_carts = CART_HOME.slice();
+          const m = G.mapScene;
+          for (let i = 0; i < 3; i++) { const o = m.objects.find((ob) => ob.key === 'cart' + i); if (o) o.x = CART_HOME[i]; }
+          m.computeSolid(); S.sfx('push');
+          await S.say('', '嘎啦嘎啦——三台推車被繩子拉回了原位。');
+        } },
+        // north: sail loft
+        { t: 'laundry', x: 6, y: 3 }, { t: 'laundry', x: 10, y: 3 }, { t: 'laundry', x: 14, y: 3 }, { t: 'laundry', x: 25, y: 3 }, { t: 'laundry', x: 29, y: 3 },
+        { t: 'laundry', x: 33, y: 3, key: 'ysail', if: (st2) => !st2.flags.ch9_part_sail, label: '取下', interact: async (S) => { await takeSail(S); } },
+        { t: 'loom', x: 20, y: 2 }, { t: 'loom_small', x: 22, y: 2 }, { t: 'basket', x: 18, y: 2 }, { t: 'fishing_net', x: 2, y: 2 },
+        { t: 'crate', x: 40, y: 2 }, { t: 'crate', x: 42, y: 4 }, { t: 'barrel', x: 42, y: 3 },
+        // east: painting room
+        { t: 'signboard', x: 28, y: 11, text: '船頭', interact: ['牆上畫著一個大箭頭「→」，旁邊寫著「船頭」。龍目要朝這個方向看。'], label: '看' },
+        { t: 'table', x: 30, y: 12, w: 2 }, { t: 'jar', x: 33, y: 12 }, { t: 'jar', x: 34, y: 12 }, { t: 'jar_row', x: 30, y: 17 },
+        { t: 'screen', x: 36, y: 15 }, { t: 'paper_stack', x: 31, y: 14 }, { t: 'workbench', x: 39, y: 13 },
+        // center slipway
+        { t: 'wang_boat', x: 19, y: 11, if: (st2) => !st2.flags.ch9_shipyard_clear },
+        { t: 'log', x: 18, y: 15 }, { t: 'log', x: 24, y: 15 }, { t: 'lantern_rack', x: 17, y: 18 },
+        // entrance hall (工寮)
+        { t: 'bed_mat', x: 5, y: 23 }, { t: 'bed_mat', x: 7, y: 23 }, { t: 'bed_mat', x: 9, y: 23 },
+        { t: 'incense_burner', x: 3, y: 23 }, { t: 'workbench', x: 14, y: 23 }, { t: 'stove', x: 33, y: 22 }, { t: 'table', x: 30, y: 25 }, { t: 'chair', x: 29, y: 25 },
+        { t: 'lantern_frame', x: 26, y: 23 }, { t: 'crate', x: 40, y: 23 }, { t: 'barrel', x: 41, y: 23 }, { t: 'log', x: 37, y: 28 },
+        { t: 'red_lantern', x: 20, y: 22 }, { t: 'red_lantern', x: 23, y: 22 },
+      ];
+      CART_Y.forEach((y, i) => out.push({ t: 'log', x: cp[i], y, key: 'cart' + i, label: '推', interact: async (S) => { await pushCart(S, i); } }));
+      BOARD_TXT.forEach((txt, i) => out.push({ t: 'signboard', x: 30 + i * 2, y: 8, text: txt, v: i === 5 ? 1 : 0, label: '查看', interact: async (S) => { await eyeBoard(S, i); } }));
+      for (const k of ['w', 'n', 'e']) {
+        const z = YZ[k];
+        out.push({ t: s.flags[z.flag] ? 'brazier' : 'cauldron', x: z.bz[0], y: z.bz[1], label: s.flags[z.flag] ? '調查' : '點燃艾草', interact: async (S) => { await yardBrazier(S, k); } });
+      }
+      return out;
+    },
+    chests: [
+      { id: 'wy_sword', x: 1, y: 19, item: 'c9_sw_xunhai' },
+      { id: 'wy_loft', x: 41, y: 2, item: 'c9_aicao', n: 1, run: async (S) => { await S.give('shimuyu', 3); } },
+      { id: 'wy_east', x: 42, y: 19, item: 'c9_ac_jinzhi' },
+    ],
+    lights: (s) => {
+      const out = [{ x: 21, y: 24, r: 180, color: '#ffb060', flicker: 0.2 }, { x: 8, y: 23, r: 110, color: '#ffb060' }];
+      if (!s.flags.ch9_shipyard_clear) out.push({ x: 21, y: 13, r: 180, color: '#7aff6a', flicker: 0.6 });
+      out.push({ x: 8, y: 16, r: 70, color: '#ffd890' });
+      return out;
+    },
+    npcs: [
+      { id: 'wy_ashan', sprite: 'old_m', name: '阿杉師', x: 8, y: 24, dir: 'down', talk: async (S) => {
+        if (F('ch9_shipyard_clear')) { await S.say('阿杉師', '……燒退了。天一亮，我們就把舵、帆、龍目裝上去。'); return; }
+        await S.say('阿杉師', '龍目要成對……瞳仁朝前，看路，不往後看。別拿錯。');
+        await S.say('阿杉師', '還有……帶著艾草去。點了艾草，瘴氣就散。');
+      } },
+      { id: 'wy_app', sprite: 'villager_m2', name: '學徒', x: 12, y: 25, dir: 'left', talk: async (S) => {
+        if (F('ch9_shipyard_clear')) { await S.say('學徒', '師傅退燒了！你們是怎麼辦到的？'); return; }
+        await S.say('學徒', '咳……師傅說，艾草要多少拿多少。');
+        if (G.Inv.count('c9_aicao') < 3) { await S.give('c9_aicao', 3 - G.Inv.count('c9_aicao')); }
+        else await S.say('學徒', '你們身上的還夠用。');
+      } },
+      { id: 'wy_app2', sprite: 'villager_m', name: '病倒的學徒', x: 5, y: 24, dir: 'down', talk: ['咳咳……綠色的火……從海那邊爬進來……', '牠們把舵拖去木料場，帆扯去帆布坊……'] },
+    ],
+    enemies: [
+      { id: 'wye1', troop: 't_c9_plague_b', x: 2, y: 13, art: 'plague_ghost', variant: 1, lv: 32, radius: 1, if: (s) => !yzClear(s, 'w') },
+      { id: 'wye2', troop: 't_c9_plague_a', x: 12, y: 4, art: 'plague_ghost', variant: 1, lv: 32, radius: 3 },
+      { id: 'wye3', troop: 't_c9_plague_b', x: 28, y: 4, art: 'plague_ghost', variant: 1, lv: 32, radius: 3, if: (s) => !yzClear(s, 'n') },
+      { id: 'wye4', troop: 't_c9_plague_a', x: 34, y: 16, art: 'plague_ghost', variant: 2, lv: 32, radius: 2 },
+      { id: 'wye5', troop: 't_c9_plague_b', x: 38, y: 11, art: 'plague_ghost', variant: 1, lv: 32, radius: 2, if: (s) => !yzClear(s, 'e') },
+      { id: 'wye6', troop: 't_c9_plague_a', x: 25, y: 18, art: 'plague_ghost', variant: 1, lv: 32, radius: 1, if: (s) => !yzClear(s, 'c') && !s.flags.ch9_shipyard_clear },
+    ],
+    events: [
+      { id: 'wy_intro', trigger: 'auto', if: (s) => !s.flags.ch9_shipyard_enter, run: async (S) => { await yardIntro(S); } },
+      { id: 'wy_rudder', trigger: 'action', x: 8, y: 16, label: '取舵', if: (s) => !s.flags.ch9_part_rudder, run: async (S) => {
+        S.sfx('item');
+        await S.say('', '木料堆深處，卡著一支巨大的舵。');
+        await S.say('xinghe:surprise', '這舵……比我人還高！');
+        await S.say('hongying:smug', '我扛。');
+        await S.say('', '紅纓單手把舵扛上了肩。');
+        await S.give('c9_key_rudder', 1);
+        S.flag('ch9_part_rudder');
+        await yardPartsCheck(S);
+      } },
+      { id: 'wy_boss', trigger: 'touch', x: 18, y: 16, w: 8, h: 2, if: (s) => !!(s.flags.ch9_part_rudder && s.flags.ch9_part_sail && s.flags.ch9_part_eye) && !s.flags.ch9_shipyard_clear, run: async (S) => { await yardBoss(S); } },
+      { id: 'wy_center_hint', trigger: 'touch', x: 18, y: 16, w: 8, h: 2, once: true, if: (s) => !(s.flags.ch9_part_rudder && s.flags.ch9_part_sail && s.flags.ch9_part_eye), run: async (S) => {
+        await S.say('', '船台上，未完成的王船靜靜地躺著。船身四周，綠色的鬼火團團轉。');
+        await S.say('yungui:serious', '舵、帆、龍目還沒找回來。先別驚動牠們。');
+      } },
+    ],
+    warps: [
+      { x: 21, y: 31, w: 2, to: 'donggang', tx: 46, ty: 11, tdir: 'down' },
+    ],
+    drawGround: (ctx, t, m) => {
+      const s = st();
+      // miasma haze per zone
+      for (const k of Object.keys(YZ)) {
+        if (yzClear(s, k)) continue;
+        const z = YZ[k];
+        ctx.save();
+        ctx.globalAlpha = 0.18 + 0.05 * Math.sin(t * 1.3 + z.x);
+        ctx.fillStyle = k === 'c' ? '#5a7a3a' : '#4a7a4a';
+        ctx.fillRect(z.x * T, z.y * T, z.w * T, z.h * T);
+        ctx.restore();
+      }
+      // the rudder in its nook
+      if (!s.flags.ch9_part_rudder) {
+        const x = 8 * T + 32, y = 16 * T + 40;
+        ctx.save();
+        ctx.fillStyle = '#7a4a26'; ctx.strokeStyle = '#3a2010'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x - 6, y - 60); ctx.lineTo(x + 6, y - 60); ctx.lineTo(x + 8, y - 10); ctx.lineTo(x + 26, y - 4); ctx.lineTo(x + 22, y + 18); ctx.lineTo(x - 22, y + 18); ctx.lineTo(x - 26, y - 4); ctx.lineTo(x - 8, y - 10); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c8282a'; ctx.fillRect(x - 18, y + 2, 36, 5);
+        ctx.restore();
+        drawSpark(ctx, 8, 16, t, '#ffe7a0');
+      }
+      if (!s.flags.ch9_part_sail) drawSpark(ctx, 33, 3, t, '#ffe7a0');
+    },
+    drawOver: (ctx, t) => {
+      const v = V();
+      if (v.ch9_chiefShow) drawMonsterAt(ctx, 'plague_ghost', 21, 15, t, { scale: 0.85, variant: 2, alpha: v.ch9_chiefShow });
+    },
+    onUpdate: (dt, m, busy) => {
+      if (busy) return;
+      const s = st();
+      if (s.flags.ch9_shipyard_clear) return;
+      const z = yzAt(m.player.x, m.player.y);
+      if (!z || yzClear(s, z)) { m._c9step = s.steps; return; }
+      if (m._c9step == null) m._c9step = s.steps;
+      if (s.steps - m._c9step >= 4) {
+        m._c9step = s.steps;
+        for (const mem of G.Party.active()) if (mem.hp > 1) mem.hp = Math.max(1, mem.hp - Math.max(1, Math.round(G.Party.stats(mem.id).mhp * 0.02)));
+        G.Render.doFlash('#7ad08a', 0.3, 0.25);
+        G.Audio.sfx('poison');
+      }
+    },
+  });
+
+  async function takeSail(S) {
+    S.sfx('item');
+    await S.say('', '晾著的帆布裡，有一面繡著「代天巡狩」的大帆。帆被瘟鬼的綠火燒出了幾個洞。');
+    await S.say('yungui:think', '破了。……算了，補帆跟補道心一樣，有破洞才透氣。');
+    await S.say('tuanzi:surprise', '這句話好像很有道理，又好像什麼都沒說。');
+    await S.give('c9_key_sail', 1);
+    S.flag('ch9_part_sail');
+    await yardPartsCheck(S);
+  }
+  async function yardIntro(S) {
+    S.flag('ch9_shipyard_enter');
+    S.setPos('player', 12, 26, 'up'); S.gather();
+    await S.say('', '工寮裡，阿杉師與兩名學徒躺在草蓆上，冒著冷汗。角落燃著殘香。');
+    S.face('wy_ashan', 'player');
+    await S.say('阿杉師', '咳……你們是廟公派來的？');
+    await S.say('阿杉師', '每晚三更，就有東西從海那邊爬進來。綠色的火……咳……');
+    await S.say('阿杉師', '牠們把舵拖去木料場，帆扯去帆布坊，龍目……藏在彩繪間。');
+    await S.say('yungui:serious', '瘟鬼。王船是送瘟的船，牠們當然不想讓它造好。');
+    await S.say('阿杉師', '龍目要成對……瞳仁朝前，看路，不往後看。別拿錯。');
+    await S.say('阿杉師', '還有……帶著艾草去。點了艾草，瘴氣就散。');
+    await S.give('c9_aicao', 3);
+    await S.say('hongying:think', '艾草？端午掛在門口那個？');
+    await S.say('yungui:normal', '端午前後，天熱，疫病多。艾草菖蒲驅瘴，是老祖宗的辦法。');
+    await S.say('tuanzi:sad', '艾草很苦，本大爺不吃。');
+    await S.say('yungui:smug', '沒人叫你吃。');
+    S.objective('取回王船舵、王船帆、龍目');
+  }
+  async function yardBoss(S) {
+    S.bgm('tension');
+    await S.camera(21, 13, 0.8);
+    V().ch9_chiefShow = 0.01;
+    await G.Tweens.to(V(), { ch9_chiefShow: 1 }, 1.0, 'linear');
+    S.sfx('ghost');
+    await S.say('', '船台上，未完成的王船旁，綠火聚成一團。數十隻瘟鬼疊在一起，捏成一個駝背、臃腫的影子。');
+    await S.say('', '咳嗽聲，像一整個村子在咳。');
+    await S.say('瘟鬼頭', '咳咳咳……王船……造好了……我們就要被載走了……');
+    await S.say('瘟鬼頭', '不要……我們不要走……這裡人多……好暖……');
+    await S.say('yungui:angry', '暖？你們待的地方，人都在發燒！');
+    await S.say('xinghe:serious', '王船造好，你們就該走了。這是千歲爺的意思。');
+    const info = { ko: false };
+    const r = await S.battle('t_c9_plague_boss', { intro: async (sc) => {
+      await plagueIntro()(sc);
+      const kill = sc.kill.bind(sc);
+      sc.kill = (u) => { if (u.side === 'party') info.ko = true; return kill(u); };
+    }, bgmAfter: 'tension' });
+    if (r !== 'win') { V().ch9_chiefShow = 0; return; }
+    S.cameraFollow();
+    await S.camera(21, 13, 0.3);
+    await G.Tweens.to(V(), { ch9_chiefShow: 0 }, 1.2, 'linear');
+    V().ch9_chiefShow = 0;
+    S.particles([{ type: 'mist', color: '#8ad070', alpha: 0.25 }]);
+    await S.say('', '瘟鬼頭散開成綠色的煙霧。煙霧繞著王船轉了一圈，被吸進船艙裡——艙門自己「喀」一聲關上。');
+    S.sfx('wood');
+    await S.say('tuanzi:surprise', '牠們……自己上船了？');
+    await S.say('chenbo:normal', '本來就是要載走的。王船出海，就把牠們一起帶出去，帶遠一點。');
+    S.flag('ch9_shipyard_clear');
+    relight(S);
+    await S.camera(8, 24, 1.0);
+    await S.say('', '工寮那邊，阿杉師咳完最後一聲，坐了起來。');
+    S.setPos('wy_ashan', 8, 24, 'up');
+    await S.jump('wy_ashan', 8);
+    await S.say('阿杉師', '……燒退了。');
+    if (!info.ko) {
+      if (!G.state.opened['wangchuan_yard:wy_east'] && !S.hasItem('c9_ac_jinzhi')) { await S.say('', '船台上，留下了一張金紙摺成的護符。'); await S.give('c9_ac_jinzhi', 1); }
+      else await S.give('c9_shuanggaorun', 3);
+    }
+    days(S, 1);
+    S.cameraFollow();
+    await S.fadeOut(1.0);
+    await S.narrate(['那一夜，東港的人睡得特別沉。', '天亮的時候，王船廠的大門敞開了。'], { veil: 1 });
+    S.quest('q_ch9_main', 3);
+    await S.warp('donggang', 44, 14, 'up', { fade: 0.01 });
+  }
+
+  // =====================================================================================================
+  // MAP 6 — wangboat_deck 王船甲板（移動樞紐）
+  // =====================================================================================================
+  const PORTS = {
+    qihou: { name: '旗後（打狗）', place: 'takao' },
+    donggang: { name: '東港', place: 'donggang' },
+    nanwan: { name: '南灣（恆春）', place: 'hengchun' },
+    eluanbi: { name: '鵝鑾鼻', place: 'eluanbi' },
+  };
+  async function boardDeck(S) {
+    S.sfx('step');
+    await S.warp('wangboat_deck', 12, 8, 'up');
+  }
+  async function disembark(S) {
+    const port = V().ch9_port || 'donggang';
+    if (port === 'qihou') await S.warp('qihou', 44, 8, 'left');
+    else if (port === 'donggang') await S.warp('donggang', 26, 25, 'up');
+    else if (port === 'nanwan') await S.warp('hengchun', 24, 39, 'up');
+    else if (port === 'eluanbi') await S.warp('eluanbi', 4, 12, 'right');
+  }
+  async function sail(S, to) {
+    const from = V().ch9_port || 'donggang';
+    await S.say('chenbo:serious', '起錨——');
+    await S.travel(PORTS[from].place, PORTS[to].place, { label: '王船順著潮水，帆是滿的。' });
+    V().ch9_port = to;
+    await S.warp('wangboat_deck', 12, 7, 'up');
+    S.toast(`王船泊在${PORTS[to].name}`, 'lantern');
+  }
+  async function helmTalk(S) {
+    await S.lines([chenboLine()]);
+    const cur = V().ch9_port || 'donggang';
+    const opts = [];
+    for (const k of ['qihou', 'donggang']) if (k !== cur) opts.push({ label: PORTS[k].name, k });
+    if (F('ch9_cape_blocked') && cur !== 'nanwan') opts.push({ label: PORTS.nanwan.name, k: 'nanwan' });
+    if (!F('ch9_cape_blocked')) opts.push({ label: '往南（繞過南岬）', k: 'south' });
+    if (F('ch9_hengchun_done') && cur !== 'eluanbi') opts.push({ label: PORTS.eluanbi.name, k: 'eluanbi' });
+    if (F('ch9_lighthouse_flame')) opts.push({ label: '出航・往東', k: 'east' });
+    opts.push({ label: '不出航', k: null });
+    await S.say('chenbo:normal', '要去哪？');
+    const c = await S.choice(opts.map((o) => o.label), { cancel: opts.length - 1 });
+    const k = opts[c] && opts[c].k;
+    if (!k) return;
+    if (k === 'south') { await capeBlocked(S); return; }
+    if (k === 'east') {
+      const ok = await S.choice(['出航（之後將無法再回到南部海域）', '再等等'], { cancel: 1 });
+      if (ok === 0) await chapterEnd(S);
+      return;
+    }
+    await sail(S, k);
+    if (k === 'eluanbi' && !F('ch9_keeper_met')) {
+      await S.say('chenbo:normal', '船就泊在岬下的小灣。上岸吧，燈塔就在上面。');
+      await disembark(S);
+    }
+  }
+  async function deckRest(S) {
+    await S.say('', '艙口底下是船艙。添載的米袋、柴火堆得整整齊齊，很好睡。');
+    const c = await S.choice(['在船艙休息', '算了'], { cancel: 1 });
+    if (c !== 0) return;
+    await S.fadeOut(0.6);
+    G.Party.healAll();
+    S.sfx('heal');
+    await S.wait(0.8);
+    await S.fadeIn(0.6);
+    S.toast('在船艙裡睡了一覺，全員完全恢復。', 'lantern');
+  }
+  const deckNight = (s) => !!s.vars.ch9_deck_night;
+  G.Maps.define('wangboat_deck', {
+    name: '王船', subtitle: '代天巡狩', place: null, bgm: 'voyage', start: [12, 6], autosave: true,
+    light: (s) => (deckNight(s) ? { ambient: s.vars.ch9_deck_dawn ? 0.3 : 0.5, color: s.vars.ch9_deck_dawn ? '#3a2040' : '#0a1030', playerR: 200 } : { ambient: 0 }),
+    particles: (s) => (deckNight(s) ? ['wind', 'lanterns'] : ['wind']),
+    tiles: (() => {
+      const g = grid(26, 12, '~');
+      g.span(3, 4, 19, 'd').span(4, 3, 21, 'd').span(5, 3, 22, 'd').span(6, 3, 22, 'd').span(7, 3, 21, 'd').span(8, 4, 19, 'd');
+      g.rect(12, 9, 1, 2, 'k');
+      g.rect(0, 0, 26, 1, 'w').rect(0, 11, 26, 1, 'w');
+      return g.rows();
+    })(),
+    objects: [
+      { t: 'banner', x: 12, y: 4, color: '#d8a030', text: '代天巡狩' },
+      { t: 'banner', x: 12, y: 7, color: '#b0281e', text: '巡' },
+      { t: 'altar', x: 18, y: 4, interact: async (S) => { S.sfx('bell'); await S.say('', '船頭的神位。木製的神位上，插著千歲爺的令旗。'); await S.saveMenu(); }, label: '參拜・存檔' },
+      { t: 'cauldron', x: 21, y: 5, if: (s) => !s.flags.ch9_lighthouse_flame, interact: ['船頭燈座。燈芯是乾的，還沒點過火。', '陳伯說，要一盞「替陌生人守過夜」的火。'], label: '調查' },
+      { t: 'brazier', x: 21, y: 5, if: (s) => !!s.flags.ch9_lighthouse_flame, interact: ['船頭燈靜靜地燒著，金色的光照在海面上，海底的珊瑚、魚群都看得清清楚楚。'], label: '調查', light: { r: 260, color: '#ffd27a', flicker: 0.2 } },
+      { t: 'stairs_down', x: 9, y: 6 },
+      { t: 'crate', x: 7, y: 3, interact: [['tuanzi:smug', '本大爺檢查過了，船艙的米很香。鹽很鹹。柴不能吃。']], label: '調查' },
+      { t: 'jar', x: 8, y: 3 }, { t: 'barrel', x: 15, y: 3 }, { t: 'crate', x: 16, y: 3 },
+      { t: 'barrel', x: 6, y: 8 }, { t: 'jar', x: 15, y: 8 }, { t: 'basket', x: 16, y: 8 },
+      { t: 'red_lantern', x: 5, y: 3, hang: true, light: { r: 120, color: '#ffb060', flicker: 0.2 } },
+      { t: 'red_lantern', x: 19, y: 3, hang: true, light: { r: 120, color: '#ffb060', flicker: 0.2 } },
+    ],
+    npcs: [
+      { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', name: '陳伯', x: 4, y: 5, dir: 'right', fixedDir: true, talk: async (S) => { await helmTalk(S); } },
+    ],
+    events: [
+      { id: 'deck_rest', trigger: 'action', x: 9, y: 6, label: '休息', run: async (S) => { await deckRest(S); } },
+      { id: 'deck_off', trigger: 'touch', x: 12, y: 10, run: async (S) => {
+        if (F('ch9_end')) return;
+        await disembark(S);
+      } },
+    ],
+    drawGround: (ctx, t) => {
+      // wake & bow spray drifting past the hull
+      ctx.save();
+      ctx.strokeStyle = 'rgba(230,245,255,0.35)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      for (let i = 0; i < 14; i++) {
+        const y = (1.3 + (i % 7) * 1.4) * T + Math.sin(t + i) * 6;
+        const x = ((i * 173 + t * 90) % (26 * T)) ;
+        ctx.globalAlpha = 0.25 + 0.2 * Math.sin(t * 2 + i);
+        ctx.beginPath(); ctx.moveTo(26 * T - x, y); ctx.lineTo(26 * T - x + 46, y); ctx.stroke();
+      }
+      // tiller at the stern
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#6a3a1e'; ctx.strokeStyle = '#2a140a';
+      ctx.beginPath(); ctx.roundRect(3 * T + 6, 5 * T + 24, T - 4, 12, 5); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    },
+    onEnter: async (S) => { S.visit(PORTS[V().ch9_port || 'donggang'].place); },
+  });
+
+  async function deckFirst(S) {
+    S.setPos('player', 12, 6, 'left'); S.gather();
+    S.face('chenbo', 'right');
+    await S.say('', '王船乘著潮水往外海駛去。陳伯穩穩地握著舵。');
+    await S.say('chenbo:serious', '別高興太早。王船醒了，可船頭燈還沒點。');
+    await S.say('chenbo:serious', '沒有燈，這船在活人的海上走得了，到了死人的海，就是瞎子。');
+    await S.say('xinghe:think', '要點什麼燈？');
+    await S.say('chenbo:normal', '引魂人的老規矩——要用一盞「替陌生人守過夜」的火。');
+    await S.say('chenbo:normal', '照過活人，也照過死人。不為自己，只為了讓別人回得了家的火。');
+    await S.say('yungui:think', '替陌生人守夜……鵝鑾鼻。島最南端那座洋人蓋的燈塔。');
+    await S.say('yungui:think', '聽說叫「東亞之光」。夜夜替不認識的船照路。');
+    await S.say('chenbo:normal', '就是那裡。往南，繞過南岬。');
+    S.objective('往南，前往鵝鑾鼻（和陳伯說話出航）');
+  }
+
+  // C9-09 南岬逆風・泊南灣
+  async function capeBlocked(S) {
+    await S.travel('donggang', 'hengchun', { label: '王船沿著海岸南下。天色晴朗，海水越來越藍。' });
+    V().ch9_port = 'nanwan';
+    await S.warp('wangboat_deck', 12, 6, 'right');
+    S.setPos('player', 12, 6, 'right'); S.gather();
+    S.light({ ambient: 0.35, color: '#1a1a2a' });
+    S.bgm('wind');
+    S.particles([{ type: 'wind', density: 2.5 }, 'leaves']);
+    S.sfx('wind'); S.shake(10, 1.0);
+    await S.say('', '接近南岬時，天空突然一暗。陸地方向，一道看不見的牆從山上壓下來——落山風。');
+    await S.say('', '帆被反吹，王船倒退。');
+    await S.say('chenbo:angry', '抓穩！');
+    S.sfx('splash'); S.shake(12, 0.8);
+    await S.say('', '震動。海浪拍上了甲板。');
+    await S.say('tuanzi:cry', '喵嗚嗚嗚嗚！本大爺要飛走了！');
+    await S.jump('tuanzi', 30);
+    await S.say('', '紅纓一把抓住糰子的尾巴。');
+    await S.say('hongying:serious', '風裡……有聲音。');
+    S.sfx('ghost');
+    await S.say('', '風聲中，隱約有人在喊——不是一個人，是很多人。喊的像是名字，但聽不清楚。');
+    await S.say('xinghe:serious', '是人在叫名字……可是每個名字都被吹碎了。');
+    await S.say('chenbo:serious', '落山風。三月以後該停的，現在四月底還在吹。');
+    await S.say('chenbo:serious', '這樣過不了南岬。先轉進南灣避風，上岸去恆春問問。');
+    S.flag('ch9_cape_blocked');
+    days(S, 2);
+    S.quest('q_ch9_main', 4);
+    S.objective('到恆春古城打聽落山風的事');
+    await S.fadeOut(0.6);
+    await S.narrate(['王船轉向，泊入南灣。海面稍稍平靜了下來。'], { veil: 1 });
+    await S.warp('hengchun', 24, 39, 'up', { fade: 0.01 });
+  }
+
+  // C9-16 繞過南岬（章末）
+  async function chapterEnd(S) {
+    V().ch9_deck_night = true; V().ch9_deck_dawn = true;
+    await S.travel('eluanbi', 'taitung', { label: '黎明前，王船繞過南岬。' });
+    await S.warp('wangboat_deck', 18, 6, 'right');
+    S.setPos('player', 17, 6, 'right'); S.gather();
+    S.setPos('hongying', 15, 7, 'right'); S.setPos('yungui', 14, 4, 'right'); S.setPos('tuanzi', 19, 7, 'right');
+    S.bgm('voyage');
+    await S.say('', '黎明前。王船的船頭燈在海上亮著，像一顆落在海面上的星。');
+    await S.say('', '王船繞過南岬。陸地在左手邊慢慢轉向——從往南，轉成往東，再轉成往北。');
+    await S.say('chenbo:normal', '過了南岬，就是後山的海了。');
+    S.light({ ambient: 0.22, color: '#10204a' });
+    await S.say('', '海水的顏色忽然變了：從灰綠，變成極深極透明的藍黑色。船底下，一股巨大的暖流推著王船往北。');
+    await S.say('xinghe:surprise', '這水……是暖的。');
+    await S.say('chenbo:smile', '黑潮。');
+    await S.say('chenbo:normal', '西邊那條黑水溝，是收人的。這一條，是送東西來的。');
+    await S.say('chenbo:normal', '魚、木頭、種子、遠方的消息。……還有人。');
+    S.particles(['sparkles', 'wind']);
+    S.sfx('splash');
+    await S.say('', '一條銀色的東西從船頭飛過——一條飛魚，張著翅膀一樣的鰭，滑過浪尖。接著兩條、十條、一百條。');
+    await S.jump('tuanzi', 26);
+    await S.say('tuanzi:surprise', '喵！！魚會飛！！本大爺看到神蹟了！！');
+    await S.say('hongying:laugh', '哈哈哈！糰子，你口水流到甲板上了！');
+    await S.say('yungui:smile', '（靠著船舷，拿出酒葫蘆喝了一口）……這倒是頭一回，看海看得高興。');
+    await S.move('player', 'RR');
+    S.bgm('love');
+    await S.say('', '星河走到船頭燈旁。燈火映在他臉上。');
+    await S.say('xinghe:normal', '（白芷。我現在在妳來的那條潮上。）');
+    await S.say('xinghe:normal', '（阿順伯說，十八年前，妳也是被這條潮送上岸的。）');
+    await S.say('xinghe:smile', '（妳那時候，應該也覺得很暖吧。）');
+    V().ch9_deck_night = false;
+    S.light({ ambient: 0 });
+    S.flash('#ffe8b0', 1.2, 0.6);
+    S.bgm('voyage');
+    await S.say('', '日出。金色的光鋪滿海面。王船乘著黑潮，往北。');
+    await S.fadeOut(1.5);
+    await S.narrate(['第九章　王船南行　完'], { veil: 1 });
+    S.flag('ch9_end');
+    S.quest('q_ch9_main', 'done');
+    await G.Story.next(S, 10);
   }
 
   // @@MAPS@@

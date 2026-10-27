@@ -770,3 +770,850 @@
       ctx.restore();
     }
   }
+
+  // =================================================================================================
+  // shared map visuals
+  // =================================================================================================
+  // 北斗 in the screen corner: frozen before 11-10, turning one notch per big beat after (vars.ch11_moon).
+  function drawDipper(ctx, t) {
+    if (!F('ch11_start') || F('ch11_done')) return;
+    const moving = F('ch11_night_moves');
+    const ang = (V().ch11_moon || 0) * 0.2;
+    ctx.save();
+    ctx.setTransform(G.S, 0, 0, G.S, 0, 0);
+    const cx = 64, cy = G.H - 112;
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = 'rgba(8,12,30,0.45)'; ctx.beginPath(); ctx.arc(cx, cy, 46, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(220,230,255,0.25)'; ctx.lineWidth = 1; ctx.stroke();
+    const S7 = [[-26, 10], [-12, 14], [-2, 6], [10, 0], [16, -12], [30, -10], [34, 4]];
+    ctx.translate(cx, cy); ctx.rotate(ang);
+    ctx.strokeStyle = 'rgba(200,215,255,0.35)'; ctx.beginPath();
+    S7.forEach(([x, y], i) => (i ? ctx.lineTo(x * 0.9, y * 0.9) : ctx.moveTo(x * 0.9, y * 0.9))); ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter';
+    S7.forEach(([x, y], i) => { const tw = moving ? 0.6 + 0.4 * Math.sin(t * 3 + i * 1.7) : 1; ctx.globalAlpha = tw; ctx.drawImage(G.FX.glowSprite('#e8f0ff'), x * 0.9 - 6, y * 0.9 - 6, 12, 12); });
+    ctx.restore();
+  }
+  // drifting soul-lights on the sea (world space)
+  function drawSeaLights(ctx, t, ms, n, col, frozen) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < n; i++) {
+      const bx = U.hash(i, 1, 41) * ms.w * T, by = U.hash(i, 2, 41) * ms.h * T;
+      const sp = frozen ? 0 : 6;
+      const x = (bx + Math.sin(t * 0.5 + i) * 10 - t * sp + ms.w * T * 4) % (ms.w * T), y = by + Math.cos(t * 0.7 + i * 2) * 6;
+      const c = Math.floor(y / T) * ms.w + Math.floor(x / T);
+      const tt = ms.terrain[c];
+      if (tt !== 'black_sea' && tt !== 'water' && tt !== 'deepwater') continue;
+      ctx.globalAlpha = 0.45 + 0.35 * Math.sin(t * 2 + i);
+      ctx.drawImage(G.FX.glowSprite(col), x - 10, y - 10, 20, 20);
+    }
+    ctx.restore();
+  }
+
+  // =================================================================================================
+  // MAP: wangboat_blacktide 王船・甲板 (28×16)
+  // =================================================================================================
+  const DECK = 'wangboat_blacktide';
+  const leg = (st) => (st || G.state).vars.ch11_leg || 0;
+  const docked = (st) => (st.flags.ch11_start && !st.flags.ch11_sail) || leg(st) >= 5;
+  function seaChar(st) {
+    if (!st.flags.ch11_start) return '~';
+    if (!st.flags.ch11_jailer) return 's';
+    if (!st.flags.ch11_sail) return '~';
+    return leg(st) >= 5 ? '~' : 'K';
+  }
+  function deckTiles(st) {
+    const g = grid(28, 16, seaChar(st));
+    if (seaChar(st) === 's') { for (let y = 0; y < 16; y++) for (let x = 0; x < 28; x++) if (U.hash(x, y, 77) < 0.12) g[y][x] = '-'; }
+    fill(g, 7, 4, 17, 1, 'd'); fill(g, 5, 5, 20, 1, 'd'); fill(g, 3, 6, 22, 4, 'd'); fill(g, 5, 10, 20, 1, 'd'); fill(g, 7, 11, 17, 1, 'd');
+    if (docked(st)) fill(g, 25, 8, 3, 1, 'k');
+    return rows(g);
+  }
+  function deckLight(st) {
+    const l = leg(st);
+    if (F('ending_normal') && st.vars.c11_dawn) return { ambient: 0.12, color: '#2a2030', tint: 'rgba(255,200,160,0.18)' };
+    if (!st.flags.ch11_sail) return { ambient: 0.6, color: '#060a1e', playerR: 220 };
+    if (l >= 5) return { ambient: 0.4, color: '#20102a', tint: 'rgba(255,170,120,0.16)', playerR: 220 };
+    if (l === 4) return st.flags.ch11_fog ? { ambient: 0.45, color: '#0a0c1a', playerR: 240 } : { ambient: 0.9, color: '#02030a', playerR: 120 };
+    return { ambient: 0.72, color: '#04060f', playerR: 220 };
+  }
+  G.Maps.define(DECK, {
+    name: '王船・甲板',
+    subtitle: (st) => (st.flags.ch11_sail ? (leg(st) >= 5 ? '彼岸・渡口' : '黑水溝') : '最後一夜'),
+    place: 'penghu',
+    bgm: (st) => (!st.flags.ch11_start ? 'voyage' : !st.flags.ch11_sail ? 'penghu' : leg(st) >= 5 ? 'farshore' : leg(st) === 4 ? (st.flags.ch11_fog ? 'farshore' : null) : 'sea'),
+    start: [15, 8],
+    light: deckLight,
+    particles: (st) => (!st.flags.ch11_sail ? ['motes'] : leg(st) >= 5 ? ['petals', 'motes'] : leg(st) === 4 && !st.flags.ch11_fog ? [{ type: 'mist', density: 3, alpha: 0.3 }] : ['lanterns', 'mist']),
+    tiles: deckTiles,
+    objects: [
+      { t: 'fence_wood', x: 7, y: 4, w: 17 }, { t: 'fence_wood', x: 7, y: 11, w: 17 },
+      { t: 'fence_wood', x: 5, y: 5, w: 2 }, { t: 'fence_wood', x: 5, y: 10, w: 2 },
+      { t: 'lamp_post', x: 4, y: 6, lit: false, interact: ['鵝鑾鼻燈塔分來的火。火很小，但很穩，好像有人一直在旁邊顧著。'], label: '調查' },
+      { t: 'totem', x: 3, y: 9, interact: ['蘭嶼帶來的護符，刻著拼板舟船頭的眼睛紋樣。', '「看不到路的時候，它幫你看。」'], label: '調查' },
+      { t: 'banner', x: 13, y: 7, color: '#f0c040', edge: '#c0312b', text: '順風',
+        interact: async (S) => { if (F('ch11_start') && !F('ch11_night_moves')) await S.say('', '旗子垂著。沒有風。'); else await S.say('', '頭城孤棚頂搶落來的旗。布被汗與油浸得發亮。風一吹，整面旗像在笑。'); }, label: '調查' },
+      { t: 'banner', x: 19, y: 7, color: '#c0312b', edge: '#f0c040', text: '王' },
+      { t: 'altar', x: 21, y: 5, if: (st) => !!st.flags.ch11_tianhou, interact: ['小小的神龕裡掛著媽祖香火袋。燭火很穩。'], label: '參拜' },
+      { t: 'stairs_down', x: 17, y: 9 },
+      { t: 'barrel', x: 22, y: 10 }, { t: 'barrel', x: 23, y: 10 }, { t: 'crate', x: 8, y: 10 }, { t: 'crate', x: 9, y: 10 }, { t: 'jar', x: 24, y: 6 },
+      { t: 'red_lantern', x: 24, y: 9, text: '王' },
+      // drifting lanterns on the black sea
+      ...[[2, 2], [6, 13], [11, 1], [16, 14], [21, 2], [26, 12], [1, 11], [25, 1]].map(([x, y]) => ({ t: 'water_lantern', x, y, if: (st) => st.flags.ch11_sail && leg(st) >= 1 && leg(st) <= 3 })),
+      { t: 'water_lantern', x: 5, y: 7, text: '木', if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done,
+        interact: [['阿木伯', '阮佇遮坐，看會著前面。少年仔，免煩惱阮。']], label: '調查' },
+    ],
+    lights: (st) => {
+      const b = st.vars.ch11_bow == null ? 260 : st.vars.ch11_bow;
+      const out = [];
+      if (b > 0) out.push({ x: 4, y: 6, r: b, color: st.flags.ch11_fog ? '#fff2d0' : '#ffd98a', flicker: 0.25 });
+      out.push({ x: 13, y: 6, r: 110, color: '#ffb060', flicker: 0.3 }, { x: 24, y: 8, r: 120, color: '#ff9050', flicker: 0.3 });
+      if (st.flags.ch11_tianhou) out.push({ x: 21, y: 5, r: 90, color: '#ffcf7a', flicker: 0 });
+      return out;
+    },
+    npcs: [
+      { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', x: 23, y: 8, dir: 'left', fixedDir: true, talk: (S) => H.helm(S) },
+      { id: 'deck_hy', sprite: 'hongying', x: 9, y: 6, dir: 'down', if: () => inParty('hongying'), talk: (S) => H.deckTalk(S, 'hongying') },
+      { id: 'deck_yg', sprite: 'yungui', x: 7, y: 9, dir: 'right', if: () => inParty('yungui'), talk: (S) => H.deckTalk(S, 'yungui') },
+      { id: 'deck_tz', sprite: 'tuanzi', x: 11, y: 9, dir: 'down', if: () => inParty('yungui'), talk: (S) => H.deckTalk(S, 'tuanzi') },
+    ],
+    events: [
+      { id: 'c11_01', trigger: 'auto', if: (st) => !st.flags.ch11_start && st.chapter === 11, run: (S) => H.c11_01(S) },
+      { id: 'c11_12', trigger: 'auto', if: (st) => st.flags.ch11_sail && !st.flags.ch11_leg1, run: (S) => H.c11_12(S) },
+      { id: 'save', trigger: 'action', x: 24, y: 9, label: '存檔', run: async (S) => { await S.saveMenu(); } },
+    ],
+    warps: [
+      { x: 17, y: 9, to: 'wangboat_cabin11', tx: 7, ty: 6, tdir: 'up', door: true },
+      { x: 27, y: 8, to: 'penghu_magong', tx: 11, ty: 7, tdir: 'right', if: (st) => st.flags.ch11_start && !st.flags.ch11_jailer && !st.flags.ch11_sail },
+      { x: 27, y: 8, to: 'xuanwu_shore', tx: 32, ty: 35, tdir: 'up', if: (st) => st.flags.ch11_jailer && !st.flags.ch11_sail },
+      { x: 27, y: 8, to: 'farshore_field', tx: 27, ty: 39, tdir: 'up', if: (st) => leg(st) >= 5 },
+    ],
+    onEnter: async (S) => { S.hideFollowers(true); },
+    drawGround: (ctx, t, ms) => {
+      const st = G.state;
+      if (st.flags.ch11_sail && leg(st) <= 3) drawSeaLights(ctx, t, ms, 40, '#8fd8ff', !st.flags.ch11_night_moves);
+      if (leg(st) >= 5) drawSeaLights(ctx, t, ms, 24, '#ff9a8a', false);
+    },
+    drawOver: (ctx, t) => drawDipper(ctx, t),
+  });
+
+  G.Maps.define('wangboat_cabin11', {
+    name: '王船・船艙',
+    bgm: (st) => (!st.flags.ch11_sail ? 'penghu' : leg(st) >= 5 ? 'farshore' : 'sea'),
+    start: [7, 6],
+    light: { ambient: 0.42, color: '#120a06', playerR: 180 },
+    tiles: rows(room(14, 9, '_', 'W', [7])),
+    objects: [
+      { t: 'bed', x: 2, y: 2 }, { t: 'bed', x: 4, y: 2 },
+      { t: 'jar', x: 11, y: 2, interact: [['chenbo:smug', '那罈是我的。不准偷喝。'], ['', '……陳伯的聲音從甲板上傳下來。']], label: '調查' },
+      { t: 'workbench', x: 8, y: 2, interact: ['陳伯的燈籠工具：竹刀、糨糊、一疊紅紙。竹骨削得整整齊齊——七次。'], label: '調查' },
+      { t: 'red_lantern', x: 7, y: 2, hang: true, text: '星', interact: ['九份陳記的式樣：紅紙、竹骨，一筆一筆寫著「沈星河」。', '陳伯說：沒有魂燈的人，由別人替他點一盞。'], label: '調查' },
+      { t: 'lantern_rack', x: 10, y: 6 }, { t: 'rug', x: 5, y: 4, w: 3, h: 2 },
+    ],
+    lights: [{ x: 7, y: 3, r: 200, color: '#ffb060', flicker: 0.2 }],
+    events: [
+      { id: 'rest', trigger: 'action', x: 2, y: 2, w: 3, h: 2, label: '休息', run: async (S) => {
+        const c = await S.choice(['休息一下（全員恢復）', '不用了'], { cancel: 1 });
+        if (c !== 0) return;
+        await S.fadeOut(0.8); G.Party.healAll(); S.sfx('heal'); await pause(S, 1.0); await S.fadeIn(0.8);
+        S.toast('在搖晃的船艙裡睡了一會兒。全員完全恢復。', 'lantern');
+        if (await S.choice(['存檔', '不用了'], { cancel: 1 }) === 0) await S.saveMenu();
+      } },
+    ],
+    warps: [{ x: 7, y: 8, to: DECK, tx: 17, ty: 8, tdir: 'down', door: true }],
+  });
+
+  // =================================================================================================
+  // MAP: penghu_magong 媽宮 (48×36)
+  // =================================================================================================
+  const stA = (st) => st.flags.ch11_magong && !st.flags.ch11_tianhou;
+  const stC = (st) => !!st.flags.ch11_night_moves;
+  const dawnPenghu = (st) => !!st.flags.ch11_done;
+  function magongTiles(st) {
+    const tide = dawnPenghu(st);
+    const g = grid(48, 36, ':');
+    // tidal flats (north & west). In the ending the tide is back.
+    fill(g, 0, 0, 48, 3, 's'); fill(g, 0, 0, 11, 36, 's'); fill(g, 0, 34, 48, 2, 's');
+    for (let y = 0; y < 36; y++) for (let x = 0; x < 48; x++) if (g[y][x] === 's' && U.hash(x, y, 31) < 0.14) g[y][x] = '-';
+    if (tide) { for (let y = 0; y < 36; y++) for (let x = 0; x < 48; x++) if (g[y][x] === 's' || g[y][x] === '-') g[y][x] = (x < 11 && y > 2) || y < 2 ? '~' : '-'; }
+    fill(g, 11, 3, 37, 1, '#');                   // seawall promenade
+    fill(g, 3, 7, 9, 1, 'k');                     // pier
+    fill(g, 15, 3, 2, 31, '#');                   // central street (中央街)
+    fill(g, 11, 11, 34, 1, '#'); fill(g, 11, 20, 34, 1, '#'); fill(g, 11, 28, 34, 1, '#');
+    fill(g, 20, 8, 12, 3, '%');                   // temple plaza (廟埕)
+    fill(g, 24, 29, 3, 7, '#');                   // south road → 南口
+    fill(g, 35, 5, 8, 4, 'f');                    // 菜宅 peanut field
+    fill(g, 11, 4, 4, 7, ':');
+    return rows(g);
+  }
+  const MG_OBJ = [
+    { t: 'mazu_temple', x: 23, y: 4, door: 2, text: '天后宮' },
+    { t: 'statue_lion', x: 21, y: 8 }, { t: 'statue_lion', x: 30, y: 8, flip: true },
+    { t: 'wang_boat', x: 3, y: 4, if: (st) => !st.flags.ch11_jailer || (st.flags.ch11_done && !st.vars.c11_boat_gone) },
+    { t: 'drying_rack', x: 18, y: 5, v: 0, interact: ['竹架上曬著丁香魚和小管。風停了，魚曬不乾。'], label: '調查' },
+    { t: 'drying_rack', x: 18, y: 7, v: 0 },
+    { t: 'signboard', x: 14, y: 10, text: '石敢當', interact: ['刻著「石敢當」三個字的石碑，立在路衝，擋煞。', '澎湖的風大，連煞都要有東西擋。'], label: '調查' },
+    { t: 'signboard', x: 25, y: 33, text: '石敢當', interact: ['南口的石敢當。過了這裡，就是退乾的海床。'], label: '調查' },
+    { t: 'shophouse', x: 17, y: 12, door: -1, text: '雜貨', v: 1 },
+    { t: 'stall', x: 19, y: 16, text: '黑糖糕', counter: true },
+    { t: 'shophouse', x: 25, y: 12, door: -1, text: '鐵舖', v: 2 },
+    { t: 'house_minnan', x: 32, y: 12, text: '海口客棧', v: 1 },
+    { t: 'stall', x: 13, y: 17, text: '代書', counter: true },
+    { t: 'well', x: 22, y: 17, interact: ['一口井，四個井口。', '老人說，這樣四戶人家可以同時汲水，不用排隊，也不用吵架。'], label: '調查' },
+    { t: 'house_minnan', x: 38, y: 22, v: 0 },
+    { t: 'house_minnan', x: 18, y: 22, door: -1, v: 1 }, { t: 'house_minnan', x: 27, y: 22, door: -1, v: 0 },
+    { t: 'house_minnan', x: 12, y: 24, door: -1, v: 0 }, { t: 'house_minnan', x: 31, y: 30, door: -1, v: 1 }, { t: 'house_minnan', x: 17, y: 30, door: -1, v: 0 },
+    { t: 'house_minnan', x: 38, y: 13, door: -1, v: 1 },
+    { t: 'shrine_small', x: 36, y: 30, text: '土地公' },
+    // 菜宅: low 咾咕石 walls around the peanut field, 天人菊
+    { t: 'fence_wood', x: 34, y: 4, w: 10, interact: ['用咾咕石疊成的矮牆，圍住一小塊菜田。', '澎湖的風會把土吹走，菜要躲在牆後面才長得大。'], label: '調查' },
+    { t: 'fence_wood', x: 34, y: 9, w: 4 }, { t: 'fence_wood', x: 40, y: 9, w: 4 },
+    { t: 'fence_wood', x: 34, y: 5, w: 1, h: 4 }, { t: 'fence_wood', x: 43, y: 5, w: 1, h: 4 },
+    ...[[36, 10], [37, 10], [41, 10], [44, 6], [45, 8], [33, 7]].map(([x, y]) => ({ t: 'flowers', x, y, interact: ['紅黃相間的小花，風再大也開。澎湖人說它是「風吹不倒的花」。'], label: '調查' })),
+    // stranded boats
+    { t: 'boat_small', x: 1, y: 1, interact: ['船底朝天，躺在泥灘上。船頭還綁著一小束褪色的香火袋。'], label: '調查' },
+    { t: 'boat_small', x: 6, y: 11 }, { t: 'boat_small', x: 2, y: 15 }, { t: 'boat_small', x: 5, y: 26 },
+    { t: 'lamp_post', x: 14, y: 6 }, { t: 'lamp_post', x: 14, y: 15 }, { t: 'lamp_post', x: 17, y: 26 }, { t: 'lamp_post', x: 23, y: 21 },
+    { t: 'lamp_post', x: 33, y: 21 }, { t: 'lamp_post', x: 27, y: 27 }, { t: 'lamp_post', x: 23, y: 33 }, { t: 'lamp_post', x: 27, y: 33 },
+    { t: 'lantern_string', x: 20, y: 8, w: 12, v: 1 },
+    { t: 'firepit', x: 13, y: 2, if: stA }, { t: 'firepit', x: 29, y: 2, if: stA },
+    { t: 'barrel', x: 12, y: 8 }, { t: 'crate', x: 13, y: 8 }, { t: 'jar', x: 29, y: 15 }, { t: 'jar', x: 30, y: 15 },
+    { t: 'bush', x: 12, y: 19 }, { t: 'bush', x: 44, y: 18 }, { t: 'bush', x: 21, y: 27 }, { t: 'bush', x: 45, y: 30 },
+    { t: 'rock_basalt', x: 45, y: 13 }, { t: 'rock_small', x: 8, y: 20 }, { t: 'driftwood', x: 4, y: 31 },
+  ];
+  G.Maps.define('penghu_magong', {
+    name: '媽宮',
+    subtitle: (st) => (dawnPenghu(st) ? '澎湖・清晨' : '澎湖・潮停之夜'),
+    place: 'penghu',
+    bgm: (st) => (st.vars.c11_magong_bgm || 'penghu'),
+    start: [11, 7],
+    light: (st) => (dawnPenghu(st) ? { ambient: 0.05, color: '#3a2a3a', tint: 'rgba(255,210,170,0.14)' } : { ambient: 0.6, color: '#070b20', playerR: 220 }),
+    particles: (st) => (dawnPenghu(st) ? ['wind', 'motes'] : stC(st) ? ['motes', 'wind'] : ['motes']),
+    tiles: magongTiles,
+    objects: MG_OBJ,
+    pass: [{ x: 43, y: 1, w: 1, h: 1, solid: true }, { x: 46, y: 1, w: 1, h: 1, solid: true }],
+    chests: [
+      { id: 'c11_01', x: 20, y: 4, item: 'c11_dingxiang', n: 2 },
+      { id: 'c11_02', x: 23, y: 18, item: 'huanhunxiang', n: 1 },
+    ],
+    lights: (st) => (dawnPenghu(st) ? [] : [
+      { x: 13, y: 3, r: 150, color: '#ffa050', flicker: 0.4 }, { x: 29, y: 3, r: 150, color: '#ffa050', flicker: 0.4 },
+      { x: 25, y: 9, r: 220, color: '#ffb060', flicker: 0.2 }, { x: 34, y: 15, r: 120, color: '#ffb060', flicker: 0.25 },
+      { x: 20, y: 16, r: 110, color: '#ffc070', flicker: 0.25 }, { x: 14, y: 18, r: 90, color: '#ffc070', flicker: 0.25 },
+      { x: 40, y: 25, r: 90, color: '#ffc070', flicker: 0.25 }, { x: 36, y: 31, r: 80, color: '#ffc070', flicker: 0.2 },
+    ]),
+    npcs: [
+      { id: 'ph_ajin', sprite: 'temple_keeper', name: '阿進伯', x: 13, y: 6, dir: 'left', if: stA, talk: [['阿進伯', '來廟裡坐。媽祖婆等恁足久矣。']] },
+      { id: 'ph_atian', sprite: 'c11_atian', name: '阿添伯', x: 16, y: 2, dir: 'up', fixedDir: true, if: (st) => !st.flags.ch11_weir_3 && !dawnPenghu(st), talk: (S) => H.atian(S) },
+      { id: 'ph_agui', sprite: 'fisher_f', name: '阿桂', pos: (st) => (stA(st) ? [20, 3] : [20, 6]), dir: 'left', if: (st) => !dawnPenghu(st), talk: (S) => H.agui(S) },
+      { id: 'ph_cat', sprite: 'cat', name: '澎湖的貓', x: 18, y: 6, dir: 'down', if: (st) => !dawnPenghu(st), talk: (S) => H.cat(S) },
+      { id: 'ph_xiuqin', sprite: 'shopkeeper_f', name: '秀琴', x: 19, y: 15, dir: 'down', fixedDir: true, if: (st) => !stA(st) && !dawnPenghu(st), talk: (S) => H.xiuqin(S) },
+      { id: 'ph_smith', sprite: 'villager_m2', name: '阿榮師', x: 27, y: 15, dir: 'down', if: (st) => !stA(st) && !dawnPenghu(st), talk: (S) => H.smith(S) },
+      { id: 'ph_xu', sprite: 'scholar', name: '許秀才', x: 13, y: 16, dir: 'down', fixedDir: true, if: (st) => !stA(st) && !dawnPenghu(st), talk: (S) => H.xu(S) },
+      { id: 'ph_sailor', sprite: 'sailor', name: '老水手', x: 11, y: 8, dir: 'left', if: (st) => !stA(st) && !dawnPenghu(st), talk: (S) => H.sailor(S) },
+      { id: 'ph_kid_yao', sprite: 'child_m', name: '阿耀', x: 8, y: 9, dir: 'down', wander: 1, if: (st) => !dawnPenghu(st), talk: (S) => H.yao(S) },
+      { id: 'ph_kid_zhu', sprite: 'child_f', name: '阿珠', x: 9, y: 10, dir: 'left', if: (st) => !dawnPenghu(st), talk: (S) => H.zhu(S) },
+      { id: 'ph_mother', sprite: 'villager_f', name: '等船的阿母', x: 22, y: 3, dir: 'up', fixedDir: true, if: (st) => !dawnPenghu(st), talk: (S) => H.mother(S) },
+      { id: 'ph_oldman_a', sprite: 'old_m', name: '廟口避難的阿伯', x: 18, y: 3, dir: 'up', if: stA, talk: [['廟口避難的阿伯', '千歲爺來巡港矣……有救矣，有救矣……']] },
+      { id: 'ph_crowd1', sprite: 'fisherman', name: '漁民', x: 24, y: 3, dir: 'up', if: stA, light: { r: 100, color: '#ffa050' }, talk: [['漁民', '彼……彼是啥物？']] },
+      { id: 'ph_crowd2', sprite: 'villager_m', name: '漁民', x: 26, y: 3, dir: 'up', if: stA, light: { r: 100, color: '#ffa050' }, talk: [['漁民', '海哪會退甲遮爾遠……']] },
+      { id: 'ph_crowd3', sprite: 'villager_f2', name: '婦人', x: 28, y: 3, dir: 'up', if: stA, talk: [['婦人', '媽祖婆保庇……']] },
+      { id: 'ph_crowd4', sprite: 'child_f', name: '囡仔', x: 25, y: 4, dir: 'up', if: stA, talk: [['囡仔', '阿母，天星袂振動！']] },
+      // townsfolk who make the town feel alive in B/C
+      { id: 'ph_town1', sprite: 'villager_m', name: '補網的阿伯', x: 30, y: 19, dir: 'down', wander: 2, if: (st) => !stA(st) && !dawnPenghu(st),
+        talk: (S) => (stC(G.state) ? L(S, [['補網的阿伯', '風轉來矣！明仔載透早，大家攏欲出海喔！']]) : L(S, [['補網的阿伯', '網補好矣，海煞無去。'], ['補網的阿伯', '我補網補四十冬，毋捌補過這款心肝。']])) },
+      { id: 'ph_town2', sprite: 'villager_f', name: '曬衫的阿姨', x: 36, y: 27, dir: 'left', wander: 2, if: (st) => !stA(st) && !dawnPenghu(st),
+        talk: (S) => (stC(G.state) ? L(S, [['曬衫的阿姨', '風一來，衫就焦矣。澎湖的風，是老天爺的手。']]) : L(S, [['曬衫的阿姨', '無風，衫曬袂焦。無風，連心肝都曬袂焦。']])) },
+      { id: 'ph_town3', sprite: 'child_m', name: '囡仔', x: 22, y: 25, dir: 'down', wander: 3, if: (st) => !stA(st) && !dawnPenghu(st),
+        talk: [['囡仔', '阿公講，天星若袂振動，就是有人咧等。'], ['囡仔', '等啥物？等天光啊！']] },
+      // ending (E-T5 / stinger)
+      { id: 'ph_mother_end', sprite: 'villager_f', name: '等船的阿母', x: 20, y: 3, dir: 'up', if: dawnPenghu, talk: [['等船的阿母', '轉來矣……阮後生轉來矣……']] },
+    ],
+    events: [
+      { id: 'c11_02', trigger: 'auto', if: (st) => st.flags.ch11_start && !st.flags.ch11_magong, run: (S) => H.c11_02(S) },
+      { id: 'board', trigger: 'action', x: 3, y: 6, w: 6, h: 1, label: '登船', if: (st) => !st.flags.ch11_jailer, run: async (S) => {
+        if (!F('ch11_tianhou')) { await S.say('', '王船停在泥灘上，船底離地半尺。'); return; }
+        await S.warp(DECK, 25, 8, 'left');
+      } },
+      { id: 'tower_gong', trigger: 'action', x: 43, y: 1, label: '調查', run: (S) => H.treasure(S, 'gong') },
+      { id: 'tower_po', trigger: 'action', x: 46, y: 1, label: '調查', run: (S) => H.treasure(S, 'po') },
+    ],
+    warps: [
+      { x: 25, y: 7, w: 2, to: 'penghu_tianhou', tx: 8, ty: 12, tdir: 'up', door: true },
+      { x: 40, y: 24, to: 'penghu_atian', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 34, y: 14, to: 'penghu_inn', tx: 7, ty: 8, tdir: 'up', door: true },
+      { x: 24, y: 35, w: 3, to: 'penghu_flats', tx: 28, ty: 1, tdir: 'down', run: async (S) => {
+        if (!F('ch11_tianhou')) { await S.say('hongying:think', '……先去廟裡吧。大家都在等。'); S.setPos('player', 25, 33, 'up'); return false; }
+        return true;
+      } },
+    ],
+    drawGround: (ctx, t) => drawStoneTowers(ctx, t),
+    drawOver: (ctx, t) => drawDipper(ctx, t),
+  });
+  // 塔公塔婆: two stacked-stone towers on the NE flats
+  function drawStoneTowers(ctx) {
+    for (const [cx, n] of [[43, 7], [46, 5]]) {
+      const x = cx * T + T / 2, y = 1 * T + T - 6;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x, y, 30, 9, 0, 0, Math.PI * 2); ctx.fill();
+      for (let i = 0; i < n; i++) {
+        const w = 30 - i * 3.2, yy = y - 6 - i * 15;
+        const g = ctx.createLinearGradient(x - w, yy - 9, x + w, yy + 9);
+        g.addColorStop(0, '#b8b2a4'); g.addColorStop(1, '#5a5650');
+        ctx.fillStyle = g; ctx.strokeStyle = '#3a3630'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(x + (U.hash(cx, i, 3) - 0.5) * 6, yy, w, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // ---- 天后宮・正殿 (18×14)
+  function tianhouTiles() {
+    const g = room(18, 14, 'T', 'E', [8, 9]);
+    fill(g, 5, 5, 8, 4, '#');
+    return rows(g);
+  }
+  G.Maps.define('penghu_tianhou', {
+    name: '澎湖天后宮',
+    subtitle: '台灣最古老的媽祖廟',
+    place: 'penghu',
+    bgm: 'temple',
+    start: [8, 12],
+    light: { ambient: 0.35, color: '#1a0c06', playerR: 180 },
+    particles: ['motes'],
+    tiles: tianhouTiles(),
+    objects: [
+      { t: 'altar', x: 8, y: 2, interact: async (S) => { await S.say('', '層層紅帳後，只見金色冠冕的一點微光，和不斷升起的香煙。'); await S.say('', '神前的那盞油燈，穩穩地亮著，一動也不動。'); }, label: '參拜' },
+      { t: 'incense_burner', x: 8, y: 4 }, { t: 'incense_burner', x: 11, y: 6 },
+      { t: 'pillar', x: 2, y: 2 }, { t: 'pillar', x: 15, y: 2 }, { t: 'pillar', x: 2, y: 10 }, { t: 'pillar', x: 15, y: 10 },
+      { t: 'mural', x: 3, y: 1, v: 2 }, { t: 'mural', x: 13, y: 1, v: 3 },
+      { t: 'shelf_lanterns', x: 14, y: 5, interact: ['一排光明燈，每一盞都寫著一個名字。'], label: '調查' }, { t: 'shelf_lanterns', x: 14, y: 7 },
+      { t: 'stone_lantern', x: 11, y: 11, interact: async (S) => { await S.say('', '三川門內側的石燈。在這裡可以整理行囊。'); await S.saveMenu(); }, label: '存檔' },
+      { t: 'rug', x: 7, y: 9, w: 4, h: 2 },
+    ],
+    lights: [{ x: 8.5, y: 2.6, r: 190, color: '#ffcf7a', flicker: 0 }, { x: 14.5, y: 6, r: 120, color: '#ffb060', flicker: 0.2 }, { x: 11, y: 6, r: 80, color: '#ff9a50', flicker: 0.3 }],
+    npcs: [
+      { id: 'ph_ajin', sprite: 'temple_keeper', name: '阿進伯', x: 10, y: 4, dir: 'down', talk: (S) => H.ajin(S) },
+      { id: 'ph_oldman', sprite: 'old_m', name: '廟口避難的阿伯', x: 3, y: 6, dir: 'right', talk: (S) => H.oldman(S) },
+      { id: 'ph_prayer', sprite: 'villager_f2', name: '廟裡祈禱的婦人', x: 6, y: 4, dir: 'up', fixedDir: true,
+        talk: (S) => (F('ch11_tianhou') ? L(S, [['廟裡祈禱的婦人', '媽祖婆保庇……保庇阮翁，保庇阮囝……'], ['廟裡祈禱的婦人', '……嘛保庇這幾个少年仔。']]) : L(S, [['廟裡祈禱的婦人', '媽祖婆保庇……保庇阮翁，保庇阮囝，保庇……']])) },
+      { id: 'ph_ref1', sprite: 'villager_f', name: '避難的阿姆', x: 3, y: 7, dir: 'right', talk: [['避難的阿姆', '囡仔睏去矣。天光進前，阮就佇遮等。']] },
+      { id: 'ph_ref2', sprite: 'child_m', name: '避難的囡仔', x: 4, y: 8, dir: 'up', talk: [['避難的囡仔', '香煙攏咧彎……親像有人咧牽。']] },
+      { id: 'ph_ref3', sprite: 'fisherman', name: '避難的漁夫', x: 3, y: 5, dir: 'right', talk: [['避難的漁夫', '船攏倒佇泥灘。潮若無轉來，阮就無飯通食。']] },
+    ],
+    events: [
+      { id: 'c11_03', trigger: 'auto', if: (st) => st.flags.ch11_magong && !st.flags.ch11_tianhou && !(st.vars.ch11_incense >= 1), run: (S) => H.c11_03a(S) },
+      { id: 'incense_sky', trigger: 'action', x: 11, y: 6, label: '拈香', run: (S) => H.incense(S, 'sky') },
+      { id: 'incense_in', trigger: 'action', x: 8, y: 4, label: '拈香', run: (S) => H.incense(S, 'in') },
+    ],
+    warps: [{ x: 8, y: 13, w: 2, to: 'penghu_magong', tx: 25, ty: 8, tdir: 'down', door: true }],
+    drawOver: (ctx, t) => {
+      // 香煙向西彎: every thread of incense smoke bends west (left)
+      for (const [cx, cy] of [[11, 6], [8, 4]]) {
+        const x0 = cx * T + T / 2, y0 = cy * T + 6;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          for (let i = 0; i <= 24; i++) {
+            const s = i / 24, yy = y0 - s * 150, xx = x0 - s * s * 160 + Math.sin(t * 1.3 + s * 6 + k * 2) * 6 * s;
+            if (i === 0) ctx.moveTo(xx + k * 3, yy); else ctx.lineTo(xx + k * 3, yy);
+          }
+          ctx.strokeStyle = `rgba(230,225,215,${0.18 - k * 0.04})`; ctx.lineWidth = 3 - k * 0.6; ctx.stroke();
+        }
+        ctx.restore();
+      }
+    },
+  });
+
+  G.Maps.define('penghu_atian', {
+    name: '阿添伯的咾咕石厝',
+    place: 'penghu',
+    bgm: 'penghu',
+    start: [6, 7],
+    light: { ambient: 0.4, color: '#140a04', playerR: 180 },
+    tiles: rows(room(12, 9, '_', 'W', [6])),
+    objects: [
+      { t: 'stove', x: 2, y: 2 }, { t: 'altar', x: 5, y: 2, interact: ['小小的神桌，供著添家的祖先牌位。'], label: '調查' },
+      { t: 'mural', x: 8, y: 1, v: 3, interact: ['一張手繪的「添家滬」滬圖。弧形的石牆，像一個抱著海的手臂。'], label: '調查' },
+      { t: 'bed', x: 10, y: 2 }, { t: 'table', x: 7, y: 5 }, { t: 'chair', x: 6, y: 5, dir: 'right' }, { t: 'chair', x: 8, y: 5, dir: 'left' },
+      { t: 'fishing_net', x: 1, y: 6 }, { t: 'pot', x: 4, y: 2 },
+    ],
+    lights: [{ x: 3, y: 3, r: 160, color: '#ffa050', flicker: 0.3 }, { x: 7, y: 5, r: 120, color: '#ffc070', flicker: 0.2 }],
+    npcs: [
+      { id: 'ph_atian_wife', sprite: 'c11_atian_wife', name: '添姆', x: 3, y: 3, dir: 'down', talk: (S) => H.atianWife(S) },
+      { id: 'ph_atian_home', sprite: 'c11_atian', name: '阿添伯', x: 9, y: 5, dir: 'left', if: (st) => !!st.flags.ch11_weir_done,
+        talk: (S) => L(S, [['阿添伯', '滬仔愛留一个縫。魚仔才會當轉去。……人嘛是。'], ['阿添伯', '七美有一口雙心石滬，兩粒心疊做伙。'], ['阿添伯', '阮這口滬，以後嘛是兩粒心。一粒阮的，一粒阿湧的。']]) },
+    ],
+    warps: [{ x: 6, y: 8, to: 'penghu_magong', tx: 40, ty: 25, tdir: 'down', door: true }],
+  });
+
+  G.Maps.define('penghu_inn', {
+    name: '海口客棧',
+    place: 'penghu',
+    bgm: 'penghu',
+    start: [7, 8],
+    light: { ambient: 0.38, color: '#140a04', playerR: 180 },
+    tiles: rows(room(14, 10, '_', 'W', [7])),
+    objects: [
+      { t: 'counter', x: 5, y: 4, w: 3 }, { t: 'shelf_lanterns', x: 5, y: 2 }, { t: 'cabinet', x: 2, y: 2 },
+      { t: 'table', x: 2, y: 6 }, { t: 'chair', x: 1, y: 6, dir: 'right' }, { t: 'chair', x: 3, y: 6, dir: 'left' },
+      { t: 'table', x: 10, y: 6 }, { t: 'chair', x: 9, y: 6, dir: 'right' }, { t: 'chair', x: 11, y: 6, dir: 'left' },
+      { t: 'stairs_up', x: 12, y: 2, interact: ['樓上是客房。'], label: '調查' }, { t: 'jar_row', x: 9, y: 2, w: 2 },
+    ],
+    lights: [{ x: 6, y: 4, r: 170, color: '#ffb060', flicker: 0.2 }, { x: 10, y: 6, r: 110, color: '#ffc070', flicker: 0.2 }],
+    npcs: [
+      { id: 'ph_innkeeper', sprite: 'villager_f2', name: '阿嬌', x: 6, y: 3, dir: 'down', talk: (S) => H.inn(S) },
+      { id: 'ph_guest', sprite: 'merchant', name: '困在澎湖的商人', x: 10, y: 7, dir: 'up', talk: [['困在澎湖的商人', '我本來今仔日欲坐船去府城。'], ['困在澎湖的商人', '船倒佇泥裡，我嘛倒佇遮。……閣一杯。']] },
+    ],
+    warps: [{ x: 7, y: 9, to: 'penghu_magong', tx: 34, ty: 15, tdir: 'down', door: true }],
+  });
+
+  // random (暗雷) encounters on certain terrain; off during test autoplay so scripted runs stay deterministic
+  function randomEnc(ms, busy, o) {
+    const st = G.state;
+    if (ms._encSteps == null) { ms._encSteps = st.steps; return; }
+    if (busy || st.steps === ms._encSteps) return;
+    ms._encSteps = st.steps;
+    if (autoplay() || ms.invuln > 0 || (o.if && !o.if(st))) return;
+    if (o.terr && !o.terr.includes(ms.terrainAt(ms.player.x, ms.player.y))) return;
+    if (Math.random() < o.rate) G.Script.run(async (S) => { await S.battle(U.pick(o.troops)); if (G.mapScene) G.mapScene.invuln = 2; });
+  }
+  // blue light curtain (sealed doors / barriers), world space
+  function drawCurtain(ctx, t, x0, y0, w, h, col) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const x = x0 * T, y = y0 * T, W = w * T, Hh = h * T;
+    const g = ctx.createLinearGradient(x, y - 60, x, y + Hh);
+    g.addColorStop(0, U.rgba(col, 0)); g.addColorStop(0.5, U.rgba(col, 0.35 + 0.1 * Math.sin(t * 3))); g.addColorStop(1, U.rgba(col, 0.1));
+    ctx.fillStyle = g; ctx.fillRect(x, y - 60, W, Hh + 60);
+    ctx.fillStyle = U.rgba('#ffffff', 0.5);
+    for (let i = 0; i < 18; i++) { const px = x + U.hash(i, 2, x0) * W, py = y - 60 + ((t * 30 + U.hash(i, 5, y0) * 200) % (Hh + 60)); ctx.fillRect(px, py, 2, 6); }
+    ctx.restore();
+  }
+
+  // =================================================================================================
+  // MAP: penghu_flats 石滬灘・潮停之路 (56×44)
+  // =================================================================================================
+  function flatsTiles() {
+    const g = grid(56, 44, 's');
+    for (let y = 0; y < 44; y++) for (let x = 0; x < 56; x++) { const h = U.hash(x, y, 51); if (h < 0.1) g[y][x] = '-'; else if (h > 0.985) g[y][x] = '~'; }
+    // weir interiors hold the last of the water
+    fill(g, 6, 3, 4, 2, '-'); fill(g, 38, 3, 6, 3, '-'); fill(g, 46, 12, 3, 2, '-'); fill(g, 15, 27, 4, 2, '-');
+    // deeper pools (solid)
+    disc(g, 33, 8, 2.2, '~'); disc(g, 12, 18, 2, '~'); disc(g, 30, 28, 2.4, '~'); disc(g, 49, 37, 3, '~'); disc(g, 40, 40, 2, '~');
+    // 潮停之路: a raised gravel bar winding SW (main) + the long way round (east)
+    path(g, [[27, 0], [27, 4], [25, 8], [22, 13], [20, 18], [23, 24], [22, 30], [16, 34], [10, 37], [7, 40], [7, 43]], '=', 2);
+    path(g, [[25, 9], [35, 14], [43, 20], [45, 28], [39, 33], [28, 35], [21, 34]], '=', 2);
+    // SW: basalt shelf leading to the reef mouth
+    for (let y = 33; y < 44; y++) for (let x = 0; x < 12; x++) if (g[y][x] !== '=' && U.hash(x, y, 9) < 0.35) g[y][x] = 'Y';
+    fill(g, 5, 39, 5, 5, '=');
+    return rows(g);
+  }
+  const FL_OBJ = (() => {
+    const o = [
+      { t: 'stone_weir', x: 5, y: 2, w: 6, h: 4, interact: ['用玄武岩與咾咕石疊成的弧形石牆。漲潮時魚游進來，退潮時被留在牆內。', '一口滬，常常是一整個家族的。'], label: '調查' },
+      { t: 'stone_weir', x: 37, y: 2, w: 8, h: 5 },
+      { t: 'stone_weir', x: 45, y: 11, w: 5, h: 4 },
+      { t: 'stone_weir', x: 14, y: 26, w: 6, h: 4, v: 1, interact: ['兩個心疊在一起的石滬。阿添伯說，七美也有一口。'], label: '調查' },
+      { t: 'basalt', x: 7, y: 7, interact: ['一根根六角形的黑色石柱，整齊得像有人排過。很久很久以前，這裡是火山流出的熔岩。'], label: '調查' },
+      { t: 'boat_ferry', x: 40, y: 29, interact: ['擱淺的舊船，船腹破了一個大洞。'], label: '調查' },
+      { t: 'boat_ferry', x: 19, y: 36 }, { t: 'boat_ferry', x: 23, y: 37 },
+      { t: 'eternal_lamp', x: 22, y: 35, if: (st) => !st.flags.ch11_captain },
+      { t: 'driftwood', x: 46, y: 5 }, { t: 'driftwood', x: 12, y: 30 }, { t: 'driftwood', x: 33, y: 39 }, { t: 'driftwood', x: 50, y: 24 },
+      { t: 'boat_small', x: 30, y: 2 }, { t: 'boat_small', x: 2, y: 22 },
+    ];
+    for (const [x, y] of [[3, 12], [2, 29], [5, 32], [9, 30], [1, 35], [10, 34], [3, 38], [12, 40], [1, 41]]) o.push({ t: 'basalt', x, y });
+    for (const [x, y] of [[15, 6], [36, 18], [8, 22], [27, 20], [48, 16], [44, 34], [17, 12], [33, 24], [5, 16], [52, 30]]) o.push({ t: 'rock_basalt', x, y });
+    for (const [x, y] of [[13, 3], [31, 16], [39, 9], [18, 41], [52, 8], [26, 41]]) o.push({ t: 'rock_small', x, y });
+    for (const [x, y] of [[20, 5], [40, 13], [11, 27], [35, 31], [48, 19], [28, 40]]) o.push({ t: 'seaweed', x, y });
+    // blue soul-lights trapped in the weirs
+    for (const [x, y] of [[39, 4], [41, 3], [43, 4], [7, 3], [9, 4], [47, 12]]) o.push({ t: 'water_lantern', x, y, light: { r: 70, color: '#8fd8ff' }, if: (st) => !st.flags.ch11_weir_done || x < 30 || x > 45 });
+    return o;
+  })();
+  G.Maps.define('penghu_flats', {
+    name: '石滬灘・潮停之路',
+    subtitle: '退乾的海床',
+    place: 'penghu',
+    bgm: 'penghu',
+    start: [28, 1],
+    light: { ambient: 0.62, color: '#0a1028', playerR: 230 },
+    particles: (st) => (stC(st) ? ['motes', 'wind', { type: 'mist', alpha: 0.12 }] : ['motes', { type: 'mist', alpha: 0.14 }]),
+    tiles: flatsTiles(),
+    objects: FL_OBJ,
+    chests: [
+      { id: 'c11_03', x: 49, y: 3, item: 'c11_xiaoguan', n: 3, run: async (S) => { S.gold(800); } },
+      { id: 'c11_04', x: 7, y: 12, item: 'lingxun', n: 2 },
+      { id: 'c11_05', x: 44, y: 23, item: 'c11_ac_fisher', n: 1 },
+      { id: 'c11_06', x: 43, y: 31, item: 'huanhundan', n: 1 },
+    ],
+    npcs: [
+      { id: 'fl_ghost_fisher', sprite: 'ghost_m', name: '迷路的漁夫魂', x: 24, y: 14, dir: 'down', ghost: true, if: (st) => !st.flags.ch11_fisher_gone, talk: (S) => H.ghostFisher(S) },
+      { id: 'fl_pirate_kid', sprite: 'c11_pirate_kid', name: '被鎖住的小海盜鬼', x: 27, y: 33, dir: 'left', ghost: true, talk: (S) => H.pirateKid(S) },
+      { id: 'fl_captain', sprite: 'c11_captain', name: '烏鬚船主', x: 21, y: 35, dir: 'down', ghost: true, if: (st) => !st.flags.ch11_captain, talk: (S) => H.c11_05(S) },
+      { id: 'fl_ayong', sprite: 'c11_ayong', name: '阿湧', x: 41, y: 5, dir: 'down', ghost: true, if: (st) => st.flags.ch11_weir_2 && !st.flags.ch11_weir_done,
+        talk: [['阿湧', '阮佇遮等。阿兄若講好，阮就出去。']] },
+      { id: 'fl_atian', sprite: 'c11_atian', name: '阿添伯', x: 40, y: 8, dir: 'up', if: (st) => st.flags.ch11_weir_3 && !st.flags.ch11_weir_done, talk: (S) => H.weir4(S) },
+    ],
+    enemies: [
+      { id: 'pg1', troop: 'penghu_1', x: 18, y: 4, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg2', troop: 'penghu_3', x: 14, y: 9, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg3', troop: 'penghu_1', x: 33, y: 10, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg4', troop: 'penghu_2', x: 10, y: 15, art: 'sea_monster', variant: 2, lv: 39, radius: 2 },
+      { id: 'pg5', troop: 'penghu_3', x: 29, y: 22, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg6', troop: 'penghu_1', x: 13, y: 22, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg7', troop: 'penghu_3', x: 37, y: 26, art: 'pirate_ghost', lv: 39, radius: 3 },
+      { id: 'pg8', troop: 'penghu_2', x: 47, y: 34, art: 'sea_monster', variant: 2, lv: 39, radius: 2 },
+    ],
+    events: [
+      { id: 'c11_04', trigger: 'auto', if: (st) => !st.flags.ch11_flats, run: (S) => H.c11_04(S) },
+      { id: 'weir2', trigger: 'touch', x: 39, y: 7, w: 5, h: 2, if: (st) => st.flags.ch11_weir_1 && !st.flags.ch11_weir_2, run: (S) => H.weir2(S) },
+      { id: 'weir4', trigger: 'touch', x: 38, y: 7, w: 6, h: 3, if: (st) => st.flags.ch11_weir_3 && !st.flags.ch11_weir_done, run: (S) => H.weir4(S) },
+      { id: 'captain', trigger: 'touch', x: 13, y: 31, w: 16, h: 2, if: (st) => !st.flags.ch11_captain, run: (S) => H.c11_05(S) },
+      { id: 'barrier', trigger: 'touch', x: 5, y: 39, w: 5, h: 1, if: (st) => !st.flags.ch11_captain, run: async (S) => {
+        S.sfx('buzz');
+        await S.say('', '藍色的光幕擋住了礁口。光幕的另一頭，烏鬚船主的沉船上，一盞長明燈幽幽地亮著。');
+        S.setPos('player', 7, 37, 'up');
+      } },
+      { id: 'mush7', trigger: 'action', x: 7, y: 7, w: 2, h: 2, spirit: true, label: '調查', if: (st) => !st.flags.mush_7, run: (S) => H.mush7(S) },
+    ],
+    warps: [
+      { x: 27, y: 0, w: 2, to: 'penghu_magong', tx: 25, ty: 33, tdir: 'up' },
+      { x: 5, y: 43, w: 5, to: 'xuanwu_shore', tx: 9, ty: 37, tdir: 'up' },
+    ],
+    onUpdate: (dt, ms, busy) => {
+      if (!busy) G.Music.play(ms.player.x < 24 && ms.player.y > 14 ? 'night' : 'penghu', { fade: 1.5 });
+      randomEnc(ms, busy, { terr: ['shallow'], rate: 0.07, troops: ['penghu_2'] });
+    },
+    drawOver: (ctx, t) => {
+      if (!F('ch11_captain')) {
+        drawCurtain(ctx, t, 5, 39, 5, 1, '#6ab8ff');
+        // the anchor chain from the captain to his lamp
+        ctx.save(); ctx.strokeStyle = 'rgba(160,170,190,0.6)'; ctx.lineWidth = 3; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(21.5 * T, 35.5 * T); ctx.quadraticCurveTo(22 * T, 36.6 * T, 22.5 * T, 35.4 * T); ctx.stroke(); ctx.restore();
+      }
+      drawDipper(ctx, t);
+    },
+  });
+
+  // =================================================================================================
+  // MAP: xuanwu_shore 玄武嶼・黑岸 (40×40)
+  // =================================================================================================
+  function xwShoreTiles() {
+    const g = grid(40, 40, 'U');
+    fill(g, 0, 38, 40, 2, '~'); fill(g, 4, 33, 24, 5, 's'); fill(g, 28, 33, 12, 7, '~');
+    fill(g, 8, 37, 3, 3, '=');                       // reef path from the flats
+    fill(g, 28, 36, 2, 1, 'k');                       // little jetty to the 王船
+    fill(g, 5, 13, 30, 15, 'Y');                      // lower terrace
+    fill(g, 12, 4, 16, 6, 'Y');                       // upper terrace (gate plaza)
+    fill(g, 19, 10, 2, 3, 'H'); fill(g, 19, 28, 2, 5, 'H');
+    fill(g, 2, 18, 3, 1, 'v');                        // sea cave mouth (west)
+    // basalt columns breaking up the terrace edges
+    for (const [x, y] of [[5, 13], [6, 13], [33, 13], [34, 13], [5, 27], [34, 27], [12, 4], [27, 4]]) set(g, x, y, 'U');
+    return rows(g);
+  }
+  G.Maps.define('xuanwu_shore', {
+    name: '玄武嶼・黑岸',
+    subtitle: '長明宮',
+    place: 'penghu',
+    bgm: 'palace',
+    start: [9, 37],
+    light: { ambient: 0.75, color: '#040818', playerR: 220 },
+    particles: (st) => (stC(st) ? ['motes', 'wind', { type: 'mist', alpha: 0.12 }] : ['motes', { type: 'mist', alpha: 0.16 }]),
+    tiles: xwShoreTiles(),
+    objects: (() => {
+      const o = [
+        { t: 'city_god_temple', x: 17, y: 0, door: 2, text: '長明宮' },
+        { t: 'wang_boat', x: 30, y: 35, water: true, if: (st) => st.flags.ch11_jailer && !st.flags.ch11_sail },
+        { t: 'banner', x: 15, y: 5, color: '#14141c', edge: '#c8d0e0', text: '長明' }, { t: 'banner', x: 24, y: 5, color: '#14141c', edge: '#c8d0e0', text: '長明' },
+      ];
+      for (const y of [5, 9, 13, 17, 21, 25, 33]) { o.push({ t: 'eternal_lamp', x: 18, y, interact: ['燈罩裡的火是藍的，一點溫度也沒有。燈底刻著「長明宮・玄」。'], label: '調查' }); o.push({ t: 'eternal_lamp', x: 21, y }); }
+      for (const [x, y] of [[7, 15], [9, 22], [26, 16], [30, 22], [13, 25], [24, 25], [14, 6], [25, 7]]) o.push({ t: 'basalt', x, y });
+      for (const [x, y] of [[6, 34], [14, 36], [22, 34], [11, 19], [29, 18], [16, 15]]) o.push({ t: 'rock_basalt', x, y });
+      for (const [x, y] of [[8, 17], [31, 25], [15, 20]]) o.push({ t: 'bones', x, y });
+      for (const [x, y] of [[10, 14], [28, 14], [33, 20]]) o.push({ t: 'soul_jar', x, y, if: (st) => !st.flags.ch11_jars_freed });
+      return o;
+    })(),
+    chests: [{ id: 'c11_07', x: 31, y: 24, item: 'c11_ft_guard_boots', n: 1 }],
+    lights: [{ x: 3, y: 18, r: 120, color: '#6ab8ff', flicker: 0.3 }],
+    enemies: [
+      { id: 'xw1', troop: 'xuanwu_1', x: 10, y: 20, sprite: 'temple_guard', lv: 40, radius: 3 },
+      { id: 'xw2', troop: 'xuanwu_2', x: 28, y: 19, art: 'lantern_golem', variant: 1, lv: 40, radius: 3 },
+      { id: 'xw3', troop: 'xuanwu_3', x: 14, y: 24, art: 'marionette', variant: 2, lv: 40, radius: 3 },
+      { id: 'xw4', troop: 'penghu_3', x: 25, y: 34, art: 'pirate_ghost', lv: 39, radius: 3 },
+    ],
+    events: [
+      { id: 'c11_06', trigger: 'auto', if: (st) => !st.flags.ch11_xuanwu, run: (S) => H.c11_06(S) },
+      { id: 'gate', trigger: 'touch', x: 19, y: 4, w: 2, h: 1, if: (st) => !st.flags.ch11_jars_freed, run: async (S) => {
+        S.sfx('buzz');
+        await S.say('', '藍色光幕上浮著密密麻麻的小字——都是名字。光幕冷得像冰。');
+        if (F('ch11_xuanwu')) await S.say('yungui:serious', '要開門，得先讓這些名字的主人離開。西邊崖下的洞穴。');
+        S.setPos('player', 19, 6, 'up');
+      } },
+      { id: 'board', trigger: 'action', x: 30, y: 35, w: 6, h: 3, label: '登船', if: (st) => st.flags.ch11_jailer && !st.flags.ch11_sail, run: async (S) => { await S.warp(DECK, 25, 8, 'left'); } },
+    ],
+    warps: [
+      { x: 8, y: 39, w: 3, to: 'penghu_flats', tx: 7, ty: 41, tdir: 'up' },
+      { x: 2, y: 18, to: 'xuanwu_b1', tx: 21, ty: 37, tdir: 'up' },
+      { x: 19, y: 3, w: 2, to: 'xuanwu_1f', tx: 21, ty: 36, tdir: 'up', door: true, if: (st) => !!st.flags.ch11_jars_freed },
+    ],
+    drawOver: (ctx, t) => { if (!F('ch11_jars_freed')) drawCurtain(ctx, t, 19, 3, 2, 1, '#6ab8ff'); drawDipper(ctx, t); },
+  });
+
+  // =================================================================================================
+  // MAP: xuanwu_b1 長明宮・萬魂窟 (44×40) — puzzle P1 五盞長明燈
+  // =================================================================================================
+  const LAMPS = [[20, 6], [27, 8], [25, 14], [15, 14], [13, 8]];
+  const lit = () => { const v = V(); if (!v.ch11_lit) v.ch11_lit = [1, 1, 1, 1, 1]; return v.ch11_lit; };
+  function b1Tiles() {
+    const g = grid(44, 40, 'C');
+    disc(g, 20, 10, 8.6, 'v', 7.6);                   // 五燈之間
+    fill(g, 20, 2, 3, 2, 'v');                        // north passage → iron gate
+    fill(g, 19, 30, 5, 9, 'v');                       // entrance foyer
+    path(g, [[19, 32], [6, 32], [5, 22], [5, 19], [9, 16], [13, 15]], 'v', 2);   // west branch
+    path(g, [[21, 30], [21, 17]], 'v', 3);                                       // middle branch (flooded)
+    path(g, [[23, 32], [37, 32], [37, 21], [33, 16], [28, 14]], 'v', 2);        // east branch
+    fill(g, 3, 19, 4, 3, 'v'); fill(g, 35, 19, 4, 3, 'v');                       // side alcoves
+    for (let y = 17; y < 30; y++) for (let x = 20; x < 24; x++) if (U.hash(x, y, 13) < 0.45) g[y][x] = '-';
+    fill(g, 16, 32, 3, 3, 'v');
+    return rows(g);
+  }
+  G.Maps.define('xuanwu_b1', {
+    name: '長明宮・萬魂窟',
+    subtitle: '玄武嶼',
+    place: 'penghu',
+    bgm: 'palace',
+    start: [21, 37],
+    light: { ambient: 0.8, color: '#02050f', playerR: 200 },
+    particles: [{ type: 'motes', density: 1.4 }],
+    tiles: b1Tiles(),
+    objects: (() => {
+      const o = [];
+      LAMPS.forEach(([x, y], i) => {
+        o.push({ t: 'eternal_lamp', x, y, if: () => lit()[i] === 1 });
+        o.push({ t: 'stone_lantern', x, y, lit: false, if: () => lit()[i] !== 1 });
+      });
+      o.push({ t: 'altar', x: 20, y: 10 });
+      // rings of soul jars around the hall (and empty jars once freed)
+      for (let k = 0; k < 34; k++) {
+        const a = k / 34 * Math.PI * 2, x = Math.round(20 + Math.cos(a) * 7.9), y = Math.round(10 + Math.sin(a) * 6.9);
+        if (y >= 16 || (x >= 19 && x <= 23 && y <= 4) || LAMPS.some(([lx, ly]) => Math.abs(lx - x) + Math.abs(ly - y) <= 1)) continue;
+        o.push({ t: 'soul_jar', x, y, if: (st) => !st.flags.ch11_jars_freed }, { t: 'jar', x, y, if: (st) => !!st.flags.ch11_jars_freed });
+      }
+      for (const [x, y] of [[4, 20], [6, 20], [36, 20], [38, 20], [8, 32], [12, 32], [30, 32], [34, 32], [19, 36], [23, 36]]) o.push({ t: 'soul_jar', x, y, if: (st) => !st.flags.ch11_jars_freed, interact: ['罐子上貼著紅紙，寫著名字與地址：「艋舺　黃氏」「竹塹　劉某」「府城　無名」……'], label: '調查' });
+      return o;
+    })(),
+    chests: [
+      { id: 'c11_08', x: 4, y: 19, item: 'c11_lamp_oil', n: 2 },
+      { id: 'c11_09', x: 38, y: 19, item: 'c11_ac_jade_bracer', n: 1 },
+      { id: 'c11_10', x: 17, y: 33, item: 'huanhundan', n: 1 },
+    ],
+    npcs: [
+      { id: 'xw_freed_soul', sprite: 'c11_freed_soul', name: '被放出的魂', x: 18, y: 12, dir: 'down', ghost: true, if: (st) => st.flags.ch11_jars_freed && !st.flags.ch11_freed_talk,
+        talk: (S) => H.freedSoul(S) },
+    ],
+    enemies: [
+      { id: 'b1a', troop: 'xuanwu_2', x: 7, y: 26, art: 'lantern_golem', variant: 1, lv: 40, radius: 3 },
+      { id: 'b1b', troop: 't11_xw_drowned', x: 35, y: 26, art: 'drowned_swarm', lv: 41, radius: 3 },
+      { id: 'b1c', troop: 'xuanwu_1', x: 21, y: 22, sprite: 'temple_guard', lv: 40, radius: 2 },
+    ],
+    events: [
+      { id: 'c11_07', trigger: 'touch', x: 13, y: 15, w: 16, h: 3, once: true, if: (st) => !st.flags.ch11_jars_freed, run: (S) => H.c11_07a(S) },
+      ...LAMPS.map(([x, y], i) => ({ id: 'lamp' + (i + 1), trigger: 'action', x, y, label: '調查', run: (S) => H.lampPillar(S, i) })),
+      { id: 'altar', trigger: 'action', x: 20, y: 10, w: 2, h: 1, label: '調查', run: (S) => H.b1Altar(S) },
+      { id: 'gate', trigger: 'touch', x: 20, y: 3, w: 3, h: 1, if: (st) => !st.flags.ch11_jars_freed, run: async (S) => {
+        S.sfx('buzz'); await S.say('', '一道黑鐵柵擋住了往上的石梯。鎖孔是一個小小的罐子形狀。'); S.setPos('player', 21, 5, 'up');
+      } },
+    ],
+    warps: [
+      { x: 21, y: 38, to: 'xuanwu_shore', tx: 4, ty: 18, tdir: 'right' },
+      { x: 20, y: 2, w: 3, to: 'xuanwu_1f', tx: 2, ty: 32, tdir: 'up', if: (st) => !!st.flags.ch11_jars_freed },
+    ],
+    onUpdate: (dt, ms, busy) => randomEnc(ms, busy, { terr: ['shallow'], rate: 0.06, troops: ['t11_xw_drowned'] }),
+    drawGround: (ctx, t, ms) => {
+      // the wall of a thousand jars: soft blue lights in the hall's rock
+      if (F('ch11_jars_freed')) return;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 160; i++) {
+        const a = U.hash(i, 1, 3) * Math.PI * 2, rr = 9.3 + U.hash(i, 2, 3) * 2.2;
+        const x = (20.5 + Math.cos(a) * rr) * T, y = (10.5 + Math.sin(a) * rr * 0.9) * T;
+        ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t * 2 + i);
+        ctx.drawImage(G.FX.glowSprite('#7ac8ff'), x - 7, y - 7, 14, 14);
+      }
+      ctx.restore();
+    },
+    drawOver: (ctx, t, ms) => {
+      if (F('ch11_jars_freed') && ms._freedT == null) ms._freedT = t;
+      if (ms._freedT != null && t - ms._freedT < 10) {
+        // thousands of lights rising, blue → warm white
+        const k = (t - ms._freedT) / 10;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 220; i++) {
+          const x = (6 + U.hash(i, 1, 8) * 30) * T, y0 = (2 + U.hash(i, 2, 8) * 18) * T;
+          const y = y0 - ((t - ms._freedT) * (60 + U.hash(i, 3, 8) * 80)) % (24 * T);
+          ctx.globalAlpha = (1 - k) * 0.8;
+          ctx.drawImage(G.FX.glowSprite(U.hash(i, 4, 8) < k ? '#fff2d8' : '#8fd0ff'), x - 6, y - 6, 12, 12);
+        }
+        ctx.restore();
+      }
+    },
+  });
+
+  // =================================================================================================
+  // MAP: xuanwu_1f 長明宮・長明殿 (44×40)
+  // =================================================================================================
+  function xw1fTiles(st) {
+    const g = grid(44, 40, 'E');
+    fill(g, 6, 4, 30, 34, 'T');                       // great hall
+    fill(g, 1, 5, 3, 30, 'T');                        // west corridor (to the cell)
+    fill(g, 4, 31, 2, 2, 'T');                        // corridor ↔ hall
+    fill(g, 38, 5, 5, 8, 'T'); fill(g, 36, 9, 2, 1, 'T');   // east wing: the study
+    fill(g, 20, 20, 3, 18, 'c'); fill(g, 19, 14, 5, 6, 'c');  // dark carpet to the altar
+    fill(g, 21, 38, 2, 1, 'T');                       // south gate
+    if (st.flags.ch11_secret) fill(g, 21, 2, 2, 2, 'H');
+    return rows(g);
+  }
+  G.Maps.define('xuanwu_1f', {
+    name: '長明宮・長明殿',
+    subtitle: '玄武嶼',
+    place: 'penghu',
+    bgm: 'palace',
+    start: [21, 36],
+    light: { ambient: 0.7, color: '#03060f', playerR: 210 },
+    particles: [{ type: 'motes', density: 0.8 }],
+    tiles: xw1fTiles,
+    objects: (() => {
+      const o = [
+        { t: 'altar', x: 21, y: 15, interact: ['夜玄的祭壇。供桌上沒有神像，只有一盞小小的、熄了很久的燈。'], label: '調查' },
+        { t: 'eternal_lamp', x: 21, y: 4, interact: async (S) => H.northLamp(S), label: '調查' },
+        { t: 'table', x: 40, y: 6, w: 2 }, { t: 'chair', x: 40, y: 7, dir: 'up' }, { t: 'bed', x: 42, y: 9 },
+        { t: 'mural', x: 39, y: 3, v: 4, interact: ['一幅褪色的畫，掛得很端正。'], label: '調查' },
+        { t: 'bookshelf', x: 38, y: 5 },
+        { t: 'stairs_down', x: 2, y: 33 },
+        { t: 'door_frame', x: 2, y: 4 },
+      ];
+      for (const y of [8, 26]) for (const x of [9, 14, 28, 33]) o.push({ t: 'eternal_lamp', x, y });
+      for (const y of [12, 20, 30]) for (const x of [8, 34]) o.push({ t: 'pillar', x, y });
+      for (const [x, y] of [[12, 34], [30, 34], [7, 17], [35, 17]]) o.push({ t: 'soul_jar', x, y, if: (st) => !st.flags.ch11_jars_freed });
+      return o;
+    })(),
+    chests: [
+      { id: 'c11_11', x: 34, y: 21, item: 'c11_ac_yx_talisman', n: 1 },
+      { id: 'c11_12', x: 33, y: 31, item: 'huanhunxiang', n: 2, run: async (S) => { S.gold(3000); } },
+    ],
+    lights: [{ x: 40, y: 6, r: 170, color: '#ffb060', flicker: 0.15 }],
+    enemies: [
+      { id: 'f1a', troop: 'xuanwu_1', x: 12, y: 23, sprite: 'temple_guard', lv: 40, radius: 3 },
+      { id: 'f1b', troop: 't11_xw_faceless', x: 29, y: 24, art: 'faceless', lv: 42, radius: 3 },
+      { id: 'f1c', troop: 'xuanwu_3', x: 15, y: 10, art: 'marionette', variant: 2, lv: 40, radius: 3 },
+      { id: 'f1d', troop: 't11_xw_faceless', x: 29, y: 11, art: 'faceless', lv: 42, radius: 2 },
+    ],
+    events: [
+      { id: 'study', trigger: 'action', x: 40, y: 6, w: 2, h: 1, label: '調查', run: (S) => H.c11_08(S) },
+      { id: 'north', trigger: 'action', x: 21, y: 3, w: 2, h: 1, label: '調查', if: (st) => !st.flags.ch11_secret, run: (S) => H.northLamp(S) },
+    ],
+    warps: [
+      { x: 21, y: 38, w: 2, to: 'xuanwu_shore', tx: 19, ty: 5, tdir: 'down', door: true },
+      { x: 2, y: 33, to: 'xuanwu_b1', tx: 21, ty: 5, tdir: 'down' },
+      { x: 2, y: 5, to: 'xuanwu_cell', tx: 6, ty: 7, tdir: 'up', door: true },
+      { x: 21, y: 2, w: 2, to: 'xuanwu_top', tx: 12, ty: 17, tdir: 'up', if: (st) => !!st.flags.ch11_secret },
+    ],
+    drawOver: (ctx, t, ms) => {
+      // the hanging forest of eternal lamps above the hall (half of them dark once the jars are free)
+      const freed = F('ch11_jars_freed');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 90; i++) {
+        if (freed && i % 2) continue;
+        const x = (9 + U.hash(i, 1, 21) * 26) * T, y = (6 + U.hash(i, 2, 21) * 26) * T - 70 + Math.sin(t * 0.8 + i) * 3;
+        ctx.globalAlpha = 0.18 + 0.12 * Math.sin(t * 1.5 + i * 0.7);
+        ctx.drawImage(G.FX.glowSprite('#6ab0ff'), x - 9, y - 9, 18, 18);
+      }
+      ctx.restore();
+    },
+  });
+
+  // ---- 白芷的囚室 (12×9)
+  const PAPER_LAMPS = [[3, 2], [6, 2], [9, 2], [3, 4], [6, 4], [9, 4]];
+  G.Maps.define('xuanwu_cell', {
+    name: '白芷的囚室',
+    place: 'penghu',
+    bgm: (st) => (st.vars.ch11_letters_read >= 6 || st.flags.ch11_letters ? 'love' : null),
+    start: [6, 7],
+    light: { ambient: 0.5, color: '#060a18', playerR: 150 },
+    particles: [{ type: 'motes', density: 0.3 }],
+    tiles: rows(room(12, 9, 't', 'P', [6])),
+    objects: [
+      { t: 'bed_mat', x: 1, y: 5 },
+      { t: 'paper_stack', x: 10, y: 7, interact: ['牆角一小堆用剩的燈籠紙與竹炭。'], label: '調查' },
+      ...PAPER_LAMPS.map(([x, y]) => ({ t: 'red_lantern', x, y, hang: true, color: '#f4efe4', text: '芷' })),
+    ],
+    lights: (st) => [{ x: 5.5, y: 2.5, r: 150, color: '#dfe9ff', flicker: 0 }].concat(st.flags.ch11_letters ? [] : [{ x: 5.5, y: 1.6, r: 46, color: '#bff3ff', flicker: 0.2 }]),
+    events: [
+      { id: 'c11_09', trigger: 'auto', if: (st) => !st.flags.ch11_cell_in, run: (S) => H.c11_09a(S) },
+      ...PAPER_LAMPS.map(([x, y], i) => ({ id: 'letter' + (i + 1), trigger: 'action', x, y, label: '調查', run: (S) => H.letter(S, i) })),
+      { id: 'wall', trigger: 'action', x: 11, y: 2, w: 1, h: 6, label: '調查', run: (S) => H.wallWriting(S) },
+      { id: 'window', trigger: 'action', x: 5, y: 1, w: 2, h: 1, label: '調查', run: async (S) => {
+        if (F('ch11_letters')) await S.say('', '小小的窗。看得見海。'); else await S.say('', '窗台上放著一支玉笛，發著一點點光。旁邊的紙燈，還沒有讀完。');
+      } },
+    ],
+    warps: [{ x: 6, y: 8, to: 'xuanwu_1f', tx: 2, ty: 6, tdir: 'down', door: true }],
+    drawGround: (ctx, t) => {
+      // starlight patch from the window
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(6 * T, 4 * T, 10, 6 * T, 4 * T, 150);
+      g.addColorStop(0, 'rgba(220,232,255,0.22)'); g.addColorStop(1, 'rgba(220,232,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(3 * T, 2 * T, 6 * T, 5 * T);
+      ctx.restore();
+      if (!F('ch11_letters')) { // the jade flute on the sill
+        ctx.save(); ctx.strokeStyle = '#cfeedd'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(5.2 * T, 1.75 * T); ctx.lineTo(6.6 * T, 1.7 * T); ctx.stroke(); ctx.restore();
+      }
+    },
+  });
+
+  // ---- 逆潮台 (24×20)
+  function topTiles() {
+    const g = grid(24, 20, 'U');
+    disc(g, 11.5, 9, 9.6, 'Y', 7.8);
+    fill(g, 11, 16, 2, 4, 'H');
+    return rows(g);
+  }
+  G.Maps.define('xuanwu_top', {
+    name: '逆潮台',
+    subtitle: '玄武嶼之巔',
+    place: 'penghu',
+    bgm: (st) => (st.flags.ch11_jailer ? 'villain' : 'palace'),
+    start: [12, 17],
+    light: (st) => (st.flags.ch11_jailer ? { ambient: 0.6, color: '#060a1e', playerR: 220 } : { ambient: 0.7, color: '#02060f', playerR: 200 }),
+    particles: (st) => (st.flags.ch11_jailer ? ['motes', 'wind'] : [{ type: 'motes', density: 1.5 }]),
+    tiles: topTiles(),
+    objects: [{ t: 'lighthouse_lamp', x: 11, y: 7, interact: ['一盞三層樓高的巨燈。光筆直地刺向西方，像一根釘子，把整片夜空釘在原地。'], label: '調查' }],
+    lights: (st) => (st.flags.ch11_jailer ? [] : [{ x: 11.5, y: 7.5, r: 420, color: '#7fc8ff', flicker: 0.1 }]),
+    events: [
+      { id: 'c11_10', trigger: 'auto', if: (st) => !st.flags.ch11_jailer, run: (S) => H.c11_10(S) },
+    ],
+    warps: [{ x: 11, y: 19, w: 2, to: 'xuanwu_1f', tx: 21, ty: 4, tdir: 'down' }],
+    drawGround: (ctx, t) => {
+      // 逆潮陣: concentric rune circles
+      const x = 12 * T, y = 8.6 * T;
+      ctx.save(); ctx.strokeStyle = F('ch11_jailer') ? 'rgba(120,140,170,0.25)' : `rgba(110,190,255,${0.35 + 0.15 * Math.sin(t * 2)})`; ctx.lineWidth = 2;
+      for (const r of [150, 230, 310]) { ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.62, 0, 0, Math.PI * 2); ctx.stroke(); }
+      for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2 + (F('ch11_jailer') ? 0 : t * 0.1); ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 160, y + Math.sin(a) * 99); ctx.lineTo(x + Math.cos(a) * 220, y + Math.sin(a) * 136); ctx.stroke(); }
+      ctx.restore();
+    },
+    drawOver: (ctx, t, ms) => {
+      if (!F('ch11_jailer')) {
+        // the beam pinning the night: straight west across the sky
+        const x = 12 * T, y = 6.4 * T;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createLinearGradient(x, 0, x - 1800, 0);
+        g.addColorStop(0, 'rgba(160,220,255,0.75)'); g.addColorStop(1, 'rgba(120,200,255,0)');
+        ctx.fillStyle = g; ctx.fillRect(x - 1800, y - 10 - Math.sin(t * 3) * 2, 1800, 20 + Math.sin(t * 3) * 4);
+        ctx.globalAlpha = 0.5; ctx.drawImage(G.FX.glowSprite('#bfe6ff'), x - 60, y - 60, 120, 120);
+        ctx.restore();
+      } else if (ms._shatter != null) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const k = Math.min(1, (t - ms._shatter) / 1.5);
+        for (let i = 0; i < 40; i++) { const a = U.hash(i, 1, 4) * Math.PI * 2, r = k * (80 + U.hash(i, 2, 4) * 260); ctx.globalAlpha = 1 - k; ctx.drawImage(G.FX.glowSprite('#9fd8ff'), 12 * T + Math.cos(a) * r - 6, 6.4 * T + Math.sin(a) * r - 6, 12, 12); }
+        ctx.restore();
+      }
+      drawDipper(ctx, t);
+    },
+  });

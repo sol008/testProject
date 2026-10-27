@@ -625,6 +625,26 @@ test('shop: buy/sell arithmetic and 99 cap (logic level)', ({ G }) => {
   A.ok(closed, 'shop resolve called on 離開');
 });
 
+test('map/script: S.move resolves for the player, an NPC and a FOLLOWER (party member)', async ({ G, ctx }) => {
+  G.ctx = ctx.document.createElement('canvas').getContext('2d');
+  if (!G.Maps.get('qa_room')) {
+    G.Maps.define('qa_room', { name: 'QA', start: [3, 3], tiles: Array(8).fill('.'.repeat(10)), npcs: [{ id: 'qa_npc', sprite: 'old_m', x: 6, y: 2 }] });
+  }
+  G.Party.join('qa_hero', 1); G.Party.join('qa_mage', 1);
+  G.Mapx.goto('qa_room', 3, 3, 'down');
+  const S = G.Script.S;
+  const done = {};
+  const step = async (sec) => { for (let t = 0; t < sec; t += 0.05) { G.Timers.update(0.05); G.Tweens.update(0.05); G.Scenes.update(0.05); await null; } };
+  S.move('player', 'R').then(() => { done.player = true; });
+  S.move('qa_npc', 'D').then(() => { done.npc = true; });
+  await step(1.5);
+  S.move('qa_mage', 'L').then(() => { done.follower = true; });
+  await step(1.5);
+  A.ok(done.player, 'player move did not resolve');
+  A.ok(done.npc, 'npc move did not resolve');
+  A.ok(done.follower, "follower move never resolved — map.js updateFollowers() ignores updateMove()'s arrival and never calls f.onArrive, so `await S.move/S.walkTo(<party member>)` soft-locks cutscenes");
+});
+
 // ------------------------------------------------------------------ content-driven sanity
 test('content: every character can be created at lv 1..50 with finite positive stats', ({ G }) => {
   const real = Object.keys(G.Data.chars).filter((id) => !id.startsWith('qa_'));

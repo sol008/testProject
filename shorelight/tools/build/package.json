@@ -1,0 +1,1 @@
+{ "name": "shorelight-build", "private": true, "version": "1.0.0", "dependencies": { "three": "0.186.1", "esbuild": "0.28.2" } }
