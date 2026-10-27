@@ -168,6 +168,21 @@ the open quest or counts the unstarted 心燈 as documented, and 再等等 reall
 
 ## Test runs
 
-- `node tools/test/sidequests/ch6.side.js`, `ch7.side.js`, `ch8.side.js`: all PASS (see the per-quest notes).
-- `node tools/test/unit.js`: 64 passed. `node tools/test/validate.js`: 0 errors.
-- Chapter tests `tools/test/chapters/ch6|7|8.test.js`: see the commit message / session summary.
+- `node tools/test/sidequests/ch6.side.js`: 6/6 PASS (ayi, ayi_warn, linto, mush, 3d, 3d_mush).
+- `node tools/test/sidequests/ch7.side.js`: salt, pasuya, warn, mush, murals PASS; see the 3D lines in the ch7 sections.
+- `node tools/test/sidequests/ch8.side.js`: 3/3 PASS (pilgrims, oyster, warn).
+- `node tools/test/unit.js`: 64 passed. `node tools/test/validate.js`: 0 errors (15 warnings, about chests behind
+  story-gated passages such as the 霧谷 log and the 舊城 sluice. These are reachable in play: the side-quest runs
+  open the 霧谷 chest area and the sluice route).
+- `tools/test/chapters/ch6.test.js --only main,ayi,mush,sweep`: 4/4 PASS. `ch7.test.js`: 63/63 checks PASS.
+- `tools/test/chapters/ch8.test.js`: main, oyster_b, npcs PASS. **`tide` FAILS (Game Over on beigang_river)**, but it
+  fails identically with the original `ch8_tide.js` (commit 2b451ea), so this branch did not cause it. It is a test-setup issue
+  (no gear, roaming drowned / 百手 at Lv31) and is left for a separate fix.
+
+## Remaining concerns
+
+- **3D, 潮音蕈**: under 靈視 the glow on the wet sand is partly hidden by the pandanus foliage in the 3D view
+  (screenshot `ch6_3d_mush`). The new non-靈視 line on the patch makes the spot findable regardless.
+- **霧谷 微光 (ch7)**: glimmers 1 and 2 have no object on the cell, only the drawn glow and a light. They are flavour;
+  the required third one sits next to a dead tree, and the guide gives all three coordinates.
+- **蚵殼阿嬤's wrong answer** loses the 心燈 by design (choice hint only).
