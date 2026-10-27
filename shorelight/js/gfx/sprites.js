@@ -2687,6 +2687,10 @@
     shoes: { type: 'cloth', color: '#2b2a3a' }, hip: ['jade'],
     glow: '#bfe8ff', weapon: 'flute', aura: '#7fd3ff',
   });
+  // 白芷's true lamp-spirit form (visions only, e.g. ch7 murals): silver hair, gold eyes, no apron, glowing
+  define('baizhi_spirit', { base: 'baizhi', eyes: '#d9a531',
+    hair: { color: '#e6e9f0', sheen: '#bfe8ff', tie: '#c3303a' }, apron: null, top: { color: '#dfe9f5', trim: '#bfe8ff', cuff: '#bfe8ff' },
+    bottom: { type: 'skirt', color: '#cfdcec' }, shoes: { type: 'bare' }, glow: '#ffe7a8', aura: '#ffd27a' });
   define('hongying', { // 洛紅纓 — client pick v2 #01 洛家槍・承: crown-high ponytail with red silk bow, crimson Qing arrow-sleeve robe
     // to the knee (side slits), black 巴圖魯 vest with brass button row, moon-white collar, laced leather bracers, riding boots, red-tassel spear
     body: 'female', skin: '#f3d3bd', eyes: '#b4581c', eyeStyle: 'sharp', brows: 'fierce', mouth: 'smirk',

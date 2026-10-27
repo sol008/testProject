@@ -982,7 +982,7 @@
       ['hongying:sad', '……是我太慢了。我要是再快一步，白芷就不會——'],
       ['yungui:normal', '洛姑娘。他倒下的時候，妳是第一個衝過去的。'],
       ['yungui:normal', '我們都慢了。慢的不只妳一個。'],
-      ['', '廟前的石階上，麻糬一動不動地坐著，望著海的方向。牠脖子上還繫著白芷綁的那條紅繩。'],
+      ['', '廟前的石階上，麻糬一動不動地坐著，望著海的方向。遠處的燈火映在牠眼裡，像兩顆小月亮。'],
       ['', '芋圓一聲不吭地爬上星河的肚子，把自己攤成一片灰色的毛毯。'],
     ]);
     S.move('yuyuan', 'U', { wait: false });
@@ -3731,7 +3731,7 @@
       ['xinghe:cry', '不……不要……誰來……誰來救他！'],
     ]);
     S.sfx('bell');
-    spawn(S, { id: 'lgirl', sprite: 'baizhi', x: 24, y: 2, dir: 'left', ghost: true });
+    spawn(S, { id: 'lgirl', sprite: 'baizhi_spirit', x: 24, y: 2, dir: 'left', ghost: true });
     S.actor('lgirl').alpha = 0;
     C7.xhGirl = { x: 24, y: 2, a: 0 };
     await Promise.all([S.fadeActor('lgirl', 1, 1.2), G.Tweens.to(C7.xhGirl, { a: 1 }, 1.2, 'linear')]);
@@ -4964,7 +4964,7 @@
     S.face('player', 'up');
     S.sfx('fire');
     await S.lines([
-      ['', '麻糬走到水邊，望著西邊。那是海的方向。脖子上的紅繩在晨風裡輕輕晃。'],
+      ['', '麻糬走到水邊，望著西邊。那是海的方向。長長的白毛在晨風裡輕輕晃。'],
       ['', '星河站起身，攤開手掌。一團穩定的心火在掌心燃燒。'],
       ['xinghe:smile', '白芷。妳再等一下。'],
       ['xinghe:smile', '這一次，妳不會一個人發光了。'],
