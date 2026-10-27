@@ -169,6 +169,18 @@ const SEGMENTS = {
   },
   flats: async (R) => {
   await R.levelTo(39);
+  // a ?startch=11 party wears starter gear: buy the Magong smith's kit (as a player would before the flats)
+  await R.ev(() => {
+    const kit = { xinghe: ['c11_sw_xuanwu', 'c11_ar_coral'], hongying: ['c11_sp_jinggu', 'c11_ar_haiwen'], yungui: ['c11_fn_leishan', 'c11_ar_coral'] };
+    for (const [id, items] of Object.entries(kit)) {
+      for (const it of items.concat(['c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'])) {
+        const slot = G.Data.items[it].type;
+        if (G.state.members[id].equip[slot] === it) continue;
+        G.Inv.add(it, 1); G.Party.equip(id, slot, it);
+      }
+    }
+    G.Party.healAll();
+  });
   // ---- 石滬灘 (11-04), 4-1 steps 2–4, 4-4 玄武蕈, 11-05 烏鬚船主
   await R.warp('penghu_flats', 28, 1, 'down');
   check('A: 11-04 ch11_flats', await R.flag('ch11_flats'));
