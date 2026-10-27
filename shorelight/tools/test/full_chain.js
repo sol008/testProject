@@ -292,7 +292,8 @@ class Harness {
     const q = String(url).replace(/^.*?(\?|$)/, '');
     if (q) log('chain', `driver asked for ${q.slice(0, 160)} — ignored (no debug preset is ever loaded)`);
     const lv = new URLSearchParams(q).get('lv');
-    if (lv) this.levelAssumption(+lv, 'debug preset lv=' + lv, null);
+    // the chapter's own startch preset is already recorded at the boundary
+    if (lv && !new RegExp(`startch=${this.ch}\\b`).test(q)) this.levelAssumption(+lv, 'debug preset lv=' + lv, null);
   }
   // init scripts a driver registers: storage/settings writers are dropped (they would wipe the chain's saves), page
   // helpers (__qa fast-forward, error hooks) are installed right away, the battle bot is already there
