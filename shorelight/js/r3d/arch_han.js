@@ -314,17 +314,15 @@
     mottle(g, S, field(S, 10, 3, 111), 0.3);
     grime(g, S, field(S, 3, 4, 112), 0.4, [60, 70, 50], 0.55);
   });
-  reg('rock', 2, (g, S, R) => { // weathered sandstone/andesite hill face with moss
-    g.fillStyle = '#6e6456'; g.fillRect(0, 0, S, S);
-    for (let i = 0; i < 40; i++) {
-      const x = R() * S, y = R() * S, w = 30 + R() * 70, h = 20 + R() * 40, c = mixHex('#8a7e6c', '#5a5246', R());
-      wrap(g, S, () => {
-        g.fillStyle = 'rgba(20,16,12,0.45)'; g.beginPath(); g.moveTo(x, y + h); g.lineTo(x + w * 0.2, y + 2); g.lineTo(x + w, y + 6); g.lineTo(x + w * 0.9, y + h + 4); g.fill();
-        g.fillStyle = LG(g, x, y, x, y + h, [[0, shade(c, 0.2)], [1, shade(c, -0.2)]]); g.beginPath(); g.moveTo(x, y + h - 3); g.lineTo(x + w * 0.2, y); g.lineTo(x + w - 3, y + 4); g.lineTo(x + w * 0.88, y + h); g.fill();
-      });
-    }
-    mottle(g, S, field(S, 16, 3, 121), 0.35);
-    grime(g, S, field(S, 3, 5, 122), 0.75, [62, 92, 46], 0.52); // moss
+  reg('rock', 2, (g, S, R) => { // weathered sandstone/andesite hill face: strata, cracks, lichen and moss
+    g.fillStyle = '#7a6e5e'; g.fillRect(0, 0, S, S);
+    const F = field(S, 5, 5, 120);
+    modulate(g, S, F, (r, gg, b, v, x, y) => { const k = 0.7 + 0.6 * v + 0.08 * sin(y * 0.11 + v * 6); return [r * k, gg * k, b * k]; }); // strata
+    g.strokeStyle = 'rgba(30,24,18,0.45)'; g.lineWidth = 1.4;
+    for (let i = 0; i < 16; i++) { let x = R() * S, y = R() * S; const a = R() * TAU; wrap(g, S, () => { g.beginPath(); g.moveTo(x, y); let xx = x, yy = y; for (let k = 0; k < 5; k++) { xx += cos(a + (R() - 0.5)) * 12; yy += sin(a + (R() - 0.5)) * 12; g.lineTo(xx, yy); } g.stroke(); }); }
+    mottle(g, S, field(S, 24, 2, 121), 0.3);
+    grime(g, S, field(S, 3, 5, 122), 0.8, [64, 96, 46], 0.5);  // moss
+    grime(g, S, field(S, 10, 3, 123), 0.35, [170, 168, 140], 0.7); // pale lichen
   });
 
   // ---------------------------------------------------------------- plaster, timber
@@ -1334,8 +1332,8 @@
     const top = y + h / 2 + 0.05 + cord;
     const so = { mat: 'sway', pivot: [x, top, z], phase: (x * 2.3 + z * 1.7 + (o.ph || 0)) % TAU };
     const prof = []; for (let i = 0; i <= 8; i++) { const t = i / 8, a = (t - 0.5) * PI; prof.push([r * (0.18 + 0.82 * cos(a)), (t - 0.5) * h]); }
-    const k = lit ? (o.glow || 2.2) : 0.55;
-    B.lathe(x, y, z, prof, Object.assign({ reg, decalU: true, seg: 12, a0: PI, k, tint: (xx, yy) => { const t = 1 - abs(yy - y) / (h * 0.6); return lit ? [1.0 * (0.75 + 0.35 * t), 0.86 * (0.7 + 0.35 * t), 0.75 * (0.7 + 0.3 * t)] : [0.8, 0.8, 0.8]; } }, so));
+    const k = lit ? (o.glow || 1.6) * 0.75 : 0.55;
+    B.lathe(x, y, z, prof, Object.assign({ reg, decalU: true, seg: 12, a0: PI, k, tint: (xx, yy) => { const t = clamp(1 - abs(yy - y) / (h * 0.55), 0, 1); return lit ? [0.85 + 0.5 * t, 0.62 + 0.45 * t * t, 0.5 + 0.35 * t * t] : [0.8, 0.8, 0.8]; } }, so));
     const dark = { reg: 'white', tint: [0.05, 0.03, 0.025] };
     B.cyl(x, y + h / 2 - 0.02, z, r * 0.4, r * 0.4, 0.07, Object.assign({}, so, dark, { seg: 8 }));
     B.cyl(x, y - h / 2 - 0.05, z, r * 0.4, r * 0.4, 0.07, Object.assign({}, so, dark, { seg: 8 }));
@@ -2087,8 +2085,8 @@
     B.box(0, 3.15, zP, 2 * hw + 0.1, 0.05, zP - zF, { reg: 'soffit', tint: '#7a6050', skip: 't', ao: false });
     const lk = C.dim || 1;
     for (const s of [-1, 1]) {
-      lanternAt(B, s * 0.68, 2.15, zP - 0.12, { kind: s < 0 ? 'ping' : 'an', lit, r: 0.27, h: 0.62, cord: 0.32, glow: 2.2 * lk, intensity: 1.2 });
-      for (const x of [s * (hw - 0.75), s * (cw + 0.42)]) lanternAt(B, x, 2.55, zP - 0.05, { lit, r: 0.14, cord: 0.22, glow: 2.2 * lk, light: abs(x) > 2 });
+      lanternAt(B, s * 0.68, 2.15, zP - 0.12, { kind: s < 0 ? 'ping' : 'an', lit, r: 0.27, h: 0.62, cord: 0.32, glow: 1.6 * lk, intensity: 1.2 });
+      for (const x of [s * (hw - 0.75), s * (cw + 0.42)]) lanternAt(B, x, 2.55, zP - 0.05, { lit, r: 0.14, cord: 0.22, glow: 1.6 * lk, light: abs(x) > 2 });
     }
     if (C.abacus) { // 城隍爺的大算盤 — the City God's great abacus, hung under the porch beam
       B.box(0, 3.0, zP - 0.35, 1.5, 0.06, 0.06, { reg: 'grain', tint: '#2a1a12' }); B.box(0, 2.62, zP - 0.35, 1.5, 0.06, 0.06, { reg: 'grain', tint: '#2a1a12' });
@@ -2135,6 +2133,202 @@
     door: id === 'temple' ? 3 : 2, doorMin: id === 'temple' ? 0 : 1, maxLights: 4,
     key: (o) => o.text || '',
     build(B, c) { grandTemple(B, c, C); },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // FORTIFICATIONS — 城牆 city_wall, 城門 gate_city (竹塹/府城 style), 恆春 fort_gate
+  // =================================================================================================
+  const WALL_H = 3.6;
+  // crenellated parapet (雉堞) along x at local z, from x0..x1 on top of height y
+  function merlons(B, x0, x1, y, z, o) {
+    const pitch = 0.95, mw = 0.55, n = max(1, round((x1 - x0) / pitch));
+    const step = (x1 - x0) / n;
+    B.box((x0 + x1) / 2, y, z, x1 - x0, 0.42, 0.28, Object.assign({ skip: 'b' }, o)); // parapet base
+    for (let i = 0; i < n; i++) { const x = x0 + (i + 0.5) * step; B.box(x, y + 0.42, z, min(mw, step - 0.12), 0.48, 0.28, Object.assign({ skip: 'b' }, o)); B.box(x, y + 0.9, z, min(mw, step - 0.12) + 0.04, 0.06, 0.32, { reg: 'granite', tint: '#d0cabe', skip: 'b' }); }
+  }
+  han('city_wall', {
+    nv: 2, salt: 33, resize: 'w',
+    key: (o) => o.tall || 110,
+    build(B, c) {
+      const { w, v } = c, H = WALL_H * (c.o.tall || 110) / 110, brick = v === 1;
+      const face = brick ? { reg: 'brickOld', tint: '#ffffff' } : { reg: 'ashlarDark', tint: '#f0ece4' };
+      const L = w, T = 0.96;
+      // battered faces: wider at the foot
+      for (const s of [1, -1]) B.quad([-L / 2, 0, s * T / 2], [L / 2, 0, s * T / 2], [L / 2, H, s * (T / 2 - 0.08)], [-L / 2, H, s * (T / 2 - 0.08)], Object.assign({ flip: s < 0 }, face));
+      for (const s of [1, -1]) B.quad([s * L / 2, 0, -s * T / 2], [s * L / 2, 0, s * T / 2], [s * L / 2, H, s * (T / 2 - 0.08)], [s * L / 2, H, -s * (T / 2 - 0.08)], Object.assign({ flip: s > 0 }, face));
+      B.box(0, 0, 0, L, 0.35, T + 0.1, { reg: 'ashlar', tint: '#d8d2c6', skip: 'b' });                    // footing course
+      B.box(0, H - 0.12, 0, L + 0.02, 0.12, T - 0.06, { reg: 'pave', tint: '#cfc8b8', ao: false });       // walkway paving
+      B.box(0, H - 0.2, T / 2 - 0.04, L + 0.02, 0.08, 0.1, { reg: 'granite', tint: '#d6d0c4' });        // string course
+      merlons(B, -L / 2, L / 2, H - 0.12, T / 2 - 0.2, face);
+      B.box(0, H - 0.12, -T / 2 + 0.12, L, 0.45, 0.2, Object.assign({ skip: 'b' }, face));               // low inner parapet (女牆)
+      for (let x = -L / 2 + 2; x < L / 2 - 1; x += 4) { B.box(x, H - 0.55, T / 2 - 0.04, 0.14, 0.12, 0.3, { reg: 'granite', tint: '#bab4a8' }); B.rect(x, H - 1.6, T / 2 - 0.075, 0.18, 1.9, { reg: 'white', tint: '#3e4a32', ao: false, k: 0.6 }, -0.08); } // drain spouts with moss streaks
+    },
+  });
+  // gate masonry with an arched passage through column `door`; returns the tower helper
+  function gateBlock(B, c, o) {
+    const { w, h, door } = c, W = w, D = h, H = o.H || WALL_H;
+    const px = -W / 2 + (door >= 0 ? door : floor(w / 2)) + 0.5, pw = 0.96, ys = o.spring || 2.05;
+    const face = o.face;
+    for (const s of [1, -1]) {
+      B.push().tr(0, 0, s * D / 2).ry(s > 0 ? 0 : PI);
+      const x = s > 0 ? px : -px;
+      wall(B, W, 0, H, 0.5, [{ x0: x - pw / 2, x1: x + pw / 2, y0: 0, y1: ys + pw / 2 }], Object.assign({ endL: true, endR: true }, face));
+      if (o.lower) wall(B, W + 0.04, 0, o.lower.h, 0.04, [{ x0: x - pw / 2, x1: x + pw / 2, y0: 0, y1: o.lower.h + 1 }], Object.assign({}, o.lower, { endL: true, endR: true }));
+      archAt(B, x, pw, ys, ys + pw / 2, 0.5, Object.assign({}, face, { voussoir: 'granite', voussoirTint: '#e0dace', key: true }));
+      B.pop();
+    }
+    for (const s of [1, -1]) { B.push().tr(s * W / 2, 0, 0).ry(s * PI / 2); wall(B, D - 1.0, 0, H, 0.5, [], Object.assign({ endL: true, endR: true }, face)); B.pop(); }
+    B.box(0, 0, 0, W - 1.0, H, D - 1.0, Object.assign({ skip: 'nsewb' }, face)); // core top
+    // passage: barrel vault & walls through the full depth, paved floor
+    B.push().tr(px, 0, D / 2 - 0.5);
+    archAt(B, 0, pw, ys, ys + pw / 2 + 0.01, D - 1.0, { reg: 'ashlarDark', tint: '#a8a49a', ao: false });
+    B.pop();
+    for (const sx of [-1, 1]) B.quad([px + sx * pw / 2, 0, sx > 0 ? -D / 2 + 0.5 : D / 2 - 0.5], [px + sx * pw / 2, 0, sx > 0 ? D / 2 - 0.5 : -D / 2 + 0.5], [px + sx * pw / 2, ys, sx > 0 ? D / 2 - 0.5 : -D / 2 + 0.5], [px + sx * pw / 2, ys, sx > 0 ? -D / 2 + 0.5 : D / 2 - 0.5], { reg: 'ashlarDark', tint: '#a8a49a' });
+    B.box(px, 0, 0, pw, 0.03, D, { reg: 'pave', tint: '#bdb6a8', skip: 'b' });
+    // studded gate leaves folded back against the passage walls
+    for (const sx of [-1, 1]) { B.push().tr(px + sx * (pw / 2 - 0.05), 0, D / 2 - 0.5 - 0.48).ry(sx * PI / 2); B.box(0, 0, 0, 0.92, ys + 0.3, 0.08, { reg: 'grain', tint: '#4a2418' }); B.rect(0, (ys + 0.3) / 2, 0.041, 0.86, ys + 0.24, { reg: o.leaf || 'doorStuds', decalUV: true }); B.pop(); }
+    // plaque & lamps
+    plaqueAt(B, px, ys + pw / 2 + 0.42, D / 2 + 0.03, 0.9, 0.34, c.text || o.text, o.plaque || { bg: '#d8d2c2', fg: '#2a2420', rim: '#7a766c' });
+    // walkway + merlons around the top
+    B.box(0, H - 0.1, 0, W - 0.02, 0.1, D - 0.02, { reg: 'pave', tint: '#cfc8b8', ao: false, skip: 'b' });
+    merlons(B, -W / 2 + 0.14, W / 2 - 0.14, H, D / 2 - 0.14, face);
+    B.push().ry(PI); merlons(B, -W / 2 + 0.14, W / 2 - 0.14, H, D / 2 - 0.14, face); B.pop();
+    return { px, H, pw, ys };
+  }
+  // one-storey gate tower (城樓) on top of the masonry
+  function gateTower(B, x, y, tw, td, c, o = {}) {
+    const lit = c.lit, th = o.th || 2.1;
+    B.push().tr(x, y, 0);
+    B.box(0, 0, 0, tw + 0.3, 0.16, td + 0.3, { reg: 'granite', tint: '#d6d0c4' });
+    B.push().tr(0, 0.16, 0);
+    const nwin = max(1, round(tw / 0.85));
+    side(B, 's', tw / 2, td / 2, (L) => {
+      const hs = []; for (let i = 0; i < nwin; i++) { const xx = -L / 2 + (i + 0.5) * L / nwin; hs.push({ x0: xx - 0.27, x1: xx + 0.27, y0: 0.55, y1: 1.55, x: xx }); }
+      wall(B, L, 0, th, 0.14, hs, { reg: 'woodNeutral', tint: '#7a2a20', eave: th });
+      for (const q of hs) windowAt(B, q.x, 0.55, 0.54, 1.0, 0.14, { style: 'diamond', lit, frameTint: '#3a120e', sill: false });
+    });
+    for (const sn of ['n', 'e', 'w']) side(B, sn, tw / 2, td / 2, (L) => wall(B, L, 0, th, 0.14, [], { reg: 'woodNeutral', tint: '#6a2418', eave: th, endL: sn !== 'n', endR: sn !== 'n' }));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) columnAt(B, sx * (tw / 2 + 0.06), sz * (td / 2 + 0.06), 0, th, 0.09, { base: 'square', tint: '#b3291f' });
+    B.box(0, th - 0.22, td / 2 + 0.07, tw + 0.3, 0.22, 0.12, { reg: 'beamPaint', ao: false });
+    // balustrade along the front of the platform
+    B.box(0, 0, td / 2 + 0.25, tw + 0.3, 0.06, 0.06, { reg: 'grain', tint: '#7a2a1c' });
+    const rf = roof(B, { type: o.roofType || 'gable', hx: tw / 2 + 0.55, hz: td / 2 + 0.6, xr: tw / 2 - 0.2, v0: 0.45, yr: th + (o.rise || 1.25), ye: th - 0.1, curve: 0.5, lift: 0.3, kick: 0.15, ridgeLift: 0.2, tile: o.tile || 'tileDark', rows: 6, gableReg: 'beamPaint', vergeTint: '#2a2a30' });
+    ridge(B, ridgePath(rf, tw / 2 + 0.3, 12, 0), { w: 0.18, h: 0.22, tint: o.ridge || '#3a3d44', ends: 'swallow', len: 0.55, rise: 0.48 });
+    if (o.roofType === 'xieshan') for (const sx of [-1, 1]) for (const sz of [-1, 1]) ridge(B, rf.hipLine(sx, sz, 6).map((p) => [p[0], p[1] + 0.03, p[2]]), { w: 0.12, h: 0.15, tint: o.ridge || '#3a3d44', ends: [null, 'curl'], len: 0.35, rise: 0.35 });
+    for (const sx of [-1, 1]) lanternAt(B, sx * (tw / 2 - 0.2), th - 0.55, td / 2 + 0.45, { lit, r: 0.15, cord: 0.15 });
+    B.pop(); B.pop();
+  }
+  // wall-mounted torch: iron bracket + flickering flame (glow) + light
+  function torchAt(B, x, y, z, lit) {
+    B.box(x, y, z + 0.08, 0.04, 0.04, 0.18, { reg: 'iron' });
+    B.lathe(x, y - 0.05, z + 0.18, [[0.02, 0], [0.07, 0.12], [0.06, 0.16]], { reg: 'iron', seg: 6 });
+    if (!lit) return;
+    B.lathe(x, y + 0.1, z + 0.18, [[0.06, 0], [0.07, 0.05], [0.035, 0.16], [0.0, 0.28]], { mat: 'sway', reg: 'white', tint: (xx, yy) => (yy < y + 0.2 ? [3.0, 1.9, 0.6] : [2.6, 0.9, 0.25]), pivot: [x, y + 0.1, z + 0.18], phase: x * 5, seg: 7 });
+    B.light(x, y + 0.3, z + 0.35, '#ff9a40', 0.9, 3.5, 0.55);
+  }
+  han('gate_city', {
+    door: 1,
+    build(B, c) {
+      const g = gateBlock(B, c, { face: { reg: 'ashlarDark', tint: '#f0ece4' }, text: '東門' });
+      for (const sx of [-1, 1]) torchAt(B, g.px + sx * 0.78, 1.55, c.h / 2, c.lit);
+      gateTower(B, 0, WALL_H, 2.3, 1.1, c, { th: 2.0 });
+    },
+    update(node, o, t) { tick(t); },
+  });
+  han('fort_gate', {
+    door: (w) => floor(w / 2), resize: 'w', key: (o) => o.text || '',
+    build(B, c) {
+      const H = 3.0;
+      const g = gateBlock(B, c, { H, spring: 1.75, face: { reg: 'brickOld', tint: '#e8c8b8' }, lower: { reg: 'rubble', tint: '#f0e8e0', h: 1.45 }, text: '南門', leaf: 'doorPlank', plaque: { bg: '#e0d8c4', fg: '#3a2a1e', rim: '#8a7a64' } });
+      gateTower(B, g.px, H, 1.5, 0.9, c, { th: 1.7, rise: 0.95 });
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // 鐘樓 bell_tower — two-eaved square tower on a stone base: red columns, bronze bell with a striker log hung on
+  // ropes, enclosed upper storey with a lattice window, green glazed 攢尖 roofs and a gourd finial
+  // =================================================================================================
+  han('bell_tower', {
+    build(B) {
+      const PH = 0.5, R = 0.78, Hc = 2.95;
+      plinth(B, 0, 0, 1.96, 1.96, PH, { side: 'ashlar', top: 'pave' });
+      steps(B, 0, 1.0, 0.7, 2, PH / 2, 0.18);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) columnAt(B, sx * R, sz * R, PH, Hc, 0.1, { tint: '#b3291f' });
+      for (const sz of [-1, 1]) B.box(0, PH + Hc - 0.24, sz * R, 2 * R + 0.2, 0.24, 0.14, { reg: 'beamPaint', ao: false });
+      for (const sx of [-1, 1]) B.box(sx * R, PH + Hc - 0.24, 0, 0.14, 0.24, 2 * R + 0.2, { reg: 'beamPaint', ao: false });
+      B.box(0, PH + Hc - 0.32, 0, 2 * R, 0.12, 0.12, { reg: 'grain', tint: '#4a2a1a' }); // bell beam
+      // bronze bell (梵鐘) with bands & nipples
+      const by = PH + 0.95;
+      B.lathe(0, by, 0, [[0.0, 1.12], [0.12, 1.12], [0.22, 1.08], [0.27, 0.96], [0.29, 0.6], [0.31, 0.25], [0.36, 0.08], [0.4, 0.0], [0.37, -0.02], [0.33, 0.02]], { reg: 'bronze', mat: 'metal', seg: 20 });
+      for (const y of [0.35, 0.7]) B.lathe(0, by + y, 0, [[0.298 + (0.7 - y) * 0.03, 0], [0.31 + (0.7 - y) * 0.03, 0.03], [0.298 + (0.7 - y) * 0.03, 0.06]], { reg: 'bronze', mat: 'metal', seg: 20 });
+      B.lathe(0, by + 1.12, 0, [[0.06, 0], [0.09, 0.08], [0.04, 0.2], [0.0, 0.22]], { reg: 'bronze', mat: 'metal', seg: 8 });
+      B.box(0, by + 1.3, 0, 0.03, PH + Hc - 0.32 - by - 1.3, 0.03, { reg: 'iron' });
+      // striker log (撞木) on two ropes
+      B.push().tr(0.62, PH + 1.35, 0.45).rz(PI / 2); B.cyl(0, -0.45, 0, 0.08, 0.08, 0.9, { reg: 'grain', tint: '#a07a50', seg: 10 }); B.pop();
+      for (const x of [0.35, 0.85]) B.box(x, PH + 1.35, 0.45, 0.015, Hc - 1.65, 0.015, { reg: 'white', tint: '#c8b48a' });
+      // lower eave (腰簷) as a pyramid whose apex is hidden inside the upper storey
+      roof(B, { type: 'hip', hx: 1.18, hz: 1.18, xr: 0, yr: PH + Hc + 0.95, ye: PH + Hc - 0.12, curve: 0.45, lift: 0.28, kick: 0.15, tile: 'tileGreen', mat: 'gloss', rows: 7, thick: 0.08 });
+      const uy = PH + Hc + 0.3, uh = 1.1;
+      side(B, 's', 0.5, 0.5, (L) => { wall(B, L, uy, uy + uh, 0.1, [{ x0: -0.25, x1: 0.25, y0: uy + 0.25, y1: uy + 0.8 }], { reg: 'woodNeutral', tint: '#7a2a20' }); windowAt(B, 0, uy + 0.25, 0.5, 0.55, 0.1, { style: 'diamond', lit: false, frameTint: '#3a120e', sill: false }); });
+      for (const sn of ['n', 'e', 'w']) side(B, sn, 0.5, 0.5, (L) => wall(B, L, uy, uy + uh, 0.1, [], { reg: 'woodNeutral', tint: '#7a2a20', endL: sn !== 'n', endR: sn !== 'n' }));
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.box(sx * 0.52, uy, sz * 0.52, 0.1, uh, 0.1, { reg: 'grain', mat: 'gloss', tint: '#b3291f' });
+      const rf = roof(B, { type: 'hip', hx: 1.0, hz: 1.0, xr: 0, yr: uy + uh + 1.15, ye: uy + uh - 0.06, curve: 0.55, lift: 0.3, kick: 0.16, tile: 'tileGreen', mat: 'gloss', rows: 7, thick: 0.08 });
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) ridge(B, rf.hipLine(sx, sz, 8).map((p) => [p[0], p[1] + 0.03, p[2]]), { w: 0.1, h: 0.13, tint: '#2c5046', mat: 'gloss', reg: 'tileGreen', ends: [null, 'curl'], len: 0.28, rise: 0.28, size: 0.5 });
+      gourdAt(B, 0, uy + uh + 1.08, 0, 0.9);
+    },
+  });
+
+  // =================================================================================================
+  // 金礦坑 mine_entrance — adit cut into a mossy hillside: timbered portal with braces and a name board, oil lamp,
+  // rails & sleepers running into the dark, ferns and grass on the crest, rubble
+  // =================================================================================================
+  han('mine_entrance', {
+    door: 1, key: (o) => o.text || '',
+    build(B, c) {
+      const { lit } = c, R = B.R;
+      const px = -1.5 + (c.door >= 0 ? c.door : 1) + 0.5;
+      const rx = 1.85, zf = 1.0, zb = -1.35, Hh = 3.1;
+      const hgt = (x, z) => {
+        const u = (x - px) / rx, f = clamp((zf - z) / (zf - zb), 0, 1);
+        let y = Hh * pow(max(0, 1 - pow(abs(x) / rx, 2.2)), 0.55) * pow(sstep(0, 0.42, f), 0.7) * (1 - 0.35 * sstep(0.6, 1, f));
+        y += (sin(x * 3.1 + z * 1.7) * 0.08 + sin(x * 7.3 - z * 4.1) * 0.04) * sstep(0, 0.2, y);
+        const cut = (1 - sstep(0.5, 0.72, abs(x - px))) * (1 - sstep(-0.05, 0.18, -z)); // notch in front of the portal
+        void u;
+        return y * (1 - cut * (1 - sstep(-0.1, 0.0, z) * 0)) * (z > 0.05 ? 1 - cut : 1);
+      };
+      const xs = samplesFlat(-rx, rx, 0.11), zs = samplesFlat(zb, zf, 0.11);
+      B.grid(xs, zs, (x, z) => [x, hgt(x, z), z], (x, z, p) => [x * 0.5, p[1] * 0.5 - z * 0.35], { reg: 'rock', tint: (x, y, z) => (y > 2.2 ? '#c8d8b0' : '#ffffff'), face: [0, 1, 0], aoOff: 0.2 });
+      // tunnel (dark) and portal timber frame
+      const zt = 0.05;
+      B.push().tr(px, 0, zt);
+      voidBox(B, -0.5, 0.5, 0, 2.1, 0, 2.2, false);
+      for (const sx of [-1, 1]) { B.box(sx * 0.52, 0, 0.04, 0.17, 2.25, 0.17, { reg: 'grain', tint: '#6a4a30' }); B.push().tr(sx * 0.38, 1.85, 0.06).rz(sx * 0.75); B.box(0, -0.2, 0, 0.1, 0.42, 0.1, { reg: 'grain', tint: '#5a3e26' }); B.pop(); }
+      B.push().tr(0, 2.3, 0.05).rz(PI / 2); B.cyl(0, -0.78, 0, 0.11, 0.11, 1.56, { reg: 'grain', tint: '#7a5434', seg: 8 }); B.pop();
+      for (let k = 0; k < 4; k++) B.box(0, 2.1 + 0.02, 0.05 - 0.3 - k * 0.5, 1.15, 0.12, 0.14, { reg: 'grain', tint: '#4a3420' }); // inner cap pieces
+      plaqueAt(B, 0, 2.62, 0.12, 0.7, 0.28, c.text || '金坑', { bg: '#5a3e26', fg: '#f3e2bd', rim: '#2a1a10', ppm: 300 });
+      for (const sx of [-1, 1]) B.box(sx * 0.22, 2.42, 0.1, 0.015, 0.22, 0.015, { reg: 'white', tint: '#2a1a10' });
+      // rails & sleepers
+      for (let z = 1.0; z > -2.1; z -= 0.42) B.box(0, 0, z, 0.9, 0.06, 0.14, { reg: 'grain', tint: '#5a4632' });
+      for (const sx of [-1, 1]) B.box(sx * 0.29, 0.06, -0.55, 0.05, 0.06, 3.2, { reg: 'iron', mat: 'metal', tint: '#8a8078' });
+      // oil lamp on the left post
+      B.box(-0.52, 1.65, 0.2, 0.03, 0.03, 0.22, { reg: 'iron' });
+      lanternAt(B, -0.52, 1.42, 0.33, { kind: 'white', lit, r: 0.08, h: 0.18, cord: 0.08, lightColor: '#ffb050', intensity: 1.0, dist: 4.5, glow: 2.6 });
+      B.pop();
+      B.box(px, 0, 0.55, 1.1, 0.02, 1.0, { reg: 'dirt', skip: 'b', ao: false });
+      // rubble and boulders, ferns and grass tufts on the crest
+      const rock = (x, z, r) => B.lathe(x, -0.05, z, [[r, 0], [r * 1.05, r * 0.3], [r * 0.85, r * 0.65], [r * 0.4, r * 0.85], [0, r * 0.9]], { reg: 'rock', seg: 7, a0: x * 3, size: 1 });
+      for (let i = 0; i < 9; i++) { const x = -1.4 + R() * 2.8, z = 0.55 + R() * 0.4; if (abs(x - px) < 0.75) continue; rock(x, z, 0.08 + R() * 0.12); }
+      rock(px + 1.0, 0.6, 0.28); rock(px - 1.05, 0.75, 0.22);
+      const tuft = (x, y, z, s, col) => { for (let k = 0; k < 5; k++) { B.push().tr(x, y, z).ry(k * 1.26 + x).rz(0.35 + (k % 2) * 0.25); B.box(0, 0, 0, 0.04 * s, 0.35 * s, 0.015, { reg: 'white', tint: col, ao: false }); B.pop(); } };
+      for (let i = 0; i < 26; i++) {
+        const x = -rx * 0.9 + R() * rx * 1.8, z = zb + 0.3 + R() * (zf - zb - 0.5), y = hgt(x, z);
+        if (y < 0.4 || (abs(x - px) < 0.8 && z > -0.2)) continue;
+        tuft(x, y - 0.02, z, 0.7 + R() * 0.8, R() < 0.5 ? '#5e8a3a' : '#7aa04a');
+      }
+      for (const [x, z] of [[px - 1.2, 0.85], [px + 1.3, 0.8]]) for (let k = 0; k < 7; k++) { B.push().tr(x, hgt(x, z) * 0 + 0.05, z).ry(k * 0.9).rz(0.9); B.box(0, 0, 0, 0.08, 0.55, 0.012, { reg: 'white', tint: '#3e6e34', ao: false }); B.pop(); }
+    },
     update(node, o, t) { tick(t); },
   });
 
