@@ -217,10 +217,10 @@ compressor), second-pass steady-state loop, 44.1 kHz.
 | song | loop | peak dBFS | RMS dBFS | K-wtd | Δ RMS vs median BGM | seam jump ≤ p99.9 step | RMS across seam |
 |---|---|---|---|---|---|---|---|
 | (median of 40 exploration / theme BGM, before) | | −6.0 | **−20.1** | −19.5 | | | |
-| title | 93.3 s | −4.4 | −19.1 | −18.5 | +1.0 | ok | −20.6 → −22.3 |
-| love | 87.3 s | −6.4 | −19.6 | −19.1 | +0.5 | ok | −23.2 → −20.5 |
-| duhun | 72.0 s | −6.1 | −19.9 | −19.5 | +0.2 | ok | −27.7 → −21.2 |
-| ending | 88.4 s | −5.2 | −19.8 | −19.1 | +0.3 | ok | −22.4 → −23.3 |
+| title | 93.3 s | −4.8 | −19.0 | −18.3 | +1.1 | ok (463 ≤ 3196 LSB) | −19.5 → −21.5 |
+| love | 87.3 s | −6.8 | −19.7 | −19.2 | +0.4 | ok (95 ≤ 2426) | −23.4 → −19.2 |
+| duhun | 72.0 s | −6.3 | −20.0 | −19.6 | +0.1 | ok (26 ≤ 2340) | −27.9 → −20.3 |
+| ending | 88.4 s | −4.9 | −19.8 | −19.1 | +0.3 | ok (90 ≤ 2789) | −22.5 → −24.0 |
 
 * **No clipping.** Every theme peaks below −4 dBFS.
 * **Loudness matched.** All four are within ±1 dB of the median exploration song. The title sits slightly above
@@ -233,6 +233,10 @@ compressor), second-pass steady-state loop, 44.1 kHz.
 * **Fades.** Every theme opens softly (bells/pad, zheng prelude, or the voice's slow attack). The `fade: 2` /
   `1.5` calls on `title` and `ending` reveal an intro rather than cutting into a downbeat. `duhun` starts on the
   first word so that a `fade: 1.5` scene (ch8) still hears it.
+* **The rest of the soundtrack** was re-measured after the instrument changes. Every song is within 1 dB of its
+  old level except `stealth` (−1.5 dB) and `tension` (−1.0 dB), which lost the droning short-bass bug; their trims
+  were raised to put them back. Songs that use the shared 渡魂謠 material (`sad`, `lighthouse`, `final_boss`,
+  `credits`, `dream`, `shrine`, `farshore`) moved by less than 0.5 dB.
 * **CPU.** Peak polyphony (notes sounding, including about 1 s of release) is title 22, love 17, duhun 16 and
   ending 30, against 50+ for the battle themes.
 

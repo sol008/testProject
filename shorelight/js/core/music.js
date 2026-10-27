@@ -1169,9 +1169,11 @@ G.Music = (() => {
   })();
 
   // loudness trims (measured RMS on the music bus; keeps exploration ≈ battle − 3 dB, cues under the master compressor)
+  // (re-measured with tools/render_music.js after the envelope fix, which made short bass notes stop droning:
+  //  stealth / tension were lifted back to where they sat)
   const TRIM = {
     battle: 0.7, battle2: 0.74, boss: 0.8, final_boss: 0.78, chaos: 0.78, toucheng: 0.74, victory: 0.78,
-    festival: 0.85, procession: 0.85, taroko: 0.88, tension: 0.9, tribe: 0.9,
+    festival: 0.85, procession: 0.85, taroko: 0.88, tension: 1.0, tribe: 0.9, stealth: 1.18,
     night: 1.25, mine: 1.2, south: 1.3, mansion: 1.15, palace: 1.15, temple: 1.1, shrine: 1.1,
   };
   for (const k in TRIM) SONGS[k].gain = TRIM[k];
