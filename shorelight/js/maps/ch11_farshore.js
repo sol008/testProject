@@ -1617,3 +1617,409 @@
       drawDipper(ctx, t);
     },
   });
+
+  // =================================================================================================
+  // MAP: farshore_field 彼岸花原 (56×44)
+  // =================================================================================================
+  const dawnShore = (st) => !!st.flags.ch11_done;
+  function fieldTiles(st) {
+    const g = grid(56, 44, 'L');
+    fill(g, 0, 0, 56, 3, '~'); fill(g, 22, 0, 12, 4, 'L');
+    fill(g, 0, 41, 56, 3, '~'); fill(g, 21, 40, 11, 1, 'k'); fill(g, 27, 41, 2, 2, 'k');
+    fill(g, 26, 3, 4, 37, '*');                       // the glowing path
+    fill(g, 31, 10, 7, 6, '~'); fill(g, 30, 12, 4, 1, 'k');   // 小渡口 pond & jetty
+    path(g, [[26, 21], [12, 21], [10, 14]], '*', 1); path(g, [[29, 18], [44, 14]], '*', 1);
+    for (let y = 3; y < 41; y++) for (let x = 0; x < 56; x++) if (g[y][x] === 'L' && U.hash(x, y, 61) < 0.05) g[y][x] = ',';
+    return rows(g);
+  }
+  G.Maps.define('farshore_field', {
+    name: '彼岸花原',
+    subtitle: (st) => (dawnShore(st) ? '彼岸・黎明' : '花開不見葉'),
+    place: 'farshore',
+    bgm: (st) => (dawnShore(st) ? 'love' : 'farshore'),
+    start: [27, 39],
+    light: (st) => (dawnShore(st) ? { ambient: 0.12, color: '#3a2a3a', tint: 'rgba(255,220,180,0.18)' } : { ambient: 0.45, color: '#1a0a24', tint: 'rgba(255,150,120,0.1)', playerR: 220 }),
+    particles: [{ type: 'petals', density: 1.2 }, 'motes'],
+    tiles: fieldTiles,
+    objects: (() => {
+      const o = [
+        { t: 'lighthouse', x: 26, y: 0, door: 1, beam: false },
+        { t: 'wang_boat', x: 21, y: 41, water: true, if: (st) => leg(st) >= 5 && !st.vars.c11_boat_gone },
+        { t: 'stall', x: 23, y: 30, text: '茶', counter: true },
+        { t: 'grave', x: 10, y: 15, interact: ['無主的木牌，寫著被遺忘的名字。字跡已經模糊了。'], label: '調查' },
+        { t: 'grave', x: 15, y: 18 }, { t: 'grave', x: 7, y: 26 }, { t: 'grave', x: 41, y: 22 },
+      ];
+      for (const [x, y] of [[25, 8], [30, 16], [25, 24], [30, 34], [25, 37]]) o.push({ t: 'stone_lantern', x, y, lit: false, interact: ['倒塌的古燈籠。燈裡沒有火。'], label: '調查' });
+      for (const [x, y] of [[4, 8], [9, 6], [15, 9], [3, 13], [17, 13], [6, 19], [13, 22], [2, 24], [16, 26], [20, 11], [8, 33], [48, 30], [38, 27], [52, 20]]) o.push({ t: 'tree_dead', x, y });
+      for (let i = 0; i < 70; i++) {
+        const x = Math.floor(U.hash(i, 1, 66) * 54) + 1, y = Math.floor(U.hash(i, 2, 66) * 36) + 4;
+        if ((x >= 25 && x <= 30) || (x >= 30 && x <= 38 && y >= 9 && y <= 16) || (x >= 21 && x <= 25 && y >= 28 && y <= 32)) continue;
+        o.push({ t: 'lily', x, y });
+      }
+      return o;
+    })(),
+    chests: [
+      { id: 'c11_13', x: 13, y: 8, item: 'c11_hd_higan', n: 1 },
+      { id: 'c11_14', x: 6, y: 14, item: 'c11_higan_tea', n: 3 },
+      { id: 'c11_15', x: 11, y: 30, item: 'huanhundan', n: 2 },
+      { id: 'c11_16', x: 43, y: 30, item: 'c11_lamp_oil', n: 3 },
+    ],
+    lights: (st) => [{ x: 27, y: 1, r: 260, color: dawnShore(st) ? '#fff4dc' : '#ffe0b0', flicker: dawnShore(st) ? 0.05 : 0.6 }, { x: 30, y: 12, r: 120, color: '#ffe6b0', flicker: 0.15 }],
+    npcs: [
+      { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', x: 28, y: 39, dir: 'up', if: (st) => !st.flags.ch11_done, talk: (S) => H.chenboShore(S) },
+      { id: 'fs_teawoman', sprite: 'old_f', name: '茶婆', x: 23, y: 29, dir: 'down', ghost: true, fixedDir: true, if: (st) => !dawnShore(st), talk: (S) => H.teawoman(S) },
+      { id: 'fs_waiting_f', sprite: 'ghost_f', name: '等人的婦人', x: 44, y: 12, dir: 'left', ghost: true, talk: (S) => H.waitingWoman(S) },
+      { id: 'fs_oldman', sprite: 'ghost_m', name: '看名牌的老人', x: 10, y: 16, dir: 'up', ghost: true, talk: (S) => H.nameplate(S) },
+      { id: 'fs_child', sprite: 'ghost_child', name: '撿花瓣的孩子', x: 50, y: 12, dir: 'left', ghost: true, wander: 1, talk: (S) => H.petalChild(S) },
+      { id: 'fs_suwan', sprite: 'c11_suwan', name: '蘇婉', x: 30, y: 13, dir: 'left', ghost: true, light: { r: 140, color: '#ffe6b0' }, if: (st) => !dawnShore(st), talk: (S) => H.suwan(S) },
+      { id: 'fs_ts_mother', sprite: 'c11_ts_mother', name: '唐山阿婆', x: 30, y: 11, dir: 'right', ghost: true, light: { r: 70, color: '#ffd8a0' }, if: (st) => !st.flags.ch11_tangshan_done && !dawnShore(st), talk: (S) => H.tsMother(S) },
+      { id: 'fs_amu_pair', sprite: 'c11_amu_young', name: '少年阿木', x: 31, y: 9, dir: 'down', ghost: true, if: (st) => st.flags.ch11_tangshan_done && !dawnShore(st),
+        talk: [['少年阿木', '阮兩个，做伙等。燈若光，阮就欲行矣。']] },
+      { id: 'fs_soul1', sprite: 'ghost_m', name: '繞著枯樹走的魂', x: 15, y: 10, dir: 'down', ghost: true, wander: 2, if: (st) => !dawnShore(st), talk: [['繞著枯樹走的魂', '這棵樹……我是不是已經繞過了？']] },
+      { id: 'fs_soul2', sprite: 'ghost_f', name: '坐著的魂', x: 46, y: 24, dir: 'left', ghost: true, if: (st) => !dawnShore(st), talk: [['坐著的魂', '燈不亮，路就看不見。看不見，就只好坐著。']] },
+      { id: 'fs_soul3', sprite: 'ghost_child', name: '小小的魂', x: 36, y: 33, dir: 'up', ghost: true, wander: 1, if: (st) => !dawnShore(st), talk: [['小小的魂', '大哥哥，你身上好暖。可以借我暖一下下嗎？']] },
+      { id: 'fs_fisher_end', sprite: 'fisherman', name: '漁夫', x: 45, y: 12, dir: 'left', ghost: true, if: dawnShore, talk: [['漁夫', '阿秀！']] },
+    ],
+    enemies: [
+      { id: 'fs1', troop: 'farshore_1', x: 10, y: 11, art: 'lily_demon', lv: 42, radius: 3, if: (st) => !dawnShore(st) },
+      { id: 'fs2', troop: 'farshore_2', x: 18, y: 24, art: 'faceless', lv: 42, radius: 3, if: (st) => !dawnShore(st) },
+      { id: 'fs3', troop: 'farshore_3', x: 40, y: 20, art: 'faceless', lv: 42, radius: 3, if: (st) => !dawnShore(st) },
+      { id: 'fs4', troop: 'farshore_1', x: 46, y: 33, art: 'lily_demon', lv: 42, radius: 3, if: (st) => !dawnShore(st) },
+      { id: 'fs5', troop: 'blacktide_1', x: 14, y: 38, art: 'drowned_swarm', lv: 41, radius: 2, if: (st) => !dawnShore(st) },
+      { id: 'fs6', troop: 'farshore_2', x: 38, y: 6, art: 'faceless', lv: 42, radius: 3, if: (st) => !dawnShore(st) },
+    ],
+    events: [
+      { id: 'c11_16', trigger: 'auto', if: (st) => leg(st) >= 5 && !st.flags.ch11_farshore, run: (S) => H.c11_16(S) },
+      { id: 'c11_17a', trigger: 'touch', x: 26, y: 30, w: 4, h: 6, once: true, if: (st) => !st.flags.ch11_done, run: (S) => H.c11_17a(S) },
+      { id: 'c11_17b', trigger: 'touch', x: 26, y: 11, w: 4, h: 4, if: (st) => !st.flags.ch11_wife_met, run: (S) => H.c11_17b(S) },
+      { id: 'ts3', trigger: 'touch', x: 26, y: 9, w: 4, h: 6, if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done && st.flags.ch11_wife_met, run: (S) => H.tangshan3(S) },
+      { id: 'board', trigger: 'action', x: 21, y: 41, w: 6, h: 2, label: '上船', if: (st) => leg(st) >= 5 && !st.flags.ch11_done, run: async (S) => { await S.warp(DECK, 25, 8, 'left'); } },
+    ],
+    warps: [{ x: 27, y: 2, to: 'farshore_tower_1', tx: 11, ty: 20, tdir: 'up', door: true }],
+    drawOver: (ctx, t, ms) => {
+      // 天空：紫、金、深藍融在一起 — and the far tower lamp breathing (screen space, gentle)
+      ctx.save(); ctx.setTransform(G.S, 0, 0, G.S, 0, 0);
+      const g = ctx.createLinearGradient(0, 0, G.W, 0);
+      const ph = Math.sin(t * 0.15) * 0.5 + 0.5;
+      g.addColorStop(0, `rgba(120,60,160,${0.08 + 0.04 * ph})`); g.addColorStop(0.5, `rgba(255,190,90,${0.06 + 0.04 * (1 - ph)})`); g.addColorStop(1, `rgba(40,60,140,${0.08 + 0.04 * ph})`);
+      ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, G.H);
+      ctx.restore();
+      if (!dawnShore(G.state)) {
+        const x = 27.5 * T, y = -1.6 * T, k = 0.5 + 0.5 * Math.sin(t * 1.3) * Math.sin(t * 0.47);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.3 + 0.5 * k;
+        ctx.drawImage(G.FX.glowSprite('#fff0c8'), x - 70, y - 70, 140, 140); ctx.restore();
+      }
+      drawDipper(ctx, t);
+    },
+  });
+
+  // =================================================================================================
+  // 彼岸燈塔 1F–5F + 頂 (24×24 each, circular)
+  // =================================================================================================
+  const P3_PLANKS = [[12, 17], [12, 16], [13, 16], [13, 15], [14, 15], [14, 12], [13, 12], [12, 12], [11, 12], [11, 11], [11, 10], [11, 9], [12, 9], [12, 8], [12, 7], [12, 6]];
+  const P3_WAVE = [8, 9, 10, 11];
+  const p3Active = (st) => st.flags.ch11_tower_3 && !st.flags.ch11_p3_done;
+  function towerTiles(n) {
+    return (st) => {
+      const g = grid(24, 24, ' ');
+      disc(g, 11.5, 11.5, 11.6, 'P');
+      disc(g, 11.5, 12, 9.4, 't', 9.0);
+      fill(g, 10, 21, 3, 1, 't');
+      if (n === 3 && p3Active(st)) {
+        for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (g[y][x] === 't') g[y][x] = 'K';
+        fill(g, 9, 18, 7, 4, 't'); fill(g, 14, 13, 2, 2, 'Y'); fill(g, 10, 3, 4, 3, 't');
+        for (const [x, y] of P3_PLANKS) set(g, x, y, 'j');
+      }
+      return rows(g);
+    };
+  }
+  function tower(n, o) {
+    const id = 'farshore_tower_' + n;
+    const flag = 'ch11_tower_' + n;
+    const upOk = o.upOk || ((st) => !!st.flags[flag]);
+    const lampX = o.lamp ? o.lamp[0] : 11, lampY = o.lamp ? o.lamp[1] : 11;
+    G.Maps.define(id, {
+      name: o.name, subtitle: '彼岸燈塔', place: 'farshore',
+      bgm: o.bgm || 'lighthouse',
+      start: [11, 20],
+      light: o.light || { ambient: 0.5, color: '#14101c', playerR: 220 },
+      particles: o.particles || ['motes'],
+      tiles: towerTiles(n),
+      objects: [
+        { t: 'lighthouse_lamp', x: lampX, y: lampY },
+        { t: 'stairs_up', x: 11, y: 3 },
+        ...(n > 1 ? [{ t: 'stairs_down', x: 11, y: 21 }] : []),
+        ...(o.objects || []),
+      ],
+      chests: o.chests || [],
+      lights: (st) => [{ x: lampX + 0.5, y: lampY + 0.2, r: 260, color: '#fff4dc', flicker: 0.2 }].concat(o.lights ? o.lights(st) : []),
+      npcs: o.npcs || [],
+      enemies: o.enemies || [],
+      events: [
+        { id: 'echo', trigger: 'action', x: lampX, y: lampY, w: 2, h: 2, label: '回聲燈', run: (S) => (F(flag) ? S.say('', '回聲燈靜靜地燃著。白色的光，一點溫度也沒有——又好像有。') : o.echo(S)) },
+        { id: 'up_block', trigger: 'touch', x: 11, y: 3, if: (st) => !upOk(st), run: async (S) => {
+          S.sfx('buzz'); await S.say('', o.blocked || '往上的石階被一層白光封住了。回聲燈還在等著。'); S.setPos('player', 11, 4, 'down');
+        } },
+        ...(o.events || []),
+      ],
+      warps: [
+        { x: 11, y: 3, to: o.up, tx: o.upX || 11, ty: o.upY || 20, tdir: 'up', if: upOk },
+        n === 1 ? { x: 10, y: 21, w: 3, to: 'farshore_field', tx: 27, ty: 4, tdir: 'down', door: true }
+          : { x: 11, y: 21, to: 'farshore_tower_' + (n - 1), tx: 11, ty: 5, tdir: 'down' },
+      ],
+      onUpdate: o.onUpdate,
+      drawGround: o.drawGround,
+      drawOver: (ctx, t, ms) => { if (!upOk(G.state)) drawCurtain(ctx, t, 11, 3, 1, 1, '#ffffff'); if (o.drawOver) o.drawOver(ctx, t, ms); },
+    });
+  }
+  // 1F 紅之層
+  tower(1, { name: '燈塔一樓・紅之層', up: 'farshore_tower_2', echo: (S) => H.c11_18(S),
+    chests: [{ id: 'c11_t1', x: 16, y: 8, item: 'c11_sp_chixiao', n: 1, if: (st) => !!st.flags.ch11_tower_1 }],
+    enemies: [{ id: 't1a', troop: 'tower_1', x: 7, y: 8, art: 'tower_warden', lv: 43, radius: 2 }],
+    npcs: [] });
+  // 2F 雲之層 + P2 五行生生
+  const WX = [{ k: '水', x: 12, y: 5 }, { k: '火', x: 16, y: 7 }, { k: '金', x: 15, y: 15 }, { k: '木', x: 8, y: 15 }, { k: '土', x: 7, y: 7 }];
+  const WX_ORDER = ['木', '火', '土', '金', '水'];
+  tower(2, { name: '燈塔二樓・雲之層', up: 'farshore_tower_3', echo: (S) => H.c11_19(S),
+    upOk: (st) => !!st.flags.ch11_wuxing_puzzle,
+    blocked: '往上的門前，五根符柱靜靜地立著。門上的字：「始於春，生生不息。」',
+    objects: WX.flatMap((p, i) => [
+      { t: 'stone_lantern', x: p.x, y: p.y, lit: false, if: (st) => st.flags.ch11_tower_2 && !((st.vars.ch11_wx || 0) > WX_ORDER.indexOf(p.k)) },
+      { t: 'stone_lantern', x: p.x, y: p.y, if: (st) => st.flags.ch11_tower_2 && (st.vars.ch11_wx || 0) > WX_ORDER.indexOf(p.k) },
+    ]),
+    events: WX.map((p) => ({ id: 'wx_' + p.x, trigger: 'action', x: p.x, y: p.y, label: '符柱', if: (st) => st.flags.ch11_tower_2 && !st.flags.ch11_wuxing_puzzle, run: (S) => H.wuxing(S, p.k) })),
+    chests: [{ id: 'c11_t2', x: 17, y: 10, item: 'c11_fn_taixu_lei', n: 1, if: (st) => !!st.flags.ch11_wuxing_puzzle }],
+    enemies: [{ id: 't2a', troop: 'tower_2', x: 6, y: 12, art: 'faceless', variant: 1, lv: 43, radius: 2, if: (st) => !!st.flags.ch11_tower_2 }],
+    drawOver: (ctx, t) => {
+      if (!F('ch11_tower_2')) return;
+      for (const p of WX) R().text(ctx, p.k, p.x * T + T / 2, p.y * T - 70, { size: 26, bold: true, align: 'center', color: '#fff0c8', stroke: 'rgba(40,20,10,0.8)', strokeW: 4 });
+    } });
+  // 3F 舊潮之層 + P3 沉板
+  tower(3, { name: '燈塔三樓・舊潮之層', up: 'farshore_tower_4', echo: (S) => H.c11_20(S), lamp: [14, 19],
+    upOk: (st) => !!st.flags.ch11_p3_done,
+    blocked: '往上的路，是浮在回聲海面上的一排木板。',
+    bgm: (st) => (p3Active(st) ? 'sea' : 'lighthouse'),
+    particles: (st) => (p3Active(st) ? [{ type: 'mist', alpha: 0.2 }, 'rain'] : ['motes']),
+    light: (st) => (p3Active(st) ? { ambient: 0.62, color: '#040814', playerR: 230 } : { ambient: 0.5, color: '#14101c', playerR: 220 }),
+    chests: [{ id: 'c11_t3', x: 15, y: 13, item: 'c11_ac_old_tassel', n: 1 }],
+    events: [
+      { id: 'p3_done', trigger: 'touch', x: 10, y: 3, w: 4, h: 3, if: p3Active, run: (S) => H.p3Done(S) },
+    ],
+    onUpdate: (dt, ms, busy) => H.p3Update(dt, ms, busy),
+    drawGround: (ctx, t, ms) => H.p3Draw(ctx, t, ms) });
+  // 4F 火之層
+  tower(4, { name: '燈塔四樓・火之層', up: 'farshore_tower_5', echo: (S) => H.c11_21(S),
+    enemies: [{ id: 't4a', troop: 'tower_3', x: 16, y: 14, art: 'inner_demon', variant: 1, lv: 43, radius: 2 }] });
+  // 5F 燈之層 + 她的記憶 + 千年燈塔守
+  const MEM = [
+    { k: 1, a: [6, 12] }, { k: 2, a: [18, 6] }, { k: 3, a: [17, 16] }, { k: 4, a: [5, 8], b: [10, 5], shy: true }, { k: 5, a: [12, 17] }, { k: 6, a: [15, 5], b: [18, 10], shy: true },
+  ];
+  tower(5, { name: '燈塔五樓・燈之層', up: 'farshore_tower_top', upX: 7, upY: 11, echo: (S) => H.c11_22(S),
+    upOk: (st) => !!st.flags.ch11_warden,
+    blocked: '石階口，站著一具高大的青銅守燈人。',
+    bgm: (st) => (st.flags.ch11_tower_5 && !st.flags.ch11_warden ? 'farshore' : 'lighthouse'),
+    chests: [{ id: 'c11_t5', x: 14, y: 4, item: 'huanhundan', n: 2, run: async (S) => { await S.give('c11_lamp_oil', 2); } }],
+    npcs: [{ id: 'warden', sprite: 'lighthouse_keeper', name: '千年燈塔守', x: 12, y: 4, dir: 'down', fixedDir: true, if: (st) => !st.flags.ch11_warden, talk: (S) => H.c11_23(S) }],
+    events: [{ id: 'c11_23', trigger: 'touch', x: 9, y: 5, w: 6, h: 2, if: (st) => st.flags.ch11_tower_5 && !st.flags.ch11_warden, run: (S) => H.c11_23(S) }],
+    onUpdate: (dt, ms, busy) => H.memUpdate(dt, ms, busy),
+    drawOver: (ctx, t, ms) => H.memDraw(ctx, t, ms) });
+  // 頂 燈心之門 (16×14)
+  G.Maps.define('farshore_tower_top', {
+    name: '燈心之門', subtitle: '彼岸燈塔・頂', place: 'farshore',
+    bgm: null,
+    start: [7, 11],
+    light: { ambient: 0.55, color: '#0c0814', playerR: 200 },
+    particles: [{ type: 'motes', density: 0.8 }],
+    tiles: (() => { const g = grid(16, 14, ' '); disc(g, 7.5, 7, 7.6, 'P', 6.8); disc(g, 7.5, 7.6, 5.8, 't', 5.2); fill(g, 7, 2, 2, 1, 't'); return rows(g); })(),
+    objects: [
+      { t: 'stairs_down', x: 7, y: 12 },
+      { t: 'water_lantern', x: 4, y: 9, interact: async (S) => { await S.say('', '一盞自己亮起來的小水燈。……這盞燈，是誰放在這裡的呢？'); if (await S.choice(['在這裡整理行囊（存檔）', '不用了'], { cancel: 1 }) === 0) await S.saveMenu(); }, label: '調查' },
+    ],
+    lights: [{ x: 7.5, y: 1.8, r: 260, color: '#fff4dc', flicker: 0.5 }, { x: 4, y: 9, r: 90, color: '#ffd890', flicker: 0.2 }],
+    events: [{ id: 'c11_24', trigger: 'auto', if: (st) => !st.flags.ch11_breath, run: (S) => H.c11_24(S) }],
+    warps: [{ x: 7, y: 12, to: 'farshore_tower_5', tx: 11, ty: 5, tdir: 'down' }],
+    drawOver: (ctx, t) => {
+      // the door of light wrapped in six black chains; the great white flame behind it, weak
+      const x = 8 * T, y = 2.4 * T;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const k = 0.55 + 0.3 * Math.sin(t * 1.1) * Math.sin(t * 0.37);
+      ctx.globalAlpha = k; ctx.drawImage(G.FX.glowSprite('#fff4dc'), x - 120, y - 170, 240, 240);
+      ctx.globalAlpha = 0.9; ctx.fillStyle = 'rgba(255,246,220,0.55)';
+      ctx.beginPath(); ctx.moveTo(x - 46, y + 10); ctx.lineTo(x - 46, y - 110); ctx.quadraticCurveTo(x, y - 160, x + 46, y - 110); ctx.lineTo(x + 46, y + 10); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      if (!F('ch11_breath')) {
+        ctx.save(); ctx.strokeStyle = 'rgba(14,10,20,0.9)'; ctx.lineWidth = 6;
+        for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x - 60 + i * 24, y - 130 + (i % 2) * 30); ctx.quadraticCurveTo(x, y - 60 + i * 6, x + 60 - i * 20, y + 4 - (i % 3) * 30); ctx.stroke(); }
+        ctx.restore();
+      }
+    },
+  });
+
+  // =================================================================================================
+  // MAP: breath_realm 一息界 (40×40) — breath terrain, psychedelic overlay, 萬象童子, 光之曼陀羅 (P4)
+  // =================================================================================================
+  const MO = { x: 15, y: 2 };      // mandala origin; local (x,y) → (15+x, 2+y)
+  const MIRRORS = [[4, 6], [1, 6], [1, 1], [7, 1], [7, 4]];
+  const LOTUS = [{ x: 2, y: 6, c: '#ff5a6a' }, { x: 4, y: 1, c: '#6ab0ff' }, { x: 7, y: 3, c: '#ffd04a' }];
+  const SRC = [4, 8], SEAT = [4, 4];
+  const mirrors = () => { const v = V(); if (!v.ch11_mirrors) v.ch11_mirrors = ['/', '\\', '\\', '\\', '\\']; return v.ch11_mirrors; };
+  // trace the light: returns {cells:[[x,y]...], lotus:Set(idx), seat:bool}
+  function traceLight() {
+    const m = mirrors();
+    let [x, y] = SRC, dx = 0, dy = -1;
+    const cells = [], lot = new Set();
+    for (let n = 0; n < 60; n++) {
+      x += dx; y += dy;
+      if (x < 0 || y < 0 || x > 8 || y > 8) break;
+      cells.push([x, y]);
+      LOTUS.forEach((l, i) => { if (l.x === x && l.y === y) lot.add(i); });
+      if (x === SEAT[0] && y === SEAT[1]) return { cells, lotus: lot, seat: true };
+      const mi = MIRRORS.findIndex(([mx, my]) => mx === x && my === y);
+      if (mi >= 0) {
+        if (m[mi] === '/') [dx, dy] = [-dy, -dx];   // N→E, E→N, S→W, W→S
+        else [dx, dy] = [dy, dx];                    // N→W, W→N, S→E, E→S
+      }
+    }
+    return { cells, lotus: lot, seat: false };
+  }
+  function breathTiles() {
+    const g = grid(40, 40, ' ');
+    disc(g, 19.5, 34, 4.6, 'Z', 3.8);
+    fill(g, 17, 26, 6, 5, 'Z');
+    disc(g, 19.5, 19.5, 9.8, 'Z', 7.2);
+    fill(g, 17, 11, 6, 3, 'Z');
+    fill(g, 15, 2, 9, 9, 'Z');
+    return rows(g);
+  }
+  G.Maps.define('breath_realm', {
+    name: '一息界', subtitle: '呼與吸之間', place: 'farshore',
+    bgm: 'breath',
+    start: [19, 34],
+    noSave: false,
+    light: { ambient: 0 },
+    psychedelic: 0.55,
+    particles: ['sparkles', { type: 'motes', density: 1.5 }],
+    tiles: breathTiles(),
+    objects: (() => {
+      const o = [];
+      MIRRORS.forEach(([x, y], i) => o.push({ t: 'crystal', x: MO.x + x, y: MO.y + y, interact: async (S) => H.mirror(S, i), label: '轉動' }));
+      LOTUS.forEach((l) => o.push({ t: 'jewel_flower', x: MO.x + l.x, y: MO.y + l.y }));
+      o.push({ t: 'geometry_pillar', x: MO.x + SRC[0], y: MO.y + SRC[1] });
+      for (const [x, y] of [[15, 32], [24, 32], [16, 36], [23, 36], [12, 17], [27, 17], [12, 22], [27, 22], [16, 27], [23, 29], [13, 19], [26, 20]]) o.push({ t: U.hash(x, y, 3) < 0.5 ? 'jewel_flower' : 'geometry_pillar', x, y });
+      for (const [x, y] of [[18, 37], [21, 31], [15, 24], [24, 15], [17, 12], [22, 12]]) o.push({ t: 'crystal', x, y });
+      return o;
+    })(),
+    npcs: [
+      { id: 'tz1', sprite: 'c11_tongzi', name: '萬象童子', x: 16, y: 20, dir: 'right', wander: 1, talk: (S) => H.tongziTalk(S, 0) },
+      { id: 'tz2', sprite: 'c11_tongzi', name: '萬象童子', x: 20, y: 18, dir: 'down', talk: (S) => H.tongziTalk(S, 1) },
+      { id: 'tz3', sprite: 'c11_tongzi', name: '萬象童子', x: 24, y: 20, dir: 'left', wander: 1, talk: (S) => H.tongziTalk(S, 2) },
+      { id: 'tz4', sprite: 'c11_tongzi', name: '萬象童子', x: 23, y: 10, dir: 'left', if: (st) => !!st.flags.ch11_tongzi_met, talk: (S) => H.mandalaHint(S) },
+    ],
+    events: [
+      { id: 'c11_25', trigger: 'touch', x: 13, y: 22, w: 14, h: 5, if: (st) => !st.flags.ch11_tongzi_met, run: (S) => H.c11_25(S) },
+      { id: 'c11_26a', trigger: 'touch', x: 15, y: 9, w: 9, h: 2, once: true, if: (st) => !!st.flags.ch11_tongzi_met, run: (S) => H.c11_26a(S) },
+      { id: 'c11_25b', trigger: 'touch', x: 17, y: 11, w: 6, h: 3, if: (st) => !st.flags.ch11_tongzi_met, run: async (S) => { await S.say('', '寶石的牆輕輕地笑了一聲，把路摺了回去。'); S.setPos('player', 19, 22, 'down'); } },
+    ],
+    onEnter: async () => { const m = G.mapScene; if (m) for (const n of m.npcs) if (/^tz|^tzold/.test(n.id)) n.alpha = 0; },
+    onUpdate: (dt, ms, busy) => H.breathUpdate(dt, ms, busy),
+    drawGround: (ctx, t, ms) => H.breathGround(ctx, t, ms),
+    drawOver: (ctx, t, ms) => H.breathOver(ctx, t, ms),
+  });
+
+  // =================================================================================================
+  // MAP: lamp_heart 燈心 (24×20)
+  // =================================================================================================
+  G.Maps.define('lamp_heart', {
+    name: '燈心', subtitle: '一息之內', place: 'farshore',
+    bgm: (st) => (st.flags.ch11_done ? 'love' : null),
+    start: [12, 18],
+    light: (st) => ({ ambient: st.flags.ch11_done ? 0.1 : 0.2, color: '#06040c', playerR: 160 }),
+    particles: [{ type: 'motes', density: 1.2 }, 'embers'],
+    tiles: (() => { const g = grid(24, 20, ' '); disc(g, 11.5, 10, 11.2, '*', 9.4); return rows(g); })(),
+    pass: [{ x: 10, y: 5, w: 4, h: 4, solid: true }],
+    objects: [{ t: 'soul_jar', x: 14, y: 11, if: (st) => !st.flags.ch11_reunion }],
+    lights: (st) => {
+      const k = st.vars.ch11_flame == null ? 1 : st.vars.ch11_flame;
+      return [{ x: 11.5, y: 6.5, r: 120 + 400 * k, color: k < 0.15 ? '#ff7a4a' : '#fff4dc', flicker: 0.35 }];
+    },
+    npcs: [
+      { id: 'yexuan', sprite: 'yexuan', portrait: 'yexuan', x: 12, y: 11, dir: 'up', if: (st) => !st.flags.ch11_yexuan_p1, talk: [['yexuan:sad', '……']] },
+    ],
+    events: [
+      { id: 'c11_27', trigger: 'auto', if: (st) => !st.flags.ch11_reunion, run: (S) => H.c11_27(S) },
+      { id: 'c11_28', trigger: 'auto', if: (st) => st.flags.ch11_reunion && !st.flags.ch11_yexuan, run: (S) => H.c11_28(S) },
+      { id: 'c11_29', trigger: 'auto', if: (st) => st.flags.ch11_yexuan && !st.flags.ch11_done, run: (S) => H.c11_29(S) },
+    ],
+    drawGround: (ctx, t, ms) => H.heartGround(ctx, t, ms),
+    drawOver: (ctx, t, ms) => H.heartOver(ctx, t, ms),
+  });
+
+  // =================================================================================================
+  // ENDING STAGES
+  // =================================================================================================
+  G.Maps.define('ending_badouzi', {
+    name: '八斗子', subtitle: (st) => (st.vars.c11_badouzi === 'oar' ? '某一天' : '七月十五　中元'), place: 'badouzi', autosave: false, noSave: true,
+    bgm: null,
+    start: [11, 9],
+    light: { ambient: 0.55, color: '#040818', playerR: 160 },
+    particles: [{ type: 'lanterns', density: 0.6 }],
+    tiles: (() => {
+      const g = grid(24, 14, 's');
+      fill(g, 0, 0, 24, 6, ',');
+      fill(g, 3, 0, 2, 7, 'H');
+      fill(g, 0, 10, 24, 4, '~');
+      for (let x = 0; x < 24; x++) if (U.hash(x, 9, 4) < 0.3) set(g, x, 9, '-');
+      return rows(g);
+    })(),
+    objects: (() => {
+      const o = [{ t: 'rock_big', x: 11, y: 7 }, { t: 'rock_small', x: 18, y: 8 }, { t: 'driftwood', x: 6, y: 8 }, { t: 'tree_pine', x: 1, y: 2 }, { t: 'tree_pine', x: 21, y: 1 }, { t: 'bush', x: 8, y: 4 }, { t: 'stone_lantern', x: 5, y: 5 }];
+      for (let i = 0; i < 16; i++) o.push({ t: 'water_lantern', x: Math.floor(U.hash(i, 1, 9) * 24), y: 10 + Math.floor(U.hash(i, 2, 9) * 4) });
+      return o;
+    })(),
+    npcs: [],
+  });
+  G.Maps.define('ending_jiufen', {
+    name: '九份', subtitle: '一年後　七月', place: 'jiufen', autosave: false, noSave: true,
+    bgm: (st) => (st.flags.ending_true ? 'ending' : 'sad'),
+    start: [10, 10],
+    light: { ambient: 0.5, color: '#0a0818', playerR: 200 },
+    particles: ['motes'],
+    tiles: (() => { const g = grid(22, 12, '#'); fill(g, 9, 0, 4, 12, 'H'); fill(g, 0, 0, 22, 2, 'X'); return rows(g); })(),
+    objects: [
+      { t: 'house_jiufen', x: 1, y: 2, w: 4, h: 3, door: 1, text: '陳記' }, { t: 'teahouse', x: 14, y: 1, door: 2 },
+      { t: 'house_jiufen', x: 1, y: 7, w: 4, h: 3, door: -1 }, { t: 'house_jiufen', x: 16, y: 7, w: 4, h: 3, door: -1 },
+      { t: 'stall', x: 6, y: 5, text: '芋圓', counter: true }, { t: 'lantern_string', x: 5, y: 3, w: 12 }, { t: 'lantern_string', x: 5, y: 8, w: 12 },
+      { t: 'red_lantern', x: 8, y: 4 }, { t: 'red_lantern', x: 13, y: 6 }, { t: 'table', x: 6, y: 7 }, { t: 'chair', x: 5, y: 7, dir: 'right' }, { t: 'chair', x: 7, y: 7, dir: 'left' },
+    ],
+    npcs: [{ id: 'agan', sprite: 'shopkeeper_f', portrait: 'agan', name: '阿柑姨', x: 6, y: 4, dir: 'down' }],
+  });
+  G.Maps.define('ending_jiufen_shop', {
+    name: '陳記燈籠舖', subtitle: '九份', place: 'jiufen', autosave: false, noSave: true,
+    bgm: (st) => (st.flags.ending_true ? 'ending' : 'sad'),
+    start: [7, 7],
+    light: { ambient: 0.4, color: '#120a06', playerR: 180 },
+    tiles: rows(room(14, 9, '_', 'W', [7])),
+    objects: [
+      { t: 'shelf_lanterns', x: 2, y: 2, w: 3 }, { t: 'shelf_lanterns', x: 9, y: 2, w: 3 }, { t: 'workbench', x: 5, y: 4 }, { t: 'lantern_frame', x: 8, y: 4 },
+      { t: 'counter', x: 2, y: 6, w: 3 }, { t: 'paper_stack', x: 11, y: 5 }, { t: 'lantern_rack', x: 10, y: 6 }, { t: 'red_lantern', x: 6, y: 2, hang: true, text: '星' },
+    ],
+    lights: [{ x: 6, y: 4, r: 200, color: '#ffb060', flicker: 0.2 }],
+    npcs: [{ id: 'chenbo_e', sprite: 'chenbo', portrait: 'chenbo', x: 6, y: 5, dir: 'down' }],
+  });
+  G.Maps.define('ending_lukang', {
+    name: '鹿港・洛家古厝', subtitle: '一年後　七月', place: 'lukang', autosave: false, noSave: true,
+    bgm: 'ending',
+    start: [9, 9],
+    light: { ambient: 0.08, color: '#3a2a1a', tint: 'rgba(255,200,140,0.12)' },
+    particles: ['leaves'],
+    tiles: (() => { const g = grid(18, 12, '%'); fill(g, 0, 0, 18, 1, 'R'); return rows(g); })(),
+    objects: [
+      { t: 'house_minnan', x: 6, y: 0, w: 6, h: 3, text: '洛' }, { t: 'house_minnan', x: 0, y: 3, w: 4, h: 3, door: -1 }, { t: 'house_minnan', x: 14, y: 3, w: 4, h: 3, door: -1 },
+      { t: 'red_lantern', x: 5, y: 3, text: '洛' }, { t: 'red_lantern', x: 12, y: 3, text: '洛' }, { t: 'well', x: 2, y: 8 }, { t: 'plant_pot', x: 15, y: 9 }, { t: 'bench', x: 13, y: 8 },
+    ],
+    npcs: [
+      { id: 'kid1', sprite: 'child_m', x: 6, y: 6, dir: 'down' }, { id: 'kid2', sprite: 'child_f', x: 8, y: 6, dir: 'down' },
+      { id: 'kid3', sprite: 'child_m', x: 10, y: 6, dir: 'down' }, { id: 'kid4', sprite: 'child_m', x: 12, y: 6, dir: 'down' },
+      { id: 'hy_e', sprite: 'hongying', portrait: 'hongying', x: 9, y: 9, dir: 'up' },
+    ],
+  });

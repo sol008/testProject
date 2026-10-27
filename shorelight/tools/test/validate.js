@@ -440,6 +440,20 @@ function buildGrid(mid) {
 }
 const inB = (g, x, y) => g && Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < g.w && y < g.h;
 const solidAt = (g, x, y) => g.solid[y * g.w + x] === 1;
+// why is a cell solid? terrain, an object footprint, or a def.pass override
+function whySolid(g, x, y) {
+  const tid = g.terrain[y * g.w + x];
+  const td = G.Tiles.get(tid);
+  if (td && td.solid) return `terrain '${tid}'`;
+  const ms = g.ms;
+  for (const o of (ms && ms.objects) || []) {
+    if (ms.objActive && !ms.objActive(o)) continue;
+    const d = G.Objects.get(o.t);
+    const ow = o.w || (d ? d.w : 1), oh = o.h || (d ? d.h : 1);
+    if (x >= o.x && x < o.x + ow && y >= o.y && y < o.y + oh) return `object '${o.t}' at ${o.x},${o.y}`;
+  }
+  return `pass override / terrain '${tid}'`;
+}
 
 // incoming entry points per map (for reachability)
 const entries = {};
@@ -492,7 +506,7 @@ for (const [mid, def] of Object.entries(maps)) {
   if (def.start) {
     const [sx, sy] = def.start;
     if (!inB(g, sx, sy)) err('maps', `${mid}: start ${sx},${sy} out of bounds`, where('start'));
-    else if (solidAt(g, sx, sy)) err('maps', `${mid}: start ${sx},${sy} is on a solid cell (${g.terrain[sy * g.w + sx]})`, where('start'));
+    else if (solidAt(g, sx, sy)) err('maps', `${mid}: start ${sx},${sy} is on a solid cell (${whySolid(g, sx, sy)})`, where('start'));
     else addEntry(mid, sx, sy, 'start');
   } else warn('maps', `${mid}: no start position (debug/new-game fall back to 5,5)`, where());
   // chests
@@ -516,7 +530,7 @@ for (const [mid, def] of Object.entries(maps)) {
     if (n.portrait && K.portraits && !K.portraits.has(n.portrait)) err('maps', `${mid}: npc ${n.id} portrait '${n.portrait}' not registered`, where(`'${n.id}'`));
     const pos = valOf(n.pos, st) || [n.x, n.y];
     if (!inB(g, pos[0], pos[1])) err('maps', `${mid}: npc ${n.id} at ${pos} out of bounds`, where(`'${n.id}'`));
-    else if (solidAt(g, pos[0], pos[1])) warn('maps', `${mid}: npc ${n.id} stands on a solid cell ${pos}`, where(`'${n.id}'`));
+    else if (solidAt(g, pos[0], pos[1])) warn('maps', `${mid}: npc ${n.id} stands on a solid cell ${pos} (${whySolid(g, pos[0], pos[1])})`, where(`'${n.id}'`));
     if (n.ghost && false) void 0;
   }
   // roaming enemies
@@ -542,13 +556,15 @@ for (const [mid, def] of Object.entries(maps)) {
     const tg = buildGrid(w.to);
     if (!tg) continue;
     if (!inB(tg, w.tx, w.ty)) err('maps', `${mid}: ${lbl} lands at ${w.tx},${w.ty} — out of bounds of '${w.to}' (${tg.w}x${tg.h})`, where(`'${w.to}'`));
-    else if (solidAt(tg, w.tx, w.ty)) err('maps', `${mid}: ${lbl} lands at ${w.tx},${w.ty} on a solid cell (${tg.terrain[w.ty * tg.w + w.tx]}) in '${w.to}' — player is stuck`, where(`'${w.to}'`));
+    else if (solidAt(tg, w.tx, w.ty)) err('maps', `${mid}: ${lbl} lands at ${w.tx},${w.ty} on a solid cell (${whySolid(tg, w.tx, w.ty)}) in '${w.to}' — player is stuck`, where(`'${w.to}'`));
     else addEntry(w.to, w.tx, w.ty, `${mid} warp`);
   }
 }
 
 // ------------------------------------------------------------------ script calls in map/story sources
-const scriptFiles = mapFiles;
+const failedFiles = new Set(env.errors.map((e) => e.file));
+// a file that failed to load did not register its own items/troops/flags — scanning it only produces noise
+const scriptFiles = mapFiles.filter((f) => !failedFiles.has(f));
 const flagSets = {}, flagReads = {};
 function checkSpeaker(who, file, line) {
   if (!who) return;
@@ -638,7 +654,7 @@ for (const c of sc(/\bS\.warp\(/)) {
   const g = buildGrid(mid);
   if (!g) continue;
   if (!inB(g, x, y)) err('scripts', `S.warp('${mid}', ${x}, ${y}) out of bounds (${g.w}x${g.h})`, { ...L(c), id: mid });
-  else if (solidAt(g, x, y)) err('scripts', `S.warp('${mid}', ${x}, ${y}) lands on a solid cell (${g.terrain[y * g.w + x]})`, { ...L(c), id: mid });
+  else if (solidAt(g, x, y)) err('scripts', `S.warp('${mid}', ${x}, ${y}) lands on a solid cell (${whySolid(g, x, y)})`, { ...L(c), id: mid });
   else addEntry(mid, x, y, `${c.file}:${c.line}`);
 }
 for (const c of sc(/\bS\.travel\(/)) void c;

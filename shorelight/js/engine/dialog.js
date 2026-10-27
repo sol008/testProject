@@ -102,14 +102,16 @@ G.Dialog = (() => {
       } else {
         this.autoT += dt;
         const autoGo = G.settings.autoAdvance && this.autoT > 1.2 + this.total * 0.04;
-        if ((I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06)) && this.page < this.pages.length - 1) {
+        // evaluate once: pressed()/clicked() consume the input
+        const adv = I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06);
+        if (adv && this.page < this.pages.length - 1) {
           this.page++;
           this.lines = this.pages[this.page];
           this.total = G.Render.countGlyphs(this.lines);
           this.shown = 0; this.done = false; this.autoT = 0;
           return;
         }
-        if (I.pressed('ok') || I.clicked() || autoGo || (skipping && this.autoT > 0.06)) {
+        if (adv) {
           const r = this.resolve;
           this.resolve = null;
           this.idle = 0;

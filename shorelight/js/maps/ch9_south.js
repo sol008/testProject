@@ -2496,5 +2496,578 @@
     await G.Story.next(S, 10);
   }
 
+  // =====================================================================================================
+  // MAP 7 — hengchun 恆春古城
+  // =====================================================================================================
+  const hcCalm = (s) => !!s.flags.ch9_fallwind_defeated;
+  const hcLight = (s) => {
+    if (hcCalm(s) && !s.flags.ch9_hengchun_done) return { ambient: 0.45, color: '#101a3a', playerR: 240 };
+    if (s.flags.ch9_ashun_met && !hcCalm(s)) return { ambient: 0.55, color: '#0c0c1c', playerR: 220 };
+    if (!hcCalm(s)) return { ambient: 0.16, color: '#5a4a24' };
+    return { ambient: 0 };
+  };
+  G.Maps.define('hengchun', {
+    name: '恆春', subtitle: '落山風裡的古城', place: 'hengchun', start: [24, 34],
+    bgm: (s) => (hcCalm(s) ? 'south' : 'wind'),
+    light: hcLight,
+    particles: (s) => (hcCalm(s) ? [{ type: 'wind', density: 0.4 }].concat(hcLight(s).ambient > 0.3 ? ['fireflies'] : []) : [{ type: 'wind', density: 2.6 }, { type: 'dust', density: 1.4 }, 'leaves']),
+    tiles: (() => {
+      const g = grid(50, 42, '.');
+      g.rect(2, 2, 46, 2, 'R').rect(2, 36, 46, 2, 'R').rect(2, 2, 2, 36, 'R').rect(46, 2, 2, 36, 'R');
+      g.rect(11, 2, 1, 2, '=').rect(37, 0, 1, 4, '=').rect(24, 36, 1, 2, '=').rect(23, 38, 3, 4, '=');
+      g.rect(2, 19, 2, 2, ':');
+      g.rect(4, 19, 42, 2, '=').rect(23, 4, 2, 32, '=');
+      g.rect(37, 4, 1, 15, ':').rect(11, 4, 1, 15, ':');
+      g.set(42, 4, 'H').set(42, 5, 'H');
+      g.rect(0, 40, 50, 2, ',');
+      g.rect(18, 39, 13, 3, 's').rect(23, 38, 3, 4, '=');
+      return g.rows();
+    })(),
+    deco: (() => {
+      const d = grid(50, 42, ' ');
+      d.dots([[0, 0], [5, 0], [15, 1], [30, 0], [44, 1], [48, 6], [48, 14], [48, 26], [0, 12], [1, 28], [8, 39], [42, 39], [47, 40]], 'd');
+      d.dots([[20, 5], [27, 10], [44, 15], [20, 26], [44, 33], [5, 33], [9, 11]], 'd');
+      d.dots([[44, 6], [45, 7], [44, 8], [45, 9]], 'B');
+      d.dots([[5, 30], [21, 13], [35, 17], [42, 21], [27, 33]], 'r');
+      d.dots([[34, 39], [36, 40], [14, 40], [12, 39]], 'u');
+      return d.rows();
+    })(),
+    objects: [
+      { t: 'fort_gate', x: 10, y: 2, text: '北門' }, { t: 'fort_gate', x: 36, y: 2, text: '東門' }, { t: 'fort_gate', x: 23, y: 36, text: '南門' },
+      { t: 'tree_dead', x: 11, y: 1 }, { t: 'rock_big', x: 2, y: 19 },
+      { t: 'signboard', x: 4, y: 18, text: '西門', interact: ['西門的城門洞被風吹倒的大樹和石頭塞住了，過不去。'], label: '看' },
+      { t: 'shophouse', x: 5, y: 6, v: 0, text: '客棧' },
+      { t: 'house_minnan', x: 12, y: 5, v: 1 },
+      { t: 'stall', x: 17, y: 10, text: '港口茶', counter: true },
+      { t: 'house_minnan', x: 30, y: 6, v: 0, text: '阿順' },
+      { t: 'bench', x: 34, y: 9 },
+      { t: 'house_minnan', x: 39, y: 9, v: 1 },
+      { t: 'house_minnan', x: 26, y: 12, v: 0 },
+      { t: 'shophouse', x: 6, y: 14, v: 1, text: '雜貨' },
+      { t: 'house_minnan', x: 13, y: 13, v: 1 },
+      { t: 'shrine_small', x: 30, y: 15, text: '福德祠' },
+      { t: 'stone_lantern', x: 29, y: 16 },
+      { t: 'shophouse', x: 6, y: 23, v: 3, text: '武具' },
+      { t: 'house_minnan', x: 13, y: 23, v: 0 },
+      { t: 'house_minnan', x: 30, y: 22, v: 1, text: '林' },
+      { t: 'signboard', x: 34, y: 25, text: '槳', label: '調查', interact: async (S) => { await oldOar(S); } },
+      { t: 'house_minnan', x: 38, y: 23, v: 0 },
+      { t: 'laundry', x: 38, y: 28 },
+      { t: 'house_minnan', x: 13, y: 29, v: 1, text: '潘' },
+      { t: 'house_minnan', x: 30, y: 29, v: 0 },
+      { t: 'rock_small', x: 15, y: 8 }, { t: 'rock_small', x: 33, y: 11 }, { t: 'rock_small', x: 9, y: 17 }, { t: 'rock_small', x: 16, y: 26 },
+      { t: 'rock_small', x: 41, y: 12 }, { t: 'rock_small', x: 16, y: 32 }, { t: 'rock_small', x: 33, y: 32 },
+      { t: 'well', x: 20, y: 22 }, { t: 'barrel', x: 10, y: 9 }, { t: 'crate', x: 10, y: 17 }, { t: 'jar', x: 10, y: 26 },
+      { t: 'lamp_post', x: 22, y: 18 }, { t: 'lamp_post', x: 25, y: 21 }, { t: 'lamp_post', x: 35, y: 5 },
+      { t: 'wind_lion', x: 22, y: 34 }, { t: 'wind_lion', x: 26, y: 34 },
+    ],
+    chests: [
+      { id: 'hc_tudi', x: 31, y: 14, item: 'c9_gangkoucha', n: 3 },
+      { id: 'hc_laundry', x: 38, y: 29, item: 'c9_hd_douli' },
+    ],
+    lights: (s) => (hcLight(s).ambient > 0.3 ? [{ x: 30, y: 16, r: 120, color: '#ffb060', flicker: 0.3 }, { x: 22, y: 18, r: 140, color: '#ffc070' }, { x: 25, y: 21, r: 140, color: '#ffc070' }, { x: 35, y: 5, r: 140, color: '#ffc070' }] : []),
+    npcs: [
+      chenboNpc('hengchun', [24, 34]),
+      { id: 'hc_ashun', sprite: 'yueqin_singer', name: '阿順伯', x: 33, y: 9, dir: 'down', fixedDir: true, if: (s) => !s.flags.ch9_ashun_met || (!!s.flags.ch9_hengchun_done && !!s.flags.ch9_yueqin_xindeng), talk: async (S) => {
+        if (!F('ch9_ashun_met')) { await ashunMeet(S); return; }
+        await S.say('阿順伯', '風回來做風了。……今晚月亮很好，我再上去唱一唱。');
+      } },
+      { id: 'hc_guard', sprite: 'soldier', name: '守門老兵', x: 36, y: 5, dir: 'down', talk: async (S) => {
+        if (hcCalm(st())) { await S.say('守門老兵', '風停了！東門外的草，都站起來了。'); return; }
+        await S.say('守門老兵', '東門外風大到人站不住，你們要去龍磐？那邊滲穴多，掉下去就爬不起來。');
+        await S.say('守門老兵', '這城牆築起來沒幾十年，四個城門，北門西門都被風吹倒的樹擋了。');
+      } },
+      { id: 'hc_widow', sprite: 'widow', name: '潘家阿嬸', x: 18, y: 32, dir: 'down',
+        pos: (s) => (s.flags.ch9_fallwind_defeated && !s.flags.ch9_widow_talk && !s.flags.ch9_name_5 ? [21, 40] : [18, 32]), talk: async (S) => { await widowTalk(S); } },
+      { id: 'hc_afu', sprite: 'child_m', name: '阿福仔', x: 27, y: 21, dir: 'down', wander: 1, talk: async (S) => {
+        if (F('ch9_name_6')) { await S.say('阿福仔', '林添福！那是我阿公。我的名字也有個福，是跟他借的。'); return; }
+        await S.say('阿福仔', '我阿公的槳上面刻著字，我不識字，你們幫我看？就在我家門口。');
+      } },
+      { id: 'hc_tea', sprite: 'fisher_f', name: '港口茶阿姨', x: 17, y: 9, dir: 'down', fixedDir: true, talk: async (S) => {
+        await S.say('港口茶阿姨', '港口茶，滿州那邊山上種的，苦苦的，回甘。風大的地方，茶也比較有骨氣。');
+        if (!hcCalm(st())) await S.say('港口茶阿姨', '落山風本來是好東西喔，吹得洋蔥甜、吹得魚乾香。可是現在……風在哭。');
+        await S.shop(['c9_gangkoucha', 'c9_lvdousuan', 'c9_chayeguan'], { title: '港口茶攤' });
+      } },
+      { id: 'hc_inn', sprite: 'merchant', name: '客棧老闆', x: 8, y: 9, dir: 'down', talk: async (S) => {
+        await S.say('客棧老闆', '一晚一百文。風大，窗戶都釘死了，你們別嫌悶。');
+        await S.inn(100, { who: '客棧老闆' });
+      } },
+      { id: 'hc_shop', sprite: 'villager_m', name: '雜貨店頭家', x: 9, y: 18, dir: 'down', talk: async (S) => {
+        await S.say('雜貨店頭家', '風這麼大，船都進不來，貨也進不來。剩下這些，你們挑吧。');
+        await S.shop(['shimuyu', 'c9_xiancaodong', 'huanhunxiang', 'ezaijian', 'c9_feiyu'], { title: '恆春雜貨' });
+      } },
+      { id: 'hc_arms', sprite: 'hunter', name: '武具行頭家', x: 9, y: 26, dir: 'down', talk: async (S) => {
+        await S.say('武具行頭家', '恆春人打獵、討海，傢俬都要堅固。');
+        const goods = ['fn_haifeng', 'c9_hd_douli', 'c9_ar_niupi', 'ac_haixing'];
+        if (F('ch9_hengchun_done')) goods.splice(1, 0, 'c9_sp_yueya');
+        await S.shop(goods, { title: '恆春武具' });
+      } },
+      { id: 'hc_tudi', sprite: 'old_m', name: '土地公廟前阿伯', x: 32, y: 17, dir: 'left', talk: async (S) => {
+        if (hcCalm(st())) { await S.say('土地公廟前阿伯', '好佳哉，風回來做風了。'); return; }
+        await S.say('土地公廟前阿伯', '土地公顧這片地，也顧這片風。風不聽話，土地公也頭痛啦。');
+      } },
+      { id: 'hc_villager', sprite: 'villager_f2', name: '恆春婦人', x: 18, y: 21, dir: 'down', wander: 2, if: (s) => hcCalm(s), talk: ['風停了，總算可以開窗曬衣服了。', '昨晚城牆上有人在唱思想起，我在被窩裡聽到哭了。'] },
+    ],
+    events: [
+      { id: 'hc_arrive', trigger: 'auto', if: (s) => !!s.flags.ch9_cape_blocked && !s.flags.ch9_hengchun_arrive, run: async (S) => { await hengchunArrive(S); } },
+      { id: 'hc_north', trigger: 'touch', x: 11, y: 3, run: async (S) => { await S.say('守門老兵', '（遠遠地喊）北門出去是山路！落山風太強，山路走不得！'); await S.move('player', 'D'); } },
+      { id: 'hc_west', trigger: 'touch', x: 4, y: 19, h: 2, run: async (S) => { await S.say('', '西門的城門洞被風吹倒的大樹和石頭塞住了，過不去。'); await S.move('player', 'R'); } },
+      { id: 'hc_east_closed', trigger: 'touch', x: 37, y: 3, if: (s) => !s.flags.ch9_names_quest, run: async (S) => {
+        S.face('hc_guard', 'player');
+        await S.say('守門老兵', '東門外風大到人站不住！沒事不要出去！');
+        await S.move('player', 'D');
+      } },
+      { id: 'hc_bay', trigger: 'touch', x: 23, y: 41, w: 3, h: 1, run: async (S) => { await S.say('', '南灣的沙灘上，王船靜靜地泊著。'); await boardDeck(S); } },
+    ],
+    warps: [
+      { x: 42, y: 4, to: 'hengchun_wall', tx: 2, ty: 4, tdir: 'right' },
+      { x: 37, y: 1, to: 'longpan', tx: 4, ty: 40, tdir: 'up', if: (s) => !!s.flags.ch9_names_quest },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 東門城牆頂 ----
+  G.Maps.define('hengchun_wall', {
+    name: '東門城牆', subtitle: '恆春古城', place: 'hengchun', start: [2, 4],
+    bgm: (s) => (s.flags.ch9_fallwind_defeated ? null : 'wind'),
+    light: (s) => (s.flags.ch9_fallwind_defeated ? { ambient: 0.45, color: '#101a3a', playerR: 240 } : { ambient: 0.55, color: '#0a0a1c', playerR: 220 }),
+    particles: (s) => (s.flags.ch9_fallwind_defeated ? ['fireflies', { type: 'wind', density: 0.3 }] : [{ type: 'wind', density: 2.4 }, { type: 'dust', density: 1.2 }]),
+    tiles: (() => {
+      const g = grid(24, 9, 'R');
+      g.rect(0, 0, 24, 2, 'w');
+      g.rect(0, 2, 24, 4, '#');
+      g.set(1, 4, 'H');
+      return g.rows();
+    })(),
+    objects: [
+      { t: 'city_wall', x: 0, y: 2, w: 24, v: 0, tall: 64 },
+      { t: 'red_lantern', x: 6, y: 3, hang: true, light: { r: 110, color: '#ffb060', flicker: 0.3 } },
+      { t: 'red_lantern', x: 19, y: 3, hang: true, light: { r: 110, color: '#ffb060', flicker: 0.3 } },
+      { t: 'bench', x: 15, y: 5 },
+    ],
+    chests: [
+      { id: 'hcw_gold', x: 22, y: 4, gold: 2000, if: (s) => !!s.flags.ch9_hengchun_done },
+    ],
+    lights: (s) => (s.flags.ch9_fallwind_defeated ? [{ x: 12, y: 0, r: 320, color: '#dde8ff' }] : []),
+    npcs: [
+      { id: 'hcw_ashun', sprite: 'yueqin_singer', name: '阿順伯', x: 13, y: 3, dir: 'up', fixedDir: true,
+        if: (s) => !!s.flags.ch9_ashun_met && (!s.flags.ch9_hengchun_done || !s.flags.ch9_yueqin_xindeng), talk: async (S) => {
+          if (F('ch9_hengchun_done') && nameCount() === 7 && !F('ch9_yueqin_xindeng')) { await wallSong(S, false); return; }
+          if (F('ch9_hengchun_done')) { await S.say('阿順伯', '還是缺了幾個。不要緊，我記得幾個，就唱幾個。'); await S.say('阿順伯', `現在找回了 ${nameCount()} 個名字。`); return; }
+          if (F('ch9_names_quest') && !F('ch9_fallwind_defeated')) { await S.say('阿順伯', '去吧。明天日落前，我在這裡等。我會一直彈，讓你們聽得到方向。'); return; }
+          await S.say('阿順伯', '……聽。');
+        } },
+    ],
+    events: [
+      { id: 'hcw_c911', trigger: 'auto', if: (s) => !!s.flags.ch9_ashun_met && !s.flags.ch9_names_quest, run: async (S) => { await wallNames(S); } },
+      { id: 'hcw_c913', trigger: 'auto', if: (s) => !!s.flags.ch9_fallwind_defeated && !s.flags.ch9_hengchun_done, run: async (S) => { await wallSong(S, true); } },
+    ],
+    warps: [
+      { x: 1, y: 4, to: 'hengchun', tx: 42, ty: 6, tdir: 'down' },
+    ],
+  });
+
+  // ---- 恆春 scripts ----
+  async function hengchunArrive(S) {
+    S.flag('ch9_hengchun_arrive');
+    S.setPos('player', 24, 34, 'up'); S.gather(); S.setPos('chenbo', 24, 35, 'up');
+    S.spawn({ id: 'hc_gateguard', sprite: 'soldier', x: 25, y: 33, dir: 'down' });
+    await S.say('', '風沙橫著吹。城裡的房子門窗緊閉，屋瓦壓著石塊。街上幾乎沒有人。');
+    await S.say('hongying:surprise', '……這是座城？還是座空城？');
+    S.face('hc_gateguard', 'player');
+    await S.say('守門老兵', '外地人？快進來快進來，風要把你們吹到海裡去了！');
+    await S.say('守門老兵', '今年的落山風不肯停。白天還好，晚上……晚上風在哭。');
+    await S.say('守門老兵', '城裡只有一個人晚上還敢出門——阿順伯。他每晚爬上東門城牆彈月琴。');
+    await S.say('守門老兵', '說是在跟風「講話」。阿順伯住在東門內，你們去找他吧。');
+    await S.move('hc_gateguard', 'UUUU', { speed: 4 });
+    S.remove('hc_gateguard');
+    S.objective('找月琴伯阿順（東門內）');
+  }
+  async function ashunMeet(S) {
+    await S.say('', '門口的小凳上，坐著一個瘦小的老人，抱著一把兩弦月琴，閉著眼睛。');
+    await S.say('阿順伯', '……客人喔。坐。風大，不要站。');
+    await S.say('xinghe:normal', '阿伯，聽說您晚上會上城牆彈琴？');
+    await S.say('阿順伯', '嗯。思想起，聽過嗎？恆春的調。我唱了六十年。');
+    S.sfx('sing');
+    await S.say('阿順伯', '（撥弦，低聲唱）思啊——想啊——起——');
+    S.sfx('wind');
+    await S.say('阿順伯', '……唱不下去了。我的歌，被風偷走了。');
+    await S.say('yungui:think', '偷走？');
+    await S.say('阿順伯', '晚上來。晚上你們就知道了。');
+    S.flag('ch9_ashun_met');
+    await S.fadeOut(0.8);
+    await S.narrate(['入夜。風更大了，風聲裡夾著哭聲。', '東門的城牆上，傳來細細的月琴聲。'], { veil: 1 });
+    relight(S);
+    await S.fadeIn(0.8);
+    S.objective('登上東門城牆（東門旁的石階）');
+  }
+  async function wallNames(S) {
+    S.bgm(null, { fade: 1 });
+    S.setPos('player', 9, 4, 'right'); S.gather();
+    await S.say('', '夜。月亮被雲遮住一半。城牆頂上，阿順伯面向東方的黑暗坐著。風從龍磐的方向撲來，帶著哭聲。');
+    await S.say('阿順伯', '你們來了。聽。');
+    S.sfx('sing');
+    await S.say('', '阿順伯撥弦。月琴聲很細，幾乎被風蓋過。');
+    await S.say('阿順伯', '（唱）思啊想啊起——船頭點火出港口——');
+    await S.say('阿順伯', '（唱）落山風吹透心頭——阿兄出海……');
+    S.sfx('wind'); S.shake(5, 0.8);
+    await S.say('', '風聲忽然大作，把歌聲切斷。風中的哭聲喊出幾個破碎的音節——像是名字的一半。');
+    await S.say('阿順伯', '……就是這裡。這一段，本來有七個名字。');
+    await S.say('阿順伯', '這幾十年來，從恆春出海沒回來的討海人，我一個一個編進歌裡。');
+    await S.say('阿順伯', '他們沒有墳，屍骨在海裡。厝邊頭尾記不住，我就用唱的記。');
+    await S.say('阿順伯', '唱一次，他們就被叫一次。被叫的人，就不會變成孤魂。');
+    await S.say('xinghe:sad', '……');
+    await S.say('阿順伯', '可是今年，落山風不肯停。它從東邊的台地上吹下來，一夜一夜，');
+    await S.say('阿順伯', '把我歌裡的名字一個一個吹走了。我現在想破頭，也想不起來。');
+    await S.say('阿順伯', '連他們的家人……也想不起來了。');
+    await S.say('hongying:serious', '風怎麼會偷名字？');
+    await S.say('yungui:think', '風本身沒有惡意。是逆潮把海裡的哀聲推上岸，被落山風吸了進去。');
+    await S.say('yungui:think', '風裡塞滿了溺死者的聲音，它停不下來——它不知道要把這些聲音送去哪。');
+    await S.say('chenbo:serious', '風的源頭，在龍磐那片台地。');
+    await S.say('xinghe:serious', '阿伯，我們去把名字拿回來。');
+    S.face('hcw_ashun', 'player');
+    await S.say('阿順伯', '（睜開眼，第一次看向星河）……少年仔，你身上有一股奇怪的火。');
+    await S.say('阿順伯', '去吧。明天日落前，我在這裡等。我會一直彈，讓你們聽得到方向。');
+    if (F('ch9_hongying_comfort')) {
+      await S.say('', '其他人走下石階時，紅纓多留了一步。');
+      await S.say('hongying:sad', '阿伯。我可以……拜託你多唱一個名字嗎？');
+      await S.say('阿順伯', '誰？');
+      await S.say('hongying:sad', '我哥哥。洛青鋒。……他不是在海裡死的。');
+      await S.wait(0.6);
+      await S.say('阿順伯', '（沉默很久）這首歌，是唱給海的。');
+      await S.say('阿順伯', '妳哥哥的名字，妳要自己唱。別人唱的，他聽不出是妳。');
+      await S.say('hongying:sad', '……我不會唱歌。');
+      await S.say('阿順伯', '會叫他名字就會唱。叫一聲，就是一句歌。');
+      S.flag('ch9_hongying_song');
+    }
+    S.flag('ch9_names_quest');
+    S.quest('q_ch9_names', 0);
+    S.objective('出東門，前往龍磐，平息落山風');
+    S.bgm('wind');
+  }
+  async function wallSong(S, first) {
+    S.bgm(null, { fade: 1 });
+    S.setPos('player', 10, 4, 'right'); S.gather();
+    S.face('hcw_ashun', 'up');
+    const n = nameCount();
+    if (first) {
+      const folk = [['hcw_widow', 'widow', 5, 3], ['hcw_afu', 'child_m', 6, 4], ['hcw_v1', 'villager_f2', 4, 3], ['hcw_v2', 'old_m', 4, 5], ['hcw_v3', 'villager_m', 6, 5]];
+      for (const [id, sp, x, y] of folk) S.spawn({ id, sprite: sp, x, y, dir: 'right', light: { r: 90, color: '#ffc070' } });
+      await S.say('', '風停了。月亮照在城牆上。城裡家家戶戶開了門，有人提著燈籠走上城牆。潘家阿嬸、阿福仔都來了。');
+      await S.say('阿順伯', '……風停了。');
+      await S.say('xinghe:normal', '阿伯，名字——我們帶回來了。');
+      await S.say('', '星河張開手，名字光一點一點飄出，繞著阿順伯的月琴轉。');
+    } else {
+      await S.say('xinghe:normal', '阿伯，剩下的名字——我們也找回來了。');
+      await S.say('', '星河張開手，七點名字光一起飄出，繞著阿順伯的月琴轉。');
+    }
+    S.particles(['fireflies', { type: 'motes', density: 1.0 }]);
+    if (n === 7) {
+      S.sfx('sing');
+      await S.say('阿順伯', '（閉眼，撥弦）思啊——想啊——起——');
+      await S.say('阿順伯', '（唱）船頭點火出港口，落山風吹透心頭，');
+      await S.say('阿順伯', '（唱）陳水生仔林添福，黃家阿九順德兄——');
+      await S.say('阿順伯', '（唱）潘家金水王家木，阿財仔伊尚少年，');
+      await S.say('阿順伯', '（唱）七個名字我共恁叫，海水再深也聽會著。');
+      S.flash('#fff2c0', 0.8, 0.4);
+      await S.say('', '每唱到一個名字，就有一點光從海面升起，飛過城牆，飛向遠方的海。');
+      if (first) await S.say('', '潘家阿嬸捂著嘴哭了。阿福仔拉著阿嬤的手。');
+      await S.say('潘家阿嬸', '……金水。是金水。你這個死人，終於聽到了吼。');
+      await S.say('阿順伯', '（放下月琴）……被叫到的人，就走得了了。');
+      await S.say('阿順伯', '謝謝你們。他們這下，不會變成孤魂了。');
+      await S.say('', '一盞小小的心燈，從月琴的共鳴孔裡飄出，落進星河掌心。');
+      S.flag('ch9_yueqin_xindeng');
+      S.quest('q_ch9_names', 'done');
+      await S.lantern('xd_yueqin_names', '月琴伯的名字');
+    } else {
+      S.sfx('sing');
+      await S.say('阿順伯', '（唱，缺了名字的地方，只有月琴聲）……');
+      await S.say('阿順伯', '……還是缺了幾個。不要緊。');
+      await S.say('阿順伯', '我記得幾個，就唱幾個。剩下的，我慢慢想，想到我死。');
+      S.quest('q_ch9_names', 1);
+    }
+    if (!first) { S.bgm('south'); return; }
+    // 歌詞殘篇（共通）
+    await S.say('阿順伯', '少年仔，你身上那股火……我看過一次。');
+    await S.say('阿順伯', '十八年前，中元的前幾天。黑潮帶著一個白頭髮的查某囡仔，漂到南灣。');
+    await S.say('xinghe:surprise', '！');
+    await S.say('阿順伯', '她全身濕淋淋，站在沙灘上，唱了一段我從沒聽過的歌。');
+    await S.say('阿順伯', '唱完，她就走進海裡，往北去了。我以為是我老眼昏花。');
+    await S.say('阿順伯', '可是那段歌，我記到今天。月琴配不出來，太乾淨了。');
+    await S.say('xinghe:serious', '阿伯……可以唱給我聽嗎？');
+    S.bgm('sad');
+    await S.say('阿順伯', '（不彈琴，低聲清唱）');
+    await S.say('阿順伯', '「燈一盞，渡一人。潮來莫回身。」');
+    await S.say('阿順伯', '「你若忘了我，我替你記；你若記得我，莫來尋。」');
+    await S.wait(0.8);
+    await S.say('xinghe:sad', '……「莫來尋」。');
+    await S.say('xinghe:sad', '（「星河……這一次，別再來找我了。」）');
+    await S.say('xinghe:serious', '……不行。這次不行。');
+    await S.give('c9_key_lyric', 1);
+    S.flag('ch9_lyric_hengchun');
+    await S.say('阿順伯', '（遞出一段舊琴弦）月琴弦。帶著。風再亂吹，你撥一下，它就會想起自己是風。');
+    await S.give('c9_ac_yueqin', 1);
+    S.flag('ch9_hengchun_done');
+    await S.say('阿順伯', '去吧。南岬的風，現在讓你們過了。');
+    for (const id of ['hcw_widow', 'hcw_afu', 'hcw_v1', 'hcw_v2', 'hcw_v3']) S.remove(id);
+    days(S, 1);
+    S.quest('q_ch9_main', 5);
+    S.objective('乘王船繞過南岬，前往鵝鑾鼻（南門外的南灣）');
+    S.bgm('south');
+  }
+  async function widowTalk(S) {
+    if (F('ch9_name_5')) { await S.say('潘家阿嬸', '潘金水！是潘金水！……他名字裡有金又有水，他說這樣出海才會發。'); return; }
+    if (!hcCalm(st())) {
+      S.flag('ch9_widow_talk');
+      await S.say('潘家阿嬸', '風吹得這麼久，我丈夫的名字……我一直念，可是一到嘴邊就被吹走了。');
+      await S.say('潘家阿嬸', '他叫……他叫……唉，我竟然想不起來。我跟他過了二十年啊。');
+      return;
+    }
+    if (!F('ch9_widow_talk')) await S.say('', '南門外的海邊，潘家阿嬸一個人望著海。');
+    await S.say('潘家阿嬸', '風停了……風一停，我就想起來了。');
+    S.emote('hc_widow', '!');
+    await S.say('潘家阿嬸', '潘金水！是潘金水！……他名字裡有金又有水，他說這樣出海才會發。');
+    await gainName(S, 5);
+  }
+  async function oldOar(S) {
+    if (F('ch9_name_6')) { await S.say('', '一支舊槳，槳面刻著三個字：「林添福」。'); return; }
+    if (!hcCalm(st())) { await S.say('', '阿福仔家門口靠著一支舊槳。槳面刻著字，可是字被風沙磨得看不清。'); return; }
+    await S.say('', '風停了，沙塵落定。舊槳上的刻字，終於看得清楚了——「林添福」。');
+    await S.say('阿福仔', '林添福！那是我阿公。我的名字也有個福，是跟他借的。');
+    await gainName(S, 6);
+  }
+
+  // =====================================================================================================
+  // MAP 8 — longpan 龍磐風原・風吹沙
+  // =====================================================================================================
+  const LP_ROCKS = [[6, 37], [0, 33], [10, 33], [15, 37], [13, 29], [19, 33], [6, 28], [22, 29], [17, 25], [26, 33], [10, 23], [24, 24], [29, 27]];
+  const LP_SMALL = [[9, 40], [21, 38], [7, 25], [28, 37], [14, 22]];
+  const LP_HOLES = [[8, 35], [13, 36], [17, 32], [4, 31], [11, 27], [20, 27], [26, 30], [8, 22], [23, 37], [15, 15], [24, 11], [7, 12], [30, 20]];
+  const LP_LEE = (() => {
+    const s = new Set();
+    for (const [x, y] of LP_ROCKS) for (const [dx, dy] of [[-1, 1], [-1, 2], [0, 2], [1, 2]]) s.add((x + dx) + ',' + (y + dy));
+    for (const [x, y] of LP_SMALL) for (const [dx, dy] of [[-1, 1], [0, 1]]) s.add((x + dx) + ',' + (y + dy));
+    return s;
+  })();
+  const LP_BRIDGE = { y: 18, x0: 37, n: 6 };
+  const lpCalm = (s) => !!s.flags.ch9_fallwind_defeated;
+  const lpInA = (x, y) => y >= 22 && y <= 42 && x <= 32;
+  G.Maps.define('longpan', {
+    name: '龍磐風原', subtitle: '落山風的源頭', place: 'hengchun', start: [4, 40],
+    bgm: (s) => (lpCalm(s) ? 'south' : 'wind'),
+    light: (s) => (lpCalm(s) ? { ambient: 0.4, color: '#101a3a', playerR: 240 } : { ambient: 0.35, color: '#4a1a10' }),
+    particles: (s) => (lpCalm(s) ? ['fireflies', { type: 'wind', density: 0.3 }] : [{ type: 'wind', density: 2.2 }, 'leaves', { type: 'dust', density: 1.0 }]),
+    tiles: (() => {
+      const g = grid(48, 44, '.');
+      g.rect(0, 0, 48, 2, '~').rect(44, 0, 4, 44, '~').rect(0, 2, 44, 1, 'X');
+      g.rect(14, 3, 18, 5, ',');
+      g.rect(33, 9, 11, 18, 's');
+      g.rect(37, 8, 7, 1, 'X').rect(37, 27, 7, 1, 'X').rect(43, 9, 1, 18, 'X').rect(43, 16, 1, 5, 's');
+      g.rect(37, 9, 6, 18, ' ');
+      g.rect(2, 40, 4, 4, '=');
+      g.rect(3, 22, 2, 18, ':');
+      for (const [x, y] of LP_HOLES) g.set(x, y, ' ');
+      g.rect(0, 42, 2, 2, ',').rect(30, 30, 3, 14, ',');
+      return g.rows();
+    })(),
+    deco: (() => {
+      const d = grid(48, 44, ' ');
+      // tall grass bands (middle plateau) and patches in the windfield
+      for (let y = 8; y <= 21; y++) for (let x = 2; x <= 31; x++) if (U.hash(x, y, 91) < 0.32) d.set(x, y, 'g');
+      for (let y = 22; y <= 41; y++) for (let x = 0; x <= 32; x++) if (U.hash(x, y, 93) < 0.08) d.set(x, y, 'g');
+      for (let y = 3; y <= 7; y++) for (let x = 14; x <= 31; x++) if (U.hash(x, y, 97) < 0.18) d.set(x, y, 'g');
+      d.rect(3, 22, 2, 22, ' ');
+      for (const [x, y] of LP_HOLES) { d.set(x, y, ' '); }
+      for (const k of LP_LEE) { const [x, y] = k.split(',').map(Number); d.set(x, y, ' '); }
+      d.rect(2, 39, 5, 5, ' ').rect(14, 7, 18, 1, ' ');
+      d.dots([[34, 10], [35, 25], [33, 16]], 'r');
+      return d.rows();
+    })(),
+    objects: () => {
+      const out = [];
+      for (const [x, y] of LP_ROCKS) out.push({ t: 'rock_big', x, y });
+      for (const [x, y] of LP_SMALL) out.push({ t: 'rock_small', x, y });
+      out.push({ t: 'rock_big', x: 1, y: 29 }, { t: 'tree_dead', x: 31, y: 9 }, { t: 'tree_dead', x: 12, y: 9 }, { t: 'rock_big', x: 33, y: 4 }, { t: 'rock_big', x: 10, y: 4 });
+      out.push({ t: 'signboard', x: 6, y: 41, text: '龍磐', interact: ['「龍磐」。再往前，就是落山風吹出去的地方。', '小心腳下的滲穴。'], label: '看' });
+      return out;
+    },
+    pass: LP_HOLES.map(([x, y]) => ({ x, y, solid: false })),
+    chests: [
+      { id: 'lp_stone', x: 1, y: 31, item: 'c9_mat_fengshi', n: 1 },
+      { id: 'lp_soup', x: 1, y: 32, item: 'c9_lvdousuan', n: 2 },
+      { id: 'lp_bracer', x: 34, y: 26, item: 'c9_ac_lujiao' },
+    ],
+    enemies: [
+      { id: 'lpe1', troop: 't_c9_wind_a', x: 10, y: 16, art: 'wind_sprite', variant: 2, lv: 33, radius: 3, if: (s) => !lpCalm(s) },
+      { id: 'lpe2', troop: 't_c9_wind_b', x: 22, y: 13, art: 'wind_sprite', variant: 2, lv: 33, radius: 3, if: (s) => !lpCalm(s) },
+      { id: 'lpe3', troop: 't_c9_wind_a', x: 27, y: 18, art: 'wind_sprite', variant: 2, lv: 33, radius: 3, if: (s) => !lpCalm(s) },
+      { id: 'lpe4', troop: 't_c9_wind_b', x: 35, y: 12, art: 'wind_sprite', variant: 2, lv: 33, radius: 2, if: (s) => !lpCalm(s) },
+      { id: 'lpe5', troop: 't_c9_wind_a', x: 18, y: 35, art: 'wind_sprite', variant: 2, lv: 33, radius: 2, if: (s) => !lpCalm(s) },
+    ],
+    events: (() => {
+      const ev = LP_HOLES.map(([x, y], i) => ({ id: 'lp_hole' + i, trigger: 'touch', x, y, run: async (S) => { await lpFall(S); } }));
+      ev.push({ id: 'lp_boss', trigger: 'touch', x: 14, y: 7, w: 18, h: 1, if: (s) => !s.flags.ch9_fallwind_defeated, run: async (S) => { await fallwindBoss(S); } });
+      ev.push({ id: 'lp_name7', trigger: 'touch', x: 43, y: 18, if: (s) => !s.flags.ch9_name_7, run: async (S) => {
+        await S.say('', '咾咕石的石縫裡，卡著一點小小的金白色光——是一個名字。');
+        await S.say('', '「阿財仔」——風裡，好像有個年輕的聲音笑了一下。');
+        await gainName(S, 7);
+      } });
+      ev.push({ id: 'lp_pluck', trigger: 'action', x: 37, y: 18, label: '撥弦', if: (s) => lpCalm(s) && !s.flags.ch9_name_7 && (G.Inv.has('c9_ac_yueqin') || Object.values(s.members).some((m) => Object.values(m.equip).includes('c9_ac_yueqin'))), run: async (S) => {
+        S.sfx('sing');
+        await S.say('', '星河撥了一下月琴弦。叮——一陣小風從山上吹下來，沙子開始往坡上流。');
+        G.mapScene._lpOne = 0;
+      } });
+      ev.push({ id: 'lp_bridge_hint', trigger: 'touch', x: 36, y: 17, h: 3, once: true, run: async (S) => {
+        await S.say('', '眼前是一道寬寬的沙溝，過不去。對面的咾咕石縫裡，好像有一點光。');
+        if (lpCalm(st())) await S.say('yungui:think', '風停了，沙橋也不會再出現了。……阿順伯給的琴弦，或許有用。');
+        else await S.say('yungui:think', '風一吹，沙往上坡流……陣風的時候，沙溝上會浮出一條路。');
+      } });
+      return ev;
+    })(),
+    warps: [
+      { x: 2, y: 43, w: 4, to: 'hengchun', tx: 37, ty: 4, tdir: 'down' },
+    ],
+    drawGround: (ctx, t, m) => {
+      const s = st();
+      if (!lpCalm(s)) {
+        // lee shelter hints
+        ctx.save(); ctx.fillStyle = 'rgba(20,30,60,0.16)';
+        for (const k of LP_LEE) { const [x, y] = k.split(',').map(Number); if (lpInA(x, y)) { ctx.beginPath(); ctx.ellipse(x * T + 32, y * T + 34, 28, 16, 0, 0, Math.PI * 2); ctx.fill(); } }
+        ctx.restore();
+      }
+      // sand ditch shading + the bridge's sand stream
+      for (let i = 0; i < LP_BRIDGE.n; i++) {
+        const x = LP_BRIDGE.x0 + i, y = LP_BRIDGE.y;
+        if (m.terrainAt(x, y) === 'sand') {
+          ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#f0d8a0';
+          for (let k = 0; k < 4; k++) ctx.fillRect(x * T + ((t * 70 + k * 17) % 64), y * T + 8 + k * 14, 10, 2);
+          ctx.restore();
+        }
+      }
+      if (!s.flags.ch9_name_7) drawSpark(ctx, 43, 18, t, '#fff6d0');
+    },
+    drawOver: (ctx, t, m) => {
+      const s = st(), v = V();
+      if (!s.flags.ch9_fallwind_defeated && v.ch9_fwShow) drawMonsterAt(ctx, 'fallwind', 23, 5, t, { scale: 0.62, alpha: v.ch9_fwShow });
+      // gust streaks
+      if (m._lpGust || m._lpWarn) {
+        const [cx, cy] = [m.cam.x, m.cam.y];
+        ctx.save();
+        ctx.strokeStyle = m._lpGust ? 'rgba(240,230,210,0.5)' : 'rgba(240,230,210,0.18)';
+        ctx.lineWidth = 2; ctx.lineCap = 'round';
+        for (let i = 0; i < (m._lpGust ? 36 : 12); i++) {
+          const yy = cy + U.hash(i, 3, 7) * G.H;
+          const xx = cx + G.W - ((t * 900 + i * 97) % (G.W + 300));
+          ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 90, yy + 40); ctx.stroke();
+        }
+        ctx.restore();
+      }
+    },
+    npcs: [chenboNpc('longpan', [4, 40])],
+    onUpdate: withFollow((dt, m, busy) => {
+      const s = st();
+      m._lpT = (m._lpT || 0) + dt;
+      const calm = lpCalm(s);
+      const ph = m._lpT % 7;
+      m._lpGust = !calm && ph >= 4;
+      m._lpWarn = !calm && ph >= 3 && ph < 4;
+      // sand bridge (forms 0.3 s / cell from the start, collapses the same way after the gust)
+      let tau = null;
+      if (!calm) tau = (ph - 4 + 7) % 7;
+      if (m._lpOne != null) { m._lpOne += dt; tau = m._lpOne; if (m._lpOne > 6) m._lpOne = null; }
+      let changed = false;
+      for (let i = 0; i < LP_BRIDGE.n; i++) {
+        const formed = tau != null && tau >= i * 0.3 && tau < 3 + i * 0.3;
+        const idx = LP_BRIDGE.y * m.w + LP_BRIDGE.x0 + i;
+        const want = formed ? 'sand' : 'void';
+        if (m.terrain[idx] !== want) { m.terrain[idx] = want; changed = true; }
+      }
+      if (changed) {
+        m.computeSolid();
+        const p = m.player;
+        if (p.y === LP_BRIDGE.y && p.x >= LP_BRIDGE.x0 && p.x < LP_BRIDGE.x0 + LP_BRIDGE.n && m.terrainAt(p.x, p.y) === 'void' && !busy) {
+          G.Script.run(async (S) => {
+            S.sfx('wind');
+            await S.say('', '沙橋在腳下崩落——眾人順著沙子滑回了坡底。');
+            await S.warp('longpan', 35, 24, 'up');
+          });
+          return;
+        }
+      }
+      if (calm || busy) return;
+      if (G.Debug && G.Debug.autoplay) return;
+      // gust pushes the party south-west unless they shelter in a rock's lee
+      const p = m.player;
+      if (m._lpGrass && !p.moving) {
+        m._lpGrass = false;
+        G.Script.run(async (S) => { await S.say('', '被風推進了草叢——草叢裡有東西！'); await S.battle('t_c9_wind_a', { mode: 'ambush' }); });
+        return;
+      }
+      if (!m._lpGust || p.moving || !lpInA(p.x, p.y) || LP_LEE.has(p.x + ',' + p.y)) { m._lpPush = 0; return; }
+      m._lpPush = (m._lpPush || 0) - dt;
+      if (m._lpPush > 0) return;
+      m._lpPush = 0.5;
+      m._lpAlt = !m._lpAlt;
+      const dirs = m._lpAlt ? [['down', 0, 1], ['left', -1, 0]] : [['left', -1, 0], ['down', 0, 1]];
+      for (const [, dx, dy] of dirs) {
+        const nx = p.x + dx, ny = p.y + dy;
+        if (m.blocked(nx, ny, p)) continue;
+        if (m.objects.some((o) => o.t === 'tallgrass' && o.x === nx && o.y === ny)) m._lpGrass = true;
+        m.shiftFollowers(p.x, p.y);
+        p.startMove(nx, ny);
+        if (Math.random() < 0.4) G.Audio.sfx('wind');
+        break;
+      }
+    }),
+  });
+
+  async function lpFall(S) {
+    S.sfx('earth'); S.shake(6, 0.4);
+    await S.say('', '腳下一空——掉進了滲穴！');
+    for (const mem of G.Party.active()) if (mem.hp > 1) mem.hp = Math.max(1, mem.hp - Math.round(G.Party.stats(mem.id).mhp * 0.05));
+    await S.fadeOut(0.5);
+    await S.narrate(['好不容易從滲穴另一頭爬了出來……回到了風原的入口。'], { veil: 1 });
+    await S.warp('longpan', 4, 40, 'up', { fade: 0.01 });
+  }
+  async function fallwindBoss(S) {
+    S.bgm('wind');
+    S.setPos('player', 23, 8, 'up'); S.gather();
+    await S.camera(23, 5, 1.0);
+    await S.say('', '台地邊緣。眼前是黑暗的太平洋。風從身後的山上沖下來，越過台地，衝向大海——');
+    await S.say('', '——又被海面彈回，捲成巨大的漩渦。');
+    V().ch9_fwShow = 0.01;
+    S.sfx('wind'); S.shake(6, 1.0);
+    await G.Tweens.to(V(), { ch9_fwShow: 1 }, 1.4, 'linear');
+    await S.say('', '漩渦中心，一個由草屑、沙、鹽霧捏成的巨大身影慢慢站起。它沒有臉，胸口一圈一圈纏著發光的細線——那是被纏住的名字。');
+    await S.say('落山風靈', '……呼——回——家——呼——回——家——');
+    await S.say('xinghe:surprise', '它在喊……回家？');
+    await S.say('yungui:serious', '它聽了太多溺死者喊回家，它以為那是自己的話。');
+    await S.say('chenbo:serious', '風是要過山過海的東西。它被這些聲音壓住了，走不了。');
+    await S.say('xinghe:serious', '那就幫它鬆開！');
+    const r = await S.battle('t_c9_fallwind', { intro: fallwindIntro(), bgmAfter: 'wind' });
+    if (r !== 'win') return;
+    S.cameraFollow();
+    await S.camera(23, 5, 0.3);
+    S.bgm('sad');
+    await S.say('', '落山風靈胸口的光線一根一根斷開，化成點點光，升上夜空。');
+    await G.Tweens.to(V(), { ch9_fwShow: 0 }, 1.6, 'linear');
+    V().ch9_fwShow = 0;
+    await S.say('', '最後一縷風輕輕吹過星河的臉，像嘆了一口氣——然後吹向海的方向，散了。');
+    S.flag('ch9_fallwind_defeated');
+    relight(S, { bgm: false });
+    S.sfx('sing');
+    await S.say('', '台地上的草慢慢站了起來。風停了。遠處，月琴聲清楚地傳了過來。');
+    for (let i = 1; i <= 3; i++) S.flag('ch9_name_' + i);
+    await gainName(S, 4);
+    await S.say('yungui:normal', '……名字都在這裡了嗎？');
+    await S.say('xinghe:think', '本體裡出來四個，可是阿伯說有七個。');
+    await S.say('chenbo:normal', '其他的，被風吹散在這片台地和城裡了吧。找找。');
+    days(S, 1);
+    S.quest('q_ch9_names', 1);
+    S.objective('收集剩下的名字（可選），回恆春東門城牆');
+    S.bgm('south');
+    S.cameraFollow();
+  }
+
   // @@MAPS@@
 })();

@@ -470,5 +470,247 @@
   const PHASE_BGM = { P1: 'jiufen', P2: 'jiufen', P3: 'jiufen', PX: 'night', P4: 'tension', P5: 'jiufen' };
   const BLUE = '#6fb6ff';
 
+  // =================================================================================================== battles
+  // Chapter-wide battle hooks (only while chapter 1 is running): first-battle / 合擊 tutorials at the start,
+  // the 劍意 tutorial the first time someone's gauge is full.
+  async function commonIntro(b) {
+    if (!F('tut_battle')) await tutorial('tut_battle');
+    const xh = b.party.find((p) => p.id === 'xinghe'), bz = b.party.find((p) => p.id === 'baizhi');
+    if (xh && bz && xh.lv >= 3 && bz.lv >= 3 && !F('tut_combo')) await tutorial('tut_combo');
+  }
+  async function commonTurn(b, u) {
+    if (u.side === 'party' && u.gauge >= 100 && !F('tut_gauge')) await tutorial('tut_gauge');
+  }
+  if (!G.Battle.__c1hooks) {
+    G.Battle.__c1hooks = true;
+    const start0 = G.Battle.start;
+    G.Battle.start = function (troop, o = {}) {
+      if (G.state.chapter !== 1) return start0(troop, o);
+      const o2 = Object.assign({}, o);
+      o2.intro = async (b) => { if (o.intro) await o.intro(b); await commonIntro(b); };
+      o2.onTurn = async (b, u) => { await commonTurn(b, u); if (o.onTurn) await o.onTurn(b, u); };
+      return start0(troop, o2);
+    };
+  }
+  // telegraphed big swing: a pulsing 「！」 over the enemy while it winds up
+  function chargeFx(b, flagKey) {
+    b.fx.push({
+      update: () => !b.result,
+      draw: (ctx) => {
+        for (const e of b.enemies) {
+          if (!e[flagKey] || e.dead) continue;
+          const h = b.unitH(e), x = e.x + e.ox, y = e.y + e.oy;
+          G.Render.text(ctx, '！', x, y - h - 30 + Math.sin(b.t * 8) * 5, { size: 52, bold: true, align: 'center', color: '#ff5a4a', stroke: '#2a0808', strokeW: 6 });
+        }
+      },
+    });
+  }
+  // 1-7 工頭魂: raises the pickaxe on its 2nd turn (and now and then after), smashes on the next
+  function foremanIntro(b) {
+    const ai = b.aiCommand.bind(b);
+    b.aiCommand = (e) => {
+      if (e.id !== 'c1_foreman') return ai(e);
+      if (e.c1charge) { e.c1charge = false; return { kind: 'skill', skill: 'c1_e_big_pick', targets: [U.pick(b.alive('party'))] }; }
+      if (e.turns === 2 || (e.turns > 3 && Math.random() < 0.3)) { e.c1charge = true; return { kind: 'skill', skill: 'c1_e_raise', targets: [e] }; }
+      const c = ai(e);
+      if (c.skill === 'c1_e_big_pick') return { kind: 'skill', skill: 'e_pickaxe', targets: c.targets };
+      return c;
+    };
+    chargeFx(b, 'c1charge');
+    return (async () => {
+      b.say('工頭魂：「金仔……是我的！」', 1.6);
+      await b.wait(1.2);
+      await b.say2('atu:serious', '少年仔！金貴仔是「金」性的魂——金驚火！用火！');
+      await tutorial('tut_element');
+    })();
+  }
+  // 1-13 遲疑的水鬼: does nothing for its first two turns
+  function hesitateIntro(b) {
+    const ai = b.aiCommand.bind(b);
+    b.aiCommand = (e) => {
+      if (e.id === 'c1_water_ghost_h' && (e.turns || 0) <= 2) return { kind: 'skill', skill: 'c1_e_hesitate', targets: [e] };
+      return ai(e);
+    };
+    return null;
+  }
+  // 1-19 墨鴉: the 長明咒印 prefers 白芷
+  function moyaIntro(b) {
+    const ai = b.aiCommand.bind(b);
+    b.aiCommand = (e) => {
+      const c = ai(e);
+      if (e.id === 'c1_moya' && c.skill === 'e_crow_hex') {
+        const bz = b.alive('party').find((p) => p.id === 'baizhi');
+        if (bz && Math.random() < 0.75) c.targets = [bz];
+        b.say('墨鴉：「長明宮的燈，在等妳。」', 1.6);
+      }
+      return c;
+    };
+    return b.say2('moya:smug', '嘎——鄉下小子，讓開。');
+  }
+  // 1-20 水鬼王 + 陳伯 (guest). 螢火 is handed over on 星河's second turn.
+  function ghostKingIntro(b) {
+    const ai = b.aiCommand.bind(b);
+    b.aiCommand = (e) => {
+      if (e.id !== 'c1_ghost_king') return ai(e);
+      const hands = b.alive('enemy').filter((x) => x.id === 'c1_wgk_hand').length;
+      e.c1last = e.c1last || 0;
+      if (hands < 2 && b.enemies.some((x) => x.id === 'c1_wgk_hand' && x.dead) && e.turns - e.c1last >= 2 && b.alive('enemy').length < 5) {
+        e.c1last = e.turns;
+        return { kind: 'skill', skill: 'c1_e_regrow', targets: [e] };
+      }
+      let c = ai(e);
+      for (let i = 0; i < 4 && c.skill === 'c1_e_regrow'; i++) c = ai(e);
+      if (c.skill === 'c1_e_regrow') c = { kind: 'attack', targets: [U.pick(b.alive('party'))] };
+      return c;
+    };
+    // 陳伯 acts on his own and never falls
+    const pc = b.playerCommand.bind(b);
+    b.playerCommand = (u) => {
+      if (u.id !== 'chenbo') return pc(u);
+      u.c1n = (u.c1n || 0) + 1;
+      const foes = b.alive('enemy');
+      const king = foes.find((x) => x.id === 'c1_ghost_king') || foes[0];
+      if (u.gauge >= 100) return Promise.resolve({ kind: 'ultimate', skill: 'c1_u_chenbo', targets: foes });
+      if (u.hp < u.mhp * 0.25) return Promise.resolve({ kind: 'defend' });
+      const grabbed = b.party.find((p) => !p.dead && p.st.stun && p.c1grabBy && !p.c1grabBy.dead);
+      if (grabbed) { b.say('陳伯：「放開！」', 1.2); return Promise.resolve({ kind: 'skill', skill: 'c1_cb_du', targets: [grabbed.c1grabBy] }); }
+      if (u.c1n % 3 === 0) { b.say('陳伯：「黑水茫茫，莫再回頭！」', 1.6); return Promise.resolve({ kind: 'skill', skill: 'c1_cb_du', targets: [king] }); }
+      return Promise.resolve({ kind: 'skill', skill: 'c1_cb_sweep', targets: foes });
+    };
+    const dmg = b.damage.bind(b);
+    b.damage = (tg, d, o) => {
+      if (tg.side === 'party' && tg.id === 'chenbo' && d >= tg.hp) {
+        d = tg.hp - 1;
+        if (d <= 0) { b.popText(tg, '撐住', '#d8d0b0'); return; }
+      }
+      return dmg(tg, d, o);
+    };
+    const kill = b.kill.bind(b);
+    b.kill = (u) => {
+      kill(u);
+      if (u.id === 'c1_wgk_hand') for (const p of b.party) if (p.c1grabBy === u) { delete p.st.stun; p.c1grabBy = null; b.popText(p, '掙脫了！', '#ffe8a0'); }
+    };
+    const ps = b.performSkill.bind(b);
+    b.performSkill = async (u, s, targets, id) => {
+      await ps(u, s, targets, id);
+      if (id === 'c1_e_grab') for (const tg of targets) if (tg.st.stun) { tg.c1grabBy = u; b.say(`冰冷的手抓住了${tg.name}！`, 1.4); }
+      if (id === 'bz_duhun') {
+        const k = b.enemies.find((e) => e.id === 'c1_ghost_king' && !e.dead);
+        if (k && (k.c1calm || 0) < 3) {
+          k.c1calm = (k.c1calm || 0) + 1;
+          k.atk = Math.round(k.d.atk * (1 - 0.15 * k.c1calm));
+          b.popText(k, '怨氣消散', '#bfe8ff');
+          b.say('一張溺死者的臉安靜下來，化作一點光，漂走了。', 2);
+          await b.wait(1);
+        }
+      }
+    };
+    return (async () => {
+      b.say('水鬼王從霧裡站了起來！', 1.4);
+      await b.wait(1);
+      await tutorial('tut_guest');
+    })();
+  }
+  async function ghostKingTurn(b, u) {
+    // 「抓」: 6% max HP each turn while held
+    if (u.side === 'party' && u.st.stun && u.c1grabBy && !u.c1grabBy.dead) {
+      b.damage(u, Math.max(1, Math.round(u.mhp * 0.06)), { color: '#8fd0ff' });
+      await b.wait(0.3);
+    }
+    if (F('ch1_yinghuo') || u.side !== 'party' || b.rounds < 2) return;
+    // 螢火
+    S_flag('ch1_yinghuo');
+    await b.say2('chenbo:serious', '星河！接著！');
+    G.Audio.sfx('item');
+    equipYinghuo();
+    const xh = b.party.find((p) => p.id === 'xinghe');
+    if (xh) {
+      const st = G.Party.stats('xinghe');
+      xh.atk = st.atk; xh.elem = st.elem; xh.luk = st.luk;
+      b.fx.push(new G.FX.Burst({ x: xh.x, y: xh.y - 80, n: 40, color: ['#ffd080', '#ff9a4a', '#fff0c0'], speed: 220, life: 1.2, gravity: -40 }));
+    }
+    G.Render.doFlash('#ffcf8a', 0.5, 0.6);
+    b.say('布包散開——裡面是一把劍。劍身映著暖暖的橘紅色光，像夏夜的螢火。', 2.4);
+    await b.wait(1.4);
+    await b.say2('chenbo:serious', '它叫「螢火」。本來要等你十八歲生日才給你。');
+    await b.say2('xinghe:surprise', '我的生日……');
+    await b.say2('chenbo:normal', '就是今暝。十八年前，放水燈那暝。');
+    await b.say2('xinghe:think', '……');
+    await b.say2('xinghe:smile', '……多謝，陳伯。');
+    await b.say2('chenbo:serious', '謝什麼。用給我看。');
+    b.say('星河裝備了螢火！', 1.6);
+  }
+  const S_flag = (k) => { G.state.flags[k] = true; };
+
+  // =================================================================================================== shared art
+  // A 水燈頭 (paper lantern house) drawn with the registered water_lantern art, scaled; `water:false` clips
+  // away the water reflection so it can stand on a floor / palanquin. `dark` dims it (unlit skeleton).
+  function drawHead(ctx, x, y, sc, o, t, opt = {}) {
+    const d = G.Objects.get('water_lantern');
+    if (!d) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sc, sc);
+    if (opt.water === false) { ctx.beginPath(); ctx.rect(-60, -140, 120, 140 + 46); ctx.clip(); }
+    if (opt.alpha != null) ctx.globalAlpha *= opt.alpha;
+    d.draw(ctx, -32, -50, Object.assign({ t: 'water_lantern', x: 0, y: 0 }, o), t);
+    ctx.restore();
+    if (opt.dark) {
+      ctx.save(); ctx.globalAlpha = opt.dark; ctx.fillStyle = '#1a1008';
+      ctx.beginPath(); ctx.ellipse(x, y - 14 * sc, 26 * sc, 26 * sc, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+  }
+  // a small floating 水燈 (lotus raft + paper box + flame), colour blends warm → blue with k
+  function drawLamp(ctx, x, y, t, seed, k, a = 1, sc = 1) {
+    if (a <= 0.01) return;
+    const bob = Math.sin(t * 1.7 + seed) * 2;
+    const warm = U.mix('#ffb050', BLUE, k), paper = U.mix('#e8a040', '#9fd0ff', k);
+    ctx.save();
+    ctx.translate(x, y + bob); ctx.scale(sc, sc);
+    ctx.globalAlpha *= a;
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) {
+      const w = (12 - i * 2.5) * (0.8 + 0.2 * Math.sin(t * 3 + i + seed));
+      ctx.fillStyle = U.rgba(warm, 0.3 - i * 0.06);
+      ctx.fillRect(-w + Math.sin(t * 2 + i) * 2, 9 + i * 4, w * 2, 1.5);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(40,26,14,0.75)';
+    ctx.beginPath(); ctx.ellipse(0, 6, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = paper;
+    ctx.fillRect(-6, -9, 12, 13);
+    ctx.fillStyle = U.shade(paper, -0.35); ctx.fillRect(2, -9, 4, 13);
+    ctx.fillStyle = '#3a2414'; ctx.fillRect(-7, -11, 14, 2.5);
+    const f = 1 + 0.15 * Math.sin(t * 9 + seed);
+    ctx.fillStyle = U.mix('#fff2c0', '#e8f8ff', k);
+    ctx.beginPath(); ctx.ellipse(0, -3, 3, 4.5 * f, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  // apparitions (monster art drawn on the map during cutscenes)
+  function drawApps(ctx, t, apps) {
+    for (const ap of apps) {
+      if (ap.a <= 0.01) continue;
+      ctx.save();
+      ctx.globalAlpha = ap.a;
+      ctx.translate(ap.x * T + T / 2, ap.y * T + T - 6 + (1 - (ap.rise == null ? 1 : ap.rise)) * 40 + Math.sin(t * 2.2 + ap.x) * 3);
+      if (ap.flip) ctx.scale(-1, 1);
+      ctx.scale(ap.sc, ap.sc);
+      G.Monsters.draw(ctx, ap.art || 'water_ghost', 0, 0, t + ap.x, { state: ap.state || 'idle', variant: ap.v || 0, phase: ap.phase || 1 });
+      ctx.restore();
+    }
+  }
+  function rise(list, app, sec = 1.2) {
+    list.push(app);
+    app.a = 0; app.rise = 0;
+    return lerpTo(app, { a: app.alpha || 0.92, rise: 1 }, sec, 'outCubic');
+  }
+  // a figure lying down (battle 'ko' pose), e.g. 星河 on the floor or 白芷 on the bed / lantern
+  function drawLying(ctx, id, x, y, sc = 0.62, alpha = 1) {
+    if (!G.Sprites || !G.Sprites.drawBattle) return;
+    ctx.save(); ctx.globalAlpha *= alpha;
+    G.Sprites.drawBattle(ctx, id, 'ko', 0, x, y, { scale: sc, shadow: false });
+    ctx.restore();
+  }
+
   // @@END@@
 })();

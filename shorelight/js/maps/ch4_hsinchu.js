@@ -880,18 +880,17 @@
   const cityTiles = (() => {
     const g = new Grid(56, 44, ':');
     g.rect(0, 0, 56, 2, 'R').rect(0, 42, 56, 2, 'R').rect(0, 0, 1, 44, 'R').rect(55, 0, 1, 44, 'R');
-    g.rect(26, 0, 3, 2, '=').rect(26, 42, 3, 2, '=').rect(0, 20, 1, 3, '=').rect(55, 20, 1, 3, '=');
-    // yards & gardens
-    g.rect(2, 3, 52, 4, ',').rect(2, 28, 16, 12, ',').rect(38, 30, 16, 10, ',').rect(2, 12, 10, 7, ',');
-    // streets
-    g.rect(26, 2, 3, 12, '=');
-    g.line([[23, 13], [32, 13]], '=', 2);
-    g.rect(23, 13, 2, 7, '=').rect(31, 13, 2, 7, '=');
-    g.rect(1, 21, 54, 2, '=');
-    g.rect(5, 10, 46, 1, '=');
-    g.rect(26, 27, 3, 15, '=');
-    g.rect(9, 33, 24, 1, '=').rect(12, 32, 1, 1, '=');
-    g.rect(36, 34, 15, 1, '=');
+    g.rect(26, 0, 3, 2, '#').rect(26, 42, 3, 2, '#').rect(0, 20, 1, 3, '#').rect(55, 20, 1, 3, '#');
+    // gardens
+    g.rect(1, 2, 54, 2, ',').rect(1, 39, 54, 3, ',').rect(1, 27, 3, 6, ',').rect(50, 27, 5, 6, ',');
+    // main streets (stone) and lanes
+    g.rect(26, 2, 3, 12, '#');
+    g.rect(23, 13, 10, 2, '#').rect(23, 13, 2, 7, '#').rect(31, 13, 2, 7, '#');
+    g.rect(1, 21, 54, 2, '#');
+    g.rect(26, 28, 3, 14, '#');
+    g.rect(2, 10, 52, 1, '=');
+    g.rect(2, 33, 24, 1, '=').rect(29, 34, 25, 1, '=');
+    g.rect(9, 11, 1, 10, '=').rect(44, 11, 1, 10, '=').rect(8, 23, 1, 10, '=').rect(45, 23, 1, 11, '=');
     // plaza
     g.rect(19, 19, 19, 9, '%');
     return g.rows();
@@ -902,25 +901,41 @@
       { t: 'gate_city', x: 26, y: 0, text: '拱宸門' }, { t: 'gate_city', x: 26, y: 42, text: '歌薰門' },
       { t: 'signboard', x: 54, y: 19, text: '迎曦門' }, { t: 'signboard', x: 1, y: 19, text: '挹爽門' },
       { t: 'city_god_temple', x: 25, y: 15, door: 2, text: '都城隍廟' },
-      { t: 'shophouse', x: 8, y: 7, text: '竹風客棧' }, { t: 'shophouse', x: 38, y: 7, text: '打鐵舖', v: 2 }, { t: 'shophouse', x: 45, y: 7, text: '回春堂', v: 1 },
+      // north row
+      { t: 'house_minnan', x: 2, y: 4, v: 0 }, { t: 'shophouse', x: 8, y: 7, text: '竹風客棧' }, { t: 'house_minnan', x: 13, y: 5, v: 1 },
+      { t: 'shophouse', x: 19, y: 6, text: '雜貨', v: 0 }, { t: 'house_minnan', x: 30, y: 5, v: 1 },
+      { t: 'shophouse', x: 38, y: 7, text: '打鐵舖', v: 2 }, { t: 'shophouse', x: 45, y: 7, text: '回春堂', v: 1 }, { t: 'house_minnan', x: 49, y: 3, v: 0 },
+      // middle
+      { t: 'house_minnan', x: 2, y: 12, v: 1 }, { t: 'house_minnan', x: 13, y: 12, v: 0 }, { t: 'shophouse', x: 4, y: 16, text: '布莊', v: 3 },
+      { t: 'house_minnan', x: 13, y: 16, v: 1 }, { t: 'shophouse', x: 39, y: 13, v: 3 }, { t: 'house_minnan', x: 46, y: 12, v: 1 },
+      { t: 'shophouse', x: 35, y: 16, text: '茶行', v: 1 },
+      // south
+      { t: 'tree_banyan', x: 4, y: 23 }, { t: 'shophouse', x: 10, y: 24, text: '餅舖', v: 2 }, { t: 'house_minnan', x: 14, y: 24, v: 0 },
       { t: 'house_minnan', x: 10, y: 30, v: 1 }, { t: 'house_minnan', x: 17, y: 30, v: 0 },
-      { t: 'house_minnan', x: 13, y: 12, v: 1 }, { t: 'shophouse', x: 40, y: 13, v: 3 },
-      { t: 'shophouse', x: 36, y: 31, v: 0 }, { t: 'house_minnan', x: 43, y: 31, v: 1 }, { t: 'house_jiufen', x: 2, y: 13, v: 2 },
-      soulLamp(17, 15), soulLamp(42, 16), soulLamp(19, 33), soulLamp(38, 34), soulLamp(46, 34), soulLamp(4, 16),
-      { t: 'tree_banyan', x: 4, y: 23 },
+      { t: 'house_minnan', x: 2, y: 35, v: 0 }, { t: 'shophouse', x: 11, y: 36, v: 0 }, { t: 'house_minnan', x: 18, y: 36, v: 1 },
+      { t: 'house_minnan', x: 39, y: 24, v: 0 }, { t: 'shophouse', x: 47, y: 24, v: 3 },
+      { t: 'shophouse', x: 33, y: 31, v: 0 }, { t: 'house_minnan', x: 39, y: 31, v: 1 },
+      { t: 'shophouse', x: 31, y: 36, v: 2 }, { t: 'house_minnan', x: 38, y: 36, v: 0 }, { t: 'house_minnan', x: 47, y: 36, v: 1 },
+      soulLamp(5, 7), soulLamp(16, 8), soulLamp(33, 8), soulLamp(5, 15), soulLamp(16, 15), soulLamp(49, 15), soulLamp(42, 27), soulLamp(16, 19), soulLamp(21, 39),
+      // plaza
       { t: 'stall', x: 20, y: 22, text: '米粉湯' }, { t: 'stall', x: 24, y: 24, text: '柿餅', v: 1 }, { t: 'stall', x: 33, y: 23, text: '長明燈', v: 2 },
       { t: 'soul_jar', x: 32, y: 23, if: (st) => !broken(st) }, { t: 'soul_jar', x: 35, y: 23, if: (st) => !broken(st) },
       { t: 'lantern_string', x: 19, y: 20, w: 8 }, { t: 'lantern_string', x: 29, y: 20, w: 8 },
       { t: 'incense_burner', x: 29, y: 20 }, { t: 'well', x: 32, y: 29 },
-      { t: 'jar', x: 30, y: 11 }, { t: 'jar', x: 32, y: 11 }, { t: 'jar', x: 33, y: 12 },
-      { t: 'crate', x: 51, y: 17 }, { t: 'crate', x: 53, y: 17 }, { t: 'crate', x: 51, y: 18 }, { t: 'barrel', x: 53, y: 18 },
-      { t: 'basket', x: 23, y: 25, v: 1 }, { t: 'bench', x: 34, y: 26 },
+      { t: 'basket', x: 23, y: 25, v: 1 }, { t: 'bench', x: 34, y: 26 }, { t: 'bench', x: 20, y: 26 },
       { t: 'stone_lantern', x: 24, y: 19 }, { t: 'stone_lantern', x: 31, y: 19 },
       { t: 'statue_lion', x: 25, y: 19 }, { t: 'statue_lion', x: 30, y: 19, flip: true },
+      // alleys & props
+      { t: 'jar', x: 30, y: 11 }, { t: 'jar', x: 32, y: 11 }, { t: 'jar', x: 33, y: 12 },
+      { t: 'crate', x: 51, y: 17 }, { t: 'crate', x: 53, y: 17 }, { t: 'crate', x: 51, y: 18 }, { t: 'barrel', x: 53, y: 18 },
+      { t: 'cart', x: 21, y: 11 }, { t: 'barrel', x: 23, y: 9 }, { t: 'laundry', x: 6, y: 8 }, { t: 'laundry', x: 50, y: 30 },
+      { t: 'barrel', x: 37, y: 19 }, { t: 'basket', x: 14, y: 27, v: 2 }, { t: 'basket', x: 48, y: 27, v: 0 }, { t: 'jar', x: 13, y: 33 },
+      { t: 'lamp_post', x: 25, y: 12 }, { t: 'lamp_post', x: 29, y: 12 }, { t: 'lamp_post', x: 25, y: 29 }, { t: 'lamp_post', x: 29, y: 29 },
+      { t: 'lamp_post', x: 10, y: 20 }, { t: 'lamp_post', x: 43, y: 20 }, { t: 'lamp_post', x: 25, y: 40 }, { t: 'lamp_post', x: 29, y: 40 },
     ];
-    for (const [x, y] of [[3, 4], [8, 4], [16, 4], [36, 4], [44, 4], [51, 4], [3, 38], [7, 39], [15, 38], [41, 38], [50, 38], [52, 30], [2, 30], [34, 37]]) o.push({ t: 'tree_camphor', x, y });
-    for (const [x, y] of [[20, 4], [32, 4], [12, 4], [48, 4], [5, 36], [12, 37], [45, 37], [40, 37]]) o.push({ t: 'flowers', x, y });
-    for (const [x, y] of [[22, 5], [33, 5], [9, 26], [48, 27], [3, 27]]) o.push({ t: 'bush', x, y });
+    for (const [x, y] of [[7, 2], [12, 2], [18, 2], [23, 2], [35, 2], [42, 2], [47, 2], [2, 40], [9, 40], [16, 40], [23, 40], [32, 40], [38, 40], [44, 40], [52, 40], [52, 28], [2, 28], [54, 4]]) o.push({ t: 'tree_camphor', x, y });
+    for (const [x, y] of [[20, 3], [32, 3], [11, 3], [45, 3], [5, 40], [13, 41], [41, 41], [49, 41], [3, 30], [51, 31]]) o.push({ t: 'flowers', x, y });
+    for (const [x, y] of [[22, 4], [36, 4], [3, 32], [53, 29], [24, 28], [30, 28], [11, 22], [42, 18]]) o.push({ t: 'bush', x, y });
     return o;
   }
   async function scene402(S) {
@@ -2719,6 +2734,7 @@
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy;
         if (inFest(nx, ny) || seen[nx + ',' + ny]) continue;
+        if (nx >= 32 && nx <= 35 && ny >= 11 && ny <= 13 && !(nx === 33 && ny === 13)) continue;
         seen[nx + ',' + ny] = 1;
         out.push([nx, ny]);
       }

@@ -503,7 +503,8 @@ function defineTests(info) {
     await s.key('z'); // 回到標題畫面
     await s.waitTop('TitleScene', 5000);
     assert(!(await s.ev(() => G.inGame)), 'G.inGame still true on the title screen');
-    await s.key('Space');
+    // with a running AudioContext the title skips 'press any key' and opens the menu directly
+    if ((await s.ev(() => G.Scenes.top().stage)) !== 'menu') await s.key('Space');
     await s.page.waitForFunction(() => G.Scenes.top().stage === 'menu', null, { timeout: 3000 });
     const cur = await s.ev(() => G.Scenes.top().list.cur.k);
     assert(cur === 'continue', `title cursor should default to 繼續旅程 when saves exist (on ${cur})`);

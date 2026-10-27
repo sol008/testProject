@@ -290,7 +290,7 @@
     const k = (p - 0.75) / 0.25;
     return 0.05 + k * 0.95 * (0.72 + 0.28 * Math.sin(t * 37));
   }
-  const LH = { x: 16.6, y: 0.55 };          // far lighthouse lamp (tile coords)
+  const LH = { x: 16.6, y: 1.15 };          // far lighthouse lamp (tile coords)
   const GL = { x: 10.5, y: 2.05 };          // giant water-lantern head centre
 
   function soulPos(k) {
@@ -341,7 +341,7 @@
   }
   // distant lighthouse silhouette on the horizon
   function drawLighthouse(ctx, t) {
-    const x = (LH.x + 0.5) * T, base = 1.45 * T, top = LH.y * T + 26;
+    const x = (LH.x + 0.5) * T, base = 2.75 * T, top = LH.y * T + 26;
     ctx.save();
     ctx.fillStyle = '#0c1020';
     ctx.beginPath();
@@ -596,7 +596,7 @@
     bridgeLights = [];
     for (let y = 0; y < ms.h; y++) for (const [x0, x1] of bridgeRuns(ms, y)) for (const [px, py] of postSpots(ms, y, x0, x1)) {
       const side = px < x0 * T + 15 ? -1 : 1;
-      bridgeLights.push({ x: (px + side * 11) / T - 0.5, y: (py - 12) / T - 0.5, r: 120, color: '#ffa050', flicker: 0.3 });
+      bridgeLights.push({ x: (px + side * 11) / T - 0.5, y: (py - 12) / T - 0.5, r: 96, color: '#ffa050', flicker: 0.3 });
     }
   }
   function dreamLights() {

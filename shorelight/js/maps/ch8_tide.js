@@ -1973,7 +1973,10 @@
   const GA = (st) => !!st.flags.ch8_gate_A, GB = (st) => !!st.flags.ch8_gate_B, GC = (st) => !!st.flags.ch8_gate_C;
   const DRY1 = (st) => GA(st), DRY2 = (st) => GB(st), DRY3 = (st) => GC(st) && !GA(st);
   function fortTiles(st) {
-    const g = mk(40, 44, 'R');
+    const g = mk(40, 44, 'w');                 // 被逆潮灌滿的舊城地基
+    const rooms = [[10, 36, 20, 7], [10, 16, 20, 13], [4, 23, 6, 6], [33, 8, 6, 6], [35, 14, 4, 11], [15, 3, 11, 6]];
+    for (const [x, y, w, h] of rooms) g.rect(x - 1, y - 2, w + 2, h + 3, 'R');   // 紅磚牆 (2 rows thick on top)
+    g.rect(18, 29, 5, 7, 'R'); g.rect(30, 18, 5, 5, 'R'); g.rect(18, 8, 5, 8, 'R'); g.rect(18, 0, 5, 3, 'R');
     g.rect(10, 36, 20, 7, '#');                // 入口廣場
     g.rect(19, 43, 3, 1, '#');
     g.rect(10, 16, 20, 13, '%');               // 中庭
@@ -2116,7 +2119,7 @@
   function drawTideLamp(ctx, t, m) {
     const f = fl();
     const cx = 12 * T + T / 2, base = 5 * T - 4;
-    const top = base - 330;
+    const top = base - 250;
     if (!f.ch8_blast) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -2151,7 +2154,7 @@
       ctx.strokeStyle = '#120e0c'; ctx.lineWidth = 2; ctx.stroke();
     } else {
       ctx.translate(cx, base);
-      ctx.scale(2.5, 2.5);
+      ctx.scale(1.85, 1.85);
       if (d) d.draw(ctx, -T / 2, -T, { t: 'eternal_lamp', x: 12, y: 4, v: 0 }, t);
       ctx.restore();
       ctx.save();

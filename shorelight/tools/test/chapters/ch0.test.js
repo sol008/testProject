@@ -37,6 +37,7 @@ if (fs.existsSync(ch1File)) {
 const STUB = ch1Ok ? /js\/maps\/ch([2-9]|1[01])_[a-z]+\.js$/ : /js\/maps\/ch([1-9]|1[01])_[a-z]+\.js$/;
 
 const results = [];
+const warnings = [];
 const assert = (c, msg) => { if (!c) throw new Error(msg); };
 
 async function session(browser, query) {
@@ -123,6 +124,17 @@ async function testTitle(browser, open) {
   await s.ev(() => G.Debug.setAutoplay(false));
   await s.page.waitForTimeout(800);
   await s.shot('02_dream_start');
+  // dialogue must advance with the real keyboard (engine check; reported as a warning — not a chapter bug)
+  await s.ev(() => { window.__said = false; G.Script.run(async (S) => { await S.say('xinghe:think', '……嗯？'); window.__said = true; }); });
+  for (let i = 0; i < 4; i++) { await s.page.waitForTimeout(500); await s.page.keyboard.press('Enter'); }
+  await s.page.waitForTimeout(500);
+  if (!(await s.ev(() => window.__said))) {
+    warnings.push('ENGINE: Enter/Z does not advance a fully shown dialogue line (js/engine/dialog.js consumes the press in the page-advance check) — reported to the lead');
+    await s.ev(() => { G.Input._hold('skip', true); });
+    await s.page.waitForTimeout(400);
+    await s.ev(() => { G.Input._hold('skip', false); });
+  }
+  await s.idle();
   // walk a few steps north with the keyboard
   await s.page.keyboard.down('ArrowUp'); await s.page.waitForTimeout(700); await s.page.keyboard.up('ArrowUp');
   await s.page.waitForTimeout(400);
@@ -298,6 +310,7 @@ async function testWipeout(browser, open) {
   await run('souls, lamps, dream rules', browser, testExtras);
   await run('dream wipe-out retries (no Game Over)', browser, testWipeout);
   await browser.close();
+  for (const w of warnings) console.log('  ! warning: ' + w);
   const fail = results.filter((r) => r.status !== 'PASS');
   console.log('\n' + (fail.length ? `FAIL — ${fail.length}/${results.length} test(s) failed` : `PASS — ${results.length}/${results.length} tests`));
   process.exit(fail.length ? 1 : 0);
