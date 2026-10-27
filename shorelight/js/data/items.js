@@ -165,7 +165,7 @@ G.Data.items = {
   ac_xionghuang: { name: '雄黃香囊', desc: '裝著雄黃的香囊，蛇蟲毒物不近身。免疫中毒。', type: 'acc', price: 150, ch: 2, icon: 'bag', stats: { def: 2 }, immune: ['poison'] },
   ac_huzhao: { name: '虎爪項鍊', desc: '虎姑婆留下的一枚爪子。攻擊提升，暴擊率提升。', type: 'acc', price: 400, ch: 2, icon: 'charm', stats: { atk: 5 }, special: ['critUp'] },
   ac_tongling: { name: '銅鈴', desc: '道士的手搖銅鈴，叮噹聲能喚醒迷魂。免疫睡眠。', type: 'acc', price: 300, ch: 3, icon: 'charm', stats: { mag: 3 }, immune: ['sleep'] },
-  ac_tuanzi: { name: '糰子毛球', desc: '糰子掉的毛搓成的小球，軟綿綿。紅纓偷偷收了好幾顆。', type: 'acc', price: 0, ch: 3, icon: 'charm', stats: { luk: 8, spd: 2 } },
+  ac_tuanzi: { name: '貓毛球', desc: '麻糬換毛季掉的長毛搓成的小球，軟綿綿。紅纓偷偷收了好幾顆。', type: 'acc', price: 0, ch: 3, icon: 'charm', stats: { luk: 8, spd: 2 } },
   ac_bagua: { name: '八卦鏡墜', desc: '小小的八卦鏡，邪術照了就彈回去。免疫封印。', type: 'acc', price: 600, ch: 4, icon: 'jade', stats: { def: 4 }, immune: ['seal'] },
   ac_yingshi: { name: '螢石墜', desc: '會在黑暗中微微發光的石頭。劍意累積加快。', type: 'acc', price: 800, ch: 4, icon: 'gem', stats: { luk: 4 }, special: ['gaugeUp'] },
   ac_maobi: { name: '秀才毛筆', desc: '竹塹老秀才送的毛筆。「讀萬卷書，行萬里路。」獲得經驗提升。', type: 'acc', price: 1000, ch: 4, icon: 'scroll', stats: { mag: 4 }, special: ['expUp'] },
@@ -176,9 +176,9 @@ G.Data.items = {
   ac_haixing: { name: '海星墜', desc: '恆春海邊撿到的海星化石。', type: 'acc', price: 1400, ch: 9, icon: 'gem', stats: { def: 8, hp: 60, luk: 4 } },
   ac_lianhua: { name: '蓮花燈墜', desc: '一盞小小的蓮花燈，裡面亮著所有被渡過的人的光。', type: 'acc', price: 0, ch: 11, icon: 'lantern', stats: { atk: 6, def: 6, mag: 6, spd: 4, luk: 6 }, special: ['autoRegen', 'gaugeUp'] },
 
-  // ===================================================================================== Materials (糰子's mushroom quest etc.)
+  // ===================================================================================== Materials (雲歸's mushroom quest etc.)
   mat_wuxun: { name: '霧林小蕈', desc: '霧林裡常見的小蕈。雲歸：「可以吃，但不建議。」', type: 'material', price: 20, ch: 2, icon: 'mushroom' },
-  mat_yueguang: { name: '月光蕈', desc: '只在滿月夜發光的蕈。糰子的蕈菇清單之一。', type: 'material', price: 80, ch: 3, icon: 'mushroom' },
+  mat_yueguang: { name: '月光蕈', desc: '只在滿月夜發光的蕈。雲歸的蕈菇清單之一。', type: 'material', price: 80, ch: 3, icon: 'mushroom' },
   mat_fengxun: { name: '風穴石耳', desc: '五指山風穴岩壁上長的石耳。', type: 'material', price: 120, ch: 4, icon: 'mushroom' },
   mat_yunzhi: { name: '雲芝', desc: '雲霧林中的靈芝，紋路像雲。', type: 'material', price: 300, ch: 7, icon: 'mushroom' },
   mat_haixun: { name: '潮汐蕈', desc: '只長在退潮礁岩上的奇怪蕈類。', type: 'material', price: 400, ch: 9, icon: 'mushroom' },

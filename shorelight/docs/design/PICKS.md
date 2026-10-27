@@ -10,4 +10,4 @@
 | 雲歸 Yun Gui | **v2 #01 太虛青灰 Taixu Blue-grey** | `v2/yungui/opt01.png` | Applied: sprite spec, dialogue portraits baked from the sheet drawing (`tools/design2/yungui_portrait_bake.js` → `js/gfx/portraits_yungui.js`) |
 | 芋圓 Yuyuan | **v2 #07 石獅繡球 Little Stone Lion** | `v2/yuyuan/opt07.png` | red silk bow collar + embroidered ball prop (temple-gate lion homage); identity per REFERENCES.md |
 | 麻糬 Mochi | **v2 #04 水燈守望 Water-lantern Watch** | `v2/mochi/opt04.png` | keeps watch beside a house-shaped 中元 water lantern; lantern light in her eyes; identity per REFERENCES.md |
-| 糰子 | *pending (sheet unfinished)* | | |
+| ~~糰子~~ | **cut by the client** (pets are 芋圓 & 麻糬 only) | `v2/tuanzi_sheet.png` kept for reference | summon skill → 白芷's 貓咪助陣 |

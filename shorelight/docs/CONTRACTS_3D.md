@@ -27,7 +27,7 @@ network access at runtime, because the game must run from `file://` on macOS.
 | js/r3d/mapview.js | `G.Map3D` field view | lead |
 | js/r3d/chars.js | `G.Char3D` character system (rig, mesh-from-spec, toon, face, animation) | characters team |
 | js/r3d/chars_cast.js | bespoke main-cast builds on top of chars.js | characters team |
-| js/r3d/animals.js | `G.Animal3D` quadrupeds & birds incl. pets 芋圓/麻糬/糰子 (same instance interface) | animals team |
+| js/r3d/animals.js | `G.Animal3D` quadrupeds & birds incl. pets 芋圓/麻糬 (same instance interface) | animals team |
 | js/r3d/arch_han.js | Han-Taiwanese architecture models | architecture team A |
 | js/r3d/arch_coast.js | Indigenous, coastal, maritime & fortification models | architecture team B |
 | js/r3d/nature.js | trees, plants, rocks, crystals, mushrooms, grass + wind | nature team |

@@ -456,12 +456,12 @@ G.Battle = (() => {
         for (const p of ps) if (p !== u) { p.mp = Math.max(0, p.mp - (s.mp || 0)); p.wait += 100 * 40 / (eff(p, 'spd') + 40); }
         this.comboAvg = { atk: ps.reduce((a, p) => a + eff(p, 'atk'), 0) / ps.length, mag: ps.reduce((a, p) => a + eff(p, 'mag'), 0) / ps.length };
       }
-      if (s.special === 'tuanzi' && s.outcomes) {
+      if ((s.special === 'cats' || s.special === 'tuanzi') && s.outcomes) {
         const tot = s.outcomes.reduce((a, o) => a + (o.w || 1), 0);
         let r = Math.random() * tot, pick = s.outcomes[0];
         for (const o of s.outcomes) { r -= (o.w || 1); if (r <= 0) { pick = o; break; } }
         this.banner(s.name, '#ffe6a8');
-        this.fx.push(summonFxIntro(u));
+        this.fx.push(summonFxIntro(u, pick.cat === 'mochi' ? 'mochi' : 'yuyuan'));
         G.Audio.sfx('magic');
         await this.wait(0.7);
         this.say(pick.text, 2.2);
@@ -1390,7 +1390,7 @@ G.Battle = (() => {
       },
     };
   }
-  function summonFxIntro(u) {
+  function summonFxIntro(u, cat = 'yuyuan') {
     let t = 0;
     return {
       update(dt) { t += dt; return t < 0.9; },
@@ -1399,7 +1399,7 @@ G.Battle = (() => {
         const k = Math.min(1, t / 0.5);
         ctx.save();
         ctx.globalAlpha = Math.min(1, (0.9 - t) * 4);
-        G.Sprites.drawChar(ctx, 'tuanzi', 'left', Math.floor(t * 10) % 4, u.x - 70 * k, u.y - Math.sin(k * Math.PI) * 60, {});
+        G.Sprites.drawChar(ctx, cat, 'left', Math.floor(t * 10) % 4, u.x - 70 * k, u.y - Math.sin(k * Math.PI) * 60, {});
         ctx.restore();
       },
     };
@@ -1417,7 +1417,7 @@ G.Battle = (() => {
         if (G.Sprites) {
           ctx.save();
           ctx.translate(x, y); ctx.scale(1.4, 1.4); ctx.rotate(k * 8);
-          G.Sprites.drawChar(ctx, 'tuanzi', 'left', Math.floor(k * 12) % 4, 0, 30, { shadow: false });
+          G.Sprites.drawChar(ctx, 'yuyuan', 'left', Math.floor(k * 12) % 4, 0, 30, { shadow: false });
           ctx.restore();
         }
       },

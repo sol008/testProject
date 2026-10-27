@@ -36,8 +36,8 @@ vision realms, and helping each other across.
 1. **七彩靈蕈 (Seven-Hued Spirit Mushrooms)** — glow in the 霧林 grove. Eating one grants
    **靈視 (Spirit Sight)**: colours breathe, edges ripple, the veil thins. Field ability: reveals
    hidden paths, ghosts, chests, true forms of 魔神仔 illusions. In battle the item grants the
-   **幻境 (Trance)** status (crit/magic up, slight confusion risk). 糰子 eats too many and gives
-   cosmic philosophy lectures (comic).
+   **幻境 (Trance)** status (crit/magic up, slight confusion risk). 雲歸 "tests" too many for research and gives
+   cosmic philosophy lectures (comic); 芋圓 steals one and stares at a wall for an hour.
 2. **夢藤湯 (Dream-Vine Brew) / 入夢禮** — an ayahuasca-like ceremony kept by **藤婆**, a centuries-old
    hermit herbalist of unknown origin who lives alone in the cloud forest below 玉山. The 夢藤 is a
    FICTIONAL spirit-vine that grows only there. (This rite belongs to no real people — real Indigenous
@@ -83,7 +83,7 @@ vision realms, and helping each other across.
   an indigo Hakka 藍衫 to mid-calf with wide, turned-back light-blue cuffs, a dark 圍身裙 apron with a silver chain, black
   trousers and cloth shoes; hair half-up with a jade comb and red string; jade flute (red-string jade tag tied to its end).
 - Companion: **麻糬 (Mochi)**, a big, very fluffy long-haired dilute calico cat from a 九份 teahouse. She
-  senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks (糰子's opposite).
+  senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks.
   In battle she is a water-element support assist (healing purr). On the field she sniffs out hidden spirit items.
   Look (client pick, v2 #04 水燈守望): her signature image is keeping watch beside a house-shaped 中元 water lantern, its
   light caught in her eyes; she was the first to see 白芷 drift back from the sea. The water lantern is her emblem (UI icon, battle summon).
@@ -97,7 +97,7 @@ vision realms, and helping each other across.
 ### 洛紅纓 (Luo Hongying) — 19
 - Heir of **鹿港洛家**, a merchant & martial clan famed for 洛家槍. The clan was massacred three
   years ago on 中元 night. She hunts the masked swordsman 「鬼面」 blamed for it.
-- Fiery, proud, blunt, honest, fiercely loyal; secretly loves cute things (糰子!); catastrophically
+- Fiery, proud, blunt, honest, fiercely loyal; secretly loves cute things (the cats!); catastrophically
   bad cook (recurring gag). Calls 星河 「笨蛋」.
 - Weapon: red-tasseled spear 「紅纓槍」. Element **金**. Physical DPS.
 - Look (client pick, v2 #01 洛家槍・承): crown-high black ponytail with a red silk bow; amber eyes; crimson Qing
@@ -108,8 +108,9 @@ vision realms, and helping each other across.
 - Taoist of **觀音山 太虛觀**. Sarcastic, lazy-eyed, drinks 米酒, reads forbidden texts on 「內景」
   (inner visions) and is an enthusiastic amateur mycologist (comic). Deeply loyal; searching for his
   missing master 清虛真人.
-- Companion: **糰子 (Tuanzi)** — a chubby 石虎 (Formosan leopard-cat) spirit that talks, eats
-  everything, panics, and, after eating spirit mushrooms, delivers absurd cosmic wisdom.
+- (No companion of his own — the client cut 糰子. 雲歸 is the one who eats spirit mushrooms "for research" and
+  delivers absurd cosmic wisdom; the cats are his long-suffering audience. 芋圓 inherits the gluttony and panic gags,
+  silently.)
 - Weapon: talismans + fan (符扇). Element **木** (thunder), but his talismans cover all five
   elements — the "weakness exploiter".
 - Look (client pick, v2 #01 太虛青灰): long black hair half-up under a small wooden crown and pin; lazy half-lidded eyes;
@@ -180,8 +181,8 @@ children); 平溪: villagers tell the 天燈 origin; everyone releases 天燈 wi
 son's letter.
 
 **3 觀音艋舺** — 淡水 river port & 紅毛城 (side: ghosts of foreign soldiers who died far from home and can't
-find their sea — 心燈); boat across to 觀音山; 雲歸 drunk on the 太虛觀 roof with 糰子; 照魂鏡 shows 白芷 as a
-lamp-flame; 鬼面 night raid (紅纓 recognises 洛家 technique) → 雲歸 + 糰子 join. 艋舺: 龍山寺, 歌仔戲 troupe
+find their sea — 心燈); boat across to 觀音山; 雲歸 drunk on the 太虛觀 roof (芋圓 climbs up and steals his snacks); 照魂鏡 shows 白芷 as a
+lamp-flame; 鬼面 night raid (紅纓 recognises 洛家 technique) → 雲歸 joins. 艋舺: 龍山寺, 歌仔戲 troupe
 (椅仔姑 possession), 阿蓮 & her drowned husband, ghost girl 小梅, two old ghosts still feuding from the
 頂下郊拚 who learn to forgive (心燈 options). Clue: 清虛真人 went south along the coast road via 竹塹.
 
@@ -264,7 +265,7 @@ each character's echo) → **一息界** breakthrough, 萬象童子 → **夜玄
 - **真結局「千燈」**: 星河: 「妳不是一個人在發光。」 Every 心燈 earned across Formosa rises from the sea as a
   lantern — from 九份, 平溪, 艋舺, 竹塹, 鹿港, 府城, the mountains, the south, the east, 澎湖 — a thousand
   lights relighting the Shorelight together. 白芷 stays human. 夜玄 crosses over holding 夜念's hand. Epilogue
-  on the next 中元 in 九份: 紅纓 rebuilding 洛家 in 鹿港; 雲歸 heading 太虛觀 (糰子 fatter); 陳伯 at the shore;
+  on the next 中元 in 九份: 紅纓 rebuilding 洛家 in 鹿港; 雲歸 heading 太虛觀 (芋圓 fatter, napping in the temple courtyard); 陳伯 at the shore;
   cameo postcards from friends around the island. 星河 waits at 八斗子 — 白芷 runs down the steps:
   「星河，這一次，換我來找你了。」
 - **普通結局「彼岸」**: 白芷 becomes the lamp and takes his memories of her. 九份, 中元: he floats a lantern and
@@ -277,7 +278,7 @@ letter (平溪) · 5 foreign soldiers' ghosts at 紅毛城 (淡水) · 6 阿蓮 
 (艋舺) · 8 椅仔姑 & the actress (艋舺) · 9 義民 ghost's name (客家庄) · 10 福伯 (洛家古厝) · 11 半邊井 (鹿港) ·
 12 林投姐 (府城) · 13 the 塔山 souls / a Tsou family's lost son (阿里山) · 14 燈母祠 murals · 15 pilgrims saved
 during 逆潮 (北港) · 16 半屏山 greed tale (打狗) · 17 the 月琴 singer's names (恆春) · 18 a Tao family's 拼板舟
-(蘭嶼) · 19 the Amis 海祭 (台東) · 20 唐山客 (黑水溝) · + 糰子's mushroom quest (multi-chapter) · + 白芷's song lyric
+(蘭嶼) · 19 the Amis 海祭 (台東) · 20 唐山客 (黑水溝) · + 雲歸's mushroom quest (multi-chapter, 麻糬 sniffs them out) · + 白芷's song lyric
 fragments. Not every region must have exactly one; writers may add small ones.
 
 ## Cultural accuracy & respect guide (READ THIS — it is binding)
