@@ -216,7 +216,7 @@
         '清虛真人沿海路南下，往竹塹。從艋舺南門出發。'],
       doneText: '清虛真人的信說：沿海路南下，先往竹塹。' },
     q_tamsui_soldiers: { name: '紅毛城的異鄉兵', lantern: true, desc: '紅毛城裡有兩個吵了兩百年的異鄉鬼魂。',
-      stages: ['夜裡，紅毛城傳來鼓聲和爭吵聲。', '找到迪亞哥的扇貝殼、彼得的小風車。', '問問漁夫阿財：外國人的海在哪裡？', '帶著兩件信物和水燈座，夜裡回紅毛城。'],
+      stages: ['夜裡，紅毛城傳來鼓聲和爭吵聲。', '找到迪亞哥的扇貝殼、彼得的小風車。（扇貝掉在城外西北角無字墓旁的草叢，要靈視才看得見；風車被鳥叼到山下，也許落到哪個小孩手裡。）', '問問漁夫阿財：外國人的海在哪裡？', '帶著兩件信物和水燈座，夜裡回紅毛城。'],
       doneText: '兩盞水燈順著退潮，漂向夕陽。' },
     q_alian: { name: '阿蓮與阿德', lantern: true, desc: '北渡頭賣碗粿的阿蓮，夜夜夢見死去的翁婿喊冷。',
       stages: ['夜裡去北邊的舊渡頭看看。', '阿德被長明燈拴住了。回去找阿蓮。', '夜裡，陪阿蓮去舊渡頭。'], doneText: '阿蓮親手吹熄了長明燈。' },
@@ -871,11 +871,13 @@
           if (S.hasItem('lingxun')) {
             await S.say('', '草叢深處，好像有什麼東西……只是肉眼看不清楚。');
             const c = await S.choice(['吃一朵七彩靈蕈，開啟靈視', '算了'], { cancel: 1 });
-            if (c === 0) { S.take('lingxun', 1); S.vision(60); S.sfx('magic'); await S.say('', '眼前的顏色開始呼吸……草叢深處，有什麼在發著微光。'); }
-          } else if (G.Quests.stage('q_tamsui_soldiers') >= 1) {
-            await S.say('baizhi:think', '這裡……有迪亞哥的氣息。要是有七彩靈蕈開啟靈視就好了。淡水的雜貨店好像有賣。');
+            if (c !== 0) return;
+            // eating it reveals the shell right away (no second search needed)
+            S.take('lingxun', 1); S.vision(60); S.sfx('magic'); await S.say('', '眼前的顏色開始呼吸……草叢深處，有什麼在發著微光。');
+          } else {
+            if (G.Quests.stage('q_tamsui_soldiers') >= 1) await S.say('baizhi:think', '這裡……有迪亞哥的氣息。要是有七彩靈蕈開啟靈視就好了。淡水的雜貨店好像有賣。');
+            return;
           }
-          return;
         }
         S.sfx('item');
         await S.give('c3_scallop', 1);
@@ -2149,7 +2151,7 @@
         { t: 'house_minnan', x: 38, y: 36, v: 1, door: -1 }, { t: 'laundry', x: 20, y: 36 }, { t: 'well', x: 23, y: 37 },
         { t: 'city_wall', x: 7, y: 42, w: 19, v: 1 }, { t: 'gate_city', x: 26, y: 42, text: '南門' }, { t: 'city_wall', x: 29, y: 42, w: 27, v: 1 },
         // 八甲庄 ruins
-        { t: 'grave', x: 50, y: 30, v: 2 }, { t: 'bones', x: 48, y: 31 }, { t: 'stump', x: 51, y: 28 }, { t: 'rock_small', x: 45, y: 26 },
+        { t: 'signboard', x: 44, y: 23, text: '八甲庄' }, { t: 'grave', x: 50, y: 30, v: 2 }, { t: 'bones', x: 48, y: 31 }, { t: 'stump', x: 51, y: 28 }, { t: 'rock_small', x: 45, y: 26 },
       ];
       if (fest) o.push({ t: 'sky_lantern', x: 20, y: 16 }, { t: 'sky_lantern', x: 33, y: 26 }, { t: 'sky_lantern', x: 40, y: 19 }, { t: 'sky_lantern', x: 12, y: 27 },
         { t: 'lantern_string', x: 23, y: 26, w: 6, v: 1 }, { t: 'lantern_string', x: 30, y: 30, w: 6, v: 1 });
@@ -2454,6 +2456,8 @@
           }
           if (F('ch3_show_done')) { await S.say('吳廟公', '月娘真圓。你們這一趟，做了不少好事。'); return; }
           await S.say('吳廟公', '觀音媽慈悲，有事慢慢講。');
+          // 小梅's clue only names a magnolia in the hair and a lullaby: point at the 玉蘭花 seller in 剝皮寮
+          if (F('ch3_xiaomei_1') && !F('ch3_chunpo_wait') && !F('ch3_xiaomei_done')) await S.say('吳廟公', '頭插玉蘭花的婦人？剝皮寮賣玉蘭花的春婆，頭上插了一輩子玉蘭花。她每日黃昏都來上香。');
           if (F('ch3_temple_met') && !F('ch3_theatre')) await S.say('吳廟公', '戲棚就在廟埕東邊。後台找洪班主。');
         } },
       { id: 'ls_xiaomei', sprite: spr('c3_ghost_xiaomei', 'ghost_child'), name: '小梅', x: 10, y: 16, dir: 'down', ghost: true,
@@ -2748,7 +2752,7 @@
           if (S.hasItem('lingxun')) {
             const c = await S.choice(['吃一朵七彩靈蕈，開啟靈視', '算了'], { cancel: 1 });
             if (c === 0) { S.take('lingxun', 1); S.vision(60); S.sfx('magic'); await mushroomScene(S); }
-          }
+          } else await S.say('yungui:think', '要開靈視才看得清楚……青草巷的阿伯有賣七彩靈蕈。');
           return;
         }
         await mushroomScene(S);
