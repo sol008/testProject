@@ -292,12 +292,12 @@
     const pts = new T.Points(geo, mat);
     pts.frustumCulled = false; pts.renderOrder = 3;
     pts.onBeforeRender = (r, s, cam) => {
-      const hgt = r.getDrawingBufferSize ? r.getDrawingBufferSize(_v2).y : 720;
+      const hgt = r.getCurrentViewport ? r.getCurrentViewport(_v4).w : 720;
       mat.uniforms.uScale.value = hgt * 0.5 * (cam.projectionMatrix ? cam.projectionMatrix.elements[5] : 1.8);
     };
     return pts;
   }
-  let _v2 = null;
+  let _v2 = null, _v4 = null;
 
   // ------------------------------------------------------------------------------------------- builder (geometry + rig)
   // All positions are in model space (feet centre at origin, facing +z), in DESIGN units (spec.height).
@@ -1037,7 +1037,7 @@
     if (_a) return;
     const T = THREE;
     _a = new T.Vector3(); _b = new T.Vector3(); _c = new T.Vector3(); _d = new T.Vector3(); _e = new T.Vector3();
-    _q = new T.Quaternion(); _q2 = new T.Quaternion(); _q3 = new T.Quaternion(); _qi = new T.Quaternion(); _m = new T.Matrix4(); _col = new T.Color(); _v2 = new T.Vector2();
+    _q = new T.Quaternion(); _q2 = new T.Quaternion(); _q3 = new T.Quaternion(); _qi = new T.Quaternion(); _m = new T.Matrix4(); _col = new T.Color(); _v2 = new T.Vector2(); _v4 = new T.Vector4();
   }
   function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 
@@ -2581,5 +2581,451 @@
     clips: monkeyClips(true),
     dur: { attack: 1.0, cast: 1.2, special: 1.4, die: 1.6, enter: 1.0 },
     cadence: 0.9,
+  });
+})();
+
+// ----------------------------------------------------------------------------------------------------- batch: harbour & city spirits
+(() => {
+  const K = G.Mon3D.kit, defC = G.Mon3D._defC;
+  const { Paint, GEN, E, atk, bump, seg, sm, clamp, lerp, shade, mix, rgba } = K;
+  const { humanRig, limb, claw, breathe, FX, FY, v3, nrm, SIDES } = K.H;
+  const TAU = Math.PI * 2, PI = Math.PI, sin = Math.sin, cos = Math.cos, abs = Math.abs, min = Math.min, max = Math.max;
+  const furSlot = (base, dark, light, n = 260) => (g, w, h, p, R) => { Paint.fill(g, w, h, p[base]); Paint.mottle(g, w, h, p[dark], 30, 8, 30, 0.35, R); Paint.strokes(g, w, h, p[dark], n, 12, PI / 2, 1.4, 0.45, R, 0.6); Paint.strokes(g, w, h, p[light], n / 2, 9, PI / 2, 1, 0.35, R, 0.6); };
+  const clothSlot = (a, b, c, wv = 4) => (g, w, h, p, R) => { Paint.vgrad(g, w, h, [0, p[c], 0.5, p[a], 1, p[b]]); Paint.weave(g, w, h, '#000', wv, 0.09); Paint.mottle(g, w, h, p[b], 16, 10, 40, 0.3, R); };
+
+  // ===================================================================================================
+  // 鼠精 rat_demon — a harbour-granary rat grown fat and cunning: upright, hunched in a patched robe with a rope belt,
+  // strings of copper cash, beady red eyes, buck teeth, twitching whiskers and a long naked tail.
+  defC('rat_demon', {
+    height: 1.35, fill: 0.92, radius: 0.33, shadow: 0.36, rimColor: '#ffe8d8',
+    pal: { fur: '#6a6058', furD: '#2e2824', furL: '#aaa094', pink: '#e8a0a0', pinkD: '#a0585a', robe: '#6a5a3a', robeD: '#2e2416', robeL: '#a8946a', coin: '#d8b04a', coinD: '#7a5a1a', eye: '#ff3a3a', teeth: '#f8e8a0', line: '#1a1410', magic: '#ffd24a' },
+    vars: [{ h: 0, s: 0.3, l: 0.15, keep: ['pink', 'pinkD', 'coin', 'coinD', 'teeth'], set: { eye: '#ff6ad0' } }, { h: -20, s: 1.2, l: -0.12, keep: ['pink', 'pinkD', 'coin', 'coinD', 'teeth'], set: { eye: '#9aff4a', magic: '#9aff4a' } }],
+    slots: {
+      fur: furSlot('fur', 'furD', 'furL'),
+      robe(g, w, h, p, R) { clothSlot('robe', 'robeD', 'robeL', 5)(g, w, h, p, R); for (let i = 0; i < 3; i++) { const x = R() * w * 0.8, y = R() * h * 0.8; g.fillStyle = shade(p.robe, i % 2 ? 0.15 : -0.2); g.fillRect(x, y, 34, 30); g.strokeStyle = p.robeL; g.setLineDash([3, 3]); g.strokeRect(x, y, 34, 30); g.setLineDash([]); } Paint.hem(g, w, h, p.robeD, h * 0.9, 14, R); },
+      pink(g, w, h, p, R) { Paint.fill(g, w, h, p.pink); Paint.mottle(g, w, h, p.pinkD, 14, 6, 20, 0.35, R); for (let y = 0; y < h; y += 9) { g.fillStyle = rgba(p.pinkD, 0.45); g.fillRect(0, y, w, 2); } },
+      coin(g, w, h, p) { Paint.fill(g, w, h, p.coin); g.fillStyle = p.coinD; for (let x = 8; x < w; x += 24) g.fillRect(x, h * 0.35, 8, h * 0.3); },
+      rope(g, w, h, p) { Paint.fill(g, w, h, '#b89a5a'); g.strokeStyle = '#6a5428'; g.lineWidth = 3; for (let x = -h; x < w; x += 10) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h * 0.6, h); g.stroke(); } },
+      teeth: (g, w, h, p) => Paint.fill(g, w, h, p.teeth),
+      eye: { size: 1, paint: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#200000', p.eye), emit: (g, w, h, p) => Paint.eye(g, w, h, shade(p.eye, -0.3), '#000', shade(p.eye, -0.5)) },
+      whisker: (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = '#f0ece0'; g.fillRect(0, h * 0.4, w, h * 0.2); },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 0.6, chest: 0.92, neck: 1.02, head: 1.06, headZ: 0.12, neckZ: 0.08, chestZ: 0.04, shY: 0.95, shZ: 0.04, sh: 0.18, up: 0.24, fore: 0.24, arm1: [0.25, -0.7, 0.7], arm2: [-0.1, -0.2, 1], lx: 0.11, knee: 0.33, kneeZ: 0.08 });
+      // pear-shaped fat body in the robe
+      B.lathe([[0.2, 0.18], [0.28, 0.35], [0.3, 0.55], [0.27, 0.78], [0.2, 0.95], [0.08, 1.02]], { slot: 'robe', seg: 22, flat: [1, 0.9], ao: [0.1, 0.5, 0.7],
+        w: (x, y, z) => { const S = x > 0 ? 'L' : 'R'; const hy = sm(0.35, 0.6, y); return [['hips', hy * (1 - sm(0.7, 0.9, y))], ['chest', sm(0.7, 0.9, y)], ['knee' + S, (1 - hy) * 0.6], ['hips', (1 - hy) * 0.4]]; }, deform: (v) => { v.z += sm(0.7, 1.0, v.y) * 0.05; } });
+      B.tube([[0.28, 0.6, 0], [0, 0.6, 0.29], [-0.28, 0.6, 0], [0, 0.6, -0.27], [0.28, 0.6, 0]], 0.03, { w: 'hips', slot: 'rope', seg: 6, sub: 3 });
+      // cash strings hanging from the belt (spring)
+      B.bone('cash', 'hips', [0.18, 0.58, 0.2]);
+      for (let i = 0; i < 7; i++) { const y = 0.56 - i * 0.045; B.geo(new THREE.TorusGeometry(0.03, 0.012, 5, 10), { at: [0.19 + i * 0.004, y, 0.21], rot: [0, 0.6, 0], w: 'cash', slot: 'coin' }); }
+      // head: tapered snout
+      B.tube([[0, 1.04, 0.06], [0, 1.08, 0.16], [0, 1.06, 0.3], [0, 1.03, 0.38]], [0.15, 0.14, 0.08, 0.025], { bones: ['neck', 'head', 'head', 'head'], slot: 'fur', seg: 14, cap0: true, cap1: true });
+      B.ell([0, 1.035, 0.385], [0.03, 0.025, 0.025], { w: 'head', slot: 'pink' });
+      for (const s of [-1, 1]) B.geo(new THREE.BoxGeometry(0.02, 0.04, 0.01), { at: [s * 0.012, 0.99, 0.35], w: 'head', slot: 'teeth', outline: false });
+      for (const [s, S] of SIDES) {
+        B.bone('ear' + S, 'head', [s * 0.1, 1.2, 0.08]);
+        B.ell([s * 0.11, 1.24, 0.06], [0.08, 0.08, 0.02], { w: 'ear' + S, slot: 'pink', rot: [0, s * 0.4, 0] });
+        B.eye('eye' + S, 'head', [s * 0.07, 1.12, 0.27], 0.022, { rot: [0, s * 0.5, 0], rz: 0.7 });
+        for (let i = 0; i < 3; i++) B.strip([[s * 0.04, 1.04, 0.36], [s * 0.2, 1.04 + (i - 1) * 0.04, 0.33 - i * 0.02]], 0.008, { w: 'head', slot: 'whisker', side: [0, 1, 0], oneSided: false });
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.06, 0.05, 0.03], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'robe' });
+        claw(B, S, s, J['hand' + S], [0, -0.3, 1], { size: 0.045, n: 4, curl: 0.9, slot: 'pink', nailSlot: 'teeth', nailLen: 0.4 });
+        limb(B, J['hip' + S], J['knee' + S], J['foot' + S], [0.07, 0.05, 0.035], ['leg' + S, 'knee' + S, 'foot' + S], { slot: 'fur' });
+        B.ell(v3(J['foot' + S], [0, -0.03, 0.08]), [0.05, 0.03, 0.12], { w: 'foot' + S, slot: 'pink' });
+      }
+      // long naked tail (spring chain)
+      const tl = [[0, 0.32, -0.25], [0, 0.18, -0.45], [0.05, 0.08, -0.7], [0.15, 0.04, -0.92], [0.3, 0.05, -1.05], [0.42, 0.12, -1.1]];
+      tl.forEach((q, i) => B.bone('tl' + i, i ? 'tl' + (i - 1) : 'hips', q));
+      B.tube(tl, [0.05, 0.04, 0.03, 0.022, 0.015, 0.006], { bones: tl.map((q, i) => 'tl' + i), slot: 'pink', seg: 7, cap0: true });
+    },
+    springs: [{ chain: ['tl1', 'tl2', 'tl3', 'tl4'], tip: [0.12, 0.07, -0.05], k: 40, d: 5, g: 1.5, max: 0.7 }, { chain: ['cash'], tip: [0, -0.3, 0], k: 60, d: 5, g: 3, max: 0.8 }].concat(SIDES.map(([s, S]) => ({ chain: ['ear' + S], tip: [s * 0.03, 0.1, 0], k: 140, d: 9, g: 0, max: 0.3 }))),
+    fx: {
+      grain: { n: 16, rate: 0, burstRate: 30, bone: 'head', at: [0, -0.05, 0.3], box: [0.1, 0.05, 0.05], vel: [0, 0.3, 0.5], velR: [0.4, 0.3, 0.3], g: 4, life: [0.4, 0.8], size: [0.03, 0.05], color: ['#f0e0b0', '#c8a46a'], add: false, shape: 1 },
+      cast: { n: 40, rate: 0, burstRate: 40, at: [0, 0.1, 0], ring: 0.8, box: [0, 0.05, 0], vel: [0, 0.2, 0], velR: [0.6, 0.1, 0.6], life: [0.6, 1.2], size: [0.1, 0.16], color: ['#3a3430', '#1a1410'], add: false, shape: 1, swirl: 7, swirlA: 3 },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.7, 0], box: [0.5, 0.8, 0.4], vel: [0, 0.8, 0], velR: [0.4, 0.4, 0.4], g: 3, life: [0.6, 1.2], size: [0.04, 0.07], color: ['#ffe08a', '#d8b04a'], shape: 3, twinkle: 10 },
+    },
+    clips: {
+      // sniffing, whiskers & ears twitching, hand-wringing
+      idle(P, t) {
+        breathe(P, t, 1.4);
+        const sn = max(0, sin(t * 7)) * (sin(t * 0.8) > 0 ? 1 : 0);
+        P.r('head', sin(t * 0.7) * 0.08 - 0.05 * sn, sin(t * 0.5) * 0.3, sin(t * 1.1) * 0.05).p('head', 0, 0, 0.01 * sn);
+        P.r('earL', sin(t * 9) * 0.1 * (sin(t * 0.6) > 0.5 ? 1 : 0)).r('spine', 0.12);
+        for (const [s, S] of SIDES) { P.r('sh' + S, -0.3 + sin(t * 4 + s) * 0.1).r('hand' + S, sin(t * 6 + s * 1.5) * 0.3).r('knee' + S, 0.15); }
+      },
+      // scurry
+      move(P, ph) { const a = ph * TAU; for (const [s, S] of SIDES) { const o = s > 0 ? 0 : PI; P.r('leg' + S, -0.6 * sin(a + o)).r('knee' + S, 0.3 + 0.5 * max(0, sin(a + o + 1))).r('sh' + S, -0.4 + 0.3 * sin(a + o + PI)); } P.rootM(0, abs(sin(a)) * 0.03, 0, 0.3); },
+      // gnaw: lunging bite with the incisors
+      attack(P, t, k) { const A = atk(k, 0.3, 0.42, 0.6), chew = bump(k, 0.42, 0.7) * sin(t * 40); P.rootM(0, 0, -0.06 * A.a + 0.35 * A.s, -0.15 * A.a + 0.35 * A.s); P.r('head', -0.3 * A.a + 0.2 * A.s + 0.1 * chew); for (const [s, S] of SIDES) P.r('sh' + S, -1.2 * A.s, 0, s * 0.2 * A.a); P.ch('fx_grain', bump(k, 0.4, 0.7) * 3); },
+      // squeak summons a swarm (dark rat shapes skitter in a ring)
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.r('head', -0.5 * u).r('chest', -0.2 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.6 * u, 0, s * 0.3 * u); P.rootM(0, 0.06 * u * abs(sin(t * 12))); P.ch('fx_cast', u); P.ch('glow', u); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); },
+      // flops over, coins scatter
+      die(P, t, k, C) { GEN.die(P, t, k, C); P.ch('fx_death', bump(k, 0, 0.4) * 3); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.7)); P.rootM(0, -0.9 * u, 0.2 * u, 0.3 * u); P.ch('fx_grain', bump(k, 0.2, 0.8) * 3); },
+    },
+    dur: { attack: 0.85, cast: 1.3 },
+    cadence: 1.6,
+  });
+
+  // ===================================================================================================
+  // 陰兵 yin_soldier — an underworld soldier of the 城隍's retinue, lost on patrol: black lamellar armour with bronze
+  // fittings, a helmet over a void with two cold eyes, blood-red war-skirt that frays into mist; spear with a 令 pennant.
+  defC('yin_soldier', {
+    height: 2.0, fill: 0.92, radius: 0.33, shadow: 0.34, shadowA: 0.7, ghostCol: '#7af0ff', rimColor: '#c8e8ff',
+    pal: { armor: '#3a3e4a', armorD: '#15171f', armorL: '#7a8094', bronze: '#9a7a3a', cloth: '#7a2026', clothD: '#3a0c12', void: '#05070c', eye: '#7af0ff', mist: '#5a8aa8', shaft: '#3a2a20', blade: '#b8c4d0', flag: '#14161e', ink: '#c8d8e8', line: '#0a0c12', magic: '#7af0ff' },
+    vars: [{ h: 0, s: 1, keep: ['eye', 'mist', 'magic'], set: { cloth: '#2a5a3a', clothD: '#0e2a18', eye: '#9aff9a', magic: '#9aff9a', bronze: '#7a8a4a' } }, { h: 0, s: 1, set: { eye: '#ff5a4a', magic: '#ff5a4a', cloth: '#d8c8a8', clothD: '#6a5a48', mist: '#8a4a4a' } }],
+    slots: {
+      lamellar: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.armorD);
+        const sw = 22, sh = 30;
+        for (let row = 0, y = 0; y < h; y += sh * 0.8, row++) for (let x = (row % 2) * sw / 2 - sw; x < w + sw; x += sw) {
+          const gr = g.createLinearGradient(x, y, x + sw, y + sh); gr.addColorStop(0, p.armorL); gr.addColorStop(0.5, p.armor); gr.addColorStop(1, p.armorD);
+          g.fillStyle = gr; g.beginPath(); g.moveTo(x + 2, y); g.lineTo(x + sw - 2, y); g.lineTo(x + sw - 2, y + sh - 6); g.quadraticCurveTo(x + sw / 2, y + sh, x + 2, y + sh - 6); g.closePath(); g.fill();
+          g.fillStyle = p.bronze; g.beginPath(); g.arc(x + sw / 2, y + 5, 2, 0, TAU); g.fill();
+        }
+        Paint.mottle(g, w, h, '#000', 20, 10, 40, 0.3, R);
+        // bronze chest disc (護心鏡) at front centre
+        const cx = w / 2, cy = h * 0.42; const gr = g.createRadialGradient(cx - 8, cy - 8, 2, cx, cy, 40); gr.addColorStop(0, '#f0e0a0'); gr.addColorStop(0.5, p.bronze); gr.addColorStop(1, shade(p.bronze, -0.5));
+        g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, 38, 0, TAU); g.fill(); g.strokeStyle = shade(p.bronze, -0.6); g.lineWidth = 4; g.stroke();
+      } },
+      helm(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.armorL, 0.5, p.armor, 1, p.armorD]); for (let x = 0; x < w; x += 20) { g.fillStyle = rgba(p.armorD, 0.7); g.fillRect(x, 0, 3, h); } g.fillStyle = p.bronze; g.fillRect(0, h * 0.8, w, 10); },
+      void: { size: 2, paint(g, w, h, p) { Paint.fill(g, w, h, p.void); for (const s of [-1, 1]) { g.fillStyle = p.eye; g.beginPath(); g.ellipse(w / 2 + s * 34, h * 0.45, 16, 7, 0, 0, TAU); g.fill(); } },
+        emit(g, w, h, p) { for (const s of [-1, 1]) { const x = w / 2 + s * 34, y = h * 0.45; const gr = g.createRadialGradient(x, y, 0, x, y, 24); gr.addColorStop(0, p.eye); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(x - 24, y - 24, 48, 48); } } },
+      cloth(g, w, h, p, R) { clothSlot('cloth', 'clothD', 'cloth', 4)(g, w, h, p, R); g.fillStyle = p.bronze; g.fillRect(0, 0, w, 8); const gr = g.createLinearGradient(0, h * 0.55, 0, h); gr.addColorStop(0, rgba(p.mist, 0)); gr.addColorStop(1, rgba(p.mist, 0.8)); g.fillStyle = gr; g.fillRect(0, h * 0.55, w, h * 0.45); g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 14) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 7, h * (0.72 + R() * 0.15)); g.lineTo(x + 14, h); g.fill(); } g.globalCompositeOperation = 'source-over'; },
+      skirtGhost(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.cloth, 0.6, p.clothD, 1, p.mist]); Paint.strokes(g, w, h, p.mist, 40, 60, PI / 2, 3, 0.4, R, 0.1); },
+      bronze(g, w, h, p) { Paint.vgrad(g, w, h, [0, '#f0e0a0', 0.5, p.bronze, 1, shade(p.bronze, -0.5)]); },
+      shaft(g, w, h, p, R) { Paint.fill(g, w, h, p.shaft); Paint.strokes(g, w, h, '#000', 30, 60, PI / 2, 1, 0.4, R, 0.05); },
+      blade(g, w, h, p) { Paint.hgrad(g, w, h, [0, shade(p.blade, -0.5), 0.5, '#ffffff', 1, shade(p.blade, -0.3)]); },
+      flag(g, w, h, p) {
+        Paint.fill(g, w, h, p.flag); g.strokeStyle = p.cloth; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+        g.fillStyle = p.ink; g.font = `bold ${w * 0.55}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('令', w / 2, h / 2);
+        g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 22) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 11, h - 22); g.lineTo(x + 22, h); g.fill(); } g.globalCompositeOperation = 'source-over';
+      },
+      plume(g, w, h, p, R) { g.clearRect(0, 0, w, h); Paint.strokes(g, w, h, p.cloth, 200, 70, PI / 2, 3, 0.9, R, 0.3); },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 1.0, chest: 1.42, neck: 1.56, head: 1.62, shY: 1.48, sh: 0.23, up: 0.3, fore: 0.28, arm1: [0.55, -1, 0.15], arm2: [0.2, -0.2, 1], lx: 0.11, knee: 0.55, noLegs: true });
+      // spear bone in right hand
+      B.bone('spear', 'handR', J.handR);
+      B.bone('fl0', 'spear', v3(J.handR, [-0.02, 1.15, 0.0])); B.bone('fl1', 'fl0', v3(J.handR, [-0.16, 1.15, 0.0])); B.bone('fl2', 'fl1', v3(J.handR, [-0.3, 1.15, 0.0]));
+      B.bone('sk0', 'hips', [0, 0.95, 0.14]); B.bone('sk1', 'sk0', [0, 0.55, 0.18]); B.bone('skb0', 'hips', [0, 0.95, -0.14]); B.bone('skb1', 'skb0', [0, 0.55, -0.2]);
+      B.bone('pl0', 'head', [0, 1.95, -0.02]); B.bone('pl1', 'pl0', [0, 2.05, -0.12]);
+      // armoured torso
+      B.lathe([[0.2, 0.95], [0.24, 1.1], [0.26, 1.3], [0.27, 1.45], [0.2, 1.55], [0.08, 1.58]], { w: B.keyW([[1.0, 'hips'], [1.2, 'spine'], [1.4, 'chest']]), slot: 'lamellar', seg: 22, flat: [1, 0.78] });
+      // pauldrons
+      for (const [s, S] of SIDES) B.ell([s * 0.27, 1.46, 0], [0.13, 0.08, 0.13], { w: 'sh' + S, slot: 'lamellar', th0: 0, thLen: PI * 0.55, seg: 14, rings: 6, rot: [0, 0, -s * 0.35] });
+      // helmet over a void face
+      B.ell([0, 1.74, 0.02], [0.12, 0.14, 0.13], { w: 'head', slot: 'void', seg: 18, rings: 12 });
+      B.lathe([[0.14, 1.72], [0.15, 1.8], [0.13, 1.9], [0.06, 1.96], [0.01, 1.98]], { w: 'head', slot: 'helm', seg: 18, at: [0, 0, -0.005] });
+      B.lathe([[0.17, 1.58], [0.16, 1.7], [0.14, 1.73]], { w: 'head', slot: 'helm', seg: 18, wobble: (y, a) => (sin(a) > 0.3 ? -0.5 * sm(1.6, 1.7, y) * 0 : 0) , deform: (v) => { if (v.z > 0.06) v.z = 0.06 + (v.z - 0.06) * 0.2; } }); // neck guard (open at the face)
+      B.lathe([[0.155, 1.79], [0.18, 1.8], [0.155, 1.81]], { w: 'head', slot: 'bronze', seg: 18 });
+      B.tube([[0, 1.97, 0], [0, 2.02, 0]], [0.015, 0.008], { w: 'head', slot: 'bronze', seg: 6 });
+      B.strip([[0, 2.0, -0.01], [0, 2.06, -0.1], [0, 1.98, -0.24]], [0.08, 0.1, 0.06], { bones: ['pl0', 'pl1', 'pl1'], slot: 'plume', side: [1, 0, 0] });
+      // war skirt panels (front/back on springs, sides) fading to mist (ghost layer)
+      B.sheet([[0.24, 0.98, 0.16], [0.25, 0.6, 0.22], [0.24, 0.38, 0.23]], [[-0.24, 0.98, 0.16], [-0.25, 0.6, 0.22], [-0.24, 0.38, 0.23]], ['sk0', 'sk1', 'sk1'], ['sk0', 'sk1', 'sk1'], { slot: 'cloth', n: 4 });
+      B.sheet([[-0.24, 0.98, -0.16], [-0.26, 0.6, -0.23], [-0.25, 0.38, -0.25]], [[0.24, 0.98, -0.16], [0.26, 0.6, -0.23], [0.25, 0.38, -0.25]], ['skb0', 'skb1', 'skb1'], ['skb0', 'skb1', 'skb1'], { slot: 'cloth', n: 4 });
+      for (const [x, z, b] of [[-0.12, 0.2, 'sk0'], [0.12, 0.2, 'sk0'], [-0.24, 0.0, 'hips'], [0.24, 0.0, 'hips']]) B.strip([[x, 1.0, z * 0.95], [x * 1.05, 0.68, z * 1.1]], 0.2, { bones: [b, b], slot: 'lamellar', side: z ? [1, 0, 0] : [0, 0, 1], uvr: [0.1, 0.1, 0.4, 0.4] });
+      B.lathe([[0.12, 0.3], [0.2, 0.6], [0.24, 0.9], [0.22, 1.0]], { layer: 'ghost', slot: 'skirtGhost', seg: 18, w: B.keyW([[0.4, 'sk1'], [0.9, 'hips']]) });
+      B.lathe([[0.25, 0.92], [0.27, 1.0], [0.25, 1.06]], { w: 'hips', slot: 'cloth', seg: 20 }); // sash
+      // arms in armour
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.075, 0.065, 0.055], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'lamellar' });
+        B.tube([v3(J['hand' + S], [0, 0.1, -0.02]), v3(J['hand' + S], [0, 0.0, 0])], [0.07, 0.065], { w: 'hand' + S, slot: 'bronze', seg: 10 });
+        B.ell(J['hand' + S], [0.05, 0.055, 0.05], { w: 'hand' + S, slot: 'helm' });
+      }
+      // spear: shaft, blade, pennant
+      const hR = J.handR;
+      B.tube([v3(hR, [0, -0.75, 0]), v3(hR, [0, 1.25, 0])], 0.022, { w: 'spear', slot: 'shaft', seg: 8, cap0: true });
+      B.tube([v3(hR, [0, 1.22, 0]), v3(hR, [0, 1.3, 0]), v3(hR, [0, 1.52, 0])], [0.03, 0.05, 0.002], { w: 'spear', slot: 'blade', seg: 4, flat: [1, 0.25] });
+      B.strip([v3(hR, [0, 1.25, 0]), v3(hR, [0.02, 1.15, 0.02])], 0.08, { w: 'spear', slot: 'plume', side: [1, 0, 0] });
+      B.sheet([v3(hR, [-0.02, 1.2, 0]), v3(hR, [-0.16, 1.2, 0]), v3(hR, [-0.3, 1.2, 0])], [v3(hR, [-0.02, 0.95, 0]), v3(hR, [-0.16, 0.95, 0]), v3(hR, [-0.3, 0.95, 0])], ['spear', 'fl1', 'fl2'], ['spear', 'fl1', 'fl2'], { slot: 'flag', n: 3 });
+    },
+    springs: [
+      { chain: ['fl0', 'fl1', 'fl2'], tip: [-0.14, 0, 0], k: 40, d: 4, g: 1, wind: 4, max: 0.8 },
+      { chain: ['sk0', 'sk1'], tip: [0, -0.3, 0.02], k: 70, d: 6, g: 1, max: 0.6 }, { chain: ['skb0', 'skb1'], tip: [0, -0.3, -0.02], k: 70, d: 6, g: 1, max: 0.6 },
+      { chain: ['pl0', 'pl1'], tip: [0, -0.1, -0.12], k: 60, d: 5, g: 2, max: 0.7 },
+    ],
+    fx: {
+      mist: { n: 20, rate: 7, at: [0, 0.35, 0], box: [0.45, 0.3, 0.35], vel: [0, 0.05, -0.15], velR: [0.08, 0.04, 0.08], life: [1.4, 2.4], size: [0.25, 0.4], grow: 1.4, color: ['#8ab8d8', '#2a3a4a'], alpha: 0.3, add: false },
+      cast: { n: 40, rate: 0, burstRate: 40, at: [0, 0.05, 0], ring: 0.9, box: [0, 0.05, 0], vel: [0, 0.9, 0], velR: [0.1, 0.3, 0.1], life: [0.7, 1.3], size: [0.06, 0.1], color: ['#e0ffff', '#7af0ff'], swirl: 3, swirlA: 1.5 },
+      death: { n: 40, rate: 0, burstRate: 40, at: [0, 1.1, 0], box: [0.5, 1.4, 0.4], vel: [0, 0.4, 0], velR: [0.3, 0.3, 0.3], life: [1, 1.8], size: [0.2, 0.35], grow: 1.5, color: ['#8ab8d8', '#2a3a4a'], alpha: 0.35, add: false },
+    },
+    clips: {
+      // at attention: slow martial breathing, spear butt planted, eyes scanning
+      idle(P, t) {
+        breathe(P, t, 0.7); P.rootM(0, 0.04 + sin(t * 1.3) * 0.03, 0, 0, 0, sin(t * 0.6) * 0.02);
+        P.r('head', sin(t * 0.5) * 0.05, sin(t * 0.35) * 0.25).r('shR', 0.05).r('shL', sin(t * 1.1) * 0.04);
+      },
+      // ghostly march: glide with a stiff stride (no legs — the skirt swings)
+      move(P, ph) { const a = sin(ph * TAU); P.rootM(0, 0.06 + abs(a) * 0.03, 0, 0.06, 0, a * 0.03); P.r('sk0', 0.25 * a).r('skb0', -0.25 * a).r('shL', 0.25 * a); },
+      // two-handed spear thrust
+      attack(P, t, k) {
+        const A = atk(k, 0.34, 0.46, 0.64);
+        P.rootM(0, 0.04, -0.1 * A.a + 0.45 * A.s, 0.12 * A.s, -0.4 * A.a + 0.2 * A.s);
+        P.r('shR', -0.6 * A.a - 0.6 * A.s, 0, -0.2 * A.a).r('armR', -0.8 * A.a + 0.6 * A.s).r('handR', 1.3 * A.a + 1.45 * A.s - 0.2 * A.a);
+        P.r('shL', -0.9 * A.a - 0.6 * A.s, 0, 0.3 * A.a).r('armL', -0.6 * A.a);
+        P.r('chest', 0, -0.4 * A.a + 0.3 * A.s).r('head', 0, 0.3 * A.a - 0.2 * A.s);
+      },
+      // 陰兵過境: raises the 令 banner, spectral troops' fire rings the ground
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.r('shR', -1.4 * u, 0, -0.2 * u).r('armR', -0.3 * u).r('head', -0.2 * u); P.rootM(0, 0.1 * u); P.ch('fx_cast', u); P.ch('glow', u * 2); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); },
+      // armour clatters; the void inside drains away as mist
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.45)); P.rootM(0, -0.2 * u, 0, 0.3 * u); P.r('head', 0.5 * u).r('shR', 0.5 * u, 0, -0.3 * u); P.ch('dissolve', E.inQ(seg(k, 0.25, 1))); P.ch('fx_death', bump(k, 0.15, 0.9) * 2); P.ch('glow', -u); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.8)); P.rootM(0, 0, 0.5 * u); P.ch('fade', u); P.ch('fx_mist', bump(k, 0, 0.9) * 4); },
+    },
+    dur: { attack: 1.05, cast: 1.6 },
+    cadence: 0.8, shadowZ: 1,
+  });
+
+  // ===================================================================================================
+  // 河伯怨靈 river_wraith — the grudge of a river-mouth shipwreck given a river-lord's form: rising from a whirlpool,
+  // flowing water hair, a crown of reeds, jade belt, pale mournful face with a trailing weed-beard; fish circle it.
+  defC('river_wraith', {
+    height: 2.1, fill: 0.92, radius: 0.4, shadow: 0.45, shadowA: 0.5, ghostCol: '#9ff8ff', rimColor: '#c8ffff', ghostSide: THREE.DoubleSide,
+    pal: { water: '#4ab0c8', waterD: '#123a5a', waterL: '#b8f4ff', face: '#d8eef0', faceD: '#7aa0b0', reed: '#8a9a4a', reedD: '#4a5a24', robe: '#2a5a7a', robeD: '#0e2238', robeL: '#6aa8c8', jade: '#7ae8b0', eye: '#e8ffff', fish: '#ff9a5a', line: '#082030', magic: '#7af0ff' },
+    vars: [{ h: 90, s: 0.9, keep: ['fish', 'face', 'faceD'] }, { h: -170, s: 1.1, l: -0.06, keep: ['face', 'faceD'], set: { eye: '#ff8a7a', fish: '#7af0ff' } }],
+    slots: {
+      water: { size: 4, paint(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.waterL, 0.5, p.water, 1, p.waterD]); g.lineWidth = 4; for (let i = 0; i < 14; i++) { g.strokeStyle = rgba(i % 2 ? p.waterL : '#ffffff', 0.5); g.beginPath(); const y0 = R() * h; for (let x = 0; x <= w; x += 8) g.lineTo(x, y0 + sin(x * 0.03 + i) * 14 + x * 0.3); g.stroke(); } } },
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.face, 0.6, p.face, 1, p.faceD]); Paint.mottle(g, w, h, p.faceD, 40, 8, 40, 0.3, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.075), y = FY(h, 0.56); g.fillStyle = p.waterD; g.beginPath(); g.ellipse(x, y, 30, 24, 0, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y + 2, 15, 12, 0, 0, TAU); g.fill(); g.fillStyle = p.line; g.beginPath(); g.arc(x, y + 2, 6, 0, TAU); g.fill();
+          g.strokeStyle = rgba(p.faceD, 0.9); g.lineWidth = 4; g.beginPath(); g.moveTo(x - s * 22, y - 14); g.quadraticCurveTo(x, y - 24, x + s * 20, y - 20); g.stroke(); } // grieving brows
+        g.strokeStyle = p.line; g.lineWidth = 4; g.beginPath(); g.moveTo(FX(w, 0.45), FY(h, 0.4)); g.quadraticCurveTo(FX(w, 0.5), FY(h, 0.42), FX(w, 0.55), FY(h, 0.4)); g.stroke();
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.075), y = FY(h, 0.56); g.fillStyle = shade(p.eye, -0.5); g.beginPath(); g.ellipse(x, y + 2, 15, 12, 0, 0, TAU); g.fill(); } } },
+      robe(g, w, h, p, R) { clothSlot('robe', 'robeD', 'robeL', 5)(g, w, h, p, R); g.strokeStyle = rgba(p.waterL, 0.4); g.lineWidth = 2; for (let i = 0; i < 10; i++) { g.beginPath(); const y = R() * h; for (let x = 0; x <= w; x += 6) g.lineTo(x, y + sin(x * 0.08) * 5); g.stroke(); } },
+      jade(g, w, h, p) { Paint.fill(g, w, h, p.robeD); for (let x = 6; x < w; x += 30) { g.fillStyle = p.jade; g.fillRect(x, h * 0.2, 20, h * 0.6); g.fillStyle = '#e8fff4'; g.fillRect(x + 3, h * 0.25, 5, h * 0.2); } },
+      reed(g, w, h, p) { Paint.hgrad(g, w, h, [0, p.reedD, 0.5, p.reed, 1, p.reedD]); },
+      weed(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.reed, 1, p.reedD]); g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 16) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 8, h * 0.8); g.lineTo(x + 16, h); g.fill(); } g.globalCompositeOperation = 'source-over'; },
+      fish: { size: 1, paint(g, w, h, p) { Paint.vgrad(g, w, h, [0, shade(p.fish, 0.4), 1, shade(p.fish, -0.3)]); }, emit(g, w, h, p) { Paint.fill(g, w, h, shade(p.fish, -0.6)); } },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 1.0, chest: 1.42, neck: 1.56, head: 1.62, shY: 1.48, sh: 0.22, up: 0.3, fore: 0.3, arm1: [0.6, -0.8, 0.3], arm2: [0.4, -0.2, 0.8], lx: 0.1, knee: 0.5, noLegs: true });
+      for (let i = 0; i < 4; i++) { const a = -0.9 + i * 0.6; B.bone('hr' + i + 'a', 'head', [sin(a) * 0.12, 1.82, -0.06]); B.bone('hr' + i + 'b', 'hr' + i + 'a', [sin(a) * 0.3, 1.6, -0.3]); B.bone('hr' + i + 'c', 'hr' + i + 'b', [sin(a) * 0.45, 1.3, -0.45]); }
+      B.bone('bd0', 'head', [0, 1.62, 0.13]); B.bone('bd1', 'bd0', [0, 1.4, 0.16]);
+      B.bone('fishA', 'root', [0.7, 1.0, 0]); B.bone('fishB', 'root', [-0.6, 1.4, 0]);
+      B.bone('v0', 'root', [0, 0.1, 0]); B.bone('v1', 'v0', [0, 0.55, 0]);
+      // torso robe
+      B.lathe([[0.18, 0.9], [0.22, 1.1], [0.24, 1.3], [0.24, 1.45], [0.17, 1.55], [0.07, 1.58]], { w: B.keyW([[1.0, 'hips'], [1.2, 'spine'], [1.4, 'chest']]), slot: 'robe', seg: 22, flat: [1, 0.8] });
+      B.lathe([[0.23, 0.98], [0.245, 1.03], [0.23, 1.08]], { w: 'hips', slot: 'jade', seg: 22 });
+      // whirlpool lower body (ghost): twisted cone flaring at the water
+      B.lathe([[0.55, 0.05], [0.42, 0.12], [0.3, 0.35], [0.22, 0.65], [0.2, 0.95]], { layer: 'ghost', slot: 'water', seg: 28, w: B.keyW([[0.1, 'v0'], [0.5, 'v1'], [0.9, 'hips']]), deform: (v) => { const a = (1 - v.y) * 2.4; const x = v.x, z = v.z; v.x = x * cos(a) - z * sin(a); v.z = x * sin(a) + z * cos(a); } });
+      const disc = new THREE.RingGeometry(0.25, 0.68, 32, 2); disc.rotateX(-PI / 2);
+      B.geo(disc, { at: [0, 0.03, 0], layer: 'ghost', slot: 'water', w: 'v0', smooth: false, uvMap: (x, y, z) => [Math.atan2(z, x) / TAU + 0.5, Math.hypot(x, z)] });
+      // head, reed crown, water-hair, weed beard
+      B.ell([0, 1.74, 0.02], [0.11, 0.14, 0.12], { w: 'head', slot: 'face', seg: 20, rings: 14 });
+      for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU; const c = new THREE.ConeGeometry(0.012, 0.22 + (i % 3) * 0.06, 4); c.translate(0, 0.12, 0); B.geo(c, { at: [sin(a) * 0.1, 1.84, cos(a) * 0.1], rot: [cos(a) * 0.3, 0, -sin(a) * 0.3], w: 'head', slot: 'reed' }); }
+      B.lathe([[0.11, 1.81], [0.12, 1.84], [0.11, 1.87]], { w: 'head', slot: 'jade', seg: 16 });
+      for (let i = 0; i < 4; i++) { const a = -0.9 + i * 0.6; B.strip([[sin(a) * 0.12, 1.82, -0.06], [sin(a) * 0.3, 1.6, -0.3], [sin(a) * 0.45, 1.3, -0.45], [sin(a) * 0.5, 1.05, -0.5]], [0.12, 0.16, 0.12, 0.04], { bones: ['hr' + i + 'a', 'hr' + i + 'b', 'hr' + i + 'c', 'hr' + i + 'c'], slot: 'water', layer: 'ghost', side: [cos(a), 0, -sin(a) * 0.5] }); }
+      for (let i = 0; i < 5; i++) { const x = (i - 2) * 0.035; B.tube([[x, 1.66, 0.12], [x * 1.4, 1.5, 0.16 + abs(x) * -0.3], [x * 1.8, 1.32, 0.15], [x * 2, 1.18, 0.12]], [0.022, 0.018, 0.012, 0.004], { bones: ['bd0', 'bd1', 'bd1', 'bd1'], slot: 'face', layer: 'ghost', seg: 6 }); }
+      // arms: wide sleeves, pale hands
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], (u) => 0.07 + u * 0.06, ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'robe', cap1: 0.15 });
+        claw(B, S, s, v3(J['hand' + S], [0, 0, 0]), [0.4, -0.3, 0.8], { size: 0.05, curl: 0.4, slot: 'face', nail: false });
+      }
+      // two koi-like fish (each a body + tail fin)
+      for (const n of ['fishA', 'fishB']) { const c = B.at(n); B.ell([c.x, c.y, c.z], [0.03, 0.05, 0.1], { w: n, slot: 'fish', seg: 10, rings: 6 }); B.geo(new THREE.ConeGeometry(0.05, 0.08, 4), { at: [c.x, c.y, c.z - 0.12], rot: [-PI / 2, 0, 0], scale: [0.3, 1, 1], w: n, slot: 'fish' }); }
+    },
+    springs: [0, 1, 2, 3].map((i) => ({ chain: ['hr' + i + 'a', 'hr' + i + 'b', 'hr' + i + 'c'], tip: [0, -0.25, -0.05], k: 35, d: 4, g: 0.5, wind: 3, max: 0.7 })).concat([{ chain: ['bd0', 'bd1'], tip: [0, -0.22, -0.02], k: 50, d: 5, g: 2, max: 0.6 }]),
+    fx: {
+      spray: { n: 24, rate: 10, at: [0, 0.08, 0], ring: 0.8, box: [0, 0.05, 0], vel: [0, 0.6, 0], velR: [0.2, 0.3, 0.2], g: 3, life: [0.4, 0.8], size: [0.04, 0.07], color: ['#e8ffff', '#4ab0c8'], shape: 2, alpha: 0.7, swirl: 5, swirlA: 2 },
+      cast: { n: 50, rate: 0, burstRate: 60, at: [0, 0.1, 0], ring: 1.0, box: [0, 0.1, 0], vel: [0, 1.6, 0], velR: [0.3, 0.6, 0.3], g: 3, life: [0.6, 1.2], size: [0.05, 0.09], color: ['#e8ffff', '#4ab0c8'], shape: 2, swirl: 6, swirlA: 3 },
+      wail: { n: 20, rate: 0, burstRate: 20, bone: 'head', at: [0, 0, 0.2], box: [0.1, 0.1, 0.1], vel: [0, 0, 0.8], velR: [0.1, 0.1, 0.1], life: [0.6, 1.0], size: [0.2, 0.3], grow: 3, color: '#9ff8ff', alpha: 0.35 },
+      death: { n: 50, rate: 0, burstRate: 50, at: [0, 1.0, 0], box: [0.6, 1.4, 0.5], vel: [0, -0.4, 0], velR: [0.3, 0.3, 0.3], g: 3, life: [0.6, 1.2], size: [0.05, 0.08], color: ['#e8ffff', '#4ab0c8'], shape: 2, floor: 0.03 },
+    },
+    lights: (C) => [{ bone: 'head', color: C.p.water, i: 0.6, r: 3, flicker: 0.05 }],
+    tick(C) {
+      const b = C.B.byName, t = C.t;
+      for (const [n, r, sp, y, ph] of [['fishA', 0.75, 1.1, 1.0, 0], ['fishB', 0.62, -1.4, 1.35, 2]]) {
+        const a = t * sp + ph, rest = b[n].userData.rest;
+        b[n].position.set(cos(a) * r - rest.x + rest.x, y + sin(t * 2 + ph) * 0.08, sin(a) * r);
+        b[n].rotation.y = -a + (sp > 0 ? 0 : PI); b[n].rotation.z = sin(t * 8 + ph) * 0.2;
+        b[n].position.x = cos(a) * r; b[n].position.y = y + sin(t * 2 + ph) * 0.08 - 0; b[n].position.z = sin(a) * r;
+      }
+      b.v0.rotation.y += t * 1.5; b.v1.rotation.y += sin(t) * 0.2;
+    },
+    clips: {
+      idle(P, t) { breathe(P, t, 1); P.rootM(0, sin(t * 1.2) * 0.04, 0, 0, sin(t * 0.3) * 0.2, sin(t * 0.8) * 0.03); P.r('head', 0.1 + sin(t * 0.6) * 0.05, 0, sin(t * 0.5) * 0.08); for (const [s, S] of SIDES) P.r('sh' + S, sin(t * 0.9 + s) * 0.1, 0, s * sin(t * 0.7) * 0.06).r('hand' + S, sin(t * 1.4 + s) * 0.2); },
+      move(P, ph) { P.rootM(0, 0.05, 0, 0.1); },
+      // drag under: both arms sweep, a tide-wave slaps forward
+      attack(P, t, k) { const A = atk(k, 0.33, 0.47, 0.66); P.rootM(0, 0.1 * A.a, 0.35 * A.s, -0.15 * A.a + 0.25 * A.s); for (const [s, S] of SIDES) P.r('sh' + S, -1.5 * A.a + 0.9 * A.s, 0, s * 0.5 * A.a).r('arm' + S, -0.4 * A.a); P.ch('fx_cast', bump(k, 0.4, 0.6)); },
+      // river wail: head thrown back, rings of grief
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.r('head', -0.5 * u).r('chest', -0.25 * u); for (const [s, S] of SIDES) P.r('sh' + S, -0.8 * u, 0, s * 1.1 * u); P.rootM(0, 0.2 * u); P.ch('fx_wail', u * 2); P.ch('fx_spray', u * 4); P.ch('glow', u); },
+      special(P, t, k, C) { this.attack(P, t, k, C); P.ch('fx_spray', bump(k, 0.3, 0.9) * 5); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); },
+      // collapses back into the river
+      die(P, t, k) { const u = E.inQ(seg(k, 0, 0.8)); P.rootM(0, -1.5 * u, 0, 0, u * 3, 0); P.ch('dissolve', E.inQ(seg(k, 0.3, 1))); P.ch('fx_death', bump(k, 0.1, 0.8) * 2); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.85)); P.rootM(0, -1.6 * u, 0, 0, u * 3, 0); P.ch('fx_spray', bump(k, 0, 0.9) * 6); },
+    },
+    dur: { attack: 1.1, cast: 1.6, die: 1.8, enter: 1.5 },
+  });
+
+  // ===================================================================================================
+  // 紙紮人 paper_effigy — a funeral paper servant boy, eyes painted in and never burned: stiff faceted paper body on a
+  // bamboo frame, rosy painted cheeks and red lips, top-knot buns, red 壽 jacket and green trousers; moves in jerks.
+  const facet = (v) => v; // marker: low segment counts give the folded-paper facets
+  defC('paper_effigy', {
+    height: 1.85, fill: 0.92, radius: 0.3, shadow: 0.3, rimColor: '#fff4e0', bands: 2, outlineCol: '#3a1418',
+    pal: { top: '#d8303a', topD: '#7a1018', topL: '#ff8a8a', pants: '#2a8a5a', pantsD: '#0e4a2a', trim: '#f0c84a', face: '#f8f2e4', faceD: '#c8bca4', cheek: '#ff6a8a', hair: '#141418', lips: '#d81a3a', bamboo: '#c8a46a', eye: '#141418', glint: '#ff3a3a', line: '#3a1418', magic: '#ff6a6a' },
+    vars: [{ h: 200, s: 0.9, keep: ['face', 'faceD', 'hair', 'bamboo', 'eye', 'trim', 'cheek', 'lips'] }, { h: 0, s: 0, l: 0.25, keep: ['hair', 'bamboo', 'eye', 'cheek', 'lips', 'line'], set: { glint: '#7affff', magic: '#7affff', trim: '#9a9a9a' } }],
+    slots: {
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.face); Paint.strokes(g, w, h, p.faceD, 120, 30, 0.2, 1, 0.25, R, 0.3); // paper fibre
+        // painted features (flat, ink brush)
+        for (const s of [-1, 1]) {
+          const x = FX(w, 0.5 + s * 0.07), y = FY(h, 0.55);
+          g.fillStyle = rgba(p.cheek, 0.8); g.beginPath(); g.arc(x + s * 8, FY(h, 0.44), 26, 0, TAU); g.fill();
+          g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 13, 15, 0, 0, TAU); g.fill();
+          g.fillStyle = p.glint; g.beginPath(); g.arc(x + 2, y - 2, 4, 0, TAU); g.fill();
+          g.strokeStyle = p.eye; g.lineWidth = 4; g.beginPath(); g.moveTo(x - 16, y - 26); g.quadraticCurveTo(x, y - 32, x + 16, y - 26); g.stroke();
+        }
+        g.fillStyle = p.lips; const mx = FX(w, 0.5), my = FY(h, 0.38); g.beginPath(); g.moveTo(mx - 14, my); g.quadraticCurveTo(mx, my - 9, mx + 14, my); g.quadraticCurveTo(mx, my + 9, mx - 14, my); g.fill();
+        // hairline at top/back
+        g.fillStyle = p.hair; g.beginPath(); g.moveTo(0, 0); g.lineTo(w, 0); g.lineTo(w, FY(h, 0.7)); g.quadraticCurveTo(w * 0.62, FY(h, 0.66), w / 2, FY(h, 0.72)); g.quadraticCurveTo(w * 0.38, FY(h, 0.66), 0, FY(h, 0.7)); g.fill();
+        g.fillRect(0, 0, w * 0.33, h); g.fillRect(w * 0.67, 0, w * 0.33, h * 0.55);
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.07), y = FY(h, 0.55); g.fillStyle = p.glint; g.beginPath(); g.arc(x + 2, y - 2, 4, 0, TAU); g.fill(); } } },
+      top(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.topL, 0.4, p.top, 1, p.topD]); Paint.strokes(g, w, h, p.topD, 80, 30, 0.2, 1, 0.25, R, 0.3);
+        // folds (paper creases)
+        g.strokeStyle = rgba(p.topD, 0.6); g.lineWidth = 2; for (let x = 0; x < w; x += w / 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+        // 壽 roundel at front
+        const cx = w / 2, cy = h * 0.5; g.save(); g.translate(cx, cy); g.scale(0.55, 1); g.fillStyle = p.trim; g.beginPath(); g.arc(0, 0, 30, 0, TAU); g.fill(); g.fillStyle = p.top; g.font = `bold 40px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('壽', 0, 2); g.restore();
+        g.fillStyle = p.trim; g.fillRect(0, h - 14, w, 8); g.fillRect(w / 2 - 3, 0, 6, h);
+      },
+      pants(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.pants, 1, p.pantsD]); g.strokeStyle = rgba(p.pantsD, 0.6); g.lineWidth = 2; for (let x = 0; x < w; x += w / 6) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } g.fillStyle = p.trim; for (let i = 0; i < 12; i++) { g.beginPath(); g.arc(R() * w, R() * h, 4, 0, TAU); g.fill(); } g.fillStyle = p.trim; g.fillRect(0, h - 10, w, 6); },
+      hair(g, w, h, p) { Paint.fill(g, w, h, p.hair); g.strokeStyle = '#2a2a34'; g.lineWidth = 2; for (let x = 0; x < w; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } },
+      paper(g, w, h, p, R) { Paint.fill(g, w, h, p.face); Paint.strokes(g, w, h, p.faceD, 60, 30, 0.2, 1, 0.3, R, 0.3); },
+      bamboo(g, w, h, p) { Paint.hgrad(g, w, h, [0, shade(p.bamboo, -0.4), 0.5, p.bamboo, 1, shade(p.bamboo, -0.4)]); },
+      shoe(g, w, h, p) { Paint.fill(g, w, h, p.hair); g.fillStyle = '#ffffff'; g.fillRect(0, h * 0.8, w, h * 0.2); },
+      tassel(g, w, h, p) { Paint.fill(g, w, h, p.lips); },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 0.9, chest: 1.25, neck: 1.36, head: 1.4, shY: 1.3, sh: 0.2, up: 0.24, fore: 0.24, arm1: [0.35, -1, 0.05], arm2: [0.1, -1, 0.3], lx: 0.09, knee: 0.48 });
+      // head: slightly flattened sphere, low facets
+      B.ell([0, 1.55, 0], [0.15, 0.16, 0.14], { w: 'head', slot: 'face', seg: 12, rings: 9, smooth: true });
+      for (const s of [-1, 1]) { B.ell([s * 0.11, 1.72, -0.02], [0.065, 0.065, 0.065], { w: 'head', slot: 'hair', seg: 8, rings: 6 }); B.geo(new THREE.TorusGeometry(0.05, 0.012, 4, 10), { at: [s * 0.11, 1.68, -0.02], rot: [PI / 2, 0, 0], w: 'head', slot: 'tassel' }); }
+      // jacket: faceted lathe (8 sides = folded paper)
+      B.lathe([[0.25, 0.86], [0.24, 0.95], [0.22, 1.1], [0.23, 1.25], [0.17, 1.33], [0.06, 1.37]], { w: B.keyW([[0.9, 'hips'], [1.1, 'spine'], [1.25, 'chest']]), slot: 'top', seg: 8, flat: [1, 0.75], smooth: false });
+      for (const [s, S] of SIDES) {
+        // boxy paper sleeves and trousers
+        B.tube([J['sh' + S], J['el' + S], v3(J['hand' + S], [0, 0.04, 0])], [0.07, 0.07, 0.075], { bones: ['sh' + S, 'arm' + S, 'hand' + S], slot: 'top', seg: 5, cap0: true, cap1: 0.15, smooth: false });
+        B.ell(J['hand' + S], [0.04, 0.05, 0.035], { w: 'hand' + S, slot: 'paper', seg: 6, rings: 5, smooth: false });
+        B.tube([J['hip' + S], J['knee' + S], v3(J['foot' + S], [0, 0.05, 0])], [0.09, 0.085, 0.085], { bones: ['leg' + S, 'knee' + S, 'foot' + S], slot: 'pants', seg: 6, cap0: true, smooth: false });
+        B.geo(new THREE.BoxGeometry(0.1, 0.06, 0.18), { at: v3(J['foot' + S], [0, -0.03, 0.04]), w: 'foot' + S, slot: 'shoe', smooth: false });
+      }
+      // visible bamboo frame pole under the feet (effigy stand) + spine stick out of the neck
+      B.geo(new THREE.BoxGeometry(0.42, 0.04, 0.22), { at: [0, 0.02, 0.02], w: 'root', slot: 'bamboo', smooth: false });
+      B.tube([[0, 1.3, -0.08], [0, 1.45, -0.1]], 0.012, { w: 'chest', slot: 'bamboo', seg: 4 });
+      void facet;
+    },
+    fx: {
+      ash: { n: 16, rate: 2, at: [0, 0.9, 0], box: [0.5, 1.2, 0.4], vel: [0, 0.2, 0], velR: [0.1, 0.1, 0.1], life: [1.5, 2.5], size: [0.04, 0.07], color: ['#f8f2e4', '#d8303a'], add: false, shape: 1, swirl: 3, swirlA: 0.5 },
+      cut: { n: 20, rate: 0, burstRate: 40, bone: 'handR', box: [0.1, 0.1, 0.1], vel: [0, 0.3, 1.0], velR: [0.6, 0.6, 0.3], life: [0.4, 0.8], size: [0.05, 0.09], color: ['#ffffff', '#f8f2e4'], add: false, shape: 1, swirl: 9, swirlA: 2 },
+      cast: { n: 20, rate: 0, burstRate: 20, bone: 'head', at: [0, 0.03, 0.15], box: [0.15, 0.05, 0.05], vel: [0, 0, 1], velR: [0.05, 0.05, 0.1], life: [0.5, 0.9], size: [0.06, 0.1], color: ['#ff6a6a', '#ff3a3a'] },
+      death: { n: 50, rate: 0, burstRate: 50, at: [0, 0.9, 0], box: [0.5, 1.5, 0.4], vel: [0, 0.8, 0], velR: [0.4, 0.4, 0.4], life: [1, 2], size: [0.06, 0.1], color: ['#ffd27a', '#2a1a14'], add: false, shape: 1, swirl: 4, swirlA: 1.5 },
+      fire: { n: 30, rate: 0, burstRate: 40, at: [0, 0.6, 0], box: [0.4, 1.0, 0.3], vel: [0, 1.0, 0], velR: [0.2, 0.3, 0.2], life: [0.4, 0.8], size: [0.12, 0.2], color: ['#fff0a0', '#ff4a1a'] },
+    },
+    clips: {
+      // eerily still; the head snaps to new angles (stop-motion jerks)
+      idle(P, t) {
+        const st = Math.floor(t * 0.8), q = (n) => K.rng(st * 13 + n)() - 0.5;
+        const blend = sm(0, 0.08, (t * 0.8) % 1);
+        const prev = Math.floor(t * 0.8) - 1, qp = (n) => K.rng(prev * 13 + n)() - 0.5;
+        P.r('head', lerp(qp(1), q(1), blend) * 0.3, lerp(qp(2), q(2), blend) * 0.6, lerp(qp(3), q(3), blend) * 0.5);
+        P.rootM(0, 0, 0, 0, 0, sin(t * 0.7) * 0.015);
+        for (const [s, S] of SIDES) P.r('sh' + S, 0, 0, s * 0.05);
+      },
+      // stiff shuffling glide, arms hanging
+      move(P, ph) { const a = sin(ph * TAU); P.rootM(0, abs(a) * 0.02, 0, 0, a * 0.1, a * 0.06); for (const [s, S] of SIDES) P.r('leg' + S, -0.15 * a * s); },
+      // paper-edge slash
+      attack(P, t, k) { const A = atk(k, 0.3, 0.42, 0.6); P.rootM(0, 0, 0.3 * A.s, 0, -0.5 * A.a + 0.8 * A.s); P.r('shR', -1.4 * A.a + 0.6 * A.s, 0, -0.6 * A.a + 1.2 * A.s).r('handR', 0.5 * A.s); P.r('head', 0, 0, 0.6 * A.s); P.ch('fx_cut', bump(k, 0.38, 0.55) * 4); },
+      // paper stare: the painted eyes glow and the head turns 180° then back
+      cast(P, t, k) { const u = sm(0, 0.2, k) * (1 - sm(0.85, 1, k)); P.r('head', 0, PI * E.ioQ(bump(k, 0.05, 0.8)), 0.3 * u); P.ch('glow', 2.5 * u); P.ch('fx_cast', bump(k, 0.4, 0.8) * 2); },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(0, 0, -0.1 * u, -0.2 * u); P.r('head', 0.4 * u, 0, 0.6 * u).r('chest', -0.3 * u); P.s('chest', -0.1 * u, 0, -0.2 * u); P.ch('fx_ash', 3 * u); },
+      // crumples and burns to ash
+      die(P, t, k) { const u = E.inQ(seg(k, 0, 0.5)); P.rootM(0, 0, 0, 0, 0, 0, -0.6 * u); P.s('chest', -0.3 * u, 0, -0.5 * u); P.r('head', 0.6 * u, 0, 0.5 * u); P.ch('dissolve', E.inQ(seg(k, 0.2, 1))); P.ch('fx_fire', bump(k, 0.1, 0.7) * 2); P.ch('fx_death', bump(k, 0.3, 1) * 2); },
+      // unfolds from flat
+      enter(P, t, k) { const u = 1 - E.outBack(seg(k, 0, 0.8)); P.s('chest', 0, 0, -0.9 * clamp(u, 0, 1)); P.rootM(0, 0, 0, -1.5 * clamp(u, 0, 1)); P.ch('fx_ash', bump(k, 0.3, 1) * 3); },
+    },
+    dur: { attack: 0.9, cast: 1.6, die: 1.8, enter: 1.1 },
+    overlayReplace: 1, cadence: 1.4,
+  });
+
+  // ===================================================================================================
+  // 紙人 paper_servant — a little cut-paper doll stamped with a red seal; flat as a sheet, it flutters on the wind and
+  // leaves after-images of itself.
+  function dollShape() {
+    const s = new THREE.Shape();
+    const pts = [[0, 1.12], [0.09, 1.1], [0.12, 1.0], [0.1, 0.92], [0.06, 0.88], [0.2, 0.84], [0.36, 0.74], [0.4, 0.66], [0.3, 0.66], [0.18, 0.72], [0.18, 0.5], [0.2, 0.28], [0.22, 0.04], [0.08, 0.04], [0.04, 0.32], [0, 0.36]];
+    const all = pts.concat(pts.slice(0, -1).reverse().map(([x, y]) => [-x, y]));
+    s.moveTo(all[0][0], all[0][1]);
+    for (let i = 1; i < all.length; i++) s.lineTo(all[i][0], all[i][1]);
+    return s;
+  }
+  defC('paper_servant', {
+    height: 1.2, fill: 0.92, radius: 0.28, shadow: 0.3, shadowA: 0.6, rimColor: '#fff8e8', bands: 2, outlineW: 0.002,
+    pal: { paper: '#f6f2e8', paperD: '#b8b0a0', paperL: '#ffffff', ink: '#1a1a1e', seal: '#d0202a', glow: '#ffe8b0', line: '#6a6050', magic: '#ffdc8a' },
+    vars: [{ set: { paper: '#f2d24a', paperD: '#b8902a', paperL: '#fff2a0', seal: '#c0181a', glow: '#ffd24a', line: '#7a5a10', magic: '#ffd24a' } }, { set: { paper: '#2a2a32', paperD: '#0e0e14', paperL: '#5a5a6a', ink: '#ff4a4a', seal: '#ff4a4a', glow: '#ff6a6a', line: '#000000', magic: '#ff6a6a' } }],
+    slots: {
+      // u: x ∈ [-0.45, 0.45], v: y ∈ [0, 1.15] (front face)
+      doll: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.paper); Paint.strokes(g, w, h, p.paperD, 160, 30, 0.1, 1, 0.25, R, 0.4);
+        const X = (x) => (x / 0.9 + 0.5) * w, Y = (y) => (1 - y / 1.15) * h;
+        // face: two dot eyes and a thin mouth
+        g.fillStyle = p.ink; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(X(s * 0.04), Y(1.02), 5, 7, 0, 0, TAU); g.fill(); }
+        g.strokeStyle = p.ink; g.lineWidth = 3; g.beginPath(); g.moveTo(X(-0.03), Y(0.95)); g.lineTo(X(0.03), Y(0.95)); g.stroke();
+        // red seal on the chest + ink 符 lines
+        g.fillStyle = p.seal; g.fillRect(X(-0.06), Y(0.8), X(0.06) - X(-0.06), Y(0.66) - Y(0.8));
+        g.fillStyle = p.paper; g.font = `bold ${(Y(0.66) - Y(0.8)) * 0.8}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('敕', X(0), Y(0.73));
+        g.strokeStyle = p.ink; g.lineWidth = 4; g.beginPath(); g.moveTo(X(0), Y(0.62)); g.lineTo(X(0), Y(0.4)); g.moveTo(X(-0.05), Y(0.55)); g.lineTo(X(0.05), Y(0.55)); g.moveTo(X(-0.04), Y(0.47)); g.lineTo(X(0.04), Y(0.47)); g.stroke();
+        // fold creases
+        g.strokeStyle = rgba(p.paperD, 0.7); g.lineWidth = 2; g.beginPath(); g.moveTo(X(-0.18), Y(0.86)); g.lineTo(X(-0.18), Y(0.05)); g.moveTo(X(0.18), Y(0.86)); g.lineTo(X(0.18), Y(0.05)); g.stroke();
+      }, emit(g, w, h, p) { const X = (x) => (x / 0.9 + 0.5) * w, Y = (y) => (1 - y / 1.15) * h; g.fillStyle = shade(p.seal, -0.4); g.fillRect(X(-0.06), Y(0.8), X(0.06) - X(-0.06), Y(0.66) - Y(0.8)); } },
+      echo(g, w, h, p) { Paint.fill(g, w, h, p.paperD); },
+    },
+    build(B, p) {
+      B.bone('body', 'root', [0, 0.5, 0]); B.bone('head', 'body', [0, 0.88, 0]);
+      for (const [s, S] of SIDES) { B.bone('arm' + S, 'body', [s * 0.12, 0.8, 0]); B.bone('hand' + S, 'arm' + S, [s * 0.36, 0.68, 0]); B.bone('leg' + S, 'body', [s * 0.1, 0.4, 0]); }
+      B.bone('echo1', 'root', [0, 0.5, -0.15]); B.bone('echo2', 'root', [0, 0.5, -0.3]);
+      const wf = (x, y) => {
+        if (y > 0.86) return [['head', 1]];
+        const S = x > 0 ? 'L' : 'R';
+        if (abs(x) > 0.17 && y > 0.6) { const k = sm(0.17, 0.34, abs(x)); return [['arm' + S, 1 - k], ['hand' + S, k]]; }
+        if (y < 0.36) return [['leg' + S, sm(0.36, 0.1, y)], ['body', 1 - sm(0.36, 0.1, y)]];
+        return [['body', 1]];
+      };
+      const geo = () => { const g = new THREE.ExtrudeGeometry(dollShape(), { depth: 0.012, bevelEnabled: false, curveSegments: 2 }); g.translate(0, 0, -0.006); return g; };
+      const uvMap = (x, y) => [x / 0.9 + 0.5, y / 1.15];
+      B.geo(geo(), { slot: 'doll', w: (x, y) => wf(x, y), uvMap, smooth: false });
+      // after-images (ghost copies on lagging bones)
+      for (const [n, z] of [['echo1', -0.15], ['echo2', -0.3]]) B.geo(geo(), { at: [0, 0, z], slot: 'echo', layer: 'ghost', w: n, uvMap, smooth: false });
+    },
+    double: true,
+    springs: [{ chain: ['echo1'], tip: [0, 0.4, 0], k: 30, d: 4, g: 0, max: 0.7 }, { chain: ['echo2'], tip: [0, 0.4, 0], k: 18, d: 3, g: 0, max: 0.9 }],
+    fx: {
+      scraps: { n: 10, rate: 2, at: [0, 0.6, 0], box: [0.4, 0.8, 0.2], vel: [0, 0.2, -0.2], velR: [0.2, 0.1, 0.2], life: [1, 2], size: [0.04, 0.06], color: ['#ffffff', '#b8b0a0'], add: false, shape: 1, swirl: 5, swirlA: 1 },
+      cut: { n: 20, rate: 0, burstRate: 40, bone: 'handR', box: [0.1, 0.1, 0.1], vel: [0, 0.3, 1.0], velR: [0.6, 0.6, 0.3], life: [0.4, 0.8], size: [0.05, 0.08], color: ['#ffffff', '#f6f2e8'], add: false, shape: 1, swirl: 9, swirlA: 2 },
+      cast: { n: 20, rate: 0, burstRate: 30, bone: 'head', at: [0, 0.14, 0.05], box: [0.1, 0.05, 0.05], vel: [0, 0.1, 0.8], velR: [0.1, 0.1, 0.1], life: [0.5, 0.9], size: [0.08, 0.14], color: ['#ff6a6a', '#d0202a'] },
+      death: { n: 40, rate: 0, burstRate: 50, at: [0, 0.6, 0], box: [0.4, 1.0, 0.1], vel: [0, 0.8, 0], velR: [0.4, 0.4, 0.4], life: [1, 1.8], size: [0.05, 0.09], color: ['#ffd27a', '#2a1a14'], add: false, shape: 1, swirl: 4, swirlA: 1.5 },
+    },
+    clips: {
+      // floats and flutters like a sheet in a draught
+      idle(P, t) {
+        P.rootM(0, 0.18 + sin(t * 2.1) * 0.06, 0, sin(t * 1.7) * 0.15, sin(t * 0.9) * 0.4, sin(t * 2.3) * 0.08);
+        P.r('body', sin(t * 3.1) * 0.12, 0, 0).r('head', sin(t * 2.6 + 1) * 0.2, 0, sin(t * 1.9) * 0.1);
+        for (const [s, S] of SIDES) P.r('arm' + S, sin(t * 4 + s) * 0.25, 0, s * sin(t * 3.3) * 0.2).r('leg' + S, sin(t * 3.6 + s * 2) * 0.3);
+      },
+      move(P, ph, k, C) { this.idle(P, ph * 2, k, C); P.rootM(0, 0.1, 0, 0.5); },
+      // flips edge-on and slices
+      attack(P, t, k, C) { const A = atk(k, 0.3, 0.42, 0.6); this.idle(P, t, k, C); P.rootM(0, 0.18, 0.5 * A.s, 0, PI / 2 * A.a + 0.6 * A.s, 0.4 * A.s); P.r('armR', -1.2 * A.s, 0, -0.5 * A.a); P.ch('fx_cut', bump(k, 0.38, 0.55) * 4); },
+      // stare: seal glows, it hovers motionless
+      cast(P, t, k) { const u = sm(0, 0.25, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0.35 * u + 0.18, 0, 0, 0, 0); for (const [s, S] of SIDES) P.r('arm' + S, 0, 0, s * 0.9 * u); P.ch('glow', 3 * u); P.ch('fx_cast', bump(k, 0.4, 0.8) * 2); },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(0, 0.18, -0.25 * u, -0.8 * u, sin(t * 30) * 0.4 * u); P.ch('fx_scraps', 3 * u); },
+      // crumples & burns
+      die(P, t, k) { const u = E.inQ(seg(k, 0, 0.5)); P.rootM(0, 0.2 - 0.2 * u, 0, -1.2 * u, u * 2, 0); P.s('body', -0.4 * u, -0.3 * u, 0); P.ch('dissolve', E.inQ(seg(k, 0.15, 1))); P.ch('fx_death', bump(k, 0.1, 0.9) * 2); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.8)); P.rootM(-1.2 * u, 0.6 * u + 0.18, 0, 0, u * 6, u); },
+    },
+    dur: { attack: 0.8, cast: 1.4, die: 1.5, enter: 1.0 },
+    shadowZ: 0.5,
   });
 })();
