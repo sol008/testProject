@@ -712,7 +712,6 @@ G.I18N.add({
   '千萬盞燈，懸在黑暗裡。': 'Thousands upon thousands of lanterns, hanging in the dark.',
   '他們需要光。': 'They need light.',
   '那我呢？我也需要——': 'And what about me? I need—',
-  '他說不下去。': 'He can\'t finish.',
   // ================================================================ 2A 真結局「千燈」
   '島上的某個地方，又有一盞燈升了起來——「%s」。': 'Somewhere on the island, another lantern rises—"%s."',
   '……放手，星河。': '…Let go, Xinghe.',
@@ -778,7 +777,7 @@ G.I18N.add({
   '渡人者，人亦渡之。……去吧。': 'Those who ferry others are ferried in turn. …Go.',
   '光從白芷的輪廓褪去。這一次，沒有再回來。她眼裡的金光褪去，又是那雙溫暖的深褐色眼睛。她的手，第一次，有了溫度。': 'The light drains from Bai Zhi\'s outline. This time, it doesn\'t come back. The gold fades from her eyes, and they are warm dark brown again. For the first time, her hands are warm.',
   '我、我好冷！': 'I-I\'m so cold!',
-  '原來冷是這種感覺！好討厭！好棒！': 'So this is what cold feels like! It\'s awful! It\'s wonderful!',
+  '原來……人的冷，是這種感覺！好討厭！好棒！': 'So this is how cold feels… when you\'re a person! It\'s awful! It\'s wonderful!',
   '白芷打了一個噴嚏。麻糬也跟著打了一個噴嚏。': 'Bai Zhi sneezes. Mochi sneezes too.',
   '恭喜。妳現在是人了。人會感冒。': 'Congratulations. You\'re human now. Humans catch colds.',
   // ================================================================ E-T3 渡口・黎明 / E-T4 一年之約
@@ -966,7 +965,7 @@ G.I18N.add({
   '可是水燈，全都是往外漂的耶。': 'But the water lanterns all drift out, you know.',
   '他身後的坡上，紅纓、雲歸、陳伯，遠遠地站著。紅纓緊張得一直揉芋圓的肚子。': 'On the slope behind him, Hongying, Yun Gui and Uncle Chen stand at a distance. Hongying is so nervous she can\'t stop kneading Taro\'s belly.',
   '芋圓面無表情地忍耐著。': 'Taro endures it, expressionless.',
-  '（小聲）噓。': '(quietly) Shh.',
+  '……噓。': '…Shh.',
   '陳伯咳了一聲，轉身看著別處。': 'Uncle Chen coughs and turns to look elsewhere.',
   '今天傍晚，陳伯對星河說了一句奇怪的話：': 'This evening, Uncle Chen said something strange to Xinghe:',
   '「今暗，你早點去海邊。」': '"Tonight, go down to the shore early."',
@@ -1021,7 +1020,6 @@ G.I18N.add({
   '芋圓……要吹三下……': 'Taro balls… you blow three times…',
   '天燈上，我寫的是……我寫的是……': 'On the sky lantern, what I wrote was… what I wrote was…',
   '白芷，我一定會——我會……': 'Bai Zhi, I swear I\'ll—I\'ll…',
-  '停頓。': 'A pause.',
   '……我會……什麼？': '…I\'ll… what?',
   '他看著眼前哭著的少女。': 'He looks at the weeping girl in front of him.',
   '……妳是……誰？': '…Who… are you?',
@@ -1097,7 +1095,7 @@ G.I18N.add({
   '麻糬站了起來。': 'Mochi stands up.',
   '牠往前走了一步，前腳碰到了水，又停住。牠就那樣站著，一直看著那點光，直到它暗下去。': 'She takes one step forward; her front paws touch the water, and she stops. She stands just like that, watching that light, until it fades.',
   '然後，牠又慢慢地坐了回去。繼續等。': 'Then, slowly, she sits back down. And goes on waiting.',
-  '只有浪聲。': 'Only the sound of the waves.',
+  '星河握緊了手裡的玉牌。': 'Xinghe\'s hand closes around the jade tag.',
   '……我會找到妳的。': '…I\'ll find you.',
   // ================================================================ true-ending tail: E-T6..E-T8, then credits
   '#渡魂謠・第一段': '#Song of Crossing · First Verse',

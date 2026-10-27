@@ -262,28 +262,28 @@
   }
   const BIMM = ['sleep', 'stun', 'trance'];
   mkEnemy('c11_captain', { name: '烏鬚船主', art: 'pirate_ghost', variant: 2, scale: 1.55, lv: 39, elem: 'water', weak: ['earth'], boss: true, immune: BIMM,
-    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 42.6, gold: 28.8 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
+    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 31.9, gold: 28.8 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
     skills: [['e11_cap_blade', 4], ['e11_cap_crew', 2, 'ally_dead'], ['e11_cap_keg', 2], ['e11_cap_rob', 1], ['e_pirate_cutlass', 2]],
     drops: [['c11_ac_captain_patch', 1]],
     desc: '三百年前在澎湖海面橫行的海盜頭子。錨鏈拴在一盞長明燈上，「守不住路，燈就燒老子。」' });
   mkEnemy('c11_powder_keg', { name: '火藥桶', art: 'pirate_ghost', variant: 1, scale: 0.6, lv: 39, elem: 'fire', m: { hp: 0.2, atk: 0.1, def: 0.5, spd: 0.6, exp: 0, gold: 0 },
     skills: [['e11_keg_hiss', 1]], desc: '冒著煙的火藥桶。先打爆它，就炸到他們自己人。' });
   mkEnemy('c11_jailer', { name: '鎖魂將', art: 'lantern_golem', variant: 2, scale: 1.7, lv: 40, elem: 'metal', weak: ['fire'], resist: ['water'], boss: true, immune: BIMM,
-    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 48.3, gold: 27.8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
+    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 35.6, gold: 27.8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
     skills: [['e11_jl_sweep', 4], ['e11_jl_seal', 3], ['e11_jl_drain', 3], ['e11_jl_lock', 2], ['e11_jl_refill', 4, 'hp<50']],
     drops: [['c11_ac_iron_heart', 1]],
     desc: '用鎖鏈、魂罐與熄不掉的長明燈拼成的獄卒。沒有頭，胸口是一只空空的罐子。' });
   mkEnemy('c11_jar', { name: '魂罐', art: 'ghost_lantern', variant: 2, scale: 1.1, lv: 40, elem: 'water', m: { hp: 0.75, atk: 0.1, def: 0.8, spd: 0.5, exp: 0.3, gold: 0 },
     skills: [['e11_jar_hum', 1]], desc: '肩上與背上的魂罐。裡面的魂在替它擋刀。' });
   mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.025,
-    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 53.5, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
+    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 38.9, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
     skills: [['e11_kun_swallow', 3], ['e_kun_spout', 4], ['e11_kun_roll', 3]],
     drops: [], desc: '黑水溝的老守者。吞下迷路的魂，馱著游到彼岸再吐出來。燈暗了，牠找不到岸。' });
   mkEnemy('c11_kun_tumor', { name: '吞魂燈瘤', art: 'ghost_lantern', variant: 1, scale: 1.25, lv: 41, elem: 'water', weak: ['earth'],
     m: { hp: 1.1, atk: 0.8, mag: 0.9, def: 0.9, spd: 0.8, exp: 0.6, gold: 0 },
     skills: [['e11_tumor_light', 1]], desc: '鯤背上腫脹的燈瘤，塞滿了吐不出去的魂。每回合替鯤回復。' });
   mkEnemy('c11_warden_elder', { name: '千年燈塔守', art: 'tower_warden', variant: 2, scale: 1.5, lv: 42, elem: 'metal', weak: ['fire'], boss: true, immune: BIMM,
-    m: { hp: 9, atk: 1.65, mag: 1.55, def: 1.2, spd: 0.95, exp: 55.9, gold: 25.9 },
+    m: { hp: 9, atk: 1.65, mag: 1.55, def: 1.2, spd: 0.95, exp: 41.9, gold: 25.9 },
     skills: [['e11_wd_staff', 4], ['e11_wd_black', 3], ['e11_wd_ash', 2], ['e11_wd_guard', 2, 'hp<60']],
     drops: [['c11_lamp_ash', 1]], desc: '守了一千年的燈，自己的火卻黑了。燈罩臉裡的火，是黑的。' });
   for (const [id, v, nm] of [['c11_tongzi_a', 0, '赤金童'], ['c11_tongzi_b', 1, '青碧童'], ['c11_tongzi_c', 2, '紫玉童']]) {
@@ -5017,16 +5017,19 @@
       ['yungui:serious', '無相吞了太多光。剩下的，不夠帶他們過去。'],
       ['baizhi:serious', '……要有燈靈，回到燈裡。'],
     ]);
+    await pause(S, 1.0);
     await S.move('baizhi', 'L');
     await S.say('', '白芷鬆開星河的手，朝那點餘燼走去。星河抓住她的手。');
+    await pause(S, 0.6);
     await L(S, [
       ['xinghe:serious', '不准。'],
       ['baizhi:sad', '星河，你看他們。'],
       ['', '千萬盞燈，懸在黑暗裡。'],
       ['baizhi:sad', '他們需要光。'],
       ['xinghe:hurt', '那我呢？我也需要——'],
-      ['', '他說不下去。'],
     ]);
+    // he can't finish the sentence: let the silence say it
+    await pause(S, 1.8);
     const kind = G.Lanterns.count() >= G.Lanterns.THRESHOLD ? 'true' : 'normal';
     if (kind === 'true') await H.endingTrue(S); else await H.endingNormal(S);
   };
@@ -5058,13 +5061,19 @@
       ['xinghe:serious', '誰說的？'],
     ]);
     if (G.Lanterns.has('xd_lighthouse_home')) await L(S, [['xinghe:serious', '鵝鑾鼻的湯先生要我告訴妳——'], ['xinghe:serious', '「不用燒掉自己。分出去就好。」']]);
+    S.bgm(null, { fade: 2 });
+    await S.say('', '星河握著她的手，貼在自己的胸口。');
+    await pause(S, 0.8);
+    await S.say('xinghe:serious', '妳聽。');
+    await pause(S, 1.6);
     await L(S, [
-      ['', '星河握著她的手，貼在自己的胸口。'],
-      ['xinghe:serious', '妳聽。'],
       ['', '靜。然後——他的胸口裡，傳出很多、很多微弱的聲音：滴答、滴答。狗叫。歌仔戲的鑼。山歌。月琴。浪打在拼板舟上的聲音。'],
       ['', '白芷睜大了眼睛。'],
-      ['xinghe:smile', '妳不是一個人在發光。'],
     ]);
+    await pause(S, 1.0);
+    // ch7: 「每一次……都是她一個人在發光。」
+    await S.say('xinghe:smile', '妳不是一個人在發光。');
+    await pause(S, 0.6);
     S.bgm('ending', { fade: 2 });
     S.flag('ending_true');
     await L(S, [['', '星河胸口的心燈，一盞接一盞飛出來，飛向那點餘燼。'], ['', '然後——東方。海的那一頭。福爾摩沙的方向。']]);
@@ -5131,7 +5140,7 @@
       ['baizhi:surprise', '……星河。'],
       ['xinghe:normal', '嗯？'],
       ['baizhi:surprise', '我、我好冷！'],
-      ['baizhi:laugh', '原來冷是這種感覺！好討厭！好棒！'],
+      ['baizhi:laugh', '原來……人的冷，是這種感覺！好討厭！好棒！'],
       ['', '白芷打了一個噴嚏。麻糬也跟著打了一個噴嚏。'],
       ['yungui:smile', '恭喜。妳現在是人了。人會感冒。'],
     ]);
@@ -5417,9 +5426,9 @@
       ['xinghe:smile', '……笨蛋。'],
       ['', '他身後的坡上，紅纓、雲歸、陳伯，遠遠地站著。紅纓緊張得一直揉芋圓的肚子。'],
       ['', '芋圓面無表情地忍耐著。'],
-      ['yungui:smile', '（小聲）噓。'],
-      ['', '陳伯咳了一聲，轉身看著別處。'],
     ]);
+    await S.say('yungui:smile', '……噓。', { size: 21 });
+    await S.say('', '陳伯咳了一聲，轉身看著別處。');
     await S.narrate(['今天傍晚，陳伯對星河說了一句奇怪的話：', '「今暗，你早點去海邊。」'], { veil: 0.6 });
     S.sfx('step');
     await S.say('', '石階上，傳來腳步聲。很輕、很快的腳步聲。');
@@ -5434,9 +5443,14 @@
     S.spawn({ id: 'bz_e', sprite: 'baizhi', x: 3, y: 0, dir: 'down', speed: 5 });
     await S.move('bz_e', 'DDDDDD', { speed: 6 });
     await S.move('bz_e', 'RRRRRRD', { speed: 4 });
-    await L(S, [['', '一個人影沿著通往海邊的石階跑下來。藍色的大襟衫，黑色的長髮挽了一半，用一條紅繩鬆鬆地綁著；髮上，一枚小小的燈籠髮簪。'], ['', '她跑得太急，在最後三階差點摔倒，又站穩了。她在星河身後幾步停下來。喘著氣。'], ['baizhi:normal', '……星河。'], ['', '星河的背，僵住了。他慢慢地，轉過身。']]);
+    await L(S, [['', '一個人影沿著通往海邊的石階跑下來。藍色的大襟衫，黑色的長髮挽了一半，用一條紅繩鬆鬆地綁著；髮上，一枚小小的燈籠髮簪。'], ['', '她跑得太急，在最後三階差點摔倒，又站穩了。她在星河身後幾步停下來。喘著氣。']]);
+    await pause(S, 1.2);   // the footsteps stop; only the sea
+    await S.say('baizhi:normal', '……星河。');
+    await pause(S, 0.8);
+    await S.say('', '星河的背，僵住了。他慢慢地，轉過身。');
     S.face('player', 'bz_e'); S.face('bz_e', 'player');
-    S.bgm('love');
+    await pause(S, 1.0);
+    S.bgm('love', { fade: 3 });
     await L(S, [
       ['xinghe:surprise', '……白……芷……？'],
       ['baizhi:smile', '水燈都往外漂。'],
@@ -5455,14 +5469,24 @@
       ['', '星河哭著笑，脫下外套，披在她肩上。'],
       ['baizhi:smile', '我知道。'],
       ['', '她退後半步。看著他。'],
+      // the prologue's dream: 「每一次，你都走這座橋。每一次，橋都會斷。」
       ['baizhi:smile', '每一次，都是你走那座橋來找我。'],
       ['baizhi:smile', '每一次，橋都會斷。'],
-      ['baizhi:smile', '所以——'],
-      ['baizhi:smile', '星河，這一次，換我來找你了。'],
+    ]);
+    await pause(S, 1.0);
+    await S.say('baizhi:smile', '所以——');
+    await pause(S, 1.2);
+    await S.say('baizhi:smile', '星河，這一次，換我來找你了。');
+    await pause(S, 1.4);
+    await L(S, [
       ['', '星河站起來。他想說什麼，說不出來。他只是張開手。她撲進他懷裡。'],
       ['', '海面上，一千盞水燈一起往外漂。遠方的海平線上，一點光——彼岸燈——亮了一下，像在笑。'],
     ]);
-    await S.fadeOut(2.0, '#ffffff');
+    await pause(S, 1.0);
+    await S.fadeOut(2.4, '#ffffff');
+    // a held white silence before the credits theme
+    S.bgm(null, { fade: 2 });
+    await pause(S, 1.6);
   };
 
   // ---- 2B 普通結局「彼岸」
@@ -5503,10 +5527,16 @@
       ['xinghe:cry', '芋圓……要吹三下……'],
       ['xinghe:cry', '天燈上，我寫的是……我寫的是……'],
       ['xinghe:cry', '白芷，我一定會——我會……'],
-      ['', '停頓。'],
-      ['xinghe:think', '……我會……什麼？'],
-      ['', '他看著眼前哭著的少女。'],
-      ['xinghe:surprise', '……妳是……誰？'],
+    ]);
+    // the sentence goes where the memories went
+    await pause(S, 2.0);
+    await S.say('xinghe:think', '……我會……什麼？');
+    await pause(S, 0.8);
+    await S.say('', '他看著眼前哭著的少女。');
+    await pause(S, 1.0);
+    await S.say('xinghe:surprise', '……妳是……誰？');
+    await pause(S, 1.6);
+    await L(S, [
       ['', '白芷笑了。眼淚一顆一顆掉下來。'],
       ['baizhi:smile', '……我是燈。'],
       ['', '她把一塊小小的玉牌，輕輕放進他的口袋。他沒有發現。——玉牌上刻著「白芷」。'],
@@ -5635,11 +5665,19 @@
       ['', '麻糬站了起來。'],
       ['', '牠往前走了一步，前腳碰到了水，又停住。牠就那樣站著，一直看著那點光，直到它暗下去。'],
       ['', '然後，牠又慢慢地坐了回去。繼續等。'],
-      ['', '只有浪聲。'],
     ]);
+    // only the waves: no text, no music
+    S.bgm(null, { fade: 3 });
+    S.sfx('water');
+    await pause(S, 2.4);
+    // the prologue's dream voice
     await S.say('?', '星河……這一次，別再來找我了。', { color: '#c8d0e0' });
+    await pause(S, 1.6);
+    await S.say('', '星河握緊了手裡的玉牌。');
     await S.say('xinghe:serious', '……我會找到妳的。');
-    await S.fadeOut(2.0);
+    await pause(S, 1.4);
+    await S.fadeOut(3.0);
+    await pause(S, 1.2);
     S.flag('game_clear');
     seenEnding('normal');
     installEnding('normal');

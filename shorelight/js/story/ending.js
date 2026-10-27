@@ -35,12 +35,17 @@ G.Ending = (() => {
       for (let i = 0; i < n; i++) this.lanterns.push({ x: U.rand(0, G.W), y: G.H + U.rand(0, 1400), s: U.rand(0.4, 1.3), ph: U.rand(0, 7), v: U.rand(14, 34) });
       this.lineH = 46;
       this.total = E.credits.length * this.lineH + G.H + 200;
-      G.Music.play(kind === 'true' ? 'credits' : 'sad', { fade: 2 });
+      // lead-in: the last line of the ending is left to ring in silence while the first lanterns rise;
+      // only then does the credits theme come in and the names start to scroll
+      this.pre = 2.2;
+      this.musicOn = false;
     }
     update(dt) {
       this.t += dt;
       const fast = G.Input.held('ok') || G.Input.held('skip');
-      this.scroll += dt * (fast ? 260 : 46);
+      if (fast) this.pre = Math.min(this.pre, this.t);
+      if (!this.musicOn && this.t >= this.pre) { this.musicOn = true; G.Music.play(this.kind === 'true' ? 'credits' : 'sad', { fade: 3 }); }
+      if (this.t >= this.pre) this.scroll += dt * (fast ? 260 : 46);
       for (const l of this.lanterns) {
         l.y -= l.v * dt * (fast ? 4 : 1); l.ph += dt;
         if (l.y < -60) { l.y = G.H + U.rand(20, 300); l.x = U.rand(0, G.W); }
