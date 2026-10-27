@@ -190,7 +190,7 @@
   const tSlate = () => texSet('slate', 256, 256, (g, hg, w, h, r) => {
     g.fillStyle = '#6a7076'; g.fillRect(0, 0, w, h);
     for (let i = 0; i < 40; i++) { const y = r() * h; g.strokeStyle = rgba(r() < 0.5 ? '#4a5056' : '#8a9096', 0.35); g.lineWidth = 1 + r() * 3; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (r() - 0.5) * 10, w * 0.6, y + (r() - 0.5) * 10, w, y); g.stroke(); hg.strokeStyle = r() < 0.5 ? '#606060' : '#a0a0a0'; hg.lineWidth = 2; hg.beginPath(); hg.moveTo(0, y); hg.lineTo(w, y); hg.stroke(); }
-    for (let i = 0; i < 30; i++) { const x = r() * w, y = r() * h, rr = 4 + r() * 16; wrap(w, h, x, y, rr, (X, Y) => { g.fillStyle = rgba(r.pick(['#9aa04a', '#c8c070', '#b8b8a0', '#7a9a5a']), 0.28 + r() * 0.2); ell(g, X, Y, rr, rr * 0.7, r()); g.fill(); }); }
+    for (let i = 0; i < 12; i++) { const x = r() * w, y = r() * h, rr = 3 + r() * 10; wrap(w, h, x, y, rr, (X, Y) => { g.fillStyle = rgba(r.pick(['#9aa04a', '#c8c070', '#b8b8a0', '#7a9a5a']), 0.08 + r() * 0.1); ell(g, X, Y, rr, rr * 0.7, r()); g.fill(); }); }
     noiseFill(g, w, h, r, 800, '#1a1c1e', 0.05, 0.14, 1, 2);
     noiseFill(g, w, h, r, 300, '#e8ece8', 0.05, 0.12, 1, 2);
   }, { strength: 2 });
@@ -838,10 +838,15 @@
     for (let i = 0; i < pos.count; i++) {
       const U = uvA.getX(i), V = uvA.getY(i), v = 1 - V / L;
       const edge = sstep(0, 0.06, v);
-      const d = (lip * course(V) + 0.025 * sin(U * 3.1 + V * 1.7) * sin(U * 1.3 - V * 2.3)) * edge + (sp.flare || 0) * pow(v, 4);
+      const ua = U / P * TAU, kq = max(1, round(P * 0.5)); // periodic around the contour (no seam)
+      const d = (lip * course(V) + 0.025 * sin(ua * kq + V * 1.7) * sin(ua * max(1, round(kq * 0.4)) - V * 2.3)) * edge + (sp.flare || 0) * pow(v, 4);
       pos.setXYZ(i, pos.getX(i) + nor.getX(i) * d, pos.getY(i) + nor.getY(i) * d, pos.getZ(i) + nor.getZ(i) * d);
     }
     grid.computeVertexNormals();
+    { // weld normals across the u=0/u=1 seam
+      const nn = grid.attributes.normal;
+      for (let j = 0; j <= nv; j++) { const a = j * (nu + 1), b = a + nu; const x = nn.getX(a) + nn.getX(b), y = nn.getY(a) + nn.getY(b), z = nn.getZ(a) + nn.getZ(b), l = hypot(x, y, z) || 1; nn.setXYZ(a, x / l, y / l, z / l); nn.setXYZ(b, x / l, y / l, z / l); }
+    }
     // shade under each course lip + darker toward the ridge seam
     const tint = sp.tint || '#ffffff';
     B.add(M.straw(), grid, { tint, ao: false, aofn: (x, y, z) => {
@@ -870,14 +875,17 @@
       const bp = band.attributes.position;
       for (let i = 0; i < bp.count; i++) { const x = bp.getX(i) - x0, z = bp.getZ(i) - z0, l = hypot(x, z) || 1; bp.setXYZ(i, bp.getX(i) + x / l * 0.02, bp.getY(i), bp.getZ(i) + z / l * 0.02); }
       band.computeVertexNormals();
-      B.add(M.straw(), band, { tint: shade(tint === '#ffffff' ? '#d8c8a0' : tint, -0.25), ao: false });
+      const bandTint = shade(tint === '#ffffff' ? '#d8c8a0' : tint, -0.25);
+      B.add(M.straw(), band, { tint: bandTint, ao: false });
+      const band2 = band.clone(); { const ix = band2.index.array; for (let i = 0; i < ix.length; i += 3) { const t0 = ix[i]; ix[i] = ix[i + 2]; ix[i + 2] = t0; } band2.computeVertexNormals(); }
+      B.add(M.straw(), band2, { tint: bandTint, ao: false });
     }
     // fringe: hanging straw tips around the eave
     if (sp.fringe !== 0) {
       const fh = sp.fringe || 0.16, pts = [];
-      for (let i = 0; i <= nu * 2; i++) { const a = base(i / (nu * 2), 1); pts.push([a[0], a[1] - thick * 0.5 + 0.02, a[2]]); }
+      for (let i = 0; i <= nu * 2; i++) { const a = base(i / (nu * 2), 1); pts.push([a[0], a[1] + 0.04, a[2]]); }
       const nrm = (i) => { const p = pts[i]; const x = p[0] - x0, z = p[2] - z0, l = hypot(x, z) || 1; return [x / l, z / l]; };
-      const fg = gStrip(pts, fh, { out: 0.05, nrm, us: 1.2 });
+      const fg = gStrip(pts, fh + thick * 0.4, { out: 0.03, nrm, us: 1.2 });
       B.add(M.fringe(), fg, { tint: '#ffffff', ao: false, cast: true });
     }
     return { base, L, P };
@@ -889,7 +897,7 @@
     const z0 = sp.z0 || 0, sag = sp.sag || 0.04, tint = sp.tint || '#ffffff';
     const slopeL = hypot(EZ, yR - yE);
     for (const sd of [-1, 1]) {
-      const base = (u, v) => { const x = lerp(-EX, EX, u); const z = sd * EZ * v; return [x, yR - (yR - yE) * v - sag * sin(PI * v) + sd * 0, z + z0]; };
+      const base = (u, v) => { const x = lerp(-EX, EX, u) + (sp.x0 || 0); const z = sd * EZ * v; return [x, yR - (yR - yE) * v - sag * sin(PI * v) + sd * 0, z + z0]; };
       const grid = gGrid(48, courses * 4, base, (u, v) => [u * EX * 2, (1 - v) * slopeL], { flip: sd < 0 });
       const pos = grid.attributes.position, nor = grid.attributes.normal, uvA = grid.attributes.uv;
       const course = (V) => { const c = (slopeL - V) / slopeL * courses; return pow(c - floor(c), 1.8); };
@@ -908,8 +916,8 @@
       // eave band + fringe
       const band = gGrid(24, 1, (u, v) => { const p = base(u, 1); return [p[0], p[1] - thick * v + 0.02, p[2] + sd * 0.03]; }, (u, v) => [u * EX * 2, v * thick], { flip: sd > 0 });
       B.add(M.straw(), band, { tint: '#8a7650', ao: false });
-      const pts = []; for (let i = 0; i <= 40; i++) { const p = base(i / 40, 1); pts.push([p[0], p[1] - thick * 0.4, p[2] + sd * 0.04]); }
-      B.add(M.fringe(), gStrip(pts, sp.fringe || 0.14, { out: 0.04, nrm: () => [0, sd], us: 1.2 }), { ao: false });
+      const pts = []; for (let i = 0; i <= 40; i++) { const p = base(i / 40, 1); pts.push([p[0], p[1] + 0.03, p[2] + sd * 0.01]); }
+      B.add(M.fringe(), gStrip(pts, (sp.fringe || 0.14) + thick * 0.5, { out: 0.03, nrm: () => [0, sd], us: 1.2 }), { ao: false });
       // rake (gable-edge) bands
       for (const ex of [-1, 1]) {
         const rk = gGrid(1, 12, (u, v) => { const p = base(ex > 0 ? 1 : 0, v); return [p[0] + ex * 0.02, p[1] - thick * u + 0.03, p[2]]; }, (u, v) => [u * thick, v * slopeL], { flip: (ex > 0) !== (sd > 0) });
@@ -937,7 +945,7 @@
     const W = 4, H = 3, fy = 0.85, door = doorOf2(o, W, 1);
     const hx = W / 2, hz = H / 2;
     // posts under the floor (grid) + front & back roof posts
-    const postT = '#6a4a30';
+    const postT = '#9a7050';
     for (let ix = 0; ix <= 4; ix++) for (let iz = 0; iz <= 3; iz++) {
       const x = -hx + 0.22 + ix * (W - 0.44) / 4, z = -hz + 0.22 + iz * (H - 0.44) / 3;
       B.add(M.wood(), gCyl(0.075, 0.09, fy, 7, { x: x + (rnd() - 0.5) * 0.04, z }), { tint: postT, jitter: 0.2, rnd });
@@ -949,7 +957,7 @@
     // plank floor (individual boards)
     for (let i = 0; i < 16; i++) {
       const z = -hz + 0.12 + i * (H - 0.24) / 16 + (H - 0.24) / 32;
-      B.add(M.wood(), gBox(W - 0.1 + (rnd() - 0.5) * 0.06, 0.05, (H - 0.24) / 16 - 0.008, { y: fy, z }, { grain: 'long', ou: rnd() * 4 }), { tint: '#8a6444', jitter: 0.18, rnd, ao: { h: 1.05, min: 0.55 } });
+      B.add(M.wood(), gBox(W - 0.1 + (rnd() - 0.5) * 0.06, 0.05, (H - 0.24) / 16 - 0.008, { y: fy, z }, { grain: 'long', ou: rnd() * 4 }), { tint: '#c49a70', jitter: 0.18, rnd, ao: { h: 1.05, min: 0.55 } });
     }
     // roof posts rising from the floor to the eave plate + low benches inside
     const eave = 2.25;
@@ -959,8 +967,8 @@
     for (const z of [-hz + 0.25, hz - 0.25]) B.add(M.wood(), gRod([-hx + 0.1, eave, z], [hx - 0.1, eave, z], 0.07, 0.07, 7), { tint: '#4e3420' });
     for (const x of [-hx + 0.25, hx - 0.25]) B.add(M.wood(), gRod([x, eave, -hz + 0.2], [x, eave, hz - 0.2], 0.06, 0.06, 7), { tint: '#4e3420' });
     // central king posts to the ridge
-    for (const x of [-0.9, 0.9]) B.add(M.wood(), gCyl(0.07, 0.07, 3.5 - fy, 7, { x, y: fy }), { tint: '#4e3420' });
-    B.add(M.wood(), gRod([-1.4, 3.45, 0], [1.4, 3.45, 0], 0.08, 0.08, 7), { tint: '#4e3420' });
+    for (const x of [-0.9, 0.9]) B.add(M.wood(), gCyl(0.07, 0.07, 3.2 - fy, 7, { x, y: fy }), { tint: '#4e3420' });
+    B.add(M.wood(), gRod([-1.4, 3.15, 0], [1.4, 3.15, 0], 0.08, 0.08, 7), { tint: '#4e3420' });
     // benches along the sides
     for (const z of [-hz + 0.45, hz - 0.45]) {
       if (z > 0) { // front bench split around the doorway
@@ -981,23 +989,23 @@
     B.add(M.wood(), gRod([lx, 0, lz + 0.25], [lx, fy + 0.05, hz - 0.05], 0.12, 0.1, 8), { tint: '#7a5a3a' });
     for (let k = 1; k <= 4; k++) { const t = k / 5; B.add(M.wood(), gBox(0.26, 0.04, 0.12, { x: lx, y: lerp(0, fy, t) + 0.08, z: lerp(lz + 0.25, hz - 0.05, t) + 0.02 }), { tint: '#5a3c24' }); }
     // ---- the hood: low sweeping thatch, rounded ends
-    thatchHood(B, { RX: 1.45, EX: hx + 0.6, EZ: hz + 0.6, rc: hz + 0.2, yR: 3.7, yE: 1.95, courses: 9, lip: 0.08, thick: 0.28, fringe: 0.2, nu: 80,
+    thatchHood(B, { RX: 1.45, EX: hx + 0.5, EZ: hz + 0.5, rc: hz + 0.2, yR: 3.45, yE: 2.1, courses: 8, lip: 0.08, thick: 0.28, fringe: 0.2, nu: 80,
       s: (v) => pow(sin(v * PI / 2), 0.8), p: (v) => pow(v, 1.5), tint: '#e6dcc4', weather: 0.35 });
-    ridgeRoll(B, -1.5, 1.5, 3.74, 0, 0.12, { step: 0.36 });
+    ridgeRoll(B, -1.5, 1.5, 3.46, 0, 0.11, { step: 0.36 });
     // fiteu (金草) tufts on the ridge — slim green leaves with yellow flower sprays
     const leafM = mat('leaf', () => G.R3M.env({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide, vertexColors: true }));
     for (const x of [-0.85, 0.05, 0.9]) {
       for (let k = 0; k < 7; k++) {
         const a = k / 7 * TAU + rnd(), lean = 0.35 + rnd() * 0.3, len = 0.28 + rnd() * 0.12;
         const lg = new THREE.PlaneGeometry(0.035, len, 1, 2); lg.translate(0, len / 2, 0);
-        B.add(leafM, place(lg, { x, y: 3.9, z: 0, rx: lean * cos(a), rz: lean * sin(a), ry: a }), { tint: '#4f7a2e', ao: false });
+        B.add(leafM, place(lg, { x, y: 3.58, z: 0, rx: lean * cos(a), rz: lean * sin(a), ry: a }), { tint: '#4f7a2e', ao: false });
       }
-      for (let k = 0; k < 6; k++) B.add(glowM('#f2d24a', 0.25), gSphere(0.03, { x: x + (rnd() - 0.5) * 0.24, y: 4.12 + rnd() * 0.08, z: (rnd() - 0.5) * 0.24 }, 6, 4), { ao: false });
+      for (let k = 0; k < 6; k++) B.add(glowM('#f2d24a', 0.25), gSphere(0.03, { x: x + (rnd() - 0.5) * 0.24, y: 3.8 + rnd() * 0.08, z: (rnd() - 0.5) * 0.24 }, 6, 4), { ao: false });
     }
     // rafters visible under the eaves
     for (let i = 0; i < 14; i++) {
       const a = i / 14 * TAU, ex = cos(a) * (hx + 0.35), ez = sin(a) * (hz + 0.35);
-      B.add(M.bamboo(), gRod([ex, 2.0, ez], [clamp(ex * 0.45, -1.4, 1.4), 3.45, ez * 0.08], 0.03, 0.03, 5), { tint: '#8a7448', ao: false });
+      B.add(M.bamboo(), gRod([ex, 2.0, ez], [clamp(ex * 0.45, -1.4, 1.4), 3.15, ez * 0.08], 0.03, 0.03, 5), { tint: '#8a7448', ao: false });
     }
     return B.build();
   }
@@ -1005,6 +1013,706 @@
     key: (o) => String(doorOf2(o, 4, 1)),
     build(o) { return buildKuba(o); },
     lights: () => [{ x: 0, y: 1.5, z: 0, color: '#ff9440', intensity: 1.3, distance: 6, flicker: 0.5 }],
+  });
+
+  // ================================================================================================
+  //  shared small parts: paper lanterns, rack textures
+  // ================================================================================================
+  const tPaper = () => texSet('paper', 128, 128, (g, hg, w, h, r) => {
+    g.fillStyle = '#f4ece0'; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 8) { g.fillStyle = 'rgba(120,80,40,0.35)'; g.fillRect(x, 0, 1.5, h); hg.fillStyle = '#c0c0c0'; hg.fillRect(x, 0, 2, h); }
+    for (let i = 0; i < 300; i++) { g.fillStyle = rgba('#d8c8b0', 0.2); g.fillRect(r() * w, r() * h, 1 + r() * 3, 1); }
+  }, { strength: 1.5 });
+  function lanternMat(col, lit, k = 1.6) {
+    const t = tPaper();
+    return mat('lantern' + col + (lit ? 'L' + k : ''), () => G.R3M.env({ color: new THREE.Color(col), map: t.map, roughness: 0.7, emissive: lit ? new THREE.Color(col) : new THREE.Color(0), emissiveMap: lit ? t.map : null, emissiveIntensity: lit ? k : 0, cutout: false }));
+  }
+  // hanging lantern group: pivot at the hook, body below. Name given so update() can sway it.
+  function lantern(name, col, r, opt = {}) {
+    const g = new THREE.Group(); g.name = name;
+    const cord = opt.cord != null ? opt.cord : 0.12, lit = opt.lit !== false;
+    const body = gLathe([[0.001, -r * 1.25], [r * 0.55, -r * 1.15], [r * 0.95, -r * 0.6], [r, 0], [r * 0.95, r * 0.6], [r * 0.55, r * 1.15], [0.001, r * 1.25]], 14, { y: -cord - r * 1.3 }, { us: 1 / (TAU * r * 0.8), vs: 1 / (r * 2.6) });
+    const bm = new THREE.Mesh(body, lanternMat(col, lit, opt.k || 1.6)); bm.castShadow = false;
+    g.add(bm);
+    const capM = M.plain();
+    const caps = new Builder();
+    caps.add(capM, gCyl(r * 0.5, r * 0.5, r * 0.18, 10, { y: -cord - r * 0.15 }), { tint: '#2a1a10', ao: false });
+    caps.add(capM, gCyl(r * 0.5, r * 0.5, r * 0.18, 10, { y: -cord - r * 2.6 }), { tint: '#2a1a10', ao: false });
+    caps.add(capM, gRod([0, 0, 0], [0, -cord - r * 0.1, 0], 0.006, 0.006, 3), { tint: '#2a1a10', ao: false });
+    if (opt.tassel) caps.add(lanternMat('#d23a2a', false), gCyl(0.004, r * 0.25, r * 0.9, 6, { y: -cord - r * 3.5 }), { ao: false });
+    const cm = caps.build(); cm.children.forEach((c) => { c.castShadow = false; });
+    g.add(cm);
+    if (opt.text) {
+      const tx = G.R3M.tex('ac:ltext:' + opt.text, 64, 128, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#3a1008'; c.font = 'bold 40px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; [...opt.text].slice(0, 3).forEach((ch, i, a) => c.fillText(ch, w / 2, h / 2 + (i - (a.length - 1) / 2) * 42)); });
+      const pm = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.9, r * 1.8), new THREE.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+      pm.position.set(0, -cord - r * 1.3, r * 1.01); pm.renderOrder = 3;
+      const pm2 = pm.clone(); pm2.position.z = -r * 1.01; pm2.rotation.y = PI;
+      g.add(pm, pm2);
+    }
+    g.userData.noMerge = true;
+    return g;
+  }
+  const swayAll = (node, names, t, s, amp = 0.08, f = 1.7) => { names.forEach((n, i) => { const l = node.getObjectByName(n); if (l) { l.rotation.z = sin(t * f + s + i * 1.3) * amp; l.rotation.x = sin(t * f * 0.77 + s * 1.7 + i) * amp * 0.6; } }); };
+
+  // ################################################################################################
+  //  TAO_HOUSE — Tao (達悟) vahey, the semi-subterranean main house: a cobble-walled pit, house front of
+  //  planks with small low doorways, a low thatched roof whose ridge barely rises above ground level,
+  //  held down by horizontal rods against typhoons; stone steps down at the door column, a backrest
+  //  stone in the courtyard. Some houses (by position) also have a tagakal, the raised cool pavilion.
+  //  The ground in Map3D is flat at y=0, so the pit is expressed as a raised cobble embankment.
+  // ################################################################################################
+  function buildTaoHouse(o, withPav) {
+    const B = new Builder(), rnd = RNG(5151 + (withPav ? 7 : 0));
+    const hx = 2, hz = 1.5, door = doorOf2(o, 4, 1), rimY = 0.8;
+    const dX = -hx + door + 0.5;
+    // pit floor: flat pebble paving
+    B.add(M.cobble(), place(new THREE.PlaneGeometry(3.3, 2.5).rotateX(-PI / 2), { y: 0.015, z: 0.05 }), { tint: '#b8b4aa', ao: false, aofn: (x, y, z) => 0.6 + 0.4 * sstep(-hz + 0.5, -hz + 1.6, z) * sstep(hx - 0.2, hx - 1.0, abs(x)) });
+    // retaining walls: back + sides (inner face cobble, top rim stones, outer earth slope with cobbles)
+    const wallSeg = (x0, z0, x1, z1, h, outDir) => {
+      const L = hypot(x1 - x0, z1 - z0), a = atan2(z1 - z0, x1 - x0), cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+      B.add(M.cobble(), gBox(L, h, 0.42, { x: cx + outDir[0] * 0.21, z: cz + outDir[1] * 0.21, ry: -a }, { ou: rnd() * 3 }), { tint: '#c8c6c0', ao: { h: h, min: 0.45 } });
+      // sloped outer embankment
+      const sl = gBox(L + 0.3, h * 0.92, 0.6, { x: cx + outDir[0] * 0.62, z: cz + outDir[1] * 0.62, ry: -a }, { ou: rnd() * 3 });
+      const sp = sl.attributes.position; // taper top outward edge down (berm)
+      for (let i = 0; i < sp.count; i++) { if (sp.getY(i) > 0.1) { const lx = sp.getX(i) - cx - outDir[0] * 0.62, lz = sp.getZ(i) - cz - outDir[1] * 0.62; if (lx * outDir[0] + lz * outDir[1] > 0.1) sp.setY(i, h * 0.2); } }
+      sl.computeVertexNormals();
+      B.add(M.cobble(), triUV(sl, 1), { tint: '#a8a49a', ao: { h: h, min: 0.55 } });
+      // rim cobbles along the top
+      const n = floor(L / 0.26);
+      for (let i = 0; i <= n; i++) { const t = i / max(1, n); B.add(M.stone(), gRock(0.13 + rnd() * 0.05, rnd, { x: lerp(x0, x1, t) + outDir[0] * (0.2 + rnd() * 0.12), y: h - 0.02, z: lerp(z0, z1, t) + outDir[1] * (0.2 + rnd() * 0.12) }), { tint: '#c4c2bb', jitter: 0.25, rnd, ao: false, aofn: (x, y) => 0.75 + 0.25 * sstep(h - 0.1, h + 0.1, y) }); }
+    };
+    wallSeg(-hx + 0.42, -hz + 0.42, hx - 0.42, -hz + 0.42, rimY, [0, -1]);
+    wallSeg(-hx + 0.42, -hz + 0.42, -hx + 0.42, hz - 0.3, rimY, [-1, 0]);
+    wallSeg(hx - 0.42, -hz + 0.42, hx - 0.42, hz - 0.3, rimY, [1, 0]);
+    // front rim (low) with a gap and steps at the door column
+    const fz = hz - 0.2, fh = 0.38;
+    for (const [a, b] of [[-hx + 0.1, dX - 0.38], [dX + 0.38, hx - 0.1]]) if (b - a > 0.2) {
+      B.add(M.cobble(), gBox(b - a, fh, 0.36, { x: (a + b) / 2, z: fz }, { ou: rnd() * 3 }), { tint: '#c0beb6', ao: { h: fh, min: 0.5 } });
+      for (let x = a + 0.12; x < b; x += 0.24) B.add(M.stone(), gRock(0.12, rnd, { x, y: fh - 0.03, z: fz + (rnd() - 0.5) * 0.1 }), { tint: '#cac8c0', jitter: 0.25, rnd, ao: false });
+    }
+    for (let i = 0; i < 3; i++) B.add(M.stone(), gBox(0.7, 0.13, 0.26, { x: dX, y: 0, z: fz + 0.36 - i * 0.24, sy: (i + 1) }), { tint: '#bcb8ae', ao: { h: 0.4, min: 0.6 } });
+    // corner fills of the rim
+    for (const sx of [-1, 1]) B.add(M.cobble(), gBox(0.42, fh + 0.1, 0.6, { x: sx * (hx - 0.21), z: hz - 0.3 }), { tint: '#b8b6ae' });
+    // ---- vahey front: plank wall with three small low doorways, sill & lintel
+    const wz = -0.32, wx = 1.32, wh = 0.98;
+    for (let i = 0; i < 12; i++) {
+      const x0 = -wx + i * (2 * wx / 12), x1 = x0 + 2 * wx / 12;
+      const dc = [-0.88, 0, 0.88].some((d) => abs((x0 + x1) / 2 - d) < 0.2);
+      if (dc) { B.add(M.wood(), gBox(x1 - x0 - 0.01, 0.2, 0.06, { x: (x0 + x1) / 2, y: wh - 0.2, z: wz }), { tint: '#6a4a32' }); B.add(M.wood(), gBox(x1 - x0 - 0.01, 0.12, 0.06, { x: (x0 + x1) / 2, y: 0, z: wz }), { tint: '#6a4a32' }); continue; }
+      B.add(M.wood(), gBox(x1 - x0 - 0.008, wh, 0.07, { x: (x0 + x1) / 2, z: wz }, { grain: 'long', ou: rnd() * 3 }), { tint: '#8a6040', jitter: 0.2, rnd });
+    }
+    for (const d of [-0.88, 0, 0.88]) {
+      B.add(M.plain(), gBox(0.38, wh - 0.3, 0.02, { x: d, y: 0.12, z: wz - 0.05 }), { tint: '#0c0806', ao: false });
+      for (const s of [-1, 1]) B.add(M.wood(), gBox(0.06, wh, 0.1, { x: d + s * 0.22, z: wz + 0.01 }), { tint: '#5a3e28' });
+    }
+    B.add(M.wood(), gBox(2 * wx + 0.2, 0.08, 0.12, { y: wh - 0.04, z: wz }, { grain: 'long' }), { tint: '#4e3420' });
+    // inner side walls of the house (hidden mostly by roof) and the back mass
+    B.add(M.wood(), gBox(2 * wx, wh, 0.9, { z: wz - 0.5 }), { tint: '#4a3424', ao: false });
+    // ---- low thatched roof: ridge barely above the rim
+    thatchHood(B, { RX: 0.95, EX: 1.78, EZ: 0.98, rc: 0.55, yR: 1.62, yE: 0.86, z0: -0.72, courses: 6, lip: 0.06, thick: 0.18, fringe: 0.1, nu: 64,
+      s: (v) => pow(v, 0.75), p: (v) => pow(v, 1.25), tint: '#ede4cc', weather: 0.45 });
+    ridgeRoll(B, -1.0, 1.0, 1.66, -0.72, 0.08, { step: 0.4, tint: '#a08a5a' });
+    // typhoon binding rods across the thatch (bamboo poles following the roof curve) + stone weights
+    for (const f of [0.35, 0.68]) {
+      const pts = []; for (let i = 0; i <= 10; i++) { const x = lerp(-1.42, 1.42, i / 10); const zz = -0.72 + 0.98 * pow(f, 0.75) * 1.02; const y = 1.62 - (1.62 - 0.86) * pow(f, 1.25) + 0.07 - 0.25 * pow(abs(x) / 1.42, 6); pts.push([x, y, zz]); }
+      B.add(M.bamboo(), gTube(pts, 0.025, 20, 5), { tint: '#7a6a44', ao: false });
+    }
+    // backrest stone + pebbles in the courtyard
+    B.add(M.stone(), gBox(0.18, 0.7, 0.14, { x: 1.25, z: 0.55, rz: 0.06 }), { tint: '#9a9e9e' });
+    for (let i = 0; i < 6; i++) B.add(M.stone(), gRock(0.05 + rnd() * 0.04, rnd, { x: (rnd() - 0.5) * 2.6, y: 0.02, z: 0.2 + rnd() * 0.8 }), { tint: '#b0aca4', ao: false });
+    // optional tagakal (raised cool pavilion) at the front-right corner
+    if (withPav) {
+      const px = 1.45, pz = 0.95, py = 1.25;
+      for (const [x, z] of [[-0.42, -0.36], [0.42, -0.36], [-0.42, 0.36], [0.42, 0.36]]) B.add(M.wood(), gCyl(0.05, 0.06, py + 0.95, 6, { x: px + x, z: pz + z }), { tint: '#6a4a30' });
+      for (let i = 0; i < 8; i++) B.add(M.wood(), gBox(1.0, 0.05, 0.1, { x: px, y: py, z: pz - 0.38 + i * 0.108 }, { grain: 'long' }), { tint: '#9a7452', jitter: 0.2, rnd });
+      B.add(M.wood(), gBox(1.0, 0.1, 0.1, { x: px, y: py - 0.12, z: pz - 0.36 }), { tint: '#5a3e28' });
+      B.add(M.wood(), gBox(1.0, 0.1, 0.1, { x: px, y: py - 0.12, z: pz + 0.36 }), { tint: '#5a3e28' });
+      thatchGable(B, { EX: 0.6, EZ: 0.52, yR: py + 1.2, yE: py + 0.8, z0: pz, courses: 3, lip: 0.04, thick: 0.1, fringe: 0.08, tint: '#efe6ce', x0: px });
+    }
+    return B.build();
+  }
+  const taoPav = (o) => (o.pavilion != null ? !!o.pavilion : hash2(o.x | 0, o.y | 0, 31) < 0.5);
+  def('tao_house', {
+    key: (o) => doorOf2(o, 4, 1) + (taoPav(o) ? 'p' : ''),
+    build(o) { return buildTaoHouse(o, taoPav(o)); },
+  });
+
+  // ################################################################################################
+  //  C10_AMIS_HOUSE — Amis (阿美族) thatched long house: raised plank floor, split-bamboo walls with
+  //  rattan binding bands, a deep-eaved gabled thatch roof over a front porch with posts, barred windows.
+  //  o.big (age-grade house) adds a carved & painted front board. Footprint w×3 (o.w), door o.door.
+  // ################################################################################################
+  function buildAmis(o) {
+    const B = new Builder(), w = o.w || 5, rnd = RNG(6060 + w);
+    const door = o.door == null ? 2 : clamp(o.door | 0, 0, w - 1), big = !!o.big;
+    const hx = w / 2, hz = 1.5, fy = 0.38, wallZ0 = -1.25, wallZ1 = 0.55, wTop = 2.05;
+    // floor platform on short posts + stone footings
+    for (let i = 0; i <= w * 2; i++) for (const z of [-1.3, -0.4, 0.5, 1.3]) {
+      const x = -hx + 0.15 + i * (2 * hx - 0.3) / (w * 2);
+      B.add(M.wood(), gCyl(0.06, 0.07, fy, 6, { x, z }), { tint: '#6a4a30' });
+    }
+    for (let i = 0; i < 22; i++) {
+      const z = -1.42 + i * (2.84 / 22) + 0.064;
+      B.add(M.bamboo(), gRod([-hx + 0.08, fy + 0.035, z], [hx - 0.08, fy + 0.035, z], 0.06, 0.06, 6), { tint: '#b8a06a', jitter: 0.25, rnd, ao: { h: 0.6, min: 0.55 } });
+    }
+    // walls: split-bamboo panels framed by posts; rattan binding bands
+    const wallH = wTop - fy;
+    const panel = (x0, x1, z, rot) => {
+      const g = gBox(x1 - x0, wallH, 0.06, { x: (x0 + x1) / 2, y: fy, z, ry: rot || 0 });
+      B.add(M.bwall(), g, { tint: '#ffffff', ao: { h: 1.4, min: 0.5, y0: fy } });
+    };
+    const dx0 = -hx + door + 0.2, dx1 = -hx + door + 0.8;
+    // front wall with door gap and window openings (window = darker recessed panel + bamboo bars)
+    panel(-hx + 0.25, dx0, wallZ1); panel(dx1, hx - 0.25, wallZ1);
+    B.add(M.bwall(), gBox(dx1 - dx0, 0.3, 0.06, { x: (dx0 + dx1) / 2, y: wTop - 0.3, z: wallZ1 }), { tint: '#e8e0cc' });
+    B.add(M.plain(), gBox(dx1 - dx0, wallH - 0.3, 0.02, { x: (dx0 + dx1) / 2, y: fy, z: wallZ1 - 0.25 }), { tint: '#1a120c', ao: false });
+    for (let i = 0; i < w; i++) {
+      if (i === door || i === 0 || i === w - 1) continue;
+      const wx = -hx + i + 0.5;
+      B.add(M.plain(), gBox(0.48, 0.34, 0.02, { x: wx, y: fy + 0.82, z: wallZ1 + 0.035 }), { tint: '#1e140c', ao: false });
+      for (let k = 0; k < 5; k++) B.add(M.bamboo(), gRod([wx - 0.2 + k * 0.1, fy + 0.8, wallZ1 + 0.06], [wx - 0.2 + k * 0.1, fy + 1.18, wallZ1 + 0.06], 0.014, 0.014, 4), { tint: '#9a7c44', ao: false });
+      B.add(M.wood(), gBox(0.58, 0.05, 0.08, { x: wx, y: fy + 0.78, z: wallZ1 + 0.05 }), { tint: '#5a3e24' });
+    }
+    panel(-hx + 0.25, hx - 0.25, wallZ0);
+    for (const sx of [-1, 1]) B.add(M.bwall(), gBox(wallZ1 - wallZ0, wallH, 0.06, { x: sx * (hx - 0.25), y: fy, z: (wallZ0 + wallZ1) / 2, ry: PI / 2 }), { tint: '#ffffff', ao: { h: 1.4, min: 0.5, y0: fy } });
+    // rattan bands
+    for (const by of [fy + 0.25, wTop - 0.3]) {
+      for (const z of [wallZ0 - 0.04, wallZ1 + 0.04]) B.add(M.rope(), gRod([-hx + 0.22, by, z], [hx - 0.22, by, z], 0.022, 0.022, 4, { us: 2 }), { tint: '#6a4a26', ao: false });
+      for (const sx of [-1, 1]) B.add(M.rope(), gRod([sx * (hx - 0.21), by, wallZ0], [sx * (hx - 0.21), by, wallZ1], 0.022, 0.022, 4), { tint: '#6a4a26', ao: false });
+    }
+    // corner & porch posts, eave plates
+    for (const x of [-hx + 0.25, hx - 0.25]) for (const z of [wallZ0, wallZ1]) B.add(M.wood(), gCyl(0.08, 0.09, wTop - fy + 0.15, 7, { x, y: fy, z }), { tint: '#6a4a2a' });
+    for (let i = 0; i <= w; i++) { const x = clamp(-hx + i, -hx + 0.15, hx - 0.15); B.add(M.wood(), gCyl(0.07, 0.085, wTop + 0.05, 7, { x, z: hz - 0.12 }), { tint: '#7a5634', jitter: 0.2, rnd }); }
+    B.add(M.wood(), gRod([-hx, wTop + 0.05, hz - 0.12], [hx, wTop + 0.05, hz - 0.12], 0.08, 0.08, 7), { tint: '#5a3e22' });
+    B.add(M.wood(), gRod([-hx, wTop + 0.05, -1.35], [hx, wTop + 0.05, -1.35], 0.08, 0.08, 7), { tint: '#5a3e22' });
+    // interior glow at the doorway + a hearth hint
+    B.add(glowM('#ff9a50', 0.35), gBox(0.3, 0.12, 0.02, { x: (dx0 + dx1) / 2, y: fy + 0.02, z: wallZ1 - 0.22 }), { ao: false, cast: false });
+    // ---- gabled thatch with deep eaves over the porch
+    const yR = big ? 3.95 : 3.6;
+    thatchGable(B, { EX: hx + 0.35, EZ: hz + 0.38, yR, yE: wTop + 0.1, courses: big ? 8 : 7, lip: 0.07, thick: 0.2, fringe: 0.16, sag: 0.06, tint: '#efe4c6' });
+    ridgeRoll(B, -hx - 0.3, hx + 0.3, yR + 0.02, 0, 0.075, { step: 0.6, tint: '#b09468' });
+    // gable triangles (bamboo infill) at both ends
+    for (const sx of [-1, 1]) {
+      const tri = new THREE.BufferGeometry();
+      const yb = wTop + 0.05, x = sx * (hx - 0.2);
+      tri.setAttribute('position', new THREE.Float32BufferAttribute([x, yb, -hz + 0.1, x, yb, hz - 0.1, x, yR - 0.15, 0], 3));
+      tri.setAttribute('uv', new THREE.Float32BufferAttribute([-1.4, 0, 1.4, 0, 0, yR - yb], 2));
+      if (sx < 0) tri.setIndex([0, 1, 2]); else tri.setIndex([0, 2, 1]);
+      tri.computeVertexNormals();
+      B.add(M.bwall(), tri, { tint: '#d8c8a0', ao: false });
+    }
+    if (big) { // age-grade house: carved & painted front board under the eave
+      const bt = G.R3M.tex('ac:amisboard', 512, 128, (g, W, H) => {
+        g.fillStyle = '#3a2614'; g.fillRect(0, 0, W, H);
+        for (let k = 0; k < 14; k++) { const x = 20 + k * 34; g.fillStyle = k % 2 ? '#f0e6d0' : '#c8402a'; poly(g, [x, H - 22, x + 17, 22, x + 34, H - 22]); g.fill(); }
+        g.fillStyle = '#e8b040'; g.fillRect(0, 8, W, 6); g.fillRect(0, H - 14, W, 6);
+      });
+      const bm = mat('amisboard', () => G.R3M.env({ map: bt, roughness: 0.7, vertexColors: true }));
+      B.add(bm, place(new THREE.PlaneGeometry(2.2, 0.55), { y: wTop + 0.62, z: hz + 0.08 }), { ao: false });
+      B.add(M.wood(), gBox(2.3, 0.06, 0.08, { y: wTop + 0.32, z: hz + 0.07 }), { tint: '#3a2614' });
+    }
+    return B.build();
+  }
+  def('c10_amis_house', {
+    key: (o) => (o.w || 5) + ':' + (o.door == null ? 2 : o.door) + (o.big ? 'b' : ''),
+    build(o) { return buildAmis(o); },
+    lights: (o) => { const w = o.w || 5, d = o.door == null ? 2 : o.door; return [{ x: -w / 2 + d + 0.5, y: 0.9, z: 0.4, color: '#ffae5a', intensity: 1, distance: 4.5, flicker: 0.3 }]; },
+  });
+
+  // ################################################################################################
+  //  BUNUN_HOUSE — Bunun (布農族) slate house: dry-stacked slate walls with big corner stones, timber
+  //  door frame and heavy lintel, small windows, a roof of overlapping slate slabs with ridge capstones.
+  // ################################################################################################
+  function buildBunun(o) {
+    const B = new Builder(), rnd = RNG(7171), door = doorOf2(o, 4, 1);
+    const hx = 2, hz = 1.5, wt = 0.34, wH = 1.75, dX = -hx + door + 0.5;
+    const wallUV = (g) => g;
+    // walls (front split around the door, windows as recessed openings)
+    const wall = (x, z, w, d, ry = 0) => B.add(M.slateWall(), gBox(w, wH, d, { x, z, ry }, { ou: rnd() * 4, ov: rnd() * 4 }), { tint: '#e8eaec', ao: { h: 0.9, min: 0.55 } });
+    wall(0, -hz + wt / 2, 2 * hx, wt);
+    for (const sx of [-1, 1]) wall(sx * (hx - wt / 2), 0, wt, 2 * hz - 2 * wt + 0.01);
+    const fz = hz - wt / 2;
+    if (dX - 0.42 > -hx) wall((-hx + dX - 0.42) / 2, fz, dX - 0.42 + hx, wt);
+    if (hx > dX + 0.42) wall((dX + 0.42 + hx) / 2, fz, hx - dX - 0.42, wt);
+    B.add(M.slateWall(), gBox(0.84, wH - 1.45, wt, { x: dX, y: 1.45, z: fz }), { tint: '#e8eaec' });
+    // big corner stones (protruding)
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (let k = 0; k < 6; k++) {
+      const y = k * 0.29, long = k % 2 === 0;
+      B.add(M.slate(), gBox(long ? 0.62 : 0.38, 0.26, long ? 0.38 : 0.62, { x: sx * (hx - (long ? 0.28 : 0.17)), y, z: sz * (hz - (long ? 0.17 : 0.28)), ry: (rnd() - 0.5) * 0.06 }), { tint: '#9aa0a6', jitter: 0.25, rnd, ao: { h: 0.9, min: 0.6 } });
+    }
+    // jutting slabs for relief along the courses
+    for (let i = 0; i < 46; i++) {
+      const side = floor(rnd() * 4), y = 0.1 + rnd() * (wH - 0.3), t = rnd();
+      let x, z, ry = 0;
+      if (side === 0) { x = lerp(-hx + 0.6, hx - 0.6, t); z = -hz - 0.01; } else if (side === 1) { x = lerp(-hx + 0.6, hx - 0.6, t); z = hz + 0.01; if (abs(x - dX) < 0.6) continue; } else { x = (side === 2 ? -1 : 1) * (hx + 0.01); z = lerp(-hz + 0.6, hz - 0.6, t); ry = PI / 2; }
+      B.add(M.slate(), gBox(0.25 + rnd() * 0.3, 0.035 + rnd() * 0.03, 0.08, { x, y, z, ry }), { tint: '#8a9096', jitter: 0.3, rnd, ao: false });
+    }
+    // door: posts, heavy lintel, dark opening with plank door ajar, sill stone
+    for (const s of [-1, 1]) B.add(M.wood(), gBox(0.12, 1.45, wt + 0.06, { x: dX + s * 0.36, z: fz }), { tint: '#7a5a3c' });
+    B.add(M.wood(), gBox(1.1, 0.2, wt + 0.12, { x: dX, y: 1.43, z: fz }, { grain: 'long' }), { tint: '#6a4a2c' });
+    B.add(M.plain(), gBox(0.6, 1.42, 0.02, { x: dX, z: fz - 0.12 }), { tint: '#120c08', ao: false });
+    B.add(M.wood(), gBox(0.3, 1.38, 0.05, { x: dX - 0.36, z: fz + 0.1, ry: -1.1 }), { tint: '#6a4a30' });
+    B.add(M.slate(), gBox(0.9, 0.08, 0.5, { x: dX, z: fz + 0.18 }), { tint: '#8a9096' });
+    B.add(glowM('#ff8a3a', 0.25), gBox(0.4, 0.1, 0.02, { x: dX, y: 0.02, z: fz - 0.1 }), { ao: false, cast: false });
+    // small windows with wooden frames
+    for (const wx of [-hx + 0.55, hx - 0.55]) {
+      if (abs(wx - dX) < 0.7) continue;
+      B.add(M.wood(), gBox(0.44, 0.36, 0.06, { x: wx, y: 0.85, z: hz + 0.005 }), { tint: '#4a3220' });
+      B.add(M.plain(), gBox(0.3, 0.24, 0.02, { x: wx, y: 0.91, z: hz + 0.035 }), { tint: '#120c08', ao: false });
+    }
+    // eave beam, roof deck
+    const yE = wH + 0.06, yR = 2.95, EZ = hz + 0.3, EX = hx + 0.25;
+    for (const z of [-hz + 0.1, hz - 0.1]) B.add(M.wood(), gBox(2 * hx + 0.3, 0.14, 0.18, { y: wH - 0.04, z }, { grain: 'long' }), { tint: '#5a3e26' });
+    const slope = atan2(yR - yE, EZ), SL = hypot(EZ, yR - yE);
+    for (const sd of [-1, 1]) {
+      B.add(M.wood(), gBox(2 * EX, 0.05, SL, { y: (yE + yR) / 2 - 0.08, z: sd * EZ / 2, rx: sd * slope }), { tint: '#2a2622', ao: false });
+      // overlapping slate slabs, eave → ridge
+      const rows = 8;
+      for (let r = 0; r < rows; r++) {
+        const tt = (r + 0.5) / rows, d = SL * (1 - tt);
+        const cy = yR - (yR - yE) * (1 - tt) + 0.02 + r * 0.004, cz = sd * EZ * (1 - tt);
+        let x = -EX - rnd() * 0.3;
+        while (x < EX) {
+          const sw = 0.32 + rnd() * 0.3, xc = clamp(x + sw / 2, -EX + sw / 2 - 0.05, EX - sw / 2 + 0.05);
+          const len = SL / rows + 0.18;
+          B.add(M.slate(), gBox(sw - 0.02, 0.04 + rnd() * 0.02, len, { x: xc, y: cy - 0.02, z: cz, rx: sd * slope + (rnd() - 0.5) * 0.05, ry: (rnd() - 0.5) * 0.06, rz: (rnd() - 0.5) * 0.04, order: 'YXZ' }, { ou: rnd() * 5, ov: rnd() * 5 }),
+            { tint: rnd() < 0.15 ? '#b4aea6' : '#c2c8ce', jitter: 0.3, rnd, ao: false, aofn: (x2, y2) => 0.7 + 0.3 * sstep(yE - 0.1, yR, y2) });
+          x += sw - 0.03;
+        }
+        void d;
+      }
+    }
+    // ridge capstones
+    for (let x = -EX + 0.15; x < EX; x += 0.45) B.add(M.slate(), gBox(0.44, 0.07, 0.42, { x: x + 0.2, y: yR + 0.02 }), { tint: '#9aa0a6', jitter: 0.3, rnd, ao: false });
+    // gable triangles (stacked slate)
+    for (const sx of [-1, 1]) {
+      const tri = new THREE.BufferGeometry(), x = sx * (hx - 0.01);
+      tri.setAttribute('position', new THREE.Float32BufferAttribute([x, wH, -hz, x, wH, hz, x, yR - 0.02, 0], 3));
+      tri.setAttribute('uv', new THREE.Float32BufferAttribute([0, wH, 3, wH, 1.5, yR], 2));
+      tri.setIndex(sx < 0 ? [0, 1, 2] : [0, 2, 1]); tri.computeVertexNormals();
+      B.add(M.slateWall(), tri, { tint: '#d8dade', ao: false });
+    }
+    void wallUV;
+    return B.build();
+  }
+  def('bunun_house', {
+    key: (o) => String(doorOf2(o, 4, 1)),
+    build(o) { return buildBunun(o); },
+    lights: (o) => [{ x: -2 + doorOf2(o, 4, 1) + 0.5, y: 0.6, z: 1.1, color: '#ff8a3a', intensity: 0.9, distance: 3, flicker: 0.45 }],
+  });
+
+  // ################################################################################################
+  //  MILLET_RACK — millet (小米) drying frame: forked posts, two cross poles hung with bound sheaves of
+  //  golden / orange / red millet. Sheaves sway in update().
+  // ################################################################################################
+  const tMillet = () => texSet('millet', 128, 128, (g, hg, w, h, r) => {
+    g.fillStyle = '#c89a38'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 1400; i++) { const x = r() * w, y = r() * h; wrap(w, h, x, y, 3, (X, Y) => { g.fillStyle = rgba(r() < 0.5 ? '#f0d070' : '#9a6a1c', 0.7); ell(g, X, Y, 1.6, 1.3); g.fill(); hg.fillStyle = '#e0e0e0'; ell(hg, X, Y, 1.4, 1.2); hg.fill(); }); }
+  }, { strength: 3 });
+  function sheaf(B, x, y, z, len, tone, rnd) {
+    const mm = mat('millet', () => { const t = tMillet(); return G.R3M.env({ map: t.map, normalMap: t.normalMap, roughness: 0.85, vertexColors: true }); });
+    for (let k = 0; k < 5; k++) {
+      const ox = (k - 2) * 0.026 + (rnd() - 0.5) * 0.01, oz = (rnd() - 0.5) * 0.04, l = len * (0.8 + rnd() * 0.3);
+      B.add(M.straw(), gRod([x + ox * 0.3, y, z + oz * 0.3], [x + ox, y - 0.1, z + oz], 0.006, 0.006, 3), { tint: '#8a7a3a', ao: false });
+      const head = gSphere(0.028, { x: x + ox, y: y - 0.1 - l / 2, z: z + oz, sy: l / 0.056 }, 7, 6);
+      B.add(mm, head, { tint: shade(tone, (rnd() - 0.5) * 0.25), ao: false, aofn: (x2, y2) => 0.75 + 0.25 * sstep(y - 0.1 - l, y - 0.1, y2) });
+    }
+    B.add(M.rope(), gCyl(0.03, 0.03, 0.03, 8, { x, y: y - 0.06, z }), { tint: '#c23a2a', ao: false });
+  }
+  function buildMilletRack() {
+    const B = new Builder(), rnd = RNG(1234);
+    for (const x of [-0.82, 0.82]) {
+      B.add(M.wood(), gCyl(0.05, 0.065, 1.95, 7, { x }), { tint: '#8a6444' });
+      B.add(M.wood(), gRod([x, 1.9, 0], [x - 0.08, 2.08, 0], 0.035, 0.025, 5), { tint: '#8a6444' });
+      B.add(M.wood(), gRod([x, 1.9, 0], [x + 0.08, 2.08, 0], 0.035, 0.025, 5), { tint: '#8a6444' });
+      B.add(M.stone(), gRock(0.12, rnd, { x, y: 0.02 }), { tint: '#9a968a' });
+    }
+    const out = [];
+    [1.92, 1.22].forEach((by, row) => {
+      B.add(M.wood(), gRod([-0.98, by, 0], [0.98, by, 0], 0.035, 0.035, 7), { tint: '#9a7650' });
+      for (const x of [-0.82, 0.82]) B.add(M.rope(), place(new THREE.TorusGeometry(0.06, 0.012, 4, 10), { x, y: by }), { tint: '#7a6040', ao: false });
+      const S = new Builder();
+      for (let i = 0; i < 6; i++) sheaf(S, -0.66 + i * 0.264, 0, 0, 0.36 + rnd() * 0.08, rnd.pick(row ? ['#d8a838', '#e0b84a', '#c88a2a', '#d0a040'] : ['#d8a838', '#e0b84a', '#c88a2a', '#b85a2a']), rnd);
+      const sg = S.build(); sg.name = 'sheaves' + row; sg.position.y = by - 0.03; sg.userData.noMerge = true;
+      out.push(sg);
+    });
+    return B.build(out);
+  }
+  def('millet_rack', {
+    build() { return buildMilletRack(); },
+    update(node, o, t) { const s = seedOf(o); for (let r = 0; r < 2; r++) { const g = node.getObjectByName('sheaves' + r); if (g) g.rotation.x = sin(t * 1.4 + s + r * 1.1) * 0.06; } },
+  });
+
+  // ################################################################################################
+  //  C10_FISH_RACK — Tao flying-fish (飛魚) drying rack: bamboo frame with split fish in two rows.
+  // ################################################################################################
+  const tFish = () => G.R3M.tex('ac:fish', 128, 256, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    // butterflied flying fish, head at top: silver-blue flesh, dark back edges, long pectoral fins
+    const body = () => { g.beginPath(); g.moveTo(64, 8); g.quadraticCurveTo(108, 40, 92, 170); g.lineTo(112, 248); g.lineTo(64, 214); g.lineTo(16, 248); g.lineTo(36, 170); g.quadraticCurveTo(20, 40, 64, 8); g.closePath(); };
+    g.fillStyle = 'rgba(160,190,215,0.85)';
+    for (const s of [-1, 1]) { g.beginPath(); g.moveTo(64 + s * 22, 60); g.lineTo(64 + s * 62, 150); g.lineTo(64 + s * 60, 168); g.lineTo(64 + s * 22, 110); g.closePath(); g.fill(); }
+    const gr = g.createLinearGradient(16, 0, 112, 0); gr.addColorStop(0, '#3e5770'); gr.addColorStop(0.18, '#6f8fae'); gr.addColorStop(0.5, '#dfe8ee'); gr.addColorStop(0.82, '#6f8fae'); gr.addColorStop(1, '#3e5770');
+    body(); g.fillStyle = gr; g.fill(); g.strokeStyle = '#2e4258'; g.lineWidth = 3; g.stroke();
+    g.fillStyle = 'rgba(190,110,80,0.55)'; g.fillRect(58, 30, 12, 130);
+    for (let y = 40; y < 160; y += 10) { g.strokeStyle = 'rgba(120,140,160,0.4)'; g.lineWidth = 1; g.beginPath(); g.moveTo(40, y); g.quadraticCurveTo(64, y + 6, 88, y); g.stroke(); }
+    g.fillStyle = '#1a1a1a'; ell(g, 52, 26, 4, 4); g.fill(); ell(g, 76, 26, 4, 4); g.fill();
+  });
+  function fishGeo(x, y, z, len) {
+    const g = new THREE.PlaneGeometry(len * 0.5, len, 2, 4);
+    g.translate(0, -len / 2, 0);
+    // slight cupping
+    const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, abs(p.getX(i)) * 0.25);
+    g.computeVertexNormals();
+    return place(g, { x, y, z });
+  }
+  function buildFishRack() {
+    const B = new Builder(), rnd = RNG(808);
+    for (const x of [-0.9, 0.9]) { B.add(M.bamboo(), gCyl(0.035, 0.04, 2.0, 7, { x }), { tint: '#c8b070' }); B.add(M.stone(), gRock(0.1, rnd, { x, y: 0.02 }), { tint: '#8a8478' }); }
+    for (const x of [-0.9, 0.9]) for (const s of [-1, 1]) B.add(M.bamboo(), gRod([x, 1.4, 0], [x + s * 0.12, 0, s * 0.35], 0.025, 0.025, 5), { tint: '#b8a060' });
+    const fm = mat('fish', () => G.R3M.env({ map: tFish(), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.45, metalness: 0.15, vertexColors: true }));
+    const out = [];
+    [1.85, 1.15].forEach((by, row) => {
+      B.add(M.bamboo(), gRod([-1.0, by, 0], [1.0, by, 0], 0.03, 0.03, 6), { tint: '#c0a868' });
+      const S = new Builder();
+      for (let i = 0; i < 7; i++) {
+        const x = -0.72 + i * 0.24 + (row ? 0.08 : 0); if (x > 0.82) continue;
+        S.add(M.rope(), gRod([x, 0, 0], [x, -0.05, 0], 0.004, 0.004, 3), { tint: '#6a5a3a', ao: false });
+        S.add(fm, fishGeo(x, -0.05, (rnd() - 0.5) * 0.02, 0.42 + rnd() * 0.06), { ao: false, aofn: (x2, y2, z2) => 0.85 + 0.15 * (1 + y2) });
+      }
+      const sg = S.build(); sg.name = 'fish' + row; sg.position.y = by; sg.userData.noMerge = true;
+      out.push(sg);
+    });
+    return B.build(out);
+  }
+  def('c10_fish_rack', {
+    build() { return buildFishRack(); },
+    update(node, o, t) { const s = seedOf(o); for (let r = 0; r < 2; r++) { const g = node.getObjectByName('fish' + r); if (g) g.rotation.x = sin(t * 2.1 + s + r * 0.9) * 0.08; } },
+  });
+
+  // ################################################################################################
+  //  DRYING_RACK — v0 米粉 rice-noodle cakes on a tilted bamboo screen (新竹); v1 柿餅 persimmons on
+  //  round bamboo trays in a tiered stand.
+  // ################################################################################################
+  const tNoodle = () => texSet('noodle', 128, 128, (g, hg, w, h, r) => {
+    g.fillStyle = '#f4f0e4'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 3) { g.strokeStyle = rgba(r() < 0.5 ? '#d8d0bc' : '#ffffff', 0.8); g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 4) g.lineTo(x, y + sin(x * 0.4 + y) * 1.2); g.stroke(); hg.strokeStyle = r() < 0.5 ? '#ffffff' : '#808080'; hg.lineWidth = 1.5; hg.beginPath(); hg.moveTo(0, y); for (let x = 0; x <= w; x += 4) hg.lineTo(x, y + sin(x * 0.4 + y) * 1.2); hg.stroke(); }
+  }, { strength: 2 });
+  function buildDryingRack(v) {
+    const B = new Builder(), rnd = RNG(4545 + v);
+    if (v === 0) {
+      // tilted screen facing south (the sun), on four bamboo legs
+      const tilt = 0.55, sw = 1.9, sh = 1.2, cy = 1.05;
+      for (const x of [-0.85, 0.85]) {
+        B.add(M.bamboo(), gRod([x, 0, -0.45], [x, cy + sh / 2 * sin(tilt) + 0.05, -0.45 + 0.08], 0.03, 0.03, 6), { tint: '#c8b070' });
+        B.add(M.bamboo(), gRod([x, 0, 0.45], [x, cy - sh / 2 * sin(tilt), 0.42], 0.03, 0.03, 6), { tint: '#c8b070' });
+      }
+      const scr = gBox(sw, 0.025, sh, { y: cy, rx: tilt }, {}); triUV(scr, 1.5);
+      B.add(M.mat(), scr, { tint: '#d8c088', ao: false });
+      for (const s of [-1, 1]) B.add(M.bamboo(), gRod([-1.0, cy + s * sh / 2 * sin(tilt), -s * sh / 2 * cos(tilt)], [1.0, cy + s * sh / 2 * sin(tilt), -s * sh / 2 * cos(tilt)], 0.03, 0.03, 6), { tint: '#b8a060' });
+      const nm = mat('noodle', () => { const t = tNoodle(); return G.R3M.env({ map: t.map, normalMap: t.normalMap, roughness: 0.6, vertexColors: true }); });
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) {
+        const lx = -0.78 + c * 0.312, lz = -0.38 + r * 0.38;
+        const cake = gBox(0.27, 0.035, 0.3, { x: lx, y: 0.015, z: lz }, { ou: rnd(), ov: rnd() });
+        place(cake, { y: cy, rx: tilt }); // tilt with the screen (cake built at screen-local coordinates)
+        B.add(nm, cake, { tint: '#ffffff', jitter: 0.08, rnd, ao: false });
+      }
+    } else {
+      // tiered stand with round sieve trays of persimmons
+      for (const x of [-0.85, 0.85]) for (const z of [-0.35, 0.35]) B.add(M.bamboo(), gCyl(0.028, 0.03, 1.55, 6, { x, z }), { tint: '#c8b070' });
+      const pm = mat('persimmon', () => G.R3M.env({ color: 0xffffff, roughness: 0.4, vertexColors: true }));
+      [0.45, 0.95, 1.45].forEach((ty, k) => {
+        for (const z of [-0.35, 0.35]) B.add(M.bamboo(), gRod([-0.95, ty - 0.04, z], [0.95, ty - 0.04, z], 0.022, 0.022, 5), { tint: '#b8a060' });
+        for (const tx of [-0.45, 0.45]) {
+          B.add(M.mat(), gCyl(0.42, 0.4, 0.05, 20, { x: tx, y: ty - 0.02 }), { tint: '#c6a868', ao: false });
+          B.add(M.bamboo(), place(new THREE.TorusGeometry(0.42, 0.018, 4, 24), { x: tx, y: ty + 0.03, rx: PI / 2 }), { tint: '#8a6a34', ao: false });
+          for (const [rad, n] of [[0, 1], [0.15, 6], [0.3, 11]]) for (let i = 0; i < n; i++) {
+            const a = i / n * TAU + rad * 3 + k;
+            B.add(pm, gSphere(0.055, { x: tx + cos(a) * rad, y: ty + 0.06, z: sin(a) * rad, sy: 0.7 }, 8, 6), { tint: mix('#e2761f', '#c45a14', rnd()), ao: false });
+            B.add(M.plain(), gCyl(0.02, 0.02, 0.012, 5, { x: tx + cos(a) * rad, y: ty + 0.095, z: sin(a) * rad }), { tint: '#3a4a1a', ao: false });
+          }
+        }
+      });
+    }
+    return B.build();
+  }
+  def('drying_rack', { variants: 2, build(o) { return buildDryingRack(o.v | 0); } });
+
+  // ################################################################################################
+  //  FISHING_NET — net hung between two poles: knotted mesh (alpha), float line with glass & cork
+  //  floats, lead line with sinkers, a pile of net at the foot. The net sways (per-instance geometry).
+  // ################################################################################################
+  const tNet = () => G.R3M.tex('ac:net', 128, 128, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.strokeStyle = '#6a5a40'; g.lineWidth = 2.2;
+    for (let k = -w; k < w * 2; k += 16) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + h, h); g.stroke(); g.beginPath(); g.moveTo(k + h, 0); g.lineTo(k, h); g.stroke(); }
+    g.fillStyle = '#4a3e2a'; for (let y = 0; y < h; y += 8) for (let x = ((y / 8) % 2) * 8; x < w; x += 16) { ell(g, x, y, 2, 2); g.fill(); }
+  });
+  function buildNet() {
+    const B = new Builder(), rnd = RNG(6262);
+    for (const x of [-0.95, 0.95]) { B.add(M.wood(), gCyl(0.045, 0.06, 1.95, 7, { x }), { tint: '#8a7050' }); B.add(M.stone(), gRock(0.12, rnd, { x, y: 0.02 }), { tint: '#8a867c' }); }
+    // top rope
+    const top = []; for (let i = 0; i <= 12; i++) { const t = i / 12, x = lerp(-0.95, 0.95, t); top.push([x, 1.82 - 0.12 * sin(PI * t), 0.02]); }
+    B.add(M.rope(), gTube(top, 0.012, 24, 4), { tint: '#b09868', ao: false });
+    // floats: alternating green glass and cork
+    const glassF = mat('glassfloat', () => G.R3M.env({ color: 0x4aa894, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.85, envMapIntensity: 1.4 }));
+    for (let i = 1; i < 12; i++) { const p = top[i]; if (i % 2) B.add(glassF, gSphere(0.065, { x: p[0], y: p[1] - 0.05, z: 0.05 }, 10, 8), { ao: false }); else B.add(M.wood(), gCyl(0.045, 0.045, 0.07, 8, { x: p[0], y: p[1] - 0.07, z: 0.04 }), { tint: '#c8a878', ao: false }); }
+    // net pile at the foot
+    const pile = gSphere(0.32, { x: -0.1, y: 0.0, z: 0.25, sx: 1.4, sy: 0.38 }, 14, 8);
+    B.add(mat('netpile', () => G.R3M.env({ map: tNet(), color: 0x8a7a5a, roughness: 1, vertexColors: true })), scaleUV(pile, 3, 3), { tint: '#ffffff', ao: { h: 0.12, min: 0.6 } });
+    // the hanging net: grid between the poles, sagging bottom (lead line)
+    const nm = mat('net', () => G.R3M.env({ map: tNet(), alphaTest: 0.4, side: THREE.DoubleSide, roughness: 1, vertexColors: true }));
+    const netGeo = gGrid(18, 12, (u, v) => { const x = lerp(-0.92, 0.92, u), yt = 1.8 - 0.12 * sin(PI * u), yb = 0.55 + 0.22 * cos(u * TAU * 1.5) - 0.12 * sin(PI * u); return [x, lerp(yb, yt, v), 0.02 + 0.06 * sin(PI * u) * (1 - v)]; }, (u, v) => [u * 3.6, v * 2.6]);
+    // uv.x used by flutter as weight: remap so attached top (v=1) → 0
+    const net = new Builder().mesh('net', nm, netGeo, { ao: false, cast: true });
+    const lead = []; for (let i = 0; i <= 12; i++) { const u = i / 12; lead.push([lerp(-0.92, 0.92, u), 0.55 + 0.22 * cos(u * TAU * 1.5) - 0.12 * sin(PI * u), 0.02 + 0.06 * sin(PI * u)]); }
+    const leadM = new Builder(); leadM.add(M.rope(), gTube(lead, 0.01, 24, 4), { tint: '#4a3a28', ao: false });
+    for (let i = 1; i < 12; i += 2) leadM.add(M.metal(), gBox(0.04, 0.03, 0.03, { x: lead[i][0], y: lead[i][1] - 0.02, z: lead[i][2] }), { tint: '#4a4a50', ao: false });
+    const lm = leadM.build(); lm.name = 'lead'; lm.userData.noMerge = true;
+    return B.build([net, lm]);
+  }
+  def('fishing_net', {
+    build() { return buildNet(); },
+    update(node, o, t) {
+      const s = seedOf(o), net = node.getObjectByName('net');
+      if (net) flutter(net, t, { amp: 0.06, freq: 1.6, k: 2.5, phase: s, axis: [0, 0, 1], weight: (u, v) => pow(1 - clamp(v / 2.6, 0, 1), 1.3) * sin(PI * clamp(u / 3.6, 0, 1)) });
+      const ld = node.getObjectByName('lead'); if (ld) ld.position.z = sin(t * 1.6 + s - 1.2) * 0.05;
+    },
+  });
+
+  // ################################################################################################
+  //  LOOM — backstrap (horizontal) loom as used by Truku / Atayal / Saisiyat weavers, resting between
+  //  sessions: the hollow warp box (braced by the weaver's feet), warp threads to the cloth beam with
+  //  its backstrap, shed rod, heddle rod, beater sword, and the half-woven red cloth with diamond motifs.
+  // ################################################################################################
+  const tWeave = () => texSet('weave', 256, 256, (g, hg, w, h, r) => {
+    g.fillStyle = '#a8241e'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { g.fillStyle = rgba(y % 4 ? '#7a1410' : '#c83a2a', 0.35); g.fillRect(0, y, w, 1); hg.fillStyle = y % 4 ? '#606060' : '#b0b0b0'; hg.fillRect(0, y, w, 1); }
+    for (let x = 0; x < w; x += 2) { g.fillStyle = 'rgba(0,0,0,0.08)'; g.fillRect(x, 0, 1, h); }
+    // rows of nested diamonds (white & black) with bands
+    for (let row = 0; row < 2; row++) {
+      const cy = 64 + row * 128;
+      for (let x = 0; x < w; x += 64) {
+        const cx = x + 32;
+        for (const [sz, col] of [[28, '#1a1414'], [20, '#f0e8d8'], [12, '#1a1414'], [5, '#f0e8d8']]) { g.fillStyle = col; poly(g, [cx, cy - sz, cx + sz, cy, cx, cy + sz, cx - sz, cy]); g.fill(); }
+      }
+      g.fillStyle = '#f0e8d8'; g.fillRect(0, cy - 44, w, 4); g.fillRect(0, cy + 40, w, 4);
+      g.fillStyle = '#1a1414'; g.fillRect(0, cy - 50, w, 3); g.fillRect(0, cy + 47, w, 3);
+    }
+  }, { strength: 1.2 });
+  function buildLoom() {
+    const B = new Builder(), rnd = RNG(2828);
+    const zBox = -0.42, zCloth = 0.36, wy = 0.32;
+    // warp box (hollow log box with an opening), sitting on the ground, braced by two stones
+    B.add(M.wood(), gBox(0.78, 0.26, 0.24, { z: zBox }, { grain: 'long' }), { tint: '#7a5232' });
+    B.add(M.plain(), gBox(0.6, 0.08, 0.2, { y: 0.2, z: zBox }), { tint: '#1a120c', ao: false });
+    for (const x of [-0.42, 0.42]) B.add(M.stone(), gRock(0.07, rnd, { x, y: 0.02, z: zBox + 0.12 }), { tint: '#8a867c' });
+    // warp threads (as a thin sheet of lines) from the box top to the cloth beam
+    const warpT = G.R3M.tex('ac:warp', 128, 16, (g, w, h) => { g.clearRect(0, 0, w, h); for (let x = 1; x < w; x += 3) { g.fillStyle = x % 6 < 3 ? '#efe6d4' : '#c8b898'; g.fillRect(x, 0, 1.6, h); } }, { wrap: true });
+    const warpM = mat('warp', () => G.R3M.env({ map: warpT, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 1, vertexColors: true }));
+    const warp = new THREE.PlaneGeometry(0.56, 0.58); warp.rotateX(-PI / 2 + atan2(0.26 - wy, 0.58)); place(warp, { y: (0.26 + wy) / 2 + 0.01, z: (zBox + 0.1 + zCloth - 0.2) / 2 });
+    B.add(warpM, warp, { ao: false });
+    // woven cloth near the cloth beam
+    const cloth = new THREE.PlaneGeometry(0.56, 0.42, 1, 1); cloth.rotateX(-PI / 2 + 0.08); place(cloth, { y: wy + 0.02, z: zCloth - 0.02 });
+    const wm = mat('weave', () => { const t = tWeave(); return G.R3M.env({ map: t.map, normalMap: t.normalMap, roughness: 0.95, side: THREE.DoubleSide, vertexColors: true }); });
+    B.add(wm, scaleUV(cloth, 1, 0.75), { ao: false });
+    // cloth beam + backstrap (leather band) curving down to the ground where the weaver sits
+    B.add(M.wood(), gRod([-0.36, wy, zCloth + 0.2], [0.36, wy, zCloth + 0.2], 0.025, 0.025, 6), { tint: '#8a6040' });
+    B.add(M.wood(), gRod([-0.36, wy + 0.03, zCloth + 0.18], [0.36, wy + 0.03, zCloth + 0.18], 0.018, 0.018, 6), { tint: '#7a5232' });
+    for (const x of [-0.37, 0.37]) B.add(M.rope(), gTube([[x, wy, zCloth + 0.2], [x * 1.05, 0.2, zCloth + 0.38], [x * 0.9, 0.06, zCloth + 0.46]], 0.012, 10, 4), { tint: '#6a4a2a', ao: false });
+    const strap = gGrid(10, 1, (u, v) => { const x = lerp(-0.33, 0.33, u); return [x, 0.04 + 0.03 * cos(PI * (u - 0.5)), zCloth + 0.46 + v * 0.07 + 0.1 * sin(PI * u)]; }, (u, v) => [u * 0.7, v * 0.07]);
+    B.add(M.wood(), strap, { tint: '#5a3a22', ao: false });
+    // shed rod (thick bamboo), heddle rod with string loops, beater sword
+    B.add(M.bamboo(), gRod([-0.36, 0.29, -0.05], [0.36, 0.29, -0.05], 0.03, 0.03, 8), { tint: '#c8b070' });
+    B.add(M.wood(), gRod([-0.36, 0.33, 0.1], [0.36, 0.33, 0.1], 0.012, 0.012, 5), { tint: '#8a6a44' });
+    for (let x = -0.26; x <= 0.27; x += 0.045) B.add(M.rope(), gTube([[x, 0.33, 0.1], [x, 0.315, 0.095], [x + 0.01, 0.3, 0.1]], 0.003, 4, 3), { tint: '#efe6d4', ao: false });
+    B.add(M.wood(), gBox(0.7, 0.012, 0.07, { y: 0.31, z: 0.2, rx: 0.2 }, { grain: 'long' }), { tint: '#a07a54' });
+    // a coiled ball of red yarn + small basket
+    B.add(mat('weave2', () => G.R3M.env({ map: tWeave().map, roughness: 1, vertexColors: true })), gSphere(0.06, { x: 0.36, y: 0.05, z: 0.12 }, 10, 8), { ao: false });
+    B.add(M.mat(), gCyl(0.13, 0.1, 0.12, 12, { x: -0.38, z: 0.12 }), { tint: '#b89a5e' });
+    return B.build();
+  }
+  def('loom', { build() { return buildLoom(); } });
+
+  // ################################################################################################
+  //  TOTEM — carved wooden marker post (kept non-sacred: no ancestor pillar of a specific people).
+  //  Motifs drawn from the 2D art and the in-game text (ch11: a Lanyu charm "carved with the boat-eye
+  //  motif"): a concentric eye rosette at the top, red/white/black geometric bands, zigzag relief and a
+  //  simple stylised figure; stone ring at the foot.
+  // ################################################################################################
+  const tTotem = () => G.R3M.tex('ac:totem', 256, 512, (g, w, h) => {
+    // u around the post (0..1 = full circle), v up the post; one "front" face at u≈0.5
+    g.fillStyle = '#6a4630'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 160; i++) { const x = (i * 37) % w; g.fillStyle = rgba(i % 3 ? '#3a2416' : '#8a6448', 0.18); g.fillRect(x, 0, 1 + (i % 3), h); }
+    const band = (y, hh) => { g.fillStyle = '#2a1a10'; g.fillRect(0, y, w, hh); for (let x = 0; x < w; x += 16) { g.fillStyle = (x / 16) % 2 ? '#a8322a' : '#e8e0cc'; poly(g, [x + 8, y + 2, x + 15, y + hh / 2, x + 8, y + hh - 2, x + 1, y + hh / 2]); g.fill(); } };
+    band(60, 26); band(250, 26); band(440, 26);
+    g.strokeStyle = '#d8ccb0'; g.lineWidth = 5; g.beginPath(); for (let x = 0; x <= w; x += 12) g.lineTo(x, 330 + ((x / 12) % 2) * 26); g.stroke();
+    g.strokeStyle = '#2a1a10'; g.lineWidth = 3; g.beginPath(); for (let x = 0; x <= w; x += 12) g.lineTo(x, 340 + ((x / 12) % 2) * 26); g.stroke();
+    // eye rosette (front, top)
+    const ex = w / 2, ey = 150;
+    g.fillStyle = '#1a1414'; ell(g, ex, ey, 46, 46); g.fill();
+    g.fillStyle = '#a8322a'; for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; poly(g, [ex + cos(a - 0.2) * 30, ey + sin(a - 0.2) * 30, ex + cos(a) * 44, ey + sin(a) * 44, ex + cos(a + 0.2) * 30, ey + sin(a + 0.2) * 30]); g.fill(); }
+    g.fillStyle = '#e8e0cc'; ell(g, ex, ey, 28, 28); g.fill(); g.strokeStyle = '#a8322a'; g.lineWidth = 5; ell(g, ex, ey, 19, 19); g.stroke();
+    g.fillStyle = '#1a1414'; ell(g, ex, ey, 8, 8); g.fill();
+    // simple figure (front, low)
+    const fx = w / 2, fy = 395;
+    g.strokeStyle = '#e8e0cc'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath(); g.arc(fx, fy - 30, 9, 0, TAU); g.moveTo(fx, fy - 21); g.lineTo(fx, fy + 10);
+    g.moveTo(fx - 22, fy - 34); g.lineTo(fx - 22, fy - 18); g.lineTo(fx, fy - 12); g.lineTo(fx + 22, fy - 18); g.lineTo(fx + 22, fy - 34);
+    g.moveTo(fx - 18, fy + 34); g.lineTo(fx - 18, fy + 20); g.lineTo(fx, fy + 10); g.lineTo(fx + 18, fy + 20); g.lineTo(fx + 18, fy + 34); g.stroke();
+  });
+  function buildTotem() {
+    const B = new Builder(), rnd = RNG(1717);
+    const tm = mat('totem', () => G.R3M.env({ map: tTotem(), roughness: 0.8, vertexColors: true }));
+    // octagonal-ish carved post, slight entasis; texture wraps once around (front at +z)
+    const post = new THREE.CylinderGeometry(0.17, 0.2, 2.4, 10, 6);
+    { const p = post.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), k = 1 + 0.04 * sin((y + 1.2) * 2.6); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } post.computeVertexNormals(); }
+    post.translate(0, 1.2, 0); post.rotateY(PI); // three's cylinder puts u=0 at +z; turn u=0.5 (motif centre) to +z
+    B.add(tm, post, { ao: { h: 0.6, min: 0.6 } });
+    // carved ridges (relief rings) at the bands
+    for (const y of [0.33, 1.15, 2.0]) B.add(M.wood(), gCyl(0.215, 0.215, 0.05, 10, { y }), { tint: '#4a3020' });
+    // capital: a small peaked cap with feather-like slats
+    B.add(M.wood(), gCyl(0.02, 0.26, 0.26, 10, { y: 2.4 }), { tint: '#6a4630' });
+    B.add(M.paint(), gSphere(0.045, { y: 2.68 }, 8, 6), { tint: '#e8e0cc', ao: false });
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; B.add(M.paint(), gBox(0.04, 0.02, 0.12, { x: sin(a) * 0.24, y: 2.38, z: cos(a) * 0.24, ry: a }), { tint: i % 2 ? '#a8322a' : '#e8e0cc', ao: false }); }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + 0.3; B.add(M.stone(), gRock(0.1 + rnd() * 0.04, rnd, { x: sin(a) * 0.32, y: 0.03, z: cos(a) * 0.32 }), { tint: '#9a968a' }); }
+    return B.build();
+  }
+  def('totem', { build() { return buildTotem(); } });
+
+  // ################################################################################################
+  //  C10_DENGGAO — 燈篙, the Ghost-Month lantern pole (頭城): a tall bamboo pole with leafy crown, a
+  //  cross bar carrying two lanterns (guiding the wandering spirits), stone footing. o.blue → ghost-blue
+  //  lanterns; o.name → an extra name lantern hung lower (阿義). Lanterns sway; light at the top.
+  // ################################################################################################
+  function buildDenggao(o) {
+    const B = new Builder(), rnd = RNG(5050);
+    const H = 5.2;
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; B.add(M.stone(), gRock(0.12 + rnd() * 0.04, rnd, { x: sin(a) * 0.17, y: 0.04, z: cos(a) * 0.17 }), { tint: '#8a8478' }); }
+    B.add(M.bamboo(), gCyl(0.035, 0.06, H, 8, {}, { vs: 1 }), { tint: '#c8b070', ao: { h: 0.4, min: 0.7 } });
+    B.add(M.bamboo(), gRod([-0.45, H - 0.38, 0], [0.45, H - 0.38, 0], 0.025, 0.025, 6), { tint: '#b8a060', ao: false });
+    B.add(M.rope(), gRod([-0.45, H - 0.38, 0], [0, H - 0.05, 0], 0.005, 0.005, 3), { tint: '#4a3a24', ao: false });
+    B.add(M.rope(), gRod([0.45, H - 0.38, 0], [0, H - 0.05, 0], 0.005, 0.005, 3), { tint: '#4a3a24', ao: false });
+    // leafy crown (bamboo leaves left on the tip, by custom)
+    const leafM = mat('leaf', () => G.R3M.env({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide, vertexColors: true }));
+    const crown = new Builder();
+    for (let i = 0; i < 18; i++) {
+      const a = rnd() * TAU, len = 0.22 + rnd() * 0.12, lg = new THREE.PlaneGeometry(0.05, len, 1, 2); lg.translate(0, len / 2, 0);
+      crown.add(leafM, place(lg, { y: rnd() * 0.25, rx: 0.6 + rnd() * 0.6, ry: a, order: 'YXZ' }), { tint: mix('#4f7a2e', '#7a9a3a', rnd()), ao: false });
+    }
+    const cr = crown.build(); cr.name = 'crown'; cr.position.y = H - 0.05; cr.userData.noMerge = true;
+    const blue = !!o.blue, extras = [cr];
+    [[-0.38, '#f0e8d8'], [0.38, '#d8402a']].forEach(([x, c], i) => {
+      const l = lantern('lan' + i, blue ? '#7ab0ff' : c, 0.11, { cord: 0.1, k: blue ? 2.2 : 1.6, tassel: true });
+      l.position.set(x, H - 0.38, 0); extras.push(l);
+    });
+    if (o.name) { const l = lantern('lan2', '#e05a2a', 0.14, { cord: 0.4, text: String(o.name), k: 1.4 }); l.position.set(0.06, H - 1.2, 0); extras.push(l); }
+    return B.build(extras);
+  }
+  def('c10_denggao', {
+    key: (o) => (o.blue ? 'b' : '') + '|' + (o.name || ''),
+    build(o) { return buildDenggao(o); },
+    update(node, o, t) { const s = seedOf(o); swayAll(node, ['lan0', 'lan1', 'lan2'], t, s, 0.12, 1.7); const c = node.getObjectByName('crown'); if (c) c.rotation.z = sin(t * 1.3 + s) * 0.06; },
+    lights: (o) => [{ x: 0, y: 4.6, z: 0, color: o.blue ? '#8ab8ff' : '#ffcf7a', intensity: 1.4, distance: 7, flicker: 0.25 }],
+  });
+
+  // ################################################################################################
+  //  C10_MONSTER_SHOW — a creature shown on the map as a prop (cutscenes). Uses the monster team's
+  //  G.Mon3D creature when it exists, else the 2D-art monster billboard; created lazily per instance.
+  // ################################################################################################
+  def('c10_monster_show', {
+    key: (o) => (o.art || '') + ':' + (o.variant || 0) + ':' + (o.scale || '') + (o.flip ? 'f' : '') + ':' + o.x + ',' + o.y,
+    build(o) {
+      const g = new THREE.Group();
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: G.R3M.blobTex(), transparent: true, depthWrite: false }));
+      sh.rotation.x = -PI / 2; sh.position.y = 0.015; sh.scale.set(1.1, 0.7, 1); sh.castShadow = false; sh.userData.noMerge = true;
+      g.add(sh);
+      g.userData.show = { art: o.art, variant: o.variant || 0, scale: o.scale, flip: !!o.flip };
+      return g;
+    },
+    update(node, o, t, dt) {
+      let rec = node.userData.inst;
+      if (!rec) {
+        const sp = node.userData.show || {}, art = sp.art || o.art || (G.Monsters ? Object.keys(G.Monsters.defs)[0] : null);
+        if (!art) return;
+        const md = G.Monsters && G.Monsters.get(art);
+        const sc = sp.scale || (md ? clamp(110 / md.h, 0.25, 0.7) : 0.5);
+        let inst = null;
+        try {
+          if (G.Mon3D && G.Mon3D.has && G.Mon3D.has(art)) { inst = G.Mon3D.create(art, { context: 'map', variant: sp.variant }); inst.root.scale.setScalar(sc); }
+          else inst = G.Models.monsterBillboard(art, { height: (md ? md.h : 160) * sc / TILE, variant: sp.variant });
+        } catch (e) { G.warnOnce && G.warnOnce('c10_monster_show ' + art, e); }
+        if (!inst) { node.userData.inst = { dead: true }; return; }
+        if (inst.setFacing) inst.setFacing(sp.flip ? PI / 2 : -PI / 2 + 0.6);
+        node.add(inst.root);
+        rec = node.userData.inst = { inst };
+      }
+      if (rec.dead) return;
+      const yaw = G.R3 && G.R3.view ? G.R3.view.yaw || 0 : 0;
+      if (rec.inst.update) rec.inst.update(dt || 1 / 60, yaw, G.R3 && G.R3.view ? G.R3.view.camera : null);
+      rec.inst.root.position.y = sin(t * 3 + (o.x || 0)) * 0.03;
+    },
+  });
+
+  // ################################################################################################
+  //  LIGHTHOUSE_LAMP — the great Fresnel lens (interior, 2×2): iron platform, brass pedestal, beehive of
+  //  glass prism rings around a bulls-eye belt, brass frames, top cap with ventilator. The lens turns
+  //  and throws two sweeping beams; strong warm light.
+  // ################################################################################################
+  function buildLamp() {
+    const B = new Builder(), rnd = RNG(9393);
+    const brass = '#c8a040', iron = '#3a3e44';
+    B.add(M.metal(), gCyl(0.95, 0.98, 0.16, 28), { tint: iron, ao: { h: 0.2, min: 0.6 } });
+    B.add(M.metal(), gCyl(0.92, 0.92, 0.03, 28, { y: 0.16 }), { tint: '#5a5e64', ao: false });
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; B.add(M.metal(), gSphere(0.02, { x: sin(a) * 0.86, y: 0.19, z: cos(a) * 0.86 }, 6, 4), { tint: '#2a2c30', ao: false }); }
+    B.add(M.metal(), gLathe([[0.3, 0.19], [0.26, 0.3], [0.2, 0.34], [0.2, 0.9], [0.26, 0.96], [0.36, 1.0]], 18), { tint: brass, ao: false });
+    for (const y of [0.45, 0.72]) B.add(M.metal(), place(new THREE.TorusGeometry(0.21, 0.02, 6, 20), { y, rx: PI / 2 }), { tint: '#e0bc5a', ao: false });
+    // the rotating lens assembly
+    const L = new Builder(), y0 = 1.0, Rl = 0.62, Hl = 1.5;
+    const prism = mat('prism', () => G.R3M.env({ color: 0xe8f4f0, roughness: 0.04, metalness: 0.2, transparent: true, opacity: 0.55, envMapIntensity: 2, emissive: 0xfff0c8, emissiveIntensity: 0.25, side: THREE.DoubleSide, vertexColors: true, cutout: false }));
+    for (let k = 0; k < 13; k++) {
+      const t = k / 12, y = y0 + 0.05 + t * Hl;
+      if (t > 0.38 && t < 0.62) continue;
+      const r = Rl * sqrt(1 - pow((t - 0.5) * 1.75, 2)) + 0.02;
+      L.add(prism, gLathe([[r * 0.9, y - 0.04], [r, y], [r * 0.92, y + 0.05]], 28), { ao: false, cast: false });
+    }
+    // bulls-eye belt: 8 panels (lenses) with concentric rings
+    const bullT = G.R3M.tex('ac:bull', 128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 2, 64, 64, 64); gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.4, '#fff4d0'); gr.addColorStop(1, '#c8b890'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let k = 1; k < 8; k++) { g.strokeStyle = rgba(k % 2 ? '#a08040' : '#ffffff', 0.6); g.lineWidth = 2; ell(g, 64, 64, k * 8, k * 8); g.stroke(); } });
+    const bullM = mat('bull', () => new THREE.MeshStandardMaterial({ map: bullT, emissive: 0xfff0c8, emissiveMap: bullT, emissiveIntensity: 1.6, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, pg = new THREE.PlaneGeometry(0.44, 0.36); place(pg, { x: sin(a) * Rl * 0.98, y: y0 + 0.05 + Hl / 2, z: cos(a) * Rl * 0.98, ry: a }); L.add(bullM, pg, { ao: false, cast: false }); }
+    // brass frame: vertical struts + belt rings
+    for (let i = 0; i < 8; i++) {
+      const a = (i + 0.5) / 8 * TAU, pts = [];
+      for (let k = 0; k <= 8; k++) { const t = k / 8, r = Rl * sqrt(max(0.02, 1 - pow((t - 0.5) * 1.75, 2))) + 0.03; pts.push([sin(a) * r, y0 + 0.02 + t * (Hl + 0.06), cos(a) * r]); }
+      L.add(M.metal(), gTube(pts, 0.016, 16, 4), { tint: brass, ao: false });
+    }
+    for (const t of [0.38, 0.62]) { const r = Rl * sqrt(1 - pow((t - 0.5) * 1.75, 2)) + 0.03; L.add(M.metal(), place(new THREE.TorusGeometry(r, 0.022, 5, 32), { y: y0 + 0.05 + t * Hl, rx: PI / 2 }), { tint: '#e0bc5a', ao: false }); }
+    // lamp core (burner glow)
+    L.add(glowM('#fff1c4', 4), gSphere(0.12, { y: y0 + 0.05 + Hl / 2 }, 12, 10), { ao: false, cast: false });
+    const lens = L.build(); lens.name = 'lens';
+    // static top cap with vent ball (does not rotate)
+    B.add(M.metal(), gLathe([[0.52, y0 + Hl + 0.06], [0.46, y0 + Hl + 0.16], [0.2, y0 + Hl + 0.36], [0.08, y0 + Hl + 0.42]], 20), { tint: brass, ao: false });
+    B.add(M.metal(), gCyl(0.06, 0.06, 0.1, 10, { y: y0 + Hl + 0.4 }), { tint: brass, ao: false });
+    B.add(M.metal(), gSphere(0.09, { y: y0 + Hl + 0.58 }, 12, 8), { tint: '#d8b050', ao: false });
+    for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; B.add(M.metal(), gRod([sin(a) * 0.5, y0 + Hl + 0.08, cos(a) * 0.5], [sin(a) * 0.32, 0.19, cos(a) * 0.32], 0.018, 0.018, 5), { tint: brass, ao: false }); }
+    // beams (child of lens so they rotate with it)
+    const bm = addMat('lampbeam', '#fff2c8', beamTex(), 0.35);
+    for (const s of [-1, 1]) {
+      const cg = new THREE.CylinderGeometry(1.4, 0.3, 9, 20, 1, true); cg.translate(0, 4.5, 0); cg.rotateZ(-s * PI / 2);
+      const cm = new THREE.Mesh(cg, bm); cm.position.y = y0 + 0.05 + Hl / 2; cm.castShadow = false; cm.renderOrder = 5; cm.name = 'beamcone'; cm.userData.noBounds = true;
+      lens.add(cm);
+    }
+    const halo = haloCard('#fff0c0', 2.4, 0.8); halo.position.y = y0 + 0.05 + Hl / 2; halo.name = 'halo'; halo.userData.noBounds = true;
+    void rnd;
+    return B.build([lens, halo]);
+  }
+  def('lighthouse_lamp', {
+    build() { return buildLamp(); },
+    update(node, o, t) {
+      const l = node.getObjectByName('lens'); if (l) l.rotation.y = t * 0.9 + seedOf(o);
+      const h = node.getObjectByName('halo'); if (h) h.material.opacity = 0.7 + 0.1 * sin(t * 3);
+    },
+    lights: () => [{ x: 0, y: 1.8, z: 0, color: '#fff0c0', intensity: 2.4, distance: 9, flicker: 0.04 }],
   });
 
   // exported for tests / other teams' reference
