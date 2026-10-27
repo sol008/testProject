@@ -362,6 +362,7 @@ G.I18N.add({
   '上次你也是這樣張著嘴！': 'Last time your mouth hung open just like that!',
   '上上次也是！嘻嘻嘻嘻！': 'And the time before last! Hee hee hee hee!',
   '上次？我、我沒來過啊！': 'Last time? I—I\'ve never been here!',
+  '{y}◆{/}　{g}◆{/}　{b}◆{/}': '{y}◆{/}  {g}◆{/}  {b}◆{/}',
   '……我好像聽懂了。他說：「你來過，你忘了，那是好事情。」': '…I think I understood that. He said: "You\'ve been here before. You forgot. That\'s a good thing."',
   '這個人聽得懂！這個人讀過書！': 'This one understands! This one has read books!',
   '書裡都是我們！可是畫得好醜！': 'The books are full of us! But they draw us so ugly!',
@@ -671,6 +672,7 @@ G.I18N.add({
   '燈靈……燈靈是燈的心……吃掉心……燈就熄……': 'The lamp spirit… the lamp spirit is the lamp\'s heart… eat the heart… and the lamp goes out…',
   '黑水捲住白芷。': 'Black water coils around Bai Zhi.',
   '白芷——！': 'Bai Zhi—!',
+  '——！': '—!',
   '白芷被吞了下去。燈室的白焰，暗到只剩一點紅。': 'Bai Zhi is swallowed. The white flame of the lamp chamber dims until only a speck of red remains.',
   '無相整個塌了下來，像一座崩落的浪。黑水捲起，吞沒了紅纓、雲歸。': 'The whole of the Formless collapses like a breaking wave. Black water surges up and swallows Hongying and Yun Gui.',
   '星——': 'Xing—',
@@ -1114,6 +1116,7 @@ G.I18N.add({
   '製作': 'Produced by',
   // ================================================================ true-ending tail: E-T6..E-T8, then credits
   '#劇本・對白・場景設計': '#Script · Dialogue · Scene Design',
+  'Claude ／ Shorelight Team': 'Claude / Shorelight Team',
   // ================================================================ 11-16
   '劇本・對白・場景設計': 'Script · Dialogue · Scene Design',
   // ================================================================ true-ending tail: E-T6..E-T8, then credits
