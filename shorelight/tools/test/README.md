@@ -86,7 +86,9 @@ optional files are ignored). Driver helpers on `Session`:
   dt in-page, yielding between steps, so battles/cutscenes run many times faster than real time
 * `script('async (S) => {...}')` — runs a script through `G.Script.run`; result in `window.__qa.res`
 * `drive(maxSec, choice)` — runs scripts to completion: holds Ctrl-skip, answers choices, auto-battles,
-  closes shops/menus; returns `'idle' | 'timeout' | 'gameover'`
+  closes shops/menus; returns `'idle' | 'timeout' | 'gameover' | 'stuck'`. Not idle while an auto event
+  is about to start (`G.Debug.pendingAuto()`), so a chained cutscene is never mistaken for player control.
+  `'stuck'` is the soft-lock detector: a script is busy on the map with nothing on screen for 15 game-s.
 
 Scenario tests: boot/title render, title → menu → settings (every row changed, persisted, survives
 reload), new game, movement & collision, pause menu (every panel visited with keys), save slot 1 →
@@ -96,6 +98,22 @@ encounter. Sweeps (parallel `--workers`): **every map** via `?debug&map=<id>` (r
 every NPC talked to, every event run) and **every troop** auto-battled by a lv 50 party with the best
 gear (must resolve win/lose/flee within 900 game-seconds, return to the map, no NaN/negative state).
 Frame cost > 16 ms is reported as a warning (headless software rendering is slower than a real GPU).
+
+**The map sweep only pokes an idle map.** On load, the real game loop starts the map's entry auto
+event at once. The sweep first lets it finish (`settle`). If that cutscene leaves the map (for example
+`taixu` → `taixu_hall` or `citygod_vision` → `zhuqian_citygod`), the sweep returns to the map with the
+state it left. It then talks to NPCs and fires events one at a time, and settles again before each one.
+Firing an NPC or event while another script runs starts two scripts at once. The engine never does
+this: `checkAuto`, touch events and interaction all wait for `!G.Script.busy()`. When it happens, one
+script's `fadeOut` or `warp` orphans the other's pending `S.say` (`G.Dialog.close` drops the line's
+resolver) or `S.move` (the warp replaces the player whose queue held it). That looked like a soft-lock
+on `mist_loop`, `citygod_vision`, `mist_grove` and `taixu`, but no player can reach it. If a map
+can't be brought to idle, the sweep warns and skips that map's remaining NPC and event checks.
+
+3D: `--3d` keeps the game's default renderer (3D on). Add `--r3lite` to append `?r3lite` (half
+resolution, no shadows or post-processing), which makes headless SwiftShader runs practical; add
+`--slow 3` for the longer timeouts, e.g.
+`node tools/test/e2e.js --3d --r3lite --slow 3 --only map --maps mist_loop`.
 
 Add a scenario:
 ```js
