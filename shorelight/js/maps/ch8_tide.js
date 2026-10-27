@@ -199,7 +199,7 @@
   });
   edef('c8_qingfeng', {
     name: '洛青鋒', sprite: 'qingfeng', lv: 30, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 1.6, mag: 1.5, def: 1.15, spd: 1.4, exp: 7, gold: 6 },
+    m: { hp: 10.4, atk: 2.25, mag: 2.15, def: 1.15, spd: 2.0, exp: 7, gold: 6 }, // sim_story: was hp 9 atk 1.6 mag 1.5 spd 1.4
     skills: [['e_qf2_sword', 3], ['c8_e_qf_qisha', 1], ['c8_e_qf_duanchao', 2], ['c8_e_qf_lowtip', 2], ['c8_e_qf_huilan', 1, 'turn>1'], ['e_qf2_tide', 1]],
     phases: [
       { at: 0.5, skills: [{ id: 'e_qf2_sword', w: 2 }, { id: 'c8_e_qf_qisha', w: 3 }, { id: 'c8_e_qf_duanchao', w: 2 }, { id: 'c8_e_qf_lowtip', w: 2 }, { id: 'c8_e_qf_huilan', w: 1 }] },
