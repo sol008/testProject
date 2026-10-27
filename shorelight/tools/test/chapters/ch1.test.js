@@ -218,7 +218,7 @@ async function testCritical(browser, open) {
   await step(s, 27, 3);
   await waitMap(s, 'mine_2');
   // 1-7
-  await level(s, 3);
+  await level(s, 4); // 工頭魂 is tuned for a player at Lv3 (docs/BALANCE.md); the bot gets one level of margin
   await step(s, 24, 16, [0]);
   f = await s.flags();
   assert(f.ch1_foreman && f.ch1_atu_met && f.tut_element && await hasItem(s, 'c1_gold_dust') >= 3, '1-7: ' + JSON.stringify(f));

@@ -475,7 +475,7 @@ async function sides(browser) {
   check('fixed battle t4_den_a', await fightEnemy('den_a'));
   check('fixed battle t4_den_b', await fightEnemy('den_b'));
   check('den enemies do not respawn', await ev(() => G.state.flags.dead_rat_den_den_a && G.state.flags.dead_rat_den_den_b));
-  await levelTo(16);
+  await levelTo(17); // 柿鼠大王 is tuned for a Lv15 player with shop gear (docs/BALANCE.md)
   await ev(() => G.Party.healAll());
   await stepOn(8, 3);
   check('柿鼠大王 beaten', await flag('ch4_ratking_beaten'));

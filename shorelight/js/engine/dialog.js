@@ -263,8 +263,10 @@ G.Dialog = (() => {
           ctx.font = G.font(size);
           const rows = this.lines.map((l) => G.Render.wrap(ctx, l, G.W - 160).map((r) => r.map((g) => g.ch).join('')));
           const rowH = Math.round(size * 1.3);
-          const height = rows.reduce((h, r) => h + lh + Math.max(0, r.length - 1) * rowH, 0);
-          return { rows, rowH, size, height, lang: G.I18N.lang() };
+          // once lines wrap, separate them a little more so each paragraph still reads as one
+          const gap = rows.some((r) => r.length > 1) ? Math.max(lh, rowH + 18) : lh;
+          const height = rows.reduce((h, r) => h + gap + Math.max(0, r.length - 1) * rowH, 0);
+          return { rows, rowH, gap, size, height, lang: G.I18N.lang() };
         };
         let L = build(size0);
         while (L.height > G.H - 60 && L.size > 18) L = build(L.size - 2);
@@ -280,7 +282,7 @@ G.Dialog = (() => {
             size: L.size, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
           });
         });
-        y += lh + (rows.length - 1) * L.rowH;
+        y += L.gap + (rows.length - 1) * L.rowH;
       }
       ctx.restore();
     }

@@ -285,7 +285,13 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     if (FROM !== 'ending') {
 
     // ------------------------------------------------------------------ 記憶之門③ + 怨宴 + 卸下面具
-    await ev(() => { for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) G.Story.ensureLevel(id, 19); G.Party.healAll(); });
+    // 怨宴 is tuned for a Lv19 player in 施家鐵舖 gear (docs/BALANCE.md): the test skips the shops, so equip it, plus two levels of margin
+    await ev(() => {
+      const W = { xinghe: 'sw_bailian', baizhi: 'fl_diaohua', hongying: 'c5_sp_steel', yungui: 'fn_zhusha' };
+      for (const id in W) Object.assign(G.state.members[id].equip, { weapon: W[id], armor: 'ar_brocade', head: 'c5_hd_warmhat', feet: 'ft_lupi' });
+      for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) G.Story.ensureLevel(id, 21);
+      G.Party.healAll();
+    });
     await stepOn(29, 11);
     await expectMap('luo_1f');
     await ev(() => G.Debug.stepOn(19, 15));
