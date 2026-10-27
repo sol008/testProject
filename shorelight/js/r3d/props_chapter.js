@@ -309,6 +309,12 @@
           blending: T.AdditiveBlending, color: new T.Color('#7fc8ff'), opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -1 }));
         h.position.set(0, 0.02, 0.03); h.renderOrder = 2; h.name = 'halo';
         out.add(h);
+        // x-ray layer: the maze's big camphor canopy covers the clearing's centre from the 3D camera, so a faint copy
+        // of the print draws on top of foliage (seen "through" the leaves, as spirit light would be)
+        const x = new T.Mesh(geo, m.clone());
+        x.material.depthTest = false; x.material.opacity = 0.35;
+        x.position.copy(p.position); x.renderOrder = 12; x.name = 'xray';
+        out.add(x);
       }
       if (o.kind === 'shoe') { // the shoe itself has some volume
         const s = new T.Mesh(new T.SphereGeometry(0.1, 10, 6), cm('shoe', () => R.env({ color: 0x5a3a5a, roughness: 0.8 })));
@@ -335,6 +341,11 @@
       if (halo) {
         if (!halo.userData.own) { halo.material = halo.material.clone(); halo.userData.own = true; }
         halo.material.opacity = p.material.opacity * 0.85;
+      }
+      const xr = node.getObjectByName('xray');
+      if (xr) {
+        if (!xr.userData.own) { xr.material = xr.material.clone(); xr.userData.own = true; }
+        xr.material.opacity = p.material.opacity * 0.4;
       }
     },
     lights: () => [], // the print glows by itself; a pool light + halo per print read as floating blobs on maze paths
