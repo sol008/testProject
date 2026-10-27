@@ -147,7 +147,7 @@
     c11_ac_juhua: { name: '天人菊香囊', desc: '紅黃相間的天人菊曬乾縫成的香囊。「風吹不倒的花」。免疫睡眠。', type: 'acc', price: 1500, ch: 11, icon: 'bag', stats: { mag: 10 }, immune: ['sleep'] },
     c11_ac_fisher: { name: '漁夫的護身符', desc: '石滬灘撿到的護身符，香火袋已經褪色。抵抗水屬性。', type: 'acc', price: 0, ch: 11, icon: 'jade', stats: { def: 10 }, resist: ['water'] },
     c11_ac_weir_stone: { name: '滬石護符', desc: '添家滬滬門頂那粒石頭，阿添伯的老爸疊的。抵抗水屬性，免疫定身。', type: 'acc', price: 0, ch: 11, icon: 'gem', stats: { def: 18 }, resist: ['water'], immune: ['stun'] },
-    c11_ac_tangshan_coin: { name: '唐山銅錢', desc: '阿木伯四十年的積蓄裡的一枚。戰鬥後得到的錢增加。', type: 'acc', price: 0, ch: 11, icon: 'ring', stats: { luk: 20 }, special: ['goldUp'] },
+    c11_ac_tangshan_coin: { name: '唐山銅錢', desc: '阿木伯四十幾年的積蓄裡的一枚。戰鬥後得到的錢增加。', type: 'acc', price: 0, ch: 11, icon: 'ring', stats: { luk: 20 }, special: ['goldUp'] },
     c11_ac_memory_lamp: { name: '憶燈', desc: '六盞記憶燈聚成的一盞小燈，溫暖得像剛煮好的芋圓。白芷專用。戰鬥開始時持續回復。', type: 'acc', price: 0, ch: 11, icon: 'lantern', who: ['baizhi'], stats: { mag: 25, mp: 30 }, special: ['autoRegen'] },
     c11_ac_captain_patch: { name: '船主的獨眼罩', desc: '烏鬚船主留下的眼罩。戴上以後，看什麼都像要打劫。暴擊率提升。', type: 'acc', price: 0, ch: 11, icon: 'misc', stats: { atk: 8, luk: 8 }, special: ['critUp'] },
     c11_ft_guard_boots: { name: '長明宮衛的鐵靴', desc: '黑鐵打的靴子，很重，走起來咚咚響。', type: 'feet', price: 0, ch: 11, icon: 'shoes', stats: { def: 20, hp: 30 } },
@@ -338,7 +338,7 @@
       doneText: '天亮了。鬼門關了。' },
     q_penghu_weir: { name: '石滬的缺口', lantern: true, desc: '堤岸上的阿添伯說：添家滬裡沒有魚，滿滬都是燈。其中一盞，叫他「阿兄」。',
       stages: ['去石滬灘的「添家滬」看看。', '滬牆要開口，得先問滬主。回去找阿添伯。', '帶阿添伯去添家滬。'], doneText: '滬仔愛留一个縫。魚仔才會當轉去。' },
-    q_tangshan: { name: '唐山客的平安信', lantern: true, desc: '溺魂暗流裡，燈橋上的唐山阿伯——林阿木，抱著四十年的積蓄，想寄一張平安信回家。',
+    q_tangshan: { name: '唐山客的平安信', lantern: true, desc: '溺魂暗流裡，燈橋上的唐山阿伯——林阿木，抱著四十幾年的積蓄，想寄一張平安信回家。',
       stages: ['替阿木伯寫一張平安信。', '黑水溝兩邊的死人，最後都到同一個岸。在彼岸找找阿木伯的阿娘。'], doneText: '「阿娘只是……想欲聽你講。」' },
     q_baizhi_memory: { name: '她的記憶', lantern: true, desc: '燈塔五樓，六盞小小的、溫暖的燈——白芷正在失去的人間記憶。',
       stages: ['收集白芷的記憶（六盞）。'], doneText: '「我會全部還給妳。一盞都不少。」' },
@@ -3607,7 +3607,7 @@
       { sprite: 'c11_echo_qingfeng', x: 780, y: 560, alpha: 0.85 },
       { sprite: 'c11_echo_hongying', x: 920, y: 600, alpha: 0.85 },
     ];
-    await cg(S, { bg: 'mansion', tint: 'rgba(255,170,90,0.45)', tintMode: 'soft-light', figures: figs, caption: '洛家・三年前的中元前夕' }, async () => {
+    await cg(S, { bg: 'mansion', tint: 'rgba(255,170,90,0.45)', tintMode: 'soft-light', figures: figs, caption: '洛家・四年前的中元前夕' }, async () => {
       S.bgm('mansion');
       await L(S, [
         ['hongying:surprise', '……這裡是……洛家。'],
@@ -4488,7 +4488,7 @@
       ['', '她只是閉上眼睛，像在確認這隻手是暖的。'],
       ['baizhi:cry', '……妳一直在等我，對不對。'],
       ['baizhi:cry', '在海邊。在船上。在這裡。'],
-      ['', '麻糬睜開眼睛，輕輕叫了一聲。那是半年來，她第一次出聲。'],
+      ['', '麻糬睜開眼睛，輕輕叫了一聲。那是半年來，她第一次那樣叫——像在喚一個名字。'],
     ]);
     // 白芷歸隊: level = party average + 1, full HP/MP
     S.take('c11_bz_flute', 1);

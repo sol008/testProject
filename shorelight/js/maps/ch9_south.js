@@ -342,7 +342,7 @@
     if (F('ch9_fallwind_defeated')) return ['chenbo:smile', '風停了。……今晚城牆上，應該聽得很清楚。'];
     if (F('ch9_names_quest')) return ['chenbo:serious', '風的源頭在龍磐。出東門，往台地上走。'];
     if (F('ch9_cape_blocked')) return ['chenbo:serious', '這城裡的人，怕的不是風，是風裡的聲音。'];
-    if (F('ch9_wangboat_launch')) return ['chenbo:normal', '三十年沒掌舵了。手生了，船倒是熟的——好船就是這樣，會教人。'];
+    if (F('ch9_wangboat_launch')) return ['chenbo:normal', '二十年沒掌舵了。手生了，船倒是熟的——好船就是這樣，會教人。'];
     if (F('ch9_jiaobei_done')) return ['chenbo:serious', '王船廠今晚會鬧。艾草帶著，別逞強。'];
     if (F('ch9_donggang_arrive')) return ['chenbo:serious', '進廟之前，先拜天公爐。規矩不能亂。'];
     if (F('ch9_qihou_night_done')) return ['chenbo:normal', '沿沙洲往南，就是東港。路上的海，你們多看兩眼。'];

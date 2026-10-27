@@ -1363,7 +1363,7 @@
     if (F('ch10_chuanyan')) { await S.say('Kaswal', '我長大要造自己的船。船眼要畫得比爸爸的更大。'); return; }
     await S.say('Kaswal', '那隻胖胖的灰色的是什麼？山豬的小孩？');
     await S.say('yungui:smug', '是貓。很重的貓。');
-    await S.say('Kaswal', '貓是什麼？可以吃嗎？');
+    await S.say('Kaswal', '貓？牠會游泳嗎？可以跟我們去抓飛魚嗎？');
     S.emote('yuyuan', '💢');
     await S.say('', '（芋圓緩緩轉過頭，用「你再說一次」的眼神看著 Kaswal。Kaswal 笑得在沙上打滾。）');
   };

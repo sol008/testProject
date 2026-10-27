@@ -384,7 +384,7 @@ G.I18N.add({
   '我長大要造自己的船。船眼要畫得比爸爸的更大。': 'When I grow up I\'m building my own boat. And I\'ll paint the boat eyes even bigger than Papa\'s.',
   '那隻胖胖的灰色的是什麼？山豬的小孩？': 'What\'s that fat gray thing? A baby wild boar?',
   '是貓。很重的貓。': 'It\'s a cat. A very heavy cat.',
-  '貓是什麼？可以吃嗎？': 'What\'s a cat? Can you eat it?',
+  '貓？牠會游泳嗎？可以跟我們去抓飛魚嗎？': 'A cat? Can it swim? Can it come catch flying fish with us?',
   '（芋圓緩緩轉過頭，用「你再說一次」的眼神看著 Kaswal。Kaswal 笑得在沙上打滾。）': '(Taro slowly turns his head and gives Kaswal a look that says "Say that again." Kaswal rolls around in the sand laughing.)',
   'Syapen 說你們守了規矩。……海邊，你們想走哪就走哪吧。': 'Syapen says you kept the rules. …The shore is yours to walk wherever you like.',
   // ================================================================ C10-02 the promise to stay on the shore
