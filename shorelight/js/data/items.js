@@ -214,6 +214,12 @@ G.Data.itemFixes = {
     desc: '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。', price: 1200,
     use: { target: 'allies', revive: 0.3 },
   },
+  // 月老紅線 (ch6 3-8): LUK+20, and while 星河 (the wearer) and 白芷 are both in the active party they each get
+  // SPD+5 (docs/story/ch6_tainan.md). `pair` is applied by G.Party.stats; the old flat spd:3 stood in for it.
+  c6_red_thread: {
+    stats: { luk: 20 },
+    pair: { with: 'baizhi', both: true, stats: { spd: 5 }, label: '與白芷同在隊伍時，兩人速度＋5' },
+  },
 };
 (function () {
   const items = G.Data.items;
@@ -237,6 +243,7 @@ G.Data.itemFixes = {
   if (G.I18N && G.I18N.add) {
     G.I18N.add({
       '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。': 'A whole bundle of soul-calling incense; its smoke finds every soul that has lost its way. Revives all fallen allies with 30% HP.',
+      '與白芷同在隊伍時，兩人速度＋5': 'With Bai Zhi in the party: both SPD +5',
     });
   }
 })();

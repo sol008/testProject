@@ -102,6 +102,21 @@ G.Party = (() => {
       if (it.special) specials.push(...[].concat(it.special));
       if (it.elem && slot === 'weapon') elem = it.elem;
     }
+    // pair bonuses — item.pair = { with: charId, stats, both? }: while the wearer and `with` are both in the active
+    // party (first four), the wearer gets `stats`; with both:true the partner gets them too (月老紅線)
+    const act = G.state.party.slice(0, 4);
+    if (act.includes(id)) {
+      for (const pid of act) {
+        const pm = G.state.members[pid];
+        if (!pm) continue;
+        for (const slot in pm.equip) {
+          const it = pm.equip[slot] && G.Data.items[pm.equip[slot]];
+          const pr = it && it.pair;
+          if (!pr || !pr.stats || !act.includes(pr.with) || pr.with === pid) continue;
+          if (pid === id || (pr.both && pr.with === id)) for (const k in pr.stats) if (s[k] != null) s[k] += pr.stats[k];
+        }
+      }
+    }
     // difficulty scaling for player side
     return {
       mhp: Math.round(s.hp), mmp: Math.round(s.mp), atk: Math.round(s.atk), def: Math.round(s.def),

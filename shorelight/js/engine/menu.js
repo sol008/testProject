@@ -223,6 +223,7 @@
         if (it.stats) {
           for (const k in it.stats) { R().text(ctx, `${STAT_NAMES[k === 'hp' ? 'mhp' : k === 'mp' ? 'mmp' : k] || k} ${it.stats[k] > 0 ? '+' : ''}${it.stats[k]}`, 950, yy, { size: 18, color: '#c9e8c0' }); yy += 26; }
         }
+        if (it.pair && it.pair.label) { R().text(ctx, it.pair.label, 950, yy, { size: 17, color: '#f4c8d0' }); yy += 26; }
         if (it.who) R().text(ctx, '可裝備：' + it.who.map(charName).join('、'), 950, yy + 6, { size: 17, color: '#c9b893' });
         R().text(ctx, '售價 ' + Math.floor((it.price || 0) / 2) + ' 文', 950, 400, { size: 16, color: '#9c947f' });
       }
