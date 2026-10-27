@@ -301,7 +301,7 @@ G.Mon3D = G.Mon3D || {
       });
     },
     jewelface(g) {
-      g.fillStyle = '#ffffff'; g.fillRect(0, 0, CS, CS);
+      g.clearRect(0, 0, CS, CS);
       for (const s of [-1, 1]) {
         g.fillStyle = '#10141c'; g.beginPath(); g.ellipse(128 + s * 44, 120, 22, 30, 0, 0, TAU); g.fill();
         g.fillStyle = '#ffffff'; g.beginPath(); g.arc(128 + s * 44 - 7, 108, 9, 0, TAU); g.fill(); g.beginPath(); g.arc(128 + s * 44 + 8, 132, 4, 0, TAU); g.fill();
@@ -772,6 +772,14 @@ G.Mon3D = G.Mon3D || {
     const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 1, curveSegments: 6 });
     g.translate(0, 0, -depth / 2);
     // normalise extrude UVs (world-sized) into 0..1 over the shape bbox
+    g.computeBoundingBox(); const bb = g.boundingBox, uv = g.attributes.uv, p = g.attributes.position;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, (p.getX(i) - bb.min.x) / (bb.max.x - bb.min.x + 1e-6), (p.getY(i) - bb.min.y) / (bb.max.y - bb.min.y + 1e-6));
+    return idx(g);
+  };
+  // flat 2D shape (single plane, xy) with bbox-normalised UVs — wings, petals, leaves (use with double-sided 'cut')
+  GEO.shape = (pts, curveSeg = 8) => {
+    const sh = new THREE.Shape(pts.map((p) => new THREE.Vector2(p[0], p[1])));
+    const g = new THREE.ShapeGeometry(sh, curveSeg);
     g.computeBoundingBox(); const bb = g.boundingBox, uv = g.attributes.uv, p = g.attributes.position;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, (p.getX(i) - bb.min.x) / (bb.max.x - bb.min.x + 1e-6), (p.getY(i) - bb.min.y) / (bb.max.y - bb.min.y + 1e-6));
     return idx(g);
@@ -3536,6 +3544,469 @@ G.Mon3D = G.Mon3D || {
         k.p('body', 0, -1.2 * dive + 0.9 * rise, 0.8 * rise); k.r('body', 0.2 * dive - 0.4 * rise); k.r('jaw', 0.6 * rise); k.fx.psy += 3 * rise; k.fx.glow += 2 * rise;
       },
       enter(k) { const u = k.u, rise = sm(0, 0.8, u); k.p('body', 0, -2.0 * (1 - rise), -1.0 * (1 - rise)); k.r('body', -0.3 * (1 - rise)); k.fx.diss = max(k.fx.diss, 1 - sm(0, 0.5, u)); },
+    },
+  });
+
+  // ============================================================================ 燈蛾 lamp_moth
+  // A great moth dancing round the dying flames of the 燈母 shrine: the powder on its wings is the ash of extinguished lamps,
+  // its eye-spots still smoulder like embers.
+  defB('lamp_moth', {
+    h: 2.6, outline: 0.003, rim: 0.4, rimColor: 0xffd0a0, wide: 1.3,
+    build(R) {
+      R.bone('body', 'root', [0, 1.45, 0]);
+      R.bone('head', 'body', [0, 1.6, 0.35]);
+      R.bone('abd', 'body', [0, 1.35, -0.2]);
+      R.bone('abd2', 'abd', [0, 1.2, -0.55]);
+      for (const s of [-1, 1]) { R.bone('wf' + sideL(s), 'body', [s * 0.12, 1.55, 0.1]); R.bone('wh' + sideL(s), 'body', [s * 0.1, 1.42, -0.12]); }
+      const FUR = 0xd8c8a8, FUR2 = 0x8a7458, WING = 0x3a2a3e, WING2 = 0x6a5068;
+      // fuzzy thorax & segmented abdomen
+      R.add(GEO.lumpy(GEO.sph(0.2, 0.2, 0.26, 14, 12), 0.08, 6), { b: 'body', c: FUR, cell: 'fur', rep: [2, 2], at: [0, 1.48, 0.05] });
+      for (let i = 0; i < 5; i++) R.add(GEO.sph(0.17 - i * 0.022, 0.15 - i * 0.02, 0.13, 12, 10), { b: i < 2 ? 'abd' : 'abd2', c: i % 2 ? FUR2 : FUR, cell: 'fur', at: [0, 1.35 - i * 0.07, -0.2 - i * 0.14] });
+      R.add(GEO.lumpy(GEO.sph(0.25, 0.16, 0.12, 12, 8), 0.2, 8), { b: 'body', c: 0xf0e8d8, cell: 'fur', at: [0, 1.62, 0.18] });
+      R.add(GEO.sph(0.12, 0.11, 0.11, 12, 10), { b: 'head', c: FUR, cell: 'fur', at: [0, 1.58, 0.35] });
+      eyes(R, 'head', [0, 1.6, 0.4], 0.08, 0.05, 0x301818, { m: 'body', cell: 'plain', yaw: 0.6 });
+      for (const s of [-1, 1]) {
+        // feathery antennae
+        const a = R.chain('ant' + sideL(s), 'head', [[s * 0.04, 1.68, 0.42], [s * 0.12, 1.85, 0.52], [s * 0.22, 1.98, 0.5]]);
+        R.add(GEO.card(0.16, 0.42, 1, 2), { m: 'cut', b: a[1], c: 0xc8b090, cell: 'feather', decal: true, at: [s * 0.04, 1.66, 0.43], rot: [-0.55, 0, s * -0.5] });
+        R.spring(a.slice(1), { k: 0.3, g: 0.1 });
+        // forewing (big, ember eye-spot) and hindwing
+        const fw = GEO.shape([[0, 0], [0.35, 0.35], [0.85, 0.6], [1.15, 0.45], [1.2, 0.1], [0.95, -0.25], [0.5, -0.3]]);
+        R.add(fw, { m: 'cut', b: 'wf' + sideL(s), c: (v) => Rig.mix(WING, WING2, sm(0.2, 1.0, abs(v.x))), cell: 'wing', at: [s * 0.12, 1.55, 0.1], rot: [-PI / 2 + 0.2, 0, 0], s: [s, 1, 1] });
+        const hw = GEO.shape([[0, 0], [0.3, -0.05], [0.75, -0.25], [0.85, -0.55], [0.55, -0.75], [0.2, -0.45]]);
+        R.add(hw, { m: 'cut', b: 'wh' + sideL(s), c: WING, cell: 'wing', at: [s * 0.1, 1.42, -0.12], rot: [-PI / 2 + 0.25, 0, 0], s: [s, 1, 1] });
+        // smouldering eye-spots on the wings
+        for (const [x, z, r, b] of [[0.72, 0.28, 0.17, 'wf'], [0.4, -0.0, 0.1, 'wf'], [0.55, -0.45, 0.12, 'wh']]) {
+          const yy = b === 'wf' ? 1.55 : 1.42;
+          R.add(GEO.cyl(r, r, 0.004, 16), { m: 'glow', b: b + sideL(s), c: 0xffa040, cell: 'emberspot', uvp: 'y', at: [s * (0.12 + x), yy + 0.012 + z * 0.2, (b === 'wf' ? 0.1 : -0.12) - z], rot: [0.2, 0, 0] });
+        }
+        // legs
+        for (let i = 0; i < 3; i++) R.add(GEO.sweep([[s * 0.1, 1.4, 0.15 - i * 0.12], [s * 0.22, 1.28, 0.2 - i * 0.12], [s * 0.26, 1.05, 0.22 - i * 0.14]], 0.012, { sides: 4 }), { b: 'body', c: 0x5a4a38, cell: 'plain' });
+      }
+      R.fx({ mode: 'fall', n: 34, at: [0, 1.4, 0], box: [2.2, 0.4, 1.2], col: [0x9a9088, 0x6a6460, 0xb8b0a8], size: 0.05, speed: 0.4, p: [1.4, 0.3, 1], blend: 'normal' });
+      R.fx({ mode: 'rise', n: 20, at: [0, 0.8, 0], box: [1.8, 1.0, 1.0], col: [0xffa040, 0xffd080], size: 0.05, speed: 0.8, p: [1.2, 0.3, 1] });
+      R.light({ b: 'body', at: [0, 1.5, 0.4], color: '#ffa040', i: 0.6, r: 3, flicker: 0.4 });
+    },
+    idle(k) {
+      // fluttering hover: fast flaps with a slow bob; wings beat down hard, recover slower
+      const f = k.t * 9, beat = sin(f) + 0.3 * sin(f * 2);
+      k.p('body', sin(k.t * 0.9) * 0.08, 0.1 * sin(k.t * 1.6) - beat * 0.03, 0);
+      k.r('body', -0.15 + sin(k.t * 0.7) * 0.05, sin(k.t * 0.5) * 0.15, 0);
+      k.r('wfL', 0, 0, -0.5 * beat); k.r('wfR', 0, 0, 0.5 * beat); k.r('whL', 0, 0, -0.45 * sin(f - 0.4)); k.r('whR', 0, 0, 0.45 * sin(f - 0.4));
+      k.r('abd', 0.1 * sin(k.t * 2)); k.r('abd2', 0.15 * sin(k.t * 2 - 0.5));
+    },
+    move(k) { const f = k.t * 14; k.r('body', 0.2); k.r('wfL', 0, 0, -0.6 * sin(f)); k.r('wfR', 0, 0, 0.6 * sin(f)); k.r('whL', 0, 0, -0.5 * sin(f - 0.4)); k.r('whR', 0, 0, 0.5 * sin(f - 0.4)); },
+    clips: {
+      attack(k) {
+        // dive: wings swept back, plunge at the target, flare up
+        const u = k.u, up = pulse(u, 0, 0.3, 0.3, 0.4), dive = pulse(u, 0.35, 0.47, 0.6, 0.95);
+        k.p('body', 0, 0.4 * up - 0.4 * dive, 0.8 * dive); k.r('body', 0.6 * dive - 0.3 * up);
+        k.r('wfL', 0, -0.8 * dive, 0.5 * up); k.r('wfR', 0, 0.8 * dive, -0.5 * up); k.r('whL', 0, -0.6 * dive); k.r('whR', 0, 0.6 * dive);
+      },
+      cast(k) {
+        // wings spread wide: the ash-powder ignites
+        const up = pulse(k.u, 0.05, 0.3, 0.75, 1);
+        k.r('wfL', 0, 0, 0.5 * up); k.r('wfR', 0, 0, -0.5 * up); k.p('body', 0, 0.3 * up, 0); k.fx.glow += 3 * up;
+      },
+      hurt: (k) => GEN.hurt(k),
+      die(k) { const u = k.u, f = sm(0.1, 0.6, u); k.p('body', 0, -1.2 * f, 0); k.r('body', 0.8 * f, 0, 1.2 * f); k.r('wfL', 0, 0, 0.8 * f); k.r('wfR', 0, 0, -0.3 * f); k.fx.diss = max(k.fx.diss, sm(0.3, 1, u)); },
+      special(k) { const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1); k.r('body', 0, u * TAU * 2 * up, 0); k.p('body', 0, 0.5 * up, 0); k.fx.glow += 2.5 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 彼岸花妖 lily_demon
+  // On the plain of red spider lilies at the far shore, a flower grew legs. Flowers and leaves never meet (花開不見葉) —
+  // it wants passing souls to be its leaves.
+  defB('lily_demon', {
+    h: 3.0, outline: 0.003, rim: 0.4, rimColor: 0xffb0b0,
+    build(R) {
+      R.bone('body', 'root', [0, 0.9, 0]);
+      const st = R.chain('st', 'body', [[0, 0.95, 0], [0.04, 1.4, 0.02], [0.0, 1.85, 0.05], [-0.05, 2.25, 0.08]]);
+      R.bone('head', st[3], [-0.05, 2.45, 0.1]);
+      for (const s of [-1, 1]) { R.bone('arm' + sideL(s), st[1], [s * 0.06, 1.55, 0.03]); R.bone('hand' + sideL(s), 'arm' + sideL(s), [s * 0.55, 1.35, 0.15]); }
+      for (let i = 0; i < 3; i++) R.bone('root' + i, 'body', [cos(i / 3 * TAU) * 0.08, 0.9, sin(i / 3 * TAU) * 0.08]);
+      const RED = 0xd82838, RED2 = 0xff5060, STEM = 0x3a7a3a;
+      // stem body and root-legs
+      R.tube(['body'].concat(st, ['head']), { r: (u) => 0.07 - u * 0.025, sides: 8, c: STEM, cell: 'pandan', rep: [1, 4] });
+      for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + 0.5; R.add(GEO.sweep([[0, 0.92, 0], [cos(a) * 0.25, 0.5, sin(a) * 0.25], [cos(a) * 0.4, 0.05, sin(a) * 0.4], [cos(a) * 0.55, 0.0, sin(a) * 0.55]], (u) => 0.05 * (1 - u * 0.7), { sides: 6 }), { b: 'root' + i, c: 0x2a5a2a, cell: 'bark' }); }
+      // leaf-blade arms: long strap leaves springing from the stem (花開不見葉 — these are the leaves it stole)
+      for (const s of [-1, 1]) {
+        const L = sideL(s), A = R.B['arm' + L].pos;
+        const blade = GEO.plane(0.95, 0.16, 6, 1); blade.translate(0.475, 0, 0);
+        GEO.warp(blade, (v) => { const t = v.x / 0.95; v.y *= 1 - t * 0.85; v.y += -t * t * 0.25 + sin(t * 3) * 0.04; v.z = sin(t * PI) * 0.06; });
+        R.add(blade, { m: 'cut', c: (v) => Rig.mix(0x2a6a2a, 0x5aaa48, sm(0, 0.8, abs(v.x - A.x))), cell: 'pandan', rep: [3, 1], at: A.toArray(), rot: [0, s < 0 ? PI : 0, 0.15], ord: 'XYZ',
+          skin: (p) => { const t = clamp(abs(p.x - A.x) / 0.95); return [['arm' + L, 1 - sm(0.3, 0.8, t)], ['hand' + L, sm(0.3, 0.8, t)]]; } });
+      }
+      // the bloom: masked face, six recurved strap petals in two layers, long stamens
+      R.add(GEO.sph(0.13, 0.15, 0.1, 16, 12), { b: 'head', c: 0xffffff, cell: 'lilyface', uvp: 'z', at: [-0.05, 2.45, 0.14] });
+      for (let layer = 0; layer < 2; layer++) for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU + layer * 0.5, len = 0.55 - layer * 0.12;
+        const pet = GEO.plane(0.11, len, 1, 6); pet.translate(0, len / 2, 0);
+        GEO.warp(pet, (v) => { const t = v.y / len; v.z = -sin(t * PI * 0.9) * 0.25 * t - t * t * 0.15; v.x *= 1 - t * 0.5 + sin(t * 9) * 0.05; });
+        R.add(pet, { m: 'cut', b: 'head', c: (v) => Rig.mix(RED, RED2, 0.5), cell: 'petal', decal: true, at: [-0.05, 2.45, 0.1], rot: [0.0, 0, a], ord: 'XYZ' });
+      }
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * TAU + 0.2, d = [cos(a), sin(a)];
+        R.add(GEO.sweep([[-0.05, 2.45, 0.12], [-0.05 + d[0] * 0.3, 2.45 + d[1] * 0.3, 0.3], [-0.05 + d[0] * 0.6, 2.5 + d[1] * 0.55, 0.32], [-0.05 + d[0] * 0.75, 2.6 + d[1] * 0.68, 0.22]], 0.008, { sides: 4 }), { b: 'head', c: RED2, cell: 'plain' });
+        R.add(GEO.sph(0.022, 0.022, 0.022, 6, 4), { b: 'head', m: 'glow', c: 0xffd060, cell: 'blank', at: [-0.05 + d[0] * 0.75, 2.6 + d[1] * 0.68, 0.22] });
+      }
+      // little lily clusters on the ground
+      for (const [x, z] of [[-0.6, 0.35], [0.65, 0.2], [0.2, -0.55], [-0.45, -0.4]]) {
+        for (let j = 0; j < 3; j++) {
+          const hh = 0.32 + j * 0.08, xx = x + (j % 2) * 0.1 - 0.05, zz = z + (j > 1 ? 0.08 : -0.03);
+          R.add(GEO.cyl(0.007, 0.009, hh, 4), { m: 'cut', b: 'root', c: 0x4a8a3a, cell: 'plain', at: [xx, hh / 2, zz] });
+          for (let c2 = 0; c2 < 2; c2++) R.add(GEO.plane(0.36, 0.36), { m: 'cut', b: 'root', c: RED2, cell: 'lily', decal: true, at: [xx, hh + 0.04, zz], rot: [-PI / 2 + 0.5 + c2 * 0.9, j * 1.3 + c2 * PI / 2, 0] });
+        }
+      }
+      R.fx({ mode: 'fall', n: 22, at: [0, 2.2, 0], box: [1.8, 1.0, 1.4], col: [RED, RED2], size: 0.07, speed: 0.4, p: [2.0, 0.6, 1], blend: 'normal' });
+      R.fx({ mode: 'wander', n: 12, at: [0, 1.6, 0], box: [1.4, 1.4, 1.0], col: [0xff6070], size: 0.04, speed: 0.6, p: [0.3, 1, 1] });
+    },
+    idle(k) {
+      const w = sin(k.t * 1.1);
+      k.wave(['st0', 'st1', 'st2', 'st3'], 'z', 0.05, 4, 1.1); k.wave(['st0', 'st1', 'st2', 'st3'], 'x', 0.04, 5, 0.8, 1);
+      k.r('head', 0.15 + w * 0.05, sin(k.t * 0.4) * 0.2, 0); k.s('head', 0.03 * sin(k.t * 1.6));
+      k.r('armL', 0, 0, sin(k.t * 1.3) * 0.2); k.r('armR', 0, 0, -sin(k.t * 1.3 + 0.5) * 0.2); k.r('handL', 0, 0, sin(k.t * 1.3) * 0.3); k.r('handR', 0, 0, -sin(k.t * 1.3) * 0.3);
+    },
+    move(k) { k.wave(['st0', 'st1', 'st2', 'st3'], 'z', 0.12, 3, 6); for (let i = 0; i < 3; i++) k.r('root' + i, sin(k.t * 6 + i * 2) * 0.3); k.p('body', 0, abs(sin(k.t * 6)) * 0.06, 0); },
+    clips: {
+      attack(k) {
+        // leaf-blade whip
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.r('st1', -0.2 * back + 0.3 * hit, 0.4 * back - 0.5 * hit); k.r('armR', -0.6 * back, 0.8 * back - 1.4 * hit, 0.4 * back); k.r('handR', 0, 0, 0.8 * hit);
+        k.p('body', 0, 0, 0.4 * hit);
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('head', 0.35 * up); k.r('head', -0.3 * up); k.r('armL', 0, 0, -0.7 * up); k.r('armR', 0, 0, 0.7 * up); k.fx.glow += 2 * up; },
+      hurt: (k) => GEN.hurt(k),
+      die(k) { const u = k.u, f = sm(0.1, 0.7, u); k.r('st0', 0.5 * f); k.r('st1', 0.4 * f); k.r('st2', 0.3 * f); k.r('head', 0.6 * f); k.s('head', -0.3 * f); k.fx.diss = max(k.fx.diss, sm(0.35, 1, u)); },
+      special(k) { const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1); k.r('head', 0, u * TAU * up, 0); k.s('head', 0.5 * up); k.fx.glow += 2 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 貪鬼 greed_ghost
+  // A ghost that never had enough: plump and lavender, cradling a teetering tower of temple offerings, gold ingots orbiting.
+  defB('greed_ghost', {
+    h: 2.4, outline: 0.003, rim: 0.5, rimColor: 0xf0d0ff,
+    build(R) {
+      R.bone('body', 'root', [0, 0.95, 0]);
+      R.bone('head', 'body', [0, 1.5, 0.05]);
+      for (const s of [-1, 1]) R.bone('hand' + sideL(s), 'body', [s * 0.42, 1.0, 0.45]);
+      R.bone('stack', 'body', [0.45, 1.05, 0.5]);
+      R.bone('coins', 'root', [0, 1.3, 0]);
+      const LAV = 0xb8a0d8, LAV2 = 0x8a70b0;
+      // bean body tapering into a curled ghost tail
+      const bodyG = GEO.lumpy(GEO.sph(0.62, 0.7, 0.55, 24, 18), 0.03, 2);
+      GEO.warp(bodyG, (v) => { v.z += sm(0.2, -0.7, v.y) * 0.1; v.x *= 1 + sm(0, -0.6, v.y) * 0.1; });
+      R.add(bodyG, { skin: byY('body', 'head', 1.0, 1.6), c: (v) => Rig.mix(LAV2, LAV, sm(0.4, 1.6, v.y)), cell: 'skin', rep: [3, 3], at: [0, 1.2, 0] });
+      const tail = R.chain('tl', 'body', [[0, 0.6, -0.1], [0.1, 0.35, -0.35], [0.3, 0.25, -0.6]]);
+      R.tube(tail, { r: (u) => 0.32 * (1 - u * 0.9), sides: 12, c: LAV2, cell: 'skin', ext: [0, 0.2] });
+      R.spring(tail.slice(1), { k: 0.15, g: 0.1 });
+      faceShell(R, 'greedface', [0, 1.43, 0.05], 0.6, 0.56, 0.52, { b: 'head', wide: 0.85, t0: 0.65, tl: 1.2 });
+      // stubby arms hugging the offerings
+      for (const s of [-1, 1]) R.add(GEO.capsule(0.1, 0.28, 4, 8), { b: 'hand' + sideL(s), c: LAV, cell: 'skin', at: [s * 0.45, 1.05, 0.4], rot: [1.2, 0, s * -0.9] });
+      // tower of offerings: bowls of rice, longevity peach buns, a red-wrapped stack, gold ingots
+      let y = 0.62;
+      for (let i = 0; i < 3; i++) {
+        R.add(GEO.lathe([[0.001, 0], [0.12, 0.0], [0.17, 0.08], [0.19, 0.11], [0.001, 0.11]], 14), { b: 'stack', c: 0xf4f0e8, cell: 'lacquer', at: [0.45 + sin(i) * 0.02, y, 0.5] });
+        R.add(GEO.tor(0.18, 0.012, 4, 16), { b: 'stack', c: 0x3a5ac0, cell: 'plain', at: [0.45 + sin(i) * 0.02, y + 0.07, 0.5], rot: [PI / 2, 0, 0] });
+        for (let j = 0; j < 3; j++) R.add(GEO.sph(0.07, 0.08, 0.07, 10, 8), { b: 'stack', c: 0xffd8e0, cell: 'plain', at: [0.45 + (j - 1) * 0.08, y + 0.15, 0.5 + (j % 2) * 0.03] });
+        y += 0.24;
+      }
+      for (let j = 0; j < 3; j++) { const g = GEO.sph(0.08, 0.09, 0.08, 10, 8); GEO.warp(g, (v) => { v.y += max(0, v.y) * 0.4; }); R.add(g, { b: 'stack', c: (v) => Rig.mix(0xffc0d0, 0xff6080, sm(0, 0.2, v.y - y - 0.05)), cell: 'plain', at: [0.45 + (j - 1) * 0.1, y + 0.08, 0.5] }); }
+      // orbiting gold ingots (元寶)
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU, g = GEO.lathe([[0.001, 0], [0.09, 0.0], [0.12, 0.05], [0.07, 0.06], [0.05, 0.1], [0.001, 0.1]], 12);
+        GEO.warp(g, (v) => { v.z *= 0.6; });
+        R.add(g, { b: 'coins', m: 'glow', c: 0xa07010, cell: 'gold', at: [cos(a) * 0.95, 1.3 + sin(i * 2) * 0.2, sin(a) * 0.8] });
+      }
+      R.fx({ mode: 'orbit', n: 18, at: [0, 1.4, 0], box: [0.1, 0.4, 0.1], col: [0xffd060, 0xfff0a0], size: 0.05, speed: 0.9, p: [1.0, 0.2, 1] });
+      R.light({ b: 'stack', at: [0.45, 1.3, 0.7], color: '#ffd060', i: 0.5, r: 3 });
+    },
+    always(k) { k.r('coins', 0, k.t * 0.8, 0); },
+    idle(k) {
+      const b = sin(k.t * 1.5);
+      k.p('body', 0, 0.08 + b * 0.05, 0); k.s('body', b * 0.02, -b * 0.02, b * 0.02);
+      k.r('stack', 0, 0, sin(k.t * 1.1) * 0.05); k.r('head', 0, sin(k.t * 0.5) * 0.15, 0);
+      // a greedy glance left and right
+      k.r('body', 0, 0.25 * Math.round(sin(k.t * 0.3) * 1.5) / 1.5, 0);
+    },
+    move(k) { k.p('body', 0, 0.1 + abs(sin(k.t * 4)) * 0.08, 0); k.r('body', 0.1, 0, sin(k.t * 4) * 0.08); },
+    clips: {
+      attack(k) {
+        // belly-slam: rear back and bounce into the target, offerings wobble
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.p('body', 0, 0.3 * back + 0.1 * hit, -0.2 * back + 0.6 * hit); k.s('body', -0.08 * back + 0.12 * hit, 0.1 * back - 0.1 * hit, -0.08 * back + 0.12 * hit);
+        k.r('stack', 0, 0, 0.3 * hit);
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('coins', 0.5 * up); k.p('coins', 0, 0.4 * up, 0); k.p('body', 0, 0.2 * up, 0); k.fx.glow += 2 * up; },
+      hurt(k) { GEN.hurt(k); k.r('stack', 0, 0, -0.3 * pulse(k.u, 0, 0.1, 0.2, 0.8)); },
+      die(k) { const u = k.u, f = sm(0.1, 0.8, u); k.s('body', 0.3 * f, -0.5 * f, 0.3 * f); k.p('stack', 0, -0.4 * f, 0.3 * f); k.r('stack', 0.8 * f); k.p('coins', 0, -1.0 * f, 0); k.fx.diss = max(k.fx.diss, sm(0.35, 1, u)); },
+      special(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); k.r('coins', 0, k.ct * 6 * up, 0); k.s('coins', 0.8 * up); k.fx.glow += 2 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // place a small eye sphere on a surface point facing outward (eyeball decal on its front)
+  function eyeAt(R, b, p, n, r, o = {}) {
+    const g = GEO.sph(r, r, r * 0.8, 12, 10);
+    R.add(g, { b, m: o.m || 'glow', c: o.c || 0x8a8a8a, cell: o.cell || 'eyeball', uvp: 'z', at: p, rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().normalize()), 'YXZ'); return [e.x, e.y, e.z]; })() });
+    if (o.lid !== false) R.add(GEO.tor(r * 1.02, r * 0.18, 5, 14), { b, m: o.lidM || 'psy', c: o.lidC || 0x8070b0, cell: 'blank', at: p, rot: (() => { const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().normalize()), 'YXZ'); return [e.x, e.y, e.z]; })() });
+  }
+
+  // ============================================================================ 百眼 hundred_eye
+  // A thing of the 一息界 grown all over with eyes; each eye sees you a little differently. A kaleidoscope orb crowned with
+  // a turning ring of eye-petals, eye-tipped tendrils trailing beneath.
+  defB('hundred_eye', {
+    h: 3.2, outline: 0, rim: 0.5, psy: [1.8, 8, 0.12, 1.0], wide: 1.2,
+    build(R) {
+      R.bone('body', 'root', [0, 1.75, 0]);
+      R.bone('core', 'body', [0, 1.75, 0]);
+      R.bone('ring', 'body', [0, 1.75, -0.05]);
+      R.bone('ring2', 'body', [0, 1.75, -0.12]);
+      R.bone('halo', 'body', [0, 1.75, -0.3]);
+      const r = R.r;
+      // kaleidoscope orb and its big central eye
+      R.add(GEO.sph(0.62, 0.62, 0.62, 28, 22), { b: 'core', m: 'psy', c: 0x4a3a7a, cell: 'blank', at: [0, 1.75, 0] });
+      eyeAt(R, 'core', [0, 1.75, 0.5], new THREE.Vector3(0, 0, 1), 0.3, { c: 0x9aff9a, cell: 'eye', lidC: 0x302050 });
+      for (let i = 0; i < 18; i++) {
+        const a = r() * TAU, h = (r() - 0.5) * 1.6, p = onEll([0, 1.75, 0], [0.62, 0.62, 0.62], a, clamp(h, -0.85, 0.85));
+        const n = new THREE.Vector3(p[0], p[1] - 1.75, p[2]);
+        if (n.z > 0.45 && abs(n.x) < 0.25 && abs(n.y) < 0.25) continue;
+        eyeAt(R, 'core', p, n, 0.06 + r() * 0.06, { c: Rig.mix(0x8a8a8a, 0xffffff, r() * 0.5) });
+      }
+      // two counter-rotating rings of eye-petals
+      for (const [rb, n, len, rad, hue] of [['ring', 14, 0.55, 0.72, 0], ['ring2', 10, 0.75, 0.62, 0.5]]) {
+        for (let i = 0; i < n; i++) {
+          const a = i / n * TAU + (rb === 'ring2' ? 0.3 : 0), d = new THREE.Vector3(cos(a), sin(a), 0);
+          const pet = GEO.shape([[-0.12, 0], [-0.1, len * 0.5], [0, len], [0.1, len * 0.5], [0.12, 0]]);
+          R.add(pet, { b: rb, m: 'psy', c: Rig.mix(0x6050a0, 0xa080e0, hue), cell: 'blank', at: [d.x * rad, 1.75 + d.y * rad, rb === 'ring' ? -0.05 : -0.12], rot: [0, 0, a - PI / 2], ord: 'XYZ' });
+          eyeAt(R, rb, [d.x * (rad + len * 0.55), 1.75 + d.y * (rad + len * 0.55), rb === 'ring' ? 0.0 : -0.07], new THREE.Vector3(0, 0, 1), 0.06, { c: 0xa0a0a0, lid: false });
+        }
+      }
+      R.add(GEO.plane(3.0, 3.0), { b: 'halo', m: 'add', c: 0x6a4ab0, cell: 'mandala', decal: true, at: [0, 1.75, -0.3] });
+      // eye-tipped tendrils
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 4 - 0.5) * 1.6, x = sin(a) * 0.35;
+        const ch = R.chain('tn' + i, 'body', [[x, 1.25, cos(a) * 0.15], [x * 1.2, 0.95, 0.1], [x * 1.3, 0.65, 0.05], [x * 1.3, 0.38, 0.05]]);
+        R.tube(ch, { r: (u) => 0.05 * (1 - u * 0.5), sides: 6, m: 'psy', c: 0x5a4a8a, cell: 'blank', ext: [0, 0.05] });
+        eyeAt(R, ch[3], [x * 1.3, 0.32, 0.05], new THREE.Vector3(0, -0.3, 1), 0.06, { c: 0xa0a0a0 });
+        R.spring(ch.slice(1), { k: 0.12, drag: 0.12, g: 0.3 });
+      }
+      R.fx({ mode: 'orbit', n: 40, at: [0, 1.75, 0], box: [0.1, 1.0, 0.1], col: [0xff60c0, 0x60e0ff, 0xffe060, 0x80ff80], size: 0.06, speed: 0.6, p: [1.5, 0.5, 1] });
+      R.light({ b: 'core', at: [0, 1.75, 0.8], color: '#b080ff', i: 0.9, r: 4, flicker: 0.1 });
+    },
+    always(k) { k.r('ring', 0, 0, k.t * 0.5); k.r('ring2', 0, 0, -k.t * 0.35); k.r('halo', 0, 0, k.t * 0.15); },
+    idle(k) {
+      k.p('body', 0, 0.12 + sin(k.t * 1.1) * 0.08, 0); k.r('body', sin(k.t * 0.7) * 0.06, sin(k.t * 0.5) * 0.1, 0);
+      // the core rolls its gaze — saccades: snappy holds between quick turns
+      const sx = Math.round(sin(k.t * 0.6) * 2) / 2, sy = Math.round(sin(k.t * 0.43 + 1) * 2) / 2;
+      k.r('core', sy * 0.25, sx * 0.4, 0);
+      for (let i = 0; i < 5; i++) k.r('tn' + i + '0', sin(k.t * 1.2 + i) * 0.15, 0, cos(k.t * 0.9 + i) * 0.15);
+    },
+    move(k) { k.p('body', 0, 0.2, 0); k.r('body', 0.25, 0, 0); },
+    clips: {
+      attack(k) {
+        // stare-beam: the core snaps to the target, petals flare, it lunges
+        const u = k.u, lock = pulse(u, 0, 0.25, 0.6, 0.8), hit = pulse(u, 0.35, 0.45, 0.6, 0.9);
+        k.s('ring', 0.3 * hit); k.s('ring2', 0.25 * hit); k.p('body', 0, 0, 0.5 * hit); k.r('core', 0, 0, 0); k.fx.glow += 2 * hit * lock; k.fx.psy += 2 * hit;
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('halo', 0.5 * up); k.s('ring', 0.4 * up); k.s('ring2', 0.4 * up); k.p('body', 0, 0.3 * up, 0); k.fx.psy += 3 * up; k.fx.glow += 1.5 * up; },
+      hurt(k) { GEN.hurt(k); k.s('core', -0.15 * pulse(k.u, 0, 0.1, 0.2, 0.7)); },
+      die(k) { const u = k.u, f = sm(0.1, 0.9, u); k.s('ring', 0.8 * f); k.s('ring2', 1.2 * f); k.s('core', -0.6 * f); k.s('halo', 1.5 * f); k.fx.diss = max(k.fx.diss, sm(0.3, 1, u)); k.fx.psy += 3 * f; },
+      special(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); k.r('ring', 0, 0, k.ct * 8 * up); k.r('ring2', 0, 0, -k.ct * 8 * up); k.s('halo', 0.8 * up); k.fx.psy += 4 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 萬象童子 jewel_child
+  // A child of the 一息界 made of light and laughter, changing into something else every second. It isn't fighting — it's
+  // playing. A faceted prism in a turning heptagonal cage. Phase 2 (夜玄 opens his jar: 「念兒……再等爹一下。」): the cage
+  // unfolds into a second, larger lattice and the prism blazes.
+  defB('jewel_child', {
+    h: 2.6, outline: 0, rim: 0.5, psy: [3.0, 7, 0.25, 1.15], phaseGlow: 1.5,
+    build(R) {
+      R.bone('body', 'root', [0, 1.5, 0]);
+      R.bone('gem', 'body', [0, 1.5, 0]);
+      R.bone('cage', 'body', [0, 1.5, 0]);
+      R.bone('cage2', 'body', [0, 1.5, 0]);
+      R.bone('limbs', 'body', [0, 1.5, 0]);
+      // the prism: stretched faceted octahedron with an inner icosahedral core
+      const gem = GEO.faceted(GEO.oct(0.48)); GEO.warp(gem, (v) => { v.y *= 1.25; v.x *= 1.05; });
+      R.add(gem, { b: 'gem', m: 'psy', c: 0x9a90c0, cell: 'blank', at: [0, 1.5, 0] });
+      R.add(GEO.faceted(GEO.ico(0.26, 0)), { b: 'gem', m: 'glow', c: 0xd0c0ff, cell: 'blank', at: [0, 1.5, 0] });
+      // little face on the front facets
+      R.add(GEO.plane(0.36, 0.36), { b: 'gem', m: 'cut', c: 0xffffff, cell: 'jewelface', decal: true, at: [0, 1.46, 0.33], rot: [-0.1, 0, 0] });
+      // floating gem hands and feet
+      for (const [x, y, z, s] of [[-0.6, 1.25, 0.15, 0.1], [0.6, 1.25, 0.15, 0.1], [-0.25, 0.75, 0.1, 0.09], [0.25, 0.75, 0.1, 0.09]]) R.add(GEO.faceted(GEO.oct(s)), { b: 'limbs', m: 'psy', c: 0xa0a0d0, cell: 'blank', at: [x, y, z], s: [1, 1.4, 1] });
+      // heptagonal cage: two rings + verticals, glowing struts
+      const cage = (bone, rad, hh, col, thick) => {
+        const P = (i, y) => [cos(i / 7 * TAU) * rad, 1.5 + y, sin(i / 7 * TAU) * rad];
+        for (let i = 0; i < 7; i++) {
+          for (const y of [-hh, hh]) R.add(GEO.sweep([P(i, y), P(i + 1, y)], thick, { sides: 4, n: 2 }), { b: bone, m: 'glow', c: col, cell: 'blank' });
+          R.add(GEO.sweep([P(i, -hh), P(i + 0.5, 0), P(i + 1, hh)], thick * 0.8, { sides: 4, n: 4 }), { b: bone, m: 'glow', c: col, cell: 'blank' });
+        }
+      };
+      cage('cage', 0.95, 0.75, 0x60a070, 0.012);
+      const p2 = R.phaseBone('cageP', 'cage2', [0, 1.5, 0], 2);
+      cage(p2, 1.45, 1.05, 0xb060c0, 0.015);
+      R.add(GEO.plane(2.4, 2.4), { b: 'cage', m: 'add', c: 0x504080, cell: 'mandala', decal: true, at: [0, 1.5, -0.6] });
+      R.fx({ mode: 'orbit', n: 30, at: [0, 1.5, 0], box: [0.1, 1.0, 0.1], col: [0xff80c0, 0x80ffe0, 0xffff80, 0x80a0ff], size: 0.06, speed: 1.2, p: [1.0, 0.6, 1] });
+      R.fx({ mode: 'wander', n: 16, at: [0, 1.5, 0], box: [2, 2, 2], col: [0xffffff], size: 0.04, speed: 1.5, p: [0.4, 1, 1] });
+      R.light({ b: 'gem', at: [0, 1.5, 0.6], color: '#c0a0ff', i: 0.8, r: 3.5, flicker: 0.15 });
+    },
+    always(k) { k.r('cage', 0, k.t * 0.6, sin(k.t * 0.4) * 0.15); k.r('cage2', 0, -k.t * 0.4, 0); k.r('limbs', 0, sin(k.t * 0.9) * 0.4, 0); },
+    idle(k) {
+      // playful: bobbing, little hops, the prism spinning on a whim
+      const hop = abs(sin(k.t * 2.2));
+      k.p('body', 0, 0.1 + hop * 0.12, 0); k.s('gem', -0.04 * hop, 0.06 * hop, -0.04 * hop);
+      k.r('gem', 0, sin(k.t * 0.8) * 0.35, sin(k.t * 1.3) * 0.1);
+      k.p('limbs', 0, sin(k.t * 2.2 + 1) * 0.05, 0);
+    },
+    move(k) { k.p('body', 0, 0.2 + abs(sin(k.t * 6)) * 0.2, 0); k.r('gem', 0.3, k.t * 3, 0); },
+    clips: {
+      attack(k) { const u = k.u, hit = pulse(u, 0.3, 0.42, 0.55, 0.9); k.p('body', 0, 0.3 * pulse(u, 0, 0.3, 0.3, 0.45), 0.7 * hit); k.r('gem', 0, k.ct * 15 * hit, 0); k.fx.psy += 2 * hit; },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('cage', 0.5 * up); k.s('gem', 0.3 * up); k.p('body', 0, 0.4 * up, 0); k.fx.psy += 3 * up; k.fx.glow += 2 * up; },
+      hurt(k) { GEN.hurt(k); k.r('gem', 0, 0, 0.6 * pulse(k.u, 0, 0.1, 0.2, 0.7)); },
+      die(k) { const u = k.u, f = sm(0.1, 0.9, u); k.s('cage', 1.5 * f); k.s('gem', -0.5 * f); k.p('body', 0, 0.5 * f, 0); k.fx.diss = max(k.fx.diss, sm(0.3, 1, u)); k.fx.glow += 2 * f; },
+      special(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); k.r('gem', 0, k.ct * 10 * up, 0); k.s('cage', 0.8 * up); k.s('cage2', 0.5 * up); k.fx.psy += 4 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 黑潮・無相 wuxiang (final boss)
+  // Everything forgotten, woken by the 逆潮: the Black Tide given a hood. A mountain of dark water curling like a wave, lost
+  // lanterns drowned in its body, a void beneath the crest where a face should be, one vast arm reaching for you.
+  // Phase 2 (「黑潮張開了千萬張嘴」): mouths tear open all over it, more arms rise from the sea.
+  // Phase 3 (「沒有形狀的東西，開始變成你們每一個人最害怕失去的樣子」): it becomes a mirror — a kaleidoscope of what you fear
+  // to lose: iridescent mirror skin, a mandala where the face was, mirror shards wheeling around it.
+  const WX = {};
+  defB('wuxiang', {
+    h: 6.6, boss: true, outline: 0.003, rim: 0.5, rimColor: 0x8ab0ff, wide: 1.5, scroll: 0.12, psy: [1.1, 9, 0.1, 1.2], phaseGlow: 1.35, ao: 0.4, edge: [1.6, 0.6, 0.3],
+    build(R) {
+      R.bone('body', 'root', [0, 0.2, 0]);
+      R.bone('mass', 'body', [0, 2.2, -0.2]);
+      R.bone('hood', 'mass', [0, 4.6, 0.1]);
+      R.bone('crest', 'hood', [0, 6.0, 0.6]);
+      R.bone('head', 'hood', [0, 4.8, 0.9]);
+      const NAVY = 0x0c1426, NAVY2 = 0x1e3254, VOID = 0x020306, LAN = 0xff8a40;
+      // the mass: a lathe "hooded wave" — broad sea-skirt base rising to a hood whose crest curls forward
+      const prof = [[3.0, 0.0], [2.6, 0.25], [2.1, 0.7], [1.8, 1.5], [1.65, 2.4], [1.55, 3.3], [1.45, 4.1], [1.35, 4.8], [1.15, 5.4], [0.8, 5.95], [0.3, 6.25], [0.001, 6.3]];
+      const g = GEO.lathe(prof, 40);
+      GEO.warp(g, (v) => {
+        const t = sm(3.8, 6.3, v.y);
+        v.z += t * t * 1.3 - sm(0.0, 1.2, v.y) * 0.0;           // hood leans/curls forward
+        v.y -= sm(0.3, 1.0, v.z / 1.5) * t * 0.6;                  // crest droops over the face
+        if (v.z > 0 && v.y > 3.9 && v.y < 5.6) { const f = sm(0.5, 1.2, v.z) * sm(3.9, 4.4, v.y) * (1 - sm(5.2, 5.6, v.y)) * (1 - sm(0.6, 1.0, abs(v.x))); v.z -= f * 0.9; } // the hollow under the hood
+        v.x *= 1 + 0.06 * sin(v.y * 3 + v.z);
+      });
+      const zone = (p) => { const t1 = sm(1.6, 2.8, p.y), t2 = sm(3.8, 4.8, p.y); return [['body', (1 - t1)], ['mass', t1 * (1 - t2)], ['hood', t2]]; };
+      R.add(g, { skin: zone, c: (v) => Rig.mix(NAVY, NAVY2, sm(0.35, 0.75, fbm(v.x * 0.9, v.y * 0.7, v.z * 0.9))).lerp(new THREE.Color(0x3a5a88), sm(5.6, 6.3, v.y) * 0.6), cell: 'water', rep: [6, 4] });
+      // the void face: a black hollow with two white eyes
+      R.add(GEO.sph(0.9, 0.75, 0.4, 20, 14), { b: 'head', m: 'glow', c: VOID, cell: 'blank', at: [0, 4.75, 0.95] });
+      for (const s of [-1, 1]) R.add(GEO.sph(0.13, 0.09, 0.05, 12, 8), { b: 'head', m: 'glow', c: 0xe8f4ff, cell: 'blank', at: [s * 0.3, 4.85, 1.32], rot: [0, 0, s * -0.15] });
+      // crest foam & spray along the hood rim
+      const r = R.r;
+      for (let i = 0; i < 16; i++) { const a = (i / 15 - 0.5) * 2.6, x = sin(a) * 1.05; R.add(GEO.lumpy(GEO.sph(0.22 + r() * 0.1, 0.14, 0.2, 10, 8), 0.2, 4, i), { b: 'crest', c: Rig.mix(0xc8d8e8, 0xffffff, r()), cell: 'plain', at: [x, 5.75 - abs(a) * 0.55, 0.95 + cos(a) * 0.55] }); }
+      // drowned lanterns embedded in the tide (the lights of everything forgotten)
+      const lantern = (b, p, sc) => {
+        R.add(GEO.lathe([[0.001, -0.1], [0.07, -0.09], [0.1, -0.03], [0.1, 0.04], [0.07, 0.09], [0.001, 0.1]], 8), { b, m: 'glow', c: LAN, cell: 'lantern', at: p, s: sc });
+      };
+      for (let i = 0; i < 46; i++) {
+        const y = 0.5 + r() * 5.0, a = r() * TAU;
+        let rad = 0; for (let j = 1; j < prof.length; j++) if (prof[j][1] >= y) { const t = (y - prof[j - 1][1]) / (prof[j][1] - prof[j - 1][1]); rad = lerp(prof[j - 1][0], prof[j][0], t); break; }
+        const t = sm(3.8, 6.3, y); let px = sin(a) * rad, pz = cos(a) * rad + t * t * 1.3;
+        if (pz > 0.4 && y > 3.9 && y < 5.6 && abs(px) < 0.9) continue;
+        const sc = 0.9 + r() * 0.8;
+        lantern(y < 2.2 ? 'body' : y < 4.4 ? 'mass' : 'hood', [px * 1.01, y, pz * 1.01], [sc, sc, sc]);
+      }
+      // faint faces of the forgotten in the water
+      for (let i = 0; i < 12; i++) { const y = 1.0 + r() * 3.2, a = (r() - 0.5) * 2.4; let rad = 1.75 - (y - 1.5) * 0.08; R.add(GEO.card(0.42, 0.55, 1, 1), { m: 'soft', b: y < 2.2 ? 'body' : 'mass', c: 0x30486a, cell: 'soul', decal: true, at: [sin(a) * rad * 1.02, y - 0.27, cos(a) * rad * 1.02], rot: [0, a, 0] }); }
+      // the reaching arm (right), and the left arm braced on the sea
+      const arm = (side, pts, nm, parent, ph) => {
+        const ch = [];
+        pts.forEach((p, i) => { const n = nm + i; if (ph && i === 0) R.phaseBone(n, parent, p, ph); else R.bone(n, i ? nm + (i - 1) : parent, p); ch.push(n); });
+        R.tube(ch, { r: (u) => 0.42 * (1 - u * 0.55), sides: 14, c: (v) => Rig.mix(NAVY, NAVY2, sm(0.3, 0.8, fbm(v.x, v.y, v.z))), cell: 'water', rep: [3, 4], ext: [0, 0.1] });
+        const H = new THREE.Vector3(...pts[pts.length - 1]), D = H.clone().sub(new THREE.Vector3(...pts[pts.length - 2])).normalize();
+        R.add(GEO.lumpy(GEO.sph(0.32, 0.26, 0.3, 12, 10), 0.08, 3), { b: ch[ch.length - 1], c: NAVY2, cell: 'water', at: H.toArray() });
+        for (let f = 0; f < 5; f++) {
+          const a = (f - 2) * 0.32, side2 = new THREE.Vector3(-D.z, 0, D.x).normalize();
+          const base = H.clone().addScaledVector(side2, sin(a) * 0.22).addScaledVector(D, 0.15);
+          const mid = base.clone().addScaledVector(D, 0.45).addScaledVector(side2, sin(a) * 0.2).add(new THREE.Vector3(0, -0.15, 0));
+          const tip = mid.clone().addScaledVector(D, 0.35).add(new THREE.Vector3(0, -0.35, 0));
+          R.add(GEO.sweep([base, mid, tip], (u) => 0.07 * (1 - u * 0.85), { sides: 6 }), { b: ch[ch.length - 1], c: (v) => Rig.mix(NAVY2, 0xe8eef4, sm(0.5, 0.9, v.distanceTo(base) / 0.8)), cell: 'stone' });
+        }
+        for (let i = 0; i < pts.length - 1; i++) lantern(ch[i], [(pts[i][0] + pts[i + 1][0]) / 2 + side * 0.3, (pts[i][1] + pts[i + 1][1]) / 2 + 0.3, (pts[i][2] + pts[i + 1][2]) / 2], [1, 1, 1]);
+        return ch;
+      };
+      WX.armR = arm(1, [[1.3, 3.6, 0.3], [2.2, 3.2, 0.9], [2.7, 2.4, 1.8], [2.8, 1.8, 2.6]], 'aR', 'mass');
+      WX.armL = arm(-1, [[-1.35, 3.3, 0.2], [-2.3, 2.3, 0.6], [-2.8, 1.1, 1.0], [-3.0, 0.35, 1.4]], 'aL', 'mass');
+      // phase 2: mouths tear open across the tide; two more arms rise from the sea behind
+      for (let i = 0; i < 12; i++) {
+        const y = 0.9 + r() * 3.6, a = (r() - 0.5) * 2.8, rad = 1.75 - (y - 1.5) * 0.07;
+        const p = [sin(a) * rad * 1.03, y, cos(a) * rad * 1.03];
+        const pb = R.phaseBone('mouth' + i, y < 2.2 ? 'body' : 'mass', p, 2);
+        R.add(GEO.sph(0.3, 0.18, 0.05, 14, 8), { b: pb, c: 0xffffff, cell: 'maw', uvp: 'z', at: p, rot: [0, a, 0] });
+      }
+      WX.armB1 = arm(1, [[0.8, 2.6, -1.2], [1.9, 3.8, -1.6], [2.4, 5.0, -1.2], [2.2, 5.9, -0.6]], 'bA', 'mass', 2);
+      WX.armB2 = arm(-1, [[-0.8, 2.6, -1.2], [-1.9, 3.9, -1.7], [-2.5, 5.1, -1.3], [-2.2, 6.0, -0.7]], 'bB', 'mass', 2);
+      // phase 3: kaleidoscope face, mandala halo and wheeling mirror shards
+      const k3 = R.phaseBone('kaleido', 'head', [0, 4.75, 1.0], 3);
+      R.add(GEO.cyl(0.85, 0.85, 0.02, 40), { b: k3, m: 'psy', c: 0xc0b0ff, cell: 'blank', at: [0, 4.75, 1.18], rot: [PI / 2, 0, 0] });
+      const halo = R.phaseBone('halo', 'hood', [0, 4.8, -0.6], 3);
+      R.add(GEO.plane(7.5, 7.5), { b: halo, m: 'add', c: 0x7060c0, cell: 'mandala', decal: true, at: [0, 4.8, -0.9] });
+      const sh = R.phaseBone('shards', 'body', [0, 3.0, 0], 3);
+      for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, rr = 3.2 + (i % 3) * 0.4; R.add(GEO.oct(0.22 + r() * 0.15), { b: sh, m: 'psy', c: 0xd0c8ff, cell: 'blank', at: [cos(a) * rr, 2.2 + sin(i * 2.1) * 1.6, sin(a) * rr], s: [0.35, 1.8, 0.12], rot: [r(), a, r()] }); }
+      // the black sea it rises from, with a line of drifting lanterns
+      waterDisk(R, 5.2, [0, 0.02, 0.4], 0x060a14);
+      for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, rr = 3.4 + (i % 2) * 0.6; lantern('root', [cos(a) * rr, 0.12, sin(a) * rr + 0.4], [1.4, 1.4, 1.4]); }
+      R.fx({ mode: 'rise', n: 50, at: [0, 2.0, 0.4], box: [5, 3, 4], col: [LAN, 0xffc080], size: 0.12, speed: 0.3, p: [3.0, 0.5, 1] });
+      R.fx({ mode: 'fall', n: 40, at: [0, 4.5, 0.6], box: [3.5, 2, 2.5], col: [0x02040a, 0x101828], size: 0.12, speed: 0.6, p: [3.5, 0.2, 1], blend: 'normal' });
+      R.fx({ mode: 'orbit', n: 30, at: [0, 3.0, 0], box: [0.2, 2.5, 0.2], col: [0xb0c8ff, 0xffffff], size: 0.18, speed: 0.35, p: [3.0, 0.8, 1] });
+      R.fx({ mode: 'wander', n: 20, at: [0, 0.3, 0.4], box: [8, 0.5, 7], col: [0x2a3448, 0x1a2234], size: 1.8, speed: 0.15, p: [0.8, 0.2, 1], blend: 'normal' });
+      R.light({ b: 'head', at: [0, 4.85, 1.6], color: '#e8f4ff', i: 1.0, r: 6 });
+      R.light({ b: 'mass', at: [0, 2.5, 2.2], color: '#ff8a40', i: 1.4, r: 8, flicker: 0.15 });
+    },
+    onPhase(inst, n) { inst.U.uIri.value = n >= 3 ? 1.1 : 0; inst.U.uHue.value = n >= 3 ? 0.4 : 0; },
+    always(k, inst) { if (inst.phase >= 3) { k.r('halo', 0, 0, k.t * 0.2); k.r('shards', 0, k.t * 0.35, 0); k.r('kaleido', 0, 0, -k.t * 0.5); } },
+    idle(k) {
+      // vast and slow: the tide breathes, the crest curls and uncurls, the arm reaches and withdraws
+      const b = sin(k.t * 0.6);
+      k.s('mass', 0.02 * b, 0.015 * b, 0.02 * b); k.r('hood', 0.05 + 0.04 * sin(k.t * 0.45), sin(k.t * 0.3) * 0.1, 0); k.r('crest', 0.06 * sin(k.t * 0.8));
+      k.r('mass', 0.03 * sin(k.t * 0.5), 0, 0.02 * sin(k.t * 0.37));
+      const reach = 0.5 + 0.5 * sin(k.t * 0.4);
+      k.r('aR0', -0.2 * reach, 0.1 * reach, 0); k.r('aR1', -0.15 * reach); k.r('aR2', 0.1 * sin(k.t * 1.3)); k.r('aR3', 0.2 * sin(k.t * 1.1));
+      k.r('aL1', 0.05 * sin(k.t * 0.7)); k.r('aL2', 0.05 * sin(k.t * 0.9));
+      if (k.ph >= 2) { k.wave(WX.armB1, 'z', 0.12, 3, 1.2); k.wave(WX.armB2, 'z', -0.12, 3, 1.1, 1); for (let i = 0; i < 12; i++) k.s('mouth' + i, 0, 0.6 * (0.5 + 0.5 * sin(k.t * 2 + i * 1.3)), 0); }
+    },
+    move(k) { k.r('mass', 0.1); k.p('body', 0, 0, sin(k.t * 1.5) * 0.1); },
+    clips: {
+      attack(k) {
+        // the arm rears up and sweeps down across the party
+        const u = k.u, up = pulse(u, 0, 0.35, 0.35, 0.45), hit = pulse(u, 0.42, 0.52, 0.68, 0.98);
+        k.r('aR0', -0.9 * up + 0.3 * hit, 0.6 * up - 0.8 * hit, 0.5 * up); k.r('aR1', -0.5 * up + 0.4 * hit); k.r('aR2', 0.4 * hit); k.r('mass', -0.05 * up + 0.1 * hit, 0.15 * up - 0.2 * hit, 0); k.r('hood', 0.15 * hit);
+        k.fx.flash = max(k.fx.flash, 0.3 * pulse(u, 0.5, 0.52, 0.56, 0.7));
+      },
+      cast(k) {
+        // the lanterns flare as the forgotten answer its call
+        const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1);
+        k.p('body', 0, 0.3 * up, 0); k.r('hood', -0.15 * up); k.r('aR0', -0.8 * up, 0, 0.6 * up); k.r('aL0', -0.6 * up, 0, -0.6 * up); k.fx.glow += 2.5 * up; k.fx.psy += 2 * up;
+      },
+      hurt(k) { const h = pulse(k.u, 0, 0.08, 0.2, 1); k.r('mass', -0.06 * h); k.r('hood', -0.12 * h); k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, k.u)) * 1.0); },
+      die(k) {
+        // the tide breaks: it collapses into the sea; the lanterns go free
+        const u = k.u, f = sm(0.1, 0.9, u);
+        k.p('body', 0, -2.5 * f, 0); k.r('hood', 0.5 * f); k.r('mass', 0.2 * f); k.s('mass', 0.2 * f, -0.3 * f, 0.2 * f);
+        k.fx.diss = max(k.fx.diss, sm(0.45, 1, u)); k.fx.glow += 2 * pulse(u, 0, 0.3, 0.5, 0.9);
+      },
+      special(k) {
+        // 黑潮 crash: rises to full height then the whole wave falls on the party
+        const u = k.u, up = pulse(u, 0.05, 0.4, 0.4, 0.52), crash = pulse(u, 0.48, 0.6, 0.72, 1);
+        k.p('body', 0, 0.6 * up - 0.2 * crash, 0.9 * crash); k.r('mass', -0.15 * up + 0.3 * crash); k.r('hood', -0.2 * up + 0.5 * crash); k.r('crest', 0.4 * crash);
+        k.r('aR0', -1.2 * up + 0.6 * crash); k.r('aL0', -1.0 * up + 0.5 * crash);
+        k.fx.glow += 2 * up + 2 * crash; k.fx.flash = max(k.fx.flash, 0.5 * pulse(u, 0.58, 0.6, 0.64, 0.8)); k.fx.psy += 2 * crash;
+      },
+      enter(k) { const u = k.u, rise = sm(0, 0.85, u); k.p('body', 0, -4.0 * (1 - rise), 0); k.r('hood', 0.4 * (1 - rise)); k.fx.diss = max(k.fx.diss, 1 - sm(0, 0.6, u)); },
     },
   });
   /* END */
