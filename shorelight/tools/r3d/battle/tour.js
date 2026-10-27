@@ -24,6 +24,7 @@ const path = require('path');
       await L.hold(page, 0.8); await L.shot(page, out, '04_target');
     });
     await step('melee', async () => {
+      await L.skipEvents(page);
       await page.evaluate(() => { const s = G.Scenes.top(); const ui = s.ui; ui.done({ kind: 'attack', targets: [ui.tg.pool[ui.tg.i]] }); });
       const a = await L.nextEvent(page, 'action'); await L.atRt(page, a.rt + 0.18); await L.shot(page, out, '05_runup');
       const f = await L.nextEvent(page, 'fx'); await L.atRt(page, f.rt + f.T * 0.55); await L.shot(page, out, '06_swing');

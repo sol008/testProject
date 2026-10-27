@@ -451,6 +451,13 @@ G.VFX3D = (() => {
       };
     }
 
+    // one shared texture per atlas cell (sprites can't offset UVs per instance)
+    cellTex(cell) {
+      this._cells = this._cells || [];
+      if (!this._cells[cell]) { const tx = this.atlas.clone(); tx.needsUpdate = true; tx.repeat.set(0.25, 0.25); tx.offset.set((cell % 4) * 0.25, (3 - Math.floor(cell / 4)) * 0.25); this._cells[cell] = tx; }
+      return this._cells[cell];
+    }
+
     // ---------------------------------------------------------------- scheduling
     later(t, fn) { if (t <= 0) fn(); else this.timers.push({ t: this.time + t, fn }); }
     track(item) { this.items.push(item); return item; }
@@ -676,18 +683,14 @@ G.VFX3D = (() => {
     flare(pos, color, o = {}) {
       const T = THREE;
       const mat = new T.SpriteMaterial({ map: this.atlas, color: new T.Color(color).multiplyScalar(o.k || 3), blending: T.AdditiveBlending, transparent: true, depthWrite: false, depthTest: !o.over, fog: false });
-      // sprite UVs into the atlas cell
-      const cell = o.shape != null ? CELL[o.shape] : CELL.star;
-      const tx = this.atlas.clone(); tx.needsUpdate = true;
-      tx.repeat.set(0.25, 0.25); tx.offset.set((cell % 4) * 0.25, (3 - Math.floor(cell / 4)) * 0.25);
-      mat.map = tx;
+      mat.map = this.cellTex(o.shape != null ? CELL[o.shape] : CELL.star);
       const s = new T.Sprite(mat);
       s.position.copy(pos); s.renderOrder = 31;
       this.scene.add(s);
       let t = 0; const dur = o.dur || 0.3, S = o.size || 2;
       return this.track({
         update: (dt) => { t += dt; const k = t / dur; const sc = S * (o.shrink ? 1 - k * 0.7 : 0.5 + ease.out3(Math.min(1, k * 2.5)) * 0.7); s.scale.set(sc, sc, 1); mat.opacity = Math.max(0, 1 - k * k); mat.rotation = (o.rot || 0) + k * (o.spin || 0.6); return k < 1; },
-        dispose: () => { this.scene.remove(s); mat.dispose(); tx.dispose(); },
+        dispose: () => { this.scene.remove(s); mat.dispose(); },
       });
     }
     lightning(from, to, o = {}) {
@@ -796,7 +799,7 @@ G.VFX3D = (() => {
       this.emit({ pos: feet, disk: 1.0, n: 26, speed: [0.4, 1.4], dir: new THREE.Vector3(0, 1, 0), cone: 0.15, life: [0.5, 0.9], size: [0.16, 0.02], color0: pal.slice(0, 2), shape: 'ember', drag: 0.6 });
       this.emit({ pos: this.P(u, 'chest'), ring: 1.2, n: 18, inward: true, speed: [1.6, 2.6], life: [0.35, 0.5], size: [0.12, 0.03], color0: pal[0], shape: 'spark', stretch: 0.25 });
       this.light(this.P(u, 'chest'), pal[1], 3.5, 6, 0.8);
-      this.glowUnit(u, pal[1], 0.35, 0.6);
+      this.glowUnit(u, pal[1], 0.12, 0.5);
     }
     kindFor(s, id) {
       if (id) {
@@ -827,7 +830,7 @@ G.VFX3D = (() => {
       const dir = away.clone(); dir.y = 0.35;
       this.emit({ pos, n: o.crit ? 34 : 18, dir, cone: 0.9, speed: [3, 8], drag: 3.5, gravity: 4, life: [0.18, 0.4], size: [0.16, 0.02], color0: [pal[0], pal[1]], shape: 'spark', stretch: 0.14, k: 2.6 });
       this.emit({ pos, n: 6, speed: [0.2, 1], life: [0.12, 0.2], size: [0.9 * sc, 0.3], color0: pal[1], shape: 'glow', k: 1.4 });
-      this.flare(pos, pal[0], { size: (o.crit ? 2.6 : 1.5) * sc, dur: o.crit ? 0.26 : 0.16, k: o.crit ? 4 : 2.6, rot: rnd(0, 1) });
+      this.flare(pos, pal[0], { size: Math.min(3.4, (o.crit ? 2.4 : 1.4) * Math.sqrt(sc)), dur: o.crit ? 0.26 : 0.16, k: o.crit ? 3.2 : 2.2, rot: rnd(0, 1) });
       if (o.crit) {
         this.ring(pos, { vertical: true, r: 1.6 * sc, color: pal[1], dur: 0.32, w: 0.04, k: 2 });
         this.emit({ pos, n: 10, speed: [1, 3], drag: 2, life: [0.3, 0.5], size: [0.35, 0.05], color0: '#ffe9a0', shape: 'star', k: 2.4 });
@@ -844,7 +847,7 @@ G.VFX3D = (() => {
       const sc = this.sizeOf(u);
       const pal = u.side === 'enemy' ? PAL.ghost : PAL.neutral;
       if (u.side !== 'enemy') return;
-      this.flare(pos, '#ffffff', { size: 3 * sc, dur: 0.35, k: 3 });
+      this.flare(pos, '#dfe8ff', { size: Math.min(3.2, 1.6 + sc * 0.6), dur: 0.3, k: 2 });
       this.ring(feet, { r: 2.2 * sc, color: pal[1], dur: 0.7, w: 0.05, k: 2 });
       this.emit({ pos, spread: 0.5 * sc, n: 50, up: 0.8, speed: [0.5, 2.5], drag: 1.2, gravity: -1.2, life: [0.8, 1.6], size: [0.18, 0.02], color0: ['#ffffff', pal[0], pal[1]], shape: ['ember', 'dot'], k: 2.2 });
       this.emit({ pos, spread: 0.4 * sc, n: 16, up: 0.6, speed: [0.3, 1.2], drag: 1, gravity: -0.5, life: [1, 1.8], size: [0.6 * sc, 1.4 * sc], color0: pal[3], a0: 0.25, alpha: true, shape: 'smoke' });
@@ -903,7 +906,10 @@ G.VFX3D = (() => {
         } else if (kind === 'thrust') {
           const d = this.dirTo(u, tg);
           this.emit({ pos: c.clone().addScaledVector(d, -1.2), n: 22, dir: d, cone: 0.05, speed: [10, 16], life: [0.1, 0.18], size: [0.22, 0.05], color0: pal.slice(0, 2), shape: 'spark', stretch: 0.25, k: 2.6 });
-          this.ring(c.clone(), { vertical: true, r: 1.1 * sc, color: pal[1], dur: 0.25, w: 0.05 });
+          this.ring(c.clone(), { vertical: true, r: 1.1 * sc, color: pal[1], dur: 0.3, w: 0.05 });
+          // the spear's afterimage: a bright tapered lance driving through the target
+          this.column(c.clone().addScaledVector(d, -1.8), { to: c.clone().addScaledVector(d, 0.6 * sc), pal, r0: 0.09, r1: 0.01, dur: 0.28, grow: 0.35, scroll: -6, streak: 0.3, k: 2.6 });
+          this.flare(c, pal[0], { size: 1.2 * Math.sqrt(sc), dur: 0.2, k: 2.4 });
           this.later(T * 0.7, () => this.emit({ pos: c, n: 14, dir: d, cone: 0.5, speed: [3, 7], drag: 3, life: [0.2, 0.35], size: [0.14, 0.02], color0: pal[0], shape: 'spark', stretch: 0.2 }));
         } else {
           const n = multi ? 3 : 1;
@@ -1537,12 +1543,12 @@ G.VFX3D = (() => {
         const a = i / 18 * TAU;
         this.later(i * 0.025, () => this.emit({ pos: cen.clone().add(new THREE.Vector3(Math.cos(a) * 3, 0.05, Math.sin(a) * 3)), n: 4, dir: new THREE.Vector3(Math.cos(a) * 0.2, 1, Math.sin(a) * 0.2), cone: 0.1, speed: [0.6, 1.2], life: [1.4, 2.2], size: [0.35, 0.15], color0: ['#ffd0e8', '#fff4fa', '#a8d8ff'], shape: 'petal', spin: 3, drag: 0.4, k: 1.8 }));
       }
-      this.later(0.5, () => this.column(cen.clone().add(new THREE.Vector3(0, 0, 0)), { pal: [holy[0], pal[1]], h: 14, r0: 3.4, r1: 2.6, dur: 1.8, grow: 0.25, scroll: -0.8, streak: 0.6, k: 1.6, a: 0.7 }));
+      this.later(0.5, () => this.column(cen.clone(), { pal: [holy[0], pal[1]], h: 14, r0: 3.4, r1: 2.6, dur: 1.8, grow: 0.25, scroll: -0.8, streak: 0.85, k: 0.9, a: 0.3 }));
       this.later(T, () => {
         this.flash('#e8f6ff', 0.55, 0.6);
         for (const tg of targets) {
           const feet = this.P(tg, 'feet');
-          this.column(feet, { pal: [holy[0], pal[0]], h: 6, r0: 0.6, r1: 0.5, dur: 1.2, grow: 0.2, k: 2 });
+          this.column(feet, { pal: [holy[0], pal[0]], h: 6, r0: 0.6, r1: 0.5, dur: 1.2, grow: 0.2, k: 1.2, a: 0.55 });
           this.emit({ pos: feet, disk: 0.6, n: 30, dir: new THREE.Vector3(0, 1, 0), cone: 0.2, speed: [1, 3], drag: 0.8, life: [0.8, 1.4], size: [0.2, 0.04], color0: [holy[0], pal[0], '#ffd0e8'], shape: ['ember', 'petal'], k: 2.2 });
           this.light(this.P(tg, 'chest'), pal[1], 5, 7, 1.4);
         }
@@ -1667,7 +1673,7 @@ G.VFX3D = (() => {
       const T = THREE, g = new T.Group();
       const sc = this.sizeOf(u);
       for (let i = 0; i < n; i++) {
-        const tx = this.atlas.clone(); tx.needsUpdate = true; tx.repeat.set(0.25, 0.25); const cell = CELL[shape]; tx.offset.set((cell % 4) * 0.25, (3 - Math.floor(cell / 4)) * 0.25);
+        const tx = this.cellTex(CELL[shape]);
         const m = new T.Sprite(new T.SpriteMaterial({ map: tx, color: new T.Color(color).multiplyScalar(2.2), blending: T.AdditiveBlending, depthWrite: false, transparent: true }));
         const a = i / n * TAU; m.position.set(Math.cos(a) * 0.45 * sc, 0.1 * Math.sin(a * 2), Math.sin(a) * 0.45 * sc); m.scale.setScalar(0.3);
         g.add(m);
@@ -1704,6 +1710,7 @@ G.VFX3D = (() => {
       this.add.dispose(); this.alpha.dispose();
       for (const l of this.lights) this.scene.remove(l);
       for (const k in this.geo) this.geo[k].dispose();
+      for (const tx of this._cells || []) if (tx) tx.dispose();
     }
   }
 

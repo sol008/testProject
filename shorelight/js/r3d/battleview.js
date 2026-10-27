@@ -67,11 +67,11 @@ G.Battle3D = (() => {
       this.tex.generateMipmaps = false; this.tex.minFilter = T.LinearFilter;
       this.uni = {
         map: { value: this.tex }, uNoise: { value: view.noiseTex }, uLight: { value: new T.Color(1, 1, 1) }, uGlow: { value: new T.Color(0, 0, 0) },
-        uEdge: { value: new T.Color('#9fd0ff').multiplyScalar(3) }, uOpacity: { value: 1 }, uDissolve: { value: 0 }, uFlip: { value: 0 },
+        uEdge: { value: new T.Color('#9fd0ff').multiplyScalar(1.6) }, uOpacity: { value: 1 }, uDissolve: { value: 0 }, uFlip: { value: 0 },
       };
       this.mat = new T.ShaderMaterial({ uniforms: this.uni, vertexShader: BB_VS, fragmentShader: BB_FS, side: T.DoubleSide, transparent: false });
       const geo = new T.PlaneGeometry(W * PX, H * PX);
-      geo.translate((W / 2 - fx) * PX, (H / 2 - fy) * PX, 0);
+      geo.translate((W / 2 - fx) * PX, (fy - H / 2) * PX, 0);
       this.mesh = new T.Mesh(geo, this.mat);
       this.mesh.castShadow = !view.lite;
       this.mesh.customDepthMaterial = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: this.tex, alphaTest: 0.5 });
@@ -222,10 +222,17 @@ G.Battle3D = (() => {
       this.events = []; // debug/test log: { k, rt, … } (tools/r3d/battle/*.js screenshot on these)
       G.Battle3D.current = this;
     }
-    ev(k, o) { if (this.events.length > 400) this.events.shift(); this.events.push(Object.assign({ k, rt: this.rt }, o || {})); }
+    ev(k, o) { this.events.push(Object.assign({ k, rt: this.rt }, o || {})); }
 
     // ---------------------------------------------------------------- helpers used by VFX
     speed() { return G.settings.battleSpeed || 1; }
+    // debug/test: swap the arena for another backdrop id (tools/r3d/battle/arenas.js)
+    rebuildArena(bg) {
+      if (this.arena.dispose) this.arena.dispose();
+      this.arena = G.Battle3D.Arena.build(this, bg);
+      this.lightK = this.arena.lightK || 1;
+      for (const [, uv] of this.units) uv.lastPose = null;
+    }
     // battle-time seconds the scene should wait before the first turn (the intro shot length; snappier in auto-battle)
     introWait() { const boss = this.director.kind === 'boss' || this.director.shot && this.director.shot.kind === 'boss'; const real = boss ? 2.6 : this.bs.auto ? 1.0 : 1.7; return real * this.speed(); }
     unitView(u) { return this.units.get(u) || null; }
@@ -331,6 +338,7 @@ G.Battle3D = (() => {
           if (pose === 'attack' && uv.kind === 'bb') uv.lungeT = 0;
           uv.lastPose = pose;
         }
+        if (u.dead && !uv.lastDead && u.side === 'enemy' && uv.kind !== 'bb') uv.clip(uv.kind === 'mon' ? 'die' : 'ko');
         uv.lastDead = u.dead;
         if (uv.lungeT != null) { uv.lungeT += dt; const k = uv.lungeT / 0.3; uv.lunge = k < 0.3 ? easeOut(k / 0.3) * 0.35 : Math.max(0, 0.35 * (1 - (k - 0.3) / 0.7)); if (k >= 1) { uv.lungeT = null; uv.lunge = 0; } }
         // locomotion while running (melee approach / flee)
@@ -412,7 +420,7 @@ G.Battle3D = (() => {
       else if (r === 'lose') this.director.defeat();
     }
     outro() {
-      return new Promise((res) => { this.ink = { t: 0, dur: 0.75, res }; });
+      return new Promise((res) => { this.ink = { t: 0, dur: 0.9, res }; });
     }
 
     // ---------------------------------------------------------------- field capture & shatter intro
@@ -555,6 +563,7 @@ G.Battle3D = (() => {
     }
     applyCamera(rdt) {
       const c = this.cam, cam = this.camera;
+      if (this.debugCam) { c.pos.set(...this.debugCam.pos); c.look.set(...this.debugCam.look); c.fov = this.debugCam.fov || 36; c.roll = 0; }
       // trauma-based shake (smooth noise)
       this.trauma = Math.max(0, this.trauma - rdt * 1.6);
       const s = this.trauma * this.trauma * (G.settings.screenShake === false ? 0 : 1);
@@ -605,7 +614,7 @@ G.Battle3D = (() => {
       // legacy 2D fx pushed by chapter scripts (drawn through a best-fit 2D→screen affine)
       if (bs.fx.length) {
         const A = this.fitAffine();
-        if (A) { ctx.save(); ctx.setTransform(...A.map((v, i) => v * (i < 4 ? 1 : 1))); this.applyBaseTransform(ctx, A); for (const f of bs.fx) { try { f.draw(ctx); } catch (e) { G.warnOnce('legacy fx', e); } } ctx.restore(); }
+        if (A) { ctx.save(); this.applyBaseTransform(ctx, A); for (const f of bs.fx) { try { f.draw(ctx); } catch (e) { G.warnOnce('legacy fx', e); } } ctx.restore(); }
       }
       if (this.cutin || this.intro) { this.drawPops(ctx, t); return; }
       // enemy HP bars and status chips
@@ -768,7 +777,7 @@ G.Battle3D = (() => {
       for (const b of this.inkBlots) {
         const kk = clamp((k - b.d) / (1 - b.d), 0, 1);
         if (kk <= 0) continue;
-        const R = easeOut(kk) * 900 * b.r;
+        const R = Math.pow(kk, 1.35) * 820 * b.r;
         ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot + kk * 0.3);
         ctx.drawImage(b.spr, -R, -R, R * 2, R * 2);
         ctx.restore();
@@ -921,9 +930,10 @@ G.Battle3D = (() => {
         const p = this.P(u, 'feet'), ec = this.v.enemyCenter('enemy');
         const d = ec.clone().sub(p); d.y = 0; d.normalize();
         const right = V3(-d.z, 0, d.x); // screen-right when looking along d
-        const pos = p.clone().addScaledVector(d, -3.4).addScaledVector(right, 1.7).setY(2.05 + Math.sin(t * 0.5) * 0.05);
-        const look = p.clone().addScaledVector(d, 4.5).addScaledVector(right, -0.4).setY(1.15);
-        return { pos, look, fov: 40 };
+        const hmax = Math.max(1.7, ...this.bs.enemies.filter((e) => !e.dead).map((e) => (this.v.units.get(e) || { height: 1.7 }).height));
+        const pos = p.clone().addScaledVector(d, -3.4).addScaledVector(right, 1.7).setY(2.05 + hmax * 0.12 + Math.sin(t * 0.5) * 0.05);
+        const look = p.clone().lerp(ec, 0.72).addScaledVector(right, -0.4).setY(0.9 + hmax * 0.3);
+        return { pos, look, fov: 40 + Math.max(0, hmax - 2) * 2 };
       } };
     }
     targetShot() {
@@ -965,19 +975,22 @@ G.Battle3D = (() => {
     // melee tracking: side-on dolly that follows the attacker into the strike
     meleeShot(a) {
       const u = a.u, tg = a.tg;
-      const side = Math.random() < 0.5 ? 1 : -1;
+      const side = 1; // the camera stays on the open front side of the line of action (never crosses it)
+      const swing = rnd(-0.25, 0.25);
       const sp0 = this.P(u, 'feet');
       return { kind: 'melee', f: (t) => {
         const p = this.P(u, 'feet'), q = this.P(tg, 'feet');
-        const huv = this.v.units.get(tg); const h = huv ? huv.height : 1.7;
+        const huv = this.v.units.get(tg), auv = this.v.units.get(u);
+        const h = Math.max(huv ? huv.height : 1.7, auv ? auv.height : 1.7);
         const d = q.clone().sub(sp0); d.y = 0; const L = d.length() || 1; d.normalize();
         const n = V3(-d.z, 0, d.x).multiplyScalar(side);
+        if (n.z < 0) n.negate();
+        n.addScaledVector(d, swing).normalize();
         const mid = p.clone().lerp(q, 0.5);
-        const dist = Math.max(4.2, Math.min(8, p.distanceTo(q) * 0.8 + 3.2 + h * 0.6));
+        const dist = Math.max(4.5, Math.min(13, p.distanceTo(q) * 0.75 + 3.0 + h * 1.5));
         const pos = mid.clone().addScaledVector(n, dist).addScaledVector(d, -1.0).setY(1.2 + h * 0.22);
-        if (pos.z < mid.z - 1 && side < 0) pos.z = mid.z + dist * 0.5; // keep the camera on the open (front) side
-        const look = mid.clone().setY(Math.min(1.6, h * 0.5) + 0.1);
-        return { pos, look, fov: 36 };
+        const look = mid.clone().setY(Math.min(2.2, h * 0.45) + 0.1);
+        return { pos, look, fov: 38 };
       } };
     }
     // spell: low 3/4 on the caster, then the targets
@@ -986,8 +999,9 @@ G.Battle3D = (() => {
         const p = this.P(u, 'feet'); const uv = this.v.units.get(u); const h = uv ? uv.height : 1.7;
         const f = V3(Math.sin(uv ? uv.yaw : 0), 0, Math.cos(uv ? uv.yaw : 0));
         const right = V3(-f.z, 0, f.x);
+        if (right.z < 0) right.negate(); // swing out toward the open front side
         const ang = t * 0.25;
-        const pos = p.clone().addScaledVector(f, 3.0 + h * 0.6).addScaledVector(right, (u.side === 'party' ? 1 : -1) * (1.6 + ang)).setY(0.7 + h * 0.15);
+        const pos = p.clone().addScaledVector(f, 3.2 + h * 0.6).addScaledVector(right, 2.0 + ang).setY(0.7 + h * 0.15);
         const look = p.clone().setY(h * 0.6);
         return { pos, look, fov: 34 };
       } };
@@ -1056,9 +1070,10 @@ G.Battle3D = (() => {
       this.locked = true; this.kind = 'victory';
       this.v.victoryT = 0;
       const pc = this.v.enemyCenter('party');
+      // slow orbit in front of the party (who turn to the lens), framed low under the results panel
       this.set({ kind: 'victory', f: (t) => {
-        const a = 1.15 + t * 0.12;
-        return { pos: V3(pc.x + Math.sin(a) * -6.2, 2.0 + Math.sin(t * 0.3) * 0.3, pc.z + Math.cos(a) * 6.2), look: V3(pc.x, 1.1, pc.z), fov: 34 };
+        const a = -0.95 + Math.min(t, 6) * 0.07;
+        return { pos: V3(pc.x + Math.sin(a) * 9.2, 1.7 + Math.sin(t * 0.3) * 0.1, pc.z + Math.cos(a) * 9.2), look: V3(pc.x - 0.3, 2.65, pc.z), fov: 40, roll: -0.02 };
       } }, 0.9);
     }
     defeat() {
@@ -1112,14 +1127,14 @@ G.Battle3D.Arena = (() => {
     palace: { indoor: 'hall', bg: '#04060e', fog: ['#060a18', 14, 60], light: { sun: '#6a9aff', si: 0.6, hemi: ['#3a5aa8', '#0a0a1a', 0.6], unit: '#a8b8e0', lamps: [{ x: 0, y: 3, z: -12, col: '#ffe0a0', i: 8, d: 14 }, { x: -8, y: 3, z: -4, col: '#5a8aff', i: 5, d: 12 }, { x: 8, y: 3, z: -4, col: '#5a8aff', i: 5, d: 12 }] }, ground: { kind: 'darktile', tint: '#3a4a6a' }, kit: 'palace', night: 1, post: { bloom: 1.0, threshold: 0.5, vignette: 0.55 } },
     linto: { sky: { zen: '#0e0a2a', hor: '#4a3a6a', low: '#1a1430', moon: { az: 10, el: 14, size: 2.2 }, stars: 0.8, clouds: 0.25, cloudCol: '#2a2448' }, fog: ['#3a2c58', 30, 140], light: { sun: '#b0a0ff', si: 0.9, hemi: ['#6a5a9a', '#1a1424', 0.75], unit: '#c0b8e0' }, ground: { kind: 'sand', tint: '#7a6a80' }, water: { col: '#2a2448', deep: '#100c24', y: -0.35, z: -10 }, kit: 'beach', style: 'linto', night: 1, post: { bloom: 0.8, threshold: 0.6 } },
     tribe: { sky: { zen: '#060a1a', hor: '#2a3050', low: '#10142a', stars: 1, milky: 1, clouds: 0.1 }, fog: ['#1a2036', 26, 110], light: { sun: '#9ab0ff', si: 0.8, hemi: ['#4a5a8a', '#1a1612', 0.7], unit: '#b0b8d8', lamps: [{ x: -6, y: 1.4, z: -10, col: '#ffb060', i: 6, d: 12 }] }, ground: { kind: 'slate', tint: '#6a6a70' }, ridges: [{ r: 170, h: 26, col: '#0c1020', rough: 0.6 }], kit: 'tribe', night: 1, post: { bloom: 0.85, threshold: 0.6 } },
-    vision: { sky: { zen: '#1a0a3a', hor: '#5a2a8a', low: '#2a1a5a', stars: 1, clouds: 0, psy: 1 }, fog: ['#3a1a6a', 16, 80], light: { sun: '#c08aff', si: 0.8, hemi: ['#8a5aff', '#2a0a4a', 0.9], unit: '#e0c8ff', lamps: [{ x: -6, y: 3, z: -8, col: '#3affc0', i: 6, d: 14 }, { x: 6, y: 3, z: -8, col: '#ff6af0', i: 6, d: 14 }] }, ground: { kind: 'psyfloor', tint: '#8a6ac8' }, kit: 'vision', night: 1, post: { bloom: 1.0, threshold: 0.55, sat: 1.25, warp: 0.25 } },
-    breath: { sky: { zen: '#2a0a3a', hor: '#a03a6a', low: '#3a1a4a', psy: 2, clouds: 0 }, fog: ['#5a1a5a', 20, 90], light: { sun: '#ffd0a0', si: 1.0, hemi: ['#ff8ac8', '#3a1a4a', 1.0], unit: '#ffe0f0', lamps: [{ x: 0, y: 4, z: -8, col: '#ffe08a', i: 8, d: 16 }] }, ground: { kind: 'mandala', tint: '#ffffff' }, kit: 'breath', post: { bloom: 1.1, threshold: 0.55, sat: 1.3, warp: 0.35 } },
+    vision: { sky: { zen: '#1a0a3a', hor: '#5a2a8a', low: '#2a1a5a', stars: 1, clouds: 0, psy: 1 }, fog: ['#3a1a6a', 16, 80], light: { sun: '#c08aff', si: 0.8, hemi: ['#8a5aff', '#2a0a4a', 0.9], unit: '#e0c8ff', lamps: [{ x: -6, y: 3, z: -8, col: '#3affc0', i: 6, d: 14 }, { x: 6, y: 3, z: -8, col: '#ff6af0', i: 6, d: 14 }] }, ground: { kind: 'psyfloor', tint: '#8a6ac8', uvScale: 8 }, kit: 'vision', night: 1, post: { bloom: 1.0, threshold: 0.55, sat: 1.25, warp: 0.25 } },
+    breath: { sky: { zen: '#2a0a3a', hor: '#a03a6a', low: '#3a1a4a', psy: 2, clouds: 0 }, fog: ['#5a1a5a', 20, 90], light: { sun: '#ffd0a0', si: 1.0, hemi: ['#ff8ac8', '#3a1a4a', 1.0], unit: '#ffe0f0', lamps: [{ x: 0, y: 4, z: -8, col: '#ffe08a', i: 8, d: 16 }] }, ground: { kind: 'mandala', tint: '#b8a8c0', uvScale: 14 }, kit: 'breath', post: { bloom: 1.1, threshold: 0.55, sat: 1.3, warp: 0.35 } },
     lake: { sky: { zen: '#0a1428', hor: '#3a5068', low: '#14202e', moon: { az: 30, el: 26, size: 2 }, stars: 0.8, clouds: 0.2, cloudCol: '#1e2c40' }, fog: ['#2a3a4c', 30, 140], light: { sun: '#a8c0e8', si: 1.0, hemi: ['#5a7090', '#1a1e14', 0.8], unit: '#b8c8d8' }, ground: { kind: 'grass', tint: '#4a5a4a' }, water: { col: '#1e3040', deep: '#0a1420', y: -0.3, z: -8 }, ridges: [{ r: 180, h: 18, col: '#1a2838', rough: 0.5 }], kit: 'lake', night: 1, post: { bloom: 0.8, threshold: 0.6 } },
     sunmoon: { sky: { zen: '#6a6ab0', hor: '#f8c8b8', low: '#c8a0a8', sun: { az: 20, el: 6, size: 2.4, col: '#fff0d8' }, clouds: 0.35, cloudCol: '#ffe8f0' }, fog: ['#e0b8c0', 34, 150], light: { sun: '#ffe0c8', si: 1.8, hemi: ['#e8c8e0', '#5a5a3a', 1.0], unit: '#fff0f0' }, ground: { kind: 'grass', tint: '#9aa070' }, water: { col: '#b8a0c8', deep: '#6a6aa0', y: -0.3, z: -8 }, ridges: [{ r: 180, h: 18, col: '#8a7aa8', rough: 0.5 }], kit: 'lake' },
     shrine: { indoor: 'hall', bg: '#04140e', fog: ['#06261e', 12, 60], light: { sun: '#a0fff0', si: 0.9, hemi: ['#3aa890', '#06140e', 0.7], unit: '#b8e8d8', lamps: [{ x: 0, y: 3, z: -12, col: '#ff9ad8', i: 8, d: 14 }, { x: -7, y: 1, z: -4, col: '#ffd8a0', i: 4, d: 8 }, { x: 7, y: 1, z: -4, col: '#ffd8a0', i: 4, d: 8 }] }, ground: { kind: 'shrinefloor', tint: '#4a8a7a' }, water: { col: '#1a6a5a', deep: '#06261e', y: 0.06, all: true, clear: true }, kit: 'shrine', night: 1, post: { bloom: 1.0, threshold: 0.55 } },
     chaos: { sky: { zen: '#0a0404', hor: '#a02a10', low: '#3a0a04', clouds: 0.6, cloudCol: '#2a0a06', stars: 0 }, fog: ['#5a1a0a', 20, 100], light: { sun: '#ff6a2a', si: 1.4, hemi: ['#ff7a3a', '#1a0604', 0.8], unit: '#ffc8a8', lamps: [{ x: -10, y: 2, z: -10, col: '#ff5a1a', i: 10, d: 16 }, { x: 10, y: 2, z: -12, col: '#ff7a2a', i: 10, d: 16 }] }, ground: { kind: 'ash', tint: '#6a4a40' }, ridges: [{ r: 150, h: 16, col: '#1a0804', rough: 0.8 }], kit: 'chaos', night: 1, post: { bloom: 1.0, threshold: 0.55, sat: 1.1 }, motes: 'embers' },
     sea: { sky: { zen: '#04101a', hor: '#1a4a5a', low: '#082028', stars: 0.9, clouds: 0.25, cloudCol: '#0c2a34' }, fog: ['#103a44', 26, 140], light: { sun: '#80d0e0', si: 0.8, hemi: ['#3a7a8a', '#1a120a', 0.75], unit: '#b0d0d8', lamps: [{ x: 0, y: 5, z: -2, col: '#ffb060', i: 8, d: 14 }] }, ground: { kind: 'deck', tint: '#8a6a4a', none: true }, water: { col: '#0c2a34', deep: '#041016', y: -1.6, all: true }, kit: 'deck', night: 1, post: { bloom: 0.85, threshold: 0.6 } },
-    farshore: { sky: { zen: '#1a0a2a', hor: '#c03a6a', low: '#5a1a2a', sun: { az: 15, el: 28, size: 3.4, col: '#ffffff', eclipse: 1 }, clouds: 0.3, cloudCol: '#8a2a5a', stars: 0.4 }, fog: ['#6a1a3a', 24, 120], light: { sun: '#ff8ab0', si: 1.0, hemi: ['#c05a8a', '#2a0a10', 0.8], unit: '#ffc8d8' }, ground: { kind: 'lilyfield', tint: '#7a2a2a' }, ridges: [{ r: 180, h: 10, col: '#3a1028', rough: 0.4 }], kit: 'farshore', night: 1, post: { bloom: 0.95, threshold: 0.55, sat: 1.15 }, motes: 'petals' },
+    farshore: { sky: { zen: '#1a0a2a', hor: '#c03a6a', low: '#5a1a2a', sun: { az: 12, el: 14, size: 3.4, col: '#ffffff', eclipse: 1 }, clouds: 0.3, cloudCol: '#8a2a5a', stars: 0.4 }, fog: ['#6a1a3a', 24, 120], light: { sun: '#ff8ab0', si: 1.0, hemi: ['#c05a8a', '#2a0a10', 0.8], unit: '#ffc8d8' }, ground: { kind: 'lilyfield', tint: '#7a2a2a' }, ridges: [{ r: 180, h: 10, col: '#3a1028', rough: 0.4 }], kit: 'farshore', night: 1, post: { bloom: 0.95, threshold: 0.55, sat: 1.15 }, motes: 'petals' },
     lighthouse: { indoor: 'tower', bg: '#0a0a0e', fog: ['#16161c', 12, 50], light: { sun: '#fff0d0', si: 1.6, sunDir: [0.1, 1, -0.2], hemi: ['#6a6a7a', '#141418', 0.55], unit: '#d8d0c8', lamps: [{ x: 0, y: 8, z: -2, col: '#ffe8b0', i: 10, d: 20 }, { x: -9, y: 2, z: -6, col: '#6a8aff', i: 3, d: 8 }] }, ground: { kind: 'stonetile', tint: '#6a6a72' }, kit: 'tower', night: 1, post: { bloom: 0.9, threshold: 0.6, vignette: 0.55 } },
     tamsui: { sky: { zen: '#3a3a7a', hor: '#ffb070', low: '#a06050', sun: { az: 0, el: 4, size: 3.2, col: '#fff0b0' }, clouds: 0.35, cloudCol: '#ffb090' }, fog: ['#e0a080', 30, 140], light: { sun: '#ffb070', si: 2.0, hemi: ['#e0a8a0', '#4a3020', 0.9], unit: '#ffe0c8' }, ground: { kind: 'pavers', tint: '#a8906a' }, water: { col: '#c07060', deep: '#5a3048', y: -0.6, z: -8 }, ridges: [{ r: 170, h: 30, col: '#5a3a5a', rough: 0.7, arc: [-30, 40] }], kit: 'harbor', post: { bloom: 0.85, threshold: 0.65 } },
     hakka: { sky: { zen: '#4a90e0', hor: '#d8eaf0', low: '#b8c8c8', sun: { az: 30, el: 50, size: 1.4 }, clouds: 0.4, cloudCol: '#ffffff' }, fog: ['#d0e0e4', 40, 160], light: { sun: '#fff4e0', si: 2.7, hemi: ['#c0d8f0', '#7a6a4a', 1.1], unit: '#ffffff' }, ground: { kind: 'dirt', tint: '#d0b890' }, ridges: [{ r: 170, h: 20, col: '#6a8a9a', rough: 0.6 }], kit: 'hakka' },
@@ -1199,6 +1214,12 @@ G.Battle3D.Arena = (() => {
     psyfloor: (g, w, h, r) => { g.fillStyle = '#1a0a3a'; g.fillRect(0, 0, w, h); const s = w / 8; for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { g.fillStyle = (i + j) % 2 ? '#3a1a6a' : '#2a1050'; g.beginPath(); g.moveTo(i * s + s / 2, j * s); g.lineTo(i * s + s, j * s + s / 2); g.lineTo(i * s + s / 2, j * s + s); g.lineTo(i * s, j * s + s / 2); g.closePath(); g.fill(); g.strokeStyle = 'rgba(120,255,220,0.35)'; g.lineWidth = 1.5; g.stroke(); } },
     mandala: (g, w, h, r) => { const cols = ['#ff6ad5', '#ffd06a', '#7af0ff', '#b6ff6a', '#a08aff']; g.fillStyle = '#2a0a3a'; g.fillRect(0, 0, w, h); const s = w / 4; for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { const cx = i * s + s / 2, cy = j * s + s / 2; for (let k = 6; k > 0; k--) { g.fillStyle = cols[(k + i + j) % 5]; g.globalAlpha = 0.85; g.beginPath(); for (let q = 0; q < 16; q++) { const a = q / 16 * TAU, rr = (q % 2 ? 0.55 : 1) * k / 6 * s * 0.5; g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.closePath(); g.fill(); } } g.globalAlpha = 1; },
   };
+  // facade textures (white-based so materials tint them)
+  PAINT.plaster = (g, w, h, r) => { noiseFill(g, w, h, r, '#e8e4dc', '#ffffff', '#c8c0b0'); for (let i = 0; i < 14; i++) { const x = r() * w; const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(90,80,60,0)'); gr.addColorStop(1, 'rgba(90,80,60,0.18)'); g.fillStyle = gr; g.fillRect(x, h * 0.5 + r() * h * 0.3, 6 + r() * 20, h); } speck(g, w, h, r, 400, ['#b8b0a0', '#ffffff'], 0.5, 1.5, 0.4); g.fillStyle = 'rgba(70,60,50,0.25)'; g.fillRect(0, h - 26, w, 26); };
+  PAINT.woodwall = (g, w, h, r) => { const n = 10; for (let i = 0; i < n; i++) { const x = i * w / n; g.fillStyle = U.shade('#d8c8b0', (r() - 0.5) * 0.25); g.fillRect(x, 0, w / n, h); for (let k = 0; k < 12; k++) { g.strokeStyle = 'rgba(70,50,30,0.2)'; g.lineWidth = 1; g.beginPath(); const xx = x + r() * w / n; g.moveTo(xx, 0); g.lineTo(xx + (r() - 0.5) * 6, h); g.stroke(); } g.fillStyle = 'rgba(40,28,18,0.5)'; g.fillRect(x, 0, 2, h); } g.fillStyle = 'rgba(40,28,18,0.6)'; g.fillRect(0, h * 0.48, w, 8); };
+  PAINT.rooftile = (g, w, h, r) => { g.fillStyle = '#a0a0a8'; g.fillRect(0, 0, w, h); const n = 16; for (let i = 0; i < n; i++) { const x = i * w / n; const gr = g.createLinearGradient(x, 0, x + w / n, 0); gr.addColorStop(0, '#6a6a72'); gr.addColorStop(0.5, '#e0e0e8'); gr.addColorStop(1, '#5a5a62'); g.fillStyle = gr; g.fillRect(x, 0, w / n, h); } for (let j = 0; j < 16; j++) { g.fillStyle = 'rgba(30,30,36,0.35)'; g.fillRect(0, j * h / 16, w, 3); } speck(g, w, h, r, 300, ['#505058', '#f0f0f8'], 0.6, 1.6, 0.3); };
+  PAINT.marble = (g, w, h, r) => { noiseFill(g, w, h, r, '#d8d8d4', '#f0f0ec', '#a8a8a4'); for (let i = 0; i < 40; i++) { g.strokeStyle = U.rgba(r() < 0.6 ? '#5a5a58' : '#8a8a86', 0.25 + r() * 0.3); g.lineWidth = 1 + r() * 3; g.beginPath(); let x = r() * w, y = 0; g.moveTo(x, y); while (y < h) { y += 8 + r() * 14; x += (r() - 0.5) * 18; g.lineTo(x, y); } g.stroke(); } for (let j = 0; j < 30; j++) { g.fillStyle = 'rgba(80,80,76,0.12)'; g.fillRect(0, r() * h, w, 1 + r() * 3); } };
+  PAINT.brick = (g, w, h, r) => { g.fillStyle = '#b8b0a8'; g.fillRect(0, 0, w, h); tileGrid(g, w, h, r, 6, 16, '#f0e8e0', '#a8a098', 0.2, true); };
   function noiseFillOver(g, w, h, r, col = '#000000') { for (let i = 0; i < 60; i++) { const x = r() * w, y = r() * h, rr = 30 + r() * 80; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, U.rgba(col, 0.12)); gr.addColorStop(1, U.rgba(col, 0)); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); } }
 
   // ------------------------------------------------------------------------------------------ sky dome
@@ -1274,9 +1295,9 @@ G.Battle3D.Arena = (() => {
     varying vec3 vW; varying vec3 vV;
     void main(){
       vec2 p = vW.xz;
-      float n1 = texture2D(uNoise, p * 0.06 + vec2(uTime * 0.01, uTime * 0.006 + uRiver * uTime * 0.05)).r;
-      float n2 = texture2D(uNoise, p * 0.13 - vec2(uTime * 0.008, -uTime * 0.012 - uRiver * uTime * 0.08)).r;
-      vec3 N = normalize(vec3((n1 - 0.5) * 0.6 + (n2 - 0.5) * 0.4, 1.0, (n2 - 0.5) * 0.6 - (n1 - 0.5) * 0.3));
+      float n1 = texture2D(uNoise, p * 0.035 + vec2(uTime * 0.01, uTime * 0.006 + uRiver * uTime * 0.05)).r;
+      float n2 = texture2D(uNoise, p * 0.08 - vec2(uTime * 0.008, -uTime * 0.012 - uRiver * uTime * 0.08)).r;
+      vec3 N = normalize(vec3((n1 - 0.5) * 0.35 + (n2 - 0.5) * 0.25, 1.0, (n2 - 0.5) * 0.35 - (n1 - 0.5) * 0.2));
       vec3 V = normalize(vV);
       vec3 Vw = normalize(cameraPosition - vW);
       float fr = pow(1.0 - clamp(dot(N, Vw), 0.0, 1.0), 4.0);
@@ -1285,7 +1306,7 @@ G.Battle3D.Arena = (() => {
       vec3 R = reflect(-Vw, N);
       float sp = pow(max(dot(R, normalize(uSunDir)), 0.0), 220.0);
       float gl = pow(max(dot(R, normalize(uSunDir)), 0.0), 18.0);
-      c += uSun * (sp * 5.0 + gl * 0.25);
+      c += uSun * (sp * 2.6 + gl * 0.12);
       // shore foam
       float f = smoothstep(1.2, 0.0, abs(vW.z - uShore) + (n1 - 0.5) * 1.6) * (1.0 - uClear);
       f *= 0.5 + 0.5 * sin(uTime * 1.3 + vW.x * 0.4 + n2 * 6.0);
@@ -1329,9 +1350,11 @@ G.Battle3D.Arena = (() => {
     }
     // --- lights
     const L = th.light || {};
-    const hemi = new TT.HemisphereLight(C((L.hemi || [])[0] || '#ffffff'), C((L.hemi || [])[1] || '#404040'), (L.hemi || [])[2] != null ? L.hemi[2] : 1);
-    scene.add(hemi); out.hemi = hemi;
-    const sun = new TT.DirectionalLight(C(L.sun || '#ffffff'), L.si != null ? L.si : 2);
+    // night / interior arenas: keep the stage readable (the dark mood comes from sky, fog and grading)
+    const nightLift = th.night ? 1.75 : 1;
+    const hemi = new TT.HemisphereLight(C((L.hemi || [])[0] || '#ffffff'), C((L.hemi || [])[1] || '#404040').lerp(C((L.hemi || [])[0] || '#ffffff'), th.night ? 0.35 : 0), ((L.hemi || [])[2] != null ? L.hemi[2] : 1) * nightLift);
+    out.group.add(hemi); out.hemi = hemi;
+    const sun = new TT.DirectionalLight(C(L.sun || '#ffffff'), Math.max(th.night ? 1.3 : 0, L.si != null ? L.si : 2));
     sun.position.copy(sunDir).multiplyScalar(40); sun.target.position.set(0, 0, 0);
     sun.castShadow = !lite;
     if (!lite) {
@@ -1341,7 +1364,7 @@ G.Battle3D.Arena = (() => {
       const sc = sun.shadow.camera; sc.left = -16; sc.right = 16; sc.top = 16; sc.bottom = -16; sc.near = 1; sc.far = 100;
       sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03; sun.shadow.radius = 3;
     }
-    scene.add(sun, sun.target); out.sun = sun;
+    out.group.add(sun, sun.target); out.sun = sun;
     const base = { hemi: hemi.intensity, sun: sun.intensity };
     // IBL from the sky gradient
     try {
@@ -1355,18 +1378,23 @@ G.Battle3D.Arena = (() => {
       es.add(eg);
       out.envRT = pm.fromScene(es, 0.04);
       scene.environment = out.envRT.texture;
-      scene.environmentIntensity = th.night ? 0.35 : 0.6;
+      scene.environmentIntensity = th.night ? 0.6 : 0.6;
       pm.dispose(); eg.geometry.dispose(); eg.material.dispose();
     } catch (e) { G.warnOnce('b3d pmrem', e); }
     // lamps (fixed set of point lights) with halos
     for (const lp of L.lamps || []) {
       const pl = new TT.PointLight(C(lp.col), lp.i * 1.0, lp.d || 12, 1.6);
       pl.position.set(lp.x, lp.y, lp.z); pl.castShadow = false;
-      scene.add(pl);
+      out.group.add(pl);
       out.lamps.push({ pl, i0: pl.intensity, flick: lp.flick != null ? lp.flick : 0.15, ph: Math.random() * 10 });
     }
     out.updaters.push((dt, t) => { for (const l of out.lamps) l.pl.intensity = l.i0 * (out.lightMul || 1) * (1 - l.flick * 0.5 * (0.5 + 0.5 * Math.sin(t * 9 + l.ph) * Math.sin(t * 5.3 + l.ph * 2))); });
-    out.lights = (k) => { out.lightMul = k; hemi.intensity = base.hemi * k; sun.intensity = base.sun * (0.4 + 0.6 * k); };
+    // camera-side fill (keeps toon-shaded characters readable in night arenas; follows the camera, no shadows)
+    const fill = new TT.DirectionalLight(C(L.fill || L.unit || '#ffffff'), L.fi != null ? L.fi : (th.night ? 0.9 : 0.45));
+    fill.castShadow = false;
+    out.group.add(fill, fill.target);
+    out.fill = fill; base.fill = fill.intensity;
+    out.lights = (k) => { out.lightMul = k; hemi.intensity = base.hemi * k; sun.intensity = base.sun * (0.4 + 0.6 * k); fill.intensity = base.fill * (0.5 + 0.5 * k); };
     // billboards (unlit) take the ambient tint of the place
     out.unitLight = C(L.unit || '#ffffff');
     out.lightK = th.night ? 1.2 : 0.8;
@@ -1374,7 +1402,7 @@ G.Battle3D.Arena = (() => {
     const P = th.post || {};
     out.bloom = P.bloom != null ? P.bloom : (th.night ? 0.8 : 0.5);
     out.bloomThreshold = P.threshold != null ? P.threshold : (th.night ? 0.62 : 0.82);
-    out.exposure = P.exposure || 1;
+    out.exposure = (P.exposure || 1) * (th.night ? 1.12 : 1);
     out.vignette = P.vignette != null ? P.vignette : (th.night ? 0.5 : 0.38);
     out.sat = P.sat || 1.06;
     out.warp = P.warp || 0;
@@ -1400,8 +1428,16 @@ G.Battle3D.Arena = (() => {
       for (const m of K.staticGroup.children) { m.traverse((n) => { if (n.geometry) n.geometry.dispose(); }); }
     }
     out.update = (dt, t, v) => { for (const f of out.updaters) f(dt, t, v); };
-    out.follow = (cam) => { if (out.sky) out.sky.position.copy(cam.position); };
-    out.dispose = () => { for (const d of out.disposables) d(); if (out.envRT) out.envRT.dispose(); };
+    const _f = new TT.Vector3();
+    out.follow = (cam) => {
+      if (out.sky) out.sky.position.copy(cam.position);
+      // fill from slightly above/right of the lens toward what it looks at
+      cam.getWorldDirection(_f);
+      fill.position.copy(cam.position).add(new TT.Vector3(0, 2.5, 0));
+      fill.target.position.copy(cam.position).addScaledVector(_f, 10);
+      fill.target.updateMatrixWorld();
+    };
+    out.dispose = () => { scene.remove(out.group); for (const d of out.disposables) d(); G.R3.dispose(out.group); if (out.envRT) out.envRT.dispose(); scene.environment = null; };
     return out;
   };
 
@@ -1427,12 +1463,13 @@ G.Battle3D.Arena = (() => {
     const geo = new TT.PlaneGeometry(size, size, seg, seg);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
-    const hf = th.groundFn || ((x, z) => groundHeight(th, x, z));
+    const base = th.groundFn || ((x, z) => groundHeight(th, x, z));
+    const W = th.water;
+    const hf = (W && !W.all && W.z != null) ? (x, z) => { const y = base(x, z); return z < W.z + 4 ? Math.min(y, lerp(0, W.y - 0.6, sm(W.z + 4, W.z - 3, z))) : y; } : base;
     const cols = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), z = pos.getZ(i);
-      let y = hf(x, z);
-      if (th.water && !th.water.all && th.water.z != null && z < th.water.z + 4) y = Math.min(y, lerp(0, th.water.y - 0.6, sm(th.water.z + 4, th.water.z - 3, z)));
+      const y = hf(x, z);
       pos.setY(i, y);
       const v = 0.82 + fbm(x * 0.13, z * 0.13, 5) * 0.32;
       cols[i * 3] = cols[i * 3 + 1] = cols[i * 3 + 2] = v;
@@ -1441,7 +1478,8 @@ G.Battle3D.Arena = (() => {
     geo.computeVertexNormals();
     // world-scale UVs: one texture tile ≈ 4 m
     const uv = geo.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 4, -pos.getZ(i) / 4);
+    const us = th.ground && th.ground.uvScale || 4;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / us, -pos.getZ(i) / us);
     const tex = groundTex(th.ground ? th.ground.kind : 'dirt');
     const mat = new TT.MeshStandardMaterial({ map: tex, color: C(th.ground && th.ground.tint || '#ffffff'), vertexColors: true, roughness: th.ground && /tile|deck|planks/.test(th.ground.kind) ? 0.55 : 0.92, metalness: 0, envMapIntensity: 0.6 });
     if (th.ground && th.ground.kind === 'darktile') { mat.roughness = 0.12; mat.metalness = 0.2; mat.envMapIntensity = 1.4; }
@@ -1562,7 +1600,9 @@ G.Battle3D.Arena = (() => {
         m.castShadow = o.cast !== false; m.receiveShadow = true;
         return m;
       },
-      box(w, h, d, mat, x, y, z, o) { return K.mesh(new TT.BoxGeometry(w, h, d), mat, x, (y || 0) + h / 2, z, o); },
+      box(w, h, d, mat, x, y, z, o) { const g = new TT.BoxGeometry(w, h, d); if (mat.map) boxUV(g, w, h, d, (o && o.tile) || 2.5); return K.mesh(g, mat, x, (y || 0) + h / 2, z, o); },
+      // tinted painted material (cached): kind ∈ plaster | woodwall | rooftile | brick | pavers | planks …
+      tmat(kind, color, o = {}) { return K.mat(color, Object.assign({ map: groundTex(kind) }, o)); },
       cyl(rt, rb, h, mat, x, y, z, o = {}) { return K.mesh(new TT.CylinderGeometry(rt, rb, h, o.seg || 10), mat, x, (y || 0) + h / 2, z, o); },
       // put a finished object on the ground at (x, z) (static → merged; dynamic → kept)
       place(obj, x, z, o = {}) {
@@ -1634,22 +1674,46 @@ G.Battle3D.Arena = (() => {
     }
     return g;
   };
+  // painted frond (rib + leaflets) used by palms and tree ferns
+  function frondTex(kind) {
+    return G.R3M.tex('b3d_frond_' + kind, 256, 64, (g, w, h) => {
+      g.clearRect(0, 0, w, h);
+      g.strokeStyle = '#ffffff'; g.lineCap = 'round';
+      for (let i = 0; i < 46; i++) {
+        const x = 8 + i * (w - 16) / 46, len = h * 0.46 * Math.sin(Math.PI * Math.min(1, (x / w) * 1.05 + 0.05));
+        g.lineWidth = kind === 'fern' ? 2.2 : 3.2;
+        for (const sg of [-1, 1]) { g.beginPath(); g.moveTo(x, h / 2); g.quadraticCurveTo(x + 6, h / 2 + sg * len * 0.6, x + 12, h / 2 + sg * len); g.stroke(); }
+      }
+      g.lineWidth = 3; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+    });
+  }
+  function frondGeo(len, wid, droop, seg = 8) {
+    const g = new THREE.PlaneGeometry(len, wid, seg, 1);
+    g.translate(len / 2, 0, 0);
+    g.rotateX(-Math.PI / 2); // lie flat: x along the frond, z across
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i) / len; p.setY(i, (0.35 * x - droop * x * x) * len); }
+    g.computeVertexNormals();
+    return g;
+  }
   PR.palm = (K, h = 6, lean = 0.2, col = '#3a7a3a') => {
     const TT = K.T, g = new TT.Group();
     const curve = new TT.QuadraticBezierCurve3(new TT.Vector3(0, 0, 0), new TT.Vector3(lean * h * 0.3, h * 0.5, 0), new TT.Vector3(lean * h, h, 0));
     g.add(K.mesh(new TT.TubeGeometry(curve, 10, 0.13, 6, false), K.mat('#7a6048'), 0, 0, 0));
     const top = curve.getPoint(1);
-    for (let i = 0; i < 9; i++) {
-      const a = i / 9 * TAU;
-      const leaf = new TT.PlaneGeometry(h * 0.42, 0.42, 6, 1);
-      const pp = leaf.attributes.position;
-      for (let j = 0; j < pp.count; j++) { const x = pp.getX(j) + h * 0.21; pp.setX(j, x); pp.setY(j, pp.getY(j) * (1 - x / (h * 0.42)) ); pp.setZ(j, -Math.pow(x / (h * 0.42), 2) * h * 0.18); }
-      leaf.computeVertexNormals();
-      const m = K.mesh(leaf, K.mat(i % 2 ? col : U.shade(col, -0.15), { side: TT.DoubleSide }), top.x, top.y, top.z);
-      m.rotation.set(Math.PI / 2 - 0.1, 0, a); m.rotateX(-0.25);
-      m.rotation.order = 'YXZ'; m.rotation.y = a; m.rotation.x = 0.2; m.rotation.z = 0;
+    const mat = K.mat(col, { map: frondTex('palm'), alphaTest: 0.5, side: TT.DoubleSide });
+    for (let i = 0; i < 10; i++) {
+      const m = K.mesh(frondGeo(h * 0.45, 0.9, 0.9 + (i % 3) * 0.2), mat, top.x, top.y, top.z);
+      m.rotation.y = i / 10 * TAU + K.r(-0.15, 0.15);
       g.add(m);
     }
+    return g;
+  };
+  PR.treeFern = (K, h = 3.2) => {
+    const TT = K.T, g = new TT.Group();
+    g.add(K.cyl(0.11, 0.16, h, K.mat('#3a3024'), 0, 0, 0));
+    const mat = K.mat('#4a7a34', { map: frondTex('fern'), alphaTest: 0.5, side: TT.DoubleSide });
+    for (let i = 0; i < 12; i++) { const m = K.mesh(frondGeo(h * 0.6, 0.7, 1.1), mat, 0, h, 0); m.rotation.y = i / 12 * TAU; g.add(m); }
     return g;
   };
   PR.pandanus = (K, h = 3.5) => {
@@ -1785,7 +1849,9 @@ G.Battle3D.Arena = (() => {
     const shape = new TT.Shape(); shape.moveTo(-d / 2 - 0.35, 0); shape.quadraticCurveTo(-d / 4, H * 0.35, 0, H); shape.quadraticCurveTo(d / 4, H * 0.35, d / 2 + 0.35, 0); shape.lineTo(d / 2 + 0.35, -0.12); shape.quadraticCurveTo(d / 4, H * 0.25, 0, H - 0.12); shape.quadraticCurveTo(-d / 4, H * 0.25, -d / 2 - 0.35, -0.12); shape.closePath();
     const geo = new TT.ExtrudeGeometry(shape, { depth: w + 0.6, bevelEnabled: false, curveSegments: 6 });
     geo.translate(0, 0, -(w + 0.6) / 2);
-    const roof = K.mesh(geo, K.mat(col, { roughness: 0.7 }), 0, y, 0, { ry: Math.PI / 2 });
+    // tile UVs: shape coords run along the slope (u) and the extrusion along the ridge (v)
+    const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 1.2, uv.getY(i) / 1.2);
+    const roof = K.mesh(geo, K.tmat('rooftile', col, { roughness: 0.7 }), 0, y, 0, { ry: Math.PI / 2 });
     g.add(roof);
     // ridge with swallow tails
     const rg = K.mesh(new TT.BoxGeometry(w + 0.2, 0.18, 0.2), K.mat(ridge), 0, y + H + 0.04, 0);
@@ -1800,9 +1866,13 @@ G.Battle3D.Arena = (() => {
   // a Taiwanese/Minnan house: wall with door & windows, roof. lit windows at night
   PR.house = (K, w = 5, d = 4, h = 2.8, o = {}) => {
     const TT = K.T, g = new TT.Group();
-    const wallM = K.mat(o.wall || '#c8b8a0', { roughness: 0.95 });
-    g.add(K.box(w, h, d, wallM, 0, 0, 0));
-    g.add(K.box(w + 0.1, 0.35, d + 0.1, K.mat(o.base || '#6a5a4a'), 0, 0, 0));
+    const wallM = K.tmat(o.tex || 'plaster', o.wall || '#c8b8a0', { roughness: 0.95 });
+    g.add(K.box(w, h, d, wallM, 0, 0, 0, { tile: 3 }));
+    g.add(K.box(w + 0.1, 0.35, d + 0.1, K.tmat('brick', o.base || '#6a5a4a'), 0, 0, 0, { tile: 1.5 }));
+    // corner posts / beam for a framed look
+    const frame = K.mat(o.frame || '#3a2a1e');
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) g.add(K.box(0.18, h, 0.18, frame, sx * (w / 2 - 0.05), 0, sz * (d / 2 - 0.05)));
+    g.add(K.box(w + 0.1, 0.16, d + 0.1, frame, 0, h - 0.16, 0));
     const winM = o.lit ? K.glow(o.litCol || '#ffb860', 1.4) : K.mat('#2a2018');
     const fz = d / 2 + 0.02;
     g.add(K.box(0.9, 1.7, 0.06, K.mat(o.door || '#7a2a1a'), 0, 0.25, fz, { cast: false }));
@@ -1823,7 +1893,7 @@ G.Battle3D.Arena = (() => {
   };
   PR.wall = (K, len, h, col = '#a84a3a', cap = '#3a3a44') => {
     const g = new K.T.Group();
-    g.add(K.box(len, h, 0.5, K.mat(col, { roughness: 0.95 }), 0, 0, 0));
+    g.add(K.box(len, h, 0.5, K.tmat('brick', col, { roughness: 0.95 }), 0, 0, 0, { tile: 1.6 }));
     g.add(K.box(len + 0.2, 0.18, 0.7, K.mat(cap), 0, h, 0));
     return g;
   };
@@ -1902,7 +1972,7 @@ G.Battle3D.Arena = (() => {
       K.place(g, x, z);
     }
     K.ring(18, 13, 8.5, (x, z) => K.place(PR.fern(K, K.r(0.9, 1.5)), x, z), { phase: 0.1 });
-    K.ring(10, 16, 10, (x, z) => K.place(PR.treeFernish ? PR.treeFernish(K) : PR.palm(K, K.r(2.5, 3.5), 0.05, '#4a7a3a'), x, z), { phase: 0.4 });
+    K.ring(10, 16, 10, (x, z) => K.place(PR.treeFern(K, K.r(2.5, 3.8)), x, z), { phase: 0.4 });
     K.ring(8, 12, 8, (x, z) => K.place(PR.rock(K, K.r(0.4, 0.9), ['#5a6a4a', '#4a5a3a']), x, z), { phase: 0.25 });
     PR.grassField(K, K.view.lite ? 1000 : 3500, [-24, 24, -16, 12], ['#5a8a3a', '#6a9a42', '#4a7a32'], 0.35, { clear: [9, 4], inside: 0.25 });
     // light shafts
@@ -1972,6 +2042,22 @@ G.Battle3D.Arena = (() => {
     PR.floatingLanterns(K, 40, [-60, 60, -80, -12], '#ffb060', -0.5, -0.4, 1);
     for (let i = 0; i < 14; i++) K.lampHalo(-40 + i * 6, 0.6, -40, '#ffb050', 1.4);
   };
+  // BoxGeometry faces are 0..1 each: rescale to world units (one texture tile per `tile` metres)
+  function boxUV(g, w, h, d, tile) {
+    const uv = g.attributes.uv, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+    for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * dims[f][0] / tile, uv.getY(i) * dims[f][1] / tile); }
+  }
+  // per-vertex planar projection on the dominant normal axis (any geometry, world-ish scale)
+  function planarUV(g, tile) {
+    g.computeVertexNormals();
+    const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) {
+      const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+      if (ax >= ay && ax >= az) uv.setXY(i, p.getZ(i) / tile, p.getY(i) / tile);
+      else if (ay >= az) uv.setXY(i, p.getX(i) / tile, p.getZ(i) / tile);
+      else uv.setXY(i, p.getX(i) / tile, p.getY(i) / tile);
+    }
+  }
   function scaleUV(geo, sx, sy) { const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * sx, uv.getY(i) * sy); }
   KITS.jiufen = (K, th) => {
     const night = !!th.night;
@@ -1979,10 +2065,10 @@ G.Battle3D.Arena = (() => {
     for (const side of [-1, 1]) {
       for (let i = 0; i < 4; i++) {
         const x = side * (14 + i * 1.2), z = -6 - i * 5.5;
-        K.place(PR.house(K, K.r(5, 7), 5, 3, { floors: 2 + (i % 2), wall: '#8a5a3a', lit: night, roof: '#2a2a30', ridge: '#8a2a1a', base: '#4a3a30' }), x, z + 0, { ry: side > 0 ? -Math.PI / 2 + 0.2 : Math.PI / 2 - 0.2, y: groundOr(K, x, z) + i * 0.6 });
+        K.place(PR.house(K, K.r(5, 7), 5, 3, { floors: 2 + (i % 2), wall: '#9a6a48', tex: 'woodwall', lit: night, roof: '#2a2a30', ridge: '#8a2a1a', base: '#4a3a30' }), x, z + 0, { ry: side > 0 ? -Math.PI / 2 + 0.2 : Math.PI / 2 - 0.2, y: groundOr(K, x, z) + i * 0.6 });
       }
     }
-    for (let i = 0; i < 3; i++) K.place(PR.house(K, 6, 5, 3, { floors: 3, wall: '#7a5032', lit: night, roof: '#2a2a30', ridge: '#8a2a1a' }), -8 + i * 8, -20 - i * 2, { y: 2 + i });
+    for (let i = 0; i < 3; i++) K.place(PR.house(K, 6, 5, 3, { floors: 3, wall: '#8a5a3a', tex: 'woodwall', lit: night, roof: '#2a2a30', ridge: '#8a2a1a' }), -8 + i * 8, -20 - i * 2, { y: 2 + i });
     // red lantern strings
     for (let i = 0; i < 3; i++) PR.lanternString(K, new K.T.Vector3(-14, 6.5, -4 - i * 4), new K.T.Vector3(14, 6.5, -5 - i * 4), 12, '#e8402a', 0.8);
     // stone steps behind
@@ -2209,13 +2295,16 @@ G.Battle3D.Arena = (() => {
     hull.add(K.box(4, 3, 13, K.mat(wang ? '#c8342a' : '#3a2a20'), 15, 0, 0)); // stern castle
     K.staticGroup.add(hull);
     // masts & sails (behind the battle line)
-    for (const [x, h] of [[-4, 14], [7, 11]]) {
-      K.place(K.cyl(0.25, 0.32, h, K.mat('#5a4030')), x, -5.5, { y: 0 });
-      const sail = new TT.PlaneGeometry(6, h * 0.6, 6, 6);
-      const pp = sail.attributes.position; for (let i = 0; i < pp.count; i++) pp.setZ(i, Math.sin((pp.getX(i) / 6 + 0.5) * Math.PI) * 0.6);
+    for (const [x, h] of [[-5, 13], [8, 10]]) {
+      K.place(K.cyl(0.2, 0.28, h, K.mat('#5a4030')), x, -5.8, { y: 0 });
+      // battened junk sail: bellied panel with darker battens
+      const sw = 4.2, sh = h * 0.5;
+      const sail = new TT.PlaneGeometry(sw, sh, 8, 8);
+      const pp = sail.attributes.position; for (let i = 0; i < pp.count; i++) pp.setZ(i, Math.sin((pp.getX(i) / sw + 0.5) * Math.PI) * 0.45);
       sail.computeVertexNormals();
-      const s = new TT.Mesh(sail, K.mat(wang ? '#e8b05a' : '#a89070', { side: TT.DoubleSide, roughness: 0.9 }));
-      s.position.set(x, h * 0.55, -5.2); s.castShadow = true;
+      const s = new TT.Mesh(sail, K.mat(wang ? '#e8b05a' : '#9a8468', { side: TT.DoubleSide, roughness: 0.9 }));
+      s.position.set(x + 0.4, h - sh / 2 - 0.4, -5.5); s.castShadow = true;
+      for (let b = 0; b < 6; b++) s.add(K.mesh(new TT.BoxGeometry(sw + 0.3, 0.06, 0.08), K.mat('#3a2a1e'), 0, -sh / 2 + (b + 0.5) * sh / 6, 0.42, { cast: false }));
       K.out.group.add(s);
       K.out.disposables.push(() => sail.dispose());
       K.out.updaters.push((dt, t) => { s.rotation.y = Math.sin(t * 0.5 + x) * 0.04; });
@@ -2279,7 +2368,8 @@ G.Battle3D.Arena = (() => {
       const geo = new TT.BoxGeometry(14, 40, 60, 6, 12, 12);
       const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const n = fbm(p.getY(i) * 0.15 + side * 10, p.getZ(i) * 0.15, 3); p.setX(i, p.getX(i) + (n - 0.5) * 5); }
       geo.computeVertexNormals();
-      const m = new TT.Mesh(geo, K.mat('#c8c8c4', { flatShading: true, roughness: 0.8 }));
+      planarUV(geo, 6);
+      const m = new TT.Mesh(geo, K.tmat('marble', '#e0e0dc', { flatShading: true, roughness: 0.7 }));
       m.position.set(side * 24, 18, -10); m.receiveShadow = true; m.castShadow = !K.view.lite;
       K.out.group.add(m); K.out.disposables.push(() => geo.dispose());
     }

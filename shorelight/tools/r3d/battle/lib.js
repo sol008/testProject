@@ -51,19 +51,27 @@ async function command(page, cmd) {
   }, cmd);
 }
 module.exports = { open, waitBattle, sc, until, hold, shot, command, ROOT };
-// wait for the next view event of kind k (after the current log length); returns the event
+// wait for the next view event of kind k, scanning from a persistent cursor (events that fired while we were busy
+// taking a screenshot are not missed); returns the event and moves the cursor past it
 async function nextEvent(page, k, timeout = 240000, filter = null) {
-  const n0 = await page.evaluate(() => G.Battle3D.current.events.length);
-  const h = await page.waitForFunction(([k, n0, f]) => {
+  const h = await page.waitForFunction(([k, f]) => {
     const v = G.Battle3D.current; if (!v) return null;
-    const e = v.events.slice(n0).find((x) => x.k === k && (!f || Object.keys(f).every((q) => x[q] === f[q])));
-    return e || null;
-  }, [k, n0, filter], { timeout, polling: 30 });
+    if (window.__evView !== v) { window.__evView = v; window.__evCur = 0; }
+    const list = v.events;
+    for (let i = window.__evCur; i < list.length; i++) {
+      const x = list[i];
+      if (x.k === k && (!f || Object.keys(f).every((q) => x[q] === f[q]))) { window.__evCur = i + 1; return x; }
+    }
+    return null;
+  }, [k, filter], { timeout, polling: 30 });
   return h.jsonValue();
 }
+// skip everything logged so far
+async function skipEvents(page) { await page.evaluate(() => { const v = G.Battle3D.current; window.__evView = v; window.__evCur = v ? v.events.length : 0; }); }
 async function atRt(page, rt, timeout = 240000) { await until(page, (t) => !G.Battle3D.current || G.Battle3D.current.rt >= t, rt, timeout); }
 // wait for the player's command menu (enemy turns in between run on their own)
 async function waitCommand(page, timeout = 300000) { await until(page, () => { const s = G.Scenes.top(); return s && s.ui && s.ui.mode === 'main'; }, null, timeout); }
 module.exports.nextEvent = nextEvent;
+module.exports.skipEvents = skipEvents;
 module.exports.atRt = atRt;
 module.exports.waitCommand = waitCommand;
