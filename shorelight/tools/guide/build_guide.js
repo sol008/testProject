@@ -625,7 +625,7 @@ TABLES.statuses = () => mdTable(['狀態', '效果'], [
 ]);
 TABLES.elements = () => {
   const rows = ELEM_ORDER.map((e) => [ELEM[e], ELEM[BEATS[e]] + '（×1.5）', ELEM[BEATEN_BY[e]] + '（×0.7）', PARTY.filter((c) => G.Data.chars[c].elem === e).map(CHAR_NAME).join('、') || '—']);
-  return mdTable(['屬性', '克（攻擊對方時傷害）', '被克（攻擊對方時傷害）', '隊員'], rows);
+  return mdTable(['攻擊的屬性', '打這個屬性 ×1.5', '打這個屬性 ×0.7', '隊員'], rows);
 };
 TABLES.difficulty = () => mdTable(['項目', '劇情', '普通', '困難'], [
   ['敵人生命', '×0.8', '×1', '×1.3'], ['敵人造成的傷害', '×0.6', '×1', '×1.25'], ['戰鬥經驗', '×1.2', '×1', '×0.9'],
@@ -703,6 +703,7 @@ function figure(id, title, sub, svg, tableMd, cls) {
 }
 function svgOpen(w, h, label) { return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg">`; }
 function yAxis(x0, x1, y0, y1, max, ticks, fmt = kfmt) {
+  if (!Number.isInteger(max / ticks)) ticks = [5, 4, 6, 3, 2].find((n) => Number.isInteger(max / n)) || ticks; // whole-number ticks
   let s = '';
   for (let i = 0; i <= ticks; i++) {
     const v = (max / ticks) * i, y = y1 - (y1 - y0) * (i / ticks);
@@ -839,14 +840,14 @@ function chartWuxing() {
     s += `<text class="elem" x="${r1(x)}" y="${r1(y + 10)}" text-anchor="middle">${ELEM[e]}</text>`;
     if (who) s += `<text class="lab" x="${r1(x)}" y="${r1(y + (y > cy ? 58 : -48))}" text-anchor="middle">${esc(who)}</text>`;
   }
-  s += `<text class="lab" x="${cx}" y="${cy - 6}" text-anchor="middle">箭頭 → 克</text><text class="tick" x="${cx}" y="${cy + 14}" text-anchor="middle">克 ×1.5　被克 ×0.7</text>`;
+  s += `<text class="lab" x="16" y="22">箭頭 A → B：A 克 B</text><text class="tick" x="16" y="40">A 打 B ×1.5，B 打 A ×0.7</text>`;
   s += '</svg>';
   return figure('wuxing', '五行相剋圖', '金克木、木克土、土克水、水克火、火克金。打在被克的一方 ×1.5，反過來打 ×0.7；敵人另有「弱點／抗性」時以弱點 ×1.5、抗性 ×0.5 為準。遊戲只用相剋，不用相生。', s, TABLES.elements());
 }
 
 function chartLanterns() {
   const per = CHS.map((ch) => ({ ch, n: LANTERNS.filter((l) => l.ch === ch).length }));
-  const W = 760, H = 330, x0 = 46, x1 = W - 20, y0 = 50, y1 = H - 44;
+  const W = 760, H = 330, x0 = 46, x1 = W - 28, y0 = 50, y1 = H - 44;
   const total = LANTERNS.length, th = G.Lanterns.THRESHOLD;
   const max = niceMax(total);
   const Y = (v) => y1 - (v / max) * (y1 - y0);
@@ -858,7 +859,7 @@ function chartLanterns() {
   per.forEach((p, i) => {
     const cxx = x0 + band * (i + 0.5);
     cum += p.n;
-    pts.push([cxx, Y(cum), cum, p.ch]);
+    pts.push([cxx + band / 2, Y(cum), cum, p.ch]);
     if (p.n) {
       const y = Y(p.n), h = y1 - y;
       s += `<path d="M${r1(cxx - bw / 2)},${y1} v${r1(-(h - 4))} a4,4 0 0 1 4,-4 h${r1(bw - 8)} a4,4 0 0 1 4,4 v${r1(h - 4)} z" fill="var(--s1)"><title>${CH_SHORT(p.ch)}：${p.n} 盞（${LANTERNS.filter((l) => l.ch === p.ch).map((l) => l.name).join('、')}）</title></path>`;
@@ -866,14 +867,14 @@ function chartLanterns() {
     }
     s += `<text class="tick" x="${r1(cxx)}" y="${y1 + 18}" text-anchor="middle">${p.ch}</text>`;
   });
-  s += `<polyline fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" points="${pts.map((p) => r1(p[0]) + ',' + r1(p[1])).join(' ')}"/>`;
-  for (const p of pts) s += `<circle cx="${r1(p[0])}" cy="${r1(p[1])}" r="4" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"><title>到${CH_SHORT(p[3])}為止最多 ${p[2]} 盞</title></circle>`;
+  s += `<polyline fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" points="${r1(x0)},${y1} ${pts.map((p) => r1(p[0]) + ',' + r1(p[1])).join(' ')}"/>`;
+  for (const p of pts) s += `<circle cx="${r1(p[0])}" cy="${r1(p[1])}" r="4" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"><title>${CH_SHORT(p[3])}結束時最多 ${p[2]} 盞</title></circle>`;
   s += `<line x1="${x0}" x2="${x1}" y1="${r1(Y(th))}" y2="${r1(Y(th))}" stroke="var(--s8)" stroke-width="1.5"/><text class="lab" x="${x0 + 6}" y="${r1(Y(th) - 6)}">真結局門檻 ${th} 盞</text>`;
   const firstReach = pts.find((p) => p[2] >= th);
   if (firstReach) s += `<text class="val" x="${r1(firstReach[0])}" y="${r1(firstReach[1] - 10)}" text-anchor="middle">${firstReach[2]}</text>`;
   s += `<text class="val" x="${r1(pts[pts.length - 1][0] - 6)}" y="${r1(pts[pts.length - 1][1] - 10)}" text-anchor="end">共 ${total}</text>`;
   s += `<text class="tick" x="${(x0 + x1) / 2}" y="${H - 8}" text-anchor="middle">章</text>`;
-  s += legend([['本章可得心燈', 'var(--s1)', 'rect'], ['累計（全拿）', 'var(--s2)', 'line']], x0, 22) + '</svg>';
+  s += legend([['本章可得心燈', 'var(--s1)', 'rect'], ['累計（每章結束時，全拿）', 'var(--s2)', 'line']], x0, 22) + '</svg>';
   const tableMd = mdTable(['章', '心燈數', '累計', '心燈'], per.map((p, i) => [CH_SHORT(p.ch), p.n, pts[i][2], LANTERNS.filter((l) => l.ch === p.ch).map((l) => l.name).join('、') || '—']), ['l', 'r', 'r', 'l']);
   return figure('lanterns', '心燈分布', `全遊戲共 ${total} 盞心燈；真結局需要 ${th} 盞。長條是各章可取得的數量，折線是全部拿到時的累計。`, s, tableMd);
 }
@@ -920,10 +921,10 @@ const SEA_VIA = {
 const SEA = new Set(Object.keys(SEA_VIA));
 // label placement [dx, dy, anchor] in px (font 11) — the northern stops are crowded
 const LBL = {
-  jiufen: [8, 7, 'start'], badouzi: [-5, -7, 'end'], pingxi: [0, 16, 'middle'], tamsui: [-7, -5, 'end'], guanyin: [-7, 8, 'end'],
+  jiufen: [8, 7, 'start'], badouzi: [5, -7, 'start'], pingxi: [0, 16, 'middle'], tamsui: [-7, -5, 'end'], guanyin: [-7, 8, 'end'],
   bangka: [-6, 18, 'end'], hsinchu: [-7, 2, 'end'], xiangtian: [7, 6, 'start'], lukang: [-7, 4, 'end'], beigang: [-7, 4, 'end'],
   yanshui: [-7, 4, 'end'], tainan: [-7, 4, 'end'], alishan: [-7, 10, 'end'], yushan: [7, 8, 'start'], sunmoon: [7, 4, 'start'],
-  takao: [-7, 2, 'end'], donggang: [-6, 12, 'end'], hengchun: [-7, 2, 'end'], eluanbi: [0, 16, 'middle'], orchid: [8, 4, 'start'],
+  takao: [-7, 2, 'end'], donggang: [-6, 12, 'end'], hengchun: [-7, 2, 'end'], eluanbi: [7, 12, 'start'], orchid: [8, 4, 'start'],
   taitung: [7, 6, 'start'], taroko: [-7, 4, 'end'], toucheng: [7, 4, 'start'], penghu: [0, -12, 'middle'], farshore: [0, 18, 'middle'],
 };
 function chartRoute(hl) {
