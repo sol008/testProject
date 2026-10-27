@@ -1678,6 +1678,13 @@
         await S.say('', '（樹影晃了晃。星河硬是從枝葉之間擠了出去。）');
         await S.warp('mistforest_s', 27, 6, 'left');
       } },
+      { id: 'ashan_clue', trigger: 'touch', x: 26, y: 6, w: 2, h: 2, if: (st) => qStage('q_woodcutter') === 0 && !st.flags.ch2_woodcutter_found && !st.flags.ch2_ashan_clue && !(st.vars.vision > 0), run: async (S) => {
+        S.flag('ch2_ashan_clue');
+        S.sfx('ghost');
+        await S.say('', '（樹叢後面，隱約傳來「嘻嘻嘻」的笑聲。還有一個男人含糊的聲音：「雞腿……好吃……」）');
+        if (inParty('baizhi')) await S.say('baizhi:think', '……樹的後面有人。可是這幾棵樹的影子，方向不對。');
+        await S.say('xinghe:serious', '魔神仔的把戲！阿竹的阿爸說不定就在裡面。……吃一朵七彩靈蕈，用靈視看看。');
+      } },
       { id: 'duel', trigger: 'touch', x: 14, y: 20, w: 12, h: 1, once: true, if: (st) => !!st.flags.ch2_maze_solved && !st.flags.ch2_duel, run: duel28 },
       { id: 'shansu', trigger: 'action', x: 4, y: 32, label: '採集', hint: kitchenNeeds('c2_shansu'), run: async (S) => {
         await S.say('', '一叢山蘇，葉子像鳥巢一樣捲在一起。嫩芽可以吃。');
@@ -1899,6 +1906,8 @@
     await S.say('阿全', '他把擔子丟了才逃回來。人沒事，可是嚇破膽，再也不敢走山路。');
     await S.say('阿全', '那個擔子裡，有好多人的信……');
     S.flag('ch2_bundle_hint');
+    await S.say('xinghe:think', '被大老虎追……說不定擔子被虎姑婆拖回窩裡了。');
+    if (qActive('q_letter')) await S.say('xinghe:serious', '周阿伯家阿興的信，說不定也在裡面。');
   }
   async function searcherTalk(S) {
     const q = PQ();
@@ -2624,6 +2633,9 @@
     if (qActive('q_hy_kitchen')) {
       const have = ['c2_bamboo_shoot', 'c2_shrimp', 'c2_shansu'].filter((i) => S.hasItem(i)).length;
       await S.say('月娘', have ? '洛姑娘的料理……材料還沒齊喔。竹筍、溪蝦、山蘇。' : '洛姑娘說要做「山產炒」……竹筍、溪蝦、山蘇。……我先把鍋子藏好。');
+      if (!S.hasItem('c2_bamboo_shoot')) await S.say('月娘', '竹筍，東北邊竹林裡的小路走到底就有。');
+      if (!S.hasItem('c2_shrimp')) await S.say('月娘', q === 2 ? '溪蝦，河邊的阿溪最會抓了。' : '溪蝦……這幾天溪水太大，抓不到了。');
+      if (!S.hasItem('c2_shansu')) await S.say('月娘', '山蘇長在陰濕的地方。霧林・南的西南角，阿山以前常去採。');
     }
     const c = await S.choice(['住宿（30 文）', '買東西', '不用了'], { cancel: 2 });
     if (c === 0) {
@@ -2766,6 +2778,9 @@
         await S.say('hongying:serious', '你們兩個，幫我找來。');
         await S.say('xinghe:think', '為什麼是我們……');
         await S.say('hongying:angry', '因為你們吃最多！');
+        await S.say('hongying:normal', '竹筍，東北邊竹林的小路底就挖得到。溪蝦，問河邊那個叫阿溪的囝仔。');
+        await S.say('hongying:normal', '山蘇……來平溪的路上，霧林・南西南角的陰濕地方有一叢。');
+        await S.say('hongying:serious', '溪蝦要趁今天白天抓。晚上溪水一漲，就抓不到了。');
         S.quest('q_hy_kitchen', 0);
       } },
     ],
@@ -3292,7 +3307,7 @@
       { t: 'brazier', x: 11, y: 2 }, { t: 'brazier', x: 21, y: 2 }, { t: 'brazier', x: 11, y: 9 }, { t: 'brazier', x: 21, y: 9 }, { t: 'brazier', x: 2, y: 3 }, { t: 'brazier', x: 3, y: 15 }, { t: 'brazier', x: 28, y: 16 },
       saveStone(16, 27, '洞裡的石燈籠——不知道是誰放的，火還亮著。'),
       // the porter's room
-      { t: 'basket', x: 3, y: 4, v: 2, label: '調查', if: (st) => !st.flags.ch2_bundle_taken, interact: async (S) => { await bundle(S); } },
+      { t: 'basket', x: 3, y: 4, v: 2, if: (st) => !st.flags.ch2_bundle_taken },   // the porter's load (event 'bundle')
       { t: 'crate', x: 2, y: 3 }, { t: 'bones', x: 6, y: 6 }, { t: 'basket', x: 7, y: 3, v: 1 },
       // stolen goods (chicken & pig bones only)
       { t: 'crate', x: 2, y: 21 }, { t: 'crate', x: 3, y: 22 }, { t: 'basket', x: 7, y: 15, v: 0 }, { t: 'bones', x: 6, y: 21 }, { t: 'jar', x: 7, y: 22 },
@@ -3338,7 +3353,9 @@
         await S.say('', '（深處，傳來小孩的哭聲。）');
         if (inParty('hongying')) await S.say('hongying:serious', '……分頭找。不對，不能分頭。一起走。');
         await S.say('xinghe:serious', '聲音從兩邊都有。');
+        if ((F('ch2_bundle_hint') || qActive('q_letter')) && !F('ch2_bundle_taken')) await S.say('baizhi:think', '……雞籠、鍋子、小鞋子。挑夫的擔子，會不會也被拖到這裡來了？');
       } },
+      { id: 'bundle', trigger: 'action', x: 3, y: 4, label: '擔子', if: (st) => !st.flags.ch2_bundle_taken, hint: true, run: (S) => bundle(S) },
       { id: 'cage1', trigger: 'action', x: 4, y: 19, label: '打開竹籠', if: (st) => !st.flags.ch2_cage1, run: cage1 },
       { id: 'cage2', trigger: 'action', x: 27, y: 18, label: '打開竹籠', if: (st) => !st.flags.ch2_cage2, run: cage2 },
       { id: 'boss', trigger: 'touch', x: 14, y: 10, w: 4, h: 1, once: true, if: (st) => bothCages(st) && !st.flags.ch2_tiger_beaten, run: async (S, e) => {

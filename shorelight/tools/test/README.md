@@ -124,3 +124,15 @@ test('mything', 'my feature works', async (s) => {
   assert(await s.ev(() => window.__qa.res === 1), 'script result');
 });
 ```
+
+## `sidequests/` — side quests played like a player
+
+`sidequests/chN.side.js` plays every side quest and 心燈 of a chapter from `?debug&startch=N` without writing any
+quest flag, item, stage or var. `sidequests/lib.js` provides the driver:
+- `goTo` walks a BFS path tile by tile with `G.Debug.stepOn`, so touch events and warps fire on the way;
+- `interact`, `talkTo` and `actEvent` press the real Z key through `MapScene.findInteract`;
+- `warpTo` walks onto a map exit;
+- `ff` fast-forwards game time, and `eatVision` uses a 七彩靈蕈 the way the 物品 menu does.
+
+Each script prints PASS/FAIL per run. `sidequests/spot3d.js` screenshots the visual clues in 3D (`?r3lite`).
+Report: docs/qa/sidequests_ch0-2.md.

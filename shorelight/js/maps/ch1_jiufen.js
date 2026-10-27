@@ -1003,6 +1003,7 @@
       if (talked('chenbo_P3') === 1) {
         await S.say('chenbo:normal', '轉來啦？……沒受傷就好。');
         await S.say('chenbo:think', '傍晚出發去雞籠。要準備什麼，趕緊。');
+        if (!G.Quests.isDone('q_ahuang')) await S.say('chenbo:normal', '阿旺講，明仔載要把阿黃送去雞籠。小金哭甲……你有閒去他厝看一下。');
         return;
       }
       const c = await S.choice(['出發去雞籠', '再等一下'], { cancel: 1 });
@@ -2331,6 +2332,7 @@
       if (!S.hasItem('c1_dried_fish')) {
         await S.say('', '黑糖睡得正香，肚子底下壓著醒木。硬搶的話，牠一定會醒來逃走。');
         await S.say('xinghe:think', '……要是有什麼好吃的可以跟牠換就好了。');
+        await S.say('xinghe:think', '貓最愛小魚乾。阿財商行有賣……早上豎崎路的阿水叔身上也常帶著。');
         return;
       }
       const c = await S.choice(['用小魚乾換', '算了'], { cancel: 1 });
@@ -2635,6 +2637,7 @@
       const out = [{ x: 17, y: 21, r: 360, color: '#ffd070', flicker: 0.15 }];
       for (const [x, y] of [[9, 18], [25, 17], [9, 24], [25, 21], [13, 27], [20, 27]]) out.push({ x, y, r: 120, color: '#ffcf60', flicker: 0.3 });
       for (const ap of FXM2.apps) if (ap.a > 0.05) out.push({ x: ap.x, y: ap.y - 0.6, r: 140 * ap.a, color: ap.art === 'miner_ghost' ? '#ffd070' : '#bfe0ff', flicker: 0.2 });
+      if (watchHere(G.state)) out.push({ x: 3, y: 23, r: 70, color: '#e8f2ff', flicker: 0.6 });   // the watch glinting in the crack
       return out;
     },
     chests: [
@@ -2697,7 +2700,7 @@
         await S.say('', '一個壓扁的鐵便當盒，蓋子上刻著「阿土」。裡面空空的。');
         await S.say('xinghe:sad', '……他那天，有吃到午飯嗎？');
       } },
-      { id: 'watch', trigger: 'action', x: 3, y: 23, label: '調查', run: (S) => findWatch(S) },
+      { id: 'watch', trigger: 'action', x: 3, y: 23, label: '石縫', hint: (st) => watchHere(st), run: (S) => findWatch(S) },
       { id: 'cage', trigger: 'action', x: 22, y: 26, self: true, label: '吊籠', run: (S) => rideCage(S) },
       { id: 'save', trigger: 'action', x: 24, y: 6, label: '記錄', run: (S) => savePoint(S) },
     ],
@@ -2732,6 +2735,7 @@
     await S.say('xinghe:think', '……順序不對嗎？');
     if (V().c1_wind_fail >= 2) await S.say('xinghe:think', '阿土伯說過，他做記號都用「正」字……一劃、兩劃、三劃。');
   }
+  const watchHere = (st) => !(st.inv && st.inv.key_watch) && !G.Quests.isDone('q_atu_watch');
   async function findWatch(S) {
     if (S.hasItem('key_watch') || G.Quests.isDone('q_atu_watch')) { await S.say('', '石縫裡什麼都沒有了。'); return; }
     await S.say('', '石縫裡有東西在閃。');
