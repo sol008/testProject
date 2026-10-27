@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>洛紅纓 — Design Pass v2</title>
+<style>
+  html, body { margin: 0; background: #2a2226; }
+  body { font-family: "WenQuanYi Zen Hei", sans-serif; }
+  #sheet { width: 2400px; background: #e6dfd3; padding: 0 0 20px; }
+  #head { height: 150px; position: relative; background: #1d171a; color: #f2eadf; }
+  #grid { display: grid; grid-template-columns: repeat(5, 468px); gap: 12px; padding: 14px 6px 0 18px; }
+  canvas { display: block; box-shadow: 0 2px 10px rgba(0,0,0,0.18); border-radius: 4px; }
+  body.single #sheet { width: auto; padding: 0; background: none; }
+  body.single #head, body.single #hdr { display: none; }
+  body.single #grid { display: block; padding: 0; }
+  body.single canvas { box-shadow: none; border-radius: 0; }
+</style>
+</head>
+<body>
+<div id="sheet"><canvas id="hdr" width="2400" height="150"></canvas><div id="grid"></div></div>
+<script src="hongying_qingfeng_common.js"></script>
+<script src="hongying_card.js"></script>
+<script src="hongying.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const one = q.get('opt'); const scale = parseFloat(q.get('scale') || '1');
+  const grid = document.getElementById('grid');
+  function header() {
+    const cv = document.getElementById('hdr'); const c = cv.getContext('2d');
+    c.fillStyle = '#1d171a'; c.fillRect(0, 0, 2400, 150);
+    c.fillStyle = '#c8323a'; c.fillRect(0, 146, 2400, 4);
+    LQ.txt(c, '洛紅纓', 40, 92, '64px "WenQuanYi Zen Hei"', '#f4ece0');
+    LQ.txt(c, 'LUO HONGYING  ·  19  ·  金 Metal  ·  紅纓槍 red-tasselled spear  ·  party member', 44, 128, 'italic 600 17px Inter', '#c9b7aa');
+    LQ.txt(c, '角色設計 v2 — 十款造型提案 Character Design Pass v2 · 10 options', 2360, 52, '22px "WenQuanYi Zen Hei"', '#f4ece0', 'right');
+    LQ.txt(c, '鹿港洛家（商號＋武家，洛家槍）的繼承人；三年前中元夜滿門被滅。火爆、驕傲、直來直往，偷偷喜歡可愛的東西，廚藝是災難。', 2360, 86, '17px "WenQuanYi Zen Hei"', '#d8ccc0', 'right');
+    LQ.txt(c, 'Each option pairs with the same-numbered family style for her brother 洛青鋒. Built for 3D toon shading: primary shapes first, fine detail as texture paint.', 2360, 116, 'italic 15px Inter', '#a8988e', 'right');
+  }
+  if (one) { document.body.classList.add('single'); }
+  else header();
+  const list = one ? [parseInt(one, 10) - 1] : LQ.HONGYING.map((_, i) => i);
+  list.forEach((i) => { const cv = document.createElement('canvas'); grid.appendChild(cv); LQ.renderCard(cv, LQ.HONGYING[i], i, one ? scale : 1); });
+  document.body.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>

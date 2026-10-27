@@ -1,17 +1,50 @@
 {
- "when": "2026-10-27T05:48:39.802Z",
- "pass": 1,
- "fail": 0,
+ "when": "2026-10-27T06:07:12.483Z",
+ "pass": 0,
+ "fail": 4,
  "skip": 0,
  "results": [
   {
-   "id": "continue",
-   "name": "menu 回標題 → title → 繼續旅程 resumes the latest save",
-   "status": "pass",
-   "msg": "",
-   "ms": 4646,
+   "id": "key-dialog",
+   "name": "REAL KEYS: dialogue single & multi-page advance with Z/Space/Enter; choices with arrows, Enter and X",
+   "status": "fail",
+   "msg": "info is not defined",
+   "ms": 0,
    "errors": [],
    "warnings": []
+  },
+  {
+   "id": "key-battle",
+   "name": "REAL KEYS: battle commands — attack (target cycling), skill, cancel, defend, item, speed key, victory with Z",
+   "status": "fail",
+   "msg": "info is not defined",
+   "ms": 0,
+   "errors": [],
+   "warnings": []
+  },
+  {
+   "id": "key-newgame",
+   "name": "REAL KEYS: title → 新的旅程 → play the opening with Z/Enter/arrows only until the player has control",
+   "status": "fail",
+   "msg": "test timeout 200000ms",
+   "ms": 204438,
+   "errors": [],
+   "warnings": [
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.",
+    "[.WebGL-0xd04001a8400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels  (×3)",
+    "[.WebGL-0xd04001a8400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+   ]
+  },
+  {
+   "id": "key-dialog-script",
+   "name": "dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens",
+   "status": "fail",
+   "msg": "test timeout 90000ms",
+   "ms": 105861,
+   "errors": [],
+   "warnings": [
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead."
+   ]
   }
  ],
  "perf": [],

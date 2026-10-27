@@ -26,6 +26,11 @@ G.Scenes = (() => {
       for (let i = 0; i < stack.length - 1; i++) if (stack[i].bgUpdate) stack[i].bgUpdate(dt);
       if (top) top.update(dt);
     },
+    // the lowest scene that will be drawn this frame
+    base() {
+      for (let i = stack.length - 1; i >= 0; i--) if (stack[i].opaque) return stack[i];
+      return stack[0];
+    },
     draw(ctx) {
       let start = 0;
       for (let i = stack.length - 1; i >= 0; i--) if (stack[i].opaque) { start = i; break; }

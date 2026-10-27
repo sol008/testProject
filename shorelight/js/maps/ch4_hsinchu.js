@@ -348,6 +348,97 @@
     };
   }
 
+  // 賽夏 house (screenplay 8-3 asks for it; no existing building fits — slate houses / kuba belong to other peoples).
+  // Bamboo-and-wood walls, a thatched gable roof, the floor slightly raised on short posts. 4x3, door column 1.
+  if (G.Objects && !G.Objects.get('c4_saisiyat_house')) {
+    const cache = {};
+    const paint = (g, v) => {
+      const rng = U.seeded(17 + v * 31);
+      const W = 256;
+      g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(W / 2, 186, 134, 14, 0, 0, Math.PI * 2); g.fill();
+      for (const x of [18, 92, 164, 234]) { g.fillStyle = '#4e3622'; g.fillRect(x - 4, 146, 8, 40); g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(x - 4, 146, 2, 40); }
+      g.fillStyle = '#3e2a18'; g.fillRect(6, 142, 244, 9);
+      // bamboo / plank walls
+      const wy0 = 64, wy1 = 144;
+      let lg = g.createLinearGradient(0, wy0, 0, wy1); lg.addColorStop(0, '#9a7a48'); lg.addColorStop(1, '#c4a46a');
+      g.fillStyle = lg; g.fillRect(12, wy0, 232, wy1 - wy0);
+      for (let x = 14; x < 242; x += 8) {
+        g.fillStyle = U.shade('#b8965c', (rng() - 0.5) * 0.25); g.fillRect(x, wy0, 6, wy1 - wy0);
+        g.fillStyle = 'rgba(60,40,20,0.35)'; g.fillRect(x + 6, wy0, 2, wy1 - wy0);
+        for (let y = wy0 + 10 + rng() * 10; y < wy1; y += 22 + rng() * 8) { g.fillStyle = 'rgba(70,50,25,0.5)'; g.fillRect(x, y, 6, 1.5); }
+      }
+      g.fillStyle = '#5a3c22'; g.fillRect(12, 92, 232, 4); g.fillRect(12, 126, 232, 4);
+      // woven ramie / rattan panel
+      g.save(); g.beginPath(); g.rect(150, 78, 74, 40); g.clip();
+      g.fillStyle = '#c8aa72'; g.fillRect(150, 78, 74, 40);
+      g.strokeStyle = 'rgba(110,80,40,0.7)'; g.lineWidth = 1.5;
+      for (let k = -40; k < 120; k += 7) { g.beginPath(); g.moveTo(150 + k, 78); g.lineTo(150 + k + 40, 118); g.stroke(); g.beginPath(); g.moveTo(150 + k + 40, 78); g.lineTo(150 + k, 118); g.stroke(); }
+      g.restore();
+      g.strokeStyle = '#4e3622'; g.lineWidth = 3; g.strokeRect(150, 78, 74, 40);
+      // doorway (column 1) with a notched log step
+      g.fillStyle = '#16100a'; g.fillRect(78, 80, 38, 64);
+      g.strokeStyle = '#4e3622'; g.lineWidth = 5; g.strokeRect(76, 78, 42, 66);
+      g.fillStyle = 'rgba(255,200,120,0.10)'; g.fillRect(80, 120, 34, 24);
+      g.save(); g.translate(97, 186); g.rotate(-0.08);
+      g.fillStyle = '#6a4a2c'; g.fillRect(-7, -42, 14, 42);
+      for (let y = -38; y < 0; y += 9) { g.fillStyle = '#2a1a0e'; g.fillRect(-7, y, 14, 2.5); }
+      g.restore();
+      // thatched gable roof
+      const ridgeY = -52, eaveY = 84;
+      g.beginPath(); g.moveTo(-10, eaveY); g.lineTo(40, ridgeY); g.lineTo(216, ridgeY); g.lineTo(266, eaveY); g.closePath();
+      lg = g.createLinearGradient(0, ridgeY, 0, eaveY); lg.addColorStop(0, '#cdb072'); lg.addColorStop(0.6, '#a8864a'); lg.addColorStop(1, '#7a5a30');
+      g.fillStyle = lg; g.fill();
+      g.save(); g.clip();
+      for (let i = 0; i < 520; i++) {
+        const x = -10 + rng() * 276, y = ridgeY + rng() * (eaveY - ridgeY);
+        g.strokeStyle = U.rgba(U.shade('#b8965a', (rng() - 0.5) * 0.6), 0.55); g.lineWidth = 1.2;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + (x - 128) * 0.04, y + 10 + rng() * 10); g.stroke();
+      }
+      for (let k = 0; k < 4; k++) { g.fillStyle = 'rgba(70,45,20,0.28)'; g.fillRect(-10, ridgeY + 30 + k * 30, 280, 3); }
+      g.restore();
+      g.strokeStyle = '#5a3e1e'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(-10, eaveY); g.lineTo(40, ridgeY); g.lineTo(216, ridgeY); g.lineTo(266, eaveY); g.stroke();
+      // ragged eave fringe
+      g.fillStyle = '#7a5a30';
+      for (let x = -10; x < 266; x += 5) { const h = 4 + rng() * 6; g.fillRect(x, eaveY - 1, 3, h); }
+      // ridge cap with bindings
+      g.fillStyle = '#5e4024'; g.fillRect(36, ridgeY - 8, 184, 10);
+      for (let x = 44; x < 216; x += 22) { g.fillStyle = '#3a2614'; g.fillRect(x, ridgeY - 10, 4, 14); }
+      // a bundle of 芒草 hung by the door, a basket
+      g.strokeStyle = '#d8d0a0'; g.lineWidth = 1.4;
+      for (let k = 0; k < 7; k++) { g.beginPath(); g.moveTo(128, 90); g.quadraticCurveTo(128 + k * 2 - 6, 104, 124 + k * 3 - 8, 122); g.stroke(); }
+      g.fillStyle = '#8a6a3a'; g.beginPath(); g.ellipse(214, 140, 14, 8, 0, 0, Math.PI * 2); g.fill();
+    };
+    G.Objects.define('c4_saisiyat_house', {
+      w: 4, h: 3, solid: true,
+      solidAt: (o, dx, dy) => !(dx === 1 && dy === 2),
+      draw(ctx, px, py, o) {
+        const v = (o.v | 0) % 3;
+        let c = cache[v];
+        if (!c) {
+          c = cache[v] = U.makeCanvas(296, 312);
+          const g = c.getContext('2d');
+          g.translate(20, 120);
+          paint(g, v);
+        }
+        ctx.drawImage(c, px - 20, py - 120, c.lw || 296, c.lh || 312);
+      },
+    });
+  }
+  // persimmon fruit hung on fallback trees (tree_camphor) — drawn over the crowns
+  function drawPersimmons(ctx, trees, ripe) {
+    for (const [x, y] of trees) {
+      const cx = x * T + T / 2, cy = (y + 1) * T - 150;
+      for (let i = 0; i < 16; i++) {
+        const a = U.hash(x, y + i, 11) * Math.PI * 2, r = Math.sqrt(U.hash(x + i, y, 12));
+        const fx = cx + Math.cos(a) * r * 70, fy = cy + Math.sin(a) * r * 50;
+        const bad = !ripe && U.hash(x, i, 13) < 0.45;
+        ctx.fillStyle = bad ? '#4a2a1a' : '#f07a1a';
+        ctx.beginPath(); ctx.arc(fx, fy, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = bad ? 'rgba(0,0,0,0.2)' : 'rgba(255,220,160,0.6)'; ctx.beginPath(); ctx.arc(fx - 2, fy - 2, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#3a5a1a'; ctx.fillRect(fx - 1, fy - 8, 3, 3);
+      }
+    }
+  }
   if (G.Sprites && G.Sprites.define && !(G.Sprites.has && G.Sprites.has('c4_manmei'))) {
     G.Sprites.define('c4_manmei', { base: 'hakka_f', body: 'elderf', eyeStyle: 'line', hair: { style: 'back', color: '#b4b0aa', knot: 'bun' }, hat: null, held: 'cane' });
   }
@@ -569,7 +660,7 @@
     const o = [
       { t: 'house_minnan', x: 34, y: 2, text: '米粉' },
       { t: 'shrine_small', x: 15, y: 13, text: '土地公' },
-      { t: 'city_wall', x: 6, y: 32, w: 6 }, { t: 'gate_city', x: 12, y: 31, text: '拱宸門' }, { t: 'city_wall', x: 15, y: 32, w: 33 },
+      { t: 'city_wall', x: 6, y: 32, w: 6, v: 1 }, { t: 'gate_city', x: 12, y: 31, text: '拱宸門' }, { t: 'city_wall', x: 15, y: 32, w: 33, v: 1 },
       { t: 'driftwood', x: 7, y: 27 }, { t: 'boat_small', x: 2, y: 18 },
       { t: 'basket', x: 33, y: 5, v: 1 }, { t: 'barrel', x: 39, y: 5 }, { t: 'jar', x: 40, y: 4 },
       { t: 'signboard', x: 12, y: 2, text: '往艋舺' },
@@ -884,13 +975,13 @@
     // gardens
     g.rect(1, 2, 54, 2, ',').rect(1, 39, 54, 3, ',').rect(1, 27, 3, 6, ',').rect(50, 27, 5, 6, ',');
     // main streets (stone) and lanes
+    g.rect(2, 10, 52, 1, '=');
+    g.rect(2, 33, 24, 1, '=').rect(29, 34, 25, 1, '=');
+    g.rect(9, 11, 1, 10, '=').rect(44, 11, 1, 10, '=').rect(8, 23, 1, 10, '=').rect(45, 23, 1, 11, '=');
     g.rect(26, 2, 3, 12, '#');
     g.rect(23, 13, 10, 2, '#').rect(23, 13, 2, 7, '#').rect(31, 13, 2, 7, '#');
     g.rect(1, 21, 54, 2, '#');
     g.rect(26, 28, 3, 14, '#');
-    g.rect(2, 10, 52, 1, '=');
-    g.rect(2, 33, 24, 1, '=').rect(29, 34, 25, 1, '=');
-    g.rect(9, 11, 1, 10, '=').rect(44, 11, 1, 10, '=').rect(8, 23, 1, 10, '=').rect(45, 23, 1, 11, '=');
     // plaza
     g.rect(19, 19, 19, 9, '%');
     return g.rows();
@@ -931,7 +1022,7 @@
       { t: 'cart', x: 21, y: 11 }, { t: 'barrel', x: 23, y: 9 }, { t: 'laundry', x: 6, y: 8 }, { t: 'laundry', x: 50, y: 30 },
       { t: 'barrel', x: 37, y: 19 }, { t: 'basket', x: 14, y: 27, v: 2 }, { t: 'basket', x: 48, y: 27, v: 0 }, { t: 'jar', x: 13, y: 33 },
       { t: 'lamp_post', x: 25, y: 12 }, { t: 'lamp_post', x: 29, y: 12 }, { t: 'lamp_post', x: 25, y: 29 }, { t: 'lamp_post', x: 29, y: 29 },
-      { t: 'lamp_post', x: 10, y: 20 }, { t: 'lamp_post', x: 43, y: 20 }, { t: 'lamp_post', x: 25, y: 40 }, { t: 'lamp_post', x: 29, y: 40 },
+      { t: 'lamp_post', x: 10, y: 20 }, { t: 'lamp_post', x: 43, y: 20 },
     ];
     for (const [x, y] of [[7, 2], [12, 2], [18, 2], [23, 2], [35, 2], [42, 2], [47, 2], [2, 40], [9, 40], [16, 40], [23, 40], [32, 40], [38, 40], [44, 40], [52, 40], [52, 28], [2, 28], [54, 4]]) o.push({ t: 'tree_camphor', x, y });
     for (const [x, y] of [[20, 3], [32, 3], [11, 3], [45, 3], [5, 40], [13, 41], [41, 41], [49, 41], [3, 30], [51, 31]]) o.push({ t: 'flowers', x, y });
@@ -1492,9 +1583,9 @@
     g.addColorStop(0, 'rgba(255,236,190,0.95)'); g.addColorStop(0.35, 'rgba(255,210,140,0.45)'); g.addColorStop(1, 'rgba(255,200,120,0)');
     ctx.fillStyle = g; ctx.fillRect(cx - 6 * T, 0, 12 * T, 5 * T);
     const fig = (x, foot, h, w, body, glow, text) => {
-      const gl = ctx.createLinearGradient(x, foot - h - 40, x, foot);
-      gl.addColorStop(0, U.rgba(glow, 0)); gl.addColorStop(0.3, U.rgba(glow, 0.35)); gl.addColorStop(1, U.rgba(glow, 0.55));
-      ctx.fillStyle = gl; ctx.fillRect(x - w * 0.9, foot - h - 60, w * 1.8, h + 60);
+      const gl = ctx.createRadialGradient(x, foot - h * 0.5, 10, x, foot - h * 0.5, h * 0.75);
+      gl.addColorStop(0, U.rgba(glow, 0.5)); gl.addColorStop(0.6, U.rgba(glow, 0.18)); gl.addColorStop(1, U.rgba(glow, 0));
+      ctx.fillStyle = gl; ctx.fillRect(x - h, foot - h * 1.3, h * 2, h * 1.6);
       const a = 0.82 + Math.sin(t * 1.3 + x) * 0.06;
       ctx.globalAlpha = a;
       ctx.fillStyle = body;
@@ -1549,6 +1640,7 @@
     g.rect(38, 16, 5, 6, ',');
     return g.rows();
   })();
+  const ROAD_PERS = [[28, 3], [31, 3], [39, 3], [27, 8], [27, 12], [39, 6], [40, 13], [29, 13], [38, 9], [35, 11]];
   function roadObjects() {
     const o = [
       { t: 'tree_camphor', x: 11, y: 15 }, { t: 'shrine_small', x: 12, y: 17, text: '伯公' },
@@ -1558,7 +1650,7 @@
       { t: 'rock_big', x: 42, y: 16 }, { t: 'basket', x: 38, y: 7, v: 1 },
       { t: 'signboard', x: 1, y: 18, text: '柿樹坪' }, { t: 'fence_bamboo', x: 21, y: 26, w: 7 },
     ];
-    for (const [x, y] of [[28, 3], [31, 3], [39, 3], [27, 8], [27, 12], [39, 6], [40, 13], [31, 11], [38, 9], [35, 11]]) o.push({ t: 'tree_camphor', x, y, v: 3 });
+    for (const [x, y] of ROAD_PERS) o.push({ t: 'tree_camphor', x, y, v: 3 });
     for (let y = 5; y <= 15; y++) for (const x of [41, 42, 43]) if (!(x === 41 && y === 10) && !(y >= 15 && x >= 42)) o.push({ t: 'bamboo', x, y });
     o.push({ t: 'bamboo', x: 40, y: 10 });
     for (const [x, y] of [[3, 3], [6, 4], [9, 3], [12, 5], [4, 10], [7, 11], [4, 29], [9, 31], [13, 33], [24, 29], [30, 31], [35, 34], [22, 6], [24, 11]]) o.push({ t: 'rice_stalks', x, y });
@@ -1599,6 +1691,7 @@
     light: (st) => (broken(st) ? { ambient: 0.05 } : { ambient: 0.15, color: '#2a2418' }),
     particles: (st) => (broken(st) ? ['leaves', { type: 'wind', density: 0.3 }] : ['leaves', { type: 'wind', density: 1 }, { type: 'motes', density: 0.3 }]),
     tiles: roadTiles, objects: roadObjects,
+    drawOver: (ctx) => drawPersimmons(ctx, ROAD_PERS, broken(G.state)),
     drawGround: (ctx) => {
       if (!F('ch4_persimmon_clues')) return;
       const x = 41 * T + T / 2, y = 17 * T + T * 0.55;
@@ -1709,7 +1802,7 @@
     })(),
     objects: [
       { t: 'basket', x: 9, y: 2, v: 1 }, { t: 'basket', x: 11, y: 2, v: 1 }, { t: 'drying_rack', x: 13, y: 2, v: 1 },
-      { t: 'bones', x: 12, y: 9 }, { t: 'rock_small', x: 7, y: 10 }, { t: 'rock_small', x: 14, y: 8 }, { t: 'stump', x: 17, y: 5 },
+      { t: 'basket', x: 12, y: 9, v: 1 }, { t: 'rock_small', x: 7, y: 10 }, { t: 'rock_small', x: 14, y: 8 }, { t: 'stump', x: 17, y: 5 },
     ],
     lights: [{ x: 10, y: 9, r: 170, color: '#fff2d0', flicker: 0.05 }, { x: 12, y: 3, r: 160, color: '#fff2d0', flicker: 0.05 }],
     drawGround: (ctx, t) => {
@@ -2020,6 +2113,7 @@
     light: (st) => (night(st) ? { ambient: 0.6, color: '#0a1030', playerR: 240 } : broken(st) ? { ambient: 0.05 } : { ambient: 0.12, color: '#2a2418' }),
     particles: (st) => (night(st) ? ['fireflies', { type: 'wind', density: broken(st) ? 0.2 : 0.6 }] : broken(st) ? ['leaves'] : ['leaves', { type: 'wind', density: 0.8 }]),
     tiles: villageTiles, objects: villageObjects,
+    drawOver: (ctx) => drawPersimmons(ctx, [[40, 3], [44, 5], [47, 3], [49, 10]], broken(G.state)),
     lights: (st) => (night(st) ? [{ x: 23, y: 11, r: 200, color: '#ff9a4a', flicker: 0.3 }, { x: 7, y: 17, r: 140, color: '#ffb060', flicker: 0.3 }, { x: 39, y: 16, r: 140, color: '#ffb060', flicker: 0.3 }] : []),
     npcs: [
       {
@@ -2096,6 +2190,10 @@
         talk: async (S) => { await sayAll(S, '阿成', ['我是向天湖那邊的賽夏人。來換鹽，順便看阿福輸。', '這陣子的風不對。要上山，趁清早，中午前一定要下來。', '中午過後，風穴會先「吸氣」，然後「吐氣」——人是站不住的。']); },
       },
       { id: 'vf1', sprite: 'hakka_f', name: '庄裡的阿姆', x: 36, y: 24, dir: 'down', wander: 3, if: (st) => !night(st), talk: async (S) => { await S.say('庄裡的阿姆', broken(G.state) ? '這幾日風乾乾爽爽，菜脯曬得特別香。' : '今年个風，吹得菜脯都發霉咧。'); } },
+      { id: 'hen1', sprite: 'chicken', x: 18, y: 20, dir: 'left', wander: 3, if: (st) => !night(st) },
+      { id: 'hen2', sprite: 'chicken', x: 30, y: 21, dir: 'right', wander: 3, if: (st) => !night(st) },
+      { id: 'dog', sprite: 'dog', x: 20, y: 12, dir: 'down', wander: 2, talk: async (S) => { S.emote('dog', '♥'); await S.say('', '黃狗搖著尾巴，在糰子身上聞來聞去。'); } },
+      { id: 'buffalo', sprite: 'buffalo', x: 14, y: 33, dir: 'left', wander: 1, talk: async (S) => { await S.say('', '水牛慢吞吞地嚼著稻草，看了你一眼。'); } },
       { id: 'vm1', sprite: 'hakka_m', name: '庄裡的阿叔', x: 12, y: 27, dir: 'down', wander: 3, if: (st) => !night(st), talk: ['梯田收冬咧，稻樁留在田肚，明年做肥。', '五指山？透早去，中晝前轉來，記得！'] },
     ],
     events: [
@@ -2482,6 +2580,13 @@
       else if (h < 0.6) o.push({ t: 'tallgrass', x, y });
     }
     for (const [x, y] of [[5, 18], [8, 19], [3, 23]]) o.push({ t: 'tree_fern', x, y });
+    const forest = ['tree_pine', 'tree_camphor', 'bamboo', 'tree_fern', 'tree_pine', 'tree_cedar_snow'];
+    for (let y = 4; y < g.h - 1; y++) for (let x = 0; x < g.w; x++) {
+      if (g.get(x, y) !== 'X' || g.get(x, y + 1) !== 'X') continue;
+      const h = U.hash(x, y, 77);
+      if (h < 0.42) o.push({ t: forest[Math.floor(U.hash(x, y, 78) * 5)], x, y });
+      else if (h < 0.5) o.push({ t: 'rock_small', x, y });
+    }
     return o;
   }
   async function scene409(S) {
@@ -2598,13 +2703,13 @@
   })();
   function xiangtianObjects(fest) {
     const o = [
-      { t: 'house_jiufen', x: 32, y: 11, v: 3, text: '夏' }, { t: 'house_jiufen', x: 25, y: 5, v: 1 }, { t: 'house_jiufen', x: 38, y: 5, v: 2 },
-      { t: 'house_jiufen', x: 40, y: 11, v: 1 }, { t: 'house_jiufen', x: 25, y: 11, v: 0 }, { t: 'house_jiufen', x: 41, y: 18, v: 2 },
+      { t: 'c4_saisiyat_house', x: 32, y: 11, v: 0 }, { t: 'c4_saisiyat_house', x: 25, y: 5, v: 1 }, { t: 'c4_saisiyat_house', x: 38, y: 5, v: 2 },
+      { t: 'c4_saisiyat_house', x: 40, y: 11, v: 1 }, { t: 'c4_saisiyat_house', x: 25, y: 11, v: 2 }, { t: 'c4_saisiyat_house', x: 41, y: 18, v: 0 },
       { t: 'granary', x: 35, y: 5 }, { t: 'granary', x: 21, y: 27 },
       { t: 'loom', x: 36, y: 13 }, { t: 'basket', x: 37, y: 12, v: 3 }, { t: 'jar', x: 29, y: 9 }, { t: 'basket', x: 28, y: 9, v: 1 },
-      { t: 'firepit', x: 29, y: 28 }, { t: 'firepit', x: 37, y: 28 }, { t: 'firepit', x: 33, y: 34 },
+      { t: 'firepit', x: 28, y: 27 }, { t: 'firepit', x: 39, y: 27 }, { t: 'firepit', x: 33, y: 34 },
     ];
-    if (fest) o.push({ t: 'firepit', x: 33, y: 30 });
+    if (fest) o.push({ t: 'firepit', x: 33, y: 29 });
     else o.push({ t: 'log', x: 31, y: 26 }, { t: 'log', x: 35, y: 33 });
     for (const [x, y] of [[2, 2], [5, 1], [9, 2], [14, 3], [20, 2], [1, 8], [1, 14], [2, 22], [3, 29], [8, 32], [14, 34], [20, 33], [44, 2], [44, 9], [44, 24], [44, 31], [42, 35], [24, 35], [27, 2], [36, 1]]) o.push({ t: U.hash(x, y, 3) < 0.5 ? 'tree_camphor' : 'tree_pine', x, y });
     for (const [x, y] of [[8, 6], [21, 9], [6, 25], [23, 23], [11, 27], [17, 26]]) o.push({ t: 'reeds', x, y });
@@ -2612,7 +2717,7 @@
     for (const [x, y] of [[42, 7], [43, 14], [3, 33], [18, 31]]) o.push({ t: 'bamboo', x, y });
     return o;
   }
-  const fireLights = [{ x: 29, y: 28, r: 230, color: '#ff8a3a', flicker: 0.5 }, { x: 37, y: 28, r: 230, color: '#ff8a3a', flicker: 0.5 }, { x: 33, y: 34, r: 230, color: '#ff8a3a', flicker: 0.5 }];
+  const fireLights = [{ x: 28, y: 27, r: 230, color: '#ff8a3a', flicker: 0.5 }, { x: 39, y: 27, r: 230, color: '#ff8a3a', flicker: 0.5 }, { x: 33, y: 34, r: 230, color: '#ff8a3a', flicker: 0.5 }];
   async function lakeMorning(S) {
     S.flag('ch4_pastaay_witnessed');
     S.flag('ch4_lake_morning');
@@ -2750,12 +2855,13 @@
     return out;
   }
   function moveDancers(m, t) {
+    if (F('ch4_fest_night') && m.cam && !m.c4CamLock) { m.cam.tx = m.player.px - G.W / 2; m.cam.ty = m.player.py - G.H / 2 + 4 * T; }
     for (const a of m.npcs) {
       if (!a.id || a.id.indexOf('dancer') !== 0) continue;
       const i = +a.id.slice(6);
       const ang = i / DANCERS * Math.PI * 2 + t * 0.05;
-      a.px = 33.5 * T + Math.cos(ang) * 4.4 * T;
-      a.py = 30.4 * T + Math.sin(ang) * 2.9 * T;
+      a.px = 33.5 * T + Math.cos(ang) * 4.2 * T;
+      a.py = 29.6 * T + Math.sin(ang) * 2.5 * T;
       const vx = -Math.sin(ang), vy = Math.cos(ang);
       a.dir = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'right' : 'left') : (vy > 0 ? 'down' : 'up');
       a.alpha = 0.85;
@@ -2765,6 +2871,10 @@
   }
   async function festBoundary(S) {
     await S.say('阿成', '那邊不要過去喔。');
+    const m = G.mapScene, p = m.player;
+    for (const [d, dx, dy] of [['up', 0, -1], ['down', 0, 1], ['left', -1, 0], ['right', 1, 0]]) {
+      if (inFest(p.x + dx, p.y + dy) && !m.blocked(p.x + dx, p.y + dy, p)) { S.face('player', d); await pushPlayer(S, d, 1); return; }
+    }
     await stepBack(S);
   }
   async function scene411a(S) {
@@ -2849,9 +2959,16 @@
     light: (st) => (st.flags.ch4_fest_night ? { ambient: 0.75, color: '#05060e', playerR: 150 } : { ambient: 0.35, color: '#3a1a10' }),
     particles: (st) => (st.flags.ch4_fest_night ? ['embers'] : ['mist']),
     tiles: xiangtianGrid.rows(), objects: () => xiangtianObjects(true),
-    lights: (st) => (st.flags.ch4_fest_night ? fireLights.concat([{ x: 33, y: 30, r: 300, color: '#ff9a40', flicker: 0.5 }]) : []),
-    onEnter: async () => { const m = G.mapScene; if (m) m.hideFollowers = true; },
-    drawGround: (ctx, t, m) => moveDancers(m, t),
+    lights: (st) => (st.flags.ch4_fest_night ? fireLights.concat([{ x: 33, y: 29, r: 300, color: '#ff9a40', flicker: 0.5 }]) : []),
+    onEnter: async () => {
+      // the circle moves slowly every frame (an update hook, so it works for any renderer)
+      const m = G.mapScene;
+      if (!m || m.c4Fest) return;
+      m.c4Fest = true;
+      m.hideFollowers = true;
+      const up0 = m.update.bind(m);
+      m.update = function (dt) { up0(dt); moveDancers(m, m.t); };
+    },
     npcs: [
       {
         id: 'xia_f', sprite: 'saisiyat_elder', name: '夏阿公', x: 33, y: 17, dir: 'up',
@@ -3198,6 +3315,7 @@
       }
       ctx.restore();
     });
+    for (const [x, y, name] of CHIMES) G.Render.text(ctx, name, x * T + T / 2, (y + 1) * T + 2, { size: 15, align: 'center', color: '#d8c8a0', alpha: 0.85 });
     // the great wind wheel
     const wx = 22 * T + T / 2, wy = 25 * T + T / 2;
     const ang = solved ? t * 2.2 : Math.sin(t * 9) * 0.12;

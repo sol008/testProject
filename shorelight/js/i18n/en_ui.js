@@ -590,3 +590,8 @@ G.I18N.add({
   '防禦力': 'Defense',
   '裝備品': 'Gear',
 });
+G.I18N.add({
+  '超高': 'Ultra',
+  '3D 畫面（重新啟動後生效）': '3D Graphics (applies after restart)',
+  '鏡頭旋轉（Q/E）': 'Camera Rotation (Q/E)',
+});

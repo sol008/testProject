@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>白芷 Bai Zhi — Design Pass v2</title>
+<style>
+  html, body { margin: 0; background: #17161d; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="baizhi_lib.js"></script>
+<script src="baizhi_helpers.js"></script>
+<script src="baizhi_opt01.js"></script>
+<script src="baizhi_opt02.js"></script>
+<script src="baizhi_opt03.js"></script>
+<script src="baizhi_opt04.js"></script>
+<script src="baizhi_opt05.js"></script>
+<script src="baizhi_opt06.js"></script>
+<script src="baizhi_opt07.js"></script>
+<script src="baizhi_opt08.js"></script>
+<script src="baizhi_opt09.js"></script>
+<script src="baizhi_opt10.js"></script>
+<script>
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const cv = document.getElementById('cv');
+  const c = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  await document.fonts.ready;
+  const D = BZ.DESIGNS.slice().sort((a, b) => a.n - b.n);
+  const { CARD, ZH, EN, SERIF } = BZ;
+  if (q.has('fig')) {
+    // debug: figure only. ?fig=N&s=scale&y0=top&y1=bottom (design units)
+    const s = parseFloat(q.get('s') || '2');
+    const d = D.find((x) => x.n === parseInt(q.get('fig'), 10));
+    const y0 = parseFloat(q.get('y0') || '-470'), y1 = parseFloat(q.get('y1') || '10');
+    const W = 420 * s, H = (y1 - y0) * s;
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    c.scale(dpr, dpr);
+    c.fillStyle = '#c9c4bb'; c.fillRect(0, 0, W, H);
+    BZ.G.base = dpr;
+    BZ.drawFigureLayer(c, d, W / 2, -y0 * s, s, s);
+  } else if (q.has('opt')) {
+    // single card ?opt=1..10&s=scale
+    const s = parseFloat(q.get('s') || '1');
+    const d = D.find((x) => x.n === parseInt(q.get('opt'), 10));
+    cv.width = Math.round(CARD.W * s * dpr);
+    cv.height = Math.round(CARD.H * s * dpr);
+    cv.style.width = CARD.W * s + 'px';
+    cv.style.height = CARD.H * s + 'px';
+    c.scale(s * dpr, s * dpr);
+    c.fillStyle = '#17161d';
+    c.fillRect(0, 0, CARD.W, CARD.H);
+    BZ.drawCard(c, d, 0, 0, s * dpr);
+  } else {
+    // full sheet: 5 x 2 grid + silhouette lineup
+    const gap = 16, W = 5 * CARD.W + 6 * gap, top = 118, lineupH = 210;
+    const H = top + 2 * CARD.H + 3 * gap + lineupH;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    c.scale(dpr, dpr);
+    const bg = c.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#1d1b25'); bg.addColorStop(1, '#121118');
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    c.fillStyle = '#f4efe6'; c.font = `52px ${ZH}`; c.fillText('白芷', gap + 6, 70);
+    c.fillStyle = '#d9b46a'; c.font = `italic 20px ${SERIF}`; c.fillText('Bai Zhi — heroine, appears ~17 · 水 water · 燈靈 lamp spirit of the Shorelight', gap + 128, 50);
+    c.fillStyle = '#b9b2c2'; c.font = `15px ${ZH}`;
+    c.fillText('角色設計 v2 · 十個方案：從九份街坊借來的大裪衫，到水燈頭／紙燈／普渡意象的燈靈，再到海沫與燈焰的幻想形態。保留：紅線＋「白芷」玉牌、玉笛、燈靈的非人氣質（漸透明）。', gap + 128, 78);
+    c.fillStyle = '#857e90'; c.font = `13px ${EN}`;
+    c.fillText('Shorelight character design pass v2 · cel-shaded / toon-ready concepts · every card: full body, bust, palette, callouts, cultural basis, 3D notes, front & back silhouettes', gap + 128, 100);
+    D.forEach((d, i) => {
+      const col = i % 5, row = Math.floor(i / 5);
+      BZ.drawCard(c, d, gap + col * (CARD.W + gap), top + row * (CARD.H + gap), dpr);
+    });
+    // silhouette lineup at map-sprite scale
+    const ly = top + 2 * (CARD.H + gap) + 4;
+    c.fillStyle = '#23212c';
+    c.beginPath(); c.roundRect(gap, ly, W - 2 * gap, lineupH - 20, 10); c.fill();
+    c.fillStyle = '#b9b2c2'; c.font = `14px ${ZH}`;
+    c.fillText('剪影檢查 Silhouette check — all ten at map-sprite scale (≈90 px), front (black) and back (grey detail)', gap + 16, ly + 26);
+    const step = (W - 2 * gap - 40) / 10;
+    D.forEach((d, i) => {
+      const x = gap + 20 + step * i + step / 2;
+      const fs = d.fs || 1;
+      BZ.silhouette(c, d, x - 26, ly + lineupH - 46, 92 * fs, { col: '#f4efe6' });
+      BZ.silhouette(c, d, x + 30, ly + lineupH - 46, 92 * fs, { col: '#f4efe6', mirror: true, backDetail: true, backCol: '#9a94a6' });
+      c.fillStyle = '#d9b46a'; c.font = `600 13px ${EN}`; c.textAlign = 'center';
+      c.fillText(String(d.n).padStart(2, '0') + ' ' + d.zh, x, ly + lineupH - 30);
+      c.textAlign = 'left';
+    });
+  }
+  document.body.dataset.ready = '1';
+})().catch((e) => { document.body.dataset.error = String(e && e.stack || e); document.body.dataset.ready = '1'; });
+</script>
+</body>
+</html>

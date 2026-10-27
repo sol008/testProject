@@ -65,7 +65,7 @@ vision realms, and helping each other across.
 - Look: dark messy hair in a short topknot with loose strands, warm brown eyes, indigo short jacket over
   white inner shirt, rolled sleeves, dark trousers, straw sandals; red string bracelet; later a sword on back.
 
-### 白芷 (Bai Zhi) — heroine, appears ~17
+### 白芷 (Bai Zhi) — heroine, appears ~19
 - Arrives unconscious on a great 水燈頭 drifting **in from** the sea (lanterns should only go out).
   Only memories: the song 「渡魂謠」 and a jade tag carved 「白芷」.
 - Gentle, curious about everything human (first taste of 九份芋圓 is a big moment), speaks poetically
@@ -73,9 +73,13 @@ vision realms, and helping each other across.
 - Weapon: jade flute (玉笛). Element **水**. Healer / support / spirit-calming songs.
 - **Secret:** she is the 燈靈 of the Shorelight. Every memory she regains makes her a little more
   translucent at the edges.
-- Look: very long silver-white hair with a pale-blue sheen, loosely tied low with a red string and a
-  small lantern-shaped hairpin; pale aqua-white layered dress (褙子 style) with sea-foam embroidery;
-  soft gold eyes; a faint glow.
+- Look (client reference, see docs/design/REFERENCES.md): very long straight jet-black hair with a blue-black
+  sheen, mostly worn down, slightly off-centre part; soft oval face; dark-brown almond eyes; a calm, dreamy,
+  upward-drifting gaze and a faint knowing smile; a small beauty mark on her right cheek beside the nose; a long
+  drop earring; red string at the wrist; jade tag; a faint glow at the edges. Costume per the chosen v2 design.
+- Companion: **麻糬 (Mochi)**, a big, very fluffy long-haired dilute calico cat from a 九份 teahouse. She
+  senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks (糰子's opposite).
+  In battle she is a water-element support assist (healing purr). On the field she sniffs out hidden spirit items.
 
 ### 洛紅纓 (Luo Hongying) — 19
 - Heir of **鹿港洛家**, a merchant & martial clan famed for 洛家槍. The clan was massacred three
@@ -90,7 +94,8 @@ vision realms, and helping each other across.
 - Taoist of **觀音山 太虛觀**. Sarcastic, lazy-eyed, drinks 米酒, reads forbidden texts on 「內景」
   (inner visions) and is an enthusiastic amateur mycologist (comic). Deeply loyal; searching for his
   missing master 清虛真人.
-- Companion: **糰子 (Tuanzi)** — a chubby 石虎 (Formosan leopard-cat) spirit that talks, eats
+- Companion: **糰子 (Tuanzi)**: a chubby 石虎 (Formosan leopard-cat) spirit who mostly looks like a plush blue-grey
+  tabby (olive eyes, a deadpan "judging you" stare) with faint leopard-cat stripes and ear spots. He talks, eats
   everything, panics, and, after eating spirit mushrooms, delivers absurd cosmic wisdom.
 - Weapon: talismans + fan (符扇). Element **木** (thunder), but his talismans cover all five
   elements — the "weakness exploiter".

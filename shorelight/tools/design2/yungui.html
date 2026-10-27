@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>雲歸 — design pass v2</title>
+<style>
+  html,body{margin:0;background:#25222a}
+  canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="yungui_qingxu_lib.js"></script>
+<script src="yungui.js"></script>
+<script>
+  // ?opt=N → single card (1-based); ?scale=S; default → full sheet
+  const q = new URLSearchParams(location.search);
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const scale = parseFloat(q.get('scale') || '1');
+  document.fonts.ready.then(() => {
+    if (q.get('opt')) {
+      const i = parseInt(q.get('opt'), 10) - 1;
+      cv.width = YG.CW * scale; cv.height = YG.CH * scale;
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#25222a'; ctx.fillRect(0, 0, YG.CW, YG.CH);
+      YG.card(ctx, 0, 0, i);
+    } else {
+      const [w, h] = YG.sheetSize();
+      cv.width = w * scale; cv.height = h * scale; ctx.scale(scale, scale);
+      YG.sheet(ctx);
+    }
+    document.body.dataset.ready = '1';
+  });
+</script>
+</body>
+</html>

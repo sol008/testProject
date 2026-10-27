@@ -30,8 +30,12 @@
 
       const ctx = G.ctx;
       G.Render.begin();
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, G.W, G.H);
+      // 3D scenes render to the WebGL canvas underneath; the 2D canvas then only carries UI / overlays
+      const base = G.Scenes.base();
+      const use3d = !!(G.R3 && G.R3.enabled() && base && (base.view3d || base.uses3d));
+      if (G.R3) G.R3.show(use3d);
+      if (use3d) ctx.clearRect(0, 0, G.W, G.H);
+      else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); }
       G.Scenes.draw(ctx);
       G.UI.drawToasts(ctx);
       G.Render.drawOverlays();
@@ -45,6 +49,7 @@
 
   async function boot() {
     G.Render.init();
+    try { if (G.R3) G.R3.init(); } catch (e) { console.error('3D init failed, using 2D', e); if (G.R3) G.R3.ok = false; }
     const msg = document.getElementById('boot-msg');
     msg.textContent = '載入字型……';
     await G.loadFonts();

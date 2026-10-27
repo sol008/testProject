@@ -146,6 +146,8 @@ class Session {
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 1500)));
     await this.page.goto(BASE + query);
     await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: o.timeout || 30000 });
+    // Autoplay/test hooks must never mask input bugs: every e2e test runs with them OFF.
+    await this.page.evaluate(() => { if (G.Debug) { if (G.Debug.setAutoplay) G.Debug.setAutoplay(false); G.Debug.autoplay = false; } G.settings.autoAdvance = false; });
     if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: o.timeout || 30000 });
     return this.page;
   }
@@ -218,6 +220,22 @@ class Session {
     this.errors.push(...e.r);
     if (e.le && !e.r.some((x) => x.includes(e.le.split('\n')[0]))) this.errors.push('G.lastError: ' + e.le.slice(0, 1500));
   }
+  // Pixel statistics of what the player actually sees (screenshot → composited 2D UI canvas + #game3d WebGL canvas).
+  async screenStats() {
+    const png = await this.page.screenshot({ type: 'png' });
+    return this.page.evaluate(async (b64) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data;
+      let nonBlack = 0, n = 0, sum = 0, sum2 = 0;
+      for (let i = 0; i < d.length; i += 4 * 97) { const l = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; sum += l; sum2 += l * l; if (l > 12) nonBlack++; }
+      const mean = sum / n;
+      const g3 = document.getElementById('game3d');
+      return { nonBlack: nonBlack / n, mean, std: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), has3d: !!g3, show3d: !!(g3 && g3.style.display !== 'none' && g3.offsetWidth > 0) };
+    }, png.toString('base64'));
+  }
+  async autoplayOff() { return this.ev(() => !(G.Debug && G.Debug.autoplay) && !G.settings.autoAdvance); }
   realErrors() { return this.errors.filter((e) => !BOOT_KEYS.has(firstLines(e, 1))); }
   async shot(name) { if (SHOTS && this.page) await this.page.screenshot({ path: path.join(OUT, name.replace(/[^\w.-]+/g, '_') + '.png') }); }
 }
@@ -243,6 +261,7 @@ async function runTest(browser, t) {
   } catch (e) {
     if (e instanceof Skip) { status = 'skip'; msg = e.message; } else { status = 'fail'; msg = e.message; }
   }
+  if (status === 'pass' && s.page && !(await s.autoplayOff().catch(() => true))) { status = 'fail'; msg = 'G.Debug.autoplay / settings.autoAdvance got switched on during the test (input path not exercised)'; }
   await s.drainGameErrors().catch(() => {});
   // errors that already happen on a plain boot (e.g. a content script with a syntax error) are reported
   // once by the boot test, not by every other test
@@ -270,7 +289,7 @@ function printResult(r) {
 }
 
 // ------------------------------------------------------------------ helpers
-const DEBUG_Q = (map, extra = '') => `?debug&map=${encodeURIComponent(map)}&lv=50${extra}`;
+const DEBUG_Q = (map, extra = '') => `?debug&map=${encodeURIComponent(map)}${/[?&]lv=/.test(extra) ? '' : '&lv=50'}${extra}`;
 async function gameInfo(browser) {
   const s = new Session(browser);
   await s.open('');
@@ -294,21 +313,241 @@ async function openOnMap(s, info, extra) {
   return m;
 }
 
+
+// ================================================================== real-keyboard tests
+// Pure page.keyboard input, G.Debug.autoplay OFF, settings.autoAdvance OFF, no held Ctrl-skip, no
+// _press/_hold hooks. ff() is used only to let game time pass (it never injects input).
+async function pressAndSettle(s, k, n = 3) { await s.page.keyboard.press(k); await s.frames(n); }
+// one "observable" of the dialogue/scene state; used to prove a key press actually changed something
+const DLG_STATE = () => {
+  const t = G.Scenes.top();
+  return JSON.stringify({ top: __qa.top(), log: G.Dialog.log.length, page: t && t.page, shown: t && Math.floor(t.shown || 0), done: !!(t && t.done), idx: t && t.list && t.list.idx, line: t && t.idx });
+};
+function defineKeyTests() {
+  test('key-dialog', 'REAL KEYS: dialogue single & multi-page advance with Z/Space/Enter; choices with arrows, Enter and X', async (s, warn) => {
+    await openOnMap(s, info);
+    assert(await s.autoplayOff(), 'autoplay is on');
+    await s.ev(() => { G.settings.textSpeed = 2; });
+    await s.script(`async (S) => {
+      await S.say('baizhi:smile', '短句。');
+      await S.say('xinghe', ${JSON.stringify('這是一段很長很長的對白，用來測試對話框的分頁功能是否正常運作。'.repeat(12))});
+      const c1 = await S.choice(['甲', '乙', '丙']);
+      const c2 = await S.choice(['留下', '離開'], { cancel: 1 });
+      await S.say('', '結束。');
+      return [c1, c2];
+    }`);
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && G.Scenes.top().text === '短句。', null, { timeout: 3000 });
+    // single-page line: first press completes the typewriter (or advances if already complete), at most 2 presses
+    let presses = 0;
+    while ((await s.ev(() => G.Dialog.log.length && G.Dialog.log[G.Dialog.log.length - 1].text)) === '短句。' && presses < 4) { await pressAndSettle(s, 'z', 4); presses++; }
+    assert(presses <= 2, `single-page line needed ${presses} Z presses (Z not advancing dialogue?)`);
+    // multi-page line
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && (G.Scenes.top().text || '').length > 100, null, { timeout: 3000 });
+    const pages = await s.ev(() => (G.Scenes.top().pages || [0]).length);
+    if (pages < 2) warn('long line did not paginate (pages=' + pages + ') — multi-page path not exercised');
+    const keysCycle = ['z', 'Space', 'Enter'];
+    presses = 0;
+    let lastPage = -1, pagesSeen = 0;
+    while ((await s.top()) === 'DialogScene' && presses < pages * 2 + 6) {
+      const before = await s.ev(DLG_STATE);
+      await pressAndSettle(s, keysCycle[presses % 3], 4);
+      presses++;
+      const after = await s.ev(DLG_STATE);
+      assert(before !== after, `key '${keysCycle[(presses - 1) % 3]}' changed nothing on the dialogue (state ${before})`);
+      const pg = await s.ev(() => G.Scenes.top().page);
+      if (pg !== lastPage) { pagesSeen++; lastPage = pg; }
+    }
+    assert((await s.top()) === 'ChoiceScene', `multi-page line not finished after ${presses} presses (top ${await s.top()})`);
+    if (pages > 1) assert(pagesSeen >= pages, `saw ${pagesSeen} of ${pages} pages`);
+    // choice 1: Down, Down, Up → index 1, confirm with Enter; X must NOT cancel (no cancel option)
+    await pressAndSettle(s, 'ArrowDown'); await pressAndSettle(s, 'ArrowDown'); await pressAndSettle(s, 'ArrowUp');
+    assert((await s.ev(() => G.Scenes.top().list.idx)) === 1, 'arrow keys did not move the choice cursor');
+    await pressAndSettle(s, 'x');
+    assert((await s.top()) === 'ChoiceScene', 'X closed a choice that has no cancel option');
+    await pressAndSettle(s, 'Enter');
+    // choice 2: X cancels → index 1
+    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene' && G.Scenes.top().options.length === 2, null, { timeout: 3000 });
+    await pressAndSettle(s, 'x');
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene', null, { timeout: 3000 });
+    for (let i = 0; i < 4 && !(await s.ev(() => window.__qa.done)); i++) await pressAndSettle(s, 'z', 5);
+    await s.page.waitForFunction(() => window.__qa.done, null, { timeout: 3000 }).catch(() => { throw new Error('final line not dismissed by Z'); });
+    const res = await s.ev(() => window.__qa.res);
+    assert(JSON.stringify(res) === '[1,1]', 'choice results ' + JSON.stringify(res));
+    assert(await s.autoplayOff(), 'autoplay switched on');
+  });
+
+  test('key-battle', 'REAL KEYS: battle commands — attack (target cycling), skill, cancel, defend, item, speed key, victory with Z', async (s) => {
+    await openOnMap(s, info, '&lv=20');
+    const troop = info.normalTroops.find((t) => true);
+    if (!troop) skip('no normal troop');
+    const item = await s.ev(() => Object.keys(G.Data.items).find((k) => { const it = G.Data.items[k]; return it.type === 'use' && it.use && it.use.heal && it.use.target === 'ally' && it.use.battle !== false; }));
+    await s.ev((it) => {
+      G.state.vars.autoBattle = false; G.settings.battleSpeed = 2; G.state.inv = {}; if (it) G.Inv.add(it, 3);
+      window.__qa.cmds = [];
+      const orig = G.Battle.Scene.prototype.execute;
+      if (!orig.__qa) { G.Battle.Scene.prototype.execute = function (u, cmd) { if (u.side === 'party') window.__qa.cmds.push(cmd.kind + (cmd.skill ? ':' + cmd.skill : '') + (cmd.item ? ':' + cmd.item : '')); return orig.call(this, u, cmd); }; G.Battle.Scene.prototype.execute.__qa = true; }
+    }, item);
+    await s.script(`async (S) => S.battle(${JSON.stringify(troop)})`);
+    await s.waitTop('BattleScene', 5000);
+    // keep the fight going long enough to try every command (test setup, not input)
+    await s.ev(() => { for (const e of G.Scenes.top().enemies) { e.hp = e.mhp = 999999; } });
+    const waitUi = async () => {
+      const ok = await s.ff(30, { until: 'G.Scenes.top().ui && G.Scenes.top().ui.mode === "main"', drawEvery: 2 });
+      assert(ok, 'command menu never appeared (auto-battle on? top=' + (await s.top()) + ')');
+      await s.frames(2);
+    };
+    const selectMain = async (k) => {
+      const idx = await s.ev((kk) => G.Scenes.top().ui.main.items.findIndex((i) => i.k === kk), k);
+      if (idx < 0) return false;
+      for (let g = 0; g < 12 && (await s.ev(() => G.Scenes.top().ui.main.idx)) !== idx; g++) await pressAndSettle(s, 'ArrowDown', 2);
+      assert((await s.ev(() => G.Scenes.top().ui.main.idx)) === idx, 'could not reach command ' + k);
+      return !(await s.ev(() => G.Scenes.top().ui.main.cur.disabled));
+    };
+    const nCmds = () => s.ev(() => window.__qa.cmds.length);
+    // speed key E cycles battleSpeed and persists it
+    const sp0 = await s.ev(() => G.settings.battleSpeed);
+    await pressAndSettle(s, 'e');
+    const sp1 = await s.ev(() => G.settings.battleSpeed);
+    assert(sp1 !== sp0, 'E did not change battle speed');
+    for (let g = 0; g < 4 && (await s.ev(() => G.settings.battleSpeed)) !== sp0; g++) await pressAndSettle(s, 'e');
+    // 1) attack: Z → target mode → Right cycles target → Z
+    await waitUi();
+    assert(await selectMain('attack'), 'attack disabled');
+    await pressAndSettle(s, 'z');
+    assert((await s.ev(() => G.Scenes.top().ui && G.Scenes.top().ui.mode)) === 'target', 'Z on 攻擊 did not open targeting');
+    const tg0 = await s.ev(() => G.Scenes.top().ui.tg.i);
+    await pressAndSettle(s, 'ArrowRight');
+    const nTg = await s.ev(() => G.Scenes.top().ui.tg.pool.length);
+    if (nTg > 1) assert((await s.ev(() => G.Scenes.top().ui.tg.i)) !== tg0, 'Right did not cycle the target');
+    let c0 = await nCmds();
+    await pressAndSettle(s, 'z');
+    await s.ff(0.2);
+    assert((await nCmds()) === c0 + 1 && (await s.ev(() => window.__qa.cmds.slice(-1)[0])) === 'attack', 'attack not executed: ' + (await s.ev(() => window.__qa.cmds)));
+    // 2) cancel path: 仙術 → X back to main; then 防禦
+    await waitUi();
+    if (await selectMain('skill')) {
+      await pressAndSettle(s, 'z');
+      assert((await s.ev(() => G.Scenes.top().ui.mode)) === 'list', '仙術 did not open the skill list');
+      await pressAndSettle(s, 'x');
+      assert((await s.ev(() => G.Scenes.top().ui.mode)) === 'main', 'X did not return from the skill list');
+    }
+    assert(await selectMain('defend'), 'defend disabled');
+    c0 = await nCmds();
+    await pressAndSettle(s, 'z');
+    await s.ff(0.2);
+    assert((await s.ev(() => window.__qa.cmds.slice(-1)[0])) === 'defend' && (await nCmds()) === c0 + 1, 'defend not executed');
+    // 3) skill: first affordable skill, confirm target(s)
+    let usedSkill = false;
+    for (let turn = 0; turn < 4 && !usedSkill; turn++) {
+      await waitUi();
+      if (!(await selectMain('skill'))) { await selectMain('defend'); await pressAndSettle(s, 'z'); continue; }
+      await pressAndSettle(s, 'z');
+      const en = await s.ev(() => G.Scenes.top().ui.list.items.findIndex((i) => !i.disabled));
+      if (en < 0) { await pressAndSettle(s, 'x'); await selectMain('defend'); await pressAndSettle(s, 'z'); continue; }
+      for (let g = 0; g < 20 && (await s.ev(() => G.Scenes.top().ui.list.idx)) !== en; g++) await pressAndSettle(s, 'ArrowDown', 2);
+      const mp0 = await s.ev(() => G.Scenes.top().ui.u.mp);
+      const sid = await s.ev(() => G.Scenes.top().ui.list.cur.id);
+      await pressAndSettle(s, 'z'); // → target mode
+      assert((await s.ev(() => G.Scenes.top().ui && G.Scenes.top().ui.mode)) === 'target', 'choosing a skill did not open targeting');
+      await pressAndSettle(s, 'z');
+      await s.ff(0.2);
+      assert((await s.ev(() => window.__qa.cmds.slice(-1)[0])) === 'skill:' + sid, 'skill not executed: ' + (await s.ev(() => window.__qa.cmds.slice(-1)[0])));
+      const mpCost = await s.ev((id) => G.Data.skills[id].mp, sid);
+      if (mpCost > 0) { await s.ff(1.5); const mp1 = await s.ev(() => { const sc = G.Scenes.top(); return Math.min(...sc.party.map((p) => p.mp)); }); void mp1; void mp0; }
+      usedSkill = true;
+    }
+    assert(usedSkill, 'never managed to cast a skill with real keys');
+    // 4) item
+    if (item) {
+      await waitUi();
+      assert(await selectMain('item'), '道具 disabled although the bag has ' + item);
+      const cnt0 = await s.ev((it) => G.Inv.count(it), item);
+      await pressAndSettle(s, 'z');
+      const ii = await s.ev((it) => G.Scenes.top().ui.list.items.findIndex((x) => x.id === it), item);
+      for (let g = 0; g < 20 && (await s.ev(() => G.Scenes.top().ui.list.idx)) !== ii; g++) await pressAndSettle(s, 'ArrowDown', 2);
+      await pressAndSettle(s, 'z'); await pressAndSettle(s, 'z');
+      await s.ff(1.5);
+      assert((await s.ev((it) => G.Inv.count(it), item)) === cnt0 - 1, 'item not consumed by the 道具 command');
+      assert((await s.ev(() => window.__qa.cmds.some((c) => c.startsWith('item:')))), 'item command not executed');
+    }
+    // 5) finish: make enemies fragile, attack with Z Z until victory, dismiss victory screens with Z only
+    await s.ev(() => { for (const e of G.Scenes.top().enemies) { e.hp = 1; e.mhp = Math.max(1, e.d.hp); } });
+    for (let i = 0; i < 40 && !(await s.ev(() => window.__qa.done)); i++) {
+      const st = await s.ev(() => { const sc = G.Scenes.stack.find((x) => x instanceof G.Battle.Scene); return sc ? { ui: !!(sc.ui && sc.ui.mode === 'main'), wait: !!sc.keyWait } : null; });
+      if (!st) break;
+      if (st.ui) { await selectMain('attack'); await pressAndSettle(s, 'z'); await pressAndSettle(s, 'z'); }
+      else if (st.wait) { await s.ff(1.0); await pressAndSettle(s, 'z', 4); }
+      else await s.ff(0.5);
+    }
+    await s.ff(3, { until: 'window.__qa.done' });
+    assert((await s.ev(() => window.__qa.res)) === 'win', 'battle did not end in a win via keyboard (res ' + (await s.ev(() => window.__qa.res)) + ', top ' + (await s.top()) + ')');
+    assert((await s.top()) === 'MapScene', 'not back on the map');
+    assert(await s.autoplayOff(), 'autoplay switched on');
+  }, { timeout: 150000 });
+
+  test('key-newgame', 'REAL KEYS: title → 新的旅程 → play the opening with Z/Enter/arrows only until the player has control', async (s, warn) => {
+    await s.open('');
+    await s.waitTop('TitleScene', 15000);
+    await s.frames(10);
+    if ((await s.ev(() => G.Scenes.top().stage)) !== 'menu') await pressAndSettle(s, 'Space');
+    const idx = await s.ev(() => G.Scenes.top().list.items.findIndex((i) => i.k === 'new'));
+    for (let g = 0; g < 10 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await pressAndSettle(s, 'ArrowDown');
+    await pressAndSettle(s, 'Enter');
+    await s.page.waitForFunction(() => G.inGame && G.state.party.length > 0, null, { timeout: 10000 }).catch(() => { throw new Error('new game did not start'); });
+    assert(await s.autoplayOff(), 'autoplay on');
+    let presses = 0, noChange = 0, quiet = 0;
+    const t0 = Date.now();
+    while (Date.now() - t0 < 150000) {
+      const st = await s.ev(() => ({ top: __qa.top(), busy: G.Script.busy(), fade: G.Render.fade.a, moving: !!(G.mapScene && (G.mapScene.player.moving || G.mapScene.followers.some((f) => f.moving) || G.mapScene.npcs.some((n) => n.moving))) }));
+      if (st.top === 'MapScene' && !st.busy && st.fade < 0.05) break; // player has control
+      if (st.top === 'GameOverScene') throw new Error('opening led to a game over');
+      if (st.top === 'MapScene' || st.fade >= 0.99) {
+        // cutscene in progress with nothing to press: let time pass; a long silence is a soft-lock
+        quiet = st.top === 'MapScene' && !st.moving ? quiet + 1 : 0;
+        if (quiet > 60) throw new Error('soft-lock in the opening: script busy, nothing on screen, for ~15s');
+        await s.page.waitForTimeout(250);
+        continue;
+      }
+      quiet = 0;
+      const before = await s.ev(DLG_STATE);
+      if (st.top === 'BattleScene') {
+        const b = await s.ev(() => { const sc = G.Scenes.top(); return { ui: sc.ui && sc.ui.mode, wait: !!sc.keyWait }; });
+        if (b.ui === 'main' || b.ui === 'target') await pressAndSettle(s, 'z');
+        else if (b.wait) await pressAndSettle(s, 'z');
+        else await s.page.waitForTimeout(150);
+        continue;
+      }
+      await pressAndSettle(s, st.top === 'ChoiceScene' ? 'Enter' : 'z', 4);
+      presses++;
+      const after = await s.ev(DLG_STATE);
+      if (st.top === 'DialogScene' && before === after) {
+        if (++noChange >= 4) throw new Error(`Z pressed 4× on the dialogue with no effect (${after}) — real-key advance broken`);
+      } else noChange = 0;
+      if (presses > 600) break;
+    }
+    const fin = await s.ev(() => ({ top: __qa.top(), busy: G.Script.busy(), map: G.mapScene && G.mapScene.def.id, log: G.Dialog.log.length }));
+    if (fin.busy || fin.top !== 'MapScene') warn(`opening still running after ${presses} presses / 150s (top=${fin.top}, map=${fin.map})`);
+    assert(fin.log > 0, 'no dialogue was shown in the opening');
+    assert(await s.autoplayOff(), 'autoplay switched on');
+  }, { timeout: 200000 });
+}
+
 // ================================================================== tests
 function defineTests(info) {
+  defineKeyTests();
   test('boot', 'boot: page loads, title scene renders, no errors', async (s) => {
     await s.open('');
     await s.waitTop('TitleScene', 15000);
     await s.page.waitForFunction(() => document.getElementById('boot').classList.contains('hide'), null, { timeout: 15000 });
     await s.frames(60);
-    const cs = await s.ev(() => __qa.canvasStats());
+    const cs = await s.screenStats();
     assert(cs.std > 3 && cs.nonBlack > 0.05, `title canvas looks empty (std ${cs.std.toFixed(1)}, nonBlack ${(cs.nonBlack * 100).toFixed(1)}%)`);
     const missing = await s.ev(() => ['Render', 'Input', 'Audio', 'Music', 'Scenes', 'Dialog', 'Script', 'Maps', 'Battle', 'Title', 'MenuScene', 'SaveScene', 'ShopScene', 'World', 'Sprites', 'Portraits', 'Backdrops', 'Monsters', 'Tiles', 'Objects', 'FX'].filter((k) => !G[k]));
     assert(!missing.length, 'global modules missing at runtime: G.' + missing.join(', G.'));
     await s.shot('title');
   });
 
-  test('title', 'title: any key → menu; settings open/change/persist; back', async (s) => {
+  test('key-title', 'title: any key → menu; settings open/change/persist; back', async (s) => {
     await s.open('');
     await s.waitTop('TitleScene', 15000);
     await s.frames(10);
@@ -355,7 +594,7 @@ function defineTests(info) {
     await s.shot('newgame');
   }, { timeout: 120000 });
 
-  test('move', 'map: arrow keys move the player and update G.state.x/y', async (s) => {
+  test('key-move', 'map: arrow keys move the player and update G.state.x/y', async (s) => {
     await openOnMap(s, info);
     const dirs = await s.ev(() => {
       const m = G.mapScene, p = m.player;
@@ -387,7 +626,7 @@ function defineTests(info) {
     }
   });
 
-  test('menu', 'pause menu: open with Esc, visit every panel, close', async (s) => {
+  test('key-menu', 'pause menu: open with Esc, visit every panel, close', async (s) => {
     await openOnMap(s, info);
     await s.ev(() => {
       // content for every panel
@@ -458,7 +697,7 @@ function defineTests(info) {
     assert(visited.length >= 8, 'visited only ' + visited.join(','));
   }, { timeout: 120000 });
 
-  test('saveload', 'save to slot 1 via menu, mutate, load it back, state matches', async (s) => {
+  test('key-saveload', 'save to slot 1 via menu, mutate, load it back, state matches', async (s) => {
     await openOnMap(s, info);
     await s.ev(() => { G.state.gold = 4321; G.state.flags.qa_saved = true; G.Inv.add(Object.keys(G.Data.items)[0], 3); });
     const goMenu = async (k) => {
@@ -492,7 +731,7 @@ function defineTests(info) {
     assert(a === b, 'loaded state differs from the saved state');
   });
 
-  test('continue', 'menu 回標題 → title → 繼續旅程 resumes the latest save', async (s) => {
+  test('key-continue', 'menu 回標題 → title → 繼續旅程 resumes the latest save', async (s) => {
     const m = await openOnMap(s, info);
     await s.ev(() => { G.state.gold = 2468; G.Save.write(3, null); });
     await s.key('Escape'); await s.waitTop('MenuScene', 3000);
@@ -514,7 +753,7 @@ function defineTests(info) {
     assert(r.gold === 2468 && r.map === m, 'continue did not restore the latest save: ' + JSON.stringify(r));
   });
 
-  test('dialog','dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens', async (s) => {
+  test('key-dialog-script','dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens', async (s) => {
     await openOnMap(s, info);
     await s.script(`async (S) => {
       await S.say('baizhi:smile', '第一句。');
@@ -548,7 +787,7 @@ function defineTests(info) {
     assert((await s.top()) === 'MapScene' && !(await s.ev(() => G.Script.busy())), 'not back to idle map');
   });
 
-  test('shop', 'shop: buy ×2 and sell ×1 update gold and inventory; leave resolves', async (s) => {
+  test('key-shop', 'shop: buy ×2 and sell ×1 update gold and inventory; leave resolves', async (s) => {
     await openOnMap(s, info);
     const goods = await s.ev(() => Object.keys(G.Data.items).filter((k) => G.Data.items[k].price > 0 && G.Data.items[k].type === 'use').slice(0, 6));
     assert(goods.length, 'no buyable items');
@@ -601,7 +840,7 @@ function defineTests(info) {
     assert((await s.ev(() => window.__qa.res)) === false, 'inn should refuse when gold is insufficient');
   });
 
-  test('flee', 'battle: flee succeeds from a normal troop; refused against a boss', async (s) => {
+  test('key-flee', 'battle: flee succeeds from a normal troop; refused against a boss', async (s) => {
     await openOnMap(s, info);
     if (!info.normalTroops.length) skip('no normal troops');
     const troop = info.normalTroops[0];
@@ -635,7 +874,7 @@ function defineTests(info) {
     assert(r2.top === 'BattleScene' && r2.result !== 'flee', 'fled from a boss battle');
   }, { timeout: 120000 });
 
-  test('gameover', 'battle: defeat → GameOver scene → 重新挑戰 restores state and the retry can be won', async (s) => {
+  test('key-gameover', 'battle: defeat → GameOver scene → 重新挑戰 restores state and the retry can be won', async (s) => {
     await openOnMap(s, info);
     if (!info.troops.length) skip('no troops');
     const troop = info.normalTroops[0] || info.troops[0];
@@ -724,8 +963,8 @@ async function mapSweep(browser, info) {
         const id = await s.ev(() => G.mapScene.def.id);
         assert(id === mid, `debug map param ignored (on '${id}')`);
         await s.frames(30);
-        const cs = await s.ev(() => __qa.canvasStats());
-        assert(cs.std > 2, `map renders as a flat colour (std ${cs.std.toFixed(1)}, mean ${cs.mean.toFixed(0)})`);
+        const cs = await s.screenStats();
+        assert(cs.std > 2, `map renders as a flat colour on screen (std ${cs.std.toFixed(1)}, mean ${cs.mean.toFixed(0)}, #game3d ${cs.has3d ? (cs.show3d ? 'visible' : 'hidden') : 'absent'})`);
         const raf = await s.ev(() => __qa.rafAvg(60));
         await s.ev(() => __qa.frameCost(30)); // warm caches (first-use pre-rendering)
         const cost = await s.ev(() => __qa.frameCost(40));

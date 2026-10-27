@@ -842,6 +842,7 @@
     const d = Object.assign({ id, kind: 'ground', rank: 0, receive: false, seed: seedCounter++ * 97 }, o);
     if (o.paint) d.tx = () => tex(id, o.size || 256, o.paint);
     D[id] = d;
+    G.Tiles.art = D; // texture painters, used by the 3D renderer
     let draw;
     if (d.kind === 'wall') draw = (ctx, px, py, nb, cx, cy, t) => drawWall(d, ctx, px, py, nb, cx, cy, t);
     else if (d.kind === 'water') draw = (ctx, px, py, nb, cx, cy, t) => drawWater(d, ctx, px, py, nb, cx, cy, t);

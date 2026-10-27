@@ -908,6 +908,20 @@
     for (const [x, y, art, variant, scale] of list) ms.objects.push({ t: 'c10_monster_show', x, y, art, variant: variant || 0, scale, tag: 'c10show', key: 'show' + x + ',' + y, v: 0 });
     ms.computeSolid();
   };
+  // followers' queued steps never resolve S.move's promise (map.js only resolves player/NPC arrivals):
+  // move them without waiting and wait for the walk time instead
+  H.fmove = async (S, id, path, o = {}) => {
+    S.move(id, path, Object.assign({}, o, { wait: false }));
+    await S.wait(path.replace(/\s/g, '').length / (o.speed || 4.2) + 0.12);
+  };
+  H.fwalk = async (S, id, x, y, o = {}) => {
+    const a = S.actor(id);
+    if (!a) return;
+    const dx = x - a.x, dy = y - a.y;
+    const h = (dx > 0 ? 'R' : 'L').repeat(Math.abs(dx)), v = (dy > 0 ? 'D' : 'U').repeat(Math.abs(dy));
+    const path = o.yFirst ? v + h : h + v;
+    if (path) await H.fmove(S, id, path, o);
+  };
   H.removeObj = (tag) => { const ms = G.mapScene; ms.objects = ms.objects.filter((o) => o.tag !== tag); ms.computeSolid(); };
   H.hurtParty = (frac) => {
     for (const m of G.Party.active()) { const st = G.Party.stats(m.id); m.hp = Math.max(1, m.hp - Math.round(st.mhp * frac)); }
@@ -1083,12 +1097,12 @@
     S.hideFollowers(false);
     await S.narrate(['五月初五，端午。', '王船乘著黑潮，在南岬東邊的海上。'], { veil: 0.85 });
     await S.fadeIn(0.8);
-    await S.move('yungui', 'R', { speed: 2.5 });
+    await H.fmove(S, 'yungui', 'R', { speed: 2.5 });
     S.face('yungui', 'up');
     await S.wait(0.4);
     S.sfx('push');
     H.addObj({ t: 'herbs_rack', x: 18, y: 4 });
-    await S.move('yungui', 'RRR');
+    await H.fmove(S, 'yungui', 'RRR');
     S.face('yungui', 'up');
     await S.wait(0.3);
     H.addObj({ t: 'herbs_rack', x: 21, y: 4 });
@@ -1122,9 +1136,9 @@
       await S.say('hongying:smug', '哼。');
       await S.say('yungui:surprise', '……她連蛋都能鎮住。');
       S.emote('tuanzi', '!');
-      await S.move('tuanzi', 'R', { speed: 6 });
+      await H.fmove(S, 'tuanzi', 'R', { speed: 6 });
       S.sfx('guard');
-      await S.move('tuanzi', 'L', { speed: 6 });
+      await H.fmove(S, 'tuanzi', 'L', { speed: 6 });
       await S.say('', '（糰子撲過去——紅纓一腳把糰子擋開。）');
     }
     S.flag('ch10_egg');
@@ -1390,7 +1404,7 @@
     await S.say('Syapen', '你們可以留在海邊。不要往上走，不要靠近家，不要碰船。');
     await S.say('xinghe:serious', '好。我們答應。');
     await S.say('tuanzi:smile', '放心！本大爺最懂了，像那種鬼——');
-    await S.move('hongying', 'R', { speed: 6 });
+    await H.fmove(S, 'hongying', 'R', { speed: 6 });
     S.emote('tuanzi', '💢');
     await S.say('', '（紅纓一把摀住糰子的嘴。）');
     await S.say('tuanzi:cry', '嗚嗚嗚嗚！');
@@ -1469,7 +1483,7 @@
     await S.fadeIn(0.5);
     // 曬架 (§5.2) — the one trust check
     S.setPos('tuanzi', 9, 11, 'left');
-    await S.move('tuanzi', 'L', { speed: 1.5 });
+    await H.fmove(S, 'tuanzi', 'L', { speed: 1.5 });
     S.emote('tuanzi', '♪');
     await S.say('', '（吃完飯，糰子偷偷摸摸地爬向飛魚曬架……）');
     const c = await S.choice(['抓住糰子', '假裝沒看到']);
@@ -1611,7 +1625,7 @@
     await S.battle('t_c10_reef_kaswal', { mode: 'normal' });
     H.monsters([]);
     await S.say('', '（怪物退回海裡。紅纓涉水過去，把 Kaswal 連同木雕一起抱起來。）');
-    await S.walkTo('hongying', 26, 23);
+    await H.fwalk(S, 'hongying', 26, 23);
     S.face('hongying', 'right');
     await S.say('Kaswal', '……妳力氣好大。');
     await S.say('hongying:smile', '嗯。我是專門抱東西的。');
@@ -1710,7 +1724,7 @@
     await S.say('Syaman', '……你。紅衣服的。');
     await S.say('hongying:surprise', '我？');
     await S.say('Syaman', '過來。扶這塊。不要動。我說放才放。');
-    await S.walkTo('hongying', 14, 17, { yFirst: true });
+    await H.fwalk(S, 'hongying', 14, 17, { yFirst: true });
     S.face('hongying', 'up');
     S.sfx('push');
     await S.say('', '（紅纓走過去，雙手扶住木板。Syaman 用木釘一根一根把船板接回去，縫隙用植物纖維塞緊。他的動作很慢，但每一下都很準。）');
@@ -2020,7 +2034,7 @@
       name: '阿美族部落', subtitle: '海岸階地上的部落', place: 'taitung',
       bgm: (st) => (time(st) === 'dawn' ? null : 'tribe'),
       start: [8, 31],
-      light: (st) => (time(st) === 'dawn' ? { ambient: 0.28, color: '#2a1a28', tint: 'rgba(255,160,90,0.24)' } : { ambient: 0.05, color: '#203048' }),
+      light: (st) => (time(st) === 'dawn' ? { ambient: 0.42, color: '#2a1626', tint: 'rgba(255,150,80,0.3)' } : { ambient: 0.05, color: '#203048' }),
       particles: (st) => (time(st) === 'dawn' ? ['wind', 'motes'] : ['wind']),
       tiles: g.rows(), objects: clean,
       pass: [{ x: 17, y: 3, solid: true }],
@@ -2654,7 +2668,7 @@
   // =================================================================================================
   // MAP: qingshui_cliffs 清水斷崖（地城）— rockfall ledge (§5.4)
   // =================================================================================================
-  const QS = { zone: [18, 15, 12, 4], lines: [20, 23, 27], alcoves: [[21, 14], [25, 14], [28, 14]], start: [17, 16, 'right'] };
+  const QS = { zone: [18, 15, 12, 4], lines: [[19, 21], [23, 25], [27, 29]], alcoves: [[21, 14], [25, 14], [28, 14]], start: [17, 16, 'right'] };
   (function qingshui() {
     const W = 50, HH = 40;
     const g = new Grid(W, HH, 'C');
@@ -2709,7 +2723,7 @@
   })();
   function onLine(ms, x, y, L) {
     const [zx, zy, zw, zh] = QS.zone;
-    return x === L && y >= zy && y < zy + zh;
+    return x >= L[0] && x <= L[1] && y >= zy && y < zy + zh;
   }
   function rockfallTick(ms, dt) {
     if (G.Script.busy() || G.Scenes.top() !== ms) return;
@@ -2718,7 +2732,7 @@
     if (Math.floor(prev / 3) === Math.floor(ms.c10rf / 3)) return;
     // impact on the line that was warned during the previous period
     const L = QS.lines[Math.floor(prev / 3) % 3];
-    ms.c10hit = { x: L, t: 0 };
+    ms.c10hit = { L, t: 0 };
     G.Audio.sfx('earth');
     G.Render.doShake(4, 0.25);
     const p = ms.player;
@@ -2740,9 +2754,9 @@
     if (per >= 2) {
       const k = per - 2;
       ctx.save();
-      for (let y = zy; y < zy + zh; y++) {
+      for (let y = zy; y < zy + zh; y++) for (let x = L[0]; x <= L[1]; x++) {
         ctx.fillStyle = `rgba(20,10,10,${0.18 + 0.3 * k})`;
-        ctx.beginPath(); ctx.ellipse(L * T + 32, y * T + 34, 18 + 10 * k, 8 + 4 * k, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(x * T + 32, y * T + 34, 18 + 10 * k, 8 + 4 * k, 0, 0, Math.PI * 2); ctx.fill();
       }
       ctx.restore();
     }
@@ -2755,12 +2769,13 @@
       const h = ms.c10hit;
       if (h.t > 0.6) { ms.c10hit = null; return; }
       ctx.save();
-      for (let y = zy; y < zy + zh; y++) {
+      for (let y = zy; y < zy + zh; y++) for (let x = h.L[0]; x <= h.L[1]; x++) {
+        if (U.hash(x, y, 77) < 0.35) continue;
         const fall = Math.min(1, h.t * 5);
         const yy = y * T + 30 - (1 - fall) * 260;
-        ctx.globalAlpha = 1 - Math.max(0, h.t - 0.3) * 3;
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, h.t - 0.3) * 3);
         ctx.fillStyle = '#d8d2c4'; ctx.strokeStyle = '#6a645a'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(h.x * T + 18, yy); ctx.lineTo(h.x * T + 34, yy - 16); ctx.lineTo(h.x * T + 48, yy - 4); ctx.lineTo(h.x * T + 42, yy + 12); ctx.lineTo(h.x * T + 22, yy + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x * T + 18, yy); ctx.lineTo(x * T + 34, yy - 16); ctx.lineTo(x * T + 48, yy - 4); ctx.lineTo(x * T + 42, yy + 12); ctx.lineTo(x * T + 22, yy + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
       }
       ctx.restore();
     }
@@ -3125,7 +3140,7 @@
     await S.say('', '（紅纓拿起一盞，寫了「洛青鋒」三個字。她寫得很慢。）');
     if (F('ch9_hongying_song')) {
       await S.say('hongying:sad', '阿順伯說……會叫他名字，就會唱。');
-      await S.move('hongying', 'D');
+      await H.fmove(S, 'hongying', 'D');
       await S.say('', '（紅纓站到船舷邊，對著黑暗的海——）');
       await S.say('hongying:cry', '哥——！');
       await S.say('hongying:cry', '洛——青——鋒——！');

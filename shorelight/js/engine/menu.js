@@ -623,6 +623,7 @@
               const big = document.createElement('canvas'); big.width = G.W; big.height = G.H;
               const bctx = big.getContext('2d');
               G.ctx = bctx; G.mapScene.draw(bctx); G.ctx = saved;
+              if (G.mapScene.view3d && G.R3.enabled()) cx.drawImage(G.R3.canvas, 0, 0, 192, 108);
               cx.drawImage(big, 0, 0, 192, 108);
               thumb = c.toDataURL('image/jpeg', 0.6);
             } catch (e) { thumb = null; }
@@ -697,7 +698,9 @@
         { k: 'autosave', label: '自動存檔', type: 'enum', opts: [true, false], names: ['開', '關'] },
         { k: 'autoAdvance', label: '對話自動播放', type: 'enum', opts: [false, true], names: ['關', '開'] },
         { k: 'visualFx', label: '迷幻視覺強度（光敏保護）', type: 'enum', opts: [1, 0.5, 0.2], names: ['完整', '柔和', '最低'] },
-        { k: 'quality', label: '畫質（重新啟動後生效）', type: 'enum', opts: ['high', 'low'], names: ['高', '省電'] },
+        { k: 'quality', label: '畫質（重新啟動後生效）', type: 'enum', opts: ['ultra', 'high', 'low'], names: ['超高', '高', '省電'] },
+        { k: 'render3d', label: '3D 畫面（重新啟動後生效）', type: 'enum', opts: [true, false], names: ['開', '關'] },
+        { k: 'camRotate', label: '鏡頭旋轉（Q/E）', type: 'enum', opts: [true, false], names: ['開', '關'] },
         { k: 'fullscreen', label: '全螢幕', type: 'action' },
       ];
       if (G.settings.autosave == null) G.settings.autosave = true;

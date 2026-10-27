@@ -187,13 +187,13 @@
   });
   edef('c8_tide_wick', {
     name: '潮引燈芯', art: 'ghost_lantern', variant: 2, lv: 30, elem: 'water', weak: ['fire'], resist: ['water'],
-    m: { hp: 1.9, atk: 0.4, mag: 1.1, def: 1.3, spd: 0.8, exp: 1.2, gold: 0.2 },
-    skills: [['c8_e_wick_feed', 2], ['c8_e_wick_wave', 2]],
+    m: { hp: 1.5, atk: 0.4, mag: 1.0, def: 1.2, spd: 0.75, exp: 1.2, gold: 0.2 },
+    skills: [['c8_e_wick_feed', 1], ['c8_e_wick_wave', 2]],
     desc: '逆潮燈分出來的燈芯，藍黑色的火焰把死者的力氣灌給青鋒。',
   });
   edef('c8_qingfeng', {
     name: '洛青鋒', sprite: 'qingfeng', lv: 30, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 10.5, atk: 1.95, mag: 1.7, def: 1.2, spd: 1.55, exp: 7, gold: 6 },
+    m: { hp: 9, atk: 1.75, mag: 1.6, def: 1.15, spd: 1.45, exp: 7, gold: 6 },
     skills: [['e_qf2_sword', 3], ['c8_e_qf_qisha', 1], ['c8_e_qf_duanchao', 2], ['c8_e_qf_lowtip', 2], ['c8_e_qf_huilan', 1, 'turn>1'], ['e_qf2_tide', 1]],
     phases: [
       { at: 0.5, skills: [{ id: 'e_qf2_sword', w: 2 }, { id: 'c8_e_qf_qisha', w: 3 }, { id: 'c8_e_qf_duanchao', w: 2 }, { id: 'c8_e_qf_lowtip', w: 2 }, { id: 'c8_e_qf_huilan', w: 1 }] },

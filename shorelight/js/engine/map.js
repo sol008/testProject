@@ -111,8 +111,8 @@ G.Mapx = G.Mapx || {};
           this.terrain[yy * this.w + xx] = legend[ch] || 'grass';
         }
       }
-      // pre-build tile textures now (during the transition fade) instead of on first draw
-      this.warmTiles();
+      // pre-build tile textures now (during the transition fade) instead of on first draw (3D bakes them itself)
+      if (!(G.R3 && G.R3.enabled())) this.warmTiles();
       // objects
       this.objects = [];
       const addObj = (o) => {
@@ -161,7 +161,14 @@ G.Mapx = G.Mapx || {};
       this.invuln = 0;
       this.stepCount = 0;
       if (this.initMech) this.initMech();
+      // 3D presentation (rebuilt for every map load)
+      if (this.view3d) { this.view3d.dispose(); this.view3d = null; }
+      if (G.R3 && G.R3.enabled() && G.Map3D) {
+        try { this.view3d = new G.Map3D(this); } catch (e) { console.error('Map3D build failed for ' + mapId, e); G.lastError = e; this.view3d = null; }
+      }
     }
+
+    exit() { if (this.view3d) { this.view3d.dispose(); this.view3d = null; } }
 
     // draw every cell once to a scratch canvas so the tile art builds its caches during the load fade
     warmTiles() {
@@ -211,6 +218,7 @@ G.Mapx = G.Mapx || {};
       const st = G.state;
       const list = st.party.slice(1, 4).slice();
       if (st.party.includes('yungui') && !st.flags.tuanzi_hidden) list.push('tuanzi');
+      if (st.party.includes('baizhi') && st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
       const prev = {};
       for (const f of this.followers || []) prev[f.id] = f;
       this.followers = list.map((id) => {
@@ -355,7 +363,7 @@ G.Mapx = G.Mapx || {};
       }
       if (p.queue.length && !p.moving) { this.stepQueue(p); return; }
       if (busy || p.moving) return;
-      const d = I.dir();
+      const d = this.view3d ? this.view3d.remapDir(I.dir()) : I.dir();
       if (d) {
         p.dir = d;
         const [dx, dy] = U.dirs[d];
@@ -636,6 +644,7 @@ G.Mapx = G.Mapx || {};
 
     // ---------------- drawing ----------------
     draw(ctx) {
+      if (this.view3d && G.R3.enabled()) { this.draw3d(ctx); return; }
       const t = this.t;
       const [sx, sy] = G.Render.shakeOffset();
       const camX = Math.round((this.cam.x + sx) * 2) / 2, camY = Math.round((this.cam.y + sy) * 2) / 2;
@@ -706,6 +715,40 @@ G.Mapx = G.Mapx || {};
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy);
       if (val(this.def.vignette) !== false) G.FX.vignette(ctx, lc && lc.ambient > 0.3 ? 0.55 : 0.32);
+      this.drawHud(ctx, t);
+    }
+
+    // 3D path: the WebGL layer renders the world; this draws the 2D overlay (prompts, emotes, HUD, screen fx)
+    draw3d(ctx) {
+      const t = this.t, v = this.view3d;
+      v.frame();
+      if (this.strikeFx) {
+        const p = this.player, s = v.actorScreen(p, 0.9);
+        ctx.save(); ctx.translate(s.x - p.px, s.y - (p.py - 40)); this.drawStrike(ctx); ctx.restore();
+      }
+      for (const e of this.enemies) if (e.alert > 0.5) {
+        const s = v.actorScreen(e);
+        if (s.visible) G.Render.text(ctx, '!', s.x, s.y - 30 + Math.sin(t * 10) * 2, { size: 30, bold: true, align: 'center', color: '#ff6a5a', stroke: '#300', strokeW: 4 });
+      }
+      for (const a of [this.player, ...this.followers, ...this.npcs]) if (a.emote) {
+        const s = v.actorScreen(a);
+        const proxy = { emote: a.emote, px: s.x, py: s.y + 112 - 6 };
+        this.drawEmote(ctx, proxy, t);
+        if (!proxy.emote) a.emote = null;
+      }
+      if (this.interactTarget && !G.Script.busy() && !this.player.moving) {
+        const it = this.interactTarget;
+        let s;
+        if (it.kind === 'npc') s = v.actorScreen(it.npc);
+        else if (it.kind === 'enemy') s = v.actorScreen(it.enemy);
+        else if (it.kind === 'chest') s = v.toScreen(it.obj.x + 0.5, 1.1, it.obj.y + 0.5);
+        else if (it.kind === 'obj') s = v.toScreen(it.obj.x + (it.obj.w || 1) / 2, 1.5, it.obj.y + (it.obj.h || 1) / 2);
+        else { const [fx, fy] = this.frontCell(); s = v.toScreen(fx + 0.5, 1.2, fy + 0.5); }
+        this.drawPrompt(ctx, it, t, s);
+      }
+      this.particles.drawScreen(ctx);
+      const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
+      if (psy > 0) G.FX.vision(ctx, t, psy * 0.55);
       this.drawHud(ctx, t);
     }
 
@@ -783,13 +826,14 @@ G.Mapx = G.Mapx || {};
       ctx.restore();
     }
 
-    drawPrompt(ctx, it, t) {
+    drawPrompt(ctx, it, t, at) {
       let x, y, label = '';
       if (it.kind === 'npc') { x = it.npc.px; y = it.npc.py - 108; label = '對話'; }
       else if (it.kind === 'chest') { x = it.obj.x * T + T / 2; y = it.obj.y * T - 20; label = '開啟'; }
       else if (it.kind === 'event') { const [fx, fy] = this.frontCell(); x = fx * T + T / 2; y = fy * T - 10; label = it.ev.label || '調查'; }
       else if (it.kind === 'obj') { x = (it.obj.x + (it.obj.w || 1) / 2) * T; y = it.obj.y * T - 16; label = it.obj.label || '調查'; }
       else if (it.kind === 'enemy') { x = it.enemy.px; y = it.enemy.py - 100; label = '先制攻擊'; }
+      if (at) { x = at.x; y = at.y; }
       y += Math.sin(t * 4) * 3;
       ctx.save();
       ctx.font = G.font(17);

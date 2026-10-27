@@ -273,7 +273,10 @@ G.Save = {
     try {
       const c = document.createElement('canvas');
       c.width = 192; c.height = 108;
-      c.getContext('2d').drawImage(G.canvas, 0, 0, 192, 108);
+      const g = c.getContext('2d');
+      g.fillStyle = '#000'; g.fillRect(0, 0, 192, 108);
+      if (G.R3 && G.R3.active) { G.R3.render(0); g.drawImage(G.R3.canvas, 0, 0, 192, 108); }
+      g.drawImage(G.canvas, 0, 0, 192, 108);
       return c.toDataURL('image/jpeg', 0.6);
     } catch (e) { return null; }
   },

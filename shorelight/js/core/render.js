@@ -6,7 +6,7 @@ G.Render = (() => {
 
   R.init = function () {
     canvas = G.canvas = document.getElementById('game');
-    ctx = G.ctx = canvas.getContext('2d', { alpha: false });
+    ctx = G.ctx = canvas.getContext('2d', { alpha: true });
     const dpr = window.devicePixelRatio || 1;
     const fit = Math.min(window.innerWidth / G.W, window.innerHeight / G.H);
     // backing store scale: crisp on Retina, capped for performance

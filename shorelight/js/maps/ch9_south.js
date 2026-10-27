@@ -785,7 +785,7 @@
     ],
     lights: (s) => (qhNight(s) ? [{ x: 21, y: 16, r: 220, color: '#ffb060', flicker: 0.2 }, { x: 31, y: 14, r: 150, color: '#ffb060' }, { x: 32, y: 20, r: 150, color: '#ffc070' }, { x: 13, y: 12, r: 120, color: '#ffb060' }] : []),
     npcs: [
-      chenboNpc('qihou', [40, 8], (s) => !!s.flags.ch9_qihou_arrive && !qhNight(s)),
+      chenboNpc('qihou', [40, 8], (s) => !qhNight(s)),
       { id: 'qh_boatman', sprite: 'boatman', name: '船夫阿水', x: 42, y: 7, dir: 'down', talk: async (S) => {
         if (F('ch9_banping_done')) await S.say('船夫阿水', '聽講金萬伯把水窟仔打開了？夭壽，太陽打西邊出來喔。');
         if (F('ch9_banping_open')) {
@@ -1016,9 +1016,9 @@
     await S.fadeOut(1.0);
     await S.narrate(['隔天早上，星河吃了一碗「黑色的、會冒泡的粥」。'], { veil: 1 });
     S.flag('ch9_qihou_night_done');
-    await S.warp('qihou', 33, 23, 'down', { fade: 0.01 });
+    await S.warp('qihou', 31, 21, 'down', { fade: 0.01 });
     S.show('yungui', true); S.show('tuanzi', true);
-    S.setPos('player', 33, 23, 'down'); S.setPos('hongying', 32, 23, 'right'); S.setPos('yungui', 34, 24, 'left'); S.setPos('tuanzi', 33, 24, 'up'); S.setPos('chenbo', 35, 23, 'left');
+    S.setPos('player', 31, 21, 'down'); S.setPos('hongying', 30, 21, 'right'); S.setPos('yungui', 29, 21, 'right'); S.setPos('tuanzi', 28, 21, 'right'); S.setPos('chenbo', 34, 21, 'left');
     S.emote('player', '💧');
     await S.say('', '客棧門口，星河趴在桌上，一動也不動。');
     await S.say('yungui:smug', '英勇。');
@@ -1540,7 +1540,7 @@
       { t: 'driftwood', x: 40, y: 24 }, { t: 'rock_small', x: 11, y: 25 },
     ],
     chests: [
-      { id: 'dg_market', x: 3, y: 10, item: 'c9_shuanggaorun', n: 2 },
+      { id: 'dg_market', x: 13, y: 7, item: 'c9_shuanggaorun', n: 2 },
       { id: 'dg_yard', x: 53, y: 10, item: 'c9_tiedingfu', n: 1 },
       { id: 'dg_banyan', x: 36, y: 17, gold: 800 },
     ],
@@ -1801,7 +1801,7 @@
     S.sfx('bell'); S.sfx('wind');
     S.particles([{ type: 'motes', density: 1.6 }, { type: 'wind', density: 0.4 }]);
     await S.say('', '第三個聖筊落定時，殿外傳來一陣風，香爐的煙全往南邊海的方向流去。');
-    S.sfx('wood');
+    S.sfx('gong');
     await S.say('', '王船廠的方向，傳來一聲悠長的木頭鳴響。');
     await S.say('添丁伯', '（深深一拜）……三聖筊。千歲爺允了。');
     await S.say('添丁伯', '「繞島巡境」。王船要先繞台灣一圈，才渡黑水溝。');
@@ -1844,7 +1844,7 @@
     await S.say('', '添丁伯持著朱筆與鏡子，在船頭前唸誦。鏡子把晨光反射到龍目上，朱筆在瞳仁點下。');
     S.flash('#fff2c8', 0.5, 0.7);
     await S.say('添丁伯', '開光點睛——');
-    S.sfx('wood'); S.shake(4, 0.6);
+    S.sfx('gong'); S.shake(4, 0.6);
     await S.say('', '龍目一點，整艘船輕輕一震，像睡醒的人吸了一口氣。');
     await S.say('xinghe:surprise', '它……它動了。');
     await S.say('阿杉師', '船有眼睛，就認得路了。');
@@ -1984,6 +1984,8 @@
     S.take('c9_aicao', 1);
     S.sfx('fire');
     S.flag(z.flag);
+    const bo = G.mapScene && G.mapScene.objects.find((ob) => ob.x === z.bz[0] && ob.y === z.bz[1] && ob.t === 'cauldron');
+    if (bo) { bo.t = 'brazier'; bo.label = '調查'; }
     relight(S, { bgm: false });
     await S.say('', `把艾草束丟進火盆。火一下子竄了起來，苦苦的煙往四周散開——${z.name}的瘴氣慢慢散去了。`);
     if (yzClear(st(), 'c')) { await S.say('', '三座火盆都點起來了。中央船台上的瘴氣，也跟著散了。'); }
@@ -2265,7 +2267,7 @@
     V().ch9_chiefShow = 0;
     S.particles([{ type: 'mist', color: '#8ad070', alpha: 0.25 }]);
     await S.say('', '瘟鬼頭散開成綠色的煙霧。煙霧繞著王船轉了一圈，被吸進船艙裡——艙門自己「喀」一聲關上。');
-    S.sfx('wood');
+    S.sfx('gong');
     await S.say('tuanzi:surprise', '牠們……自己上船了？');
     await S.say('chenbo:normal', '本來就是要載走的。王船出海，就把牠們一起帶出去，帶遠一點。');
     S.flag('ch9_shipyard_clear');
@@ -2305,14 +2307,14 @@
     if (port === 'qihou') await S.warp('qihou', 44, 8, 'left');
     else if (port === 'donggang') await S.warp('donggang', 26, 25, 'up');
     else if (port === 'nanwan') await S.warp('hengchun', 24, 39, 'up');
-    else if (port === 'eluanbi') await S.warp('eluanbi', 4, 12, 'right');
+    else if (port === 'eluanbi') await S.warp('eluanbi', 5, 12, 'right');
   }
   async function sail(S, to) {
     const from = V().ch9_port || 'donggang';
     await S.say('chenbo:serious', '起錨——');
     await S.travel(PORTS[from].place, PORTS[to].place, { label: '王船順著潮水，帆是滿的。' });
     V().ch9_port = to;
-    await S.warp('wangboat_deck', 12, 7, 'up');
+    await S.warp('wangboat_deck', 10, 7, 'up');
     S.toast(`王船泊在${PORTS[to].name}`, 'lantern');
   }
   async function helmTalk(S) {
@@ -3068,6 +3070,621 @@
     S.bgm('south');
     S.cameraFollow();
   }
+
+  // =====================================================================================================
+  // MAP 9 — eluanbi 鵝鑾鼻岬
+  // =====================================================================================================
+  const elNight = (s) => !!s.flags.ch9_keeper_met;
+  G.Maps.define('eluanbi', {
+    name: '鵝鑾鼻', subtitle: '台灣最南端的燈', place: 'eluanbi', bgm: 'lighthouse', start: [5, 12],
+    light: (s) => (elNight(s) ? { ambient: 0.6, color: '#0a1030', playerR: 230 } : { ambient: 0.3, color: '#4a2030' }),
+    particles: (s) => (elNight(s) ? [{ type: 'wind', density: 0.8 }, { type: 'motes', density: 0.7 }] : [{ type: 'wind', density: 0.8 }]),
+    tiles: (() => {
+      const g = grid(40, 32, '.');
+      g.rect(0, 0, 6, 28, '~').rect(4, 9, 3, 8, 's').rect(2, 12, 2, 1, 'k');
+      g.rect(0, 26, 40, 2, 'X').rect(0, 28, 40, 4, '~');
+      g.rect(36, 0, 4, 26, ',');
+      g.rect(18, 0, 2, 13, '=').rect(7, 12, 13, 1, '=');
+      g.rect(14, 16, 14, 6, '#').rect(16, 13, 2, 3, '=');
+      g.rect(13, 15, 1, 8, 'h').rect(28, 15, 1, 8, 'h');
+      g.rect(18, 11, 17, 1, '=').rect(34, 11, 2, 15, '=');
+      return g.rows();
+    })(),
+    deco: (() => {
+      const d = grid(40, 32, ' ');
+      for (let y = 1; y <= 25; y++) for (let x = 4; x <= 38; x++) if (U.hash(x, y, 51) < 0.07) d.set(x, y, 'g');
+      d.rect(13, 12, 17, 12, ' ').rect(3, 9, 18, 5, ' ').rect(17, 0, 4, 13, ' ').rect(17, 10, 20, 3, ' ').rect(33, 10, 4, 16, ' ');
+      d.dots([[8, 4], [11, 6], [29, 4], [33, 7], [6, 20], [10, 23], [31, 19], [38, 16]], 't');
+      d.dots([[7, 17], [27, 9], [37, 22], [24, 24], [12, 25]], 'r');
+      d.dots([[9, 8], [26, 6], [30, 23]], 'u');
+      return d.rows();
+    })(),
+    objects: [
+      { t: 'lighthouse', x: 21, y: 17 },
+      { t: 'house_minnan', x: 24, y: 17, w: 4, door: 2, v: 0, interact: ['守塔人小屋。門上掛著一塊洋文的小牌子，門鎖著。'], label: '看' },
+      { t: 'city_wall', x: 14, y: 15, w: 2, v: 0, tall: 44 }, { t: 'city_wall', x: 18, y: 15, w: 10, v: 0, tall: 44 }, { t: 'city_wall', x: 14, y: 22, w: 14, v: 0, tall: 44 },
+      { t: 'bench', x: 14, y: 18 },
+      { t: 'rock_big', x: 30, y: 21 }, { t: 'rock_big', x: 36, y: 18 }, { t: 'rock_small', x: 32, y: 24 },
+      { t: 'signboard', x: 15, y: 13, text: '鵝鑾鼻', interact: ['「鵝鑾鼻燈塔」。人稱「東亞之光」。', '燈塔的光，夜夜替不認識的船照路。'], label: '看' },
+      { t: 'dock_post', x: 2, y: 11 }, { t: 'dock_post', x: 2, y: 13 },
+      { t: 'wang_boat', x: 0, y: 2, water: true, solid: false, z: -200, if: (s) => s.vars.ch9_port === 'eluanbi' },
+    ],
+    lights: (s) => {
+      const out = [{ x: 22, y: 14, r: 200, color: '#fff2c8' }];
+      if (elNight(s)) {
+        const a = (G.time || 0) * 0.7;
+        out.push({ x: 22 + Math.cos(a) * 9, y: 16 + Math.sin(a) * 5, r: 260, color: '#fff6d8' });
+      }
+      return out;
+    },
+    npcs: [
+      chenboNpc('eluanbi', [5, 12], (s) => !s.flags.ch9_keeper_met),
+      { id: 'el_tom', sprite: 'lighthouse_keeper', name: '湯姆', x: 23, y: 20, dir: 'up', ghost: true, light: { r: 90, color: '#ffe8b0' },
+        if: (s) => !s.flags.ch9_lighthouse_flame, talk: async (S) => { await tomTalk(S); } },
+      { id: 'el_amu', sprite: 'child_m', name: '阿目', x: 30, y: 9, dir: 'left', wander: 1,
+        pos: (s) => (s.flags.ch9_keeper_home ? [25, 21] : [30, 9]), talk: async (S) => {
+          if (F('ch9_keeper_home')) { await S.say('阿目', '我現在是守燈的了！……雖然阿爸說我是去偷懶。'); await S.say('阿目', '湯先生說，燈要留下來。我就留下來。'); return; }
+          await S.say('阿目', '你們看得到湯先生？！我以為只有我看得到！');
+          await S.say('阿目', '我每天晚上偷偷來幫他擦燈罩。他教我看星星、看浪。他說我眼睛好，叫我「阿目」。');
+          await S.say('阿目', '其實我本來叫阿木啦……他字寫錯了，我就改了。');
+        } },
+    ],
+    events: [
+      { id: 'el_c914', trigger: 'auto', if: (s) => !s.flags.ch9_keeper_met, run: async (S) => { await keeperMeet(S); } },
+      { id: 'el_board', trigger: 'touch', x: 2, y: 12, run: async (S) => { await boardDeck(S); } },
+      { id: 'el_north', trigger: 'touch', x: 18, y: 0, w: 2, h: 1, run: async (S) => {
+        await S.say('chenbo:normal', '這條山路翻過去就是恆春。王船在灣裡等著，還是坐船吧。');
+        await S.move('player', 'D');
+      } },
+      { id: 'el_cave_closed', trigger: 'touch', x: 34, y: 24, w: 2, h: 1, if: (s) => !s.flags.ch9_keeper_met, run: async (S) => {
+        await S.say('', '小徑往下，通到崖底的海蝕洞。底下傳來浪聲……還有別的聲音。');
+        await S.move('player', 'U');
+      } },
+    ],
+    warps: [
+      { x: 22, y: 19, to: 'lighthouse_in', tx: 6, ty: 9, tdir: 'up', door: true },
+      { x: 34, y: 25, w: 2, to: 'longkeng_caves', tx: 21, ty: 3, tdir: 'down', if: (s) => !!s.flags.ch9_keeper_met, run: async (S) => {
+        if (!F('ch9_cave_cleared')) { V().flame = 100; V().ch9_lastBz = 0; }
+        return true;
+      } },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  // ---- 燈塔 1F / 燈室 ----
+  G.Maps.define('lighthouse_in', {
+    name: '燈塔', subtitle: '守塔人起居間', place: 'eluanbi', bgm: 'lighthouse', start: [6, 9],
+    light: { ambient: 0.35, color: '#1a1408' }, particles: [{ type: 'dust', density: 0.5 }],
+    tiles: (() => { const g = grid(14, 12, 'P'); g.rect(1, 2, 12, 9, '_').rect(6, 11, 2, 1, '_'); return g.rows(); })(),
+    objects: [
+      { t: 'bookshelf', x: 1, y: 2 }, { t: 'mural', x: 4, y: 1, v: 1, interact: ['一張舊航海圖。七星岩的位置，被人用紅墨水圈了好幾圈。'], label: '看' },
+      { t: 'stove', x: 7, y: 2 }, { t: 'cabinet', x: 9, y: 2, interact: ['一座老式的擺鐘。指針停在兩點。'], label: '看' },
+      { t: 'bed', x: 12, y: 5 }, { t: 'table', x: 4, y: 6, w: 2 }, { t: 'chair', x: 3, y: 6, dir: 'right' }, { t: 'chair', x: 6, y: 6, dir: 'left' },
+      { t: 'tea_set', x: 4, y: 5 }, { t: 'lantern_frame', x: 1, y: 9 }, { t: 'barrel', x: 12, y: 9 },
+      { t: 'stairs_up', x: 11, y: 3 },
+    ],
+    lights: [{ x: 5, y: 5, r: 160, color: '#ffc070', flicker: 0.2 }, { x: 8, y: 3, r: 120, color: '#ff9a40', flicker: 0.3 }],
+    events: [
+      { id: 'lhi_up', trigger: 'touch', x: 11, y: 3, run: async (S) => { await S.warp('lighthouse_top', 2, 7, 'right'); } },
+    ],
+    warps: [{ x: 6, y: 11, w: 2, to: 'eluanbi', tx: 22, ty: 20, tdir: 'down', door: true }],
+  });
+  G.Maps.define('lighthouse_top', {
+    name: '燈室', subtitle: '東亞之光', place: 'eluanbi', bgm: 'lighthouse', start: [2, 7],
+    light: { ambient: 0.5, color: '#0a1030', playerR: 160 }, particles: [{ type: 'motes', density: 0.6 }],
+    tiles: (() => { const g = grid(10, 10, 'P'); g.rect(1, 2, 8, 7, '#'); return g.rows(); })(),
+    objects: [
+      { t: 'lighthouse_lamp', x: 4, y: 3 },
+      { t: 'mural', x: 1, y: 1, v: 0 }, { t: 'mural', x: 7, y: 1, v: 3 },
+      { t: 'stairs_down', x: 1, y: 7 },
+    ],
+    lights: [{ x: 5, y: 4, r: 320, color: '#fff2c8', flicker: 0.05 }],
+    npcs: [
+      { id: 'lt_tom', sprite: 'lighthouse_keeper', name: '湯姆', x: 7, y: 6, dir: 'left', ghost: true, light: { r: 90, color: '#ffe8b0' },
+        if: (s) => !!s.flags.ch9_lighthouse_flame && !s.flags.ch9_keeper_home, talk: async (S) => {
+          if (logCount() === 3) { await lighthouseHome(S); return; }
+          await S.say('湯姆', 'You\'re back! 船頭燈亮了！我看到了！Brilliant！');
+          await S.say('湯姆', '我的日誌……那天晚上，風把它吹出窗外。掉到龍坑裡去了吧。');
+          await S.say('湯姆', `你們找到了 ${logCount()} 頁。`);
+          await tomShop(S);
+        } },
+    ],
+    events: [
+      { id: 'lht_down', trigger: 'touch', x: 1, y: 7, run: async (S) => { await S.warp('lighthouse_in', 11, 4, 'down'); } },
+      { id: 'lht_home', trigger: 'auto', if: (s) => !!s.flags.ch9_lighthouse_flame && !s.flags.ch9_keeper_home && logCount() === 3 && !!s.vars.ch9_autoHome, run: async (S) => { V().ch9_autoHome = false; await lighthouseHome(S); } },
+    ],
+  });
+
+  // ---- 鵝鑾鼻 scripts ----
+  async function tomShop(S) {
+    await S.say('湯姆', 'Welcome to Tom\'s shop！我的店！……其實是倉庫。');
+    await S.say('湯姆', 'Everything one cash！……OK，不是 one cash。');
+    await S.shop(['c9_biscuit', 'c9_dengyou', 'c9_match'], { title: '湯姆的倉庫' });
+  }
+  async function tomTalk(S) {
+    const c = await S.choice(['說話', '買東西', '離開'], { cancel: 2 });
+    if (c === 1) { await tomShop(S); return; }
+    if (c !== 0) return;
+    const lines = [
+      'Good evening！晚安！……啊，不對，晚安是 goodnight。晚上好！甲飽未？',
+      'This lamp，東亞之光！Light of East Asia！很大，很亮，很 expensive！',
+      '七星岩，那邊，很多石頭在水底下。以前很多 ship 撞上去。So，燈。',
+      '我不睡覺。Ghost 不用睡覺。很方便。Also very boring。',
+    ];
+    const v = V();
+    v.ch9_tomLine = ((v.ch9_tomLine || 0) + 1) % lines.length;
+    await S.say('湯姆', lines[v.ch9_tomLine]);
+    if (F('ch9_keeper_met') && !F('ch9_cave_cleared')) await S.say('湯姆', 'Bring it back alive！要活著拿回來——火跟你們都是！');
+  }
+  async function keeperMeet(S) {
+    S.bgm('lighthouse');
+    S.setPos('player', 21, 21, 'up'); S.gather(); S.setPos('hongying', 20, 21, 'up'); S.setPos('yungui', 19, 20, 'up'); S.setPos('tuanzi', 20, 20, 'right'); S.setPos('chenbo', 18, 21, 'up');
+    await S.camera(22, 15, 0.8);
+    await S.say('', '白色的燈塔立在岬角上。太陽沉入海裡——燈塔的光「轟」一聲亮起，光束掃過海面。');
+    S.flash('#fff6d8', 0.6, 0.6);
+    S.light({ ambient: 0.5, color: '#0a1030', playerR: 230 });
+    await S.say('tuanzi:surprise', '喵……好亮！比一百個燈籠還亮！');
+    await S.say('xinghe:surprise', '這就是……東亞之光。');
+    S.cameraFollow();
+    await S.say('', '燈塔門口，一個高大的洋人背對著他們，正用抹布擦門上的銅把手。他穿著舊式制服，身體半透明，被燈光一照，透出後面的牆。');
+    await S.say('hongying:serious', '（低聲）……鬼。');
+    await S.say('yungui:normal', '而且是洋鬼。……字面上的意思。');
+    S.face('el_tom', 'player'); S.emote('el_tom', '!');
+    await S.jump('el_tom', 14);
+    await S.say('', '洋人轉過身，嚇了一跳，抹布掉在地上。');
+    await S.say('湯姆', 'Oh! Oh my! 客人！Visitors！真的客人！');
+    await S.say('湯姆', 'Good evening！晚安！……啊，不對，晚安是 goodnight。');
+    await S.say('湯姆', '晚上好！甲飽未？');
+    await S.say('xinghe:surprise', '……甲、甲飽了。');
+    await S.say('湯姆', 'Excellent！很好！你們看得到我？Splendid！很多人看不到我。');
+    await S.say('湯姆', '只有阿目看得到。還有狗。還有……（看著糰子）Oh. A cat. 好大的 cat。');
+    await S.say('tuanzi:angry', '本大爺是石虎！');
+    await S.say('湯姆', '石……虎？Stone tiger？Ah——Kitty 大人。');
+    await S.say('tuanzi:shy', '……「大人」可以。');
+    await S.say('湯姆', 'My name is Thomas Archer. Tom。這裡的人叫我「湯先生」。');
+    await S.say('湯姆', 'I am the keeper. 守燈的。我守這個燈……嗯……很久了。');
+    await S.say('chenbo:normal', '多久？');
+    await S.say('湯姆', '（想了想）I don\'t know. 我不記得了。我只記得——燈不能熄。');
+    await S.say('湯姆', '七星岩，那邊，水底下很多石頭。以前好多 ship 撞上去，好多人死掉。');
+    await S.say('湯姆', 'So，燈。燈亮著，船就看得到。Simple！');
+    await S.say('', '雲歸瞇眼看著湯姆。他的胸口有一點小小的、溫暖的光——跟燈塔的光是同一種顏色。');
+    await S.say('yungui:think', '（他死了以後，還一直把自己的魂點在燈上。）');
+    await S.say('xinghe:serious', '湯先生。我們需要燈塔的火。');
+    await S.say('湯姆', 'The fire？');
+    await S.say('xinghe:serious', '我們的船——那艘王船——要點船頭燈，才能去救一個人。');
+    await S.say('xinghe:serious', '要一盞替陌生人守過夜的火。我們想……跟你借一點。');
+    await S.wait(0.6);
+    await S.say('', '湯姆沉默。燈塔的光又掃過一圈。');
+    await S.say('湯姆', 'No.');
+    await S.say('xinghe:surprise', '欸？');
+    await S.say('湯姆', 'Sorry. 對不起。不行。如果我分火給你，燈就暗了。');
+    await S.say('湯姆', '燈暗了，船就看不到，就撞石頭。我不能。I can\'t.');
+    S.bgm('sad');
+    await S.say('湯姆', 'I gave everything to this lamp. 我什麼都給它了。');
+    await S.say('湯姆', 'That night——颱風那天——油沒了。我把椅子燒了，桌子燒了。');
+    await S.say('湯姆', '我媽媽寄來的信……我也燒了。一封一封。燈一直亮著。沒有船撞上去。');
+    await S.say('湯姆', '（笑）然後我就……不記得我家在哪裡了。Funny, isn\'t it？');
+    await S.say('hongying:sad', '……');
+    await S.say('湯姆', '所以，不能分。燈是全部。我也是全部。');
+    S.spawn({ id: 'el_amu_run', sprite: 'child_m', x: 16, y: 13, dir: 'down' });
+    await S.move('el_amu_run', 'DDD', { speed: 5 });
+    await S.say('阿目', '湯先生！湯先生！龍坑那邊又有東西爬上來了！今天燈罩又被浪打濕了！');
+    await S.say('湯姆', 'Oh no. 那些 sea monster……最近每天晚上都來。牠們想把燈弄熄。');
+    S.bgm('lighthouse');
+    await S.say('chenbo:serious', '逆潮推上來的東西，最怕的就是光。');
+    await S.say('chenbo:normal', '湯先生。燈的火，分出去，自己不會暗的。');
+    await S.say('湯姆', 'How do you know？');
+    await S.say('chenbo:normal', '我做了一輩子燈籠。點燈的時候，一根蠟燭點另一根，');
+    await S.say('chenbo:normal', '第一根從來沒有少過一點光。');
+    await S.say('湯姆', '……');
+    await S.say('xinghe:serious', '這樣吧。我們先去龍坑，把那些怪物趕走。');
+    await S.say('xinghe:serious', '等我們回來，你再決定要不要借。');
+    await S.say('湯姆', '（看著星河很久）You have a strange light, boy. 你身上有奇怪的光。');
+    await S.say('湯姆', '很小。可是……not going out。不會熄。');
+    await S.say('湯姆', 'OK. Deal！一言為定！');
+    await S.say('湯姆', 'Take this——（遞出一盞防風馬燈）——下面很暗。這是我的燈的火，一小點。');
+    await S.say('湯姆', 'Just a little. 一點點喔！燈塔不會暗——我會看著。');
+    S.flash('#fff2c8', 0.5, 0.5);
+    await S.say('', '湯姆從大燈上分出一小點火，放進防風燈裡。燈塔的光一點都沒有變暗。湯姆盯著燈塔看了很久。');
+    await S.say('湯姆', '……Huh.');
+    await S.give('key_lighthouse', 1);
+    await S.say('湯姆', 'Bring it back alive！要活著拿回來——火跟你們都是！');
+    await S.say('chenbo:normal', '我把船繞到龍坑出口的海邊等你們。湯先生會在燈塔上替你們照路。');
+    S.remove('el_amu_run');
+    S.flag('ch9_keeper_met');
+    S.quest('q_ch9_main', 6);
+    S.objective('穿過龍坑海蝕洞，把火帶到海邊的王船（東邊的小徑）');
+    relight(S, { bgm: false });
+  }
+
+  // =====================================================================================================
+  // MAP 10 — longkeng_caves 龍坑海蝕洞
+  // =====================================================================================================
+  const LK_BZ = [[18, 3, 19, 4], [26, 12, 25, 13], [9, 19, 10, 20], [31, 18, 31, 19], [12, 29, 12, 30], [31, 35, 31, 36]];   // brazier x,y + respawn x,y
+  const LK_CH = [
+    { cells: [[21, 14], [21, 15], [21, 16], [21, 17], [21, 18]], start: [21, 13] },
+    { cells: [[18, 20], [17, 20], [16, 20], [15, 20], [14, 20], [13, 20]], start: [19, 20] },
+    { cells: [[21, 21], [21, 22], [21, 23], [21, 24]], start: [21, 20] },
+    { cells: [[24, 20], [25, 20], [26, 20], [27, 20], [28, 20], [29, 20]], start: [23, 20] },
+    { cells: [[34, 19], [35, 19]], start: [33, 19] },
+  ];
+  const LK_LOGS = [
+    { x: 5, y: 5, text: '「……Ship sighted, 2 a.m., heading for the reef. Lit the flare. She turned. Thank God. 船轉向了。感謝上帝。」',
+      after: [['xinghe:think', '洋文……看不懂。不過最後一句寫的是中文。'], ['yungui:think', '他後來寫中文，是寫給阿目看的吧。']] },
+    { x: 39, y: 18, text: '「Mother\'s letter today. She still puts the candle in the window every night, for Father. 媽媽的信：她每天晚上還在窗口點蠟燭，等爸爸。爸爸出海，三十年了。」',
+      after: [['hongying:sad', '……他媽媽也在等人。']] },
+    { x: 40, y: 30, text: '「If I do not come home, tell her: I became the candle. Whitby, North Yorkshire. 如果我沒回家，告訴她：我變成了那根蠟燭。」',
+      after: [['chenbo:sad', '……Whitby。']] },
+  ];
+  const lkHigh = (m) => ((m._lkT || 0) % 20) >= 10;
+  async function lkBrazier(S, i) {
+    const v = V();
+    const lit = !!F('ch9_lkbz_' + i);
+    if (!lit) {
+      S.flag('ch9_lkbz_' + i); S.sfx('fire');
+      const o = G.mapScene && G.mapScene.objects.find((ob) => ob.x === LK_BZ[i][0] && ob.y === LK_BZ[i][1] && (ob.t === 'cauldron' || ob.t === 'brazier'));
+      if (o) { o.t = 'brazier'; o.label = '取火'; }
+    }
+    v.flame = 100; v.ch9_lastBz = i;
+    await S.say('', lit ? '咾咕石火盆燒得正旺。防風燈的火又旺了起來。' : '把防風燈的火引進咾咕石火盆——火盆亮了起來，燈火也回滿了。');
+  }
+  async function lkLog(S, i) {
+    const L = LK_LOGS[i];
+    S.flag('ch9_log_' + (i + 1));
+    await S.give('c9_key_log', 1);
+    const n = logCount();
+    if (n === 1) S.quest('q_ch9_lighthouse', 0);
+    await S.say('', `燈塔日誌殘頁（${n} / 3）`);
+    await S.say('', L.text);
+    for (const [who, text] of L.after) await S.say(who, text);
+    if (n === 3) { S.quest('q_ch9_lighthouse', 1); S.toast('支線：把日誌殘頁交給燈室裡的湯先生', 'scroll'); }
+  }
+  G.Maps.define('longkeng_caves', {
+    name: '龍坑', subtitle: '海蝕洞', place: 'eluanbi', start: [21, 3],
+    bgm: (s) => (s.flags.ch9_cave_cleared ? 'sea' : 'night'),
+    light: { ambient: 0.75, color: '#020814', playerR: 200, playerColor: '#ffd890' },
+    particles: [{ type: 'mist', color: '#c8e0f0', alpha: 0.1 }, { type: 'motes', density: 0.8 }],
+    tiles: (() => {
+      const g = grid(44, 44, 'C');
+      g.rect(21, 0, 2, 2, 'v').rect(15, 2, 14, 8, 'v');
+      g.dots([[17, 6], [24, 7], [16, 9], [27, 4]], 'X');
+      g.rect(4, 4, 7, 5, 'v').rect(11, 6, 4, 1, 'v');
+      g.rect(21, 10, 2, 2, 'v');
+      g.rect(3, 12, 38, 14, '~');
+      g.rect(16, 12, 12, 2, 'v');
+      g.rect(19, 19, 5, 2, 'y').rect(8, 19, 5, 3, 'y').rect(30, 18, 4, 4, 'y');
+      for (const ch of LK_CH) for (const [x, y] of ch.cells) g.set(x, y, '-');
+      g.rect(36, 17, 5, 5, 'v');
+      g.rect(16, 25, 12, 1, 'v').rect(21, 26, 2, 2, 'v');
+      g.rect(8, 28, 28, 10, 'v');
+      g.rect(10, 33, 4, 2, '-').rect(26, 29, 3, 2, '-').rect(17, 35, 3, 2, '-');
+      g.rect(37, 29, 5, 4, 'v').set(36, 30, 'v');
+      g.rect(16, 38, 12, 2, 'v');
+      g.rect(8, 40, 28, 2, 's').rect(0, 42, 44, 2, '~').rect(14, 38, 2, 2, 'C').rect(28, 38, 2, 2, 'C');
+      g.dots([[8, 12], [9, 13], [38, 24], [36, 13], [5, 24]], 'w');
+      return g.rows();
+    })(),
+    objects: (s) => {
+      const out = [
+        { t: 'rock_big', x: 14, y: 31 }, { t: 'rock_big', x: 24, y: 33 }, { t: 'rock_small', x: 30, y: 29 }, { t: 'rock_small', x: 9, y: 34 },
+        { t: 'rock_small', x: 26, y: 3 }, { t: 'bones', x: 6, y: 7 }, { t: 'driftwood', x: 18, y: 41 }, { t: 'driftwood', x: 27, y: 40 },
+        { t: 'rock_big', x: 12, y: 39 }, { t: 'rock_big', x: 30, y: 39 },
+      ];
+      LK_BZ.forEach(([x, y], i) => out.push({ t: s.flags['ch9_lkbz_' + i] ? 'brazier' : 'cauldron', x, y, label: s.flags['ch9_lkbz_' + i] ? '取火' : '點燃', interact: async (S) => { await lkBrazier(S, i); } }));
+      LK_LOGS.forEach((L, i) => out.push({ t: 'paper_stack', x: L.x, y: L.y, if: (st2) => !st2.flags['ch9_log_' + (i + 1)], label: '拾起', interact: async (S) => { await lkLog(S, i); } }));
+      out.push({ t: 'wang_boat', x: 18, y: 42, water: true, solid: false, z: -200 });
+      return out;
+    },
+    chests: [
+      { id: 'lk_incense', x: 27, y: 3, item: 'huanhunxiang', n: 2 },
+      { id: 'lk_fu', x: 8, y: 21, item: 'c9_fn_chaoyin' },
+      { id: 'lk_salve', x: 9, y: 36, item: 'c9_baicaogao', n: 2 },
+      { id: 'lk_pin', x: 34, y: 37, item: 'hd_shanhu' },
+    ],
+    lights: (s) => {
+      const out = [];
+      LK_BZ.forEach(([x, y], i) => { if (!s.flags['ch9_lkbz_' + i]) out.push({ x, y, r: 50, color: '#6a7aa0' }); });
+      out.push({ x: 21, y: 41, r: 220, color: '#ffb060', flicker: 0.2 });
+      return out;
+    },
+    enemies: [
+      { id: 'lke1', troop: 't_c9_cave_a', x: 24, y: 8, art: 'moray', variant: 1, lv: 34, radius: 2, if: (s) => !s.flags.ch9_cave_cleared },
+      { id: 'lke2', troop: 't_c9_cave_b', x: 20, y: 32, art: 'sea_monster', lv: 34, radius: 3, if: (s) => !s.flags.ch9_cave_cleared },
+      { id: 'lke3', troop: 't_c9_cave_c', x: 29, y: 31, art: 'sea_monster', lv: 34, radius: 2, if: (s) => !s.flags.ch9_cave_cleared },
+      { id: 'lke4', troop: 't_c9_cave_a', x: 6, y: 5, art: 'moray', variant: 1, lv: 34, radius: 1, if: (s) => !s.flags.ch9_cave_cleared },
+    ],
+    events: [
+      { id: 'lk_boss', trigger: 'touch', x: 16, y: 38, w: 12, h: 1, if: (s) => !s.flags.ch9_cave_cleared, run: async (S) => { await morayBoss(S); } },
+      { id: 'lk_beach', trigger: 'touch', x: 8, y: 41, w: 28, h: 1, if: (s) => !!s.flags.ch9_cave_cleared, run: async (S) => { await S.say('', '小舢舨在浪裡等著。'); await boardDeck(S); } },
+    ],
+    warps: [{ x: 21, y: 0, w: 2, to: 'eluanbi', tx: 34, ty: 23, tdir: 'up' }],
+    drawGround: (ctx, t, m) => {
+      // rising / falling water over the tide channels
+      const hi = lkHigh(m);
+      const k = ((m._lkT || 0) % 10) / 10;
+      ctx.save();
+      for (const ch of LK_CH) for (const [x, y] of ch.cells) {
+        ctx.globalAlpha = hi ? 0.15 : 0.08 + 0.1 * k;
+        ctx.fillStyle = '#9ad0ff';
+        ctx.fillRect(x * T + 4, y * T + 4, T - 8, T - 8);
+      }
+      ctx.restore();
+    },
+    drawOver: (ctx, t, m) => {
+      const v = V();
+      if (v.ch9_kingShow) drawMonsterAt(ctx, 'moray', 21, 39, t, { scale: 0.8, variant: 2, alpha: v.ch9_kingShow });
+      if (F('ch9_cave_cleared')) return;
+      // flame meter (screen space)
+      const x = m.cam.x + 30, y = m.cam.y + 30, f = v.flame == null ? 100 : v.flame;
+      ctx.save();
+      G.UI.plate(ctx, x, y, 236, 44, 0.6, 20);
+      G.UI.lanternIcon(ctx, x + 24, y + 22, 9, t);
+      G.Render.text(ctx, '燈火', x + 42, y + 9, { size: 20, color: '#ffe0a0' });
+      G.UI.bar(ctx, x + 92, y + 16, 124, 12, f / 100, '#ffd27a', '#e07a2a');
+      const hi = lkHigh(m);
+      G.Render.text(ctx, hi ? '漲潮' : '退潮', x + 250, y + 9, { size: 20, color: hi ? '#8ac8ff' : '#d8f0ff' });
+      ctx.restore();
+    },
+    onUpdate: (dt, m, busy) => {
+      const s = st(), v = V();
+      if (s.flags.ch9_cave_cleared) return;
+      if (v.flame == null) v.flame = 100;
+      if (m._lkSteps == null) { m._lkSteps = s.steps; m._lkBattles = s.battles; }
+      // flame cost: 1 per 2 steps, 2 per step on splashing shallows, 10 per battle
+      if (s.steps !== m._lkSteps) {
+        const n = s.steps - m._lkSteps;
+        m._lkSteps = s.steps;
+        if (m.terrainAt(m.player.x, m.player.y) === 'shallow') v.flame -= 2 * n;
+        else { m._lkHalf = (m._lkHalf || 0) + n; v.flame -= Math.floor(m._lkHalf / 2); m._lkHalf %= 2; }
+      }
+      if (s.battles !== m._lkBattles) { v.flame -= 10 * (s.battles - m._lkBattles); m._lkBattles = s.battles; }
+      v.flame = Math.max(0, Math.min(100, v.flame));
+      m.lightCfg.playerR = 80 + v.flame * 1.2;
+      if (busy) return;
+      // tides: 10 s low, 10 s high
+      const wasHigh = lkHigh(m);
+      m._lkT = (m._lkT || 0) + dt;
+      const high = lkHigh(m);
+      if (high !== wasHigh || m._lkInit == null) {
+        m._lkInit = true;
+        for (const ch of LK_CH) for (const [x, y] of ch.cells) m.terrain[y * m.w + x] = high ? 'water' : 'shallow';
+        m.computeSolid();
+        if (high) {
+          const ch = LK_CH.find((c) => c.cells.some(([x, y]) => x === m.player.x && y === m.player.y));
+          if (ch) {
+            G.Script.run(async (S) => {
+              S.sfx('splash'); S.shake(6, 0.4);
+              await S.say('', '漲潮了！浪頭打過來，把眾人沖回了礁石上。燈火被浪花濺得一暗。');
+              V().flame = Math.max(0, V().flame - 15);
+              await S.warp('longkeng_caves', ch.start[0], ch.start[1], m.player.dir, { fade: 0.2 });
+            });
+            return;
+          }
+        }
+      }
+      if (v.flame <= 0 && !m._lkOut) {
+        m._lkOut = true;
+        G.Script.run(async (S) => {
+          S.sfx('dark');
+          await S.say('', '防風燈的火熄了。洞裡一下子暗了下來。');
+          await S.say('yungui:normal', '火滅了。回最近的火盆再借一次。');
+          const b = LK_BZ[v.ch9_lastBz || 0];
+          V().flame = 100;
+          S.flag('ch9_lkbz_' + (v.ch9_lastBz || 0));
+          await S.warp('longkeng_caves', b[2], b[3], 'down');
+          if (G.mapScene) G.mapScene._lkOut = false;
+        });
+      }
+    },
+  });
+
+  async function morayBoss(S) {
+    S.bgm('tension');
+    S.setPos('player', 21, 37, 'down'); S.gather();
+    await S.camera(21, 39, 0.8);
+    await S.say('', '海蝕拱門下，海水灌進來又退出去。拱門另一邊，看得見王船的燈籠——陳伯已經把船繞到這裡等著了。');
+    S.sfx('splash'); S.shake(10, 0.8);
+    V().ch9_kingShow = 0.01;
+    await G.Tweens.to(V(), { ch9_kingShow: 1 }, 0.6, 'linear');
+    await S.say('', '水面忽然隆起。一條比王船還長的海鰻破水而出，身上長滿黑色的藤壺，眼睛混濁發白。');
+    await S.say('tuanzi:cry', '好、好大的鰻魚！本大爺可以吃一個月！……不，牠會先吃本大爺！');
+    await S.say('hongying:serious', '牠要撲燈！護好火！');
+    const r = await S.battle('t_c9_moray_king', { intro: morayIntro(), bgmAfter: 'night' });
+    removeGuardLamp();
+    if (r !== 'win') { V().ch9_kingShow = 0; return; }
+    S.cameraFollow();
+    await S.camera(21, 39, 0.3);
+    await S.say('', '鰻王翻身，黑色的藤壺一片片剝落，露出原本銀藍色的身體。');
+    await S.say('', '牠的眼睛清了，看了眾人一眼，潛回深海。');
+    await G.Tweens.to(V(), { ch9_kingShow: 0 }, 1.0, 'linear');
+    V().ch9_kingShow = 0;
+    await S.say('xinghe:smile', '……牠只是病了。');
+    S.flag('ch9_cave_cleared');
+    await S.fadeOut(0.8);
+    await S.narrate(['眾人穿過拱門，涉水上了王船的小舢舨。'], { veil: 1 });
+    V().ch9_port = 'eluanbi';
+    V().ch9_deck_night = true;
+    await S.warp('wangboat_deck', 18, 6, 'right', { fade: 0.01 });
+    await bowLamp(S);
+  }
+  async function bowLamp(S) {
+    S.setPos('player', 19, 6, 'right'); S.gather(); S.setPos('hongying', 18, 7, 'right'); S.setPos('yungui', 17, 5, 'right'); S.setPos('tuanzi', 17, 7, 'right');
+    S.setPos('chenbo', 4, 5, 'right');
+    S.bgm('voyage');
+    await S.say('chenbo:normal', '（從船尾喊）火呢？');
+    await S.say('xinghe:smile', '活著。');
+    S.emote('player', '✦');
+    await S.say('', '星河舉起防風燈，走到船頭燈座前，把那一小點火，移到船頭燈的燈芯上。');
+    S.sfx('fire');
+    S.flag('ch9_lighthouse_flame');
+    S.take('key_lighthouse', 1);
+    S.refresh();
+    S.flash('#ffd890', 0.9, 0.85);
+    S.light({ ambient: 0.35 });
+    await S.say('', '火苗一碰到燈芯——「呼」——燃起一團金色的大火，比防風燈大了十倍，卻很溫和。');
+    await S.say('', '光照在海面上，海底的珊瑚、魚群，都看得清清楚楚。');
+    await S.say('', '同一時間，岬角上的燈塔，光也跟著一亮——比平常更亮。');
+    S.flash('#fff6d8', 0.6, 0.5);
+    await S.say('xinghe:surprise', '燈塔……變亮了？');
+    await S.say('chenbo:smile', '說了吧。火分出去，不會變暗。');
+    await S.say('', '遠處燈塔上，一個半透明的人影站在燈室窗邊，揮著手。');
+    await S.say('湯姆', '（遠遠地）……Huh！It didn\'t go dark！沒有暗！！');
+    await S.say('湯姆', 'It\'s brighter！更亮！！Ha ha！Brilliant！');
+    await xunjingShow(S, 1);
+    days(S, 1);
+    S.quest('q_ch9_main', 7);
+    S.objective('和陳伯說話，出航・往東');
+    if (logCount() === 3) {
+      await S.say('xinghe:normal', '陳伯，等一下。我們撿到了湯先生的日誌，得還給他。');
+      await S.say('chenbo:normal', '去吧。船等你們。');
+      V().ch9_autoHome = true;
+      await S.warp('lighthouse_top', 2, 7, 'right');
+    } else {
+      await S.say('chenbo:normal', '該走了。');
+      if (logCount() > 0) S.toast('還可以回鵝鑾鼻，把日誌殘頁交給湯先生', 'scroll');
+    }
+  }
+  async function lighthouseHome(S) {
+    S.setPos('player', 5, 7, 'right'); S.gather();
+    S.setPos('lt_tom', 7, 6, 'left');
+    S.bgm('lighthouse');
+    await S.say('湯姆', 'You\'re back! 船頭燈亮了！我看到了！Brilliant！');
+    await S.say('xinghe:normal', '湯先生，我們在洞裡撿到這個。（遞出日誌）');
+    await S.say('湯姆', '……My log. 我的日誌。那天晚上，風把它吹出窗外……');
+    await S.say('', '湯姆接過殘頁，讀著。手在發抖。');
+    S.take('c9_key_log', 3);
+    await S.say('湯姆', '「Whitby」……');
+    await S.say('湯姆', 'Whitby. Whitby！I remember！懸崖上有一座老修道院，ruins，很高。');
+    await S.say('湯姆', '港口很小，紅色的屋頂。冬天風很大——像這裡的落山風！Ha！');
+    S.bgm('sad');
+    await S.say('湯姆', '還有我媽媽……她每天晚上在窗口點一根蠟燭。Every night.');
+    await S.say('湯姆', '等我爸爸。爸爸沒有回來。她一直點，點了三十年。');
+    await S.say('湯姆', 'So I became a lighthouse keeper. 我想……如果每個窗口都有一根蠟燭，');
+    await S.say('湯姆', '就不會有人的爸爸回不了家。');
+    await S.say('湯姆', '（笑，眼眶發亮）I burned her letters to keep this lamp lit. 我燒了她的信。');
+    await S.say('湯姆', 'Stupid. 憨。燈不需要我的信。燈只需要……有人在。');
+    const c = await S.choice(['「你已經在了很久了。」', '「現在有人可以接你的班了。」']);
+    if (c === 0) await S.say('xinghe:sad', '你已經在這裡很久很久了。你可以休息了。');
+    else await S.say('xinghe:smile', '湯先生，你看——');
+    S.spawn({ id: 'lt_amu', sprite: 'child_m', x: 2, y: 7, dir: 'right' });
+    await S.say('', '阿目站在燈室門口，手裡拿著擦燈罩的抹布。');
+    await S.say('阿目', '湯先生……我會擦燈罩了。我會看浪、看星星、看船。');
+    await S.say('阿目', '你教我的，我都會。……你要回家，就回家吧。');
+    await S.move('lt_tom', 'LL');
+    await S.say('湯姆', '……Amu.（蹲下，雖然手穿過了阿目的肩膀）You\'ll be a fine keeper. 很好的守燈人。');
+    await S.say('湯姆', '記得：燈不是燒自己。燈是……留下來。Staying. 留下來，就是燈。');
+    S.emote('lt_amu', '💧');
+    await S.say('阿目', '（哭）嗯。');
+    S.face('lt_tom', 'player');
+    await S.say('湯姆', '（對星河）Boy. 你的燈……那個女孩子。你要去找她，對不對？');
+    await S.say('xinghe:serious', '嗯。');
+    await S.say('湯姆', 'Tell her——告訴她，不用燒掉自己。分出去就好。Like this one.（指著大燈）');
+    await S.say('xinghe:surprise', '……');
+    await S.say('湯姆', 'Well then.（整理制服，敬禮）Keeper Thomas Archer, going home.');
+    await S.say('湯姆', '守燈人湯姆……回家了。');
+    S.bgm('love');
+    S.flash('#fff6d8', 1.0, 0.6);
+    await S.fadeActor('lt_tom', 0, 1.6);
+    await S.say('', '湯姆的身體化成燈塔光束裡的一點一點亮光。光束掃過海面，往北，往很遠很遠的地方。');
+    await S.say('', '燈塔的燈沒有變暗。');
+    S.flag('ch9_keeper_home');
+    await S.lantern('xd_lighthouse_home', '燈塔守的家書');
+    await S.say('阿目', '（擦掉眼淚，拿起抹布，開始擦燈罩）……燈要擦乾淨，船才看得到。');
+    await S.give('c9_ac_telescope', 1);
+    S.quest('q_ch9_lighthouse', 'done');
+    S.remove('lt_amu');
+    S.bgm('lighthouse');
+  }
+
+  // =====================================================================================================
+  // CHAPTER ENTRY — C9-01 竹筏渡港
+  // =====================================================================================================
+  G.Story = G.Story || {};
+  G.Story.ch9 = async (S) => {
+    S.chapter(9);
+    prepareParty();
+    const v = V();
+    v.xunjing = v.xunjing || 0;
+    nameCount(); logCount();
+    G.Dialog.close();
+    await S.fadeOut(0.6);
+    await S.titleCard(G.Chapters[9], '打狗・東港・恆春・鵝鑾鼻');
+    S.flag('ch9_start');
+    S.bgm('sad');
+    await S.narrate(['三月底，安平。', '紅纓親手為兄長立了一塊木牌。她在上面寫「洛青鋒」三個字，寫了很久。'], { veil: 1 });
+    await S.narrate(['四月二十，打狗港。'], { veil: 1 });
+    v.days_to_gate = 100;
+    await S.warp('qihou', 40, 8, 'left', { fade: 0.01, stayDark: true, noAutosave: true });
+    // on the bamboo raft crossing the harbour
+    const m = G.mapScene;
+    const raft = m.objects.find((o) => o.key === 'qh_ferry');
+    if (raft) raft.x = 45;
+    const seat = { player: [45, 10, 'left'], yungui: [46, 10, 'left'], tuanzi: [45, 9, 'left'], hongying: [47, 10, 'up'], chenbo: [46, 9, 'left'], qh_boatman: [47, 9, 'left'] };
+    for (const id in seat) S.setPos(id, seat[id][0], seat[id][1], seat[id][2]);
+    await S.camera(44, 9, 0.01);
+    await S.fadeIn(1.0);
+    S.bgm('south');
+    for (const id in seat) S.move(id, 'LL', { wait: false, speed: 0.8, ghost: true });
+    if (raft) await G.Tweens.to(raft, { x: 43 }, 2.5, 'linear'); else await S.wait(2.5);
+    for (const id in seat) { const a = S.actor(id); if (a) { a.queue = []; S.face(id, seat[id][2]); } }
+    await S.say('船夫阿水', '坐好喔！打狗港的水看起來平，底下流仔真急。');
+    await S.say('tuanzi:sad', '喵嗚……又是船……本大爺這輩子坐的船，比吃的魚還多。');
+    await S.say('yungui:smug', '不可能。你吃的魚比整個打狗港的魚還多。');
+    S.emote('tuanzi', '💢');
+    await S.say('tuanzi:angry', '那是因為本大爺在幫大家試毒！');
+    await S.say('xinghe:smile', '陳伯，這裡為什麼叫打狗啊？');
+    await S.say('chenbo:normal', '早年住這一帶的平埔人，管海邊的刺竹林叫 Takau。');
+    await S.say('chenbo:normal', '唐山人聽了，寫成「打狗」。跟狗沒關係，別再問了。');
+    await S.say('tuanzi:smile', '沒有狗？好佳哉。');
+    await S.camera(45, 10, 0.8);
+    await S.say('', '筏尾，紅纓獨自坐著。懷裡抱著用布包好的洛家劍譜，望著北方。');
+    await S.say('xinghe:think', '……');
+    const c = await S.choice(['跟紅纓說話', '讓她靜一靜']);
+    if (c === 0) {
+      v.ch9_comfort = 'talk';
+      S.face('player', 'right');
+      await S.say('xinghe:normal', '紅纓，妳早上沒吃東西吧？要不要……');
+      await S.say('hongying:normal', '不餓。');
+      await S.say('xinghe:smile', '不是啦，我是說——妳要不要煮給我吃？');
+      await S.say('hongying:surprise', '……蛤？');
+      await S.say('xinghe:laugh', '我最近胃太好了，想挑戰一下自己。');
+      await S.say('hongying:angry', '……笨蛋。');
+      S.emote('hongying', '♪', 0.9);
+      await S.say('', '紅纓轉回去看海。嘴角動了一下。');
+    } else {
+      v.ch9_comfort = 'quiet';
+      await S.say('', '星河默默坐到她旁邊，不說話。兩人一起看海。');
+      await S.wait(0.8);
+      await S.say('', '過了一會，紅纓的肩膀，輕輕靠了過來一點點。');
+      await S.say('hongying:sad', '……謝謝。');
+    }
+    S.flag('ch9_hongying_comfort');
+    S.cameraFollow();
+    await S.say('yungui:normal', '陳伯，說正事吧。你說只有王船能渡黑水溝。');
+    await S.say('chenbo:serious', '嗯。王船是千歲爺的船。王爺代天巡狩，船上載的是瘟、是厄。');
+    await S.say('chenbo:serious', '是那些送不走的東西。海上的東西，見了王船，都得讓路。');
+    await S.say('yungui:think', '可東港三年一科迎王，最後王船是一把火燒掉的，叫送王。');
+    await S.say('chenbo:normal', '現在多是燒。早年也有放流出海的，叫「遊地河」。');
+    await S.say('chenbo:normal', '千歲爺肯不肯借，要問祂。我們去東港，東隆宮。');
+    await S.say('xinghe:serious', '那還等什麼？直接去東港！');
+    await S.say('chenbo:angry', '急什麼！天都要暗了。先在旗後落腳，打聽打聽消息。');
+    await S.say('chenbo:serious', '還有一件事。今天四月二十。七月底，關鬼門。');
+    await S.say('chenbo:serious', '……還剩一百天。');
+    S.sfx('bell');
+    S.toast(`距關鬼門　${v.days_to_gate} 日`, 'lantern');
+    await S.wait(0.6);
+    await S.say('xinghe:serious', '一百天。');
+    await S.say('', '星河握緊了手上的紅繩手環。');
+    await S.say('xinghe:normal', '（白芷，等我。）');
+    S.sfx('push');
+    await S.fadeOut(0.6);
+    S.setPos('player', 40, 8, 'left'); S.gather(); S.setPos('chenbo', 41, 8, 'left'); S.setPos('qh_boatman', 42, 7, 'down');
+    await S.fadeIn(0.6);
+    S.flag('ch9_qihou_arrive');
+    S.quest('q_ch9_main', 0);
+    S.objective('到旗後天后宮打聽王船的消息');
+    if (G.settings.autosave !== false) G.Save.auto();
+  };
 
   // @@MAPS@@
 })();

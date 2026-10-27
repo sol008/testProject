@@ -26,7 +26,7 @@
   G.Data.skills.c0_gather = { name: '聚霧', desc: '大海霧魂正在聚集霧氣……', mp: 0, type: 'special', elem: null, target: 'self', power: 0, fx: 'buff', sfx: 'wind' };
   G.Data.skills.c0_e_mist_surge = { name: '霧湧', desc: '', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 1.3, fx: 'water_big', sfx: 'water' };
   G.Data.enemies.c0_sea_wisp_big = {
-    name: '大海霧魂', art: 'sea_wisp', variant: 1, scale: 1.25, lv: 2, hp: 90, mp: 10, atk: 8, def: 6, mag: 8, spd: 10, luk: 3,
+    name: '大海霧魂', art: 'sea_wisp', variant: 1, scale: 1.25, lv: 2, hp: 84, mp: 10, atk: 8, def: 6, mag: 6, spd: 10, luk: 3,
     elem: 'water', weak: ['fire'], exp: 46, gold: 8, drops: [], skills: [{ id: 'e_ghost_touch', w: 6 }],
     desc: '霧越濃，它們想起的事就越多——大多是冷，和想家。',
   };
@@ -238,9 +238,18 @@
       const L = this.lyr;
       if (L) {
         const fade = L.out >= 0 ? Math.max(0, 1 - L.out / 1.4) : 1;
+        const o = { size: 32, align: 'center', color: '#e8f6ff', glow: 'rgba(140,210,255,0.8)', glowBlur: 18 };
         L.shown.forEach((k, j) => {
-          const y = 128 + j * 52 + (1 - k) * 10;
-          G.Render.text(ctx, L.lines[j], G.W / 2, y, { size: 32, align: 'center', color: '#e8f6ff', alpha: k * fade, glow: 'rgba(140,210,255,0.8)', glowBlur: 18 });
+          if (G.I18N.isEn()) {
+            G.Render.text(ctx, L.lines[j], G.W - 300, 150 + j * 50 + (1 - k) * 10, Object.assign({ alpha: k * fade }, o, { size: 28 }));
+            return;
+          }
+          // classical vertical columns, right to left, over the open sea; glyphs fade in one by one
+          const x = G.W - 170 - j * 64;
+          [...L.lines[j]].forEach((ch, c) => {
+            const a = U.clamp(k * 9 - c, 0, 1) * fade;
+            if (a > 0) G.Render.text(ctx, ch, x, 124 + c * 39 + (1 - a) * 6, Object.assign({ alpha: a }, o));
+          });
         });
       }
     }
@@ -449,6 +458,10 @@
 
   // ------------------------------------------------------------------ world layer below actors
   function drawGround(ctx, t, ms) {
+    // the cloud platforms are fog made solid: tone the white floor down to a misty blue-grey
+    const y0 = Math.max(0, Math.floor(ms.cam.y / T)), y1 = Math.min(ms.h - 1, Math.floor((ms.cam.y + G.H) / T) + 1);
+    ctx.fillStyle = 'rgba(16,22,48,0.42)';
+    for (let y = y0; y <= y1; y++) for (let x = 0; x < ms.w; x++) if (ms.terrain[y * ms.w + x] === 'cloud') ctx.fillRect(x * T, y * T, T, T);
     drawDeck(ctx, ms, t);
     drawLighthouse(ctx, t);
     drawGiantLantern(ctx, t);
@@ -495,6 +508,7 @@
   }
   // ------------------------------------------------------------------ emissive layer, drawn after the lighting pass
   function drawLightLayer(ctx, t, ms) {
+    if (ms.view3d && G.R3 && G.R3.enabled()) return;   // 3D view: lights/decals come from def.lights / drawGround
     const [sx, sy] = [0, 0];
     const camX = Math.round((ms.cam.x + sx) * 2) / 2, camY = Math.round((ms.cam.y + sy) * 2) / 2;
     ctx.save();
@@ -518,7 +532,7 @@
       ctx.beginPath(); ctx.moveTo(lx, ly - 3); ctx.lineTo(lx - 420, ly + 30); ctx.lineTo(lx - 420, ly + 90); ctx.lineTo(lx, ly + 3); ctx.fill();
     }
     // giant lantern head: cold white aura
-    glow(ctx, GL.x * T, GL.y * T, 150, '#cfe6ff', 0.22 + 0.05 * Math.sin(t * 1.3));
+    glow(ctx, GL.x * T, GL.y * T, 140, '#cfe6ff', 0.13 + 0.04 * Math.sin(t * 1.3));
     // souls' flames
     for (const k in SOULS) {
       if (k === 'c' && G.state.flags.ch0_soulc_follow) continue;
@@ -542,7 +556,7 @@
     if (girl) {
       const gx = girl.px, gy = girl.py - 44;
       glow(ctx, gx, gy, 26 + 6 * Math.sin(t * 2), '#eef8ff', 0.8 * FX.girlOrb);
-      glow(ctx, gx, gy, 90, '#cfe8ff', 0.25 * Math.max(FX.girlOrb, FX.girlShown));
+      glow(ctx, gx, gy, 80, '#cfe8ff', 0.22 * FX.girlOrb + 0.1 * FX.girlShown);
     }
     // blue soul-fire on the decorative lamps (0-6)
     if (FX.blue > 0.01) {
@@ -567,8 +581,8 @@
       const wx = p.px + 12, wy = p.py - 40, hx = girl.px - 4, hy = girl.py - 74;
       glow(ctx, wx, wy, 24, '#ff3a3a', FX.red);
       glow(ctx, hx, hy, 24, '#ff3a3a', FX.red);
-      ctx.globalAlpha = FX.red * 0.75;
-      ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 1.6; ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 10;
+      ctx.globalAlpha = FX.red;
+      ctx.strokeStyle = '#ff6a5a'; ctx.lineWidth = 2.4; ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 10;
       ctx.beginPath(); ctx.moveTo(wx, wy);
       ctx.bezierCurveTo(wx + 40, wy + 30 + Math.sin(t * 3) * 8, hx - 40, hy + 40, hx, hy);
       ctx.stroke();
@@ -609,7 +623,7 @@
       out.push({ x: x / T - 0.5, y: y / T - 0.5, r: 120 * FX.souls[k].glow * FX.souls[k].a, color: '#9fe6ff', flicker: 0.2 });
     }
     if (FX.follow && FX.follow.a > 0) out.push({ x: FX.follow.x / T - 0.5, y: FX.follow.y / T - 0.5, r: 100 * FX.follow.a, color: '#9fe6ff', flicker: 0.2 });
-    out.push({ x: GL.x - 0.5, y: GL.y - 0.3, r: 280, color: '#dcecff', flicker: 0.08 });
+    out.push({ x: GL.x - 0.5, y: GL.y - 0.6, r: 170, color: '#dcecff', flicker: 0.08 });
     out.push({ x: LH.x, y: LH.y, r: 30 + 160 * beaconLevel(t), color: '#fff0c0', flicker: 0 });
     if (FX.blue > 0.01) for (const x of [8, 12]) out.push({ x, y: 15, r: 150 * FX.blue, color: '#4aa8ff', flicker: 0.4 });
     if (FX.flare > 0.01) for (const [x, y] of [[12, 35], [8, 32], [12, 32]]) out.push({ x, y, r: 260 * FX.flare, color: '#ffb35c', flicker: 0.2 });
@@ -618,7 +632,7 @@
       const k = U.ease.inOutQuad(Math.min(1, s.t / s.dur));
       out.push({ x: U.lerp(s.x0, s.x1, k) / T - 0.5, y: U.lerp(s.y0, s.y1, k) / T - 0.5, r: 60, color: s.c, flicker: 0.2 });
     }
-    if (FX.red > 0.05 && ms) out.push({ x: ms.player.x, y: ms.player.y - 0.4, r: 120 * FX.red, color: '#ff4a3a', flicker: 0.1 });
+    if (FX.red > 0.05 && ms) out.push({ x: ms.player.x, y: ms.player.y - 0.4, r: 70 * FX.red, color: '#ff4a3a', flicker: 0.1 });
     return out;
   }
 
@@ -1182,7 +1196,7 @@
     lerpTo(FX, { mistK: 0.55 }, 3.5);
     await camTo(10, 5.2, 3.2, 'inOutQuad');
     lerpTo(FX, { girlOrb: 0, girlShown: 1 }, 2.4);
-    if (girl) { girl.light = { r: 220, color: '#dff6ff' }; await G.Tweens.to(girl, { alpha: 0.85 }, dur(2.4), 'linear'); }
+    if (girl) { girl.light = { r: 130, color: '#dff6ff' }; await G.Tweens.to(girl, { alpha: 0.85 }, dur(2.4), 'linear'); }
     await wait(S, 0.8);
     // she hums 渡魂謠 — lone dizi, lyrics as floating subtitles
     const len = auto() ? 0 : Snd.lullaby(80);
@@ -1307,7 +1321,7 @@
       ctx.translate(G.W / 2, by);
       ctx.rotate(-0.25 + Math.sin(t * 0.6) * 0.12);
       ctx.globalAlpha = 0.85;
-      if (G.Sprites) G.Sprites.drawBattle(ctx, 'xinghe', 'ko', 0, 0, 0, { shadow: false, scale: 0.8 });
+      if (G.Sprites) G.Sprites.drawBattle(ctx, 'xinghe', 'ko', 0, 0, 0, { shadow: false, scale: 1.25 });
       ctx.restore();
       ctx.strokeStyle = 'rgba(200,230,255,0.5)'; ctx.lineWidth = 1;
       for (const b of this.bub) { ctx.globalAlpha = Math.max(0, 1 - b.t / 3); ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke(); }
