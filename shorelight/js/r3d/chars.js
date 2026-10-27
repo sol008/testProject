@@ -1099,11 +1099,10 @@ G.Char3D = (() => {
       // hem piping
       g.fillStyle = trim; g.fillRect(x - 2, y + h - max(2, h * 0.018), w + 4, max(2, h * 0.018) + 2);
       if (top.hemBand) { g.fillStyle = top.hemBand.color || trim; g.fillRect(x - 2, y + h * (1 - (top.hemBand.h || 0.05)), w + 4, h * (top.hemBand.h || 0.05)); }
-      // side slits (開衩): piped edges at the sides and the centre-back vent
+      // side slits (開衩): piped edges at the sides (the centre-back vent is a plain seam)
       if (o.slitY != null) {
         const sy = V(o.slitY);
         for (const th of [-PI / 2, PI / 2]) Pn.piping(g, [[U(th), sy], [U(th), y + h]], trim, pipeW * 1.6);
-        g.fillStyle = trim; g.fillRect(x - 1, sy, pipeW * 1.2, y + h - sy); g.fillRect(x + w - pipeW * 1.2 + 1, sy, pipeW * 1.2, y + h - sy);
         if (top.toggles) for (const th of [-PI / 2, PI / 2]) for (const k of [0.15, 0.4]) Pn.knot(g, U(th), lerp(sy, y + h, k), pipeW * 1.1, top.toggles);
       }
       const cl = top.closure;
@@ -1352,7 +1351,7 @@ G.Char3D = (() => {
       }
       // stand collar (立領) for side / centre / round closures
       if (cl === 'side' || cl === 'center' || cl === 'round') {
-        const crect = clothRect(B, 'collar', 0.3, 0.05, top.trim || shade(top.color, -0.3), { folds: false });
+        const crect = clothRect(B, 'collar', 0.3, 0.05, top.collarColor || top.trim || shade(top.color, -0.3), { folds: false });
         const nr = P.neckR + shirtInfl + 0.006 * s;
         tube(B.G, [[0, P.neckY - 0.004 * s, -0.008], [0, P.neckY + 0.034 * s, -0.012]], 16, crect, (t) => ({ rx: nr * (1 - 0.06 * t), ry: nr * (1 - 0.06 * t) * 1.02 }),
           (t) => wmix([[B.b('chest'), 1]], [[B.b('neck'), 1]], 0.35 + t * 0.3), { nv: 2, up: [0, 0, 1], phase: 0, flipFrame: false, axisY: true });
@@ -2449,12 +2448,28 @@ G.Char3D = (() => {
         const ids = B.chain('twin' + (sg > 0 ? 'L' : 'R'), 'head', pts, { stiff: 1.0, drag: 0.35, grav: 0.8, r: 0.012, groups: ['body', 'head'], kind: 'hair' });
         lock(B, lockR, pts, 0.022 * P.s, 0.014 * P.s, (t) => (t < 0.1 ? W : [[ids[t < 0.5 ? 0 : 1], 1]]), { up: [0, 0, 1], nv: 8 });
       }
-    } else if (k === 'halfup') {
-      const c0 = bunAt(PI, 0.62, 0.026 * P.s, 0.8);
-      if (H.tie) tieAt(headPt(B, PI, 0.62, capOff + 0.006), [0, 0.5, -1], 0.02 * P.s);
+    } else if (k === 'halfup') { // H.knotPh: height of the half-up knot (0.62 back of the head … ~0.35 near the crown)
+      const kp = H.knotPh != null ? H.knotPh : 0.62;
+      const c0 = bunAt(PI, kp, 0.026 * P.s * (H.knotR || 1), 0.8);
+      if (H.tie) tieAt(headPt(B, PI, kp, capOff + 0.006), [0, 0.5, -1], 0.02 * P.s);
+      if (H.loop) { // a looped half-up (髻環): a hair ring standing up from the knot
+        const lc = vadd(c0, [0, 0.022 * P.s, -0.004]);
+        tube(B.G, Array.from({ length: 13 }, (_, i) => { const a = i / 12 * TAU; return vadd(lc, [sin(a) * 0.026 * P.s, cos(a) * 0.022 * P.s + 0.004, 0]); }), 8, capR, () => ({ rx: 0.008 * P.s, ry: 0.011 * P.s }), () => W, { nv: 24, up: [0, 0, 1] });
+      }
     }
     // ---- pins & ornaments
     for (const pin of H.pins || []) hairPin(B, pin, capOff);
+    // silk bow at the tie (H.bow: size factor; colour = H.tie): two puffed loops and a knot
+    if (H.bow && B._tieAt) {
+      const bc = H.tie || '#d8282a', bk = (typeof H.bow === 'number' ? H.bow : 1) * P.s;
+      const br = C._internal.clothRect(B, 'bow' + bc, 0.08, 0.05, bc, { weave: 'silk', folds: false, after: (g, x, y, w, h) => { g.fillStyle = rgba('#000', 0.18); g.fillRect(x + w * 0.45, y, w * 0.1, h); g.fillStyle = rgba('#fff', 0.2); g.fillRect(x, y + h * 0.15, w, h * 0.12); } });
+      const c0 = vadd(B._tieAt, [0, 0.012 * P.s, 0.004 * P.s]);
+      for (const sg of [-1, 1]) {
+        const cc = vadd(c0, [sg * 0.034 * bk, 0.008 * bk, -0.004 * bk]);
+        blob(B.G, 10, 6, br, cc, [1, 1, 1], W, { deform: (n) => [n[0] * 0.032 * bk, n[1] * 0.022 * bk * (1 - 0.35 * max(0, -sg * n[0])), n[2] * 0.012 * bk] , rot: (p) => [p[0], p[1] + sg * p[0] * 0.25, p[2]] });
+      }
+      blob(B.G, 8, 5, br, c0, [0.012 * bk, 0.014 * bk, 0.011 * bk], W);
+    }
     // ribbons (long ribbon ends from the tie)
     if (H.ribbon && B._tieAt) {
       const rc = H.tie || '#d8282a';
@@ -3104,10 +3119,13 @@ G.Char3D = (() => {
       case 'bow': K.path([[0, 0.6, -0.12], [0, 0.3, 0.06], [0, 0, 0.1], [0, -0.3, 0.06], [0, -0.6, -0.12]], 0.01, 'wood', 6); K.path([[0, 0.6, -0.12], [0, -0.6, -0.12]], 0.0015, 'white', 3); break;
       case 'plaque': K.cyl([0, 0, -0.05], [0, 0, 0.5], 0.012, 0.012, 'red', 6); K.box([0, 0, 0.62], 0.012, 0.12, 0.1, 'lacq'); break;
       case 'grass': case 'fiber': for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; K.path([[cos(a) * 0.01, sin(a) * 0.01, -0.06], [cos(a) * 0.02, sin(a) * 0.02, 0.15], [cos(a) * 0.05, sin(a) * 0.05 - 0.04, 0.32]], (t) => 0.005 * (1 - t), item === 'grass' ? 'green' : 'fiber', 3); } break;
-      case 'flute': K.cyl([0, 0, -0.18], [0, 0, 0.3], 0.011, 0.011, look.mat || 'jade', 8); for (let k = 0; k < 6; k++) K.ball([0, 0.01, -0.05 + k * 0.05], 0.003, 'dark', 1, 1, 1, 3); K.cyl([0, 0, 0.27], [0, 0, 0.29], 0.013, 0.013, 'gold', 8);
-        if (look.tassel) K.path([[0, 0, -0.18], [0, -0.06, -0.19], [0, -0.13, -0.2]], (t) => 0.004 + 0.004 * t, look.tassel, 4);
+      case 'flute': { // 笛: look.len scales it (1 = 48 cm), look.foot = length behind the grip (m)
+        const fl = look.len || 1, z0 = -(look.foot != null ? look.foot : 0.18 * fl), z1 = z0 + 0.48 * fl;
+        K.cyl([0, 0, z0], [0, 0, z1], 0.011, 0.011, look.mat || 'jade', 8); for (let k = 0; k < 6; k++) K.ball([0, 0.01, z1 - 0.35 * fl + k * 0.05 * fl], 0.003, 'dark', 1, 1, 1, 3); K.cyl([0, 0, z1 - 0.03], [0, 0, z1 - 0.01], 0.013, 0.013, 'gold', 8);
+        K.cyl([0, 0, z0 + 0.01], [0, 0, z0 + 0.03], 0.013, 0.013, 'gold', 8);
+        if (look.tassel) K.path([[0, 0, z0], [0, -0.06, z0 - 0.01], [0, -0.13, z0 - 0.02]], (t) => 0.004 + 0.004 * t, look.tassel, 4);
         if (look.tag) { // red-string jade tag (「白芷」) swinging from the flute's foot on a spring chain
-          const t0 = K.T([0, -0.004, -0.175]);
+          const t0 = K.T([0, -0.004, z0 + 0.005]);
           const ids = B.chain('fluteTag' + bone, bone, [t0, vadd(t0, [0, -0.06, 0]), vadd(t0, [0, -0.1, 0])], { stiff: 0.5, drag: 0.3, grav: 1.2, r: 0.01, groups: [], kind: 'prop' });
           tube(B.G, [t0, vadd(t0, [0, -0.06, 0])], 4, sw(B, 'red'), () => ({ rx: 0.0022 }), (t) => [[t < 0.15 ? B.b(bone) : ids[0], 1]], { nv: 3, linear: true });
           const K2 = kit(B, ids[1], vadd(t0, [0, -0.082, 0]));
@@ -3115,6 +3133,7 @@ G.Char3D = (() => {
           K2.path([[0, -0.02, 0], [0, -0.04, 0], [0, -0.058, 0]], (t) => 0.003 + 0.004 * t, 'tassel', 4);
         }
         break;
+      }
       default: K.box([0, 0, 0.04], 0.02, 0.02, 0.04, 'wood');
     }
   }
@@ -3467,6 +3486,13 @@ G.Char3D = (() => {
           const Qh = hq0.clone().premultiply(_q().setFromUnitVectors(cur, axis));
           const off = grip.position.clone().applyQuaternion(Qh);
           ik2(B['upperArm' + S], B['foreArm' + S], hand, tgt.clone().sub(off), pole);
+          // the fist's roll about the shaft is only known after the solve: re-solve with the grip offset of the final
+          // hand rotation so the grip point (not just the wrist) lands on the shaft
+          for (let it = 0; it < 2; it++) {
+            const hq1 = worldQuat(hand), c1 = _v().set(0, 0, 1).applyQuaternion(hq1);
+            const off1 = grip.position.clone().applyQuaternion(hq1.premultiply(_q().setFromUnitVectors(c1, axis)));
+            ik2(B['upperArm' + S], B['foreArm' + S], hand, tgt.clone().sub(off1), pole);
+          }
           const hq = worldQuat(hand);
           const cur2 = _v().set(0, 0, 1).applyQuaternion(hq);
           setWorldQuat(hand, hq.premultiply(_q().setFromUnitVectors(cur2, axis)));

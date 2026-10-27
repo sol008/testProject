@@ -257,13 +257,13 @@
   look('baizhi', 'v2_02', {
     spec: {
       body: 'female', skin: BZ.skin, eyes: '#4b2c20',
-      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.5, locks: 1.75, locksSide: 'R', tie: BZ.red, knot: 'halfup',
-        pins: [{ type: 'comb', color: BZ.jade, th: 1.7, ph: 0.5, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
+      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.5, locks: 1.75, locksSide: 'R', tie: BZ.red, knot: 'halfup', knotPh: 0.36, loop: true,
+        pins: [{ type: 'comb', color: BZ.jade, th: 1.15, ph: 0.45, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
       hat: null,
-      top: { color: BZ.shirt, len: 0.86, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.17, slits: 0.06, button: BZ.cream },
+      top: { color: BZ.shirt, len: 0.72, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.24, slits: 0.06, button: BZ.cream },
       apron: { color: BZ.apron, len: 0.62, bib: true, bibDrop: 0.075, bibW: 0.6, chain: '#c8ccd6', stitch: '#d8b860', emb: '#e8788a', embN: 3, band: '#1e1d2b', trim: '#4a5a82' },
       skirt: null, sash: null, vest: null,
-      bottom: { type: 'pants', color: '#1e1d26' }, shoes: { type: 'cloth', color: BZ.apron, sole: '#ece6d6' },
+      bottom: { type: 'pants', color: '#1e1d26' }, shoes: { type: 'cloth', color: BZ.apron, sole: '#8a8698' },
       bracelet: { color: BZ.red }, hip: ['jade'], held: null, weapon: 'flute', glow: '#bfe8ff', aura: '#7fd3ff',
     },
     body3d: { neckLen: 0.05, neckR: 0.037, sh: 0.15, headW: 0.168 },
@@ -274,16 +274,16 @@
       marks: [{ x: -0.2, y: -0.27, r: 0.75, color: '#3a2224' }],
     },
     expr: 'dreamy',
-    props3d: { flute: { mat: 'jade', tag: true } },
+    props3d: { flute: { mat: 'jade', tag: true, len: 1.45, foot: 0.3 } },
     style: { rest: { head: [-3, 0, -3], neck: [-2, 0, 0], upperArmL: [0, 0, -2], upperArmR: [0, 0, 2] } },
     parts: [(B) => earrings(B, { sides: [1], len: 0.05, bead: 'dark', drop: 'jade' })],
     clips: {
       // the sheet pose: the jade flute held level across the body at the waist, both hands near its middle
       sheet: () => ({ dur: 4, loop: true, k: [
         { t: 0, hp: [0, 0, 0], ch: [-1, 0, 0], nk: [-2, 0, 0], hd: [-3, 6, -4], fL: [0.01, 0, 0], fR: [-0.01, 0, 0],
-          hR: [-0.07, 1.0, 0.22], hRd: [1, 0, 0.04], hRroll: 90, hRm: 'on', hL: 0.15, hLm: 'on' },
-        { t: 2, ch: [0.5, 0, 0], hp: [0, -0.005, 0], hR: [-0.07, 0.995, 0.22] },
-        { t: 4, ch: [-1, 0, 0], hp: [0, 0, 0], hR: [-0.07, 1.0, 0.22] },
+          hR: [-0.06, 1.06, 0.22], hRd: [1, 0, 0.03], hRroll: 90, hRm: 'on', hL: 0.13, hLm: 'on' },
+        { t: 2, ch: [0.5, 0, 0], hp: [0, -0.005, 0], hR: [-0.06, 1.055, 0.22] },
+        { t: 4, ch: [-1, 0, 0], hp: [0, 0, 0], hR: [-0.06, 1.06, 0.22] },
       ] }),
     },
   });
