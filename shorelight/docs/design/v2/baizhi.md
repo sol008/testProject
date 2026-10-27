@@ -1,6 +1,6 @@
 # 白芷 Bai Zhi: Character Design Pass v2
 
-Heroine, appears about 17. 燈靈 (the lamp spirit) of the 彼岸燈. Water element, healer, jade flute, sings 「渡魂謠」.
+Heroine, appears about 19. 燈靈 (the lamp spirit) of the 彼岸燈. Water element, healer, jade flute, sings 「渡魂謠」.
 She carries a red string and a jade tag carved 「白芷」.
 
 - Sheet: `docs/design/v2/baizhi_sheet.png` (10 cards in a 5×2 grid plus a silhouette line-up at map-sprite scale)
