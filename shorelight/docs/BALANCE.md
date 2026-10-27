@@ -110,8 +110,8 @@ its builder finished it (their own lowering of 烏鬚船主 / 鎖魂將 / 鯤 / 
 | 無相・深淵 (phase 2, trio, +50% after phase 1) | 11 | 44 | 星河 紅纓 雲歸 (白芷 taken) | boss | 92% (100%) | 89% (65%) | 12.6 | 95% (100%) → 71% (83%) | 無相・深淵 atk/mag 2.35→1.42, spd 1.4→0.84 (trio, after phase 1 with half HP/MP back); 'before' 92% was the KO bug — with the bug fixed and the old stats it is 0% |
 | 無相之心 (phase 3, cannot be lost) | 11 | 44 | 星河 | scripted | 100% (21%) | 100% (23%) | 5.6 | 100% (20%) → 100% (21%) |  |
 
-All multipliers are the `m:` stat multipliers of the enemy definitions (stats = `G.Data.enemyCurve(lv)` × m); exp and
-gold are unchanged (every changed boss has an explicit `exp`/`gold` multiplier).
+All multipliers are the `m:` stat multipliers of the enemy definitions (stats = `G.Data.enemyCurve(lv)` × m). This
+pass left exp and gold unchanged; the later progression pass changed rewards only (see "Progression & economy").
 
 ### Why the bosses were trivial
 
@@ -196,6 +196,223 @@ Not re-run: the remaining segments/sessions of those tests (the bot also plays t
   which are in the table above.)
 - No engine (`js/engine/*`) changes — but see the hpFloor bug below.
 
+## Progression & economy
+
+The balance pass above tuned every boss for the level and gear of `G.Data.areas` (boss at the top level of its area)
+and the best gear of the shops reachable before it. The full-chain run (docs/qa/full_chain.md) showed that a player
+who follows the main story does not get there: levels came almost only from the chapter-opening floors, carried gold
+covered 15–60 % of the assumed gear, and 潮怨・百手 (ch8) walled a carried party. That run skips the field fights, so
+the first step was to measure what a **normal** player gets, then close the gaps with the levers below — rewards first,
+boss stats untouched.
+
+### How it is measured — `tools/sim_economy.js`
+
+A model over the game's own data (loaded like `sim_story.js`), three play styles, chapter by chapter:
+
+- **Critical path per map.** The shortest walks on the real collision grid (`G.MapScene.solid`; a gate that is still
+  closed costs 25 steps) from the arrival warp to every other warp and every story / puzzle spot of the map. A roaming
+  enemy is *met* when its home is within its chase range (+ wander radius) of that path. `--maps` prints them.
+- **Normal player** (the target): fights every enemy met, × 1.3 for backtracking (≈ 1.3 × the critical-path steps;
+  respawning enemies again on re-entry), the maps' step encounters (ch11 暗雷 on shallows), half of ch10's optional sea
+  fights, the ch11 boarding at its rate; opens chests within 10 steps of the path and all town chests; does half of each
+  chapter's 心燈 quests. Before each boss it buys the sim's consumable kit (5 + 3 heals, 3 MP items, 2 revives; the
+  whole kit at a chapter's first boss, 40 % restock at the others), then the gear BALANCE assumes there (weapons, armour,
+  head/feet, accessories; a < 8 % side-grade only with gold to spare). Old gear is not sold (conservative).
+- **Minimal player**: flees every field fight, no side content, chests within 4 steps of the path only.
+- **Thorough player**: every roaming enemy of every map of the chapter ×1.5 (the cross-check of "How it was
+  measured"), all sea fights, all chests, all side quests.
+- Levels: the chapter opening's floor, then the exp of everything before each boss (every active member gets the full
+  troop exp). Story fights that end by script without `rewards: true` give nothing; adds a boss summons mid-fight are
+  not counted except 清虛's 冥燈印 (so the real numbers are a little higher).
+- `node tools/sim_story.js --model normal|minimal|thorough` then runs every boss at exactly that state: the integer
+  level the style has there, the gear it could afford, the kit it bought. That is the "sim win" column below.
+
+### Before → after, per chapter
+
+Level at chapter entry → at the end of the chapter (fraction = progress to the next level), and the gold earned in
+the chapter (field fights + story fights + chests + quests). "Before" is the same model on the data of commit 45b5b4a
+(the full-chain report); field fights = the normal player's expected count.
+
+| Ch | BALANCE boss Lv | Minimal: Lv in → out | Normal: Lv in → out | Thorough: Lv in → out | Gold earned in the chapter (min / normal / thorough) | Normal: gold at entry · field fights |
+|---|---|---|---|---|---|---|
+| 1 | 3–4 | 2 → 4.5 ⇒ 2 → **4.7** | 2 → 5.4 ⇒ 2 → **5.7** | 2 → 5.6 ⇒ 2 → **5.9** | 446 / 827 / 955 ⇒ **519 / 900 / 1028** | 0 ⇒ 0 · 18.7 |
+| 2 | 6–8 | 5 → 6.2 ⇒ 5 → **6.4** | 5 → 8.8 ⇒ 5 → **9.1** | 5 → 9.4 ⇒ 5 → **9.7** | 394 / 2037 / 2422 ⇒ **925 / 2768 / 3153** | 296 ⇒ 369 · 27.3 |
+| 3 | 10–13 | 9 → 10.6 ⇒ 9 → **11.7** | 9 → 11.3 ⇒ 9 → **12.4** | 9 → 12.2 ⇒ 9 → **13.2** | 1626 / 2275 / 2775 ⇒ **3133 / 3782 / 4282** | 628 ⇒ 1102 · 7.8 |
+| 4 | 16 | 13 → 14.0 ⇒ 13 → **14.2** | 13 → 15.9 ⇒ 13 → **16.4** | 13 → 16.8 ⇒ 13 → **17.6** | 1452 / 3783 / 5993 ⇒ **6945 / 9276 / 11486** | 676 ⇒ 1437 · 18.2 |
+| 5 | 19 | 16 → 16.4 ⇒ 16 → **17.2** | 16 → 18.3 ⇒ 16 → **19.6** | 16 → 19.4 ⇒ 17 → **21.0** | 1158 / 4286 / 5793 ⇒ **7584 / 10712 / 12219** | 1204 ⇒ 4578 · 16.9 |
+| 6 | 21–23 | 19 → 20.4 ⇒ 19 → **22.6** | 19 → 21.0 ⇒ 19 → **23.5** | 19 → 21.4 ⇒ 21 → **24.6** | 2864 / 3753 / 3890 ⇒ **13858 / 14747 / 14884** | 1440 ⇒ 9650 · 6.5 |
+| 7 | 24–27 | 23 → 24.4 ⇒ 23 → **26.5** | 23 → 26.3 ⇒ 23 → **28.2** | 23 → 28.1 ⇒ 24 → **30.3** | 1696 / 7191 / 12907 ⇒ **14840 / 22335 / 28051** | 1310 ⇒ 9174 · 20.8 |
+| 8 | 28–29 | 27 → 28.3 ⇒ 27 → **29.0** | 27 → 28.8 ⇒ 28 → **30.5** | 28 → 30.0 ⇒ 30 → **32.5** | 2926 / 4198 / 4767 ⇒ **16309 / 17581 / 18150** | 2547 ⇒ 11990 · 4.9 |
+| 9 | 31–34 | 30 → 31.5 ⇒ 30 → **32.5** | 30 → 33.5 ⇒ 30 → **34.9** | 30 → 34.0 ⇒ 32 → **36.9** | 9853 / 19902 / 23576 ⇒ **12542 / 23129 / 26886** | 1563 ⇒ 14389 · 22.1 |
+| 10 | 35–38 | 34 → 35.4 ⇒ 34 → **37.3** | 34 → 36.7 ⇒ 34 → **39.2** | 34 → 37.1 ⇒ 36 → **41.0** | 4938 / 11562 / 13203 ⇒ **21563 / 29187 / 30828** | 3935 ⇒ 22888 · 17.6 |
+| 11 | 39–44 | 35 → 37.0 ⇒ 38 → **42.4** | 36 → 40.6 ⇒ 39 → **44.9** | 37 → 42.1 ⇒ 40 → **47.1** | 6103 / 18437 / 29562 ⇒ **25774 / 39108 / 50233** | 2345 ⇒ 19973 · 27.1 |
+
+### Before → after, per boss
+
+Level = the style's level there (fraction = progress to the next); "gear" = the share (by price) of the gear BALANCE
+assumes that the normal / minimal player can afford by then (an item at least as good counts); "sim win" =
+`sim_story.js --model` first-try win rate at that state (n = 300 normal and minimal, 100 thorough). Before the pass the
+normal player fell 1–4 levels behind from ch6 on and could afford 10–45 % of the gear in ch6–8 (百手: 31 %, the wall of
+the chain run); a minimal player lost most bosses from ch7 on.
+
+| Boss | Ch | BALANCE Lv | Normal Lv (before → after) | Minimal Lv | Thorough Lv | Normal gear (before → after) | Minimal gear | Sim win: normal (before → after) · minimal (before → after) · thorough |
+|---|---|---|---|---|---|---|---|---|
+| 工頭魂・金貴仔 (1-7) | 1 | 3 | 2.9 → **3.1** | 2.0 → 2.0 | 3.4 → 3.6 | 36% → **36%** | 36% → 36% | 69% → **88%** · 69% → **69%** · 88% |
+| 墨鴉 (1-19, after the 1-18 fight) | 1 | 4 | 4.7 → **5.0** | 3.4 → 3.6 | 5.0 → 5.3 | 75% → **100%** | 25% → 25% | 92% → **97%** · 69% → **69%** · 96% |
+| 水鬼王 + 陳伯 (1-20, right after 墨鴉) | 1 | 4 | 5.1 → **5.3** | 4.1 → 4.2 | 5.3 → 5.6 | 100% → **100%** | 25% → 36% | 95% → **96%** · 89% → **89%** · 96% |
+| 洛紅纓 duel (2-8, loseOk) | 2 | 6 | 7.0 → **7.4** | 5.2 → 5.5 | 7.7 → 8.0 | 63% → **100%** | 11% → 14% | 100% → **100%** · 100% → **100%** · 100% |
+| 虎姑婆 (2-15) | 2 | 8 | 8.5 → **8.8** | 5.4 → 5.7 | 9.1 → 9.4 | 82% → **100%** | 11% → 13% | 100% → **100%** · 85% → **87%** · 100% |
+| 石猴王 (3-5) | 3 | 10 | 9.5 → **9.6** | 9.0 → 9.0 | 10.5 → 10.7 | 100% → **100%** | 13% → 13% | 100% → **100%** · 100% → **100%** · 100% |
+| 鬼面 raid (3-9, after the 陰兵 fight) | 3 | 10 | 10.0 → **10.5** | 9.5 → 10.0 | 10.9 → 11.4 | 100% → **100%** | 13% → 23% | 100% → **100%** · 100% → **100%** · 100% |
+| 河伯怨靈 (4-2) | 3 | 13 | 11.1 → **12.2** | 10.3 → 11.4 | 11.9 → 13.0 | 58% → **100%** | 18% → 41% | 100% → **100%** · 100% → **100%** · 100% |
+| 風魔 (4-15) | 4 | 16 | 15.4 → **15.9** | 13.4 → 13.5 | 16.2 → 16.9 | 54% → **100%** | 13% → 63% | 100% → **100%** · 55% → **91%** · 99% |
+| 怨宴 (3-12) | 5 | 19 | 17.9 → **18.7** | 16.0 → 16.0 | 19.1 → 20.2 | 77% → **100%** | 35% → 100% | 79% → **91%** · 27% → **68%** · 95% |
+| 疫聚 (鹽水蜂炮) | 6 | 21 | 19.4 → **20.0** | 19.4 → 19.4 | 19.8 → 21.3 | 11% → **92%** | 11% → 54% | 96% → **99%** · 78% → **99%** · 100% |
+| 林投姐 (3-11) | 6 | 22 | 20.3 → **21.5** | 19.7 → 20.4 | 20.8 → 22.8 | 24% → **100%** | 18% → 71% | 100% → **100%** · 100% → **100%** · 100% |
+| 冥燈護法 (萬燈閣) | 6 | 23 | 20.6 → **22.6** | 20.1 → 21.6 | 21.1 → 23.7 | 32% → **100%** | 26% → 86% | 72% → **97%** · 42% → **92%** · 99% |
+| 黑熊精 (alishan) | 7 | 24 | 23.0 → **23.5** | 23.0 → 23.0 | 23.6 → 25.1 | 9% → **95%** | 9% → 64% | 13% → **88%** · 2% → **80%** · 93% |
+| 心魔・雲歸 | 7 | 25 | 24.4 → **25.2** | 23.0 → 23.7 | 25.8 → 27.1 | 29% → **100%** | 9% → 76% | 61% → **93%** · 12% → **63%** · 98% |
+| 無光之影 (心火 awakens) | 7 | 26 | 24.6 → **25.8** | 23.2 → 24.4 | 25.9 → 27.6 | 29% → **100%** | 9% → 76% | 86% → **91%** · 3% → **75%** · 96% |
+| 蛟 (日月潭) | 7 | 26 | 25.2 → **26.7** | 23.4 → 25.1 | 26.6 → 28.5 | 29% → **100%** | 9% → 81% | 87% → **93%** · 1% → **81%** · 98% |
+| 清虛真人 + 冥燈印 (燈母祠) | 7 | 27 | 25.7 → **27.6** | 23.6 → 25.8 | 27.6 → 29.7 | 24% → **100%** | 8% → 58% | 74% → **93%** · 0% → **76%** · 100% |
+| 潮怨・百手 (8-4) | 8 | 28 | 27.9 → **29.0** | 27.8 → 27.8 | 29.1 → 31.1 | 29% → **100%** | 13% → 92% | 31% → **97%** · 0% → **80%** · 100% |
+| 洛青鋒 (8-6) | 8 | 29 | 28.8 → **29.9** | 28.3 → 28.3 | 30.0 → 31.9 | 43% → **100%** | 26% → 78% | 62% → **91%** · 12% → **93%** · 97% |
+| 大肚貪鬼 (半屏山) | 9 | 31 | 30.4 → **31.0** | 30.2 → 30.3 | 30.6 → 33.1 | 69% → **100%** | 30% → 100% | 75% → **93%** · 9% → **93%** · 95% |
+| 瘟鬼頭 (東港 船台) | 9 | 32 | 31.7 → **32.6** | 30.7 → 31.1 | 32.0 → 34.6 | 82% → **100%** | 37% → 100% | 82% → **88%** · 23% → **87%** · 95% |
+| 落山風靈 (龍磐) | 9 | 33 | 32.5 → **33.7** | 31.0 → 31.7 | 32.9 → 35.7 | 68% → **100%** | 20% → 68% | 77% → **93%** · 23% → **74%** · 97% |
+| 潮病鰻王 (鵝鑾鼻) | 9 | 34 | 33.3 → **34.7** | 31.2 → 32.2 | 33.7 → 36.7 | 76% → **100%** | 29% → 68% | 100% → **92%** · 89% → **75%** · 96% |
+| 潮病海蛇 (蘭嶼) | 10 | 35 | 34.3 → **35.2** | 34.1 → 34.1 | 34.4 → 37.2 | 76% → **100%** | 29% → 68% | 96% → **91%** · 84% → **78%** · 94% |
+| 大潮怨 (海祭 岬角) | 10 | 36 | 35.4 → **36.5** | 34.6 → 35.0 | 35.6 → 38.5 | 92% → **100%** | 29% → 76% | 93% → **96%** · 98% → **88%** · 98% |
+| 太魯閣石巨靈 | 10 | 37 | 36.2 → **38.0** | 34.8 → 36.1 | 36.5 → 39.9 | 60% → **100%** | 23% → 65% | 80% → **77%** · 22% → **72%** · 89% |
+| 孤魂眾 (頭城 普渡) | 10 | 38 | 36.5 → **38.7** | 35.0 → 36.8 | 36.8 → 40.6 | 27% → **100%** | 12% → 53% | 76% → **90%** · 12% → **78%** · 96% |
+| 烏鬚船主 (11-05) | 11 | 39 | 37.5 → **39.7** | 35.4 → 38.0 | 38.2 → 41.8 | 17% → **100%** | 11% → 58% | 48% → **93%** · 3% → **70%** · 94% |
+| 鎖魂將 (11-10) | 11 | 40 | 39.0 → **41.5** | 35.6 → 38.9 | 40.0 → 43.6 | 41% → **100%** | 11% → 68% | 60% → **90%** · 2% → **73%** · 95% |
+| 鯤 (11-14) | 11 | 41 | 39.3 → **42.4** | 36.0 → 39.9 | 40.3 → 44.4 | 41% → **100%** | 11% → 84% | 4% → **97%** · 0% → **76%** · 97% |
+| 千年燈塔守 (11-23) | 11 | 43 | 40.0 → **43.6** | 36.3 → 41.0 | 41.5 → 46.0 | 56% → **100%** | 26% → 84% | 74% → **98%** · 12% → **78%** · 98% |
+| 夜玄・玄冥法師 (11-28 phase 1) | 11 | 44 | 40.3 → **44.6** | 36.6 → 42.1 | 41.8 → 46.9 | 47% → **100%** | 22% → 78% | 78% → **100%** · 72% → **100%** · 100% |
+| 夜玄・逆潮法身 (phase 2, after phase 1 +30%) | 11 | 44 | 40.3 → **44.6** | 36.6 → 42.1 | 41.8 → 46.9 | 47% → **100%** | 22% → 78% | 2% → **93%** · 1% → **81%** · 100% |
+| 黑潮・無相 (phase 1, full heal before) | 11 | 44 | 40.6 → **44.9** | 37.0 → 42.4 | 42.1 → 47.1 | 47% → **100%** | 22% → 78% | 75% → **100%** · 63% → **97%** · 100% |
+| 無相・深淵 (phase 2, trio, +50% after phase 1) | 11 | 44 | 40.6 → **44.9** | 37.0 → 42.4 | 42.1 → 47.1 | 47% → **100%** | 22% → 78% | 25% → **94%** · 0% → **70%** · 97% |
+
+### What changed (levers in order of preference)
+
+**1. Story battles and boss rewards** (the `m.exp` / `m.gold` reward multipliers of each boss; their stats are
+unchanged, so the "Results" table above still holds). Each boss now pays roughly 0.5–1 level and a good part of the
+next shop's gear, so a player who only follows the story still levels between floors and can buy most of the gear:
+
+| Boss | Lv | Exp before → after | Gold before → after |
+|---|---|---|---|
+| 工頭魂・金貴仔 (`c1_foreman`) | 3 | 57 → 68 | 47 → 120 |
+| 魔神仔頭 (`c2_mosin_lead`) | 6 | 74 → 200 | 51 → 250 |
+| 虎姑婆 (`tiger_granny`) | 9 | 313 → 313 | 267 → 599 |
+| 石猴王 (`c3_monkey_king`) | 12 | 260 → 802 | 120 → 500 |
+| 鬼面 (`c3_guimian`) | 11 | 446 → 1503 | 219 → 700 |
+| 河伯怨靈 (`c3_river_boss`) | 13 | 285 → 342 | 153 → 799 |
+| 風魔 (`e_wind_demon`) | 18 | 1188 → 1485 | 507 → 3500 |
+| 怨宴 (`c5_feast`) | 20 | 993 → 3503 | 576 → 3002 |
+| 疫聚 (`c6_plague_mass`) | 21 | 851 → 4008 | 382 → 2500 |
+| 林投姐 (`c6_linto`) | 22 | 1177 → 4994 | 0 → 0 |
+| 冥燈護法 (`c6_netherlamp`) | 24 | 1376 → 5006 | 723 → 4999 |
+| 黑熊精（潮病） (`c7_bear_boss`) | 24 | 983 → 4002 | 362 → 3001 |
+| 心魔・雲歸 (`c7_heart_yg`) | 25 | 846 → 4004 | 0 → 0 |
+| 無光之影 (`c7_lightless`) | 26 | 1361 → 4500 | 0 → 0 |
+| 蛟 (`c7_jiao_boss`) | 26 | 1134 → 4500 | 501 → 3497 |
+| 冥燈印 (`c7_dark_seal`) | 27 | 4207 → 5013 | 1053 → 3000 |
+| 潮怨・百手 (`c8_hundred_hands`) | 28 | 2619 → 2619 | 662 → 3500 |
+| 洛青鋒 (`c8_qingfeng`) | 30 | 2052 → 5013 | 726 → 3497 |
+| 溺魂 (`c9_drowned`) | 30 | 281 → 449 | 116 → 185 |
+| 海霧魂 (`c9_sea_wisp`) | 30 | 223 → 349 | 92 → 144 |
+| 大肚貪鬼 (`c9_greed_big`) | 31 | 1555 → 4509 | 1012 → 1012 |
+| 瘟鬼頭 (`c9_plague_chief`) | 31 | 2177 → 5006 | 759 → 1796 |
+| 落山風靈 (`c9_fallwind`) | 32 | 2304 → 5003 | 924 → 2006 |
+| 潮病鰻王 (`c9_moray_king`) | 33 | 2783 → 2783 | 1101 → 1101 |
+| 潮病海蛇 (`tide_serpent`) | 36 | 2847 → 8017 | 1086 → 4004 |
+| 大潮怨 (`c10_tide_wraith_big`) | 36 | 1627 → 12509 | 621 → 3508 |
+| 峽谷巨像 (`gorge_colossus`) | 38 | 3137 → 9501 | 1172 → 5993 |
+| 孤魂眾 (`c10_guhun_horde`) | 38 | 2689 → 5987 | 2 → 4001 |
+| 烏鬚船主 (`c11_captain`) | 39 | 2348 → 11983 | 1042 → 5001 |
+| 鎖魂將 (`c11_jailer`) | 40 | 3440 → 13995 | 1440 → 5004 |
+| 鯤 (`c11_kun`) | 41 | 3596 → 15986 | 0 → 0 |
+| 千年燈塔守 (`c11_warden_elder`) | 42 | 3755 → 17981 | 1351 → 4999 |
+| 夜玄・逆潮法身 (`c11_yexuan_2`) | 44 | 5249 → 4199 | 1651 → 1651 |
+
+- 林投姐, 心魔・雲歸, 無光之影 and 鯤 keep 0 gold (an empathy fight, two of the heroes' own shadows, a whale); 清虛真人
+  stays 0/0 — the reward is on the 冥燈印 on his back. 夜玄・逆潮法身 only moved with the ch11 exp curve.
+- 黑熊精 (`t_c7_bear`, ends at 30 %) and 洛青鋒 (`qfBattleOpts`, he kneels) ended by script **without** `rewards: true`,
+  so they paid nothing at all; both now pay (js/maps/ch7_mountains.js, ch8_tide.js).
+- 溺魂 / 海霧魂 (ch9's beach and road story fights) ×1.5 exp, so the first ch9 boss is not fought at the floor.
+- **Chapter 11 now floors the party at Lv38** (`G.Data.progression` ch11 `lv[0]`) like every other chapter opening
+  (it used the party average, so a player who arrived low stayed low for the whole finale).
+
+**2. Main-path chests** (gold added to chests on or near the critical path, and in towns; items unchanged). Quest
+rewards were left as they are (keepsakes and food; 半邊井 1,500, 米粉 500, 半屏山 1,000 gold): they only reach players
+who do side content, and the normal player already ends every chapter with gold to spare.
+
+| Ch | Chests (gold added) |
+|---|---|
+| 2 | 霧林南 c2_s1 +200 |
+| 4 | 客家古道 c4_09 +500 · 五指山 c4_12 +300, c4_15 +500 · 風穴 c4_18 +600, c4_22 +600 |
+| 5 | 鹿港 c5_01 +800 · 洛家 c5_06, c5_08 +600, c5_07 +800, c5_09, c5_10 +600 |
+| 6 | 鹽水 c6_01, c6_02 +600 · 府城 c6_03 +800 · 長明宮 c6_09, c6_11 +800, c6_12 +1,000 |
+| 7 | 糖廍 c7_ss_a +1,500 · 阿里山 c7_af_d +1,200 · 玉山 c7_ys_e +1,000 · 雲霧林 c7_cf_g +1,000 · 日月潭 c7_sm_i +1,500, c7_sm_j +1,000 |
+| 8 | 北港 c8_bg_inn, c8_bg_alley +1,500 · 溪口 c8_rv_village +2,000 · 安平 c8_ap_oyster, c8_ap_shrine +1,000 |
+| 10 | 台東海岸 coastC +2,000, coastB +1,000 |
+| 11 | 媽宮 c11_01, c11_02 +2,500 · 潮間帶 c11_04 +1,000 · 玄武 B1 c11_08 +1,500, c11_09, c11_10 +1,000 |
+
+**3. Encounter exp per area** (`G.Data.enemyCurve`'s fights-per-level table `FPL`, which scales every enemy of that
+level band; js/data/enemies.js). The model counts the field fights a normal player really meets: few in ch1, ch4 and
+ch5 (each worth more), many in ch7, ch10 and ch11 (each worth less — that exp moved to the bosses, which narrows the
+gap between the normal and the minimal player and keeps the thorough player from running away):
+
+| Band (levels) | ch1 (1–4) | ch4 (13–15) | ch5 (16–18) | ch7 (23–26) | ch10 (34–37) | ch11 (38+) |
+|---|---|---|---|---|---|---|
+| FPL before → after | 9 → 7.5 | 12 → 10 | 9 → 7.2 | 13 → 17.3 | 13 → 15.3 | 13 → 16.25 |
+| exp per fight | ×1.2 | ×1.2 | ×1.25 | ×0.75 | ×0.85 | ×0.8 |
+
+Field gold is unchanged.
+
+**4. Shop prices** for gear priced above its chapter (gold per stat point):
+
+- ch3 艋舺 armour and fan were dearer than ch4's better gear: 艋舺短打 520 → 380, 繡花褙子 540 → 400, 桃木符扇 600 → 450.
+- ch10 頭城 sells a second full tier right after 花蓮's, priced like ch11 gear for ch10 stats: 蘭陽劍 2,600 → 1,900,
+  海神符扇 2,800 → 2,000, 蕉絲衫 2,200 → 1,600, 蕉絲頭巾 1,150 → 850, 蕉絲綁腿 1,000 → 750, 漁家護腕 1,400 → 1,100.
+- ch11 澎湖布鞋 1,300 → 1,000 and 漁夫斗笠 1,200 → 1,000 (the dearest per point of the whole game).
+
+**5. Boss retunes: none.** No stat of any boss changed; the "Results" table and the "2 levels lower" column stand.
+
+### Side fixes
+
+- **七仙蕈 (雲歸的蕈譜, `q_tuanzi_mush`).** Only five of the six mushrooms 玄武蕈 needs existed before ch11 (ch3 剝皮寮,
+  ch4 風穴, ch5 洛家, ch6 林投林, ch7 雲霧林), and ch4–6 also required ch3's 杉皮蕈, which needs a 青草阿伯 conversation
+  and 靈視 at night — miss it and the quest could never be finished. Now: ch4–6 no longer require 杉皮蕈 (finding any
+  mushroom starts the quest); a sixth, **潮汐蕈**, grows on the coral right on the path through 龍坑 (ch9, visible glow,
+  short scene, EN text); and the quest log names where the next one grows — each chapter opening points it at that
+  chapter's mushroom (stage texts in js/maps/ch3_guanyin.js), with 「（開啟靈視）」 for the three that need Spirit Sight.
+  All six are reachable on normal play paths across ch3–ch9, so 玄武蕈 in ch11 can complete the seven.
+- **Quests left open by main-story scenes.** `q_atu_watch` (opened in the mine by 阿土伯) and `q_hy_kitchen` (opened by
+  the 平溪 morning) could only be finished in their chapter but stayed open for the rest of the game. The next
+  chapter's opening now removes the previous chapter's unfinished chapter-local side quests from the log
+  (ch2: `q_atu_watch`, `q_ahuang`, `q_xingmu`; ch3: `q_hy_kitchen`, `q_woodcutter`, `q_letter`).
+
+### Verification
+
+- `node tools/sim_story.js` (BALANCE conditions, n = 100): unchanged within noise — 85–100 % for every boss.
+- `node tools/sim_story.js --model normal|minimal|thorough` (n = 300 / 300 / 100): the "Sim win" columns above.
+- `node tools/test/full_chain.js --from ch5 --encounters` (no assist): see docs/qa/full_chain.md.
+- `node tools/test/validate.js`: 0 errors · `node tools/test/unit.js`: 60 passed.
+
+### Notes / open
+
+- **The normal player ends rich** (≈ 20–30 k gold unspent late in the game): the story and chest gold was sized so that
+  the *minimal* player can buy most of the gear and a kit, and the normal player gets field gold on top. That surplus
+  is consumables and luxury upgrades; it does not buy power the bosses were not tuned for (the best shop gear is what
+  BALANCE assumed). If it feels too loose, trim the town chests of ch8–11 first (they only matter to the minimal player
+  for 1–2 bosses each).
+- **The thorough player** (every roaming enemy, 1.5 times) is 2–3.5 levels above the boss levels from ch7 on; with no
+  exp penalty for being over-levelled that is the natural reward for grinding, and it is not required.
+- The minimal player stays ≈ 1–2.5 levels under the BALANCE level (it never fights in the field) and relies on gear,
+  kit and careful play: 63 % (心魔・雲歸) is its lowest first-try rate, and every boss has 重新挑戰.
+
 ## Needs a human playtest
 
 - **Speed of the retuned bosses.** Most now act about twice per party round. That is what makes them dangerous for a
@@ -203,8 +420,10 @@ Not re-run: the remaining segments/sessions of those tests (the bot also plays t
 - **KO rates.** At 86–94 % wins a member falls in 35–95 % of the retuned boss fights; revives (回魂, 心火・不滅, 還魂香) carry the
   party. Check that this feels tense rather than grindy, especially 冥燈護法 (15 rounds), 潮怨・百手 (18) and 柿鼠大王
   (15).
-- **Level assumptions.** A player who skips symbol enemies is 2–4 levels lower in ch6–10 (the right-hand column: the
-  harder bosses drop to 55–75 %; 蛟 55 %, 心魔・雲歸 59 %, 柿鼠大王 61 %).
+- **Level assumptions.** Superseded by "Progression & economy": a normal player is now at the boss level (±1), and a
+  player who flees every field fight is 1–2.5 levels lower but can afford most of the gear (63–100 % first try).
+- **Economy feel** (Progression & economy): bosses now pay 0.5–1 level each and the normal player ends with gold to
+  spare; check that field fights still feel worth taking in ch7 / ch10 / ch11, where their exp moved to the bosses.
 - **工頭魂** at Lv3 (星河 alone, guard tutorial): one bad 鶴嘴鋤重擊 crit can end it; 93 % in the sim.
 - **The in-game auto-battle (F)** can no longer beat these bosses on normal.
 - **無相・深淵** is now clearly weaker on paper than phase 1; it is the party state (trio, half HP/MP, no 白芷) that makes
