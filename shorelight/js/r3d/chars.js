@@ -1621,15 +1621,19 @@ G.Char3D = (() => {
       }
     }
   }
-  // flat ribbon (2-sided card with slight thickness) along chain points
+  // flat ribbon (2-sided card with slight thickness) along chain points. `side` = the ribbon's WIDTH direction at its
+  // root (the tube frame's reference is the face normal, so it is derived as tangent × side).
   function ribbon(B, pts, ids, rect, halfW, side, thick, opts = {}) {
     const n = (pts.length - 1) * 3;
+    const t0 = vnorm(vsub(pts[1], pts[0]));
+    let up = vcross(t0, side);
+    if (vlen(up) < 1e-4) up = side; else up = vnorm(up);
     const Wf = (t) => {
       const seg = clamp(t * (pts.length - 1), 0, ids.length - 1e-4), si = floor(seg), sf = seg - si;
       const W = [[ids[si], 1 - sf * 0.5]]; if (si + 1 < ids.length) W.push([ids[si + 1], sf * 0.5]); else W[0][1] = 1;
       return W;
     };
-    tube(B.G, pts, 6, rect, (t) => ({ rx: halfW(t), ry: thick(t), ao: opts.ao ? opts.ao(t) : 1 }), (t) => Wf(t), { nv: n, up: side, uvf: opts.uvf, phase: 0 });
+    tube(B.G, pts, 6, rect, (t) => ({ rx: halfW(t), ry: thick(t), ao: opts.ao ? opts.ao(t) : 1 }), (t) => Wf(t), { nv: n, up, uvf: opts.uvf, phase: 0 });
   }
   C.ribbon = ribbon;
 
@@ -1749,7 +1753,7 @@ G.Char3D = (() => {
     const fpt = (t) => { const y = kp[1] - fL * t; const p = torsoPt(ringAt(R, clamp(y, P.legTop, P.neckY)), kth * (1 - 0.6 * t) + 0.05, 0.03 * s + 0.006 * s * t); return [p[0], y, max(p[2], kp[2] * (1 - t))]; };
     const fp = [kp, fpt(0.35), fpt(0.7), fpt(1)];
     const fids = B.chain('nscarfF', 'chest', fp, { stiff: 1.2, drag: 0.35, grav: 0.8, r: 0.016 * s, groups: ['body'], kind: 'ribbon' });
-    ribbon(B, fp, fids, rect, (t) => hw * (1 - 0.55 * pow(t, 1.5)) * (t > 0.92 ? (1 - t) / 0.08 * 0.5 + 0.5 : 1), [sin(kth) * 0.5, 0, 1], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
+    ribbon(B, fp, fids, rect, (t) => hw * (1 - 0.55 * pow(t, 1.5)) * (t > 0.92 ? (1 - t) / 0.08 * 0.5 + 0.5 : 1), [cos(kth), 0, -sin(kth)], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
     // long tail from the back-left of the neck, sweeping back and out over the left shoulder blade
     const tL = (sc.tail || 0.62) * s, sw = sc.sweep != null ? sc.sweep : 0.6;
     const t0 = [sin(2.3) * rN, yN - 0.01 * s, cos(2.3) * rN - 0.004 * s];
@@ -1760,7 +1764,7 @@ G.Char3D = (() => {
       tp.push([t0[0] + (0.05 + tL * 0.55 * sw * t) * s, y, min(bz, t0[2]) - tL * 0.35 * sw * t * t]);
     }
     const tids = B.chain('nscarfT', 'chest', tp, { stiff: 0.55 + sw * 0.6, drag: 0.3, grav: 0.75, r: 0.02 * s, groups: ['body'], kind: 'ribbon' });
-    ribbon(B, tp, tids, rect, (t) => hw * (1.05 - 0.45 * t) * (t > 0.9 ? (1 - t) / 0.1 * 0.6 + 0.4 : 1), [0.45, 0.15, -1], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
+    ribbon(B, tp, tids, rect, (t) => hw * (1.05 - 0.45 * t) * (t > 0.9 ? (1 - t) / 0.1 * 0.6 + 0.4 : 1), [1, 0, 0.35], () => 0.004 * s, { uvf: (u, v) => [v, 0.5 + u * 0.5] });
   }
 
   function buildBeads(B, bd) {
