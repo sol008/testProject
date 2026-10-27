@@ -23,6 +23,7 @@ G.Input = (() => {
 
   window.addEventListener('keydown', (e) => {
     if (e.metaKey && e.code !== 'MetaLeft') return; // ⌘-shortcuts (e.g. ⌘F fullscreen) are not game input
+    if (e.ctrlKey && e.code === 'KeyF') return;  // Ctrl+F is the fullscreen shortcut on Windows/Linux, not auto-battle
     const a = KEYMAP[e.code];
     if (a) {
       e.preventDefault();
