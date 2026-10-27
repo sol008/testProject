@@ -1011,6 +1011,168 @@
     },
   });
 
+  // ============================================================ 09 引魂幡 — soul-banner funeral priest
+  OPT({
+    zh: '引魂幡', en: 'Soul-banner Priest', tag: '度亡科儀・寫實 Funeral rite / grounded',
+    idea: '中元普渡夜的「烏頭」雲歸：黑袍白領、高方巾，手持帶竹葉的引魂幡與一盞普渡白燈——不說笑的時候，他其實很適合送人過岸。',
+    shape: '最「直」的一款：高方巾＋垂直竹竿＋窄長幡，整體是三條平行直線；黑白二值，只留燈火一點冷光。',
+    culture: '台灣喪葬與普渡由「烏頭」道士主持度亡；引魂幡常以留葉的竹竿懸掛，紙燈書「普渡」。方巾、黑袍白領為道士常服。幻想處：幡上符文會隨魂光流動、燈內是引魂人的藍火。',
+    ratio: 7.5, H: 386, bg: ['#e3e5ea', '#aab0bd'], accent: '#3b3f52', dx: 22,
+    palette: [['黑道袍 Black robe', '#1c1b22'], ['白領袖 White trims', '#efebe2'], ['幡白 Banner paper', '#f4f1e8'], ['竹青 Bamboo', '#7a9a4a'], ['魂火藍 Soul flame', '#8fd0ff'], ['膚 Skin (pale)', '#eedfd2'], ['紅裡 Red lining', '#8e2a2a']],
+    bust: { y: -0.55, z: 1.6 },
+    draw(ctx, B, o) {
+      const u = B.u, cx = B.cx, hb = B.top;
+      const skin = '#eedfd2', blk = '#1c1b22', wht = '#efebe2', bam = '#7a9a4a', soul = '#8fd0ff';
+      const hc = { c: '#1a1920', sh: '#0a0a0e', hi: '#4a4c60', ln: '#060608', rim: '#cfe6ff' };
+      const px = cx - 1.38 * u, ptop = hb - 0.95 * u;
+      // cap ribbons behind
+      for (const s of [-1, 1]) H.lock(ctx, [[cx + s * 0.2 * u, hb + 0.1 * u], [cx + s * 0.45 * u, B.chin + 0.2 * u], [cx + s * 0.55 * u, B.chestY + 0.2 * u]], 0.1 * u, 0.09 * u, { c: blk, sh: '#0a0a0e', ln: '#050506', rim: '#cfe6ff' });
+      // bamboo pole + leaves + banner
+      cel(ctx, ribbon([[px, B.gy - 0.05 * u], [px + 0.02 * u, ptop]], 0.11 * u, 0.07 * u), { c: '#9bb060', s: 1, h: 0.6, rim: 1, lw: 1.5, fx: (c) => { if (DZ.sil) return; for (let y = B.gy - 0.6 * u; y > ptop; y -= 0.9 * u) DZ.line(c, [[px - 0.06 * u, y], [px + 0.06 * u, y - 0.02 * u]], 1.2, DZ.dk(bam, 0.4)); } });
+      [[-0.5, -0.35], [-0.3, -0.6], [0.05, -0.75], [0.35, -0.55], [0.55, -0.25], [-0.6, 0.05], [0.5, 0.1]].forEach(([dx, dy], i) => cel(ctx, ribbon([[px + 0.02 * u, ptop + 0.05 * u], [px + dx * 0.55 * u, ptop + dy * 0.5 * u], [px + dx * u, ptop + dy * u]], 0.02 * u, 0.01 * u, 0.13 * u), { c: i % 2 ? bam : DZ.dk(bam, 0.15), s: 1, h: 0, rim: 0, lw: 1.1 }));
+      const bx0 = px + 0.06 * u, by0 = ptop + 0.35 * u, by1 = B.waistY + 0.2 * u;
+      const ban = sp([[bx0, by0, 1], [bx0 + 0.42 * u, by0, 1], [bx0 + 0.44 * u, by1, 1], [bx0 + 0.22 * u, by1 - 0.22 * u, 1], [bx0 + 0.02 * u, by1, 1]]);
+      cel(ctx, ban, { c: '#f4f1e8', s: 0.06 * u, h: 1, rim: 1, lw: 1.6, fx: (c) => { if (DZ.sil) return; c.fillStyle = '#1c1b22'; c.font = DZ.font(0.22 * u, 700, 'serif'); c.textAlign = 'center'; ['引', '魂', '歸', '岸'].forEach((ch, i) => c.fillText(ch, bx0 + 0.22 * u, by0 + (0.42 + i * 0.32) * u)); c.fillStyle = '#b3261e'; c.fillRect(bx0 + 0.12 * u, by0 + 1.5 * u, 0.2 * u, 0.2 * u); DZ.line(c, [[bx0 + 0.05 * u, by0 + 0.12 * u], [bx0 + 0.39 * u, by0 + 0.12 * u]], 1, '#1c1b22'); } });
+      for (let i = 0; i < 3; i++) cel(ctx, ribbon([[bx0 + 0.44 * u, by0 + 0.1 * u + i * 0.12 * u], [bx0 + 0.75 * u, by0 + 0.4 * u + i * 0.2 * u], [bx0 + 0.6 * u + i * 0.08 * u, by0 + 1.2 * u + i * 0.25 * u]], 0.06 * u, 0.05 * u), { c: i === 1 ? '#e8e2d2' : '#f4f1e8', s: 1, h: 0, rim: 0, lw: 1.1 });
+      // body
+      H.backCollar(ctx, B, '#2b2a33');
+      H.neck(ctx, B, skin, { w: 0.14 });
+      H.shoes(ctx, B, { type: 'cloth', c: '#17161c', sole: '#efebe2', spread: 0.24, w: 0.16, sock: '#f3f0e8' });
+      const vY = B.chestY - 0.1 * u, hemY = B.gy - 0.38 * u;
+      const robe = H.robe(B, { vY, hemY, hem: 0.98, waist: 0.64, hip: 0.74, knee: 0.86 });
+      cel(ctx, robe, { c: blk, s: 0.16 * u, h: 1.5, hi: '#34343f', rim: 2, lw: 2, fx: (c) => { H.robeFolds(c, B, blk, B.waistY + 0.3 * u, hemY, [-0.55, -0.15, 0.25, 0.6], { w: 0.18, a: 1 }); if (!DZ.sil) { c.save(); c.beginPath(); c.rect(cx - 3 * u, B.kneeY + 0.6 * u, 6 * u, 3 * u); c.clip(); DZ.crescent(c, robe, [0, 0.12 * u], wht); c.restore(); } } });
+      H.crossCollar(ctx, B, { vY, band: wht, guard: '#ffffff', endY: B.waistY, endX: 0.55 });
+      const sy = B.waistY;
+      cel(ctx, sp([[cx - 0.64 * u, sy - 0.1 * u], [cx + 0.64 * u, sy - 0.1 * u], [cx + 0.66 * u, sy + 0.1 * u], [cx - 0.66 * u, sy + 0.1 * u]]), { c: wht, s: 2, h: 1, rim: 1, lw: 1.6 });
+      H.lock(ctx, [[cx + 0.15 * u, sy + 0.05 * u], [cx + 0.2 * u, sy + 0.6 * u], [cx + 0.16 * u, sy + 1.2 * u]], 0.12 * u, 0.1 * u, { c: wht, sh: '#c9c4b8', ln: '#3a3a44', rim: '#ffffff' });
+      // hanging bell 帝鐘
+      DZ.line(ctx, [[cx - 0.4 * u, sy + 0.05 * u], [cx - 0.42 * u, sy + 0.35 * u]], 1.2, '#8e2a2a');
+      cel(ctx, sp([[cx - 0.42 * u, sy + 0.32 * u], [cx - 0.3 * u, sy + 0.45 * u], [cx - 0.28 * u, sy + 0.62 * u, 1], [cx - 0.56 * u, sy + 0.62 * u, 1], [cx - 0.54 * u, sy + 0.45 * u]]), { c: '#b08a3a', s: 2, h: 1, rim: 1, lw: 1.4 });
+      // viewer-right sleeve hanging + lantern
+      const sl = H.sleeveHang(ctx, B, 1, { c: blk, out: 1.38, lining: '#8e2a2a', band: wht, wristY: B.crotchY - 0.12 * u, bot: B.crotchY + 0.6 * u });
+      const lx = sl.wrist[0] + 0.25 * u, ly = B.crotchY + 0.85 * u;
+      if (!DZ.sil) DZ.glow(ctx, lx, ly, 0.9 * u, soul, 0.5);
+      cel(ctx, ribbon([[sl.wrist[0] - 0.04 * u, sl.wrist[1] + 0.1 * u], [lx, ly - 0.55 * u]], 0.04 * u, 0.04 * u), { c: '#5a4430', s: 0, h: 0, rim: 0, lw: 1.1 });
+      DZ.line(ctx, [[lx, ly - 0.55 * u], [lx, ly - 0.32 * u]], 1, '#3a3040');
+      const lan = DZ.ell(lx, ly, 0.27 * u, 0.3 * u);
+      cel(ctx, lan, { c: '#f6f2ea', s: 0.05 * u, h: 0, rim: 0, lw: 1.5, fx: (c) => { if (DZ.sil) return; const g = c.createRadialGradient(lx, ly + 0.05 * u, 0, lx, ly, 0.3 * u); g.addColorStop(0, DZ.rgba(soul, 0.9)); g.addColorStop(1, DZ.rgba(soul, 0)); c.fillStyle = g; c.fill(lan); for (let k = -2; k <= 2; k++) { c.strokeStyle = DZ.rgba('#9a9488', 0.6); c.lineWidth = 0.008 * u; c.beginPath(); c.ellipse(lx, ly, Math.abs(k) * 0.07 * u + 0.01, 0.3 * u, 0, 0, 7); c.stroke(); } c.fillStyle = '#1c1b22'; c.font = DZ.font(0.13 * u, 700, 'serif'); c.textAlign = 'center'; c.fillText('普', lx, ly - 0.02 * u); c.fillText('渡', lx, ly + 0.13 * u); } });
+      for (const yy of [ly - 0.32 * u, ly + 0.28 * u]) cel(ctx, DZ.ell(lx, yy, 0.13 * u, 0.04 * u), { c: '#2a2630', s: 0, h: 0, rim: 0, lw: 1 });
+      DZ.hand(ctx, sl.wrist[0] - 0.06 * u, sl.wrist[1] - 0.04 * u, -0.25, 0.6 * u, 'fist', -1, skin);
+      // viewer-left: sleeve over the forearm gripping the pole
+      const slL = sp([[cx - 0.52 * u, B.shY - 0.2 * u], [cx - 0.95 * u, B.shY], [cx - 1.15 * u, B.shY + 0.5 * u], [cx - 1.25 * u, B.chestY + 0.15 * u], [cx - 1.5 * u, B.waistY + 0.2 * u], [cx - 1.45 * u, B.hipY + 0.3 * u], [cx - 1.2 * u, B.hipY + 0.35 * u], [cx - 0.98 * u, B.waistY + 0.2 * u], [cx - 0.82 * u, B.chestY + 0.3 * u], [cx - 0.78 * u, B.shY + 0.8 * u]]);
+      cel(ctx, slL, { c: blk, s: 0.12 * u, sd: [1, 0.4], h: 1.5, hi: '#34343f', rim: 2, lw: 2, fx: (c) => { if (DZ.sil) return; DZ.drape(c, cx - 1.22 * u, B.chestY + 0.3 * u, B.hipY + 0.35 * u, 0.2 * u, -0.04 * u, DZ.rgba('#000000', 0.5)); c.lineWidth = 0.1 * u; c.strokeStyle = wht; c.stroke(sp([[cx - 1.28 * u, B.chestY + 0.05 * u], [cx - 1.18 * u, B.chestY + 0.3 * u], [cx - 1.3 * u, B.chestY + 0.5 * u]], false)); } });
+      DZ.hand(ctx, px + 0.12 * u, B.chestY + 0.15 * u, -Math.PI / 2 - 0.1, 0.58 * u, 'fist', -1, skin);
+      // head
+      const F = {
+        skin, blushA: 0.06,
+        shape: { t: [0.38, 0.41], c: [0.37, 0.6], j: [0.28, 0.84], ch: [0.1, 0.97] },
+        eye: { x: 0.168, y: 0.56, w: 0.165, h: 0.06, tilt: -0.04, open: 0.58, iris: '#3a3038', ir: 0.039, irisY: 0.25, crease: 0.3, peak: 0.45, lidW: 0.024, bag: 1 },
+        brow: { y: 0.45, w: 0.19, th: 0.02, tilt: -0.12, arch: 0.01, col: '#1a1920' },
+        nose: { type: 'bridge', y: 0.73, w: 0.046 }, mouth: { type: 'frown', y: 0.86, w: 0.1 },
+        age: { hollow: 0.55, naso: 0.25 },
+      };
+      DZ.head(ctx, F, cx, hb, u);
+      const locks = [ribbon([[cx - 0.36 * u, hb + 0.25 * u], [cx - 0.45 * u, hb + 0.7 * u], [cx - 0.44 * u, B.shY + 0.2 * u], [cx - 0.42 * u, B.chestY]], 0.12 * u, 0.02 * u, 0.13 * u), ribbon([[cx + 0.36 * u, hb + 0.25 * u], [cx + 0.45 * u, hb + 0.7 * u], [cx + 0.44 * u, B.shY + 0.2 * u], [cx + 0.42 * u, B.chestY]], 0.12 * u, 0.02 * u, 0.13 * u)];
+      const capH = sp([[cx - 0.46 * u, hb + 0.45 * u], [cx - 0.44 * u, hb + 0.22 * u], [cx, hb + 0.12 * u], [cx + 0.44 * u, hb + 0.22 * u], [cx + 0.46 * u, hb + 0.45 * u], [cx + 0.3 * u, hb + 0.26 * u], [cx, hb + 0.22 * u], [cx - 0.3 * u, hb + 0.26 * u]]);
+      H.hair(ctx, locks.concat([capH]), hc);
+      // tall square cap 方巾
+      const capT = sp([[cx - 0.46 * u, hb + 0.24 * u, 1], [cx - 0.4 * u, hb - 0.5 * u, 1], [cx + 0.4 * u, hb - 0.5 * u, 1], [cx + 0.46 * u, hb + 0.24 * u, 1], [cx, hb + 0.18 * u]]);
+      cel(ctx, capT, { c: '#1f1e26', s: 0.1 * u, h: 1.5, hi: '#3c3c4a', rim: 1.8, lw: 1.9, fx: (c) => { if (DZ.sil) return; DZ.line(c, [[cx, hb - 0.5 * u], [cx, hb + 0.18 * u]], 1.1, '#3c3c4a'); c.fillStyle = '#2c2b35'; c.fill(DZ.poly([[cx - 0.45 * u, hb + 0.06 * u], [cx + 0.45 * u, hb + 0.06 * u], [cx + 0.46 * u, hb + 0.2 * u], [cx - 0.46 * u, hb + 0.2 * u]])); c.fillStyle = '#efebe2'; c.beginPath(); c.arc(cx, hb + 0.13 * u, 0.05 * u, 0, 7); c.fill(); } });
+      return [
+        { zh: '方巾', en: 'tall square cap', p: [cx + 0.3 * u, hb - 0.25 * u], side: 1 },
+        { zh: '引魂幡', en: 'soul banner, leafy bamboo', p: [bx0 + 0.22 * u, by0 + 0.8 * u], side: -1 },
+        { zh: '白護領', en: 'white collar & cuffs', p: [cx + 0.14 * u, B.shY - 0.1 * u], side: 1 },
+        { zh: '帝鐘', en: 'ritual hand bell', p: [cx - 0.42 * u, sy + 0.5 * u], side: -1 },
+        { zh: '普渡燈', en: 'Pudu paper lantern', p: [lx + 0.2 * u, ly], side: 1 },
+        { zh: '黑道袍', en: 'black robe, white hem', p: [cx - 0.5 * u, B.gy - 0.6 * u], side: -1 },
+      ];
+    },
+  });
+
+  // ============================================================ 10 太虛霄遊 — void-walker (bold fantasy)
+  OPT({
+    zh: '太虛霄遊', en: 'Void-walker of Taixu', tag: '覺醒形態・奇幻 Awakened / bold fantasy',
+    idea: '讀懂「內景」之後的雲歸：懸浮半空，身後一輪雷紋八卦，長髮與冠帶無風自飄，衣襬化成雲——適合終章覺醒、宣傳主視覺。',
+    shape: '圓（身後八卦環）＋放射（漂浮的髮、袖、冠帶）＋下擺消散成雲：唯一腳不著地、底部最輕的剪影。',
+    culture: '取材道教神仙圖像：蓮花冠、冠帶、輕紗外袍、腳踏雲氣；八卦與雷紋為太虛觀符號。幻想處：整體為覺醒形態而非日常服，額上雷印、玉色瞳光、衣襬化雲。',
+    ratio: 7.5, H: 372, bg: ['#2d3454', '#121526'], bustBg: '#283050', accent: '#3f9f86',
+    palette: [['玉紗外袍 Jade gauze', '#8fd1bd'], ['月白內袍 Moon-white', '#eef2ee'], ['夜藍 Night ink', '#1c2340'], ['雷玉光 Jade glow', '#7dffd2'], ['金八卦 Gold ring', '#e2c36a'], ['膚 Skin (luminous)', '#f3e2d4'], ['髮 Hair + white streak', '#191b26']],
+    bust: { y: -0.5, z: 1.55 },
+    draw(ctx, B0, o) {
+      const u = B0.u;
+      const B = DZ.frame(B0.cx, B0.gy - 0.55 * u, B0.H, B0.heads, { sh: 0.95 });
+      const cx = B.cx, hb = B.top;
+      const prevRim = DZ.rim; DZ.rim = '#9effe0';
+      const skin = '#f3e2d4', jade = '#8fd1bd', moon = '#eef2ee', nightC = '#1c2340', glowC = '#7dffd2', gold = '#e2c36a';
+      const hc = { c: '#191b26', sh: '#0a0b12', hi: '#3c5a6a', ln: '#05060a', rim: '#9effe0' };
+      // halo: bagua ring
+      const hcY = B.shY - 0.15 * u;
+      if (!DZ.sil) { DZ.glow(ctx, cx, hcY, 2.1 * u, glowC, 0.35); }
+      const ring = new Path2D(); ring.arc(cx, hcY, 1.62 * u, 0, Math.PI * 2); ring.arc(cx, hcY, 1.42 * u, 0, Math.PI * 2, true);
+      cel(ctx, ring, { c: gold, s: 0, h: 0, rim: 0, lw: 1.5, ln: '#7a5a1a' });
+      if (!DZ.sil) { DZ.bagua(ctx, cx, hcY, 1.15 * u, DZ.rgba(gold, 0.95), 0.045 * u, 0.0); ctx.strokeStyle = DZ.rgba(glowC, 0.6); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, hcY, 1.02 * u, 0, 7); ctx.stroke(); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 1.62 * u, hcY + Math.sin(a) * 1.62 * u); ctx.lineTo(cx + Math.cos(a) * 1.75 * u, hcY + Math.sin(a) * 1.75 * u); ctx.stroke(); } }
+      // floating hair mass behind
+      const back = sp([[cx - 0.4 * u, hb + 0.2 * u], [cx - 0.9 * u, hb + 0.3 * u], [cx - 1.45 * u, hb + 0.1 * u, 1], [cx - 1.2 * u, hb + 0.6 * u], [cx - 1.6 * u, B.shY, 1], [cx - 1.05 * u, B.shY + 0.3 * u], [cx - 1.3 * u, B.chestY + 0.3 * u, 1], [cx - 0.6 * u, B.chestY], [cx, B.shY + 0.1 * u], [cx + 0.6 * u, B.chestY], [cx + 1.35 * u, B.chestY + 0.2 * u, 1], [cx + 1.05 * u, B.shY + 0.3 * u], [cx + 1.65 * u, B.shY - 0.1 * u, 1], [cx + 1.15 * u, hb + 0.55 * u], [cx + 1.5 * u, hb + 0.05 * u, 1], [cx + 0.9 * u, hb + 0.25 * u], [cx + 0.4 * u, hb + 0.2 * u], [cx, hb - 0.08 * u]]);
+      cel(ctx, back, { c: DZ.dk(hc.c, 0.05), sh: hc.sh, s: 4, h: 0, rim: 2, rimC: hc.rim, lw: 1.8, ln: hc.ln, fx: (c) => { if (DZ.sil) return; H.strands(c, [[[cx - 0.5 * u, hb + 0.3 * u], [cx - 1.0 * u, hb + 0.35 * u], [cx - 1.35 * u, hb + 0.15 * u]], [[cx - 0.6 * u, B.shY - 0.1 * u], [cx - 1.1 * u, B.shY + 0.05 * u], [cx - 1.45 * u, B.shY]], [[cx + 0.5 * u, hb + 0.3 * u], [cx + 1.0 * u, hb + 0.35 * u], [cx + 1.4 * u, hb + 0.1 * u]], [[cx + 0.6 * u, B.shY - 0.1 * u], [cx + 1.1 * u, B.shY + 0.05 * u], [cx + 1.5 * u, B.shY - 0.05 * u]]], hc, 0.04 * u); } });
+      // crown ribbons 冠帶 floating up and out
+      for (const s of [-1, 1]) cel(ctx, ribbon([[cx + s * 0.1 * u, hb - 0.12 * u], [cx + s * 0.6 * u, hb - 0.55 * u], [cx + s * 1.1 * u, hb - 0.4 * u], [cx + s * 1.5 * u, hb - 0.75 * u]], 0.08 * u, 0.06 * u), { c: jade, s: 1.5, h: 1, rim: 1, lw: 1.4 });
+      H.neck(ctx, B, skin, { w: 0.14 });
+      // bare feet, toes pointed (floating)
+      for (const s of [-1, 1]) cel(ctx, sp([[cx + s * 0.2 * u - 0.09 * u, B.gy - 0.75 * u], [cx + s * 0.2 * u + 0.09 * u, B.gy - 0.75 * u], [cx + s * 0.22 * u + 0.08 * u, B.gy - 0.25 * u], [cx + s * 0.24 * u, B.gy - 0.05 * u], [cx + s * 0.2 * u - 0.07 * u, B.gy - 0.25 * u]]), { c: skin, sh: DZ.skinSh(skin), s: 2, h: 0, rim: 1, lw: 1.3, ln: DZ.skinLn(skin) });
+      // inner robe
+      const hemY = B.gy - 0.55 * u, vY = B.chestY - 0.05 * u;
+      const inner = H.robe(B, { vY, hemY, hem: 0.8, waist: 0.6, hip: 0.68, knee: 0.74 });
+      cel(ctx, inner, { c: moon, s: 0.14 * u, h: 2, rim: 2, lw: 1.8, fx: (c) => H.robeFolds(c, B, moon, B.waistY + 0.3 * u, hemY, [-0.3, 0.1, 0.45], { w: 0.14 }) });
+      // outer gauze robe: open front, hem dissolving into cloud lobes, sleeves floating
+      for (const s of [-1, 1]) {
+        const p = sp([[cx + s * 0.22 * u, B.shY - 0.32 * u, 1], [cx + s * 0.9 * u, B.shY], [cx + s * 1.0 * u, B.waistY], [cx + s * 1.25 * u, B.kneeY], [cx + s * 1.5 * u, B.kneeY + 0.55 * u], [cx + s * 1.2 * u, B.kneeY + 0.75 * u], [cx + s * 1.0 * u, B.kneeY + 0.55 * u], [cx + s * 0.8 * u, B.kneeY + 0.9 * u], [cx + s * 0.55 * u, B.kneeY + 0.65 * u], [cx + s * 0.38 * u, B.kneeY + 0.85 * u], [cx + s * 0.3 * u, B.hipY], [cx + s * 0.2 * u, B.chestY]]);
+        cel(ctx, p, { c: jade, s: 0.18 * u, h: 2, rim: 2, lw: 1.9, grad: [0, B.waistY, 0, B.gy, 0.4], fx: (c) => { if (DZ.sil) return; DZ.drape(c, cx + s * 0.75 * u, B.waistY, B.kneeY + 0.7 * u, 0.25 * u, s * 0.08 * u, DZ.rgba(DZ.dk(jade, 0.3), 0.7)); DZ.cloud(c, cx + s * 0.9 * u - (s < 0 ? 0.25 * u : 0), B.kneeY + 0.3 * u, 0.14 * u, '#eaffff', 1.4, s); DZ.cloud(c, cx + s * 0.55 * u - (s < 0 ? 0.2 * u : 0), B.hipY + 0.4 * u, 0.1 * u, '#eaffff', 1.2, s); DZ.tp(c, [[cx + s * 0.2 * u, B.chestY], [cx + s * 0.3 * u, B.hipY], [cx + s * 0.4 * u, B.kneeY + 0.8 * u]], 0.08 * u, 0.08 * u, gold); } });
+      }
+      // sash
+      const sy = B.waistY;
+      cel(ctx, sp([[cx - 0.6 * u, sy - 0.1 * u], [cx + 0.6 * u, sy - 0.1 * u], [cx + 0.62 * u, sy + 0.1 * u], [cx - 0.62 * u, sy + 0.1 * u]]), { c: nightC, s: 2, h: 1, rim: 1.2, lw: 1.6 });
+      DZ.taiji(ctx, cx, sy, 0.13 * u, '#eef2ee', '#1c2340', 0.8);
+      H.crossCollar(ctx, B, { vY, band: nightC, guard: '#eef2ee', endY: sy, endX: 0.5 });
+      // floating wing sleeves
+      for (const s of [-1, 1]) {
+        const p = sp([[cx + s * 0.55 * u, B.shY - 0.2 * u], [cx + s * 0.98 * u, B.shY - 0.02 * u], [cx + s * 1.5 * u, B.shY + 0.2 * u], [cx + s * 2.0 * u, B.shY + 0.05 * u, 1], [cx + s * 1.85 * u, B.chestY + 0.3 * u], [cx + s * 2.05 * u, B.waistY + 0.2 * u, 1], [cx + s * 1.5 * u, B.waistY + 0.25 * u], [cx + s * 1.1 * u, B.waistY - 0.1 * u], [cx + s * 0.8 * u, B.shY + 0.8 * u]]);
+        cel(ctx, p, { c: jade, s: 0.14 * u, sd: [s, 0.4], h: 2, rim: 2, lw: 1.9, fx: (c) => { if (DZ.sil) return; DZ.tp(c, [[cx + s * 1.5 * u, B.waistY + 0.2 * u], [cx + s * 1.85 * u, B.chestY + 0.3 * u], [cx + s * 2.0 * u, B.shY + 0.08 * u]], 0.08 * u, 0.06 * u, gold); fold(c, [[cx + s * 1.0 * u, B.shY + 0.3 * u], [cx + s * 1.45 * u, B.shY + 0.5 * u], [cx + s * 1.8 * u, B.chestY + 0.2 * u]], 0.07 * u, DZ.rgba(DZ.dk(jade, 0.3), 0.8)); } });
+      }
+      // viewer-left: open fan before the chest; viewer-right: open palm with a hovering talisman
+      DZ.fan(ctx, cx - 0.55 * u, B.chestY + 0.45 * u, 0.85 * u, -0.5, { leaf: '#f4f1e8', rib: '#2a2f48', spread: 2.0, paint: (c, r) => { c.strokeStyle = '#2f6f63'; c.lineWidth = 0.04 * u; c.beginPath(); c.moveTo(-r * 0.4, -r * 0.6); c.lineTo(-r * 0.1, -r * 0.85); c.lineTo(0, -r * 0.62); c.lineTo(r * 0.3, -r * 0.88); c.stroke(); } });
+      DZ.hand(ctx, cx - 0.55 * u, B.chestY + 0.45 * u, -Math.PI * 0.75, 0.56 * u, 'fist', -1, skin);
+      DZ.hand(ctx, cx + 1.4 * u, B.waistY + 0.15 * u, -0.5, 0.56 * u, 'open', 1, skin);
+      if (!DZ.sil) DZ.glow(ctx, cx + 1.65 * u, B.waistY - 0.35 * u, 0.6 * u, glowC, 0.6);
+      DZ.fu(ctx, cx + 1.65 * u, B.waistY - 0.4 * u, 0.18 * u, 0.48 * u, 0.25, { paper: '#e6fff6', ink: '#1f8f72' });
+      // head
+      const F = {
+        skin, blushA: 0.12,
+        shape: { t: [0.385, 0.405], c: [0.375, 0.59], j: [0.285, 0.835], ch: [0.1, 0.968] },
+        eye: { x: 0.168, y: 0.55, w: 0.168, h: 0.06, tilt: 0.12, open: 0.45, iris: '#3fd6a8', ir: 0.042, crease: 0.35, peak: 0.55, lidW: 0.026, pupil: '#0d3a30', pupilR: 0.3 },
+        brow: { y: 0.44, w: 0.19, th: 0.022, tilt: 0.06, arch: 0.012, col: '#191b26' },
+        nose: { type: 'bridge', y: 0.725, w: 0.047 }, mouth: { type: 'neutral', y: 0.848, w: 0.11 },
+        extra: (c) => { if (DZ.sil) return; c.strokeStyle = glowC; c.lineWidth = 0.014; c.beginPath(); c.moveTo(-0.02, 0.29); c.lineTo(0.02, 0.33); c.lineTo(-0.015, 0.36); c.lineTo(0.02, 0.4); c.stroke(); },
+      };
+      DZ.head(ctx, F, cx, hb, u);
+      if (!DZ.sil) { DZ.glow(ctx, cx - 0.17 * u, hb + 0.55 * u, 0.1 * u, glowC, 0.45); DZ.glow(ctx, cx + 0.17 * u, hb + 0.55 * u, 0.1 * u, glowC, 0.45); }
+      const capP = sp([[cx - 0.47 * u, hb + 0.45 * u], [cx - 0.47 * u, hb + 0.15 * u], [cx - 0.25 * u, hb - 0.04 * u], [cx, hb - 0.08 * u], [cx + 0.25 * u, hb - 0.04 * u], [cx + 0.47 * u, hb + 0.15 * u], [cx + 0.47 * u, hb + 0.45 * u], [cx + 0.36 * u, hb + 0.24 * u], [cx, hb + 0.17 * u], [cx - 0.36 * u, hb + 0.24 * u]]);
+      const front = [ribbon([[cx - 0.08 * u, hb + 0.14 * u], [cx - 0.25 * u, hb + 0.35 * u], [cx - 0.42 * u, hb + 0.62 * u], [cx - 0.6 * u, B.chin + 0.1 * u]], 0.12 * u, 0.01 * u, 0.13 * u), ribbon([[cx + 0.08 * u, hb + 0.14 * u], [cx + 0.25 * u, hb + 0.35 * u], [cx + 0.45 * u, hb + 0.6 * u], [cx + 0.65 * u, B.chin]], 0.12 * u, 0.01 * u, 0.13 * u)];
+      H.hair(ctx, [capP].concat(front), hc, { cols: [hc.c, '#d8e4ea', hc.c] });
+      // lotus crown 蓮花冠
+      cel(ctx, DZ.ell(cx, hb - 0.08 * u, 0.15 * u, 0.11 * u), { c: hc.c, sh: hc.sh, s: 2, h: 0, rim: 1, lw: 1.4, ln: hc.ln });
+      [[-0.17, 0.25], [0.17, -0.25], [0, 0]].forEach(([dx, a]) => cel(ctx, DZ.xf(sp([[0, 0], [-0.09 * u, -0.12 * u], [0, -0.3 * u, 1], [0.09 * u, -0.12 * u]]), new DOMMatrix().translate(cx + dx * u, hb - 0.04 * u).rotate(a * 57.3)), { c: '#b8f0dc', s: 1.5, h: 1, rim: 1, lw: 1.3 }));
+      DZ.rim = prevRim;
+      return [
+        { zh: '蓮花冠・冠帶', en: 'lotus crown, ribbons', p: [cx + 0.6 * u, hb - 0.5 * u], side: 1 },
+        { zh: '雷紋八卦環', en: 'thunder-bagua halo', p: [cx - 1.5 * u, hcY - 0.6 * u], side: -1 },
+        { zh: '額上雷印', en: 'thunder sigil, jade eyes', p: [cx, hb + 0.33 * u], side: -1 },
+        { zh: '玉紗外袍', en: 'jade gauze over-robe', p: [cx + 1.75 * u, B.chestY + 0.2 * u], side: 1 },
+        { zh: '雲化衣襬', en: 'hem dissolving to cloud', p: [cx - 0.9 * u, B.kneeY + 0.65 * u], side: -1 },
+        { zh: '懸浮赤足', en: 'floating, bare feet', p: [cx + 0.24 * u, B.gy - 0.15 * u], side: 1 },
+      ];
+    },
+  });
+
   // ------------------------------------------------------------ card
   const CW = 460, CH = 900;
   YG.CW = CW; YG.CH = CH;
