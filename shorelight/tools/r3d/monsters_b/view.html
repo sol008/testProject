@@ -73,13 +73,13 @@ setTimeout(function () {
   // per-id stats (draw calls, tris) before layout
   const stats = {};
   for (const it of items) if (!stats[it.id]) { let calls = 0, tris = 0; it.obj.traverse((o) => { if ((o.isMesh || o.isPoints) && o.visible) { calls++; if (o.geometry.index && !o.userData.outline) tris += o.geometry.index.count / 3; } }); stats[it.id] = { calls, tris }; }
-  // advance each to its own time
-  for (const it of items) { const n = Math.round(it.T * 60); for (let s = 0; s < n; s++) { G.time = s / 60; it.inst.update(1 / 60, 0, null); } }
-  G.time = T0;
   const boxes = items.map((it) => { it.obj.updateMatrixWorld(true); const b = new THREE.Box3(); it.obj.traverse((o) => { if (o.isSkinnedMesh && !o.userData.outline) { o.geometry.computeBoundingBox(); } }); b.setFromObject(it.obj, false); return b.isEmpty() ? new THREE.Box3(new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 2, 1)) : b; });
   const cols = num('cols', items.length <= 6 ? items.length : Math.ceil(Math.sqrt(items.length * 1.8)));
   const cell = Math.max(1.4, ...ids.map((id) => G.Mon3D.B.DEFS[id] ? G.Mon3D.B.DEFS[id].h * (G.Mon3D.B.DEFS[id].wide || 1) : 2)) * num('gap', 1.15);
   items.forEach((it, i) => { it.obj.position.x += (i % cols) * cell; it.obj.position.z += Math.floor(i / cols) * cell; });
+  // advance each to its own time
+  for (const it of items) { const n = Math.round(it.T * 60); for (let s = 0; s < n; s++) { G.time = s / 60; it.inst.update(1 / 60, 0, null); } }
+  G.time = T0;
   const all = new THREE.Box3(); for (const it of items) all.expandByObject(it.obj);
   const ctr = all.getCenter(new THREE.Vector3()), size = all.getSize(new THREE.Vector3());
   if (q.get('ground') !== '0') {

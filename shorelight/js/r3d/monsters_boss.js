@@ -215,8 +215,8 @@ G.Mon3D = G.Mon3D || {
       // pandanus (林投) leaf card: long blade with midrib and serrated edges, alpha outside
       g.clearRect(0, 0, CS, CS);
       g.beginPath(); g.moveTo(CS * 0.5, 0);
-      for (let y = 0; y <= CS; y += 8) { const w = (1 - y / CS) * 0.12 * CS + 6; g.lineTo(CS * 0.5 + w + (y % 16 ? 0 : 5), CS - y); }
-      for (let y = CS; y >= 0; y -= 8) { const w = (1 - y / CS) * 0.12 * CS + 6; g.lineTo(CS * 0.5 - w - (y % 16 ? 0 : 5), CS - y); }
+      for (let y = 0; y <= CS; y += 8) { const w = (1 - pow(y / CS, 1.5)) * 0.4 * CS + 4; g.lineTo(CS * 0.5 + w + (y % 16 ? 0 : 5), CS - y); }
+      for (let y = CS; y >= 0; y -= 8) { const w = (1 - pow(y / CS, 1.5)) * 0.4 * CS + 4; g.lineTo(CS * 0.5 - w - (y % 16 ? 0 : 5), CS - y); }
       g.closePath();
       const gr = g.createLinearGradient(CS * 0.35, 0, CS * 0.65, 0); gr.addColorStop(0, grey(170)); gr.addColorStop(0.5, grey(255)); gr.addColorStop(1, grey(160));
       g.fillStyle = gr; g.fill();
@@ -280,7 +280,7 @@ G.Mon3D = G.Mon3D || {
     },
     lintoface(g) {
       face(g, '#e8e6e2', () => {
-        const gr = g.createRadialGradient(128, 130, 10, 128, 130, 140); gr.addColorStop(0, '#f2f1ee'); gr.addColorStop(1, '#b7bcc4'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS);
+        const gr = g.createRadialGradient(128, 130, 10, 128, 130, 150); gr.addColorStop(0, '#f6f5f2'); gr.addColorStop(1, '#e8e6e2'); g.fillStyle = gr; g.fillRect(0, 0, CS, CS);
         for (const s of [-1, 1]) {
           g.strokeStyle = '#2a2230'; g.lineWidth = 4; g.lineCap = 'round'; g.beginPath(); g.moveTo(128 + s * 22, 96); g.quadraticCurveTo(128 + s * 50, 84, 128 + s * 76, 100); g.stroke();
           eyeAlmond(g, 128 + s * 46, 126, 24, 9, ['#4a5060', '#1a1c24'], false, '#1a141c');
@@ -409,7 +409,7 @@ G.Mon3D = G.Mon3D || {
     },
     ghostface(g) {
       face(g, '#e4ecf0', () => {
-        for (const s of [-1, 1]) { g.fillStyle = '#20242e'; g.beginPath(); g.ellipse(128 + s * 40, 118, 20, 26, 0, 0, TAU); g.fill(); g.fillStyle = '#c8e8ff'; g.beginPath(); g.arc(128 + s * 40, 122, 5, 0, TAU); g.fill(); }
+        for (const s of [-1, 1]) { const gr = g.createRadialGradient(128 + s * 40, 120, 2, 128 + s * 40, 120, 22); gr.addColorStop(0, '#141820'); gr.addColorStop(0.6, '#3a4250'); gr.addColorStop(1, 'rgba(160,180,200,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(128 + s * 40, 120, 22, 18, 0, 0, TAU); g.fill(); g.fillStyle = '#c8e8ff'; g.beginPath(); g.arc(128 + s * 40, 121, 4, 0, TAU); g.fill(); }
         g.fillStyle = '#20242e'; g.beginPath(); g.ellipse(128, 190, 7, 9, 0, 0, TAU); g.fill();
         g.strokeStyle = 'rgba(80,90,110,0.45)'; g.lineWidth = 3; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(128 + s * 60, 150); g.quadraticCurveTo(128 + s * 50, 180, 128 + s * 30, 196); g.stroke(); }
       });
@@ -1317,6 +1317,10 @@ G.Mon3D = G.Mon3D || {
     }
     stepSprings(dt) {
       if (!this.springs.length) return;
+      // teleports (spawn placement, scene changes) would fling the chains: reset when the root jumps
+      const rp = _v.setFromMatrixPosition(this.root.matrixWorld);
+      if (this.lastRootPos && rp.distanceTo(this.lastRootPos) > 0.6 * max(1, this.def.h / 3)) for (const s of this.springs) s.init = false;
+      this.lastRootPos = (this.lastRootPos || new THREE.Vector3()).copy(rp);
       const step = 1 / 60;
       this.sAcc = (this.sAcc || 0) + dt;
       let n = 0;
@@ -1401,6 +1405,364 @@ G.Mon3D = G.Mon3D || {
   const byZ = (a, b, z0, z1) => (p) => { const t = sm(z0, z1, p.z); return [[a, 1 - t], [b, t]]; };
 
   /* CREATURES */
+  // ============================================================================ humanoid toolkit
+  // biped(R, p): standard bones body/chest/neck/head, arm*/fore*/hand*, leg*/shin*/foot* (L = −x, R = +x). Faces +z.
+  function biped(R, p) {
+    const hip = p.hip, cz = p.cz || 0;
+    R.bone('body', 'root', [0, hip, 0]);
+    R.bone('chest', 'body', [0, p.chest, cz]);
+    R.bone('neck', 'chest', [0, p.neck, cz + (p.nz || 0)]);
+    R.bone('head', 'neck', [0, p.head, cz + (p.hz || 0.02)]);
+    for (const s of [-1, 1]) {
+      const L = s < 0 ? 'L' : 'R', sw = p.sw, out = p.armOut != null ? p.armOut : 0.06, al = p.arm;
+      R.bone('arm' + L, 'chest', [s * sw, p.sy, cz]);
+      R.bone('fore' + L, 'arm' + L, [s * (sw + out), p.sy - al * 0.48, cz + 0.02]);
+      R.bone('hand' + L, 'fore' + L, [s * (sw + out * 1.3), p.sy - al * 0.94, cz + 0.07]);
+      if (p.legs !== false) {
+        const hw = p.hw;
+        R.bone('leg' + L, 'body', [s * hw, hip - 0.04, 0]);
+        R.bone('shin' + L, 'leg' + L, [s * hw * 1.02, hip * 0.52, 0.04]);
+        R.bone('foot' + L, 'shin' + L, [s * hw, 0.08, 0]);
+      }
+    }
+  }
+  const sideL = (s) => (s < 0 ? 'L' : 'R');
+  // limbs as swept tubes over the arm/leg chains
+  function limbs(R, o) {
+    for (const s of [-1, 1]) {
+      const L = sideL(s);
+      if (o.arm) R.tube(['arm' + L, 'fore' + L, 'hand' + L], Object.assign({ sides: 10, ext: [0.03, 0.02] }, o.arm));
+      if (o.leg && R.has('leg' + L)) R.tube(['leg' + L, 'shin' + L, 'foot' + L], Object.assign({ sides: 10, ext: [0.04, 0] }, o.leg));
+    }
+  }
+  // hanging cloth (skirt / robe / coat-tails): lathe from waist to hem, skinned to n spring chains (2 bones each).
+  // o: { y0, y1, r0, r1, n, c, cell, rep, m, z (centre z), from: [a0, a1] angular range (default full), flare, sides, k, drag, g, parent }
+  function skirt(R, o) {
+    const n = o.n || 8, y0 = o.y0, y1 = o.y1, pz = o.z || 0, px = o.x || 0, par = o.parent || 'body', pre = o.name || 'sk';
+    const a0 = o.from ? o.from[0] : 0, a1 = o.from ? o.from[1] : TAU, full = !o.from;
+    const chains = [];
+    for (let i = 0; i < n; i++) {
+      const a = full ? (i / n) * TAU : lerp(a0, a1, n > 1 ? i / (n - 1) : 0.5);
+      const ym = lerp(y0, y1, 0.45);
+      const rm = lerp(o.r0, o.r1, 0.45);
+      const b0 = R.bone(pre + i + 'a', par, [px + sin(a) * o.r0 * 0.9, y0 - 0.02, pz + cos(a) * o.r0 * 0.9]);
+      const b1 = R.bone(pre + i + 'b', b0, [px + sin(a) * rm, ym, pz + cos(a) * rm]);
+      chains.push({ a, b0, b1 });
+      R.spring([b0, b1], { k: o.k || 0.22, drag: o.drag || 0.2, g: o.g != null ? o.g : 0.3, tail: [sin(a) * (o.r1 - rm), y1 - ym, cos(a) * (o.r1 - rm)] });
+    }
+    const sides = o.sides || n * 4, hs = o.hs || 8;
+    const g = new THREE.CylinderGeometry(1, 1, 1, sides, hs, true, full ? 0 : a0, full ? TAU : a1 - a0);
+    GEO.warp(g, (v) => {
+      const t = 0.5 - v.y; // 0 top → 1 bottom
+      const r = lerp(o.r0, o.r1, o.flare ? o.flare(t) : t);
+      const wav = o.wave ? 1 + sin(atan2(v.x, v.z) * o.wave) * 0.04 * t : 1;
+      v.x *= r * wav; v.z *= r * wav; v.y = lerp(y0, y1, t);
+      v.x += px; v.z += pz;
+    });
+    idx(g);
+    const skin = (pt) => {
+      const t = clamp((y0 - pt.y) / (y0 - y1));
+      let a = atan2(pt.x - px, pt.z - pz); if (a < 0) a += TAU;
+      // two nearest chains by angle
+      let j0 = 0, j1 = 0, f = 0;
+      if (full) { const fi = a / TAU * n; j0 = floor(fi) % n; j1 = (j0 + 1) % n; f = fi - floor(fi); }
+      else { let aa = a; if (aa > a1 + 0.5) aa -= TAU; const fi = clamp((aa - a0) / (a1 - a0)) * (n - 1); j0 = min(n - 1, floor(fi)); j1 = min(n - 1, j0 + 1); f = fi - j0; }
+      const A = chains[j0], B = chains[j1];
+      const wTop = 1 - sm(0, 0.25, t), w1 = sm(0.35, 0.75, t), w0 = (1 - wTop) * (1 - w1);
+      const out = [];
+      if (wTop > 0.001) out.push([par, wTop]);
+      if (w0 > 0.001) { out.push([A.b0, w0 * (1 - f)]); out.push([B.b0, w0 * f]); }
+      if (w1 > 0.001) { out.push([A.b1, w1 * (1 - f)]); out.push([B.b1, w1 * f]); }
+      out.sort((x, y) => y[1] - x[1]);
+      return out.slice(0, 4);
+    };
+    R.add(g, { skin, c: o.c, cell: o.cell || 'cloth', rep: o.rep || [4, 2], m: o.m || 'body' });
+    return chains;
+  }
+  // hair strand / ribbon / tassel: chain through pts (first = root on parent), flattened tube, spring
+  function strand(R, name, parent, pts, o = {}) {
+    const ch = R.chain(name, parent, pts);
+    R.tube(ch, { r: o.r || ((u) => 0.05 * (1 - u * 0.7)), ell: o.ell || [1, 0.4], sides: o.sides || 6, c: o.c, cell: o.cell || 'hair', rep: o.rep || [1, 2], m: o.m, ext: [0, o.tip || 0.08], up: o.up });
+    R.spring(ch.slice(0, ch.length), { k: o.k || 0.16, drag: o.drag || 0.15, g: o.g != null ? o.g : 0.5, tail: o.tail });
+    return ch;
+  }
+  // humanoid motion library (s = side sign)
+  const HUM = {
+    idle(k, o = {}) {
+      const b = sin(k.t * 1.7), sw = sin(k.t * 0.55);
+      k.p('body', sw * 0.015, b * 0.012, 0); k.r('body', 0, sw * 0.05, sw * 0.02);
+      k.r('chest', 0.03 + b * 0.015, -sw * 0.03, 0); k.s('chest', b * 0.012);
+      k.r('head', sin(k.t * 0.8) * 0.04, sin(k.t * 0.37) * 0.15, 0);
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        k.r('arm' + L, 0.05 + b * 0.03, 0, s * (o.armOut || 0.08)); k.r('fore' + L, -(o.elbow || 0.2), 0, 0);
+        k.r('leg' + L, -0.03, 0, 0); k.r('shin' + L, 0.06, 0, 0);
+      }
+    },
+    walk(k, o = {}) {
+      const c = k.t * (o.rate || 7), st = o.stride || 0.5;
+      k.p('body', 0, abs(sin(c)) * 0.05 * (o.bob || 1), 0); k.r('body', 0.06, sin(c) * 0.12, 0); k.r('chest', 0.04, -sin(c) * 0.16, 0);
+      for (const s of [-1, 1]) {
+        const L = sideL(s), ph = c + (s < 0 ? 0 : PI);
+        k.r('leg' + L, sin(ph) * st, 0, 0); k.r('shin' + L, max(0, -cos(ph)) * st * 1.4 + 0.05, 0, 0); k.r('foot' + L, -sin(ph) * 0.2, 0, 0);
+        k.r('arm' + L, -sin(ph) * st * 0.8, 0, s * 0.08); k.r('fore' + L, -0.3 - max(0, -sin(ph)) * 0.3, 0, 0);
+      }
+    },
+    // overhead weapon chop with the right arm: anticipation (raise, coil), strike, follow-through, recover
+    chop(k, o = {}) {
+      const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.42), hit = pulse(u, 0.36, 0.46, 0.62, 0.95);
+      k.r('body', -0.15 * back + 0.25 * hit, 0.35 * back - 0.25 * hit, 0); k.p('body', 0, -0.03 * hit, 0.35 * hit * (o.lunge || 1));
+      k.r('chest', -0.15 * back + 0.25 * hit, 0.3 * back - 0.4 * hit, 0);
+      k.r('armR', -2.8 * back + 0.3 * hit, 0, 0.3 * back); k.r('foreR', -0.9 * back - 0.1 * hit, 0, 0); k.r('handR', -0.5 * back + 0.6 * hit, 0, 0);
+      k.r('armL', -0.6 * back + 0.3 * hit, 0, -0.3 * back); k.r('foreL', -0.6 * back);
+      k.r('legL', -0.45 * hit); k.r('shinL', 0.45 * hit); k.r('legR', 0.35 * hit); k.r('shinR', 0.2 * hit);
+      k.fx.glow += 0.6 * hit;
+    },
+    // forward thrust (spear/halberd/claws) with both arms
+    thrust(k) {
+      const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.42), hit = pulse(u, 0.36, 0.45, 0.62, 0.95);
+      k.r('body', 0.3 * hit - 0.15 * back, -0.4 * back + 0.3 * hit, 0); k.p('body', 0, 0, 0.45 * hit - 0.1 * back);
+      k.r('armR', -0.3 * back - 1.4 * hit, 0, 0.2 * back); k.r('foreR', -1.6 * back + 0.2 * hit); k.r('armL', -0.9 * hit - 0.3 * back); k.r('foreL', -0.8 * back - 0.5 * hit);
+      k.r('legL', -0.5 * hit); k.r('shinL', 0.5 * hit); k.r('legR', 0.4 * hit);
+    },
+    cast(k, o = {}) {
+      const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1), wind = pulse(u, 0, 0.12, 0.12, 0.3);
+      k.r('body', -0.05 * up + 0.1 * wind, 0, 0); k.p('body', 0, 0.06 * up + (o.float || 0) * up, 0);
+      k.r('chest', -0.2 * up); k.r('head', -0.25 * up);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -1.9 * up + 0.3 * wind, 0, s * 0.6 * up); k.r('fore' + L, -0.5 * up); k.r('hand' + L, -0.4 * up); }
+      k.fx.glow += 1.6 * up; k.fx.psy += up;
+    },
+    hurt(k) {
+      const u = k.u, h = pulse(u, 0, 0.07, 0.18, 1);
+      k.r('body', -0.25 * h, 0.1 * h, 0); k.p('body', 0, -0.03 * h, -0.2 * h);
+      k.r('chest', -0.25 * h); k.r('head', -0.4 * h, 0, 0.15 * h);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.5 * h, 0, s * 0.5 * h); k.r('fore' + L, -0.6 * h); }
+      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, u)) * 1.2);
+    },
+    die(k, o = {}) {
+      const u = k.u, st = sm(0, 0.2, u), fall = sm(0.2, 0.65, u);
+      k.r('body', -0.2 * st - (o.back ? 1.2 : -0.9) * fall * 0.0, 0, 0);
+      k.p('body', 0, -k.h * 0.32 * fall, -0.25 * st);
+      k.r('body', 0.6 * fall, 0, 0.15 * fall); k.r('chest', 0.3 * fall); k.r('head', 0.5 * fall - 0.3 * st);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, 0.3 * fall - 0.6 * st, 0, s * 0.3 * fall); k.r('fore' + L, -0.4 * fall); k.r('leg' + L, -1.3 * fall); k.r('shin' + L, 1.9 * fall); k.r('foot' + L, -0.5 * fall); }
+      k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.15, u)) * 0.8); k.fx.diss = max(k.fx.diss, sm(0.4, 1, u));
+    },
+    special(k) {
+      // leap & cleave: crouch, jump spin, crash down
+      const u = k.u, cr = pulse(u, 0, 0.18, 0.18, 0.3), air = pulse(u, 0.25, 0.4, 0.55, 0.68), land = pulse(u, 0.62, 0.7, 0.8, 1);
+      k.p('body', 0, -0.25 * cr + 0.9 * air - 0.2 * land, 0.5 * air + 0.6 * land); k.r('body', 0.2 * cr - 0.2 * air + 0.4 * land, air * TAU * 0.5 * 0, 0);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('leg' + L, -0.9 * cr - 0.6 * air - 0.6 * land); k.r('shin' + L, 1.4 * cr + 1.0 * air + 0.8 * land); }
+      k.r('armR', -2.9 * air + 0.4 * land, 0, 0); k.r('armL', -2.4 * air + 0.2 * land); k.r('foreR', -0.5 * air);
+      k.fx.glow += 2.0 * (air + land); k.fx.flash = max(k.fx.flash, 0.5 * pulse(u, 0.66, 0.7, 0.72, 0.85));
+    },
+    enter(k) {
+      const u = k.u, rise = sm(0, 0.75, u);
+      k.p('body', 0, -0.6 * (1 - rise), 0); k.r('body', 0.6 * (1 - rise), 0, 0); k.r('head', 0.5 * (1 - sm(0.5, 0.9, u)));
+      k.fx.diss = max(k.fx.diss, 1 - sm(0, 0.75, u)); k.fx.glow += 1.5 * pulse(u, 0.5, 0.75, 0.8, 1);
+    },
+  };
+  const humClips = (extra = {}) => Object.assign({ attack: (k) => HUM.chop(k), cast: (k) => HUM.cast(k), hurt: (k) => HUM.hurt(k), die: (k) => HUM.die(k), special: (k) => HUM.special(k), enter: (k) => HUM.enter(k) }, extra);
+  // simple torso: tapered ellipsoid lathe from hips to shoulders, skinned body→chest
+  function torso(R, o) {
+    const pts = [];
+    const n = 12;
+    for (let i = 0; i <= n; i++) { const t = i / n; const r = o.r(t); pts.push([max(0.001, r), lerp(o.y0, o.y1, t)]); }
+    const g = GEO.lathe(pts, o.seg || 18);
+    if (o.depth) GEO.warp(g, (v) => { v.z *= o.depth; v.z += o.z || 0; });
+    return R.add(g, { skin: byY('body', 'chest', lerp(o.y0, o.y1, 0.3), lerp(o.y0, o.y1, 0.75)), c: o.c, cell: o.cell || 'cloth', rep: o.rep || [3, 2], m: o.m });
+  }
+  // string between two bones (marionette strings, chains): thin tube; top verts follow `a`, bottom verts follow `b`
+  function tether(R, a, b, pa, pb, r, o = {}) {
+    const g = GEO.sweep([pa, [(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2, (pa[2] + pb[2]) / 2], pb], r, { sides: 4, n: 6, cap: false });
+    const A = new THREE.Vector3(...pa), B = new THREE.Vector3(...pb), L = A.distanceTo(B);
+    R.add(g, Object.assign({ c: 0xe8e0d0, cell: 'blank', skin: (p) => { const t = clamp(p.distanceTo(A) / L); return [[a, 1 - t], [b, t]]; } }, o));
+  }
+
+  // ============================================================================ 傀儡 marionette
+  // A 傀儡戲 string-puppet general come loose of its theatre: red loyal-face mask, gilt armour, 靠旗 flags, strings to a control bar.
+  defB('marionette', {
+    h: 2.6, outline: 0.003, rim: 0.3,
+    build(R) {
+      biped(R, { hip: 0.78, chest: 1.12, neck: 1.33, head: 1.48, sw: 0.2, sy: 1.26, arm: 0.5, hw: 0.1, armOut: 0.05 });
+      R.bone('bar', 'root', [0, 2.45, 0.05]);
+      R.bone('sword', 'handR', [0.3, 0.8, 0.2]);
+      const RED = 0xb8282a, GOLD = 0xe0b040, BLUE = 0x2a4a9a, WOOD = 0xc89a64;
+      // wooden body under the costume, jointed limbs (visible pegs)
+      torso(R, { y0: 0.72, y1: 1.3, r: (t) => 0.19 + 0.05 * sin(t * PI) - 0.07 * sm(0.8, 1, t), depth: 0.7, c: RED, cell: 'brocade', rep: [3, 1.5] });
+      R.add(GEO.box(0.38, 0.3, 0.2, 0.04), { b: 'chest', c: GOLD, cell: 'lamellar', rep: [2, 1.5], at: [0, 1.08, 0.06] });
+      R.add(GEO.sph(0.08, 0.08, 0.03, 12, 8), { b: 'chest', c: 0xffffff, cell: 'opera', uvp: 'z', at: [0, 1.1, 0.17] });
+      R.add(GEO.tor(0.2, 0.025, 6, 20), { b: 'body', c: GOLD, cell: 'metal', at: [0, 0.8, 0], rot: [PI / 2, 0, 0], s: [1, 0.75, 1] });
+      skirt(R, { y0: 0.82, y1: 0.42, r0: 0.21, r1: 0.3, n: 6, c: RED, cell: 'brocade', rep: [3, 1], k: 0.25, wave: 6 });
+      skirt(R, { name: 'ap', y0: 0.8, y1: 0.36, r0: 0.08, r1: 0.12, from: [-0.5, 0.5], n: 2, z: 0.17, c: GOLD, cell: 'qilin', rep: [1, 1], k: 0.2 });
+      limbs(R, { arm: { r: (u) => 0.06 - u * 0.012, c: RED, cell: 'brocade', rep: [2, 2] }, leg: { r: (u) => 0.07 - u * 0.02, c: 0xf4f0e8, cell: 'cloth', rep: [2, 2] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.sph(0.1, 0.07, 0.1, 10, 8), { b: 'arm' + L, c: GOLD, cell: 'lamellar', at: [s * 0.23, 1.26, 0] });
+        R.add(GEO.sph(0.05, 0.05, 0.05, 8, 6), { b: 'hand' + L, c: 0xf2d0b0, cell: 'skin', at: [s * 0.27, 0.8, 0.08] });
+        R.add(GEO.box(0.12, 0.08, 0.22, 0.03), { b: 'foot' + L, c: 0x1a1a1a, cell: 'cloth', at: [s * 0.1, 0.05, 0.05] });
+        R.add(GEO.box(0.13, 0.03, 0.24, 0.01), { b: 'foot' + L, c: 0xf0f0f0, cell: 'plain', at: [s * 0.1, 0.015, 0.05] });
+        R.add(GEO.sph(0.035, 0.035, 0.035, 8, 6), { b: 'fore' + L, c: WOOD, cell: 'wood', at: [s * 0.25, 1.02, 0.02] });
+        R.add(GEO.sph(0.035, 0.035, 0.035, 8, 6), { b: 'shin' + L, c: WOOD, cell: 'wood', at: [s * 0.1, 0.4, 0.07] });
+      }
+      // head: carved wooden head with painted red-face, black beard, helmet with pom-poms and pheasant feathers
+      R.add(GEO.sph(0.13, 0.15, 0.13, 16, 12), { b: 'head', c: 0xc8302a, cell: 'skin', at: [0, 1.48, 0.02] });
+      faceShell(R, 'opera', [0, 1.47, 0.025], 0.135, 0.155, 0.135, { b: 'head', wide: 1.0, t0: 0.6, tl: 1.7 });
+      strand(R, 'beard', 'head', [[0, 1.38, 0.13], [0, 1.25, 0.15], [0, 1.1, 0.13]], { r: (u) => 0.05 * (1 - u * 0.6), ell: [1, 0.35], c: 0x101010, k: 0.3, g: 0.6 });
+      R.add(GEO.cyl(0.14, 0.15, 0.1, 16), { b: 'head', c: GOLD, cell: 'gold', at: [0, 1.6, 0] });
+      R.add(GEO.cone(0.12, 0.14, 12), { b: 'head', c: GOLD, cell: 'gold', at: [0, 1.71, 0] });
+      for (let i = 0; i < 5; i++) R.add(GEO.sph(0.035, 0.035, 0.035, 8, 6), { b: 'head', c: 0xe02030, cell: 'plain', at: [cos(i * 0.6 - 1.2) * 0.15, 1.64, sin(i * 0.6 - 1.2) * 0.15 + 0.02] });
+      R.add(GEO.sph(0.05, 0.05, 0.05, 8, 6), { b: 'head', c: 0xe02030, cell: 'plain', at: [0, 1.8, 0] });
+      for (const s of [-1, 1]) strand(R, 'plume' + sideL(s), 'head', [[s * 0.05, 1.76, -0.02], [s * 0.16, 1.98, -0.1], [s * 0.3, 2.08, -0.16], [s * 0.42, 2.02, -0.2]], { r: (u) => 0.016 * (1 - u * 0.5), ell: [1, 1], c: 0xf0c060, cell: 'feather', k: 0.25, g: 0.2 });
+      // 靠旗: four triangular back flags on poles (spring-swayed)
+      for (let i = 0; i < 4; i++) {
+        const a = (i - 1.5) * 0.35, base = [sin(a) * 0.12, 1.25, -0.15];
+        const top = [sin(a) * 0.55, 1.95 + abs(i - 1.5) * -0.05, -0.32];
+        const pole = R.chain('flag' + i, 'chest', [base, [(base[0] + top[0]) / 2, (base[1] + top[1]) / 2, (base[2] + top[2]) / 2], top]);
+        R.tube(pole, { r: 0.012, sides: 5, c: 0x2a2a2a, cell: 'wood', ext: [0, 0.05] });
+        R.spring(pole.slice(1), { k: 0.3, drag: 0.2, g: 0.05, tail: [top[0] - (base[0] + top[0]) / 2, top[1] - (base[1] + top[1]) / 2, top[2] - (base[2] + top[2]) / 2] });
+        const fl = GEO.ext([[0, 0], [0.26, -0.04], [0, -0.42]], 0.01, 0);
+        R.add(fl, { b: pole[1], m: 'cut', c: [BLUE, 0x3a6ad0], cell: 'brocade', at: [top[0] * 0.98, top[1] - 0.02, top[2]], rot: [0, (i < 2 ? -1 : 1) * 0.4 + PI * (i < 2 ? 1 : 0), 0] });
+      }
+      // sword (dao) in the right hand
+      R.add(GEO.ext([[0, 0], [0.04, 0.02], [0.05, 0.75], [0.0, 0.85], [-0.02, 0.78], [-0.015, 0.02]], 0.012, 0.004), { b: 'sword', c: 0xd8dce4, cell: 'metal', at: [0.29, 0.8, 0.2], rot: [1.2, 0, 0] });
+      R.add(GEO.box(0.16, 0.03, 0.05, 0.01), { b: 'sword', c: GOLD, cell: 'gold', at: [0.29, 0.8, 0.2], rot: [1.2, 0, 0] });
+      // control bar (wooden cross) with strings to head, hands, knees
+      R.add(GEO.box(0.7, 0.05, 0.06, 0.015), { b: 'bar', c: WOOD, cell: 'wood', at: [0, 2.45, 0.05] });
+      R.add(GEO.box(0.06, 0.05, 0.5, 0.015), { b: 'bar', c: WOOD, cell: 'wood', at: [0, 2.45, 0.05] });
+      tether(R, 'bar', 'head', [0, 2.43, 0.05], [0, 1.78, 0.0], 0.004, { m: 'glow', c: 0x807860 });
+      tether(R, 'bar', 'handL', [-0.33, 2.43, 0.05], [-0.27, 0.82, 0.08], 0.004, { m: 'glow', c: 0x807860 });
+      tether(R, 'bar', 'handR', [0.33, 2.43, 0.05], [0.27, 0.82, 0.08], 0.004, { m: 'glow', c: 0x807860 });
+      tether(R, 'bar', 'shinL', [-0.05, 2.43, 0.28], [-0.1, 0.45, 0.06], 0.004, { m: 'glow', c: 0x807860 });
+      tether(R, 'bar', 'shinR', [0.05, 2.43, 0.28], [0.1, 0.45, 0.06], 0.004, { m: 'glow', c: 0x807860 });
+      tether(R, 'bar', 'chest', [0, 2.43, -0.2], [0, 1.25, -0.1], 0.004, { m: 'glow', c: 0x807860 });
+      R.fx({ mode: 'rise', n: 12, at: [0, 0.3, 0], box: [0.8, 0.2, 0.6], col: [0xffd080], size: 0.04, speed: 0.6, p: [1.2, 0.1, 1] });
+    },
+    // puppet motion: the bar leads, the body dangles; stiff jointed snaps instead of smooth arcs
+    idle(k) {
+      const t = k.t, sn = (x) => Math.round(x * 4) / 4; // quantised "string tug"
+      k.p('bar', sin(t * 0.9) * 0.05, sin(t * 1.3) * 0.03, 0); k.r('bar', 0, 0, sin(t * 0.9) * 0.08);
+      k.p('body', sin(t * 0.9 - 0.4) * 0.04, 0.03 + abs(sin(t * 1.3 - 0.3)) * 0.04, 0); k.r('body', 0, sin(t * 0.5) * 0.2, sin(t * 0.9 - 0.5) * 0.06);
+      k.r('head', 0.05 * sn(sin(t * 0.7)), 0.3 * sn(sin(t * 0.45)), 0.1 * sn(sin(t * 0.6)));
+      k.r('armR', -0.25 + 0.1 * sin(t * 1.3), 0, 0.35); k.r('foreR', -0.6); k.r('handR', 0.6); k.r('armL', -0.2 + 0.15 * sn(sin(t * 0.8)), 0, -0.25); k.r('foreL', -0.5);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('leg' + L, 0.1 * sin(t * 0.9 + s), 0, s * 0.05); k.r('shin' + L, 0.15 + 0.1 * sin(t * 0.9 + s)); k.r('foot' + L, 0.3); }
+    },
+    move(k) {
+      // the puppeteer's high-stepping walk: bar bobs, knees lifted by strings
+      const c = k.t * 6;
+      k.p('bar', 0, abs(sin(c)) * 0.08, 0); k.p('body', 0, 0.05 + abs(sin(c)) * 0.12, 0); k.r('body', 0, sin(c) * 0.15, 0);
+      for (const s of [-1, 1]) { const L = sideL(s), ph = c + (s < 0 ? 0 : PI); k.r('leg' + L, -max(0, sin(ph)) * 1.1, 0, 0); k.r('shin' + L, max(0, sin(ph)) * 1.4, 0, 0); k.r('foot' + L, 0.3); k.r('arm' + L, -sin(ph) * 0.5, 0, s * 0.2); }
+      k.r('foreR', -0.8);
+    },
+    clips: {
+      attack(k) {
+        // jerk up on the strings, spin the blade, slash down
+        const u = k.u, lift = pulse(u, 0, 0.25, 0.3, 0.42), hit = pulse(u, 0.38, 0.46, 0.6, 0.95);
+        k.p('bar', 0, 0.3 * lift - 0.1 * hit, 0.3 * hit); k.p('body', 0, 0.35 * lift - 0.05 * hit, 0.5 * hit);
+        k.r('body', -0.2 * lift + 0.3 * hit, 0.6 * lift - 0.4 * hit, 0);
+        k.r('armR', -3.0 * lift + 0.5 * hit, 0, 0.4 * lift); k.r('foreR', -0.3 * lift); k.r('handR', -0.8 * lift + 1.2 * hit);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('leg' + L, -0.6 * lift + 0.3 * hit * s); k.r('shin' + L, 1.0 * lift); }
+        k.fx.glow += hit;
+      },
+      cast(k) {
+        // strings blaze: the general strikes an opera pose (亮相), flags snap
+        const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1);
+        k.p('bar', 0, 0.15 * up, 0); k.p('body', 0, 0.2 * up, 0);
+        k.r('armL', -1.6 * up, 0, -1.1 * up); k.r('foreL', -1.2 * up); k.r('armR', -2.6 * up, 0, 0.4 * up); k.r('head', -0.2 * up, -0.5 * up, 0);
+        k.r('legL', -1.0 * up); k.r('shinL', 1.3 * up);
+        k.fx.glow += 3 * up;
+      },
+      hurt: (k) => { HUM.hurt(k); k.p('bar', 0, 0.1 * pulse(k.u, 0, 0.1, 0.2, 0.6), 0); },
+      die(k) {
+        // strings cut: the puppet collapses in a heap, bar drifts away
+        const u = k.u, cut = sm(0.1, 0.18, u), drop = sm(0.15, 0.45, u);
+        k.p('bar', 0, 0.8 * sm(0.1, 1, u), 0); k.r('bar', 0, 0, 0.6 * sm(0.1, 1, u));
+        k.p('body', 0, -0.45 * drop, 0); k.r('body', 0.2 * drop, 0, 0.5 * drop); k.r('head', 0.8 * drop, 0, 0.5 * drop);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, 0.4 * drop, 0, s * 1.0 * drop); k.r('leg' + L, -1.5 * drop, 0, s * 0.6 * drop); k.r('shin' + L, 1.0 * drop); }
+        k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.15, u))); k.fx.diss = max(k.fx.diss, sm(0.55, 1, u)); void cut;
+      },
+      special: (k) => HUM.special(k), enter: (k) => HUM.enter(k),
+    },
+  });
+
+  // ============================================================================ 溺屍兵 drowned_soldier
+  // A Qing brave (勇) who drowned crossing the Black Ditch: bloated blue skin, straw hat, rusted dao, seaweed, dripping water.
+  defB('drowned_soldier', {
+    h: 2.5, outline: 0.003, rim: 0.35, rimColor: 0xa0e0ff,
+    build(R) {
+      biped(R, { hip: 1.0, chest: 1.45, neck: 1.75, head: 1.95, sw: 0.27, sy: 1.66, arm: 0.72, hw: 0.13, armOut: 0.08, cz: 0.04, hz: 0.06 });
+      R.bone('blade', 'handR', [0.38, 0.95, 0.13]);
+      const SKIN = 0x8aa4a8, TUNIC = 0x2e3e5e, TRIM = 0x9a2a1a;
+      torso(R, { y0: 0.95, y1: 1.72, r: (t) => 0.27 + 0.05 * sin(t * PI) - 0.1 * sm(0.75, 1, t), depth: 0.75, c: TUNIC, cell: 'cloth', rep: [3, 2] });
+      R.add(GEO.sph(0.17, 0.17, 0.03, 16, 10), { b: 'chest', c: 0xffffff, cell: 'yong', uvp: 'z', at: [0, 1.42, 0.24] });
+      R.add(GEO.tor(0.27, 0.035, 6, 20), { b: 'body', c: TRIM, cell: 'cloth', at: [0, 1.0, 0.0], rot: [PI / 2, 0, 0], s: [1, 0.76, 1] });
+      skirt(R, { y0: 1.02, y1: 0.55, r0: 0.28, r1: 0.36, n: 6, c: TUNIC, cell: 'cloth', k: 0.18, wave: 5 });
+      skirt(R, { name: 'rag', y0: 0.62, y1: 0.42, r0: 0.355, r1: 0.37, n: 6, c: TRIM, cell: 'fringe', m: 'cut', rep: [5, 1], k: 0.15 });
+      limbs(R, { arm: { r: (u) => 0.085 - u * 0.015, c: TUNIC, cell: 'cloth', rep: [2, 2] }, leg: { r: (u) => 0.09 - u * 0.025, c: 0xd0c8b0, cell: 'bandage', rep: [2, 4] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.lumpy(GEO.sph(0.075, 0.09, 0.06, 10, 8), 0.05, 6), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.37, 0.95, 0.12] });
+        R.add(GEO.box(0.13, 0.08, 0.26, 0.03), { b: 'foot' + L, c: 0x1a1a1a, cell: 'cloth', at: [s * 0.13, 0.05, 0.05] });
+      }
+      // bloated drowned head, one eye clouded, glowing pupil; conical straw hat with red tassel
+      R.add(GEO.lumpy(GEO.sph(0.2, 0.22, 0.19, 16, 12), 0.05, 4, 2), { b: 'head', c: SKIN, cell: 'skin', at: [0, 1.96, 0.06] });
+      faceShell(R, 'drownface', [0, 1.95, 0.065], 0.205, 0.225, 0.195, { b: 'head', wide: 0.95, t0: 0.6, tl: 1.75 });
+      R.add(GEO.sph(0.03, 0.03, 0.02, 8, 6), { b: 'head', m: 'glow', c: 0x9ae0d0, cell: 'blank', at: [0.07, 1.99, 0.25] });
+      R.add(GEO.cone(0.4, 0.2, 20), { b: 'head', c: 0xc8a868, cell: 'pandan', rep: [6, 1], at: [0, 2.2, 0.04], rot: [0.12, 0, 0.08] });
+      R.add(GEO.sph(0.04, 0.04, 0.04, 8, 6), { b: 'head', c: 0xc02020, cell: 'plain', at: [0.02, 2.31, 0.06] });
+      strand(R, 'queue', 'head', [[0, 1.9, -0.15], [0, 1.65, -0.24], [0.02, 1.4, -0.27], [0.03, 1.15, -0.27]], { r: (u) => 0.035 * (1 - u * 0.5), ell: [1, 1], c: 0x141414, k: 0.15, g: 0.6 });
+      // seaweed draped over shoulders, dripping
+      for (const s of [-1, 1]) strand(R, 'weed' + sideL(s), 'chest', [[s * 0.2, 1.72, 0.05], [s * 0.3, 1.55, 0.2], [s * 0.32, 1.3, 0.24], [s * 0.3, 1.08, 0.22]], { r: (u) => 0.05, ell: [1, 0.25], c: 0x3a6a2a, cell: 'kelp', m: 'cut', k: 0.2, g: 0.6 });
+      // rusted dao
+      R.add(GEO.ext([[0, 0], [0.05, 0.02], [0.07, 0.62], [0.02, 0.72], [-0.02, 0.6], [-0.02, 0.02]], 0.012, 0.004), { b: 'blade', c: 0x8a7060, cell: 'metal', at: [0.38, 0.92, 0.15], rot: [1.35, 0, 0.1] });
+      R.add(GEO.cyl(0.02, 0.02, 0.16, 6), { b: 'blade', c: 0x3a2a1a, cell: 'wood', at: [0.38, 0.95, 0.13], rot: [1.35, 0, 0] });
+      R.fx({ mode: 'fall', n: 26, at: [0, 1.4, 0.05], box: [0.7, 1.2, 0.5], col: [0x9ad8f0], size: 0.035, speed: 1.4, p: [1.3, 0.05, 1] });
+    },
+    idle(k) { HUM.idle(k, { elbow: 0.35 }); k.r('head', 0.15, 0, 0.18 + sin(k.t * 0.6) * 0.05); k.r('chest', 0.12); },
+    move(k) { HUM.walk(k, { rate: 5, stride: 0.35, bob: 0.6 }); k.r('head', 0.1, 0, 0.2 + sin(k.t * 5) * 0.1); },
+    clips: humClips(),
+  });
+
+  // ============================================================================ 海盜鬼 pirate_ghost
+  defB('pirate_ghost', {
+    h: 2.7, outline: 0.003, rim: 0.5, rimColor: 0x80ffe0,
+    build(R) {
+      biped(R, { hip: 1.02, chest: 1.5, neck: 1.8, head: 2.0, sw: 0.28, sy: 1.7, arm: 0.74, hw: 0.14, armOut: 0.07, cz: 0.03 });
+      R.bone('blade', 'handR', [0.4, 0.97, 0.12]);
+      const SKIN = 0x7ab8b0, COAT = 0x2a3448, SASH = 0xb02a28;
+      torso(R, { y0: 0.98, y1: 1.78, r: (t) => 0.27 + 0.04 * sin(t * PI) - 0.1 * sm(0.75, 1, t), depth: 0.75, c: COAT, cell: 'cloth', rep: [3, 2] });
+      R.add(GEO.tor(0.27, 0.06, 8, 20), { b: 'body', c: SASH, cell: 'cloth', at: [0, 1.05, 0], rot: [PI / 2, 0, 0], s: [1, 0.78, 1] });
+      strand(R, 'sash', 'body', [[0.18, 1.02, 0.14], [0.22, 0.85, 0.18], [0.24, 0.66, 0.2]], { r: 0.06, ell: [1, 0.2], c: SASH, cell: 'cloth', k: 0.2 });
+      skirt(R, { name: 'coat', y0: 1.05, y1: 0.45, r0: 0.28, r1: 0.36, n: 6, from: [0.9, TAU - 0.9], c: COAT, cell: 'cloth', k: 0.2, wave: 4 });
+      limbs(R, { arm: { r: (u) => 0.085 - u * 0.02, c: COAT, cell: 'cloth', rep: [2, 2] }, leg: { r: (u) => 0.1 - u * 0.03, c: 0x1e2430, cell: 'cloth', rep: [2, 3] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.sph(0.07, 0.08, 0.06, 10, 8), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.39, 0.97, 0.12] });
+        R.add(GEO.cyl(0.11, 0.1, 0.28, 10), { b: 'shin' + L, c: 0x2a1e18, cell: 'skin', at: [s * 0.14, 0.2, 0.02] });
+        R.add(GEO.box(0.14, 0.08, 0.28, 0.03), { b: 'foot' + L, c: 0x2a1e18, cell: 'skin', at: [s * 0.14, 0.04, 0.06] });
+      }
+      R.add(GEO.sph(0.19, 0.21, 0.19, 16, 12), { b: 'head', c: SKIN, cell: 'skin', at: [0, 2.0, 0.04] });
+      faceShell(R, 'pirateface', [0, 1.99, 0.045], 0.195, 0.215, 0.195, { b: 'head', wide: 0.95, t0: 0.6, tl: 1.75 });
+      R.add(GEO.sph(0.205, 0.12, 0.205, 16, 8, { tl: PI / 2 }), { b: 'head', c: SASH, cell: 'cloth', at: [0, 2.06, 0.03] });
+      for (const s of [-1, 1]) R.add(GEO.sph(0.03, 0.03, 0.02, 8, 6), { b: 'head', m: 'glow', c: 0x9affe8, cell: 'blank', at: [s * 0.075, 2.02, 0.22] });
+      strand(R, 'scarf', 'head', [[0.0, 2.06, -0.18], [0.06, 1.92, -0.3], [0.1, 1.72, -0.36]], { r: 0.05, ell: [1, 0.2], c: SASH, cell: 'cloth', k: 0.18 });
+      for (let i = 0; i < 4; i++) strand(R, 'hair' + i, 'head', [[(i - 1.5) * 0.1, 1.98, -0.12], [(i - 1.5) * 0.13, 1.75, -0.2], [(i - 1.5) * 0.15, 1.5, -0.22]], { r: 0.045, c: 0x101418, k: 0.15 });
+      // tattered junk sail worn as a cloak (spring hem)
+      skirt(R, { name: 'sail', y0: 1.75, y1: 0.55, r0: 0.3, r1: 0.55, n: 4, from: [PI - 1.0, PI + 1.0], parent: 'chest', c: 0xb0603a, cell: 'sail', m: 'cut', rep: [2, 2], k: 0.12, g: 0.5 });
+      // cutlass with spectral edge, lantern at the hip
+      R.add(GEO.ext([[0, 0], [0.05, 0.02], [0.08, 0.7], [0.0, 0.85], [-0.02, 0.65], [-0.02, 0.02]], 0.012, 0.004), { b: 'blade', c: 0xd8e4e0, cell: 'metal', at: [0.4, 0.95, 0.15], rot: [1.25, 0, 0.1] });
+      R.add(GEO.ext([[0.05, 0.05], [0.08, 0.7], [0.0, 0.85]], 0.004, 0), { b: 'blade', m: 'glow', c: 0x40ffd0, cell: 'blank', at: [0.4, 0.95, 0.15], rot: [1.25, 0, 0.1], s: [1.1, 1, 1] });
+      R.add(GEO.tor(0.08, 0.012, 6, 14, PI * 1.2), { b: 'blade', c: 0xc0a040, cell: 'gold', at: [0.4, 0.95, 0.15], rot: [1.25, 0, 1.6] });
+      R.bone('lamp', 'body', [-0.32, 0.88, 0.1]);
+      R.add(GEO.cyl(0.06, 0.07, 0.15, 8), { b: 'lamp', m: 'glow', c: 0x40ffc0, cell: 'glass', at: [-0.32, 0.86, 0.1] });
+      R.add(GEO.cone(0.08, 0.06, 8), { b: 'lamp', c: 0x3a3020, cell: 'metal', at: [-0.32, 0.97, 0.1] });
+      R.fx({ mode: 'rise', n: 24, at: [0, 0.6, 0], box: [0.9, 0.9, 0.6], col: [0x40ffc0, 0x9affe8], size: 0.05, speed: 0.8, p: [1.4, 0.2, 1] });
+      R.light({ b: 'lamp', at: [-0.32, 0.86, 0.1], color: '#40ffc0', i: 0.7, r: 3, flicker: 0.2 });
+    },
+    idle(k) { HUM.idle(k, { elbow: 0.4 }); k.r('armR', -0.3); k.r('foreR', -0.5); k.r('body', 0, 0.15, 0); },
+    move(k) { HUM.walk(k, { rate: 6.5, stride: 0.45 }); },
+    clips: humClips(),
+  });
+
   // place items along a bone chain: fn(i, mid, tangent, side, up, radius) → part opts (or null); skinned to the segment
   function along(R, order, rf, from, to, step, fn) {
     const P = order.map((n) => R.B[n].pos), N = P.length;
@@ -1891,4 +2253,478 @@ G.Mon3D = G.Mon3D || {
     },
   });
 
+  // ============================================================================ 石像衛 stone_guardian
+  // Temple statue-guard of the 燈母 shrine: weathered granite, moss and ferns, a planted sword, eyes that wake teal.
+  defB('stone_guardian', {
+    h: 3.1, outline: 0.003, rim: 0.25, ao: 0.45,
+    build(R) {
+      biped(R, { hip: 1.1, chest: 1.65, neck: 2.05, head: 2.25, sw: 0.36, sy: 1.95, arm: 0.85, hw: 0.17, armOut: 0.1, cz: 0.02 });
+      R.bone('sword', 'handR', [0.5, 1.12, 0.2]);
+      const ST = 0x9a9a92, ST2 = 0xb8b8ae, MOSS = 0x5a7a3a;
+      const moss = (base) => (v, u, w) => { const m = sm(0.58, 0.7, fbm(v.x * 2.5 + 3, v.y * 2.5, v.z * 2.5)); return Rig.mix(base, MOSS, m * 0.85); };
+      // plinth
+      R.add(GEO.lumpy(GEO.box(1.3, 0.3, 1.0, 0.04), 0.02, 3), { b: 'root', c: moss(0x8a8a82), cell: 'stone', rep: [2, 1], at: [0, 0.15, 0] });
+      torso(R, { y0: 1.05, y1: 2.0, r: (t) => 0.32 + 0.08 * sin(t * PI) - 0.1 * sm(0.8, 1, t), depth: 0.7, c: moss(ST), cell: 'stone', rep: [3, 2], seg: 14 });
+      R.add(GEO.lumpy(GEO.box(0.62, 0.52, 0.4, 0.06), 0.02, 4), { b: 'chest', c: moss(ST2), cell: 'lamellar', rep: [3, 2], at: [0, 1.6, 0.05] });
+      R.add(GEO.sph(0.11, 0.11, 0.04, 12, 8), { b: 'chest', c: 0xffffff, cell: 'mask_g', uvp: 'z', at: [0, 1.38, 0.26] });
+      skirt(R, { y0: 1.12, y1: 0.48, r0: 0.34, r1: 0.44, n: 6, c: moss(ST), cell: 'lamellar', rep: [5, 2], k: 0.9, drag: 0.5, g: 0 });
+      limbs(R, { arm: { r: (u) => 0.12 - u * 0.02, c: moss(ST), cell: 'stone', rep: [2, 2] }, leg: { r: (u) => 0.13 - u * 0.03, c: moss(ST), cell: 'stone', rep: [2, 2] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.lumpy(GEO.sph(0.2, 0.15, 0.2, 12, 8), 0.06, 4), { b: 'arm' + L, c: moss(ST2), cell: 'lamellar', at: [s * 0.4, 1.95, 0] });
+        R.add(GEO.lumpy(GEO.sph(0.1, 0.11, 0.09, 10, 8), 0.06, 5), { b: 'hand' + L, c: ST, cell: 'stone', at: [s * 0.49, 1.08, 0.18] });
+        R.add(GEO.lumpy(GEO.box(0.2, 0.12, 0.32, 0.04), 0.03, 5), { b: 'foot' + L, c: ST, cell: 'stone', at: [s * 0.17, 0.36, 0.06] });
+      }
+      // helmet & face
+      R.add(GEO.lumpy(GEO.sph(0.21, 0.24, 0.21, 14, 12), 0.04, 4), { b: 'head', c: ST, cell: 'stone', at: [0, 2.25, 0.04] });
+      R.add(GEO.lumpy(GEO.sph(0.25, 0.2, 0.25, 14, 10, { tl: PI * 0.55 }), 0.03, 5), { b: 'head', c: moss(ST2), cell: 'lamellar', at: [0, 2.3, 0.02] });
+      R.add(GEO.cyl(0.03, 0.05, 0.16, 8), { b: 'head', c: ST2, cell: 'stone', at: [0, 2.56, 0.0] });
+      R.add(GEO.sph(0.05, 0.05, 0.05, 8, 6), { b: 'head', c: ST2, cell: 'stone', at: [0, 2.66, 0] });
+      R.add(GEO.box(0.3, 0.05, 0.08, 0.02), { b: 'head', c: 0x5a5a56, cell: 'stone', at: [0, 2.28, 0.21] });
+      for (const s of [-1, 1]) R.add(GEO.sph(0.045, 0.02, 0.02, 8, 6), { b: 'head', m: 'glow', c: 0x60fff0, cell: 'blank', at: [s * 0.08, 2.28, 0.24] });
+      // planted sword
+      R.add(GEO.ext([[-0.05, 0], [0.05, 0], [0.06, 1.0], [0, 1.12], [-0.06, 1.0]], 0.03, 0.01), { b: 'sword', c: moss(0xa0a29a), cell: 'stone', at: [0.5, 0.0, 0.32] });
+      R.add(GEO.box(0.32, 0.06, 0.08, 0.02), { b: 'sword', c: ST2, cell: 'stone', at: [0.5, 1.12, 0.32] });
+      R.add(GEO.cyl(0.035, 0.035, 0.3, 8), { b: 'sword', c: ST, cell: 'stone', at: [0.5, 1.15, 0.32] });
+      // ferns & grass tufts in the moss
+      const r = R.r;
+      for (let i = 0; i < 9; i++) {
+        const spots = [[0.3, 1.98, 0.1, 'armR'], [-0.35, 1.98, 0.05, 'armL'], [0.5, 0.32, 0.4, 'root'], [-0.5, 0.32, 0.35, 'root'], [-0.45, 0.32, -0.4, 'root'], [0.15, 2.47, -0.1, 'head'], [0.2, 1.15, 0.3, 'body'], [-0.3, 1.2, 0.2, 'body'], [0.45, 0.32, -0.35, 'root']];
+        const [x, y, z, b] = spots[i];
+        for (let j = 0; j < 4; j++) R.add(GEO.card(0.08, 0.22 + r() * 0.12, 1, 2), { m: 'cut', b, c: Rig.mix(0x4a7a2a, 0x8ab040, r()), cell: 'frond', decal: true, at: [x, y - 0.02, z], rot: [-0.3 - r() * 0.4, j * 1.6 + r(), 0] });
+      }
+      R.fx({ mode: 'wander', n: 10, at: [0, 1.6, 0.2], box: [1.2, 1.6, 0.6], col: [0x60fff0], size: 0.04, speed: 0.5, p: [0.2, 1, 1] });
+      R.light({ b: 'head', at: [0, 2.28, 0.3], color: '#60fff0', i: 0.5, r: 2.5 });
+    },
+    idle(k) {
+      // statues barely breathe: rare grinding head turns
+      const tt = k.t * 0.25, step = Math.round(sin(tt) * 2) / 2;
+      k.r('head', 0, step * 0.25, 0); k.r('chest', 0.02 * sin(k.t * 0.8)); k.r('armR', -0.15); k.r('foreR', -0.25); k.r('armL', 0.05, 0, -0.1); k.r('foreL', -0.15);
+    },
+    move(k) { HUM.walk(k, { rate: 4, stride: 0.3, bob: 0.4 }); },
+    clips: humClips({
+      attack(k) {
+        // wrench the sword from the plinth and bring it down
+        HUM.chop(k, { lunge: 0.6 });
+        k.fx.flash = max(k.fx.flash, 0.3 * pulse(k.u, 0.44, 0.47, 0.5, 0.6));
+      },
+      enter(k) { HUM.enter(k); k.fx.glow += 2 * pulse(k.u, 0.6, 0.8, 0.9, 1); },
+    }),
+  });
+
+  // ============================================================================ 冥燈護法 nether_guardian (boss)
+  // Guardian of the 萬燈閣: black lacquered armour hung with soul-jars, halberd and a blue soul-lantern. It truly believes
+  // it guards the dead. Phase 2: the jars crack — freed souls orbit it and its helm-flames roar.
+  defB('nether_guardian', {
+    h: 4.8, boss: true, outline: 0.003, rim: 0.4, rimColor: 0x80c0ff, phaseGlow: 1.5, edge: [0.4, 1.0, 2.4],
+    build(R) {
+      biped(R, { hip: 1.75, chest: 2.6, neck: 3.25, head: 3.5, sw: 0.58, sy: 3.05, arm: 1.3, hw: 0.28, armOut: 0.14, cz: 0.04 });
+      R.bone('halberd', 'handR', [0.78, 1.8, 0.3]);
+      R.bone('lchain', 'handL', [-0.78, 1.75, 0.25]);
+      R.bone('lantern', 'lchain', [-0.8, 1.35, 0.3]);
+      const ARM = 0x1e222c, ARM2 = 0x343a48, GOLD = 0xb89a50, BLUE = 0x5ab0ff;
+      torso(R, { y0: 1.6, y1: 3.15, r: (t) => 0.5 + 0.12 * sin(t * PI) - 0.14 * sm(0.8, 1, t), depth: 0.72, c: ARM, cell: 'lamellar', rep: [4, 3] });
+      // breastplate with a soul-eye boss, gold trim
+      R.add(GEO.lumpy(GEO.box(0.95, 0.75, 0.5, 0.12), 0.01, 3), { b: 'chest', c: ARM2, cell: 'metal', at: [0, 2.65, 0.08] });
+      R.add(GEO.tor(0.13, 0.03, 8, 18), { b: 'chest', c: GOLD, cell: 'gold', at: [0, 2.72, 0.35] });
+      R.add(GEO.sph(0.1, 0.1, 0.05, 12, 8), { b: 'chest', m: 'glow', c: 0x6ac0ff, cell: 'iris2', uvp: 'z', at: [0, 2.72, 0.36] });
+      R.add(GEO.tor(0.45, 0.04, 6, 24), { b: 'body', c: GOLD, cell: 'gold', at: [0, 1.75, 0], rot: [PI / 2, 0, 0], s: [1, 0.74, 1] });
+      R.add(GEO.box(0.3, 0.3, 0.06, 0.03), { b: 'body', c: GOLD, cell: 'qilin', at: [0, 1.65, 0.36] });
+      skirt(R, { y0: 1.8, y1: 0.75, r0: 0.48, r1: 0.62, n: 8, c: ARM, cell: 'lamellar', rep: [8, 3], k: 0.3, wave: 8 });
+      // cape (back half) — deep violet-black with a ragged hem
+      skirt(R, { name: 'cape', parent: 'chest', y0: 3.1, y1: 0.35, r0: 0.55, r1: 0.95, n: 5, from: [PI - 1.2, PI + 1.2], c: [0x0e0a16, 0x2a1e40], cell: 'fringe', m: 'cut', rep: [3, 1], k: 0.1, g: 0.6, wave: 6 });
+      limbs(R, { arm: { r: (u) => 0.19 - u * 0.04, c: ARM, cell: 'lamellar', rep: [3, 3] }, leg: { r: (u) => 0.22 - u * 0.06, c: ARM, cell: 'lamellar', rep: [3, 3] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        // spiked pauldrons with soul-flame
+        R.add(GEO.lumpy(GEO.sph(0.36, 0.22, 0.33, 14, 10, { tl: PI * 0.6 }), 0.02, 3), { b: 'arm' + L, c: ARM2, cell: 'metal', at: [s * 0.66, 3.08, 0] });
+        R.add(GEO.tor(0.3, 0.03, 6, 18, PI), { b: 'arm' + L, c: GOLD, cell: 'gold', at: [s * 0.66, 3.03, 0], rot: [0, PI / 2, 0] });
+        for (let i = 0; i < 3; i++) R.add(GEO.cone(0.06, 0.32, 6), { b: 'arm' + L, c: ARM2, cell: 'metal', at: [s * (0.62 + i * 0.08), 3.22 - i * 0.04, -0.12 + i * 0.12], rot: [0, 0, s * -0.5] });
+        R.add(GEO.lumpy(GEO.sph(0.15, 0.17, 0.14, 10, 8), 0.04, 5), { b: 'hand' + L, c: ARM2, cell: 'metal', at: [s * 0.78, 1.8, 0.25] });
+        R.add(GEO.box(0.28, 0.16, 0.48, 0.05), { b: 'foot' + L, c: ARM2, cell: 'metal', at: [s * 0.28, 0.09, 0.08] });
+        R.add(GEO.lumpy(GEO.sph(0.2, 0.2, 0.2, 10, 8), 0.02, 4), { b: 'shin' + L, c: ARM2, cell: 'metal', at: [s * 0.29, 0.92, 0.12] });
+        // hanging soul-jars at the belt
+        for (let j = 0; j < 2; j++) {
+          const jx = s * (0.3 + j * 0.2), jz = 0.38 - j * 0.12;
+          R.add(GEO.lathe([[0.001, 0], [0.09, 0.02], [0.11, 0.12], [0.06, 0.22], [0.07, 0.26], [0.001, 0.27]], 10), { b: 'body', m: 'glow', c: 0x3a8ad0, cell: 'glass', at: [jx, 1.28, jz] });
+          tether(R, 'body', 'body', [jx, 1.72, jz - 0.05], [jx, 1.55, jz], 0.01, { c: 0x6a6050 });
+        }
+      }
+      // horned helm with visor; blue soul-fire crest (additive cards)
+      R.add(GEO.lumpy(GEO.sph(0.34, 0.36, 0.34, 16, 12), 0.02, 3), { b: 'head', c: ARM2, cell: 'metal', at: [0, 3.5, 0.05] });
+      R.add(GEO.box(0.48, 0.1, 0.14, 0.03), { b: 'head', c: 0x0a0a10, cell: 'plain', at: [0, 3.46, 0.33] });
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.07, 0.03, 0.03, 8, 6), { b: 'head', m: 'glow', c: 0x6ac8ff, cell: 'blank', at: [s * 0.12, 3.47, 0.4] });
+        R.add(GEO.sweep([[s * 0.28, 3.65, 0.0], [s * 0.55, 3.85, -0.05], [s * 0.62, 4.15, -0.15], [s * 0.5, 4.4, -0.25]], (u) => 0.09 * (1 - u * 0.9), { sides: 8 }), { b: 'head', c: 0xd8ccb0, cell: 'stone' });
+      }
+      R.add(GEO.tor(0.34, 0.035, 6, 20, PI), { b: 'head', c: GOLD, cell: 'gold', at: [0, 3.55, 0.05], rot: [0, 0, 0] });
+      for (let i = 0; i < 5; i++) R.add(GEO.card(0.28, 0.6 + (i % 2) * 0.25, 1, 2), { m: 'add', b: 'head', c: BLUE, cell: 'flame', decal: true, at: [(i - 2) * 0.09, 3.8, -0.02], rot: [0, (i - 2) * 0.6, (i - 2) * -0.15] });
+      // halberd (戟): long shaft, crescent blade, spear point, red tassel
+      R.add(GEO.cyl(0.035, 0.035, 4.2, 8), { b: 'halberd', c: 0x2a1a14, cell: 'wood', at: [0.78, 1.8, 0.3] });
+      R.add(GEO.cone(0.08, 0.5, 6), { b: 'halberd', c: 0xc8d0d8, cell: 'metal', at: [0.78, 4.12, 0.3] });
+      R.add(GEO.ext([[0, 0], [0.45, 0.15], [0.55, 0.45], [0.35, 0.3], [0.0, 0.25]], 0.025, 0.01), { b: 'halberd', c: 0xc8d0d8, cell: 'metal', at: [0.8, 3.45, 0.3] });
+      R.add(GEO.ext([[0, 0], [0.45, 0.15], [0.55, 0.45], [0.35, 0.3], [0.0, 0.25]], 0.01, 0), { b: 'halberd', m: 'glow', c: 0x5ab0ff, cell: 'blank', at: [0.8, 3.45, 0.3], s: [1.04, 1.04, 1] });
+      strand(R, 'tassel', 'halberd', [[0.78, 3.8, 0.3], [0.8, 3.55, 0.32], [0.82, 3.3, 0.33]], { r: 0.05, ell: [1, 1], c: 0xb01818, cell: 'hair', k: 0.2, g: 0.7 });
+      // soul lantern on a chain (spring) in the left hand
+      tether(R, 'handL', 'lantern', [-0.78, 1.72, 0.25], [-0.8, 1.38, 0.3], 0.012, { c: 0x6a6050 });
+      R.spring(['lchain', 'lantern'], { k: 0.12, drag: 0.08, g: 0.8, tail: [0, -0.4, 0] });
+      R.add(GEO.lathe([[0.001, 0.0], [0.18, 0.02], [0.2, 0.08], [0.2, 0.42], [0.16, 0.48], [0.001, 0.5]], 8), { b: 'lantern', m: 'glow', c: 0x4aa0ff, cell: 'lattice', rep: [4, 1], at: [-0.8, 0.88, 0.3] });
+      R.add(GEO.cone(0.25, 0.16, 8), { b: 'lantern', c: ARM2, cell: 'metal', at: [-0.8, 1.42, 0.3] });
+      R.add(GEO.cyl(0.2, 0.22, 0.05, 8), { b: 'lantern', c: ARM2, cell: 'metal', at: [-0.8, 0.86, 0.3] });
+      // phase 2: soul-flames burst from the pauldrons, the jars' souls swirl
+      for (const s of [-1, 1]) {
+        const pb = R.phaseBone('pflame' + sideL(s), 'arm' + sideL(s), [s * 0.66, 3.2, 0], 2);
+        for (let i = 0; i < 3; i++) R.add(GEO.card(0.35, 0.8, 1, 2), { m: 'add', b: pb, c: 0x6a8aff, cell: 'flame', decal: true, at: [s * 0.66, 3.15, 0], rot: [0, i * 1.05, s * 0.2] });
+      }
+      R.fx({ mode: 'orbit', n: 36, at: [0, 2.3, 0], box: [0.1, 1.6, 0.1], col: [0x8ad0ff, 0xc0e8ff, 0x5a80ff], size: 0.12, speed: 0.9, p: [1.3, 0.4, 1] });
+      R.fx({ mode: 'rise', n: 26, at: [0, 3.9, -0.05], box: [0.4, 0.2, 0.3], col: [0x5ab0ff, 0xb0e0ff], size: 0.08, speed: 1.4, p: [0.9, 0.1, 1] });
+      R.light({ b: 'lantern', at: [-0.8, 1.1, 0.3], color: '#5ab0ff', i: 1.6, r: 6, flicker: 0.15 });
+      R.light({ b: 'head', at: [0, 3.9, 0], color: '#6a8aff', i: 0.8, r: 4, flicker: 0.3 });
+    },
+    idle(k) {
+      HUM.idle(k, { elbow: 0.3, armOut: 0.15 });
+      k.r('armR', -0.35, 0, 0.1); k.r('foreR', -0.65); k.r('armL', -0.25, 0, -0.1); k.r('foreL', -0.55);
+      k.p('body', 0, -0.03, 0);
+    },
+    move(k) { HUM.walk(k, { rate: 4.5, stride: 0.35, bob: 0.5 }); k.r('foreR', -0.6); },
+    clips: humClips({
+      attack: (k) => { HUM.thrust(k); },
+      cast(k) {
+        // raise the soul-lantern high: chained souls stream out
+        const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1);
+        k.r('armL', -2.6 * up, 0, -0.2 * up); k.r('foreL', -0.2 * up); k.r('chest', -0.15 * up); k.r('head', -0.2 * up);
+        k.r('armR', -0.5 * up); k.fx.glow += 2.5 * up;
+      },
+    }),
+  });
+
+  // ============================================================================ 心魔 inner_demon
+  // Your own face and your worst words: a mirror-black doppelgänger veined with neon, a kaleidoscope halo behind its head,
+  // glass shards orbiting. Its skin is a thin-film mirror that shifts hue as it moves.
+  defB('inner_demon', {
+    h: 2.6, outline: 0.003, rim: 0.7, rimColor: 0xff70e0, iri: 0.55, psy: [2.4, 8, 0.15, 1.1], edge: [1.6, 0.3, 1.4],
+    build(R) {
+      biped(R, { hip: 0.98, chest: 1.38, neck: 1.66, head: 1.84, sw: 0.22, sy: 1.58, arm: 0.66, hw: 0.11, armOut: 0.05, cz: 0.02 });
+      R.bone('sword', 'handR', [0.3, 0.92, 0.12]);
+      R.bone('halo', 'head', [0, 1.9, -0.25]);
+      const INK = 0x14101e, INK2 = 0x2a1e3e, NEON = 0xff40c8, CY = 0x40e8ff;
+      torso(R, { y0: 0.92, y1: 1.62, r: (t) => 0.2 + 0.04 * sin(t * PI) - 0.08 * sm(0.8, 1, t) - 0.03 * sm(0.3, 0.5, t) * (1 - sm(0.5, 0.7, t)), depth: 0.72, c: INK, cell: 'shard', rep: [3, 2] });
+      skirt(R, { y0: 1.0, y1: 0.42, r0: 0.21, r1: 0.34, n: 6, c: [INK, INK2], cell: 'fringe', m: 'cut', rep: [4, 1], k: 0.15, wave: 7 });
+      limbs(R, { arm: { r: (u) => 0.065 - u * 0.02, c: INK, cell: 'shard', rep: [2, 2] }, leg: { r: (u) => 0.085 - u * 0.03, c: INK, cell: 'shard', rep: [2, 2] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.sph(0.055, 0.07, 0.05, 10, 8), { b: 'hand' + L, c: INK, cell: 'shard', at: [s * 0.28, 0.93, 0.1] });
+        R.add(GEO.box(0.1, 0.06, 0.24, 0.02), { b: 'foot' + L, c: INK, cell: 'shard', at: [s * 0.11, 0.04, 0.05] });
+      }
+      // head: smooth mask-like face (no features), two eye-slits, ponytail (spring) — your silhouette
+      R.add(GEO.sph(0.15, 0.18, 0.16, 18, 14), { b: 'head', c: INK, cell: 'shard', at: [0, 1.85, 0.03] });
+      for (const s of [-1, 1]) R.add(GEO.sph(0.045, 0.012, 0.02, 8, 6), { b: 'head', m: 'glow', c: s < 0 ? NEON : CY, cell: 'blank', at: [s * 0.06, 1.87, 0.18], rot: [0, s * 0.3, s * -0.2] });
+      R.add(GEO.sph(0.16, 0.12, 0.17, 16, 8, { tl: PI / 2 }), { b: 'head', c: INK2, cell: 'hair', at: [0, 1.9, 0.02] });
+      strand(R, 'tail', 'head', [[0, 1.98, -0.12], [0, 1.85, -0.26], [0.0, 1.6, -0.3], [0, 1.35, -0.28], [0, 1.15, -0.26]], { r: (u) => 0.06 * (1 - u * 0.7), ell: [1, 0.6], c: INK2, k: 0.12, g: 0.4 });
+      // neon fracture veins over the body
+      const r = R.r;
+      for (let i = 0; i < 9; i++) {
+        let a = r() * TAU, h = -0.8 + r() * 1.2; const pts = [];
+        for (let j = 0; j < 5; j++) { pts.push(onEll([0, 1.28, 0.02], [0.235, 0.36, 0.175], a, clamp(h, -0.95, 0.95))); a += (r() - 0.5) * 0.9; h += 0.25 + r() * 0.15; }
+        glowLine(R, pts, 0.007, i % 2 ? NEON : CY, { skin: byY('body', 'chest', 1.0, 1.5) });
+      }
+      // blade of violet light
+      R.add(GEO.ext([[-0.025, 0], [0.025, 0], [0.03, 0.85], [0, 0.98], [-0.03, 0.85]], 0.012, 0.004), { b: 'sword', m: 'glow', c: 0xd060ff, cell: 'blank', at: [0.3, 0.92, 0.14], rot: [1.35, 0, 0] });
+      R.add(GEO.box(0.14, 0.03, 0.04, 0.01), { b: 'sword', c: INK2, cell: 'metal', at: [0.3, 0.92, 0.14], rot: [1.35, 0, 0] });
+      // kaleidoscope halo (psy) and orbiting mirror shards
+      R.add(GEO.plane(0.84, 0.84), { b: 'halo', m: 'add', c: 0xb090ff, cell: 'mandala', decal: true, at: [0, 1.9, -0.25] });
+      R.add(GEO.tor(0.44, 0.012, 6, 40), { b: 'halo', m: 'glow', c: 0xff80e0, cell: 'blank', at: [0, 1.9, -0.24] });
+      R.bone('shards', 'body', [0, 1.3, 0]);
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * TAU, rr = 0.55 + (i % 2) * 0.15;
+        R.add(GEO.oct(0.07 + r() * 0.05), { b: 'shards', m: 'psy', c: 0xb0a0e0, cell: 'blank', at: [cos(a) * rr, 1.1 + sin(i * 2.3) * 0.4, sin(a) * rr], s: [0.5, 1.6, 0.25], rot: [r(), r() * 3, r()] });
+      }
+      R.fx({ mode: 'rise', n: 22, at: [0, 0.5, 0], box: [0.6, 0.6, 0.6], col: [NEON, CY, 0xb070ff], size: 0.05, speed: 1, p: [1.6, 0.2, 1] });
+    },
+    always(k) { k.r('shards', 0, k.t * 0.6, 0); k.r('halo', 0, 0, k.t * 0.3); },
+    idle(k) { HUM.idle(k, { elbow: 0.3 }); k.r('armR', -0.2, 0, 0.2); k.r('foreR', -0.4); k.r('head', 0.12, 0, 0.12 + 0.05 * sin(k.t * 0.7)); k.p('body', 0, 0.04 + 0.03 * sin(k.t * 1.2), 0); },
+    move(k) { HUM.walk(k, { rate: 7, stride: 0.5 }); },
+    clips: humClips({
+      attack(k) {
+        // mirror-step: a flicker forward and a rising cross-slash
+        const u = k.u, blink = pulse(u, 0.25, 0.32, 0.35, 0.42), hit = pulse(u, 0.32, 0.42, 0.6, 0.95);
+        HUM.chop(k);
+        k.fx.diss = max(k.fx.diss, 0.55 * blink); k.fx.psy += 2 * hit;
+      },
+      special(k) {
+        // shatter: the body splits into kaleidoscope shards and reforms
+        const u = k.u, br = pulse(u, 0.2, 0.4, 0.6, 0.85);
+        k.s('shards', 1.5 * br); k.r('shards', 0, u * 8, 0); k.s('halo', 1.2 * br); k.fx.diss = max(k.fx.diss, 0.7 * br); k.fx.psy += 3 * br; k.fx.glow += 2 * br;
+        k.r('armR', -2.5 * br, 0, 0.6 * br); k.r('armL', -2.5 * br, 0, -0.6 * br);
+      },
+    }),
+  });
+
+
+  // ghost wisp tail: a lathe that narrows into a curling translucent tail, skinned to a spring chain
+  function wispTail(R, o) {
+    const pts = o.pts || [[0, o.y0, 0], [0.02, o.y0 - 0.3, -0.05], [0.06, o.y0 - 0.6, -0.15], [0.12, o.y0 - 0.85, -0.3]];
+    const ch = R.chain(o.name || 'wisp', o.parent || 'body', pts);
+    R.tube(ch, { r: (u) => o.r * (1 - u * 0.85), sides: 14, c: o.c, cell: o.cell || 'cloth', m: o.m || 'ghost', ext: [0, 0.15], ell: [1, 0.85] });
+    R.spring(ch.slice(1), { k: 0.1, drag: 0.1, g: -0.1, wind: 0.6 });
+    return ch;
+  }
+  // long sleeve (water-sleeve feel): tube over arm chain flaring past the hand, hem spring-weighted to the hand
+  function sleeve(R, s, o) {
+    const L = sideL(s);
+    R.tube(['arm' + L, 'fore' + L, 'hand' + L], { r: (u) => o.r0 + (o.r1 * 0.7 - o.r0) * sm(0.3, 0.9, u), sides: 12, c: o.c, cell: o.cell || 'robe', rep: [2, 2], ext: [0.04, 0.0], m: o.m });
+    R.add(GEO.sph(o.r0 * 1.35, o.r0 * 1.2, o.r0 * 1.3, 12, 8), { b: 'arm' + L, c: o.c, cell: o.cell || 'robe', at: R.B['arm' + L].pos.toArray(), m: o.m });
+  }
+  const GHOST = {
+    idle(k, o = {}) { HUM.idle(k, o); k.p('body', 0, 0.08 + sin(k.t * 1.3) * 0.06, 0); k.r('body', 0.04 + sin(k.t * 0.9) * 0.03, 0, sin(k.t * 0.7) * 0.04); },
+    move(k) { k.p('body', 0, 0.1 + sin(k.t * 3) * 0.05, 0); k.r('body', 0.25, 0, sin(k.t * 3) * 0.05); for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, 0.3, 0, s * 0.15); k.r('fore' + L, -0.2); } },
+  };
+
+  // ============================================================================ 孤魂 hungry_ghost (also 孤棚餓鬼 boss, variant 2 × 1.5)
+  // An unworshipped wandering soul in a pale burial robe, needle-thin neck, tiny mouth, hands held out for offerings.
+  defB('hungry_ghost', {
+    h: 2.5, outline: 0.003, rim: 0.6, rimColor: 0xc0e8ff,
+    build(R) {
+      biped(R, { hip: 1.15, chest: 1.55, neck: 1.82, head: 2.08, sw: 0.2, sy: 1.72, arm: 0.66, hw: 0.1, armOut: 0.06, legs: false, nz: 0.06, hz: 0.1 });
+      const ROBE = 0xe8ecef, SKIN = 0xd8e2ea;
+      torso(R, { y0: 1.1, y1: 1.8, r: (t) => 0.2 + 0.02 * sin(t * PI) - 0.08 * sm(0.8, 1, t), depth: 0.8, c: ROBE, cell: 'robe', rep: [3, 2] });
+      R.add(GEO.box(0.16, 0.4, 0.02, 0.01), { b: 'chest', c: 0xb8c4cc, cell: 'cloth', at: [0.05, 1.45, 0.18], rot: [0, 0, 0.12] });
+      skirt(R, { y0: 1.15, y1: 0.4, r0: 0.21, r1: 0.3, n: 6, c: [0xc8d4dc, ROBE], cell: 'robe', rep: [3, 2], k: 0.12, g: 0.1, wave: 6 });
+      skirt(R, { name: 'hem', y0: 0.44, y1: 0.12, r0: 0.3, r1: 0.26, n: 6, c: 0xd8e4ec, cell: 'fringe', m: 'ghost', rep: [5, 1], k: 0.08, g: -0.1 });
+      for (const s of [-1, 1]) sleeve(R, s, { r0: 0.07, r1: 0.16, c: ROBE, ext: 0.12 });
+      for (const s of [-1, 1]) { const L = sideL(s); R.add(GEO.sph(0.04, 0.06, 0.03, 8, 6), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.27, 0.98, 0.12] }); }
+      // needle neck & head
+      R.tube(['chest', 'neck', 'head'], { r: (u) => 0.035 + 0.03 * sm(0, 0.2, 1 - u), sides: 8, c: SKIN, cell: 'skin', ext: [0, 0] });
+      R.add(GEO.sph(0.15, 0.18, 0.15, 16, 12), { b: 'head', c: SKIN, cell: 'skin', at: [0, 2.1, 0.1] });
+      faceShell(R, 'ghostface', [0, 2.09, 0.105], 0.155, 0.185, 0.155, { b: 'head', wide: 0.95, t0: 0.6, tl: 1.75 });
+      R.add(GEO.sph(0.155, 0.12, 0.16, 16, 8, { tl: PI / 2 }), { b: 'head', c: 0x101418, cell: 'hair', at: [0, 2.15, 0.08] });
+      R.add(GEO.sph(0.08, 0.07, 0.08, 10, 8), { b: 'head', c: 0x101418, cell: 'hair', at: [0, 2.32, 0.02] });
+      for (const s of [-1, 1]) strand(R, 'lock' + sideL(s), 'head', [[s * 0.12, 2.12, 0.08], [s * 0.15, 1.95, 0.08], [s * 0.15, 1.75, 0.05]], { r: 0.035, c: 0x101418, k: 0.2 });
+      // 鬼火: blue will-o-wisps hovering by the hands
+      for (const s of [-1, 1]) R.add(GEO.card(0.14, 0.24, 1, 1), { m: 'add', b: 'hand' + sideL(s), c: 0x60b0ff, cell: 'flame', decal: true, at: [s * 0.33, 1.05, 0.2], rot: [0, s * 0.4, 0] });
+      R.fx({ mode: 'orbit', n: 10, at: [0, 1.3, 0], box: [0.1, 0.8, 0.1], col: [0x80c8ff, 0xc0e8ff], size: 0.09, speed: 0.8, p: [0.7, 0.3, 1] });
+      R.fx({ mode: 'wander', n: 10, at: [0, 0.2, 0], box: [0.8, 0.2, 0.8], col: [0xe8f0f8], size: 0.5, speed: 0.4, p: [0.3, 0.2, 1], blend: 'normal' });
+      R.light({ b: 'chest', at: [0, 1.3, 0.4], color: '#80c8ff', i: 0.6, r: 3, flicker: 0.3 });
+    },
+    idle(k) {
+      GHOST.idle(k, { elbow: 0.4 });
+      // begging: hands drift out, then fall
+      const beg = 0.5 + 0.5 * sin(k.t * 0.6);
+      for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.6 - 0.3 * beg, 0, s * 0.05); k.r('fore' + L, -0.5 * beg); k.r('hand' + L, 0.4); }
+      k.r('neck', 0.25 + 0.05 * sin(k.t * 0.8)); k.r('head', 0.1, sin(k.t * 0.4) * 0.3, 0.2 * sin(k.t * 0.3));
+    },
+    move: (k) => GHOST.move(k),
+    clips: humClips({
+      attack(k) {
+        // lunging grab: neck stretches out, hands clutch
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.p('body', 0, 0.1 * back, 0.5 * hit); k.r('body', -0.2 * back + 0.4 * hit);
+        k.p('head', 0, 0, 0.25 * hit); k.p('neck', 0, 0, 0.1 * hit); k.r('neck', 0.5 * hit);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.4 * back - 1.4 * hit, 0, s * 0.3 * back); k.r('fore' + L, -0.2 * hit); }
+      },
+    }),
+  });
+
+  // ============================================================================ 瘟鬼 plague_ghost
+  // Plague spirit: ragged grave-robe papered with talismans that failed, hair over its face, a gourd of pestilence, green miasma.
+  defB('plague_ghost', {
+    h: 2.5, outline: 0.003, rim: 0.4, rimColor: 0xc8f080,
+    build(R) {
+      biped(R, { hip: 1.08, chest: 1.45, neck: 1.72, head: 1.9, sw: 0.22, sy: 1.62, arm: 0.68, hw: 0.11, armOut: 0.07, legs: false, cz: 0.08, nz: 0.12, hz: 0.18 });
+      R.bone('gourd', 'body', [0.25, 0.95, 0.12]);
+      const ROBE = 0x8a9278, ROBE2 = 0x5a6248, SKIN = 0xb8c4a0;
+      torso(R, { y0: 1.02, y1: 1.7, r: (t) => 0.22 + 0.03 * sin(t * PI) - 0.08 * sm(0.8, 1, t), depth: 0.8, c: ROBE, cell: 'robe', rep: [3, 2], z: 0.04 });
+      skirt(R, { y0: 1.08, y1: 0.32, r0: 0.24, r1: 0.34, n: 7, c: [ROBE2, ROBE], cell: 'robe', rep: [3, 2], k: 0.12, wave: 7 });
+      skirt(R, { name: 'rag', y0: 0.38, y1: 0.08, r0: 0.34, r1: 0.36, n: 7, c: ROBE2, cell: 'fringe', m: 'cut', rep: [6, 1], k: 0.1 });
+      for (const s of [-1, 1]) sleeve(R, s, { r0: 0.07, r1: 0.13, c: ROBE, ext: 0.06 });
+      for (const s of [-1, 1]) { const L = sideL(s); R.add(GEO.lumpy(GEO.sph(0.045, 0.07, 0.035, 8, 6), 0.1, 5), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.3, 0.9, 0.16] }); }
+      // talismans stuck all over (each a little card that flutters with its bone)
+      const tal = [[0.1, 1.45, 0.24, 'chest', 0.2], [-0.12, 1.2, 0.25, 'body', -0.25], [0.18, 0.75, 0.3, 'sk1a', 0.1], [-0.2, 0.62, 0.28, 'sk6a', -0.15], [0.0, 1.62, -0.2, 'chest', 3.1], [0.26, 1.3, -0.1, 'chest', 2.0]];
+      for (const [x, y, z, b, a] of tal) R.add(GEO.card(0.11, 0.28, 1, 2), { m: 'cut', b, c: 0xffffff, cell: 'talisman', decal: true, at: [x, y - 0.14, z], rot: [0.1, a, a * 0.3] });
+      // head hunched forward, hair curtain over the face
+      R.add(GEO.sph(0.15, 0.18, 0.15, 14, 12), { b: 'head', c: SKIN, cell: 'skin', at: [0, 1.9, 0.18] });
+      faceShell(R, 'plagueface', [0, 1.89, 0.185], 0.155, 0.185, 0.155, { b: 'head', wide: 0.9, t0: 0.6, tl: 1.75 });
+      R.add(GEO.sph(0.165, 0.13, 0.17, 16, 8, { tl: PI / 2 }), { b: 'head', c: 0x101210, cell: 'hair', at: [0, 1.95, 0.16] });
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 6 - 0.5) * 2.6, x = sin(a) * 0.15, z = 0.16 + cos(a) * 0.15;
+        strand(R, 'h' + i, 'head', [[x, 2.0, z], [x * 1.15, 1.8, z + (abs(a) < 0.6 ? 0.05 : 0)], [x * 1.2, 1.55, z], [x * 1.2, 1.3, z - 0.04]], { r: (u) => 0.05 * (1 - u * 0.5), c: 0x101210, k: 0.12, g: 0.6 });
+      }
+      // gourd of pestilence
+      R.add(GEO.lathe([[0.001, 0], [0.09, 0.03], [0.1, 0.1], [0.05, 0.17], [0.065, 0.23], [0.04, 0.29], [0.02, 0.33], [0.001, 0.34]], 12), { b: 'gourd', c: 0xb08a40, cell: 'lacquer', at: [0.25, 0.75, 0.12] });
+      R.add(GEO.cyl(0.012, 0.012, 0.08, 5), { b: 'gourd', c: 0xb02020, cell: 'plain', at: [0.25, 1.1, 0.12] });
+      R.fx({ mode: 'rise', n: 26, at: [0, 0.6, 0.05], box: [1.0, 0.6, 0.8], col: [0x8ab040, 0x6a9030, 0xa0c050], size: 0.35, speed: 0.35, p: [1.4, 0.3, 1], blend: 'normal' });
+      R.fx({ mode: 'wander', n: 18, at: [0, 1.2, 0.1], box: [1.2, 1.4, 1.0], col: [0xd0ff60], size: 0.04, speed: 0.6, p: [0.3, 1, 1] });
+    },
+    idle(k) { GHOST.idle(k, { elbow: 0.5 }); k.r('chest', 0.25); k.r('head', 0.2, sin(k.t * 0.4) * 0.2, 0); k.r('armR', -0.2); k.r('foreR', -0.8); k.p('body', 0, -0.06, 0); },
+    move: (k) => GHOST.move(k),
+    clips: humClips({
+      cast(k) { HUM.cast(k); k.r('gourd', -1.2 * pulse(k.u, 0.1, 0.35, 0.7, 1)); },
+    }),
+  });
+
+  // ============================================================================ 無面鬼 faceless
+  // A soul washed of every memory: tall, black-robed, its face a smooth blank egg. It wants a face — yours will do.
+  defB('faceless', {
+    h: 2.9, outline: 0.003, rim: 0.5, rimColor: 0xd8d0ff, psy: [3, 5, 0.1, 0.6],
+    build(R) {
+      biped(R, { hip: 1.35, chest: 1.85, neck: 2.2, head: 2.42, sw: 0.2, sy: 2.05, arm: 0.95, hw: 0.1, armOut: 0.04, legs: false });
+      const ROBE = 0x14121c, PALE = 0xece8f0;
+      torso(R, { y0: 1.3, y1: 2.14, r: (t) => 0.18 + 0.02 * sin(t * PI) - 0.06 * sm(0.8, 1, t), depth: 0.8, c: ROBE, cell: 'robe', rep: [3, 2] });
+      skirt(R, { y0: 1.35, y1: 0.08, r0: 0.19, r1: 0.38, n: 8, c: [0x0a0a10, ROBE], cell: 'robe', rep: [4, 3], k: 0.1, g: 0.15, wave: 8, flare: (t) => t * t });
+      skirt(R, { name: 'hem', y0: 0.16, y1: 0.0, r0: 0.37, r1: 0.42, n: 8, c: 0x1a1824, cell: 'fringe', m: 'cut', rep: [8, 1], k: 0.08 });
+      for (const s of [-1, 1]) sleeve(R, s, { r0: 0.06, r1: 0.1, c: ROBE, ext: 0.02 });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        // long pale fingers
+        for (let i = 0; i < 4; i++) R.add(GEO.cyl(0.008, 0.012, 0.22, 5), { b: 'hand' + L, c: PALE, cell: 'skin', at: [s * (0.26 + (i - 1.5) * 0.02), 1.06, 0.1 + (i - 1.5) * 0.01], rot: [0.2, 0, s * 0.1] });
+        R.add(GEO.sph(0.035, 0.05, 0.025, 8, 6), { b: 'hand' + L, c: PALE, cell: 'skin', at: [s * 0.26, 1.15, 0.1] });
+      }
+      R.tube(['chest', 'neck', 'head'], { r: 0.045, sides: 8, c: PALE, cell: 'skin' });
+      // the blank egg face
+      R.add(GEO.sph(0.14, 0.19, 0.15, 20, 16), { b: 'head', c: PALE, cell: 'skin', at: [0, 2.45, 0.04] });
+      faceShell(R, 'blank', [0, 2.44, 0.045], 0.146, 0.196, 0.156, { b: 'head', m: 'ghost', c: 0xb0a8e0, wide: 0.8, t0: 0.7, tl: 1.5 });
+      R.add(GEO.sph(0.152, 0.16, 0.16, 16, 10, { tl: PI * 0.55 }), { b: 'head', c: 0x08080c, cell: 'hair', at: [0, 2.5, 0.0] });
+      for (let i = 0; i < 6; i++) {
+        const a = PI + (i / 5 - 0.5) * 2.2, x = sin(a) * 0.14, z = cos(a) * 0.14;
+        strand(R, 'h' + i, 'head', [[x, 2.52, z], [x * 1.3, 2.3, z * 1.2], [x * 1.4, 1.95, z * 1.3], [x * 1.3, 1.6, z * 1.3]], { r: (u) => 0.055 * (1 - u * 0.5), c: 0x08080c, k: 0.1, g: 0.5 });
+      }
+      R.fx({ mode: 'wander', n: 14, at: [0, 0.1, 0], box: [1, 0.2, 1], col: [0x2a2838], size: 0.6, speed: 0.3, p: [0.3, 0.2, 1], blend: 'normal' });
+      R.fx({ mode: 'rise', n: 14, at: [0, 2.3, 0.1], box: [0.3, 0.3, 0.3], col: [0xc0b0ff], size: 0.04, speed: 0.7, p: [0.6, 0.1, 1] });
+    },
+    idle(k) {
+      GHOST.idle(k, { elbow: 0.15, armOut: 0.04 });
+      // the head tilts too far, slowly, like it is studying you
+      k.r('head', 0.1, 0, 0.45 * sin(k.t * 0.35)); k.r('neck', 0.1, 0, 0.15 * sin(k.t * 0.35));
+      k.p('body', 0, -0.06, 0);
+    },
+    move: (k) => GHOST.move(k),
+    clips: humClips({
+      attack(k) {
+        const u = k.u, hit = pulse(u, 0.3, 0.42, 0.6, 0.95);
+        HUM.thrust(k); k.fx.psy += 3 * hit; k.r('head', 0, 0, 0.6 * hit);
+      },
+      special(k) { // face-steal: the blank face swirls with stolen faces
+        const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1);
+        k.p('body', 0, 0.4 * up, 0); k.r('head', -0.3 * up); for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -1.8 * up, 0, s * 0.9 * up); }
+        k.fx.psy += 5 * up;
+      },
+    }),
+  });
+
+  // ============================================================================ 山鬼 mountain_ghost
+  // Hunched mountain ghoul: moss-hump back sprouting branches, long clawed arms, a walking stick of driftwood.
+  defB('mountain_ghost', {
+    h: 2.6, outline: 0.003, rim: 0.35, rimColor: 0xe0ffa0,
+    build(R) {
+      biped(R, { hip: 1.0, chest: 1.42, neck: 1.62, head: 1.68, sw: 0.26, sy: 1.5, arm: 0.95, hw: 0.14, armOut: 0.1, cz: 0.18, nz: 0.2, hz: 0.38 });
+      R.bone('stick', 'handL', [-0.36, 0.6, 0.35]);
+      const SKIN = 0x8a9878, MOSS = 0x4a7a2a;
+      // hunched back: torso + big mossy hump
+      torso(R, { y0: 0.95, y1: 1.6, r: (t) => 0.22 + 0.05 * sin(t * PI) - 0.06 * sm(0.8, 1, t), depth: 0.85, c: SKIN, cell: 'skin', rep: [3, 2], z: 0.1 });
+      R.add(GEO.lumpy(GEO.sph(0.42, 0.45, 0.38, 18, 14), 0.12, 2.5, 4), { b: 'chest', c: (v) => Rig.mix(0x2e5a1e, 0x6a9a3a, fbm(v.x * 4, v.y * 4, v.z * 4)), cell: 'moss', rep: [3, 3], at: [0, 1.45, -0.12] });
+      for (let i = 0; i < 3; i++) {
+        const x = (i - 1) * 0.18;
+        R.add(GEO.sweep([[x, 1.75, -0.15], [x * 1.4, 2.0, -0.2], [x * 2.0 + 0.05, 2.2, -0.15], [x * 2.6, 2.38, -0.22]], (u) => 0.03 * (1 - u * 0.8), { sides: 5 }), { b: 'chest', c: 0x5a4a32, cell: 'bark' });
+        R.add(GEO.sweep([[x * 1.4, 2.0, -0.2], [x * 1.4 + 0.12, 2.15, -0.1]], 0.015, { sides: 4 }), { b: 'chest', c: 0x5a4a32, cell: 'bark' });
+        for (let j = 0; j < 3; j++) R.add(GEO.card(0.1, 0.12, 1, 1), { m: 'cut', b: 'chest', c: 0x6aa040, cell: 'leaf', decal: true, at: [x * 2.6 + (j - 1) * 0.05, 2.33, -0.22], rot: [0, j * 2, 0.3] });
+      }
+      R.add(GEO.cyl(0.24, 0.26, 0.2, 12), { b: 'body', c: 0x3a3a28, cell: 'cloth', at: [0, 0.92, 0.05] });
+      limbs(R, { arm: { r: (u) => 0.07 - u * 0.02, c: SKIN, cell: 'skin', rep: [2, 3] }, leg: { r: (u) => 0.08 - u * 0.025, c: SKIN, cell: 'skin', rep: [2, 3] } });
+      for (const s of [-1, 1]) {
+        const L = sideL(s);
+        R.add(GEO.sph(0.07, 0.08, 0.07, 10, 8), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.4, 0.58, 0.28] });
+        for (let i = 0; i < 4; i++) R.add(GEO.cone(0.012, 0.13, 5), { b: 'hand' + L, c: 0xe8e4c8, at: [s * (0.37 + i * 0.022), 0.5, 0.33], rot: [2.6, 0, 0] });
+        R.add(GEO.box(0.13, 0.06, 0.26, 0.03), { b: 'foot' + L, c: SKIN, cell: 'skin', at: [s * 0.14, 0.04, 0.06] });
+        R.add(GEO.lumpy(GEO.sph(0.1, 0.06, 0.08, 8, 6), 0.2, 6), { b: 'arm' + L, c: MOSS, cell: 'moss', at: [s * 0.28, 1.52, 0.1] });
+      }
+      R.add(GEO.sph(0.15, 0.16, 0.16, 14, 12), { b: 'head', c: SKIN, cell: 'skin', at: [0, 1.7, 0.42] });
+      faceShell(R, 'ghoulface', [0, 1.69, 0.425], 0.155, 0.165, 0.165, { b: 'head', wide: 0.95, t0: 0.6, tl: 1.75 });
+      for (const s of [-1, 1]) R.add(GEO.cone(0.04, 0.12, 6), { b: 'head', c: SKIN, cell: 'skin', at: [s * 0.15, 1.75, 0.38], rot: [0, 0, s * -1.3] });
+      R.add(GEO.sweep([[-0.36, 0.0, 0.42], [-0.37, 0.5, 0.36], [-0.38, 1.0, 0.33], [-0.34, 1.15, 0.36]], 0.03, { sides: 6 }), { b: 'stick', c: 0x6a5a40, cell: 'bark' });
+      R.fx({ mode: 'wander', n: 12, at: [0, 1.4, -0.1], box: [1, 1, 1], col: [0xc8ff70], size: 0.04, speed: 0.5, p: [0.3, 1, 1] });
+    },
+    idle(k) { HUM.idle(k, { elbow: 0.3 }); k.r('body', 0.15); k.r('head', -0.2 + sin(k.t * 0.5) * 0.08, sin(k.t * 0.3) * 0.3, 0); k.r('armL', -0.45); k.r('foreL', -0.3); k.r('legL', -0.2); k.r('legR', -0.2); k.r('shinL', 0.4); k.r('shinR', 0.4); k.p('body', 0, -0.06, 0); },
+    move(k) { HUM.walk(k, { rate: 5, stride: 0.4, bob: 0.8 }); k.r('body', 0.2); k.r('armL', -0.5); },
+    clips: humClips({ attack: (k) => { HUM.thrust(k); k.r('head', 0.3 * pulse(k.u, 0.3, 0.45, 0.6, 0.9)); } }),
+  });
+
+  // ============================================================================ 林投姐 linto_jie (boss)
+  // Tainan legend: swindled of everything by a faithless lover, she hanged herself under a pandanus (林投) tree.
+  // She doesn't want revenge — she wants someone to hear her out. A woman in white, hair to her knees, fog at her feet,
+  // the pandanus behind her. Phase 2: grief breaks — her hair rises and spreads like a dark halo, the fronds thrash.
+  defB('linto_jie', {
+    h: 4.3, boss: true, outline: 0.003, rim: 0.55, rimColor: 0xc8e8ff, wide: 1.3, phaseGlow: 1.4,
+    build(R) {
+      biped(R, { hip: 1.2, chest: 1.62, neck: 1.9, head: 2.06, sw: 0.2, sy: 1.8, arm: 0.66, hw: 0.11, armOut: 0.05, legs: false, hz: 0.03 });
+      const WHITE = 0xf2f2ee, BLUE = 0xc8d4e4, SKIN = 0xe8e6e2, HAIR = 0x0c0c12;
+      // white Qing-era robe (大襟衫) with a pleated skirt (馬面裙) that dissolves into fog
+      torso(R, { y0: 1.15, y1: 1.86, r: (t) => 0.18 + 0.03 * sin(t * PI) - 0.07 * sm(0.8, 1, t), depth: 0.78, c: WHITE, cell: 'robe', rep: [3, 2] });
+      R.add(GEO.sweep([[0.0, 1.85, 0.15], [0.08, 1.7, 0.17], [0.14, 1.55, 0.16], [0.15, 1.4, 0.15]], 0.012, { sides: 4 }), { b: 'chest', c: 0x8a9ab0, cell: 'blank' });
+      R.add(GEO.tor(0.19, 0.02, 6, 20), { b: 'body', c: BLUE, cell: 'cloth', at: [0, 1.2, 0], rot: [PI / 2, 0, 0], s: [1, 0.8, 1] });
+      skirt(R, { y0: 1.22, y1: 0.18, r0: 0.2, r1: 0.42, n: 10, c: [BLUE, WHITE], cell: 'robe', rep: [10, 2], k: 0.1, g: 0.2, wave: 12, flare: (t) => t * (0.6 + 0.4 * t) });
+      skirt(R, { name: 'hem', y0: 0.25, y1: 0.0, r0: 0.41, r1: 0.48, n: 10, c: 0xe0e8f0, cell: 'fringe', m: 'ghost', rep: [8, 1], k: 0.08, g: -0.05 });
+      for (const s of [-1, 1]) sleeve(R, s, { r0: 0.06, r1: 0.14, c: WHITE, ext: 0.08 });
+      for (const s of [-1, 1]) { const L = sideL(s); R.add(GEO.sph(0.035, 0.05, 0.025, 8, 6), { b: 'hand' + L, c: SKIN, cell: 'skin', at: [s * 0.26, 1.15, 0.12] }); }
+      R.tube(['chest', 'neck', 'head'], { r: 0.04, sides: 8, c: SKIN, cell: 'skin' });
+      R.add(GEO.sph(0.12, 0.15, 0.125, 18, 14), { b: 'head', c: SKIN, cell: 'skin', at: [0, 2.08, 0.04] });
+      faceShell(R, 'lintoface', [0, 2.07, 0.045], 0.123, 0.153, 0.128, { b: 'head', wide: 0.95, t0: 0.6, tl: 1.75 });
+      R.add(GEO.sph(0.13, 0.12, 0.135, 16, 8, { tl: PI * 0.5 }), { b: 'head', c: HAIR, cell: 'hair', at: [0, 2.12, 0.03] });
+      for (let i = 0; i < 5; i++) R.add(GEO.sph(0.014, 0.01, 0.014, 6, 4), { b: 'head', c: 0xf8f8f0, cell: 'plain', at: [0.1 + cos(i * 1.26) * 0.02, 2.2 + sin(i * 1.26) * 0.02, 0.07] });
+      // knee-length hair: a curtain of spring strands
+      for (let i = 0; i < 9; i++) {
+        const a = PI + (i / 8 - 0.5) * 2.8, x = sin(a) * 0.12, z = cos(a) * 0.12 + 0.02;
+        strand(R, 'h' + i, 'head', [[x, 2.14, z], [x * 1.25, 1.9, z * 1.2 - 0.02], [x * 1.3, 1.5, z * 1.25 - 0.04], [x * 1.3, 1.1, z * 1.25 - 0.04], [x * 1.3, 0.75, z * 1.2 - 0.02]], { r: (u) => 0.06 * (1 - u * 0.4), c: HAIR, k: 0.1, g: 0.6 });
+      }
+      for (const s of [-1, 1]) strand(R, 'f' + sideL(s), 'head', [[s * 0.1, 2.1, 0.08], [s * 0.12, 1.85, 0.1], [s * 0.12, 1.55, 0.1]], { r: 0.035, c: HAIR, k: 0.15 });
+      // phase 2: hair rises into a spreading dark halo
+      const hp = R.phaseBone('hairhalo', 'head', [0, 2.12, -0.05], 2);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU, d = [cos(a), sin(a) * 0.8 + 0.3, -0.3];
+        R.add(GEO.sweep([[0, 2.12, -0.05], [d[0] * 0.4, 2.12 + d[1] * 0.4, -0.15], [d[0] * 0.8 + sin(i) * 0.1, 2.12 + d[1] * 0.85, -0.3], [d[0] * 1.15, 2.12 + d[1] * 1.15 + 0.1, -0.35]], (u) => 0.05 * (1 - u * 0.8), { sides: 5, ell: [1, 0.4] }), { b: hp, c: HAIR, cell: 'hair' });
+      }
+      // the pandanus (林投): leaning trunk on prop roots, two crowns of serrated strap leaves, a pineapple-like fruit
+      R.bone('tree', 'root', [0.55, 0.0, -0.75]);
+      R.bone('crownA', 'tree', [0.15, 3.2, -0.95]);
+      R.bone('crownB', 'tree', [1.25, 2.75, -0.7]);
+      const BARK = 0x6a5a48;
+      R.add(GEO.sweep([[0.55, 0.6, -0.75], [0.45, 1.6, -0.82], [0.25, 2.5, -0.9], [0.15, 3.2, -0.95]], (u) => 0.13 - u * 0.04, { sides: 9 }), { b: 'tree', c: BARK, cell: 'bark', rep: [2, 4] });
+      R.add(GEO.sweep([[0.45, 1.8, -0.82], [0.8, 2.3, -0.78], [1.1, 2.6, -0.72], [1.25, 2.75, -0.7]], (u) => 0.08 - u * 0.03, { sides: 7 }), { b: 'tree', c: BARK, cell: 'bark', rep: [2, 3] });
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; R.add(GEO.sweep([[0.55 + cos(a) * 0.05, 0.7, -0.75 + sin(a) * 0.05], [0.55 + cos(a) * 0.25, 0.35, -0.75 + sin(a) * 0.25], [0.55 + cos(a) * 0.38, 0.0, -0.75 + sin(a) * 0.38]], 0.03, { sides: 5 }), { b: 'tree', c: BARK, cell: 'bark' }); }
+      for (const [cb, cx, cy, cz, n] of [['crownA', 0.15, 3.2, -0.95, 14], ['crownB', 1.25, 2.75, -0.7, 11]]) {
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * TAU * 1.618 * 3, el = -0.3 + (i % 3) * 0.35;
+          R.add(GEO.card(0.3, 1.25 + (i % 4) * 0.12, 1, 6), { m: 'cut', b: cb, c: Rig.mix(0x2a5a2a, 0x6a9a48, (i % 5) / 4), cell: 'frond', decal: true, at: [cx, cy, cz], rot: [PI / 2 - 0.9 - el * 0.6, a, 0] });
+        }
+        R.add(GEO.lumpy(GEO.sph(0.13, 0.17, 0.13, 10, 8), 0.1, 8), { b: cb, c: 0xd8902a, cell: 'diamond', at: [cx + 0.08, cy - 0.2, cz + 0.1] });
+      }
+      // fog and falling tears
+      R.fx({ mode: 'wander', n: 26, at: [0, 0.15, 0], box: [2.4, 0.3, 2.0], col: [0xe8eef4, 0xd8e2ee], size: 0.9, speed: 0.25, p: [0.5, 0.2, 1], blend: 'normal' });
+      R.fx({ mode: 'fall', n: 12, at: [0.05, 2.0, 0.14], box: [0.15, 0.05, 0.05], col: [0x9ae0ff], size: 0.035, speed: 0.6, p: [1.7, 0.02, 1] });
+      R.fx({ mode: 'orbit', n: 14, at: [0, 1.2, 0], box: [0.2, 1.4, 0.2], col: [0x80c0ff, 0xb0e0ff], size: 0.1, speed: 0.5, p: [1.0, 0.4, 1] });
+      R.light({ b: 'chest', at: [0, 1.5, 0.6], color: '#a0d0ff', i: 0.6, r: 4, flicker: 0.2 });
+    },
+    idle(k) {
+      GHOST.idle(k, { elbow: 0.3 });
+      // grief: one hand at her chin, the other limp; head bowed, swaying
+      k.r('armR', -1.1, 0, -0.35); k.r('foreR', -1.6); k.r('handR', 0.3);
+      k.r('armL', 0.1, 0, -0.08); k.r('foreL', -0.2);
+      k.r('head', 0.3 + 0.06 * sin(k.t * 0.5), 0.25, 0.15); k.r('neck', 0.1);
+      k.p('body', 0, -0.06, 0);
+      // the tree breathes in the wind
+      k.r('crownA', sin(k.t * 0.8) * 0.06, 0, sin(k.t * 0.6) * 0.08); k.r('crownB', sin(k.t * 0.9 + 1) * 0.07, 0, sin(k.t * 0.7) * 0.09);
+      if (k.ph > 1) { k.r('crownA', sin(k.t * 4) * 0.15, 0, sin(k.t * 3) * 0.2); k.r('crownB', sin(k.t * 4.5) * 0.15, 0, sin(k.t * 3.3) * 0.2); k.r('hairhalo', 0, 0, sin(k.t * 0.8) * 0.15); k.r('head', -0.3); }
+    },
+    move: (k) => GHOST.move(k),
+    clips: humClips({
+      attack(k) {
+        // a lunge of sorrow: she rushes forward, hair whipping, sleeves lashing
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        k.p('body', 0, 0.15 * back, 0.6 * hit - 0.15 * back); k.r('body', -0.25 * back + 0.35 * hit, 0.3 * hit, 0);
+        for (const s of [-1, 1]) { const L = sideL(s); k.r('arm' + L, -0.6 * back - 1.6 * hit, 0, s * (0.8 * back - 0.2 * hit)); k.r('fore' + L, -0.3 * hit); }
+        k.r('head', -0.4 * hit);
+      },
+      cast(k) { HUM.cast(k, { float: 0.3 }); k.r('head', -0.3 * pulse(k.u, 0.05, 0.35, 0.75, 1)); },
+    }),
+  });
+  /* END */
 })();
