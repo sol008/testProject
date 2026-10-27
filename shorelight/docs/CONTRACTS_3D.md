@@ -166,9 +166,10 @@ ground decal or to the screen overlay:
   `ctx.setTransform(...)` / `ctx.resetTransform()` (e.g. `setTransform(G.S, 0, 0, G.S, 0, 0)`). The mode is part of the
   save()/restore() state. On the overlay, world px still map through the 2D camera (`x - cam.x`), so a full-screen
   gradient built at `cam.x + G.W / 2` lands at the screen centre.
-- **Screen space** for a `fillRect` / `strokeRect` / `clearRect` / `drawImage` whose rectangle spans the whole view
-  along one axis starting at a screen edge — full-screen tints (`fillRect(cam.x - 40, cam.y - 40, G.W + 80, G.H + 80)`),
-  vignettes, edge fades, letterbox bars, a whole-map darkness fill.
+- **Screen space** for a `fillRect` / `strokeRect` / `clearRect` whose rectangle spans the whole view along one axis
+  starting at a screen edge (its edges at most 128 px outside the screen), and for a `drawImage` that covers the whole
+  screen — full-screen tints (`fillRect(cam.x - 40, cam.y - 40, G.W + 80, G.H + 80)`), vignettes, edge fades,
+  letterbox bars. Paths (`fill()` / `stroke()`) are never classified by size: draw full-screen shapes in screen mode.
 - **Ground decal** for everything else (glows, decals, chalk marks, rune circles, puddles, rockfall shadows, a hull
   rim, sprites drawn at world positions).
 - In drawGround (and drawMechFloor), a solid-colour full-view `fillRect`/`clearRect` tints the **whole decal** instead
