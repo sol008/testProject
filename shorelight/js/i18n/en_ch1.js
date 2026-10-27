@@ -585,7 +585,6 @@ G.I18N.add({
   '艾草是我自己去山腳採的，別人家的沒這麼香。': 'I pick the mugwort myself at the foot of the mountain. Nobody else\'s smells this good.',
   '陳伯拜土地公的粿，攏是跟我訂的。拿去，供品籃裡有了。': 'The cakes Uncle Chen offers to the Earth God always come from me. Here—they\'re already in the offering basket.',
   '粿婆的攤子': 'Rice-Cake Granny\'s Stall',
-  '昨暝我在窗戶縫偷看喔。那個白頭髮的姊姊在唱歌。': 'Last night I peeked through a crack in the window. The big sister with the white hair was singing.',
   '好好聽。水鬼都哭了。': 'It was so pretty. Even the water ghosts cried.',
   '阿母說今暝不帶我去雞籠，說小孩子去海邊會被抓交替。': 'Mama says she won\'t take me to Keelung tonight. She says kids who go to the sea get caught as a replacement.',
   '我又不會被抓！我會游泳！': 'I won\'t get caught! I can swim!',
@@ -1524,4 +1523,6 @@ G.I18N.add({
   // ---- mine cart (the direction word is spliced in at runtime and is not extracted on its own)
   '礦車滑到盡頭，停了下來。北邊已經通了。': 'The cart rolls to the end of the track and stops. The way north is open now.',
   '礦車滑到盡頭，停了下來。東邊已經通了。': 'The cart rolls to the end of the track and stops. The way east is open now.',
+  // ---- source line revised after extraction (Bai Zhi's hair: 白頭髮 → 長頭髮)
+  '昨暝我在窗戶縫偷看喔。那個長頭髮的姊姊在唱歌。': 'Last night I peeked through a crack in the window. The big sister with the long hair was singing.',
 });
