@@ -38,6 +38,7 @@ class Run {
   constructor(browser, label) { this.browser = browser; this.label = label; this.errors = []; this.warns = []; this.shotN = 0; }
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     // 2D renderer for the playthrough (software WebGL in headless Chromium is far too slow for the 3D view)
     await this.ctx.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
     this.page = await this.ctx.newPage();
@@ -82,6 +83,7 @@ class Run {
   async talk(id) { await this.page.evaluate((id) => G.Debug.talk(id), id); await this.idle(); }
   async trigger(id) { await this.page.evaluate((id) => G.Debug.trigger(id), id); await this.idle(); }
   async step(x, y) { await this.page.evaluate(([x, y]) => G.Debug.stepOn(x, y), [x, y]); await this.page.waitForTimeout(120); await this.idle(); }
+  async stepGo(x, y) { await this.page.evaluate(([x, y]) => G.Debug.stepOn(x, y), [x, y]); }
   async interactObj(t, x, y) {
     await this.page.evaluate(([t, x, y]) => {
       const o = G.mapScene.objects.find((ob) => ob.t === t && ob.x === x && ob.y === y);
@@ -111,12 +113,18 @@ class Run {
   // watch the ending to the title screen, holding the skip key through the credits
   async toTitle(ms = 20 * 60000) {
     const t0 = Date.now();
-    let held = false;
+    let held = false, lastLog = Date.now();
     while (Date.now() - t0 < ms) {
       const top = await this.page.evaluate(() => { const t = G.Scenes.top(); return t && t.constructor ? t.constructor.name : ''; });
       if (top === 'CreditsScene' && !held) { await this.shot('credits', true); await this.page.keyboard.down('ControlLeft'); held = true; }
       if (top !== 'CreditsScene' && held) { await this.page.keyboard.up('ControlLeft'); held = false; }
+      if (top === 'GameOverScene') throw new Error(`[${this.label}] GAME OVER during the finale: ${await this.where()}`);
       if (top === 'TitleScene') { if (held) await this.page.keyboard.up('ControlLeft'); return true; }
+      if (Date.now() - lastLog > 60000) {
+        lastLog = Date.now();
+        console.log('    … ' + await this.page.evaluate(() => `${G.mapScene && G.mapScene.def.id} top=${G.Scenes.top() && G.Scenes.top().constructor.name} ` +
+          ['ch11_reunion', 'ch11_yexuan_p1', 'ch11_yexuan', 'ch11_nianer', 'ch11_wuxiang_1', 'ch11_wuxiang_2', 'ch11_wuxiang', 'ch11_done', 'ending_true', 'ending_normal'].filter((k) => G.state.flags[k]).join(',')));
+      }
       await this.page.waitForTimeout(250);
     }
     throw new Error(`[${this.label}] never reached the title screen: ${await this.where()}`);
@@ -170,7 +178,7 @@ const SEGMENTS = {
   await R.choices([0]); await R.talk('ph_innkeeper');
   },
   flats: async (R) => {
-  await R.levelTo(39);
+  await R.levelTo(41); // 烏鬚船主 is tuned for a Lv39 player (docs/BALANCE.md): two levels of margin for the battle bot
   // a ?startch=11 party wears starter gear: buy the Magong smith's kit (as a player would before the flats)
   await R.ev(() => {
     const kit = { xinghe: ['c11_sw_xuanwu', 'c11_ar_coral'], hongying: ['c11_sp_jinggu', 'c11_ar_haiwen'], yungui: ['c11_fn_leishan', 'c11_ar_coral'] };
@@ -259,7 +267,7 @@ const SEGMENTS = {
   await R.choices(['暗流', 0]); await R.talk('chenbo');
   check('A: 4-2 step 1 平安信', await R.flag('ch11_tangshan_letter') && await R.ev(() => G.Inv.has('c11_pingan_letter')));
   for (const id of ['deck_hy', 'deck_yg', 'deck_yy', 'deck_mc']) await R.talk(id);
-  await R.levelTo(44);
+  await R.levelTo(46); // 鯤 is tuned for a Lv41 player (docs/BALANCE.md)
   await R.heal();                                   // rest at the save point before the boss
   await R.choices(['鯤之淵']); await R.talk('chenbo');
   check('A: 11-14 鯤 (鯤鱗甲)', await R.flag('ch11_kun') && await R.ev(() => G.Inv.has('c11_ar_kun_scale')));
@@ -341,7 +349,7 @@ const SEGMENTS = {
   },
   true: async (R) => {
   await R.levelTo(48);
-  await R.step(19, 6);
+  await R.stepGo(19, 6);                            // the ending runs to the title screen: don't wait for map idle
   // ---- 燈心: reunion → 夜玄 ×2 → 夜念 → 無相 ×3 → E-00 → 真結局 → credits → stinger → title
   await R.toTitle();
   const fin = await R.ev(() => ({ f: G.state.flags, party: G.state.party.slice(), n: G.Lanterns.count(), th: G.Lanterns.THRESHOLD }));
@@ -362,7 +370,7 @@ const SEGMENTS = {
   await R.levelTo(48);
   await R.script("await S.warp('breath_realm', 19, 7, 'up', { reload: true });");
   check('B: lanterns below the threshold', await R.ev(() => G.Lanterns.count() < G.Lanterns.THRESHOLD));
-  await R.step(19, 6);
+  await R.stepGo(19, 6);                            // the ending runs to the title screen: don't wait for map idle
   await R.toTitle();
   const fin = await R.ev(() => ({ f: G.state.flags, n: G.Lanterns.count() }));
   check(`B: lanterns ${fin.n} < 14 → 普通結局`, !!fin.f.ending_normal && !fin.f.ending_true);
@@ -406,7 +414,8 @@ async function play(browser, from, to) {
     } else if (!R) {
       R = await openFrom(browser, 'A', ORDER[i - 1]);
     }
-    await R.ev(() => { G.settings.battleSpeed = 8; });
+    // the autoplay battle AI barely heals: run the fights on 'easy' so the story path, not the dice, is what gets tested
+    await R.ev(() => { G.settings.battleSpeed = 8; G.settings.difficulty = 'easy'; });
     const ts = Date.now();
     await SEGMENTS[seg](R);
     await R.health(seg);

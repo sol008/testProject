@@ -182,7 +182,7 @@
   });
   edef('c8_hundred_hands', {
     name: '潮怨・百手', art: 'tide_grudge', variant: 2, scale: 1.8, lv: 28, elem: 'water', resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 11, atk: 1.9, mag: 2.0, def: 1.1, spd: 1.2, exp: 7, gold: 6 },
+    m: { hp: 11, atk: 3.6, mag: 3.8, def: 1.1, spd: 2.3, exp: 7, gold: 6 }, // sim_story: was atk 1.9 mag 2.0 spd 1.2
     skills: [['c8_e_hands_drag', 3], ['c8_e_grudge_tide', 2], ['e_tg_curse', 1], ['c8_e_call_drowned', 1, 'turn>2']],
     phases: [
       { at: 0.5, lines: [['潮怨・百手', '……有人……在點燈叫我們……說回來吧……回來吧……'], ['yungui:serious', '點燈叫它們？……長明宮！']] },
@@ -199,7 +199,7 @@
   });
   edef('c8_qingfeng', {
     name: '洛青鋒', sprite: 'qingfeng', lv: 30, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 1.6, mag: 1.5, def: 1.15, spd: 1.4, exp: 7, gold: 6 },
+    m: { hp: 10.4, atk: 2.25, mag: 2.15, def: 1.15, spd: 2.0, exp: 7, gold: 6 }, // sim_story: was hp 9 atk 1.6 mag 1.5 spd 1.4
     skills: [['e_qf2_sword', 3], ['c8_e_qf_qisha', 1], ['c8_e_qf_duanchao', 2], ['c8_e_qf_lowtip', 2], ['c8_e_qf_huilan', 1, 'turn>1'], ['e_qf2_tide', 1]],
     phases: [
       { at: 0.5, skills: [{ id: 'e_qf2_sword', w: 2 }, { id: 'c8_e_qf_qisha', w: 3 }, { id: 'c8_e_qf_duanchao', w: 2 }, { id: 'c8_e_qf_lowtip', w: 2 }, { id: 'c8_e_qf_huilan', w: 1 }] },

@@ -247,6 +247,7 @@ G.FX = (() => {
     }
     const b = buf.getContext('2d');
     b.setTransform(1, 0, 0, 1, 0, 0);
+    b.clearRect(0, 0, buf.width, buf.height);  // a transparent 2D overlay (3D mode) must not accumulate
     b.drawImage(cv, 0, 0);
     ctx.save();
     // 1) breathing ripple: redraw in horizontal strips with sine offsets
@@ -332,8 +333,9 @@ G.FX = (() => {
       ctx.beginPath();
       ctx.ellipse(G.W / 2, G.H / 2 + 6, 410, 52, -0.02, 0, Math.PI * 2);
       ctx.fill();
-      G.Render.text(ctx, this.sub || '', G.W / 2, G.H / 2 - 92, { size: 24, align: 'center', color: '#c9b893' });
-      G.Render.text(ctx, this.title, G.W / 2, G.H / 2 - 30, { size: 60, align: 'center', color: '#fff1d0', glow: 'rgba(255,170,90,0.7)', glowBlur: 24 });
+      G.Render.textClip(ctx, this.sub || '', G.W / 2, G.H / 2 - 92, G.W - 120, { size: 24, align: 'center', color: '#c9b893' });
+      const tf = G.Render.fit(ctx, this.title, G.W - 120, { size: 60, minSize: 36 });
+      G.Render.text(ctx, tf.str, G.W / 2, G.H / 2 - 30 + (60 - tf.size) / 2, { size: tf.size, align: 'center', color: '#fff1d0', glow: 'rgba(255,170,90,0.7)', glowBlur: 24 });
       G.UI.lanternIcon(ctx, G.W / 2, G.H / 2 + 92, 10, G.time);
       ctx.restore();
     }
@@ -380,7 +382,7 @@ G.FX = (() => {
       const ta = Math.min(1, Math.max(0, (t - 1.2) / 0.6));
       ctx.globalAlpha = Math.max(0, a) * ta;
       G.Render.text(ctx, '點亮心燈', x, y + 64, { size: 22, align: 'center', color: '#ffd9a0' });
-      G.Render.text(ctx, this.name, x, y + 96, { size: 34, align: 'center', color: '#fff3d8', glow: 'rgba(255,170,90,0.7)', glowBlur: 16 });
+      G.Render.textClip(ctx, this.name, x, y + 96, G.W - 120, { size: 34, align: 'center', color: '#fff3d8', glow: 'rgba(255,170,90,0.7)', glowBlur: 16 });
       G.Render.text(ctx, `已點亮的心燈：${G.Lanterns.count()}`, x, y + 148, { size: 20, align: 'center', color: '#c9b893' });
       ctx.restore();
     }

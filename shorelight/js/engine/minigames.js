@@ -22,11 +22,11 @@ G.Mini = (() => {
   });
   const finish = (scene, v) => { G.Scenes.pop(scene); scene.res(v); };
 
-  function frame(ctx, title, sub) {
+  function frame(ctx, title, sub, subW = 760) {
     ctx.fillStyle = 'rgba(4,6,14,0.7)';
     ctx.fillRect(0, 0, G.W, G.H);
     G.UI.panel(ctx, 240, 120, 800, 470, { title });
-    if (sub) G.Render.text(ctx, sub, G.W / 2, 160, { size: 20, align: 'center', color: '#c9b893' });
+    if (sub) G.Render.textClip(ctx, sub, G.W / 2, 160, subW, { size: 20, minSize: 15, align: 'center', color: '#c9b893' });
   }
 
   // ------------------------------------------------------------------ timing bar
@@ -95,7 +95,7 @@ G.Mini = (() => {
       else if (top >= this.o.need || this.t >= this.o.time) { this.done = true; this.win = false; this.doneT = 0; G.Audio.sfx('buzz'); }
     }
     draw(ctx) {
-      frame(ctx, this.o.title, this.o.hint);
+      frame(ctx, this.o.title, this.o.hint, 560); // keep clear of the countdown at the right
       const lanes = [{ name: '我方', v: this.v, c: '#ffd97a' }, ...this.o.rivals.map((r, i) => ({ name: r.name, v: this.rv[i], c: '#c8a0ff' }))];
       const lw = 90, gap = (640 - lanes.length * lw) / (lanes.length + 1);
       lanes.forEach((l, i) => {
@@ -105,7 +105,8 @@ G.Mini = (() => {
         for (let k = 0; k < 10; k++) ctx.fillRect(x + lw / 2 - 6, y0 - h + k * 33, 12, 3);
         const p = U.clamp(l.v / this.o.need, 0, 1);
         G.UI.lanternIcon(ctx, x + lw / 2, y0 - p * h, 13, G.time + i);
-        G.Render.text(ctx, l.name, x + lw / 2, y0 + 10, { size: 19, align: 'center', color: l.c });
+        // lane captions (English team names) must not run into the neighbouring lane
+        G.Render.textClip(ctx, l.name, x + lw / 2, y0 + 10, Math.min(lw + gap - 8, 200), { size: 19, minSize: 13, align: 'center', color: l.c });
       });
       // flag on top
       ctx.fillStyle = '#d8382a'; ctx.beginPath(); ctx.moveTo(G.W / 2, 196); ctx.lineTo(G.W / 2 + 40, 206); ctx.lineTo(G.W / 2, 216); ctx.fill();
@@ -169,7 +170,7 @@ G.Mini = (() => {
     draw(ctx) {
       frame(ctx, this.o.title, this.o.hint);
       const label = this.phase === 'listen' ? `${this.o.opponent} 唱：` : this.phase === 'answer' ? '換你唱：' : '';
-      G.Render.text(ctx, label, 330, 220, { size: 26, color: '#fff0d0' });
+      G.Render.textClip(ctx, label, 330, 220, 620, { size: 26, color: '#fff0d0' });
       const n = this.phrase.length;
       for (let i = 0; i < n; i++) {
         const x = G.W / 2 - (n - 1) * 46 + i * 92, y = 320;

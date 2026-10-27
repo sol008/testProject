@@ -390,7 +390,7 @@
   });
   enemy('c10_guhun_horde', {
     name: '孤魂眾', art: 'hungry_ghost', variant: 2, scale: 2.2, lv: 38, elem: 'water', weak: ['earth', 'fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 5.0, atk: 1.9, mag: 1.8, def: 1.1, spd: 1.15, exp: 6, gold: 0.01 },
+    m: { hp: 6.0, atk: 2.55, mag: 2.4, def: 1.1, spd: 1.55, exp: 6, gold: 0.01 }, // sim_story: was hp 5 atk 1.9 mag 1.8 spd 1.15
     skills: [['e_hungry_grab', 3], ['e_hungry_wail', 2], ['c10_es_snatch', 1], ['c10_es_callkin', 1, 'hp<70']],
     drops: [['c10_puduash', 1]],
     desc: '數百個瘦削的孤魂糾纏成一團，伸出無數細長的手臂。它們不是恨——是餓，是沒有人叫它們的名字。',

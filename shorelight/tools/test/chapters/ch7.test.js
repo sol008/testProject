@@ -134,6 +134,7 @@ const nextSeg = (seg) => SEGS[SEGS.indexOf(seg) + 1];
   const browser = await chromium.launch({ headless: !HEADED });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(INIT);
+  await ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   // 2D renderer (the 3D presentation is far too slow on software GL)
   await ctx.addInitScript(() => { try { const k = 'shorelight_settings'; const o = JSON.parse(localStorage.getItem(k) || '{}'); o.render3d = false; localStorage.setItem(k, JSON.stringify(o)); } catch (e) { /* ignore */ } });
   page = await ctx.newPage();

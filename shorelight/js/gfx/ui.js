@@ -430,8 +430,12 @@ G.UI = (() => {
           let tx = rx + 18;
           if (it.icon) { UI.icon(ctx, it.icon, tx, ry + (this.rowH - 30) / 2, 30); tx += 38; }
           if (it.elem) { UI.elemBadge(ctx, it.elem, tx + 10, ry + this.rowH / 2, 11); tx += 28; }
-          G.Render.text(ctx, it.label, tx, ry + (this.rowH - size) / 2 - 1, {
-            size, color: it.disabled ? UI.DIM : (it.color || UI.TEXT),
+          // the label must end before the right-hand value (or the cursor edge): shrink, then ellipsis
+          let end = rx + colW - 20;
+          if (it.right != null) { ctx.font = G.font(size - 2); end = rx + colW - 22 - G.Render.measure(ctx, String(it.right)) - 14; }
+          const f = G.Render.fit(ctx, it.label, end - tx, { size, minSize: o.minSize, ellipsis: o.ellipsis });
+          G.Render.text(ctx, f.str, tx, ry + (this.rowH - f.size) / 2 - 1, {
+            size: f.size, color: it.disabled ? UI.DIM : (it.color || UI.TEXT),
           });
           if (it.right != null) {
             G.Render.text(ctx, String(it.right), rx + colW - 22, ry + (this.rowH - size) / 2 - 1, {
@@ -472,21 +476,27 @@ G.UI = (() => {
       if (toasts[i].t > toasts[i].life) toasts.splice(i, 1);
     }
   };
+  // toasts wider than TOAST_MAX_W (long English quest / song-fragment toasts) wrap onto extra lines
+  const TOAST_MAX_W = 1000;
   UI.drawToasts = function (ctx) {
-    toasts.forEach((ts, i) => {
+    let yy = 84;
+    toasts.forEach((ts) => {
       const a = Math.min(1, ts.t * 5, (ts.life - ts.t) * 3);
-      const y = 84 + i * 54 - (1 - Math.min(1, ts.t * 6)) * 20;
+      const y = yy - (1 - Math.min(1, ts.t * 6)) * 20;
       ctx.save();
       ctx.globalAlpha = a;
       ctx.font = G.font(22);
-      const w = ctx.measureText(G.T(ts.text).replace(/\{.\}|\{\/\}/g, '')).width + (ts.icon ? 54 : 30) + 20;
+      const lines = G.Render.wrap(ctx, ts.text, TOAST_MAX_W);
+      const tw = Math.max(...lines.map((l) => G.Render.lineWidth(ctx, l)), 0);
+      const w = tw + (ts.icon ? 54 : 30) + 20;
+      const h = 44 + (lines.length - 1) * 26;
       const x = G.W / 2 - w / 2;
-      UI.panel(ctx, x, y, w, 44, { ornament: false });
+      UI.panel(ctx, x, y, w, h, { ornament: false });
       let tx = x + 20;
-      if (ts.icon) { UI.icon(ctx, ts.icon, tx, y + 7, 30); tx += 38; }
-      const lines = G.Render.wrap(ctx, ts.text, 2000);
+      if (ts.icon) { UI.icon(ctx, ts.icon, tx, y + (h - 30) / 2, 30); tx += 38; }
       G.Render.drawLines(ctx, lines, tx, y + 10, 26, ts.color || UI.TEXT);
       ctx.restore();
+      yy += h + 10;
     });
   };
 

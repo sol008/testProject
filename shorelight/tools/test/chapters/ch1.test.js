@@ -37,6 +37,7 @@ const assert = (c, msg) => { if (!c) throw new Error(msg); };
 
 async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
+  await ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   const page = await ctx.newPage();
   const errors = [];
   // functional tests run on the 2D renderer (the WebGL view is slow under SwiftShader); a separate test uses ?r3lite
@@ -217,7 +218,7 @@ async function testCritical(browser, open) {
   await step(s, 27, 3);
   await waitMap(s, 'mine_2');
   // 1-7
-  await level(s, 3);
+  await level(s, 4); // 工頭魂 is tuned for a player at Lv3 (docs/BALANCE.md); the bot gets one level of margin
   await step(s, 24, 16, [0]);
   f = await s.flags();
   assert(f.ch1_foreman && f.ch1_atu_met && f.tut_element && await hasItem(s, 'c1_gold_dust') >= 3, '1-7: ' + JSON.stringify(f));

@@ -14,6 +14,10 @@
 // ultimates, otherwise the best expected-damage action with a mild MP cost). The party for each area uses
 // the levels from G.Data.areas (normal fights at the area's low level, bosses at its high level) and the best
 // equipment with item.ch <= area chapter.
+//
+// It only knows js/data/*. For the bosses and scripted fights of the chapter files (their own enemies, troops and
+// battle rule hooks) use tools/sim_story.js, which runs the real battle engine headless with every chapter loaded and a
+// sensible-player AI (tools/test/lib/battlebot.js); results and the tuning behind them are in docs/BALANCE.md.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -201,18 +205,18 @@ function physDmg(a, t, power, elem, exp) {
   const base = power * stat(a, 'atk') * 2 * 50 / (50 + stat(t, 'def'));
   const em = elemMult(elem, t);
   const crit = Math.min(0.6, 0.05 + stat(a, 'luk') / 500 + (a.specials.includes('critUp') ? 0.1 : 0) + (a.st.trance ? 0.2 : 0));
-  const hit = Math.max(0.5, Math.min(1, 0.95 - (stat(t, 'spd') - stat(a, 'spd')) / 400));
+  const hit = Math.max(0.6, Math.min(0.99, 0.95 - (stat(t, 'spd') - stat(a, 'spd')) / 400));
   let d = base * em * (t.st.guard ? 0.5 : 1) * (t.st.shield ? 0.6 : 1);
-  if (t.side === 'p' && t.resist.includes(elem)) d *= 0.5;
+  if (t.side === 'p' && t.resist.includes(elem)) d *= 0.6;
   if (exp) return d * hit * (1 + crit * 0.5);
   if (rnd() > hit) return -1;
   return Math.max(1, Math.round(d * (0.9 + rnd() * 0.2) * (rnd() < crit ? 1.5 : 1)));
 }
 function magDmg(a, t, power, elem, exp) {
   const m = stat(a, 'mag');
-  const base = power * m * 2 * 50 / (50 + stat(t, 'def') * 0.3 + m * 0.7);
+  const base = power * m * 2 * 50 / (50 + stat(t, 'def') * 0.3 + stat(t, 'mag') * 0.7); // engine: the TARGET's mag resists (battle.js applyEffect)
   let d = base * elemMult(elem, t) * (t.st.shield ? 0.6 : 1);
-  if (t.side === 'p' && t.resist.includes(elem)) d *= 0.5;
+  if (t.side === 'p' && t.resist.includes(elem)) d *= 0.6;
   if (exp) return d;
   return Math.max(1, Math.round(d * (0.9 + rnd() * 0.2)));
 }

@@ -91,6 +91,7 @@ class Session {
   async open(query, waitMap = true) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
     await this.ctx.addInitScript(INIT);
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     this.page = await this.ctx.newPage();
     this.page.setDefaultTimeout(600000);
     this.page.on('console', (m) => {
@@ -250,6 +251,8 @@ const SEGMENTS = [
     assert((await s.flags('ch6_s3_open', 'ch6_qingxu_letter'))[0] && await s.ev(() => G.state.inv.c6_qingxu_letter === 1), '3-13 letter');
   } },
   { id: 'finale', start: '?debug&qa2d&map=palace_study&x=12&y=3&lv=23&chapter=6&flags=' + F_LETTER, vars: { ch6_time: 2 }, run: async (s) => {
+    // 冥燈護法 is tuned for a Lv23 player (docs/BALANCE.md): two levels of margin for the battle bot
+    await s.ev(() => { for (const id of G.state.party.slice(0, 4)) G.Story.ensureLevel(id, 25); G.Party.healAll(); });
     await s.noGuards();
     await s.step(12, 2);
     await s.until('G.state.chapter === 7 && G.state.flags.ch6_done', 900);

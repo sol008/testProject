@@ -42,9 +42,10 @@ function loadGame(seed) {
   // inert timers: battle pose resets / drum loops must not keep node alive or fire mid-battle
   ctx.setTimeout = () => 0; ctx.setInterval = () => 0; ctx.clearTimeout = () => {}; ctx.clearInterval = () => {};
   const errors = [];
-  for (const rel of indexScripts()) {
+  const GROOT = process.env.SIM_ROOT || ROOT; // SIM_ROOT: run against another checkout (e.g. a git archive of the old data)
+  for (const rel of indexScripts(GROOT)) {
     if (rel === 'js/core/fontdata.js' || rel === 'js/main.js') continue;
-    const file = path.join(ROOT, rel);
+    const file = path.join(GROOT, rel);
     if (!fs.existsSync(file)) continue;
     let code = fs.readFileSync(file, 'utf8');
     const m = /js\/maps\/(ch\d+)_[a-z]+\.js$/.exec(rel);
@@ -74,6 +75,7 @@ function headless(G) {
   if (G.UI) G.UI.toast = () => {};
   G.Scenes.push = (sc) => { G.__top = sc; }; G.Scenes.pop = () => {}; G.Scenes.top = () => G.__top; G.Scenes.replace = (sc) => { G.__top = sc; };
   G.settings.difficulty = 'normal'; G.settings.battleSpeed = 1;
+  { const i = process.argv.indexOf('--diff'); if (i >= 0) G.settings.difficulty = process.argv[i + 1]; }
   const P = G.Battle.Scene.prototype;
   P.tween = R; P.waitKey = R; P.cutIn = async function () {}; P.playFx = R;
   P.finish = async function () {
@@ -82,20 +84,17 @@ function headless(G) {
     this.resolve(r);
   };
   P.playerCommand = function (u) { return Promise.resolve(G.__ai(this, u)); };
+  instrument(P);
   const exec = P.execute;
   P.execute = async function (u, cmd) {
-    this.__acts = (this.__acts || 0) + 1;
     if (G.__trace) {
       const tg = cmd && cmd.targets ? cmd.targets.map((t) => t && (t.id + ':' + t.hp)).join(',') : '';
       G.__trace.push(`r${this.rounds} ${u.id}(${u.hp}/${u.mhp} mp${u.mp}) ${cmd ? cmd.kind + ' ' + (cmd.skill || cmd.item || '') : '-'} -> ${tg}`);
     }
-    if (u.side === 'enemy') { this.__last = this.__last || new Map(); this.__last.set(u, cmd); }
     if (u.side === 'party' && cmd && cmd.kind === 'item') this.__items = (this.__items || 0) + 1;
     if (u.side === 'party' && cmd && cmd.kind === 'defend') this.__guards = (this.__guards || 0) + 1;
     return exec.call(this, u, cmd);
   };
-  const say = P.say;
-  P.say = function (text, sec) { this.__msgAt = this.__acts || 0; return say.call(this, text, sec); };
   const kill = P.kill;
   P.kill = function (u) { if (u.side === 'party') this.__ko = (this.__ko || 0) + 1; return kill.call(this, u); };
   // tutorials and other overlay scenes: never block
@@ -103,232 +102,8 @@ function headless(G) {
 }
 
 // ------------------------------------------------------------------------------------------------ party AI
-function makeAI(G, mode) {
-  const SK = () => G.Data.skills;
-  const IT = () => G.Data.items;
-  const statMul = (u, k) => (u.st[k + 'Up'] ? 1.3 : 1) * (u.st[k + 'Down'] ? 0.7 : 1) * (k === 'mag' && u.st.trance ? 1.25 : 1);
-  const eff = (u, k) => u[k] * statMul(u, k);
-  const hasSp = (u, id) => !!(u.specials && u.specials.includes(id));
-  const pct = (u) => u.hp / u.mhp;
-
-  function oneHit(sc, u, s, tg, avg) {
-    const power = s.power || 1;
-    const atk = avg ? avg.atk : eff(u, 'atk'), mag = avg ? avg.mag : eff(u, 'mag');
-    let d;
-    if (s.type === 'phys') {
-      d = power * atk * 2 * 50 / (50 + eff(tg, 'def'));
-      const hit = Math.max(0.6, Math.min(0.99, 0.95 - (eff(tg, 'spd') - eff(u, 'spd')) / 400));
-      const crit = Math.min(1, 0.05 + (u.luk || 0) / 500 + (u.st.trance ? 0.3 : 0) + (s.crit || 0) + (hasSp(u, 'critUp') ? 0.12 : 0));
-      d *= hit * (1 + crit * 0.5);
-      if (tg.diving) d = 0;
-    } else d = power * mag * 2 * 50 / (50 + (eff(tg, 'def') * 0.3 + eff(tg, 'mag') * 0.7));
-    d *= sc.elemFactor(s.elem || null, tg);
-    if (tg.st.guard) d *= 0.5;
-    return d;
-  }
-  // expected damage of skill s by u on target tg (or the whole side), capped by remaining HP
-  function expDmg(sc, u, s, tg, avg) {
-    const foes = sc.alive('enemy');
-    const hits = s.hits || 1;
-    if (s.target === 'enemies') return foes.reduce((a, f) => a + Math.min(f.hp, oneHit(sc, u, s, f, avg) * hits), 0);
-    if (s.target === 'random') return foes.reduce((a, f) => a + Math.min(f.hp, oneHit(sc, u, s, f, avg) * hits / foes.length), 0);
-    return Math.min(tg.hp, oneHit(sc, u, s, tg, avg) * hits);
-  }
-  const isMain = (sc, e) => e.boss || e.mhp >= Math.max(...sc.enemies.map((x) => x.mhp));
-  function pickTarget(sc, u, s, avg) {
-    const foes = sc.alive('enemy');
-    const F = sc.__fight || {};
-    let best = null, bv = -1;
-    for (const f of foes) {
-      let v = expDmg(sc, u, s, f, avg);
-      if (v <= 0) continue;
-      if (F.focus && F.focus.includes(f.id)) v *= 3;
-      if (F.avoid && F.avoid.includes(f.id)) v *= 0.2;
-      // finish what can be finished; adds that die in ~2 hits come first, otherwise the main enemy
-      if (f.hp <= v) v += f.mhp * 0.25 + 50;
-      else if (!isMain(sc, f) && f.hp <= v * 2.2) v *= 1.4;
-      else if (isMain(sc, f)) v *= 1.05;
-      if (v > bv) { bv = v; best = f; }
-    }
-    return best || foes[0];
-  }
-  function cmdFor(sc, u, id, kind, tg) {
-    const s = SK()[id];
-    let targets;
-    switch (s.target) {
-      case 'enemies': case 'random': targets = sc.alive('enemy'); break;
-      case 'allies': targets = s.revive ? sc.party.slice() : sc.alive('party'); break;
-      case 'self': targets = [u]; break;
-      case 'ally': targets = [tg || sc.alive('party').slice().sort((a, b) => pct(a) - pct(b))[0]]; break;
-      case 'deadAlly': targets = [tg || sc.party.find((p) => p.dead) || u]; break;
-      default: targets = [tg || pickTarget(sc, u, s)];
-    }
-    return { kind: kind || (s.ultimate ? 'ultimate' : 'skill'), skill: id, targets };
-  }
-  const healAmt = (u, s, avg) => ((s.power || 1) * (avg ? avg.mag : eff(u, 'mag')) * 1.2 + (s.power || 1) * 10) * (hasSp(u, 'healUp') ? 1.25 : 1);
-  const knownSkills = (u) => ((u.m && u.m.skills) || []).filter((id) => SK()[id] && !SK()[id].combo && !SK()[id].hidden && SK()[id].type !== 'passive');
-  const canCast = (u, id) => !u.st.seal && (SK()[id].mp || 0) <= u.mp;
-  const invList = (f) => G.Inv.list((it) => it.type === 'use' && it.use && it.use.battle !== false && f(it.use, it));
-  const healItems = () => invList((x) => (x.heal || x.healPct) && !x.revive && (x.target || 'ally') !== 'enemy');
-  const itemHeal = (id, tg) => { const x = IT()[id].use; return (x.heal || 0) + (x.healPct ? x.healPct * tg.mhp : 0); };
-  const healerOf = (sc) => {
-    for (const id of ['baizhi', 'yungui', 'xinghe', 'hongying']) {
-      const p = sc.party.find((q) => q.id === id && !q.dead && !q.st.sleep && !q.st.stun && !q.st.seal);
-      if (p && knownSkills(p).some((k) => SK()[k].type === 'heal' && canCast(p, k))) return p;
-    }
-    return null;
-  };
-  const nextEnemyWait = (sc) => Math.min(...sc.alive('enemy').map((e) => e.wait), 1e9);
-  const turnLen = (u) => 100 * 40 / (eff(u, 'spd') + 40);
-  // a big enemy attack is telegraphed (wind-up skill, a 「！」 charge flag, or an on-screen warning)
-  function telegraph(sc) {
-    for (const e of sc.alive('enemy')) {
-      for (const k in e) if (/charge|gather|windup|telegraph/i.test(k) && e[k] === true) return e;
-      const c = sc.__last && sc.__last.get(e);
-      const s = c && c.skill && SK()[c.skill];
-      if (s && s.type === 'special' && s.target === 'self' && !s.summon && !s.outcomes) return e;
-    }
-    if (sc.msg && (sc.__acts || 0) - (sc.__msgAt || 0) <= 2 && /伏低|防禦|穩住|蓄力|要來了|快躲/.test(sc.msg.text || '')) return true;
-    return null;
-  }
-
-  function useItem(sc, u, id, tg) { return { kind: 'item', item: id, targets: [tg] }; }
-
-  return function smart(sc, u) {
-    if (mode === 'auto') return sc.autoCommand(u);
-    const F = sc.__fight || {};
-    const party = sc.party, alive = sc.alive('party'), dead = party.filter((p) => p.dead), foes = sc.alive('enemy');
-    if (!foes.length) return { kind: 'defend' };
-    const skills = knownSkills(u);
-    const usable = skills.filter((k) => !SK()[k].ultimate && canCast(u, k));
-    const healer = healerOf(sc);
-    const iAmHealer = healer === u;
-    const hurt = alive.filter((p) => pct(p) < 0.55);
-    const boss = !!sc.troop.boss || foes.some((e) => e.boss);
-    const bossE = foes.filter((e) => isMain(sc, e))[0] || foes[0];
-    const nearlyDone = foes.every((e) => e.hp < e.mhp * 0.08 || (e.endAt && e.hp < e.mhp * (e.endAt + 0.05)));
-
-    // 1. ultimate
-    if (u.gauge >= 100 && !u.st.seal) {
-      const ults = [];
-      const main = G.Data.chars[u.id] && G.Data.chars[u.id].ultimate;
-      if (main && SK()[main]) ults.push(main);
-      for (const k of skills) if (SK()[k].ultimate && !ults.includes(k)) ults.push(k);
-      let best = null, bv = 0;
-      for (const k of ults) {
-        const s = SK()[k];
-        let v;
-        if (s.type === 'heal') v = (dead.length || hurt.length >= 2) ? 1e9 : -1;
-        else v = expDmg(sc, u, s, pickTarget(sc, u, s));
-        if (v > bv) { bv = v; best = k; }
-      }
-      if (best) return cmdFor(sc, u, best, 'ultimate');
-    }
-    // 2. revive
-    if (dead.length && !nearlyDone) {
-      const rev = usable.filter((k) => SK()[k].type === 'revive' || (SK()[k].revive && SK()[k].type === 'heal')).sort((a, b) => (SK()[b].power || 0) - (SK()[a].power || 0))[0];
-      if (rev) return cmdFor(sc, u, rev, null, dead[0]);
-      const reviverAlive = alive.some((p) => p !== u && knownSkills(p).some((k) => SK()[k].type === 'revive' && canCast(p, k)) && !p.st.sleep && !p.st.stun);
-      const ri = invList((x) => x.revive)[0];
-      if (ri && !reviverAlive) return useItem(sc, u, ri, dead[0]);
-    }
-    // 3. heal
-    const healSk = usable.filter((k) => SK()[k].type === 'heal' && !SK()[k].ultimate);
-    if (healSk.length && (iAmHealer || alive.some((p) => pct(p) < 0.3))) {
-      const allH = healSk.filter((k) => SK()[k].target === 'allies').sort((a, b) => SK()[b].power - SK()[a].power);
-      const oneH = healSk.filter((k) => SK()[k].target === 'ally').sort((a, b) => SK()[a].power - SK()[b].power);
-      const worst = alive.slice().sort((a, b) => pct(a) - pct(b))[0];
-      if (alive.filter((p) => pct(p) < 0.6).length >= 2 && allH.length) return cmdFor(sc, u, allH[0]);
-      if (pct(worst) < 0.45) {
-        const need = worst.mhp - worst.hp;
-        const k = oneH.find((kk) => healAmt(u, SK()[kk]) >= need * 0.8) || oneH[oneH.length - 1] || allH[0];
-        if (k) return cmdFor(sc, u, k, null, worst);
-      }
-    }
-    // 4. heal items: someone in danger and the healer cannot cover it before the enemies act
-    const crit = alive.filter((p) => pct(p) < 0.32).sort((a, b) => pct(a) - pct(b));
-    if (crit.length) {
-      const healerSoon = healer && healer !== u && healer.wait < nextEnemyWait(sc) && crit.length === 1;
-      if (!healerSoon) {
-        const hi = healItems();
-        if (hi.length) {
-          const t = crit[0], need = t.mhp - t.hp;
-          const id = hi.slice().sort((a, b) => itemHeal(a, t) - itemHeal(b, t)).find((x) => itemHeal(x, t) >= need * 0.6) || hi[hi.length - 1];
-          return useItem(sc, u, id, t);
-        }
-      }
-    }
-    // 5. MP for the healer
-    if (iAmHealer && u.mp < u.mmp * 0.2) {
-      const mi = invList((x) => (x.mp || x.mpPct) && !x.heal)[0] || invList((x) => x.mp || x.mpPct)[0];
-      if (mi) return useItem(sc, u, mi, u);
-    }
-    // 6. cure the healer / a sealed caster / a stunned ally
-    const cureSk = usable.find((k) => SK()[k].type === 'cure' || (SK()[k].cure && SK()[k].type !== 'heal'));
-    const stuck = alive.find((p) => p !== u && (p.st.sleep > 1 || p.st.stun > 1 || (p.st.seal && p === healer)));
-    if (cureSk && stuck) return cmdFor(sc, u, cureSk, null, stuck);
-    // 6b. fight-specific play that the battle itself tells the player to do (on-screen hints)
-    if (F.tactics) { const c = F.tactics(sc, u, { G, cmdFor: (id, tg) => cmdFor(sc, u, id, null, tg), item: (id, tg) => useItem(sc, u, id, tg), usable, healer, iAmHealer }); if (c) return c; }
-    // 7. guard against a telegraphed blow
-    const tel = telegraph(sc);
-    if (tel && !F.noGuard) {
-      const e = tel === true ? null : tel;
-      const before = !e || e.wait < turnLen(u) * 1.05;
-      if (before && (pct(u) < 0.8 || iAmHealer || tel === true)) return { kind: 'defend' };
-    }
-    // 8. last stand: nobody can heal and this member would drop
-    if (pct(u) < 0.2 && !healer && !healItems().length && alive.length > 1 && !F.noGuard) return { kind: 'defend' };
-
-    // 9. boss openers: buffs / debuffs that are certain to land (data `buffs` skip the status roll)
-    if (boss && !u.st.seal && !nearlyDone && !G.__plain) {
-      const tryS = (k, cond, tg) => (usable.includes(k) && cond ? cmdFor(sc, u, k, null, tg) : null);
-      const anyBossNot = (st) => foes.filter((e) => isMain(sc, e)).some((e) => !e.st[st]);
-      const r = tryS('yg_mihun', anyBossNot('atkDown') && bossE.hp > bossE.mhp * 0.25, bossE)
-        || tryS('yg_tiangang', anyBossNot('defDown') && bossE.hp > bossE.mhp * 0.3, bossE)
-        || tryS('hy_xushi', !u.st.atkUp && bossE.hp > bossE.mhp * 0.2)
-        || tryS('bz_yuewu', alive.filter((p) => !p.st.defUp).length >= 2 && u.mp > u.mmp * 0.45)
-        || tryS('bz_ganlin', alive.filter((p) => pct(p) < 0.8 && !p.st.regen).length >= 2 && u.mp > u.mmp * 0.4);
-      if (r) return r;
-    }
-    // 10. damage (skills, attack) vs combos
-    const atkSk = { name: '攻擊', type: 'phys', power: 1, target: 'enemy', elem: u.elem || null };
-    const atkT = pickTarget(sc, u, atkSk);
-    const atkVal = expDmg(sc, u, atkSk, atkT);
-    const kmp = boss ? atkVal / 30 : atkVal / 8;
-    const reserve = iAmHealer ? u.mmp * 0.3 : 0;
-    let best = { kind: 'attack', targets: [atkT] }, bv = F.valueMod ? F.valueMod(sc, u, atkSk, atkT, atkVal) : atkVal;
-    for (const k of usable) {
-      const s = SK()[k];
-      if (s.type !== 'phys' && s.type !== 'mag') continue;
-      if (u.mp - (s.mp || 0) < reserve) continue;
-      const t = s.target === 'enemy' ? pickTarget(sc, u, s) : null;
-      let v = expDmg(sc, u, s, t) * (s.delay ? 1 / s.delay : 1) - (s.mp || 0) * kmp;
-      if (F.valueMod) v = F.valueMod(sc, u, s, t, v);
-      if (s.buffs && s.buffs.some((b) => b.amt < 0) && t && isMain(sc, t)) v *= 1.15;
-      if (v > bv) { bv = v; best = cmdFor(sc, u, k, null, t); }
-    }
-    // cats: roughly an attack, keep for non-boss filler only when nothing better
-    if (boss && !u.st.seal) {
-      for (const [k, s] of Object.entries(SK())) {
-        if (!s.combo || s.combo[0] !== u.id) continue;
-        if ((s.req && !G.state.flags[s.req]) || (s.flag && !G.state.flags[s.flag])) continue;
-        const mates = s.combo.map((pid) => party.find((p) => p.id === pid));
-        if (mates.some((p) => !p || p.dead || p.st.sleep || p.st.stun || p.st.seal || p.mp < (s.mp || 0) || (s.comboLv && p.lv < s.comboLv))) continue;
-        const avg = { atk: mates.reduce((a, p) => a + eff(p, 'atk'), 0) / mates.length, mag: mates.reduce((a, p) => a + eff(p, 'mag'), 0) / mates.length };
-        let v;
-        if (s.type === 'heal') { if (alive.filter((p) => pct(p) < 0.6).length < 2) continue; v = 1e8; }
-        else {
-          const t = s.target === 'enemy' ? pickTarget(sc, u, s, avg) : null;
-          v = expDmg(sc, u, s, t, avg) - bv * mates.length - (s.mp || 0) * kmp * mates.length;
-          if (v <= 0) continue;
-          return cmdFor(sc, u, k, 'skill', t);
-        }
-        return cmdFor(sc, u, k, 'skill');
-      }
-    }
-    return best;
-  };
-}
+// The sensible-player policy lives in tools/test/lib/battlebot.js (shared with the chapter playthrough tests).
+const { makeAI, instrument } = require('./test/lib/battlebot');
 
 // ------------------------------------------------------------------------------------------------ setup
 const SLOTS = ['weapon', 'armor', 'head', 'feet', 'acc'];
@@ -377,15 +152,33 @@ function setup(env, F, lvShift) {
   // tutorial popups never block
   for (const ch in G.__X) { try { for (const k of G.__X[ch].ev("typeof TUT !== 'undefined' ? Object.keys(TUT) : []")) G.state.flags[k] = true; } catch (e) { /* no TUT */ } }
   for (const k of ['tut_gauge', 'tut_element', 'tut_guest', 'tut_guard', 'tut_guard_hint', 'tut_combo', 'tut_item', 'tut_ultimate']) G.state.flags[k] = true;
-  const pool = (F.shops || []).slice();
+  // --test: the chapter playthrough test's conditions (its level boosts, the gear it equips, the auto-battle AI)
+  const T = G.__testMode ? (F.test || {}) : null;
+  const realGear = T && G.__testGear === 'real';
+  const pool = T && !realGear ? (T.shops || []) : (F.shops || []).slice();
+  const lvOf = (cid) => (T && T.lv != null ? (typeof T.lv === 'object' ? T.lv[cid] : T.lv) : (typeof F.lv === 'object' ? F.lv[cid] : F.lv));
   for (const cid of F.party) {
-    const lv = Math.max(1, (typeof F.lv === 'object' ? F.lv[cid] : F.lv) + (lvShift || 0));
+    const lv = Math.max(1, lvOf(cid) + (lvShift || 0));
     const m = G.Party.create(cid, lv);
     for (const sk of (F.skills && F.skills[cid]) || []) G.Party.learnSkill(cid, sk);
-    const cand = pool.concat(Object.values(m.equip).filter(Boolean)).concat((F.gifts && F.gifts[cid]) || []);
+    const gifts = T && !realGear ? (T.gifts && T.gifts[cid]) || [] : (F.gifts && F.gifts[cid]) || [];
+    const cand = pool.concat(Object.values(m.equip).filter(Boolean)).concat(gifts);
+    if (T && !realGear && T.gearMaxCh != null) { // ch9 test's gearUp(): best atk+def+mag item of chapter <= N per slot
+      for (const slot of ['weapon', 'armor', 'head', 'feet']) {
+        let best = null;
+        for (const [iid, it] of Object.entries(G.Data.items)) {
+          if (it.type !== slot || (it.ch || 0) > T.gearMaxCh || (it.who && !it.who.includes(cid))) continue;
+          const sc = it.stats ? (it.stats.atk || 0) + (it.stats.def || 0) + (it.stats.mag || 0) : 0;
+          if (!best || sc > best.sc) best = { iid, sc };
+        }
+        if (best) m.equip[slot] = best.iid;
+      }
+    }
     for (const slot of SLOTS) {
-      const fixed = F.gear && F.gear[cid] && F.gear[cid][slot];
+      const gearSrc = T && !realGear ? T.gear : F.gear;
+      const fixed = gearSrc && gearSrc[cid] && gearSrc[cid][slot];
       if (fixed !== undefined) { m.equip[slot] = fixed; continue; }
+      if (T && !realGear) continue; // tests keep what they were given
       const noShopAcc = G.__noacc && slot === 'acc';
       const b = bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id) && !(noShopAcc && pool.includes(id))), slot);
       if (b) m.equip[slot] = b;
@@ -393,7 +186,7 @@ function setup(env, F, lvShift) {
     const st = G.Party.stats(cid); m.hp = st.mhp; m.mp = st.mmp;
     G.state.party.push(cid);
   }
-  const inv = kitFrom(G, pool, F);
+  const inv = T ? Object.assign({}, G.__testKit || {}, T.inv || {}, F.inv || {}) : kitFrom(G, pool, F);
   for (const [id, n] of Object.entries(inv)) G.Inv.add(id, n);
   if (F.pre) F.pre(G, env);
 }
@@ -405,7 +198,7 @@ async function battleOnce(env, F, troop, optsSrc) {
   G.__top = null;
   const p = G.Battle.start(troop, opts || {});
   const sc = G.__top;
-  if (sc) sc.__fight = F;
+  if (sc) sc.__fight = G.__testMode ? {} : F; // the browser bot has no per-fight hints
   p.then((r) => { done = true; res = r; }, (e) => { done = true; res = 'error:' + (e && e.stack); });
   for (let i = 0; i < 3 && !done; i++) await new Promise((r) => setImmediate(r));
   return { done, res, sc };
@@ -466,6 +259,10 @@ async function main() {
   const { G } = env;
   G.__ai = makeAI(G, opt('ai', 'smart'));
   G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
+  G.__testMode = !!opt('test');
+  if (opt('testkit')) G.__testKit = JSON.parse(opt('testkit'));
+  G.__testGear = opt('testgear', null);
+  if (G.__testMode && opt('testai', 'auto') === 'auto') G.__ai = makeAI(G, 'auto');
   // --set "enemyId:hp*1.3,atk*1.2/otherId:spd*0.9" — try stat multipliers without editing the data
   if (opt('set')) for (const part of String(opt('set')).split('/')) {
     const [eid, mods] = part.split(':');
@@ -496,7 +293,8 @@ async function main() {
     if (only && !only.some((o) => F.id === o || F.id.includes(o))) continue;
     if (chOnly != null && F.ch !== chOnly) continue;
     const R = await runFight(env, F, F.n || n, lvShift);
-    const lv = typeof F.lv === 'object' ? Object.values(F.lv).join('/') : F.lv;
+    const L = G.__testMode && F.test && F.test.lv != null ? F.test.lv : F.lv;
+    const lv = typeof L === 'object' ? Object.values(L).join('/') : L;
     const tag = R.err ? 'ERROR ' + R.err : (F.scripted ? 'scripted' : (R.win < 0.6 ? 'HARD' : R.win > 0.97 && R.koAny < 0.03 ? 'TRIVIAL' : ''));
     console.log(`${F.id.padEnd(22)} ch${String(F.ch).padEnd(3)} L${String(lv).padEnd(9)} win ${(R.win / R.n * 100).toFixed(0).padStart(3)}%  rounds ${R.rounds.toFixed(1).padStart(4)}  KO ${(R.koAny * 100).toFixed(0).padStart(3)}%  items ${R.items.toFixed(1)}  guard ${R.guards.toFixed(1)}  HP ${(R.hpLeft * 100).toFixed(0).padStart(3)}%  ${F.party.map((p) => p.slice(0, 2)).join('')}  ${tag}`);
     if (opt('verbose')) console.log(describe(env, F, lvShift));

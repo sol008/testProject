@@ -85,7 +85,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   defEnemy('c5_feast', {
     name: '怨宴', art: 'grudge_feast', lv: 20, elem: 'earth', weak: ['wood'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 10.5, atk: 2.0, mag: 2.05, def: 1.15, spd: 1.3, exp: 7, gold: 8 },
+    m: { hp: 10.5, atk: 4.2, mag: 4.3, def: 1.15, spd: 2.7, exp: 7, gold: 8 }, // sim_story: was atk 2.0 mag 2.05 spd 1.3
     skills: [['c5_e_gulp', 3], ['c5_e_shatter', 3], ['c5_e_wine', 2], ['c5_e_seat', 1, 'turn>2'],
       ['c5_e_serve_pig', 2, 'ally_dead'], ['c5_e_serve_turtle', 2, 'ally_dead']],
     phases: [{

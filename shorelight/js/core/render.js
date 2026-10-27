@@ -136,6 +136,43 @@ G.Render = (() => {
     R.text(ctx2, str, x, y, Object.assign({}, o, { size }));
   };
 
+  // Fit a (translated) string into maxW: shrink the font down to o.minSize (default 70 % of the size, at least 12px),
+  // then, unless o.ellipsis === false, cut it with '…'. Returns { str, size, w } — str is already translated.
+  R.fit = function (ctx2, str, maxW, o = {}) {
+    let s = G.T(String(str));
+    const size0 = o.size || 22;
+    const minSize = Math.min(size0, o.minSize || Math.max(12, Math.round(size0 * 0.7)));
+    ctx2.save();
+    ctx2.font = G.font(size0, o.bold);
+    let w = ctx2.measureText(s).width;
+    let size = size0;
+    if (w > maxW && w > 0) {
+      size = Math.max(minSize, Math.floor(size0 * maxW / w * 10) / 10);
+      ctx2.font = G.font(size, o.bold);
+      w = ctx2.measureText(s).width;
+      if (w > maxW && o.ellipsis !== false) {
+        // binary search the longest prefix that fits with an ellipsis
+        let lo = 0, hi = s.length;
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1;
+          if (ctx2.measureText(s.slice(0, mid).trimEnd() + '…').width <= maxW) lo = mid; else hi = mid - 1;
+        }
+        s = s.slice(0, lo).trimEnd() + '…';
+        w = ctx2.measureText(s).width;
+      }
+    }
+    ctx2.restore();
+    return { str: s, size, w };
+  };
+  // R.text that never exceeds maxW (shrink, then ellipsis — see R.fit)
+  R.textClip = function (ctx2, str, x, y, maxW, o = {}) {
+    const f = R.fit(ctx2, str, maxW, o);
+    R.text(ctx2, f.str, x, y, Object.assign({}, o, { size: f.size }));
+    return f;
+  };
+  // width of a wrapped glyph line (from R.wrap)
+  R.lineWidth = (ctx2, line) => line.reduce((a, g) => a + ctx2.measureText(g.ch).width, 0);
+
   R.text = function (ctx2, str, x, y, o = {}) {
     str = G.T(str);
     ctx2.save();

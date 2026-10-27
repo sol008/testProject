@@ -205,13 +205,13 @@
     e11_jar_hum: { name: '嗡鳴', desc: '罐子裡傳來細細的聲音：冷……家……', mp: 0, type: 'special', elem: null, target: 'self', power: 0, fx: 'ghost', sfx: 'ghost' },
     // 鯤
     e11_kun_swallow: { name: '吞', desc: '鯤張開了大口——', mp: 0, type: 'special', elem: null, target: 'self', power: 0, fx: 'bite', sfx: 'splash' },
-    e11_kun_roll: { name: '翻身', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 1.2, status: { id: 'stun', chance: 0.15, turns: 1 }, fx: 'water_big', sfx: 'splash' },
+    e11_kun_roll: { name: '翻身', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 1.0, status: { id: 'stun', chance: 0.15, turns: 1 }, fx: 'water_big', sfx: 'splash' },
     e11_kun_dive: { name: '北冥', desc: '鯤潛入深海……海面一片死寂。（防禦！）', mp: 0, type: 'special', elem: null, target: 'self', power: 0, fx: 'water', sfx: 'splash' },
-    e11_kun_breach: { name: '鯤破浪而出', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 2.2, fx: 'water_big', sfx: 'crit' },
+    e11_kun_breach: { name: '鯤破浪而出', desc: '', mp: 0, type: 'phys', elem: 'water', target: 'enemies', power: 1.8, fx: 'water_big', sfx: 'crit' },
     e11_tumor_light: { name: '魂光', desc: '', mp: 0, type: 'mag', elem: 'water', target: 'enemy', power: 0.8, fx: 'ghost', sfx: 'ghost' },
     // 千年燈塔守
-    e11_wd_staff: { name: '千年燈杖', desc: '', mp: 0, type: 'phys', elem: 'metal', target: 'enemy', power: 1.7, fx: 'claw', sfx: 'crit' },
-    e11_wd_black: { name: '黑燈', desc: '', mp: 0, type: 'mag', elem: null, target: 'enemies', power: 1.1, buffs: [{ stat: 'mag', amt: -0.3, turns: 2 }], fx: 'dark', sfx: 'dark' },
+    e11_wd_staff: { name: '千年燈杖', desc: '', mp: 0, type: 'phys', elem: 'metal', target: 'enemy', power: 1.5, fx: 'claw', sfx: 'crit' },
+    e11_wd_black: { name: '黑燈', desc: '', mp: 0, type: 'mag', elem: null, target: 'enemies', power: 0.9, buffs: [{ stat: 'mag', amt: -0.3, turns: 2 }], fx: 'dark', sfx: 'dark' },
     e11_wd_ash: { name: '燈灰', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, buffs: [{ stat: 'spd', amt: -0.3, turns: 2 }], fx: 'debuff', sfx: 'debuff' },
     e11_wd_guard: { name: '守燈', desc: '', mp: 0, type: 'buff', elem: null, target: 'self', power: 0, buffs: [{ stat: 'def', amt: 0.3, turns: 3 }], status: { id: 'regen', chance: 1, turns: 2 }, fx: 'buff', sfx: 'buff' },
     // 萬象遊戲
@@ -262,28 +262,28 @@
   }
   const BIMM = ['sleep', 'stun', 'trance'];
   mkEnemy('c11_captain', { name: '烏鬚船主', art: 'pirate_ghost', variant: 2, scale: 1.55, lv: 39, elem: 'water', weak: ['earth'], boss: true, immune: BIMM,
-    m: { hp: 6.5, atk: 1.9, mag: 1.6, def: 1.1, spd: 1.2, exp: 5, gold: 6 },
+    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 5, gold: 6 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
     skills: [['e11_cap_blade', 4], ['e11_cap_crew', 2, 'ally_dead'], ['e11_cap_keg', 2], ['e11_cap_rob', 1], ['e_pirate_cutlass', 2]],
     drops: [['c11_ac_captain_patch', 1]],
     desc: '三百年前在澎湖海面橫行的海盜頭子。錨鏈拴在一盞長明燈上，「守不住路，燈就燒老子。」' });
   mkEnemy('c11_powder_keg', { name: '火藥桶', art: 'pirate_ghost', variant: 1, scale: 0.6, lv: 39, elem: 'fire', m: { hp: 0.2, atk: 0.1, def: 0.5, spd: 0.6, exp: 0, gold: 0 },
     skills: [['e11_keg_hiss', 1]], desc: '冒著煙的火藥桶。先打爆它，就炸到他們自己人。' });
   mkEnemy('c11_jailer', { name: '鎖魂將', art: 'lantern_golem', variant: 2, scale: 1.7, lv: 40, elem: 'metal', weak: ['fire'], resist: ['water'], boss: true, immune: BIMM,
-    m: { hp: 8, atk: 1.85, mag: 1.75, def: 1.15, spd: 0.95, exp: 7, gold: 8 },
+    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 7, gold: 8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
     skills: [['e11_jl_sweep', 4], ['e11_jl_seal', 3], ['e11_jl_drain', 3], ['e11_jl_lock', 2], ['e11_jl_refill', 4, 'hp<50']],
     drops: [['c11_ac_iron_heart', 1]],
     desc: '用鎖鏈、魂罐與熄不掉的長明燈拼成的獄卒。沒有頭，胸口是一只空空的罐子。' });
   mkEnemy('c11_jar', { name: '魂罐', art: 'ghost_lantern', variant: 2, scale: 1.1, lv: 40, elem: 'water', m: { hp: 0.75, atk: 0.1, def: 0.8, spd: 0.5, exp: 0.3, gold: 0 },
     skills: [['e11_jar_hum', 1]], desc: '肩上與背上的魂罐。裡面的魂在替它擋刀。' });
   mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.025,
-    m: { hp: 8.5, atk: 2.0, mag: 1.9, def: 1.15, spd: 1.0, exp: 7, gold: 0 },
+    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 7, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
     skills: [['e11_kun_swallow', 3], ['e_kun_spout', 4], ['e11_kun_roll', 3]],
     drops: [], desc: '黑水溝的老守者。吞下迷路的魂，馱著游到彼岸再吐出來。燈暗了，牠找不到岸。' });
   mkEnemy('c11_kun_tumor', { name: '吞魂燈瘤', art: 'ghost_lantern', variant: 1, scale: 1.25, lv: 41, elem: 'water', weak: ['earth'],
     m: { hp: 1.1, atk: 0.8, mag: 0.9, def: 0.9, spd: 0.8, exp: 0.6, gold: 0 },
     skills: [['e11_tumor_light', 1]], desc: '鯤背上腫脹的燈瘤，塞滿了吐不出去的魂。每回合替鯤回復。' });
   mkEnemy('c11_warden_elder', { name: '千年燈塔守', art: 'tower_warden', variant: 2, scale: 1.5, lv: 42, elem: 'metal', weak: ['fire'], boss: true, immune: BIMM,
-    m: { hp: 9, atk: 2.0, mag: 1.9, def: 1.2, spd: 1.0, exp: 7, gold: 7 },
+    m: { hp: 9, atk: 1.65, mag: 1.55, def: 1.2, spd: 0.95, exp: 7, gold: 7 },
     skills: [['e11_wd_staff', 4], ['e11_wd_black', 3], ['e11_wd_ash', 2], ['e11_wd_guard', 2, 'hp<60']],
     drops: [['c11_lamp_ash', 1]], desc: '守了一千年的燈，自己的火卻黑了。燈罩臉裡的火，是黑的。' });
   for (const [id, v, nm] of [['c11_tongzi_a', 0, '赤金童'], ['c11_tongzi_b', 1, '青碧童'], ['c11_tongzi_c', 2, '紫玉童']]) {
@@ -297,7 +297,7 @@
     skills: [['e_yx_oar', 4], ['e_yx_jar', 3], ['e11_yx_soul', 3], ['e11_yx_purge', 2], ['e11_yx_call', 2, 'ally_dead']],
     drops: [], desc: '長明宮之主。持黑玉之槳，背後浮著一只罐子。二十年前，他在黑水溝接住了女兒的魂燈。' });
   mkEnemy('c11_yexuan_2', { name: '夜玄・逆潮法身', sprite: 'yexuan', lv: 44, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BIMM, endAt: 0.2,
-    m: { hp: 12, atk: 2.3, mag: 2.45, def: 1.15, spd: 1.5, exp: 9, gold: 8 },
+    m: { hp: 12, atk: 2.4, mag: 2.55, def: 1.15, spd: 1.58, exp: 9, gold: 8 }, // sim_story: was atk 2.3 mag 2.45 spd 1.5
     skills: [['e11_yx_souls', 3], ['e_yx_oar', 3], ['e_yx_reverse', 2]],
     drops: [], desc: '黑水纏身的夜玄。身後展開兩片由溺死者的臉組成的黑浪之翼，罐子在頭頂發光。' });
   mkEnemy('c11_wuxiang_1', { name: '黑潮・無相', art: 'wuxiang', lv: 44, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM.concat(['seal']),
@@ -305,7 +305,7 @@
     skills: [['e_wx_tide', 4], ['e11_wx_drown', 3], ['e11_wx_back', 2], ['e11_wx_hands', 3]],
     drops: [], desc: '黑水溝裡，所有沒人哀悼、沒人渡、沒人記得名字的悲傷。表面浮動著千萬張模糊的臉。' });
   mkEnemy('c11_wuxiang_2', { name: '無相・深淵', art: 'wuxiang', lv: 45, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM.concat(['seal']),
-    m: { hp: 11.5, atk: 2.35, mag: 2.35, def: 1.2, spd: 1.4, exp: 4, gold: 0 },
+    m: { hp: 11.5, atk: 1.42, mag: 1.42, def: 1.2, spd: 0.84, exp: 4, gold: 0 }, // sim_story: was atk/mag 2.35 spd 1.4 — the trio fights it after phase 1 with half HP/MP back and no 白芷
     skills: [['e11_wx_abyss', 3], ['e11_wx_devour', 3], ['e11_wx_cold', 2], ['e11_wx_voices', 3]],
     drops: [], desc: '巨影塌成一張巨口與漩渦。漩渦深處，有一點白光。' });
   mkEnemy('c11_wuxiang_3', { name: '無相之心', art: 'wuxiang', lv: 45, elem: 'water', boss: true, immune: BIMM.concat(['seal', 'poison']),
@@ -320,7 +320,7 @@
     t11_xw_drowned: { enemies: ['drowned_swarm', 'drowned_swarm'], bg: 'palace', bgm: 'battle2' },
     t11_xw_faceless: { enemies: ['faceless', 'marionette_v2', 'marionette_v2'], bg: 'palace', bgm: 'battle2' },
     t11_kun: { enemies: ['c11_kun', 'c11_kun_tumor', 'c11_kun_tumor'], bg: 'sea', bgm: 'boss', boss: true, flee: false },
-    t11_warden: { enemies: ['c11_warden_elder', 'tower_warden', 'tower_warden'], bg: 'lighthouse', bgm: 'boss', boss: true, flee: false },
+    t11_warden: { enemies: ['c11_warden_elder', 'tower_warden'], bg: 'lighthouse', bgm: 'boss', boss: true, flee: false },
     t11_tongzi: { enemies: ['c11_tongzi_a', 'c11_tongzi_b', 'c11_tongzi_c'], bg: 'breath', bgm: 'breath', flee: false },
     t11_yexuan_1: { enemies: ['c11_yexuan_1', 'marionette_v2', 'marionette_v2'], bg: 'lighthouse', bgm: 'villain', boss: true, flee: false },
     t11_yexuan_2: { enemies: ['c11_yexuan_2'], bg: 'lighthouse', bgm: 'boss', boss: true, flee: false },
@@ -479,11 +479,33 @@
         const text = typeof ln === 'string' ? ln : ln.text;
         const col = wall ? '#1e1814' : '#2a2018';
         const wl = wrapText(ctx, text, w - 90, size);
+        const tops = [];
         for (const gl of wl) {
           ctx.save(); ctx.font = G.font(size); ctx.textBaseline = 'top';
           G.Render.drawLines(ctx, [gl], x + 44, ly, size + 14, col, Infinity, false);
           ctx.restore();
+          tops.push(ly);
           ly += size + 18;
+        }
+        // translated line: strike the words listed in strikeEn (e.g. "don't") wherever they appear in the wrapped lines
+        if (ln && typeof ln === 'object' && Array.isArray(ln.strikeEn) && G.T(text) !== text) {
+          ctx.save(); ctx.font = G.font(size);
+          ctx.strokeStyle = 'rgba(20,14,10,0.9)'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+          wl.forEach((gl, j) => {
+            for (const word of ln.strikeEn) {
+              let at = gl.indexOf(word);
+              while (at >= 0) {
+                const sx = x + 44 + ctx.measureText(gl.slice(0, at)).width, sw = ctx.measureText(word).width;
+                const yy = tops[j] + size * 0.55;
+                for (let k = 0; k < 12; k++) {
+                  const jy = (U.hash(j, k, at) - 0.5) * size * 0.7;
+                  ctx.beginPath(); ctx.moveTo(sx - 3, yy + jy); ctx.lineTo(sx + sw + 3, yy + jy + (U.hash(k, at, 2) - 0.5) * 8); ctx.stroke();
+                }
+                at = gl.indexOf(word, at + word.length);
+              }
+            }
+          });
+          ctx.restore();
         }
         // strike-through marks (zh only — positions are found by glyph)
         if (ln && typeof ln === 'object' && Array.isArray(ln.strike) && G.T(text) === text) {
@@ -863,7 +885,7 @@
       { t: 'red_lantern', x: 24, y: 9, text: '王' },
       // drifting lanterns on the black sea
       ...[[2, 2], [6, 13], [11, 1], [16, 14], [21, 2], [26, 12], [1, 11], [25, 1]].map(([x, y]) => ({ t: 'water_lantern', x, y, if: (st) => st.flags.ch11_sail && leg(st) >= 1 && leg(st) <= 3 })),
-      { t: 'water_lantern', x: 5, y: 7, text: '木', if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done,
+      { t: 'water_lantern', x: 5, y: 7, text: '阿木', if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done,
         interact: [['阿木伯', '阮佇遮坐，看會著前面。少年仔，免煩惱阮。']], label: '調查' },
     ],
     lights: (st) => {
@@ -2921,7 +2943,7 @@
   };
   H.wallWriting = async (S) => {
     if (F('ch11_letters')) {
-      await paper({ kind: 'wall', pages: [['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'] }]] });
+      await paper({ kind: 'wall', pages: [['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'], strikeEn: ["don't"] }]] });
       return;
     }
     S.bgm('love');
@@ -2929,7 +2951,7 @@
     await S.say('', '東牆。一整面牆，用燒過的竹炭寫著大字。字很用力，有些地方把石灰都刮破了。');
     await paper({ kind: 'wall', portrait: 'baizhi', expr: 'sad', pages: [
       ['如果我忘了，請告訴我：我曾經很快樂。'],
-      ['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'] }],
+      ['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'], strikeEn: ["don't"] }],
     ] });
     await L(S, [
       ['', '下面那一行，寫了又塗，塗了又寫。「別」字被劃了十幾道，劃到看不見。最後的「了」也被抹掉了。'],
@@ -4514,7 +4536,9 @@
   function yexuan1Hooks() {
     return {
       hpFloor: { c11_yexuan_1: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      // the engine also raises onFloor when a party member drops to 0 HP (battle.js: floorK is `false`, not null, for
+      // party targets) — only the boss reaching its floor ends the phase, never the first KO
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_yexuan_1') return; b.result = 'win'; b.scriptedEnd = true; },
       intro: async (b) => {
         hookB(b, 'execute', async (orig, u, cmd) => {
           if (cmd.skill !== 'e11_yx_purge') return orig(u, cmd);
@@ -4738,7 +4762,7 @@
     const base = () => G.Data.enemies.c11_wuxiang_1.skills;
     return {
       hpFloor: { c11_wuxiang_1: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_wuxiang_1') return; b.result = 'win'; b.scriptedEnd = true; }, // see yexuan1Hooks
       intro: async (b) => {
         await bLines(b, [['無相', '我們有好多臉……你們想看誰的？']]);
         hookB(b, 'execute', async (orig, u, cmd) => { if (cmd.skill === 'e11_wx_faces') { await wxFaces(b); return; } return orig(u, cmd); });
@@ -4757,7 +4781,7 @@
   function wuxiang2Hooks() {
     return {
       hpFloor: { c11_wuxiang_2: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_wuxiang_2') return; b.result = 'win'; b.scriptedEnd = true; }, // see yexuan1Hooks
       intro: async (b) => { for (const e of b.enemies) e.phase = 2; },
       onTurn: async (b, u) => {
         const w = foe(b, 'c11_wuxiang_2');
@@ -4786,7 +4810,8 @@
       loseOk: true,
       hpFloor: { c11_wuxiang_3: 0.0001 },
       finishers: ['c_qiandeng'],
-      onFloor: async (b) => {
+      onFloor: async (b, e) => {
+        if (e && e.id !== 'c11_wuxiang_3') return; // see yexuan1Hooks
         b._floored = true;
         await bLines(b, [['', '無相之心沒有倒下。它只是蜷得更緊了。'], ['yungui:think', '它不是敵人……它需要的不是被打倒。'], ['baizhi:serious', '是被「渡」。']]);
         b.say('使用「千燈」或白芷的「渡魂謠」', 3.0);
@@ -4841,6 +4866,9 @@
   H.finalBattle = async (S) => {
     // phase 1 無相・萬面
     if (!F('ch11_wuxiang_1')) {
+      // before the last fight, the heart flame mends everyone (and a lost fight retries from here, healed again)
+      G.Party.healAll();
+      S.toast('燈心的白焰撫過每個人的傷。全員完全回復。', 'lantern');
       S.bgm('final_boss');
       const r = await S.battle('t11_wuxiang_1', wuxiang1Hooks());
       if (r !== 'win') return;
@@ -4854,6 +4882,9 @@
     }
     // phase 2 無相・深淵 (trio)
     if (!F('ch11_wuxiang_2')) {
+      await S.say('xinghe:serious', '……還沒完。白芷還在裡面！');
+      for (const m of G.Party.active()) { const st = G.Party.stats(m.id); m.hp = Math.min(st.mhp, Math.max(1, m.hp) + Math.round(st.mhp * 0.5)); m.mp = Math.min(st.mmp, m.mp + Math.round(st.mmp * 0.5)); }
+      S.toast('心燈的火一熱。全員氣血、真氣回復五成。', 'lantern');
       const r = await S.battle('t11_wuxiang_2', wuxiang2Hooks());
       if (r !== 'win') return;
       S.shake(10, 1.2); S.sfx('earth');

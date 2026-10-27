@@ -43,7 +43,10 @@ const S10a = S9;
 const S10b = S10a.concat(['c10_qiyuwan', 'c10_xiaomigao', 'c10_baicao', 'c10_fanshu', 'c10_sw_chaosheng', 'c10_sp_huilang', 'c10_ar_tengjia', 'c10_hd_lupi', 'c10_ft_lupi']);
 const S10c = S10b.concat(['c10_quxiefu', 'mashu', 'c10_sp_huilan', 'c10_ar_shiwen', 'c10_hd_zhubian']);
 const S10 = S10c.concat(['c10_gaozha', 'c10_mifengeng', 'c10_pudugao', 'c10_sw_lanyang', 'c10_fn_haishen', 'c10_ac_yujia', 'c10_ar_jiaosi', 'c10_hd_jiaosi', 'c10_ft_jiaosi']);
-const SHOPS = { S1a, S1, S2a, S2, S3a, S3, S4, S5, S6, S7a, S7b, S7, S8a, S8, S9a, S9b, S9, S10b, S10c, S10 };
+const S11 = S10.concat(['heitanggao', 'c11_xianbing', 'c11_xiaoguan', 'c11_dingxiang', 'c11_fengru', 'xianrenzhang', 'c11_jingua', 'huanhundan', 'jiuzhuan',
+  'c11_sw_xuanwu', 'c11_sp_jinggu', 'c11_fl_haiyue', 'c11_fn_leishan', 'c11_ar_coral', 'c11_ar_haiwen', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua']);
+const S11b = S11.concat(['c11_higan_tea', 'c11_qingxin_tea', 'c11_lamp_oil']); // 茶婆的茶棚 (field, before the tower)
+const SHOPS = { S11, S11b, S1a, S1, S2a, S2, S3a, S3, S4, S5, S6, S7a, S7b, S7, S8a, S8, S9a, S9b, S9, S10b, S10c, S10 };
 
 const XH = 'xinghe', BZ = 'baizhi', HY = 'hongying', YG = 'yungui';
 const FOUR = [XH, BZ, HY, YG], TRIO = [XH, HY, YG];
@@ -54,6 +57,20 @@ const SK7x = { [XH]: ['xh_xinhuo_ran', 'xh_xinhuo_zhao', 'xh_xinhuo_bumie', 'xh_
 const SK8 = { [XH]: SK7x[XH], [HY]: ['hy_fangshou'], [YG]: ['yg_mankan', 'yg_taixu'] };
 const SK9 = { [XH]: SK7x[XH], [HY]: ['hy_fangshou', 'hy_luojia'], [YG]: ['yg_mankan', 'yg_taixu'] };
 const AWAKE = { ch7_xinhuo: true, ch7_taixu: true };
+
+// gear the chapter playthrough tests equip (tools/test/chapters/chN.test.js) — used by `sim_story.js --test`
+const eq = (w, a, h, f, ac) => Object.fromEntries(Object.entries({ weapon: w, armor: a, head: h, feet: f, acc: ac }).filter(([, v]) => v));
+const T4 = { [XH]: eq('sw_jiujiang', 'ar_hakka', 'hd_huabu', 'ft_muji'), [BZ]: eq('fl_shange', 'ar_hakka', 'hd_huabu', 'ft_muji'), [HY]: eq('sp_zhujie', 'ar_hakka', 'hd_huabu', 'ft_muji'), [YG]: eq('fn_zhugu', 'ar_hakka', 'hd_huabu', 'ft_muji') };
+const T7 = { [XH]: eq('sw_qixing', 'ar_chain', 'hd_yuguan', 'ft_lupi'), [HY]: eq('sp_qilin', 'ar_chain', null, 'ft_lupi'), [YG]: eq('fn_qixing', 'ar_brocade', null, 'ft_lupi') };
+const T8 = { [XH]: eq('c8_liuguang', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_qingxin'), [HY]: eq('c8_jingtao', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_huzhao'), [YG]: eq('c8_leiyin', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_yeming') };
+const T5 = { [XH]: eq('sw_bailian', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [BZ]: eq('fl_diaohua', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [HY]: eq('c5_sp_steel', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [YG]: eq('fn_zhusha', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi') };
+const T11 = { [XH]: eq('c11_sw_xuanwu', 'c11_ar_coral', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'), [HY]: eq('c11_sp_jinggu', 'c11_ar_haiwen', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'),
+  [YG]: eq('c11_fn_leishan', 'c11_ar_coral', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'), [BZ]: eq('c11_fl_dengxin', null, null, null, 'c11_ac_memory_lamp') };
+const DBG = { jinchuang: 5, xumingsan: 5, jiuzhuan: 5, huanhunxiang: 5, huanhundan: 5, jiedu: 5, xiangbao: 5, pinganfu: 5, yuyuan: 5, caozaiguo: 5, mijiu: 5, mifentang: 5 }; // ?debug&map=… start
+const K6 = { xumingsan: 6, huanhunxiang: 4 }, K7 = { xumingsan: 6, wanguo: 3, fenglisu: 3, huanhunxiang: 3, xiangbao: 3 };
+const K9 = { shimuyu: 3, xumingsan: 5, huanhunxiang: 3, xiancao: 3 }, K10 = { wuyuzi: 5, yinghuaxia: 3, huanhunxiang: 5, jiuzhuan: 2, mijiu: 5, aiyu: 4 };
+const T6 = { [XH]: eq('sw_qixing', 'c6_brocade_m', 'hd_yuguan', 'ft_lupi'), [BZ]: eq('fl_baiyu', 'c6_brocade_f', 'hd_yuguan', 'ft_lupi'), [HY]: eq('sp_qilin', 'c6_brocade_f', 'hd_yuguan', 'ft_lupi'), [YG]: eq('fn_qixing', 'c6_brocade_m', 'hd_yuguan', 'ft_lupi') };
+const T10 = { [XH]: eq('c10_sw_lanyang', 'c10_ar_jiaosi', 'c10_hd_jiaosi', 'c10_ft_jiaosi'), [HY]: eq('c10_sp_huilan', 'c10_ar_jiaosi', 'c10_hd_jiaosi', 'c10_ft_jiaosi'), [YG]: eq('c10_fn_haishen', 'c10_ar_jiaosi', 'c10_hd_jiaosi', 'c10_ft_jiaosi') };
 
 // a sensible player plays the hint the battle shows
 const tWindDemon = (sc, u, h) => {
@@ -109,21 +126,35 @@ const tGuhun = (sc, u, h) => {
   return null;
 };
 
+// 無相之心 cannot fall: once it is held at its floor the screen says 「使用『千燈』或白芷的『渡魂謠』」
+const tHeart = (sc, u, h) => {
+  const heart = sc.enemies.find((e) => e.id === 'c11_wuxiang_3' && !e.dead);
+  if (!heart || !sc._floored) return null;
+  if (u.id === BZ && h.usable.includes('bz_duhun')) return h.cmdFor('bz_duhun', heart);
+  return null;
+};
+const c7flame = (G) => G.__X.ch7.ev('C7.applyFlame()');
+const SK11 = { [XH]: SK9[XH], [HY]: SK9[HY], [YG]: SK9[YG].concat(['yg_pudu']), [BZ]: [] };
+const LV11 = { [XH]: 44, [HY]: 44, [YG]: 44, [BZ]: 45 };
+const GIFT11 = { [XH]: ['sw_yinghuo'], [BZ]: ['c11_fl_dengxin', 'c11_ac_memory_lamp'] };
+// the scene's own heals between phases (fraction of max HP and MP)
+const heal = (k) => (G) => { for (const m of G.Party.active()) { const st = G.Party.stats(m.id); m.hp = Math.min(st.mhp, Math.max(1, m.hp) + Math.round(st.mhp * k)); m.mp = Math.min(st.mmp, m.mp + Math.round(st.mmp * k)); } };
+
 function FIGHTS() {
   return [
     // ============================================================== ch0 序章 (dream: a loss restarts the fight at full HP)
-    { id: 'c0_big_wisp', ch: 0, file: 'ch0', name: '大海霧魂 (0-6, optional)', troop: 't_c0_dream_3', opts: "{ loseOk: true, intro: (b) => setupBattle(b, {}) }",
+    { id: 'c0_big_wisp', test: { lv: 1 }, ch: 0, file: 'ch0', name: '大海霧魂 (0-6, optional)', troop: 't_c0_dream_3', opts: "{ loseOk: true, intro: (b) => setupBattle(b, {}) }",
       party: [XH], lv: 1, shops: [], kit: { heal: [0, 0], mp: 0, revive: 0 }, scripted: true },
 
     // ============================================================== ch1 九份燈火
-    { id: 'c1_foreman', ch: 1, file: 'ch1', name: '工頭魂・金貴仔 (1-7)', troop: 't_c1_foreman', opts: "{ intro: (b) => foremanIntro(b) }",
+    { id: 'c1_foreman', test: { lv: 4 }, ch: 1, file: 'ch1', name: '工頭魂・金貴仔 (1-7)', troop: 't_c1_foreman', opts: "{ intro: (b) => foremanIntro(b) }",
       party: [XH], lv: 3, shops: S1a, kit: { heal: [3, 3], mp: 0, revive: 0 } },
-    { id: 'c1_shore_ghost', ch: 1, file: 'ch1', name: '遲疑的水鬼 (1-13)', troop: 't_c1_shore_ghost', opts: "{ intro: (b) => hesitateIntro(b) }",
+    { id: 'c1_shore_ghost', test: { lv: 4 }, ch: 1, file: 'ch1', name: '遲疑的水鬼 (1-13)', troop: 't_c1_shore_ghost', opts: "{ intro: (b) => hesitateIntro(b) }",
       party: [XH], lv: 4, shops: S1, kit: { heal: [3, 3], mp: 0, revive: 0 } },
-    { id: 'c1_moya', ch: 1, file: 'ch1', name: '墨鴉 (1-19, after the 1-18 fight)', troop: 't_c1_moya', opts: "{ intro: (b) => moyaIntro(b), rewards: true }",
+    { id: 'c1_moya', test: { lv: 5 }, ch: 1, file: 'ch1', name: '墨鴉 (1-19, after the 1-18 fight)', troop: 't_c1_moya', opts: "{ intro: (b) => moyaIntro(b), rewards: true }",
       before: [{ troop: 'jiufen_1', opts: "noFlee('jiufen_1')" }],
       party: [XH, BZ], lv: 4, shops: S1, kit: { heal: [4, 3], mp: 2, revive: 0 } },
-    { id: 'c1_ghost_king', ch: 1, file: 'ch1', name: '水鬼王 + 陳伯 (1-20, right after 墨鴉)', troop: 't_c1_ghost_king',
+    { id: 'c1_ghost_king', test: { lv: 5 }, ch: 1, file: 'ch1', name: '水鬼王 + 陳伯 (1-20, right after 墨鴉)', troop: 't_c1_ghost_king',
       opts: "{ guests: ['chenbo'], intro: (b) => ghostKingIntro(b), onTurn: (b, u) => ghostKingTurn(b, u), rewards: true }",
       before: [{ troop: 'jiufen_1', opts: "noFlee('jiufen_1')" }, { troop: 't_c1_moya', opts: "{ intro: (b) => moyaIntro(b), rewards: true }", after: (G) => {
         const avg = Math.round(G.Party.active().reduce((a, m) => a + m.lv, 0) / G.Party.active().length);
@@ -132,109 +163,132 @@ function FIGHTS() {
       party: [XH, BZ], lv: 4, shops: S1, kit: { heal: [4, 3], mp: 2, revive: 0 } },
 
     // ============================================================== ch2 霧林天燈
-    { id: 'c2_woodcutter', ch: 2, file: 'ch2', name: '魔神仔頭 (2-7, loseOk)', troop: 't_c2_woodcutter', opts: "{ loseOk: true, onTurn: phantomTurn, intro: phantomTurn }",
+    { id: 'c2_woodcutter', test: { lv: 6 }, ch: 2, file: 'ch2', name: '魔神仔頭 (2-7, loseOk)', troop: 't_c2_woodcutter', opts: "{ loseOk: true, onTurn: phantomTurn, intro: phantomTurn }",
       party: [XH, BZ], lv: 6, shops: S2a, gifts: yinghuo, loseOk: true },
-    { id: 'c2_duel', ch: 2, file: 'ch2', name: '洛紅纓 duel (2-8, loseOk)', troop: 'boss_hongying', opts: "{ loseOk: true, onTurn: duelTurn }",
+    { id: 'c2_duel', test: { lv: 6 }, ch: 2, file: 'ch2', name: '洛紅纓 duel (2-8, loseOk)', troop: 'boss_hongying', opts: "{ loseOk: true, onTurn: duelTurn }",
       party: [XH, BZ], lv: 6, shops: S2a, gifts: yinghuo, loseOk: true },
-    { id: 'c2_ambush', ch: 2, file: 'ch2', name: '魔神仔 ambush (2-9, loseOk)', troop: 't_c2_ambush', opts: "{ loseOk: true }",
+    { id: 'c2_ambush', test: { lv: 6 }, ch: 2, file: 'ch2', name: '魔神仔 ambush (2-9, loseOk)', troop: 't_c2_ambush', opts: "{ loseOk: true }",
       party: [XH, BZ, HY], lv: 6, shops: S2a, gifts: yinghuo, loseOk: true },
-    { id: 'c2_tiger', ch: 2, file: 'ch2', name: '虎姑婆 (2-15)', troop: 't_c2_tiger', opts: "{ onTurn: oilTurn }",
+    { id: 'c2_tiger', test: { lv: 9 }, ch: 2, file: 'ch2', name: '虎姑婆 (2-15)', troop: 't_c2_tiger', opts: "{ onTurn: oilTurn }",
       party: [XH, BZ, HY], lv: 8, shops: S2, gifts: yinghuo },
 
     // ============================================================== ch3 觀音艋舺
-    { id: 'c3_monkeyking', ch: 3, file: 'ch3', name: '石猴王 (3-5)', troop: 't_c3_monkeyking', opts: null,
+    { id: 'c3_monkeyking', test: { lv: 11 }, ch: 3, file: 'ch3', name: '石猴王 (3-5)', troop: 't_c3_monkeyking', opts: null,
       party: [XH, BZ, HY], lv: 10, shops: S3a, gifts: yinghuo },
-    { id: 'c3_guimian', ch: 3, file: 'ch3', name: '鬼面 raid (3-9, after the 陰兵 fight)', troop: 't_c3_guimian',
+    { id: 'c3_guimian', test: { lv: 11 }, ch: 3, file: 'ch3', name: '鬼面 raid (3-9, after the 陰兵 fight)', troop: 't_c3_guimian',
       opts: "(() => { let said75 = false; return { guests: ['yungui'], rewards: true, onTurn: async (b, u) => { const boss = b.enemies.find((e) => e.id === 'c3_guimian'); const hy = b.party.find((pp) => pp.id === 'hongying'); if (boss && u === boss && hy && !hy.dead) hy.st.guard = 1; if (boss && !said75 && boss.hp <= boss.mhp * 0.75) said75 = true; } }; })()",
       before: [{ troop: 't_c3_raid', opts: "{ guests: ['yungui'] }" }],
       party: [XH, BZ, HY], lv: 10, shops: S3a, gifts: yinghuo },
-    { id: 'c3_theatre', ch: 3, file: 'ch3', name: '戲棚 紙人 (3, 義子姑)', troop: 't_c3_theatre', opts: null,
+    { id: 'c3_theatre', test: { lv: 13, inv: DBG }, ch: 3, file: 'ch3', name: '戲棚 紙人 (3, 義子姑)', troop: 't_c3_theatre', opts: null,
       party: FOUR, lv: 12, shops: S3, gifts: yinghuo },
-    { id: 'c3_river_boss', ch: 3, file: 'ch3', name: '河伯怨靈 (4-2)', troop: 't_c3_river_boss',
+    { id: 'c3_river_boss', test: { lv: 13, inv: DBG }, ch: 3, file: 'ch3', name: '河伯怨靈 (4-2)', troop: 't_c3_river_boss',
       opts: "(() => { let warned = false; return { onTurn: async (b, u) => { if (!warned && b.rounds >= 3 && u.side === 'enemy' && u.id === 'c3_river_boss') { warned = true; u.st.stun = 1; } } }; })()",
       party: FOUR, lv: 13, shops: S3, gifts: yinghuo },
-    { id: 'c3_feud', ch: 3, file: 'ch3', name: '頂下郊 老鬼 (3 turns)', troop: 't_c3_feud', opts: "{ turnLimit: 3, turnLimitResult: 'win', loseOk: true, hpFloor: { c3_ghost_ashui: 0.001, c3_ghost_awang: 0.001 } }",
+    { id: 'c3_feud', test: { lv: 13 }, ch: 3, file: 'ch3', name: '頂下郊 老鬼 (3 turns)', troop: 't_c3_feud', opts: "{ turnLimit: 3, turnLimitResult: 'win', loseOk: true, hpFloor: { c3_ghost_ashui: 0.001, c3_ghost_awang: 0.001 } }",
       party: FOUR, lv: 12, shops: S3, gifts: yinghuo, scripted: true },
 
     // ============================================================== ch4 竹塹風起
-    { id: 'c4_coast_intro', ch: 4, file: 'ch4', name: '九降風精 (4-1)', troop: 't4_coast_intro', opts: null, party: FOUR, lv: 13, shops: S3, gifts: yinghuo },
-    { id: 'c4_racks', ch: 4, file: 'ch4', name: '米粉架 ×3 (4-3, back to back)', troop: 't4_rack_3', opts: null,
+    { id: 'c4_coast_intro', test: { lv: 13, gear: T4 }, ch: 4, file: 'ch4', name: '九降風精 (4-1)', troop: 't4_coast_intro', opts: null, party: FOUR, lv: 13, shops: S3, gifts: yinghuo },
+    { id: 'c4_racks', test: { lv: 15, gear: T4 }, ch: 4, file: 'ch4', name: '米粉架 ×3 (4-3, back to back)', troop: 't4_rack_3', opts: null,
       before: [{ troop: 't4_rack_1' }, { troop: 't4_rack_2' }], party: FOUR, lv: 14, shops: S4, gifts: yinghuo },
-    { id: 'c4_ratking', ch: 4, file: 'ch4', name: '柿鼠大王 (side quest)', troop: 't4_ratking', opts: null, party: FOUR, lv: 15, shops: S4, gifts: yinghuo },
-    { id: 'c4_wind_demon', ch: 4, file: 'ch4', name: '風魔 (4-15)', troop: 't4_boss_wind_demon', opts: null,
+    { id: 'c4_ratking', test: { lv: 17, gear: T4 }, ch: 4, file: 'ch4', name: '柿鼠大王 (side quest)', troop: 't4_ratking', opts: null, party: FOUR, lv: 15, shops: S4, gifts: yinghuo },
+    { id: 'c4_wind_demon', test: { lv: 17, gear: T4 }, ch: 4, file: 'ch4', name: '風魔 (4-15)', troop: 't4_boss_wind_demon', opts: null,
       party: FOUR, lv: 16, shops: S4, gifts: yinghuo, tactics: tWindDemon },
 
     // ============================================================== ch5 鹿港舊夢
-    { id: 'c5_feast', ch: 5, file: 'ch5', name: '怨宴 (3-12)', troop: 't_c5_feast', opts: "{ intro: feastIntro }", party: FOUR, lv: 19, shops: S5, gifts: yinghuo },
+    { id: 'c5_feast', test: { lv: 21, gear: T5 }, ch: 5, file: 'ch5', name: '怨宴 (3-12)', troop: 't_c5_feast', opts: "{ intro: feastIntro }", party: FOUR, lv: 19, shops: S5, gifts: yinghuo },
 
     // ============================================================== ch6 府城長明
-    { id: 'c6_plague_mass', ch: 6, file: 'ch6', name: '疫聚 (鹽水蜂炮)', troop: 't_c6_plague_mass',
+    { id: 'c6_plague_mass', test: { lv: 19, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '疫聚 (鹽水蜂炮)', troop: 't_c6_plague_mass',
       opts: "beehiveRules({ chance: 0.6, k: 15, forceAt: { id: 'c6_plague_mass', at: 0.3 } })", party: FOUR, lv: 21, shops: S6, gifts: yinghuo },
-    { id: 'c6_linto', ch: 6, file: 'ch6', name: '林投姐 (3-11)', troop: 't_c6_linto_boss', opts: 'lintoRules()',
+    { id: 'c6_linto', test: { lv: 21, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '林投姐 (3-11)', troop: 't_c6_linto_boss', opts: 'lintoRules()',
       party: FOUR, lv: 22, shops: S6, gifts: yinghuo, tactics: tLinto },
-    { id: 'c6_moya', ch: 6, file: 'ch6', name: '墨鴉 (caught while sneaking)', troop: 't_c6_moya', opts: 'moyaRules()', party: FOUR, lv: 22, shops: S6, gifts: yinghuo },
-    { id: 'c6_netherlamp', ch: 6, file: 'ch6', name: '冥燈護法 (萬燈閣)', troop: 't_c6_netherlamp', opts: 'netherRules()',
+    { id: 'c6_moya', test: { lv: 22, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '墨鴉 (caught while sneaking)', troop: 't_c6_moya', opts: 'moyaRules()', party: FOUR, lv: 22, shops: S6, gifts: yinghuo },
+    { id: 'c6_netherlamp', test: { lv: 25, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '冥燈護法 (萬燈閣)', troop: 't_c6_netherlamp', opts: 'netherRules()',
       party: FOUR, lv: 23, shops: S6, gifts: yinghuo, tactics: tNether },
-    { id: 'c6_yexuan', ch: 6, file: 'ch6', name: '夜玄 (forced loss)', troop: 't_c6_yexuan_loss', opts: 'yexuanRules()',
+    { id: 'c6_yexuan', test: { lv: 23, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '夜玄 (forced loss)', troop: 't_c6_yexuan_loss', opts: 'yexuanRules()',
       party: FOUR, lv: 23, shops: S6, gifts: yinghuo, scripted: true, winIf: (r) => r.result === 'lose' },
 
     // ============================================================== ch7 雲山入夢 (白芷 gone; 星河's flame drains until 心火)
-    { id: 'c7_bear', ch: 7, file: 'ch7', name: '黑熊精 (alishan)', troop: 't_c7_bear', opts: '{}',
+    { id: 'c7_bear', test: { lv: 23, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '黑熊精 (alishan)', troop: 't_c7_bear', opts: '{}',
       party: TRIO, lv: 24, shops: S7a, gifts: yinghuo, flags: { ch7_flame: 72 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c7_mirror_qf', ch: 7, file: 'ch7', name: '心魔・鬼面 (紅纓 alone)', troop: 't_c7_mirror_qf', opts: '{ loseOk: true }',
+    { id: 'c7_mirror_qf', test: { lv: 24, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '心魔・鬼面 (紅纓 alone)', troop: 't_c7_mirror_qf', opts: '{ loseOk: true }',
       party: [HY], lv: 25, shops: S7b, flags: { ch7_flame: 60 }, scripted: true },
-    { id: 'c7_mirror_yg', ch: 7, file: 'ch7', name: '心魔・雲歸', troop: 't_c7_mirror_yg', opts: '{}',
+    { id: 'c7_mirror_yg', test: { lv: 24, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '心魔・雲歸', troop: 't_c7_mirror_yg', opts: '{}',
       party: TRIO, lv: 25, shops: S7b, gifts: yinghuo, skills: SK7, flags: { ch7_flame: 58 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c7_drown_shadow', ch: 7, file: 'ch7', name: '溺影 (puzzle penalty, loseOk)', troop: 't_c7_drown_shadow', opts: '{ loseOk: true }',
+    { id: 'c7_drown_shadow', test: { lv: 24, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '溺影 (puzzle penalty, loseOk)', troop: 't_c7_drown_shadow', opts: '{ loseOk: true }',
       party: TRIO, lv: 26, shops: S7b, gifts: yinghuo, skills: SK7, flags: { ch7_flame: 50 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), loseOk: true },
-    { id: 'c7_shadow', ch: 7, file: 'ch7', name: '無光之影 (心火 awakens)', troop: 't_c7_shadow', opts: '{}',
+    { id: 'c7_shadow', test: { lv: 24, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '無光之影 (心火 awakens)', troop: 't_c7_shadow', opts: '{}',
       party: TRIO, lv: 26, shops: S7b, gifts: yinghuo, skills: SK7x, flags: { ch7_xinhuo: true },
       pre: (G) => { G.__X.ch7.ev('C7.applyFlame()'); const m = G.state.members.xinghe; const st = G.Party.stats('xinghe'); m.hp = st.mhp; m.mp = st.mmp; m.gauge = 50; } },
-    { id: 'c7_jiao', ch: 7, file: 'ch7', name: '蛟 (日月潭)', troop: 't_c7_jiao', opts: '{}',
+    { id: 'c7_jiao', test: { lv: 25, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '蛟 (日月潭)', troop: 't_c7_jiao', opts: '{}',
       party: TRIO, lv: 26, shops: S7b, gifts: { [XH]: ['sw_yinghuo', 'c7_ac_xinghuo'] }, skills: SK7x, flags: { ch7_xinhuo: true }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c7_moths', ch: 7, file: 'ch7', name: '燈蛾 (puzzle penalty)', troop: 't_c7_moths', opts: '{}',
+    { id: 'c7_moths', test: { lv: 25, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '燈蛾 (puzzle penalty)', troop: 't_c7_moths', opts: '{}',
       party: TRIO, lv: 27, shops: S7, gifts: { [XH]: ['sw_yinghuo', 'c7_ac_xinghuo'] }, skills: SK7x, flags: { ch7_xinhuo: true }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c7_qingxu', ch: 7, file: 'ch7', name: '清虛真人 + 冥燈印 (燈母祠)', troop: 't_c7_qingxu', opts: '{}',
+    { id: 'c7_qingxu', test: { lv: 25, gear: T7, inv: K7 }, ch: 7, file: 'ch7', name: '清虛真人 + 冥燈印 (燈母祠)', troop: 't_c7_qingxu', opts: '{}',
       party: TRIO, lv: 27, shops: S7, gifts: { [XH]: ['sw_yinghuo', 'c7_ac_xinghuo'] }, skills: SK7x, flags: { ch7_xinhuo: true },
       pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), focus: ['c7_dark_seal'] },
 
     // ============================================================== ch8 逆潮
-    { id: 'c8_street', ch: 8, file: 'ch8', name: '北港 street (8-1)', troop: 't_c8_street', opts: '{}',
+    { id: 'c8_street', test: { lv: 25, gear: T8 }, ch: 8, file: 'ch8', name: '北港 street (8-1)', troop: 't_c8_street', opts: '{}',
       party: TRIO, lv: 27, shops: S8a, gifts: yinghuo, skills: SK8, flags: AWAKE, pre: (G) => G.__X.ch7 && G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c8_rescue5', ch: 8, file: 'ch8', name: '溪口 rescue 5 (8-3)', troop: 't_c8_p5', opts: '{}',
+    { id: 'c8_rescue5', test: { lv: 28, gear: T8 }, ch: 8, file: 'ch8', name: '溪口 rescue 5 (8-3)', troop: 't_c8_p5', opts: '{}',
       party: TRIO, lv: 28, shops: S8a, gifts: yinghuo, skills: SK8, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c8_hundred', ch: 8, file: 'ch8', name: '潮怨・百手 (8-4)', troop: 't_c8_hundred', opts: '{}',
+    { id: 'c8_hundred', test: { lv: 31, gear: T8 }, ch: 8, file: 'ch8', name: '潮怨・百手 (8-4)', troop: 't_c8_hundred', opts: '{}',
       party: TRIO, lv: 28, shops: S8a, gifts: yinghuo, skills: SK8, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c8_guards', ch: 8, file: 'ch8', name: '長明宮衛 (fort)', troop: 't_c8_guards', opts: '{}',
+    { id: 'c8_guards', test: { lv: 29, gear: T8 }, ch: 8, file: 'ch8', name: '長明宮衛 (fort)', troop: 't_c8_guards', opts: '{}',
       party: TRIO, lv: 29, shops: S8, gifts: yinghuo, skills: SK8, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c8_qingfeng', ch: 8, file: 'ch8', name: '洛青鋒 (8-6)', troop: 't_c8_qingfeng', opts: 'qfBattleOpts()',
+    { id: 'c8_qingfeng', test: { lv: 36, gear: T8 }, ch: 8, file: 'ch8', name: '洛青鋒 (8-6)', troop: 't_c8_qingfeng', opts: 'qfBattleOpts()',
       party: TRIO, lv: 29, shops: S8, gifts: yinghuo, skills: SK8, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), focus: ['c8_tide_wick'] },
 
     // ============================================================== ch9 王船南行
-    { id: 'c9_beach', ch: 9, file: 'ch9', name: '旗後 night beach ×2', troop: 't_c9_beach_2', opts: '{}', before: [{ troop: 't_c9_beach_1' }],
+    { id: 'c9_beach', test: { lv: 30, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '旗後 night beach ×2', troop: 't_c9_beach_2', opts: '{}', before: [{ troop: 't_c9_beach_1' }],
       party: TRIO, lv: 30, shops: S9a, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c9_greed', ch: 9, file: 'ch9', name: '大肚貪鬼 (半屏山)', troop: 't_c9_greed_boss', opts: '{ intro: greedIntro([]) }',
+    { id: 'c9_greed', test: { lv: 30, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '大肚貪鬼 (半屏山)', troop: 't_c9_greed_boss', opts: '{ intro: greedIntro([]) }',
       party: TRIO, lv: 31, shops: S9a, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c9_plague', ch: 9, file: 'ch9', name: '瘟鬼頭 (東港 船台)', troop: 't_c9_plague_boss', opts: '{ intro: plagueIntro() }',
+    { id: 'c9_plague', test: { lv: 31, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '瘟鬼頭 (東港 船台)', troop: 't_c9_plague_boss', opts: '{ intro: plagueIntro() }',
       party: TRIO, lv: 32, shops: S9b, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c9_fallwind', ch: 9, file: 'ch9', name: '落山風靈 (龍磐)', troop: 't_c9_fallwind', opts: '{ intro: fallwindIntro() }',
-      party: TRIO, lv: 33, shops: S9, gifts: yinghuo, gear: { [XH]: { acc: 'c9_ac_yueqin' } }, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c9_moray', ch: 9, file: 'ch9', name: '潮病鰻王 (鵝鑾鼻)', troop: 't_c9_moray_king', opts: '{ intro: morayIntro() }',
+    { id: 'c9_fallwind', test: { lv: 33, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '落山風靈 (龍磐)', troop: 't_c9_fallwind', opts: '{ intro: fallwindIntro() }',
+      party: TRIO, lv: 33, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
+    { id: 'c9_moray', test: { lv: 34, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '潮病鰻王 (鵝鑾鼻)', troop: 't_c9_moray_king', opts: '{ intro: morayIntro() }',
       party: TRIO, lv: 34, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, vars: { flame: 60 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tMoray },
 
     // ============================================================== ch10 後山巡境
-    { id: 'c10_kaswal', ch: 10, file: 'ch10', name: 'Kaswal reef fight', troop: 't_c10_reef_kaswal', opts: "{ mode: 'normal' }",
+    { id: 'c10_kaswal', test: { lv: 40, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: 'Kaswal reef fight', troop: 't_c10_reef_kaswal', opts: "{ mode: 'normal' }",
       party: TRIO, lv: 35, shops: S10a, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c10_serpent', ch: 10, file: 'ch10', name: '潮病海蛇 (蘭嶼)', troop: 'boss_tide_serpent', opts: '{ intro: H.serpentRules }',
+    { id: 'c10_serpent', test: { lv: 40, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: '潮病海蛇 (蘭嶼)', troop: 'boss_tide_serpent', opts: '{ intro: H.serpentRules }',
       party: TRIO, lv: 35, shops: S10a, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tSerpent },
-    { id: 'c10_coast', ch: 10, file: 'ch10', name: '大潮怨 (海祭, after two fights)', troop: 't_c10_coast_boss', opts: '{}',
-      before: [{ troop: 't_c10_coast_fix_a' }, { troop: 't_c10_coast_fix_b' }],
+    { id: 'c10_coast', test: { lv: 40, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: '大潮怨 (海祭 岬角)', troop: 't_c10_coast_boss', opts: '{}',
       party: TRIO, lv: 36, shops: S10b, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c10_colossus', ch: 10, file: 'ch10', name: '太魯閣石巨靈', troop: 'boss_colossus', opts: '{ intro: H.colossusRules }',
+    { id: 'c10_colossus', test: { lv: 44, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: '太魯閣石巨靈', troop: 'boss_colossus', opts: '{ intro: H.colossusRules }',
       party: TRIO, lv: 37, shops: S10c, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), valueMod: vColossus },
-    { id: 'c10_guhun', ch: 10, file: 'ch10', name: '孤魂眾 (頭城 普渡)', troop: 't_c10_guhun', opts: '{ intro: H.guhunRules }',
+    { id: 'c10_guhun', test: { lv: 40, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: '孤魂眾 (頭城 普渡)', troop: 't_c10_guhun', opts: '{ intro: H.guhunRules }',
       party: TRIO, lv: 38, shops: S10, gifts: yinghuo, skills: { [XH]: SK9[XH], [HY]: SK9[HY], [YG]: SK9[YG].concat(['yg_pudu']) }, flags: AWAKE,
       inv: { c10_pudu_offering: 6 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tGuhun },
+    // ============================================================== ch11 黑水溝・彼岸 (白芷 rejoins before 夜玄 at the party average + 1)
+    { id: 'c11_captain', test: { lv: 39, gear: T11 }, ch: 11, file: 'ch11', name: '烏鬚船主 (11-05)', troop: 't11_captain', opts: 'captainHooks()',
+      party: TRIO, lv: 39, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_jailer', test: { lv: 43, gear: T11 }, ch: 11, file: 'ch11', name: '鎖魂將 (11-10)', troop: 't11_jailer', opts: 'jailerHooks()',
+      party: TRIO, lv: 40, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_kun', test: { lv: 44, gear: T11 }, ch: 11, file: 'ch11', name: '鯤 (11-14)', troop: 't11_kun', opts: 'kunHooks()',
+      party: TRIO, lv: 41, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame, focus: ['c11_kun_tumor'] },
+    { id: 'c11_warden', test: { lv: 45, gear: T11 }, ch: 11, file: 'ch11', name: '千年燈塔守 (11-23)', troop: 't11_warden', opts: null,
+      party: TRIO, lv: 43, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_tongzi', test: { lv: 46, gear: T11 }, ch: 11, file: 'ch11', name: '萬象童子 (optional game, 15 turns)', troop: 't11_tongzi', opts: 'tongziHooks()',
+      party: TRIO, lv: 44, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame, loseOk: true, scripted: true },
+    { id: 'c11_yexuan1', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '夜玄・玄冥法師 (11-28 phase 1)', troop: 't11_yexuan_1', opts: 'yexuan1Hooks()',
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_yexuan2', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '夜玄・逆潮法身 (phase 2, after phase 1 +30%)', troop: 't11_yexuan_2', opts: 'yexuan2Hooks()',
+      before: [{ troop: 't11_yexuan_1', opts: 'yexuan1Hooks()', after: heal(0.3) }],
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang1', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '黑潮・無相 (phase 1, full heal before)', troop: 't11_wuxiang_1', opts: 'wuxiang1Hooks()',
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang2', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '無相・深淵 (phase 2, trio, +50% after phase 1)', troop: 't11_wuxiang_2', opts: 'wuxiang2Hooks()',
+      before: [{ troop: 't11_wuxiang_1', opts: 'wuxiang1Hooks()', after: (G) => { G.Party.leave('baizhi'); heal(0.5)(G); } }],
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang3', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '無相之心 (phase 3, cannot be lost)', troop: 't11_wuxiang_3', opts: 'wuxiang3Hooks()',
+      party: [XH], lv: 44, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, scripted: true, tactics: tHeart,
+      pre: (G) => { c7flame(G); for (const [id, lv] of [[HY, 44], [YG, 44], [BZ, 45]]) { const m = G.Party.create(id, lv); for (const k of (SK11[id] || [])) G.Party.learnSkill(id, k); } } },
   ];
 }
 

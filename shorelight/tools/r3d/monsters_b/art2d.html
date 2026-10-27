@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Monster team B — 2D reference sheet</title>
+<style>html,body{margin:0;background:#2a2c33;color:#ddd;font:12px system-ui}</style></head><body>
+<canvas id="c"></canvas>
+<!-- 2D reference sheet for team B creatures: art2d.html?ids=a,b&scale=1.5&cols=4&state=idle -->
+<script src="../../../js/core/util.js"></script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.warn(k, e));</script>
+<script>G.font = G.font || ((px, w) => (w || "") + " " + px + "px serif");</script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/monsters.js"></script>
+<script src="../../../js/gfx/monsters2.js"></script>
+<script src="../../../js/gfx/monsters3.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const ids = (q.get('ids') || '').split(',').filter(Boolean);
+const sc = parseFloat(q.get('scale') || '1.5'), cols = parseInt(q.get('cols') || '4');
+const mx = Math.max(...ids.map((i) => { const d = G.Monsters.get(i); return d ? Math.max(d.w * 1.5, d.h * 1.2) : 300; })); const cw = mx * sc + 20, ch = mx * sc + 30;
+const c = document.getElementById('c');
+c.width = cw * Math.min(cols, ids.length); c.height = ch * Math.ceil(ids.length / cols);
+const g = c.getContext('2d');
+g.fillStyle = '#2a2c33'; g.fillRect(0, 0, c.width, c.height);
+ids.forEach((id, i) => {
+  const x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
+  g.save(); g.translate(x + cw / 2, y + ch - 30); g.scale(sc, sc);
+  try { G.Monsters.draw(g, id, 0, 0, parseFloat(q.get('t') || '0.3'), { state: q.get('state') || 'idle', variant: 0, phase: +(q.get('phase') || 1) }); } catch (e) { console.error(id, e); }
+  g.restore();
+  const d = G.Monsters.get(id);
+  g.fillStyle = '#fff'; g.fillText(id + ' ' + (d ? d.w + 'x' + d.h : '?'), x + 6, y + ch - 10);
+});
+window.__ready = true;
+</script></body></html>

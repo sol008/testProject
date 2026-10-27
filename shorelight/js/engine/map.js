@@ -895,14 +895,19 @@ G.Mapx = G.Mapx || {};
         ctx.save();
         ctx.globalAlpha = Math.max(0, a);
         const x = 40, y = 40;
-        const g = ctx.createLinearGradient(x, 0, x + 460, 0);
-        g.addColorStop(0, 'rgba(6,8,18,0.8)'); g.addColorStop(1, 'rgba(6,8,18,0)');
+        // long (English) place names: the backing gradient grows with the name, and the name shrinks past ~800px
+        const nm = G.Render.fit(ctx, this.map.name, 800, { size: 40, minSize: 30 });
+        const bw = Math.max(460, nm.w + 120);
+        const g = ctx.createLinearGradient(x, 0, x + bw, 0);
+        g.addColorStop(0, 'rgba(6,8,18,0.8)');
+        if (bw > 460) g.addColorStop((nm.w + 20) / bw, 'rgba(6,8,18,0.55)');
+        g.addColorStop(1, 'rgba(6,8,18,0)');
         ctx.fillStyle = g;
-        ctx.fillRect(x - 10, y - 6, 470, 82);
+        ctx.fillRect(x - 10, y - 6, bw + 10, 82);
         ctx.fillStyle = G.UI.GOLD; ctx.fillRect(x - 10, y - 6, 3, 82);
-        G.Render.text(ctx, this.map.name, x + 12, y + 2, { size: 40, color: '#fbeec8', glow: 'rgba(255,190,100,0.6)', glowBlur: 16 });
+        G.Render.text(ctx, nm.str, x + 12, y + 2 + (40 - nm.size) / 2, { size: nm.size, color: '#fbeec8', glow: 'rgba(255,190,100,0.6)', glowBlur: 16 });
         const sub = val(this.def.subtitle) || (G.Chapters && G.Chapters[G.state.chapter]) || '';
-        if (sub) G.Render.text(ctx, sub, x + 14, y + 52, { size: 18, color: '#cbbf9e' });
+        if (sub) G.Render.textClip(ctx, sub, x + 14, y + 52, 800, { size: 18, color: '#cbbf9e' });
         ctx.restore();
       }
       // objective tracker
@@ -910,11 +915,13 @@ G.Mapx = G.Mapx || {};
       if (obj && !G.Script.busy()) {
         ctx.save();
         ctx.font = G.font(18);
-        const tw = G.Render.measure(ctx, obj);
-        const x = G.W - tw - 64, y = 22;
-        G.UI.plate(ctx, x, y, tw + 44, 36, 0.55, 18);
+        // English objectives run to 100+ characters: wrap them in a capped-width tracker instead of one long strip
+        const lines = G.Render.wrap(ctx, obj, G.I18N.isEn() ? 520 : 4000);
+        const tw = Math.max(...lines.map((l) => G.Render.lineWidth(ctx, l)), 0);
+        const x = G.W - tw - 64, y = 22, h = 36 + (lines.length - 1) * 24;
+        G.UI.plate(ctx, x, y, tw + 44, h, 0.55, lines.length > 1 ? 14 : 18);
         G.UI.lanternIcon(ctx, x + 18, y + 18, 6, t);
-        G.Render.text(ctx, obj, x + 32, y + 7, { size: 18, color: '#f0e4c4' });
+        G.Render.drawLines(ctx, lines, x + 32, y + 7, 24, '#f0e4c4');
         ctx.restore();
       }
       // vision timer

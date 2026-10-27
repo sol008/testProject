@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Interior props contact sheet</title>
+<style>html,body{margin:0;background:#1b1d22;color:#ddd;font:12px system-ui;overflow:hidden}.lb{position:absolute;padding:1px 5px;background:rgba(0,0,0,.55);border-radius:3px}</style></head>
+<body><canvas id="c"></canvas>
+<!--
+  Contact sheet for props_interior: every item gets its own auto-framed tile.
+  ?items=bed,mural:3,chair:5&yaw=25&pitch=40&cols=4&t=1.5&night=1&w=1280&h=720&o=dir:left (extra o fields for all items)
+  window.__ready becomes true after drawing.
+-->
+<script>window.G_VIEWER = true;</script>
+<script src="../../../js/core/util.js"></script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/tiles.js"></script>
+<script src="../../../js/gfx/nature.js"></script>
+<script src="../../../js/gfx/objects.js"></script>
+<script src="../../../js/gfx/objects2.js"></script>
+<script src="../../../js/gfx/interior.js"></script>
+<script src="../../../js/gfx/sprites.js"></script>
+<script src="../../../js/gfx/monsters.js"></script>
+<script src="../../../js/gfx/monsters2.js"></script>
+<script src="../../../js/gfx/monsters3.js"></script>
+<script src="../../../js/vendor/three.bundle.js"></script>
+<script src="../../../js/r3d/core.js"></script>
+<script src="../../../js/r3d/materials.js"></script>
+<script src="../../../js/r3d/models.js"></script>
+<script src="../../../js/r3d/chars.js"></script>
+<script src="../../../js/r3d/chars_cast.js"></script>
+<script src="../../../js/r3d/animals.js"></script>
+<script src="../../../js/r3d/arch_han.js"></script>
+<script src="../../../js/r3d/arch_coast.js"></script>
+<script src="../../../js/r3d/nature.js"></script>
+<script src="../../../js/r3d/props.js"></script>
+<script src="../../../js/r3d/props_interior.js"></script>
+<script src="../../../js/r3d/monsters.js"></script>
+<script src="../../../js/r3d/monsters_boss.js"></script>
+<script src="../../../js/r3d/env.js"></script>
+<script src="../../../js/r3d/vfx.js"></script>
+<script>
+setTimeout(function () {
+  const q = new URLSearchParams(location.search), num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const W = num('w', 1280), H = num('h', 720), night = q.get('night') === '1';
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true; renderer.setScissorTest(true);
+  G.R3.renderer = renderer;
+  const items = (q.get('items') || 'table').split(',').map((s) => { const [id, v] = s.split(':'); return { id, v: +(v || 0) }; });
+  const extra = {}; for (const kv of (q.get('o') || '').split(';').filter(Boolean)) { const [k, v] = kv.split(':'); extra[k] = isNaN(+v) ? v : +v; }
+  const cols = num('cols', Math.ceil(Math.sqrt(items.length * 1.6))), rows = Math.ceil(items.length / cols);
+  const tw = Math.floor(W / cols), th = Math.floor(H / rows);
+  const yaw = num('yaw', 25) * Math.PI / 180, pitch = num('pitch', 40) * Math.PI / 180, T = num('t', 1);
+  const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: night ? 0x1a2240 : 0xbcd4e6 })));
+  const envTex = pm.fromScene(es, 0.04).texture;
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g2 = gc.getContext('2d'); g2.fillStyle = '#7a6450'; g2.fillRect(0, 0, 128, 128); g2.strokeStyle = 'rgba(0,0,0,0.25)'; g2.strokeRect(0, 0, 128, 128);
+  const gt = new THREE.CanvasTexture(gc); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.colorSpace = THREE.SRGBColorSpace; gt.repeat.set(8, 8);
+  const errs = [];
+  items.forEach((it, i) => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(night ? 0x0b1020 : 0x8fb4d0);
+    scene.environment = envTex; scene.environmentIntensity = night ? 0.15 : 0.5;
+    scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.25 : 1.0));
+    const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.25 : 2.6);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+    scene.add(sun, sun.target);
+    const d = G.Objects.get(it.id) || { w: 1, h: 1 };
+    const o = Object.assign({ t: it.id, x: i, y: 0, v: it.v, w: d.w, h: d.h }, extra);
+    let obj = null;
+    try { obj = G.Models.create(it.id, o); } catch (e) { errs.push(it.id + ' ' + e.message); }
+    if (!obj) obj = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true }));
+    scene.add(obj);
+    const md = G.Models.defs[it.id];
+    if (md && md.update) for (let s = 0; s <= Math.round(T * 30); s++) md.update(obj, o, s / 30, 1 / 30);
+    // the def's lights as real point lights
+    if (md && md.lights) for (const l of md.lights(o) || []) { const pl = new THREE.PointLight(l.color || '#ffb060', (l.intensity || 1) * 2.2, (l.distance || 4) * 1.2, 1.6); pl.position.set(l.x || 0, l.y || 1.2, l.z || 0); scene.add(pl); }
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshStandardMaterial({ map: gt, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+    obj.updateMatrixWorld(true);
+    obj.traverse((n) => { if (n.isMesh && n.castShadow === undefined) n.castShadow = true; });
+    const b = new THREE.Box3().setFromObject(obj), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    const cam = new THREE.PerspectiveCamera(30, tw / th, 0.02, 100);
+    const r = Math.max(sz.x, sz.y, sz.z) * 0.62 + 0.15, dist = r / Math.tan(15 * Math.PI / 180) * num('dist', 1);
+    cam.position.set(c.x + Math.sin(yaw) * Math.cos(pitch) * dist, c.y + Math.sin(pitch) * dist, c.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+    cam.lookAt(c);
+    sun.position.copy(c).add(new THREE.Vector3(-6, 10, 5)); sun.target.position.copy(c); sun.target.updateMatrixWorld();
+    const sc = sun.shadow.camera; sc.left = sc.bottom = -4; sc.right = sc.top = 4; sc.far = 40; sc.updateProjectionMatrix();
+    const x = (i % cols) * tw, y = H - (Math.floor(i / cols) + 1) * th;
+    renderer.setViewport(x, y, tw, th); renderer.setScissor(x, y, tw, th);
+    renderer.render(scene, cam);
+    const lb = document.createElement('div'); lb.className = 'lb'; lb.textContent = it.id + (it.v ? ':' + it.v : '');
+    lb.style.left = (x + 4) + 'px'; lb.style.top = (H - y - th + 4) + 'px'; document.body.appendChild(lb);
+  });
+  window.__errs = errs; window.__ready = true;
+}, 0);
+</script></body></html>

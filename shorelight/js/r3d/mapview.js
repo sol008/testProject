@@ -40,6 +40,7 @@ G.Map3D = (() => {
       this.buildDecals();
       this.terrainSnap = ms.terrain.slice();
       if (G.Env3D && G.Env3D.decorate) { try { G.Env3D.decorate(this); } catch (e) { G.warnOnce('env3d decorate', e); } }
+      if (G.Nature3D && G.Nature3D.scatterGrass) { try { this.grass = G.Nature3D.scatterGrass(this); } catch (e) { G.warnOnce('nature3d grass', e); } }
       if (this.def.build3d) { try { this.def.build3d(this, THREE); } catch (e) { G.warnOnce('build3d ' + this.def.id, e); } }
       this.snapCamera();
     }
@@ -431,7 +432,7 @@ G.Map3D = (() => {
       return holder;
     }
     footprint(o) { const d = G.Objects.get(o.t); return [o.w || (d ? d.w : 1), o.h || (d ? d.h : 1)]; }
-    objSig(o) { return o.t + '|' + o.x + ',' + o.y + '|' + (o.open ? 1 : 0) + '|' + (o.v || 0) + '|' + (o.state || '') + '|' + (o.lit ? 1 : 0); }
+    objSig(o) { return o.t + '|' + o.x + ',' + o.y + '|' + (o.open ? 1 : 0) + '|' + (o.v || 0) + '|' + (o.state || '') + '|' + (o.lit ? 1 : 0) + '|' + (o.on ? 1 : 0) + '|' + (o.text || '') + '|' + (o.color || '') + '|' + (o.hang || '') + '|' + (o.w || ''); }
 
     syncObjects(initial) {
       const ms = this.ms;
@@ -545,7 +546,12 @@ G.Map3D = (() => {
         const md = G.Models.defs[o.t];
         const fp = this.footprint(o);
         if (md && md.lights) {
-          for (const l of md.lights(o) || []) out.push({ x: o.x + fp[0] / 2 + (l.x || 0), y: l.y != null ? l.y : 1.2, z: o.y + fp[1] / 2 + (l.z || 0), color: l.color || '#ffb060', i: l.intensity || 1, r: l.distance || 4, flicker: l.flicker || 0 });
+          // light offsets are in model space: rotate them with the model's o.rot3d (THREE y-rotation)
+          const cr = Math.cos(o.rot3d || 0), sr = Math.sin(o.rot3d || 0);
+          for (const l of md.lights(o) || []) {
+            const lx = l.x || 0, lz = l.z || 0;
+            out.push({ x: o.x + fp[0] / 2 + lx * cr + lz * sr, y: l.y != null ? l.y : 1.2, z: o.y + fp[1] / 2 - lx * sr + lz * cr, color: l.color || '#ffb060', i: l.intensity || 1, r: l.distance || 4, flicker: l.flicker || 0 });
+          }
           continue;
         }
         const d = G.Objects.get(o.t);
@@ -808,8 +814,15 @@ G.Map3D = (() => {
         const o = node.userData.o, md = node.userData.def;
         if (md && md.update) { try { md.update(node.children[0], o, this.t, dt); } catch (e) { G.warnOnce('mupd ' + o.t, e); } }
         if (node.children[0] && node.children[0].userData.fallback) node.children[0].traverse((n) => { if (n.userData.billboard) n.rotation.y = this.yaw; });
-        if (o.spirit) node.traverse((n) => { if (n.material && !n.userData.outline) { n.material.transparent = true; n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3); } });
+        if (o.spirit) node.traverse((n) => {
+          if (!n.material || n.userData.outline || Array.isArray(n.material)) return;
+          // materials are shared between instances of a model: give spirit objects their own copy before fading
+          if (!n.userData.spiritMat) { n.material = n.material.clone(); n.userData.spiritMat = true; n.material.transparent = true; }
+          n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3);
+        });
       }
+      if (G.Nature3D && G.Nature3D.update) { try { G.Nature3D.update(this, dt); } catch (e) { G.warnOnce('nature3d update', e); } }
+      else if (G.Wind3D && G.Wind3D.update) G.Wind3D.update(dt);
       if (this.waterU) this.waterU.value = this.t;
       if (this.sky) this.sky.material.uniforms.time.value = this.t;
       // psychedelic grade

@@ -11,7 +11,8 @@
 // ({ extend: 'day', spec: {...} }) — 陳伯 wears his hidden 引魂人 gear in battle without a second body.
 //
 // Sources: docs/design/REFERENCES.md (白芷 face & hair, binding), docs/design/v2/*.md + sheets (final designs:
-// chenbo, yexuan, moya), docs/STORY_BIBLE.md, and the existing 2D specs for the party (final v2 picks pending).
+// chenbo, yexuan, moya; the party's client picks per docs/design/PICKS.md: 星河 #07, 白芷 #02, 紅纓 #01, 雲歸 #01),
+// docs/STORY_BIBLE.md. Party looks carry a `sheet` clip that reproduces the design card's pose (bench: anim=sheet).
 'use strict';
 (() => {
   const C = G.Char3D, I = C._internal;
@@ -139,7 +140,8 @@
   function earrings(B, o) {
     const P = B.P, s = P.s, F = B.F;
     for (const sg of o.sides || [1, -1]) {
-      const lobe = C.headPt(B, sg * 1.52, acos(clamp(F.eyeY - 0.36, -1, 1)), 0.004 * s);
+      // the lobe of the (small, tucked) ear: see buildHead (ear centre between eye and nose height)
+      const lobe = C.headPt(B, sg * 1.6, acos(clamp((F.eyeY + F.noseY) * 0.5 + 0.02 - 0.16 * (F.ears || 1), -1, 1)), 0.006 * s);
       const L = (o.len || 0.045) * s;
       const pts = [lobe, vadd(lobe, [0, -L * 0.6, 0]), vadd(lobe, [0, -L, 0])];
       const ids = B.chain('ear' + (sg > 0 ? 'L' : 'R'), 'head', pts, { stiff: 0.6, drag: 0.3, grav: 1.2, r: 0.006, groups: [], kind: 'prop' });
@@ -216,7 +218,7 @@
   look('xinghe', 'v2_07', {
     spec: {
       body: 'adult', skin: XH.skin, eyes: '#9a521c',
-      hair: { style: 'center', part: 0, color: XH.hair, sheen: '#4c4a62', back: 'ponytail', len: 0.36, tie: '#c8432b', tiePh: 0.22, arch: 0.08, sweep: 0.22, stiff: 0.9, locks: 0.95, vol: 1.12, bangLen: 0.06, bangSpread: 1.1 },
+      hair: { style: 'center', part: 0, color: XH.hair, sheen: '#4c4a62', back: 'ponytail', len: 0.36, tie: '#c8432b', tiePh: 0.22, arch: 0.08, sweep: 0.22, stiff: 0.9, locks: 0.95, vol: 1.12, bangLen: 0.1, bangSpread: 1.1, bangW: 1.3, front: 1.12, temple: 0.1 },
       hat: null,
       top: { color: XH.char, len: 0.46, closure: 'side', inner: '#6e2420', trim: XH.ember, sleeve: 'long', cuff: XH.char, slits: 0.07, hemArt: xingheHem },
       scarf: { color: XH.scarf, trim: '#b8481c', tail: 0.7, front: 0.26, w: 0.042, sweep: 1.0 },
@@ -227,7 +229,7 @@
     },
     body3d: { H: 1.76, head: 0.228, headW: 0.164, headD: 0.19, legTop: 0.91, sh: 0.176, chestW: 0.146, waistW: 0.118, hipW: 0.138, armR: 0.044, foreR: 0.037, thighR: 0.07, calfR: 0.048 },
     face3d: { eyeStyle: 'sharp', ew: 0.31, eh: 0.4, tilt: 0.42, iris: '#9a521c', irisLight: '#ffb050', lash: 0.3, browW: 2.5, browArch: 0.06, browAng: -0.3, browCol: '#141116',
-      chin: 0.33, jaw: 0.8, cheek: 0.0, mouth: 'flat', restCurve: -0.08, mouthW: 0.15, blush: 0.05 },
+      chin: 0.52, jaw: 0.86, jawTop: -0.2, cheek: 0.0, mouth: 'flat', restCurve: -0.08, mouthW: 0.15, blush: 0.05 },
     expr: 'determined',
     props3d: { sword: { glow: 'ember', blade: 'steel', guard: 'bronze', pommel: 'bronze', grip: 'dark', tassel: true } },
     style: { rest: { head: [-2, 0, 0], chest: [-2, 0, 0] } },
@@ -257,25 +259,48 @@
   look('baizhi', 'v2_02', {
     spec: {
       body: 'female', skin: BZ.skin, eyes: '#4b2c20',
-      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.5, locks: 1.75, locksSide: 'R', tie: BZ.red, knot: 'halfup', knotPh: 0.36, loop: true,
-        pins: [{ type: 'comb', color: BZ.jade, th: 1.15, ph: 0.45, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
+      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.52, locks: 1.75, locksSide: 'R', tuck: 'L', tie: BZ.red, knot: 'halfup', knotPh: 0.36, loop: true,
+        pins: [{ type: 'comb', color: BZ.jade, th: 1.15, ph: 0.45, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.14, bangLen: -0.02, bangSpread: 1.35, bangW: 1.25, front: 1.1, temple: 0.12 },
       hat: null,
-      top: { color: BZ.shirt, len: 0.72, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.24, slits: 0.06, button: BZ.cream },
+      top: { color: BZ.shirt, len: 0.72, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.3, slits: 0.06, button: BZ.cream },
       apron: { color: BZ.apron, len: 0.62, bib: true, bibDrop: 0.075, bibW: 0.6, chain: '#c8ccd6', stitch: '#d8b860', emb: '#e8788a', embN: 3, band: '#1e1d2b', trim: '#4a5a82' },
       skirt: null, sash: null, vest: null,
       bottom: { type: 'pants', color: '#1e1d26' }, shoes: { type: 'cloth', color: BZ.apron, sole: '#8a8698' },
       bracelet: { color: BZ.red }, hip: ['jade'], held: null, weapon: 'flute', glow: '#bfe8ff', aura: '#7fd3ff',
     },
-    body3d: { neckLen: 0.05, neckR: 0.037, sh: 0.15, headW: 0.168 },
+    // slender, graceful build (REFERENCES.md: slender neck and shoulders): narrow shoulders and waist with a soft hip
+    // curve, long legs, a long slim neck, fine wrists, small hands and feet
+    body3d: { H: 1.64, head: 0.222, headW: 0.164, headD: 0.184, legTop: 0.885, neckLen: 0.06, neckR: 0.031,
+      sh: 0.137, chestW: 0.118, chestF: 0.084, chestB: 0.077, waistW: 0.088, waistF: 0.064, waistB: 0.062, hipW: 0.136, hipF: 0.086, hipB: 0.102,
+      upArm: 0.262, foreArm: 0.222, armR: 0.03, elbowR: 0.024, foreR: 0.025, wristR: 0.0175, hand: 0.138, palm: 0.8,
+      thighR: 0.066, kneeR: 0.038, calfR: 0.041, ankleR: 0.022, foot: 0.198, footW: 0.034, hipSep: 0.076 },
+    // delicate oval face, gently tapered chin; large soft almond eyes, upturned outer corners, long lashes, subtle double
+    // lid; natural softly arched brows; small refined nose; full rose-pink lips in a faint smile; light blush
     face3d: {
-      eyeStyle: 'soft', ew: 0.255, eh: 0.6, tilt: 0.2, irisR: 0.58, iris: '#4b2c20', irisLight: '#8a5838', lash: 0.75, dbl: 0.7, low: 0.5,
-      browW: 1.15, browArch: 0.3, browAng: 0.05, browCol: '#16131a',
-      lips: '#d98892', lipTint: 0.6, mouthW: 0.155, restCurve: 0.32, chin: 0.43, jaw: 0.82, cheek: 0.035, blush: 0.32,
-      marks: [{ x: -0.2, y: -0.27, r: 0.75, color: '#3a2224' }],
+      eyeStyle: 'soft', ew: 0.29, eh: 0.6, tilt: 0.26, irisR: 0.6, iris: '#4b2c20', irisLight: '#9a6a46', lash: 1.0, lidW: 1.1, wing: 1.15, dbl: 0.85, low: 0.6,
+      browW: 1.1, browArch: 0.42, browAng: 0.04, browCol: '#17131a', browY: 0.21,
+      lips: '#cf7684', lipTint: 0.85, lipFull: 1.25, mouthW: 0.185, restCurve: 0.34,
+      chin: 0.64, jaw: 0.9, jawTop: -0.28, cheek: 0.0, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
+      marks: [{ x: -0.21, y: -0.34, r: 0.8, color: '#3a2224' }],
     },
     expr: 'dreamy',
     props3d: { flute: { mat: 'jade', tag: true, len: 1.45, foot: 0.3 } },
-    style: { rest: { head: [-3, 0, -3], neck: [-2, 0, 0], upperArmL: [0, 0, -2], upperArmR: [0, 0, 2] } },
+    // posture & motion: upright, relaxed, elegant economy of movement
+    style: {
+      rest: { chest: [-2, 0, 0], head: [-3, 0, -3], neck: [-3, 0, 0], shoulderL: [0, 0, 1.5], shoulderR: [0, 0, -1.5], upperArmL: [0, 0, -3], upperArmR: [0, 0, 3] },
+      idle: { shift: 1, tilt: 4, hands: 'fold', sway: 0.8, dur: 5.5 },   // weight on one leg, hands lightly folded at the waist
+      fidgets: ['f_look', 'f_shift', 'f_tuck'],
+      // a lighter step: soft heel strike, smaller arm swing with soft elbows and wrists, feet near one line, a little
+      // more hip sway and roll, a lifted chest
+      gait: {
+        walk: { lift: 0.065, bob: 0.014, sway: 0.028, hipYaw: 5, hipRoll: 5.5, chestYaw: -4, arm: 13, armOut: 3, elbow: 16, heel: 11, toeOff: 28, lean: 1.5, twist: 2, track: 0.03, toeOut: 3, wrist: 10, wristOut: 6 },
+        jog: { arm: 22, armOut: 4, sway: 0.018, hipRoll: 4.5, track: 0.018, wrist: 8 },
+        run: { arm: 32, sway: 0.012, track: 0.012, wrist: 6 },
+      },
+      // battle: a poised 丁字步 (front foot on the line, back foot turned out, weight back), flute raised to the lips
+      stance: { flute: { fL: [0.0, 0, 0.1], fR: [-0.045, 0, -0.06], fLy: -2, fRy: 38, hp: [0.008, -0.022, -0.01], h: [0, -14, 2], sp: [0, 2, 0], ch: [-4, 9, -2], nk: [-2, -4, 2], hd: [-5, -8, 8],
+        hR: [-0.16, 1.49, 0.17], hRr: [-4, 90, 0] } },
+    },
     parts: [(B) => earrings(B, { sides: [1], len: 0.05, bead: 'dark', drop: 'jade' })],
     clips: {
       // the sheet pose: the jade flute held level across the body at the waist, both hands near its middle
@@ -288,40 +313,88 @@
     },
   });
 
-  // ================================================================================================ 洛紅纓
-  // v2 option 01 「洛家槍·承」 (faithful-historical canon refit; final pick pending): Qing arrow-sleeve robe in clan
-  // crimson under a black leather 巴圖魯 vest with a one-line button row, brass belt, laced leather bracers, moon-white
-  // fitted trousers, soft black riding boots, crown-high ponytail with a red silk ribbon, red-tassel spear.
-  look('hongying', 'opt01', {
+  // ================================================================================================ 洛紅纓 (FINAL: v2 #01 洛家槍・承, docs/design/v2/hongying.md §01)
+  // The clan look made real, 7.3 heads: crown-high ponytail (as tall as a spear tassel) tied with a big red silk bow and a
+  // red ribbon running down it, side-swept fringe with face-framing locks; sharp amber-brown eyes, fierce brows, a
+  // confident half-smile. Clan-crimson Qing 箭袖袍 to the knee with darker roundel (團紋) figuring, white stand collar,
+  // black hem band, side slits edged black with brass toggles; black leather 巴圖魯坎肩 with the 一字襟 brass-and-red button
+  // row across the chest; wide black belt with a round brass boss; laced black leather bracers over horse-hoof cuffs;
+  // moon-white fitted trousers; black soft riding boots with a crimson top band; a yellow sachet and a little cat charm
+  // at the hip (she secretly loves cute things); the red-tassel 洛家槍 (on the back in the field, in hand in battle).
+  const HY = { crimson: '#b0242c', leather: '#2a1d20', moon: '#e9e0d0', brass: '#c99a48', skin: '#f3d3bd', hair: '#21181f', red: '#c8323a' };
+  function hongyingRobe(g, x, y, w, h) { // 團紋 roundels in a darker crimson over the robe body
+    const R0 = min(w * 0.022, h * 0.03);
+    g.strokeStyle = rgba(shade(HY.crimson, -0.32), 0.75); g.lineWidth = max(1, R0 * 0.18);
+    for (let r = 0; r < 12; r++) for (let c = 0; c < 26; c++) {
+      const cx = x + (c + (r % 2) * 0.5) / 26 * w, cy = y + h * (0.36 + r * 0.05);
+      if (cy > y + h * 0.93) continue;
+      g.beginPath(); g.arc(cx, cy, R0, 0, TAU); g.stroke(); g.beginPath(); g.arc(cx, cy, R0 * 0.45, 0, TAU); g.stroke();
+    }
+  }
+  look('hongying', 'v2_01', {
     spec: {
-      hair: { style: 'side', color: '#1d161c', sheen: '#5a4a62', back: 'ponytail', len: 0.5, tie: '#d8282a', ribbon: true },
-      top: { color: '#b0242c', len: 0.34, closure: 'side', inner: '#f2ece2', trim: '#6a1218', sleeve: 'long', cuff: '#2a1d20', button: '#c99a48' },
-      vest: { color: '#2a1d20', trim: '#c99a48', len: 0.04, open: false },
-      belt: { color: '#2a1d20', buckle: '#c99a48' }, bracers: { color: '#2a1d20' },
-      bottom: { type: 'pants', color: '#e9e0d0' }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a' },
-      back: 'spear', weapon: 'spear',
+      body: 'female', skin: HY.skin, eyes: '#b4581c',
+      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.26, sweep: 0.22, stiff: 1.5, bow: 1.05, ribbon: true, ribbonLen: 0.5, locks: 0.7, vol: 1.1, bangW: 1.6, front: 1.12, temple: 0.1 },
+      hat: null,
+      top: { color: HY.crimson, len: 0.42, closure: 'side', inner: HY.moon, trim: HY.leather, collarColor: HY.moon, sleeve: 'long', cuff: '#1d1416', slits: 0.07, toggles: HY.brass,
+        hemBand: { color: HY.leather, h: 0.035 }, hemArt: hongyingRobe },
+      vest: { color: HY.leather, trim: '#3a2a2c', len: -0.2, open: false, closure: 'yizi', button: HY.brass, button2: HY.red, buttons: 9, rowAt: 0.17 },
+      belt: { color: HY.leather, buckle: HY.brass, w: 0.05, round: 0.022 }, bracers: { color: HY.leather, from: 0.42 },
+      bottom: { type: 'pants', color: HY.moon }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a', from: 0.6, flare: 1.1, band: HY.crimson },
+      sash: null, skirt: null, apron: null,
+      hip: ['charm'], back: 'spear', weapon: 'spear', aura: '#ffd36a',
     },
-    face3d: { eyeStyle: 'sharp', iris: '#5a2a22', irisLight: '#b0603a', browW: 1.45, lash: 0.6, chin: 0.36, jaw: 0.8, restCurve: -0.05 },
+    body3d: { sh: 0.158, chestW: 0.134, waistW: 0.104, armR: 0.037, foreR: 0.031 },
+    face3d: { eyeStyle: 'sharp', ew: 0.275, eh: 0.74, tilt: 0.22, irisR: 0.6, iris: '#a8501c', irisLight: '#e89a50', lash: 0.75, browW: 1.55, browAng: -0.2, browArch: 0.2, browCol: '#1d161c',
+      chin: 0.62, jaw: 0.9, jawTop: -0.28, mouth: 'smirk', restCurve: 0.18, lips: '#d46a72', lipTint: 0.4, blush: 0.25 },
     expr: 'determined',
-    props3d: { spear: { tasselMat: 'tassel' } },
+    props3d: { spear: { tasselMat: 'tassel', grip: 0.46, len: 0.92 } },
     style: { rest: { chest: [-3, 0, 0], head: [-2, 0, 0], upperArmL: [0, 0, 3], upperArmR: [0, 0, -3] } },
+    clips: {
+      // the sheet pose: spear planted upright in the right hand, left fist on the hip, weight on the left leg
+      sheet: () => ({ dur: 3, loop: true, k: [
+        { t: 0, hp: [0.015, -0.005, 0], h: [0, 4, -2], sp: [0, -2, 1], ch: [-3, -4, 1], nk: [0, 2, 0], hd: [-2, 6, 3], fL: [0.02, 0, 0.01], fR: [-0.05, 0, 0.0], fRy: 12,
+          hR: [-0.3, 0.88, 0.07], hRd: [0, 1, 0.02], hRm: 'on', hL: [0.21, 1.0, -0.03], hLr: [0, -90, 90], hLm: 'on' },
+        { t: 1.5, ch: [-2, -4, 1], hp: [0.015, -0.01, 0] },
+        { t: 3, ch: [-3, -4, 1], hp: [0.015, -0.005, 0] },
+      ] }),
+    },
   });
 
-  // ================================================================================================ 雲歸
-  // Lazy-eyed Taoist of 太虛觀: long black hair half-up with a wooden crown pin, faded blue-grey robe, yin-yang sash,
-  // flowing sleeves, gourd and folding fan at the hip; sarcastic half-smile. (v2 pick pending.)
-  look('yungui', 'canon', {
+  // ================================================================================================ 雲歸 (FINAL: v2 #01 太虛青灰, docs/design/v2/yungui.md §01)
+  // The canon answer, 7 heads, long straight lines + drooping wide sleeves, a lazy one-shoulder-low stance: long ink-black
+  // hair half-up under a carved wooden crown with a cinnabar-tipped pin, long front locks over both shoulders; narrow,
+  // half-lidded brown eyes and a lazy half-smile. Washed-out blue-grey 交領右衽 道袍 to the ankle with a deep-indigo
+  // collar band under a wide white 護領 guard collar, flowing 廣袖 with indigo and white cuff bands; wide black belt with
+  // the 太極 plaque and hanging black tails; talisman pouch at the right hip, amber rice-wine gourd on a red cord at the
+  // left; cloud-toe shoes over white socks; the folding fan (in battle; resting on his shoulder in the sheet pose).
+  const YG = { robe: '#7f93a6', indigo: '#3d4a63', white: '#efeadf', hair: '#25242e', skin: '#efd0b4', wood: '#9a6b3c', cinnabar: '#b8352a' };
+  look('yungui', 'v2_01', {
     spec: {
-      hair: { style: 'part', color: '#1f1c26', sheen: '#55557a', back: 'long', len: 0.42, knot: 'halfup', locks: 0.8, tie: '#5a3a24' },
-      hat: { type: 'crown', color: '#8a5a32', acc: '#efe4c8' },
-      top: { color: '#7d8ea0', len: 0.95, closure: 'cross', inner: '#ece8df', trim: '#4a5a6c', sleeve: 'flow', cuff: '#5a6a7c', emb: '#a8b8c4' },
-      sash: { color: '#2b2a32', w: 3.4, emblem: 'taiji', tails: true },
-      shoes: { type: 'cloth', color: '#2a2832' }, hip: ['gourd'], weapon: 'fan',
+      body: 'tall', skin: YG.skin, eyes: '#5a3a26',
+      hair: { style: 'part', color: YG.hair, sheen: '#55557a', back: 'long', len: 0.44, knot: 'halfup', knotPh: 0.2, locks: 1.45, tie: '#5a3a24', vol: 1.05, front: 1.1, temple: 0.18 },
+      hat: { type: 'crown', color: YG.wood, acc: YG.cinnabar },
+      top: { color: YG.robe, len: 0.98, closure: 'cross', inner: YG.white, trim: YG.indigo, lapel: { w: 0.05, guard: YG.white, guardLen: 0.5 }, sleeve: 'flow', cuff: YG.indigo, cuff2: YG.white, cuffW: 0.12, emb: null },
+      sash: { color: '#22212a', w: 3.6, emblem: 'taiji', tails: true, tailLen: 0.08 },
+      belt: null, apron: null, vest: null,
+      bottom: { type: 'pants', color: YG.white }, shoes: { type: 'cloth', color: '#24222c', sole: YG.white },
+      hip: ['gourd', 'talisman'], held: null, weapon: 'fan', aura: '#9be36a',
     },
-    face3d: { eyeStyle: 'narrow', iris: '#3c3846', droop: 0.42, browAng: -0.05, browArch: 0.15, chin: 0.4, jaw: 0.86, mouth: 'smirk', restCurve: 0.25 },
+    body3d: { head: 0.252, headW: 0.172, headD: 0.19, sh: 0.176, chestW: 0.146, waistW: 0.124 },
+    face3d: { eyeStyle: 'narrow', ew: 0.28, eh: 0.55, iris: '#5a3a26', irisLight: '#9a6a46', droop: 0.38, browAng: -0.05, browArch: 0.2, browW: 1.3, browCol: '#201e26',
+      chin: 0.58, jaw: 0.88, jawTop: -0.25, mouth: 'smirk', restCurve: 0.25, blush: 0.12 },
     expr: 'smug',
-    props3d: { fan: { mat: 'dark', tassel: true } },
+    props3d: { fan: { mat: 'wood', rib: 'dark', len: 1.35, w: 1.9, tassel: false }, hip_gourd: { mat: 'gourd', cord: true } },
     style: { rest: { spine: [-3, 0, 2], chest: [-2, 3, 2], head: [3, -4, 6], upperArmL: [2, 0, 2] } },
+    clips: {
+      // the sheet pose: fan resting back on the right shoulder, the left arm hanging loose in its sleeve, one shoulder low
+      sheet: () => ({ dur: 4, loop: true, k: [
+        { t: 0, hp: [-0.012, -0.004, 0], h: [0, -3, 2], sp: [0, -2, 2], ch: [-1, -3, 3], nk: [0, 2, -2], hd: [2, 4, -5], fL: [0.03, 0, 0.0], fR: [-0.02, 0, 0.02], fLy: -4, fRy: 8,
+          hR: [-0.27, 1.3, 0.05], hRd: [0.12, 1, -0.5], hRm: 'on' },
+        { t: 2, ch: [0, -3, 3], hp: [-0.012, -0.01, 0], hR: [-0.27, 1.295, 0.05] },
+        { t: 4, ch: [-1, -3, 3], hp: [-0.012, -0.004, 0], hR: [-0.27, 1.3, 0.05] },
+      ] }),
+    },
   });
 
   // ================================================================================================ 陳伯 · 陳渡  (FINAL, docs/design/v2/chenbo.md)
@@ -393,7 +466,7 @@
       shoes: { type: 'boots', color: YX.black, sole: '#f0ece2' }, held: 'lstaff', weapon: 'lstaff', hip: ['jar'],
     },
     body3d: { H: 1.84, head: 0.232, headW: 0.164, headD: 0.19, legTop: 0.96, chestW: 0.142, waistW: 0.118, hipW: 0.138, armR: 0.042, foreR: 0.035, neckLen: 0.058 },
-    face3d: { eyeStyle: 'narrow', iris: '#c8a040', irisLight: '#f2d888', ew: 0.21, droop: 0.5, tilt: -0.08, bags: 1, browAng: 0.38, browArch: 0.1, browW: 1.15, browCol: '#1a181e', chin: 0.3, jaw: 0.74, cheek: -0.035, restCurve: 0.06, blush: 0, eyeShadow: '#a890b0' },
+    face3d: { eyeStyle: 'narrow', iris: '#c8a040', irisLight: '#f2d888', ew: 0.21, droop: 0.5, tilt: -0.08, bags: 1, browAng: 0.38, browArch: 0.1, browW: 1.15, browCol: '#1a181e', chin: 0.46, jaw: 0.82, jawTop: -0.18, cheek: -0.035, restCurve: 0.06, blush: 0, eyeShadow: '#a890b0' },
     expr: 'neutral',
     props3d: { lstaff: { len: 1.07, shaft: 'lacq', ring: 'gold', lantern: { mat: 'blue', cage: 'gold', r: 0.07, h: 0.18, light: YX.blue, i: 1.1, range: 3.6, cord: 0.05, tassel: true } } },
     style: { rest: { spine: [-1, 0, 0], chest: [-2, 0, 0], head: [2, 0, 0], upperArmL: [-6, -8, -3], upperArmR: [-6, 8, 3], foreArmL: [-28, 18, 0] } },
@@ -427,7 +500,7 @@
       shoes: { type: 'cloth', color: '#1a1820', sole: '#efe9dc' }, held: 'crook', weapon: 'crook', hip: ['tally'],
     },
     body3d: { sh: 0.17, chestW: 0.14, waistW: 0.118, thighR: 0.066, calfR: 0.044, headW: 0.172 },
-    face3d: { eyeStyle: 'sharp', iris: '#3a2230', browAng: -0.1, browArch: 0.55, browW: 1.3, chin: 0.36, jaw: 0.84, mouth: 'smirk', restCurve: 0.42 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a2230', browAng: -0.1, browArch: 0.55, browW: 1.3, chin: 0.52, jaw: 0.86, jawTop: -0.2, mouth: 'smirk', restCurve: 0.42 },
     expr: 'smug',
     style: { rest: { chest: [-5, 0, 0], head: [-5, 0, 2], hips: [-2, 0, 0] } },
     parts: [
@@ -454,14 +527,14 @@
   // lacquered demon mask and a ragged black cape. Sharp, guarded face.
   look('qingfeng', 'canon', {
     spec: { hair: { style: 'side', color: '#1b1820', sheen: '#4a4458', back: 'ponytail', len: 0.34, tie: '#7a1a20' }, top: { closure: 'side', button: '#b89a4a' }, bracers: { color: '#1e1a1e' }, hip: ['sword'] },
-    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.42, jaw: 0.86, restCurve: -0.1 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.56, jaw: 0.88, jawTop: -0.22, restCurve: -0.1 },
     props3d: { sword: { blade: 'steel', guard: 'gold', tassel: true } },
     expr: 'determined',
     style: { rest: { chest: [-2, 0, 0] } },
   });
   look('qingfeng_mask', 'canon', {
     spec: { hair: { style: 'side', color: '#1b1820', back: 'ponytail', len: 0.34, tie: '#4a1018' }, top: { closure: 'side' }, cape: { color: '#17151c', len: 0.75, ragged: true, collarColor: '#24212a' }, hip: ['sword'] },
-    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.42 },
+    face3d: { eyeStyle: 'sharp', iris: '#3a1e1e', browW: 1.5, chin: 0.56, jaw: 0.88, jawTop: -0.22 },
     props3d: { sword: { blade: 'steel', guard: 'dark', tassel: false } },
   });
 

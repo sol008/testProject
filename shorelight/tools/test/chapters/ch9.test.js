@@ -123,6 +123,7 @@ async function expectMap(id, label) { const m = await mapId(); check(label || `o
 async function newPage(browser, url, initialChoices, mode3d) {
   page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   installErrorHooks(page);
+  await page.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   await page.addInitScript((use3d) => {
     window.__c9err = [];
     window.addEventListener('error', (e) => { window.__c9err.push({ msg: String(e.message || ''), file: String(e.filename || '') }); }, true);

@@ -50,6 +50,7 @@ const assert = (c, msg) => { if (!c) throw new Fail(msg); };
 
 async function newPage(browser) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  await ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
   // the WIP WebGL renderer is very slow under headless SwiftShader; the chapter logic is renderer-agnostic, so
   // run the 2D path unless --3d is given
   if (!argv.includes('--3d')) await ctx.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false })); } catch (e) { /* ignore */ } });

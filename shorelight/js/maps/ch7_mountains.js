@@ -208,7 +208,7 @@
   }
   enemy('c7_bear_boss', {
     name: '黑熊精（潮病）', art: 'bear_spirit', lv: 24, elem: 'earth', boss: true, immune: BOSS_IMM, endAt: 0.3,
-    m: { hp: 9, atk: 1.75, mag: 1, def: 1.2, spd: 1.0, exp: 5, gold: 4 },
+    m: { hp: 16.2, atk: 3.6, mag: 2.05, def: 1.2, spd: 2.05, exp: 5, gold: 4 }, // sim_story: was hp 9 atk 1.75 mag 1 spd 1
     skills: [['e_bear_swipe', 3], ['e_bear_roar', 1], ['e_claw', 2]], drops: [['c7_mat_bear', 1]],
     phases: [{ at: 0.5, text: '黑熊精胸前的黑水沸騰起來——黑潮狂怒！', buffs: [{ stat: 'atk', amt: 0.3, turns: 8 }] }],
     desc: '胸前的白色 V 字斑紋被黑水染污，眼角淌著黑色的水。牠不是獵物——牠是病了。',
@@ -222,7 +222,7 @@
   });
   enemy('c7_heart_yg', {
     name: '心魔・雲歸', sprite: 'yungui', lv: 25, elem: 'wood', weak: ['metal'], boss: true, immune: BOSS_IMM,
-    m: { hp: 5.2, atk: 0.8, mag: 1.9, def: 1.0, spd: 1.15, exp: 4, gold: 0 },
+    m: { hp: 8.1, atk: 1.45, mag: 3.4, def: 1.0, spd: 2.05, exp: 4, gold: 0 }, // sim_story: was hp 5.2 atk 0.8 mag 1.9 spd 1.15
     skills: [['c7_e_yg_wulei', 2], ['c7_e_yg_ding', 1], ['c7_e_yg_fu_wood', 2]], drops: [['c7_huiqi', 1]],
     phases: [{ at: 0.5, lines: [['心魔・雲歸', '你連我都打不贏，還想找他？']] }],
     desc: '不喝酒、不偷懶、不玩物喪志。他是雲歸以為師父想要的那個弟子。',
@@ -239,7 +239,7 @@
   });
   enemy('c7_lightless', {
     name: '無光之影', sprite: 'xinghe', scale: 1.3, lv: 26, elem: 'water', weak: ['fire'], resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 1.6, mag: 1.9, def: 1.1, spd: 1.2, exp: 6, gold: 0 },
+    m: { hp: 13.3, atk: 2.75, mag: 3.25, def: 1.1, spd: 2.05, exp: 6, gold: 0 }, // sim_story: was hp 9 atk 1.6 mag 1.9 spd 1.2
     skills: [['c7_e_xideng', 3], ['c7_e_heichao', 2], ['c7_e_jieguang', 1], ['attack', 1]], drops: [['c7_ac_xinghuo', 1]],
     phases: [{
       at: 0.5, lines: [['無光之影', '你明明……只是一個燈籠舖的學徒……'], ['xinghe:smile', '對啊。所以我最會點燈了！']],
@@ -249,20 +249,20 @@
   });
   enemy('c7_jiao_boss', {
     name: '蛟', art: 'jiao', lv: 26, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.5, atk: 1.8, mag: 1.7, def: 1.15, spd: 1.0, exp: 5, gold: 5 },
+    m: { hp: 8.5, atk: 3.6, mag: 3.4, def: 1.15, spd: 2.0, exp: 5, gold: 5 }, // sim_story: was atk 1.8 mag 1.7 spd 1
     skills: [['e_jiao_bite', 3], ['c7_e_jiao_tail', 2], ['attack', 1]], drops: [['c7_mat_jiao', 1]],
     desc: '長著角的巨大水蛇，鱗片上纏著黑色的水草，眼中淌著黑水。湖底的老東西也被潮病染了。',
   });
   enemy('c7_qingxu_boss', {
     name: '清虛真人（被附身）', sprite: 'qingxu', lv: 27, elem: 'wood', boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 1.7, mag: 2.0, def: 1.2, spd: 1.25, exp: 0, gold: 0 },
+    m: { hp: 9, atk: 2.65, mag: 3.1, def: 1.2, spd: 1.95, exp: 0, gold: 0 }, // sim_story: was atk 1.7 mag 2.0 spd 1.25
     skills: [['c7_e_qx_sword', 2], ['c7_e_qx_ding', 1]],
     phases: [{ at: 0.6, lines: [['qingxu:hurt', '雲歸……燈在我背上……打它……']], summon: ['c7_dark_seal'] }],
     desc: '雲歸的師父。背上嵌著一盞藍黑色的長明燈，黑色的絲線扎進他的四肢。',
   });
   enemy('c7_dark_seal', {
     name: '冥燈印', art: 'ghost_lantern', variant: 2, lv: 27, elem: 'water', weak: ['fire'], resist: ['water'], immune: BOSS_IMM,
-    m: { hp: 5.5, atk: 0.6, mag: 1.6, def: 1.1, spd: 1.05, exp: 12, gold: 10 },
+    m: { hp: 5.5, atk: 0.95, mag: 2.5, def: 1.1, spd: 1.65, exp: 12, gold: 10 }, // sim_story: was atk 0.6 mag 1.6 spd 1.05
     skills: [['c7_e_seal_fire', 1]], drops: [['c7_key_taixu_book', 1]],
     phases: [
       { at: 0.5, lines: [['qingxu:serious', '五雷——轟頂！']] },

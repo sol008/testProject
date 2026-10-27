@@ -161,7 +161,7 @@
   });
   defE('c9_greed_big', {
     name: '大肚貪鬼', art: 'greed_ghost', variant: 1, scale: 1.6, lv: 31, elem: 'earth', weak: ['wood'], resist: ['earth', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 7, atk: 1.9, mag: 1.7, def: 1.15, spd: 1.0, luk: 2, exp: 5, gold: 8 },
+    m: { hp: 10.7, atk: 3.35, mag: 3.0, def: 1.15, spd: 1.75, luk: 2, exp: 5, gold: 8 }, // sim_story: was hp 7 atk 1.9 mag 1.7 spd 1
     skills: [['c9_es_devour', 2], ['c9_es_belly', 3], ['e_greed_grab', 3], ['c9_es_gorge', 1, 'hp<60']],
     drops: [['c9_mat_banpingshi', 1]],
     desc: '白拿了幾百年的貪鬼，肚子裡隱約有半座山的輪廓。從來沒有吃飽過。',
@@ -173,7 +173,7 @@
   });
   defE('c9_plague_chief', {
     name: '瘟鬼頭', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 31, elem: 'wood', weak: ['metal', 'fire'], resist: ['water'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 8, atk: 1.8, mag: 1.75, def: 1.1, spd: 1.1, exp: 7, gold: 6 },
+    m: { hp: 11.7, atk: 3.05, mag: 2.95, def: 1.1, spd: 1.85, exp: 7, gold: 6 }, // sim_story: was hp 8 atk 1.8 mag 1.75 spd 1.1
     skills: [['c9_es_plague_breath', 3], ['c9_es_fever_touch', 3], ['c9_es_summon_plague', 2, 'ally_dead'], ['c9_es_cough', 1]],
     drops: [['c9_baicaogao', 1]],
     desc: '數十隻瘟鬼疊成的駝背身影。咳嗽聲像一整個村子在咳。',
@@ -182,14 +182,14 @@
   for (const [pid, pname] of PUFFS) {
     defE(pid, {
       name: pname, art: 'wind_sprite', variant: 2, scale: 1.3, lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood'], immune: BOSS_IMM,
-      m: { hp: 1.0, atk: 1.0, mag: 1.15, spd: 1.35, exp: 0.6, gold: 0.4 },
+      m: { hp: 1.15, atk: 1.27, mag: 1.43, spd: 1.7, exp: 0.6, gold: 0.4 }, // sim_story: was hp 1 atk 1 mag 1.15 spd 1.35
       skills: [['c9_es_gust', 2], ['c9_es_namecall', 2]], drops: [],
       desc: '落山風靈散開成的風團，胸口纏著一個發光的名字。',
     });
   }
   defE('c9_fallwind', {
     name: '落山風靈', art: 'fallwind', lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 7.5, atk: 2.0, mag: 2.0, def: 1.1, spd: 1.25, exp: 7, gold: 7 },
+    m: { hp: 8.6, atk: 2.55, mag: 2.55, def: 1.1, spd: 1.6, exp: 7, gold: 7 }, // sim_story: was hp 7.5 atk/mag 2.0 spd 1.25
     skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]],
     phases: [{ at: 0.5, summon: ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'], skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]] }],
     drops: [['c9_mat_fengshi', 1], ['c9_hd_fenggu', 1]],
@@ -197,7 +197,7 @@
   });
   defE('c9_moray_king', {
     name: '潮病鰻王', art: 'moray', variant: 2, scale: 1.9, lv: 33, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BOSS_IMM.concat(['poison']),
-    m: { hp: 7.5, atk: 1.6, mag: 1.6, def: 1.1, spd: 1.1, exp: 8, gold: 8 },
+    m: { hp: 10.5, atk: 2.6, mag: 2.6, def: 1.1, spd: 1.75, exp: 8, gold: 8 }, // sim_story: was hp 7.5 atk/mag 1.6 spd 1.1
     skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1]],
     phases: [{ at: 0.4, phase: 2, text: '黑色的藤壺一片片剝落，鰻王的身體露出銀藍色——牠的動作反而更快了！',
       skills: [['c9_es_bite_big', 3], ['c9_es_tailsweep2', 2], ['c9_es_snuff', 2], ['c9_es_tide_rise', 1]] }],
@@ -586,6 +586,9 @@
             }
             await sc.wait(0.5);
           } else {
+            // the three 風團 build the wind together like the one 風靈 did (one step per three of their actions):
+            // counting every 風團 action blew the party away again before anyone could act to guard (a stun-lock)
+            if (puffIds.includes(u.id) && (W.pa = (W.pa || 0) + 1) % 3) return;
             W.v = Math.min(W.cap, W.v + 1);
             if (W.v === 2 && W.cap >= 3) sc.say('雲歸：「它要吹了！伏低！」', 1.6);
           }

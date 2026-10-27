@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Mon3D strip</title>
+<style>html,body{margin:0;background:#15171c;color:#ddd;font:12px system-ui,sans-serif;overflow:hidden}
+.lb{position:absolute;padding:1px 5px;background:rgba(0,0,0,.55);border-radius:3px;white-space:nowrap}</style></head>
+<body><canvas id="c"></canvas>
+<!--
+  Monster team A test page: grid of render cells. Rows = ids × views, columns = time samples of one clip.
+  ?ids=a,b  anim=idle|move|attack|cast|hurt|die|special|enter  ts=0.1,0.3,…  (or n=6&dur=1.2)
+  views=0,45,90,180 (deg)  variant=0  phase=1  cw=260 ch=300  night=1  pitch=14  dist=1  fallback=1 (add 2D column)
+  window.__stats = per-id { tris, calls } (each id rendered alone), window.__ready
+-->
+<script>window.G_VIEWER = true;</script>
+<script src="../../../js/core/util.js"></script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.error(k, e && e.stack || e));</script>
+<script src="../../../js/core/font.js"></script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/sprites.js"></script>
+<script src="../../../js/gfx/monsters.js"></script>
+<script src="../../../js/gfx/monsters2.js"></script>
+<script src="../../../js/gfx/monsters3.js"></script>
+<script src="../../../js/vendor/three.bundle.js"></script>
+<script src="../../../js/r3d/core.js"></script>
+<script src="../../../js/r3d/materials.js"></script>
+<script src="../../../js/r3d/models.js"></script>
+<script src="../../../js/r3d/monsters.js"></script>
+<script src="../../../js/r3d/monsters_boss.js"></script>
+<script>
+setTimeout(function () {
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const ids = (q.get('ids') || 'jiangshi').split(',').filter(Boolean);
+  const anim = q.get('anim') || 'idle';
+  let ts = q.get('ts') ? q.get('ts').split(',').map(parseFloat) : null;
+  if (!ts) { const n = num('n', 1), dur = num('dur', 1); ts = []; for (let i = 0; i < n; i++) ts.push(n === 1 ? dur : (dur * i) / (n - 1)); }
+  const views = (q.get('views') || '20').split(',').map((v) => parseFloat(v) * Math.PI / 180);
+  const fb = q.get('fallback') === '1';
+  const CW = num('cw', 340), CH = num('ch', 400);
+  const cols = ts.length + (fb ? 1 : 0), rows = ids.length * views.length;
+  const W = CW * cols, H = CH * rows;
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.autoClear = false;
+  G.R3.renderer = renderer;
+  const night = q.get('night') === '1';
+  const mkScene = () => {
+    const scene = new THREE.Scene();
+    scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.45 : 1.15));
+    const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.5 : 2.8);
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+    sun.position.set(-12, 20, 9); scene.add(sun, sun.target);
+    const sc = sun.shadow.camera; sc.left = -6; sc.right = 6; sc.top = 6; sc.bottom = -6; sc.far = 80; sc.updateProjectionMatrix();
+    const gc = document.createElement('canvas'); gc.width = gc.height = 128; const g = gc.getContext('2d');
+    g.fillStyle = night ? '#2a3040' : '#6e7a5e'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.strokeRect(0, 0, 128, 128);
+    const tx = new THREE.CanvasTexture(gc); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(30, 30); tx.colorSpace = THREE.SRGBColorSpace;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ map: tx, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+    return scene;
+  };
+  const bg = new THREE.Color(night ? 0x0b1020 : 0x8fb4d0);
+  const stats = {};
+  const labels = [];
+  let r = 0;
+  for (const id of ids) for (const vy of views) {
+    for (let c = 0; c < cols; c++) {
+      const scene = mkScene();
+      let inst = null;
+      const isFb = fb && c === ts.length;
+      try {
+        if (isFb) inst = G.Models.monsterBillboard(id, { height: G.Monsters.get(id).h / 64 * 0.9, variant: num('variant', 0) });
+        else inst = G.Mon3D.create(id, { context: 'battle', variant: num('variant', 0), phase: num('phase', 1) });
+      } catch (e) { console.error('create', id, e.stack || e); }
+      if (!inst) { console.error('no instance', id); continue; }
+      scene.add(inst.root);
+      inst.setFacing(vy);
+      if (!isFb) {
+        if (anim === 'move') inst.setMove(num('speed', 4));
+        else if (anim !== 'idle') inst.play(anim, { loop: q.get('loop') === '1' });
+      }
+      const T = isFb ? 0.5 : ts[c];
+      const steps = Math.round(T * 60);
+      for (let s = 0; s < steps; s++) inst.update(1 / 60, 0, null);
+      if (isFb) inst.update(0, 0);
+      const hgt = inst.height || 2;
+      const cam = new THREE.PerspectiveCamera(30, CW / CH, 0.05, 200);
+      const pitch = num('pitch', 14) * Math.PI / 180;
+      const dist = (hgt * 0.5 + 0.6) / Math.tan(15 * Math.PI / 180) * 1.25 * num('dist', 1);
+      const look = new THREE.Vector3(0, hgt * 0.5, 0);
+      cam.position.set(0, look.y + Math.sin(pitch) * dist, Math.cos(pitch) * dist); cam.lookAt(look);
+      if (inst.lights) for (const L of inst.lights()) { const pl = new THREE.PointLight(L.color, L.i * 1.2, L.r * 2, 2); pl.position.set(L.x, L.y, L.z); scene.add(pl); }
+      const x = c * CW, y = H - (r + 1) * CH;
+      renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.setScissorTest(true);
+      renderer.setClearColor(bg); renderer.clear();
+      renderer.info.reset(); renderer.info.autoReset = false;
+      renderer.render(scene, cam);
+      if (!isFb && !stats[id]) {
+        // count with only the creature (ground + shadow pass excluded): main-pass calls/tris
+        let dc = 0; inst.root.traverse((o) => { if ((o.isMesh || o.isPoints) && o.visible) dc++; });
+        stats[id] = { calls: dc, tris: renderer.info.render.triangles - 2, h: +hgt.toFixed(2), parts: {} };
+        inst.root.traverse((o) => { if (o.geometry && o.geometry.index) stats[id].parts[o.name || o.type] = o.geometry.index.count / 3; });
+        let nan = false; inst.root.traverse((o) => { if (o.geometry) { o.geometry.computeBoundingSphere(); if (isNaN(o.geometry.boundingSphere.radius)) nan = true; } });
+        if (nan) console.error('NaN bounding sphere', id);
+      }
+      labels.push([x + 4, (r) * CH + 4, (c === 0 ? id + ' ' + Math.round(vy * 180 / Math.PI) + '° ' : '') + (isFb ? '2D' : anim + ' t=' + T.toFixed(2))]);
+    }
+    r++;
+  }
+  for (const [x, y, t] of labels) { const d = document.createElement('div'); d.className = 'lb'; d.style.left = x + 'px'; d.style.top = y + 'px'; d.textContent = t; document.body.appendChild(d); }
+  window.__stats = stats; window.__size = [W, H];
+  window.__ready = true;
+}, 0);
+</script></body></html>

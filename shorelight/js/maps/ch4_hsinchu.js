@@ -150,7 +150,7 @@
   });
   edef('e_rat_king', {
     name: '柿鼠大王', art: 'rat_demon', variant: 2, lv: 15, elem: 'water', weak: ['earth'], boss: true, immune: BOSS_IMM, scale: 1.6,
-    m: { hp: 10, atk: 2.3, mag: 1.2, def: 1.2, spd: 1.0, exp: 5, gold: 6 },
+    m: { hp: 16, atk: 4.2, mag: 2.2, def: 1.2, spd: 1.85, exp: 5, gold: 6 }, // sim_story: was hp 10 atk 2.3 mag 1.2 spd 1
     skills: [['e_ratking_belly', 3], ['e_rat_swarm', 2], ['e_ratking_call', 1], ['e_ratking_gorge', 2, 'hp<50']],
     drops: [['mat_ratking_tooth', 1], ['shibing', 1]],
     desc: '坐在柿餅王座上的大老鼠，圓得像一顆柿子。牠堅持那三百個柿餅是「冬糧」。',
