@@ -89,6 +89,8 @@ vision realms, and helping each other across.
   eyes and a deadpan "judging you" stare, and he decides 星河 is *his* human (to 星河's loud protests). He is silent,
   heavy and unimpressed by ghosts. In battle he is an earth-element "body-block" assist (guards the weakest ally). On the
   field he sits on pressure plates. 麻糬 and 芋圓 are a bonded pair; together they are the party's two pets.
+  Look (client pick, v2 #07 石獅繡球): wears a red silk bow at the neck and carries a little red-and-gold embroidered ball
+  (繡球) everywhere, in homage to the temple-gate stone lions he loves to imitate.
 
 ### 洛紅纓 (Luo Hongying) — 19
 - Heir of **鹿港洛家**, a merchant & martial clan famed for 洛家槍. The clan was massacred three
