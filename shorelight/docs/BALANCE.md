@@ -499,7 +499,16 @@ browser bot of the chapter tests) is 93.8 % — the hints matter mostly for 冥�
 js/data troops (`node tools/sim_story.js --areas --ai auto --n 50`: sim_battle.js's area list through the real engine,
 area level, best gear of chapter ≤ the area's, the standard kit): the 173 field troops are won 100 % with **0 items**
 used (before: 100 %, 0); the 26 area bosses average **86 %** (before 51 %, bot 85 %; `boss_wuxiang` at L44 1 % → 90 %).
-Browser: `index.html?debug&battle=boss_wuxiang&party=xinghe,hongying,yungui,baizhi&lv=46&auto=1` (normal) — BROWSER
+Browser: `index.html?debug&battle=boss_wuxiang&party=xinghe,hongying,yungui,baizhi&lv=46&auto=1` (normal, 2D, in-game
+AI only — no test bot): with the debug start's own starting gear the boss is unwinnable for any policy (bot and
+in-game AI both 0 % in the sim at L44–50), so the run equipped the `--areas` gear for 一息界 (best item of chapter ≤ 11
+per slot) before the battle and kept the debug bag. **Won** in 22 rounds, no console errors; the AI used 迷魂扇 ×5,
+天罡破法 ×4, 蓄勢 ×2, 月霧護身曲 ×2, every member's ultimate, 回魂 ×4, and 4 items (米酒 for 白芷's MP, 還魂香 ×2 —
+the cheaper revive, not 還魂丹 —, 九轉回生丹 ×1). Sim of the same setup: 98 % (bot 96 %). Before: 0 %.
+Tests: `unit.js` 64 passed (2 new `autobattle:` tests: item rules, a warning naming one member), `validate.js` 0 errors
+(15 warnings, unchanged); chapter segments one at a time: ch2 `--only=critical` **PASS** (no bot: the in-game AI
+fights 紅纓's duel and 虎姑婆), ch1 `critical` **PASS** (a first run failed at the attic keyboard walk, before any
+battle, while another browser was busy; the rerun and `--from=raid` passed), ch5 `--only main --from boss` **PASS** (怨宴).
 
 ## Needs a human playtest
 
