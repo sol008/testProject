@@ -3785,7 +3785,7 @@
     await camTo(37.5, 3.5, 0.8);
     await S.say('', '礁台。白色的水燈頭卡在礁岩之間。紙厝的屋簷樣式很古老，看不出是哪一姓的。燈裡的火是冷冷的白光。');
     await lerpTo(FXB, { girl: 1 }, 0.8);
-    await S.say('', '燈上，一個少女側躺著。銀白色的長髮散在水面上，用一條紅繩鬆鬆地綁著。');
+    await S.say('', '燈上，一個少女側躺著。烏黑的長髮散在水面上，髮梢泛著一點銀白的微光，用一條紅繩鬆鬆地綁著。');
     await S.say('xinghe:surprise', '……！');
     await S.say('xinghe:surprise', '是她……夢裡的……');
     if (!auto()) { Snd.lullaby(80, 1); await wait(S, 3.2); Snd.stopLullaby(1.5); }
@@ -3893,7 +3893,7 @@
     S.emote('player', '…', 2);
     await S.say('', '子夜。燈籠舖裡很暗，只有一盞小油燈。星河趴在床邊睡著了。');
     await wait(S, 0.8);
-    await S.say('', '床上的少女睜開眼睛。金色的瞳孔，在暗中淡淡發亮。');
+    await S.say('', '床上的少女睜開眼睛。深褐色的眼睛——有那麼一瞬間，瞳底像映著一點金色的燈火。');
     FXS.bzLying = false;
     const bz = S.spawn({ id: 'bz_n', sprite: 'baizhi', portrait: 'baizhi', x: 14, y: 5, dir: 'down', speed: 1.8 });
     bz.light = { r: 90, color: '#dff6ff' };
