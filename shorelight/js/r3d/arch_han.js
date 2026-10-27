@@ -338,9 +338,9 @@
       for (let k = 0; k < 6; k++) { x += (R() - 0.5) * 20; y += 4 + R() * 10; g.lineTo(x, y); }
       g.stroke();
     }
-    for (let i = 0; i < 5; i++) { // spalled patches showing brick
-      const x = R() * S, y = R() * S, w = 10 + R() * 20, h = 6 + R() * 10;
-      wrap(g, S, () => { g.fillStyle = 'rgba(150,90,60,0.55)'; ell(g, x, y, w, h); g.fill(); g.strokeStyle = 'rgba(80,60,40,0.4)'; g.stroke(); });
+    for (let i = 0; i < 2; i++) { // a couple of small spalled patches showing brick
+      const x = R() * S, y = R() * S, w = 6 + R() * 9, h = 4 + R() * 5;
+      wrap(g, S, () => { g.fillStyle = 'rgba(150,96,70,0.3)'; ell(g, x, y, w, h, R()); g.fill(); g.strokeStyle = 'rgba(80,60,40,0.25)'; g.stroke(); });
     }
   });
   function paintPlanks(base, vertical, boards, seed) {
@@ -1086,7 +1086,7 @@
     const tile = R.tile || 'tileRed', m = R.mat || 'matte', tint = R.tint || '#ffffff', so = R.soffitTint || '#9a8a7a';
     const vTop = (v, s) => v * hz * s; // distance along the plan for UVs
     // --- front / back panels (tiles run in x)
-    for (const sg of [1, -1]) {
+    for (const sg of R.sides || [1, -1]) {
       const us = samp(-hx, hx);
       const Pt = (a, v, under) => { const xe = xEnd(v), x = clamp(a, -xe, xe); const p = surf(x, sg * v * hz, v, under); if (!under) p[1] += cf(x) * (corr === 'tube' ? sstep(0, 0.06, v) : 1); return p; };
       const slopeLen = (v) => v * hypot(hz, yr - ye);
@@ -1137,7 +1137,7 @@
       }
     } else if (R.verge !== false) {
       // verge / barge boards on the gable ends (懸山) — the house code adds gable walls (硬山) as needed
-      for (const sx of [1, -1]) for (const sg of [1, -1]) {
+      for (const sx of [1, -1]) for (const sg of R.sides || [1, -1]) {
         const path = []; for (let i = 0; i <= 10; i++) { const v = i / 10; const p = surf(sx * hx, sg * v * hz, v); path.push([p[0] + sx * 0.03, p[1] + 0.03, p[2]]); }
         B.sweep(path, [[-0.04, -thick - 0.06], [0.04, -thick - 0.06], [0.04, 0.05], [-0.04, 0.05]], { hard: true, mat: 'matte', reg: R.vergeReg || 'grain', tint: R.vergeTint || '#3a2a22', ao: false, caps: true });
       }
@@ -1368,6 +1368,61 @@
     B.box(x, 0, z, w, h, d, { reg: o.side || 'ashlar', tint: o.tint || '#ffffff', skip: 't' + 'b' });
     B.box(x, h - 0.001, z, w, 0.001, d, { reg: o.top || 'pave', tint: o.topTint || '#ffffff', skip: 'nsewb', ao: false });
     if (o.curb !== false) for (const s of [1, -1]) B.box(x, h - 0.06, z + s * (d / 2 - 0.08), w + 0.04, 0.08, 0.18, { reg: 'granite', tint: '#e0dace', skip: 'b' });
+  }
+
+  // arched head of an opening (local wall frame, outer face z = 0, depth t toward −z): fills the region between
+  // the arch curve and yTop. The jambs below ys come from the wall hole. o: { rise (default w/2 → semicircle),
+  // reg, tint, voussoir (stone ring region), deep (render the intrados — vault — through the full depth) }
+  function archAt(B, cx, w, ys, yt, t, o = {}) {
+    const r = w / 2, rise = o.rise != null ? o.rise : r, n = o.seg || 12;
+    const pts = []; for (let i = 0; i <= n; i++) { const a = PI - (i / n) * PI; pts.push([cx + cos(a) * r, ys + sin(a) * rise]); }
+    const fo = Object.assign({ reg: 'plaster' }, o);
+    for (let i = 0; i < n; i++) {
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+      B.quad([x0, y0, 0], [x1, y1, 0], [x1, yt, 0], [x0, yt, 0], fo);                 // front spandrel strip
+      B.quad([x1, y1, -t], [x0, y0, -t], [x0, yt, -t], [x1, yt, -t], fo);             // back
+      B.quad([x0, y0, -t], [x1, y1, -t], [x1, y1, 0], [x0, y0, 0], Object.assign({}, fo, { reg: o.vaultReg || fo.reg, tint: o.vaultTint || fo.tint })); // intrados
+    }
+    if (o.voussoir) { // stone ring proud of the face
+      const ring = []; for (let i = 0; i <= n; i++) { const a = PI - (i / n) * PI; ring.push([cx + cos(a) * (r + 0.07), ys + sin(a) * (rise + 0.07), 0.025]); }
+      B.sweep(ring, [[-0.08, -0.03], [0.08, -0.03], [0.08, 0.03], [-0.08, 0.03]], { hard: true, reg: o.voussoir, tint: o.voussoirTint || '#ffffff', up: [0, 0, 1], caps: true });
+      if (o.key) B.box(cx, ys + rise - 0.02, 0.04, 0.18, 0.22, 0.08, { reg: o.voussoir, tint: o.voussoirTint || '#ffffff' });
+    }
+  }
+  // ---------------------------------------------------------------- roof ornaments
+  function gourdAt(B, x, y, z, s = 1, o = {}) { // 葫蘆 finial
+    B.lathe(x, y, z, [[0.06 * s, 0], [0.16 * s, 0.08 * s], [0.2 * s, 0.2 * s], [0.15 * s, 0.32 * s], [0.07 * s, 0.38 * s], [0.12 * s, 0.46 * s], [0.13 * s, 0.53 * s], [0.08 * s, 0.62 * s], [0.02 * s, 0.7 * s], [0.0, 0.78 * s]], { reg: 'gold', mat: 'metal', seg: 10, tint: o.tint || '#ffffff', ao: false });
+  }
+  function pearlAt(B, x, y, z, s = 1) { // 火珠 flaming pearl between the twin dragons
+    B.lathe(x, y + 0.02 * s, z, Array.from({ length: 7 }, (_, i) => { const a = -PI / 2 + (i / 6) * PI; return [cos(a) * 0.16 * s + 0.001, (sin(a) + 1) * 0.16 * s]; }), { reg: 'white', mat: 'gloss', tint: '#d8ecff', seg: 10, ao: false });
+    for (let k = 0; k < 7; k++) { const a = (k / 7) * TAU; B.push().tr(x + cos(a) * 0.17 * s, y + 0.16 * s + sin(a) * 0.17 * s, z).rz(a - PI / 2); B.cyl(0, 0, 0, 0.06 * s, 0.0, 0.2 * s, { reg: 'porcelain', mat: 'gloss', tint: k % 2 ? '#ffb040' : '#ff6a3a', seg: 5, ao: false }); B.pop(); }
+    B.box(x, y - 0.1 * s, z, 0.14 * s, 0.12 * s, 0.14 * s, { reg: 'porcelain', mat: 'gloss', ao: false });
+  }
+  // 剪黏 dragon lying along a ridge: head at (x,y,z), body trailing toward dir (±1 along x), length len, scale s
+  function dragonAt(B, x, y, z, dir, len, s = 1, o = {}) {
+    const n = 26, path = [];
+    for (let i = 0; i <= n; i++) { const t = i / n; path.push([x + dir * t * len, y + 0.16 * s + sin(t * PI * 2.6 + 0.6) * 0.16 * s * (1 - t * 0.4) + t * 0.12 * s, z + sin(t * PI * 1.3) * 0.05 * s]); }
+    const body = o.body || '#5ab890', mtl = 'gloss';
+    B.sweep(path, circle(0.075 * s, 7), { reg: 'scales', mat: mtl, tint: body, ao: false, size: 0.3, caps: true, scale: (t) => (t < 0.12 ? lerp(1.35, 1, t / 0.12) : lerp(1, 0.25, (t - 0.12) / 0.88)) });
+    // head: snout, jaw, horns, whiskers
+    const hd = path[0], fw = [-dir, 0, 0];
+    B.sweep([add(hd, mul(fw, -0.05 * s)), add(hd, mul(fw, 0.16 * s)), add(add(hd, mul(fw, 0.27 * s)), [0, -0.02 * s, 0])], circle(0.1 * s, 7), { reg: 'scales', mat: mtl, tint: body, ao: false, caps: true, scale: (t) => lerp(1, 0.45, t) });
+    B.sweep([add(hd, [0, -0.07 * s, 0]), add(add(hd, mul(fw, 0.22 * s)), [0, -0.12 * s, 0])], circle(0.04 * s, 5), { reg: 'porcelain', mat: mtl, tint: '#f04a3a', ao: false, caps: true });
+    for (const sz of [1, -1]) {
+      B.sweep([add(hd, [0, 0.07 * s, sz * 0.04 * s]), add(add(hd, mul(fw, -0.15 * s)), [0, 0.24 * s, sz * 0.09 * s])], circle(0.022 * s, 5), { reg: 'gold', mat: 'metal', ao: false, caps: true, scale: (t) => lerp(1, 0.3, t) });
+      B.sweep([add(add(hd, mul(fw, 0.2 * s)), [0, 0, sz * 0.05 * s]), add(add(hd, mul(fw, 0.42 * s)), [0, 0.1 * s, sz * 0.16 * s])], circle(0.01 * s, 4), { reg: 'gold', mat: 'metal', ao: false, caps: true });
+      B.box(hd[0] + fw[0] * 0.08 * s, hd[1] + 0.05 * s, hd[2] + sz * 0.07 * s, 0.04 * s, 0.04 * s, 0.03 * s, { reg: 'white', tint: '#fff8e0', mat: 'gloss', ao: false });
+    }
+    // dorsal fins & legs
+    for (let i = 3; i < n - 2; i += 3) { const p = path[i]; B.push().tr(p[0], p[1] + 0.06 * s, p[2]); B.cyl(0, 0, 0, 0.035 * s, 0, 0.11 * s, { reg: 'porcelain', mat: mtl, tint: o.fin || '#f06a3a', seg: 4, ao: false }); B.pop(); }
+    for (const i of [6, 16]) { const p = path[i]; for (const sz of [1, -1]) B.sweep([p, add(p, [dir * 0.05 * s, -0.16 * s, sz * 0.1 * s])], circle(0.025 * s, 5), { reg: 'scales', mat: mtl, tint: body, ao: false, caps: true }); }
+  }
+  // the ridge crown of a temple: twin dragons chasing the pearl (or a gourd / pagoda in the middle)
+  function ridgeCrown(B, x, y, z, half, s, o = {}) {
+    if (o.center === 'gourd') gourdAt(B, x, y, z, s * 1.4);
+    else if (o.center === 'pagoda') { for (let k = 0; k < 5; k++) { const ww = (0.34 - k * 0.05) * s; B.box(x, y + k * 0.16 * s, z, ww, 0.1 * s, ww, { reg: 'porcelain', mat: 'gloss', ao: false }); B.box(x, y + k * 0.16 * s + 0.1 * s, z, ww * 1.3, 0.04 * s, ww * 1.3, { reg: 'tileOrange', mat: 'gloss', ao: false }); } gourdAt(B, x, y + 0.8 * s, z, s * 0.6); }
+    else pearlAt(B, x, y, z, s);
+    if (o.dragons !== false) for (const d of [-1, 1]) dragonAt(B, x + d * 0.3 * s, y, z, d, half, s, o);
   }
 
   // =================================================================================================
@@ -1614,6 +1669,472 @@
         B.box(x, y0 + 0.95, z, 0.3, 0.12, 0.3, { reg: 'iron', ao: false });
       }
     },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // 街屋 shophouse — two-storey street house with a 亭仔腳 arcade: arched piers, shopfronts in the shade,
+  // plastered upper façade with arched windows & louvred shutters, parapet with a crest and the shop's name
+  // =================================================================================================
+  const SHOP = ['#e6d6b4', '#b4cfbe', '#e6b49e', '#cdc6de'], SHOP_NAMES = ['金源號', '福春行', '永安堂', '和記'];
+  han('shophouse', {
+    nv: 4, salt: 27, resize: 'w', door: 1,
+    build(B, c) {
+      const { w, h, v, door, lit } = c, col = SHOP[v];
+      const hw = w / 2 - 0.02, hd = h / 2 - 0.04, Ha = 3.1, Hu = 6.15, Hp = 6.95, T = 0.34, AD = 1.0;
+      const po = { reg: 'plaster', tint: col, eave: Hu };
+      const cellX = (i) => -w / 2 + i + 0.5;
+      // --- arcade front: piers and arches
+      side(B, 's', hw, hd, (L) => {
+        const holes = [];
+        for (let i = 0; i < w; i++) { const x = cellX(i), a = 0.33 - (i === 0 || i === w - 1 ? 0.03 : 0); holes.push({ x0: x - a, x1: x + a, y0: 0, y1: 2.2 + a, x, a }); }
+        wall(B, L, 0, Ha, T, holes, Object.assign({}, po, { endL: true, endR: true }));
+        for (const q of holes) archAt(B, q.x, q.a * 2, 2.2, 2.2 + q.a, T, { reg: 'plaster', tint: col, vaultTint: shade(col, -0.15), voussoir: 'plaster', voussoirTint: shade(col, 0.25), key: true });
+        for (let i = 0; i <= w; i++) { const x = clamp(-w / 2 + i, -L / 2 + 0.1, L / 2 - 0.1); B.box(x, 0, 0.04, 0.3, 0.42, 0.08, { reg: 'granite', tint: '#d8d0c0' }); B.box(x, 1.9, 0.03, 0.26, 0.1, 0.06, { reg: 'plaster', tint: shade(col, 0.3) }); } // pier bases & imposts
+        // floor-line cornice between storeys
+        B.box(0, Ha - 0.16, 0.06, L + 0.08, 0.12, 0.12, { reg: 'plaster', tint: shade(col, 0.25) });
+        B.box(0, Ha - 0.04, 0.09, L + 0.12, 0.08, 0.18, { reg: 'plaster', tint: shade(col, -0.25) });
+        // arcade: floor, ceiling, shopfront wall at the back
+        B.box(0, 0, -AD / 2, L, 0.1, AD, { reg: 'pave', tint: '#e8d8c8', skip: 'b' });
+        B.box(0, Ha - 0.3, -AD / 2 - T / 2, L, 0.06, AD - T, { reg: 'soffit', tint: '#8a7464', skip: 't', ao: false });
+        B.push().tr(0, 0, -AD);
+        const sh = [];
+        for (let i = 0; i < w; i++) sh.push(i === door ? { x0: cellX(i) - 0.4, x1: cellX(i) + 0.4, y0: 0.1, y1: 2.25 } : { x0: cellX(i) - 0.36, x1: cellX(i) + 0.36, y0: 0.85, y1: 1.85 });
+        wall(B, L, 0, Ha - 0.28, 0.2, sh, { reg: 'woodV', tint: '#a08070', eave: Ha });
+        for (let i = 0; i < w; i++) {
+          const x = cellX(i);
+          if (i === door) {
+            doorAt(B, x, 0.8, 2.15, 0.2, { lit, curtain: 'norenDian', frameTint: '#1e140e', depth: 1.2 });
+          } else {
+            windowAt(B, x, 0.85, 0.72, 1.0, 0.2, { style: 'grid', lit, frameTint: '#22160f', sillReg: 'grain', sillTint: '#2a1a10' });
+            for (let k = 0; k < 3; k++) { const jx = x - 0.28 + k * 0.28, rr0 = 0.13 + (k % 2) * 0.03; B.lathe(jx, 0.1, 0.25, [[0.07, 0], [rr0, 0.08], [rr0 + 0.02, 0.22], [rr0 * 0.8, 0.36], [0.07, 0.4], [0.075, 0.44]], { reg: 'white', mat: 'gloss', tint: ['#6a4a2a', '#4a5a6a', '#7a3a2a'][(k + i) % 3], seg: 10 }); }
+          }
+        }
+        B.pop();
+        for (let i = 0; i < w; i++) if (i !== door) lanternAt(B, cellX(i), 2.25, -0.55, { lit, r: 0.15, cord: 0.35, intensity: 0.7 });
+        if (door >= 0) B.light(cellX(door), 1.0, -AD - 0.3, '#ffb862', lit ? 0.6 : 0, 3, 0.1);
+        // --- upper façade
+        const uh = [];
+        for (let i = 0; i < w; i++) uh.push({ x0: cellX(i) - 0.26, x1: cellX(i) + 0.26, y0: 3.85, y1: 5.1 + 0.26, x: cellX(i) });
+        wall(B, L, Ha, Hu, 0.24, uh, Object.assign({}, po, { endL: true, endR: true }));
+        for (const q of uh) {
+          archAt(B, q.x, 0.52, 5.1, 5.36, 0.24, { reg: 'plaster', tint: col, voussoir: 'plaster', voussoirTint: shade(col, 0.3), key: true });
+          windowAt(B, q.x, 3.85, 0.52, 1.25, 0.24, { style: 'grid', lit, frameTint: '#3a2a1e', sillReg: 'plaster', sillTint: shade(col, -0.2), shutters: '#4f8a6e', recess: 0.1 });
+          const fanPts = []; for (let k = 0; k <= 10; k++) { const a = PI - (k / 10) * PI; fanPts.push([q.x + cos(a) * 0.2, 5.1 + sin(a) * 0.2, -0.12]); }
+          B.fan([q.x, 5.08, -0.12], fanPts, lit ? { mat: 'glow', reg: 'latGrid', tint: [1.2, 0.8, 0.45] } : { reg: 'latGrid', tint: '#8a7a68' });
+        }
+        for (let i = 0; i <= w; i++) { const x = clamp(-w / 2 + i, -L / 2 + 0.11, L / 2 - 0.11); B.box(x, Ha, 0.04, 0.22, Hu - Ha, 0.08, { reg: 'plaster', tint: shade(col, 0.18) }); B.box(x, Hu - 0.5, 0.06, 0.3, 0.14, 0.12, { reg: 'plaster', tint: shade(col, 0.3) }); }
+        // main cornice + parapet with balustrade panels and the central crest (山頭)
+        B.box(0, Hu - 0.05, 0.1, L + 0.2, 0.16, 0.2, { reg: 'plaster', tint: shade(col, 0.3) });
+        B.box(0, Hu + 0.11, 0.05, L + 0.1, 0.06, 0.1, { reg: 'plaster', tint: shade(col, -0.3) });
+        B.box(0, Hu, -0.12, L, Hp - Hu, 0.24, { reg: 'plaster', tint: shade(col, 0.08), skip: 'b' });
+        const cw = min(1.7, L * 0.42);
+        for (const [a, b] of [[-L / 2 + 0.15, -cw / 2 - 0.1], [cw / 2 + 0.1, L / 2 - 0.15]]) if (b - a > 0.3) {
+          B.box((a + b) / 2, Hu + 0.25, 0.02, b - a, 0.42, 0.04, { reg: 'plaster', tint: shade(col, -0.45) });
+          for (let x = a + 0.1; x < b - 0.05; x += 0.16) B.cyl(x, Hu + 0.25, 0.05, 0.035, 0.035, 0.42, { reg: 'plaster', tint: shade(col, 0.2), seg: 6, caps: false });
+        }
+        const crest = []; const ch = 0.75;
+        for (let k = 0; k <= 16; k++) { const t = k / 16, x = lerp(-cw / 2, cw / 2, t); crest.push([-x, Hp + 0.05 + ch * pow(sin(t * PI), 0.7) - (abs(t - 0.5) > 0.42 ? 0.12 : 0)]); }
+        crest.push([-cw / 2, Hp - 0.1], [cw / 2, Hp - 0.1]);
+        B.sweep([[0, 0, -0.18], [0, 0, 0.06]], crest, { hard: true, reg: 'plaster', tint: shade(col, 0.15), caps: true, ao: false });
+        plaqueAt(B, 0, Hp + 0.15, 0.08, min(1.25, cw * 0.78), 0.34, c.text || SHOP_NAMES[v], { bg: '#f1e6c9', fg: '#8a2418', rim: '#6c5434', backTint: shade(col, -0.2) });
+        for (const sx of [-1, 1]) B.lathe(sx * (cw / 2 + 0.05), Hp, 0, [[0.06, 0], [0.09, 0.1], [0.06, 0.2], [0.0, 0.32]], { reg: 'plaster', tint: shade(col, 0.3), seg: 8 }); // finials
+        B.lathe(0, Hp + 0.05 + ch, 0, [[0.07, 0], [0.11, 0.1], [0.0, 0.22]], { reg: 'porcelain', mat: 'gloss', seg: 8 });
+      });
+      // --- back & party walls
+      side(B, 'n', hw, hd, (L) => {
+        const holes = []; for (let i = 0; i < w; i++) if (i % 2 === 0) holes.push({ x0: cellX(i) - 0.25, x1: cellX(i) + 0.25, y0: 4.0, y1: 4.8, x: cellX(i) });
+        wall(B, L, 0, Hu + 0.1, 0.24, holes, Object.assign({}, po, { tint: shade(col, -0.08) }));
+        for (const q of holes) windowAt(B, q.x, 4.0, 0.5, 0.8, 0.24, { style: 'grid', lit: false, frameTint: '#3a2a1e', sillReg: 'plaster', sillTint: shade(col, -0.2) });
+        B.box(0, 0, 0.0, L, 0.5, 0.06, { reg: 'ashlarDark' });
+      });
+      const rf = roof(B, { type: 'gable', hx: hw + 0.02, hz: hd - 0.12, yr: Hu + 1.15, ye: Hu + 0.05, curve: 0.35, tile: 'tileRed', verge: false, rows: 6, cz: -0.05 });
+      for (const sname of ['e', 'w']) side(B, sname, hw, hd, (L) => {
+        wall(B, L, 0, Hu + 0.1, 0.2, [], { reg: 'brickRed', tint: '#e8c8b8', eave: Hu, endL: true, endR: true });
+        B.box(0, Hu + 0.1, -0.1, L, Hp - Hu - 0.1, 0.2, { reg: 'brickRed', tint: '#e8c8b8', skip: 'b' });
+        const prof = rf.profile(0, 10, false).map((p) => [sname === 'e' ? -p[2] - 0.05 : p[2] + 0.05, p[1] + 0.08, 0]).filter((p) => p[1] > Hp);
+        if (prof.length > 1) { prof.sort((a, b) => a[0] - b[0]); B.fan([prof[0][0], Hp, 0], [...prof, [prof[prof.length - 1][0], Hp, 0]], { reg: 'brickRed', tint: '#e8c8b8', ao: false }); B.fan([prof[prof.length - 1][0], Hp, -0.2], [...prof.map((p) => [p[0], p[1], -0.2]).reverse(), [prof[0][0], Hp, -0.2]], { reg: 'brickRed', tint: '#e8c8b8', ao: false }); }
+      });
+      ridge(B, ridgePath(rf, hw - 0.05, 8, 0), { w: 0.2, h: 0.2, tint: '#b8503a' });
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // 九份 teahouse — multi-storey timber teahouse: plank ground floor with diamond lattice, pent roof (腰簷) hung with
+  // a row of red lanterns, balcony with red railing and the name board, shoji upper floor, tar-paper roof with a
+  // front cross-gable (破風) holding a round window and 懸魚, a vertical 茶館 sign
+  // =================================================================================================
+  han('teahouse', {
+    door: 2,
+    build(B, c) {
+      const { w, h, door, lit } = c;
+      const hw = w / 2 - 0.05, hd = h / 2 - 0.08, H1 = 3.3, H2 = 6.15, sb = 0.28, set = 0.75, T = 0.18;
+      const trim = '#24160d', wo = { reg: 'woodV', tint: '#9a6a52', eave: H1 };
+      const dc = -w / 2 + door + 0.5;
+      const post = (x, y0, y1, z = 0.05) => B.box(x, y0, z, 0.16, y1 - y0, 0.16, { reg: 'grain', tint: trim });
+      // ---------- ground floor
+      side(B, 's', hw, hd, (L) => {
+        const holes = [];
+        for (let i = 0; i < w; i++) { const x = -w / 2 + i + 0.5; holes.push(i === door ? { x0: x - 0.52, x1: x + 0.52, y0: sb - 0.01, y1: 2.3, d: 1 } : { x0: x - 0.33, x1: x + 0.33, y0: 1.0, y1: 1.85, x }); }
+        wall(B, L, sb, H1, T, holes, wo);
+        wall(B, L, 0, sb, T + 0.05, holes.filter((q) => q.d).map((q) => Object.assign({}, q, { y0: -1 })), { reg: 'ashlarDark' });
+        for (const q of holes) if (!q.d) windowAt(B, q.x, 1.0, 0.66, 0.85, T, { style: 'diamond', lit, frameTint: trim, sillReg: 'grain', sillTint: trim });
+        doorAt(B, dc, 1.04, 2.3, T, { lit, curtain: 'norenCha', frameTint: trim, depth: 1.6 });
+        B.box(dc, 0, 0.25, 1.4, sb, 0.5, { reg: 'granite', tint: '#d0c8b8', skip: 'b' }); // entry step
+        for (let i = 0; i <= w; i++) { const x = clamp(-w / 2 + i, -L / 2 + 0.08, L / 2 - 0.08); if (abs(x - dc) < 0.6) continue; post(x, sb, H1); }
+        post(dc - 0.62, sb, H1); post(dc + 0.62, sb, H1);
+        B.box(0, 2.45, 0.07, L, 0.12, 0.1, { reg: 'grain', tint: trim });
+        B.box(0, sb, 0.07, L, 0.1, 0.1, { reg: 'grain', tint: trim });
+        B.light(dc, 1.0, -0.5, '#ffb862', lit ? 0.7 : 0, 3.2, 0.1);
+      });
+      for (const sname of ['e', 'w', 'n']) side(B, sname, hw, hd, (L) => {
+        const holes = sname === 'n' ? [{ x0: -0.9, x1: -0.3, y0: 1.1, y1: 1.8, x: -0.6 }, { x0: 0.3, x1: 0.9, y0: 1.1, y1: 1.8, x: 0.6 }] : [{ x0: -0.3, x1: 0.3, y0: 1.1, y1: 1.8, x: 0 }];
+        wall(B, L, sb, H1 + 0.12, T, holes, Object.assign({}, wo, { endL: sname !== 'n', endR: sname !== 'n' }));
+        wall(B, L, 0, sb, T + 0.05, [], { reg: 'ashlarDark', endL: true, endR: true });
+        for (const q of holes) windowAt(B, q.x, 1.1, 0.6, 0.7, T, { style: 'diamond', lit: lit && sname !== 'n', frameTint: trim, sillReg: 'grain', sillTint: trim });
+        post(-L / 2 + 0.08, sb, H1); post(L / 2 - 0.08, sb, H1);
+      });
+      // ---------- balcony deck, railing, name board
+      const zf = hd + 0.12, zb = hd - set;
+      B.box(0, H1, (zf + zb) / 2, w + 0.1, 0.14, zf - zb, { reg: 'woodH', tint: '#6a4a3a' });
+      const ry0 = H1 + 0.14, ry1 = H1 + 1.0;
+      B.box(0, ry1 - 0.08, zf - 0.04, w + 0.06, 0.08, 0.1, { reg: 'grain', mat: 'gloss', tint: '#b8302a' });
+      B.box(0, ry0, zf - 0.04, w + 0.06, 0.07, 0.08, { reg: 'grain', mat: 'gloss', tint: '#8a2018' });
+      for (let x = -w / 2 + 0.06; x <= w / 2; x += 0.16) B.box(x, ry0 + 0.07, zf - 0.04, 0.045, ry1 - ry0 - 0.15, 0.045, { reg: 'grain', mat: 'gloss', tint: '#c03a2e' });
+      for (const sx of [-1, 1]) for (let z = zb + 0.1; z < zf - 0.1; z += 0.16) B.box(sx * (w / 2 + 0.03), ry0 + 0.07, z, 0.045, ry1 - ry0 - 0.15, 0.045, { reg: 'grain', mat: 'gloss', tint: '#c03a2e' });
+      for (const sx of [-1, 1]) B.box(sx * (w / 2 + 0.03), ry1 - 0.08, (zf + zb) / 2, 0.1, 0.08, zf - zb, { reg: 'grain', mat: 'gloss', tint: '#b8302a' });
+      plaqueAt(B, 0, ry0 + 0.45, zf + 0.03, 1.7, 0.42, c.text || '燈火茶樓', { bg: '#1b1a22', fg: '#f2cb68', rim: '#8a6a2a' });
+      // ---------- pent roof (腰簷) under the balcony with its lantern row
+      roof(B, { type: 'gable', sides: [1], hx: hw + 0.3, hz: 0.82, cz: zf - 0.05, yr: H1 - 0.02, ye: H1 - 0.42, curve: 0.1, tile: 'tarPaper', corr: 'batten', thick: 0.08, rows: 3, vergeTint: '#1e1c1c', soffitTint: '#6a5848' });
+      for (let i = 0; i < 8; i++) { const x = -w / 2 + 0.31 + i * (w - 0.62) / 7; if (abs(x - dc) < 0.45) continue; lanternAt(B, x, H1 - 0.82, zf + 0.5, { lit, r: 0.15, cord: 0.12, intensity: 0.6 }); }
+      // ---------- upper floor
+      side(B, 's', hw, -zb, () => {});
+      B.push().tr(0, 0, zb);
+      const ux = [-1.7, -0.57, 0.57, 1.7];
+      wall(B, w - 0.12, H1 + 0.14, H2 + 0.1, T, ux.map((x) => ({ x0: x - 0.38, x1: x + 0.38, y0: 3.85, y1: 5.15, x })), Object.assign({}, wo, { reg: 'clapNeutral', tint: '#8a5a44', eave: H2 }));
+      for (const x of ux) windowAt(B, x, 3.85, 0.76, 1.3, T, { style: 'shoji', lit, frameTint: trim, sill: false });
+      for (const x of [-hw + 0.08, -1.13, 0, 1.13, hw - 0.08]) post(x, H1 + 0.14, H2 + 0.1);
+      B.box(0, 5.45, 0.07, w - 0.1, 0.1, 0.1, { reg: 'grain', tint: trim });
+      B.pop();
+      for (const [sname, ctr] of [['e', 1], ['w', -1]]) {
+        B.push().tr(ctr * hw, 0, (zb - hd) / 2).ry(ctr * PI / 2);
+        const L = zb + hd;
+        wall(B, L, H1 + 0.14, H2 + 0.1, T, [{ x0: -0.3, x1: 0.3, y0: 4.0, y1: 4.9 }], Object.assign({}, wo, { reg: 'clapNeutral', tint: '#8a5a44', endL: true, endR: true }));
+        windowAt(B, 0, 4.0, 0.6, 0.9, T, { style: 'shoji', lit, frameTint: trim, sill: false });
+        B.pop();
+      }
+      B.push().tr(0, 0, -hd).ry(PI); wall(B, w - 0.1, H1 + 0.14, H2 + 0.1, T, [], Object.assign({}, wo, { reg: 'clapNeutral', tint: '#8a5a44' })); B.pop();
+      // ---------- main roof + front cross gable (破風)
+      const czr = (zb - hd) / 2, hzr = (zb + hd) / 2 + 0.7;
+      const rf = roof(B, { type: 'gable', hx: hw + 0.45, hz: hzr, cz: czr, yr: H2 + 1.25, ye: H2 - 0.15, curve: 0.15, tile: 'tarPaper', corr: 'batten', thick: 0.1, rows: 5, vergeTint: '#1e1c1c', soffitTint: '#6a5848' });
+      ridge(B, ridgePath(rf, hw + 0.45, 4, -0.02), { w: 0.22, h: 0.12, reg: 'tarPaper', tint: '#bbbbbb' });
+      const gl = 1.5, zfr = zb + 0.62;
+      B.push().tr(0, 0, zfr - gl).ry(PI / 2);
+      const cg = roof(B, { type: 'gable', hx: gl, hz: 1.15, yr: H2 + 1.05, ye: H2 - 0.05, curve: 0.1, tile: 'tarPaper', corr: 'batten', thick: 0.1, rows: 4, vergeTint: '#2e2f36' });
+      B.pop();
+      // gable face: planks, round lit window, white-trimmed barge boards, 懸魚
+      const gz = zfr - 0.12, apex = H2 + 1.0, gb = H2 - 0.05;
+      B.fan([0, gb, gz], [[1.05, gb, gz], [0, apex - 0.1, gz], [-1.05, gb, gz]], { reg: 'woodV', tint: '#7a5038', ao: false, flip: true });
+      B.box(0, gb - 0.12, gz, 2.2, 0.14, 0.14, { reg: 'grain', tint: trim });
+      const rw = []; for (let k = 0; k <= 16; k++) { const a = (k / 16) * TAU; rw.push([cos(a) * 0.22, H2 + 0.5 + sin(a) * 0.22, gz + 0.02]); }
+      B.fan([0, H2 + 0.5, gz + 0.02], rw, lit ? { mat: 'glow', reg: 'latGrid', tint: [1.3, 0.85, 0.45], closeFan: false } : { reg: 'latGrid', tint: '#6a5a48' });
+      B.sweep(rw.concat([rw[0]]), [[-0.035, -0.035], [0.035, -0.035], [0.035, 0.035], [-0.035, 0.035]], { hard: true, reg: 'grain', tint: trim, up: [0, 0, 1], closed: true });
+      for (const sx of [-1, 1]) B.sweep([[0, apex - 0.08, gz + 0.1], [sx * 1.2, gb - 0.06, gz + 0.1]], [[-0.03, -0.05], [0.03, -0.05], [0.03, 0.0], [-0.03, 0.0]], { hard: true, reg: 'white', tint: '#e0d4b6', caps: true, up: [0, 0, 1] });
+      B.sweep([[0, apex - 0.15, gz + 0.06], [0, apex - 0.35, gz + 0.06], [0, apex - 0.48, gz + 0.06]], [[-0.1, 0], [0.1, 0], [0.05, 0.03], [-0.05, 0.03]], { hard: true, reg: 'white', tint: '#e2d6b8', caps: true, up: [0, 0, 1], scale: (t) => [lerp(1, 0.4, t), 1] });
+      // upper lantern row under the main eave
+      for (let i = 0; i < 8; i++) { const x = -w / 2 + 0.31 + i * (w - 0.62) / 7; if (abs(x) < 1.2) continue; lanternAt(B, x, H2 - 0.55, zb + 0.42, { lit, r: 0.15, cord: 0.12, intensity: 0.6 }); }
+      // vertical 茶館 sign hanging from a bracket off the west corner
+      B.box(-hw - 0.2, 4.7, zf - 0.05, 0.5, 0.05, 0.05, { reg: 'iron' });
+      B.push().tr(-hw - 0.35, 3.95, zf - 0.05);
+      const uv = B.decal(70, 240, (g, W, H) => paintBoard(g, W, H, '茶館', { bg: '#a3241e', fg: '#ffe7b0', rim: '#1d120c', dir: 'v' }));
+      B.box(0, -0.02, -0.03, 0.34, 0.76, 0.05, { reg: 'grain', tint: '#1d120c' });
+      B.quad([-0.15, 0.0, 0.0], [0.15, 0.0, 0.0], [0.15, 0.72, 0.0], [-0.15, 0.72, 0.0], { mat: 'decal', ao: false }, uv);
+      B.pop();
+      void rf; void cg;
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // 土地公廟 shrine_small — roadside 福德祠: stone platform, red-brick shrine with a veiled niche (the deity is never
+  // shown: an embroidered curtain, candle glow and offerings), couplets, swallowtail roof with a pearl, incense burner
+  // =================================================================================================
+  han('shrine_small', {
+    key: (o) => o.text || '',
+    build(B, c) {
+      const { lit } = c, text = c.text || '福德祠', hakka = /伯公/.test(text);
+      plinth(B, 0, 0.05, 1.86, 1.7, 0.26, { side: 'ashlar', top: 'pave' });
+      steps(B, 0, 0.92, 0.8, 1, 0.13, 0.2);
+      const bw = 1.3, bd = 0.9, bz = -0.25, by = 0.26, bh = 1.25;
+      B.push().tr(0, by, bz);
+      const bo = { reg: 'brickRed', tint: hakka ? '#e0d8d0' : '#ffffff', eave: by + bh };
+      side(B, 's', bw / 2, bd / 2, (L) => {
+        wall(B, L, 0, bh, 0.16, [{ x0: -0.3, x1: 0.3, y0: 0.1, y1: 0.78 }], bo);
+        archAt(B, 0, 0.6, 0.78, 1.08, 0.16, { reg: 'brickRed', tint: bo.tint, voussoir: 'granite', voussoirTint: '#d8d2c4' });
+        B.box(0, 0.78 + 0.3, -0.08, 0.6, bh - 1.08, 0.16, { reg: 'brickRed', tint: bo.tint });
+        // niche interior: altar, candles, curtain
+        voidBox(B, -0.3, 0.3, 0.1, 1.08, -0.16, 0.5, lit, [0.5, 0.26, 0.1]);
+        B.box(0, 0.1, -0.42, 0.52, 0.3, 0.16, { reg: 'grain', mat: 'gloss', tint: '#8a1c14' });
+        for (const sx of [-0.18, 0.18]) { B.cyl(sx, 0.4, -0.42, 0.018, 0.018, 0.12, { reg: 'white', tint: '#c42a1f', seg: 6 }); B.cyl(sx, 0.52, -0.42, 0.012, 0.0, 0.05, { mat: 'glow', reg: 'white', tint: [2.4, 1.6, 0.6], seg: 5 }); }
+        B.grid(lin01(6), lin01(3), (u, v) => [lerp(-0.29, 0.29, u), lerp(1.06, 0.62, v) - (u < 0.3 || u > 0.7 ? 0 : 0) , -0.2 + sin(u * PI * 5) * 0.015 - (abs(u - 0.5) < 0.2 ? 0.0 : 0.01)], (u, v) => [u * 1.2, v * 0.8], { mat: 'cloth', reg: 'embroid', pivot: [0, 1.06, -0.2], phase: 1.3, face: [0, 0, 1], ao: false });
+        for (const sx of [-1, 1]) B.grid(lin01(2), lin01(4), (u, v) => [sx * lerp(0.3, 0.2, u) * (1 - v * 0.15), lerp(1.06, 0.15, v), -0.19], (u, v) => [u * 0.3, v], { mat: 'cloth', reg: 'embroid', pivot: [sx * 0.25, 1.06, -0.19], phase: 2 + sx, face: [0, 0, 1], ao: false });
+        paperAt(B, -0.48, 0.55, 0.0, 0.13, 0.62, hakka ? '伯公' : '福德');
+        paperAt(B, 0.48, 0.55, 0.0, 0.13, 0.62, hakka ? '保庇' : '正神');
+        plaqueAt(B, 0, 1.18, 0.03, 0.5, 0.15, text, { bg: '#1c2f5a', fg: '#f6d06a', rim: '#d6a542', ppm: 400 });
+      });
+      for (const sname of ['n', 'e', 'w']) side(B, sname, bw / 2, bd / 2, (L) => wall(B, L, 0, bh, 0.16, [], Object.assign({}, bo, { endL: sname !== 'n', endR: sname !== 'n' })));
+      B.pop();
+      const rf = roof(B, { type: 'gable', hx: bw / 2 + 0.16, hz: bd / 2 + 0.32, cz: bz, yr: by + bh + 0.55, ye: by + bh - 0.08, curve: 0.5, lift: 0.1, ridgeLift: 0.14, tile: hakka ? 'tileGrey' : 'tileRed', rows: 5, thick: 0.08 });
+      ridge(B, ridgePath(rf, bw / 2 + 0.06, 10, 0), { w: 0.14, h: 0.17, tint: '#3a6a82', ends: 'swallow', len: 0.38, rise: 0.3, band: 'porcelain', bandFrom: 2, bandTo: 2 });
+      pearlAt(B, 0, rf.ridgeY(0) + 0.15, bz, 0.55);
+      // incense burner (香爐) with smouldering sticks
+      B.lathe(0, 0.26, 0.55, [[0.0, 0], [0.12, 0.02], [0.17, 0.08], [0.2, 0.18], [0.17, 0.24], [0.19, 0.26], [0.0, 0.26]], { reg: 'bronze', mat: 'metal', seg: 12 });
+      for (const sx of [-1, 1]) B.cyl(sx * 0.09, 0.26, 0.55, 0.02, 0.02, 0.06, { reg: 'bronze', mat: 'metal', seg: 6 });
+      for (let k = -2; k <= 2; k++) { B.push().tr(k * 0.035, 0.5, 0.55).rz(k * 0.08); B.cyl(0, 0, 0, 0.006, 0.006, 0.32, { reg: 'white', tint: '#a8442e', seg: 4, caps: false }); B.cyl(0, 0.32, 0, 0.008, 0.008, 0.02, { mat: 'glow', reg: 'white', tint: [3, 1.2, 0.4], seg: 4 }); B.pop(); }
+      B.light(0, 0.7, 0.05, '#ff7a34', lit ? 0.9 : 0.3, 3.2, 0.4);
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // well — granite well ring, two posts carrying a little gabled roof, windlass with rope & bucket
+  // =================================================================================================
+  han('well', {
+    build(B) {
+      B.lathe(0, 0, 0, [[0.38, 0], [0.4, 0.05], [0.4, 0.52], [0.43, 0.56], [0.43, 0.64], [0.3, 0.64], [0.3, 0.4]], { reg: 'ashlar', seg: 16, size: 1 });
+      B.disc(0, 0.38, 0, 0.3, 1, { reg: 'white', mat: 'gloss', tint: '#16242a', seg: 16, ao: false });
+      for (const sx of [-1, 1]) {
+        B.box(sx * 0.46, 0, 0, 0.12, 2.05, 0.12, { reg: 'grain', tint: '#5a3e28' });
+        B.box(sx * 0.46, 0, 0, 0.22, 0.2, 0.22, { reg: 'granite' });
+      }
+      B.box(0, 1.98, 0, 1.06, 0.1, 0.1, { reg: 'grain', tint: '#4a3020' });
+      roof(B, { type: 'gable', hx: 0.66, hz: 0.5, yr: 2.42, ye: 1.98, curve: 0.2, tile: 'tileDark', rows: 3, thick: 0.06, caps: false });
+      // windlass drum with crank
+      B.push().tr(0, 1.45, 0).rz(PI / 2); B.cyl(0, -0.4, 0, 0.07, 0.07, 0.8, { reg: 'grain', tint: '#6a4a2e', seg: 10 }); B.pop();
+      for (let k = 0; k < 6; k++) { B.push().tr(-0.15 + k * 0.05, 1.45, 0).rz(PI / 2); B.cyl(0, -0.006, 0, 0.078, 0.078, 0.012, { reg: 'white', tint: '#c8b48a', seg: 10 }); B.pop(); }
+      B.box(0.47, 1.45, 0.1, 0.05, 0.05, 0.25, { reg: 'iron' });
+      B.box(0, 0.62, 0.06, 0.012, 0.83, 0.012, { reg: 'white', tint: '#c8b48a' });
+      B.lathe(0, 0.42, 0.06, [[0.0, 0], [0.09, 0], [0.11, 0.2], [0.0, 0.2]], { reg: 'woodV', seg: 10 }); // bucket on the rope
+      B.lathe(0.32, 0.64, 0.28, [[0.0, 0], [0.11, 0], [0.13, 0.2], [0.12, 0.2], [0.1, 0.03], [0.0, 0.03]], { reg: 'woodV', seg: 10 }); // bucket on the rim
+      for (const y of [0.7, 0.8]) B.lathe(0.32, y, 0.28, [[0.115 + (y - 0.64) * 0.1, 0], [0.12 + (y - 0.64) * 0.1, 0.015]], { reg: 'iron', seg: 10 });
+    },
+  });
+
+  // =================================================================================================
+  // 涼亭 pavilion — square 攢尖 pavilion: stone platform & steps, four red columns, painted beams with 掛落 fretwork,
+  // 美人靠 bench, stone table & stools, green glazed roof with upswept hips and a gourd finial
+  // =================================================================================================
+  han('pavilion', {
+    build(B, c) {
+      const { lit } = c, H = 0.32, cy = 3.0, R = 1.18;
+      plinth(B, 0, -0.08, 2.9, 2.7, H);
+      steps(B, 0, 1.45, 0.95, 2, H / 2, 0.22, { flare: 0.08 });
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) columnAt(B, sx * R, sz * R - 0.08, H, cy - H, 0.11, { tint: '#b3291f' });
+      // beams, painted bands, fretwork
+      for (const [a, b] of [[[-R, R], [R, R]], [[-R, -R], [R, -R]]]) { B.box(0, cy - 0.28, a[1] - 0.08, 2 * R + 0.2, 0.26, 0.16, { reg: 'beamPaint', ao: false }); }
+      for (const sx of [-1, 1]) B.box(sx * R, cy - 0.28, -0.08, 0.16, 0.26, 2 * R + 0.2, { reg: 'beamPaint', ao: false });
+      for (const sz of [-1, 1]) for (let x = -R + 0.12; x < R - 0.1; x += 0.11) B.box(x, cy - 0.5, sz * R - 0.08, 0.025, 0.22, 0.025, { reg: 'grain', tint: '#8a2a1c' });
+      for (const sz of [-1, 1]) B.box(0, cy - 0.53, sz * R - 0.08, 2 * R - 0.2, 0.03, 0.03, { reg: 'grain', tint: '#8a2a1c' });
+      // 美人靠 bench along the back & sides
+      const bench = (x0, z0, x1, z1) => {
+        const L = hypot(x1 - x0, z1 - z0), a = atan2(z1 - z0, x1 - x0);
+        B.push().tr((x0 + x1) / 2, H, (z0 + z1) / 2).ry(-a);
+        B.box(0, 0.42, 0, L, 0.06, 0.34, { reg: 'grain', mat: 'gloss', tint: '#7a2a1e' });
+        B.box(0, 0, 0.06, L, 0.42, 0.04, { reg: 'grain', tint: '#5a2016' });
+        for (let x = -L / 2 + 0.06; x < L / 2; x += 0.09) { B.push().tr(x, 0.48, -0.17).rx(0.35); B.box(0, 0, 0, 0.025, 0.42, 0.025, { reg: 'grain', tint: '#6a2418' }); B.pop(); }
+        B.push().tr(0, 0.88, -0.32).rx(0.35); B.box(0, 0, 0, L, 0.05, 0.06, { reg: 'grain', mat: 'gloss', tint: '#7a2a1e' }); B.pop();
+        B.pop();
+      };
+      bench(-R + 0.12, -R + 0.08, R - 0.12, -R + 0.08);
+      bench(-R + 0.08, R - 0.4, -R + 0.08, -R + 0.25);
+      bench(R - 0.08, -R + 0.25, R - 0.08, R - 0.4);
+      // stone table & stools
+      B.lathe(0, H, 0.0, [[0.22, 0], [0.12, 0.08], [0.1, 0.55], [0.18, 0.62], [0.42, 0.66], [0.44, 0.72], [0.0, 0.74]], { reg: 'granite', seg: 16 });
+      for (let k = 0; k < 3; k++) { const a = k * TAU / 3 + 0.5; B.lathe(sin(a) * 0.68, H, cos(a) * 0.68, [[0.15, 0], [0.11, 0.2], [0.15, 0.4], [0.0, 0.42]], { reg: 'granite', seg: 10 }); }
+      // roof
+      const rf = roof(B, { type: 'hip', hx: 1.75, hz: 1.75, xr: 0, cz: -0.08, yr: 5.25, ye: cy - 0.05, curve: 0.55, lift: 0.42, kick: 0.22, tile: 'tileGreen', mat: 'gloss', rows: 9, thick: 0.1, soffitTint: '#7a6a5a' });
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        const hl = rf.hipLine(sx, sz, 10).map((p) => [p[0], p[1] + 0.03, p[2]]);
+        ridge(B, hl, { w: 0.12, h: 0.16, tint: '#2c5c4a', mat: 'gloss', reg: 'tileGreen', ends: [null, 'curl'], len: 0.35, rise: 0.32, size: 0.5 });
+      }
+      gourdAt(B, 0, 5.2, -0.08, 1.25);
+      for (const sx of [-1, 1]) lanternAt(B, sx * R, cy - 0.85, R + 0.0, { lit, r: 0.15, cord: 0.22 });
+    },
+    update(node, o, t) { tick(t); },
+  });
+
+  // =================================================================================================
+  // 牌坊 paifang — memorial gateway: two posts with 抱鼓石 drum stones, two beams framing the name board and carved
+  // panels, a small tiled roof with swallowtails and a pearl. v0 granite (green tiles), v1 red lacquer (red tiles)
+  // =================================================================================================
+  han('paifang', {
+    nv: 2, salt: 31,
+    key: (o) => o.text || '',
+    build(B, c) {
+      const stone = c.v === 0, px = 1.5, Hp = 4.35;
+      const pst = stone ? { reg: 'granite', tint: '#e6e0d4' } : { reg: 'grain', mat: 'gloss', tint: '#b02a20' };
+      const bmo = stone ? { reg: 'granite', tint: '#d8d2c6' } : { reg: 'beamPaint', ao: false };
+      for (const sx of [-1, 1]) {
+        B.box(sx * px, 0, 0, 0.62, 0.32, 0.62, { reg: 'granite', tint: '#d0cabe' });
+        B.box(sx * px, 0.32, 0, 0.36, Hp - 0.32, 0.36, pst);
+        if (!stone) for (const y of [0.32, Hp - 0.06]) B.box(sx * px, y, 0, 0.38, 0.06, 0.38, { reg: 'gold', mat: 'metal' });
+        for (const sz of [-1, 1]) { // 抱鼓石 drum stones bracing the post front and back
+          B.box(sx * px, 0.32, sz * 0.42, 0.24, 0.42, 0.46, { reg: 'granite', tint: '#dcd6ca' });
+          B.push().tr(sx * px, 0.95, sz * 0.38).rz(PI / 2);
+          B.cyl(0, -0.13, 0, 0.26, 0.26, 0.26, { reg: 'granite', tint: '#e2dcd0', seg: 14 });
+          B.pop();
+        }
+        // carved vertical couplets on the post faces
+        const txt = sx < 0 ? '慈航普渡' : '燈照彼岸';
+        for (const sz of [1, -1]) {
+          const uv = B.decal(60, 300, (g, W, H) => { g.fillStyle = stone ? '#cfc9bc' : '#a82a20'; g.fillRect(0, 0, W, H); chars(g, txt, W / 2, H / 2, 46, stone ? 'rgba(50,46,40,0.85)' : '#f2cb68', 'v', 1.25, stone ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)'); });
+          B.push().tr(sx * px, 2.05, sz * 0.183).ry(sz > 0 ? 0 : PI);
+          B.quad([-0.14, -0.75, 0], [0.14, -0.75, 0], [0.14, 0.75, 0], [-0.14, 0.75, 0], { mat: 'decal', ao: false }, uv);
+          B.pop();
+        }
+      }
+      // beams (lower 額枋, upper 大額枋) and the panels between them
+      B.box(0, 2.95, 0, 2 * px + 0.5, 0.3, 0.3, bmo);
+      B.box(0, 3.95, 0, 2 * px + 0.8, 0.32, 0.32, bmo);
+      for (const sx of [-1, 1]) { B.box(sx * 0.95, 3.25, 0, 0.9, 0.7, 0.18, stone ? { reg: 'relief', tint: '#ffffff' } : { reg: 'relief', tint: '#9ab8c8' }); B.box(sx * 0.48, 3.25, 0, 0.12, 0.7, 0.22, pst); }
+      for (const sz of [1, -1]) plaqueAt(B, 0, 3.6, sz * 0.12, 0.92, 0.6, c.text || '彼岸', Object.assign(stone ? { bg: '#2a3a5a', fg: '#f2d070', rim: '#8e8a7e' } : { bg: '#1c2f5a', fg: '#f6d06a', rim: '#d6a542' }, { ry: sz > 0 ? 0 : PI, ppm: 300 }));
+      for (const sx of [-1, 1]) for (const k of [0, 1]) B.box(sx * (0.5 + k * 0.4), 4.27, 0, 0.16, 0.16, 0.16, { reg: stone ? 'granite' : 'gold', mat: stone ? 'matte' : 'metal' }); // 斗 blocks
+      const rf = roof(B, { type: 'gable', hx: 2.25, hz: 0.62, yr: 5.08, ye: 4.42, curve: 0.45, lift: 0.14, ridgeLift: 0.16, tile: stone ? 'tileGreen' : 'tileRed', mat: stone ? 'gloss' : 'matte', rows: 4, thick: 0.1, vergeTint: stone ? '#2c4c42' : '#6a2418' });
+      ridge(B, ridgePath(rf, 2.0, 14, 0), { w: 0.16, h: 0.2, tint: stone ? '#2c4c42' : '#7a2a1e', ends: 'swallow', len: 0.55, rise: 0.42, band: 'porcelain', bandFrom: 2, bandTo: 2 });
+      pearlAt(B, 0, rf.ridgeY(0) + 0.18, 0, 0.7);
+    },
+  });
+
+  // =================================================================================================
+  // GRAND TEMPLES — 三川殿 front hall with a raised central roof (斷簷升箭口), dragon columns (龍柱), door gods (門神),
+  // painted beams & pendant brackets, 剪黏 twin dragons on the ridges, and a 歇山 main hall behind.
+  // The deity is never shown: the open centre door reveals an altar, candles and a closed embroidered curtain.
+  // =================================================================================================
+  const TEMPLES = {
+    temple: { tile: 'tileOrange', tileTint: '#ffffff', ridge: '#2f5e7a', side: 'ashlar', sideTint: '#ffffff', wood: '#9a2a20', bay: 'round', door: 1.3, text: '靈安宮', plaque: { bg: '#1c2f5a', fg: '#f6d06a', rim: '#d6a542' }, crown: 'pearl', dragon: '#4ab88a', main: 'tileOrange', lantern: 'red', cols: '#b3291f' },
+    mazu_temple: { tile: 'tileRed', tileTint: '#ffe8de', ridge: '#a63f2c', side: 'brickRed', sideTint: '#ffffff', wood: '#a8302a', bay: 'door', door: 1.7, text: '天后宮', vertical: true, plaque: { bg: '#1d2a55', fg: '#f2d070', rim: '#d6a542' }, crown: 'pagoda', dragon: '#3aa87a', main: 'tileRed', lantern: 'red', cols: '#aaa59b', studs: 'doorStuds' },
+    city_god_temple: { tile: 'tileDark', tileTint: '#ffffff', ridge: '#3c3f43', side: 'brickOld', sideTint: '#a88878', wood: '#3a2420', bay: 'door', door: 1.7, text: '城隍廟', vertical: true, plaque: { bg: '#121212', fg: '#d9b45a', rim: '#8a6a3a' }, crown: 'gourd', dragon: '#5f8a7c', main: 'tileDark', lantern: 'red', cols: '#86837d', studs: 'doorPlank', abacus: true, dim: 0.72 },
+  };
+  function grandTemple(B, c, C) {
+    const { w, h, lit } = c, W = w, D = h;
+    const PH = 0.42, hw = W / 2 - 0.08;
+    const zP = D / 2 - 0.42, zF = D / 2 - 1.05, zB = zF - 1.75, zM0 = zB - 0.25, zM1 = -D / 2 + 0.12;
+    const cw = C.door > 1.5 ? 1.05 : 1.2, dw = C.door, dh = 2.45;
+    const wood = C.wood;
+    // platform & steps
+    plinth(B, 0, 0, W - 0.04, D - 0.04, PH, { side: 'ashlar', top: 'pave' });
+    steps(B, 0, D / 2 + 0.02, dw + 1.0, 3, PH / 3, 0.2, { flare: 0.1 });
+    B.push().tr(0, PH, 0);
+    // ---------------- front hall facade (local wall frame at zF)
+    const fe = 3.35; // front eave height above the platform
+    B.push().tr(0, 0, zF);
+    const sideX = cw + (hw - cw) / 2;
+    const holes = [{ x0: -dw / 2, x1: dw / 2, y0: 0, y1: dh }];
+    if (C.bay === 'door') for (const s of [-1, 1]) holes.push({ x0: s * sideX - 0.42, x1: s * sideX + 0.42, y0: 0, y1: 2.0 });
+    else for (const s of [-1, 1]) holes.push({ x0: s * sideX - 0.48, x1: s * sideX + 0.48, y0: 1.15, y1: 2.11 });
+    const fTop = 3.75;
+    // centre bay in red timber, side bays in stone / brick
+    wall(B, cw * 2, 0, fTop, 0.3, [holes[0]], { reg: 'woodNeutral', tint: wood, eave: fe, endL: true, endR: true });
+    for (const s of [-1, 1]) {
+      B.push().tr(s * (cw + (hw - cw) / 2), 0, 0);
+      wall(B, hw - cw, 0, fTop, 0.3, [holes[s < 0 ? 1 : 2]].map((q) => Object.assign({}, q, { x0: q.x0 - s * sideX, x1: q.x1 - s * sideX })), { reg: C.side, tint: C.sideTint, eave: fe, endL: true, endR: true });
+      B.pop();
+      B.box(s * sideX, 0, 0.04, hw - cw, 0.5, 0.08, { reg: 'granite', tint: '#e2dccf' }); // 裙堵 base course
+      if (C.bay === 'round') { // 龍虎窗: round stone window with bars, carved panel below
+        B.push().tr(s * sideX, 1.63, 0);
+        const ring = []; for (let k = 0; k <= 24; k++) { const a = (k / 24) * TAU; ring.push([cos(a) * 0.55, sin(a) * 0.55, 0.04]); }
+        B.sweep(ring, [[-0.09, -0.05], [0.09, -0.05], [0.09, 0.05], [-0.09, 0.05]], { hard: true, reg: 'granite', tint: '#e6e0d4', up: [0, 0, 1] });
+        for (let k = -3; k <= 3; k++) { const x = k * 0.13, hh = sqrt(max(0, 0.48 * 0.48 - x * x)); B.push().tr(x, 0, -0.1).ry(PI / 4); B.box(0, -hh, 0, 0.06, hh * 2, 0.06, { reg: 'granite', tint: '#d8d2c6' }); B.pop(); }
+        const fill = []; for (let k = 0; k <= 24; k++) { const a = (k / 24) * TAU; fill.push([cos(a) * 0.5, sin(a) * 0.5, -0.2]); }
+        B.fan([0, 0, -0.2], fill, { mat: 'glow', reg: 'white', tint: lit ? [0.3, 0.17, 0.07] : [0.03, 0.025, 0.02] });
+        B.pop();
+        B.box(s * sideX, 0.58, 0.035, 1.2, 0.5, 0.05, { reg: 'relief' });
+        B.rect(s * sideX, 0.83, 0.065, 1.1, 0.42, { reg: 'relief', decalUV: true });
+      } else { // side doors with studs
+        doorAt(B, s * sideX, 0.84, 2.0, 0.3, { leaves: 'closed', reg: C.studs, frameTint: wood, threshold: true, lit: false, depth: 0.4 });
+        B.box(s * sideX, 2.2, 0.03, 1.0, 0.36, 0.05, { reg: 'beamPaint', ao: false });
+      }
+    }
+    // centre door: door gods on the leaves, opened inward; interior altar behind (no deity shown)
+    doorAt(B, 0, dw, dh, 0.3, { leaves: 'open', reg: 'doorGodR', regL: 'doorGodL', lit, pins: true, frameTint: '#3a120e', depth: 1.9 });
+    B.push().tr(0, 0, -0.3);
+    B.box(0, 0, -1.25, dw * 0.85, 0.85, 0.42, { reg: 'grain', mat: 'gloss', tint: '#7a1a12' });                 // altar table
+    B.box(0, 0.05, -1.03, dw * 0.85, 0.72, 0.02, { reg: 'embroid' });                                          // table skirt 桌裙
+    B.lathe(0, 0.85, -1.25, [[0.0, 0], [0.12, 0.02], [0.16, 0.1], [0.14, 0.18], [0.0, 0.18]], { reg: 'bronze', mat: 'metal', seg: 10 });
+    for (const sx of [-1, 1]) { B.cyl(sx * dw * 0.32, 0.85, -1.25, 0.03, 0.03, 0.26, { reg: 'white', tint: '#c42a1f', seg: 6 }); B.cyl(sx * dw * 0.32, 1.11, -1.25, 0.02, 0.0, 0.07, { mat: 'glow', reg: 'white', tint: [2.6, 1.6, 0.5], seg: 5 }); }
+    B.grid(lin01(8), lin01(3), (u, v) => [lerp(-dw * 0.46, dw * 0.46, u), lerp(dh - 0.05, 0.9, v), -1.72 + sin(u * PI * 7) * 0.03], (u, v) => [u * 2, v * 2.4], { reg: 'embroid', face: [0, 0, 1], ao: false }); // closed shrine curtain
+    B.box(0, dh - 0.3, -1.6, dw * 0.95, 0.28, 0.06, { reg: 'gold', mat: 'metal' });
+    B.pop();
+    // plaque above the door (vertical 豎匾 for 媽祖/城隍, horizontal for the village temple)
+    if (C.vertical) plaqueAt(B, 0, dh + 0.65, 0.12, 0.42, 1.05, c.text || C.text, Object.assign({ dir: 'v', ppm: 260 }, C.plaque));
+    else plaqueAt(B, 0, dh + 0.42, 0.06, 1.35, 0.4, c.text || C.text, Object.assign({ ppm: 260 }, C.plaque));
+    B.box(0, fTop - 0.55, 0.02, cw * 2, 0.28, 0.06, { reg: 'beamPaint', ao: false });
+    B.pop();
+    // ---------------- porch: columns, beams, brackets, pendants, lanterns
+    for (const s of [-1, 1]) {
+      dragonColumn(B, s * cw, zP, 0, 3.15, 0.15, { tint: C.dragon, a0: s > 0 ? PI : 0 });
+      columnAt(B, s * (hw - 0.22), zP, 0, 3.15, 0.14, { tint: C.cols, reg: C.cols === '#b3291f' ? 'grain' : 'granite', mat: C.cols === '#b3291f' ? 'gloss' : 'matte' });
+      for (const x of [s * cw, s * (hw - 0.22)]) B.box(x, 3.1, (zP + zF) / 2, 0.18, 0.24, zP - zF + 0.2, { reg: 'beamPaint', ao: false }); // 通樑 tie beams
+      for (const x of [s * cw, s * (hw - 0.22)]) for (let k = 0; k < 3; k++) B.box(x, 3.15 + k * 0.14, zP, 0.22 + k * 0.1, 0.12, 0.22 + k * 0.06, { reg: k % 2 ? 'gold' : 'grain', mat: k % 2 ? 'metal' : 'gloss', tint: k % 2 ? '#ffffff' : '#7a2a1e' }); // 斗拱 stack
+      // 吊筒 hanging pendants with gilded lotus ends
+      const xp = s * sideX;
+      B.cyl(xp, 2.75, zP, 0.07, 0.07, 0.45, { reg: 'grain', mat: 'gloss', tint: '#7a2a1e', seg: 8 });
+      B.lathe(xp, 2.55, zP, [[0.0, 0], [0.08, 0.04], [0.11, 0.12], [0.08, 0.2]], { reg: 'gold', mat: 'metal', seg: 8 });
+    }
+    B.box(0, 3.15, zP, 2 * hw + 0.2, 0.3, 0.2, { reg: 'beamPaint', ao: false });
+    B.box(0, 3.45, zP, 2 * hw + 0.3, 0.12, 0.26, { reg: 'grain', tint: '#3a2418' });
+    B.box(0, 3.15, zP, 2 * hw + 0.1, 0.05, zP - zF, { reg: 'soffit', tint: '#7a6050', skip: 't', ao: false });
+    const lk = C.dim || 1;
+    for (const s of [-1, 1]) {
+      lanternAt(B, s * 0.68, 2.15, zP - 0.12, { kind: s < 0 ? 'ping' : 'an', lit, r: 0.27, h: 0.62, cord: 0.32, glow: 2.2 * lk, intensity: 1.2 });
+      for (const x of [s * (hw - 0.75), s * (cw + 0.42)]) lanternAt(B, x, 2.55, zP - 0.05, { lit, r: 0.14, cord: 0.22, glow: 2.2 * lk, light: abs(x) > 2 });
+    }
+    if (C.abacus) { // 城隍爺的大算盤 — the City God's great abacus, hung under the porch beam
+      B.box(0, 3.0, zP - 0.35, 1.5, 0.06, 0.06, { reg: 'grain', tint: '#2a1a12' }); B.box(0, 2.62, zP - 0.35, 1.5, 0.06, 0.06, { reg: 'grain', tint: '#2a1a12' });
+      for (const sx of [-1, 1]) B.box(sx * 0.75, 2.62, zP - 0.35, 0.06, 0.44, 0.06, { reg: 'grain', tint: '#2a1a12' });
+      B.box(0, 2.88, zP - 0.35, 1.5, 0.03, 0.05, { reg: 'grain', tint: '#2a1a12' });
+      for (let k = 0; k < 9; k++) for (const y of [2.93, 2.72, 2.79]) { B.push().tr(-0.6 + k * 0.15, y, zP - 0.35).rz(PI / 2); B.cyl(0, -0.025, 0, 0.035, 0.035, 0.05, { reg: 'grain', mat: 'gloss', tint: '#5a2a1a', seg: 6 }); B.pop(); }
+    }
+    // ---------------- front hall body: side & back walls
+    for (const s of [-1, 1]) { B.push().tr(s * hw, 0, (zF + zB) / 2).ry(s * PI / 2); wall(B, zF - zB, 0, fTop, 0.3, [], { reg: C.side, tint: C.sideTint, eave: fe, endL: true, endR: true }); B.pop(); }
+    B.push().tr(0, 0, zB).ry(PI); wall(B, 2 * hw, 0, fTop, 0.3, [], { reg: C.side, tint: C.sideTint }); B.pop();
+    // ---------------- main hall (正殿)
+    const mh = 4.3;
+    for (const s of [-1, 1]) { B.push().tr(s * hw, 0, (zM0 + zM1) / 2).ry(s * PI / 2); wall(B, zM0 - zM1, 0, mh, 0.3, [{ x0: -0.3, x1: 0.3, y0: 1.5, y1: 2.4 }], { reg: C.side, tint: C.sideTint, eave: mh, endL: true, endR: true }); windowAt(B, 0, 1.5, 0.6, 0.9, 0.3, { style: 'bars', lit, sill: false }); B.pop(); }
+    B.push().tr(0, 0, zM1).ry(PI); wall(B, 2 * hw, 0, mh, 0.3, [{ x0: -0.5, x1: 0.5, y0: 1.5, y1: 2.3 }], { reg: C.side, tint: C.sideTint, eave: mh }); windowAt(B, 0, 1.5, 1.0, 0.8, 0.3, { style: 'turtle', lit: false }); B.pop();
+    B.push().tr(0, 0, zM0); wall(B, 2 * hw, 3.6, mh, 0.3, [], { reg: C.side, tint: C.sideTint }); B.pop();
+    B.box(0, mh - 0.4, (zM0 + zM1) / 2, 2 * hw + 0.02, 0.3, zM0 - zM1 + 0.02, { reg: 'beamPaint', skip: 'b', ao: false });
+    // ---------------- roofs
+    const rc = (zP + 0.55 + zB - 0.15) / 2, rhz = (zP + 0.55 - (zB - 0.15)) / 2;
+    const tileM = C.tile === 'tileOrange' || C.tile === 'tileGreen' ? 'gloss' : 'matte';
+    const side = roof(B, { type: 'gable', hx: W / 2 + 0.3, hz: rhz, cz: rc, yr: fe + 1.25, ye: fe, curve: 0.55, lift: 0.22, ridgeLift: 0.28, tile: C.tile, tint: C.tileTint, mat: tileM, rows: 7, vergeTint: shade(C.ridge, -0.2) });
+    ridge(B, ridgePath(side, W / 2 + 0.1, 18, 0).map((p) => [p[0], p[1], p[2] + rc]), { w: 0.24, h: 0.32, tint: C.ridge, ends: 'swallow', len: 0.85, rise: 0.75, band: 'porcelain', bandFrom: 2, bandTo: 2 });
+    const cen = roof(B, { type: 'gable', hx: cw + 0.45, hz: rhz - 0.12, cz: rc, yr: fe + 2.0, ye: fe + 0.62, curve: 0.55, lift: 0.18, ridgeLift: 0.22, tile: C.tile, tint: C.tileTint, mat: tileM, rows: 7, vergeTint: shade(C.ridge, -0.2) });
+    ridge(B, ridgePath(cen, cw + 0.3, 12, 0).map((p) => [p[0], p[1], p[2] + rc]), { w: 0.24, h: 0.32, tint: C.ridge, ends: 'swallow', len: 0.7, rise: 0.65, band: 'porcelain', bandFrom: 2, bandTo: 2 });
+    for (const sx of [-1, 1]) B.fan([sx * (cw + 0.42), fe + 0.55, rc], cen.profile(sx * (cw + 0.42), 10, true).map((p) => [sx * (cw + 0.42), p[1], p[2]]).filter((p) => p[1] > fe + 0.5), { reg: 'beamPaint', ao: false, flip: sx < 0 }); // raised-roof side panels
+    ridgeCrown(B, 0, cen.ridgeY(0) + 0.3, rc, 0.95, 1.0, { center: C.crown === 'gourd' ? 'gourd' : 'pearl', body: C.dragon });
+    // side gables of the front hall (硬山)
+    for (const sx of [1, -1]) {
+      const x = sx * (hw + 0.0);
+      const top = side.profile(sx * (hw), 12, true).map((p) => [x, p[1] - 0.02, p[2] + rc]).filter((p) => p[1] > fTop - 0.01 && p[2] < zF + 0.05 && p[2] > zB - 0.05);
+      if (top.length > 2) B.fan([x, fTop, (zF + zB) / 2], (sx > 0 ? top.slice().reverse() : top), { reg: C.side, tint: C.sideTint, ao: false });
+    }
+    const mcz = (zM0 + zM1) / 2, mhz = (zM0 - zM1) / 2 + 0.65;
+    const main = roof(B, { type: 'xieshan', hx: W / 2 + 0.4, hz: mhz, xr: W / 2 - 0.55, v0: 0.42, cz: mcz, yr: mh + 2.15, ye: mh - 0.1, curve: 0.55, lift: 0.4, kick: 0.2, tile: C.main, tint: C.tileTint, mat: tileM, rows: 8, gableReg: 'beamPaint', bargeTint: shade(C.ridge, -0.2) });
+    ridge(B, ridgePath(main, W / 2 - 0.5, 18, 0).map((p) => [p[0], p[1], p[2] + mcz]), { w: 0.28, h: 0.38, tint: C.ridge, ends: 'swallow', len: 1.0, rise: 0.85, band: 'porcelain', bandFrom: 2, bandTo: 2 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      ridge(B, main.hipLine(sx, sz, 8).map((p) => [p[0], p[1] + 0.03, p[2]]), { w: 0.16, h: 0.2, tint: C.ridge, ends: [null, 'curl'], len: 0.5, rise: 0.5 });
+      ridge(B, main.gableEdge(sx, sz, 6).map((p) => [p[0] - sx * 0.05, p[1] + 0.03, p[2]]), { w: 0.14, h: 0.18, tint: C.ridge });
+    }
+    ridgeCrown(B, 0, main.ridgeY(0) + 0.36, mcz, 1.5, 1.35, { center: C.crown, body: C.dragon });
+    B.pop();
+    B.light(0, PH + 1.0, zF - 0.9, '#ffc070', lit ? 1.1 : 0.2, 4.5, 0.15);
+  }
+  for (const [id, C] of Object.entries(TEMPLES)) han(id, {
+    door: id === 'temple' ? 3 : 2, doorMin: id === 'temple' ? 0 : 1, maxLights: 4,
+    key: (o) => o.text || '',
+    build(B, c) { grandTemple(B, c, C); },
     update(node, o, t) { tick(t); },
   });
 
