@@ -1421,6 +1421,7 @@
       ]);
       S.flag('ch7_sq_pasuya', 1);
       S.quest('q_ch7_pasuya', 0);
+      S.objective('到神木林西南的霧谷，替 Voyu 看一看');
       return;
     }
     if (S.has('ch7_morning')) { await S.say('Voyu', '神木林在北邊。我們從小就被帶去看那棵樹。'); return; }
@@ -1677,6 +1678,7 @@
     await S.say('Voyu 的母親', '我會好好記得他。記得，跟等，是不一樣的。');
     S.bgm('tribe');
     S.cameraFollow();
+    S.objective(S.has('ch7_seaofclouds') ? '從神木林北邊，往玉山山徑去' : '到神木林東邊的崖上看雲海');
   };
 
   // ================================================================================================ 1.5 alishan_forest 神木林・雲海

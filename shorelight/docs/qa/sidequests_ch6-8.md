@@ -45,7 +45,7 @@ What the driver does, and does **not** do:
 | 6 | 林投姐 (心燈 `lantern_linto`, main story) | PASS | — |
 | 6 | 雲歸的蕈譜・潮音蕈 (`q_tuanzi_mush`, no 心燈) | PASS | spot was a bare, 靈視-only tile; now speaks without 靈視 and offers a 七彩靈蕈; 府城藥鋪 sells 七彩靈蕈 |
 | 7 | 老吳的鹽 (`q_ch7_salt`, no 心燈) | PASS | 老吳 now tells you to bring salt up the mountain |
-| 7 | 霧中的獵刀 (`q_ch7_pasuya`, 心燈 `lantern_tsou_hunter`) | PASS | — |
+| 7 | 霧中的獵刀 (`q_ch7_pasuya`, 心燈 `lantern_tsou_hunter`) | PASS | objective now follows the quest (it kept saying 「和 Voyu 說話」 after he asked) |
 | 7 | 燈母祠的壁畫 (`q_ch7_murals`, 心燈 `lantern_lamp_murals`) | PASS | — |
 | 7 | 雲歸的蕈譜・雲芝 (`q_tuanzi_mush`) | PASS | — |
 | 8 | 北港的香客 (`q_ch8_pilgrims`, 心燈 `lantern_beigang_pilgrims`) | PASS | — |
@@ -118,6 +118,7 @@ Other ch6 extras (赤崁樓燈謎, 大天后宮月老, 孔廟硯台) are not que
 | **Clues** | Voyu names 「神木林西南邊」, the quest log repeats it, the log is a visible object, the glimmers glow and cast light. |
 | **Window** | 玉山 「繼續往上走」: unstarted → 「1 盞心燈未點亮」; started → named (test `warn`, which also showed 再等等 steps back). |
 | **3D** | `3d_valley`: the three glimmer lights are present in the 3D view (screenshot `ch7_3d_valley`). |
+| **Issue found / fixed** | After Voyu's request the on-screen objective still read 「天亮了。和 Voyu 說話，再往北邊的神木林」, and after the delivery it stayed on 「把皮帽和獵刀帶回 Voyu 的家」. It is now 「到神木林西南的霧谷，替 Voyu 看一看」 on accepting, and after the delivery it moves on to the 雲海 / 玉山 objective. English in `en_ch7.js`. |
 | **Remaining** | none. |
 
 ### 心燈「燈母祠的壁畫」 (`q_ch7_murals` → `lantern_lamp_murals`)
@@ -169,7 +170,7 @@ the open quest or counts the unstarted 心燈 as documented, and 再等等 reall
 ## Test runs
 
 - `node tools/test/sidequests/ch6.side.js`: 6/6 PASS (ayi, ayi_warn, linto, mush, 3d, 3d_mush).
-- `node tools/test/sidequests/ch7.side.js`: salt, pasuya, warn, mush, murals PASS; see the 3D lines in the ch7 sections.
+- `node tools/test/sidequests/ch7.side.js`: 7/7 PASS (salt, pasuya, warn, mush, murals, 3d_valley, 3d_yunzhi).
 - `node tools/test/sidequests/ch8.side.js`: 3/3 PASS (pilgrims, oyster, warn).
 - `node tools/test/unit.js`: 64 passed. `node tools/test/validate.js`: 0 errors (15 warnings, about chests behind
   story-gated passages such as the 霧谷 log and the 舊城 sluice. These are reachable in play: the side-quest runs

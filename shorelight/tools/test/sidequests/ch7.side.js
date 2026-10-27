@@ -44,6 +44,7 @@ test('pasuya', '心燈「霧中的獵刀」：火塘夜 → 早上 Voyu → 神�
   await night(s);
   await s.talk('voyu');
   assert(await s.stage('q_ch7_pasuya') === 0, 'stage 0: Voyu asks');
+  assert(/霧谷/.test(await s.ev(() => G.state.vars.objective || '')), 'objective points at the 霧谷');
   await s.exit('alishan_forest');
   s.note('倒木 clue: ' + JSON.stringify(await s.clue(6, 23, 2, 1)));
   await s.act(6, 23, [], 'event:log');
@@ -59,6 +60,7 @@ test('pasuya', '心燈「霧中的獵刀」：火塘夜 → 早上 Voyu → 神�
   await s.exit('tsou_house');
   await s.talk('mother');
   assert(await s.done('q_ch7_pasuya') && await s.lit('lantern_tsou_hunter') && await s.item('c7_hulu') === 1, 'quest done, 心燈 lit, 小葫蘆');
+  assert(!/皮帽/.test(await s.ev(() => G.state.vars.objective || '')), 'objective moves on after the delivery');
 });
 
 // ---------------------------------------------------------------- the 玉山 upper gate warns about both
@@ -142,7 +144,7 @@ test('3d_valley', '3D：霧谷的三處「微光」在 3D 檢視下也有光', a
 test('3d_yunzhi', '3D：雲芝的「調查」標籤', async (s) => {
   await s.open('?debug&map=cloud_forest&lv=25&chapter=7&flags=' + F_CLOUD);
   await s.ev(() => { G.mapScene.enemies = []; });
-  await s.walk([9, 22]);
+  await s.walk([[8, 21], [7, 20], [9, 20], [8, 19]], '(next to the 雲芝)');
   await s.ff(1);
   await s.shot(SHOTS, 'ch7_3d_yunzhi');
 }, { render3d: true });

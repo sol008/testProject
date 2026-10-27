@@ -1421,4 +1421,5 @@ G.I18N.add({
   '星河把夢藤交給藤婆。她把藤折成三段，丟進火邊的陶壺裡。': 'Xinghe hands the Dream Vine to Granny Teng. She snaps it into three pieces and drops them into the clay pot by the fire.',
   // side-quest discoverability (docs/qa/sidequests_ch6-8.md)
   '上山的話，帶一包粗鹽去吧。山上的人家煮飯都用得著，送給部落的阿姨，她們會很歡喜。': 'If you\'re heading up the mountain, take a bag of coarse salt. Folks up there always need it for cooking. Give it to the women in the village; they\'ll be glad of it.',
+  '到神木林西南的霧谷，替 Voyu 看一看': 'Go to the misty valley southwest of the Sacred Tree Forest and look around for Voyu',
 });
