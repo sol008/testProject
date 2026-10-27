@@ -546,7 +546,12 @@ G.Map3D = (() => {
         const md = G.Models.defs[o.t];
         const fp = this.footprint(o);
         if (md && md.lights) {
-          for (const l of md.lights(o) || []) out.push({ x: o.x + fp[0] / 2 + (l.x || 0), y: l.y != null ? l.y : 1.2, z: o.y + fp[1] / 2 + (l.z || 0), color: l.color || '#ffb060', i: l.intensity || 1, r: l.distance || 4, flicker: l.flicker || 0 });
+          // light offsets are in model space: rotate them with the model's o.rot3d (THREE y-rotation)
+          const cr = Math.cos(o.rot3d || 0), sr = Math.sin(o.rot3d || 0);
+          for (const l of md.lights(o) || []) {
+            const lx = l.x || 0, lz = l.z || 0;
+            out.push({ x: o.x + fp[0] / 2 + lx * cr + lz * sr, y: l.y != null ? l.y : 1.2, z: o.y + fp[1] / 2 - lx * sr + lz * cr, color: l.color || '#ffb060', i: l.intensity || 1, r: l.distance || 4, flicker: l.flicker || 0 });
+          }
           continue;
         }
         const d = G.Objects.get(o.t);
