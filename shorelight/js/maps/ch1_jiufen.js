@@ -170,12 +170,12 @@
     tut_talk: { title: '操作說明', pages: [['{y}對話／調查{/}：面向人物或物件，按 Enter、空白鍵 或 Z。', '{y}取消／返回{/}：Esc 或 X。']] },
     tut_save: { title: '記錄點', pages: [['發著微光的石燈籠是「{y}記錄點{/}」。面向它按確認鍵，就能記錄目前的旅程。', '此外，每次穿過地圖出入口時，遊戲也會自動記錄一次（自動存檔欄位）。']] },
     tut_shop: { title: '商店', pages: [['商店：選「{y}購買{/}」挑選商品，左右鍵調整數量；也可以「{y}販賣{/}」掉用不到的東西。', '裝備類商品會標示裝上之後能力的變化（↑↓）。']] },
-    tut_menu: { title: '選單', pages: [['按 {y}C、M 或 Tab{/} 打開選單，可以查看道具、裝備、法術與隊伍狀態。', '{y}平安符{/}可以在戰鬥中使用：解除異常，還會護身三回合。先收好吧！']] },
+    tut_menu: { title: '選單', pages: [['按 {y}C、M 或 Tab{/} 打開選單，可以查看物品、裝備、仙術與隊伍狀態。', '{y}平安符{/}可以在戰鬥中使用：解除異常，還會護身三回合。先收好吧！']] },
     tut_equip: { title: '裝備', pages: [['打開選單 →「{y}裝備{/}」，把礦工頭巾戴上吧！', '裝備會改變能力值。']] },
     tut_field_enemy: { title: '地圖上的敵人', pages: [['地圖上看得到的就是敵人，碰到就會開戰。', '從背後或側面靠近，趁牠撞上你之前按確認鍵先砍一下，就能「{y}先制攻擊{/}」！', '等級遠高於敵人時，牠們會自己逃開。']] },
     tut_battle: { title: '戰鬥說明', pages: [['畫面上方的「行動順序」顯示誰先出手；速度越快，輪到得越頻繁。', '輪到你時選擇行動：{y}攻擊{/}、{y}仙術{/}（消耗真氣 MP）、{y}道具{/}、{y}防禦{/}、{y}逃跑{/}。']] },
     tut_element: { title: '五行', pages: [['五行：{y}金、木、水、火、土{/}。相剋時造成 1.5 倍傷害；反過來被剋，只剩 0.7 倍。', '金剋木、木剋土、土剋水、水剋火、火剋金。', '星河的「{y}螢火斬{/}」是火屬性——對金屬性的敵人特別有效！']] },
-    tut_gauge: { title: '劍意', pages: [['{y}劍意{/}滿了！受到傷害、或每次行動，劍意都會累積。', '滿到 100 時，可以施展消耗全部劍意的「{y}絕招{/}」——就像阿炳伯故事裡的劍仙一樣。']] },
+    tut_gauge: { title: '劍意', pages: [['{y}劍意{/}滿了！受到傷害、或每次行動，劍意都會累積。', '滿到 100 時，可以施展消耗全部劍意的「{y}絕技{/}」——就像阿炳伯故事裡的劍仙一樣。']] },
     tut_party: { title: '隊伍', pages: [['{y}白芷{/}加入了隊伍！她擅長「清心曲」療傷與水屬性的法術。', '她的身子比較單薄。選單的「隊伍」可以調整出場順序。']] },
     tut_combo: { title: '合擊', pages: [['{y}合擊{/}：特定的夥伴都在場、狀態良好時，可以一起施展「合擊」。', '星河與白芷的合擊——「{y}星河渡燈{/}」。在「仙術」選單的最下方。']] },
     tut_battle_item: { title: '戰鬥道具', pages: [['戰鬥中也可以使用{y}道具{/}。', '「{y}鹽米{/}」帶土屬性——土剋水，對水屬性的水鬼特別有效！']] },
@@ -1215,7 +1215,7 @@
     await S.say('xinghe:laugh', '是在討摸啦。');
     await S.say('baizhi:smile', '白白的、軟軟的、圓圓的……像阿柑姨說的那個——麻糬。');
     await S.say('baizhi:smile', '妳叫麻糬，好不好？');
-    await S.say('麻糬', '喵。');
+    await S.say('', '「喵。」');
     await S.walkTo('yuyuan_cat', 10, 10);
     S.face('yuyuan_cat', 'down');
     S.emote('yuyuan_cat', '…', 1.8);
@@ -1237,7 +1237,7 @@
     await S.say('xinghe:think', '……');
     await S.say('xinghe:hurt', '……好啦好啦！路上的魚乾，我出！');
     S.emote('mochi', '♥');
-    await S.say('麻糬', '喵。');
+    await S.say('', '「喵。」');
     S.remove('mochi'); S.remove('yuyuan_cat');
     S.flag('mochi_joined'); S.flag('yuyuan_joined');
     if (bz) bz.scripted = false;
@@ -1312,7 +1312,7 @@
         await S.say('abing:sad', '我的醒木……沒醒木，我講話就沒精神。');
         if (S.hasItem('c1_xingmu')) await xingmuReturn(S);
       } else {
-        await S.say('abing:smile', '少年仔，今仔日十四，暗時要去雞籠看放水燈某？');
+        await S.say('abing:smile', '少年仔，今仔日十四，暗時要去雞籠看放水燈無？');
         await S.say('abing:laugh', '我老啦，腳走不到海邊，就在這說給人聽。');
       }
     }
@@ -1354,7 +1354,7 @@
     await S.say('abing:serious', '四十幾年前，雞籠這邊，漳州人跟泉州人為了地盤，拿刀拿槍相拚。');
     await S.say('abing:sad', '死了好多人。屍骨收不完，就合葬在一起，蓋了一間廟——老大公廟。');
     await S.say('abing:normal', '後來大家想：再這樣拚下去，雞籠就沒人了。');
-    await S.say('abing:normal', '長輩們坐下來講好：以後不分漳泉，用「姓」來輪流辦中元普度。');
+    await S.say('abing:normal', '長輩們坐下來講好：以後不分漳泉，用「姓」來輪流辦中元普渡。');
     await S.say('abing:smile', '十一個姓，一姓一年。輪到的那一姓，就叫「主普」。');
     await S.say('abing:laugh', '要拚，就拚誰的陣頭較鬧熱、誰的水燈頭較漂亮——莫再拚誰的刀較利！');
     await S.say('abing:serious', '每年七月初一，老大公廟「開龕門」，鬼門開，好兄弟出來作客。');
@@ -1362,7 +1362,7 @@
     await S.say('abing:normal', '各姓扛著水燈頭，從雞籠街遊到望海巷的海邊，點火，放落海。');
     await S.say('abing:think', '水燈漂得越遠，那一姓今年就越旺。為什麼？');
     await S.say('abing:smile', '因為燈越遠，照到的水路越長，海裡的好兄弟，就越多人看得到路。');
-    await S.say('abing:normal', '十五普度，請好兄弟吃飽；八月初一，關龕門，再送他們回去。');
+    await S.say('abing:normal', '十五普渡，請好兄弟吃飽；八月初一，關龕門，再送他們回去。');
     await S.say('xinghe:smile', '今年陳姓做主普，陳伯做的水燈頭，一定漂最遠。');
     await S.say('abing:laugh', '哈哈，你這囝仔，自己家的燈就是較會吹！');
   }
@@ -3173,7 +3173,7 @@
     await S.say('chenbo:serious', '那個姑娘，有沒有說她是誰？');
     await S.say('xinghe:think', '沒有。她只叫我……別再去找她。');
     await S.say('chenbo:think', '……');
-    await S.say('chenbo:normal', '走吧。陳主委在等。');
+    await S.say('chenbo:normal', '走吧。陳爐主在等。');
     S.move('cb_d', 'UUUU', { wait: false });
     await S.move('player', 'UUUU', { speed: 2.2 });
     for (let i = 0; i < walkers.length; i++) S.remove('wk' + i);
@@ -3249,17 +3249,17 @@
     npcs: [
       { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', x: 7, y: 8, dir: 'down', if: klNpc,
         pos: (st) => (st.flags.ch1_keelung ? [7, 8] : [37, 8]), talk: (S) => klChenbo(S) },
-      { id: 'chen_chair', sprite: 'old_m', name: '陳主委', x: 7, y: 10, dir: 'down', if: klNpc, talk: (S) => S.lines([
+      { id: 'chen_chair', sprite: 'old_m', name: '陳爐主', x: 7, y: 10, dir: 'down', if: klNpc, talk: (S) => S.lines([
         '哈哈！陳師傅的徒弟！你看，咱陳姓的水燈頭，雞籠第一！',
-        '今年輪到咱陳姓做主普，是幾十年才一次的大事。',
+        '今年輪到咱陳姓做主普，是十一年才一次的大事。',
         '十一個姓輪流，一姓一年。輪到的人，出錢出力，辦得越大越有面子。',
         '以前漳泉相拚，拚刀拚命；現在各姓相拚，拚陣頭拚水燈頭。',
         '這款拚法，死不了人，大家還吃得飽飽。好啦！',
-      ], { name: '陳主委' }) },
+      ], { name: '陳爐主' }) },
       { id: 'fashi', sprite: 'taoist', name: '法師', x: 16, y: 27, dir: 'down', if: klNpc, talk: (S) => S.lines([
         '七月初一，老大公廟開龕門，好兄弟從龕裡出來，到人間作客。',
-        '十五普度，請他們吃飽；八月初一，關龕門，再請他們回去。',
-        '放水燈，是要照亮水路，請海裡的孤魂上岸來吃普度。',
+        '十五普渡，請他們吃飽；八月初一，關龕門，再請他們回去。',
+        '放水燈，是要照亮水路，請海裡的孤魂上岸來吃普渡。',
         '燈漂得越遠，照到的水路越長……',
         '只是今年，貧道點香的時候，煙一直往下沉。',
       ], { name: '法師' }) },
@@ -3290,10 +3290,10 @@
         '「六死三留一回頭」——十個人過海，六個死在海裡，三個留下來，一個逃回去。',
         '中元的水燈，就是點給那六個人看的。',
       ], { name: '老水手' }) },
-      { id: 'pudu_aunt', sprite: 'villager_f', name: '普度阿桑', x: 25, y: 28, dir: 'up', if: klNpc, talk: (S) => S.lines([
+      { id: 'pudu_aunt', sprite: 'villager_f', name: '普渡阿桑', x: 25, y: 28, dir: 'up', if: klNpc, talk: (S) => S.lines([
         '我們這區的供桌，每一樣都要插一支香，好兄弟才知道「這是給我的」。',
         '拜完要燒銀紙。好兄弟拿去用，在那邊才不會餓肚子。',
-      ], { name: '普度阿桑' }) },
+      ], { name: '普渡阿桑' }) },
       { id: 'lin_kl', sprite: 'doctor', name: '林大夫', x: 15, y: 8, dir: 'down', if: klNpc, talk: ['我來顧主普壇。每年擠到昏倒的，起碼五、六個。'] },
       { id: 'agan_kl', sprite: 'shopkeeper_f', portrait: 'agan', x: 24, y: 8, dir: 'down', if: klNpc, talk: (S) => S.say('agan:laugh', '星河！這邊這邊！阿柑姨幫陳姓的水燈頭準備了芋圓，等一下拜完分！') },
       { id: 'ajiu_kl', sprite: 'villager_m2', name: '阿九', x: 36, y: 7, dir: 'up', if: klNpc, talk: ['這盞燈，寫我阿娘的名字。……字很醜，她不會怪我。'] },
@@ -3381,7 +3381,7 @@
     await S.say('xinghe:surprise', '哇……');
     await S.say('xinghe:laugh', '每年看，還是好壯觀！');
     S.face('chenbo', 'player');
-    await S.say('chenbo:normal', '我去陳主委那裡。你自己逛，莫走遠。');
+    await S.say('chenbo:normal', '我去陳爐主那裡。你自己逛，莫走遠。');
     await S.say('chenbo:serious', '遊行開始之前回來。');
     await S.move('chenbo', 'LLLL');
     await lerpTo(ms.actor('chenbo') || {}, { alpha: 0 }, 0.4);
@@ -3450,7 +3450,7 @@
     S.move('chenbo', 'RRRRR', { wait: false, speed: 1.4 });
     S.move('player', 'RRRRR', { wait: false, speed: 1.4 });
     for (const h of FXK.heads) lerpTo(h, { dx: 5 }, 3.6, 'linear');
-    await S.say('陳主委', '陳姓的——走頭前！');
+    await S.say('陳爐主', '陳姓的——走頭前！');
     await S.say('群眾', '好啊——！');
     await S.say('xinghe:laugh', '陳伯！大家都在看我們的燈！');
     await S.say('chenbo:smile', '……嗯。');
@@ -3527,7 +3527,7 @@
     npcs: [
       { id: 'chenbo', sprite: 'chenbo', portrait: 'chenbo', x: 20, y: 16, dir: 'up',
         if: (st) => st.flags.ch1_bd_in && !st.flags.ch1_baizhi_found, pos: (st) => (st.flags.ch1_lanterns_back ? [24, 20] : [20, 16]), talk: (S) => bdChenbo(S) },
-      { id: 'chen_chair', sprite: 'old_m', name: '陳主委', x: 22, y: 15, dir: 'up', if: bdBefore, talk: ['等法師念完經，就點火下水。少年人，退後一點。'] },
+      { id: 'chen_chair', sprite: 'old_m', name: '陳爐主', x: 22, y: 15, dir: 'up', if: bdBefore, talk: ['等法師念完經，就點火下水。少年人，退後一點。'] },
       { id: 'fashi', sprite: 'taoist', name: '法師', x: 25, y: 17, dir: 'up', fixedDir: true, if: bdBefore, talk: ['南無……'] },
       { id: 'fisher1', sprite: 'fisherman', name: '漁夫', x: 14, y: 13, dir: 'up', if: bdBefore, talk: ['等一下推水燈頭，大家用力喔！'] },
       { id: 'fisher2', sprite: 'fisherman', name: '漁夫', x: 30, y: 13, dir: 'up', if: bdBefore, talk: ['浪很平，今年會漂很遠！'] },
@@ -3687,10 +3687,10 @@
     await wait(S, 1.0);
     // the release
     S.sfx('bell'); await wait(S, 0.3); S.sfx('bell');
-    await S.say('陳主委', '時辰到——點火！');
+    await S.say('陳爐主', '時辰到——點火！');
     S.sfx('fire');
     for (const h of FXB.heads) lerpTo(h, { burn: 1 }, 1.0);
-    await S.say('', '法師念咒。陳主委點燃陳姓水燈頭的底座，紙厝亮了起來。');
+    await S.say('', '法師念咒。陳爐主點燃陳姓水燈頭的底座，紙厝亮了起來。');
     await camTo(24, 11, 0.8);
     for (const h of FXB.heads) { h.frame = false; lerpTo(h, { y: 12.2 * T }, 1.2); }
     S.sfx('splash');
@@ -3721,7 +3721,7 @@
     await S.say('', '然後，所有的燈，開始往岸邊漂回來。');
     await S.say('群眾', '燈……燈倒轉來了！');
     await S.say('群眾', '歹兆頭啊！水燈倒漂，是好兄弟不肯收！');
-    await S.say('陳主委', '怎麼會……幾十年來，從來沒有……');
+    await S.say('陳爐主', '怎麼會……幾十年來，從來沒有……');
     await S.say('法師', '大家退後！離開水邊！');
     S.particles([{ type: 'mist', alpha: 0.26, density: 1.7, color: '#c0d0e8' }, 'embers']);
     S.sfx('wind');
@@ -3785,7 +3785,7 @@
     await camTo(37.5, 3.5, 0.8);
     await S.say('', '礁台。白色的水燈頭卡在礁岩之間。紙厝的屋簷樣式很古老，看不出是哪一姓的。燈裡的火是冷冷的白光。');
     await lerpTo(FXB, { girl: 1 }, 0.8);
-    await S.say('', '燈上，一個少女側躺著。烏黑的長髮散在水面上，髮梢泛著一點銀白的微光，用一條紅繩鬆鬆地綁著。');
+    await S.say('', '燈上，一個少女側躺著。烏黑的長髮散在水面上，髮梢泛著一點淡淡的微光，用一條紅繩鬆鬆地綁著。');
     await S.say('xinghe:surprise', '……！');
     await S.say('xinghe:surprise', '是她……夢裡的……');
     if (!auto()) { Snd.lullaby(80, 1); await wait(S, 3.2); Snd.stopLullaby(1.5); }
