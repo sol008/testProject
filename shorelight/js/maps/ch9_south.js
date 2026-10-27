@@ -112,9 +112,9 @@
     c9_es_summon_plague: { name: '咳出瘟鬼', desc: '一陣劇咳，又一隻瘟鬼滾了出來。', mp: 0, type: 'special', elem: null, target: 'self', power: 0, summon: ['plague_ghost_v1'], fx: 'summon', sfx: 'ghost' },
     c9_es_fever_fire: { name: '疫火', desc: '', mp: 0, type: 'mag', elem: 'fire', target: 'enemy', power: 1.2, status: { id: 'poison', chance: 0.3, turns: 3 }, fx: 'fire', sfx: 'fire' },
     c9_es_cough: { name: '群咳', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, buffs: [{ stat: 'atk', amt: -0.3, turns: 2 }], fx: 'debuff', sfx: 'debuff' },
-    c9_es_downslope: { name: '落山', desc: '整片山的風一口氣壓了下來！', mp: 0, type: 'phys', elem: 'wood', target: 'enemies', power: 1.7, delay: 1.2, fx: 'wind', sfx: 'wind' },
+    c9_es_downslope: { name: '落山', desc: '整片山的風一口氣壓了下來！', mp: 0, type: 'phys', elem: 'wood', target: 'enemies', power: 1.4, delay: 1.2, fx: 'wind', sfx: 'wind' },
     c9_es_gust: { name: '陣風', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 1.0, fx: 'wind', sfx: 'wind' },
-    c9_es_sandblast: { name: '風吹沙', desc: '', mp: 0, type: 'phys', elem: null, target: 'enemy', power: 1.45, status: { id: 'spdDown', chance: 0.5, turns: 3 }, fx: 'earth', sfx: 'wind' },
+    c9_es_sandblast: { name: '風吹沙', desc: '', mp: 0, type: 'phys', elem: null, target: 'enemy', power: 1.3, status: { id: 'spdDown', chance: 0.5, turns: 3 }, fx: 'earth', sfx: 'wind' },
     c9_es_saltmist: { name: '鹽霧', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, status: { id: 'seal', chance: 0.25, turns: 2 }, fx: 'seal', sfx: 'wind' },
     c9_es_howl: { name: '呼嘯', desc: '', mp: 0, type: 'buff', elem: null, target: 'self', power: 0, buffs: [{ stat: 'mag', amt: 0.3, turns: 3 }], fx: 'buff', sfx: 'wind' },
     c9_es_namecall: { name: '喚名', desc: '風裡有人在喊一個名字。', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 0.8, status: { id: 'seal', chance: 0.2, turns: 2 }, fx: 'wind', sfx: 'ghost' },
@@ -189,7 +189,7 @@
   }
   defE('c9_fallwind', {
     name: '落山風靈', art: 'fallwind', lv: 32, elem: 'wood', weak: ['metal'], resist: ['wood', 'water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 2.3, mag: 2.3, def: 1.15, spd: 1.4, exp: 7, gold: 7 },
+    m: { hp: 7.5, atk: 2.0, mag: 2.0, def: 1.1, spd: 1.25, exp: 7, gold: 7 },
     skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]],
     phases: [{ at: 0.5, summon: ['c9_puff_a', 'c9_puff_b', 'c9_puff_c'], skills: [['c9_es_gust', 3], ['c9_es_sandblast', 3], ['c9_es_saltmist', 1], ['c9_es_howl', 1]] }],
     drops: [['c9_mat_fengshi', 1], ['c9_hd_fenggu', 1]],
