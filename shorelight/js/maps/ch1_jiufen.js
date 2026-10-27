@@ -106,7 +106,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   EN.c1_foreman = mkEnemy({
     name: '工頭魂・金貴仔', art: 'miner_ghost', variant: 2, scale: 1.5, lv: 3, elem: 'metal', boss: true, immune: BOSS_IMM,
-    m: { hp: 4.1, atk: 1.4, def: 1.1, exp: 7, gold: 4 },
+    m: { hp: 5.2, atk: 2.0, mag: 1.4, def: 1.1, spd: 1.4, exp: 7, gold: 4 }, // tools/sim_story.js: was hp 4.1 atk 1.4 spd 1 (never threatened a careful player)
     skills: [['e_pickaxe', 5], ['c1_e_gold_dust', 2], ['c1_e_big_pick', 1]],
     phases: [{ at: 0.5, heal: 0.15, lines: [['工頭魂', '攏是我的！攏是我的！']], buffs: [{ stat: 'atk', amt: 0.3, turns: 3 }] }],
     desc: '舊金礦坑的工頭「金貴仔」。死了也抱著金塊不放，腰上還掛著算盤。被金子附了身，是「金」性的魂——金驚火。',

@@ -182,7 +182,7 @@
   });
   edef('c8_hundred_hands', {
     name: '潮怨・百手', art: 'tide_grudge', variant: 2, scale: 1.8, lv: 28, elem: 'water', resist: ['water'], boss: true, immune: BOSS_IMM,
-    m: { hp: 11, atk: 1.9, mag: 2.0, def: 1.1, spd: 1.2, exp: 7, gold: 6 },
+    m: { hp: 11, atk: 3.6, mag: 3.8, def: 1.1, spd: 2.3, exp: 7, gold: 6 }, // sim_story: was atk 1.9 mag 2.0 spd 1.2
     skills: [['c8_e_hands_drag', 3], ['c8_e_grudge_tide', 2], ['e_tg_curse', 1], ['c8_e_call_drowned', 1, 'turn>2']],
     phases: [
       { at: 0.5, lines: [['潮怨・百手', '……有人……在點燈叫我們……說回來吧……回來吧……'], ['yungui:serious', '點燈叫它們？……長明宮！']] },

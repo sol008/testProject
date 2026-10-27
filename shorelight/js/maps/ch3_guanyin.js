@@ -178,7 +178,7 @@
   });
   c3enemy('c3_river_boss', {
     name: '河伯怨靈', art: 'river_wraith', variant: 1, scale: 1.5, lv: 13, elem: 'water', weak: ['earth'], resist: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 10.5, atk: 1.5, mag: 1.7, def: 1.1, spd: 0.95, exp: 4, gold: 3.5 },
+    m: { hp: 15.2, atk: 3.0, mag: 3.4, def: 1.1, spd: 1.9, exp: 4, gold: 3.5 }, // sim_story: was hp 10.5 atk 1.5 mag 1.7 spd 0.95
     skills: [['c3_wraith_wave', 3], ['c3_wraith_bind', 2], ['c3_wraith_swallow', 2], ['c3_wraith_call', 1]],
     drops: [['xiangbao', 1]],
     desc: '河底淤泥與水草纏成的巨大人形，臉是一團漩渦。身上掛著幾盞熄滅的漁燈。',

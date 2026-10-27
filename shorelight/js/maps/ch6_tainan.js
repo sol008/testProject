@@ -145,7 +145,7 @@
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   defEnemy('c6_plague_mass', {
     name: '疫聚', art: 'plague_ghost', variant: 2, scale: 1.8, lv: 21, elem: 'earth', weak: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 12, atk: 1.95, mag: 2.05, def: 1.1, spd: 0.95, exp: 5.5, gold: 5 },
+    m: { hp: 17.4, atk: 3.9, mag: 4.1, def: 1.1, spd: 1.9, exp: 5.5, gold: 5 }, // sim_story: was hp 12 atk 1.95 mag 2.05 spd 0.95
     skills: [['c6_pm_cough', 3], ['c6_pm_fever', 2], ['c6_pm_drag', 2], ['c6_pm_gather', 1, 'hp<50']],
     phases: [{ at: 0.5, heal: 0.1, text: '灰霧裡又浮出了幾張臉——它在把整條街的哭聲吸回去。' }],
     drops: [['fengpao', 1]],
@@ -164,7 +164,7 @@
   });
   defEnemy('c6_netherlamp', {
     name: '冥燈護法', art: 'nether_guardian', lv: 24, elem: 'water', weak: ['earth'], resist: ['fire'], boss: true, immune: BOSS_IMM,
-    m: { hp: 12.5, atk: 2.05, mag: 2.1, def: 1.15, spd: 1.3, exp: 7, gold: 8 },
+    m: { hp: 12.5, atk: 3.45, mag: 3.55, def: 1.15, spd: 2.2, exp: 7, gold: 8 }, // sim_story: was atk 2.05 mag 2.1 spd 1.3
     skills: [['c6_ng_chain', 3], ['c6_ng_light', 3], ['c6_ng_bind', 2]],
     phases: [
       { at: 0.5, phase: 2, lines: [['baizhi:sad', '……它也在哭。它說：「不要打了，我也是被綁著的。」']], msg: '燈籠頭裂開了一道縫，藍火往外噴！',
@@ -192,7 +192,7 @@
   E.c6_yexuan.hp = 999999; E.c6_yexuan.def = 999;
   defEnemy('c6_moya2', {
     name: '墨鴉', sprite: 'moya', lv: 23, elem: 'water', weak: ['earth'], boss: true, immune: BOSS_IMM,
-    m: { hp: 6.5, atk: 1.7, mag: 1.8, def: 1.0, spd: 1.5, exp: 5, gold: 7 },
+    m: { hp: 7.2, atk: 2.05, mag: 2.15, def: 1.0, spd: 1.8, exp: 5, gold: 7 }, // sim_story: was hp 6.5 atk 1.7 mag 1.8 spd 1.5
     skills: [['c6_my_feathers', 3], ['c6_my_wings', 2], ['c6_my_peck', 2], ['c6_my_pride', 1, 'hp<50']],
     phases: [{ at: 0.5, lines: [['moya:angry', '我的羽毛！我新長的羽毛！']] }],
     drops: [['c6_crow_feather', 1]],

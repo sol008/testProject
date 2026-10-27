@@ -669,7 +669,7 @@ G.Data.enemyCurve = function (L) {
   troop('orchid_4', ['drowned_soul', 'drowned_soul', 'moray_v2'], 'orchid', 'battle2');
   def('tide_serpent', {
     name: '潮病海蛇', art: 'tide_serpent', lv: 36, elem: 'water', weak: ['earth', 'wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 9, atk: 2.1, mag: 2.03, def: 1.15, spd: 1.35, exp: 7, gold: 7 },
+    m: { hp: 11.5, atk: 3.05, mag: 2.95, def: 1.15, spd: 1.95, exp: 7, gold: 7 }, // tools/sim_story.js: was hp 9 atk 2.1 mag 2.03 spd 1.35
     skills: [['e_ts_bite', 3], ['e_ts_wave', 3], ['e_ts_sick', 1], ['e_sea_tentacle', 1]],
     drops: [['hd_kunlin', 1]],
     desc: '隨黑潮洄游的巨大海蛇，鱗片下滲著黑色的潮病。牠撞壞了拼板舟，不是因為兇猛，是因為痛。',
@@ -695,7 +695,7 @@ G.Data.enemyCurve = function (L) {
   troop('taroko_4', ['cliff_spirit_v1', 'fog_spirit_v2', 'drowned_soul'], 'taroko', 'battle2');
   def('gorge_colossus', {
     name: '峽谷巨像', art: 'gorge_colossus', lv: 38, elem: 'earth', weak: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8, atk: 3.04, mag: 2.72, def: 1.35, spd: 1.25, exp: 7, gold: 7 },
+    m: { hp: 8, atk: 2.15, mag: 1.65, def: 1.35, spd: 1.25, exp: 7, gold: 7 }, // tools/sim_story.js: was atk 3.04 mag 2.72 (its 濁流 nearly one-shot the party)
     skills: [['e_gc_smash', 3], ['e_gc_quake', 2], ['e_gc_river', 2], ['e_cliff_shell', 1, 'hp<50']],
     drops: [['ft_shunfeng', 1]],
     desc: '被潮病侵蝕的大理石巨像，立霧溪的碧水在它腳下變得混濁。它守著峽谷，卻已經不記得在守什麼。',
