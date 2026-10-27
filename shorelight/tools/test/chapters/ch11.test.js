@@ -62,11 +62,13 @@ class Run {
     const ok = await this.page.evaluate((t) => new Promise((res) => {
       const t0 = Date.now(); let since = 0;
       const iv = setInterval(() => {
+        if (G.GameOverScene && G.Scenes.top() instanceof G.GameOverScene) { clearInterval(iv); res('gameover'); return; }
         const idle = !G.Script.busy() && G.Scenes.top() === G.mapScene && G.Render.fade.a < 0.05;
         if (!idle) since = 0; else if (!since) since = Date.now();
         if ((since && Date.now() - since > 600) || Date.now() - t0 > t) { clearInterval(iv); res(idle); }
       }, 50);
     }), ms);
+    if (ok === 'gameover') throw new Error(`[${this.label}] GAME OVER (party wiped): ${await this.where()}`);
     if (!ok) throw new Error(`[${this.label}] not idle: ${await this.where()}`);
   }
   where() { return this.page.evaluate(() => `map=${G.mapScene && G.mapScene.def.id} top=${G.Scenes.top() && G.Scenes.top().constructor.name} busy=${G.Script.busy()} fade=${G.Render.fade.a.toFixed(2)}`); }
@@ -164,6 +166,7 @@ const SEGMENTS = {
   await R.choices([0]); await R.talk('ph_innkeeper');
   },
   flats: async (R) => {
+  await R.levelTo(39);
   // ---- 石滬灘 (11-04), 4-1 steps 2–4, 4-4 玄武蕈, 11-05 烏鬚船主
   await R.warp('penghu_flats', 28, 1, 'down');
   check('A: 11-04 ch11_flats', await R.flag('ch11_flats'));

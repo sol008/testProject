@@ -262,7 +262,7 @@
   }
   const BIMM = ['sleep', 'stun', 'trance'];
   mkEnemy('c11_captain', { name: '烏鬚船主', art: 'pirate_ghost', variant: 2, scale: 1.55, lv: 39, elem: 'water', weak: ['earth'], boss: true, immune: BIMM,
-    m: { hp: 6.5, atk: 2.2, mag: 2.0, def: 1.1, spd: 1.2, exp: 5, gold: 6 },
+    m: { hp: 6.5, atk: 1.9, mag: 1.6, def: 1.1, spd: 1.2, exp: 5, gold: 6 },
     skills: [['e11_cap_blade', 4], ['e11_cap_crew', 2, 'ally_dead'], ['e11_cap_keg', 2], ['e11_cap_rob', 1], ['e_pirate_cutlass', 2]],
     drops: [['c11_ac_captain_patch', 1]],
     desc: '三百年前在澎湖海面橫行的海盜頭子。錨鏈拴在一盞長明燈上，「守不住路，燈就燒老子。」' });
@@ -2662,7 +2662,7 @@
           b.say('火藥桶冒著煙！', 1.0); await b.wait(0.6);
           b._kegSelf = true; keg.hp = 0; b.kill(keg); b._kegSelf = false;
           G.Audio.sfx('fire'); b.shakeT = 0.6; b.say('轟！', 1.0);
-          for (const p of b.alive('party')) b.damage(p, magHit(b, u, p, 1.6, 'fire'), { elem: 'fire' });
+          for (const p of b.alive('party')) b.damage(p, magHit(b, u, p, 0.9, 'fire'), { elem: 'fire' });
           await b.wait(0.8);
         }
         if (b._capHurt && !u.dead) { b._capHurt = false; await bLines(b, [['烏鬚船主', '……老子的鬍子！！']]); }
