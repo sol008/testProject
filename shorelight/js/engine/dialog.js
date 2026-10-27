@@ -255,21 +255,37 @@ G.Dialog = (() => {
       ctx.globalAlpha = this.alpha;
       const n = this.idx + 1;
       const lh = 50;
-      // Lines too wide for the screen (most English narration) wrap onto extra rows at full size instead of being
-      // shrunk; the block stays vertically centred. A line that fits keeps the original one-row layout.
+      // English: lines too wide for the screen wrap onto balanced extra rows at full size instead of being shrunk to
+      // ~16px; the block stays vertically centred. Chinese keeps the original layout (one row each, the rare
+      // over-long line shrunk to fit). A line that fits is a single row in both languages.
       if (!this.layout || this.layout.lang !== G.I18N.lang()) {
         const size0 = this.o.size || 30;
+        const maxW = G.W - 160;
         const build = (size) => {
           ctx.font = G.font(size);
-          const rows = this.lines.map((l) => G.Render.wrap(ctx, l, G.W - 160).map((r) => r.map((g) => g.ch).join('')));
+          const en = G.I18N.isEn();
+          const sizes = [];
+          const rows = this.lines.map((l) => {
+            const w = G.Render.measure(ctx, l);
+            if (!en || w <= G.W - 120) {
+              sizes.push(w > G.W - 120 ? Math.max(16, Math.floor(size * (G.W - 120) / w)) : size);
+              return [l];
+            }
+            sizes.push(size);
+            // balanced: n rows of roughly equal width (no one-word last row)
+            const n = Math.ceil(w / maxW);
+            let r = G.Render.wrap(ctx, l, Math.min(maxW, w / n * 1.1));
+            if (r.length > n) r = G.Render.wrap(ctx, l, maxW);
+            return r.map((row) => row.map((g) => g.ch).join(''));
+          });
           const rowH = Math.round(size * 1.3);
           // once lines wrap, separate them a little more so each paragraph still reads as one
           const gap = rows.some((r) => r.length > 1) ? Math.max(lh, rowH + 18) : lh;
           const height = rows.reduce((h, r) => h + gap + Math.max(0, r.length - 1) * rowH, 0);
-          return { rows, rowH, gap, size, height, lang: G.I18N.lang() };
+          return { rows, sizes, rowH, gap, size, height, lang: G.I18N.lang() };
         };
         let L = build(size0);
-        while (L.height > G.H - 60 && L.size > 18) L = build(L.size - 2);
+        while (G.I18N.isEn() && L.height > G.H - 60 && L.size > 18) L = build(L.size - 2);
         this.layout = L;
       }
       const L = this.layout;
@@ -279,7 +295,7 @@ G.Dialog = (() => {
         const rows = L.rows[i].length ? L.rows[i] : [''];
         rows.forEach((row, k) => {
           G.Render.text(ctx, row, G.W / 2, y + k * L.rowH + (1 - a) * 8, {
-            size: L.size, align: 'center', color: this.o.color || '#efe3c2', alpha: a,
+            size: L.sizes[i], align: 'center', color: this.o.color || '#efe3c2', alpha: a,
           });
         });
         y += L.gap + (rows.length - 1) * L.rowH;
