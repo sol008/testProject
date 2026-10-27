@@ -296,7 +296,7 @@
         ? new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, fog: false, color: new T.Color(1.6, 1.7, 1.9), polygonOffset: true, polygonOffsetFactor: -2 })
         : new T.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: o.kind === 'shoe' ? 0.8 : 0.6, polygonOffset: true, polygonOffsetFactor: -2 });
       // the 2D art is centred at (32, 34) of the 64-px cell
-      const geo = new T.PlaneGeometry(1, 1);
+      const geo = glow ? new T.PlaneGeometry(1.2, 1.2) : new T.PlaneGeometry(1, 1);   // spirit prints a touch larger: they are the way out
       geo.rotateX(-Math.PI / 2);
       const p = new T.Mesh(geo, m);
       p.position.set(0, 0.025, 0.03);
@@ -330,11 +330,11 @@
       if (o.kind) { p.material.opacity = Math.min(1, hold); return; }
       const ph = (o.seq || 0) * 0.6;
       // never dimmer than ~0.7: the prints are the way out of the maze and must read through the fog at any moment
-      p.material.opacity = Math.min(1, (0.8 + 0.2 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade) * Math.max(0.85, hold));
+      p.material.opacity = Math.min(1, (0.85 + 0.15 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade) * Math.max(0.85, hold));
       const halo = node.getObjectByName('halo');
       if (halo) {
         if (!halo.userData.own) { halo.material = halo.material.clone(); halo.userData.own = true; }
-        halo.material.opacity = p.material.opacity * 0.55;
+        halo.material.opacity = p.material.opacity * 0.85;
       }
     },
     lights: () => [], // the print glows by itself; a pool light + halo per print read as floating blobs on maze paths
