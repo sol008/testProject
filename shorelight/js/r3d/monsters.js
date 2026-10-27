@@ -1757,3 +1757,422 @@
     shadowZ: 1,
   });
 })();
+
+// ----------------------------------------------------------------------------------------------------- batch: mine, shore & mist forest
+(() => {
+  const K = G.Mon3D.kit, defC = G.Mon3D._defC;
+  const { Paint, GEN, E, atk, bump, seg, sm, clamp, lerp, shade, mix, rgba } = K;
+  const { humanRig, limb, claw, breathe, FX, FY, v3, nrm, SIDES } = K.H;
+  const TAU = Math.PI * 2, PI = Math.PI, sin = Math.sin, cos = Math.cos, abs = Math.abs, min = Math.min, max = Math.max;
+  const furSlot = (base, dark, light) => (g, w, h, p, R) => { Paint.fill(g, w, h, p[base]); Paint.mottle(g, w, h, p[dark], 30, 8, 30, 0.35, R); Paint.strokes(g, w, h, p[dark], 260, 10, PI / 2, 1.4, 0.45, R, 0.6); Paint.strokes(g, w, h, p[light], 140, 8, PI / 2, 1, 0.35, R, 0.6); };
+
+  // ===================================================================================================
+  // 礦坑蝙蝠 mine_bat — gold-dust cave bat with glowing amber eyes and teal ore crystals grown along its spine;
+  // membranous wings on real finger bones, scalloped trailing edge, constant hover-flap.
+  defC('mine_bat', {
+    height: 1.5, fill: 0.92, radius: 0.5, shadow: 0.5, shadowA: 0.6, rimColor: '#ffd8e8',
+    pal: { fur: '#5a4652', furD: '#2a1e28', furL: '#9a7e86', wing: '#4a3046', wingD: '#1e1222', wingL: '#a0708a', bone: '#c8a8a8', eye: '#ffb43a', crystal: '#62f0d8', crystalD: '#1e7a7e', line: '#1a0e18', magic: '#7af5df' },
+    vars: [{ h: 160, s: 1.2, keep: ['eye'] }, { h: -40, s: 1.4, l: -0.03, set: { eye: '#ff4a3a' } }],
+    slots: {
+      fur: furSlot('fur', 'furD', 'furL'),
+      wing(g, w, h, p, R) {
+        Paint.hgrad(g, w, h, [0, p.wingD, 0.5, p.wing, 1, p.wingD]); Paint.mottle(g, w, h, p.wingL, 18, 10, 40, 0.25, R);
+        // veins
+        g.strokeStyle = rgba(p.wingL, 0.45); g.lineWidth = 1.5; for (let i = 0; i < 7; i++) { g.beginPath(); let x = R() * w, y = 0; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (R() - 0.5) * 30; y += h / 6; g.lineTo(x, y); } g.stroke(); }
+        // scalloped trailing edge (v 0 = canvas bottom)
+        g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+        g.beginPath(); g.ellipse(w / 2, h + 4, w * 0.48, h * 0.18, 0, 0, TAU); g.fill();
+        for (const x of [w * 0.15, w * 0.85]) { g.beginPath(); g.arc(x, h * 0.98, 8 + R() * 6, 0, TAU); g.fill(); } // tears
+        g.globalCompositeOperation = 'source-over';
+      },
+      bone(g, w, h, p) { Paint.vgrad(g, w, h, [0, p.bone, 1, p.wingD]); },
+      inner(g, w, h, p, R) { Paint.fill(g, w, h, mix(p.wingL, '#e89aa8', 0.5)); Paint.strokes(g, w, h, p.wing, 30, 30, PI / 2, 1, 0.4, R); },
+      eye: { size: 1, paint: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#1a0800', p.eye), emit: (g, w, h, p) => Paint.eye(g, w, h, shade(p.eye, -0.2), '#000', shade(p.eye, -0.4)) },
+      crystal: { size: 1, paint: (g, w, h, p) => Paint.hgrad(g, w, h, [0, p.crystalD, 0.4, p.crystal, 0.6, '#e8fffa', 1, p.crystalD]), emit: (g, w, h, p) => Paint.hgrad(g, w, h, [0, '#000', 0.5, shade(p.crystal, -0.3), 1, '#000']) },
+      fang: (g, w, h) => Paint.fill(g, w, h, '#f4ecdc'),
+    },
+    build(B, p) {
+      B.bone('body', 'root', [0, 1.0, 0]);
+      B.bone('head', 'body', [0, 1.18, 0.14]);
+      B.bone('jaw', 'head', [0, 1.13, 0.22]);
+      for (const [s, S] of SIDES) {
+        B.bone('ear' + S, 'head', [s * 0.08, 1.3, 0.1]);
+        const sh = [s * 0.13, 1.1, 0], el = [s * 0.42, 1.24, -0.03], wr = [s * 0.68, 1.12, 0.0];
+        const t1 = [s * 1.1, 1.3, 0.02], t2 = [s * 1.05, 0.92, -0.04], t3 = [s * 0.74, 0.74, -0.05];
+        B.bone('w0' + S, 'body', sh); B.bone('w1' + S, 'w0' + S, el); B.bone('w2' + S, 'w1' + S, wr);
+        B.bone('f1' + S, 'w2' + S, v3(wr, [t1[0] - wr[0], t1[1] - wr[1], t1[2] - wr[2]], 0.5)); B.bone('f2' + S, 'w2' + S, v3(wr, [t2[0] - wr[0], t2[1] - wr[1], t2[2] - wr[2]], 0.5)); B.bone('f3' + S, 'w2' + S, v3(wr, [t3[0] - wr[0], t3[1] - wr[1], t3[2] - wr[2]], 0.5));
+        B.bone('leg' + S, 'body', [s * 0.07, 0.86, -0.04]);
+        // wing bones (arm + three fingers)
+        B.tube([sh, el, wr], [0.03, 0.022, 0.018], { bones: ['w0' + S, 'w1' + S, 'w2' + S], slot: 'bone', seg: 6 });
+        const mids = [t1, t2, t3].map((t) => v3(wr, [t[0] - wr[0], t[1] - wr[1], t[2] - wr[2]], 0.5));
+        [t1, t2, t3].forEach((t, i) => B.tube([wr, mids[i], t], [0.016, 0.012, 0.004], { bones: ['w2' + S, 'f' + (i + 1) + S, 'f' + (i + 1) + S], slot: 'bone', seg: 5 }));
+        // thumb claw
+        B.tube([wr, v3(wr, [s * 0.02, 0.08, 0.05])], [0.014, 0.002], { w: 'w2' + S, slot: 'bone', seg: 5 });
+        // membrane panels between fingers, and from the last finger back to the body
+        const bul = (u, v) => sin(PI * v) * sin(PI * u) * 0.04;
+        B.sheet([wr, mids[0], t1], [wr, mids[1], t2], ['w2' + S, 'f1' + S, 'f1' + S], ['w2' + S, 'f2' + S, 'f2' + S], { slot: 'wing', n: 4, bulge: bul });
+        B.sheet([wr, mids[1], t2], [wr, mids[2], t3], ['w2' + S, 'f2' + S, 'f2' + S], ['w2' + S, 'f3' + S, 'f3' + S], { slot: 'wing', n: 4, bulge: bul });
+        B.sheet([el, wr, t3], [[s * 0.15, 1.04, -0.02], [s * 0.14, 0.92, -0.04], [s * 0.1, 0.82, -0.05]], ['w1' + S, 'w2' + S, 'f3' + S], ['w0' + S, 'body', 'body'], { slot: 'wing', n: 4, bulge: bul });
+        B.sheet([sh, el, wr], [[s * 0.15, 1.04, -0.02], [s * 0.15, 1.04, -0.02], el], ['w0' + S, 'w1' + S, 'w2' + S], ['w0' + S, 'w0' + S, 'w1' + S], { slot: 'wing', n: 2 });
+        // ears
+        B.geo(new THREE.ConeGeometry(0.06, 0.2, 7, 1), { at: [s * 0.085, 1.37, 0.09], rot: [-0.1, 0, -s * 0.35], scale: [1, 1, 0.45], w: 'ear' + S, slot: 'fur' });
+        B.geo(new THREE.ConeGeometry(0.04, 0.15, 6, 1), { at: [s * 0.088, 1.365, 0.11], rot: [-0.1, 0, -s * 0.35], scale: [1, 1, 0.3], w: 'ear' + S, slot: 'inner', outline: false });
+        // feet
+        B.tube([[s * 0.07, 0.86, -0.04], [s * 0.08, 0.76, -0.02], [s * 0.08, 0.72, 0.02]], [0.022, 0.014, 0.006], { bones: ['leg' + S, 'leg' + S, 'leg' + S], slot: 'bone', seg: 5 });
+        B.eye('eye' + S, 'head', [s * 0.075, 1.24, 0.28], 0.036, { ry: 0.85, rz: 0.6 });
+        B.geo(new THREE.ConeGeometry(0.012, 0.05, 5), { at: [s * 0.025, 1.13, 0.31], rot: [PI, 0, 0], w: 'jaw', slot: 'fang', outline: false });
+      }
+      // body + head
+      B.ell([0, 0.97, -0.01], [0.21, 0.25, 0.2], { w: 'body', slot: 'fur', seg: 18, rings: 12 });
+      B.ell([0, 1.21, 0.15], [0.16, 0.14, 0.15], { w: 'head', slot: 'fur', seg: 16, rings: 12 });
+      B.ell([0, 1.16, 0.29], [0.065, 0.05, 0.06], { w: 'head', slot: 'inner', seg: 10, rings: 7 });
+      B.ell([0, 1.12, 0.24], [0.05, 0.02, 0.05], { w: 'jaw', slot: 'inner', seg: 8, rings: 5 });
+      // ore crystals along the spine
+      const cr = [[0.1, 1.16, -0.1, 0.07, 0.38, -0.25, -0.35], [0.17, 1.1, -0.08, 0.055, 0.28, -0.2, -0.95], [0.04, 1.18, -0.12, 0.05, 0.26, -0.35, 0.1], [-0.08, 1.1, -0.14, 0.05, 0.22, -0.5, 0.6], [0.12, 1.0, -0.16, 0.05, 0.2, -0.7, -0.6], [-0.02, 0.98, -0.18, 0.045, 0.18, -0.9, 0.2]];
+      for (const [x, y, z, r, l, rx, rz] of cr) { const c = new THREE.ConeGeometry(r, l, 5, 1); c.translate(0, l / 2, 0); B.geo(c, { at: [x, y, z], rot: [rx, 0, rz], w: 'body', slot: 'crystal', smooth: false }); }
+    },
+    springs: SIDES.map(([s, S]) => ({ chain: ['ear' + S], tip: [0, 0.12, 0], k: 120, d: 8, g: 0, max: 0.3 })),
+    fx: {
+      dust: { n: 20, rate: 8, at: [0, 0.9, -0.05], box: [1.6, 0.4, 0.4], vel: [0, -0.3, 0], velR: [0.2, 0.1, 0.2], life: [0.8, 1.6], size: [0.025, 0.045], color: ['#ffe28a', '#c08a2a'], shape: 3, twinkle: 10 },
+      cast: { n: 30, rate: 0, burstRate: 40, at: [0, 1.1, 0.4], box: [0.3, 0.3, 0.3], vel: [0, 0.2, 1.2], velR: [0.8, 0.5, 0.4], life: [0.6, 1.2], size: [0.1, 0.16], color: ['#2a1e28', '#100810'], add: false, shape: 1, swirl: 8, swirlA: 2.5 },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.5, 0], box: [0.6, 0.5, 0.4], vel: [0, 0.6, 0], velR: [0.4, 0.3, 0.4], life: [0.8, 1.5], size: [0.05, 0.08], color: ['#7af5df', '#ffe28a'], shape: 3, twinkle: 8 },
+    },
+    lights: (C) => [{ bone: 'body', at: [0, 0.15, -0.15], color: C.p.crystal, i: 0.7, r: 2.5, flicker: 0.05 }],
+    // hover flap shared by idle/move/cast
+    clips: {
+      idle(P, t, k, C) {
+        const f = t * 3.2 * TAU / 3.2 * 1.6; const a = sin(f), up = cos(f);
+        for (const [s, S] of SIDES) {
+          P.r('w0' + S, 0, 0, s * (0.75 * a - 0.1)).r('w1' + S, 0, 0, s * 0.35 * a).r('w2' + S, 0, s * 0.25 * max(0, -a), s * 0.3 * a);
+          P.r('f1' + S, 0, 0, s * 0.15 * a).r('f3' + S, 0, 0, -s * 0.15 * a).r('leg' + S, 0.3 + 0.2 * up);
+        }
+        P.rootM(0, 0.08 - 0.06 * a, 0, 0.1 + 0.05 * up); P.r('head', -0.1 * a + sin(t * 0.7) * 0.1, sin(t * 0.5) * 0.25);
+      },
+      move(P, ph, k, C) { this.idle(P, ph * 1.3, k, C); P.rootM(0, 0.05, 0, 0.35); },
+      // swoop: rise & wings back, dive-bite, pull up
+      attack(P, t, k, C) {
+        const A = atk(k, 0.3, 0.45, 0.62);
+        this.idle(P, t * 1.4, k, C);
+        for (const [s, S] of SIDES) P.r('w0' + S, 0, -s * 0.6 * A.s, s * 0.8 * A.a - s * 0.3 * A.s);
+        P.rootM(0, 0.25 * A.a - 0.35 * A.s, 0.45 * A.s, -0.2 * A.a + 0.6 * A.s); P.r('jaw', 0.6 * A.s + 0.2 * A.a).r('head', 0.3 * A.s);
+      },
+      // screech → bat swarm
+      cast(P, t, k, C) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); this.idle(P, t * 1.8, k, C); P.r('head', -0.6 * u).r('jaw', 0.7 * u); P.rootM(0, 0.15 * u, -0.1 * u, -0.3 * u); P.ch('fx_cast', u); P.ch('glow', u * 1.5); },
+      hurt(P, t, k, C) { const u = (1 - E.outQ(k)) * min(1, k * 14); this.idle(P, t, k, C); P.rootM(0, -0.1 * u, -0.2 * u, -0.6 * u, 0, sin(t * 40) * 0.3 * u); for (const [s, S] of SIDES) P.r('w0' + S, 0, 0, s * 0.8 * u); },
+      // wings fold, it tumbles to the ground
+      die(P, t, k) {
+        const u = E.inQ(seg(k, 0, 0.4));
+        for (const [s, S] of SIDES) P.r('w0' + S, 0, -s * 1.2 * u, -s * 0.9 * u).r('w1' + S, 0, s * 1.5 * u, 0).r('w2' + S, 0, -s * 1.0 * u, 0);
+        P.rootM(0, -0.9 * u, 0, 0.6 * u, 0, 1.5 * u); P.ch('dissolve', E.inQ(seg(k, 0.45, 1))); P.ch('fx_death', bump(k, 0.4, 1) * 2);
+      },
+      enter(P, t, k, C) { this.idle(P, t * 1.5, k, C); const u = 1 - E.outC(seg(k, 0, 0.8)); P.rootM(0, 1.2 * u, -0.5 * u, 0.3 * u); P.ch('fade', u * 0.8); },
+    },
+    dur: { attack: 0.95, cast: 1.4 },
+    shadowZ: 0.6, shadowX: 1.6,
+  });
+
+  // ===================================================================================================
+  // 沙蟹精 sand_crab — a giant 八斗子 reef crab crusted with barnacles; one oversized crusher claw, stalked eyes,
+  // eight articulated legs; scuttles sideways. Steals offerings on 中元 nights.
+  defC('sand_crab', {
+    height: 1.05, fill: 0.92, radius: 0.6, shadow: 0.6, rimColor: '#ffe6c8', shadowX: 1.5,
+    pal: { shell: '#d98a4a', shellD: '#7a3a1e', shellL: '#ffd29a', spot: '#b4482a', belly: '#f0dcb8', leg: '#c8743e', eye: '#ffe86a', claw: '#e2904e', clawTip: '#3a1a14', line: '#4a2012', sand: '#e6cf9a', magic: '#ffd27a' },
+    vars: [{ h: 175, s: 0.9, keep: ['sand', 'eye'] }, { h: -28, s: 1.25, l: -0.08, keep: ['sand'], set: { eye: '#9affd8' } }],
+    slots: {
+      shell: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.shellL, 0.5, p.shell, 1, p.shellD]);
+        Paint.mottle(g, w, h, p.spot, 40, 8, 30, 0.45, R); Paint.mottle(g, w, h, p.shellL, 30, 5, 18, 0.35, R);
+        Paint.speck(g, w, h, p.shellD, 500, 3, 0.4, R);
+        // carapace grooves
+        g.strokeStyle = rgba(p.shellD, 0.7); g.lineWidth = 4; g.beginPath(); g.moveTo(w * 0.3, h * 0.35); g.quadraticCurveTo(w * 0.5, h * 0.5, w * 0.7, h * 0.35); g.moveTo(w * 0.5, h * 0.42); g.lineTo(w * 0.5, h * 0.15); g.stroke();
+      } },
+      leg(g, w, h, p, R) { Paint.hgrad(g, w, h, [0, p.shellD, 0.5, p.leg, 1, p.shellD]); Paint.speck(g, w, h, p.spot, 120, 3, 0.5, R); for (let y = 0; y < h; y += 22) { g.fillStyle = rgba(p.shellD, 0.5); g.fillRect(0, y, w, 3); } },
+      claw(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.clawTip, 0.25, p.claw, 0.7, p.shellL, 1, p.claw]); Paint.speck(g, w, h, p.spot, 200, 4, 0.5, R); Paint.mottle(g, w, h, p.shellD, 10, 8, 20, 0.3, R); },
+      tip(g, w, h, p) { Paint.vgrad(g, w, h, [0, p.clawTip, 1, p.claw]); },
+      belly(g, w, h, p, R) { Paint.fill(g, w, h, p.belly); Paint.strokes(g, w, h, shade(p.belly, -0.25), 30, 60, 0, 2, 0.5, R, 0.1); },
+      barnacle(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, '#5a5048', 0.4, '#d8d0c0', 1, '#f6f0e6']); Paint.strokes(g, w, h, '#8a8070', 40, 40, PI / 2, 2, 0.6, R, 0.05); },
+      eye: { size: 1, paint: (g, w, h, p) => Paint.eye(g, w, h, p.eye, '#120800', '#1a0e0a'), emit: (g, w, h, p) => Paint.eye(g, w, h, shade(p.eye, -0.4), '#000', '#000') },
+    },
+    build(B, p) {
+      B.bone('body', 'root', [0, 0.52, 0]);
+      B.bone('mouth', 'body', [0, 0.5, 0.33]);
+      // shell: flattened, wider than long, front edge lobed
+      B.ell([0, 0.56, 0], [0.5, 0.2, 0.36], { w: 'body', slot: 'shell', seg: 28, rings: 14, deform: (v) => { if (v.z > 0.15) v.y -= (v.z - 0.15) * 0.25; v.y += sin(Math.atan2(v.x, v.z) * 7) * 0.008; } });
+      B.ell([0, 0.47, 0.02], [0.42, 0.11, 0.3], { w: 'body', slot: 'belly', seg: 20, rings: 8, th0: PI * 0.5, thLen: PI * 0.5 });
+      // barnacles
+      const R = K.rng(7);
+      for (let i = 0; i < 9; i++) { const a = R() * TAU, r = 0.1 + R() * 0.3; const x = cos(a) * r, z = sin(a) * r * 0.7; const y = 0.56 + 0.2 * Math.sqrt(max(0, 1 - (x / 0.5) ** 2 - (z / 0.36) ** 2)); const c = new THREE.CylinderGeometry(0.02 + R() * 0.015, 0.035 + R() * 0.02, 0.04 + R() * 0.03, 7, 1, true); B.geo(c, { at: [x, y + 0.01, z], rot: [z * 0.8, 0, -x * 0.8], w: 'body', slot: 'barnacle' }); }
+      // eye stalks (spring)
+      for (const [s, S] of SIDES) {
+        B.bone('stalk' + S, 'body', [s * 0.09, 0.66, 0.3]); B.bone('eye' + S, 'stalk' + S, [s * 0.11, 0.84, 0.33]);
+        B.tube([[s * 0.09, 0.66, 0.3], [s * 0.11, 0.84, 0.33]], [0.025, 0.02], { bones: ['stalk' + S, 'eye' + S], slot: 'leg', seg: 6 });
+        B.ell([s * 0.11, 0.87, 0.34], [0.04, 0.045, 0.04], { w: 'eye' + S, slot: 'eye', rot: [0, s * 0.3, 0] });
+      }
+      // legs: 4 per side
+      for (const [s, S] of SIDES) for (let i = 0; i < 4; i++) {
+        const z = 0.16 - i * 0.13, ang = (i - 1.5) * 0.25;
+        const hp = [s * 0.4, 0.5, z], kn = [s * 0.6, 0.66, z - ang * 0.3], ft = [s * 0.74, 0.02, z - ang * 0.5];
+        const n = 'lg' + S + i;
+        B.bone(n + 'a', 'body', hp); B.bone(n + 'b', n + 'a', kn); B.bone(n + 'c', n + 'b', ft);
+        B.tube([hp, kn, v3(kn, [ft[0] - kn[0], ft[1] - kn[1], ft[2] - kn[2]], 0.55), ft], [0.06, 0.055, 0.04, 0.008], { bones: [n + 'a', n + 'b', n + 'b', n + 'c'], slot: 'leg', seg: 7, flat: [1, 0.7] });
+      }
+      // claws: right one oversized (crusher)
+      for (const [s, S] of SIDES) {
+        const big = s < 0 ? 1.6 : 1.0;
+        const sh = [s * 0.32, 0.52, 0.3], el = [s * 0.5, 0.58, 0.5], wr = [s * 0.42, 0.62, 0.72];
+        B.bone('arm' + S, 'body', sh); B.bone('fore' + S, 'arm' + S, el); B.bone('claw' + S, 'fore' + S, wr);
+        const tipP = v3(wr, [-s * 0.08, 0.02, 0.28], big);
+        B.bone('pin' + S, 'claw' + S, v3(wr, [-s * 0.02, -0.04, 0.1], big));
+        B.tube([sh, el, wr], [0.05 * big, 0.055 * big, 0.06 * big], { bones: ['arm' + S, 'fore' + S, 'claw' + S], slot: 'leg', seg: 8 });
+        // propodus (fixed finger) + palm
+        B.ell(v3(wr, [0, 0, 0.06], big), [0.1 * big, 0.08 * big, 0.12 * big], { w: 'claw' + S, slot: 'claw', seg: 12, rings: 8 });
+        B.tube([v3(wr, [0, 0.02, 0.14], big), v3(wr, [-s * 0.04, 0.03, 0.24], big), tipP], [0.05 * big, 0.035 * big, 0.006], { w: 'claw' + S, slot: 'tip', seg: 7, flat: [1, 0.7] });
+        // dactyl (moving finger)
+        const pb = v3(wr, [-s * 0.02, -0.04, 0.1], big);
+        B.tube([pb, v3(pb, [-s * 0.03, -0.03, 0.12], big), v3(pb, [-s * 0.07, 0.0, 0.2], big)], [0.04 * big, 0.03 * big, 0.005], { w: 'pin' + S, slot: 'tip', seg: 7, flat: [1, 0.7] });
+      }
+    },
+    springs: SIDES.map(([s, S]) => ({ chain: ['stalk' + S], tip: [s * 0.02, 0.18, 0.03], k: 80, d: 6, g: 0, max: 0.5 })),
+    fx: {
+      bubble: { n: 14, rate: 2, bone: 'mouth', box: [0.1, 0.05, 0.05], vel: [0, 0.25, 0.15], velR: [0.1, 0.05, 0.1], life: [0.8, 1.5], size: [0.04, 0.08], color: ['#ffffff', '#bff0ff'], alpha: 0.55, swirl: 5, swirlA: 0.4, add: false },
+      cast: { n: 40, rate: 0, burstRate: 50, bone: 'mouth', box: [0.15, 0.1, 0.1], vel: [0, 0.3, 1.2], velR: [0.4, 0.3, 0.3], life: [0.8, 1.5], size: [0.08, 0.16], color: ['#ffffff', '#9fe8ff'], alpha: 0.6, swirl: 4, swirlA: 1, add: false },
+      sand: { n: 24, rate: 0, burstRate: 40, at: [0, 0.03, 0], box: [1.6, 0.05, 0.8], vel: [0, 0.5, 0], velR: [0.4, 0.3, 0.4], g: 3, life: [0.5, 0.9], size: [0.06, 0.1], color: ['#e6cf9a', '#a08a5a'], add: false, shape: 1 },
+      death: { n: 30, rate: 0, burstRate: 30, at: [0, 0.5, 0], box: [0.8, 0.4, 0.6], vel: [0, 0.6, 0], velR: [0.3, 0.3, 0.3], life: [0.8, 1.5], size: [0.06, 0.1], color: ['#ffffff', '#bff0ff'], alpha: 0.6, add: false },
+    },
+    clips: {
+      idle(P, t) {
+        P.rootM(0, sin(t * 2) * 0.01, 0, sin(t * 1.1) * 0.02, sin(t * 0.4) * 0.08, sin(t * 1.3) * 0.02);
+        for (const [s, S] of SIDES) {
+          P.r('arm' + S, sin(t * 1.4 + s) * 0.06, 0, 0).r('pin' + S, 0, 0, s * (0.2 + 0.2 * max(0, sin(t * (s > 0 ? 2.2 : 1.7))))); // claw clicks
+          P.r('stalk' + S, sin(t * 1.9 + s * 2) * 0.12, 0, s * sin(t * 0.7) * 0.1);
+          for (let i = 0; i < 4; i++) P.r('lg' + S + i + 'a', 0, 0, s * sin(t * 2.5 + i * 1.3 + s) * 0.04);
+        }
+        P.ch('fx_bubble', 0);
+      },
+      // sideways scuttle: alternating tetrapod gait
+      move(P, ph) {
+        for (const [s, S] of SIDES) for (let i = 0; i < 4; i++) {
+          const q = ph * TAU + (i % 2 ? PI : 0) + (s > 0 ? 0 : PI);
+          P.r('lg' + S + i + 'a', 0, sin(q) * 0.25, s * max(0, cos(q)) * 0.35).r('lg' + S + i + 'b', 0, 0, -s * max(0, cos(q)) * 0.25);
+        }
+        P.rootM(sin(ph * TAU) * 0.03, abs(sin(ph * TAU * 2)) * 0.02, 0, 0, 0, sin(ph * TAU) * 0.05);
+      },
+      // big crusher claw: raise, snap down, pinch
+      attack(P, t, k) {
+        const A = atk(k, 0.33, 0.47, 0.66), snap = seg(k, 0.4, 0.5) * (1 - seg(k, 0.7, 0.9));
+        P.r('armR', -0.9 * A.a + 0.4 * A.s, 0.5 * A.a, 0).r('foreR', -0.5 * A.a + 0.3 * A.s).r('clawR', -0.4 * A.a + 0.5 * A.s).r('pinR', 0, 0, -0.55 * A.a + 0.6 * snap);
+        P.r('armL', -0.3 * A.a, -0.3 * A.a, 0);
+        P.rootM(0, 0.04 * A.a, 0.15 * A.s, -0.12 * A.a + 0.15 * A.s, 0.2 * A.a - 0.2 * A.s, 0);
+        for (const [s, S] of SIDES) for (let i = 0; i < 4; i++) P.r('lg' + S + i + 'b', 0, 0, -s * 0.15 * A.a);
+      },
+      // bubble blast from the mouth
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0.06 * u, 0, -0.2 * u); for (const [s, S] of SIDES) P.r('arm' + S, -0.6 * u, s * 0.4 * u, 0).r('pin' + S, 0, 0, -s * 0.4 * u * (0.5 + 0.5 * sin(t * 18))); P.ch('fx_cast', u); },
+      // double pinch + sand kick
+      special(P, t, k) {
+        const a1 = bump(k, 0.1, 0.45), a2 = bump(k, 0.4, 0.8);
+        P.r('armR', -0.6 * a1 + 0.4 * a2).r('pinR', 0, 0, 0.5 * a1).r('armL', -0.6 * a2).r('pinL', 0, 0, -0.5 * a2);
+        P.rootM(0, 0, 0.2 * (a1 + a2), 0.1 * (a1 + a2)); P.ch('fx_sand', bump(k, 0.4, 0.6) * 3);
+      },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(sin(t * 50) * 0.02 * u, 0.05 * u, -0.12 * u, -0.25 * u); for (const [s, S] of SIDES) P.r('arm' + S, -0.4 * u, s * 0.5 * u, 0).r('stalk' + S, -0.4 * u); },
+      // flips onto its back, legs curl
+      die(P, t, k) {
+        const u = E.ioQ(seg(k, 0, 0.45));
+        P.rootM(0, 0.35 * bump(k, 0, 0.5) + 0.28 * u, 0, 0, 0, PI * u);
+        for (const [s, S] of SIDES) for (let i = 0; i < 4; i++) P.r('lg' + S + i + 'a', 0, 0, s * 0.6 * seg(k, 0.4, 0.6) + s * sin(t * 25 + i) * 0.15 * bump(k, 0.4, 0.8)).r('lg' + S + i + 'b', 0, 0, -s * 0.9 * seg(k, 0.4, 0.6));
+        P.ch('dissolve', E.inQ(seg(k, 0.55, 1))); P.ch('fx_death', bump(k, 0.5, 1) * 2);
+      },
+      // bursts out of the sand
+      enter(P, t, k) { const u = 1 - E.outBack(seg(k, 0.1, 0.8)); P.rootM(0, -0.5 * clamp(u, 0, 1.2), 0, 0.3 * u); P.ch('fx_sand', bump(k, 0, 0.5) * 3); },
+    },
+    dur: { attack: 1.05, special: 1.3, die: 1.7, enter: 1.2 },
+    cadence: 1.4,
+  });
+
+  // ===================================================================================================
+  // 魔神仔 mosina — the little red-faced mountain imp that leads hikers astray: oversized grinning head with sly
+  // amber eyes, pointed ears, twig-thin dark limbs with long fingers, a cape-skirt of leaves, sprigs on the crown.
+  defC('mosina', {
+    height: 1.3, fill: 0.92, radius: 0.3, shadow: 0.32, rimColor: '#ffe0a0',
+    pal: { face: '#d24a3a', faceD: '#7e1e1e', faceL: '#ff9a7a', limb: '#7a3a2a', limbD: '#3a1610', leaf: '#4f8a3a', leafD: '#1f4020', leafL: '#a4d06a', leaf2: '#8a7a32', eye: '#fff07a', teeth: '#f6eedc', line: '#2a0e0a', magic: '#b4f07a' },
+    vars: [{ h: 40, s: 0.9, keep: ['eye', 'teeth'] }, { h: -60, s: 1.1, l: -0.05, keep: ['teeth', 'face', 'faceD', 'faceL'], set: { eye: '#9af0ff' } }],
+    slots: {
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.faceL, 0.5, p.face, 1, p.faceD]); Paint.mottle(g, w, h, p.faceD, 50, 8, 30, 0.35, R); Paint.speck(g, w, h, p.faceD, 200, 2, 0.4, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.07), y = FY(h, 0.58);
+          g.fillStyle = p.faceD; g.beginPath(); g.ellipse(x, y, 22, 17, s * 0.4, 0, TAU); g.fill();
+          g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 17, 12, s * 0.4, 0, TAU); g.fill();
+          g.fillStyle = '#1a0800'; g.beginPath(); g.ellipse(x + s * 3, y, 4, 9, 0, 0, TAU); g.fill();
+          g.strokeStyle = p.line; g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 24, y - 14); g.lineTo(x + s * 18, y - 24); g.stroke(); } // sly brows
+        const mx = FX(w, 0.5), my = FY(h, 0.4);
+        g.fillStyle = '#2a0808'; g.beginPath(); g.moveTo(mx - 62, my - 12); g.quadraticCurveTo(mx, my + 48, mx + 62, my - 12); g.quadraticCurveTo(mx, my + 12, mx - 62, my - 12); g.fill();
+        g.fillStyle = p.teeth; for (let i = -5; i <= 5; i++) { const x = mx + i * 10; g.beginPath(); g.moveTo(x - 5, my + 2 - abs(i) * 1.4); g.lineTo(x + 5, my + 2 - abs(i) * 1.4); g.lineTo(x, my + 14 - abs(i) * 1.5); g.fill(); }
+        g.fillStyle = p.faceD; g.beginPath(); g.ellipse(mx, FY(h, 0.49), 8, 6, 0, 0, TAU); g.fill(); // nostrils
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.07), y = FY(h, 0.58); g.fillStyle = shade(p.eye, -0.45); g.beginPath(); g.ellipse(x, y, 16, 11, s * 0.4, 0, TAU); g.fill(); } } },
+      limb(g, w, h, p, R) { Paint.fill(g, w, h, p.limb); Paint.strokes(g, w, h, p.limbD, 80, 40, PI / 2, 2, 0.5, R, 0.1); Paint.mottle(g, w, h, p.limbD, 10, 6, 20, 0.4, R); },
+      leaf(g, w, h, p, R) {
+        g.clearRect(0, 0, w, h);
+        const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, p.leafD); gr.addColorStop(0.5, p.leaf); gr.addColorStop(1, p.leafD);
+        g.fillStyle = gr; g.beginPath(); g.moveTo(w / 2, 0); g.bezierCurveTo(w * 1.05, h * 0.25, w * 0.95, h * 0.75, w / 2, h); g.bezierCurveTo(w * 0.05, h * 0.75, -w * 0.05, h * 0.25, w / 2, 0); g.fill();
+        g.strokeStyle = p.leafL; g.lineWidth = 3; g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.stroke();
+        g.lineWidth = 1.5; for (let y = 20; y < h - 10; y += 22) { g.beginPath(); g.moveTo(w / 2, y); g.lineTo(w * 0.15, y + 18); g.moveTo(w / 2, y); g.lineTo(w * 0.85, y + 18); g.stroke(); }
+        Paint.mottle(g, w, h, p.leaf2, 6, 6, 18, 0.5, R);
+      },
+      leafy(g, w, h, p, R) { Paint.fill(g, w, h, p.leafD); for (let i = 0; i < 60; i++) { const x = R() * w, y = R() * h; g.fillStyle = [p.leaf, p.leafL, p.leaf2, p.leafD][i % 4]; g.beginPath(); g.ellipse(x, y, 10, 22, R() * PI, 0, TAU); g.fill(); } },
+      ear(g, w, h, p) { Paint.vgrad(g, w, h, [0, p.faceD, 1, p.face]); },
+      nail: (g, w, h, p) => Paint.fill(g, w, h, p.limbD),
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 0.62, chest: 0.82, neck: 0.92, head: 0.96, headZ: 0.03, shY: 0.86, sh: 0.11, up: 0.3, fore: 0.3, arm1: [0.6, -1, 0.1], arm2: [0.3, -0.5, 1], lx: 0.09, knee: 0.32, kneeZ: 0.08, kneeX: 1.4 });
+      for (const [s, S] of SIDES) B.bone('ear' + S, 'head', [s * 0.2, 1.14, 0]);
+      const sprig = [[0, 1.38, -0.02, 0], [0.08, 1.35, -0.06, 0.5], [-0.08, 1.35, -0.05, -0.5]];
+      sprig.forEach(([x, y, z, a], i) => { B.bone('sp' + i, 'head', [x * 0.6, 1.3, z]); B.bone('sq' + i, 'sp' + i, [x, y + 0.1, z]); });
+      // big head
+      B.ell([0, 1.12, 0.04], [0.2, 0.19, 0.18], { w: 'head', slot: 'face', seg: 24, rings: 16, deform: (v) => { v.x *= 1 + max(0, (v.y - 1.0)) * 0.6; } });
+      for (const [s, S] of SIDES) B.geo(new THREE.ConeGeometry(0.06, 0.24, 7), { at: [s * 0.26, 1.16, 0], rot: [0, 0, -s * 1.2], scale: [1, 1, 0.5], w: 'ear' + S, slot: 'ear' });
+      // leafy crown + sprigs
+      B.ell([0, 1.25, -0.0], [0.17, 0.08, 0.15], { w: 'head', slot: 'leafy', th0: 0, thLen: PI * 0.5, seg: 14, rings: 6 });
+      sprig.forEach(([x, y, z, a], i) => { B.tube([[x * 0.6, 1.28, z], [x, y + 0.1, z]], [0.012, 0.006], { bones: ['sp' + i, 'sq' + i], slot: 'limb', seg: 5 }); B.strip([[x, y + 0.08, z], [x * 1.4, y + 0.22, z]], 0.1, { bones: ['sq' + i, 'sq' + i], slot: 'leaf', side: [cos(a), 0, sin(a)] }); });
+      // torso (thin) + neck
+      B.tube([[0, 0.55, 0], [0, 0.72, 0.01], [0, 0.88, 0.02], [0, 0.98, 0.03]], [0.08, 0.09, 0.075, 0.04], { bones: ['hips', 'spine', 'chest', 'neck'], slot: 'limb', seg: 10 });
+      // leaf cape-skirt: rings of leaf cards
+      const rng = K.rng(3);
+      for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + ring * 0.3, r = 0.09 + ring * 0.02, y0 = 0.9 - ring * 0.16;
+        const top = [sin(a) * r, y0, cos(a) * r], bot = [sin(a) * (r + 0.12), y0 - 0.2 - rng() * 0.05, cos(a) * (r + 0.12)];
+        B.strip([top, bot], 0.13, { bones: [ring ? 'hips' : 'chest', ring ? 'hips' : 'spine'], slot: 'leaf', side: [cos(a), 0, -sin(a)] });
+      }
+      // limbs: twig-thin with knobby joints, long fingers
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.03, 0.025, 0.02], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'limb' });
+        B.ell(J['el' + S], [0.03, 0.03, 0.03], { w: 'arm' + S, slot: 'limb' });
+        claw(B, S, s, J['hand' + S], [0.15, -0.7, 0.6], { size: 0.05, n: 3, curl: 0.6, slot: 'limb', nailSlot: 'nail', nailLen: 0.5 });
+        limb(B, J['hip' + S], J['knee' + S], J['foot' + S], [0.035, 0.03, 0.025], ['leg' + S, 'knee' + S, 'foot' + S], { slot: 'limb' });
+        B.ell(J['knee' + S], [0.035, 0.035, 0.035], { w: 'knee' + S, slot: 'limb' });
+        B.ell(v3(J['foot' + S], [0, -0.03, 0.06]), [0.045, 0.03, 0.1], { w: 'foot' + S, slot: 'limb' });
+      }
+    },
+    springs: [0, 1, 2].map((i) => ({ chain: ['sp' + i, 'sq' + i], tip: [0, 0.14, 0], k: 90, d: 6, g: -1, max: 0.6 })).concat(SIDES.map(([s, S]) => ({ chain: ['ear' + S], tip: [s * 0.2, 0, 0], k: 140, d: 9, g: 0, max: 0.3 }))),
+    fx: {
+      leaves: { n: 10, rate: 1.5, at: [0, 0.6, 0], box: [0.5, 0.4, 0.4], vel: [0, -0.1, 0], velR: [0.2, 0.1, 0.2], g: 0.6, life: [1.2, 2.2], size: [0.06, 0.1], color: ['#a4d06a', '#4f8a3a'], add: false, shape: 1, swirl: 4, swirlA: 0.8 },
+      cast: { n: 40, rate: 0, burstRate: 50, at: [0, 0.6, 0], ring: 0.5, box: [0, 0.6, 0], vel: [0, 0.8, 0], velR: [0.2, 0.3, 0.2], life: [0.8, 1.4], size: [0.07, 0.12], color: ['#b4f07a', '#4f8a3a'], add: false, shape: 1, swirl: 7, swirlA: 3 },
+      giggle: { n: 16, rate: 0, burstRate: 20, bone: 'head', at: [0, 0.1, 0.2], box: [0.3, 0.2, 0.1], vel: [0, 0.4, 0.2], velR: [0.3, 0.2, 0.2], life: [0.5, 0.9], size: [0.05, 0.08], color: ['#fff07a', '#ffb03a'], shape: 3, twinkle: 12 },
+      death: { n: 36, rate: 0, burstRate: 40, at: [0, 0.7, 0], box: [0.5, 0.9, 0.4], vel: [0, 0.3, 0], velR: [0.5, 0.4, 0.5], g: 0.5, life: [1, 1.8], size: [0.07, 0.11], color: ['#a4d06a', '#8a7a32'], add: false, shape: 1, swirl: 5, swirlA: 1.5 },
+    },
+    clips: {
+      // mischievous: bouncing on the balls of its feet, head tilting, fingers twiddling
+      idle(P, t) {
+        const b = abs(sin(t * 3.2));
+        P.rootM(0, b * 0.025, 0, 0.05, sin(t * 0.6) * 0.2, sin(t * 1.6) * 0.06);
+        P.r('head', sin(t * 1.1) * 0.08, sin(t * 0.8) * 0.25, sin(t * 1.6) * 0.15);
+        for (const [s, S] of SIDES) { P.r('knee' + S, 0.25 + b * 0.15).r('leg' + S, -0.15 - b * 0.07).r('foot' + S, -0.1); P.r('sh' + S, -0.2 + sin(t * 2.6 + s) * 0.15, 0, s * 0.1).r('arm' + S, -0.3).r('hand' + S, sin(t * 5 + s) * 0.3); }
+      },
+      // skipping hop
+      move(P, ph) {
+        const u = ph % 1, air = sin(u * PI);
+        P.rootM(0, air * 0.12, 0, 0.15, 0, sin(ph * PI) * 0.1);
+        for (const [s, S] of SIDES) { const q = sin(ph * TAU + (s > 0 ? 0 : PI)); P.r('leg' + S, -0.6 * q).r('knee' + S, 0.4 + 0.4 * max(0, -q)); P.r('sh' + S, 0.5 * q, 0, s * 0.3); }
+      },
+      // pounce & claw rake
+      attack(P, t, k) {
+        const A = atk(k, 0.3, 0.44, 0.62);
+        P.rootM(0, 0.15 * bump(k, 0.3, 0.55), -0.05 * A.a + 0.35 * A.s, -0.2 * A.a + 0.35 * A.s);
+        P.r('shR', -1.8 * A.a + 1.2 * A.s, 0, -0.4 * A.a).r('armR', -0.6 * A.a).r('handR', 0.6 * A.s);
+        P.r('shL', -0.8 * A.a + 0.6 * A.s, 0, 0.5 * A.a);
+        for (const [s, S] of SIDES) P.r('knee' + S, 0.7 * A.a).r('leg' + S, -0.4 * A.a);
+        P.r('head', -0.2 * A.a + 0.2 * A.s);
+      },
+      // 牽人 trick: spins and giggles, leaves whirl
+      cast(P, t, k) { const u = sm(0, 0.25, k) * (1 - sm(0.85, 1, k)); P.rootM(0, 0.05 * u, 0, 0, E.ioQ(seg(k, 0.1, 0.8)) * TAU, 0); for (const [s, S] of SIDES) P.r('sh' + S, -0.5 * u, 0, s * 1.2 * u); P.r('head', -0.3 * u); P.ch('fx_cast', u); P.ch('fx_giggle', bump(k, 0.6, 0.9) * 2); },
+      // "feast" offering: crouches, offers cupped hands (mud & grasshoppers), cackles
+      special(P, t, k) { const u = bump(k, 0.1, 0.9); P.rootM(0, -0.05 * u, 0.1 * u, 0.2 * u); for (const [s, S] of SIDES) P.r('sh' + S, -1.2 * u, 0, -s * 0.2 * u).r('arm' + S, -0.5 * u).r('knee' + S, 0.6 * u).r('leg' + S, -0.4 * u); P.r('head', -0.2 * u, 0, sin(t * 12) * 0.1 * u); P.ch('fx_giggle', u); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); const u = (1 - E.outQ(k)) * min(1, k * 14); P.s('head', 0.08 * u, -0.08 * u, 0.08 * u); },
+      die(P, t, k, C) { const u = E.ioQ(seg(k, 0, 0.4)); P.rootM(0, 0, 0, 0, u * 4, 0, -0.4 * u); P.ch('dissolve', E.inQ(seg(k, 0.25, 0.9))); P.ch('fx_death', bump(k, 0.2, 0.9) * 2); },
+      // drops in from the canopy
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.6)); const land = bump(k, 0.55, 0.8); P.rootM(0, 1.4 * u * u, 0, 0, 0, 0, -0.15 * land); for (const [s, S] of SIDES) P.r('knee' + S, 0.8 * land).r('leg' + S, -0.4 * land); P.ch('fx_leaves', bump(k, 0, 0.6) * 4); },
+    },
+    dur: { attack: 0.9, cast: 1.4, special: 1.5, enter: 1.1 },
+    cadence: 1.3,
+  });
+
+  // ===================================================================================================
+  // 蕈精 mushroom_imp — a moon-soaked mist-forest mushroom that waddles: psychedelic glowing cap (spots slowly
+  // cycle colour), pink gills, shy face on the stem, stubby arms; little glowing mushrooms sprout around its feet.
+  defC('mushroom_imp', {
+    height: 1.2, fill: 0.92, radius: 0.4, shadow: 0.42, rimColor: '#fff0ff',
+    pal: { stem: '#efe2c8', stemD: '#a8906e', stemL: '#fffaf0', gill: '#f6c6e6', eye: '#1a1030', line: '#3a2440', magic: '#ff8ae8', base: '#ff3fa8' },
+    vars: [{ set: { base: '#3fe0ff', magic: '#7affd8' } }, { set: { base: '#ffd23f', magic: '#ffb04a', stem: '#d8c8f0', stemD: '#7a64a0', stemL: '#f4ecff' } }],
+    slots: {
+      cap: { size: 4, paint(g, w, h, p, R) {
+        // rainbow psychedelic dome: base hue bands + spots
+        const hues = [0, -25, 30, 0, 190, -60, 0];
+        const gr = g.createLinearGradient(0, 0, 0, h); hues.forEach((hh, i) => gr.addColorStop(i / (hues.length - 1), K.hueShift(p.base, hh, 1, -0.05)));
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 26; i++) { const x = R() * w, y = R() * h * 0.85, r = 8 + R() * 14; g.fillStyle = rgba('#fffaf0', 0.8); g.beginPath(); g.ellipse(x, y, r, r * 0.8, 0, 0, TAU); g.fill(); g.fillStyle = K.hueShift(p.base, R() * 360, 1, 0.15); g.beginPath(); g.ellipse(x, y, r * 0.65, r * 0.5, 0, 0, TAU); g.fill(); }
+        g.fillStyle = shade(p.base, -0.4); g.fillRect(0, h * 0.95, w, h * 0.05);
+      }, emit(g, w, h, p, R) {
+        Paint.fill(g, w, h, shade(p.base, -0.7));
+        for (let i = 0; i < 26; i++) { const x = R() * w, y = R() * h * 0.85, r = 8 + R() * 14; R(); g.fillStyle = shade(K.hueShift(p.base, R() * 360, 1, 0.1), -0.25); g.beginPath(); g.ellipse(x, y, r * 0.65, r * 0.5, 0, 0, TAU); g.fill(); }
+      } },
+      gill(g, w, h, p) { Paint.fill(g, w, h, p.gill); g.strokeStyle = shade(p.gill, -0.3); g.lineWidth = 2; for (let x = 0; x < w; x += 6) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } },
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.stemL, 0.6, p.stem, 1, p.stemD]); Paint.strokes(g, w, h, p.stemD, 80, 40, PI / 2, 1.5, 0.3, R, 0.1);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.085), y = FY(h, 0.6);
+          g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y, 30, 38, 0, 0, TAU); g.fill();
+          g.fillStyle = '#ffffff'; g.beginPath(); g.arc(x - 9, y - 13, 12, 0, TAU); g.fill(); g.beginPath(); g.arc(x + 9, y + 12, 6, 0, TAU); g.fill();
+          g.fillStyle = rgba(p.magic, 0.55); g.beginPath(); g.ellipse(x + s * 22, y + 30, 16, 9, 0, 0, TAU); g.fill(); } // blush
+        const mx = FX(w, 0.5), my = FY(h, 0.47); g.strokeStyle = p.eye; g.lineWidth = 4; g.beginPath(); g.arc(mx, my - 6, 9, 0.2 * PI, 0.8 * PI); g.stroke();
+      } },
+      stem(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.stemL, 1, p.stemD]); Paint.strokes(g, w, h, p.stemD, 60, 30, PI / 2, 1.2, 0.3, R, 0.1); },
+      baby: { size: 1, paint: (g, w, h, p) => Paint.vgrad(g, w, h, [0, K.hueShift(p.base, 180), 1, p.base]), emit: (g, w, h, p) => Paint.vgrad(g, w, h, [0, shade(K.hueShift(p.base, 180), -0.3), 1, shade(p.base, -0.4)]) },
+    },
+    build(B, p) {
+      B.bone('hips', 'root', [0, 0.25, 0]); B.bone('body', 'hips', [0, 0.45, 0]); B.bone('head', 'body', [0, 0.7, 0]);
+      B.bone('cap', 'head', [0, 0.82, 0]);
+      for (const [s, S] of SIDES) { B.bone('arm' + S, 'body', [s * 0.21, 0.48, 0.03]); B.bone('hand' + S, 'arm' + S, [s * 0.34, 0.36, 0.08]); B.bone('foot' + S, 'hips', [s * 0.12, 0.06, 0.04]); }
+      // stem body (face on the front)
+      B.lathe([[0.22, 0.04], [0.26, 0.12], [0.26, 0.3], [0.23, 0.5], [0.19, 0.68], [0.16, 0.8]], { w: B.keyW([[0.15, 'hips'], [0.45, 'body'], [0.72, 'head']]), slot: 'face', seg: 24, uvMap: (x, y, z, u, v) => [u, lerp(0.1, 0.95, v)] });
+      // cap: dome with rolled rim, gills underneath
+      const capP = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * PI / 2; capP.push([cos(a) * 0.52 + (i < 2 ? 0.02 : 0), 0.78 + sin(a) * 0.36]); }
+      capP.unshift([0.5, 0.74]);
+      B.lathe(capP, { w: 'cap', slot: 'cap', seg: 30, wobble: (y, a) => sin(a * 5) * 0.02 * sm(0.9, 0.78, y) });
+      B.lathe([[0.17, 0.8], [0.35, 0.77], [0.5, 0.74]], { w: 'cap', slot: 'gill', seg: 30 });
+      // stubby arms, feet
+      for (const [s, S] of SIDES) {
+        B.tube([[s * 0.2, 0.5, 0.03], [s * 0.3, 0.42, 0.06], [s * 0.34, 0.36, 0.08]], [0.05, 0.045, 0.04], { bones: ['arm' + S, 'arm' + S, 'hand' + S], slot: 'stem', seg: 8, cap1: true });
+        B.ell([s * 0.13, 0.05, 0.08], [0.09, 0.05, 0.11], { w: 'foot' + S, slot: 'stem' });
+      }
+      // baby glowing mushrooms around the feet (on root)
+      for (const [x, z, sc] of [[0.42, 0.2, 1], [-0.45, 0.1, 0.8], [0.3, -0.3, 0.7], [-0.25, 0.38, 0.6]]) {
+        B.tube([[x, 0, z], [x, 0.1 * sc, z]], [0.02 * sc, 0.015 * sc], { w: 'root', slot: 'stem', seg: 6 });
+        B.ell([x, 0.1 * sc, z], [0.06 * sc, 0.045 * sc, 0.06 * sc], { w: 'root', slot: 'baby', th0: 0, thLen: PI * 0.55, seg: 10, rings: 5 });
+      }
+    },
+    fx: {
+      spores: { n: 30, rate: 10, at: [0, 0.75, 0], ring: 0.5, box: [0, 0.1, 0], vel: [0, -0.05, 0], velR: [0.1, 0.06, 0.1], life: [1.5, 3], size: [0.035, 0.06], color: ['#ffffff', '#ff8ae8'], swirl: 2, swirlA: 0.3, twinkle: 6 },
+      cast: { n: 50, rate: 0, burstRate: 60, at: [0, 1.0, 0], box: [0.5, 0.2, 0.5], vel: [0, 0.4, 0.4], velR: [0.6, 0.3, 0.6], life: [1.2, 2], size: [0.06, 0.12], color: ['#ff8ae8', '#7affd8'], swirl: 3, swirlA: 1.2, twinkle: 5, drag: 0.8 },
+      death: { n: 40, rate: 0, burstRate: 40, at: [0, 0.8, 0], box: [0.8, 0.4, 0.8], vel: [0, 0.2, 0], velR: [0.4, 0.3, 0.4], life: [1.2, 2.2], size: [0.05, 0.09], color: ['#ffffff', '#ff8ae8'], twinkle: 8 },
+    },
+    lights: (C) => [{ bone: 'cap', at: [0, 0.1, 0], color: C.p.base, i: 0.8, r: 3, flicker: 0.05 }],
+    tick(C) { C.glowBase = 1 + 0.35 * sin(C.t * 1.7) + 0.15 * sin(C.t * 4.3); },
+    clips: {
+      idle(P, t) {
+        const b = sin(t * 2.2);
+        P.s('body', 0.03 * b, -0.04 * b, 0.03 * b).r('cap', sin(t * 1.1) * 0.06, sin(t * 0.4) * 0.2, sin(t * 1.4) * 0.05).r('head', 0, 0, sin(t * 0.9) * 0.08);
+        for (const [s, S] of SIDES) P.r('arm' + S, sin(t * 1.8 + s) * 0.15, 0, s * 0.1 * b);
+      },
+      // waddle: side-to-side rocking
+      move(P, ph) { const a = sin(ph * TAU); P.rootM(0, abs(a) * 0.03, 0, 0, 0, a * 0.12); P.r('cap', 0, 0, -a * 0.1); for (const [s, S] of SIDES) { P.p('foot' + S, 0, max(0, a * s) * 0.05, 0); P.r('arm' + S, 0.4 * a * s); } },
+      // head-butt with the cap (bonk)
+      attack(P, t, k) { const A = atk(k, 0.35, 0.48, 0.66); P.rootM(0, 0.12 * bump(k, 0.3, 0.55), 0.3 * A.s, -0.3 * A.a + 0.55 * A.s, 0, 0, 0.12 * A.a - 0.1 * A.s); P.r('cap', 0.3 * A.s); for (const [s, S] of SIDES) P.r('arm' + S, 0.6 * A.a, 0, s * 0.6 * A.a); },
+      // spore puff: squash down, cap pumps, cloud
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)), pump = max(0, sin(t * 14)) * u; P.rootM(0, 0, 0, 0, 0, 0, -0.12 * pump); P.s('cap', 0.12 * pump, -0.1 * pump, 0.12 * pump); for (const [s, S] of SIDES) P.r('arm' + S, -1.2 * u); P.ch('fx_cast', u); P.ch('glow', u * 1.2); },
+      special(P, t, k, C) { this.cast(P, t, k, C); P.ch('fx_spores', bump(k, 0.2, 0.9) * 5); },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(0, 0, -0.1 * u, -0.3 * u, 0, 0, -0.15 * u); P.r('cap', -0.3 * u); },
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.5)); P.rootM(0, 0, 0, 0, 0, 0, -0.5 * u); P.r('cap', 0.3 * u, 0, 0.4 * u); P.ch('dissolve', E.inQ(seg(k, 0.3, 1))); P.ch('fx_death', bump(k, 0.2, 0.9) * 2); P.ch('glow', -0.8 * u); },
+      // pops up out of the ground
+      enter(P, t, k) { const u = 1 - E.outBack(seg(k, 0, 0.8)); P.rootM(0, -0.6 * clamp(u, 0, 1.3), 0, 0, 0, 0, 0.3 * u); P.ch('fx_spores', bump(k, 0.4, 1) * 4); },
+    },
+    dur: { attack: 0.95, cast: 1.5 },
+    cadence: 1.2,
+  });
+})();
