@@ -134,9 +134,9 @@
     const S = 200; const [c, ctx] = mkCanvas(S, S, dpr);
     const g = ctx.createLinearGradient(0, 0, 0, S); g.addColorStop(0, XL.mix(D.accent, '#f6f0e4', 0.82)); g.addColorStop(1, XL.mix(D.accent, '#e8dccb', 0.7));
     ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
-    const hu = 420 / D.heads, z = (D.bustZoom || 1.55) * 60 / hu;
+    const hu = 420 / D.heads, z = (D.bustZoom || 1.38) * 60 / hu;
     const hx = D.headX || 0, hy = -420 + hu * 0.62 + (D.bustDy || 0);
-    drawFigure(ctx, D, S / 2 - hx * z, 84 - hy * z, z, dpr, { bust: true });
+    drawFigure(ctx, D, S / 2 - hx * z, 96 - hy * z, z, dpr, { bust: true });
     ctx.fillStyle = 'rgba(30,22,20,0.65)'; ctx.fillRect(0, S - 18, S, 18);
     ctx.fillStyle = '#f6efe2'; ctx.font = `10px ${FONT}`; ctx.fillText('臉部特寫 ' + (D.faceNote || ''), 6, S - 5);
     return c;

@@ -39,7 +39,7 @@
       locks.push(XL.curve([[-0.44, 0.22], [-0.41, -0.04], [-0.22, -0.15], [0.05, -0.16], [0.3, -0.11], [0.44, 0.04], [0.44, 0.24], [0, 0.1]]));
       c.save(); c.clip(XL.faceShape(F)); c.fillStyle = XL.skinShadow(C.skin);
       c.fill(XL.curve([[-0.46, 0.2], [-0.4, 0.42], [-0.22, 0.44], [-0.02, 0.4], [0.18, 0.44], [0.38, 0.4], [0.46, 0.2]])); c.restore();
-      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.03, -0.36, 0.36, XL.rgba('#8a86a6', 0.7), {}) });
+      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.03, -0.36, 0.36, XL.rgba('#8a86a6', 0.5), {}) });
     };
     // hexagonal lantern pauldron
     const pauldron = (ctx, x, y, rot) => XL.withT(ctx, x, y, rot, 1, 1, (c) => {
@@ -319,7 +319,7 @@
       XL.line(c, [[-0.34, -0.24], [0, -0.2], [0.34, -0.24]], C.red, 2);
       XL.paint(c, XL.ell(0.3, -0.17, 0.05, 0.05), C.brass, { lw: 1 });
       // chin strings
-      XL.line(c, [[-0.3, 0.3], [-0.12, 0.98]], XL.rgba('#5a4a3a', 0.9), 0.9); XL.line(c, [[0.3, 0.3], [0.12, 0.98]], XL.rgba('#5a4a3a', 0.9), 0.9);
+      XL.line(c, [[-0.36, 0.62], [-0.3, 0.86], [-0.1, 1.0]], XL.rgba('#5a4a3a', 0.9), 0.9); XL.line(c, [[0.36, 0.62], [0.3, 0.86], [0.1, 1.0]], XL.rgba('#5a4a3a', 0.9), 0.9);
     };
     function draw(ctx) {
       // the soul-oar 引魂槳, blade up, soul lantern on a hook

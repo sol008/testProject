@@ -160,7 +160,7 @@
       locks.push(XL.curve([[-0.42, 0.16], [-0.38, -0.06], [-0.2, -0.17], [0.02, -0.19], [0.24, -0.16], [0.4, -0.04], [0.42, 0.16], [0, 0.0]]));
       c.save(); c.clip(XL.faceShape(F)); c.fillStyle = XL.skinShadow(C.skin);
       c.fill(XL.curve([[-0.45, 0.1], [-0.38, 0.62], [-0.28, 0.4], [-0.06, 0.48], [0.0, 0.3], [0.06, 0.48], [0.28, 0.38], [0.38, 0.6], [0.45, 0.1]])); c.restore();
-      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.01, -0.34, 0.34, XL.rgba('#6e6a86', 0.7), { n: 4 }) });
+      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.01, -0.34, 0.34, XL.rgba('#6e6a86', 0.55), {}) });
       // hair tie (red cord) at the crown
       XL.paint(c, XL.ribbon([[-0.02, -0.2], [0.12, -0.24]], 0.05), '#c8432b', { lw: 1 });
     };

@@ -85,7 +85,7 @@
   };
   // anime/toon hair shine: a band with a jagged lower edge, following the skull curve (unit head space)
   XD.shine = (c, y, x0, x1, col, o = {}) => {
-    const n = o.n || 4, th = o.th || 0.024, curve = o.curve === undefined ? 0.07 : o.curve, len = o.len || 0.82;
+    const n = o.n || 3, th = o.th || 0.026, curve = o.curve === undefined ? 0.07 : o.curve, len = o.len || 0.9;
     for (let i = 0; i < n; i++) {
       const t0 = (i + (1 - len) / 2) / n, t1 = (i + 1 - (1 - len) / 2) / n, pts = [];
       for (let k = 0; k <= 4; k++) { const t = t0 + (t1 - t0) * k / 4; pts.push([x0 + (x1 - x0) * t, y + curve * Math.pow(2 * t - 1, 2) + (k === 2 ? (o.dip || 0.005) : 0)]); }

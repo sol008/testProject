@@ -818,6 +818,199 @@
     },
   });
 
+  // ============================================================ 07 火居醉道 — off-duty householder (historical queue)
+  OPT({
+    zh: '火居醉道', en: 'Off-duty Householder', tag: '日常便服・史實 Off-duty / historical',
+    idea: '下了班的火居道士：道袍脫下來綁在腰上，汗衫、大褲、柴屐，扛著一甕米酒、辮子盤在頭上——全觀音山最懶，也最好說話的人。',
+    shape: '不對稱的「歪」：肩上酒甕在頭側形成大圓塊，身體重心偏一邊；裸臂、短褲、柴屐讓下半身最輕最窄。',
+    culture: '台灣正一多為在家「火居道士」，平日如常人著汗衫大褲、薙髮留辮（勞動時盤辮於頭），趿柴屐；米酒裝陶甕貼紅紙。此款保留史實辮髮。幻想處：腰間綁著灰藍道袍當圍裙、酒甕貼符「防偷喝」。',
+    ratio: 7, H: 384, bg: ['#f0e5d0', '#d2b88f'], accent: '#a8692a', dx: -12,
+    palette: [['汗衫米白 Undershirt', '#f0ebe0'], ['大褲黑 Trousers', '#2c2a30'], ['灰藍道袍 Tied robe', '#7f93a6'], ['陶甕褐 Jar glaze', '#7a4a2a'], ['紅紙 Red label', '#c4362c'], ['膚 Skin (flushed)', '#ecc6a4'], ['辮髮 Queue', '#26222a']],
+    bust: { y: -0.35, z: 1.6, x: 0.2 },
+    draw(ctx, B, o) {
+      const u = B.u, cx = B.cx, hb = B.top;
+      const skin = '#ecc6a4', white = '#f0ebe0', blk = '#2c2a30', robeC = '#7f93a6', jarC = '#7a4a2a';
+      const hc = { c: '#26222a', sh: '#121015', hi: '#5a5466', ln: '#09080b', rim: '#f0d9b8' };
+      const feet = [cx - 0.34 * u, cx + 0.38 * u];
+      const sy = B.waistY + 0.1 * u;
+      // tied robe hanging behind the hips
+      cel(ctx, sp([[cx - 0.75 * u, sy], [cx + 0.75 * u, sy], [cx + 1.0 * u, B.kneeY - 0.1 * u], [cx + 0.8 * u, B.kneeY + 0.25 * u, 1], [cx + 0.2 * u, B.kneeY + 0.15 * u], [cx - 0.5 * u, B.kneeY + 0.3 * u, 1], [cx - 0.95 * u, B.kneeY]]), { c: DZ.dk(robeC, 0.15), s: 0.1 * u, h: 1, rim: 1.4, lw: 1.8, fx: (c) => { if (!DZ.sil) { DZ.drape(c, cx - 0.6 * u, sy + 0.3 * u, B.kneeY + 0.25 * u, 0.25 * u, -0.05 * u, DZ.rgba(DZ.dk(robeC, 0.4), 0.7)); DZ.drape(c, cx + 0.6 * u, sy + 0.3 * u, B.kneeY + 0.2 * u, 0.25 * u, 0.05 * u, DZ.rgba(DZ.dk(robeC, 0.4), 0.7)); } } });
+      H.neck(ctx, B, skin, { w: 0.16, adam: true });
+      H.trousers(ctx, B, { c: blk, hemY: B.kneeY + 0.45 * u, feet, wHem: 0.3, kneeW: 0.36, rolled: true });
+      for (const fx of feet) H.legwrap(ctx, B, fx, B.kneeY + 0.35 * u, B.gy - 0.25 * u, 0.26 * u, 0.2 * u, skin, { bare: true, sh: DZ.skinSh(skin), ln: DZ.skinLn(skin) });
+      H.shoes(ctx, B, { type: 'clog', skin, spread: 0, dx: 0, w: 0.15, h: 0.3, c: '#8a6a44', strap: '#3a2a24' });
+      // (clogs are drawn at ±spread; place them under the feet)
+      // undershirt 汗衫 (short sleeves, side-fastened, collar loose)
+      const shirt = sym(cx, [[0, B.shY - 0.2 * u], [0.22 * u, B.shY - 0.34 * u, 1], [0.55 * u, B.shY - 0.18 * u], [0.92 * u, B.shY + 0.05 * u], [0.86 * u, B.shY + 0.75 * u], [0.68 * u, B.waistY], [0.74 * u, B.hipY - 0.1 * u, 1], [0, B.hipY - 0.05 * u]]);
+      cel(ctx, shirt, { c: white, s: 0.16 * u, h: 2, rim: 1.6, lw: 1.9, fx: (c) => { if (DZ.sil) return; DZ.tp(c, [[cx, B.shY - 0.2 * u], [cx - 0.22 * u, B.shY + 0.05 * u], [cx - 0.5 * u, B.shY + 0.35 * u], [cx - 0.6 * u, B.chestY + 0.3 * u]], 0.05 * u, 0.05 * u, '#d8d0c0'); fold(c, [[cx + 0.4 * u, B.shY + 0.4 * u], [cx + 0.3 * u, B.chestY + 0.4 * u], [cx + 0.25 * u, B.waistY]], 0.07 * u, DZ.rgba('#b8ae9c', 0.7)); fold(c, [[cx - 0.2 * u, B.chestY + 0.2 * u], [cx - 0.1 * u, B.waistY - 0.1 * u]], 0.06 * u, DZ.rgba('#b8ae9c', 0.6)); c.fillStyle = DZ.rgba('#c9b48a', 0.35); c.fill(DZ.ell(cx + 0.35 * u, B.chestY - 0.05 * u, 0.12 * u, 0.08 * u)); } });
+      // tied robe sleeves knotted at the front
+      const knot = [cx + 0.05 * u, sy + 0.05 * u];
+      cel(ctx, ribbon([[cx - 0.72 * u, sy - 0.05 * u], [cx - 0.35 * u, sy + 0.08 * u], knot], 0.24 * u, 0.2 * u), { c: robeC, s: 2, h: 1, rim: 1.2, lw: 1.6 });
+      cel(ctx, ribbon([[cx + 0.72 * u, sy - 0.05 * u], [cx + 0.4 * u, sy + 0.08 * u], knot], 0.24 * u, 0.2 * u), { c: robeC, s: 2, h: 1, rim: 1.2, lw: 1.6 });
+      cel(ctx, ribbon([knot, [cx - 0.05 * u, sy + 0.45 * u], [cx - 0.12 * u, sy + 0.85 * u]], 0.2 * u, 0.3 * u), { c: robeC, s: 2.5, h: 1, rim: 1.2, lw: 1.6, fx: (c) => { if (!DZ.sil) { c.fillStyle = '#3d4a63'; c.fill(DZ.ell(cx - 0.12 * u, sy + 0.84 * u, 0.15 * u, 0.06 * u)); } } });
+      cel(ctx, ribbon([knot, [cx + 0.2 * u, sy + 0.4 * u], [cx + 0.25 * u, sy + 0.7 * u]], 0.2 * u, 0.28 * u), { c: DZ.dk(robeC, 0.06), s: 2.5, h: 1, rim: 1.2, lw: 1.6, fx: (c) => { if (!DZ.sil) { c.fillStyle = '#3d4a63'; c.fill(DZ.ell(cx + 0.25 * u, sy + 0.7 * u, 0.14 * u, 0.06 * u)); } } });
+      cel(ctx, DZ.ell(knot[0], knot[1], 0.13 * u, 0.11 * u), { c: robeC, s: 2, h: 1, rim: 1, lw: 1.6 });
+      // fan dangling from the belt
+      DZ.fan(ctx, cx - 0.45 * u, sy + 0.05 * u, 0.7 * u, Math.PI - 0.15, { closed: true, rib: '#5b3b27' });
+      // viewer-left arm: hanging, bare, holding a little wine cup
+      const SL = [cx - 0.82 * u, B.shY + 0.12 * u], EL = [cx - 1.0 * u, B.waistY], WL = [cx - 1.04 * u, B.hipY + 0.25 * u];
+      cel(ctx, ribbon([[SL[0] + 0.05 * u, SL[1] - 0.1 * u], [SL[0] - 0.08 * u, SL[1] + 0.35 * u]], 0.42 * u, 0.36 * u), { c: white, s: 2, h: 1, rim: 1, lw: 1.6 });
+      H.skinLimb(ctx, [[SL[0] - 0.06 * u, SL[1] + 0.3 * u], EL, WL], 0.28 * u, 0.19 * u, skin);
+      cel(ctx, sp([[WL[0] - 0.12 * u, WL[1] + 0.32 * u], [WL[0] + 0.12 * u, WL[1] + 0.32 * u], [WL[0] + 0.08 * u, WL[1] + 0.48 * u], [WL[0] - 0.08 * u, WL[1] + 0.48 * u]]), { c: '#efe6d6', s: 1, h: 0, rim: 0, lw: 1.3, fx: (c) => { if (!DZ.sil) { c.strokeStyle = '#3d5a8a'; c.lineWidth = 0.02 * u; c.beginPath(); c.moveTo(WL[0] - 0.1 * u, WL[1] + 0.38 * u); c.lineTo(WL[0] + 0.1 * u, WL[1] + 0.38 * u); c.stroke(); } } });
+      DZ.hand(ctx, WL[0], WL[1], 0.05, 0.62 * u, 'relax', -1, skin);
+      // viewer-right arm: jar on the shoulder
+      const jc = [cx + 0.92 * u, B.shY - 0.42 * u];
+      const jar = sp([[jc[0] - 0.18 * u, jc[1] - 0.52 * u, 1], [jc[0] + 0.18 * u, jc[1] - 0.52 * u, 1], [jc[0] + 0.22 * u, jc[1] - 0.4 * u], [jc[0] + 0.5 * u, jc[1] - 0.1 * u], [jc[0] + 0.5 * u, jc[1] + 0.3 * u], [jc[0] + 0.3 * u, jc[1] + 0.5 * u, 1], [jc[0] - 0.3 * u, jc[1] + 0.5 * u, 1], [jc[0] - 0.5 * u, jc[1] + 0.3 * u], [jc[0] - 0.5 * u, jc[1] - 0.1 * u], [jc[0] - 0.22 * u, jc[1] - 0.4 * u]]);
+      cel(ctx, jar, {
+        c: jarC, s: 0.12 * u, h: 2.5, hi: '#b07a4a', rim: 1.6, lw: 1.9,
+        fx: (c) => {
+          if (DZ.sil) return;
+          c.fillStyle = '#e8dcc0'; c.fill(DZ.poly([[jc[0] - 0.22 * u, jc[1] - 0.6 * u], [jc[0] + 0.22 * u, jc[1] - 0.6 * u], [jc[0] + 0.2 * u, jc[1] - 0.46 * u], [jc[0] - 0.2 * u, jc[1] - 0.46 * u]]));
+          c.fillStyle = '#c4362c'; c.fill(DZ.poly([[jc[0] - 0.2 * u, jc[1] - 0.18 * u], [jc[0] + 0.16 * u, jc[1] - 0.2 * u], [jc[0] + 0.18 * u, jc[1] + 0.25 * u], [jc[0] - 0.18 * u, jc[1] + 0.27 * u]]));
+          c.fillStyle = '#1e1a1a'; c.font = DZ.font(0.15 * u, 700, 'serif'); c.textAlign = 'center'; c.fillText('米', jc[0] - 0.01 * u, jc[1] - 0.02 * u); c.fillText('酒', jc[0] - 0.01 * u, jc[1] + 0.17 * u);
+          DZ.fu(c, jc[0] + 0.33 * u, jc[1] + 0.05 * u, 0.1 * u, 0.3 * u, 0.25);
+        },
+      });
+      cel(ctx, sp([[jc[0] - 0.24 * u, jc[1] - 0.72 * u], [jc[0] + 0.24 * u, jc[1] - 0.72 * u], [jc[0] + 0.24 * u, jc[1] - 0.58 * u], [jc[0] - 0.24 * u, jc[1] - 0.58 * u]]), { c: '#c4362c', s: 1, h: 0, rim: 0, lw: 1.3 });
+      const SR = [cx + 0.82 * u, B.shY + 0.12 * u], ER = [cx + 1.3 * u, B.waistY - 0.35 * u], WR = [cx + 1.36 * u, B.shY - 0.2 * u];
+      cel(ctx, ribbon([[SR[0] - 0.05 * u, SR[1] - 0.1 * u], [SR[0] + 0.12 * u, SR[1] + 0.32 * u]], 0.42 * u, 0.36 * u), { c: white, s: 2, h: 1, rim: 1, lw: 1.6 });
+      H.skinLimb(ctx, [[SR[0] + 0.1 * u, SR[1] + 0.28 * u], ER, WR], 0.28 * u, 0.2 * u, skin);
+      DZ.hand(ctx, WR[0], WR[1], Math.PI * 0.85, 0.6 * u, 'open', 1, skin);
+      // head — queue coiled round the head, shaved forehead
+      const tilt = -0.1;
+      ctx.save(); ctx.translate(cx, B.chin); ctx.rotate(tilt); ctx.translate(-cx, -B.chin);
+      const F = {
+        skin, stub: 0.16, blush: '#e0564a', blushA: 0.5,
+        shape: { t: [0.4, 0.4], c: [0.395, 0.6], j: [0.32, 0.84], ch: [0.13, 0.962] },
+        eye: { x: 0.172, y: 0.565, w: 0.16, h: 0.06, tilt: 0.02, open: 0.34, iris: '#4a3022', ir: 0.04, crease: 0.45, creaseH: 1.3, peak: 0.5, lidW: 0.025, gaze: 0.05, bag: 0.5 },
+        brow: { y: 0.43, w: 0.19, th: 0.024, tilt: -0.08, arch: 0.03, col: '#221c20' },
+        nose: { type: 'broad', y: 0.735, w: 0.058 }, mouth: { type: 'grin', y: 0.855, w: 0.16, oh: 0.04 },
+        paint: (c) => { c.fillStyle = DZ.rgba('#e0564a', 0.25); c.beginPath(); c.ellipse(0.0, 0.7, 0.05, 0.025, 0, 0, 7); c.fill(); },
+      };
+      DZ.head(ctx, F, cx, hb, u);
+      // shaved crown (blue-grey stubble tint over the skull top)
+      DZ.clipDo(ctx, DZ.xf(DZ.face, new DOMMatrix([u, 0, 0, u, cx, hb])), (c) => { const g = c.createLinearGradient(0, hb, 0, hb + 0.35 * u); g.addColorStop(0, DZ.rgba('#7d8494', 0.55)); g.addColorStop(1, DZ.rgba('#7d8494', 0)); c.fillStyle = g; c.fillRect(cx - u, hb - 0.1 * u, 2 * u, 0.4 * u); });
+      // back hair + coiled queue ring
+      const back = sp([[cx - 0.47 * u, hb + 0.5 * u], [cx - 0.44 * u, hb + 0.25 * u], [cx - 0.3 * u, hb + 0.2 * u], [cx + 0.3 * u, hb + 0.2 * u], [cx + 0.44 * u, hb + 0.25 * u], [cx + 0.47 * u, hb + 0.5 * u], [cx + 0.42 * u, hb + 0.62 * u], [cx - 0.42 * u, hb + 0.62 * u]]);
+      const ring = ribbon([[cx - 0.5 * u, hb + 0.3 * u], [cx - 0.3 * u, hb + 0.1 * u], [cx, hb + 0.06 * u], [cx + 0.3 * u, hb + 0.1 * u], [cx + 0.5 * u, hb + 0.3 * u]], 0.13 * u, 0.13 * u);
+      H.hair(ctx, [ring], hc, {
+        fx: (c) => { if (DZ.sil) return; DZ.dense([[cx - 0.5 * u, hb + 0.3 * u], [cx - 0.3 * u, hb + 0.1 * u], [cx, hb + 0.06 * u], [cx + 0.3 * u, hb + 0.1 * u], [cx + 0.5 * u, hb + 0.3 * u]], 4).forEach((q, i) => { if (i % 2) return; c.fillStyle = DZ.rgba(hc.hi, 0.85); c.beginPath(); c.ellipse(q[0], q[1], 0.045 * u, 0.02 * u, 0.6, 0, 7); c.fill(); }); },
+      });
+      // queue tail tucked & red cord
+      H.hair(ctx, [ribbon([[cx + 0.48 * u, hb + 0.3 * u], [cx + 0.56 * u, hb + 0.5 * u], [cx + 0.52 * u, hb + 0.62 * u]], 0.1 * u, 0.02 * u)], hc);
+      cel(ctx, DZ.ell(cx + 0.5 * u, hb + 0.36 * u, 0.05 * u, 0.04 * u), { c: '#c4362c', s: 0, h: 0, rim: 0, lw: 1 });
+      // wisps
+      H.hair(ctx, [ribbon([[cx - 0.4 * u, hb + 0.35 * u], [cx - 0.45 * u, hb + 0.5 * u], [cx - 0.42 * u, hb + 0.62 * u]], 0.04 * u, 0.004 * u)], hc, { lw: 1 });
+      ctx.restore();
+      return [
+        { zh: '盤辮', en: 'queue coiled round head', p: [cx - 0.3 * u, hb + 0.12 * u], side: -1 },
+        { zh: '米酒甕', en: 'rice-wine jar (+joke fu)', p: [cx + 0.9 * u, B.shY - 0.6 * u], side: 1 },
+        { zh: '汗衫', en: 'side-closing undershirt', p: [cx - 0.35 * u, B.chestY + 0.2 * u], side: -1 },
+        { zh: '腰綁道袍', en: 'robe knotted at the waist', p: [cx + 0.05 * u, sy + 0.05 * u], side: 1 },
+        { zh: '捲褲管', en: 'rolled wide trousers', p: [cx + 0.38 * u, B.kneeY + 0.35 * u], side: 1 },
+        { zh: '柴屐', en: 'wooden clogs', p: [cx - 0.34 * u, B.gy - 0.05 * u], side: -1 },
+      ];
+    },
+  });
+
+  // ============================================================ 08 符紙長巾 — talisman-scarf ink mage
+  OPT({
+    zh: '朱墨符師', en: 'Vermilion-ink Talisman Master', tag: '奇幻詮釋 Bold fantasy',
+    idea: '把「符」穿在身上：一條數十張符紙連成的長巾在身後畫出 S 形，手持比人還高的符筆、筆尖滴著朱砂——字寫得比誰都好，就是懶得寫。',
+    shape: '細長黑色直身＋一條黃色 S 曲線（符巾）＋一根斜線（大筆）：黑／黃高對比，剪影靠符巾與筆一眼辨識。',
+    culture: '取材道教書符：黃紙、朱砂、符筆，畫符前於額點硃砂；黑色緇衣為道士常服色。幻想處：符紙連成可操控的長巾、兩側剃短的現代「辮」式（明確為奇幻改造）。',
+    ratio: 7.5, H: 398, bg: ['#efe9dc', '#cdc1aa'], accent: '#b8352a', dx: 6,
+    palette: [['緇衣墨黑 Ink robe', '#1e1d24'], ['符紙黃 Talisman yellow', '#e6c457'], ['朱砂 Vermilion', '#c0352a'], ['內襯朱紅 Lining', '#9a2a24'], ['筆桿竹 Bamboo', '#b48a52'], ['膚 Skin (pale)', '#f2dcc8'], ['髮 Hair', '#16151b']],
+    bust: { y: -0.2, z: 1.65 },
+    draw(ctx, B, o) {
+      const u = B.u, cx = B.cx, hb = B.top;
+      const skin = '#f2dcc8', ink = '#1e1d24', yel = '#e6c457', ver = '#c0352a';
+      const hc = { c: '#16151b', sh: '#08080b', hi: '#4a4a5c', ln: '#050506', rim: '#f5d68a' };
+      // talisman scarf path (behind body part first)
+      const scarfBack = [[cx + 0.5 * u, B.shY - 0.1 * u], [cx + 1.0 * u, B.shY + 0.3 * u], [cx + 1.45 * u, B.waistY], [cx + 1.25 * u, B.kneeY - 0.3 * u], [cx + 1.65 * u, B.kneeY + 0.4 * u], [cx + 2.0 * u, B.gy - 0.6 * u]];
+      const chain = (pts, n0) => {
+        const d = DZ.dense(pts, 8);
+        let acc = 0;
+        for (let i = 1; i < d.length; i++) {
+          acc += Math.hypot(d[i][0] - d[i - 1][0], d[i][1] - d[i - 1][1]);
+          if (acc > 0.32 * u) { acc = 0; const a = Math.atan2(d[i][1] - d[i - 1][1], d[i][0] - d[i - 1][0]) - Math.PI / 2; DZ.fu(ctx, d[i][0], d[i][1], 0.22 * u, 0.4 * u, a, { paper: (i + n0) % 3 ? yel : '#f0d77a', ink: ver }); }
+        }
+      };
+      DZ.tp(ctx, scarfBack, 0.04 * u, 0.04 * u, '#7a1f1a');
+      chain(scarfBack, 0);
+      // braid over the viewer-left shoulder is drawn later; neck
+      H.neck(ctx, B, skin, { w: 0.14, adam: true });
+      H.shoes(ctx, B, { type: 'cloth', c: '#141318', sole: '#d9d2c2', spread: 0.24, w: 0.16 });
+      // slim ink robe with high side slits showing vermilion lining
+      const hemY = B.gy - 0.36 * u, vY = B.chestY - 0.12 * u;
+      cel(ctx, sp([[cx - 0.75 * u, B.hipY], [cx + 0.75 * u, B.hipY], [cx + 0.9 * u, hemY], [cx - 0.9 * u, hemY]]), { c: '#9a2a24', s: 2, h: 0, rim: 0, lw: 1.6 });
+      const robe = H.robe(B, { vY, hemY, hem: 0.82, waist: 0.6, hip: 0.68, knee: 0.74, wave: 2 });
+      cel(ctx, robe, {
+        c: ink, s: 0.15 * u, h: 1.6, hi: '#3a3a48', rim: 2, lw: 2, rimC: '#f5d68a',
+        fx: (c) => {
+          if (DZ.sil) return;
+          H.robeFolds(c, B, ink, B.waistY + 0.3 * u, hemY, [-0.35, 0.05, 0.4], { w: 0.16, a: 1 });
+          // ink & vermilion splashes (texture)
+          [[0.3, B.kneeY, 0.06], [0.45, B.kneeY + 0.2 * u, 0.03], [-0.4, B.hipY + 0.3 * u, 0.04]].forEach(([x, y, r]) => { c.fillStyle = DZ.rgba(ver, 0.85); c.beginPath(); c.arc(cx + x * u, y, r * u, 0, 7); c.fill(); });
+          for (const s of [-1, 1]) DZ.line(c, [[cx + s * 0.62 * u, B.hipY + 0.2 * u], [cx + s * 0.78 * u, hemY + 0.05 * u]], 1.4, '#9a2a24');
+        },
+      });
+      H.crossCollar(ctx, B, { vY, band: '#2c2a33', guard: ver, endY: B.waistY, endX: 0.5 });
+      // sash
+      const sy = B.waistY;
+      cel(ctx, sp([[cx - 0.62 * u, sy - 0.1 * u], [cx + 0.62 * u, sy - 0.1 * u], [cx + 0.64 * u, sy + 0.1 * u], [cx - 0.64 * u, sy + 0.1 * u]]), { c: ver, s: 2, h: 1, rim: 1.2, lw: 1.6 });
+      H.pouch(ctx, cx + 0.42 * u, sy + 0.08 * u, 0.3 * u, 0.34 * u, '#2c2a33', { flap: '#3c3a44', knot: yel });
+      // front scarf: over the viewer-left shoulder, down the front, trailing left
+      const scarfF = [[cx - 0.4 * u, B.shY - 0.2 * u], [cx - 0.75 * u, B.chestY - 0.1 * u], [cx - 0.55 * u, B.waistY + 0.4 * u], [cx - 0.95 * u, B.kneeY - 0.2 * u], [cx - 1.6 * u, B.kneeY + 0.2 * u], [cx - 1.85 * u, B.gy - 0.4 * u]];
+      DZ.tp(ctx, scarfF, 0.04 * u, 0.04 * u, '#7a1f1a');
+      chain(scarfF, 1);
+      // viewer-right arm: pinch talisman at the chest
+      const SR = [cx + 0.85 * u, B.shY + 0.1 * u], ER = [cx + 1.0 * u, B.waistY - 0.1 * u], WR = [cx + 0.5 * u, B.chestY + 0.05 * u];
+      H.limb(ctx, [SR, [cx + 1.02 * u, B.shY + 0.6 * u], ER, [cx + 0.75 * u, B.chestY + 0.35 * u], WR], 0.4 * u, 0.3 * u, ink, { s: 0.06 * u, rimC: '#f5d68a' });
+      cel(ctx, sp([[WR[0] + 0.18 * u, WR[1] + 0.05 * u], [WR[0] + 0.1 * u, WR[1] - 0.17 * u], [WR[0] - 0.06 * u, WR[1] - 0.12 * u], [WR[0] - 0.02 * u, WR[1] + 0.12 * u]]), { c: ver, s: 1, h: 0, rim: 0, lw: 1.3 });
+      DZ.fu(ctx, WR[0] - 0.2 * u, WR[1] - 0.6 * u, 0.2 * u, 0.5 * u, -0.25, { paper: '#f0d77a' });
+      DZ.hand(ctx, WR[0], WR[1], Math.PI * 0.82, 0.58 * u, 'pinch', -1, skin);
+      // viewer-left arm: giant brush held diagonally
+      const SL = [cx - 0.85 * u, B.shY + 0.1 * u], EL = [cx - 1.15 * u, B.waistY - 0.05 * u], WL = [cx - 0.9 * u, B.hipY + 0.1 * u];
+      const b0 = [cx - 0.55 * u, B.gy - 0.15 * u], b1 = [cx - 1.75 * u, hb - 0.4 * u];
+      cel(ctx, ribbon([b0, b1], 0.1 * u, 0.12 * u), { c: '#b48a52', s: 1, h: 0.8, rim: 1, lw: 1.5, fx: (c) => { if (DZ.sil) return; for (let t = 0.1; t < 0.9; t += 0.18) { const x = b0[0] + (b1[0] - b0[0]) * t, y = b0[1] + (b1[1] - b0[1]) * t; c.fillStyle = DZ.dk('#b48a52', 0.35); c.beginPath(); c.ellipse(x, y, 0.07 * u, 0.02 * u, -0.9, 0, 7); c.fill(); } } });
+      const bt = [b1[0] - 0.12 * u, b1[1] - 0.18 * u];
+      cel(ctx, sp([[b1[0] + 0.06 * u, b1[1] + 0.06 * u], [b1[0] - 0.14 * u, b1[1] - 0.06 * u], [bt[0] - 0.12 * u, bt[1] - 0.25 * u], [bt[0] - 0.22 * u, bt[1] - 0.42 * u, 1], [bt[0] + 0.02 * u, bt[1] - 0.2 * u], [b1[0] + 0.1 * u, b1[1] - 0.05 * u]]), { c: '#2a2026', s: 2, h: 1, rim: 1, lw: 1.5, fx: (c) => { if (!DZ.sil) { c.fillStyle = ver; c.fill(sp([[bt[0] - 0.05 * u, bt[1] - 0.2 * u], [bt[0] - 0.22 * u, bt[1] - 0.42 * u], [bt[0] - 0.02 * u, bt[1] - 0.25 * u]])); } } });
+      if (!DZ.sil) { ctx.fillStyle = ver; ctx.beginPath(); ctx.ellipse(bt[0] - 0.3 * u, bt[1] - 0.3 * u, 0.03 * u, 0.045 * u, 0, 0, 7); ctx.fill(); }
+      H.limb(ctx, [SL, EL, WL], 0.4 * u, 0.3 * u, ink, { s: 0.06 * u, rimC: '#f5d68a' });
+      cel(ctx, sp([[WL[0] - 0.18 * u, WL[1] - 0.05 * u], [WL[0] + 0.1 * u, WL[1] - 0.18 * u], [WL[0] + 0.2 * u, WL[1] + 0.05 * u], [WL[0] - 0.08 * u, WL[1] + 0.15 * u]]), { c: ver, s: 1, h: 0, rim: 0, lw: 1.3 });
+      DZ.hand(ctx, WL[0] + 0.02 * u, WL[1] + 0.04 * u, -0.6, 0.58 * u, 'fist', 1, skin);
+      // head: undercut sides, long braid
+      const F = {
+        skin, blushA: 0.08,
+        shape: { t: [0.38, 0.41], c: [0.385, 0.57], cb: 0.012, j: [0.28, 0.83], ch: [0.095, 0.968] },
+        eye: { x: 0.17, y: 0.555, w: 0.17, h: 0.05, tilt: 0.16, open: 0.75, iris: '#2a1c18', ir: 0.036, crease: 0, peak: 0.6, lidW: 0.026, gaze: 0.08 },
+        brow: { type: 'sharp', y: 0.445, w: 0.18, th: 0.022, tilt: 0.14, arch: 0.006, col: '#16151b' },
+        nose: { type: 'bridge', y: 0.73, w: 0.045 }, mouth: { type: 'smirk', y: 0.85, w: 0.11 },
+        age: { hollow: 0.6 },
+        extra: (c) => { for (const s2 of [-1, 1]) { c.save(); c.scale(s2, 1); c.fillStyle = DZ.rgba(ver, 0.85); c.beginPath(); c.moveTo(0.25, 0.53); c.quadraticCurveTo(0.29, 0.51, 0.31, 0.48); c.quadraticCurveTo(0.28, 0.535, 0.24, 0.56); c.fill(); c.restore(); } c.fillStyle = ver; c.beginPath(); c.ellipse(0, 0.36, 0.014, 0.03, 0, 0, 7); c.fill(); },
+      };
+      DZ.head(ctx, F, cx, hb, u);
+      // shaved side stubble
+      DZ.clipDo(ctx, DZ.xf(DZ.face, new DOMMatrix([u, 0, 0, u, cx, hb])), (c) => { c.fillStyle = DZ.rgba('#3a3a48', 0.55); for (const s2 of [-1, 1]) c.fill(sp([[cx + s2 * 0.26 * u, hb + 0.05 * u], [cx + s2 * 0.42 * u, hb + 0.2 * u], [cx + s2 * 0.42 * u, hb + 0.48 * u], [cx + s2 * 0.36 * u, hb + 0.42 * u], [cx + s2 * 0.3 * u, hb + 0.2 * u]])); });
+      const top = sp([[cx - 0.32 * u, hb + 0.24 * u], [cx - 0.3 * u, hb + 0.0 * u], [cx, hb - 0.1 * u], [cx + 0.3 * u, hb + 0.0 * u], [cx + 0.32 * u, hb + 0.24 * u], [cx + 0.12 * u, hb + 0.14 * u], [cx - 0.12 * u, hb + 0.16 * u]]);
+      const fr = [ribbon([[cx - 0.08 * u, hb + 0.1 * u], [cx - 0.16 * u, hb + 0.3 * u], [cx - 0.12 * u, hb + 0.5 * u]], 0.09 * u, 0.006 * u), ribbon([[cx + 0.04 * u, hb + 0.1 * u], [cx + 0.0 * u, hb + 0.26 * u], [cx + 0.05 * u, hb + 0.4 * u]], 0.06 * u, 0.005 * u)];
+      const braidPts = [[cx - 0.2 * u, hb + 0.02 * u], [cx - 0.5 * u, hb + 0.3 * u], [cx - 0.55 * u, B.chin + 0.1 * u], [cx - 0.45 * u, B.chestY - 0.1 * u], [cx - 0.38 * u, B.waistY - 0.1 * u]];
+      const braid = ribbon(braidPts, 0.18 * u, 0.1 * u);
+      H.hair(ctx, [braid, top].concat(fr), hc, { fx: (c, i) => { if (DZ.sil || i) return; DZ.dense(braidPts, 6).forEach((q, k) => { if (k % 2 || k < 2) return; c.fillStyle = DZ.rgba(hc.hi, 0.8); c.beginPath(); c.ellipse(q[0] + ((k / 2) % 2 ? 0.03 : -0.03) * u, q[1], 0.06 * u, 0.025 * u, (k / 2) % 2 ? 0.6 : -0.6, 0, 7); c.fill(); }); } });
+      DZ.fu(ctx, cx - 0.38 * u, B.waistY + 0.18 * u, 0.15 * u, 0.36 * u, 0.1, { paper: yel });
+      cel(ctx, DZ.ell(cx - 0.38 * u, B.waistY - 0.05 * u, 0.07 * u, 0.05 * u), { c: ver, s: 0, h: 0, rim: 0, lw: 1 });
+      return [
+        { zh: '額點硃砂', en: 'cinnabar brow dot', p: [cx, hb + 0.37 * u], side: 1 },
+        { zh: '長辮繫符', en: 'braid with fu tag (fantasy)', p: [cx - 0.5 * u, B.chin + 0.2 * u], side: -1 },
+        { zh: '符紙長巾', en: 'linked-talisman stole', p: [cx + 1.45 * u, B.waistY], side: 1 },
+        { zh: '大符筆', en: 'giant talisman brush', p: [cx - 1.45 * u, B.shY - 0.4 * u], side: -1 },
+        { zh: '朱紅內襯', en: 'vermilion lining, slits', p: [cx + 0.8 * u, B.kneeY + 0.5 * u], side: 1 },
+        { zh: '黑緇衣', en: 'black Taoist robe', p: [cx - 0.3 * u, B.kneeY], side: -1 },
+      ];
+    },
+  });
+
   // ------------------------------------------------------------ card
   const CW = 460, CH = 900;
   YG.CW = CW; YG.CH = CH;
