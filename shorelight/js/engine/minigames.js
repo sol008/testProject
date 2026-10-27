@@ -7,7 +7,7 @@
 G.Mini = (() => {
   const U = G.U;
   const M = {};
-  const push = (scene) => new Promise((res) => { scene.res = res; G.Scenes.push(scene); });
+  const push = (scene) => new Promise((res) => { G.Dialog.close(); scene.res = res; G.Scenes.push(scene); });
   const finish = (scene, v) => { G.Scenes.pop(scene); scene.res(v); };
 
   function frame(ctx, title, sub) {

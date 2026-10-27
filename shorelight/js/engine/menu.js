@@ -54,7 +54,7 @@
         { label: '設定', k: 'settings', icon: 'fan' },
         { label: '回標題', k: 'title', icon: 'hat' },
       ];
-      this.list = new UI().List(this.items, { rows: this.items.length, rowH: 42 });
+      this.list = new G.UI.List(this.items, { rows: this.items.length, rowH: 42 });
       this.sub = null;
     }
     update(dt) {
@@ -159,7 +159,7 @@
       const f = k === 'use' ? (it) => it.type === 'use' || it.type === 'material' : k === 'key' ? (it) => it.type === 'key' : (it) => ['weapon', 'armor', 'head', 'feet', 'acc'].includes(it.type);
       const ids = G.Inv.list(f);
       const idx = this.list ? this.list.idx : 0;
-      this.list = new UI().List(ids.map((id) => {
+      this.list = new G.UI.List(ids.map((id) => {
         const it = G.Data.items[id];
         const usable = it.type === 'use' && it.use && it.use.field !== false && (it.use.heal || it.use.healPct || it.use.mp || it.use.mpPct || it.use.cure || it.use.revive || it.use.vision || it.use.fieldRun);
         return { label: it.name, right: '×' + G.Inv.count(id), icon: UI().itemIcon(it), id, usable };
@@ -257,7 +257,7 @@
     constructor(id, back) {
       this.id = id; this.back = back;
       const m = G.state.members[id];
-      this.list = new UI().List(m.skills.map((sid) => {
+      this.list = new G.UI.List(m.skills.map((sid) => {
         const s = G.Data.skills[sid];
         if (!s) return null;
         const field = ['heal', 'revive', 'cure'].includes(s.type);
@@ -343,7 +343,7 @@
           const slot = this.slots[this.slotIdx];
           const items = this.itemsFor(slot).map((iid) => ({ label: G.Data.items[iid].name, right: '×' + G.Inv.count(iid), icon: UI().itemIcon(G.Data.items[iid]), iid }));
           items.unshift({ label: '（卸下）', iid: null });
-          this.list = new UI().List(items, { rows: 9, rowH: 44 });
+          this.list = new G.UI.List(items, { rows: 9, rowH: 44 });
           this.mode = 'items';
         }
       } else {
@@ -492,7 +492,7 @@
       this.back = back;
       const q = G.state.quests;
       const ids = Object.keys(q).sort((a, b) => (q[a].done ? 1 : 0) - (q[b].done ? 1 : 0));
-      this.list = new UI().List(ids.map((id) => {
+      this.list = new G.UI.List(ids.map((id) => {
         const d = G.Data.quests && G.Data.quests[id];
         return { label: (q[id].done ? '✓ ' : '') + (d ? d.name : id), id, color: q[id].done ? '#8a8270' : (d && d.main ? '#ffd97a' : null) };
       }), { rows: 12, rowH: 44 });
@@ -524,7 +524,7 @@
     constructor(back) {
       this.back = back;
       this.ids = Object.keys(G.state.lanterns);
-      this.list = new UI().List(this.ids.map((id) => ({ label: G.state.lanterns[id].name, id })), { rows: 11, rowH: 44 });
+      this.list = new G.UI.List(this.ids.map((id) => ({ label: G.state.lanterns[id].name, id })), { rows: 11, rowH: 44 });
     }
     update() { const r = this.list.update(); if (r === 'cancel') this.back(); }
     draw(ctx, t) {
@@ -549,7 +549,7 @@
     constructor(back) {
       this.back = back;
       const ids = Object.keys(G.Data.enemies || {}).filter((id) => G.state.bestiary[id]);
-      this.list = new UI().List(ids.map((id) => ({ label: G.Data.enemies[id].name, right: '×' + G.state.bestiary[id], id })), { rows: 12, rowH: 44 });
+      this.list = new G.UI.List(ids.map((id) => ({ label: G.Data.enemies[id].name, right: '×' + G.state.bestiary[id], id })), { rows: 12, rowH: 44 });
       this.total = Object.keys(G.Data.enemies || {}).length;
     }
     update() { const r = this.list.update(); if (r === 'cancel') this.back(); }

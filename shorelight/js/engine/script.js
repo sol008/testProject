@@ -170,6 +170,7 @@ G.Script = (() => {
     healParty() { G.Party.healAll(); G.Audio.sfx('heal'); },
     async lantern(id, name) {
       if (!G.Lanterns.add(id, name)) return;
+      G.Dialog.close();
       await new Promise((res) => G.Scenes.push(new G.FX.LanternGet(name, res)));
     },
     quest(id, stage) {
@@ -210,7 +211,7 @@ G.Script = (() => {
       const r = await G.Battle.start(troop, o);
       return r;
     },
-    shop(goods, o) { return new Promise((res) => G.Scenes.push(new G.ShopScene(goods, res, o))); },
+    shop(goods, o) { G.Dialog.close(); return new Promise((res) => G.Scenes.push(new G.ShopScene(goods, res, o))); },
     async inn(price, o = {}) {
       const c = await S.choice([`住宿（${price} 文）`, '不用了'], { cancel: 1 });
       if (c !== 0) return false;
@@ -234,7 +235,7 @@ G.Script = (() => {
     gameOver() { G.Scenes.push(new G.GameOverScene()); return new Promise(() => {}); },
     ending(kind) { return G.Ending ? G.Ending.play(kind) : Promise.resolve(); },
     // run a minigame scene; resolves with its result
-    scene(sceneObj) { return new Promise((res) => { sceneObj.onDone = res; G.Scenes.push(sceneObj); }); },
+    scene(sceneObj) { G.Dialog.close(); return new Promise((res) => { sceneObj.onDone = res; G.Scenes.push(sceneObj); }); },
   };
   Sc.S = S;
 
