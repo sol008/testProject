@@ -122,7 +122,10 @@ G.Mapx = G.Mapx || {};
         this.objects.push(inst);
         return inst;
       };
-      (val(def.objects) || []).forEach((o) => { if (!o.if || o.if(st)) addObj(o); });
+      // an object whose `if` fails on load is left out until the map is loaded again — a same-map S.warp does NOT
+      // reload. `live: true` keeps it, and objActive() re-checks `if` every frame (draw, 3D, interaction), for
+      // objects whose condition changes while the map stays loaded (e.g. the ch2 maze footprints per loopStep).
+      (val(def.objects) || []).forEach((o) => { if (!o.if || o.live || o.if(st)) addObj(o); });
       if (def.deco) {
         const dl = Object.assign({}, G.Maps.DECO, def.decoLegend || {});
         def.deco.forEach((row, yy) => {

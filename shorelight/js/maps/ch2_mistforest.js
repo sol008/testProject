@@ -830,7 +830,8 @@
       }
       for (const [x, y, dir] of prints) {
         if ('gw'.includes(MLP.d[y][x])) MLP.d[y][x] = ' ';
-        out.push({ t: 'c2_footprint', x, y, dir, seq: 40 - (toExit.get(x + ',' + y) || 0) / 2, spirit: true, step: k,
+        // live: loopStep changes while the map stays loaded (loopBack is a same-map warp, which keeps the object list)
+        out.push({ t: 'c2_footprint', x, y, dir, seq: 40 - (toExit.get(x + ',' + y) || 0) / 2, spirit: true, step: k, live: true,
           if: (st) => !!st.flags.ch2_lingshi && !st.flags.ch2_maze_solved && (st.vars.loopStep || 0) === k });
       }
     });

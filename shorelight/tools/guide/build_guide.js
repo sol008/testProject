@@ -187,6 +187,7 @@ function extractInns() {
 }
 
 // ---------------------------------------------------------------- heart lanterns
+const read = (p) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null);
 const LANTERN_QUEST_ALIAS = { xd_yueqin_names: 'q_ch9_names', lantern_fubo: 'q_fubo' };
 function extractLanterns() {
   const out = [];
@@ -199,6 +200,19 @@ function extractLanterns() {
     }
   }
   const Q = G.Data.quests;
+  // number them the way the chapter walkthroughs do (①…㉘ in docs/guide/chapters/chNN.md); unnumbered ones keep script order
+  const CIRC = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚';
+  for (const l of out) {
+    let q = LANTERN_QUEST_ALIAS[l.id] || Object.keys(Q).find((k) => Q[k].lantern && Q[k].name === l.name);
+    if (!q) q = Object.keys(Q).find((k) => Q[k].lantern && (Q[k].name.includes(l.name) || l.name.includes(Q[k].name)));
+    const frag = read(path.join(GUIDE, 'chapters', `ch${String(l.ch).padStart(2, '0')}.md`)) || '';
+    const names = [l.name, q && Q[q].name].filter(Boolean);
+    let best = null;
+    for (const m of frag.matchAll(new RegExp(`([${CIRC}])\\s*[「『*]*(${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g'))) { const v = CIRC.indexOf(m[1]); if (best == null || v < best) best = v; }
+    l.fragNo = best;
+  }
+  out.sort((a, b) => a.ch - b.ch || ((a.fragNo == null ? 99 : a.fragNo) - (b.fragNo == null ? 99 : b.fragNo)) || a.line - b.line);
+  out.forEach((l, i) => { l.no = i + 1; l.circ = CIRC[i] || String(i + 1); });
   for (const l of out) {
     let q = LANTERN_QUEST_ALIAS[l.id] || Object.keys(Q).find((k) => Q[k].lantern && Q[k].name === l.name);
     if (!q) q = Object.keys(Q).find((k) => Q[k].lantern && (Q[k].name.includes(l.name) || l.name.includes(Q[k].name)));
@@ -622,9 +636,9 @@ TABLES.progression = () => mdTable(['章', '標題', '區域等級', '隊伍', '
 }));
 TABLES.lanterns = () => {
   const Q = G.Data.quests;
-  const rows = LANTERNS.map((l, i) => {
+  const rows = LANTERNS.map((l) => {
     const q = l.quest && Q[l.quest];
-    return [i + 1, CH_SHORT(l.ch), l.name, q ? q.name : '（主線劇情）', q ? (q.stages || []).join(' → ') : '—'];
+    return [l.circ, CH_SHORT(l.ch), l.name, q ? q.name : '（主線劇情）', q ? (q.stages || []).join(' → ') : '—'];
   });
   return mdTable(['#', '章', '心燈', '任務', '任務步驟（遊戲內任務日誌）'], rows, ['r', 'l', 'l', 'l', 'l']);
 };
@@ -1034,7 +1048,6 @@ function mdToHtml(md, ctx) {
 // =====================================================================================================================
 // 7. assembling
 // =====================================================================================================================
-const read = (p) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null);
 function demote(md) { return md.replace(/^(#{1,5})(\s)/gm, '#$1$2'); }
 function chapterFragment(ch) {
   const nn = String(ch).padStart(2, '0');
