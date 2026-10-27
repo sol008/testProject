@@ -844,6 +844,8 @@ G.I18N.add({
   '海盜鬼們化作一串暗紅色的光，往西漂去。礁口的藍色光幕隨之消散。': 'The pirate ghosts become a string of dark red lights and drift away west. The blue curtain over the reef pass fades with them.',
   '進入玄武嶼': 'Enter Xuanwu Isle',
   // ---------------------------------------------------------------- 4-4 七仙蕈之七「玄武蕈」
+  '麻糬坐在這根玄武岩柱前，一動也不動。石柱的側面，好像有什麼在微微發亮……看不清楚。': 'Mochi sits before this basalt column, perfectly still. Something on the side of the column seems to glimmer faintly… you can\'t quite make it out.',
+  '……要是有七彩靈蕈，開了靈視，也許就看得見。': '…With a Seven-Hued Spirit Mushroom and Spirit Sight, we might be able to see it.',
   '一根六角形的玄武岩柱側面，長著一排小小的蕈。蕈傘也是六角形的，像縮小的石柱，發著黑曜石般的微光。': 'On the side of a hexagonal basalt column grows a row of tiny mushrooms. Their caps are hexagonal too, like miniature columns, glimmering like obsidian.',
   '……玄武蕈。': '…The Basalt Mushroom.',
   '是麻糬先找到的。她坐在石柱前，一動也不動，等大家走過來。': 'Mochi found it first. She sits before the column, perfectly still, waiting for everyone to come over.',
