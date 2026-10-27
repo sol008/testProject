@@ -103,6 +103,7 @@ G.Battle = (() => {
       const ens = this.troop.enemies;
       this.enemies = ens.map((e, i) => enemyUnit(e, i, ens.length, this.diff));
       this.bg = this.troop.bg || 'forest';
+      if (G.Backdrops.preload) { try { G.Backdrops.preload(this.bg); } catch (e) { G.warnOnce('backdrop ' + this.bg, e); } }
       this.fleeTries = 0;
       this.result = null;
       this.cutin = null;
