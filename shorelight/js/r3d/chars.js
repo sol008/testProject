@@ -1614,7 +1614,7 @@ G.Char3D = (() => {
       const tl = (0.26 + (sa.tailLen || 0)) * s;
       for (const off of [-0.022, 0.022]) {
         const side = [cos(kth), 0, -sin(kth)];
-        const p0 = vadd(vadd(kp, vsc(side, off * s)), vsc(nrm, 0.01 * s));
+        const p0 = vadd(vadd(vadd(kp, vsc(side, off * s)), vsc(nrm, 0.01 * s)), [0, sa.emblem ? -wv * 0.75 : 0, 0]); // below an emblem plaque
         const pts = [p0, vadd(p0, [0, -tl * 0.35, 0.012 * s]), vadd(p0, [0, -tl * 0.7, 0.018 * s]), vadd(p0, [0, -tl, 0.02 * s])];
         const ids = B.chain('sashT' + (off > 0 ? 'a' : 'b'), 'hips', pts, { stiff: 0.6, drag: 0.3, grav: 1.0, r: 0.015 * s, groups: ['leg', 'body'], kind: 'ribbon' });
         ribbon(B, pts, ids, rect, (t) => (0.018 + 0.006 * t) * s * (sa.w ? sa.w / 2.6 : 1), side, (t) => 0.004 * s);
@@ -2481,7 +2481,12 @@ G.Char3D = (() => {
       for (const sg of [-1, 1]) {
         const p0 = vadd(B._tieAt, [sg * 0.015 * P.s, 0, -0.01]);
         const L = (H.ribbonLen || 0.38) * P.s;
-        const pts = [p0, vadd(p0, [sg * 0.02, -L * 0.25, -0.03]), vadd(p0, [sg * 0.025, -L * 0.55, -0.04]), vadd(p0, [sg * 0.025, -L * 0.8, -0.045]), vadd(p0, [sg * 0.02, -L, -0.05])];
+        let pts = [p0, vadd(p0, [sg * 0.02, -L * 0.25, -0.03]), vadd(p0, [sg * 0.025, -L * 0.55, -0.04]), vadd(p0, [sg * 0.025, -L * 0.8, -0.045]), vadd(p0, [sg * 0.02, -L, -0.05])];
+        if (p0[1] > P.headC[1] + P.head * 0.25) { // high (crown) tie: go back over the skull first, then down behind the head and back
+          const zB = (y) => min(P.headC[2] - P.headD * 0.62, backZ(B, y, 0.03));
+          pts = [p0, vadd(p0, [sg * 0.018, -0.02 * P.s, -0.07 * P.s])];
+          for (let i = 1; i <= 3; i++) { const y = p0[1] - 0.02 * P.s - (L - 0.02 * P.s) * i / 3; pts.push([p0[0] + sg * (0.025 + 0.01 * i) * P.s, y, zB(y)]); }
+        }
         const ids = B.chain('ribbon' + (sg > 0 ? 'L' : 'R'), 'head', pts, { stiff: 0.35, drag: 0.25, grav: 1.0, r: 0.012, groups: ['body', 'head'], kind: 'ribbon' });
         C.ribbon(B, pts, ids, rrect, (t) => (0.014 + 0.004 * t) * P.s, [1, 0, 0], () => 0.002);
       }
@@ -3093,7 +3098,9 @@ G.Char3D = (() => {
         break;
       }
       case 'fan': { // closed folding fan (opens procedurally in battle via scale? kept closed)
-        K.box([0, 0, 0.09], 0.012, 0.02, 0.11, look.mat || 'dark'); K.ball([0, 0, -0.02], 0.008, 'gold');
+        const fl = look.len || 1, fw = look.w || 1; // closed folding fan: guard sticks + pleats (look.len / look.w scale it)
+        K.box([0, 0, 0.09 * fl], 0.012 * fw, 0.02 * fw, 0.11 * fl, look.mat || 'dark'); K.ball([0, 0, -0.02], 0.008 * fw, 'gold');
+        if (fw > 1.2) for (let k = -2; k <= 2; k++) K.cyl([0.0125 * fw, k * 0.0075 * fw, -0.01], [0.0125 * fw, k * 0.0075 * fw * 1.5, 0.19 * fl], 0.0018, 0.0018, look.rib || 'dark', 3); // rib lines on the guard
         if (look.tassel !== false) K.path([[0, 0, -0.025], [0, -0.05, -0.03], [0, -0.09, -0.03]], 0.004, 'tassel', 4);
         break;
       }

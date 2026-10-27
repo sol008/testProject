@@ -309,13 +309,13 @@
   look('hongying', 'v2_01', {
     spec: {
       body: 'female', skin: HY.skin, eyes: '#b4581c',
-      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.1, sweep: 0.04, stiff: 0.8, bow: 1.05, ribbon: true, ribbonLen: 0.56, locks: 0.7, vol: 1.1 },
+      hair: { style: 'side', color: HY.hair, sheen: '#5a4a62', back: 'ponytail', len: 0.52, tie: HY.red, tiePh: 0.2, arch: 0.26, sweep: 0.22, stiff: 1.5, bow: 1.05, ribbon: true, ribbonLen: 0.5, locks: 0.7, vol: 1.1 },
       hat: null,
-      top: { color: HY.crimson, len: 0.5, closure: 'side', inner: HY.moon, trim: HY.leather, collarColor: HY.moon, sleeve: 'long', cuff: '#1d1416', slits: 0.07, toggles: HY.brass,
+      top: { color: HY.crimson, len: 0.42, closure: 'side', inner: HY.moon, trim: HY.leather, collarColor: HY.moon, sleeve: 'long', cuff: '#1d1416', slits: 0.07, toggles: HY.brass,
         hemBand: { color: HY.leather, h: 0.035 }, hemArt: hongyingRobe },
-      vest: { color: HY.leather, trim: '#3a2a2c', len: 0.03, open: false, closure: 'yizi', button: HY.brass, button2: HY.red, buttons: 9, rowAt: 0.17 },
+      vest: { color: HY.leather, trim: '#3a2a2c', len: -0.2, open: false, closure: 'yizi', button: HY.brass, button2: HY.red, buttons: 9, rowAt: 0.17 },
       belt: { color: HY.leather, buckle: HY.brass, w: 0.05, round: 0.022 }, bracers: { color: HY.leather, from: 0.42 },
-      bottom: { type: 'pants', color: HY.moon }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a', from: 0.56, flare: 1.1, band: HY.crimson },
+      bottom: { type: 'pants', color: HY.moon }, shoes: { type: 'boots', color: '#1e1618', sole: '#3a2a2a', from: 0.6, flare: 1.1, band: HY.crimson },
       sash: null, skirt: null, apron: null,
       hip: ['charm'], back: 'spear', weapon: 'spear', aura: '#ffd36a',
     },
@@ -323,34 +323,53 @@
     face3d: { eyeStyle: 'sharp', ew: 0.27, eh: 0.6, iris: '#a8501c', irisLight: '#e89a50', lash: 0.65, browW: 1.55, browAng: -0.2, browArch: 0.2, browCol: '#1d161c',
       chin: 0.36, jaw: 0.8, mouth: 'smirk', restCurve: 0.18, lips: '#d46a72', lipTint: 0.4, blush: 0.25 },
     expr: 'determined',
-    props3d: { spear: { tasselMat: 'tassel', grip: 0.46 } },
+    props3d: { spear: { tasselMat: 'tassel', grip: 0.46, len: 0.92 } },
     style: { rest: { chest: [-3, 0, 0], head: [-2, 0, 0], upperArmL: [0, 0, 3], upperArmR: [0, 0, -3] } },
     clips: {
       // the sheet pose: spear planted upright in the right hand, left fist on the hip, weight on the left leg
       sheet: () => ({ dur: 3, loop: true, k: [
         { t: 0, hp: [0.015, -0.005, 0], h: [0, 4, -2], sp: [0, -2, 1], ch: [-3, -4, 1], nk: [0, 2, 0], hd: [-2, 6, 3], fL: [0.02, 0, 0.01], fR: [-0.05, 0, 0.0], fRy: 12,
-          hR: [-0.3, 0.98, 0.07], hRd: [0, 1, 0.02], hRm: 'on', hL: [0.21, 1.0, -0.03], hLr: [0, -90, 90], hLm: 'on' },
+          hR: [-0.3, 0.88, 0.07], hRd: [0, 1, 0.02], hRm: 'on', hL: [0.21, 1.0, -0.03], hLr: [0, -90, 90], hLm: 'on' },
         { t: 1.5, ch: [-2, -4, 1], hp: [0.015, -0.01, 0] },
         { t: 3, ch: [-3, -4, 1], hp: [0.015, -0.005, 0] },
       ] }),
     },
   });
 
-  // ================================================================================================ 雲歸
-  // Lazy-eyed Taoist of 太虛觀: long black hair half-up with a wooden crown pin, faded blue-grey robe, yin-yang sash,
-  // flowing sleeves, gourd and folding fan at the hip; sarcastic half-smile. (v2 pick pending.)
-  look('yungui', 'canon', {
+  // ================================================================================================ 雲歸 (FINAL: v2 #01 太虛青灰, docs/design/v2/yungui.md §01)
+  // The canon answer, 7 heads, long straight lines + drooping wide sleeves, a lazy one-shoulder-low stance: long ink-black
+  // hair half-up under a carved wooden crown with a cinnabar-tipped pin, long front locks over both shoulders; narrow,
+  // half-lidded brown eyes and a lazy half-smile. Washed-out blue-grey 交領右衽 道袍 to the ankle with a deep-indigo
+  // collar band under a wide white 護領 guard collar, flowing 廣袖 with indigo and white cuff bands; wide black belt with
+  // the 太極 plaque and hanging black tails; talisman pouch at the right hip, amber rice-wine gourd on a red cord at the
+  // left; cloud-toe shoes over white socks; the folding fan (in battle; resting on his shoulder in the sheet pose).
+  const YG = { robe: '#7f93a6', indigo: '#3d4a63', white: '#efeadf', hair: '#25242e', skin: '#efd0b4', wood: '#9a6b3c', cinnabar: '#b8352a' };
+  look('yungui', 'v2_01', {
     spec: {
-      hair: { style: 'part', color: '#1f1c26', sheen: '#55557a', back: 'long', len: 0.42, knot: 'halfup', locks: 0.8, tie: '#5a3a24' },
-      hat: { type: 'crown', color: '#8a5a32', acc: '#efe4c8' },
-      top: { color: '#7d8ea0', len: 0.95, closure: 'cross', inner: '#ece8df', trim: '#4a5a6c', sleeve: 'flow', cuff: '#5a6a7c', emb: '#a8b8c4' },
-      sash: { color: '#2b2a32', w: 3.4, emblem: 'taiji', tails: true },
-      shoes: { type: 'cloth', color: '#2a2832' }, hip: ['gourd'], weapon: 'fan',
+      body: 'tall', skin: YG.skin, eyes: '#5a3a26',
+      hair: { style: 'part', color: YG.hair, sheen: '#55557a', back: 'long', len: 0.44, knot: 'halfup', knotPh: 0.2, locks: 1.45, tie: '#5a3a24', vol: 1.05 },
+      hat: { type: 'crown', color: YG.wood, acc: YG.cinnabar },
+      top: { color: YG.robe, len: 0.98, closure: 'cross', inner: YG.white, trim: YG.indigo, lapel: { w: 0.05, guard: YG.white, guardLen: 0.5 }, sleeve: 'flow', cuff: YG.indigo, cuff2: YG.white, cuffW: 0.12, emb: null },
+      sash: { color: '#22212a', w: 3.6, emblem: 'taiji', tails: true, tailLen: 0.08 },
+      belt: null, apron: null, vest: null,
+      bottom: { type: 'pants', color: YG.white }, shoes: { type: 'cloth', color: '#24222c', sole: YG.white },
+      hip: ['gourd', 'talisman'], held: null, weapon: 'fan', aura: '#9be36a',
     },
-    face3d: { eyeStyle: 'narrow', iris: '#3c3846', droop: 0.42, browAng: -0.05, browArch: 0.15, chin: 0.4, jaw: 0.86, mouth: 'smirk', restCurve: 0.25 },
+    body3d: { head: 0.252, headW: 0.172, headD: 0.19, sh: 0.176, chestW: 0.146, waistW: 0.124 },
+    face3d: { eyeStyle: 'narrow', ew: 0.28, eh: 0.55, iris: '#5a3a26', irisLight: '#9a6a46', droop: 0.38, browAng: -0.05, browArch: 0.2, browW: 1.3, browCol: '#201e26',
+      chin: 0.4, jaw: 0.84, mouth: 'smirk', restCurve: 0.25, blush: 0.12 },
     expr: 'smug',
-    props3d: { fan: { mat: 'dark', tassel: true } },
+    props3d: { fan: { mat: 'wood', rib: 'dark', len: 1.35, w: 1.9, tassel: false }, hip_gourd: { mat: 'gourd', cord: true } },
     style: { rest: { spine: [-3, 0, 2], chest: [-2, 3, 2], head: [3, -4, 6], upperArmL: [2, 0, 2] } },
+    clips: {
+      // the sheet pose: fan resting back on the right shoulder, the left arm hanging loose in its sleeve, one shoulder low
+      sheet: () => ({ dur: 4, loop: true, k: [
+        { t: 0, hp: [-0.012, -0.004, 0], h: [0, -3, 2], sp: [0, -2, 2], ch: [-1, -3, 3], nk: [0, 2, -2], hd: [2, 4, -5], fL: [0.03, 0, 0.0], fR: [-0.02, 0, 0.02], fLy: -4, fRy: 8,
+          hR: [-0.27, 1.3, 0.05], hRd: [0.12, 1, -0.5], hRm: 'on' },
+        { t: 2, ch: [0, -3, 3], hp: [-0.012, -0.01, 0], hR: [-0.27, 1.295, 0.05] },
+        { t: 4, ch: [-1, -3, 3], hp: [-0.012, -0.004, 0], hR: [-0.27, 1.3, 0.05] },
+      ] }),
+    },
   });
 
   // ================================================================================================ 陳伯 · 陳渡  (FINAL, docs/design/v2/chenbo.md)
