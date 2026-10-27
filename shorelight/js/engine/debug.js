@@ -102,11 +102,16 @@ G.Debug.talk = function (npcId) {
   const talk = n.talk || (n.def && n.def.talk);
   return G.Script.run(async (S) => { if (typeof talk === 'function') await talk(S, n); else await S.lines(talk, n); });
 };
-// teleport the player onto a cell and fire touch events / warps as if they had walked there
-G.Debug.stepOn = function (x, y) {
-  const m = G.mapScene;
-  m.player.setCell(x, y);
-  m.player.onArrive = null;
+// teleport the player onto a cell and fire touch events / warps as if they had walked there. The player faces the
+// direction of the step (dominant axis from the old cell; horizontal on a tie), so direction-gated warps (`dir`) and
+// facing checks behave as after a real step; pass `dir` to force a facing (e.g. a long jump onto an 'up' warp).
+G.Debug.stepOn = function (x, y, dir) {
+  const m = G.mapScene, p = m.player;
+  const dx = x - p.x, dy = y - p.y;
+  if (!dir && (dx || dy)) dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  if (dir) { p.dir = dir; G.state.dir = dir; }
+  p.setCell(x, y);
+  p.onArrive = null;
   m.onPlayerArrive();
 };
 // wait until no script is running and no overlay scene is open (resolves with true, or false on timeout)
