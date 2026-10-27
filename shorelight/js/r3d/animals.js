@@ -823,6 +823,20 @@ G.Animal3D = (() => {
       P(cone(g('wrist'), g('hand'), 0.045 * u * lr, 0.043 * u * lr, Object.assign({}, LEGM, { bone: 'wrist' + sx, bc: 'hand' + sx, k: kl, region: 'lowleg' })));
       P(ell(V3.lerp(g('hand'), legs['F' + sx].toe, 0.38), [0.058 * u * lr, 0.042 * u * lr, 0.072 * u * lr], Object.assign({}, LEGM, { bone: 'hand' + sx, k: 0.018 * u, region: 'paw' })));
     }
+    // sculpted fur clumps (long hair): pointed round cones blended into the body: ruff, cheeks, britches, belly fringe
+    if (fl) {
+      const tuft = (base, dir, len, r, bone, region, extra) => {
+        const d = V3.norm(dir);
+        P(cone(base, V3.add(base, V3.mul(d, len)), r, r * 0.06, Object.assign({ bone, k: r * 0.45, region, white: 1, noHull: true, tuft: true }, extra || {})));
+      };
+      const rc = k3(0, 0.44, 0.3), rr = 0.17 * (cfg.ruff || 1) * u;
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) {
+        const a = (i / 8 - 0.5) * 2.6 + (row % 2) * 0.15, h = [0.55, 0.05, -0.45][row];
+        const nrm = V3.norm([sin(a), h, cos(a)]);
+        const base = V3.add(rc, [nrm[0] * rr * 0.95, nrm[1] * rr * 0.9, nrm[2] * rr * 0.8]);
+        tuft(base, V3.add(V3.mul(nrm, 0.7), [0, -1, 0.15]), (0.04 + 0.01 * hash3(i, row, 1)) * (row === 2 ? 1.15 : 1), 0.019, 'ruff', 'ruff');
+      }
+    }
     // tail
     const tr0 = 0.05 * u * (cfg.tail && cfg.tail.r || 1), tr1 = tr0 * (cfg.tail && cfg.tail.taper != null ? cfg.tail.taper : 0.72);
     for (let i = 0; i < tN; i++) {
@@ -830,26 +844,33 @@ G.Animal3D = (() => {
         bone: 'tail' + (i + 1), bp: i ? 'tail' + i : 'hips', bc: i < tN - 1 ? 'tail' + (i + 2) : null, k: i ? 0.008 : 0.03 * u, region: 'tail',
         st: 1, sc: [i * 7 / tN, (i + 1) * 7 / tN], tailT: [i / tN, (i + 1) / tN], fluff: (cfg.tail && cfg.tail.fluff || 0), flow: V3.sub(tailP[i + 1], tailP[i]), clump: 36,
       }));
+      if (fl && i > 0) { // plume: clumps around each segment, pointing out and back along the tail
+        const a = tailP[i], b2 = tailP[i + 1], ax = V3.norm(V3.sub(b2, a));
+        const side = V3.norm(V3.cross(ax, [0, 1, 0])), up = V3.cross(side, ax);
+        const r = lerp(tr0, tr1, i / tN);
+        for (let kk = 0; kk < 4; kk++) {
+          const ang = kk / 4 * TAU + i * 0.7, dv = V3.add(V3.mul(side, cos(ang)), V3.mul(up, sin(ang)));
+          const base = V3.add(V3.lerp(a, b2, 0.5), V3.mul(dv, r * 0.7));
+          P(cone(base, V3.add(base, V3.add(V3.mul(dv, r * 1.1), V3.mul(ax, r * 1.4))), r * 0.55, r * 0.05, { bone: 'tail' + (i + 1), k: r * 0.5, region: 'tail', tailT: [i / tN, (i + 1) / tN], noHull: true, tuft: true }));
+        }
+      }
     }
     const tailDir = V3.norm(V3.sub(tailP[tN], tailP[0]));
     const cheekWhere = (p) => p[1] < hc[1] - 0.12 * R && abs(p[0]) > 0.42 * R && p[2] < hc[2] + 0.45 * R;
     const FUR = fl ? {
-      ruff: { dens: 0.95, len: 0.05, w: 0.034, lift: 0.55, droop: 0.6, flow: [0, -1, 0.35] },
-      neck: { dens: 0.8, len: 0.045, w: 0.032, lift: 0.45, droop: 0.5, flow: [0, -0.8, -0.5] },
-      torso: { dens: 0.35, len: 0.034, w: 0.028, lift: 0.28, droop: 0.5, flow: [0, -0.35, -1] },
-      belly: { dens: 0.9, len: 0.045, w: 0.032, lift: 0.12, droop: 0.2, flow: [0, -1, -0.25], grav: 0.35 },
-      haunch: { dens: 0.75, len: 0.045, w: 0.032, lift: 0.3, droop: 0.5, flow: [0, -1, -0.7] },
-      tail: { dens: 1, len: 0.05, w: 0.034, lift: 0.8, droop: 0.45, flow: (p, n) => V3.add(tailDir, V3.mul(n, 0.15)), grav: 0.05 },
-      head: { dens: 1, len: 0.03, w: 0.024, lift: 0.75, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.7, -0.45], where: cheekWhere },
-      shoulder: { dens: 0.3, len: 0.028, w: 0.024, lift: 0.25, droop: 0.4, flow: [0, -1, -0.2] },
-      leg: { dens: 0.18, len: 0.022, w: 0.02, lift: 0.3, droop: 0.4, flow: [0, -1, -0.4] },
-      paw: { dens: 0.7, len: 0.016, w: 0.016, lift: 0.55, droop: 0.2, flow: [0, 0.1, 1], where: (p) => p[1] < 0.02 },
+      ruff: { dens: 0.9, len: 0.05, w: 0.044, lift: 0.4, droop: 0.7, flow: [0, -1, 0.35] },
+      neck: { dens: 0.55, len: 0.042, w: 0.04, lift: 0.3, droop: 0.6, flow: [0, -0.8, -0.5], where: (p, n) => n[1] < 0.3 },
+      belly: { dens: 0.8, len: 0.042, w: 0.04, lift: 0.08, droop: 0.2, flow: [0, -1, -0.25], grav: 0.3, where: (p, n) => n[1] < -0.2 },
+      haunch: { dens: 0.6, len: 0.042, w: 0.04, lift: 0.18, droop: 0.5, flow: [0, -1, -0.7], where: (p, n) => n[2] < 0.2 },
+      tail: { dens: 1, len: 0.046, w: 0.042, lift: 0.55, droop: 0.4, flow: (p, n) => V3.add(tailDir, V3.mul(n, 0.1)), grav: 0.04 },
+      head: { dens: 1, len: 0.028, w: 0.03, lift: 0.55, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.7, -0.45], where: cheekWhere },
+      paw: { dens: 0.6, len: 0.014, w: 0.018, lift: 0.45, droop: 0.2, flow: [0, 0.1, 1], where: (p) => p[1] < 0.02 },
     } : {
       head: { dens: 0.75, len: 0.017, w: 0.018, lift: 0.7, droop: 0.4, flow: (p) => [Math.sign(p[0]), -0.6, -0.5], where: cheekWhere },
       neck: { dens: 0.25, len: 0.018, w: 0.02, lift: 0.3, droop: 0.4, flow: [0, -0.9, 0.3], where: (p) => p[2] > zS },
     };
     return {
-      fur: FUR, furMax: fl ? 330 : 70, whiskers: { col: cfg.whiskerCol || '#f7f5f0' },
+      fur: FUR, furMax: fl ? 120 : 70, whiskers: { col: cfg.whiskerCol || '#f7f5f0' },
       cfg, joints: J, JP, prims, legs, eyes, ears, hc, R, spY, zH, zS, tailN: tN,
       h: cfg.voxel || 0.0125, hullH: cfg.hullH || 0.019, warp: { c: hc, m: 2.4, R: R * 1.3 },
       springs: (S) => {
@@ -1155,7 +1176,7 @@ G.Animal3D = (() => {
     // hull: no fur noise (it would pierce the fine surface), slightly inflated instead; eye sockets kept closed
     const hullPrims = prims.filter((p) => !p.noHull && !p.sub).map((p) => {
       const q = Object.assign({}, p, { fluff: 0, bb: null });
-      const inf = (p.fluff || 0) * 0.2;
+      const inf = 0; // fur displacement only pushes outward, so the plain hull always stays inside
       if (q.type === 'e') { q.rx += inf; q.ry += inf; q.rz += inf; } else { q.r1 += inf; q.r2 += inf; }
       return q;
     });
@@ -1743,7 +1764,7 @@ G.Animal3D = (() => {
   const GAITS = {
     walk: { duty: 0.64, off: { HL: 0, FL: 0.24, HR: 0.5, FR: 0.74 }, lift: 0.032, liftF: 0.04, f0: 1.25, fk: 2.4, sweepMax: 0.11, bob: 0.004, roll: 0.03, yaw: 0.07, scap: 0.008 },
     trot: { duty: 0.44, off: { FL: 0, HR: 0.02, FR: 0.5, HL: 0.52 }, lift: 0.04, liftF: 0.048, f0: 2.3, fk: 0.9, sweepMax: 0.13, bob: 0.006, roll: 0.02, yaw: 0.035, scap: 0.006 },
-    gallop: { duty: 0.3, off: { HL: 0, HR: 0.09, FR: 0.44, FL: 0.53 }, lift: 0.05, liftF: 0.06, f0: 2.7, fk: 0.22, sweepMax: 0.2, bob: 0.014, roll: 0.0, yaw: 0.0, scap: 0.004, flex: 0.2 },
+    gallop: { duty: 0.24, off: { HL: 0, HR: 0.09, FR: 0.44, FL: 0.53 }, lift: 0.05, liftF: 0.06, f0: 2.7, fk: 0.22, sweepMax: 0.16, bob: 0.014, roll: 0.0, yaw: 0.0, scap: 0.004, flex: 0.2 },
   };
   function gaitPose(p, I, g, phase, vp, vf) {
     const G_ = I.gaits[g];
@@ -2212,7 +2233,7 @@ G.Animal3D = (() => {
           femur0: (() => { const d = ch[1].clone().sub(ch[0]).normalize(); return Math.atan2(d.dot(fwd), d.dot(down)); })(),
         };
       }
-      this.legLenN = min(...this.legKeys.map((L) => this.legs[L].la + this.legs[L].lb)) / this.ps;
+      this.legLenN = min(...this.legKeys.map((L) => this.legs[L].la + this.legs[L].lb + this.legs[L].lc * 0.8)) / this.ps;
       // eye/lid axes (head-local = model at rest)
       this.eyeInfo = plan.eyes.map((e) => ({ sx: e.sx, x: new THREE.Vector3(...e.F.x), y: new THREE.Vector3(...e.F.y), z: new THREE.Vector3(...e.F.z) }));
       // state
