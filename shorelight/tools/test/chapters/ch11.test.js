@@ -91,6 +91,7 @@ class Run {
     await this.idle();
   }
   // (the autoplay AI is far worse than a player; the test runs ~2 levels above the progression table to keep boss fights deterministic)
+  async heal() { await this.page.evaluate(() => { G.Party.healAll(); }); }
   async levelTo(lv) {
     await this.page.evaluate((lv) => { for (const id of ['xinghe', 'hongying', 'yungui', 'baizhi']) if (G.state.members[id]) G.Story.ensureLevel(id, lv); G.Party.healAll(); }, lv);
   }
@@ -207,6 +208,7 @@ const SEGMENTS = {
   check('A: 4-4 玄武蕈 + 七仙蕈全收集 (七色蕈鈴, 萬色符)', await R.flag('mush_7') && await R.ev(() => G.Inv.has('c11_ac_cosmic') && G.state.members.yungui.skills.includes('c11_yg_cosmic') && G.state.quests.q_tuanzi_mush && G.state.quests.q_tuanzi_mush.done));
   await R.step(7, 39);
   check('A: barrier before the captain sends the player back', (await R.ev(() => G.mapScene.player.y)) < 39);
+  await R.heal();                                   // rest at the save point before the boss
   await R.step(20, 32);
   check('A: 11-05 烏鬚船主 beaten (海圖)', await R.flag('ch11_captain') && await R.ev(() => G.Inv.has('c11_blacktide_chart')));
   },
@@ -236,6 +238,7 @@ const SEGMENTS = {
   await R.step(6, 8);
   await R.choices([0]); await R.trigger('north');
   check('A: 北牆暗門 (ch11_secret)', await R.flag('ch11_secret'));
+  await R.heal();                                   // rest at the save point before the boss
   await R.step(21, 2);
   check('A: 11-10 鎖魂將 → 錨燈碎 (ch11_jailer, ch11_night_moves)', await R.flag('ch11_jailer') && await R.flag('ch11_night_moves'));
   check('A: back on the 王船 after 11-10', (await R.map()) === 'wangboat_blacktide');
@@ -257,6 +260,7 @@ const SEGMENTS = {
   check('A: 4-2 step 1 平安信', await R.flag('ch11_tangshan_letter') && await R.ev(() => G.Inv.has('c11_pingan_letter')));
   for (const id of ['deck_hy', 'deck_yg', 'deck_yy', 'deck_mc']) await R.talk(id);
   await R.levelTo(44);
+  await R.heal();                                   // rest at the save point before the boss
   await R.choices(['鯤之淵']); await R.talk('chenbo');
   check('A: 11-14 鯤 (鯤鱗甲)', await R.flag('ch11_kun') && await R.ev(() => G.Inv.has('c11_ar_kun_scale')));
   await R.choices(['無光之霧']); await R.talk('chenbo');
@@ -315,6 +319,7 @@ const SEGMENTS = {
   for (const [x, y] of [[6, 12], [18, 6], [17, 16], [5, 8], [12, 17], [15, 5]]) { await R.step(x, y); await R.page.waitForTimeout(200); await R.idle(); }
   check('A: 4-3 心燈 她的記憶 (6 memories, 憶燈)', await R.flag('ch11_mem_all') && await R.ev(() => G.Lanterns.has('lantern_baizhi_memory') && G.Inv.has('c11_ac_memory_lamp')));
   await R.shot('tower5');
+  await R.heal();                                   // rest at the save point before the boss
   await R.step(11, 6);
   check('A: 11-23 千年燈塔守', await R.flag('ch11_warden'));
   await R.step(11, 3);
@@ -325,6 +330,7 @@ const SEGMENTS = {
   // ---- 一息界: 萬象童子 + optional 萬象遊戲 + 光之曼陀羅 (P4)
   await R.levelTo(46);
   await R.choices(['好，來玩']);
+  await R.heal();                                   // rest at the save point before the boss
   await R.step(19, 24);
   check('A: 11-25 萬象童子 met', await R.flag('ch11_tongzi_met'));
   check('A: 萬象遊戲 (optional battle) played', await R.ev(() => G.state.flags.ch11_tongzi_game || G.state.battles > 0));

@@ -188,7 +188,7 @@ function makeAI(G, mode) {
       const s = c && c.skill && SK()[c.skill];
       if (s && s.type === 'special' && s.target === 'self' && !s.summon && !s.outcomes) return e;
     }
-    if (sc.msg && (sc.__acts || 0) - (sc.__msgAt || 0) <= 2 && /伏低|防禦|擋住|穩住|蓄力|要來了|快躲/.test(sc.msg.text || '')) return true;
+    if (sc.msg && (sc.__acts || 0) - (sc.__msgAt || 0) <= 2 && /伏低|防禦|穩住|蓄力|要來了|快躲/.test(sc.msg.text || '')) return true;
     return null;
   }
 

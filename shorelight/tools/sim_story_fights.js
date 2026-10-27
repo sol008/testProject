@@ -186,7 +186,7 @@ function FIGHTS() {
     { id: 'c7_mirror_yg', ch: 7, file: 'ch7', name: '心魔・雲歸', troop: 't_c7_mirror_yg', opts: '{}',
       party: TRIO, lv: 25, shops: S7b, gifts: yinghuo, skills: SK7, flags: { ch7_flame: 58 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
     { id: 'c7_drown_shadow', ch: 7, file: 'ch7', name: '溺影 (puzzle penalty, loseOk)', troop: 't_c7_drown_shadow', opts: '{ loseOk: true }',
-      party: [XH], lv: 26, shops: S7b, gifts: yinghuo, skills: SK7, flags: { ch7_flame: 50 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), loseOk: true },
+      party: TRIO, lv: 26, shops: S7b, gifts: yinghuo, skills: SK7, flags: { ch7_flame: 50 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), loseOk: true },
     { id: 'c7_shadow', ch: 7, file: 'ch7', name: '無光之影 (心火 awakens)', troop: 't_c7_shadow', opts: '{}',
       party: TRIO, lv: 26, shops: S7b, gifts: yinghuo, skills: SK7x, flags: { ch7_xinhuo: true },
       pre: (G) => { G.__X.ch7.ev('C7.applyFlame()'); const m = G.state.members.xinghe; const st = G.Party.stats('xinghe'); m.hp = st.mhp; m.mp = st.mmp; m.gauge = 50; } },
