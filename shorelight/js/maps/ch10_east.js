@@ -889,7 +889,12 @@
     if (i === opts.length - 2) { await S.say('chenbo:serious', '黑潮只往北流。回頭，就趕不上了。'); return; }
     const p = ports[i];
     // C10-15 / C10-16 happen on the way north to 頭城
-    if (p.id === 'toucheng' && !F('ch10_zhongyuan')) { await H.zhongyuan(S); return; }
+    if (p.id === 'toucheng' && !F('ch10_zhongyuan')) {
+      // after 頭城 陳伯 only sails again with the 順風旗 (chenboDeck): every southern port closes here
+      if (!(await S.pointOfNoReturn({ chapter: 10, quests: ['q_c10_race'],
+        intro: [['chenbo:serious', '去了頭城，就要趕著繞回西邊。南邊這些港口，回不來了。']] }))) return;
+      await H.zhongyuan(S); return;
+    }
     if (p.id === 'baosang' && !F('ch10_taitung_arrive')) await H.montage(S);
     await H.sail(S, p.id);
   };
@@ -1085,6 +1090,7 @@
       await S.fadeIn(0.4);
       await S.give('c10_ayi_lantern', 1);
       S.quest('q_c10_luohanjiao', 1);
+      H.objective(S, '（支線）把阿義的燈籠掛上普渡場的燈篙（頭城）');
     }
   };
 
@@ -1564,9 +1570,11 @@
       { t: 'rock_big', x: 28, y: 21 }, { t: 'rock_basalt', x: 24, y: 26 }, { t: 'rock_small', x: 29, y: 24 },
       { t: 'seaweed', x: 19, y: 2 }, { t: 'seaweed', x: 25, y: 12 }, { t: 'seaweed', x: 8, y: 23 },
       { t: 'rock_big', x: 2, y: 6 }, { t: 'rock_big', x: 30, y: 4 }, { t: 'rock_basalt', x: 26, y: 17 }, { t: 'rock_big', x: 4, y: 15 }, { t: 'rock_basalt', x: 32, y: 15 },
-      { t: 'driftwood', x: 22, y: 12, tag: 'oar1', label: '撿起', if: (st) => !st.flags.c10_oar1,
+      // w: 2 = the driftwood's footprint, so Z works on either half (findInteract only uses o.w). oar2's left half has
+      // no free side (rock above, sea below, a sealed pocket to the west): without it the oar could not be picked up.
+      { t: 'driftwood', x: 22, y: 12, tag: 'oar1', w: 2, label: '撿起', if: (st) => !st.flags.c10_oar1,
         interact: async (S) => { S.flag('c10_oar1'); H.removeObj('oar1'); await S.give('c10_oar', 1); await S.say('xinghe:normal', '一支槳，漂在礁盤上。……槳柄磨得好亮。'); } },
-      { t: 'driftwood', x: 6, y: 24, tag: 'oar2', label: '撿起', if: (st) => !st.flags.c10_oar2,
+      { t: 'driftwood', x: 6, y: 24, tag: 'oar2', w: 2, label: '撿起', if: (st) => !st.flags.c10_oar2,
         interact: async (S) => { S.flag('c10_oar2'); H.removeObj('oar2'); await S.give('c10_oar', 1); await S.say('hongying:normal', '又一支。應該是 Syaman 的。'); } },
       H.crate('reef', 29, 12, [['c10_seasalt', 2], ['huanhunxiang', 1]], { line: '被沖上礁盤的漂流木箱。不是這座島的東西。' }),
       // 黑潮鱗甲 (ch10 tier armour) in the west pocket of the flats, past the second crab
@@ -1752,6 +1760,7 @@
     await S.say('Syaman', '（對星河）你。那個桶子，給我。');
     await S.move('player', 'U');
     await S.say('', '（星河遞過去。雲歸和兩隻貓在旁邊看。）');
+    await S.say('yungui:normal', '（小聲）……人家在修自己的船。我們看著就好。');
     const c = await S.choice(['問他船是怎麼造的', '安靜地看']);
     if (c === 0) {
       await S.say('xinghe:normal', 'Syaman，這船是用幾塊木板拼的？');
@@ -2267,22 +2276,23 @@
           await S.say('', '礁岸上，一個大型的潮怨守著水漬，四周的溺魂都朝它聚過來。');
           await S.battle('t_c10_coast_fix_b');
           S.flag('c10_fix_b');
+          await S.say('yungui:normal', '潮怨守著的那灘水漬，也是招魂點。');
         } },
         { id: 'fixC', trigger: 'touch', x: 17, y: 2, w: 9, h: 4, if: (st) => !st.flags.c10_fix_c, run: (S) => H.coastBoss(S) },
-        { id: 'ptA', trigger: 'action', x: COAST.A[0], y: COAST.A[1], label: '招魂', if: (st) => st.flags.c10_fix_a && !st.flags.ch10_coast_a, run: async (S) => {
+        { id: 'ptA', trigger: 'action', x: COAST.A[0], y: COAST.A[1], label: '招魂', hint: true, if: (st) => st.flags.c10_fix_a && !st.flags.ch10_coast_a, run: async (S) => {
           await H.guide(S, COAST.A);
           await S.say('xinghe:normal', '往北走。黑潮會帶你們走。');
           S.flag('ch10_coast_a');
           await H.coastCheck(S);
         } },
-        { id: 'ptB', trigger: 'action', x: COAST.B[0], y: COAST.B[1], label: '招魂', if: (st) => st.flags.c10_fix_b && !st.flags.ch10_coast_b, run: async (S) => {
+        { id: 'ptB', trigger: 'action', x: COAST.B[0], y: COAST.B[1], label: '招魂', hint: true, if: (st) => st.flags.c10_fix_b && !st.flags.ch10_coast_b, run: async (S) => {
           await H.guide(S, COAST.B);
           await S.say('', '（一個溺魂在消失前，回頭看了星河一眼，用很輕的聲音說了一句聽不懂的鄉音。）');
           await S.say('yungui:sad', '……漳州腔。是從唐山渡海的人。');
           S.flag('ch10_coast_b');
           await H.coastCheck(S);
         } },
-        { id: 'ptC', trigger: 'action', x: COAST.C[0], y: COAST.C[1], label: '招魂', if: (st) => st.flags.c10_fix_c && !st.flags.ch10_coast_c, run: async (S) => {
+        { id: 'ptC', trigger: 'action', x: COAST.C[0], y: COAST.C[1], label: '招魂', hint: true, if: (st) => st.flags.c10_fix_c && !st.flags.ch10_coast_c, run: async (S) => {
           await H.guide(S, COAST.C, 40);
           await S.say('', '（所有溺魂的藍光升起，在岬角上空繞了一圈，往北方、往黑潮的方向，慢慢漂走。）');
           S.flag('ch10_coast_c');
@@ -3448,10 +3458,12 @@
             await S.say('', '（寫著「阿義」的燈籠，掛上了燈篙。在一排燈裡亮著。）');
             S.flag('ch10_ayi_lantern_ready');
             S.quest('q_c10_luohanjiao', 2);
+            H.objective(S, '搶孤前準備（阿坤在普渡場西南；可練習油柱）');
             return;
           }
           await S.say('', '高高的燈篙。燈越高，好兄弟越看得到這裡有普渡。');
           if (F('ch10_ayi_lantern_ready')) await S.say('', '燈篙上，「阿義」的燈籠亮著。');
+          else if (!F('ch10_ayi_met') && V().c10_tc_time !== 'eve') await S.say('yungui:think', '（燈篙底下有一點很淡的陰氣……白天看不到。晚上再來看看吧。）');
         } },
         { id: 'guzhao', trigger: 'action', x: 36, y: 25, w: 4, label: '孤棚', run: async (S) => {
           await S.say('', '孤棚。下面十二根孤柱，上面一座一座的孤棧，綁滿了供品。孤棧頂上，插著順風旗。');
@@ -3480,8 +3492,8 @@
     } else if (c === 1) {
       // point of no return: 普渡 → 搶孤 → 關鬼門 runs straight into chapter 11
       if (!(await S.pointOfNoReturn({ chapter: 10,
-        quests: ['q_c10_tatala', 'q_c10_race', 'q_c10_luohanjiao'],
-        lanterns: { xd_tao_tatala: 'q_c10_tatala', xd_luohanjiao: 'q_c10_luohanjiao' } }))) return;
+        quests: [{ id: 'q_c10_luohanjiao', open: (st) => !st.flags.ch10_ayi_lantern_ready }],
+        lanterns: { xd_luohanjiao: 'q_c10_luohanjiao' } }))) return;
       await S.say('阿坤', '好！七月廿九夜，普渡完就搶孤！');
       await S.fadeOut(1.0);
       V().c10_tc_time = 'pudu';
@@ -3519,6 +3531,7 @@
   };
   H.tcInn = async (S) => {
     await S.say('客棧夥計', '住一晚一百二十文。這幾天普渡，房間不多喔。');
+    if (!F('ch10_ayi_met') && !F('ch10_pudu_defended') && V().c10_tc_time !== 'eve') await S.say('客棧夥計', '……晚上普渡場那根燈篙底下，常常有個瘦瘦的影子，站著看燈。');
     const ok = await S.inn(120, { who: '客棧夥計' });
     if (!ok) return;
     const was = V().c10_tc_time;

@@ -1267,3 +1267,12 @@ G.I18N.add({
   '灘頭西端，一個被黑潮推上岸的木箱。箱縫裡傳出細細的、像潮聲一樣的笛音。': 'At the west end of the beach, a crate the Kuroshio pushed ashore. A thin flute note, like the sound of the tide, seeps through its seams.',
   '卡在礁縫裡的漂流木箱，裡面疊著一件用大魚鱗片綴成的甲。': 'A driftwood crate wedged in a crack in the reef. Folded inside is armor stitched from the scales of a great fish.',
 });
+// side-quest discoverability pass (tools/test/sidequests/ch10.side.js)
+G.I18N.add({
+  '潮怨守著的那灘水漬，也是招魂點。': 'The water stain that Tide Grudge was guarding is a soul-calling spot too.',
+  '去了頭城，就要趕著繞回西邊。南邊這些港口，回不來了。': 'Once we reach Toucheng, we race back round to the west. We won\'t be coming back to these southern ports.',
+  '（支線）把阿義的燈籠掛上普渡場的燈篙（頭城）': '(Side quest) Hang A-Yi\'s lantern on the lantern pole at the Pudu grounds (Toucheng)',
+  '（燈篙底下有一點很淡的陰氣……白天看不到。晚上再來看看吧。）': '(There\'s a faint chill of yin at the foot of the pole… Nothing to see by day. Let\'s come back at night.)',
+  '……晚上普渡場那根燈篙底下，常常有個瘦瘦的影子，站著看燈。': '…At night there\'s often a thin shadow standing under that lantern pole on the Pudu grounds, just looking up at the lights.',
+  '（小聲）……人家在修自己的船。我們看著就好。': '(Quietly) …He\'s mending his own boat. We just watch.',
+});
