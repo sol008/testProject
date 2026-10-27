@@ -122,8 +122,13 @@ G.Battle = (() => {
       this.prevBgm = G.Music.current;
       G.Music.play(bgm, { fade: 0.3 });
       G.Audio.sfx('encounter');
+      // 3D presentation (G.Battle3D reads this scene every frame; the 2D path is used when G.R3 is off)
+      if (G.R3 && G.R3.enabled() && G.Battle3D) {
+        try { this.view3d = new G.Battle3D(this); } catch (e) { console.error('Battle3D build failed', e); G.lastError = e; this.view3d = null; }
+      }
       this.run();
     }
+    exit() { if (this.view3d) { this.view3d.dispose(); this.view3d = null; } }
     all() { return [...this.party, ...this.enemies]; }
     alive(side) { return (side === 'party' ? this.party : this.enemies).filter((u) => !u.dead); }
 
@@ -135,7 +140,7 @@ G.Battle = (() => {
 
     // ---------------------------------------------------------------- main loop
     async run() {
-      await this.wait(0.9);
+      await this.wait(this.view3d ? this.view3d.introWait() : 0.9); // 3D: let the establishing / boss shot play
       const mode = this.o.mode;
       if (mode === 'advantage') this.say('先制攻擊！', 1.4);
       else if (mode === 'ambush') this.say('遭到偷襲！', 1.4);
@@ -461,7 +466,8 @@ G.Battle = (() => {
         let r = Math.random() * tot, pick = s.outcomes[0];
         for (const o of s.outcomes) { r -= (o.w || 1); if (r <= 0) { pick = o; break; } }
         this.banner(s.name, '#ffe6a8');
-        this.fx.push(summonFxIntro(u, pick.cat === 'mochi' ? 'mochi' : 'yuyuan'));
+        if (this.view3d) this.view3d.onSummonIntro(u, pick.cat === 'mochi' ? 'mochi' : 'yuyuan');
+        else this.fx.push(summonFxIntro(u, pick.cat === 'mochi' ? 'mochi' : 'yuyuan'));
         G.Audio.sfx('magic');
         await this.wait(0.7);
         this.say(pick.text, 2.2);
@@ -518,6 +524,7 @@ G.Battle = (() => {
         this.popText(u, '幻覺！', '#ff8ae0');
       }
       const melee = (type === 'phys' && (s.melee || s.target === 'enemy') && !s.ranged && targets.length === 1);
+      if (this.view3d) this.view3d.onAction(u, s, targets, melee);
       if (melee) {
         const tg = targets[0];
         u.pose = 'ready';
@@ -528,7 +535,7 @@ G.Battle = (() => {
       } else {
         u.pose = type === 'phys' ? 'attack' : 'cast'; u.poseT = 0;
         if (type !== 'phys') {
-          this.fx.push(castGlow(u, s));
+          if (this.view3d) this.view3d.onCast(u, s); else this.fx.push(castGlow(u, s));
           G.Audio.sfx(s.castSfx || 'magic');
           await this.wait(0.4);
         }
@@ -547,6 +554,7 @@ G.Battle = (() => {
         await this.tween(u, { ox: 0, oy: 0 }, 0.22, 'inOutQuad');
       }
       u.pose = u.dead ? 'ko' : 'idle';
+      if (this.view3d) this.view3d.onActionEnd(u);
       await this.wait(0.2);
     }
 
@@ -649,8 +657,9 @@ G.Battle = (() => {
       tg.flash = 1;
       tg.pose = 'hurt'; tg.poseT = 0;
       if (tg.st.sleep) delete tg.st.sleep;
-      const n = { x: tg.x + U.rand(-14, 14), y: tg.y - this.unitH(tg) * 0.6, text: String(dmg), t: 0, color: o.color || (tg.side === 'party' ? '#ff9a8a' : '#fff4dc'), size: o.crit ? 46 : 36, crit: o.crit };
+      const n = { x: tg.x + U.rand(-14, 14), y: tg.y - this.unitH(tg) * 0.6, text: String(dmg), t: 0, color: o.color || (tg.side === 'party' ? '#ff9a8a' : '#fff4dc'), size: o.crit ? 46 : 36, crit: o.crit, u: tg };
       this.pops.push(n);
+      if (this.view3d) this.view3d.onDamage(tg, dmg, o);
       if (o.weak) this.popText(tg, '弱點！', '#ffd84a', -40);
       if (o.resist) this.popText(tg, '抵抗', '#a8b8c8', -40);
       if (o.crit) { this.popText(tg, '暴擊！', '#ffcf4a', -70); this.shakeT = 0.25; G.Audio.sfx('crit'); }
@@ -662,7 +671,8 @@ G.Battle = (() => {
     healUnit(tg, amt) {
       if (tg.dead) return;
       tg.hp = Math.min(tg.mhp, tg.hp + amt);
-      this.pops.push({ x: tg.x, y: tg.y - this.unitH(tg) * 0.6, text: '+' + amt, t: 0, color: '#8af08a', size: 34 });
+      this.pops.push({ x: tg.x, y: tg.y - this.unitH(tg) * 0.6, text: '+' + amt, t: 0, color: '#8af08a', size: 34, u: tg });
+      if (this.view3d && this.view3d.fx) this.view3d.fx.heal(tg);
     }
     revive(tg, frac) {
       tg.dead = false;
@@ -675,10 +685,11 @@ G.Battle = (() => {
     kill(u) {
       u.dead = true;
       u.st = {};
+      if (this.view3d) this.view3d.onKill(u);
       if (u.side === 'enemy') {
         G.Audio.sfx('death');
         G.state.bestiary[u.id] = (G.state.bestiary[u.id] || 0) + 1;
-        this.fx.push(new G.FX.Burst({ x: u.x, y: u.y - this.unitH(u) * 0.5, n: 30, color: ['#c8d8ff', '#ffffff', '#a0b0ff'], speed: 180, life: 1.1, jitter: 30 }));
+        if (!this.view3d) this.fx.push(new G.FX.Burst({ x: u.x, y: u.y - this.unitH(u) * 0.5, n: 30, color: ['#c8d8ff', '#ffffff', '#a0b0ff'], speed: 180, life: 1.1, jitter: 30 }));
         this.tween(u, { alpha: 0 }, 0.8, 'linear');
       } else {
         u.pose = 'ko';
@@ -692,7 +703,7 @@ G.Battle = (() => {
       return ((md && md.h) || 160) * (u.scale || 1);
     }
     popText(u, text, color, dy = 0) {
-      this.pops.push({ x: u.x, y: u.y - this.unitH(u) - 10 + dy, text, t: 0, color, size: 24, label: true });
+      this.pops.push({ x: u.x, y: u.y - this.unitH(u) - 10 + dy, text, t: 0, color, size: 24, label: true, u, dy });
     }
 
     async useItem(u, itemId, targets) {
@@ -753,12 +764,14 @@ G.Battle = (() => {
     async cutIn(u, s) {
       if (u.side !== 'party') return;
       this.cutin = { u, s, t: 0, partner: s.combo ? s.combo.find((x) => x !== u.id) : null };
+      if (this.view3d) this.view3d.onCutin(u, s);
       G.Audio.sfx('ultimate');
       await this.wait(1.25);
       this.cutin = null;
     }
 
     playFx(id, u, targets, s) {
+      if (this.view3d) return this.wait(this.view3d.playFx(id, u, targets, s)); // 3D: G.VFX3D returns the impact time
       const add = (f) => this.fx.push(f);
       const center = (tg) => [tg.x, tg.y - this.unitH(tg) * 0.5];
       const elemColor = {
@@ -828,6 +841,7 @@ G.Battle = (() => {
     async finish() {
       this.ui = null;
       const r = this.result || 'lose';
+      if (this.view3d) await this.view3d.beforeFinish(r); // 3D: finishing slow-mo, victory / defeat camera
       // write back party state
       const writeBack = () => {
         for (const p of this.party) {
@@ -859,7 +873,8 @@ G.Battle = (() => {
         await G.Render.fadeTo(0, 0.8);
         return;
       }
-      await G.Render.fadeTo(1, 0.45, '#000');
+      if (this.view3d) await this.view3d.outro(r); // 3D: ink-wash wipe back to the field
+      else await G.Render.fadeTo(1, 0.45, '#000');
       G.Scenes.pop(this);
       // bgmAfter: null = silence after the fight (scripted beat follows)
       if (this.o.bgmAfter === null) G.Music.stop(0.6);
@@ -943,6 +958,7 @@ G.Battle = (() => {
     }
 
     draw(ctx) {
+      if (this.view3d && G.R3.enabled()) { this.draw3d(ctx); return; }
       const t = this.t;
       ctx.save();
       if (this.shakeT > 0) ctx.translate(U.rand(-6, 6) * Math.min(1, this.shakeT * 3), U.rand(-4, 4) * Math.min(1, this.shakeT * 3));
@@ -970,6 +986,26 @@ G.Battle = (() => {
       G.FX.vignette(ctx, 0.35);
       this.drawHud(ctx, t);
       if (this.cutin) this.drawCutin(ctx, t);
+      this.drawMsg(ctx);
+      if (this.vic) this.drawVictory(ctx, t);
+      // intro transition: shattered snapshot
+      if (this.introT < 0.9) this.drawIntro(ctx, this.introT);
+    }
+
+    // 3D path: G.Battle3D renders the arena/units/VFX to the WebGL layer; this draws the 2D UI on top
+    draw3d(ctx) {
+      const t = this.t, v = this.view3d;
+      v.frame();
+      v.drawOverlay(ctx, t);
+      if (this.overlayK > 0) G.FX.vision(ctx, t, Math.min(1, this.overlayK) * 0.4);
+      if (!this.cutin) this.drawHud(ctx, t);
+      if (this.cutin) v.drawCutin(ctx, t);
+      this.drawMsg(ctx);
+      if (this.vic) this.drawVictory(ctx, t);
+      v.drawTransition(ctx);
+    }
+
+    drawMsg(ctx) {
       if (this.msg) {
         const a = Math.min(1, this.msg.t * 6, (this.msg.life - this.msg.t) * 5);
         ctx.save(); ctx.globalAlpha = Math.max(0, a);
@@ -980,9 +1016,6 @@ G.Battle = (() => {
         G.Render.text(ctx, this.msg.text, G.W / 2, 248, { size: 30, align: 'center', color: '#fff0d0' });
         ctx.restore();
       }
-      if (this.vic) this.drawVictory(ctx, t);
-      // intro transition: shattered snapshot
-      if (this.introT < 0.9) this.drawIntro(ctx, this.introT);
     }
 
     drawUnit(ctx, u, t) {
@@ -990,12 +1023,13 @@ G.Battle = (() => {
       const x = u.x + u.ox, y = u.y + u.oy;
       ctx.save();
       ctx.globalAlpha = u.alpha;
-      // shadow
+      // shadow (skipped when G.Battle3D paints the unit's billboard texture: _bbPass)
+      const bb = this._bbPass;
       const sw = u.side === 'party' ? 40 : Math.min(140, (this.unitH(u) * 0.35));
       ctx.fillStyle = 'rgba(0,0,0,0.32)';
-      ctx.beginPath(); ctx.ellipse(x, y, sw, sw * 0.28, 0, 0, Math.PI * 2); ctx.fill();
+      if (!bb) { ctx.beginPath(); ctx.ellipse(x, y, sw, sw * 0.28, 0, 0, Math.PI * 2); ctx.fill(); }
       // active highlight ring
-      if (this.active === u && !this.result) {
+      if (this.active === u && !this.result && !bb) {
         ctx.strokeStyle = `rgba(255,220,140,${0.5 + 0.3 * Math.sin(t * 6)})`; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.ellipse(x, y, sw + 10, (sw + 10) * 0.3, 0, 0, Math.PI * 2); ctx.stroke();
       }
@@ -1030,6 +1064,7 @@ G.Battle = (() => {
         oc.globalCompositeOperation = 'source-over';
         ctx.drawImage(off, 0, 0, off.width, off.height, x - w / 2, y - h + 20, off.width / G.S, off.height / G.S);
       } else drawBody(ctx);
+      if (bb) { ctx.restore(); return; }
       // enemy HP bar
       if (u.side === 'enemy' && !u.dead && !u.boss) {
         const bw = 90;
