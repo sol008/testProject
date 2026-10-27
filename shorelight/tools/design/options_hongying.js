@@ -33,6 +33,7 @@
       {
         name: '紅纓槍', en: 'Red-tassel Spear (canon)', style: 'classic', expr: 'smug', bg: ['#2a1420', '#5a1a20'],
         desc: '原設定：高馬尾＋長紅緞帶，赤紅交領短袍外罩黑皮背心、銅釘點綴，紅纓槍從肩後探出。俐落、好認、配色最強烈。',
+        gloss: 'Canon: high ponytail with long red ribbon, crimson robe, black studded leather vest, red-tassel spear.',
         spec: hy({
           behind(c) { AC.spearBack(c); },
           back(c, S) { HB.ponyHigh(c, S, { ribbon: '#d42638' }); },
@@ -46,6 +47,7 @@
       {
         name: '鹿港千金', en: 'Lukang Heiress', style: 'donghua', expr: 'smug', bg: ['#2a0a10', '#6a3010'], accent: '#ffb040', rim: '#ffe0b0',
         desc: '「一府二鹿」的大小姐氣場：高髻插金步搖、垂紅流蘇，緋紅織錦大裪衫滾金邊、金盤扣，槍纓也換成金紅。驕傲寫在下巴上。',
+        gloss: 'Lukang heiress: high bun with gold buyao and red tassels, crimson brocade jacket with gold trim, gold-tassel spear.',
         spec: hy({
           eye: { iris: ['#3e0c12', '#a0302a', '#f09050', '#ffd0a0'] },
           hair: { base: '#2a1e28', dark: '#0e080e', light: '#7a5a6a', line: '#080406', hi: '#c0a0a8' },
@@ -74,6 +76,7 @@
       {
         name: '鐵甲紅纓', en: 'Armoured Spear-maiden', style: 'classic', expr: 'serious', bg: ['#202838', '#5a2020'], accent: '#ff7060',
         desc: '武將感最強：額繫紅抹額嵌赤玉，肩上層疊鱗甲、胸前護心鏡，赤紅披風。像要上陣的少將軍——適合中後期「復仇」篇章。',
+        gloss: 'Armoured: red headband with a jewel, lamellar pauldron, chest mirror, crimson cape.',
         spec: hy({
           behind(c) { OF.capeBack(c, { col: '#9a1824', lining: '#2a1a1a' }); AC.spearBack(c, { x: 78 }); },
           back(c, S) { HB.ponyHigh(c, S, { ribbon: '#d42638', len: 1.05 }); },
@@ -89,6 +92,7 @@
       {
         name: '素縞尋仇', en: 'Mourning Avenger', style: 'ink', expr: 'serious', bg: ['#888', '#222'],
         desc: '大膽詮釋：為滅門守孝——紅緞帶換成白色孝帶纏額、長辮束起，一身墨黑夜行衣，臉頰一道舊傷。只剩槍纓還是紅的。冷、狠、心碎。',
+        gloss: 'Bold mourning version: white mourning headband, tight braid, black night-raid clothes, cheek scar; only the tassel stays red.',
         inkAccent: true,
         spec: hy({
           eye: { iris: ['#2a0a0a', '#6a1a1a', '#b85a4a', '#e0b0a0'], lid: 0.86, slant: 0.14 },
@@ -106,6 +110,7 @@
       {
         name: '斷髮明志', en: 'The Girl Who Cut Her Hair', style: 'cel', expr: 'angry', bg: ['#e04030', '#301018'], accent: '#ffd040',
         desc: '大膽詮釋：滅門那夜一刀剪去長髮——參差短髮、額上綁著隨風狂飛的紅布條，赤紅勁裝配黑背心。最有爆發力、最「火爆」。',
+        gloss: 'Bold: hair hacked short the night of the massacre, wild red headband tails, crimson and black - maximum fire.',
         spec: hy({
           faceOpt: { browTh: 3.6 }, eye: { slant: 0.15, h: 0.85, lashMul: 1.15 },
           behind(c) { AC.spearBack(c, { a: 0.45, x: 60 }); },
@@ -130,6 +135,7 @@
       {
         name: '雙尾甜心', en: 'Twin-tail Softie', style: 'water', expr: 'shy', bg: ['#f0a0b0', '#f8e0b0'], accent: '#f08aa0',
         desc: '把「偷偷喜歡可愛東西」做成整套造型：雙馬尾綁紅蝴蝶結、櫻桃紅短衫，胸前掛著一隻自己縫的石虎小吊飾——被看到會臉紅大叫「才不是！」',
+        gloss: 'Her secret soft side: twin tails with red bows, cherry-red jacket, a handmade leopard-cat charm, blushing.',
         spec: hy({
           faceOpt: { chinY: 76, eyeH: 39, blush: 0.3 }, eye: { iris: ['#4a0c1a', '#b0304a', '#f08a90', '#ffd8d8'], slant: 0.04, h: 0.98, lashMul: 1.15 },
           hair: { base: '#2e2430', dark: '#120c14', light: '#8a6a7a', line: '#0b070d', hi: '#c8a8b8' },
@@ -149,6 +155,7 @@
       {
         name: '江湖鏢師', en: 'Caravan Escort', style: 'classic', expr: 'laugh', bg: ['#3a2a1a', '#8a5a2a'], accent: '#ffc070',
         desc: '走鏢押貨的江湖兒女：紅頭巾包住髮髻、馬尾從後垂下，土黃粗布衫外罩皮背心、斜背麻繩，笑起來豪邁爽朗。更接地氣、更「俠」。',
+        gloss: 'Caravan escort: red headscarf, low ponytail, ochre robe, leather vest, rope over the shoulder, hearty laugh.',
         spec: hy({
           skin: SKIN.warm, eye: { iris: ['#3a1a0a', '#8a4a1a', '#d89050', '#ffe0b0'], h: 0.92 },
           hair: { base: '#2a2020', dark: '#100a0a', light: '#6a5a50', line: '#080404', hi: '#a09080' },
@@ -170,6 +177,7 @@
       {
         name: '赤焰鋒芒', en: 'Crimson Edge', style: 'donghua', expr: 'serious', bg: ['#0e060a', '#3a0810'], accent: '#ff3a3a', rim: '#ffb0a0',
         desc: '國漫女武神：超長高馬尾、髮梢染成焰紅，黑底赤紋不對稱勁裝鑲金，眼神凌厲泛紅光，火星與槍纓一起翻飛。氣勢最大。',
+        gloss: 'Donghua warrior: extra-long ponytail with flame-red tips, black-and-crimson with gold, glowing red eyes, embers.',
         spec: hy({
           faceOpt: { browTh: 3.4 }, eye: { iris: IRIS.crimson, slant: 0.17, h: 0.82, lashMul: 1.25 },
           hair: { base: '#221820', dark: '#0a0608', light: '#a04050', line: '#050304', hi: '#ff8080' },
@@ -193,6 +201,7 @@
       {
         name: '白銀金鋒', en: 'Silver Edge of Metal', style: 'cel', expr: 'normal', bg: ['#8ab0d0', '#e8eef4'], accent: '#ffffff',
         desc: '五行屬「金」的另解：白銀色調——白衣銀甲、銀冠束高馬尾，只留紅緞帶與槍纓一點紅。乾淨鋒利，和星河的暖色形成強對比。',
+        gloss: '\'Metal\' element reread: white robe, silver armour and crown, only ribbon and tassel red - a cool contrast to Xinghe.',
         spec: hy({
           eye: { iris: ['#2a1418', '#7a3a3a', '#d08a7a', '#ffe0d0'] },
           hair: { base: '#22202e', dark: '#0a0a12', light: '#6a6a8a', line: '#050508', hi: '#b0b0d0' },
@@ -220,6 +229,7 @@
       {
         name: '洛家閨秀', en: 'Daughter of House Luo', style: 'water', expr: 'smile', bg: ['#e09080', '#a0b8a0'], accent: '#d06050',
         desc: '回到鹿港古厝時的家常模樣：髮盤成髻簪一朵紅山茶，清代紅色大裪衫滾黑邊、斜襟盤扣。難得溫柔的笑，讓人想起滅門前的她。',
+        gloss: 'At home in Lukang: bun with a red camellia, Qing-era red jacket with black piping, a rare gentle smile.',
         spec: hy({
           eye: { slant: 0.08, h: 0.94 }, faceOpt: { blush: 0.2 },
           hair: { base: '#2a2228', dark: '#100a0e', light: '#7a6a72', line: '#080406', hi: '#b0a0a8' },

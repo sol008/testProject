@@ -50,6 +50,7 @@
       {
         name: '太虛道長', en: 'Taoist of Taixu Temple (canon)', style: 'classic', expr: 'smug', bg: ['#1a2a3a', '#3a4a5a'], accent: '#c0e0ff',
         desc: '原設定：長髮半束、木冠橫簪，中分瀏海落幾縷碎髮；褪色藍灰道袍配深色寬領，領口塞著黃符，摺扇與酒葫蘆隨身。似笑非笑。',
+        gloss: 'Canon: half-up hair with wooden crown and pin, centre part with stray strands, faded blue-grey robe, talisman, fan and gourd.',
         spec: yg({
           back(c, S) { HB.long(c, S, { len: 210 }); },
           body(c, S) {
@@ -68,6 +69,7 @@
       {
         name: '醉臥米酒', en: 'Tipsy Immortal', style: 'water', expr: 'laugh', bg: ['#e8b080', '#a0b8d0'], accent: '#f0a070',
         desc: '屋頂上喝醉的那一幕：長髮全散、領口鬆垮滑開，臉頰泛紅、眼睛瞇成一條線，抱著大葫蘆米酒。最慵懶、最有「酒仙」味。',
+        gloss: 'Drunk on the temple roof: hair all loose, collar slipping, flushed cheeks, hugging a big rice-wine gourd.',
         spec: yg({
           faceOpt: { blush: 0.55 }, eye: { lid: 0.55, droop: 0.08 },
           back(c, S) { HB.long(c, S, { len: 210, w: 1.08 }); },
@@ -91,6 +93,7 @@
       {
         name: '符籙天師', en: 'Talisman Master', style: 'donghua', expr: 'serious', bg: ['#0a0a14', '#2a1a0a'], accent: '#ffcc50', rim: '#fff0c0',
         desc: '認真起來的樣子：高聳黑道冠嵌太極、玄黑道袍滾金八卦紋，身邊環繞發光黃符，眼底一層金光。最帥、最「天師」。',
+        gloss: 'Serious mode: tall black Taoist cap with taiji, black robe with gold trigrams, ring of glowing talismans, golden eyes.',
         spec: yg({
           eye: { lid: 0.9, slant: 0.1, irisW: 0.92, iris: ['#2a2008', '#8a6a1a', '#ffd060', '#fff4c0'] }, faceOpt: { browTh: 4.4 }, brow: { arch: 0.3 },
           aura(c) {
@@ -122,6 +125,7 @@
       {
         name: '蕈癡學者', en: 'Mushroom Nerd', style: 'cel', expr: 'laugh', bg: ['#7ab060', '#f0e8b0'], accent: '#fff4d0',
         desc: '把「業餘蕈菇學家」演滿：圓框眼鏡、髮冠上插著兩朵七彩靈蕈，苔綠道袍斜背採集袋、帶子上別滿香菇徽章。一聊蘑菇就停不下來。',
+        gloss: 'Mushroom nerd: round glasses on a chain, spirit mushrooms in his crown, moss-green robe, strap pinned with mushrooms.',
         spec: yg({
           eye: { lid: 1, h: 1.12, irisH: 1.05, slant: 0, iris: ['#2a2a10', '#5a6a2a', '#a8c060', '#e8f4b0'] }, faceOpt: { eyeH: 28 },
           hair: { base: '#2e2a26', dark: '#120e0c', light: '#7a6e60', line: '#0a0806', hi: '#b0a490' },
@@ -152,6 +156,7 @@
       {
         name: '雷法真人', en: 'Thunder-rite Adept', style: 'donghua', expr: 'smug', bg: ['#0a0c24', '#2a1a4a'], accent: '#90a0ff', rim: '#e0e8ff',
         desc: '「木（雷）」屬性拉滿：長髮被雷氣吹起、鬢邊一縷霜白，靛紫道袍繡雲雷紋，瞳孔泛電光，身側劈啪閃著雷符。最強戰鬥形態。',
+        gloss: 'Thunder form: hair lifted by static, one frost-white streak, indigo-violet robe with cloud-thunder pattern, lightning talismans.',
         spec: yg({
           eye: { iris: IRIS.storm, lid: 0.8, slant: 0.08 },
           hair: { base: '#24203a', dark: '#0c0a18', light: '#7a80d0', line: '#06050c', hi: '#c0c8ff' },
@@ -184,6 +189,7 @@
       {
         name: '青衫摺扇', en: 'Scholar Behind the Fan', style: 'classic', expr: 'smug', bg: ['#1a3a3a', '#3a5a4a'], accent: '#c0f0d0',
         desc: '書生扮相：長髮低束一條青緞帶，青碧儒衫，摺扇半掩著嘴只露出一雙笑眼——「在下只是路過的閒散道人。」最有心機感。',
+        gloss: 'Scholar: low ponytail with teal ribbon, teal scholar\'s robe, folding fan hiding a sly smile.',
         spec: yg({
           eye: { lid: 0.58, droop: 0.1, slant: 0 },
           back(c, S) { HB.ponyLow(c, S, { vol: 1.15, tie: '#3a8a7a' }); },
@@ -214,6 +220,7 @@
       {
         name: '墨竹道人', en: 'Ink-bamboo Hermit', style: 'ink', expr: 'normal', bg: ['#6a8a6a', '#222'],
         desc: '水墨隱士：長髮只用一根竹簪鬆鬆挽住，素袍、竹影橫斜，眼神淡然。這是他獨處、想念師父時的樣子——安靜的那一面。',
+        gloss: 'Ink-wash hermit: hair loosely pinned with bamboo, plain robe, bamboo shadows - the quiet side that misses his master.',
         spec: yg({
           eye: { lid: 0.84, droop: 0.12, slant: -0.02 }, mouths: { normal: 'flat' },
           back(c, S) { HB.long(c, S, { len: 210, w: 1.05 }); },
@@ -238,6 +245,7 @@
       {
         name: '雲遊散人', en: 'Wandering Recluse', style: 'water', expr: 'smile', bg: ['#a0c0d0', '#d8c8a0'], accent: '#a0b8c8',
         desc: '下山尋師的旅裝：頭戴寬邊斗笠、肩披灰褐斗篷，胸前掛一串木念珠，腰邊酒葫蘆。風塵僕僕、笑容依舊，像隨時會吟一句歪詩。',
+        gloss: 'On the road to find his master: wide straw hat, travel cloak, wooden prayer beads, gourd.',
         spec: yg({
           eye: { lid: 0.72 },
           back(c, S) { HB.ponyLow(c, S, { vol: 1.1 }); },
@@ -265,6 +273,7 @@
       {
         name: '不羈野道', en: 'Rogue Taoist', style: 'cel', expr: 'smug', bg: ['#3a3a5a', '#d06a40'], accent: '#ffd080',
         desc: '大膽現代詮釋：頭髮剪短、後腦只紮一小撮，耳上掛兩枚符咒耳墜，頸側畫著朱砂符紋；黑內襯外披敞開的藍灰無袖道袍。浪子氣十足。',
+        gloss: 'Bold modern take: short hair with a tiny tail, talisman earrings, vermilion sigils on the neck, open sleeveless robe.',
         spec: yg({
           faceOpt: { chinY: 86, browTh: 4.4 }, eye: { lid: 0.72, slant: 0.15, h: 0.9 }, brow: { arch: 0.2 },
           back(c, S) { HB.nape(c, S, { len: 0.8 }); S.K.lock(c, [-56, -70, -84, -84, -96, -64], 16, { p: 0.6 }); },
@@ -303,6 +312,7 @@
       {
         name: '霜髮道者', en: 'Frost-haired Sage', style: 'classic', expr: 'normal', bg: ['#1a2a40', '#4a5a7a'], accent: '#d0f0ff',
         desc: '大膽詮釋：讀太多「內景」禁書而早生華髮——一頭灰白長髮戴蓮花冠，白衣淡藍衿，冰藍眼眸。清冷出塵，像已經半隻腳踏進仙界。',
+        gloss: 'Bold: hair gone prematurely grey from forbidden texts, lotus crown, white robe with pale-blue collar, ice-blue eyes.',
         spec: yg({
           eye: { iris: ['#1a3a4a', '#4a8aa0', '#a8e0f0', '#ffffff'], lid: 0.8 },
           hair: { base: '#c8ccd8', dark: '#7a8094', light: '#ffffff', line: '#4a5064', hi: '#ffffff' },

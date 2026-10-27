@@ -24,6 +24,7 @@
       {
         name: '燈靈初醒', en: 'Lamp Spirit Awakens (canon)', style: 'classic', expr: 'smile', bg: ['#14284a', '#2a4a5a'],
         desc: '原設定：及腰銀髮泛淡藍光，紅繩低綁、燈籠髮簪；水綠褙子滾浪花繡邊，周身一層微光。溫柔、乾淨、一眼就是女主角。',
+        gloss: 'Canon: waist-long silver hair tied low with red string, lantern hairpin, aqua beizi with sea-foam embroidery, soft glow.',
         spec: bz({
           aura(c) { AC.aura(c, '#bef0ff', 0.32, 170); },
           back(c, S) { HB.long(c, S); },
@@ -39,6 +40,7 @@
       {
         name: '雲肩仙子', en: 'Cloud-collar Celestial', style: 'donghua', expr: 'smile', bg: ['#1a1a3a', '#4a4a7a'], accent: '#b8c8ff', rim: '#ffffff',
         desc: '國漫仙子路線：頭頂雙環髻纏珍珠步搖，月白雲肩四瓣如意紋綴紅流蘇，背後飄著半透明披帛。最華麗、最「仙」。',
+        gloss: 'Celestial: twin hair loops with pearls and a buyao pin, four-lobed cloud collar with red tassels, floating shawl.',
         spec: bz({
           hair: { base: '#eceaf8', dark: '#a8a0d0', light: '#ffffff', line: '#8a80b4', hi: '#ffffff' },
           eye: { h: 1.04, irisH: 1.04 },
@@ -67,6 +69,7 @@
       {
         name: '海霧幽光', en: 'Sea-mist Phantom', style: 'water', expr: 'normal', bg: ['#2a6a8a', '#6a6aa8'], bgA: 0.85, accent: '#9ad8f0',
         desc: '強調「燈靈」本質：長髮像在水中漂浮、髮尾化成光點，身形下緣半透明。眼神有點恍惚、像隨時會被海風吹散。',
+        gloss: 'Ghostly lamp spirit: hair drifting as if underwater and dissolving into light, translucent lower edge, dreamy eyes.',
         spec: bz({
           eye: { iris: IRIS.paleGold, droop: 0.06, lid: 0.92 },
           hair: { base: '#eef4fa', dark: '#a8c0e0', light: '#ffffff', line: '#8aa0c8', hi: '#ffffff' },
@@ -92,6 +95,7 @@
       {
         name: '水燈少女', en: 'Water-lantern Maiden', style: 'cel', expr: 'smile', bg: ['#f08aa0', '#ffd8a0'], accent: '#fff0f0',
         desc: '中元夏夜感：銀髮編成側辮垂在胸前、紅繩穿辮，頭上一盞小蓮花水燈；白衣配珊瑚紅領與腰帶，明亮可愛、色彩跳。',
+        gloss: 'Summer festival: side braid threaded with red string, lotus water-lantern ornament, white dress with coral collar and sash.',
         spec: bz({
           hair: { base: '#e2eaf8', dark: '#8ca2d2', light: '#ffffff', line: '#6a80b0', hi: '#ffffff' },
           faceOpt: { eyeH: 39, round: 0.3 }, eye: { h: 1.05, irisH: 1.05, slant: -0.03 },
@@ -114,6 +118,7 @@
       {
         name: '九份姑娘', en: 'Jiufen Girl', style: 'water', expr: 'laugh', bg: ['#c8a8e8', '#f0c890'], accent: '#c8a0e0',
         desc: '「變成人」之後的日常裝：銀髮挽成低髻插木簪，薰衣紫大裪衫配盤扣，捧著一碗熱騰騰的芋圓笑開——第一次嚐到人間味。',
+        gloss: 'Becoming human: low bun with wooden pin, lavender side-fastened jacket, laughing over a steaming bowl of taro balls.',
         spec: bz({
           faceOpt: { blush: 0.32 },
           back(c, S) {
@@ -140,6 +145,7 @@
       {
         name: '渡魂歌者', en: 'Soul-ferrying Singer', style: 'classic', expr: 'normal', bg: ['#0e2a30', '#1a4a48'], accent: '#90f0c8',
         desc: '強調「〈渡魂謠〉與玉笛」：銀髮編成一圈辮冠、鬢邊垂著翠玉流蘇，薄荷綠長衣繡浪紋，玉笛斜抱在胸前。安靜、神聖、帶一點哀傷。',
+        gloss: 'The singer: braided crown, jade tassel, mint robe with wave embroidery, jade flute across the chest.',
         spec: bz({
           eye: { iris: ['#4a4a12', '#a09a3a', '#e8e490', '#fffbd8'], droop: 0.08 },
           hair: { base: '#e8f2f0', dark: '#98c0b8', light: '#ffffff', line: '#6a9890', hi: '#ffffff' },
@@ -171,6 +177,7 @@
       {
         name: '彼岸花燈', en: 'Spider-lily Lamp of the Far Shore', style: 'donghua', expr: 'serious', bg: ['#1a060c', '#4a0a18'], accent: '#ff4a5a', rim: '#ffd0d0',
         desc: '大膽詮釋「彼岸」面：銀髮髮尾漸層成彼岸花紅，鬢邊一朵發光的曼珠沙華；黑底紅襟長衣、緋金眼眸、紅瓣飄落。神秘又危險的美。',
+        gloss: 'Bold Far-Shore aspect: silver hair fading to spider-lily red, glowing lily, black robe with crimson collar, falling petals.',
         spec: bz({
           eye: { iris: ['#5a0a10', '#c03030', '#ffb060', '#fff0c0'], slant: 0.11, h: 0.9, lashMul: 1.2 },
           skin: { base: '#fff2ee', mid: '#f6dcd6' },
@@ -193,6 +200,7 @@
       {
         name: '月白短髮', en: 'Moon-white Bob', style: 'cel', expr: 'surprise', bg: ['#6aa0e0', '#c8e8ff'], accent: '#ffffff',
         desc: '大膽詮釋：剪短的齊瀏海鮑伯頭＋一撮呆毛，大眼睛對什麼都「咦？」；寬大的淺藍外衣、耳下晃著小燈籠耳墜。最可愛、最好奇。',
+        gloss: 'Bold: blunt-fringe bob with ahoge, huge curious eyes, oversized pale-blue jacket, little lantern earring.',
         spec: bz({
           faceOpt: { eyeH: 39, chinY: 76, round: 0.4 }, eye: { h: 1.08, irisH: 1.06, irisW: 1.04 },
           hair: { base: '#e6eefa', dark: '#98aedc', light: '#ffffff', line: '#7088bc', hi: '#ffffff' },
@@ -216,6 +224,7 @@
       {
         name: '墨韻燈靈', en: 'Ink-wash Lamp Spirit', style: 'ink', expr: 'normal', bg: ['#a0c8d8', '#222'], inkAccent: true,
         desc: '水墨版：長髮在腦後鬆鬆一束、用紅繩繫住任它散開如一筆墨暈，素白衣只留紅繩與燈籠一點紅。留白多、意境重，適合章節插畫。',
+        gloss: 'Ink-wash: hair gathered loosely at the nape with red string, plain white robe, only red accents.',
         spec: bz({
           eye: { droop: 0.05, lid: 0.86 },
           hair: { base: '#d8dce4', dark: '#6a7488', light: '#ffffff', line: '#4a5468', hi: '#ffffff' },
@@ -240,6 +249,7 @@
       {
         name: '燈母遺珠', en: 'Heir of the Lantern Mother', style: 'classic', expr: 'normal', bg: ['#2a1a3a', '#6a4a2a'], accent: '#ffd070',
         desc: '神性最高的版本：高髻戴金蓮冠、兩側垂步搖，額間一點火焰花鈿，身後一圈燈籠光環；白金褙子層層疊疊。適合真結局或覺醒形態。',
+        gloss: 'Divine / true-ending form: high bun with golden lotus crown and buyao, flame forehead mark, lantern halo, white-and-gold layers.',
         spec: bz({
           eye: { iris: ['#8a5a0a', '#e0a020', '#ffe070', '#ffffff'], lid: 0.9, irisW: 0.96 },
           hair: { base: '#f4f2f0', dark: '#c8b8a0', light: '#ffffff', line: '#9a8a70', hi: '#ffffff' },

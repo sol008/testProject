@@ -18,6 +18,10 @@ G.I18N.add({
   '設定': 'Settings',
   '繁體中文': '繁體中文',
   '按任意鍵開始': 'Press Any Key',
+  'v1.0　© Shorelight Team': 'v1.0  © Shorelight Team',
+  // sandbox test map (js/maps/test.js)
+  '測試之地': 'Testing Grounds',
+  '引擎測試': 'Engine Test',
   '載入字型……': 'Loading fonts…',
   '準備中……': 'Preparing…',
 
@@ -61,8 +65,6 @@ G.I18N.add({
   '紅纓': 'Hongying',
   '青鋒': 'Qingfeng',
   '？？？': '???',
-  // first letters for the battle timeline (battle.js draws name.slice(0, 1))
-  '星': 'X', '白': 'B', '紅': 'H', '雲': 'Y',
 
   // ------------------------------------------------------------------ five phases (elements) & statuses
   '金': 'Metal',
@@ -132,7 +134,7 @@ G.I18N.add({
   '自動戰鬥：關': 'Auto-battle: OFF',
   '戰鬥速度 ×%d': 'Battle speed ×%d',
   '戰鬥速度 ×': 'Battle speed ×',
-  '劍意': 'Sword Will',
+  '劍意': 'Will', // battle HUD label under the gauge (13px, shares space with the MP number)
   '自動戰鬥中（F 關閉）': 'Auto-battle (F to stop)',
   '手動': 'Manual',
   '自動': 'Auto',
@@ -442,7 +444,7 @@ G.I18N.add({
   '八斗子': 'Badouzi',
   '平溪': 'Pingxi',
   '淡水': 'Tamsui',
-  '觀音山': 'Mount Guanyin',
+  '觀音山': 'Mt. Guanyin',
   '艋舺': 'Bangka',
   '竹塹': 'Zhuqian',
   '向天湖': 'Xiangtian Lake',

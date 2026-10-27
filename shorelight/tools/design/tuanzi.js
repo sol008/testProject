@@ -277,11 +277,13 @@
       {
         name: '糰子本尊', en: 'Tuanzi Classic (canon)', style: 'classic', expr: 'smile', bg: ['#2a2040', '#4a3050'],
         desc: '原設定：麻糬般的圓身體、黃褐毛色配黑斑，石虎招牌的白眼線與額紋，抱著一朵發光的紫色靈蕈。標準吉祥物比例。',
+        gloss: 'Canon: mochi-round body, tawny fur with black spots, white eye-lines and forehead stripes, hugging a glowing mushroom.',
         spec: tz({ body: 'round', bodyExtra: held('mushroom'), tail: {} }),
       },
       {
         name: '大福紅龜粿', en: 'Big Mochi with Red Turtle Cake', style: 'water', expr: 'smile', bg: ['#f0c080', '#e0a0a0'], accent: '#f0a070',
         desc: '「什麼都吃」放大版：吃成一顆攤開的大麻糬，耳朵小小、瞇瞇眼，雙手抱著比臉還大的紅龜粿，嘴邊還有碎屑。最療癒。',
+        gloss: 'Ate too much: flattened loaf body, tiny ears, sleepy eyes, holding a red turtle cake bigger than its face.',
         spec: tz({
           body: 'loaf', head: { w: 1.08, h: 0.96 }, ears: { s: 0.82 }, fluff: 1.4,
           eye: { lid: 0.55 }, faceOpt: { eyeH: 30, blush: 0.5 },
@@ -292,6 +294,7 @@
       {
         name: '靈光尾環', en: 'Glowing Tail-rings', style: 'donghua', expr: 'normal', bg: ['#081828', '#10304a'], accent: '#60f0ff', rim: '#c0faff',
         desc: '靈獸感：身形略修長、尾巴高高捲起，尾上環紋發出青藍靈光，額紋與斑點也微微透光；眼睛是湖水綠。夜裡會自己發亮。',
+        gloss: 'Spirit beast: sleeker body, tufted ears, tail rings and forehead stripes glowing cyan, aqua eyes.',
         spec: tz({
           body: 'sleek', head: { w: 0.96, h: 1 }, ears: { s: 1.08, tuft: true }, glowSpots: '#40d8f0',
           eye: { iris: ['#063a3a', '#10a0a0', '#80fff0', '#e0ffff'] },
@@ -303,6 +306,7 @@
       {
         name: '符咒項圈', en: 'Talisman Collar & Tiny Cap', style: 'classic', expr: 'smile', bg: ['#1a2a3a', '#3a4a5a'], accent: '#ffd060',
         desc: '和雲歸成套：頭頂一頂迷你黑道冠、脖子上紅繩項圈掛金鈴與小黃符，肩上斜背一隻縮小版酒葫蘆。一看就是「道觀的貓」。',
+        gloss: 'Matches Yun Gui: tiny black Taoist cap, red collar with a gold bell and talisman tags, mini gourd.',
         spec: tz({
           body: 'round',
           bodyExtra(c) {
@@ -328,6 +332,7 @@
       {
         name: '小奶糰', en: 'Tiny Kitten', style: 'cel', expr: 'surprise', bg: ['#ffb0c0', '#ffe8b0'], accent: '#ffffff',
         desc: '幼崽版：小小一隻、頭比身體大，超大耳朵和水汪汪大眼，粉紅鼻頭，抱著一條小魚乾一臉「咦？」。萌度最高，適合 Q 版周邊。',
+        gloss: 'Kitten: tiny body, oversized head and ears, huge glossy eyes, pink nose, holding a dried fish.',
         spec: tz({
           body: 'tiny', head: { w: 1.02, h: 1.04 }, ears: { s: 1.3, tilt: 0.1 },
           faceOpt: { eyeW: 40, eyeH: 44, eyeX: -28, farX: 38, blush: 0.6 }, eye: { iris: ['#2a3a10', '#7daa32', '#e8f080', '#fffad0'], pupilSize: 1.15 },
@@ -338,6 +343,7 @@
       {
         name: '山林野貓', en: 'Wild Leopard-cat', style: 'ink', expr: 'serious', bg: ['#6a8a5a', '#222'],
         desc: '最貼近真實石虎：灰褐毛、密集黑斑與清楚的白眼線、窄一點的口鼻、琥珀眼小瞳孔，神情警覺。水墨畫法，帶「保育」的寫實味。',
+        gloss: 'Most realistic leopard cat: grey-brown fur, dense spots, alert amber eyes; ink-painting treatment.',
         spec: tz({
           fur: 'wild', body: 'sleek', head: { w: 0.94, h: 1.02 }, ears: { s: 1, round: true }, spots: 'dense', stripeW: 1.15,
           eye: { iris: ['#3a2a08', '#a07a20', '#f0c860', '#fff0c0'], pupilSize: 0.6 }, faceOpt: { eyeH: 30, blush: 0 },
@@ -348,6 +354,7 @@
       {
         name: '蕈仙開悟', en: 'Mushroom-enlightened Sage', style: 'donghua', expr: 'smug', bg: ['#1a0a3a', '#3a1a5a'], accent: '#d080ff', rim: '#ffe0ff',
         desc: '「吃太多靈蕈」形態：額上睜開第三隻眼、斑點變成七彩、半閉的禪定眼，頭頂浮著一朵蕈傘當光環，準備開講宇宙真理。喜劇必殺。',
+        gloss: 'Mushroom-enlightened: third eye, rainbow spots, half-closed zen eyes, mushroom-cap halo - ready to lecture on the cosmos.',
         spec: tz({
           fur: 'cosmic', body: 'round', eye: { lid: 0.5, iris: ['#3a1060', '#9050d0', '#f0b0ff', '#ffffff'] },
           glowSpots: '#ff80d0', mouths: { smug: 'catw' },
@@ -369,6 +376,7 @@
       {
         name: '月光石虎', en: 'Moonlight Spirit', style: 'classic', expr: 'normal', bg: ['#0e1a3a', '#2a3a6a'], accent: '#c0d8ff',
         desc: '靈體版：銀白毛色、霧藍斑點，額上一彎新月印記，身形邊緣微微發光、像月光凝成的貓。安靜神秘，可做「靈獸覺醒」形態。',
+        gloss: 'Moonlight spirit: silver-white fur, misty blue spots, crescent forehead mark, soft glow.',
         spec: tz({
           fur: 'moon', body: 'round', eye: { iris: ['#1a2a5a', '#4a6ab0', '#b0d0ff', '#ffffff'] },
           noseCol: '#d0a8c8', earInner: '#e8d8f0', whisker: 'rgba(255,255,255,0.95)',
@@ -384,6 +392,7 @@
       {
         name: '燈火尾巴', en: 'Lantern-flame Tail', style: 'cel', expr: 'laugh', bg: ['#f08040', '#3a1a4a'], accent: '#ffd060',
         desc: '和燈籠舖呼應：毛色偏橘紅、尾巴尖端燃著一簇不燙手的燈火，脖子繫紅緞帶，張嘴大笑。跟星河站在一起像「燈籠舖的招牌貓」。',
+        gloss: 'Lantern-shop cat: orange fur, a harmless flame at the tail tip, red ribbon, big laugh.',
         spec: tz({
           fur: 'ember', body: 'round', ears: { s: 1.05 }, eye: { iris: ['#4a2a08', '#c06a10', '#ffc050', '#fff4c0'] },
           tail: { spine: [86, 170, 160, 160, 160, 60, 118, 30], w: 26, flame: true, ring: '#5a2010' },
@@ -393,6 +402,7 @@
       {
         name: '招財糰子', en: 'Lucky Beckoning Tuanzi', style: 'water', expr: 'smile', bg: ['#f0d070', '#f09090'], accent: '#f0c050',
         desc: '過年版：金黃毛色、胸前紅肚兜繡金「福」，舉起一隻肉球招手、另一手抱著福壽古錢，鈴鐺叮噹。適合節慶活動與商店吉祥物。',
+        gloss: 'New-year mascot: golden fur, red bib embroidered with 福, one paw beckoning, lucky coin.',
         spec: tz({
           fur: 'golden', body: 'pear', spots: 'sparse', eye: { iris: ['#3a2a08', '#8a6a10', '#f0d050', '#fffbd0'] },
           paws: false,

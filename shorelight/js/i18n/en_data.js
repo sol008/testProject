@@ -316,7 +316,7 @@ G.I18N.add({
   '山邊常見的青草，嚼起來很苦。解除中毒。': 'A common hillside herb, bitter to chew. Cures Poison.',
   '香包': 'Herbal Sachet',
   '縫著艾草與香料的小布包，聞了神清氣爽。解除睡眠、封印、暈眩、幻境。':
-    'A little cloth pouch stitched full of mugwort and spices; one sniff clears the head. Cures Sleep, Seal, Stun, and Trance.',
+    'Mugwort and spice in a cloth pouch; one sniff clears the head. Cures Sleep, Seal, Stun, Trance.',
   '平安符': 'Peace Charm',
   '廟裡求來的平安符，摺成小小一包。解除異常並護身三回合。':
     'A blessing charm from the temple, folded into a tiny packet. Cures ailments and grants a Shield for 3 turns.',
@@ -324,28 +324,28 @@ G.I18N.add({
   // ---- regional food ----
   '芋圓': 'Taro Balls',
   '九份阿柑姨的招牌，Q彈香甜。白芷吃第一口時愣住了。回復氣血 80、真氣 10。':
-    'Auntie Gan\'s famous taro balls (yuyuan) from Jiufen—springy, chewy, and sweet. Bai Zhi froze at her very first bite. Restores 80 HP and 10 MP.',
+    "Auntie Gan's chewy, sweet taro balls (yuyuan). Bai Zhi froze at the first bite. Restores 80 HP, 10 MP.",
   '草仔粿': 'Mugwort Rice Cake',
   '艾草揉進糯米皮，包著菜脯米。回復氣血 150。':
-    'Caozaiguo: sticky-rice dough kneaded green with mugwort, wrapped around savory dried radish. Restores 150 HP.',
+    'Caozaiguo: mugwort rice dough wrapped around savory dried radish. Restores 150 HP.',
   '米酒': 'Rice Wine',
   '雲歸的最愛。「這是藥引，不是酒。」回復真氣 40。':
     'Yun Gui\'s favorite. "It\'s a medicinal catalyst, not booze." Restores 40 MP.',
   '米粉湯': 'Rice Noodle Soup',
   '艋舺街邊的一碗熱湯，配上黑白切。全體回復氣血 120。':
-    'A steaming street-side bowl from Bangka, served with a plate of heibai qie—assorted cuts, light and dark. Restores 120 HP to the party.',
+    'Bangka street-side soup with a plate of heibai qie (assorted cuts). Restores 120 HP to the party.',
   '柿餅': 'Dried Persimmons',
   '新埔九降風吹出來的柿餅，甜得像蜜。回復真氣 50。':
     'Persimmons dried by the Jiujiang wind of Xinpu, sweet as honey. Restores 50 MP.',
   '擂茶': 'Pounded Tea',
   '客家伙房裡用擂缽慢慢磨出來的茶，香氣濃厚。回復真氣 80 並解除中毒。':
-    'Leicha—Hakka tea slowly ground in a mortar in a courtyard farmhouse, rich and fragrant. Restores 80 MP and cures Poison.',
+    'Leicha: Hakka tea slowly ground in a mortar, rich and nutty. Restores 80 MP and cures Poison.',
   '粄條': 'Flat Rice Noodles',
   '客家庄的米食，滑順有嚼勁。回復氣血 300。':
     'Bantiao from the Hakka village—silky, wide, and pleasantly chewy. Restores 300 HP.',
   '仙草': 'Grass Jelly',
   '關西的仙草煮成黑亮的凍，退火又解熱。回復氣血 150 並解除一切異常。':
-    'Xiancao from Guanxi, boiled into a glossy black jelly that cools body and temper alike. Restores 150 HP and cures all ailments.',
+    'Guanxi grass jelly (xiancao), glossy black and cooling. Restores 150 HP and cures all ailments.',
   '牛舌餅': 'Ox-Tongue Pastry',
   '鹿港老餅舖的牛舌餅，薄脆酥香。回復氣血 250、真氣 20。':
     'A long, flaky "ox-tongue" pastry from an old Lukang bakery, thin and crisp. Restores 250 HP and 20 MP.',
@@ -360,16 +360,16 @@ G.I18N.add({
     'Tainan\'s breakfast of choice—a hot bowl of congee that warms you to the heart. Restores 300 HP to the party.',
   '鳳梨酥': 'Pineapple Cake',
   '「旺來」討個好彩頭。回復氣血 400、真氣 40。':
-    'In Taiwanese, "pineapple" sounds like "prosperity comes"—so every bite is good luck. Restores 400 HP and 40 MP.',
+    'In Taiwanese, "pineapple" sounds like "prosperity comes." Restores 400 HP and 40 MP.',
   '愛玉': 'Aiyu Jelly',
   '嘉義山區的愛玉子搓洗成凍，加點檸檬。回復真氣 100。':
-    'Aiyu seeds from the Chiayi hills, rubbed and washed into a trembling jelly with a squeeze of lemon. Restores 100 MP.',
+    'Aiyu seeds from the Chiayi hills, washed into a trembling jelly with lemon. Restores 100 MP.',
   '小米酒': 'Millet Wine',
   '主人家熱情遞來的小米酒。依禮輕抿一口，心意比酒更暖。回復真氣 150 並持續回復氣血。':
-    'Millet wine warmly offered by your hosts. Etiquette calls for a small sip—the welcome is warmer than the wine. Restores 150 MP and grants Regen.',
+    "Your hosts' millet wine. A polite sip—the welcome is warmer than the wine. Restores 150 MP; Regen.",
   '烏魚子': 'Mullet Roe',
   '冬天烏魚洄游時做成的珍饈，打狗港的漁家送的。回復氣血 900。':
-    'Wuyuzi: a delicacy of cured roe made when the mullet run in winter, a gift from a Takao fishing family. Restores 900 HP.',
+    'Wuyuzi: cured mullet roe, a winter delicacy from a Takao fishing family. Restores 900 HP.',
   '櫻花蝦餅': 'Sakura Shrimp Cracker',
   '東港的櫻花蝦炸成的餅，紅豔酥脆。全體回復氣血 600。':
     'Donggang\'s tiny sakura shrimp fried into a cracker, ruby-red and crunchy. Restores 600 HP to the party.',
@@ -378,7 +378,7 @@ G.I18N.add({
     'Flying fish from Orchid Island, sun-dried until they taste of sea wind. Restores 1200 HP.',
   '釋迦': 'Sugar Apple',
   '台東的釋迦，像佛頭一樣一顆顆的果實，綿密香甜。回復真氣 180。':
-    'A Taitung sugar apple, its knobbly skin like the curls on a Buddha\'s head, its flesh creamy and sweet. Restores 180 MP.',
+    "A Taitung sugar apple, knobbly as a Buddha's curls and creamy inside. Restores 180 MP.",
   '花蓮麻糬': 'Hualien Mochi',
   '軟糯的麻糬，裹著花生粉。全體回復氣血 700。':
     'Soft, pillowy mochi rolled in crushed peanuts. Restores 700 HP to the party.',
@@ -392,13 +392,13 @@ G.I18N.add({
   // ---- spirit items & throwables ----
   '七彩靈蕈': 'Seven-Hued Spirit Mushroom',
   '霧林深處發光的七色蕈。吃下後能得「靈視」，看見藏起來的路與魂；戰鬥中使一名同伴進入「幻境」（暴擊、術法提升，偶爾會恍神）。':
-    'A seven-colored mushroom glowing deep in the Misty Wood. Eat it to gain Spirit Sight and see hidden paths and souls. In battle, sends one ally into Trance (higher crits and magic, with the occasional daze).',
+    'Eat for Spirit Sight: see hidden paths and souls. In battle, an ally enters Trance (crit & magic up).',
   '鞭炮': 'Firecrackers',
   '中元普渡剩下的鞭炮。劈哩啪啦，鬼也怕。對敵全體造成 40 點火屬性傷害。':
-    'Leftover firecrackers from the Ghost Festival offerings. Crackle-crackle-bang—even ghosts flinch. Deals 40 Fire damage to all foes.',
+    'Ghost Festival leftovers—crackle, bang, and even ghosts flinch. 40 Fire damage to all foes.',
   '掌心雷符': 'Palm Thunder Talisman',
   '太虛觀量產的雷符，誰都能丟。對敵一體造成 160 點木屬性傷害。':
-    'A mass-produced Taixu Temple thunder talisman—anyone can throw one. Deals 160 Wood damage to one foe.',
+    'Mass-produced at Taixu Temple; anyone can throw one. 160 Wood damage to one foe.',
   '鎮邪符': 'Evil-Warding Talisman',
   '對敵一體，高機率封印其術法三回合。': 'High chance to Seal one foe\'s arts for 3 turns.',
   '定身符': 'Binding Talisman',
@@ -890,25 +890,25 @@ G.I18N.add({
   // ---- Combo Arts ----
   '星河渡燈': 'Lantern Ferry',
   '【合擊・星河＋白芷】劍火點燈，笛聲送行，一河燈火渡盡陰霾。全體術法大傷害。':
-    '[Combo · Xinghe + Bai Zhi] Sword-fire lights the lanterns, the flute sends them on, and a river of light carries the darkness away. Massive Art damage to all foes.',
+    'A river of lanterns, lit by the sword and sent off by the flute. Massive Art damage to all foes.',
   '火樹銀花': 'Fireworks in Bloom',
   '【合擊・星河＋紅纓】火劍銀槍交錯，如元宵煙火綻放。全體三連擊。':
-    '[Combo · Xinghe + Hongying] Fire sword and silver spear cross like Lantern Festival fireworks. 3 hits on all foes.',
+    'Fire sword and silver spear burst like Lantern Festival fireworks. 3 hits on all foes.',
   '雷霆槍陣': 'Thunderspear',
   '【合擊・紅纓＋雲歸】雷符附槍，一槍引落九天之雷。木屬性單體極大傷害，可能暈眩。':
-    '[Combo · Hongying + Yun Gui] A thunder talisman on the spear calls lightning down from the ninth heaven. Enormous Wood damage to one foe; may Stun.',
+    'A thunder talisman on the spear calls down the heavens. Huge Wood damage to one foe; may Stun.',
   '雲水禪心': 'Zen of Cloud and Water',
   '【合擊・白芷＋雲歸】笛聲與符光相和。我方全體大幅回復並持續回復。':
-    '[Combo · Bai Zhi + Yun Gui] Flute song and talisman light in harmony. Greatly heals all allies and grants Regen.',
+    'Flute song and talisman light in harmony. Greatly heals all allies and grants Regen.',
   '符火燎原': 'Talisman Wildfire',
   '【合擊・星河＋雲歸】劍引符火，燒遍山野。火屬性全體術法。':
-    '[Combo · Xinghe + Yun Gui] The sword leads talisman-fire across hill and field. Fire Art on all foes.',
+    'The sword leads talisman-fire across hill and field. Fire Art on all foes.',
   '月下紅纓': 'Moonlit Tassel',
   '【合擊・白芷＋紅纓】月光凝在槍尖。水屬性單體重擊並降低敵人防禦。':
-    '[Combo · Bai Zhi + Hongying] Moonlight gathers on the spear tip. Heavy Water strike on one foe and lowers its Guard.',
+    'Moonlight gathers on the spear tip. Heavy Water strike on one foe; lowers its Guard.',
   '千燈': 'A Thousand Lanterns',
   '【合擊・四人】「妳不是一個人在發光。」一路上被渡過的每一盞心燈一同亮起。全體極大傷害。':
-    '[Combo · All Four] "You\'re not the only one shining." Every heart lantern lit along the way blazes at once. Enormous damage to all foes.',
+    '"You\'re not the only one shining." Every heart lantern blazes. Huge damage to all.',
 
   // ---- enemy skills: generic ----
   '撞擊': 'Ram',

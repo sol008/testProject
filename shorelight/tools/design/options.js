@@ -65,6 +65,7 @@
       {
         name: '燈火少年', en: 'Lantern-shop Boy (canon)', style: 'classic', expr: 'smile', bg: ['#1a2448', '#4a2a3a'],
         desc: '原設定忠實版：凌亂短髮＋紅繩小髻，靛藍大裪衫配盤扣，背上「螢火」劍柄。最安全、最「仙劍」的主角臉。',
+        gloss: 'Faithful to the bible: messy hair with a red-cord topknot, indigo side-fastened jacket with frog buttons, sword hilt over the shoulder.',
         spec: xh({
           behind(c) { AC.swordBack(c); },
           back(c, S) { HB.nape(c, S); },
@@ -78,6 +79,7 @@
       {
         name: '紙燈學徒', en: 'Workshop Apprentice', style: 'water', expr: 'laugh', bg: ['#f0b070', '#7aa0d0'], accent: '#e08a50',
         desc: '藍染點點頭巾、米白短衫外罩帆布圍裙，臉頰沾一抹朱紅顏料、耳後夾著毛筆——一看就是剛糊完燈籠溜出來玩。',
+        gloss: 'Indigo polka-dot headscarf, cream shirt under a canvas apron, a vermilion paint smudge and a brush behind the ear.',
         spec: xh({
           faceOpt: { eyeH: 31, chinY: 80, round: 0.4 },
           back(c, S) { HB.nape(c, S, { len: 0.8 }); },
@@ -103,6 +105,7 @@
       {
         name: '螢火劍客', en: 'Firefly Swordsman', style: 'donghua', expr: 'serious', bg: ['#0e0a1a', '#3a1010'], accent: '#ff7a2a',
         desc: '國漫主角路線：利落高馬尾、髮梢透出餘燼橘光，黑紅勁裝鑲金色火紋，琥珀色眼睛發亮、周身火星飛舞。',
+        gloss: 'Donghua hero: sleek high ponytail with ember tips, black-and-crimson outfit with gold flame embroidery, glowing amber eyes, sparks.',
         spec: xh({
           faceOpt: { eyeH: 25, chinY: 87, cheek: -2, browTh: 3.6 }, eye: { iris: IRIS.amber, slant: 0.12, h: 0.86, irisW: 1.05 }, brow: { color: '#1a1018', arch: 0.4 },
           hair: { base: '#2a2030', dark: '#0e0a14', light: '#ff9050', line: '#070509', hi: '#ffb070' },
@@ -139,6 +142,7 @@
       {
         name: '八斗子海風', en: 'Sea-breeze Kid of Badouzi', style: 'cel', expr: 'laugh', bg: ['#4ab0c8', '#f0d090'], accent: '#ffffff',
         desc: '在海邊撿到的孩子：曬得微黑、背後掛著斗笠，褪色海藍短衫敞著領口，脖子上用紅繩繫著一枚貝殼。陽光感最強。',
+        gloss: 'Sun-tanned shore kid: straw hat slung on his back, faded sea-blue jacket, a seashell on a red cord.',
         spec: xh({
           skin: SKIN.tan, faceOpt: { eyeH: 31, chinY: 80, round: 0.5, cheek: 1 }, eye: { h: 1.05, irisH: 1.05 },
           hair: { base: '#3a2a22', dark: '#1a120c', light: '#9a7a5a', line: '#120a06', hi: '#c0a080' },
@@ -171,6 +175,7 @@
       {
         name: '借火之子', en: 'Child of the Borrowed Flame', style: 'donghua', expr: 'normal', bg: ['#0a1428', '#1a2a4a'], accent: '#7fd0ff', rim: '#c8ecff',
         desc: '大膽詮釋，直接把「秘密」穿在身上：一眼暖棕、一眼映著白芷的海藍魂火；白衣靛領、衣襬繡火焰，身旁漂著藍色魂燈。',
+        gloss: 'Bold: wears his secret - one warm brown eye, one sea-blue eye lit by her flame; white robe, flame hem, drifting soul-lights.',
         spec: xh({
           eyesDraw: hetero(IRIS.brown, IRIS.sea),
           hair: { base: '#2a2838', dark: '#100e18', light: '#7aa0d0', line: '#08070c', hi: '#a0d0ff' },
@@ -198,6 +203,7 @@
       {
         name: '劍仙迷', en: 'Wannabe Sword-Immortal', style: 'cel', expr: 'smug', bg: ['#d0502a', '#3a2050'], accent: '#ffd060',
         desc: '茶館說書聽太多：額上綁著飄帶紅抹額、圍巾隨風亂飛，橘褐短褂，嘴角一抹「本大俠來也」的得意笑。喜劇感強。',
+        gloss: 'Storyteller fanboy: flying red hero headband, scarf, rust-orange jacket, cocky grin.',
         spec: xh({
           faceOpt: { eyeH: 27 }, eye: { iris: ['#4a1a0a', '#a0481a', '#f0a050', '#ffe0a0'] },
           hair: { base: '#3a2420', dark: '#1a0e0c', light: '#a0705a', line: '#120806', hi: '#d0a080' },
@@ -218,6 +224,7 @@
       {
         name: '墨染少年', en: 'Ink-wash Youth', style: 'ink', expr: 'normal', bg: ['#c03030', '#222'], inkAccent: true,
         desc: '水墨意境、偏憂鬱：留長的瀏海中分、低馬尾以紅繩繫住，灰藍長衫一身素淨，只有一縷紅是他記得的溫度。',
+        gloss: 'Ink-wash and melancholy: longer centre-parted fringe, low ponytail tied with red string, grey-blue robe.',
         spec: xh({
           faceOpt: { eyeH: 26, chinY: 86 }, eye: { iris: ['#2a1a14', '#5a3a2a', '#9a7a60', '#e0c8b0'], lid: 0.9 },
           hair: { base: '#2a2a30', dark: '#0a0a0e', light: '#6a6a78', line: '#050508', hi: '#9a9aa8' },
@@ -236,6 +243,7 @@
       {
         name: '長辮小哥', en: 'Qing-era Braid Boy', style: 'water', expr: 'smile', bg: ['#e0b050', '#6a7a90'], accent: '#e0a030',
         desc: '清代街坊味最濃的一版：黑緞瓜皮帽頂著紅結、腦後一條長辮垂到胸前，深褐對襟馬褂配金盤扣，手提一盞礦工提燈。',
+        gloss: 'Most Qing-era: black skull-cap with red knot, long queue braid over the shoulder, brown mandarin jacket, miner\'s lamp.',
         spec: xh({
           faceOpt: { eyeH: 29, chinY: 83 }, eye: { droop: 0.05 },
           hair: { base: '#2a2224', dark: '#100c0e', light: '#6a5a62', line: '#0a0607', hi: '#9a8a92' },
@@ -277,6 +285,7 @@
       {
         name: '劍仙之姿', en: 'The Sword-Immortal He Becomes', style: 'classic', expr: 'serious', bg: ['#202a50', '#6a3040'], accent: '#ffd080',
         desc: '「長大後」的終章形象：臉型更俐落、長髮半束銀冠，白衣紅襟外罩赤紅披風，螢火劍光透肩。適合後期換裝或宣傳圖。',
+        gloss: 'Endgame form: older face, half-up hair with silver crown, white robe, crimson cape, glowing sword.',
         spec: xh({
           faceOpt: { chinY: 88, eyeH: 25, jaw: 1, cheek: -1 }, eye: { iris: ['#3a1a0a', '#8a4a1a', '#e0a050', '#ffe0a0'], slant: 0.05 },
           hair: { base: '#2c2030', dark: '#120a16', light: '#7a6488', line: '#0a060c', hi: '#b09ac0' },
@@ -303,6 +312,7 @@
       {
         name: '懶骨頭', en: 'Lazybones', style: 'cel', expr: 'smug', bg: ['#6ab070', '#f0e0a0'], accent: '#fff4c0',
         desc: '把「愛偷懶」放大：半睜的睡眼、嘴裡叼根草，頭頂翹著一撮呆毛，靛衫領口隨便敞開。輕鬆好笑的日常版本。',
+        gloss: 'Lazy-day version: sleepy half-lidded eyes, grass stalk in mouth, ahoge, collar hanging open.',
         spec: xh({
           eye: { lid: 0.62, droop: 0.06 }, faceOpt: { eyeH: 28 },
           hair: { base: '#3a2c34', dark: '#1d1520', light: '#8a7488', line: '#160f16', hi: '#a98fa6' },
