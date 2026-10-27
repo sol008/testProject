@@ -96,8 +96,9 @@ vision realms, and helping each other across.
 - Fiery, proud, blunt, honest, fiercely loyal; secretly loves cute things (糰子!); catastrophically
   bad cook (recurring gag). Calls 星河 「笨蛋」.
 - Weapon: red-tasseled spear 「紅纓槍」. Element **金**. Physical DPS.
-- Look: high ponytail of black hair with a long red ribbon, sharp eyes, crimson short robe with black
-  leather vest and arm-guards, white trousers, boots; red tassel spear.
+- Look (client pick, v2 #01 洛家槍・承): crown-high black ponytail with a red silk bow; amber eyes; crimson Qing
+  arrow-sleeve robe (箭袖袍) to the knee with side slits, black 巴圖魯 vest with a brass one-line button row, moon-white
+  collar, laced leather bracers, riding boots; red-tasselled spear (洛家槍).
 
 ### 雲歸 (Yun Gui) — 24
 - Taoist of **觀音山 太虛觀**. Sarcastic, lazy-eyed, drinks 米酒, reads forbidden texts on 「內景」

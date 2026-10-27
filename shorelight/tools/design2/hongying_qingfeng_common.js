@@ -390,6 +390,13 @@
     const ex = (e.x ?? 0.19) * h, ey = (e.y ?? 0.585) * h, ew = (e.w ?? 0.19) * h, eh = (e.h ?? 0.1) * h, tilt = e.tilt ?? 0.08;
     const lid = e.lid ?? 0; const peak = e.peak ?? 0.35;
     const I = [sx * (ex - ew * 0.5), ey + ew * tilt * 0.5 + (e.innerDrop || 0) * h], O = [sx * (ex + ew * 0.5), ey - ew * tilt * 0.5];
+    if (e.closed) { // closed lids (blink / happy arc / pained)
+      const Ic = [sx * (ex - ew * 0.5), ey + ew * tilt * 0.5], Oc = [sx * (ex + ew * 0.5), ey - ew * tilt * 0.5];
+      const my = e.closed === 'happy' ? ey - eh * 0.55 : ey + eh * 0.3;
+      line([Ic, [sx * (ex - ew * 0.1), my], [sx * (ex + ew * 0.2), my + (e.closed === 'happy' ? 0 : -eh * 0.05)], Oc], e.lashCol || '#24161c', 2.6);
+      line([Oc, [Oc[0] + sx * ew * (e.flick ?? 0.13), Oc[1] - eh * 0.2]], e.lashCol || '#24161c', 1.6);
+      return;
+    }
     const upH = eh * (1 - lid * 0.75);
     const U1 = [I[0] + sx * ew * (peak * 0.5), I[1] - upH * 1.25], U2 = [O[0] - sx * ew * (0.55 - peak * 0.5), O[1] - upH * (e.outerLift ?? 0.95)];
     const lowH = eh * (e.low ?? 0.55);

@@ -6,4 +6,5 @@
 | 陳伯 Chen Bo | final turnaround | `v2/chenbo_sheet.png` | story cast: single design |
 | 夜玄 Ye Xuan | final turnaround | `v2/yexuan_sheet.png` | story cast: single design |
 | 沈星河 Shen Xinghe | **v2 #07 螢火劍客 The Firefly Swordsman** | `v2/xinghe/opt07.png` | Spec in `v2/xinghe.md` §07. Applied: sprite spec (+ new neck `scarf` sprite piece), dialogue portraits baked from the sheet drawing (`tools/design2/xinghe_portrait_bake.js` → `js/gfx/portraits_xinghe.js`) |
-| 洛紅纓, 雲歸, 糰子, 芋圓, 麻糬 | *pending (sheets unfinished)* | | |
+| 洛紅纓 Luo Hongying | **v2 #01 洛家槍・承 Heir of the Luo Spear** | `v2/hongying/opt01.png` | Applied: sprite spec, dialogue portraits baked from the sheet drawing (`tools/design2/hongying_portrait_bake.js` → `js/gfx/portraits_hongying.js`) |
+| 雲歸, 糰子, 芋圓, 麻糬 | *pending (sheets unfinished)* | | |

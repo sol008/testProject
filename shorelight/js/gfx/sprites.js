@@ -2687,13 +2687,14 @@
     shoes: { type: 'cloth', color: '#2b2a3a' }, hip: ['jade'],
     glow: '#bfe8ff', weapon: 'flute', aura: '#7fd3ff',
   });
-  define('hongying', { // 洛紅纓: black high ponytail with long red ribbon, crimson short robe, black leather vest & arm guards, white trousers, boots, red-tassel spear
-    body: 'female', skin: SK.light, eyes: '#5a2620', eyeStyle: 'sharp', brows: 'fierce', mouth: 'flat',
-    hair: { style: 'side', color: '#1f1c26', back: 'ponytail', len: 0.5, tie: '#d8282a', ribbon: true },
-    top: { color: '#b4252c', len: 0.34, closure: 'cross', inner: '#f2ece2', trim: '#7a141a', sleeve: 'long' },
-    vest: { color: '#25212a', trim: '#4e3e34', len: 0.04 },
-    belt: { color: '#2a2228', buckle: '#d6b25a' }, bracers: { color: '#2a2328' },
-    bottom: { type: 'pants', color: '#efe9de' }, shoes: { type: 'boots', color: '#2a2228' },
+  define('hongying', { // 洛紅纓 — client pick v2 #01 洛家槍・承: crown-high ponytail with red silk bow, crimson Qing arrow-sleeve robe
+    // to the knee (side slits), black 巴圖魯 vest with brass button row, moon-white collar, laced leather bracers, riding boots, red-tassel spear
+    body: 'female', skin: '#f3d3bd', eyes: '#b4581c', eyeStyle: 'sharp', brows: 'fierce', mouth: 'smirk',
+    hair: { style: 'side', color: '#21181f', back: 'ponytail', len: 0.55, tie: '#c8323a', ribbon: true },
+    top: { color: '#b0242c', len: 0.55, closure: 'side', inner: '#e9e0d0', trim: '#2a1d20', sleeve: 'long', cuff: '#1d1416' },
+    vest: { color: '#2a1d20', trim: '#c99a48', len: 0.06 },
+    belt: { color: '#2a1d20', buckle: '#c99a48' }, bracers: { color: '#2a1d20' },
+    bottom: { type: 'pants', color: '#2a1d20' }, shoes: { type: 'boots', color: '#21181f' },
     back: 'spear', weapon: 'spear', aura: '#ffd36a',
   });
   define('yungui', { // 雲歸: long black half-up hair with wooden crown pin, faded blue-grey Taoist robe, yin-yang sash, gourd, fan
