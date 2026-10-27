@@ -319,6 +319,9 @@
         brow: { y: 0.445, w: 0.19, th: 0.022, tilt: 0.06, arch: 0.01, col: '#1b1820' }, browR: { y: 0.425, tilt: 0.18, arch: 0.022 },
         nose: { type: 'bridge', y: 0.725, w: 0.048 }, mouth: { type: 'smirk', y: 0.848, w: 0.125 },
       };
+      // YG.EXPR: expression overrides for the in-game portrait bake (tools/design2/yungui_portrait.html)
+      if (YG.EXPR) for (const k of ['eye', 'brow', 'browR', 'mouth']) if (YG.EXPR[k]) F[k] = Object.assign({}, F[k], YG.EXPR[k]);
+      if (YG.EXPR && YG.EXPR.blush) F.blushA = YG.EXPR.blush;
       DZ.head(ctx, F, cx, hb, u);
       // hair shadow on forehead
       const cap = sp([[cx - 0.47 * u, hb + 0.5 * u], [cx - 0.49 * u, hb + 0.22 * u], [cx - 0.3 * u, hb - 0.03 * u], [cx, hb - 0.08 * u], [cx + 0.3 * u, hb - 0.03 * u], [cx + 0.49 * u, hb + 0.22 * u], [cx + 0.47 * u, hb + 0.5 * u], [cx + 0.36 * u, hb + 0.28 * u], [cx + 0.15 * u, hb + 0.16 * u], [cx, hb + 0.14 * u], [cx - 0.15 * u, hb + 0.16 * u], [cx - 0.36 * u, hb + 0.28 * u]]);

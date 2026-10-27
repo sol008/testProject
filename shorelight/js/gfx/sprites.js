@@ -2697,11 +2697,12 @@
     bottom: { type: 'pants', color: '#2a1d20' }, shoes: { type: 'boots', color: '#21181f' },
     back: 'spear', weapon: 'spear', aura: '#ffd36a',
   });
-  define('yungui', { // 雲歸: long black half-up hair with wooden crown pin, faded blue-grey Taoist robe, yin-yang sash, gourd, fan
-    body: 'tall', skin: '#efd2b8', eyes: '#3c3846', eyeStyle: 'narrow', mouth: 'smirk',
-    hair: { style: 'part', color: '#24212c', back: 'long', len: 0.42, knot: 'halfup', locks: 0.7 },
+  define('yungui', { // 雲歸 — client pick v2 #01 太虛青灰: long black half-up hair with wooden crown & pin, faded blue-grey 道袍 with
+    // white guard collar, taiji sash plaque, talisman pouch, rice-wine gourd, cloud-toe shoes, folding fan (docs/design/v2/yungui.md)
+    body: 'tall', skin: '#efd0b4', eyes: '#5a3a26', eyeStyle: 'narrow', mouth: 'smirk',
+    hair: { style: 'part', color: '#25242e', back: 'long', len: 0.42, knot: 'halfup', locks: 0.7 },
     hat: { type: 'crown', color: '#9a6b3c', acc: '#efe4c8' },
-    top: { color: '#7f90a2', len: 0.95, closure: 'cross', inner: '#ece8df', trim: '#4f5e70', sleeve: 'flow' },
+    top: { color: '#7f93a6', len: 0.95, closure: 'cross', inner: '#efeadf', trim: '#3d4a63', sleeve: 'flow' },
     sash: { color: '#2b2a32', w: 3.4, emblem: 'taiji', tails: true },
     shoes: { type: 'cloth', color: '#2a2832' }, hip: ['gourd', 'fan'], weapon: 'fan', aura: '#9be36a',
   });

@@ -304,6 +304,13 @@
     const cx = e.x, cy = e.y, w = e.w, h = e.h, tl = e.tilt;
     const I = [cx - w / 2, cy + h * 0.15], O = [cx + w / 2, cy - tl * w + h * 0.02];
     const op = e.open;
+    if (e.closed) { // closed lids: blink / happy arc / pained
+      const Ic = [cx - w / 2, cy + h * 0.15], Oc = [cx + w / 2, cy - tl * w + h * 0.02];
+      const my = e.closed === 'happy' ? cy - h * 0.55 : cy + h * 0.35;
+      ctx.lineWidth = px(2.4); ctx.lineCap = 'round'; ctx.strokeStyle = line;
+      ctx.stroke(sp([Ic, [cx - w * 0.05, my], [cx + w * 0.25, my + (e.closed === 'happy' ? 0 : -h * 0.08)], Oc], false));
+      ctx.restore(); return;
+    }
     const peakX = cx - w / 2 + w * e.peak;
     const upTop = cy - h * op;
     const up = [I, [cx - w * 0.3, cy - h * 0.6 * op], [peakX, upTop], [cx + w * 0.3, cy - h * 0.8 * op - tl * w * 0.45], O];

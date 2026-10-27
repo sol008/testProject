@@ -108,8 +108,9 @@ vision realms, and helping each other across.
   everything, panics, and, after eating spirit mushrooms, delivers absurd cosmic wisdom.
 - Weapon: talismans + fan (符扇). Element **木** (thunder), but his talismans cover all five
   elements — the "weakness exploiter".
-- Look: long black hair half-up with a wooden hairpin crown, narrow amused eyes, faded blue-grey Taoist
-  robe with yin-yang sash, loose sleeves, gourd at hip, folding fan.
+- Look (client pick, v2 #01 太虛青灰): long black hair half-up under a small wooden crown and pin; lazy half-lidded eyes;
+  wash-faded blue-grey 正一 Taoist robe (crossed collar, right over left, wide sleeves) with a white guard collar, taiji sash
+  plaque, talisman pouch, rice-wine gourd, white socks and cloud-toe shoes; folding fan carried over the shoulder.
 
 ### Supporting
 - **陳伯 / 陳渡 (Chen Du)** — grumpy, kind old lantern-maker; secretly a retired **引魂人**. Wields an

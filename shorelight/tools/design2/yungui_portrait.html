@@ -1,0 +1,57 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>雲歸 portrait bake</title>
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style></head>
+<body>
+<canvas id="cv"></canvas>
+<script src="yungui_qingxu_lib.js"></script>
+<script src="yungui.js"></script>
+<script>
+// Bakes the in-game dialogue portrait of 雲歸 (client pick v2 #01 太虛青灰) from the exact design-sheet drawing.
+// ?expr=<name>&blink=1&k=<pixel scale>   canonical box 300x340 (bottom-aligned bust), transparent background.
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const expr = q.get('expr') || 'normal', blink = q.get('blink') === '1', k = parseFloat(q.get('k') || '2');
+  await document.fonts.ready;
+  const opt = YG.options[0];
+  const sad = { brow: { tilt: -0.05, arch: 0.004 }, browR: { tilt: -0.05, y: 0.44, arch: 0.004 } };
+  const E = {
+    normal: {},
+    smile: { eye: { open: 0.42 }, mouth: { type: 'smile' } },
+    laugh: { eye: { closed: 'happy' }, mouth: { type: 'grin', oh: 0.045 }, blush: 0.4 },
+    sad: Object.assign({ eye: { open: 0.48, gaze: 0 }, mouth: { type: 'frown' } }, sad),
+    cry: Object.assign({ eye: { open: 0.4 }, mouth: { type: 'frown' }, tears: true }, sad),
+    angry: { eye: { open: 0.62 }, brow: { tilt: 0.16 }, browR: { tilt: 0.16, y: 0.445 }, mouth: { type: 'grim' } },
+    surprise: { eye: { open: 1.0, gaze: 0 }, brow: { y: 0.41, tilt: 0.02 }, browR: { y: 0.41, tilt: 0.02 }, mouth: { type: 'open', oh: 0.04 } },
+    think: { eye: { open: 0.55, gaze: 0.3 }, mouth: { type: 'neutral' } },
+    shy: { eye: { open: 0.45, gaze: -0.25 }, mouth: { type: 'smile' }, blush: 0.6 },
+    hurt: { eye: { closed: true }, brow: { tilt: -0.05 }, browR: { tilt: -0.05, y: 0.44 }, mouth: { type: 'grin', oh: 0.03 } },
+    serious: { eye: { open: 0.68, gaze: 0 }, brow: { tilt: 0.1 }, browR: { tilt: 0.1, y: 0.445 }, mouth: { type: 'grim' } },
+    smug: { eye: { open: 0.38 }, mouth: { type: 'smirk' } },
+  }[expr] || {};
+  const ex = JSON.parse(JSON.stringify(E));
+  if (blink) ex.eye = Object.assign({}, ex.eye || {}, { closed: true });
+  YG.EXPR = ex;
+  const W = 300, H = 340;
+  const cv = document.getElementById('cv'), c = cv.getContext('2d');
+  cv.width = W * k; cv.height = H * k;
+  c.scale(k, k);
+  const Hh = opt.H || 392, B = DZ.frame(0, Hh, Hh, opt.ratio, opt.frame || {});
+  const z = 3.1;                                // design px → portrait px
+  const bx = B.cx + 0.1 * B.u, by = B.top - 0.55 * B.u;
+  c.save(); c.translate(W / 2 + 14, 10); c.scale(z, z); c.translate(-bx, -by);
+  DZ.k = 1.25 / z;
+  opt.draw(c, B, { view: 'front', bust: true });
+  DZ.k = 1;
+  c.restore();
+  if (ex.tears) {
+    for (const [x, len] of [[-0.17, 40], [0.17, 30]]) {
+      const sx = W / 2 + 14 + (x - 0.1) * B.u * z, sy = 10 + (0.55 + 0.62) * B.u * z;
+      const g = c.createLinearGradient(0, sy, 0, sy + len);
+      g.addColorStop(0, 'rgba(210,235,255,0.95)'); g.addColorStop(1, 'rgba(210,235,255,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(sx, sy + len / 2, 2.2, len / 2, 0, 0, 7); c.fill();
+    }
+  }
+  document.body.dataset.ready = '1';
+})().catch((e) => { document.body.dataset.error = String(e && e.stack || e); document.body.dataset.ready = '1'; });
+</script>
+</body></html>
