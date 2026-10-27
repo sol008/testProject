@@ -973,11 +973,12 @@ G.Battle = (() => {
       if (this.msg) {
         const a = Math.min(1, this.msg.t * 6, (this.msg.life - this.msg.t) * 5);
         ctx.save(); ctx.globalAlpha = Math.max(0, a);
-        const w = 520;
+        const mt = G.Render.fit(ctx, this.msg.text, G.W - 160, { size: 30 });
+        const w = Math.max(520, mt.w + 200);
         const g = ctx.createLinearGradient(G.W / 2 - w / 2, 0, G.W / 2 + w / 2, 0);
         g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, 'rgba(0,0,0,0.7)'); g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = g; ctx.fillRect(G.W / 2 - w / 2, 236, w, 56);
-        G.Render.text(ctx, this.msg.text, G.W / 2, 248, { size: 30, align: 'center', color: '#fff0d0' });
+        G.Render.text(ctx, mt.str, G.W / 2, 248 + (30 - mt.size) / 2, { size: mt.size, align: 'center', color: '#fff0d0' });
         ctx.restore();
       }
       if (this.vic) this.drawVictory(ctx, t);
@@ -1064,7 +1065,7 @@ G.Battle = (() => {
       this.party.forEach((p, i) => {
         const x = px + 12 + i * cw, y = py + 12;
         if (this.active === p) G.UI.cursor(ctx, x - 4, y - 4, cw - 12, 84, t, true);
-        G.Render.text(ctx, p.name, x + 14, y + 2, { size: 22, color: p.dead ? '#8a7a7a' : '#fff0d0' });
+        G.Render.textClip(ctx, p.name, x + 14, y + 2, cw - 90, { size: 22, color: p.dead ? '#8a7a7a' : '#fff0d0' });
         G.Render.text(ctx, 'Lv' + p.lv, x + cw - 30, y + 6, { size: 15, align: 'right', color: '#c9b893' });
         const lowHp = p.hp > 0 && p.hp < p.mhp * 0.3;
         G.UI.bar(ctx, x + 14, y + 34, cw - 120, 12, p.hp / p.mhp, lowHp ? '#ffb07a' : '#7ae08a', lowHp ? '#c8502a' : '#2a9a4a');
@@ -1116,11 +1117,12 @@ G.Battle = (() => {
         const b = this.skillBanner;
         const a = Math.min(1, b.t * 8, (1.4 - b.t) * 4);
         ctx.save(); ctx.globalAlpha = Math.max(0, a);
-        const w = 420, x = G.W / 2 - w / 2, y = 96;
+        const bt = G.Render.fit(ctx, b.text, G.W - 200, { size: 30 });
+        const w = Math.max(420, bt.w + 200), x = G.W / 2 - w / 2, y = 96;
         const g = ctx.createLinearGradient(x, 0, x + w, 0);
         g.addColorStop(0, 'rgba(10,8,20,0)'); g.addColorStop(0.5, 'rgba(10,8,20,0.8)'); g.addColorStop(1, 'rgba(10,8,20,0)');
         ctx.fillStyle = g; ctx.fillRect(x, y, w, 50);
-        G.Render.text(ctx, b.text, G.W / 2, y + 9, { size: 30, align: 'center', color: b.color, glow: 'rgba(255,180,90,0.5)', glowBlur: 10 });
+        G.Render.text(ctx, bt.str, G.W / 2, y + 9 + (30 - bt.size) / 2, { size: bt.size, align: 'center', color: b.color, glow: 'rgba(255,180,90,0.5)', glowBlur: 10 });
         ctx.restore();
       }
       if (this.auto) G.Render.text(ctx, '自動戰鬥中（F 關閉）', 24, G.H - 34, { size: 17, color: '#ffd97a' });
@@ -1155,7 +1157,8 @@ G.Battle = (() => {
         const px = -380 + slide * (ids.length > 1 ? 160 + i * 300 : 300) + k * 30;
         G.Portraits.draw(ctx, id, i === 0 ? 'serious' : 'angry', px, G.H / 2 - 230, 360, 400, t, {});
       });
-      G.Render.text(ctx, c.s.name, G.W - 120 - (1 - slide) * 200, G.H / 2 - 36, { size: 64, align: 'right', color: '#fff4dc', glow: 'rgba(255,170,80,0.9)', glowBlur: 26 });
+      const cn = G.Render.fit(ctx, c.s.name, G.W - 520, { size: 64, minSize: 40 });
+      G.Render.text(ctx, cn.str, G.W - 120 - (1 - slide) * 200, G.H / 2 - 36 + (64 - cn.size) / 2, { size: cn.size, align: 'right', color: '#fff4dc', glow: 'rgba(255,170,80,0.9)', glowBlur: 26 });
       ctx.restore();
     }
 
@@ -1185,7 +1188,14 @@ G.Battle = (() => {
       const v = this.vic;
       const a = Math.min(1, v.t * 3);
       ctx.save(); ctx.globalAlpha = a;
-      const w = 620, h = v.page === 0 ? 300 : 120 + v.ups.length * 92, x = G.W / 2 - w / 2, y = 140;
+      // spoils wrap (four long English item names do not fit one 500px line); the panel grows to hold them
+      let spoils = null;
+      if (v.page === 0) {
+        ctx.font = G.font(22);
+        const names = v.drops.map((d) => G.T(G.Data.items[d] ? G.Data.items[d].name : d));
+        spoils = G.Render.wrap(ctx, names.length ? names.join(G.I18N.isEn() ? ', ' : '、') : '—', 500);
+      }
+      const w = 620, h = v.page === 0 ? 300 + Math.max(0, spoils.length - 2) * 30 : 120 + v.ups.length * 92, x = G.W / 2 - w / 2, y = 140;
       G.UI.panel(ctx, x, y, w, h, { title: v.page === 0 ? '戰鬥勝利' : '等級提升' });
       if (v.page === 0) {
         G.Render.text(ctx, '獲得經驗', x + 60, y + 50, { size: 24, color: '#c9b893' });
@@ -1193,21 +1203,21 @@ G.Battle = (() => {
         G.Render.text(ctx, '獲得錢財', x + 60, y + 92, { size: 24, color: '#c9b893' });
         G.Render.text(ctx, v.gold + ' 文', x + w - 60, y + 92, { size: 26, align: 'right', color: '#ffe08a' });
         G.Render.text(ctx, '戰利品', x + 60, y + 134, { size: 24, color: '#c9b893' });
-        const names = v.drops.map((d) => (G.Data.items[d] ? G.Data.items[d].name : d));
-        G.Render.text(ctx, names.length ? names.join('、') : '—', x + 60, y + 172, { size: 22, color: '#fff0d0' });
+        ctx.font = G.font(22);
+        G.Render.drawLines(ctx, spoils, x + 60, y + 172, 30, '#fff0d0');
       } else {
         v.ups.forEach((up, i) => {
           const yy = y + 50 + i * 92;
           const nm = G.ShortNames[up.id] || G.Names[up.id];
-          G.Render.text(ctx, `${nm}  Lv ${up.from} → {y}${up.lv}{/}`.replace(/\{.\}|\{\/\}/g, ''), x + 50, yy, { size: 26, color: '#fff0d0' });
+          G.Render.textClip(ctx, `${nm}  Lv ${up.from} → {y}${up.lv}{/}`.replace(/\{.\}|\{\/\}/g, ''), x + 50, yy, w - 100, { size: 26, color: '#fff0d0' });
           const b = up.before, af = up.after;
           if (b && af) {
             const s = `生命 ${b.mhp}→${af.mhp}　真氣 ${b.mmp}→${af.mmp}　武 ${b.atk}→${af.atk}　法 ${b.mag}→${af.mag}`;
-            G.Render.text(ctx, s, x + 50, yy + 34, { size: 18, color: '#c9e8c0' });
+            G.Render.textClip(ctx, s, x + 50, yy + 34, w - 100, { size: 18, color: '#c9e8c0' });
           }
           if (up.learned.length) {
             const sk = up.learned.map((id) => (G.Data.skills[id] ? G.Data.skills[id].name : id)).join('、');
-            G.Render.text(ctx, '習得：' + sk, x + 50, yy + 58, { size: 18, color: '#ffd97a' });
+            G.Render.textClip(ctx, '習得：' + sk, x + 50, yy + 58, w - 100, { size: 18, color: '#ffd97a' });
           }
         });
       }
@@ -1599,7 +1609,8 @@ G.Battle = (() => {
         if (!tg.all || list.length === 1) {
           // target info
           const info = `${u.name}${u.side === 'enemy' && u.d && u.d.elem ? '' : ''}`;
-          G.Render.text(ctx, info, x, y - 74, { size: 22, align: 'center', color: '#fff0d0', stroke: '#1a0e08', strokeW: 4 });
+          const iy = Math.max(76, y);
+          G.Render.textClip(ctx, info, x, iy - 74, 420, { size: 22, align: 'center', color: '#fff0d0', stroke: '#1a0e08', strokeW: 4 });
           if (u.side === 'enemy' && u.d) {
             const known = (G.state.bestiary[u.id] || 0) > 0;
             const weakTxt = known && u.weak && u.weak.length ? G.T('弱：' + u.weak.map((e) => ELEM_NAMES[e]).join('')) : '';
@@ -1607,8 +1618,8 @@ G.Battle = (() => {
             const ww = weakTxt ? ctx.measureText(weakTxt).width : 0;
             const total = (u.d.elem ? 26 : 0) + ww;
             let lx = x - total / 2;
-            if (u.d.elem) { G.UI.elemBadge(ctx, u.d.elem, lx + 10, y - 32, 10); lx += 26; }
-            if (weakTxt) G.Render.text(ctx, weakTxt, lx, y - 41, { size: 15, color: '#ffd84a' });
+            if (u.d.elem) { G.UI.elemBadge(ctx, u.d.elem, lx + 10, iy - 32, 10); lx += 26; }
+            if (weakTxt) G.Render.text(ctx, weakTxt, lx, iy - 41, { size: 15, color: '#ffd84a' });
           }
         }
       }

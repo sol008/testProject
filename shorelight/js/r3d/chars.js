@@ -2546,7 +2546,8 @@ G.Char3D = (() => {
     tube(B.G, pts, opts.seg || 6, rect, (t) => {
       const tip = opts.blunt ? 1 - 0.5 * sstep(0.85, 1, t) : pow(1 - pow(t, opts.taperP || 1.6), opts.taperQ || 0.9);
       const swell = 1 + (opts.swell || 0.15) * sin(t * PI);
-      return { rx: max(0.0006, w0 * tip * swell * (opts.baseK && t < 0.15 ? lerp(opts.baseK, 1, t / 0.15) : 1)), ry: max(0.0005, th0 * (opts.blunt ? 1 : (1 - 0.7 * t))), ao: opts.ao ? opts.ao(t) : 1 };
+      const root = opts.rootK != null && t < 0.14 ? lerp(opts.rootK, 1, sstep(0, 0.14, t)) : 1; // thin root: the lock grows out of the cap
+      return { rx: max(0.0006, w0 * tip * swell * (opts.baseK && t < 0.15 ? lerp(opts.baseK, 1, t / 0.15) : 1)), ry: max(0.0005, th0 * root * (opts.blunt ? 1 : (1 - 0.7 * t))), ao: opts.ao ? opts.ao(t) : 1 };
     }, W, { nv: opts.nv || max(4, (pts.length - 1) * 3), up: opts.up || [0, 0, 1], uvf: opts.uvf });
   }
   C.lock = lock;
@@ -2634,6 +2635,7 @@ G.Char3D = (() => {
         const po = H.part || 0; // off-centre part (rad, + = toward the character's left)
         for (const sg of [-1, 1]) for (let i = 0; i < 4; i++) {
           const t = i / 3;
+          if (H.tuck && (H.tuck === 'L' ? 1 : -1) === sg && i >= 2) continue; // tucked side: the hair is swept back
           const span = (sg > 0 ? 1 - po : 1 + po) * (H.bangSpread || 1);
           // curtain fringe: short at the part, lengthening toward the temples so the eyes stay clear
           bang(po + sg * (0.08 + t * 0.35 * span), po + sg * (0.42 + t * 0.6) * span, eyeLvl + 0.05 + t * 0.35 + (H.bangLen || 0) + (H.bangSpread ? (t - 0.5) * 0.2 : 0), 0.03 - t * 0.003, { ph0: 0.12, sweepP: H.bangSpread ? 0.7 : 0.9, lift: 0.006 });
@@ -2802,7 +2804,7 @@ G.Char3D = (() => {
     const chains = [];
     const pathFor = (th, spread, k = 0) => {
       const pts = [];
-      const p0 = headPt(B, th, 1.25, capOff * 1.4), p1 = headPt(B, th, 1.9, capOff * 1.8);
+      const p0 = headPt(B, th, 1.08, capOff * 1.15), p1 = headPt(B, th, 1.9, capOff * 1.8);
       pts.push(p0, p1);
       const ny = P.neckY - 0.01;
       const yS = P.shoulderY;
@@ -2846,7 +2848,7 @@ G.Char3D = (() => {
         return wmix(one(chains[c0].ids), one(chains[c1].ids), cf);
       };
       const wid = (tied ? 0.03 : 0.036) * s * (1 - abs(t) * 0.25) * (H.vol || 1);
-      lock(B, lockR, pts, wid, 0.012 * s, Wf, { up: [sin(th), 0, cos(th)], nv: 18, taperP: 2.2, taperQ: 0.8, swell: 0.25 });
+      lock(B, lockR, pts, wid, 0.012 * s, Wf, { up: [sin(th), 0, cos(th)], nv: 18, taperP: 2.2, taperQ: 0.8, swell: 0.25, rootK: 0.35 });
     }
     if (tied) {
       const tie = headPt(B, PI, 2.0, capOff * 2.2);

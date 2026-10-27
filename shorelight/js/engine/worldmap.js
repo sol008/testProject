@@ -41,6 +41,10 @@ G.World = (() => {
   const LON0 = 118.7, LAT0 = 25.45, KX = 196, KY = 208;
   // label nudges (px at scale 1) so crowded northern names don't overlap
   const LABEL_OFF = { tamsui: [-70, -14], guanyin: [-78, 8], bangka: [-62, 22], pingxi: [-56, 18], jiufen: [6, -14], badouzi: [10, -30], hsinchu: [-62, 0], xiangtian: [-70, 14] };
+  // English names are 3-5x wider than the Chinese ones: labels nudged to the left of their dot are drawn right-aligned
+  // there instead (so they end at the dot rather than run across it), and a few crowded pairs swap sides.
+  const LABEL_EN = { tamsui: [0, -14, 1], guanyin: [0, 8, 1], bangka: [0, 22, 1], pingxi: [-4, 18, 1], hsinchu: [0, 0, 1], xiangtian: [0, 14, 1],
+    alishan: [0, -2, 1], hengchun: [0, -12, 1], orchid: [0, -14, 0], yushan: [0, 12, 0] };
   W.proj = (lon, lat, box) => {
     const x = (lon - LON0) * KX, y = (LAT0 - lat) * KY;
     return [box.x + x * box.s, box.y + y * box.s];
@@ -128,8 +132,9 @@ G.World = (() => {
       ctx.beginPath(); ctx.arc(x, y, cur ? 7 : 5, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#2a1408'; ctx.lineWidth = 1.5; ctx.stroke();
       if (cur) G.UI.lanternIcon(ctx, x, y - 22, 8, t);
-      const right = p[0] > 121.3 || id === 'farshore';
-      const off = LABEL_OFF[id] || [0, 0];
+      let right = p[0] > 121.3 || id === 'farshore';
+      let off = LABEL_OFF[id] || [0, 0];
+      if (G.I18N.isEn() && LABEL_EN[id]) { off = LABEL_EN[id]; right = !!off[2]; }
       G.Render.text(ctx, p[2], x + (right ? -10 : 10) + off[0] * box.s, y - 10 + off[1] * box.s, { size: Math.min(26, 15 * Math.max(1, box.s * 0.75)), align: right ? 'right' : 'left', color: known ? '#fff0d0' : '#8a8a8a', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
     }
     ctx.restore();
@@ -180,9 +185,14 @@ G.World = (() => {
       // caption
       const capA = Math.min(1, t * 2, (this.dur + 0.6 - t) * 3);
       ctx.save(); ctx.globalAlpha = Math.max(0, capA);
-      G.UI.panel(ctx, 60, G.H - 170, 520, 120, { ornament: true });
-      G.Render.text(ctx, `${p0[2]}　→　${p1[2]}`, 90, G.H - 150, { size: 34, color: '#fff0d0' });
-      if (this.o.label) G.Render.text(ctx, this.o.label, 92, G.H - 100, { size: 20, color: '#c9b893' });
+      // the caption panel widens for long English place names / labels (up to most of the screen)
+      const route = G.T(`${p0[2]}　→　${p1[2]}`);
+      ctx.font = G.font(34); const rw = G.Render.measure(ctx, route);
+      ctx.font = G.font(20); const lw = this.o.label ? G.Render.measure(ctx, this.o.label) : 0;
+      const pw = Math.min(G.W - 120, Math.max(520, rw + 64, lw + 64));
+      G.UI.panel(ctx, 60, G.H - 170, pw, 120, { ornament: true });
+      G.Render.textClip(ctx, route, 90, G.H - 150, pw - 60, { size: 34, color: '#fff0d0' });
+      if (this.o.label) G.Render.textClip(ctx, this.o.label, 92, G.H - 100, pw - 62, { size: 20, color: '#c9b893' });
       ctx.restore();
       G.FX.vignette(ctx, 0.4);
     }

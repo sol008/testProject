@@ -280,7 +280,7 @@
       eyeStyle: 'soft', ew: 0.29, eh: 0.6, tilt: 0.26, irisR: 0.6, iris: '#4b2c20', irisLight: '#9a6a46', lash: 1.0, lidW: 1.1, wing: 1.15, dbl: 0.85, low: 0.6,
       browW: 1.1, browArch: 0.42, browAng: 0.04, browCol: '#17131a', browY: 0.21,
       lips: '#cf7684', lipTint: 0.85, lipFull: 1.25, mouthW: 0.185, restCurve: 0.34,
-      chin: 0.38, jaw: 0.79, jawTop: -0.06, cheek: 0.03, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
+      chin: 0.43, jaw: 0.8, jawTop: -0.03, cheek: 0.0, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
       marks: [{ x: -0.21, y: -0.34, r: 0.8, color: '#3a2224' }],
     },
     expr: 'dreamy',
@@ -299,7 +299,7 @@
       },
       // battle: a poised 丁字步 (front foot on the line, back foot turned out, weight back), flute raised to the lips
       stance: { flute: { fL: [0.0, 0, 0.1], fR: [-0.045, 0, -0.06], fLy: -2, fRy: 38, hp: [0.008, -0.022, -0.01], h: [0, -14, 2], sp: [0, 2, 0], ch: [-4, 9, -2], nk: [-2, -4, 2], hd: [-5, -8, 8],
-        hR: [-0.19, 1.39, 0.14], hRr: [-4, 90, 0] } },
+        hR: [-0.16, 1.49, 0.17], hRr: [-4, 90, 0] } },
     },
     parts: [(B) => earrings(B, { sides: [1], len: 0.05, bead: 'dark', drop: 'jade' })],
     clips: {
