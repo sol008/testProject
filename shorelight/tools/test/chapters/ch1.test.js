@@ -14,7 +14,7 @@
 //   4. xingmu   : 「醒木失竊記」— the cat chase, 阿水's 小魚乾, the 醒木 back to 阿炳伯 → 說書折扇.
 //   5. townsfolk: every NPC of every map talked to in every phase (P1, P2, P3, P4-raid map, P5), every action event.
 //   6. maps     : the raid map, mines and festival maps load and render (screenshots with --shots).
-//   7. 3d       : the WebGL field view (?r3lite) runs a raid cutscene through the map's update3d hook.
+//   7. 3d       : (only with --3d) the WebGL field view (?r3lite) runs a raid cutscene through update3d.
 // Functional tests run with the 2D renderer (localStorage render3d:false); only test 7 uses the 3D view.
 // Debug aid: --from=raid starts the critical path at the night raid.
 // Other chapters' files (2…11) are stubbed out so work in progress elsewhere cannot break this test.
@@ -501,7 +501,11 @@ async function test3d(browser, open) {
     ['raid map, mines & festival maps render', testMaps],
     ['3D view (?r3lite): raid apparitions, festival', test3d],
   ];
-  for (const [name, fn] of tests) if (!only.length || only.some((o) => name.includes(o))) await run(name, browser, fn);
+  // the WebGL view is slow under SwiftShader: its smoke test only runs with --3d
+  for (const [name, fn] of tests) {
+    if (fn === test3d && !process.argv.includes('--3d')) continue;
+    if (!only.length || only.some((o) => name.includes(o))) await run(name, browser, fn);
+  }
   await browser.close();
   const fail = results.filter((r) => r.status !== 'PASS');
   console.log('\n' + (fail.length ? `FAIL — ${fail.length}/${results.length} test(s) failed` : `PASS — ${results.length}/${results.length} tests`));

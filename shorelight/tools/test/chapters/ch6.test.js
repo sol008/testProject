@@ -4,6 +4,8 @@
 //   node tools/test/chapters/ch6.test.js                 # everything
 //   node tools/test/chapters/ch6.test.js --only main,ayi # tests whose id contains one of the words
 //   node tools/test/chapters/ch6.test.js --shots <dir>   # also write map screenshots (2D canvas) to <dir>
+//   node tools/test/chapters/ch6.test.js --only main --from linto   # resume the critical path at a segment
+//     segments: yanshui, fucheng, linto, stealth, finale
 //   node tools/test/chapters/ch6.test.js --headed
 //
 // Story/side-quest tests run with the 2D renderer (deterministic & fast: game logic is fast-forwarded with a fixed
@@ -166,93 +168,116 @@ const assert = (c, msg) => { if (!c) throw new Error('assert: ' + msg); };
 const tests = [];
 const test = (id, name, fn) => tests.push({ id, name, fn });
 
-// ------------------------------------------------------------------ the critical path
-test('main', '主線：startch=6 → 鹽水 → 蜂炮夜 → 府城 → 做十六歲 → 林投姐 → 潛行 → 萬燈閣 → 夜玄 → 第七章', async (s) => {
-  await s.open('?debug&qa2d&startch=6', false);
-  await s.until('G.mapScene && G.mapScene.def', 120);
-  await s.pets();
+// ------------------------------------------------------------------ the critical path (resumable segments)
+// `--from <segment>` starts at that segment from a debug save-point (map + flags) and plays to the end;
+// `--only main` with no --from plays everything from ?debug&startch=6.
+const F_BEEHIVE = 'ch6_start,ch6_arrive_ys,ch6_yanshui,ch6_night,ch6_beehive';
+const F_ROUZONG = F_BEEHIVE + ',ch6_fucheng,ch6_fc_arrive,ch6_moya,ch6_sixteen,ch6_rouzong';
+const F_GATE = F_ROUZONG + ',ch6_linto_in,ch6_linto_done,ch6_infiltrate,ch6_s1_tut';
+const F_LETTER = F_GATE + ',ch6_s2_in,ch6_s3_in,ch6_s3_open,ch6_qingxu_letter';
+const SEGMENTS = [
+  { id: 'yanshui', start: '?debug&qa2d&startch=6', vars: {}, run: async (s) => {
+    await s.idle(120);
+    assert(await s.map() === 'yanshui', 'intro ends in 鹽水 (map ' + await s.map() + ')');
+    assert((await s.flags('ch6_start', 'ch6_arrive_ys')).every(Boolean), 'intro flags');
+    assert(await s.ev(() => G.state.chapter === 6 && G.state.party.join(',') === 'xinghe,baizhi,hongying,yungui'), 'chapter 6 party');
+    await s.shot('main_01_yanshui');
+    await s.step(21, 6);
+    assert(await s.map() === 'yanshui_temple' && (await s.flags('ch6_yanshui'))[0], '3-2 temple');
+    await s.talk('ys_keeper', ['開始吧']);
+    assert((await s.flags('ch6_night', 'ch6_beehive')).every(Boolean), '3-3 beehive night done');
+    assert(await s.ev(() => G.state.inv.fengpao > 0), '疫聚 dropped 蜂炮');
+    await s.shot('main_02_beehive_after');
+    await s.run(`async (S) => { await S.warp('yanshui_inn', 6, 8, 'up'); }`);
+  } },
+  { id: 'fucheng', start: '?debug&qa2d&map=yanshui_inn&lv=21&chapter=6&flags=' + F_BEEHIVE, vars: {}, run: async (s) => {
+    await s.talk('ys_innkeeper', ['休息到天亮']);
+    assert(await s.map() === 'fucheng' && (await s.flags('ch6_fucheng', 'ch6_fc_arrive')).every(Boolean), '3-4 arrive 府城');
+    await s.step(5, 10);
+    assert((await s.flags('ch6_moya'))[0] && await s.map() === 'fucheng', '3-5 墨鴉');
+    await s.shot('main_03_fucheng');
+    await s.step(26, 13);
+    assert(await s.map() === 'fc_qiniang' && (await s.flags('ch6_sixteen'))[0], '3-6 做十六歲');
+    assert(await s.ev(() => G.state.inv.c6_qiniang_rouge === 1 && G.state.inv.c6_sesame_chicken === 3), '3-6 rewards');
+    await s.run(`async (S) => { await S.warp('fucheng', 21, 16, 'up'); }`);
+    await s.step(21, 15);
+    assert((await s.flags('ch6_rouzong'))[0] && await s.ev(() => G.state.vars.ch6_time === 1 && G.state.inv.c6_zheng_zongzi === 2), '3-7 肉粽伯');
+    await s.run(`async (S) => { await S.warp('fucheng', 2, 40, 'left'); }`);
+  } },
+  { id: 'linto', start: '?debug&qa2d&map=fucheng&x=2&y=40&lv=21&chapter=6&flags=' + F_ROUZONG, vars: { ch6_time: 1 }, items: { c6_zheng_zongzi: 2 }, run: async (s) => {
+    await s.step(0, 40);
+    assert(await s.map() === 'linto' && (await s.flags('ch6_linto_in'))[0], '3-10 enter 林投林');
+    await s.shot('main_04_linto');
+    await s.ev(() => { G.mapScene.enemies = []; });
+    await s.step(8, 29);
+    assert(await s.ev(() => G.state.vars.ch6_linto_wrong === 1 && G.mapScene.player.x === 18 && G.mapScene.player.y === 32), 'dead end sends back to A');
+    // 3-11 林投姐 — the party 「傾聽」 (defends) whenever she tells her story
+    await s.ev(() => {
+      window.__listen = setInterval(() => {
+        const b = G.Scenes.top();
+        if (b instanceof G.Battle.Scene && b.c6 && b.c6.listened && !b.__qa) {
+          b.__qa = true;
+          const ac = b.autoCommand.bind(b);
+          b.autoCommand = (u) => (b.c6.window && !b.c6.listened.has(u.id) ? { kind: 'defend' } : ac(u));
+        }
+      }, 20);
+    });
+    await s.step(14, 9);
+    await s.ev(() => clearInterval(window.__listen));
+    assert((await s.flags('ch6_linto_done'))[0], '3-11 林投姐 resolved');
+    assert(await s.ev(() => G.Lanterns.has('lantern_linto') && G.state.inv.c6_linto_comb === 1 && !G.state.inv.c6_zheng_zongzi), 'lantern_linto + 木梳, 肉粽 given');
+    assert(await s.ev(() => (G.state.vars.ch6_listen || 0) >= 3 && G.state.flags.ch6_listen3 && G.state.inv.c6_zhaoniang_pin === 1), '傾聽 ≥3 → 昭娘的銀簪 (listen=' + await s.ev(() => G.state.vars.ch6_listen) + ')');
+    assert(await s.ev(() => G.state.vars.ch6_time === 2), 'night falls');
+    await s.step(34, 4);
+    assert(await s.map() === 'palace_dock' && (await s.flags('ch6_infiltrate', 'ch6_s1_tut')).every(Boolean), '3-12 water gate → S1');
+  } },
+  { id: 'stealth', start: '?debug&qa2d&map=palace_dock&lv=22&chapter=6&flags=' + F_GATE, vars: { ch6_time: 2 }, run: async (s) => {
+    await s.shot('main_05_palace_dock');
+    await s.noGuards();
+    await s.step(15, 1);
+    assert(await s.map() === 'palace_hall', 'S1 → S2');
+    await s.noGuards();
+    await s.step(36, 1);
+    assert(await s.map() === 'palace_study', 'S2 → S3');
+    await s.noGuards();
+    await s.ev(() => { const m = G.mapScene; const o = m.objects.find((x) => x.chest && x.chest.id === 'c6_10'); m.openChest(o); });
+    await s.idle();
+    assert(await s.ev(() => G.state.inv.c6_qingxu_gourd === 1), 'S3 影行箱 (清虛的舊葫蘆)');
+    await s.trigger('shelf_2_6');
+    assert(await s.ev(() => G.state.vars.ch6_s3_wrong === 1), 'wrong shelf counted');
+    await s.trigger('shelf_2_9');
+    await s.trigger('shelf_20_12');
+    assert((await s.flags('ch6_s3_open', 'ch6_qingxu_letter'))[0] && await s.ev(() => G.state.inv.c6_qingxu_letter === 1), '3-13 letter');
+  } },
+  { id: 'finale', start: '?debug&qa2d&map=palace_study&x=12&y=3&lv=23&chapter=6&flags=' + F_LETTER, vars: { ch6_time: 2 }, run: async (s) => {
+    await s.noGuards();
+    await s.step(12, 2);
+    await s.until('G.state.chapter === 7 && G.state.flags.ch6_done', 900);
+    const f = await s.flags('ch6_yexuan_met', 'ch6_netherlamp', 'ch6_captured', 'ch6_ship', 'lyric_ch6', 'ch6_done', 'xinghe_gutter');
+    assert(f.every(Boolean), 'ending flags ' + JSON.stringify(f));
+    assert(await s.ev(() => !G.state.party.includes('baizhi') && !!G.state.members.baizhi && G.state.inv.key_jadetag >= 1), '白芷 left the party; 玉牌 kept');
+    assert(await s.ev(() => G.Quests.isDone('q_ch6_main')), 'main quest done');
+    assert(await s.ev(() => G.state.inv.c6_nether_wick === 1), '冥燈護法 dropped 冥燈殘芯');
+  } },
+];
+const FROM = opt('from', '') || null;
+test('main', '主線：startch=6 → 鹽水 → 蜂炮夜 → 府城 → 做十六歲 → 林投姐 → 潛行 → 萬燈閣 → 夜玄 → 第七章' + (FROM ? `（從 ${FROM} 開始）` : ''), async (s) => {
+  let i = FROM ? SEGMENTS.findIndex((g) => g.id === FROM) : 0;
+  assert(i >= 0, 'unknown segment ' + FROM + ' (' + SEGMENTS.map((g) => g.id).join(', ') + ')');
+  const seg = SEGMENTS[i];
+  if (i === 0) {
+    await s.open(seg.start, false);
+    await s.until('G.mapScene && G.mapScene.def', 120);
+    await s.pets();
+  } else {
+    await s.open(seg.start);
+    await s.ev(([v, it]) => { Object.assign(G.state.vars, v); for (const k in it || {}) G.Inv.add(k, it[k]); }, [seg.vars, seg.items]);
+  }
   await s.gear();
-  await s.idle(120);
-  assert(await s.map() === 'yanshui', 'intro ends in 鹽水 (map ' + await s.map() + ')');
-  assert((await s.flags('ch6_start', 'ch6_arrive_ys')).every(Boolean), 'intro flags');
-  assert(await s.ev(() => G.state.chapter === 6 && G.state.party.join(',') === 'xinghe,baizhi,hongying,yungui'), 'chapter 6 party');
-  await s.shot('main_01_yanshui');
-  // 3-2 武廟
-  await s.step(21, 6);
-  assert(await s.map() === 'yanshui_temple' && (await s.flags('ch6_yanshui'))[0], '3-2 temple');
-  // 3-3 蜂炮夜 (三波 + 疫聚)
-  await s.talk('ys_keeper', ['開始吧']);
-  assert((await s.flags('ch6_night', 'ch6_beehive')).every(Boolean), '3-3 beehive night done');
-  assert(await s.ev(() => G.state.inv.fengpao > 0), '疫聚 dropped 蜂炮');
-  await s.shot('main_02_beehive_after');
-  // 3-4 客棧 → 府城
-  await s.run(`async (S) => { await S.warp('yanshui_inn', 6, 8, 'up'); }`);
-  await s.talk('ys_innkeeper', ['休息到天亮']);
-  assert(await s.map() === 'fucheng' && (await s.flags('ch6_fucheng', 'ch6_fc_arrive')).every(Boolean), '3-4 arrive 府城');
-  // 3-5 墨鴉
-  await s.step(5, 10);
-  assert((await s.flags('ch6_moya'))[0] && await s.map() === 'fucheng', '3-5 墨鴉');
-  await s.shot('main_03_fucheng');
-  // 3-6 做十六歲
-  await s.step(26, 13);
-  assert(await s.map() === 'fc_qiniang' && (await s.flags('ch6_sixteen'))[0], '3-6 做十六歲');
-  assert(await s.ev(() => G.state.inv.c6_qiniang_rouge === 1 && G.state.inv.c6_sesame_chicken === 3), '3-6 rewards');
-  // 3-7 肉粽伯
-  await s.run(`async (S) => { await S.warp('fucheng', 21, 16, 'up'); }`);
-  await s.step(21, 15);
-  assert((await s.flags('ch6_rouzong'))[0] && await s.ev(() => G.state.vars.ch6_time === 1 && G.state.inv.c6_zheng_zongzi === 2), '3-7 肉粽伯');
-  // 3-10 林投林 (one wrong turn, then the boss)
-  await s.step(0, 40);
-  assert(await s.map() === 'linto' && (await s.flags('ch6_linto_in'))[0], '3-10 enter 林投林');
-  await s.shot('main_04_linto');
-  await s.ev(() => { G.mapScene.enemies = []; });
-  await s.step(8, 29);
-  assert(await s.ev(() => G.state.vars.ch6_linto_wrong === 1 && G.mapScene.player.x === 18 && G.mapScene.player.y === 32), 'dead end sends back to A');
-  // 3-11 林投姐 — the party 「傾聽」 (defends) whenever she tells her story
-  await s.ev(() => {
-    window.__listen = setInterval(() => {
-      const b = G.Scenes.top();
-      if (b instanceof G.Battle.Scene && b.c6 && b.c6.listened && !b.__qa) {
-        b.__qa = true;
-        const ac = b.autoCommand.bind(b);
-        b.autoCommand = (u) => (b.c6.window && !b.c6.listened.has(u.id) ? { kind: 'defend' } : ac(u));
-      }
-    }, 20);
-  });
-  await s.step(14, 9);
-  await s.ev(() => clearInterval(window.__listen));
-  assert((await s.flags('ch6_linto_done'))[0], '3-11 林投姐 resolved');
-  assert(await s.ev(() => G.Lanterns.has('lantern_linto') && G.state.inv.c6_linto_comb === 1 && !G.state.inv.c6_zheng_zongzi), 'lantern_linto + 木梳, 肉粽 given');
-  assert(await s.ev(() => (G.state.vars.ch6_listen || 0) >= 3 && G.state.flags.ch6_listen3 && G.state.inv.c6_zhaoniang_pin === 1), '傾聽 ≥3 → 昭娘的銀簪 (listen=' + await s.ev(() => G.state.vars.ch6_listen) + ')');
-  assert(await s.ev(() => G.state.vars.ch6_time === 2), 'night falls');
-  // 3-12 水門 → S1
-  await s.step(34, 4);
-  assert(await s.map() === 'palace_dock' && (await s.flags('ch6_infiltrate', 'ch6_s1_tut')).every(Boolean), '3-12 water gate → S1');
-  await s.shot('main_05_palace_dock');
-  await s.noGuards();
-  await s.step(15, 1);
-  assert(await s.map() === 'palace_hall', 'S1 → S2');
-  await s.noGuards();
-  await s.step(36, 1);
-  assert(await s.map() === 'palace_study', 'S2 → S3');
-  await s.noGuards();
-  // the shadow chest (never spotted) and the shelves puzzle
-  await s.ev(() => { const m = G.mapScene; const o = m.objects.find((x) => x.chest && x.chest.id === 'c6_10'); m.openChest(o); });
-  await s.idle();
-  assert(await s.ev(() => G.state.inv.c6_qingxu_gourd === 1), 'S3 影行箱 (清虛的舊葫蘆)');
-  await s.trigger('shelf_2_6');
-  assert(await s.ev(() => G.state.vars.ch6_s3_wrong === 1), 'wrong shelf counted');
-  await s.trigger('shelf_2_9');
-  await s.trigger('shelf_20_12');
-  assert((await s.flags('ch6_s3_open', 'ch6_qingxu_letter'))[0] && await s.ev(() => G.state.inv.c6_qingxu_letter === 1), '3-13 letter');
-  // 3-14 … 3-17 → chapter 7
-  await s.step(12, 2);
-  await s.until('G.state.chapter === 7 && G.state.flags.ch6_done', 900);
-  const f = await s.flags('ch6_yexuan_met', 'ch6_netherlamp', 'ch6_captured', 'ch6_ship', 'lyric_ch6', 'ch6_done', 'xinghe_gutter');
-  assert(f.every(Boolean), 'ending flags ' + JSON.stringify(f));
-  assert(await s.ev(() => !G.state.party.includes('baizhi') && !!G.state.members.baizhi && G.state.inv.key_jadetag >= 1), '白芷 left the party; 玉牌 kept');
-  assert(await s.ev(() => G.Quests.isDone('q_ch6_main')), 'main quest done');
-  assert(await s.ev(() => G.state.inv.c6_nether_wick === 1), '冥燈護法 dropped 冥燈殘芯');
+  for (; i < SEGMENTS.length; i++) {
+    console.log('    · segment ' + SEGMENTS[i].id);
+    await SEGMENTS[i].run(s);
+  }
 });
 
 // ------------------------------------------------------------------ side quests & optional scenes
