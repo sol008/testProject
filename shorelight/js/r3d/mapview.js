@@ -669,7 +669,8 @@ G.Map3D = (() => {
       this.decal.visible = false;
       this.scene.add(this.decal);
     }
-    // screen: the 2D overlay context (MapScene.draw3d passes its ctx; G.ctx otherwise)
+    // screen: the 2D overlay context (MapScene.draw3d passes its ctx; G.ctx otherwise) — sets the transform and size
+    // of the screen layer
     updateDecals(screen) {
       const ms = this.ms, t = ms.t;
       if (!this.hookCount()) { if (this.decal && this.decal.visible) this.clearDecal(); return; }
@@ -688,6 +689,16 @@ G.Map3D = (() => {
       // upload only when something was drawn (this frame or the last one, which must be cleared away)
       if (drew || this.decal.visible) this.decalTex.needsUpdate = true;
       this.decal.visible = drew;
+    }
+    // composite the screen-space output of this frame's 2D hooks onto the overlay (called by MapScene.draw3d)
+    drawHookLayer(ctx) {
+      const sp = this.split;
+      if (!sp || !sp.layerUsed) return;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(sp.layer, 0, 0);
+      ctx.restore();
     }
     clearDecal() {
       const g = this.decalCanvas.getContext('2d');
@@ -881,11 +892,21 @@ G.Map3D = (() => {
     }
     begin(screen) {
       const v = this.view, ms = v.ms;
-      this.S = screen; this.W = v.decalCanvas.getContext('2d');
+      // screen-space output goes to an offscreen layer the size of the overlay canvas; MapScene.draw3d composites it
+      // (view.drawHookLayer) after the 2D screen fx, so passes that re-read the overlay (G.FX.vision) can't amplify it
+      const cv = screen.canvas;
+      if (!this.layer || this.layer.width !== cv.width || this.layer.height !== cv.height) {
+        this.layer = document.createElement('canvas');
+        this.layer.width = cv.width; this.layer.height = cv.height;
+        this.layerUsed = false;
+      }
+      this.S = this.layer.getContext('2d'); this.W = v.decalCanvas.getContext('2d');
       const W = this.W, S = this.S;
       if (this.drewLast !== false) { W.setTransform(1, 0, 0, 1, 0, 0); W.clearRect(0, 0, v.decalCanvas.width, v.decalCanvas.height); }
+      if (this.layerUsed) { S.setTransform(1, 0, 0, 1, 0, 0); S.clearRect(0, 0, this.layer.width, this.layer.height); }
+      S.setTransform(screen.getTransform());
       S.save(); W.save();
-      for (const k of SPLIT_SYNC) { try { W[k] = S[k]; } catch (e) { /* unsupported prop */ } }
+      for (const k of SPLIT_SYNC) { try { W[k] = S[k] = screen[k]; } catch (e) { /* unsupported prop */ } }
       W.setLineDash([]); S.setLineDash([]);
       this.dev = S.getTransform();
       this.devInv = this.dev.inverse();
@@ -902,6 +923,7 @@ G.Map3D = (() => {
       this.S.restore(); this.W.restore();
       this.stack.length = 0;
       this.drewLast = this.worldOps > 0;
+      this.layerUsed = this.screenOps > 0;
       return this.drewLast;
     }
     // decal transform matching a screen-ctx transform M: W = Wbase × T(cam) × dev⁻¹ × M

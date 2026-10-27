@@ -754,7 +754,8 @@ G.Mapx = G.Mapx || {};
     }
 
     // 3D path: the WebGL layer renders the world; this draws the 2D overlay (prompts, emotes, HUD, screen fx).
-    // v.frame(ctx) also runs the 2D map hooks: world-space output → ground decal, screen-space output → ctx.
+    // v.frame(ctx) also runs the 2D map hooks: world-space output → ground decal, screen-space output → a layer that
+    // v.drawHookLayer(ctx) composites after the screen fx, under drawScreen and the HUD.
     draw3d(ctx) {
       const t = this.t, v = this.view3d;
       this.camFrame();
@@ -786,6 +787,7 @@ G.Mapx = G.Mapx || {};
       this.particles.drawScreen(ctx);
       const psy = Math.max(val(this.def.psychedelic) || 0, G.state.vars.vision > 0 ? Math.min(1, G.state.vars.vision / 3) * 0.75 : 0);
       if (psy > 0) G.FX.vision(ctx, t, psy * 0.55);
+      v.drawHookLayer(ctx); // screen-space output of drawGround/drawOver (see Map3D SplitCtx)
       this.drawScreenHooks(ctx, t);
       this.drawHud(ctx, t);
     }

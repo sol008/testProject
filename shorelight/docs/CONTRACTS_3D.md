@@ -154,7 +154,7 @@ runs in 2D and 3D, so write it once in 2D terms:
 |---|---|---|
 | `drawGround(ctx, t, ms)` | world px (2D camera applied), under objects/actors | **ground decal**: a canvas texture laid over the whole map at y≈0.035 (1 tile = `view.decalS` px), drawn under actors, occluded by walls/models |
 | `ms.drawMechFloor` (winds, guard cones) | as drawGround | ground decal |
-| `drawOver(ctx, t, ms)` | world px, above actors (before emotes, lighting, HUD) | world-space drawing → ground decal; **screen-space drawing → the 2D overlay canvas, composited over the 3D frame** |
+| `drawOver(ctx, t, ms)` | world px, above actors (before emotes, lighting, HUD) | world-space drawing → ground decal; **screen-space drawing → a screen layer composited over the 3D frame** (after the 2D screen fx, under drawScreen and the HUD) |
 | `drawScreen(ctx, t, ms)` | screen coords, after lighting/vignette, under the HUD | same, on the overlay over the 3D frame |
 | `update3d(view, dt, THREE)` | — | every frame before render (3D props/billboards for upright things) |
 
