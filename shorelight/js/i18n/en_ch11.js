@@ -1227,4 +1227,5 @@ G.I18N.add({
   '……只怕，到了燈下，會不夠。': '…I only fear that when we reach the lamp, it won\'t be enough.',
   '前方的海平線，出現一道紅色的岸。岸的盡頭，一座白色的巨塔，頂端的光虛弱地明滅。': 'On the horizon ahead appears a red shore. At its far end stands a great white tower, the light at its top flickering weakly.',
   '……彼岸。': '…The Far Shore.',
+  '阿木': 'Mu',  // 阿木伯's water lantern label (bare 木 would read as the Wood element)
 });

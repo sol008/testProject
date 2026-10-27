@@ -479,11 +479,33 @@
         const text = typeof ln === 'string' ? ln : ln.text;
         const col = wall ? '#1e1814' : '#2a2018';
         const wl = wrapText(ctx, text, w - 90, size);
+        const tops = [];
         for (const gl of wl) {
           ctx.save(); ctx.font = G.font(size); ctx.textBaseline = 'top';
           G.Render.drawLines(ctx, [gl], x + 44, ly, size + 14, col, Infinity, false);
           ctx.restore();
+          tops.push(ly);
           ly += size + 18;
+        }
+        // translated line: strike the words listed in strikeEn (e.g. "don't") wherever they appear in the wrapped lines
+        if (ln && typeof ln === 'object' && Array.isArray(ln.strikeEn) && G.T(text) !== text) {
+          ctx.save(); ctx.font = G.font(size);
+          ctx.strokeStyle = 'rgba(20,14,10,0.9)'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+          wl.forEach((gl, j) => {
+            for (const word of ln.strikeEn) {
+              let at = gl.indexOf(word);
+              while (at >= 0) {
+                const sx = x + 44 + ctx.measureText(gl.slice(0, at)).width, sw = ctx.measureText(word).width;
+                const yy = tops[j] + size * 0.55;
+                for (let k = 0; k < 12; k++) {
+                  const jy = (U.hash(j, k, at) - 0.5) * size * 0.7;
+                  ctx.beginPath(); ctx.moveTo(sx - 3, yy + jy); ctx.lineTo(sx + sw + 3, yy + jy + (U.hash(k, at, 2) - 0.5) * 8); ctx.stroke();
+                }
+                at = gl.indexOf(word, at + word.length);
+              }
+            }
+          });
+          ctx.restore();
         }
         // strike-through marks (zh only — positions are found by glyph)
         if (ln && typeof ln === 'object' && Array.isArray(ln.strike) && G.T(text) === text) {
@@ -863,7 +885,7 @@
       { t: 'red_lantern', x: 24, y: 9, text: '王' },
       // drifting lanterns on the black sea
       ...[[2, 2], [6, 13], [11, 1], [16, 14], [21, 2], [26, 12], [1, 11], [25, 1]].map(([x, y]) => ({ t: 'water_lantern', x, y, if: (st) => st.flags.ch11_sail && leg(st) >= 1 && leg(st) <= 3 })),
-      { t: 'water_lantern', x: 5, y: 7, text: '木', if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done,
+      { t: 'water_lantern', x: 5, y: 7, text: '阿木', if: (st) => st.flags.ch11_tangshan_letter && !st.flags.ch11_tangshan_done,
         interact: [['阿木伯', '阮佇遮坐，看會著前面。少年仔，免煩惱阮。']], label: '調查' },
     ],
     lights: (st) => {
@@ -2921,7 +2943,7 @@
   };
   H.wallWriting = async (S) => {
     if (F('ch11_letters')) {
-      await paper({ kind: 'wall', pages: [['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'] }]] });
+      await paper({ kind: 'wall', pages: [['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'], strikeEn: ["don't"] }]] });
       return;
     }
     S.bgm('love');
@@ -2929,7 +2951,7 @@
     await S.say('', '東牆。一整面牆，用燒過的竹炭寫著大字。字很用力，有些地方把石灰都刮破了。');
     await paper({ kind: 'wall', portrait: 'baizhi', expr: 'sad', pages: [
       ['如果我忘了，請告訴我：我曾經很快樂。'],
-      ['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'] }],
+      ['如果我忘了，請告訴我：我曾經很快樂。', { text: '星河，這一次，別再來找我了。', strike: ['別', '了'], strikeEn: ["don't"] }],
     ] });
     await L(S, [
       ['', '下面那一行，寫了又塗，塗了又寫。「別」字被劃了十幾道，劃到看不見。最後的「了」也被抹掉了。'],
