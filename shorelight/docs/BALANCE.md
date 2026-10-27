@@ -1,6 +1,6 @@
-# Boss & scripted-fight balance — chapters 0–10
+# Boss & scripted-fight balance — chapters 0–11
 
-Goal: every boss and scripted fight of chapters 0–10 is winnable on the **first try** by a normal player at the level
+Goal: every boss and scripted fight of chapters 0–11 is winnable on the **first try** by a normal player at the level
 and gear they really have there, but stays a real challenge: a player who heals, guards and uses items sensibly should
 win **about 70–90 %** of the time. The auto-battle does not count.
 
@@ -15,7 +15,8 @@ unmodified** (工頭魂's raised pickaxe, 水鬼王's hands and 陳伯, 怨宴's
 燈印, ch7's 心燈 flame and mirror rules, 青鋒's wicks, 貪鬼's 吞食, 瘟鬼頭, 落山風靈's wind gauge and 風團, 鰻王's 燈火,
 海蛇's dives, 石巨靈's stone armour, 孤魂眾's hunger). Nothing had to be approximated except that the player never retries.
 Fights that follow each other with no chance to rest are chained (HP/MP/劍意 carry over): ch1 1-18 → 墨鴉 → 水鬼王,
-ch3 陰兵 → 鬼面, ch4 米粉架 ×3, ch9 night beach ×2.
+ch3 陰兵 → 鬼面, ch4 米粉架 ×3, ch9 night beach ×2, ch11 夜玄 phase 1 → (+30 % HP/MP) → phase 2 and 無相 phase 1 (full heal
+before) → 白芷 taken, +50 % → phase 2. The win rate of a phase-2 row is that of the whole pair.
 
 **The player — `tools/test/lib/battlebot.js`.** Revives (skill, else item); the designated healer (白芷, else 雲歸, else
 星河) heals with skills, anyone uses a heal item when a member is below ~⅓ and the healer can't act first; MP items for
@@ -47,7 +48,8 @@ rounds) and were not retuned. *loseOk* fights continue the story after a loss; *
 
 ## Results
 
-Win = first-try win rate; (KO) = share of fights in which at least one member fell.
+Win = first-try win rate; (KO) = share of fights in which at least one member fell. Chapter 11 was added after
+its builder finished it (their own lowering of 烏鬚船主 / 鎖魂將 / 鯤 / 千年燈塔守 is the "before").
 | Fight | Ch | Lv | Party | Kind | Win before (KO) | Win after (KO) | Rounds after | 2 levels lower: before → after | Change |
 |---|---|---|---|---|---|---|---|---|---|
 | 大海霧魂 (0-6, optional) | 0 | 1 | 星河 | scripted | 100% (0%) | 100% (0%) | 5.1 | 100% (0%) → 100% (0%) |  |
@@ -97,6 +99,16 @@ Win = first-try win rate; (KO) = share of fights in which at least one member fe
 | 大潮怨 (海祭 岬角) | 10 | 36 | 星河 紅纓 雲歸 | boss | 96% (36%) | 94% (36%) | 4.3 | 90% (50%) → 88% (49%) | unchanged (the three 海祭 fights are separate map events: the player can heal between them) |
 | 太魯閣石巨靈 | 10 | 37 | 星河 紅纓 雲歸 | boss | 11% (99%) | 86% (76%) | 8.3 | 4% (100%) → 66% (90%) | 峽谷巨像 (js/data) atk 3.04→2.15, mag 2.72→1.65 (its 濁流 nearly one-shot 星河); stone-armour rules unchanged |
 | 孤魂眾 (頭城 普渡) | 10 | 38 | 星河 紅纓 雲歸 | boss | 100% (10%) | 92% (53%) | 8.1 | 100% (15%) → 78% (65%) | 孤魂眾 hp 5→6, atk 1.9→2.55, mag 1.8→2.4, spd 1.15→1.55 |
+| 烏鬚船主 (11-05) | 11 | 39 | 星河 紅纓 雲歸 | boss | 100% (10%) | 89% (65%) | 9.5 | 100% (10%) → 77% (78%) | 烏鬚船主 hp 6.5→7.5, atk 1.9→3.05, mag 1.6→2.55, spd 1.2→1.9 |
+| 鎖魂將 (11-10) | 11 | 40 | 星河 紅纓 雲歸 | boss | 100% (6%) | 90% (73%) | 10.6 | 100% (13%) → 79% (80%) | 鎖魂將 hp 8→8.8, atk 1.85→2.8, mag 1.75→2.6, spd 0.95→1.45 |
+| 鯤 (11-14) | 11 | 41 | 星河 紅纓 雲歸 | boss | 100% (3%) | 91% (79%) | 12.5 | 100% (3%) → 79% (90%) | 鯤 atk 1.55→2.55, mag 1.45→2.4, spd 0.9→1.5 (HP unchanged: tumours heal it, the fight is already 12 rounds) |
+| 千年燈塔守 (11-23) | 11 | 43 | 星河 紅纓 雲歸 | boss | 94% (32%) | 94% (32%) | 6.8 | 82% (56%) → 82% (50%) | unchanged |
+| 萬象童子 (optional game, 15 turns) | 11 | 44 | 星河 紅纓 雲歸 | scripted | 100% (0%) | 100% (0%) | 3.0 | 100% (0%) → 100% (0%) |  |
+| 夜玄・玄冥法師 (11-28 phase 1) | 11 | 44/44/44/45 | 星河 白芷 紅纓 雲歸 | boss | 100% (34%) | 100% (35%) | 15.3 | 100% (47%) → 99% (47%) | unchanged (phase 1 of a two-phase fight) |
+| 夜玄・逆潮法身 (phase 2, after phase 1 +30%) | 11 | 44/44/44/45 | 星河 白芷 紅纓 雲歸 | boss | 94% (59%) | 90% (68%) | 11.3 | 90% (73%) → 84% (84%) | 夜玄・逆潮法身 atk 2.3→2.4, mag 2.45→2.55, spd 1.5→1.58 — the pair now ends at 90% |
+| 黑潮・無相 (phase 1, full heal before) | 11 | 44/44/44/45 | 星河 白芷 紅纓 雲歸 | boss | 100% (28%) | 100% (28%) | 15.2 | 100% (40%) → 100% (35%) | unchanged (phase 1; KO bug fixed, see below) |
+| 無相・深淵 (phase 2, trio, +50% after phase 1) | 11 | 44 | 星河 紅纓 雲歸 (白芷 taken) | boss | 92% (100%) | 89% (65%) | 12.6 | 95% (100%) → 71% (83%) | 無相・深淵 atk/mag 2.35→1.42, spd 1.4→0.84 (trio, after phase 1 with half HP/MP back); 'before' 92% was the KO bug — with the bug fixed and the old stats it is 0% |
+| 無相之心 (phase 3, cannot be lost) | 11 | 44 | 星河 | scripted | 100% (21%) | 100% (23%) | 5.6 | 100% (20%) → 100% (21%) |  |
 
 All multipliers are the `m:` stat multipliers of the enemy definitions (stats = `G.Data.enemyCurve(lv)` × m); exp and
 gold are unchanged (every changed boss has an explicit `exp`/`gold` multiplier).
@@ -132,6 +144,26 @@ to guard — whole-party wipes with the 風團 acting 15 times in a row. The 風
   them 15+ rounds long.
 - ch1 墨鴉 / 水鬼王 (88 %), ch10 大潮怨 (94 % alone; the three 海祭 fights are separate map events) are in range.
 
+## Chapter 11
+
+- **Bug fixed — a party KO won the fight.** `battle.js damage()` computes `floorK = tg.side === 'enemy' && hpFloor && hpFloor[id]`,
+  which is `false` (not null) for a party member, so the hpFloor branch runs for party members too: when a member
+  drops to 0 HP it raises `onFloor`. 夜玄 phase 1 and 無相 phases 1–2 end the battle as a **win** in `onFloor`, so the
+  first KO ended the phase as a victory (that is how 無相・深淵 looked 92 % before: the party "won" in 1.8 rounds while
+  dying). Fixed in ch11 only — each `onFloor` now checks it is its boss (`(b, e) => { if (e && e.id !== …) return; … }`;
+  無相之心's 「渡」 hint had the same issue). **Engine follow-up (not done, js/engine is another agent's):**
+  `const floorK = tg.side === 'enemy' && this.o.hpFloor ? this.o.hpFloor[tg.id] : null;`. ch6 林投姐 already checked
+  the id; no other chapter uses `onFloor`.
+- With the bug fixed, 無相・深淵 (fought by the trio after phase 1, with half HP/MP back and 白芷 swallowed) won **0 %**:
+  its stats were set as if it were an ordinary four-member boss. It now has much lower damage and speed; the whole
+  final fight (phase 1 → 2) ends at ~88 %. Phase 3 (無相之心, 星河 alone) cannot be lost by design.
+- 夜玄: phase 1 alone is 100 % with KOs; the pair ends at 90 % after a small raise of phase 2.
+- 烏鬚船主, 鎖魂將, 鯤 (lowered by the builder) were trivial again at the real level with the 馬公 smith's gear and were
+  raised to 89–91 %. 千年燈塔守 (94 %) and the optional 萬象童子 game (loseOk, 15 turns) are unchanged.
+- Test: `tools/test/chapters/ch11.test.js` loads the battle bot like the others; `flats` levels to 41 (was 39) before
+  烏鬚船主 and `voyage` to 46 (was 44) before 鯤. Browser runs, one at a time: `--only true` **PASS** (7/7, 夜玄 ×2, 無相
+  ×3, true ending) and `--only normal` **PASS** (4/4). The other ch11 segments were not re-run.
+
 ## Playthrough tests
 
 The playthrough tests fight with the in-game auto-battle, which never guards, never uses items and heals late; with
@@ -160,9 +192,9 @@ Not re-run: the remaining segments/sessions of those tests (the bot also plays t
 - `tools/sim_battle.js`: magic damage now resists with the **target's** `mag` like the engine
   (`battle.js applyEffect`: `def*0.3 + target.mag*0.7`); it used the attacker's, which hid how hard magic-heavy enemies
   hit low-`mag` members (石巨靈's 濁流). Also the engine's hit clamp (0.6–0.99) and party resist (×0.6).
-  With the fix, sim_battle flags ch11's data bosses 夜玄 (9 %) and 黑潮・無相 (20 %) at L44 — **chapter 11 was not
-  touched** (still being tested by its builder), but its builder should check those with `sim_story.js`.
-- No engine (`js/engine/*`) changes.
+  (With the fix sim_battle flags the *js/data* 夜玄 / 無相 as brutal at L44; the game uses chapter 11's own versions,
+  which are in the table above.)
+- No engine (`js/engine/*`) changes — but see the hpFloor bug below.
 
 ## Needs a human playtest
 
@@ -175,5 +207,7 @@ Not re-run: the remaining segments/sessions of those tests (the bot also plays t
   harder bosses drop to 55–75 %; 蛟 55 %, 心魔・雲歸 59 %, 柿鼠大王 61 %).
 - **工頭魂** at Lv3 (星河 alone, guard tutorial): one bad 鶴嘴鋤重擊 crit can end it; 93 % in the sim.
 - **The in-game auto-battle (F)** can no longer beat these bosses on normal.
+- **無相・深淵** is now clearly weaker on paper than phase 1; it is the party state (trio, half HP/MP, no 白芷) that makes
+  it a fight. Worth a look in the real ending sequence, together with 夜玄's 15-round phase 1.
 - **The bot's hints are generic**: in the sim the player follows each fight's on-screen hints (`tactics`); a player who
   misses them (e.g. never feeds 孤魂眾, never guards 燈印) will find 冥燈護法 / 孤魂眾 / 海蛇 harder than listed.
