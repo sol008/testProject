@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Monsters B harness</title>
+<style>html,body{margin:0;background:#1b1d22;color:#ddd;font:13px system-ui;overflow:hidden}.lb{position:absolute;transform:translate(-50%,0);padding:1px 5px;background:rgba(0,0,0,.55);border-radius:4px;white-space:nowrap}#info{position:absolute;left:8px;top:6px}</style></head>
+<body><canvas id="c"></canvas><div id="info"></div>
+<!--
+  Team-B creature harness (complements tools/r3d/viewer.html):
+    ids=a,b  anim=<clip>|walk  t=s  phase=n  views=1|4  frames=N (strip: N copies of each id at t, t+dt, …)  dt=s
+    yaw pitch dist fov  night=1  bloom=0|1 (UnrealBloom on; default 1)  bg=#hex  stats per id → window.__stats
+-->
+<script>window.G_VIEWER = true;</script>
+<script src="../../../js/core/util.js"></script>
+<script>G.font = G.font || ((s, b) => (b ? "bold " : "") + s + "px serif");</script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.warn(k, e));</script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/tiles.js"></script>
+<script src="../../../js/gfx/nature.js"></script>
+<script src="../../../js/gfx/objects.js"></script>
+<script src="../../../js/gfx/objects2.js"></script>
+<script src="../../../js/gfx/interior.js"></script>
+<script src="../../../js/gfx/sprites.js"></script>
+<script src="../../../js/gfx/monsters.js"></script>
+<script src="../../../js/gfx/monsters2.js"></script>
+<script src="../../../js/gfx/monsters3.js"></script>
+<script src="../../../js/vendor/three.bundle.js"></script>
+<script src="../../../js/r3d/core.js"></script>
+<script src="../../../js/r3d/materials.js"></script>
+<script src="../../../js/r3d/models.js"></script>
+<script src="../../../js/r3d/chars.js"></script>
+<script src="../../../js/r3d/chars_cast.js"></script>
+<script src="../../../js/r3d/animals.js"></script>
+<script src="../../../js/r3d/arch_han.js"></script>
+<script src="../../../js/r3d/arch_coast.js"></script>
+<script src="../../../js/r3d/nature.js"></script>
+<script src="../../../js/r3d/props.js"></script>
+<script src="../../../js/r3d/monsters.js"></script>
+<script src="../../../js/r3d/monsters_boss.js"></script>
+<script src="../../../js/r3d/env.js"></script>
+<script src="../../../js/r3d/vfx.js"></script>
+<script>
+setTimeout(function () {
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const W = num('w', 1280), H = num('h', 720);
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  G.R3.renderer = renderer;
+  const scene = new THREE.Scene();
+  const night = q.get('night') === '1';
+  scene.background = new THREE.Color(q.get('bg') || (night ? '#0b1020' : '#7f9fb8'));
+  scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.45 : 1.1));
+  const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.5 : 2.6);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+  scene.add(sun, sun.target);
+  try { const pm = new THREE.PMREMGenerator(renderer); const es = new THREE.Scene(); es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: night ? 0x1a2240 : 0xbcd4e6 }))); scene.environment = pm.fromScene(es, 0.04).texture; scene.environmentIntensity = 0.55; } catch (e) { console.warn(e); }
+  const ids = (q.get('ids') || 'bear_spirit').split(',');
+  const views = num('views', 1), frames = num('frames', 1), dtF = num('dt', 0.15);
+  const anim = q.get('anim') || 'idle', T0 = num('t', 0.5), phase = num('phase', 1);
+  const items = [];
+  // set=clip:t,clip:t… → one copy per entry (clip sheet)
+  const SET = q.get('set') ? q.get('set').split(',').map((e) => { const [a, t] = e.split(':'); return { a, t: parseFloat(t || '0.5') }; }) : null;
+  if (SET) for (const id of ids) for (const e of SET) {
+    let inst = null;
+    try { inst = G.Mon3D.create(id, { context: 'battle', phase }); } catch (er) { console.error('build failed', id, er); }
+    if (!inst) continue;
+    inst.setFacing(num('ryaw', 0) * Math.PI / 180);
+    if (e.a === 'walk') inst.setMove(4.2); else if (e.a !== 'idle') inst.play(e.a, { loop: false });
+    items.push({ id, inst, obj: inst.root, T: e.t, label: e.a + ' ' + e.t });
+    scene.add(inst.root);
+  }
+  if (!SET) for (const id of ids) for (let f = 0; f < frames; f++) for (let v = 0; v < views; v++) {
+    let inst = null;
+    try { inst = q.get('fallback') === '1' ? G.Models.monsterBillboard(id, { height: G.Monsters.get(id).h / 64 }) : G.Mon3D.create(id, { context: q.get('ctx') || 'battle', phase }); } catch (e) { console.error('build failed', id, e); }
+    if (!inst) continue;
+    const yaw = [0, -Math.PI / 4, -Math.PI / 2, Math.PI][v] || 0;
+    inst.setFacing(yaw + num('ryaw', 0) * Math.PI / 180);
+    if (anim === 'walk') inst.setMove(4.2); else if (anim !== 'idle') inst.play(anim, { loop: q.get('loop') !== '0' });
+    items.push({ id, inst, obj: inst.root, T: T0 + f * dtF, label: id + (views > 1 ? ['', ' ¾', ' side', ' back'][v] : '') + (frames > 1 ? ' t=' + (T0 + f * dtF).toFixed(2) : '') });
+    scene.add(inst.root);
+  }
+  // per-id stats (draw calls, tris) before layout
+  const stats = {};
+  for (const it of items) if (!stats[it.id]) { let calls = 0, tris = 0; it.obj.traverse((o) => { if ((o.isMesh || o.isPoints) && o.visible) { calls++; if (o.geometry.index && !o.userData.outline) tris += o.geometry.index.count / 3; } }); stats[it.id] = { calls, tris }; }
+  const boxes = items.map((it) => { it.obj.updateMatrixWorld(true); const b = new THREE.Box3(); it.obj.traverse((o) => { if (o.isSkinnedMesh && !o.userData.outline) { o.geometry.computeBoundingBox(); } }); b.setFromObject(it.obj, false); return b.isEmpty() ? new THREE.Box3(new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 2, 1)) : b; });
+  const cols = num('cols', items.length <= 6 ? items.length : Math.ceil(Math.sqrt(items.length * 1.8)));
+  const cell = Math.max(1.4, ...ids.map((id) => G.Mon3D.B.DEFS[id] ? G.Mon3D.B.DEFS[id].h * (G.Mon3D.B.DEFS[id].wide || 1) : 2)) * num('gap', 1.15);
+  items.forEach((it, i) => { it.obj.position.x += (i % cols) * cell; it.obj.position.z += Math.floor(i / cols) * cell; });
+  // advance each to its own time
+  for (const it of items) { const n = Math.round(it.T * 60); for (let s = 0; s < n; s++) { G.time = s / 60; it.inst.update(1 / 60, 0, null); } }
+  G.time = T0;
+  const all = new THREE.Box3(); for (const it of items) all.expandByObject(it.obj);
+  const ctr = all.getCenter(new THREE.Vector3()), size = all.getSize(new THREE.Vector3());
+  if (q.get('ground') !== '0') {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 256; const g = gc.getContext('2d'); g.fillStyle = night ? '#2a3038' : '#6e7a5e'; g.fillRect(0, 0, 256, 256); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+    const tx = new THREE.CanvasTexture(gc); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; const gs = Math.max(size.x, size.z) + 30; tx.repeat.set(gs, gs);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(gs, gs), new THREE.MeshStandardMaterial({ map: tx, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(ctr.x, 0, ctr.z); ground.receiveShadow = true; scene.add(ground);
+  }
+  const cam = new THREE.PerspectiveCamera(num('fov', 30), W / H, 0.05, 500);
+  const camYaw = num('yaw', 20) * Math.PI / 180, pitch = num('pitch', 18) * Math.PI / 180;
+  const radius = q.has('rad') ? num('rad', 1) : Math.max(size.x, size.y * 1.6, size.z) * 0.5 + 0.3;
+  const dist = radius / Math.tan(cam.fov * Math.PI / 360) * 1.1 * num('dist', 1);
+  const look = ctr.clone(); look.y = q.has('ly') ? num('ly', 1) : size.y * 0.45; if (q.has('lz')) look.z += num('lz', 0); if (q.has('lx')) look.x += num('lx', 0);
+  cam.position.set(look.x + Math.sin(camYaw) * Math.cos(pitch) * dist, look.y + Math.sin(pitch) * dist, look.z + Math.cos(camYaw) * Math.cos(pitch) * dist); cam.lookAt(look);
+  sun.position.copy(look).add(new THREE.Vector3(-12, 20, 9)); sun.target.position.copy(look); sun.target.updateMatrixWorld();
+  const sc = sun.shadow.camera, r2 = radius * 1.5 + 2; sc.left = -r2; sc.right = r2; sc.top = r2; sc.bottom = -r2; sc.far = 120; sc.updateProjectionMatrix();
+  // one more zero-dt update so cameras/look-at settle; then render (optionally with bloom like the game)
+  for (const it of items) it.inst.update(0, camYaw, cam);
+  if (q.get('bloom') !== '0' && THREE.EffectComposer) {
+    const comp = new THREE.EffectComposer(renderer); comp.setSize(W, H);
+    comp.addPass(new THREE.RenderPass(scene, cam));
+    comp.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(W, H), num('bloomS', 0.55), 0.5, num('bloomT', night ? 0.6 : 0.85)));
+    comp.addPass(new THREE.OutputPass());
+    comp.render();
+  } else renderer.render(scene, cam);
+  if (q.get('labels') !== '0') items.forEach((it) => { const b = new THREE.Box3().setFromObject(it.obj); const p = new THREE.Vector3((b.min.x + b.max.x) / 2, 0, b.max.z).project(cam); const d = document.createElement('div'); d.className = 'lb'; d.textContent = it.label; d.style.left = ((p.x * 0.5 + 0.5) * W) + 'px'; d.style.top = ((-p.y * 0.5 + 0.5) * H + 4) + 'px'; document.body.appendChild(d); });
+  const info = renderer.info.render;
+  const bb = {}; items.forEach((it, i) => { const s = boxes[i].getSize(new THREE.Vector3()); bb[it.id] = [+s.x.toFixed(2), +s.y.toFixed(2), +s.z.toFixed(2)]; });
+  document.getElementById('info').textContent = `${items.length} items · ${info.calls} calls · ${info.triangles} tris`;
+  window.__stats = { per: stats, size: bb, items: items.length };
+  window.__ready = true;
+}, 0);
+</script></body></html>
