@@ -229,7 +229,7 @@ function FIGHTS() {
     { id: 'c9_plague', test: { lv: 31, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '瘟鬼頭 (東港 船台)', troop: 't_c9_plague_boss', opts: '{ intro: plagueIntro() }',
       party: TRIO, lv: 32, shops: S9b, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
     { id: 'c9_fallwind', test: { lv: 33, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '落山風靈 (龍磐)', troop: 't_c9_fallwind', opts: '{ intro: fallwindIntro() }',
-      party: TRIO, lv: 33, shops: S9, gifts: yinghuo, gear: { [XH]: { acc: 'c9_ac_yueqin' } }, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
+      party: TRIO, lv: 33, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
     { id: 'c9_moray', test: { lv: 34, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '潮病鰻王 (鵝鑾鼻)', troop: 't_c9_moray_king', opts: '{ intro: morayIntro() }',
       party: TRIO, lv: 34, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, vars: { flame: 60 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tMoray },
 
