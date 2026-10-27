@@ -1601,6 +1601,10 @@
     await nar(S, '一位提著蝦捲的婦人經過，喃喃自語。');
     await S.say('等待的家屬', '今天他會吃嗎……他以前最愛吃蝦捲了……');
     await S.say('xinghe:sad', '……');
+    // clue for 蚵殼阿嬤 (her 心燈 can only start before the 觀潮台)
+    await pan(S, 9, 21, 1.4, 0.8);
+    await nar(S, '西邊的海灘上，一位剖蚵的阿嬤守著一顆大石頭。石頭上，坐著一個渾身濕透、一動也不動的老漁夫。');
+    await S.say('xinghe:think', '……那個人，也是「走回來」的嗎？');
     S.cameraFollow();
     S.objective('打聽觀潮台的事。小廟的廟公也許知道怎麼上舊城。');
   }
@@ -1932,7 +1936,7 @@
     for (const id of ['hy88', 'yg88', 'yy88', 'mc88', 'cb88']) S.remove(id);
     rmObj(m, boat);
     S.hideFollowers(false);
-    S.objective('與陳伯一起，從安平東邊的路往南出發');
+    S.objective(fl().ch8_sq_oyster === 1 && !fl().ch8_oyster_done ? '先去海邊看看蚵殼阿嬤，再與陳伯從安平東邊的路往南出發' : '與陳伯一起，從安平東邊的路往南出發');
     await S.warp('anping', 9, 16, 'right', { reload: true, fade: 0.01 });
     S.gather();
     await S.fadeIn(0.8);

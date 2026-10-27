@@ -1721,7 +1721,7 @@
       objects: deco([['counter', 5, 4], ['herbs_rack', 1, 2], ['herbs_rack', 2, 2], ['jar_row', 8, 2], ['cauldron', 10, 6], ['jar', 1, 6]]),
       npcs: [{ id: 'fc_doctor', sprite: 'doctor', name: '藥鋪老闆', x: 6, y: 3, dir: 'down',
         talk: shopkeeperTalk(['金創藥、凝神丹、回魂香，府城藥鋪，童叟無欺。', '這陣子西邊來看病的人變多了。都說睡不好，夢見有人在罐子裡叫他們的名字。'],
-          ['jinchuang', 'c6_jinchuang2', 'c6_jinchuang3', 'c6_ningshen', 'c6_ningshen2', 'huanhunxiang', 'jiedu', 'xiangbao', 'c6_herb_tea', 'c6_revive_incense'], '府城藥鋪') }],
+          ['jinchuang', 'c6_jinchuang2', 'c6_jinchuang3', 'c6_ningshen', 'c6_ningshen2', 'huanhunxiang', 'jiedu', 'xiangbao', 'c6_herb_tea', 'c6_revive_incense', 'lingxun'], '府城藥鋪') }],
       warps: [{ x: 5, y: 8, w: 2, to: 'fucheng', tx: 57, ty: 17, tdir: 'down', door: true }],
     };
   })());
@@ -1804,6 +1804,16 @@
         { id: 'deadC2', trigger: 'touch', x: 25, y: 11, h: 2, run: (S) => Sc.deadEnd(S, 'C') },
         { id: 'boss', trigger: 'touch', x: 14, y: 9, w: 2, if: (st) => !st.flags.ch6_linto_done, run: (S) => Sc.lintoBoss(S) },
         { id: 'mush', trigger: 'touch', x: 22, y: 21, w: 2, h: 2, spirit: true, if: (st) => !st.flags.mush_ch6, run: (S) => Sc.mushroom(S) },
+        // without 靈視 the patch is only a sound: one line (and a 七彩靈蕈 offer) so the spot is not a bare tile
+        { id: 'mush_hear', trigger: 'touch', x: 22, y: 21, w: 2, h: 2, if: (st) => !st.flags.mush_ch6 && !LT.mushHeard && !G.mapScene.visionOn(), run: async (S) => {
+          LT.mushHeard = true;   // once per visit
+          await S.say('', '腳下的濕沙裡，傳來細細的潮聲……可是這裡離海還很遠。');
+          await S.say('yungui:think', '……有什麼長在這裡。肉眼看不見。');
+          if (S.hasItem('lingxun')) {
+            const c = await S.choice(['吃一朵七彩靈蕈，開啟靈視', '算了'], { cancel: 1 });
+            if (c === 0) { S.take('lingxun', 1); S.vision(60); S.sfx('magic'); await Sc.mushroom(S); }
+          } else await S.say('yungui:normal', '要是有七彩靈蕈就好了。府城的藥鋪……說不定有賣。');
+        } },
         { id: 'gate', trigger: 'touch', x: 33, y: 4, w: 5, h: 2, if: (st) => st.flags.ch6_linto_done && !st.flags.ch6_infiltrate, run: (S) => Sc.waterGate(S) },
         { id: 'graves', trigger: 'action', x: 14, y: 31, label: '看', run: async (S) => {
           await S.say('', '三座沒有名字的墳。墳前插著幾根燒完的香，不知道是誰來拜的。');
@@ -1814,6 +1824,7 @@
         { x: 18, y: 35, w: 2, to: 'fucheng', tx: 1, ty: 40, tdir: 'left' },
         { x: 35, y: 3, to: 'palace_dock', tx: 4, ty: 15, tdir: 'up', if: (st) => !!st.flags.ch6_infiltrate },
       ],
+      onEnter: () => { LT.mushHeard = false; },
       onUpdate: (dt, ms, busy) => {
         if (busy) return;
         // deeper into the thicket (north) = darker
@@ -2227,6 +2238,8 @@
     await S.say('林伯', '不過今年……有點奇怪。大疫塚那邊，這幾暝都有人看到東西在走。');
     await S.say('林伯', '巷口那幾盞長明宮送的燈，一到暗時，就有咳嗽聲。');
     await S.say('hongying:serious', '又是長明燈。');
+    // clue for 轎夫與母親: 阿義 is on the main street only until the 蜂炮夜 starts
+    await S.say('林伯', '……廟口那個阿義，今年第一次扛轎。他阿母，就是八年前那場瘟走的。');
     S.quest('q_ch6_main', 0);
     S.objective('準備好了，就跟林伯說一聲（蜂炮夜）');
     S.toast('（可以先在街上逛逛、買斗笠和厚棉襖。）');
@@ -2240,6 +2253,7 @@
     }
     await S.say('林伯', '關聖帝君，忠義千秋。鹽水人的命，是帝君救回來的。');
     if (!S.has('ch6_yanshui')) return;
+    if (!S.has('ch6_ayi_met')) await S.say('林伯', '起轎前，去廟口跟阿義講講話吧。那個囝仔，有話放在心裡八年了。');
     await S.say('林伯', '轎夫都準備好了。你們呢？');
     const c = await S.choice(['開始吧。（蜂炮夜）', '再等一下'], { cancel: 1 });
     // point of no return: 阿義 leaves the main street once the 蜂炮夜 starts (his 心燈 quest must be started before)
@@ -2480,6 +2494,8 @@
     if (S.has('ch6_ayi_met')) {
       await S.say('baizhi:think', '……大疫塚那邊，還有一個人沒有走。');
       if (G.Quests.stage('q_yanshui_mother') < 1) S.quest('q_yanshui_mother', 1);
+      S.objective('大疫塚還有一個人沒有走。去看看，再到客棧休息');
+      return;
     }
     S.objective('到鹽水客棧休息，天亮往府城');
   };
