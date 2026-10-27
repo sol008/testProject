@@ -3029,3 +3029,398 @@
     shadowZ: 0.5,
   });
 })();
+
+// ----------------------------------------------------------------------------------------------------- batch: 鹿港 & old-mansion ghosts
+(() => {
+  const K = G.Mon3D.kit, defC = G.Mon3D._defC;
+  const { Paint, GEN, E, atk, bump, seg, sm, clamp, lerp, shade, mix, rgba } = K;
+  const { humanRig, limb, claw, breathe, FX, FY, v3, nrm, SIDES } = K.H;
+  const TAU = Math.PI * 2, PI = Math.PI, sin = Math.sin, cos = Math.cos, abs = Math.abs, min = Math.min, max = Math.max;
+  const clothSlot = (a, b, c, wv = 4) => (g, w, h, p, R) => { Paint.vgrad(g, w, h, [0, p[c], 0.5, p[a], 1, p[b]]); Paint.weave(g, w, h, '#000', wv, 0.08); Paint.mottle(g, w, h, p[b], 16, 10, 40, 0.25, R); };
+  const hairSlot = (g, w, h, p, R) => { Paint.vgrad(g, w, h, [0, p.hairL, 0.3, p.hair, 1, p.hair]); Paint.strokes(g, w, h, p.hairL, 160, 80, PI / 2, 1.5, 0.5, R, 0.05); g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 10) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 5, h * (0.82 + R() * 0.12)); g.lineTo(x + 10, h); g.fill(); } g.globalCompositeOperation = 'source-over'; };
+
+  // ===================================================================================================
+  // 吊死鬼 hanged_ghost — a limp figure in white that drifts as if still hanging: toes pointed down, head lolled to one
+  // side, long black hair over the face with the long tongue showing; it carries the rope coiled in its hands and
+  // whispers. Unsettling, never gory (no rope at the neck — the sway implies it).
+  defC('hanged_ghost', {
+    height: 1.95, fill: 0.92, radius: 0.3, shadow: 0.3, shadowA: 0.55, ghostCol: '#cfe8ff', rimColor: '#e8f4ff',
+    pal: { robe: '#dfe6ea', robeD: '#7a8a98', robeL: '#ffffff', skin: '#c8d8dc', skinD: '#7a9098', hair: '#0c0e14', hairL: '#2a3040', tongue: '#c83048', tongueD: '#6a1424', rope: '#a8885a', ropeD: '#5a4428', eye: '#d8f4ff', mist: '#9ab8d0', line: '#2a343e', magic: '#bfe0ff' },
+    vars: [{ h: 0, s: 1, keep: ['skin', 'skinD', 'hair', 'hairL', 'tongue', 'tongueD', 'rope', 'ropeD'], set: { robe: '#c8d8b8', robeD: '#5a7a5a', mist: '#9ad8a0', eye: '#d8ffb0', magic: '#d8ffb0' } }, { h: 0, s: 1, keep: ['skin', 'skinD', 'hair', 'hairL', 'rope', 'ropeD'], set: { robe: '#8a1a2a', robeD: '#3a0810', robeL: '#d84a5a', mist: '#c85a6a', eye: '#ff9a9a', magic: '#ff6a7a' } }],
+    slots: {
+      robe(g, w, h, p, R) { clothSlot('robe', 'robeD', 'robeL', 5)(g, w, h, p, R); Paint.strokes(g, w, h, p.robeD, 30, 80, PI / 2, 2, 0.25, R, 0.05); g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 16) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 8, h * (0.86 + R() * 0.1)); g.lineTo(x + 16, h); g.fill(); } g.globalCompositeOperation = 'source-over'; },
+      skin(g, w, h, p, R) { Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 30, 6, 24, 0.3, R); },
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 40, 8, 36, 0.3, R);
+        const x = FX(w, 0.47), y = FY(h, 0.56); g.fillStyle = '#10161c'; g.beginPath(); g.ellipse(x, y, 16, 12, 0, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); // one eye glimpsed between strands
+        g.fillStyle = '#2a0a10'; g.beginPath(); g.ellipse(FX(w, 0.5), FY(h, 0.38), 16, 10, 0, 0, TAU); g.fill();
+      }, emit(g, w, h, p) { g.fillStyle = shade(p.eye, -0.3); g.beginPath(); g.arc(FX(w, 0.47), FY(h, 0.56), 5, 0, TAU); g.fill(); } },
+      hair: hairSlot,
+      tongue(g, w, h, p) { Paint.hgrad(g, w, h, [0, p.tongueD, 0.5, p.tongue, 1, p.tongueD]); },
+      rope(g, w, h, p) { Paint.fill(g, w, h, p.rope); g.strokeStyle = p.ropeD; g.lineWidth = 4; for (let x = -h; x < w; x += 12) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h * 0.7, h); g.stroke(); } },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 1.0, chest: 1.38, neck: 1.52, head: 1.57, shY: 1.44, sh: 0.17, up: 0.3, fore: 0.27, arm1: [0.15, -1, 0.25], arm2: [-0.4, -0.3, 1], lx: 0.08, knee: 0.55, foot: 0.12 });
+      for (let i = 0; i < 6; i++) { const a = -1.3 + i * 0.52, fr = abs(a) < 0.5; const r0 = [sin(a) * 0.1, 1.8, cos(a) * 0.08]; B.bone('hr' + i, 'head', r0); B.bone('hs' + i, 'hr' + i, [sin(a) * 0.13, fr ? 1.55 : 1.45, cos(a) * 0.15]); }
+      B.bone('tg0', 'head', [0.0, 1.6, 0.12]); B.bone('tg1', 'tg0', [0.0, 1.48, 0.14]);
+      B.bone('hem', 'hips', [0, 0.5, 0]);
+      // head (lolled), face mostly hidden
+      B.ell([0, 1.68, 0.02], [0.105, 0.13, 0.115], { w: 'head', slot: 'face', seg: 20, rings: 14 });
+      B.ell([0, 1.73, -0.01], [0.12, 0.12, 0.125], { w: 'head', slot: 'hair', th0: 0, thLen: PI * 0.62, seg: 18, rings: 10 });
+      for (let i = 0; i < 6; i++) { const a = -1.3 + i * 0.52, fr = abs(a) < 0.5; B.strip([[sin(a) * 0.1, 1.8, cos(a) * 0.08 + (fr ? 0.05 : 0)], [sin(a) * 0.13, fr ? 1.55 : 1.45, cos(a) * 0.15], [sin(a) * 0.14, fr ? 1.3 : 1.1, cos(a) * 0.16]], [0.09, 0.1, 0.07], { bones: ['hr' + i, 'hs' + i, 'hs' + i], slot: 'hair', side: [cos(a), 0, -sin(a)] }); }
+      // long tongue lolling below the hair
+      B.tube([[0, 1.6, 0.12], [0.01, 1.48, 0.14], [0.02, 1.36, 0.13], [0.025, 1.3, 0.11]], [0.032, 0.03, 0.025, 0.012], { bones: ['tg0', 'tg1', 'tg1', 'tg1'], slot: 'tongue', seg: 8, flat: [1, 0.45], up: [1, 0, 0], cap1: true });
+      B.tube([[0, 1.48, 0], [0, 1.6, 0.02]], 0.045, { w: 'neck', slot: 'skin', seg: 8 });
+      // long white robe to the shins (cloth panels on the hem bone)
+      B.lathe([[0.2, 0.42], [0.21, 0.7], [0.19, 1.0], [0.2, 1.25], [0.2, 1.42], [0.14, 1.5], [0.05, 1.53]], { slot: 'robe', seg: 22, flat: [1, 0.8],
+        w: (x, y, z) => { const S = x > 0 ? 'L' : 'R'; const k = sm(0.95, 0.5, y); return [['hips', (1 - k) * (1 - sm(1.2, 1.4, y))], ['chest', sm(1.2, 1.4, y)], ['hem', k * 0.6], ['knee' + S, k * 0.4]]; } });
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], (u) => 0.06 + u * 0.03, ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'robe', cap1: 0.15 });
+        claw(B, S, s, v3(J['hand' + S], [0, -0.01, 0.02]), [-0.3, -0.4, 1], { size: 0.045, curl: 0.8, slot: 'skin', nail: false });
+        // dangling legs & pointed bare feet
+        limb(B, v3(J['knee' + S], [0, 0.05, 0]), J['knee' + S], J['foot' + S], [0.04, 0.035, 0.03], ['knee' + S, 'knee' + S, 'foot' + S], { slot: 'skin' });
+        B.ell(v3(J['foot' + S], [0, -0.05, 0.02]), [0.035, 0.08, 0.04], { w: 'foot' + S, slot: 'skin', rot: [0.25, 0, 0] });
+      }
+      // the rope, coiled in both hands (torus loops between the hands) + a trailing end
+      const mid = v3(v3(J.handL, J.handR, 1), [0, 0, 0], 1).map((x) => x / 2);
+      for (let i = 0; i < 3; i++) B.geo(new THREE.TorusGeometry(0.1 - i * 0.012, 0.014, 6, 18), { at: v3(mid, [0, -0.04 - i * 0.02, 0.04]), rot: [PI / 2 - 0.3, 0.2 * i, 0], w: 'handR', slot: 'rope' });
+      B.bone('rp0', 'handR', v3(mid, [0.08, -0.08, 0.05])); B.bone('rp1', 'rp0', v3(mid, [0.1, -0.35, 0.05]));
+      B.tube([v3(mid, [0.08, -0.08, 0.05]), v3(mid, [0.1, -0.35, 0.05]), v3(mid, [0.12, -0.55, 0.04])], 0.014, { bones: ['rp0', 'rp1', 'rp1'], slot: 'rope', seg: 6 });
+    },
+    springs: [0, 1, 2, 3, 4, 5].map((i) => ({ chain: ['hr' + i, 'hs' + i], tip: [0, -0.3, 0], k: 60, d: 6, g: 3, max: 0.7 })).concat([
+      { chain: ['tg0', 'tg1'], tip: [0.01, -0.12, -0.02], k: 50, d: 5, g: 3, max: 0.8 }, { chain: ['rp0', 'rp1'], tip: [0.02, -0.2, 0], k: 50, d: 5, g: 4, max: 0.9 }, { chain: ['hem'], tip: [0, -0.4, 0], k: 60, d: 6, g: 1, max: 0.4 }]),
+    fx: {
+      mist: { n: 14, rate: 4, at: [0, 0.4, 0], box: [0.35, 0.2, 0.3], vel: [0, -0.1, 0], velR: [0.06, 0.04, 0.06], life: [1.5, 2.5], size: [0.2, 0.32], grow: 1.3, color: ['#e8f4ff', '#7a8a98'], alpha: 0.25, add: false },
+      sigh: { n: 20, rate: 0, burstRate: 25, bone: 'head', at: [0, -0.05, 0.15], box: [0.1, 0.1, 0.1], vel: [0, -0.05, 0.5], velR: [0.15, 0.1, 0.1], life: [1, 1.6], size: [0.18, 0.28], grow: 2, color: ['#cfe8ff', '#5a6a78'], alpha: 0.3, add: false, drag: 0.8 },
+      cast: { n: 30, rate: 0, burstRate: 30, at: [0, 1.0, 0], ring: 0.6, box: [0, 1.2, 0], vel: [0, 0.2, 0], velR: [0.05, 0.1, 0.05], life: [1, 1.6], size: [0.05, 0.09], color: ['#ffffff', '#bfe0ff'], swirl: 3, swirlA: 1.4, twinkle: 6 },
+      death: { n: 40, rate: 0, burstRate: 40, at: [0, 1.0, 0], box: [0.5, 1.5, 0.4], vel: [0, 0.5, 0], velR: [0.3, 0.3, 0.3], life: [1, 1.8], size: [0.2, 0.35], grow: 1.5, color: ['#e8f4ff', '#7a8a98'], alpha: 0.35, add: false },
+    },
+    // pendulum sway about a pivot well above the head
+    clips: {
+      idle(P, t) {
+        const L = 2.6, a = sin(t * 0.9) * 0.05, b = sin(t * 0.63 + 1) * 0.035;
+        P.rootM(sin(a) * L, 0.18 + (1 - cos(a)) * -L * 0.0, sin(b) * L * 0.6, -b * 0.6, sin(t * 0.3) * 0.25, -a);
+        P.r('neck', 0, 0, 0.45).r('head', 0.35, 0, 0.25);
+        for (const [s, S] of SIDES) P.r('leg' + S, 0.05).r('foot' + S, 0.35);
+        P.r('chest', 0.06 + sin(t * 1.3) * 0.015);
+      },
+      move(P, ph, k, C) { this.idle(P, ph * 1.5, k, C); P.rootM(0, 0.06, 0, 0.1); },
+      // whips the rope out like a lasso
+      attack(P, t, k) {
+        const A = atk(k, 0.34, 0.48, 0.66);
+        P.rootM(0, 0.18, 0.3 * A.s, 0.15 * A.s); P.r('neck', 0, 0, 0.45 - 0.2 * A.s).r('head', 0.35 - 0.3 * A.s, 0, 0.25);
+        P.r('shR', -1.8 * A.a + 0.9 * A.s, 0, -0.5 * A.a).r('armR', -0.7 * A.a + 0.5 * A.s).r('shL', -0.4 * A.a);
+        P.r('rp0', 0, 0, 1.2 * A.s).r('rp1', 0, 0, 0.8 * A.s);
+      },
+      // sigh: leans close, an icy breath of despair
+      cast(P, t, k, C) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); this.idle(P, t, k, C); P.rootM(0, 0, 0.15 * u, 0.25 * u); P.r('head', -0.3 * u, 0, -0.2 * u); P.ch('fx_sigh', u * 1.5); P.ch('fx_cast', u); P.ch('glow', u); },
+      hurt(P, t, k) { const u = (1 - E.outQ(k)) * min(1, k * 14); P.rootM(0, 0.18, -0.2 * u, -0.4 * u); P.r('neck', 0, 0, 0.45).r('head', 0.35, 0, 0.25 - 0.4 * u); },
+      // the figure slowly comes to rest and fades upward into mist
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.7)); P.rootM(0, 0.18 + 0.5 * u, 0); P.r('neck', 0, 0, 0.45 * (1 - u)).r('head', 0.35 * (1 - u), 0, 0.25 * (1 - u)); P.ch('fade', E.inQ(seg(k, 0.3, 1))); P.ch('dissolve', E.inQ(seg(k, 0.3, 1)) * 0.8); P.ch('fx_death', bump(k, 0.2, 0.9) * 2); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.85)); P.rootM(0, 1.5 * u + 0.18, 0); P.r('neck', 0, 0, 0.45).r('head', 0.35, 0, 0.25); P.ch('fade', u); },
+    },
+    dur: { attack: 1.05, cast: 1.7, die: 2.0, enter: 1.5 },
+    overlayReplace: 0.85, shadowZ: 1,
+  });
+
+  // ===================================================================================================
+  // 怨婢 grudge_maid — a maidservant who could not escape the mansion fire: twin buns, porcelain-pale face with red
+  // tears, blue-grey servant's jacket and apron, a cracked blue-and-white teacup on its saucer; a violet grudge aura.
+  defC('grudge_maid', {
+    height: 1.75, fill: 0.92, radius: 0.28, shadow: 0.3, shadowA: 0.6, ghostCol: '#d8b0ff', rimColor: '#e8d8ff',
+    pal: { top: '#9ab0c0', topD: '#46586a', topL: '#d8e6ee', skirt: '#5a6a80', skirtD: '#222a3a', skin: '#e6eaee', skinD: '#9aa4b4', hair: '#121418', hairL: '#3a4050', tear: '#d0203a', aura: '#9a4adf', cup: '#f4f6f0', cupBlue: '#3a5ab8', eye: '#f0d8ff', line: '#1a1e2a', magic: '#b46aff' },
+    vars: [{ h: 0, s: 1, keep: ['skin', 'skinD', 'hair', 'hairL', 'cup', 'cupBlue', 'tear'], set: { top: '#c0a8a0', topD: '#6a4a44', topL: '#f0dcd4', skirt: '#7a4a4a', skirtD: '#2e1414', aura: '#df4a6a', magic: '#ff6a8a', eye: '#ffd8e0' } }, { h: 0, s: 1, keep: ['skin', 'skinD', 'hair', 'hairL', 'cup', 'cupBlue'], set: { top: '#2a2e3a', topD: '#0c0e14', topL: '#5a6070', skirt: '#1a1c24', skirtD: '#06060a', aura: '#4adfc8', magic: '#4adfc8', eye: '#c8fff4', tear: '#4adfc8' } }],
+    slots: {
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 20, 8, 40, 0.2, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.065), y = FY(h, 0.55);
+          g.fillStyle = p.line; g.beginPath(); g.ellipse(x, y, 16, 9, s * -0.15, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.ellipse(x, y + 1, 9, 6, 0, 0, TAU); g.fill();
+          g.strokeStyle = p.line; g.lineWidth = 4; g.beginPath(); g.moveTo(x - s * 18, y - 18); g.lineTo(x + s * 14, y - 13); g.stroke();
+          // red tears running down
+          g.strokeStyle = p.tear; g.lineWidth = 5; g.beginPath(); g.moveTo(x + s * 4, y + 8); g.quadraticCurveTo(x + s * 2, y + 50, x + s * 8, y + 90); g.stroke(); }
+        g.fillStyle = '#7a2a3a'; g.beginPath(); g.ellipse(FX(w, 0.5), FY(h, 0.39), 8, 4, 0, 0, TAU); g.fill();
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.065), y = FY(h, 0.55); g.fillStyle = shade(p.eye, -0.5); g.beginPath(); g.ellipse(x, y + 1, 9, 6, 0, 0, TAU); g.fill(); g.strokeStyle = shade(p.tear, -0.3); g.lineWidth = 5; g.beginPath(); g.moveTo(x + s * 4, y + 8); g.quadraticCurveTo(x + s * 2, y + 50, x + s * 8, y + 90); g.stroke(); } } },
+      top(g, w, h, p, R) { clothSlot('top', 'topD', 'topL', 4)(g, w, h, p, R); g.fillStyle = p.topD; g.fillRect(w * 0.55, 0, 8, h); g.fillStyle = p.topL; g.fillRect(0, h - 10, w, 5); },
+      skirt(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.skirt, 0.6, p.skirtD, 1, rgba(p.aura, 0.9)]); Paint.weave(g, w, h, '#000', 4, 0.08); g.globalCompositeOperation = 'destination-out'; for (let x = 0; x < w; x += 18) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 9, h * (0.78 + R() * 0.15)); g.lineTo(x + 18, h); g.fill(); } g.globalCompositeOperation = 'source-over'; },
+      apron(g, w, h, p, R) { Paint.fill(g, w, h, '#eef0ee'); Paint.weave(g, w, h, '#888', 4, 0.12); g.fillStyle = rgba(p.tear, 0.75); g.beginPath(); g.ellipse(w * 0.4, h * 0.5, 16, 10, 0.4, 0, TAU); g.ellipse(w * 0.6, h * 0.62, 8, 6, 0, 0, TAU); g.fill(); },
+      skin(g, w, h, p) { Paint.fill(g, w, h, p.skin); },
+      hair: hairSlot,
+      cup(g, w, h, p, R) { Paint.fill(g, w, h, p.cup); g.strokeStyle = p.cupBlue; g.lineWidth = 4; g.beginPath(); for (let x = 0; x <= w; x += 6) g.lineTo(x, h * 0.4 + sin(x * 0.1) * 10); g.stroke(); g.fillStyle = p.cupBlue; g.fillRect(0, h * 0.9, w, h * 0.1); Paint.cracks(g, w, h, '#3a3a3a', 3, 70, 1.5, 0.9, R); },
+      tea(g, w, h) { Paint.fill(g, w, h, '#8a5a2a'); },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 0.92, chest: 1.26, neck: 1.38, head: 1.43, shY: 1.32, sh: 0.16, up: 0.25, fore: 0.24, arm1: [0.25, -1, 0.3], arm2: [-0.3, 0.2, 1], lx: 0.08, knee: 0.5, noLegs: true });
+      B.bone('sk0', 'hips', [0, 0.6, 0.1]); B.bone('skb', 'hips', [0, 0.6, -0.1]);
+      // head with twin buns
+      B.ell([0, 1.53, 0.01], [0.1, 0.12, 0.105], { w: 'head', slot: 'face', seg: 20, rings: 14 });
+      B.ell([0, 1.56, -0.01], [0.11, 0.11, 0.115], { w: 'head', slot: 'hair', th0: 0, thLen: PI * 0.48, seg: 18, rings: 9, deform: (v) => { if (v.z < 0) v.y -= 0.0; } });
+      B.ell([0, 1.5, -0.04], [0.1, 0.1, 0.08], { w: 'head', slot: 'hair', seg: 14, rings: 9 });
+      for (const s of [-1, 1]) B.ell([s * 0.09, 1.66, -0.02], [0.05, 0.05, 0.05], { w: 'head', slot: 'hair', seg: 10, rings: 8 });
+      B.bone('lk', 'head', [0.09, 1.5, 0.06]); B.strip([[0.09, 1.56, 0.07], [0.1, 1.42, 0.08], [0.1, 1.3, 0.07]], 0.04, { bones: ['lk', 'lk', 'lk'], slot: 'hair', side: [1, 0, -0.3] }); // loose lock
+      // jacket, apron, long skirt fading to violet
+      B.lathe([[0.17, 0.92], [0.18, 1.05], [0.18, 1.2], [0.15, 1.33], [0.05, 1.37]], { w: B.keyW([[0.95, 'hips'], [1.1, 'spine'], [1.25, 'chest']]), slot: 'top', seg: 20, flat: [1, 0.8] });
+      B.lathe([[0.3, 0.08], [0.27, 0.4], [0.22, 0.7], [0.18, 0.95]], { slot: 'skirt', seg: 22, flat: [1, 0.85], w: (x, y, z) => { const k = sm(0.9, 0.4, y); return [['hips', 1 - k], ['sk0', k * max(0, z) * 3], ['skb', k * max(0, -z) * 3], ['hips', k * 0.3]]; } });
+      B.sheet([[0.12, 0.95, 0.165], [0.15, 0.62, 0.215], [0.16, 0.38, 0.245]], [[-0.12, 0.95, 0.165], [-0.15, 0.62, 0.215], [-0.16, 0.38, 0.245]], ['hips', 'sk0', 'sk0'], ['hips', 'sk0', 'sk0'], { slot: 'apron', n: 3 });
+      // arms holding cup & saucer in front
+      for (const [s, S] of SIDES) { limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.055, 0.05, 0.045], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'top' }); B.ell(J['hand' + S], [0.035, 0.03, 0.045], { w: 'hand' + S, slot: 'skin' }); }
+      const c = v3(J.handL, J.handR).map((x) => x / 2);
+      B.bone('cup', 'handR', v3(c, [0, 0.02, 0.02]));
+      B.lathe([[0.001, 0], [0.09, 0.005], [0.1, 0.015], [0.09, 0.012]], { at: v3(c, [0, 0.0, 0.02]), w: 'cup', slot: 'cup', seg: 16 });
+      B.lathe([[0.001, 0.015], [0.04, 0.02], [0.055, 0.05], [0.065, 0.085], [0.06, 0.083], [0.05, 0.05]], { at: v3(c, [0, 0.0, 0.02]), w: 'cup', slot: 'cup', seg: 16 });
+      const tea = new THREE.CircleGeometry(0.058, 14); tea.rotateX(-PI / 2); B.geo(tea, { at: v3(c, [0, 0.075, 0.02]), w: 'cup', slot: 'tea' });
+    },
+    springs: [{ chain: ['sk0'], tip: [0, -0.4, 0.05], k: 60, d: 6, g: 1, max: 0.5 }, { chain: ['skb'], tip: [0, -0.4, -0.05], k: 60, d: 6, g: 1, max: 0.5 }, { chain: ['lk'], tip: [0, -0.2, 0], k: 60, d: 5, g: 3, max: 0.6 }],
+    fx: {
+      aura: { n: 18, rate: 6, at: [0, 0.3, 0], ring: 0.35, box: [0, 0.3, 0], vel: [0, 0.35, 0], velR: [0.05, 0.1, 0.05], life: [1.2, 2], size: [0.18, 0.3], grow: 1.2, color: ['#c88aff', '#3a1a6a'], alpha: 0.3 },
+      steam: { n: 10, rate: 3, bone: 'cup', at: [0, 0.1, 0], box: [0.03, 0.01, 0.03], vel: [0, 0.2, 0], velR: [0.03, 0.05, 0.03], life: [1, 1.6], size: [0.06, 0.1], grow: 2, color: '#ffffff', alpha: 0.25, add: false, swirl: 3, swirlA: 0.2 },
+      cast: { n: 40, rate: 0, burstRate: 40, at: [0, 1.0, 0], ring: 0.6, box: [0, 1.2, 0], vel: [0, 0.4, 0], velR: [0.1, 0.2, 0.1], life: [0.8, 1.4], size: [0.1, 0.18], color: ['#e0b0ff', '#6a2aaf'], swirl: 4, swirlA: 2 },
+      shards: { n: 16, rate: 0, burstRate: 40, bone: 'cup', box: [0.05, 0.05, 0.05], vel: [0, 0.6, 0.8], velR: [0.5, 0.4, 0.5], g: 4, life: [0.4, 0.8], size: [0.04, 0.06], color: ['#ffffff', '#3a5ab8'], add: false, shape: 1 },
+      death: { n: 40, rate: 0, burstRate: 40, at: [0, 0.9, 0], box: [0.4, 1.4, 0.4], vel: [0, 0.5, 0], velR: [0.3, 0.3, 0.3], life: [1, 1.8], size: [0.15, 0.3], grow: 1.5, color: ['#e0b0ff', '#3a1a6a'], alpha: 0.35 },
+    },
+    lights: (C) => [{ bone: 'chest', color: C.p.aura, i: 0.6, r: 2.5, flicker: 0.1 }],
+    clips: {
+      // head bowed, offering the cup; a shiver now and then
+      idle(P, t) {
+        breathe(P, t, 0.8); const sh = max(0, sin(t * 0.5)) ** 12;
+        P.rootM(sin(t * 40) * 0.004 * sh, 0.06 + sin(t * 1.4) * 0.025, 0, 0, sin(t * 0.3) * 0.1, sin(t * 0.7) * 0.02);
+        P.r('head', 0.25 + sin(t * 0.6) * 0.04, sin(t * 0.35) * 0.1, 0.06);
+      },
+      move(P, ph) { P.rootM(0, 0.08, 0, 0.08); P.r('sk0', -0.2).r('head', 0.25); },
+      // flings the scalding tea
+      attack(P, t, k) {
+        const A = atk(k, 0.32, 0.45, 0.62);
+        P.rootM(0, 0.06, 0.25 * A.s, -0.1 * A.a + 0.12 * A.s); P.r('head', 0.25 - 0.4 * A.s);
+        P.r('shR', -0.8 * A.a - 0.4 * A.s, 0, -0.3 * A.s).r('armR', 0.4 * A.a - 0.6 * A.s).r('handR', -0.8 * A.s).r('shL', 0.3 * A.s);
+        P.ch('fx_shards', bump(k, 0.45, 0.55) * 3);
+      },
+      // wail: head snaps up, violet grudge erupts
+      cast(P, t, k) { const u = sm(0, 0.2, k) * (1 - sm(0.85, 1, k)); P.r('head', -0.5 * u, 0, sin(t * 30) * 0.05 * u).r('chest', -0.2 * u); P.rootM(0, 0.15 * u + 0.06); P.ch('fx_cast', u); P.ch('fx_aura', u * 4); P.ch('glow', u * 1.5); },
+      // serves tea (the poisoned cup): bows deeply, cup offered
+      special(P, t, k) { const u = bump(k, 0.05, 0.95); P.r('spine', 0.4 * u).r('chest', 0.2 * u).r('head', 0.3 * u); for (const [s, S] of SIDES) P.r('sh' + S, -0.6 * u); P.rootM(0, 0.06, 0.15 * u); P.ch('fx_steam', u * 4); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.ch('fx_steam', (1 - k) * 3); },
+      // the cup falls and shatters; she fades
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.5)); P.r('shR', 0.4 * u).r('shL', 0.4 * u).r('head', 0.4 * u); P.rootM(0, 0.06 - 0.1 * u); P.ch('fx_shards', bump(k, 0.3, 0.45) * 4); P.ch('fade', E.inQ(seg(k, 0.3, 1))); P.ch('dissolve', E.inQ(seg(k, 0.35, 1))); P.ch('fx_death', bump(k, 0.3, 1) * 2); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.85)); P.rootM(0, 0.06, -0.6 * u); P.ch('fade', u); P.ch('fx_aura', bump(k, 0, 1) * 4); },
+    },
+    dur: { attack: 1.0, cast: 1.5, special: 1.6, die: 1.9, enter: 1.4 },
+    shadowZ: 1,
+  });
+
+  // ===================================================================================================
+  // 骷髏將 bone_general — a skeleton general still guarding a door no one uses: rusted lamellar cuirass and pauldrons,
+  // a helmet with a red plume, tattered war-cape, violet ghost-fire in the sockets; wields a 偃月 halberd.
+  // Extra polish: phase 2 (o.phase ≥ 2) — the ghost-fire flares from the eyes and ribs, cape smoulders.
+  defC('bone_general', {
+    height: 2.1, fill: 0.9, radius: 0.38, shadow: 0.4, rimColor: '#e8d8ff', boss: true,
+    pal: { bone: '#e8dcc0', boneD: '#8a7a5a', boneL: '#fffaf0', rust: '#8a4a2a', rustD: '#3a1a0e', rustL: '#c88a5a', iron: '#5a5a5e', cape: '#6a1a22', capeD: '#2a060a', plume: '#b8202a', eye: '#b06aff', shaft: '#4a3424', blade: '#a8aeb4', line: '#1e140c', magic: '#b06aff' },
+    vars: [{ h: 0, s: 1, keep: ['bone', 'boneD', 'boneL'], set: { eye: '#6aff9a', magic: '#6aff9a', cape: '#1a4a3a', capeD: '#06201a', plume: '#2aa86a' } }, { h: 0, s: 1, set: { eye: '#ff4a2a', magic: '#ff6a2a', rust: '#3a3a44', rustD: '#121218', rustL: '#8a8a9a', cape: '#1a1a24', capeD: '#050508', plume: '#d8d8e8' } }],
+    slots: {
+      bone(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.boneL, 0.5, p.bone, 1, p.boneD]); Paint.speck(g, w, h, p.boneD, 300, 2, 0.4, R); Paint.cracks(g, w, h, p.boneD, 6, 50, 1.2, 0.6, R); },
+      skull: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.boneL, 0.6, p.bone, 1, p.boneD]); Paint.speck(g, w, h, p.boneD, 600, 3, 0.4, R);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.075), y = FY(h, 0.52); g.fillStyle = '#0a0608'; g.beginPath(); g.ellipse(x, y, 30, 26, s * 0.2, 0, TAU); g.fill(); g.fillStyle = p.eye; g.beginPath(); g.arc(x, y, 9, 0, TAU); g.fill(); }
+        g.fillStyle = '#0a0608'; g.beginPath(); g.moveTo(FX(w, 0.5), FY(h, 0.46)); g.lineTo(FX(w, 0.485), FY(h, 0.39)); g.lineTo(FX(w, 0.515), FY(h, 0.39)); g.fill(); // nasal cavity
+        g.fillStyle = '#f4ecd8'; for (let i = -4; i <= 4; i++) { g.fillRect(FX(w, 0.5 + i * 0.012) - 5, FY(h, 0.35), 10, 16); } g.strokeStyle = p.boneD; g.lineWidth = 2; for (let i = -4; i <= 4; i++) { g.strokeRect(FX(w, 0.5 + i * 0.012) - 5, FY(h, 0.35), 10, 16); }
+        Paint.cracks(g, w, h, p.boneD, 5, 70, 2, 0.7, R);
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.075), y = FY(h, 0.52); const gr = g.createRadialGradient(x, y, 0, x, y, 14); gr.addColorStop(0, p.eye); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(x - 14, y - 14, 28, 28); } } },
+      rust: { size: 4, paint(g, w, h, p, R) {
+        Paint.fill(g, w, h, p.rustD);
+        for (let row = 0, y = 0; y < h; y += 26, row++) for (let x = (row % 2) * 10 - 20; x < w + 20; x += 20) { const gr = g.createLinearGradient(x, y, x + 20, y + 26); gr.addColorStop(0, p.rustL); gr.addColorStop(0.5, p.rust); gr.addColorStop(1, p.rustD); g.fillStyle = gr; g.fillRect(x + 1, y + 1, 18, 24); g.fillStyle = p.iron; g.fillRect(x + 8, y + 3, 3, 3); }
+        Paint.mottle(g, w, h, '#c86a2a', 30, 6, 26, 0.35, R); Paint.mottle(g, w, h, '#000', 16, 10, 40, 0.3, R);
+      } },
+      cape(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.cape, 1, p.capeD]); Paint.weave(g, w, h, '#000', 5, 0.15); g.globalCompositeOperation = 'destination-out'; for (let i = 0; i < 9; i++) { const x = R() * w, y = h * (0.3 + R() * 0.5), r = 6 + R() * 12; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } for (let x = 0; x < w; x += 20) { g.beginPath(); g.moveTo(x, h); g.lineTo(x + 10, h * (0.7 + R() * 0.2)); g.lineTo(x + 20, h); g.fill(); } g.globalCompositeOperation = 'source-over'; },
+      plume(g, w, h, p, R) { g.clearRect(0, 0, w, h); Paint.strokes(g, w, h, p.plume, 220, 90, PI / 2, 3, 0.95, R, 0.25); },
+      iron(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, shade(p.iron, 0.5), 0.5, p.iron, 1, shade(p.iron, -0.5)]); Paint.mottle(g, w, h, p.rust, 14, 6, 24, 0.5, R); },
+      shaft(g, w, h, p, R) { Paint.fill(g, w, h, p.shaft); Paint.strokes(g, w, h, '#000', 30, 60, PI / 2, 1, 0.4, R, 0.05); for (let y = 0; y < h; y += 40) { g.fillStyle = p.iron; g.fillRect(0, y, w, 5); } },
+      blade(g, w, h, p) { Paint.hgrad(g, w, h, [0, shade(p.blade, -0.5), 0.5, '#ffffff', 1, shade(p.blade, -0.3)]); g.fillStyle = rgba(p.rust, 0.5); g.fillRect(0, h * 0.6, w, h * 0.4); },
+      fire: { size: 1, paint: (g, w, h, p) => Paint.fill(g, w, h, p.eye), emit: (g, w, h, p) => Paint.vgrad(g, w, h, [0, '#000', 0.5, shade(p.eye, -0.4), 1, shade(p.eye, -0.1)]) },
+    },
+    build(B, p) {
+      const J = humanRig(B, { hip: 1.02, chest: 1.42, neck: 1.56, head: 1.62, shY: 1.48, sh: 0.24, up: 0.32, fore: 0.3, arm1: [0.45, -1, 0.1], arm2: [0.15, -0.3, 1], lx: 0.11, knee: 0.55 });
+      B.bone('jaw', 'head', [0, 1.66, 0.06]);
+      B.bone('cp0', 'chest', [0, 1.48, -0.16]); B.bone('cp1', 'cp0', [0, 1.05, -0.24]); B.bone('cp2', 'cp1', [0, 0.6, -0.3]);
+      B.bone('pl0', 'head', [0, 1.95, -0.02]); B.bone('pl1', 'pl0', [0, 2.0, -0.18]);
+      B.bone('hal', 'handR', J.handR);
+      // skull + jaw, helmet with plume
+      B.ell([0, 1.73, 0.0], [0.1, 0.12, 0.115], { w: 'head', slot: 'skull', seg: 18, rings: 12, deform: (v) => { if (v.y < 1.68) v.x *= 0.85; } });
+      B.ell([0, 1.64, 0.04], [0.07, 0.035, 0.07], { w: 'jaw', slot: 'bone', seg: 10, rings: 6 });
+      B.lathe([[0.125, 1.79], [0.13, 1.85], [0.11, 1.92], [0.05, 1.97], [0.01, 1.99]], { w: 'head', slot: 'rust', seg: 16 });
+      B.lathe([[0.13, 1.79], [0.16, 1.8], [0.13, 1.82]], { w: 'head', slot: 'iron', seg: 16 });
+      B.strip([[0, 1.95, -0.02], [0, 2.05, -0.15], [0, 1.95, -0.32]], [0.08, 0.11, 0.06], { bones: ['pl0', 'pl1', 'pl1'], slot: 'plume', side: [1, 0, 0] });
+      // spine & ribcage visible below the cuirass; neck vertebrae
+      B.tube([[0, 1.0, -0.04], [0, 1.2, -0.06], [0, 1.4, -0.05], [0, 1.6, -0.01]], 0.03, { bones: ['hips', 'spine', 'chest', 'neck'], slot: 'bone', seg: 6 });
+      for (let i = 0; i < 4; i++) { const y = 1.2 + i * 0.06; B.geo(new THREE.TorusGeometry(0.13 - i * 0.004, 0.012, 4, 14, PI * 1.6), { at: [0, y, -0.02], rot: [PI / 2, 0, PI / 2 + 0.3], scale: [1, 0.75, 1], w: 'spine', slot: 'bone' }); }
+      // pelvis
+      B.ell([0, 1.0, 0], [0.13, 0.06, 0.09], { w: 'hips', slot: 'bone', seg: 12, rings: 6 });
+      // cuirass (lamellar front/back plate), skirt of plates, pauldrons
+      B.lathe([[0.18, 1.18], [0.22, 1.3], [0.23, 1.42], [0.18, 1.52], [0.08, 1.56]], { w: B.keyW([[1.25, 'spine'], [1.4, 'chest']]), slot: 'rust', seg: 16, flat: [1, 0.75] });
+      for (const [x, z] of [[-0.12, 0.13], [0.12, 0.13], [-0.18, 0], [0.18, 0], [0, -0.14]]) B.strip([[x, 1.16, z], [x * 1.1, 0.82, z * 1.25]], 0.17, { w: 'hips', slot: 'rust', side: z ? [1, 0, 0] : [0, 0, 1], uvr: [0, 0, 0.5, 0.5] });
+      for (const [s, S] of SIDES) B.ell([s * 0.27, 1.48, 0], [0.14, 0.09, 0.14], { w: 'sh' + S, slot: 'rust', th0: 0, thLen: PI * 0.55, seg: 12, rings: 5, rot: [0, 0, -s * 0.35] });
+      // war cape (tattered, 3-bone spring)
+      B.sheet([[0.2, 1.48, -0.14], [0.26, 1.05, -0.24], [0.28, 0.6, -0.3], [0.28, 0.3, -0.32]], [[-0.2, 1.48, -0.14], [-0.26, 1.05, -0.24], [-0.28, 0.6, -0.3], [-0.28, 0.3, -0.32]], ['cp0', 'cp1', 'cp2', 'cp2'], ['cp0', 'cp1', 'cp2', 'cp2'], { slot: 'cape', n: 4 });
+      // bone limbs with knobbed joints, bony hands
+      for (const [s, S] of SIDES) {
+        limb(B, J['sh' + S], J['el' + S], J['hand' + S], [0.03, 0.025, 0.022], ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'bone', seg: 7 });
+        B.ell(J['el' + S], [0.035, 0.035, 0.035], { w: 'arm' + S, slot: 'bone' });
+        claw(B, S, s, J['hand' + S], [-0.1, -0.2, 1], { size: 0.05, curl: 0.9, slot: 'bone', nail: false });
+        B.tube([v3(J['el' + S], [0, -0.02, 0.05]), v3(J['hand' + S], [0, 0.03, -0.04])], [0.05, 0.045], { w: 'arm' + S, slot: 'rust', seg: 8 }); // bracer
+        limb(B, J['hip' + S], J['knee' + S], J['foot' + S], [0.035, 0.03, 0.025], ['leg' + S, 'knee' + S, 'foot' + S], { slot: 'bone', seg: 7 });
+        B.ell(J['knee' + S], [0.04, 0.04, 0.04], { w: 'knee' + S, slot: 'bone' });
+        B.tube([v3(J['knee' + S], [0, -0.05, 0.02]), v3(J['foot' + S], [0, 0.08, 0])], [0.06, 0.055], { w: 'knee' + S, slot: 'rust', seg: 8 }); // greave
+        B.ell(v3(J['foot' + S], [0, -0.03, 0.06]), [0.055, 0.035, 0.11], { w: 'foot' + S, slot: 'iron' });
+      }
+      // 偃月 halberd
+      const hR = J.handR;
+      B.tube([v3(hR, [0, -0.9, 0]), v3(hR, [0, 1.15, 0])], 0.025, { w: 'hal', slot: 'shaft', seg: 8, cap0: true });
+      const bl = new THREE.Shape(); bl.moveTo(0, 0); bl.quadraticCurveTo(0.22, 0.05, 0.26, 0.42); bl.quadraticCurveTo(0.12, 0.3, 0.02, 0.36); bl.lineTo(0, 0.2); bl.closePath();
+      const blg = new THREE.ExtrudeGeometry(bl, { depth: 0.01, bevelEnabled: false, curveSegments: 5 }); blg.translate(0, 0, -0.005); blg.rotateY(PI / 2);
+      B.geo(blg, { at: v3(hR, [0, 1.05, 0]), w: 'hal', slot: 'blade', smooth: false, uvMap: (x, y, z, u, v) => [0.5, 0.5] });
+      B.tube([v3(hR, [0, 1.02, 0]), v3(hR, [0, 1.1, 0])], [0.04, 0.035], { w: 'hal', slot: 'iron', seg: 8 });
+      // ghost-fire inside the ribcage (glow layer)
+      B.ell([0, 1.28, -0.02], [0.07, 0.1, 0.06], { w: 'spine', slot: 'fire', layer: 'glow', seg: 10, rings: 8 });
+    },
+    springs: [{ chain: ['cp0', 'cp1', 'cp2'], tip: [0, -0.3, -0.03], k: 45, d: 5, g: 2, wind: 2, max: 0.7 }, { chain: ['pl0', 'pl1'], tip: [0, -0.1, -0.17], k: 60, d: 5, g: 2, max: 0.7 }],
+    fx: {
+      wisp: { n: 16, rate: 5, bone: 'head', at: [0, 0.03, 0.1], box: [0.15, 0.03, 0.04], vel: [0, 0.4, -0.1], velR: [0.05, 0.1, 0.05], life: [0.5, 0.9], size: [0.06, 0.1], color: ['#e8c8ff', '#6a2aaf'], swirl: 6, swirlA: 0.4 },
+      clank: { n: 16, rate: 0, burstRate: 40, bone: 'hal', at: [0, 1.2, 0.2], box: [0.1, 0.1, 0.1], vel: [0, 0.5, 0.5], velR: [0.6, 0.5, 0.6], g: 5, life: [0.3, 0.6], size: [0.03, 0.05], color: ['#ffffff', '#ffb04a'], shape: 3 },
+      cast: { n: 40, rate: 0, burstRate: 40, at: [0, 0.05, 0], ring: 0.8, box: [0, 0.05, 0], vel: [0, 1.0, 0], velR: [0.1, 0.4, 0.1], life: [0.6, 1.2], size: [0.07, 0.12], color: ['#e8c8ff', '#6a2aaf'], swirl: 3, swirlA: 1 },
+      death: { n: 50, rate: 0, burstRate: 50, at: [0, 0.9, 0], box: [0.5, 1.4, 0.4], vel: [0, 0.6, 0], velR: [0.5, 0.4, 0.5], g: 4, life: [0.6, 1.2], size: [0.06, 0.1], color: ['#e8dcc0', '#8a7a5a'], add: false, shape: 1 },
+    },
+    lights: (C) => [{ bone: 'head', at: [0, 0.1, 0.1], color: C.p.eye, i: 0.7 * (C.phaseN > 1 ? 1.8 : 1), r: 2.5, flicker: 0.2 }],
+    phase(C, n) { C.glowBase = n >= 2 ? 2.2 : 1; C.fxMul = { wisp: n >= 2 ? 3 : 1 }; C.U.uRimColor && 0; },
+    tick(C) { C.glowBase = (C.phaseN >= 2 ? 2.2 : 1) * (0.85 + 0.15 * sin(C.t * 9) * sin(C.t * 5.3)); },
+    clips: {
+      // stands guard: halberd planted, jaw chattering faintly, slow sentry turn of the head
+      idle(P, t, k, C) {
+        breathe(P, t, 0.5); P.r('head', sin(t * 0.4) * 0.05, sin(t * 0.3) * 0.3).r('jaw', 0.05 + max(0, sin(t * 11)) * 0.06 * (sin(t * 0.7) > 0.5 ? 1 : 0));
+        P.r('shR', 0.15).r('armR', -0.2); if (C.phaseN >= 2) P.r('chest', -0.06).rootM(0, 0, 0, 0, 0, sin(t * 17) * 0.004);
+      },
+      move(P, ph) { const a = sin(ph * TAU); for (const [s, S] of SIDES) P.r('leg' + S, -0.35 * a * s).r('knee' + S, max(0, 0.6 * a * s)).r('shL', 0.25 * a); P.rootM(0, abs(cos(ph * TAU)) * 0.03, 0, 0.03); },
+      // great overhead cleave
+      attack(P, t, k) {
+        const A = atk(k, 0.36, 0.48, 0.66);
+        P.rootM(0, -0.03 * A.s, 0.3 * A.s, -0.12 * A.a + 0.2 * A.s);
+        P.r('shR', -2.5 * A.a + 1.6 * A.s, 0, -0.2 * A.a).r('armR', -0.6 * A.a + 0.5 * A.s).r('handR', 0.6 * A.s);
+        P.r('shL', -2.0 * A.a + 1.3 * A.s, 0, 0.3 * A.a).r('armL', -0.8 * A.a);
+        P.r('chest', -0.25 * A.a + 0.3 * A.s).r('jaw', 0.3 * A.s);
+        for (const [s, S] of SIDES) P.r('knee' + S, 0.3 * A.s);
+        P.ch('fx_clank', bump(k, 0.46, 0.56) * 4);
+      },
+      // rallying roar: ghost-fire floods the ground
+      cast(P, t, k) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); P.r('head', -0.4 * u).r('jaw', 0.6 * u).r('chest', -0.2 * u); P.r('shR', -1.6 * u).r('shL', -0.3 * u, 0, 0.9 * u); P.ch('fx_cast', u); P.ch('glow', 2 * u); },
+      // guard stance (e_guard): halberd held crosswise
+      special(P, t, k) { const u = bump(k, 0.05, 0.95); P.r('shR', -1.0 * u, 0, -0.6 * u).r('armR', -1.0 * u).r('handR', 0, 1.4 * u, 0).r('shL', -1.0 * u, 0, 0.4 * u).r('armL', -0.8 * u); for (const [s, S] of SIDES) P.r('knee' + S, 0.4 * u).r('leg' + S, -0.25 * u); P.rootM(0, -0.05 * u); P.ch('glow', u); },
+      hurt(P, t, k, C) { GEN.hurt(P, t, k, C); P.r('jaw', 0.3 * (1 - k)); },
+      // falls apart: the skeleton collapses into a pile, the fire goes out
+      die(P, t, k) {
+        const u = E.inQ(seg(k, 0, 0.45));
+        P.rootM(0, -0.6 * u, -0.1 * u, 0.2 * u, 0, 0, -0.2 * u);
+        P.r('head', 0.6 * u, 0, 0.4 * u).r('shR', 0.8 * u).r('shL', 0.5 * u).r('chest', 0.5 * u);
+        for (const [s, S] of SIDES) P.r('knee' + S, 1.4 * u).r('leg' + S, -1.0 * u);
+        P.ch('glow', -1 * u); P.ch('fx_death', bump(k, 0.3, 0.6) * 4); P.ch('dissolve', E.inQ(seg(k, 0.55, 1)));
+      },
+      // assembles from a pile of bones
+      enter(P, t, k) { const u = 1 - E.outBack(seg(k, 0.1, 0.8)); P.rootM(0, -0.6 * clamp(u, 0, 1), 0); for (const [s, S] of SIDES) P.r('knee' + S, 1.4 * clamp(u, 0, 1)).r('leg' + S, -1.0 * clamp(u, 0, 1)); P.r('head', 0.6 * clamp(u, 0, 1)); P.ch('glow', bump(k, 0.5, 1) * 2); P.ch('dissolve', 1 - sm(0, 0.2, k)); },
+    },
+    dur: { attack: 1.2, cast: 1.6, special: 1.4, die: 2.0, enter: 1.5 },
+  });
+
+  // ===================================================================================================
+  // 椅仔姑 chair_spirit (boss) — not an evil spirit, a lonely one: a little girl who died young sits on the old bamboo
+  // chair used in the 椅仔姑 game, translucent and pale, eyes closed, bare feet dangling; the chair rocks on its own.
+  // Phase 2: she opens her eyes (tears glow), the chair lifts off the ground and the aura grows.
+  defC('chair_spirit', {
+    height: 1.62, fill: 0.95, radius: 0.5, shadow: 0.5, shadowX: 1.1, ghostCol: '#cfeeff', rimColor: '#e0f4ff', boss: true,
+    pal: { bamboo: '#c8a060', bambooD: '#6a4a24', bambooL: '#f0d8a0', lash: '#8a5a2a', skin: '#e8f2f6', skinD: '#9ab4c8', dress: '#cfe4f2', dressD: '#7a9ab8', dressL: '#ffffff', hair: '#141a24', hairL: '#3a4a64', eye: '#2a3a52', tear: '#bff4ff', glow: '#a8e4ff', line: '#3a2a18', magic: '#bfe8ff' },
+    vars: [{ h: 0, s: 1, keep: ['skin', 'skinD', 'hair', 'hairL', 'eye'], set: { dress: '#f2d6e4', dressD: '#b07a98', glow: '#ffb8e0', tear: '#ffd8f0', magic: '#ffc8e8' } }, { h: 0, s: 1, set: { bamboo: '#6a6a72', bambooD: '#2a2a32', bambooL: '#a8a8b4', lash: '#3a3a44', dress: '#d8f2d0', dressD: '#7aa880', glow: '#b8ffc8', magic: '#b8ffc8' } }],
+    slots: {
+      bamboo(g, w, h, p, R) { Paint.hgrad(g, w, h, [0, p.bambooD, 0.4, p.bamboo, 0.6, p.bambooL, 1, p.bambooD]); Paint.strokes(g, w, h, p.bambooD, 40, 60, PI / 2, 1, 0.3, R, 0.02); for (let y = 0; y < h; y += h / 3) { g.fillStyle = p.bambooD; g.fillRect(0, y, w, 5); } },
+      slat(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.bambooL, 1, p.bamboo]); for (let x = 0; x < w; x += 18) { g.fillStyle = rgba(p.bambooD, 0.8); g.fillRect(x, 0, 3, h); } Paint.mottle(g, w, h, p.bambooD, 12, 8, 30, 0.3, R); },
+      lash(g, w, h, p) { Paint.fill(g, w, h, p.lash); g.strokeStyle = shade(p.lash, -0.4); g.lineWidth = 3; for (let x = 0; x < w; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 4, h); g.stroke(); } },
+      ribbon(g, w, h) { Paint.fill(g, w, h, '#c8202a'); },
+      face: { size: 4, paint(g, w, h, p, R) {
+        Paint.vgrad(g, w, h, [0, p.skin, 0.6, p.skin, 1, p.skinD]);
+        for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.072), y = FY(h, 0.52);
+          g.strokeStyle = p.eye; g.lineWidth = 5; g.beginPath(); g.arc(x, y - 6, 14, 0.15 * PI, 0.85 * PI); g.stroke(); // closed, downcast eyes
+          g.strokeStyle = rgba(p.tear, 0.9); g.lineWidth = 4; g.beginPath(); g.moveTo(x + s * 4, y + 8); g.lineTo(x + s * 6, y + 40); g.stroke();
+          g.fillStyle = rgba('#ffb0c0', 0.35); g.beginPath(); g.ellipse(x + s * 6, FY(h, 0.44), 18, 10, 0, 0, TAU); g.fill(); }
+        g.strokeStyle = shade(p.skinD, -0.3); g.lineWidth = 4; g.beginPath(); g.arc(FX(w, 0.5), FY(h, 0.37), 9, 1.15 * PI, 1.85 * PI); g.stroke(); // small sad mouth
+        // little flower above the ear
+        g.fillStyle = '#ffffff'; for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; g.beginPath(); g.arc(FX(w, 0.64) + cos(a) * 10, FY(h, 0.74) + sin(a) * 10, 7, 0, TAU); g.fill(); } g.fillStyle = '#ffd24a'; g.beginPath(); g.arc(FX(w, 0.64), FY(h, 0.74), 5, 0, TAU); g.fill();
+      }, emit(g, w, h, p) { for (const s of [-1, 1]) { const x = FX(w, 0.5 + s * 0.072), y = FY(h, 0.52); g.strokeStyle = shade(p.tear, -0.5); g.lineWidth = 4; g.beginPath(); g.moveTo(x + s * 4, y + 8); g.lineTo(x + s * 6, y + 40); g.stroke(); } } },
+      dress(g, w, h, p, R) { Paint.vgrad(g, w, h, [0, p.dressL, 0.5, p.dress, 1, p.dressD]); Paint.weave(g, w, h, '#000', 4, 0.05); g.strokeStyle = rgba(p.dressD, 0.5); g.lineWidth = 2; for (let x = 0; x < w; x += 24) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 8, h); g.stroke(); } },
+      skin(g, w, h, p) { Paint.vgrad(g, w, h, [0, p.skin, 1, p.skinD]); },
+      hair: hairSlot,
+    },
+    build(B, p) {
+      // ---- the chair (static frame on root, back legs pivot = rocking happens via root motion)
+      B.bone('chair', 'root', [0, 0.5, 0]);
+      const leg = (x, z, y1) => B.tube([[x, 0, z], [x, y1, z]], 0.028, { w: 'chair', slot: 'bamboo', seg: 8, cap0: true, cap1: true });
+      for (const s of [-1, 1]) { leg(s * 0.26, 0.24, 0.62); leg(s * 0.26, -0.22, 1.34); }
+      for (const [y, z0, z1] of [[0.18, 0.24, -0.22], [0.5, 0.24, -0.22]]) for (const s of [-1, 1]) B.tube([[s * 0.26, y, z0], [s * 0.26, y, z1]], 0.018, { w: 'chair', slot: 'bamboo', seg: 6 });
+      for (const y of [0.18, 0.5, 0.62]) B.tube([[-0.26, y, 0.24], [0.26, y, 0.24]], 0.018, { w: 'chair', slot: 'bamboo', seg: 6 });
+      for (const y of [0.5, 0.86, 1.04, 1.18, 1.31]) B.tube([[-0.26, y, -0.22], [0.26, y, -0.22]], 0.02, { w: 'chair', slot: 'bamboo', seg: 6 });
+      B.geo(new THREE.BoxGeometry(0.52, 0.035, 0.46), { at: [0, 0.52, 0.01], w: 'chair', slot: 'slat', smooth: false });
+      for (const [x, y, z] of [[0.26, 0.5, 0.24], [-0.26, 0.5, 0.24], [0.26, 0.5, -0.22], [-0.26, 0.5, -0.22], [0.26, 1.04, -0.22], [-0.26, 1.04, -0.22]]) B.tube([[x, y - 0.03, z], [x, y + 0.03, z]], 0.034, { w: 'chair', slot: 'lash', seg: 8 });
+      // red cloth tied to the back post (the 椅仔姑 ritual chair), spring
+      B.bone('rb0', 'chair', [-0.27, 1.22, -0.22]); B.bone('rb1', 'rb0', [-0.3, 1.02, -0.28]);
+      B.strip([[-0.27, 1.24, -0.22], [-0.3, 1.02, -0.28], [-0.32, 0.84, -0.3]], [0.05, 0.06, 0.04], { bones: ['rb0', 'rb1', 'rb1'], slot: 'ribbon', side: [0, 0, 1] });
+      // ---- the girl (seated): child proportions
+      B.bone('hips', 'chair', [0, 0.62, -0.02]); B.bone('spine', 'hips', [0, 0.78, -0.03]); B.bone('chest', 'spine', [0, 0.92, -0.03]); B.bone('neck', 'chest', [0, 1.02, -0.02]); B.bone('head', 'neck', [0, 1.06, 0.0]);
+      for (const [s, S] of SIDES) {
+        B.bone('leg' + S, 'hips', [s * 0.07, 0.6, 0.0]); B.bone('knee' + S, 'leg' + S, [s * 0.07, 0.6, 0.24]); B.bone('foot' + S, 'knee' + S, [s * 0.08, 0.3, 0.27]);
+        B.bone('sh' + S, 'chest', [s * 0.11, 0.97, -0.02]); B.bone('arm' + S, 'sh' + S, [s * 0.15, 0.8, 0.05]); B.bone('hand' + S, 'arm' + S, [s * 0.09, 0.66, 0.14]);
+      }
+      for (let i = 0; i < 5; i++) { const a = -1.2 + i * 0.6; B.bone('hr' + i, 'head', [sin(a) * 0.09, 1.16, -0.06 + abs(a) * 0.02]); B.bone('hs' + i, 'hr' + i, [sin(a) * 0.12, 0.92, -0.08]); }
+      B.ell([0, 1.15, 0.01], [0.085, 0.1, 0.09], { w: 'head', slot: 'face', seg: 20, rings: 14 });
+      B.ell([0, 1.18, -0.01], [0.093, 0.093, 0.097], { w: 'head', slot: 'hair', th0: 0, thLen: PI * 0.5, seg: 16, rings: 8 });
+      for (let i = 0; i < 5; i++) { const a = -1.2 + i * 0.6; B.strip([[sin(a) * 0.09, 1.2, -0.04 + (abs(a) < 0.3 ? -0.04 : 0)], [sin(a) * 0.12, 0.92, -0.08], [sin(a) * 0.12, 0.7, -0.08]], [0.07, 0.08, 0.05], { bones: ['hr' + i, 'hs' + i, 'hs' + i], slot: 'hair', side: [cos(a), 0, -sin(a) * 0.4] }); }
+      // dress (ghost layer → translucent) and limbs
+      B.lathe([[0.15, 0.56], [0.14, 0.7], [0.11, 0.86], [0.1, 0.98], [0.04, 1.02]], { layer: 'ghost', w: B.keyW([[0.65, 'hips'], [0.82, 'spine'], [0.95, 'chest']]), slot: 'dress', seg: 18, flat: [1, 0.85] });
+      for (const [s, S] of SIDES) {
+        B.tube([[s * 0.07, 0.62, 0], [s * 0.075, 0.6, 0.25], [s * 0.08, 0.36, 0.27]], [0.06, 0.05, 0.04], { bones: ['leg' + S, 'knee' + S, 'foot' + S], slot: 'dress', layer: 'ghost', seg: 10 });
+        B.tube([[s * 0.08, 0.4, 0.27], [s * 0.08, 0.3, 0.27]], [0.03, 0.025], { w: 'foot' + S, slot: 'skin', seg: 8 });
+        B.ell([s * 0.08, 0.27, 0.3], [0.03, 0.025, 0.055], { w: 'foot' + S, slot: 'skin' });
+        B.tube([[s * 0.11, 0.97, -0.02], [s * 0.15, 0.8, 0.05], [s * 0.09, 0.66, 0.14]], [0.04, 0.035, 0.03], { bones: ['sh' + S, 'arm' + S, 'hand' + S], slot: 'dress', layer: 'ghost', seg: 10, cap1: true });
+        B.ell([s * 0.085, 0.65, 0.16], [0.03, 0.025, 0.035], { w: 'hand' + S, slot: 'skin' });
+      }
+    },
+    springs: [0, 1, 2, 3, 4].map((i) => ({ chain: ['hr' + i, 'hs' + i], tip: [0, -0.22, 0], k: 50, d: 5, g: 2.5, max: 0.6 })).concat([{ chain: ['rb0', 'rb1'], tip: [-0.02, -0.18, -0.02], k: 50, d: 4, g: 2, wind: 2.5, max: 0.8 }]),
+    fx: {
+      motes: { n: 20, rate: 5, at: [0, 0.9, 0], ring: 0.7, box: [0, 1.0, 0], vel: [0, 0.15, 0], velR: [0.05, 0.08, 0.05], life: [1.5, 2.6], size: [0.05, 0.09], color: ['#ffffff', '#a8e4ff'], swirl: 1.2, swirlA: 0.4, twinkle: 6 },
+      tears: { n: 16, rate: 1.5, bone: 'head', at: [0, -0.04, 0.08], box: [0.08, 0.02, 0.02], vel: [0, -0.2, 0.02], velR: [0.02, 0.05, 0.02], g: 2.5, life: [0.5, 0.8], size: [0.03, 0.045], color: ['#ffffff', '#bff4ff'], shape: 2, floor: 0.02 },
+      cast: { n: 50, rate: 0, burstRate: 50, at: [0, 0.9, 0], ring: 1.0, box: [0, 1.4, 0], vel: [0, 0.2, 0], velR: [0.1, 0.2, 0.1], life: [1, 1.8], size: [0.06, 0.12], color: ['#ffffff', '#a8e4ff'], swirl: 2, swirlA: 1.5, twinkle: 5 },
+      death: { n: 50, rate: 0, burstRate: 50, at: [0, 0.9, 0], box: [0.5, 1.0, 0.5], vel: [0, 0.6, 0], velR: [0.2, 0.2, 0.2], life: [1.5, 2.5], size: [0.06, 0.1], color: ['#ffffff', '#a8e4ff'], twinkle: 6, shape: 3 },
+    },
+    lights: (C) => [{ bone: 'chest', color: C.p.glow, i: 0.8 * (C.phaseN > 1 ? 1.6 : 1), r: 3, flicker: 0.05 }],
+    phase(C, n) { C.glowBase = n >= 2 ? 1.8 : 1; C.fxMul = { motes: n >= 2 ? 3 : 1, tears: n >= 2 ? 4 : 1 }; },
+    clips: {
+      // the chair rocks on its back legs; she swings her feet and sways, head bowed
+      idle(P, t, k, C) {
+        const lift = C.phaseN >= 2 ? 0.25 + sin(t * 1.3) * 0.05 : 0;
+        const rock = sin(t * 1.4) * 0.07;
+        P.rootM(0, lift + max(0, rock) * 0.04, 0, -abs(rock) * 0.5 - 0.02, sin(t * 0.3) * 0.08, rock * 0.3);
+        P.r('head', 0.3 + sin(t * 0.7) * 0.05, 0, 0.1 + sin(t * 0.5) * 0.05);
+        for (const [s, S] of SIDES) P.r('knee' + S, sin(t * 2.2 + (s > 0 ? 0 : 1.5)) * 0.3);
+        if (C.phaseN >= 2) P.r('head', -0.25);
+      },
+      move(P, ph, k, C) { this.idle(P, ph * 2, k, C); P.rootM(0, 0.15, 0, 0.1); },
+      // chair sways violently toward the target (e_chair_sway)
+      attack(P, t, k, C) {
+        const A = atk(k, 0.3, 0.45, 0.65); this.idle(P, t, k, C);
+        P.rootM(0, 0.12 * bump(k, 0.25, 0.6), 0.35 * A.s, -0.2 * A.a + 0.35 * A.s, 0, sin(t * 20) * 0.05 * A.s);
+        P.r('head', -0.2 * A.s);
+      },
+      // tears (e_chair_tears): she looks up, tears become a drifting rain of light
+      cast(P, t, k, C) { const u = sm(0, 0.3, k) * (1 - sm(0.85, 1, k)); this.idle(P, t, k, C); P.r('head', -0.55 * u); for (const [s, S] of SIDES) P.r('sh' + S, -0.6 * u, 0, s * 0.3 * u); P.rootM(0, 0.2 * u); P.ch('fx_cast', u); P.ch('fx_tears', u * 6); P.ch('glow', u * 1.2); },
+      // ghost touch: reaches out a small hand
+      special(P, t, k, C) { const u = bump(k, 0.1, 0.9); this.idle(P, t, k, C); P.r('shR', -1.3 * u).r('armR', 0.4 * u).r('head', -0.2 * u, 0.3 * u); P.rootM(0, 0, 0.15 * u, 0.15 * u); P.ch('glow', u); },
+      hurt(P, t, k, C) { const u = (1 - E.outQ(k)) * min(1, k * 14); this.idle(P, t, k, C); P.rootM(sin(t * 50) * 0.02 * u, 0, -0.1 * u, -0.25 * u); P.r('head', 0.2 * u); },
+      // she is released: rises, smiles faintly and fades into motes; the chair settles, empty
+      die(P, t, k) { const u = E.ioQ(seg(k, 0, 0.7)); P.p('hips', 0, 0.5 * u, 0).r('head', -0.3 * u); P.ch('fade', E.inQ(seg(k, 0.4, 1))); P.ch('dissolve', E.inQ(seg(k, 0.4, 1))); P.ch('fx_death', bump(k, 0.3, 1) * 2); },
+      enter(P, t, k) { const u = 1 - E.outC(seg(k, 0, 0.9)); P.ch('fade', u); P.rootM(0, 0, 0, 0, 0, sin(t * 8) * 0.1 * u); P.ch('fx_motes', bump(k, 0, 1) * 4); },
+    },
+    dur: { attack: 1.1, cast: 1.8, special: 1.4, die: 2.4, enter: 1.6 },
+    overlayReplace: 0.6,
+  });
+})();
