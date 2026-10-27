@@ -916,6 +916,7 @@ G.Mon3D = G.Mon3D || {
       if (ext[0]) P.unshift(P[0].clone().addScaledVector(P[0].clone().sub(P[1]).normalize(), ext[0]));
       if (ext[1]) { const L = P.length; P.push(P[L - 1].clone().addScaledVector(P[L - 1].clone().sub(P[L - 2]).normalize(), ext[1])); }
       const g = GEO.sweep(P, o.r != null ? o.r : 0.1, { sides: o.sides || 10, ell: o.ell, n: o.n || (names.length + 1) * 5, cap: o.cap, up: o.up });
+      if (o.warp) GEO.warp(g, o.warp);
       if (o.tile) {
         // square texels: repeats along = length / circumference × repeats around
         let len = 0; for (let i = 1; i < P.length; i++) len += P[i].distanceTo(P[i - 1]);
@@ -980,6 +981,15 @@ G.Mon3D = G.Mon3D || {
       list.forEach((g) => g.dispose());
       if (!merged) { console.error('mon3d-b merge failed', id, k); continue; }
       if (k === 'body' || k === 'cut') bakeAO(merged, def.h, def.ao != null ? def.ao : 0.35);
+      // sanitise: degenerate triangles give zero/NaN normals, which turn into NaN pixels that bloom across the screen
+      const nr = merged.attributes.normal, ps = merged.attributes.position;
+      let bad = 0;
+      for (let i = 0; i < nr.count; i++) {
+        const x = nr.getX(i), y = nr.getY(i), z = nr.getZ(i), l = Math.hypot(x, y, z);
+        if (!(l > 1e-6)) { nr.setXYZ(i, 0, 1, 0); bad++; } else if (abs(l - 1) > 1e-3) nr.setXYZ(i, x / l, y / l, z / l);
+        if (!isFinite(ps.getX(i) + ps.getY(i) + ps.getZ(i))) { ps.setXYZ(i, 0, 0, 0); bad++; }
+      }
+      if (bad && G.debug) console.warn('mon3d-b', id, k, 'fixed', bad, 'degenerate verts');
       merged.computeBoundingSphere();
       geos[k] = merged;
       tris += merged.index.count / 3;
@@ -3256,6 +3266,276 @@ G.Mon3D = G.Mon3D || {
       hurt(k) { GEN.hurt(k); k.s('body', 0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7), -0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7), 0.1 * pulse(k.u, 0, 0.1, 0.2, 0.7)); },
       die(k) { const u = k.u; k.s('body', 0.6 * sm(0.1, 1, u), -0.4 * sm(0.1, 1, u), 0.6 * sm(0.1, 1, u)); k.p('body', 0, -0.3 * sm(0.2, 1, u), 0); k.fx.diss = max(k.fx.diss, sm(0.2, 1, u)); },
       special: (k) => GEN.special(k), enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 潮怨 tide_grudge
+  // A cresting wave of the 逆潮, full of the grudges of the drowned — their wailing faces pressed into the water.
+  defB('tide_grudge', {
+    h: 2.8, outline: 0.003, rim: 0.6, rimColor: 0xc0f8ff, scroll: -0.25, ao: 0.25,
+    build(R) {
+      R.bone('body', 'root', [0, 0.1, 0]);
+      const C = R.chain('w', 'body', [[0, 0.15, -0.95], [0, 0.95, -0.85], [0, 1.75, -0.55], [0, 2.35, -0.05], [0, 2.5, 0.45], [0, 2.2, 0.85], [0, 1.75, 0.8]]);
+      R.spring(C.slice(4), { k: 0.2, drag: 0.15, g: 0.3 });
+      const TEAL = 0x1e7a88, DEEP = 0x0e3a4a, FOAM = 0xf0fcff;
+      // the wave sheet: a wide flattened sweep up the chain, tapering at both sides
+      const sheet = (wd, th, cOff, m) => {
+        R.tube(C, { r: (u) => th * (1.25 - 0.45 * u) * (1 - 0.5 * sm(0.8, 1, u)), ell: [1, wd / th], sides: 18, up: [1, 0, 0], ext: [0, 0.1], n: 60, m,
+          warp: (v) => { const x = v.x / wd; v.y -= x * x * 0.7 * sm(0.3, 2.5, v.y); v.z -= x * x * 0.35 * sm(1.5, 2.5, v.y); },
+          c: (v, uu, vv) => Rig.mix(DEEP, TEAL, sm(0.0, 2.2, v.y + cOff)).lerp(new THREE.Color(FOAM), sm(2.2, 2.6, v.y) * 0.8), cell: 'water', rep: [1, 3] });
+      };
+      sheet(1.0, 0.16, 0, 'body');
+      // foam crest along the lip and spray clumps
+      const r = R.r;
+      for (let i = 0; i < 14; i++) {
+        const x = (i / 13 - 0.5) * 1.9, xn = x / 1.0, b = i % 2 ? 'w4' : 'w3', base = R.B[b].pos;
+        R.add(GEO.lumpy(GEO.sph(0.15 + r() * 0.08, 0.1, 0.15, 10, 8), 0.2, 4, i), { b, c: FOAM, cell: 'plain', at: [x * 0.92, base.y + 0.14 - xn * xn * 0.62, base.z + (b === 'w4' ? 0.05 : -0.05) - xn * xn * 0.3] });
+      }
+      // foam skirt at the base
+      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; R.add(GEO.lumpy(GEO.sph(0.25, 0.1, 0.22, 10, 6), 0.2, 4, i + 20), { b: 'body', c: Rig.mix(FOAM, 0xa8d8e8, r()), cell: 'plain', at: [cos(a) * 0.9, 0.08, -0.4 + sin(a) * 0.55] }); }
+      // drowned faces pressed into the water (wailing)
+      const faces = [[-0.45, 1.2, 'w1', 0.32], [0.3, 1.5, 'w2', 0.28], [-0.1, 0.65, 'w1', 0.26], [0.55, 0.85, 'w1', 0.22], [-0.55, 1.9, 'w2', 0.22]];
+      faces.forEach(([x, y, b, sz], i) => {
+        const fb = R.bone('face' + i, b, [x, y, R.B[b].pos.z + 0.2]);
+        R.add(GEO.card(sz, sz * 1.25, 1, 1), { m: 'soft', b: fb, c: 0xd8f4ff, cell: 'soul', decal: true, at: [x, y - sz * 0.6, R.B[b].pos.z + 0.17 + (y - R.B[b].pos.y) * 0.15], rot: [-0.25, 0, 0] });
+      });
+      R.fx({ mode: 'fall', n: 30, at: [0, 2.4, 0.6], box: [1.8, 0.3, 0.4], col: [0xffffff, 0xc8f0ff], size: 0.06, speed: 1.0, p: [2.2, 0.3, 1] });
+      R.fx({ mode: 'rise', n: 16, at: [0, 0.2, 0], box: [2, 0.3, 1.4], col: [0xffffff], size: 0.5, speed: 0.4, p: [0.6, 0.3, 1], blend: 'normal' });
+      R.fx({ mode: 'wander', n: 10, at: [0, 1.3, 0], box: [1.6, 1.6, 0.8], col: [0x80e0ff], size: 0.05, speed: 0.6, p: [0.3, 1, 1] });
+    },
+    idle(k) {
+      const b = sin(k.t * 1.3);
+      k.r('w1', b * 0.03); k.r('w2', b * 0.05); k.r('w3', 0.04 + b * 0.06); k.r('w4', b * 0.08); k.s('body', 0, b * 0.02, 0);
+      for (let i = 0; i < 5; i++) { const w = 0.5 + 0.5 * sin(k.t * 2.2 + i * 1.7); k.s('face' + i, 0.12 * w, 0.2 * w, 0); }
+    },
+    move(k) { k.r('w2', 0.1); k.r('w3', 0.15); k.p('body', 0, 0, sin(k.t * 3) * 0.05); },
+    clips: {
+      attack(k) {
+        // the wave rears then crashes forward over the target
+        const u = k.u, up = pulse(u, 0, 0.32, 0.32, 0.42), crash = pulse(u, 0.38, 0.52, 0.65, 0.95);
+        k.r('w1', -0.15 * up + 0.2 * crash); k.r('w2', -0.15 * up + 0.35 * crash); k.r('w3', -0.2 * up + 0.5 * crash); k.r('w4', 0.6 * crash);
+        k.p('body', 0, 0.2 * up, 0.6 * crash); k.s('body', 0.1 * up, 0.2 * up, 0);
+        k.fx.flash = max(k.fx.flash, 0.3 * pulse(u, 0.5, 0.52, 0.55, 0.65));
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('body', 0.1 * up, 0.25 * up, 0); for (let i = 0; i < 5; i++) k.s('face' + i, 0.5 * up); k.fx.glow += 1.5 * up; },
+      hurt(k) { GEN.hurt(k); k.r('w3', -0.2 * pulse(k.u, 0, 0.1, 0.2, 0.8)); },
+      die(k) { const u = k.u, f = sm(0.1, 0.8, u); k.s('body', 0.3 * f, -0.85 * f, 0.3 * f); k.r('w3', 0.6 * f); k.r('w4', 0.6 * f); k.fx.diss = max(k.fx.diss, sm(0.3, 1, u)); },
+      special(k) { const u = k.u, up = pulse(u, 0.05, 0.3, 0.75, 1); k.s('body', 0.3 * up, 0.35 * up, 0); k.r('w3', 0.3 * up); for (let i = 0; i < 5; i++) k.s('face' + i, 0.8 * up); k.fx.glow += 2 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 溺魂群 drowned_swarm
+  // Souls drowned in the Black Ditch, circling in a whirlpool: a vortex of small wailing wisps around a dark eye of water.
+  defB('drowned_swarm', {
+    h: 2.6, outline: 0, rim: 0.6, rimColor: 0xc8f0ff, scroll: -0.2, wide: 1.2,
+    build(R) {
+      R.bone('body', 'root', [0, 0.1, 0]);
+      const rings = [['ring0', 0.35, 0.95, 7], ['ring1', 0.6, 1.5, 9], ['ring2', 0.9, 2.05, 10], ['ring3', 0.6, 0.5, 6]];
+      const r = R.r;
+      for (const [rb, rad, y, n] of rings) {
+        R.bone(rb, 'body', [0, y, 0]);
+        for (let i = 0; i < n; i++) {
+          const a = i / n * TAU + r() * 0.3, x = cos(a) * rad, z = sin(a) * rad, sz = 0.16 + r() * 0.1, yy = y + (r() - 0.5) * 0.25;
+          // each soul: a teardrop head + trailing tail (ghost) and a face card
+          const tail = [[x, yy, z]]; for (let j = 1; j < 4; j++) { const aa = a - j * 0.25; tail.push([cos(aa) * rad * (1 + j * 0.05), yy - j * 0.04, sin(aa) * rad * (1 + j * 0.05)]); }
+          R.add(GEO.sweep(tail, (u) => sz * 0.55 * (1 - u * 0.9), { sides: 8, n: 10 }), { b: rb, m: 'ghost', c: 0xb8e8ff, cell: 'plain' });
+          R.add(GEO.card(sz * 1.1, sz * 1.3, 1, 1), { m: 'soft', b: rb, c: 0xffffff, cell: 'soul', decal: true, at: [x, yy - sz * 0.6, z], rot: [0, -a + PI, 0] });
+        }
+      }
+      // hands reaching out of the whirl
+      for (let i = 0; i < 4; i++) {
+        const a = i / 4 * TAU + 0.5, x = cos(a) * 0.5, z = sin(a) * 0.5;
+        const hb = R.chain('hand' + i, 'body', [[x * 0.6, 0.0, z * 0.6], [x, 0.45, z], [x * 1.3, 0.8, z * 1.3]]);
+        R.tube(hb, { r: (u) => 0.05 * (1 - u * 0.4), sides: 6, m: 'ghost', c: 0x9ad0f0, cell: 'skin', ext: [0, 0.05] });
+        R.add(GEO.sph(0.06, 0.08, 0.04, 8, 6), { b: hb[2], m: 'ghost', c: 0xc0e8ff, cell: 'skin', at: [x * 1.33, 0.86, z * 1.33] });
+      }
+      // dark whirlpool
+      waterDisk(R, 1.5, [0, 0.02, 0], 0x0e2a3a);
+      R.add(GEO.cyl(0.5, 0.5, 0.02, 24), { m: 'glow', c: 0x02060a, cell: 'blank', at: [0, 0.01, 0] });
+      R.fx({ mode: 'swirl', n: 40, at: [0, 0.05, 0], box: [0.1, 0.1, 0.1], col: [0x9ae0ff, 0xd8f4ff], size: 0.06, speed: 0.5, p: [0.5, 2.3, 1.6] });
+      R.fx({ mode: 'fall', n: 20, at: [0, 1.4, 0], box: [1.6, 1.4, 1.6], col: [0x9ad8f0], size: 0.04, speed: 1.0, p: [1.2, 0.05, 1] });
+      R.light({ b: 'body', at: [0, 1.2, 0], color: '#9ae0ff', i: 0.7, r: 4, flicker: 0.2 });
+    },
+    always(k) { k.r('ring0', 0, k.t * 1.4, 0); k.r('ring1', 0, k.t * 1.0, 0); k.r('ring2', 0, k.t * 0.7, 0); k.r('ring3', 0, k.t * 1.8, 0); },
+    idle(k) {
+      for (let i = 0; i < 4; i++) { const ph = k.t * 1.5 + i * 1.6; k.r('hand' + i + '0', sin(ph) * 0.3, 0, cos(ph) * 0.3); k.r('hand' + i + '1', sin(ph + 1) * 0.3); }
+      k.p('ring1', 0, sin(k.t * 1.3) * 0.08, 0); k.p('ring2', 0, sin(k.t * 1.1 + 1) * 0.1, 0);
+    },
+    move(k) { k.r('body', 0.15, 0, 0); },
+    clips: {
+      attack(k) { const u = k.u, hit = pulse(u, 0.3, 0.45, 0.6, 0.95); k.p('ring1', 0, 0, 0.8 * hit); k.p('ring2', 0, -0.2 * hit, 0.6 * hit); k.s('ring0', 0.3 * hit); for (let i = 0; i < 4; i++) k.r('hand' + i + '0', -0.8 * hit); },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('ring1', 0.4 * up); k.s('ring2', 0.5 * up); k.p('ring2', 0, 0.3 * up, 0); k.fx.glow += 1.5 * up; },
+      hurt: (k) => GEN.hurt(k),
+      die(k) { const u = k.u, f = sm(0.1, 0.9, u); for (const rb of ['ring0', 'ring1', 'ring2', 'ring3']) k.s(rb, 0.8 * f); k.p('ring2', 0, 0.8 * f, 0); k.fx.diss = max(k.fx.diss, sm(0.2, 1, u)); },
+      special(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); k.s('ring2', 0.8 * up); k.s('ring1', 0.6 * up); k.fx.glow += 2 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 海妖 sea_monster
+  // Driven up from the Kuroshio deep by the tide-sickness: a barnacled octopus whose spots glow sick green.
+  // Its singing is beautiful because it learned it from the drowned.
+  const OCTO = { arms: [] };
+  defB('sea_monster', {
+    h: 2.5, outline: 0.003, rim: 0.45, rimColor: 0xe0c0ff, clipY: -0.05, scroll: -0.1, wide: 1.3,
+    build(R) {
+      R.bone('body', 'root', [0, 0.7, 0]);
+      R.bone('head', 'body', [0, 1.3, -0.05]);
+      const PUR = 0x6a4a8a, PUR2 = 0x9a70b8, SUCK = 0xe8c8d8, SPOT = 0x8aff60;
+      // mantle: tall bulb leaning back, barnacle crown, glowing spots
+      const mantle = GEO.lumpy(GEO.sph(0.62, 0.8, 0.6, 22, 18), 0.05, 2.5, 4);
+      GEO.warp(mantle, (v) => { v.z -= sm(0, 0.8, v.y) * 0.2; });
+      R.add(mantle, { skin: byY('body', 'head', 0.9, 1.6), c: (v) => Rig.mix(PUR, PUR2, sm(0.5, 0.8, fbm(v.x * 3, v.y * 3, v.z * 3))), cell: 'skin', rep: [3, 3], at: [0, 1.45, -0.05] });
+      const r = R.r;
+      for (let i = 0; i < 16; i++) {
+        const a = r() * TAU, h = -0.2 + r() * 0.9, p = onEll([0, 1.45, -0.05], [0.62, 0.8, 0.6], a, h);
+        R.add(GEO.sph(0.04 + r() * 0.04, 0.04 + r() * 0.04, 0.02, 8, 6), { b: 'head', m: 'glow', c: SPOT, cell: 'blank', at: p, rot: [0, -a + PI / 2, 0] });
+      }
+      for (let i = 0; i < 10; i++) { const a = r() * TAU, p = onEll([0, 1.45, -0.05], [0.6, 0.78, 0.58], a, 0.55 + r() * 0.4); R.add(GEO.lumpy(GEO.cyl(0.05, 0.08, 0.08, 8), 0.05, 8, i), { b: 'head', c: 0xe0d8c8, cell: 'barnacle', at: p, rot: [r() * 0.5, 0, r() * 0.5] }); }
+      // big yellow eyes with bar pupils, heavy lids
+      for (const s of [-1, 1]) {
+        R.add(GEO.sph(0.14, 0.13, 0.08, 14, 10), { b: 'body', c: 0xe8e060, cell: 'eye', at: [s * 0.3, 0.98, 0.45], rot: [0, s * 0.4, PI / 2] });
+        R.add(GEO.sph(0.16, 0.08, 0.1, 12, 8, { tl: PI / 2 }), { b: 'body', c: PUR, cell: 'skin', at: [s * 0.3, 1.04, 0.43], rot: [0.3, s * 0.4, 0] });
+      }
+      R.add(GEO.lumpy(GEO.sph(0.5, 0.35, 0.45, 18, 12), 0.04, 3), { b: 'body', c: PUR, cell: 'skin', at: [0, 0.75, 0.05] });
+      // eight arms: tapered tubes on 5-bone chains, suckers on the underside
+      OCTO.arms = [];
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU + PI / 8, dx = sin(a), dz = cos(a), len = 1.5 + (i % 2) * 0.25;
+        const pts = []; for (let j = 0; j < 6; j++) { const t = j / 5, rr = 0.35 + t * len, curl = t * t * 0.6; pts.push([dx * rr - dz * curl * 0.4, 0.45 - t * 0.5 + t * t * (i % 3 === 0 ? 0.9 : 0.2), dz * rr + dx * curl * 0.4]); }
+        const ch = R.chain('a' + i + '_', 'body', pts);
+        OCTO.arms.push(ch);
+        R.tube(ch, { r: (u) => 0.13 * (1 - u * 0.85), sides: 10, up: [0, 1, 0], c: (v, uu) => (cos(TAU * uu) > 0.3 ? SUCK : PUR), cell: 'skin', rep: [2, 6], ext: [0, 0.2] });
+        for (let j = 1; j < 9; j++) { const t = j / 10, P = ch.map((n) => R.B[n].pos), q = P[0].clone().lerp(P[5], t); q.y -= 0.12 * (1 - t * 0.8); R.add(GEO.cyl(0.03 * (1 - t * 0.6), 0.035 * (1 - t * 0.6), 0.02, 8), { b: ch[min(4, floor(t * 5))], c: SUCK, cell: 'plain', at: q.toArray() }); }
+      }
+      waterDisk(R, 1.9, [0, 0.02, 0], 0x1a3a4a);
+      R.fx({ mode: 'rise', n: 20, at: [0, 0.4, 0], box: [2, 0.3, 2], col: [SPOT, 0xc0ff90], size: 0.05, speed: 0.6, p: [1.5, 0.2, 1] });
+      R.fx({ mode: 'rise', n: 12, at: [0, 0.2, 0], box: [1.6, 0.2, 1.6], col: [0xd0f0ff], size: 0.08, speed: 0.5, p: [1.0, 0.1, 1] });
+    },
+    idle(k) {
+      const b = sin(k.t * 1.1);
+      k.p('body', 0, b * 0.06, 0); k.s('head', b * 0.04, -b * 0.03, b * 0.04); k.r('head', -0.1 + b * 0.05, 0, sin(k.t * 0.6) * 0.06);
+      OCTO.arms.forEach((ch, i) => { k.wave(ch, 'x', 0.18, 4, 2.2, i * 0.8, (u) => 0.3 + u); k.wave(ch, 'y', 0.12, 3, 1.4, i * 1.3, (u) => u); });
+    },
+    move(k) { OCTO.arms.forEach((ch, i) => k.wave(ch, 'x', 0.35, 3, 6, i * 0.8)); k.p('body', 0, 0.15, 0); },
+    clips: {
+      attack(k) {
+        // two front arms coil back and lash forward
+        const u = k.u, back = pulse(u, 0, 0.3, 0.3, 0.4), hit = pulse(u, 0.34, 0.44, 0.6, 0.95);
+        for (const i of [0, 7]) OCTO.arms[i].forEach((b, j) => k.r(b, (-0.6 * back + 0.5 * hit) * (j ? 1 : 0.5), 0, 0));
+        k.r('body', -0.15 * back + 0.25 * hit); k.p('body', 0, 0.1 * back, 0.3 * hit);
+      },
+      cast(k) { const up = pulse(k.u, 0.05, 0.35, 0.75, 1); k.s('head', 0.15 * up); OCTO.arms.forEach((ch) => k.r(ch[0], -0.6 * up)); k.p('body', 0, 0.3 * up, 0); k.fx.glow += 2 * up; },
+      hurt: (k) => GEN.hurt(k),
+      die(k) { const u = k.u, f = sm(0.1, 0.8, u); k.p('body', 0, -1.0 * f, 0); OCTO.arms.forEach((ch) => k.r(ch[0], 0.5 * f)); k.fx.diss = max(k.fx.diss, sm(0.4, 1, u)); k.fx.flash = max(k.fx.flash, 1 - sm(0, 0.15, u)); },
+      special(k) { const up = pulse(k.u, 0.05, 0.3, 0.75, 1); OCTO.arms.forEach((ch, i) => { k.r(ch[0], -1.0 * up); k.wave(ch, 'y', 0.4 * up, 2, 8, i); }); k.s('head', 0.2 * up); k.fx.glow += 2 * up; },
+      enter: (k) => GEN.enter(k),
+    },
+  });
+
+  // ============================================================================ 鯤 kun (boss)
+  // 北冥有魚，其名為鯤 — when it swims the Black Ditch the whole sea's lights tilt. A whale the size of an island surfacing
+  // from black water: barnacled hide, a line of soul-lanterns glowing along its flank, a golden eye that has seen every era.
+  // Phase 2: the lanterns blaze, a starfield wakes on its skin and its mouth opens on a galaxy.
+  const KUN = {};
+  defB('kun', {
+    h: 4.2, boss: true, outline: 0.003, rim: 0.5, rimColor: 0x9ad0ff, clipY: -0.02, scroll: -0.05, wide: 1.8, psy: [0.8, 6, 0.06, 1.3], phaseGlow: 1.6, edge: [0.6, 1.2, 2.2],
+    build(R) {
+      // spine runs head (+z, front) → tail (−z); the whale lies along z so it faces the party
+      const sp = [[0, 1.2, 2.8], [0, 1.7, 1.6], [0, 1.85, 0.2], [0, 1.6, -1.3], [0, 1.1, -2.6], [0, 0.5, -3.6], [0, 0.4, -4.3]];
+      R.bone('body', 'root', sp[2]);
+      R.bone('s0', 'body', sp[1]); R.bone('head', 's0', sp[0]);
+      R.bone('s2', 'body', sp[3]); R.bone('s3', 's2', sp[4]); R.bone('s4', 's3', sp[5]); R.bone('tail', 's4', sp[6]);
+      R.bone('jaw', 'head', [0, 0.6, 2.4]);
+      KUN.spine = ['s0', 'body', 's2', 's3', 's4', 'tail'];
+      const SK = 0x3a5a84, SK2 = 0x6a8ab4, BELLY = 0xc8d4e0, LAMP = 0xffc860;
+      const prof = (z) => { const t = (2.95 - z) / 7.4; return { w: 1.55 * sm(-0.02, 0.22, t) * (1 - 0.82 * sm(0.4, 1.0, t)), h: 1.25 * sm(-0.02, 0.2, t) * (1 - 0.75 * sm(0.45, 1.0, t)) }; };
+      // body: lathe-like loft along z, skinned along the spine (weights by z)
+      const g = new THREE.CylinderGeometry(1, 1, 1, 36, 40, false);
+      g.rotateX(PI / 2);
+      GEO.warp(g, (v) => {
+        const z = lerp(-4.45, 2.95, v.z + 0.5), P = prof(z), ax = v.x, ay = v.y;
+        const yc = keys(z, [-4.45, 0.45, -3.6, 0.5, -2.6, 1.1, -1.3, 1.55, 0.2, 1.6, 1.6, 1.4, 2.95, 0.95]);
+        v.set(ax * P.w, yc + ay * P.h * (ay < 0 ? 0.85 : 1), z);
+      });
+      idx(g);
+      const zs = [2.95, 1.6, 0.2, -1.3, -2.6, -3.6, -4.3], zb = ['head', 's0', 'body', 's2', 's3', 's4', 'tail'];
+      const kunSkin = (p) => { for (let i = 0; i < zs.length - 1; i++) if (p.z <= zs[i] && p.z >= zs[i + 1]) { const t = (zs[i] - p.z) / (zs[i] - zs[i + 1]); return [[zb[i], 1 - t], [zb[i + 1], t]]; } return [[p.z > 0 ? 'head' : 'tail', 1]]; };
+      R.add(g, { skin: kunSkin, c: (v) => { const n = fbm(v.x * 0.8, v.y * 0.8, v.z * 0.8); const belly = sm(0.9, 0.4, v.y - (keys(v.z, [-4.45, 0.45, -2.6, 1.1, 0.2, 1.6, 2.95, 0.95]) - 0.6)); return Rig.mix(Rig.mix(SK, SK2, sm(0.4, 0.75, n)), BELLY, belly * 0.0 + sm(0.2, -0.6, v.y - keys(v.z, [-4.45, 0.45, -2.6, 1.1, 0.2, 1.6, 2.95, 0.95])) * 0.8); }, cell: 'skin', rep: [6, 10] });
+      // mouth line, golden eyes
+      for (const s of [-1, 1]) {
+        // mouth line traced on the hull, eye just above its corner
+        const yc = (z) => keys(z, [-4.45, 0.45, -2.6, 1.1, -1.3, 1.55, 0.2, 1.6, 1.6, 1.4, 2.95, 0.95]);
+        const ml = []; for (let i = 0; i <= 8; i++) { const z = lerp(2.9, 1.0, i / 8), P = prof(z), a = 2.0 - i * 0.02; ml.push([s * sin(a) * P.w * 1.01, yc(z) + cos(a) * P.h * 0.86, z]); }
+        R.add(GEO.sweep(ml, 0.035, { sides: 4 }), { b: 'head', c: 0x0a0e18, cell: 'plain' });
+        { const z = 1.3, P = prof(z), a = 1.35, ex = s * sin(a) * P.w, ey = yc(z) + cos(a) * P.h;
+          R.add(GEO.sph(0.2, 0.16, 0.1, 14, 10), { b: 'head', m: 'glow', c: 0xa08020, cell: 'eye', at: [ex, ey, z], rot: [0, s * PI / 2, PI / 2] });
+          R.add(GEO.tor(0.21, 0.045, 6, 16), { b: 'head', c: SK, cell: 'skin', at: [ex + s * 0.01, ey, z], rot: [0, s * PI / 2, 0] }); }
+        // pectoral fins
+        R.bone('fin' + sideL(s), 'body', [s * 1.3, 0.85, 0.6]);
+        const fin = GEO.ext([[0, 0], [0.4, -0.15], [1.6, -0.6], [1.9, -0.75], [1.5, -0.35], [0.5, 0.15]], 0.06, 0.03);
+        R.add(fin, { b: 'fin' + sideL(s), c: SK2, cell: 'skin', at: [s * 1.3, 0.85, 0.6], rot: [0.2, s < 0 ? PI : 0, s * -0.4], s: [1, 1, 1] });
+      }
+      // tail flukes: horizontal, swept, raised out of the water behind
+      for (const sd of [-1, 1]) {
+        const fl = GEO.ext([[0, 0], [0.5, -0.1], [1.3, -0.35], [1.7, -0.7], [1.25, -0.6], [0.45, -0.4], [0, -0.3]], 0.07, 0.03);
+        R.add(fl, { b: 'tail', c: SK, cell: 'skin', at: [0, 0.45, -4.25], rot: [-PI / 2, 0, 0], s: [sd, 1, 1] });
+      }
+      // barnacle reefs on the back, the line of soul-lanterns along the flanks (and the starfield for phase 2)
+      const r = R.r;
+      for (let i = 0; i < 30; i++) {
+        const z = 2.2 - r() * 6, P = prof(z), a = -0.4 + r() * 0.8, yc = keys(z, [-4.45, 0.45, -2.6, 1.1, -1.3, 1.55, 0.2, 1.6, 1.6, 1.4, 2.95, 0.95]);
+        const p = [sin(a) * P.w * 0.98, yc + cos(a) * P.h * 0.98, z];
+        R.add(GEO.lumpy(GEO.cyl(0.05 + r() * 0.06, 0.08 + r() * 0.08, 0.08, 8), 0.05, 8, i), { skin: kunSkin, c: 0xd8d4c8, cell: 'barnacle', at: p, rot: [0, 0, -a] });
+      }
+      for (let i = 0; i < 22; i++) {
+        const s = i % 2 ? 1 : -1, z = 2.2 - (i / 22) * 5.6 + r() * 0.2, P = prof(z), a = s * (0.9 + r() * 0.5), yc = keys(z, [-4.45, 0.45, -2.6, 1.1, -1.3, 1.55, 0.2, 1.6, 1.6, 1.4, 2.95, 0.95]);
+        const p = [sin(a) * P.w, yc + cos(a) * P.h, z];
+        R.add(GEO.sph(0.07 + r() * 0.04, 0.07 + r() * 0.04, 0.04, 10, 8), { skin: kunSkin, m: 'glow', c: LAMP, cell: 'heart', at: p, rot: [0, a, 0] });
+      }
+      // phase 2: starfield skin overlay + galaxy maw
+      const pb = R.phaseBone('stars', 'body', [0, 1.6, 0.2], 2);
+      for (let i = 0; i < 60; i++) { const z = 2.4 - r() * 6.2, P = prof(z), a = (r() - 0.5) * 2.6, yc = keys(z, [-4.45, 0.45, -2.6, 1.1, -1.3, 1.55, 0.2, 1.6, 1.6, 1.4, 2.95, 0.95]); R.add(GEO.oct(0.03 + r() * 0.03), { b: pb, m: 'glow', c: Rig.mix(0xa0d8ff, 0xffffff, r()), cell: 'blank', at: [sin(a) * P.w * 1.01, yc + cos(a) * P.h * 1.01, z] }); }
+      const maw = R.phaseBone('maw', 'jaw', [0, 0.85, 2.2], 2);
+      R.add(GEO.sph(0.9, 0.3, 0.8, 18, 10), { b: maw, m: 'psy', c: 0x7060a0, cell: 'blank', at: [0, 0.88, 2.0] });
+      // sea
+      waterDisk(R, 4.8, [0, 0.02, -0.6], 0x0e2438);
+      R.fx({ mode: 'rise', n: 30, at: [0, 1.3, -0.6], box: [3.5, 1.5, 7], col: [LAMP, 0xffe8a0], size: 0.1, speed: 0.3, p: [2.5, 0.4, 1] });
+      R.fx({ mode: 'fall', n: 40, at: [0, 2.2, -0.6], box: [3, 0.5, 6], col: [0xd8f0ff], size: 0.06, speed: 1.0, p: [2.2, 0.2, 1] });
+      R.fx({ mode: 'wander', n: 16, at: [0, 0.3, -0.6], box: [6, 0.4, 8], col: [0xe0f0f8], size: 1.4, speed: 0.2, p: [0.6, 0.2, 1], blend: 'normal' });
+      R.light({ b: 'body', at: [0, 2.2, 0.2], color: '#ffc860', i: 1.2, r: 8, flicker: 0.1 });
+    },
+    idle(k) {
+      // slow vast breathing; swells passing along the body; the tail lifts and settles
+      const b = sin(k.t * 0.5);
+      k.p('body', 0, b * 0.12, 0); k.r('body', b * 0.03, 0, sin(k.t * 0.3) * 0.02);
+      k.wave(KUN.spine, 'x', 0.04, 5, 0.7, 0, (u) => 0.3 + u); k.r('s4', -0.25); k.r('tail', -0.35 + sin(k.t * 0.6) * 0.15);
+      k.r('jaw', 0.02 + 0.02 * sin(k.t * 0.8)); k.r('finL', 0, 0, sin(k.t * 0.7) * 0.15); k.r('finR', 0, 0, -sin(k.t * 0.7) * 0.15);
+      if (k.ph > 1) k.r('jaw', 0.15);
+    },
+    move(k) { k.wave(KUN.spine, 'y', 0.06, 4, 2); k.r('tail', sin(k.t * 2) * 0.3); },
+    clips: {
+      attack(k) {
+        // breach-slam: rears the head out of the sea and crashes down
+        const u = k.u, up = pulse(u, 0, 0.38, 0.38, 0.5), down = pulse(u, 0.45, 0.55, 0.68, 0.98);
+        k.r('body', -0.25 * up + 0.12 * down); k.r('s0', -0.15 * up + 0.12 * down); k.p('body', 0, 0.8 * up - 0.3 * down, 0.5 * down);
+        k.r('tail', 0.4 * up - 0.4 * down); k.r('jaw', 0.3 * up);
+        k.fx.flash = max(k.fx.flash, 0.4 * pulse(u, 0.53, 0.55, 0.58, 0.7));
+      },
+      cast(k) {
+        // the song: lanterns flare, the mouth opens, the sea tilts
+        const u = k.u, up = pulse(u, 0.05, 0.35, 0.75, 1);
+        k.r('jaw', 0.35 * up); k.r('body', -0.1 * up, 0, 0.08 * sin(k.ct * 2) * up); k.fx.glow += 2.5 * up; k.fx.psy += 2 * up;
+      },
+      hurt(k) { const h = pulse(k.u, 0, 0.08, 0.2, 1); k.r('body', -0.08 * h, 0, 0.05 * h); k.r('tail', 0.3 * h); k.fx.flash = max(k.fx.flash, (1 - sm(0, 0.35, k.u)) * 1.0); },
+      die(k) { const u = k.u, f = sm(0.1, 0.9, u); k.p('body', 0, -1.6 * f, 0); k.r('body', 0.15 * f, 0, 0.3 * f); k.r('tail', 0.5 * f); k.fx.diss = max(k.fx.diss, sm(0.5, 1, u)); k.fx.glow += 2 * pulse(u, 0, 0.2, 0.3, 0.6); },
+      special(k) {
+        // swallowing tide: dives, then the vast mouth rises open beneath the party
+        const u = k.u, dive = pulse(u, 0.05, 0.3, 0.35, 0.5), rise = pulse(u, 0.45, 0.6, 0.75, 1);
+        k.p('body', 0, -1.2 * dive + 0.9 * rise, 0.8 * rise); k.r('body', 0.2 * dive - 0.4 * rise); k.r('jaw', 0.6 * rise); k.fx.psy += 3 * rise; k.fx.glow += 2 * rise;
+      },
+      enter(k) { const u = k.u, rise = sm(0, 0.8, u); k.p('body', 0, -2.0 * (1 - rise), -1.0 * (1 - rise)); k.r('body', -0.3 * (1 - rise)); k.fx.diss = max(k.fx.diss, 1 - sm(0, 0.5, u)); },
     },
   });
   /* END */
