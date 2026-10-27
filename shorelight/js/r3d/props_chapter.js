@@ -274,7 +274,8 @@
       const tex = R.canvasTex(printCanvas(o));
       const glow = !o.kind;
       const m = glow
-        ? new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, color: new T.Color(1.6, 1.7, 1.9), polygonOffset: true, polygonOffsetFactor: -2 })
+        // fog: false — spirit light, it must not sink into the maze's dense mist fog
+        ? new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false, fog: false, color: new T.Color(1.6, 1.7, 1.9), polygonOffset: true, polygonOffsetFactor: -2 })
         : new T.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: o.kind === 'shoe' ? 0.8 : 0.6, polygonOffset: true, polygonOffsetFactor: -2 });
       // the 2D art is centred at (32, 34) of the 64-px cell
       const geo = new T.PlaneGeometry(1, 1);
@@ -292,13 +293,22 @@
       }
       return out;
     },
+    // the spirit pulse is applied here, not by MapView's generic spirit fade: that pass clones the material once and
+    // then scales the opacity it found on that frame, which froze each print at a random point of its pulse (often
+    // ~0.2 — the "sometimes the footprints don't show" bug in 3D)
+    ownFade: true,
     update(node, o, t) {
-      if (o.kind) return;
       const p = node.getObjectByName('print');
       if (!p) return;
+      const hold = node.parent && node.parent.userData.fade != null ? node.parent.userData.fade : 1;
+      if (o.kind && hold >= 0.999 && !p.userData.own) return;   // mud prints: shared material, no fade
       if (!p.userData.own) { p.material = p.material.clone(); p.userData.own = true; } // per-instance pulse
+      if (o.kind) { p.material.opacity = Math.min(1, hold); return; }
       const ph = (o.seq || 0) * 0.6;
-      p.material.opacity = Math.min(1, (0.62 + 0.38 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade));
+      // never dimmer than ~0.7: the prints are the way out of the maze and must read through the fog at any moment
+      p.material.opacity = Math.min(1, (0.8 + 0.2 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade) * Math.max(0.85, hold));
+      const halo = node.getObjectByName('halo');
+      if (halo) halo.material.opacity = p.material.opacity * 0.55;
     },
     lights: () => [], // the print glows by itself; a pool light + halo per print read as floating blobs on maze paths
   });

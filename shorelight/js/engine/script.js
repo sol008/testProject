@@ -135,7 +135,10 @@ G.Script = (() => {
       m.cam.speed = 3.5;
       await S.wait(sec);
     },
-    cameraFollow(id = 'player') { const m = map(); m.cam.tx = null; m.cam.ty = null; m.cam.follow = id; m.cam.speed = 7; },
+    cameraFollow(id = 'player') { const m = map(); m.cam.tx = null; m.cam.ty = null; m.cam.follow = id; m.cam.speed = 7; m.cam.hold = false; },
+    // keep the current S.camera() framing after the script ends (a fixed-view room / puzzle). Without it, a pan that
+    // is still in place when the last script finishes is released back to the player automatically.
+    cameraHold(on = true) { map().cam.hold = !!on; },
 
     // ---------------- state ----------------
     flag(k, v = true) { G.state.flags[k] = v; },
@@ -265,7 +268,8 @@ G.Script = (() => {
         m.player.scripted = false;
         for (const f of m.followers) f.scripted = false;
         for (const n of m.npcs) if (!n.spawned) n.scripted = false;
-        if (running === 0) m.refresh();
+        // control is about to return to the player: MapScene.update re-attaches the camera to them (see camRelease)
+        if (running === 0) { m.refresh(); m.camRelease = true; }
       }
       G.Input.clear();
     }

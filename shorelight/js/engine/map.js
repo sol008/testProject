@@ -332,6 +332,17 @@ G.Mapx = G.Mapx || {};
       }
       if (this.invuln > 0) this.invuln -= dt;
       const busy = G.Script.busy();
+      // the last script just ended: a cutscene pan (S.camera / cam.tx) or a cameraFollow(<npc>) it never undid
+      // must not leave the player walking out of frame (2D and 3D both read this.cam). Re-attach the camera to the
+      // player unless the map asked to keep the framing (S.cameraHold) or an auto event is about to continue the
+      // cutscene (it releases the camera itself when it ends). Runs before onUpdate, which may re-aim cam.tx per frame.
+      if (this.camRelease && !busy) {
+        this.camRelease = false;
+        const c = this.cam;
+        if (!c.hold && (c.tx != null || c.follow !== 'player') && !this.autoPending()) {
+          c.tx = null; c.ty = null; c.follow = 'player'; c.speed = 7;
+        }
+      }
       // player
       this.updatePlayer(dt, busy);
       this.updateFollowers(dt);
@@ -463,6 +474,7 @@ G.Mapx = G.Mapx || {};
       return G.Script.run(e.run, e);
     }
 
+    autoPending() { return (this.def.events || []).some((e) => e.trigger === 'auto' && this.eventOk(e)); }
     checkAuto() {
       for (const e of this.def.events || []) {
         if (e.trigger !== 'auto') continue;

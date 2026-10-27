@@ -224,8 +224,11 @@
           for (const [tx, ty] of [[9, -7], [12, -1], [12, 5], [9, 11]]) { ctx.beginPath(); ctx.ellipse(dx + tx, dy + ty - 2, 3.2, 2.6, 0, 0, Math.PI * 2); ctx.fill(); }
         }
       } else {
+        // the spirit prints are the only way out of the maze: they pulse but never drop below ~0.75, and they ignore
+        // the engine's generic spirit flicker (globalAlpha down to 0.5), which on top of the pulse left them at ~0.15
+        ctx.globalAlpha = o.alpha != null ? Math.min(1, o.alpha) : 1;
         const ph = (o.seq || 0) * 0.6;
-        const a = Math.min(1, (0.62 + 0.38 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade));
+        const a = Math.min(1, (0.85 + 0.15 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade));
         ctx.scale(1.25, 1.25);
         ctx.shadowColor = '#dff4ff'; ctx.shadowBlur = 18;
         ctx.fillStyle = `rgba(228,242,255,${a.toFixed(3)})`;
@@ -772,16 +775,68 @@
     clearDeco(R, 11, 4, 2, 12); clearDeco(R, 5, 9, 14, 2); clearDeco(R, 10, 7, 3, 3);
     return R;
   })();
-  // silver footprints for loopStep k, leading to the next correct exit (E, S, S, W)
-  const PRINTS = [
-    [[7, 9, 'right'], [9, 10, 'right'], [11, 10, 'right'], [13, 9, 'right'], [15, 10, 'right'], [17, 9, 'right'], [19, 10, 'right'], [21, 9, 'right']],
-    [[12, 5, 'down'], [12, 7, 'down'], [12, 9, 'down'], [12, 11, 'down'], [12, 13, 'down'], [11, 15, 'down'], [12, 17, 'down']],
-    [[11, 5, 'down'], [12, 7, 'down'], [12, 9, 'down'], [11, 11, 'down'], [12, 13, 'down'], [12, 15, 'down'], [11, 17, 'down']],
-    [[10, 5, 'down'], [9, 7, 'left'], [7, 9, 'left'], [5, 10, 'left'], [3, 9, 'left'], [1, 10, 'left']],
-  ];
-  const printObjs = [];
-  PRINTS.forEach((list, k) => list.forEach(([x, y, dir], i) => printObjs.push({ t: 'c2_footprint', x, y, dir, seq: i, spirit: true,
-    if: (st) => !!st.flags.ch2_lingshi && !st.flags.ch2_maze_solved && (st.vars.loopStep || 0) === k })));
+  // silver footprints for loopStep k, leading to the next correct exit (E, S, S, W).
+  // Every step's trail runs from the clearing's centre (below the camphor) to that exit, and a spur joins it from
+  // every place the party can arrive (north entrance, the three loop-back spots, the grove nook), so a trail is on
+  // screen wherever the party stands. Paths are walked on the map grid (never through the tree or solid decor) and
+  // the tall grass / flowers on print cells are cleared so nothing covers a print in 2D or 3D.
+  const SEQ = ['E', 'S', 'S', 'W'];
+  const EXIT_CELLS = { E: [[23, 9], [23, 10]], S: [[11, 19], [12, 19]], W: [[0, 9], [0, 10]] };
+  const ARRIVE = { E: [1, 9, 'right'], W: [22, 9, 'left'], S: [11, 3, 'down'] };
+  const PRINT_FROM = [[11, 1], [11, 3], [1, 9], [22, 9], [3, 15]];   // north entrance, loop-back spots, grove nook
+  const HUB = [11, 10];
+  function mazePrints() {
+    const W = MLP.g[0].length, H = MLP.g.length;
+    const open = (x, y) => x >= 0 && y >= 0 && x < W && y < H && !!MLP.walk[y][x] && !(x === 11 && y === 8) && ' gw'.includes(MLP.d[y][x]);
+    const N4 = [[1, 0, 'right'], [-1, 0, 'left'], [0, 1, 'down'], [0, -1, 'up']];
+    const field = (targets) => {   // BFS distance from a set of cells
+      const d = new Map(), q = [];
+      for (const [x, y] of targets) { d.set(x + ',' + y, 0); q.push([x, y]); }
+      for (let i = 0; i < q.length; i++) {
+        const [x, y] = q[i], k = d.get(x + ',' + y);
+        for (const [dx, dy] of N4) { const nx = x + dx, ny = y + dy, kk = nx + ',' + ny; if (open(nx, ny) && !d.has(kk)) { d.set(kk, k + 1); q.push([nx, ny]); } }
+      }
+      return d;
+    };
+    // walk downhill on a distance field, keeping the heading while it still descends (straight runs, few turns)
+    const walk = (d, from, stop) => {
+      const path = [];
+      let [x, y] = from, head = null;
+      for (let n = 0; n < 200 && d.get(x + ',' + y) > 0 && !(stop && stop(x, y)); n++) {
+        const k = d.get(x + ',' + y);
+        const opts = N4.filter(([dx, dy]) => d.get((x + dx) + ',' + (y + dy)) === k - 1);
+        const pick = opts.find((o) => o[2] === head) || opts[0];
+        path.push([x, y, pick[2]]);
+        x += pick[0]; y += pick[1]; head = pick[2];
+      }
+      path.push([x, y, head || 'down']);
+      return path;
+    };
+    const out = [];
+    SEQ.forEach((ex, k) => {
+      const toExit = field(EXIT_CELLS[ex]);
+      const prints = [];
+      const near = (x, y) => prints.some((p) => Math.max(Math.abs(p[0] - x), Math.abs(p[1] - y)) <= 1);
+      const lay = (path, i0) => { for (let i = i0; i < path.length; i += 2) if (!near(path[i][0], path[i][1])) prints.push(path[i]); };
+      const trail = walk(toExit, HUB);
+      lay(trail, 0);
+      const onTrail = new Set(trail.map(([x, y]) => x + ',' + y));
+      const toTrail = field(trail);
+      for (const a of PRINT_FROM) {
+        if (onTrail.has(a[0] + ',' + a[1])) continue;
+        // a spur joins the trail where it meets it — or, when the exit is closer than the trail, runs straight out
+        const spur = toExit.get(a[0] + ',' + a[1]) < toTrail.get(a[0] + ',' + a[1]) ? walk(toExit, a) : walk(toTrail, a);
+        lay(spur.slice(0, -1), 1);
+      }
+      for (const [x, y, dir] of prints) {
+        if ('gw'.includes(MLP.d[y][x])) MLP.d[y][x] = ' ';
+        out.push({ t: 'c2_footprint', x, y, dir, seq: 40 - (toExit.get(x + ',' + y) || 0) / 2, spirit: true, step: k,
+          if: (st) => !!st.flags.ch2_lingshi && !st.flags.ch2_maze_solved && (st.vars.loopStep || 0) === k });
+      }
+    });
+    return out;
+  }
+  const printObjs = mazePrints();
 
   // music sinks a little further every loop (5.3: pitch drift → volume fallback)
   function loopMusic() {
@@ -793,7 +848,6 @@
       bus.gain.setTargetAtTime(G.settings.music * k, ac.currentTime, 0.6);
     } catch (e) { /* audio not available */ }
   }
-  const ARRIVE = { E: [1, 9, 'right'], W: [22, 9, 'left'], S: [11, 3, 'down'] };
   async function loopBack(S, dir) {
     const [x, y, d] = ARRIVE[dir];
     await S.fadeOut(dur(0.5), '#dfe8e4');
@@ -826,8 +880,7 @@
       else await S.say('baizhi:think', '……西南的蕨叢後面，那道光還在唱歌。');
       return;
     }
-    // solving: the true path is east, south, south, west
-    const SEQ = ['E', 'S', 'S', 'W'];
+    // solving: the true path is east, south, south, west (SEQ)
     const k = v.loopStep || 0;
     if (SEQ[k] === dir) {
       v.loopStep = k + 1;
@@ -835,11 +888,48 @@
       if (v.loopStep >= 4) { await mazeSolved(S); return; }
       await loopBack(S, dir);
       if (vis()) S.toast('銀色的腳印，又往前延伸了。');
+      else if ((v.c2_wrong || 0) >= 3) S.toast(MOCHI_TOAST[SEQ[v.loopStep]]);   // 麻糬 keeps leading once she has started
     } else {
       v.loopStep = 0;
+      v.c2_wrong = (v.c2_wrong || 0) + 1;
       await loopBack(S, dir);
       await S.say('xinghe:think', '……又回來了。腳印不是往這邊。');
+      if (v.c2_wrong >= 3) await mazeHint(S, v.c2_wrong === 3);
     }
+  }
+  // safety net: after three wrong turns, 麻糬 (who smells spirit things, 靈視 or not) sniffs out the next exit.
+  // Without the cat, 白芷 feels it. From then on every arrival in the clearing names the next exit.
+  const MOCHI_HINT = {
+    E: '（麻糬貼著地面嗅了嗅，朝東邊的路口跑了幾步，回頭「喵」了一聲。）',
+    S: '（麻糬貼著地面嗅了嗅，朝南邊的路口跑了幾步，回頭「喵」了一聲。）',
+    W: '（麻糬貼著地面嗅了嗅，朝西邊的路口跑了幾步，回頭「喵」了一聲。）',
+  };
+  const MOCHI_TOAST = { E: '麻糬朝東邊的路口喵了一聲。', S: '麻糬朝南邊的路口喵了一聲。', W: '麻糬朝西邊的路口喵了一聲。' };
+  const BAIZHI_HINT = { E: '……東邊。那邊的霧，比較薄。', S: '……南邊。那邊的霧，比較薄。', W: '……西邊。那邊的霧，比較薄。' };
+  async function mazeHint(S, first) {
+    const next = SEQ[V().loopStep || 0];
+    if (hasPet('mochi')) {
+      if (!first) { S.toast(MOCHI_TOAST[next]); return; }
+      await pet(S, 'mochi', '♪', MOCHI_HINT[next]);
+      await S.say('xinghe:surprise', '麻糬聞得到那些腳印？……好，跟著麻糬走！');
+    } else if (inParty('baizhi')) await S.say('baizhi:think', BAIZHI_HINT[next]);
+    else S.toast(MOCHI_TOAST[next]);
+  }
+  // 靈視 running out inside the unsolved maze: say so, and point at the way to get it back
+  async function sightLost(S) {
+    await S.say('xinghe:surprise', '啊，腳印……不見了！');
+    if (S.hasItem('lingxun')) await S.say('baizhi:think', '靈視退了。包袱裡還有七彩靈蕈，從「物品」再吃一朵吧。');
+    else await S.say('baizhi:think', '靈蕈吃完了。西南蕨叢後面的蕈林，應該還採得到。');
+  }
+  function mazeTick(dt, ms) {
+    forestTick(dt, ms);
+    const v = V(), now = v.vision || 0, was = ms.c2vis == null ? now : ms.c2vis;
+    ms.c2vis = now;
+    if (!F('ch2_lingshi') || F('ch2_maze_solved')) return;
+    if (was > 10 && now <= 10 && now > 0) G.UI.toast('靈視快要消退了。', { icon: 'mushroom' });
+    if (was > 0 && now <= 0) v.c2_sightLost = true;   // in vars: survives a loop-back warp or a save before it is said
+    if (now > 0) delete v.c2_sightLost;
+    else if (v.c2_sightLost && !G.Script.busy() && G.Scenes.top() === ms) { delete v.c2_sightLost; G.Script.run(sightLost); }
   }
   async function singingLight(S) { // 2-4
     await S.say('xinghe:hurt', '……我們被魔神仔牽著走了。');
@@ -924,6 +1014,8 @@
       } },
       { id: 'blind', trigger: 'auto', once: true, if: (st) => st.flags.ch2_lingshi && !st.flags.ch2_maze_solved && !(st.vars.vision > 0), run: async (S) => {
         await S.say('xinghe:think', '沒有靈視，我看不到那些腳印……');
+        if (S.hasItem('lingxun')) await S.say('baizhi:think', '靈視退了。包袱裡還有七彩靈蕈，從「物品」再吃一朵吧。');
+        else await S.say('baizhi:think', '靈蕈吃完了。西南蕨叢後面的蕈林，應該還採得到。');
       } },
       { id: 'exit_n', trigger: 'touch', x: 11, y: 0, w: 2, h: 1, run: (S) => loopExit(S, 'N') },
       { id: 'exit_s', trigger: 'touch', x: 11, y: 19, w: 2, h: 1, run: (S) => loopExit(S, 'S') },
@@ -934,7 +1026,7 @@
       { x: 1, y: 15, h: 3, to: 'mist_grove', tx: 28, ty: 14, tdir: 'left', if: (st) => !!st.flags.ch2_grove_open },
     ],
     onEnter: async () => { loopMusic(); },
-    onUpdate: (dt, ms) => forestTick(dt, ms),
+    onUpdate: (dt, ms) => mazeTick(dt, ms),
   });
 
   // =================================================================================================
@@ -1201,6 +1293,7 @@
     S.quest('q_ch2_main', 1);
     S.objective('用靈視找出迷陣的出口');
     S.gather();
+    S.cameraFollow();   // release the stele framing (S.camera(15, 8) above) — the player walks off from here
     await tutorial('tut_lingshi');
     G.Tweens.to(fx, { line: 0 }, dur(6));
   }

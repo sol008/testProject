@@ -772,6 +772,29 @@ test('map/script: S.move resolves for the player, an NPC and a FOLLOWER (party m
   A.ok(done.npc, 'npc move did not resolve');
   A.ok(done.follower, "follower move never resolved — map.js updateFollowers() ignores updateMove()'s arrival and never calls f.onArrive, so `await S.move/S.walkTo(<party member>)` soft-locks cutscenes");
 });
+test('map/script: a cutscene pan (S.camera) left in place is released to the player when the script ends; S.cameraHold keeps it', async ({ G, ctx }) => {
+  G.ctx = ctx.document.createElement('canvas').getContext('2d');
+  if (!G.Maps.get('qa_cam')) G.Maps.define('qa_cam', { name: 'QA', start: [3, 3], tiles: Array(30).fill('.'.repeat(40)), npcs: [{ id: 'qa_npc', sprite: 'old_m', x: 30, y: 20 }] });
+  G.Party.join('qa_hero', 1);
+  G.Mapx.goto('qa_cam', 3, 3, 'down');
+  const step = async (sec) => { for (let t = 0; t < sec; t += 0.05) { G.Timers.update(0.05); G.Tweens.update(0.05); G.Scenes.update(0.05); await null; } };
+  const ms = G.mapScene;
+  // ch2 mist_grove 2-5 bug: the script pans to the stele and never calls S.cameraFollow() → the player walks out of frame
+  G.Script.run(async (S) => { await S.camera(30, 20, 0.1); });
+  await step(0.5);
+  A.ok(ms.cam.tx == null && ms.cam.follow === 'player', 'camera still parked after the script ended (MapScene.update camRelease): ' + JSON.stringify(ms.cam) + ' busy=' + G.Script.busy());
+  // a follow on an NPC left behind is released too
+  G.Script.run(async (S) => { S.cameraFollow('qa_npc'); });
+  await step(0.3);
+  A.eq(ms.cam.follow, 'player');
+  // explicit hold: the framing survives the end of the script, until cameraFollow()
+  G.Script.run(async (S) => { await S.camera(30, 20, 0.1); S.cameraHold(); });
+  await step(0.5);
+  A.ok(ms.cam.tx != null, 'S.cameraHold() should keep the camera parked');
+  G.Script.run(async (S) => { S.cameraFollow(); });
+  await step(0.3);
+  A.ok(ms.cam.tx == null && !ms.cam.hold, 'cameraFollow() clears the hold');
+});
 
 // ------------------------------------------------------------------ content-driven sanity
 test('content: every character can be created at lv 1..50 with finite positive stats', ({ G }) => {

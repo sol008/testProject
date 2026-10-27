@@ -712,7 +712,7 @@ function chartLevelCurve() {
   }
   s += legend([...styles.map(([, l, c]) => [l, c, 'line']), ['頭目設計等級', 'var(--band)', 'rect']], x0, 22) + '</svg>';
   const tableMd = TABLES.balance('levels');
-  return figure('level_curve', '推薦等級曲線', '各章結束時的等級（docs/BALANCE.md「Progression & economy」模擬：速攻＝逃過所有野戰、一般＝打路上遇到的怪並做一半心燈、全收集＝每隻怪約 1.5 次＋所有支線）；灰色直條是該章頭目的設計等級。', s, tableMd);
+  return figure('level_curve', '推薦等級曲線', '各章結束時的等級（docs/BALANCE.md「Progression & economy」模擬：速攻＝逃過所有野戰、一般＝打路上遇到的怪並做一半心燈、全收集＝每隻怪約 1.5 次＋所有支線）；灰色直條是該章頭目的設計等級。等級的小數代表往下一級的進度（5.7 ＝ Lv5、已走完七成）。', s, tableMd);
 }
 
 function chartBossHp(list, id, title) {

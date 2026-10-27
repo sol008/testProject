@@ -1840,6 +1840,7 @@
     S.remove('c3_hong'); S.remove('c3_xiulan'); S.remove('c3_wu');
     S.objective(mainObj());
     S.toast('南門已開放。也可以到龍山寺正殿前賞月。', 'lantern');
+    S.cameraFollow();
   }
 
   async function bkMoon(S) { // 3-15 月下
@@ -2347,6 +2348,7 @@
     S.quest('q_ch3_main', 4);
     S.objective(mainObj());
     S.toast('艋舺有幾件放不下的事：阿蓮、廟裡的哭聲、八甲庄的老鬼。', 'scroll');
+    S.cameraFollow();
   }
   async function xiaomeiReunion(S) { // 4-3 step 3
     S.flag('ch3_chunpo_wait', false);
@@ -2827,6 +2829,7 @@
     await S.give('c3_wanguo_lite', 5);
     S.remove('c3_alian');
     S.objective(mainObj());
+    S.cameraFollow();
   }
   G.Maps.define('bangka_riverbank', {
     name: '舊渡頭', subtitle: '河岸夜路', place: 'bangka',

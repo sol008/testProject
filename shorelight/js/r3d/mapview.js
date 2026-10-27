@@ -881,9 +881,13 @@ G.Map3D = (() => {
       for (const [, node] of this.nodes) {
         if (!node.visible) continue;
         const o = node.userData.o, md = node.userData.def;
+        const fade = (o.spirit ? 0.7 + 0.25 * Math.sin(this.t * 3) : 1) * (o.alpha != null ? Math.min(1, o.alpha) : 1);
+        // models that animate their own opacity (md.ownFade) read the spirit/alpha fade here and apply it themselves:
+        // the generic pass below would freeze their opacity at whatever value it had on the first faded frame
+        node.userData.fade = fade;
         if (md && md.update) { try { md.update(node.children[0], o, this.t, dt); } catch (e) { G.warnOnce('mupd ' + o.t, e); } }
         if (node.children[0] && node.children[0].userData.fallback) node.children[0].traverse((n) => { if (n.userData.billboard) n.rotation.y = this.yaw; });
-        const fade = (o.spirit ? 0.7 + 0.25 * Math.sin(this.t * 3) : 1) * (o.alpha != null ? Math.min(1, o.alpha) : 1);
+        if (md && md.ownFade) continue;
         if (fade < 0.999 || node.userData.faded) {
           node.userData.faded = true;
           node.traverse((n) => {

@@ -8,6 +8,7 @@
 //   node tools/test/e2e.js --workers 4           # parallel pages for map/battle sweeps (default 4)
 //   node tools/test/e2e.js --no-sweep            # skip the per-map and per-troop sweeps
 //   node tools/test/e2e.js --headed --shots      # visible browser / save PNGs to tools/test/out/
+//   node tools/test/e2e.js --3d --r3lite         # 3D renderer on, in its lite mode (headless software WebGL)
 //
 // Every test collects console errors, uncaught page errors, unhandled rejections and G.lastError.
 // A test fails if its assertions fail OR the game logged an error while it ran.
@@ -33,6 +34,9 @@ const NO_SWEEP = argv.includes('--no-sweep');
 // enables the '3d' test; use it on a machine with a real GPU (add --headed).
 const FORCE_3D = argv.includes('--3d');
 const NO_3D = argv.includes('--no3d');
+// --r3lite appends ?r3lite (half resolution, no shadows/post) to every page: with --3d this makes the 3D path
+// practical under headless SwiftShader (e.g. `--3d --r3lite --only map --maps mist_loop`)
+const R3LITE = argv.includes('--r3lite');
 const TSCALE = Math.max(1, +opt('slow', 1) || 1); // --slow 3 multiplies every timeout (busy machines)
 const OUT = path.join(__dirname, 'out');
 fs.mkdirSync(OUT, { recursive: true });
@@ -153,6 +157,7 @@ class Session {
       else if (m.type() === 'warning') this.warnings.push(t.slice(0, 300));
     });
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 1500)));
+    if (R3LITE) query += (query.includes('?') ? '&' : '?') + 'r3lite';
     await this.page.goto(BASE + query, { timeout: 120000 * TSCALE });
     await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: (o.timeout || 60000) * TSCALE });
     // Autoplay/test hooks must never mask input bugs: every e2e test runs with them OFF.
@@ -192,7 +197,10 @@ class Session {
         if (top === 'ShopScene') { const s = G.Scenes.top(); s.mode = 'menu'; s.menu.idx = 2; G.Input._press('ok'); }
         if (top === 'MenuScene' || top === 'SaveScene' || top === 'SettingsScene' || top === 'WorldMapScene') G.Input._press('cancel');
         else if (!['MapScene', 'DialogScene', 'ChoiceScene', 'BattleScene', 'ShopScene', 'NarrateScene', 'TravelScene', 'BacklogScene'].includes(top)) G.Input._press('ok'); // tutorials, title cards, minigames…
-        return G.Script.busy() || top !== 'MapScene' ? 'busy' : 'idle';
+        // not idle while an auto event is about to start on the next update (one script just ended, the next
+        // auto event — e.g. the destination map's entry cutscene — has not been picked up by checkAuto yet)
+        const pending = top === 'MapScene' && G.Debug && G.Debug.pendingAuto && G.Debug.pendingAuto();
+        return G.Script.busy() || top !== 'MapScene' || pending ? 'busy' : 'idle';
       }, choice);
       if (st === 'idle') break;
       if (st === 'gameover') { await this.ev(() => G.Input._hold('skip', false)); return 'gameover'; }
@@ -202,7 +210,7 @@ class Session {
         !G.mapScene.player.moving && G.mapScene.followers.every((f) => !f.moving) && G.mapScene.npcs.every((n) => !n.moving));
       quiet = silent ? quiet + 0.5 : 0;
       if (quiet >= 15) {
-        this.lastStuck = await this.ev(() => ({ queues: [G.mapScene.player, ...G.mapScene.followers, ...G.mapScene.npcs].filter((a) => a.queue.length || a.onArrive).map((a) => `${a.id}(queue ${a.queue.length}${a.onArrive ? ', awaiting arrival' : ''})`) }));
+        this.lastStuck = await this.ev(() => ({ map: G.mapScene.def.id, queues: [G.mapScene.player, ...G.mapScene.followers, ...G.mapScene.npcs].filter((a) => a.queue.length || a.onArrive).map((a) => `${a.id}(queue ${a.queue.length}${a.onArrive ? ', awaiting arrival' : ''})`) }));
         await this.ev(() => G.Input._hold('skip', false));
         return 'stuck';
       }
@@ -1005,37 +1013,61 @@ async function mapSweep(browser, info) {
         await s.shot('map_' + mid);
         await s.drainGameErrors();
         if (s.realErrors().length) throw new Error('errors while loading/rendering the map');
+        // Hand the player control the way the game does before poking anything: let the map's entry auto events
+        // (started by the real game loop as soon as the map loads) run to completion. Talking to an NPC or firing
+        // an event while such a cutscene is still running starts a SECOND script concurrently — the engine never
+        // does that (checkAuto, touch events and interaction all wait for !G.Script.busy()) — and one script's
+        // fadeOut/warp then orphans the other's pending S.say / S.move promise (G.Dialog.close drops the line's
+        // resolver; a warp replaces the actor whose move queue held it), which reads as a soft-lock no player can hit.
+        // If the entry cutscene takes the party to another map, come back to `mid` with the state it left, as a
+        // player returning to the map would (the entry cutscene's own conditions are then normally spent).
+        const onMid = () => s.ev((m) => !!(G.mapScene && G.mapScene.def.id === m), mid).catch(() => false);
+        const stuckMsg = (what) => `soft-lock ${what}: script busy with nothing on screen for 15s (map ${s.lastStuck.map}; actors: ${s.lastStuck.queues.join(', ') || 'none'})`;
+        // true once the game is idle on `mid`; false (after a warning) if it cannot get there — the remaining checks
+        // are then skipped, since anything fired now would run concurrently with a script the player is still watching
+        const settle = async (what, maxSec = 90) => {
+          for (let k = 0; k < 3; k++) {
+            const r = await s.drive(maxSec);
+            if (r === 'stuck') throw new Error(stuckMsg(what));
+            if (r === 'timeout') { warn(`${what}: auto events did not finish within ${maxSec}s of auto-advance; remaining NPC/event checks skipped`); return false; }
+            if (r === 'gameover') { warn(`${what}: led to a game over; reloading`); await s.open(DEBUG_Q(mid), { waitMap: true }); continue; }
+            if (await onMid()) return true;
+            await s.ev((m) => { const d = G.Maps.get(m); const st = d.start || [5, 5]; G.Mapx.goto(m, st[0], st[1], 'down'); }, mid);
+          }
+          warn(`${what}: could not get back to an idle '${mid}' (its entry cutscene keeps leaving the map); remaining NPC/event checks skipped`);
+          return false;
+        };
+        const reload = async (what) => { await s.open(DEBUG_Q(mid), { waitMap: true }); return settle(`map-entry script (${what})`); };
+        const fin = async () => { const bad = await s.ev(() => __qa.numericSanity()); assert(!bad.length, 'state corrupted: ' + bad.join(', ')); };
+        if (!(await settle('map-entry script'))) return fin();
         // talk to every NPC (each in turn, from the current state)
-        const auto = await s.drive(90);
-        if (auto === 'stuck') throw new Error(`soft-lock: map-entry script busy with nothing on screen for 15s (actors: ${s.lastStuck.queues.join(', ') || 'none'})`);
-        if (auto === 'timeout') warn('auto events on map entry did not finish within 90s of auto-advance');
-        if (auto === 'gameover' || !(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid))) { warn('map-entry script left the map; NPC checks use a fresh load'); await s.open(DEBUG_Q(mid), { waitMap: true }); }
         const npcs = await s.ev(() => G.mapScene.npcs.filter((n) => n.talk || (n.def && n.def.talk)).map((n) => n.id));
         await s.ev(() => { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; });
         for (const nid of npcs) {
           await s.ev((n) => { const m = G.mapScene; const a = m.actor(n); if (!a) return; const p = m.player; m.interactTarget = { kind: 'npc', npc: a }; p.dir = 'down'; m.doInteract(); }, nid);
           const r = await s.drive(40);
-          if (r === 'stuck') throw new Error(`soft-lock talking to npc '${nid}': script busy with nothing on screen for 15s (actors: ${s.lastStuck.queues.join(', ') || 'none'})`);
+          if (r === 'stuck') throw new Error(stuckMsg(`talking to npc '${nid}'`));
           if (r === 'timeout') warn(`npc ${nid}: talk script did not finish within 40s (top=${await s.top()})`);
-          if (r === 'gameover') { warn(`npc ${nid}: talk led to a game over`); await s.open(DEBUG_Q(mid), { waitMap: true }); }
-          if (!(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid))) await s.open(DEBUG_Q(mid), { waitMap: true });
+          if (r === 'gameover') warn(`npc ${nid}: talk led to a game over`);
+          if ((r === 'gameover' || !(await onMid())) && !(await reload(`after npc '${nid}'`))) return fin();
           await s.drainGameErrors();
           if (s.realErrors().length) throw new Error(`errors while talking to npc '${nid}'`);
         }
-        // run every action/touch/auto event once on a fresh load
+        // run every action/touch/auto event once, starting from a fresh load; auto events run by settle() (the
+        // fresh load's entry cutscene, or one enabled by the previous event) are no longer eventOk and are skipped
         const evs = await s.ev(() => (G.mapScene.def.events || []).map((e, i) => ({ i, trig: e.trigger, id: e.id || `${e.x},${e.y}` })));
-        if (evs.length) await s.open(DEBUG_Q(mid), { waitMap: true });
+        if (evs.length && !(await reload('before events'))) return fin();
         for (const ev of evs) {
-          await s.ev((i) => { const m = G.mapScene; const e = m.def.events[i]; if (e && m.eventOk(e)) m.runEvent(e); }, ev.i);
+          if (!(await settle(`auto event before '${ev.id}'`))) return fin();
+          await s.ev((i) => { const m = G.mapScene; const e = m.def.events[i]; if (e && !G.Script.busy() && m.eventOk(e)) m.runEvent(e); }, ev.i);
           const r = await s.drive(60);
-          if (r === 'stuck') throw new Error(`soft-lock in event '${ev.id}': script busy with nothing on screen for 15s (actors: ${s.lastStuck.queues.join(', ') || 'none'})`);
+          if (r === 'stuck') throw new Error(stuckMsg(`in event '${ev.id}'`));
           if (r === 'timeout') warn(`event ${ev.id} (${ev.trig}): script did not finish within 60s (top=${await s.top()})`);
-          if (r === 'gameover' || !(await s.ev((m) => G.mapScene && G.mapScene.def.id === m, mid).catch(() => false))) await s.open(DEBUG_Q(mid), { waitMap: true });
+          if ((r === 'gameover' || !(await onMid())) && !(await reload(`after event '${ev.id}'`))) return fin();
           await s.drainGameErrors();
           if (s.realErrors().length) throw new Error(`errors while running event '${ev.id}'`);
         }
-        const bad = await s.ev(() => __qa.numericSanity());
-        assert(!bad.length, 'state corrupted: ' + bad.join(', '));
+        await fin();
       },
     });
   });
