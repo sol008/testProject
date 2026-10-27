@@ -85,6 +85,8 @@ vision realms, and helping each other across.
 - Companion: **麻糬 (Mochi)**, a big, very fluffy long-haired dilute calico cat from a 九份 teahouse. She
   senses the lamp-spirit's light and adopts 白芷 in chapter 1. Serene and regal, she never speaks (糰子's opposite).
   In battle she is a water-element support assist (healing purr). On the field she sniffs out hidden spirit items.
+  Look (client pick, v2 #04 水燈守望): her signature image is keeping watch beside a house-shaped 中元 water lantern, its
+  light caught in her eyes; she was the first to see 白芷 drift back from the sea. The water lantern is her emblem (UI icon, battle summon).
 - Second cat: **芋圓 (Yuyuan, "Taro Ball")**, the teahouse's other cat. He is a huge, chubby blue-grey tabby with olive
   eyes and a deadpan "judging you" stare, and he decides 星河 is *his* human (to 星河's loud protests). He is silent,
   heavy and unimpressed by ghosts. In battle he is an earth-element "body-block" assist (guards the weakest ally). On the
