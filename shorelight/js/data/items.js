@@ -201,3 +201,42 @@ G.Data.items = {
   key_flag: { name: '順風旗', desc: '頭城搶孤奪下的順風旗，最後的航程需要它。', type: 'key', price: 0, ch: 10, icon: 'scroll' },
   key_homeletter: { name: '唐山客的家書', desc: '黑水溝上一個溺死的唐山客託付的信，寫著回不去的家鄉地址。', type: 'key', price: 0, ch: 11, icon: 'letter' },
 };
+
+// ===================================================================================== engine fixes to chapter items
+// Chapter files (js/maps/chN_*.js) load after this file and Object.assign their own items into G.Data.items. A fix
+// listed here is merged into that chapter definition the moment it is assigned (top-level fields replace; `use`
+// merges), so the id keeps working everywhere without touching the chapter file. Keep the reason next to each fix.
+G.Data.itemFixes = {
+  // 回魂香 (ch6 藥鋪 / chest c6_12): the design (docs/story/ch6_tainan.md, item table) is a WHOLE-PARTY revive at
+  // 30% for 1200 文; the chapter data had a single-target 60% revive. Battle + field menu handle target 'allies' +
+  // revive (the fallen are included in the target pool).
+  c6_revive_incense: {
+    desc: '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。', price: 1200,
+    use: { target: 'allies', revive: 0.3 },
+  },
+};
+(function () {
+  const items = G.Data.items;
+  const merge = (v, fix) => {
+    if (!v || typeof v !== 'object') return v;
+    const out = Object.assign({}, v, fix);
+    if (fix.use) out.use = Object.assign({}, v.use || {}, fix.use);
+    return out;
+  };
+  for (const id of Object.keys(G.Data.itemFixes)) {
+    const fix = G.Data.itemFixes[id];
+    if (items[id]) { items[id] = merge(items[id], fix); continue; }
+    // not defined yet: the first assignment (the chapter's Object.assign) stores the merged definition as a plain
+    // data property; until then the id stays non-enumerable so loops over G.Data.items never see an empty entry
+    Object.defineProperty(items, id, {
+      configurable: true, enumerable: false,
+      get() { return undefined; },
+      set(v) { Object.defineProperty(items, id, { value: merge(v, fix), writable: true, enumerable: true, configurable: true }); },
+    });
+  }
+  if (G.I18N && G.I18N.add) {
+    G.I18N.add({
+      '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。': 'A whole bundle of soul-calling incense; its smoke finds every soul that has lost its way. Revives all fallen allies with 30% HP.',
+    });
+  }
+})();

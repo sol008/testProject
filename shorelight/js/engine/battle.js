@@ -324,7 +324,7 @@ G.Battle = (() => {
       const s = G.Data.skills[id];
       let targets;
       if (s.target === 'enemies' || s.target === 'random') targets = this.alive('enemy');
-      else if (s.target === 'allies') targets = this.alive('party');
+      else if (s.target === 'allies') targets = s.revive ? this.party.slice() : this.alive('party'); // revive:true also lifts the fallen
       else if (s.target === 'self') targets = [u];
       else targets = [target || this.alive('enemy')[0]];
       return { kind: s.ultimate ? 'ultimate' : 'skill', skill: id, targets };
@@ -1512,7 +1512,10 @@ G.Battle = (() => {
         case 'enemies': pool = sc.alive('enemy'); all = true; break;
         case 'random': pool = sc.alive('enemy'); all = true; break;
         case 'ally': pool = sc.alive('party'); break;
-        case 'allies': pool = cmd.skill && G.Data.skills[cmd.skill] && G.Data.skills[cmd.skill].revive ? sc.party.slice() : sc.alive('party'); all = true; break;
+        case 'allies': { // whole-party revives (skills with revive:true, items with use.revive) include the fallen
+          const sk = cmd.skill && G.Data.skills[cmd.skill], it = cmd.item && G.Data.items[cmd.item];
+          pool = (sk && sk.revive) || (it && it.use && it.use.revive) ? sc.party.slice() : sc.alive('party'); all = true; break;
+        }
         case 'deadAlly': pool = sc.party.filter((p) => p.dead); if (!pool.length) pool = sc.alive('party'); break;
         case 'self': pool = [this.u]; break;
         default: pool = sc.alive('enemy');
