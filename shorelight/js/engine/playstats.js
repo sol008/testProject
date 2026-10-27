@@ -287,7 +287,7 @@ G.PlayStats = (() => {
 
   const fmt = (sec) => G.U.fmtTime(Math.max(0, sec || 0));
   P.fmt = fmt;
-  P.chapterName = (ch) => (G.Chapters && G.Chapters[ch]) || ('第' + ch + '章');
+  P.chapterName = (ch) => (G.Chapters && G.Chapters[ch]) || ('#' + ch);
   P.bossName = (b) => {
     const d = b.enemy && G.Data.enemies[b.enemy];
     return d ? d.name : b.key;

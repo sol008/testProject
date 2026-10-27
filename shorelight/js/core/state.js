@@ -53,7 +53,9 @@ G.newStats = function () {
 G.statChapter = function (stats, ch) {
   const k = String(ch | 0);
   let c = stats.chapters[k];
-  if (!c) c = stats.chapters[k] = { time: 0, act: {}, battles: 0, wins: 0, losses: 0, gameOvers: 0, flees: 0, retries: 0 };
+  if (!c || typeof c !== 'object') c = stats.chapters[k] = {};
+  for (const n of ['time', 'battles', 'wins', 'losses', 'gameOvers', 'flees', 'retries']) if (typeof c[n] !== 'number') c[n] = 0;
+  if (!c.act || typeof c.act !== 'object') c.act = {};
   for (const a of G.STAT_ACTS) if (typeof c.act[a] !== 'number') c.act[a] = 0;
   return c;
 };
@@ -306,7 +308,9 @@ G.Save = {
     try {
       const d = JSON.parse(localStorage.getItem(G.Save.key(slot)));
       if (!d) return false;
-      const st = G.migrateStats(Object.assign(G.newState(), d.state));
+      const st = Object.assign(G.newState(), d.state);
+      if (!d.state || !d.state.stats) st.stats = null; // made before play statistics existed
+      G.migrateStats(st);
       // play statistics are a record of real play, not of the save: loading an older save of the same
       // playthrough (after a game over, or after quitting without saving) keeps the time/battles played since
       if (G.PlayStats) G.PlayStats.adoptLoaded(st);

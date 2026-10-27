@@ -353,6 +353,134 @@ test('settings: defaults, persistence across reloads, corrupt storage falls back
   A.eq(c.G.settings.battleSpeed, 1);
 });
 
+// ------------------------------------------------------------------ play statistics (js/engine/playstats.js)
+// a controllable real-time clock: tick(sec) advances it and runs one PlayStats.tick of that length
+function playClock(G) {
+  let now = 1000;
+  G.PlayStats.clock = () => now;
+  G.PlayStats.input(now);
+  G.inGame = true;
+  return {
+    get now() { return now; },
+    tick(sec, step = 0.5) { for (let t = 0; t < sec - 1e-9; t += step) { now += step; G.PlayStats.tick(step); } },
+    input() { G.PlayStats.input(now); },
+  };
+}
+test('playstats: time counts only after input confirms it; total() includes the pending part', ({ G }) => {
+  const c = playClock(G);
+  c.tick(10);
+  A.near(G.state.playtime, 0, 1e-9, 'nothing committed before the next input');
+  A.near(G.PlayStats.total(), 10, 1e-9, 'HUD total includes pending time');
+  c.input();
+  A.near(G.state.playtime, 10, 1e-9);
+  A.near(G.state.stats.chapters['0'].time, 10, 1e-9);
+  A.near(G.state.stats.chapters['0'].act.explore, 10, 1e-9, 'no scenes, no script → exploration');
+});
+test('playstats: AFK — over 3 min without input winds back to the last input and stops the clock', ({ G }) => {
+  const c = playClock(G);
+  c.tick(30); c.input();
+  c.tick(200);                                            // walks away
+  A.near(G.PlayStats.total(), 30, 1e-9, 'the 3 idle minutes are subtracted');
+  A.eq(G.PlayStats.stopReason(), 'afk');
+  c.tick(600);
+  A.near(G.PlayStats.total(), 30, 1e-9, 'nothing counts while AFK');
+  c.input(); c.tick(5); c.input();                        // back at the keyboard
+  A.near(G.state.playtime, 35, 1e-9);
+  A.eq(G.state.stats.afk.count, 1); A.near(G.state.stats.afk.lost, 180, 0.6);
+  // a held key (walking) is input too
+  c.tick(5); c.input(); G.Input._hold('right', true); c.tick(400); G.Input._hold('right', false);
+  A.ok(G.PlayStats.total() > 435, 'holding a direction keeps the clock running');
+});
+test('playstats: hidden tab, unfocused window and pause stop the clock', ({ G }) => {
+  const c = playClock(G);
+  c.tick(10);
+  G.PlayStats.setHidden(true);
+  A.near(G.state.playtime, 10, 1e-9, 'hiding the tab commits what was played');
+  c.tick(60);
+  A.near(G.PlayStats.total(), 10, 1e-9, 'hidden: not counted');
+  G.PlayStats.setHidden(false); c.tick(4);
+  G.PlayStats.setBlurred(true); c.tick(60);
+  A.near(G.PlayStats.total(), 14, 1e-9, 'blurred: not counted');
+  G.PlayStats.setBlurred(false);
+  G.PlayStats.paused = true; c.tick(30); G.PlayStats.paused = false;
+  A.near(G.PlayStats.total(), 14, 1e-9, 'paused: not counted');
+  G.PlayStats.tick(30); c.input();
+  A.near(G.state.playtime, 14, 1e-9, 'a frame gap > 2 s (suspended tab / sleep) is never counted');
+  G.inGame = false; c.tick(20); c.input();
+  A.near(G.state.playtime, 14, 1e-9, 'title screen: not counted');
+});
+test('playstats: activity split follows the scene stack and the chapter', ({ G }) => {
+  const c = playClock(G);
+  G.state.chapter = 2;
+  const push = (s) => G.Scenes.push(s);
+  G.Scenes.replace(new G.BlankScene());
+  c.tick(4);                                                            // explore
+  const menu = push(new G.MenuScene()); c.tick(3); G.Scenes.pop(menu);  // menu
+  const shop = push(new G.ShopScene([], () => {})); c.tick(2); G.Scenes.pop(shop);
+  const mini = push({ update() {}, draw() {}, statKind: 'minigame' }); c.tick(5); G.Scenes.pop(mini);
+  const dlg = push(new (class DialogScene { update() {} draw() {} })()); c.tick(6); G.Scenes.pop(dlg);
+  const bs = push(Object.assign(Object.create(G.Battle.Scene.prototype), { update() {}, draw() {} })); c.tick(7); G.Scenes.pop(bs);
+  G.state.chapter = 3; c.tick(1);
+  c.input();
+  const ch2 = G.state.stats.chapters['2'];
+  A.deep(ch2.act, { explore: 4, menu: 5, minigame: 5, dialogue: 6, battle: 7 });
+  A.near(ch2.time, 27, 1e-9); A.near(G.state.stats.chapters['3'].time, 1, 1e-9);
+  A.near(G.state.playtime, 28, 1e-9, 'chapter times add up to playtime');
+  const s = G.PlayStats.summary();
+  A.near(s.total, 28, 1e-9); A.eq(s.chapters.length, 2); A.near(s.act.explore, 5, 1e-9);
+});
+test('playstats: battles, wins, game overs, boss attempts/time; retry keeps the statistics', ({ G }) => {
+  G.Data.enemies.qa_boss = { name: 'QA頭目', boss: true, hp: 100, atk: 1, def: 1, mag: 1, spd: 1 };
+  const c = playClock(G);
+  G.state.chapter = 1;
+  const mk = (troopId, troop, o) => Object.assign(Object.create(G.Battle.Scene.prototype), { troopId, troop, o: o || {}, update() {}, draw() {} });
+  const fight = (sc, sec, r) => { G.PlayStats.battleStart(sc); G.Scenes.push(sc); c.tick(sec); G.PlayStats.battleEnd(sc, r); G.Scenes.pop(sc); c.input(); };
+  fight(mk('qa_t', { enemies: ['qa_boss_x'] }), 3, 'win');
+  fight(mk('qa_t', { enemies: ['qa_boss_x'] }), 2, 'flee');
+  fight(mk('qa_boss_t', { enemies: ['qa_boss'], boss: true }), 10, 'lose');
+  // 重新挑戰: the state reverts to before the fight, the statistics must not
+  const keep = G.PlayStats.keep();
+  G.state = Object.assign(G.newState(), { chapter: 1, playtime: 0 });
+  G.PlayStats.retry('qa_boss_t', keep);
+  fight(mk('qa_boss_t', { enemies: ['qa_boss'], boss: true }), 20, 'win');
+  fight(mk('qa_story', { enemies: ['qa_boss_x'] }, { loseOk: true }), 1, 'lose');
+  const ch = G.state.stats.chapters['1'];
+  A.deep({ b: ch.battles, w: ch.wins, l: ch.losses, go: ch.gameOvers, f: ch.flees, r: ch.retries }, { b: 5, w: 2, l: 2, go: 1, f: 1, r: 1 });
+  const b = G.state.stats.bosses.qa_boss_t;
+  A.deep({ a: b.attempts, w: b.wins, l: b.losses, r: b.retries, fw: b.firstWin, e: b.enemy }, { a: 2, w: 1, l: 1, r: 1, fw: 2, e: 'qa_boss' });
+  A.near(b.time, 30, 1e-9, 'boss time = time in both boss battles');
+  A.near(G.state.playtime, 36, 1e-9);
+  const rep = G.PlayStats.report();
+  A.ok(rep.includes('QA頭目') && rep.includes('0:00:36') && rep.includes('"bosses"'), 'report has the boss, the total and raw JSON');
+});
+test('playstats: survive save/load; old saves migrate (playtime → legacy); a same-run older save keeps newer stats', (env) => {
+  const { G, ctx } = env;
+  const c = playClock(G);
+  G.state.chapter = 4; c.tick(50); c.input();
+  A.ok(G.Save.write(1, null));
+  const saved = JSON.parse(JSON.stringify(G.state.stats));
+  A.ok(G.Save.read(1));
+  A.deep(G.state.stats, saved); A.near(G.state.playtime, 50, 1e-9);
+  // play on without saving, then load the older save of the same playthrough → keep the newer statistics
+  c.tick(20); c.input(); G.state.stats.chapters['4'].gameOvers = 2;
+  A.ok(G.Save.read(1));
+  A.near(G.state.playtime, 70, 1e-9); A.eq(G.state.stats.chapters['4'].gameOvers, 2);
+  // a different playthrough's save is loaded as saved
+  G.state = G.newState();
+  A.ok(G.Save.read(1)); A.ok(G.state.playtime >= 50);
+  // pre-stats save
+  ctx.localStorage.setItem(G.Save.key(5), JSON.stringify({ state: { version: 1, map: 'sandbox', party: [], members: {}, inv: {}, flags: {}, playtime: 1234, chapter: 3 }, meta: {} }));
+  A.ok(G.Save.read(5));
+  A.eq(G.state.stats.legacy, 1234); A.deep(G.state.stats.chapters, {}); A.eq(G.state.playtime, 1234);
+  c.tick(6); c.input();
+  const s = G.PlayStats.summary();
+  A.near(s.total, 1240, 1e-9); A.near(s.chapters[0].time, 6, 1e-9);
+  // partial stats from a newer/older stats version are filled in
+  G.state.stats = { runId: 'x', chapters: { 1: { time: 5 } }, bosses: { b: { attempts: 1 } } };
+  G.migrateStats(G.state);
+  A.eq(G.state.stats.chapters['1'].act.battle, 0); A.eq(G.state.stats.bosses.b.wins, 0); A.eq(G.state.stats.afk.count, 0);
+});
+
 // ------------------------------------------------------------------ battle formulas
 function unit(G, o) {
   return Object.assign({ side: 'party', id: 'u', name: 'u', lv: 1, hp: 500, mhp: 500, mp: 50, mmp: 50, atk: 50, def: 20, mag: 40, spd: 10, luk: 0, elem: null, weak: [], resist: [], immune: [], st: {}, x: 0, y: 0, ox: 0, oy: 0, gauge: 0, dead: false, pose: 'idle', alpha: 1, flash: 0 }, o);
