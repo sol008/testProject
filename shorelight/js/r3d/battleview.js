@@ -138,16 +138,24 @@ G.Battle3D = (() => {
       if (!this.inst) { this.inst = new BBUnit(view, u); this.kind = 'bb'; }
       this.root = new THREE.Group();
       this.root.add(this.inst.root);
-      if (this.kind === 'mon' && u.scale && u.scale !== 1 && !this.inst.scaled) this.inst.root.scale.setScalar(u.scale);
       this.height = this.inst.height || 1.7;
-      if (this.kind === 'mon' && u.scale && !this.inst.scaled) this.height *= u.scale;
+      if (this.kind === 'mon') {
+        // keep the 2D battle proportions (party sprite 150 px ≈ 1.7 m): creature height = 2D h × scale × PX
+        const md = G.Monsters && G.Monsters.get(u.art);
+        const want = (md ? md.h : 160) * (u.scale || 1) * PX;
+        const f = want / Math.max(0.1, this.inst.height || want);
+        this.inst.root.scale.setScalar(f);
+        this.height = want;
+        this.radius = (this.inst.radius || this.height * 0.28) * f;
+      }
       if (this.kind === 'char' && view.bs.c7 && view.bs.c7.childYungui && u.id === 'yungui') { this.inst.root.scale.setScalar(0.74); this.height *= 0.74; }
-      this.radius = this.inst.radius || clamp(this.height * 0.28, 0.35, 2.4);
+      if (this.kind !== 'mon') this.radius = this.inst.radius || clamp(this.height * 0.28, 0.35, 2.4);
       // contact shadow
       const blob = new THREE.Mesh(view.blobGeo, view.blobMat);
       blob.rotation.x = -Math.PI / 2; blob.position.y = 0.02; blob.renderOrder = 1;
       blob.scale.setScalar(Math.max(1, this.radius * 2.2));
       this.blob = blob; this.root.add(blob);
+      if (this.kind === 'mon') blob.visible = false; // Mon3D brings its own contact shadow
       this.pos = V3(); this.home = V3();
       this.yaw = u.side === 'party' ? -Math.PI / 2 : Math.PI / 2;
       this.knock = V3(); this.lunge = 0; this.glowC = new THREE.Color(0, 0, 0); this.glowT = 0; this.glowDur = 0; this.glowAmt = 0; this.glowCol = new THREE.Color();
@@ -351,13 +359,16 @@ G.Battle3D = (() => {
         if (u.flash > 0.05 && uv.kind !== 'bb') uv.glowC.addScalar(u.flash * 0.9);
         if (uv.kind === 'bb') uv.inst.glow(uv.glowC);
         else if (uv.inst.bodyMat && uv.inst.bodyMat.userData.u) { for (const m of [uv.inst.bodyMat, uv.inst.faceMat]) if (m && m.userData.u && m.userData.u.uGlow) m.userData.u.uGlow.value.copy(uv.glowC); }
-        else if (uv.inst.flash) uv.inst.flash(uv.glowC);
+        else if (uv.kind === 'mon') {
+          if (u.flash > 0.05) uv.inst.flash = Math.max(uv.inst.flash || 0, u.flash);
+          if (uv.inst.setPhase && u.phase !== uv.lastPhase) { uv.lastPhase = u.phase; try { uv.inst.setPhase(u.phase || 1); } catch (e) { G.warnOnce('mon phase', e); } }
+        }
         // opacity / death dissolve
         const ghost = !!(bs.c7 && bs.c7.ghost && bs.c7.ghost[u.id] === 'ghost');
         if (uv.inst.setOpacity) uv.inst.setOpacity(u.alpha, ghost);
         if (uv.kind === 'bb') uv.inst.uni.uLight.value.copy(this.arena.unitLight || new THREE.Color(1, 1, 1));
         uv.blob.material.opacity = 0.9;
-        uv.blob.visible = u.alpha > 0.2;
+        uv.blob.visible = u.alpha > 0.2 && uv.kind !== 'mon';
         uv.root.visible = u.alpha > 0.01;
         // hurt shake for billboards
         if (uv.kind === 'bb' && u.pose === 'hurt' && !u.dead) uv.inst.mesh.position.x = Math.sin(u.poseT * 70) * 0.04 * Math.exp(-u.poseT * 6);
@@ -520,6 +531,9 @@ G.Battle3D = (() => {
       if (this.slowT > 0) { this.slowT -= rdt; ts *= this.slowK; }
       const dt = rdt * sp * ts;
       this.rt += rdt; this.t += dt;
+      // shared map systems: no see-through cutout in battle; drive the foliage wind clock
+      if (G.R3M.cut) G.R3M.cut.uCutOn.value = 0;
+      if (G.Wind3D && G.Wind3D.update) { try { G.Wind3D.update(rdt); } catch (e) { G.warnOnce('wind3d', e); } }
       this.syncUnits(dt);
       this.updateUnits(dt, rdt * sp * Math.max(ts, 0.25));
       if (this.fx) this.fx.update(dt);
@@ -1326,7 +1340,7 @@ G.Battle3D.Arena = (() => {
     const th = T[bg] || autoTheme(bg);
     const scene = view.scene;
     const lite = view.lite;
-    const out = { group: new TT.Group(), updaters: [], theme: th, lamps: [], disposables: [] };
+    const out = { group: new TT.Group(), updaters: [], theme: th, lamps: [], disposables: [], models: [] };
     scene.add(out.group);
     const sky = th.sky;
     const fogC = C(th.fog ? th.fog[0] : (sky ? sky.hor : '#000000'));
@@ -1429,7 +1443,10 @@ G.Battle3D.Arena = (() => {
       out.disposables.push(() => G.R3.dispose(merged));
       for (const m of K.staticGroup.children) { m.traverse((n) => { if (n.geometry) n.geometry.dispose(); }); }
     }
-    out.update = (dt, t, v) => { for (const f of out.updaters) f(dt, t, v); };
+    out.update = (dt, t, v) => {
+      for (const f of out.updaters) f(dt, t, v);
+      for (const h of out.models) { const g = h.userData.gm; if (g && g.def && g.def.update) { try { g.def.update(g.node, g.o, t, dt); } catch (e) { G.warnOnce('b3d model upd ' + g.o.t, e); } } }
+    };
     const _f = new TT.Vector3();
     out.follow = (cam) => {
       if (out.sky) out.sky.position.copy(cam.position);
@@ -1439,7 +1456,7 @@ G.Battle3D.Arena = (() => {
       fill.target.position.copy(cam.position).addScaledVector(_f, 10);
       fill.target.updateMatrixWorld();
     };
-    out.dispose = () => { scene.remove(out.group); for (const d of out.disposables) d(); G.R3.dispose(out.group); if (out.envRT) out.envRT.dispose(); scene.environment = null; };
+    out.dispose = () => { scene.remove(out.group); for (const h of out.models) if (h.parent) h.parent.remove(h); /* shared with the G.Models cache */ for (const d of out.disposables) d(); G.R3.dispose(out.group); if (out.envRT) out.envRT.dispose(); scene.environment = null; };
     return out;
   };
 
@@ -2428,6 +2445,259 @@ G.Battle3D.Arena = (() => {
     const lh = K.group(K.cyl(0.8, 1.1, 7, K.mat('#2a1a24'), 0, 0, 0), K.cyl(0.6, 0.6, 1, K.glow('#fff0d0', 2.5), 0, 7, 0));
     K.place(lh, 40, -60);
     K.lampHalo(40, 7.5, -60, '#fff0d0', 4);
+  };
+
+  // ------------------------------------------------------------------------------------------ team models
+  // Prefer the shared G.Models library (nature / architecture / props teams); fall back to the procedural props above.
+  // Model origin = footprint centre on the ground, front facing +z (toward the battle camera).
+  function gm(K, type, o = {}) {
+    if (!G.Models || !G.Models.has || !G.Models.has(type)) return null;
+    const obj = Object.assign({ t: type, x: Math.round(o.x || 0) + 1000, y: Math.round(o.z || 0) + 1000, v: o.v != null ? o.v : (K.rng() * 3) | 0, lit: o.lit !== false }, o.obj || {});
+    let node = null;
+    try { node = G.Models.create(type, obj); } catch (e) { G.warnOnce('b3d model ' + type, e); }
+    if (!node) return null;
+    const holder = new THREE.Group(); holder.add(node);
+    holder.userData.gm = { def: G.Models.defs[type], o: obj, node };
+    node.traverse((n) => { if (n.isMesh) { n.receiveShadow = true; if (K.view.lite) n.castShadow = false; } });
+    return holder;
+  }
+  // place a team model (or the fallback) at x,z; returns the node
+  function M(K, type, x, z, o = {}, fallback) {
+    let node = gm(K, type, Object.assign({ x, z }, o));
+    if (node) {
+      K.place(node, x, z, { ry: o.ry, s: o.s, y: o.y, dynamic: true });
+      K.out.models.push(node);
+      return node;
+    }
+    if (fallback) { node = fallback(); if (node) K.place(node, x, z, { ry: o.ry, s: o.s, y: o.y }); }
+    return node;
+  }
+  A.gm = gm; A.M = M;
+
+  const PINES = ['tree_pine', 'tree_cedar_snow'];
+  KITS.meadow = (K, th) => {
+    K.ring(16, 20, 15, (x, z) => M(K, 'tree_pine', x, z, { s: K.r(1.6, 2.4) }, () => PR.pine(K, K.r(5, 9))));
+    K.ring(10, 30, 22, (x, z) => M(K, 'tree_cedar_snow', x, z, { s: K.r(2, 3) }, () => PR.pine(K, K.r(7, 11), '#2a4038')), { phase: 0.3 });
+    K.ring(12, 14, 9, (x, z) => M(K, K.rng() < 0.3 ? 'rock_big' : 'rock_small', x, z, { s: K.r(0.8, 1.4) }, () => PR.rock(K, K.r(0.3, 0.9), ['#8a8a84', '#6a6a66'])), { phase: 0.15 });
+    K.ring(14, 12, 7.5, (x, z) => M(K, K.rng() < 0.5 ? 'flowers' : 'bush', x, z, { s: K.r(0.9, 1.3) }), { phase: 0.4 });
+    PR.grassField(K, K.view.lite ? 1500 : 5000, [-26, 26, -18, 14], ['#7aa04a', '#8ab052', '#5a8a3a'], 0.45, { clear: [10, 4.5], inside: 0.15 });
+    const path = new K.T.Mesh(new K.T.PlaneGeometry(2.4, 40, 1, 20), K.mat('#a89068', { roughness: 1 }));
+    path.rotation.x = -Math.PI / 2; path.position.set(0.5, 0.02, -24); path.receiveShadow = true;
+    K.out.group.add(path);
+  };
+  const forestBase = KITS.forest;
+  KITS.forest = (K, th) => {
+    if (!G.Models || !G.Models.has('tree_camphor')) { forestBase(K, th); return; }
+    for (let i = 0; i < 34; i++) {
+      const a = K.r(0, TAU), rr = K.r(12, 32);
+      const x = Math.sin(a) * rr * 1.3, z = -Math.cos(a) * rr;
+      if (z > 3 && x > -8 && x < 16) continue;
+      M(K, K.rng() < 0.45 ? 'tree_cypress' : 'tree_camphor', x, z, { s: K.r(1.8, 2.8) });
+    }
+    K.ring(12, 14, 9, (x, z) => M(K, 'tree_fern', x, z, { s: K.r(1.1, 1.6) }), { phase: 0.4 });
+    K.ring(16, 12, 7.5, (x, z) => M(K, K.rng() < 0.5 ? 'bush' : 'flowers', x, z, { s: K.r(1, 1.4) }, () => PR.fern(K, K.r(0.9, 1.5))), { phase: 0.1 });
+    K.ring(6, 15, 9, (x, z, i) => M(K, i % 2 ? 'stump' : 'log', x, z, { ry: K.r(0, TAU) }), { phase: 0.25 });
+    PR.grassField(K, K.view.lite ? 1000 : 3500, [-24, 24, -16, 12], ['#5a8a3a', '#6a9a42', '#4a7a32'], 0.35, { clear: [9, 4], inside: 0.25 });
+    for (let i = 0; i < 6; i++) {
+      const geo = new K.T.CylinderGeometry(0.6, 2.2, 22, 12, 1, true); geo.translate(0, -11, 0);
+      const m = new K.T.Mesh(geo, new K.T.MeshBasicMaterial({ color: C('#fff6d8'), transparent: true, opacity: 0.06, blending: K.T.AdditiveBlending, depthWrite: false, side: K.T.DoubleSide, fog: false }));
+      m.position.set(K.r(-14, 10), 20, K.r(-14, -4)); m.rotation.z = 0.3; m.rotation.x = 0.15;
+      K.out.group.add(m); K.out.disposables.push(() => { geo.dispose(); m.material.dispose(); });
+    }
+  };
+  const mushBase = KITS.mushroom;
+  KITS.mushroom = (K, th) => {
+    if (!G.Models || !G.Models.has('mushroom_giant')) { mushBase(K, th); return; }
+    K.ring(12, 15, 10, (x, z) => M(K, 'mushroom_giant', x, z, { s: K.r(1.4, 2.6), ry: K.r(0, TAU) }));
+    K.ring(22, 11, 7, (x, z) => M(K, 'mushroom_glow', x, z, { s: K.r(0.8, 1.4) }), { phase: 0.2 });
+    K.ring(14, 26, 18, (x, z) => M(K, 'mushroom_giant', x, z, { s: K.r(2.5, 4) }), { phase: 0.5 });
+    K.ring(10, 13, 8, (x, z) => M(K, 'crystal', x, z, { s: K.r(0.8, 1.5) }), { phase: 0.35 });
+    PR.grassField(K, K.view.lite ? 800 : 2600, [-22, 22, -16, 12], ['#3a3a7a', '#4a3a8a', '#2a4a6a'], 0.4, { clear: [9, 4], inside: 0.2 });
+  };
+  const shoreBase = KITS.shore;
+  KITS.shore = (K, th) => {
+    shoreBase(K, th);
+    for (const [x, z, t] of [[-9, -6, 'driftwood'], [12, -6.5, 'seaweed'], [-14, -2, 'seaweed'], [9, 7, 'driftwood']]) M(K, t, x, z, { ry: K.r(0, TAU) });
+    M(K, 'stone_lantern', 13.5, -3, { lit: true });
+  };
+  const beachBase = KITS.beach;
+  KITS.beach = (K, th) => {
+    const st = th.style;
+    if (!G.Models || !G.Models.has('coconut_palm')) { beachBase(K, th); return; }
+    if (st === 'linto') {
+      K.ring(12, 15, 8, (x, z) => { if (z > -7) M(K, 'pandanus', x, z, { s: K.r(1.2, 1.8) }); });
+      K.ring(6, 22, 12, (x, z) => { if (z > -7) M(K, 'coconut_palm', x, z, { s: K.r(1.6, 2.2) }); }, { phase: 0.3 });
+    } else if (st === 'orchid') {
+      for (const [x, z, s] of [[-18, -10, 6], [-13, -14, 4], [16, -12, 7], [22, -8, 5]]) { const r = PR.rock(K, s, ['#2a2a30', '#3a3a3e']); r.scale.y *= 2.2; K.place(r, x, z); }
+      for (const [x, z, ry] of [[-10, -3, 0.3], [12, -3.5, -0.4]]) M(K, 'tatala', x, z, { ry }, () => PR.boat(K, 4, '#e8e0d0'));
+      K.ring(8, 14, 7, (x, z) => { if (z > -6) M(K, 'rock_small', x, z, { s: K.r(0.8, 1.3) }); });
+    } else if (st === 'south') {
+      K.ring(8, 15, 7, (x, z) => { if (z > -6) M(K, K.rng() < 0.6 ? 'coconut_palm' : 'tree_betel', x, z, { s: K.r(1.6, 2.2) }); });
+      for (let i = 0; i < 6; i++) M(K, 'dock_post', -4 + i * 1.6, -9 - i * 0.2, { y: -0.6 }, () => K.cyl(0.12, 0.14, 2, K.mat('#5a4030')));
+      M(K, 'boat_small', 6, -12, { y: -0.45, ry: 0.4 });
+    } else {
+      K.ring(10, 16, 8, (x, z) => { if (z > -6) M(K, K.rng() < 0.3 ? 'driftwood' : 'rock_small', x, z, { s: K.r(0.8, 1.3), ry: K.r(0, TAU) }); });
+      K.ring(5, 22, 12, (x, z) => { if (z > -6) M(K, 'coconut_palm', x, z, { s: K.r(1.6, 2.2) }); }, { phase: 0.2 });
+    }
+  };
+  const jiufenBase = KITS.jiufen;
+  KITS.jiufen = (K, th) => {
+    if (!G.Models || !G.Models.has('house_jiufen')) { jiufenBase(K, th); return; }
+    const night = !!th.night;
+    for (const side of [-1, 1]) for (let i = 0; i < 4; i++) {
+      const x = side * (14 + i * 1.5), z = -5 - i * 5.5;
+      M(K, i % 2 ? 'teahouse' : 'house_jiufen', x, z, { ry: side > 0 ? -Math.PI / 2 + 0.25 : Math.PI / 2 - 0.25, y: groundOr(K, x, z) + i * 0.6, s: 1.3, lit: night });
+    }
+    for (let i = 0; i < 3; i++) M(K, 'teahouse', -9 + i * 9, -21 - i * 2, { y: 2 + i, s: 1.3, lit: night });
+    for (let i = 0; i < 3; i++) PR.lanternString(K, new K.T.Vector3(-14, 6.5, -4 - i * 4), new K.T.Vector3(14, 6.5, -5 - i * 4), 12, '#e8402a', 0.8);
+    for (let i = 0; i < 6; i++) K.place(K.box(10, 0.4, 1.2, K.tmat('pavers', '#8a8078')), 0, -10 - i * 1.2, { y: i * 0.4 });
+    M(K, 'stone_lantern', -9, -4, { lit: night }, () => PR.stoneLantern(K, 1.2, night ? '#ffc070' : null));
+    M(K, 'stone_lantern', 10, -4.5, { lit: night }, () => PR.stoneLantern(K, 1.2, night ? '#ffc070' : null));
+    M(K, 'red_lantern', -12, 1, {}); M(K, 'red_lantern', 12, 0.5, {});
+  };
+  const streetBase = KITS.street;
+  KITS.street = (K, th) => {
+    if (!G.Models || !G.Models.has('shophouse')) { streetBase(K, th); return; }
+    const st = th.style, night = !!th.night;
+    for (const side of [-1, 1]) for (let i = 0; i < 5; i++) {
+      const x = side * 14.5, z = -19 + i * 6;
+      if (z > 6) continue;
+      M(K, 'shophouse', x, z, { ry: side > 0 ? -Math.PI / 2 : Math.PI / 2, s: 1.25, lit: night || K.rng() < 0.4 });
+    }
+    M(K, st === 'procession' ? 'city_god_temple' : 'paifang', 0, -26, { s: 1.3, lit: night }, () => PR.house(K, 9, 5, 4, { wall: '#a8342a', roof: '#2a2a30', ridge: '#d8a03a', lit: night }));
+    const cols = st === 'procession' ? ['#e8402a', '#ffd23a'] : ['#e8402a'];
+    for (let i = 0; i < 4; i++) PR.lanternString(K, new K.T.Vector3(-12, 6, -2 - i * 5), new K.T.Vector3(12, 6, -3 - i * 5), 10, cols[i % cols.length], 0.75);
+    if (st === 'procession') for (let i = 0; i < 8; i++) M(K, i % 2 ? 'pilgrim_flag' : 'banner', (i % 2 ? 1 : -1) * 11, -16 + i * 3, {}, () => K.group(K.cyl(0.05, 0.05, 4, K.mat('#3a2a1e'), 0, 0, 0), K.box(0.05, 1.6, 1.0, K.mat(i % 3 ? '#e8b02a' : '#d8342a', { side: K.T.DoubleSide }), 0, 2.2, 0.5)));
+    for (const [x, z] of [[-10, -6], [10, -7]]) M(K, 'lamp_post', x, z, { lit: true });
+  };
+  const templeBase = KITS.temple;
+  KITS.temple = (K, th) => {
+    if (!G.Models || !G.Models.has('temple')) { templeBase(K, th); return; }
+    M(K, 'temple', 0, -17, { s: 1.35, lit: true });
+    for (const side of [-1, 1]) K.place(PR.wall(K, 18, 2.4, '#a8443a'), side * 13, -8, { ry: Math.PI / 2 });
+    M(K, 'incense_burner', 0, -9.5, { s: 1.6 });
+    for (const [x, z] of [[-6, -10], [6, -10]]) M(K, 'statue_lion', x, z, { s: 1.3 }, () => PR.stoneLantern(K, 1.1, '#ffb060'));
+    for (const [x, z] of [[-11, -2], [12, -3]]) M(K, 'stone_lantern', x, z, { lit: true }, () => PR.stoneLantern(K, 1.1, '#ffb060'));
+    for (const [x, z] of [[-17, -14], [18, -13], [-20, -4], [21, -2]]) M(K, 'tree_camphor', x, z, { s: K.r(2, 2.6) }, () => PR.broadTree(K, K.r(5, 7), ['#2a4a2a', '#3a5a32', '#24402a']));
+  };
+  const mansionBase = KITS.mansion;
+  KITS.mansion = (K, th) => {
+    if (!G.Models || !G.Models.has('house_minnan')) { mansionBase(K, th); return; }
+    M(K, 'house_minnan', 0, -17, { s: 1.6, lit: true });
+    for (const side of [-1, 1]) { K.place(PR.wall(K, 20, 2.6, '#5a3028', '#1a2a2a'), side * 14, -8, { ry: Math.PI / 2 }); M(K, 'house_minnan', side * 11, -12, { ry: side * -Math.PI / 2, s: 1.2, lit: K.rng() < 0.5 }); }
+    for (const [x, z] of [[-17, -16], [18, -14], [-19, 2]]) M(K, 'tree_dead', x, z, { s: 2.2 });
+    PR.floatingLanterns(K, 10, [-14, 14, -16, -6], '#80ffa0', 0.5, 4, 0.4);
+  };
+  const tainanBase = KITS.tainan;
+  KITS.tainan = (K, th) => {
+    if (!G.Models || !G.Models.has('chikan_tower')) { tainanBase(K, th); return; }
+    M(K, 'chikan_tower', 0, -20, { s: 1.4 });
+    K.place(PR.wall(K, 34, 1.4, '#b8684a', '#8a4a3a'), 0, -13.5);
+    for (const [x, z] of [[-17, -10], [17, -11], [-21, -2], [21, -3], [-12, -20], [13, -21]]) M(K, 'tree_maple', x, z, { s: K.r(2, 2.6), v: 0 }, () => PR.broadTree(K, K.r(5, 7), ['#d8401e', '#e85a2a', '#2a5a2a'], '#4a3020'));
+  };
+  const hakkaBase = KITS.hakka;
+  KITS.hakka = (K, th) => {
+    if (!G.Models || !G.Models.has('hakka_house')) { hakkaBase(K, th); return; }
+    M(K, 'hakka_house', 0, -17, { s: 1.4 });
+    for (const [x, z] of [[-17, -8], [18, -7], [-20, 3]]) M(K, 'bamboo', x, z, { s: 2 }, () => PR.bamboo(K, K.r(6, 9), 9));
+    for (const [x, z] of [[-10, -6], [10, -6]]) M(K, 'drying_rack', x, z, { s: 1.2 });
+  };
+  const tribeBase = KITS.tribe;
+  KITS.tribe = (K, th) => {
+    if (!G.Models || !G.Models.has('slate_house')) { tribeBase(K, th); return; }
+    for (const [x, z, ry] of [[-14, -12, 0.3], [12, -14, -0.2], [-4, -19, 0]]) M(K, 'slate_house', x, z, { ry, s: 1.3, lit: true });
+    M(K, 'totem', 15, -6, { s: 1.4 }); M(K, 'firepit', -9, -7, { lit: true }); M(K, 'millet_rack', 10, -8, {});
+    K.ring(12, 15, 10, (x, z) => M(K, 'rock_small', x, z, { s: K.r(0.8, 1.3) }, () => PR.rock(K, K.r(0.4, 1), ['#4a4a50', '#3a3a40'])));
+  };
+  const harborBase = KITS.harbor;
+  KITS.harbor = (K, th) => {
+    harborBase(K, th);
+    M(K, 'red_fort', 24, -20, { s: 1.4, y: 3 });
+  };
+  KITS.grassland = (K) => {
+    PR.grassField(K, K.view.lite ? 2000 : 7000, [-30, 30, -24, 14], ['#a8b860', '#c8c880', '#8aa050'], 0.7, { clear: [10, 4.5], inside: 0.2 });
+    if (!M(K, 'gate_city', 0, -26, { s: 1.4 })) K.place(PR.wall(K, 40, 3.2, '#9a7a5a', '#6a5a4a'), 0, -26);
+    for (const x of [-12, 12, -24, 24]) M(K, 'city_wall', x, -26, { s: 1.4, obj: { w: 8 } });
+    for (const [x, z] of [[-20, -10], [22, -14], [-26, -18]]) M(K, K.rng() < 0.5 ? 'tree_banyan' : 'tree_camphor', x, z, { s: 1.6 }, () => PR.broadTree(K, 4, ['#3a6a32', '#4a7a3a']));
+  };
+  const capeBase = KITS.cape;
+  KITS.cape = (K, th) => {
+    if (!G.Models || !G.Models.has('lighthouse')) { capeBase(K, th); return; }
+    M(K, 'lighthouse', -16, -16, { s: 1.5, lit: true });
+    K.lampHalo(-16, 11, -16, '#fff0c0', 4);
+    PR.grassField(K, K.view.lite ? 1600 : 5000, [-28, 28, -10, 14], ['#3a5a3a', '#4a6a42', '#2a4a2a'], 0.6, { clear: [10, 4.5], inside: 0.2 });
+    K.ring(8, 16, 7, (x, z) => { if (z > -9) M(K, 'rock_small', x, z, {}, () => PR.rock(K, K.r(0.4, 1), ['#4a4a50'])); });
+  };
+  KITS.cape.pre = capeBase.pre;
+  const gorgeBase = KITS.gorge;
+  KITS.gorge = (K, th) => {
+    gorgeBase(K, th);
+    M(K, 'cliff_waterfall', -14, -14, { s: 2.2 });
+    for (const [x, z] of [[-8, -7], [9, -8]]) M(K, 'rock_marble', x, z, { s: 1.6 });
+  };
+  const festBase = KITS.festival;
+  KITS.festival = (K, th) => {
+    if (!G.Models || !G.Models.has('guzhao')) { festBase(K, th); return; }
+    M(K, 'guzhao', 0, -20, { s: 1.3, lit: true });
+    for (let i = 0; i < 3; i++) PR.lanternString(K, new K.T.Vector3(-20, 5 + i, -12 - i * 2), new K.T.Vector3(-4, 11, -18), 10, '#ffb040', 0.6);
+    for (let i = 0; i < 3; i++) PR.lanternString(K, new K.T.Vector3(20, 5 + i, -12 - i * 2), new K.T.Vector3(4, 11, -18), 10, '#ffb040', 0.6);
+    K.ring(10, 16, 8, (x, z) => M(K, 'lamp_post', x, z, { lit: true }, () => PR.lanternPost(K, '#ff9a40', 2.4)));
+  };
+  const basaltBase = KITS.basalt;
+  KITS.basalt = (K, th) => {
+    basaltBase(K, th);
+    for (let i = 0; i < 3; i++) M(K, 'stone_weir', 4 + i * 6, -13, { y: -0.5 });
+  };
+  const alishanBase = KITS.alishan;
+  KITS.alishan = (K, th) => {
+    if (!G.Models || !G.Models.has('tree_cypress')) { alishanBase(K, th); return; }
+    for (const [x, z, s] of [[-15, -6, 2.6], [-19, -14, 3.2], [16, -8, 2.8], [21, -15, 3.4], [-12, -18, 2.4], [10, -20, 2.8], [-22, 2, 2.8], [23, 1, 3]]) M(K, 'tree_cypress', x, z, { s });
+    K.ring(16, 13, 8.5, (x, z) => M(K, 'tree_fern', x, z, { s: K.r(1, 1.4) }, () => PR.fern(K, K.r(0.8, 1.4))));
+    PR.grassField(K, K.view.lite ? 900 : 3000, [-24, 24, -16, 12], ['#5a7a3a', '#6a8a42'], 0.35, { clear: [9, 4], inside: 0.2 });
+  };
+  const screeBase = KITS.scree;
+  KITS.scree = (K, th) => {
+    if (!G.Models || !G.Models.has('tree_cedar_snow')) { screeBase(K, th); return; }
+    for (let i = 0; i < 30; i++) { const a = K.r(0, TAU), rr = K.r(11, 26); const x = Math.sin(a) * rr * 1.3, z = -Math.cos(a) * rr; if (z > 4 && x > -8 && x < 14) continue; M(K, K.rng() < 0.4 ? 'rock_big' : 'rock_small', x, z, { s: K.r(0.8, 2) }); }
+    for (let i = 0; i < 16; i++) M(K, 'tree_cedar_snow', K.r(-30, 30), K.r(-30, -12), { s: K.r(1.2, 2) });
+  };
+  const visionBase = KITS.vision;
+  KITS.vision = (K, th) => {
+    visionBase(K, th);
+    K.ring(8, 13, 8, (x, z, i) => M(K, i % 2 ? 'geometry_pillar' : 'jewel_flower', x, z, { s: 1.3 }), { phase: 0.2 });
+    K.ring(10, 18, 12, (x, z) => M(K, 'crystal', x, z, { s: K.r(1.2, 2) }), { phase: 0.6 });
+  };
+  const chaosBase = KITS.chaos;
+  KITS.chaos = (K, th) => {
+    chaosBase(K, th);
+    for (const [x, z] of [[-16, -6], [17, -8], [-12, -16]]) M(K, 'tree_dead', x, z, { s: 2 });
+  };
+  const farBase = KITS.farshore;
+  KITS.farshore = (K, th) => {
+    if (!G.Models || !G.Models.has('lily')) { farBase(K, th); return; }
+    // 彼岸花 to the horizon: instanced lily models would be heavy → keep the instanced field, add model clumps near the stage
+    farBase(K, th);
+    K.ring(18, 11.5, 6.5, (x, z) => M(K, 'lily', x, z, { v: 0, s: K.r(1, 1.4) }), { phase: 0.1, front: true });
+  };
+  const mineBase = KITS.mine;
+  KITS.mine = (K, th) => {
+    mineBase(K, th);
+    for (const [x, z, t] of [[13, -5, 'crate'], [14, -3.5, 'barrel'], [-14, 2, 'barrel'], [12, 3, 'crate']]) M(K, t, x, z, { ry: K.r(0, TAU) });
+  };
+  const palaceBase = KITS.palace;
+  KITS.palace = (K, th) => {
+    palaceBase(K, th);
+    for (const [x, z] of [[-5, -20], [5, -20]]) M(K, 'eternal_lamp', x, z, { lit: true });
+  };
+  const shrineBase = KITS.shrine;
+  KITS.shrine = (K, th) => {
+    shrineBase(K, th);
+    for (let i = 0; i < 10; i++) { const x = K.r(-13, 13), z = K.r(-17, 5); if (Math.abs(x) < 9.5 && Math.abs(z) < 4.5) continue; M(K, 'lotus', x, z, { y: 0.05 }); }
+  };
+  const lakeBase = KITS.lake;
+  KITS.lake = (K, th) => {
+    lakeBase(K, th);
+    for (let i = 0; i < 8; i++) M(K, 'lotus', K.r(-14, 14), K.r(-16, -10), { y: th.water.y + 0.05 });
   };
   return A;
 })();

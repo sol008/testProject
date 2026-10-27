@@ -343,6 +343,7 @@ G.VFX3D = (() => {
     g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
     g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
     g.setIndex(idx);
+    g.translate(-r * Math.cos(0) * 0.92, 0, 0); // centre the arc (not the circle) on the anchor: the blade passes through the target
     return g;
   }
 
@@ -532,7 +533,7 @@ G.VFX3D = (() => {
     // ---------------------------------------------------------------- mesh primitives
     slash(pos, o = {}) {
       const T = THREE, cam = this.view.camera;
-      const arc = o.arc || 2.2, r = o.r || 0.9, thick = o.thick || 0.32, dur = o.dur || 0.28;
+      const arc = o.arc || 2.2, r = (o.r || 0.9) * 1.3, thick = (o.thick || 0.32) * 1.35, dur = o.dur || 0.28;
       const pal = o.pal || PAL.neutral;
       const mat = new T.ShaderMaterial({
         uniforms: { uA: { value: new T.Color(pal[0]).multiplyScalar(o.k || 2.2) }, uB: { value: new T.Color(pal[1]).multiplyScalar(o.k || 2.2) }, uProg: { value: 0 }, uAlpha: { value: 1 } },
