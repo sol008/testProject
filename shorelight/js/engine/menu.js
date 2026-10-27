@@ -50,7 +50,7 @@
         { label: '心燈', k: 'lanterns', icon: 'lantern' },
         { label: '地圖', k: 'world', icon: 'scroll' },
         { label: '圖鑑', k: 'bestiary', icon: 'mushroom' },
-        { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.mapScene.def.noSave) },
+        { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.Mapx.val(G.mapScene.def.noSave)) },
         { label: '讀檔', k: 'load', icon: 'key' },
         { label: '設定', k: 'settings', icon: 'fan' },
         { label: '回標題', k: 'title', icon: 'hat' },

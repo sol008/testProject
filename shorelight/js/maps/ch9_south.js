@@ -681,7 +681,7 @@
       const ai = sc.aiCommand.bind(sc);
       sc.aiCommand = (e) => {
         const cmd = ai(e);
-        if (e === king && cmd.skill === 'c9_es_tide_rise' && (tides >= 2 || sc.enemies.some((x) => x !== king && !x.dead))) {
+        if (e === king && cmd.skill === 'c9_es_tide_rise' && (tides >= 1 || sc.enemies.some((x) => x !== king && !x.dead))) {
           return { kind: 'skill', skill: p2 ? 'c9_es_tailsweep2' : 'c9_es_tailsweep', targets: sc.alive('party') };
         }
         return cmd;
@@ -691,7 +691,7 @@
         await exec(u, cmd);
         if (cmd && cmd.skill === 'c9_guard_lamp') setFlame(v.flame + 15, u);
         if (u === king && cmd && cmd.skill === 'c9_es_snuff') setFlame(v.flame - 10, sc.alive('party')[0] || u);
-        if (u === king && cmd && cmd.skill === 'c9_es_tide_rise') { tides++; sc.addStatus(king, 'atkUp', 3); }
+        if (u === king && cmd && cmd.skill === 'c9_es_tide_rise') { tides++; }
       };
       const startTurn = sc.startTurn.bind(sc);
       sc.startTurn = async (u) => {
