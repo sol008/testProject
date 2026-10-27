@@ -542,6 +542,26 @@
         yy += para.en ? 9 : 2;
       }
     });
+    // ----- props & details strip (under the text columns)
+    if (S.props) {
+      const P = S.props, n = P.items.length, gap = 14;
+      const gw = (bt[2] - gap * (n - 1)) / n;
+      ctx.fillStyle = T.gold; ctx.font = `600 14px ${K.FONT_EN}`;
+      ctx.fillText('道具與細節  PROPS & DETAILS (texture-paint reference)', bt[0], P.y - 10);
+      P.items.forEach((it, i) => {
+        const x = bt[0] + i * (gw + gap);
+        ctx.save();
+        const pp = K.rrect(x, P.y, gw, P.h, 10);
+        ctx.fillStyle = T.propBg || T.paper0; ctx.fill(pp); ctx.clip(pp);
+        const img = K.renderView(it.draw, it.box, it.scale * 2, { lineScale: it.lineScale || 0.8 });
+        const w = (it.box[2] - it.box[0]) * it.scale, h = (it.box[3] - it.box[1]) * it.scale;
+        ctx.drawImage(img, x + (gw - w) / 2, P.y + 6 + (P.h - 30 - h) / 2, w, h);
+        ctx.fillStyle = 'rgba(20,16,24,0.08)'; ctx.fillRect(x, P.y + P.h - 26, gw, 26);
+        ctx.fillStyle = T.ink; ctx.font = `600 13px ${K.FONT_ZH}`;
+        ctx.fillText(it.label, x + 10, P.y + P.h - 8);
+        ctx.restore();
+      });
+    }
     // ----- silhouettes (bottom of the right panel)
     const sy = Math.max(yA, yB) + 6, sx = rp[0], sw = rp[2], sh = Hh - 46 - sy;
     ctx.save();

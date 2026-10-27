@@ -533,6 +533,23 @@
     K.part(ctx, K.P((q) => q.roundRect(x - w / 2 - 1.5, y0 - 16, w + 3, 16, 2)), { fill: C.brass, line: MT.br.line, lw: 1.4, fx: [{ dx: -3, dy: 0, c: MT.br.sh }] });
   }
 
+  function token(ctx, cx, top, k) {
+    ctx.save(); ctx.translate(cx, top); ctx.scale(k, k);
+    K.line(ctx, [[0, -24], [-2, -10], [0, 0]], 1.6, C.red);
+    const tok = K.S([[-15, 0, 1], [15, 0, 1], [17, 40], [0, 53, 1], [-17, 40]], true, 0.4);
+    K.toon(ctx, tok, MT.lac, { s: 6, lw: 1.8 });
+    ctx.fillStyle = '#d6aa52'; ctx.font = `700 12px ${K.FONT_ZH}`; ctx.textAlign = 'center';
+    ctx.fillText('長', 0, 17); ctx.fillText('明', 0, 31);
+    K.line(ctx, [[-15, 5], [15, 5]], 1, '#d6aa52');
+    K.part(ctx, K.circle(0, 44, 3.4), { fill: C.red, line: MT.red.line, lw: 1 });
+    ctx.restore();
+  }
+  function badge(ctx, x, y, r) {
+    K.part(ctx, K.circle(x, y, r), { fill: '#e9e0c8', line: '#4a3a2a', lw: 2, fx: [{ dx: -r * 0.2, dy: -r * 0.08, c: '#bfb197' }] });
+    ctx.save(); ctx.strokeStyle = C.red; ctx.lineWidth = r * 0.14; ctx.beginPath(); ctx.arc(x, y, r * 0.82, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#1a1418'; ctx.font = `700 ${Math.round(r)}px ${K.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillText('明', x, y + r * 0.36); ctx.restore();
+  }
+
   // ------------------------------------------------------------------ hands
   function fistOnPole(ctx, x, y, flip) {
     // gripping a vertical pole at (x,y): back of hand faces outward, fingers wrap the front
@@ -776,8 +793,7 @@
 
     // ---- hands, pole
     hipHand(ctx, -112, -452, false);
-    poleAndLantern(ctx, PX, 1, {});
-    fistOnPole(ctx, PX, -426, false);
+    if (!o.noPole) { poleAndLantern(ctx, PX, 1, {}); fistOnPole(ctx, PX, -426, false); }
   }
 
   // ------------------------------------------------------------------ BACK VIEW
@@ -970,13 +986,24 @@
     bottom: [44, 1214, 1616],
     bust: {
       label: '胸像 · 得意', labelEn: 'BUST — default expression: smug', h: 460,
-      draw: (c) => drawFront(c, { turn: 0.32, expr: 'smug' }), box: [-160, -850, 200, -575], scale: 1.67, offX: 40, offY: 0,
+      draw: (c) => drawFront(c, { turn: 0.32, expr: 'smug', noPole: true }), box: [-160, -850, 200, -575], scale: 1.67, offX: 40, offY: 0,
     },
     exprH: 172,
+    props: {
+      y: 1500, h: 128,
+      items: [
+        { label: '長明燈 soul lantern', draw: (c) => { K.line(c, [[0, -60], [0, -46]], 1.8, C.red); lantern(c, 0, -46, 72, 88, {}); }, box: [-60, -64, 60, 92], scale: 0.62 },
+        { label: '鴉首鉤 crook finial', draw: (c) => { const ck = [[-60, 30], [-57, 2], [-36, -18], [-6, -18], [14, -2], [20, 18]]; K.taper(c, ck, 13, MT.bam.line, { w0: 1, w1: 0.8, noScale: true }); K.taper(c, ck, 9.5, MT.bam.base, { w0: 1, w1: 0.8, noScale: true }); crowHead(c, 20, 20, 1.6, false); }, box: [-70, -30, 72, 46], scale: 1.05 },
+        { label: '敕令符 talismans', draw: (c) => { talisman(c, -16, -46, 22, 92, -0.08, 3); talisman(c, 16, -44, 22, 88, 0.08, 7); }, box: [-44, -50, 44, 50], scale: 0.95 },
+        { label: '長明宮令牌 token', draw: (c) => token(c, 0, -26, 1.45), box: [-34, -64, 34, 54], scale: 0.85 },
+        { label: '號褂圓補 badge', draw: (c) => badge(c, 0, 0, 34), box: [-40, -40, 40, 40], scale: 1.15 },
+        { label: '辮梢 queue tip', draw: (c) => braid(c, [[0, -70], [2, -30], [0, 10]], 20, 13, { seg: 15, tail: 30 }), box: [-40, -74, 40, 64], scale: 0.7 },
+      ],
+    },
     exprs: [
-      { label: '奸笑 scheming', draw: (c) => drawFront(c, { turn: 0.2, expr: 'scheme' }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
-      { label: '暴怒 furious', draw: (c) => drawFront(c, { turn: -0.12, expr: 'angry' }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
-      { label: '慌了 panicking', draw: (c) => drawFront(c, { turn: 0.0, expr: 'panic' }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
+      { label: '奸笑 scheming', draw: (c) => drawFront(c, { turn: 0.2, expr: 'scheme', noPole: true }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
+      { label: '暴怒 furious', draw: (c) => drawFront(c, { turn: -0.12, expr: 'angry', noPole: true }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
+      { label: '慌了 panicking', draw: (c) => drawFront(c, { turn: 0.0, expr: 'panic', noPole: true }), box: [-80, -786, 84, -652], scale: 1.33, offX: 0, offY: 0 },
     ],
     palette: [
       { c: C.feather, zh: '鴉羽黑', en: 'Crow black', role: 'PRIMARY' },
