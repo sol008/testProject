@@ -262,21 +262,21 @@
   }
   const BIMM = ['sleep', 'stun', 'trance'];
   mkEnemy('c11_captain', { name: '烏鬚船主', art: 'pirate_ghost', variant: 2, scale: 1.55, lv: 39, elem: 'water', weak: ['earth'], boss: true, immune: BIMM,
-    m: { hp: 6.5, atk: 1.9, mag: 1.6, def: 1.1, spd: 1.2, exp: 5, gold: 6 },
+    m: { hp: 7.5, atk: 3.05, mag: 2.55, def: 1.1, spd: 1.9, exp: 5, gold: 6 }, // tools/sim_story.js: was hp 6.5 atk 1.9 mag 1.6 spd 1.2
     skills: [['e11_cap_blade', 4], ['e11_cap_crew', 2, 'ally_dead'], ['e11_cap_keg', 2], ['e11_cap_rob', 1], ['e_pirate_cutlass', 2]],
     drops: [['c11_ac_captain_patch', 1]],
     desc: '三百年前在澎湖海面橫行的海盜頭子。錨鏈拴在一盞長明燈上，「守不住路，燈就燒老子。」' });
   mkEnemy('c11_powder_keg', { name: '火藥桶', art: 'pirate_ghost', variant: 1, scale: 0.6, lv: 39, elem: 'fire', m: { hp: 0.2, atk: 0.1, def: 0.5, spd: 0.6, exp: 0, gold: 0 },
     skills: [['e11_keg_hiss', 1]], desc: '冒著煙的火藥桶。先打爆它，就炸到他們自己人。' });
   mkEnemy('c11_jailer', { name: '鎖魂將', art: 'lantern_golem', variant: 2, scale: 1.7, lv: 40, elem: 'metal', weak: ['fire'], resist: ['water'], boss: true, immune: BIMM,
-    m: { hp: 8, atk: 1.85, mag: 1.75, def: 1.15, spd: 0.95, exp: 7, gold: 8 },
+    m: { hp: 8.8, atk: 2.8, mag: 2.6, def: 1.15, spd: 1.45, exp: 7, gold: 8 }, // sim_story: was hp 8 atk 1.85 mag 1.75 spd 0.95
     skills: [['e11_jl_sweep', 4], ['e11_jl_seal', 3], ['e11_jl_drain', 3], ['e11_jl_lock', 2], ['e11_jl_refill', 4, 'hp<50']],
     drops: [['c11_ac_iron_heart', 1]],
     desc: '用鎖鏈、魂罐與熄不掉的長明燈拼成的獄卒。沒有頭，胸口是一只空空的罐子。' });
   mkEnemy('c11_jar', { name: '魂罐', art: 'ghost_lantern', variant: 2, scale: 1.1, lv: 40, elem: 'water', m: { hp: 0.75, atk: 0.1, def: 0.8, spd: 0.5, exp: 0.3, gold: 0 },
     skills: [['e11_jar_hum', 1]], desc: '肩上與背上的魂罐。裡面的魂在替它擋刀。' });
   mkEnemy('c11_kun', { name: '鯤', art: 'kun', lv: 41, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM, endAt: 0.025,
-    m: { hp: 8.5, atk: 1.55, mag: 1.45, def: 1.15, spd: 0.9, exp: 7, gold: 0 },
+    m: { hp: 8.5, atk: 2.55, mag: 2.4, def: 1.15, spd: 1.5, exp: 7, gold: 0 }, // sim_story: was atk 1.55 mag 1.45 spd 0.9
     skills: [['e11_kun_swallow', 3], ['e_kun_spout', 4], ['e11_kun_roll', 3]],
     drops: [], desc: '黑水溝的老守者。吞下迷路的魂，馱著游到彼岸再吐出來。燈暗了，牠找不到岸。' });
   mkEnemy('c11_kun_tumor', { name: '吞魂燈瘤', art: 'ghost_lantern', variant: 1, scale: 1.25, lv: 41, elem: 'water', weak: ['earth'],
@@ -297,7 +297,7 @@
     skills: [['e_yx_oar', 4], ['e_yx_jar', 3], ['e11_yx_soul', 3], ['e11_yx_purge', 2], ['e11_yx_call', 2, 'ally_dead']],
     drops: [], desc: '長明宮之主。持黑玉之槳，背後浮著一只罐子。二十年前，他在黑水溝接住了女兒的魂燈。' });
   mkEnemy('c11_yexuan_2', { name: '夜玄・逆潮法身', sprite: 'yexuan', lv: 44, elem: 'water', weak: ['earth'], resist: ['water', 'fire'], boss: true, immune: BIMM, endAt: 0.2,
-    m: { hp: 12, atk: 2.3, mag: 2.45, def: 1.15, spd: 1.5, exp: 9, gold: 8 },
+    m: { hp: 12, atk: 2.4, mag: 2.55, def: 1.15, spd: 1.58, exp: 9, gold: 8 }, // sim_story: was atk 2.3 mag 2.45 spd 1.5
     skills: [['e11_yx_souls', 3], ['e_yx_oar', 3], ['e_yx_reverse', 2]],
     drops: [], desc: '黑水纏身的夜玄。身後展開兩片由溺死者的臉組成的黑浪之翼，罐子在頭頂發光。' });
   mkEnemy('c11_wuxiang_1', { name: '黑潮・無相', art: 'wuxiang', lv: 44, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM.concat(['seal']),
@@ -305,7 +305,7 @@
     skills: [['e_wx_tide', 4], ['e11_wx_drown', 3], ['e11_wx_back', 2], ['e11_wx_hands', 3]],
     drops: [], desc: '黑水溝裡，所有沒人哀悼、沒人渡、沒人記得名字的悲傷。表面浮動著千萬張模糊的臉。' });
   mkEnemy('c11_wuxiang_2', { name: '無相・深淵', art: 'wuxiang', lv: 45, elem: 'water', weak: ['earth'], resist: ['water'], boss: true, immune: BIMM.concat(['seal']),
-    m: { hp: 11.5, atk: 2.35, mag: 2.35, def: 1.2, spd: 1.4, exp: 4, gold: 0 },
+    m: { hp: 11.5, atk: 1.42, mag: 1.42, def: 1.2, spd: 0.84, exp: 4, gold: 0 }, // sim_story: was atk/mag 2.35 spd 1.4 — the trio fights it after phase 1 with half HP/MP back and no 白芷
     skills: [['e11_wx_abyss', 3], ['e11_wx_devour', 3], ['e11_wx_cold', 2], ['e11_wx_voices', 3]],
     drops: [], desc: '巨影塌成一張巨口與漩渦。漩渦深處，有一點白光。' });
   mkEnemy('c11_wuxiang_3', { name: '無相之心', art: 'wuxiang', lv: 45, elem: 'water', boss: true, immune: BIMM.concat(['seal', 'poison']),
@@ -4536,7 +4536,9 @@
   function yexuan1Hooks() {
     return {
       hpFloor: { c11_yexuan_1: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      // the engine also raises onFloor when a party member drops to 0 HP (battle.js: floorK is `false`, not null, for
+      // party targets) — only the boss reaching its floor ends the phase, never the first KO
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_yexuan_1') return; b.result = 'win'; b.scriptedEnd = true; },
       intro: async (b) => {
         hookB(b, 'execute', async (orig, u, cmd) => {
           if (cmd.skill !== 'e11_yx_purge') return orig(u, cmd);
@@ -4760,7 +4762,7 @@
     const base = () => G.Data.enemies.c11_wuxiang_1.skills;
     return {
       hpFloor: { c11_wuxiang_1: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_wuxiang_1') return; b.result = 'win'; b.scriptedEnd = true; }, // see yexuan1Hooks
       intro: async (b) => {
         await bLines(b, [['無相', '我們有好多臉……你們想看誰的？']]);
         hookB(b, 'execute', async (orig, u, cmd) => { if (cmd.skill === 'e11_wx_faces') { await wxFaces(b); return; } return orig(u, cmd); });
@@ -4779,7 +4781,7 @@
   function wuxiang2Hooks() {
     return {
       hpFloor: { c11_wuxiang_2: 0.001 },
-      onFloor: async (b) => { b.result = 'win'; b.scriptedEnd = true; },
+      onFloor: async (b, e) => { if (e && e.id !== 'c11_wuxiang_2') return; b.result = 'win'; b.scriptedEnd = true; }, // see yexuan1Hooks
       intro: async (b) => { for (const e of b.enemies) e.phase = 2; },
       onTurn: async (b, u) => {
         const w = foe(b, 'c11_wuxiang_2');
@@ -4808,7 +4810,8 @@
       loseOk: true,
       hpFloor: { c11_wuxiang_3: 0.0001 },
       finishers: ['c_qiandeng'],
-      onFloor: async (b) => {
+      onFloor: async (b, e) => {
+        if (e && e.id !== 'c11_wuxiang_3') return; // see yexuan1Hooks
         b._floored = true;
         await bLines(b, [['', '無相之心沒有倒下。它只是蜷得更緊了。'], ['yungui:think', '它不是敵人……它需要的不是被打倒。'], ['baizhi:serious', '是被「渡」。']]);
         b.say('使用「千燈」或白芷的「渡魂謠」', 3.0);

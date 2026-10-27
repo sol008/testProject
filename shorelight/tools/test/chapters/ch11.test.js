@@ -38,6 +38,7 @@ class Run {
   constructor(browser, label) { this.browser = browser; this.label = label; this.errors = []; this.warns = []; this.shotN = 0; }
   async open(query) {
     this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+    await this.ctx.addInitScript({ path: path.join(ROOT, 'tools', 'test', 'lib', 'battlebot.js') }); // battle bot + easy: bosses are tuned for a player, not the auto-battle (docs/BALANCE.md)
     // 2D renderer for the playthrough (software WebGL in headless Chromium is far too slow for the 3D view)
     await this.ctx.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
     this.page = await this.ctx.newPage();
@@ -177,7 +178,7 @@ const SEGMENTS = {
   await R.choices([0]); await R.talk('ph_innkeeper');
   },
   flats: async (R) => {
-  await R.levelTo(39);
+  await R.levelTo(41); // 烏鬚船主 is tuned for a Lv39 player (docs/BALANCE.md): two levels of margin for the battle bot
   // a ?startch=11 party wears starter gear: buy the Magong smith's kit (as a player would before the flats)
   await R.ev(() => {
     const kit = { xinghe: ['c11_sw_xuanwu', 'c11_ar_coral'], hongying: ['c11_sp_jinggu', 'c11_ar_haiwen'], yungui: ['c11_fn_leishan', 'c11_ar_coral'] };
@@ -266,7 +267,7 @@ const SEGMENTS = {
   await R.choices(['暗流', 0]); await R.talk('chenbo');
   check('A: 4-2 step 1 平安信', await R.flag('ch11_tangshan_letter') && await R.ev(() => G.Inv.has('c11_pingan_letter')));
   for (const id of ['deck_hy', 'deck_yg', 'deck_yy', 'deck_mc']) await R.talk(id);
-  await R.levelTo(44);
+  await R.levelTo(46); // 鯤 is tuned for a Lv41 player (docs/BALANCE.md)
   await R.heal();                                   // rest at the save point before the boss
   await R.choices(['鯤之淵']); await R.talk('chenbo');
   check('A: 11-14 鯤 (鯤鱗甲)', await R.flag('ch11_kun') && await R.ev(() => G.Inv.has('c11_ar_kun_scale')));

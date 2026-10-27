@@ -43,7 +43,10 @@ const S10a = S9;
 const S10b = S10a.concat(['c10_qiyuwan', 'c10_xiaomigao', 'c10_baicao', 'c10_fanshu', 'c10_sw_chaosheng', 'c10_sp_huilang', 'c10_ar_tengjia', 'c10_hd_lupi', 'c10_ft_lupi']);
 const S10c = S10b.concat(['c10_quxiefu', 'mashu', 'c10_sp_huilan', 'c10_ar_shiwen', 'c10_hd_zhubian']);
 const S10 = S10c.concat(['c10_gaozha', 'c10_mifengeng', 'c10_pudugao', 'c10_sw_lanyang', 'c10_fn_haishen', 'c10_ac_yujia', 'c10_ar_jiaosi', 'c10_hd_jiaosi', 'c10_ft_jiaosi']);
-const SHOPS = { S1a, S1, S2a, S2, S3a, S3, S4, S5, S6, S7a, S7b, S7, S8a, S8, S9a, S9b, S9, S10b, S10c, S10 };
+const S11 = S10.concat(['heitanggao', 'c11_xianbing', 'c11_xiaoguan', 'c11_dingxiang', 'c11_fengru', 'xianrenzhang', 'c11_jingua', 'huanhundan', 'jiuzhuan',
+  'c11_sw_xuanwu', 'c11_sp_jinggu', 'c11_fl_haiyue', 'c11_fn_leishan', 'c11_ar_coral', 'c11_ar_haiwen', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua']);
+const S11b = S11.concat(['c11_higan_tea', 'c11_qingxin_tea', 'c11_lamp_oil']); // 茶婆的茶棚 (field, before the tower)
+const SHOPS = { S11, S11b, S1a, S1, S2a, S2, S3a, S3, S4, S5, S6, S7a, S7b, S7, S8a, S8, S9a, S9b, S9, S10b, S10c, S10 };
 
 const XH = 'xinghe', BZ = 'baizhi', HY = 'hongying', YG = 'yungui';
 const FOUR = [XH, BZ, HY, YG], TRIO = [XH, HY, YG];
@@ -61,6 +64,8 @@ const T4 = { [XH]: eq('sw_jiujiang', 'ar_hakka', 'hd_huabu', 'ft_muji'), [BZ]: e
 const T7 = { [XH]: eq('sw_qixing', 'ar_chain', 'hd_yuguan', 'ft_lupi'), [HY]: eq('sp_qilin', 'ar_chain', null, 'ft_lupi'), [YG]: eq('fn_qixing', 'ar_brocade', null, 'ft_lupi') };
 const T8 = { [XH]: eq('c8_liuguang', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_qingxin'), [HY]: eq('c8_jingtao', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_huzhao'), [YG]: eq('c8_leiyin', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_yeming') };
 const T5 = { [XH]: eq('sw_bailian', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [BZ]: eq('fl_diaohua', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [HY]: eq('c5_sp_steel', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [YG]: eq('fn_zhusha', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi') };
+const T11 = { [XH]: eq('c11_sw_xuanwu', 'c11_ar_coral', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'), [HY]: eq('c11_sp_jinggu', 'c11_ar_haiwen', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'),
+  [YG]: eq('c11_fn_leishan', 'c11_ar_coral', 'c11_hd_douli', 'c11_ft_bu', 'c11_ac_juhua'), [BZ]: eq('c11_fl_dengxin', null, null, null, 'c11_ac_memory_lamp') };
 const DBG = { jinchuang: 5, xumingsan: 5, jiuzhuan: 5, huanhunxiang: 5, huanhundan: 5, jiedu: 5, xiangbao: 5, pinganfu: 5, yuyuan: 5, caozaiguo: 5, mijiu: 5, mifentang: 5 }; // ?debug&map=… start
 const K6 = { xumingsan: 6, huanhunxiang: 4 }, K7 = { xumingsan: 6, wanguo: 3, fenglisu: 3, huanhunxiang: 3, xiangbao: 3 };
 const K9 = { shimuyu: 3, xumingsan: 5, huanhunxiang: 3, xiancao: 3 }, K10 = { wuyuzi: 5, yinghuaxia: 3, huanhunxiang: 5, jiuzhuan: 2, mijiu: 5, aiyu: 4 };
@@ -120,6 +125,20 @@ const tGuhun = (sc, u, h) => {
   if (h.G.Inv.count('c10_pudu_offering') > 0) return h.item('c10_pudu_offering', boss);
   return null;
 };
+
+// 無相之心 cannot fall: once it is held at its floor the screen says 「使用『千燈』或白芷的『渡魂謠』」
+const tHeart = (sc, u, h) => {
+  const heart = sc.enemies.find((e) => e.id === 'c11_wuxiang_3' && !e.dead);
+  if (!heart || !sc._floored) return null;
+  if (u.id === BZ && h.usable.includes('bz_duhun')) return h.cmdFor('bz_duhun', heart);
+  return null;
+};
+const c7flame = (G) => G.__X.ch7.ev('C7.applyFlame()');
+const SK11 = { [XH]: SK9[XH], [HY]: SK9[HY], [YG]: SK9[YG].concat(['yg_pudu']), [BZ]: [] };
+const LV11 = { [XH]: 44, [HY]: 44, [YG]: 44, [BZ]: 45 };
+const GIFT11 = { [XH]: ['sw_yinghuo'], [BZ]: ['c11_fl_dengxin', 'c11_ac_memory_lamp'] };
+// the scene's own heals between phases (fraction of max HP and MP)
+const heal = (k) => (G) => { for (const m of G.Party.active()) { const st = G.Party.stats(m.id); m.hp = Math.min(st.mhp, Math.max(1, m.hp) + Math.round(st.mhp * k)); m.mp = Math.min(st.mmp, m.mp + Math.round(st.mmp * k)); } };
 
 function FIGHTS() {
   return [
@@ -246,6 +265,30 @@ function FIGHTS() {
     { id: 'c10_guhun', test: { lv: 40, gear: T10, inv: K10 }, ch: 10, file: 'ch10', name: '孤魂眾 (頭城 普渡)', troop: 't_c10_guhun', opts: '{ intro: H.guhunRules }',
       party: TRIO, lv: 38, shops: S10, gifts: yinghuo, skills: { [XH]: SK9[XH], [HY]: SK9[HY], [YG]: SK9[YG].concat(['yg_pudu']) }, flags: AWAKE,
       inv: { c10_pudu_offering: 6 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tGuhun },
+    // ============================================================== ch11 黑水溝・彼岸 (白芷 rejoins before 夜玄 at the party average + 1)
+    { id: 'c11_captain', test: { lv: 39, gear: T11 }, ch: 11, file: 'ch11', name: '烏鬚船主 (11-05)', troop: 't11_captain', opts: 'captainHooks()',
+      party: TRIO, lv: 39, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_jailer', test: { lv: 43, gear: T11 }, ch: 11, file: 'ch11', name: '鎖魂將 (11-10)', troop: 't11_jailer', opts: 'jailerHooks()',
+      party: TRIO, lv: 40, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_kun', test: { lv: 44, gear: T11 }, ch: 11, file: 'ch11', name: '鯤 (11-14)', troop: 't11_kun', opts: 'kunHooks()',
+      party: TRIO, lv: 41, shops: S11, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame, focus: ['c11_kun_tumor'] },
+    { id: 'c11_warden', test: { lv: 45, gear: T11 }, ch: 11, file: 'ch11', name: '千年燈塔守 (11-23)', troop: 't11_warden', opts: null,
+      party: TRIO, lv: 43, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_tongzi', test: { lv: 46, gear: T11 }, ch: 11, file: 'ch11', name: '萬象童子 (optional game, 15 turns)', troop: 't11_tongzi', opts: 'tongziHooks()',
+      party: TRIO, lv: 44, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, pre: c7flame, loseOk: true, scripted: true },
+    { id: 'c11_yexuan1', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '夜玄・玄冥法師 (11-28 phase 1)', troop: 't11_yexuan_1', opts: 'yexuan1Hooks()',
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_yexuan2', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '夜玄・逆潮法身 (phase 2, after phase 1 +30%)', troop: 't11_yexuan_2', opts: 'yexuan2Hooks()',
+      before: [{ troop: 't11_yexuan_1', opts: 'yexuan1Hooks()', after: heal(0.3) }],
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang1', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '黑潮・無相 (phase 1, full heal before)', troop: 't11_wuxiang_1', opts: 'wuxiang1Hooks()',
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang2', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '無相・深淵 (phase 2, trio, +50% after phase 1)', troop: 't11_wuxiang_2', opts: 'wuxiang2Hooks()',
+      before: [{ troop: 't11_wuxiang_1', opts: 'wuxiang1Hooks()', after: (G) => { G.Party.leave('baizhi'); heal(0.5)(G); } }],
+      party: FOUR, lv: LV11, shops: S11b, gifts: GIFT11, skills: SK11, flags: AWAKE, pre: c7flame },
+    { id: 'c11_wuxiang3', test: { lv: 48, gear: T11 }, ch: 11, file: 'ch11', name: '無相之心 (phase 3, cannot be lost)', troop: 't11_wuxiang_3', opts: 'wuxiang3Hooks()',
+      party: [XH], lv: 44, shops: S11b, gifts: yinghuo, skills: SK11, flags: AWAKE, scripted: true, tactics: tHeart,
+      pre: (G) => { c7flame(G); for (const [id, lv] of [[HY, 44], [YG, 44], [BZ, 45]]) { const m = G.Party.create(id, lv); for (const k of (SK11[id] || [])) G.Party.learnSkill(id, k); } } },
   ];
 }
 
