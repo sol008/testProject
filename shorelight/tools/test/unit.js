@@ -553,6 +553,74 @@ test('battle: kill() of an enemy records the bestiary', ({ G }) => {
   A.ok(e.dead); A.eq(G.state.bestiary.sea_wisp, 1);
 });
 
+test('battle: auto-battle ultimate with revive:true also targets KO\'d allies (cmdForSkill)', ({ G }) => {
+  const sc = scene(G);
+  G.Data.skills.qa_rez_ult = { name: 'rez', mp: 0, type: 'heal', target: 'allies', power: 2, revive: true, ultimate: true, fx: 'heal' };
+  const a = unit(G, { id: 'qa_hero' }), b = unit(G, { id: 'qa_mage', hp: 0, dead: true });
+  sc.party = [a, b];
+  const cmd = sc.cmdForSkill(a, 'qa_rez_ult', null);
+  A.ok(cmd.targets.includes(b), 'KO\'d ally missing from targets — auto-battle ultimate never revives (battle.js cmdForSkill uses alive(\'party\') for target allies; manual CommandUI uses sc.party)');
+});
+
+// ------------------------------------------------------------------ dialogue / menus (logic level, no rendering)
+function pump(G, scene, sec, dt = 0.05) { for (let t = 0; t < sec; t += dt) { G.Input.update(dt); G.Timers.update(dt); G.Tweens.update(dt); G.Scenes.update(dt); G.Input.endFrame(); } }
+test('dialog: pressing OK advances a single-page line (no auto/skip)', async ({ G, ctx }) => {
+  G.ctx = ctx.document.createElement('canvas').getContext('2d');
+  G.settings.autoAdvance = false;
+  let done = false;
+  G.Dialog.say('baizhi', '短句。').then(() => { done = true; });
+  pump(G, null, 1.0); // let the typewriter finish
+  G.Input._press('ok'); pump(G, null, 0.05); await null; await null;
+  A.ok(done, 'line was not dismissed by OK — dialog.js DialogScene.update consumes the press in the multi-page check (I.pressed(\'ok\') evaluated before `this.page < this.pages.length - 1`) so the second check never sees it');
+});
+test('dialog: choice returns the highlighted index; cancel only when allowed', async ({ G, ctx }) => {
+  G.ctx = ctx.document.createElement('canvas').getContext('2d');
+  let r = null;
+  G.Dialog.choice(['a', 'b', 'c']).then((i) => { r = i; });
+  pump(G, null, 0.1);
+  G.Input._press('down'); pump(G, null, 0.05);
+  G.Input._press('cancel'); pump(G, null, 0.05); await null;
+  A.eq(r, null, 'cancel without opts.cancel must not resolve');
+  G.Input._press('ok'); pump(G, null, 0.05); await null;
+  A.eq(r, 1);
+  let r2 = null;
+  G.Dialog.choice(['x', 'y'], { cancel: 1 }).then((i) => { r2 = i; });
+  pump(G, null, 0.1); G.Input._press('cancel'); pump(G, null, 0.05); await null;
+  A.eq(r2, 1);
+});
+test('menu: save-slot thumbnail failure must not leave G.ctx pointing at the offscreen canvas', ({ G, ctx }) => {
+  const main = ctx.document.createElement('canvas').getContext('2d');
+  G.ctx = main;
+  G.Party.join('qa_hero', 1);
+  G.mapScene = { def: { id: 'x' }, map: { name: 'x' }, draw() { throw new Error('draw failed'); } };
+  const sc = new G.SaveScene('save', () => {});
+  G.Scenes.push(sc);
+  G.Input._press('ok');
+  sc.update(0.016);
+  A.ok(G.Save.exists(1), 'save still written');
+  A.ok(G.ctx === main, 'G.ctx was not restored after G.mapScene.draw threw (menu.js SaveScene: `G.ctx = bctx; G.mapScene.draw(bctx); G.ctx = saved;` needs try/finally) — every later frame renders into a detached canvas');
+});
+test('shop: buy/sell arithmetic and 99 cap (logic level)', ({ G }) => {
+  G.state.gold = 1000;
+  let closed = false;
+  const sc = new G.ShopScene(['qa_potion', 'no_such_item', 'qa_sword'], () => { closed = true; });
+  A.deep(sc.goods, ['qa_potion', 'qa_sword'], 'unknown goods filtered');
+  G.Scenes.push(sc);
+  const step = (k) => { G.Input._press(k); sc.update(0.016); G.Input.endFrame(); };
+  step('ok'); // 購買
+  step('ok'); // potion → qty
+  step('right'); step('right'); step('ok'); // buy 3
+  A.eq(G.Inv.count('qa_potion'), 3); A.eq(G.state.gold, 970);
+  G.Inv.add('qa_potion', 95); // 98
+  step('ok'); step('right'); step('right'); step('ok'); // max qty is 1 (99 cap)
+  A.eq(G.Inv.count('qa_potion'), 99, 'qty must be capped so the bag never exceeds 99');
+  step('cancel'); step('down'); step('ok'); // 販賣
+  step('ok'); step('ok'); // sell 1 potion (sorted first)
+  A.eq(G.Inv.count('qa_potion'), 98); A.eq(G.state.gold, 970 - 10 + 5);
+  step('cancel'); step('down'); step('ok'); // 離開
+  A.ok(closed, 'shop resolve called on 離開');
+});
+
 // ------------------------------------------------------------------ content-driven sanity
 test('content: every character can be created at lv 1..50 with finite positive stats', ({ G }) => {
   const real = Object.keys(G.Data.chars).filter((id) => !id.startsWith('qa_'));

@@ -143,6 +143,9 @@ G.Mapx = G.Mapx || {};
       this.buildNpcs();
       this.buildEnemies();
       this.player = new Actor({ id: 'player', x, y, dir: st.dir, speed: 4.2 });
+      if (G.Sprites && G.Sprites.preload) {
+        try { G.Sprites.preload([...new Set(this.npcs.map((n) => n.sprite || n.id).concat(st.party))]); } catch (e) { G.warnOnce('sprite preload', e); }
+      }
       this.followers = [];
       this.buildFollowers();
       this.computeSolid();

@@ -10,6 +10,8 @@
 G.I18N.add({
   // ------------------------------------------------------------------ title
   '彼岸燈': 'Shorelight',
+  // English-mode subtitle under the title logo is deliberately the Chinese name — keep it untranslated
+  '彼　岸　燈': '彼　岸　燈',
   '新的旅程': 'New Journey',
   '繼續旅程': 'Continue',
   '讀取進度': 'Load Game',
@@ -28,7 +30,7 @@ G.I18N.add({
   '第五章　鹿港舊夢': 'Chapter 5: Old Dreams of Lukang',
   '第六章　府城長明': "Chapter 6: Tainan's Eternal Light",
   '第七章　雲山入夢': 'Chapter 7: Dreaming in the Cloud Peaks',
-  '第八章　逆潮': 'Chapter 8: The Reversing Tide',
+  '第八章　逆潮': 'Chapter 8: The Reverse Tide',
   '第九章　王船南行': 'Chapter 9: The King Boat Sails South',
   '第十章　後山巡境': 'Chapter 10: Beyond the Back Mountains',
   '第十一章　黑水溝・彼岸': 'Chapter 11: Black Tide, Far Shore',
@@ -119,6 +121,7 @@ G.I18N.add({
   '吸收 ': 'Absorbed ',
   '弱點！': 'Weak spot!',
   '抵抗': 'Resisted',
+  '反轉！': 'Inverted!',
   '暴擊！': 'Critical!',
   '復活！': 'Revived!',
   '倒下了': 'Down!',
@@ -351,6 +354,10 @@ G.I18N.add({
   '畫質（重新啟動後生效）': 'Graphics (after restart)',
   '高': 'High',
   '省電': 'Power Saver',
+  '迷幻視覺強度（光敏保護）': 'Vision FX (photosensitivity)',
+  '完整': 'Full',
+  '柔和': 'Soft',
+  '最低': 'Minimal',
   '全螢幕': 'Fullscreen',
   'Z 切換': 'Z: Toggle',
   '鍵位：方向鍵/WASD 移動　Z/空白/Enter 決定　X/Esc 返回・選單　Shift 奔跑': 'Controls: Arrows/WASD move   Z/Space/Enter confirm   X/Esc back/menu   Shift run',

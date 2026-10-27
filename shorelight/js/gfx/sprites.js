@@ -45,7 +45,9 @@
 //   hip:[ 'gourd'|'flute'|'pouch'|'knife'|'fan'|'jade'|'sword'|'creel'|'lamp' ],
 //   back:'sword'|'spear'|'basket'|'bundle'|'quiver'|'herbs'|'umbrella',
 //   armPose:'brow'|'ear' (giant figures), weapon:'sword'|'spear'|'fan'|'flute'|'oar'|'lstaff'|'glaive'|'ffan'|'whisk'
-//   (battle weapon style), aura:'#hex' (cast glow), ghost:bool, glow:'#hex', halo:'#hex' }
+//   (battle weapon style), aura:'#hex' (cast glow), ghost:bool, ghostTint:'#hex', glow:'#hex', halo:'#hex' }
+// drawBattle also draws a soft ground shadow unless o.shadow === false; o.scale is supported by both draw calls.
+// G.Sprites.frameInfo(id, 'map'|'battle', dirOrPose) -> {w,h,ax,ay}; G.Sprites.preload(ids, battle?); G.Sprites.clearCache().
 // ────────────────────────────────────────────────────────────────────────────────────────────────────
 'use strict';
 (() => {
@@ -1599,7 +1601,8 @@
   P_('cane', 36, 0.97, 1.6, (c, L, R) => { const t = R.bat ? 1.4 : 1; stick(c, 0, L, 2 * t, wood, R.lw * 0.7); c.beginPath(); c.arc(L, -2 * t, 2.2 * t, PI * 0.5, PI * 1.6, true); stroke(c, ol(wood), 2.6 * t); c.stroke(); stroke(c, wood, 1.6 * t); });
   P_('lstaff', 92, 0.48, 1.85, (c, L, R) => { // 夜玄's lantern staff
     const t = R.bat ? 1.4 : 1, lw = R.lw * 0.75;
-    stick(c, 0, L * 0.9, 2.4 * t, '#2a2230', lw);
+    stick(c, 0, L * 0.9, 2.4 * t, '#5a3446', lw);
+    for (const f of [0.3, 0.6]) seg(c, L * f, -1.3 * t, L * f, 1.3 * t, '#d6b25a', 1 * t);
     const [dx, dy] = worldDown(c);
     const hx = L * 0.97, hy = 0;
     c.beginPath(); c.moveTo(L * 0.86, 0); c.quadraticCurveTo(L * 1.02 - dx * 2 * t, -dy * 2 * t, hx + dx * 3 * t, hy + dy * 3 * t);
@@ -1792,6 +1795,7 @@
     const S = R.S, k = R.k, P = R.P;
     const it = S.back;
     if (!it) return;
+    if (R.bat && R.pose.w && (it === S.weapon || (it === 'sword' && S.weapon === 'sword'))) return; // weapon is in hand
     const B = R.B, sh = R.shY, hp = R.hipY;
     if (it === 'sword') {
       if (B) drawProp(c, R, 'scabbard', P.sw * 0.95, sh - 8 * k, 2.2);
@@ -1915,7 +1919,6 @@
         if (S.cape) drawMantle(c, R, S.cape);
         drawHead(c, R);
         if (S.beadsOver) drawBeads(c, R, S.beads);
-        if (S.armPose) armPoseHand(c, R);
       });
     } else if (v === 'back') {
       legs(); lower();
@@ -1947,12 +1950,10 @@
         drawHead(c, R);
         armFn(1, false);
         if (S.armor) drawPauldrons(c, R, S.armor);
-        if (S.armPose) armPoseHand(c, R);
       });
     }
     if (R.pose.fx) for (const f of R.pose.fx) FX[f] && FX[f](c, R);
   }
-  function armPoseHand(c, R) { /* giant figures' raised hand is a normal arm pose; nothing extra */ void c; void R; }
 
   // =================================================================================== battle FX baked into poses
   const FX = {
@@ -2053,7 +2054,7 @@
     const sc = (S.size || 1);
     const k = 1, lw = bat ? 1.6 : 1.3;
     c.save(); c.scale(sc, sc);
-    if (pose.belly) { c.translate(0, -(Q.leg + Q.bh * 1.75)); c.scale(1, -1); }
+    if (pose.belly) { c.translate(0, -(Q.leg + Q.bh * 1.1 + Q.hr * 1.0)); c.rotate(0.18); c.scale(1, -1); }
     else if (pose.rot) { c.translate(0, -Q.leg * 0.4); c.rotate(pose.rot); }
     const legY = -Q.leg - (pose.hop || 0);
     const by = legY - Q.bh * 0.55;
@@ -2270,7 +2271,7 @@
     const holdIdx = view === 'side' ? (S.armPose ? 0 : 1) : view === 'back' ? 0 : 1;
     if (S.held && { cane: 1, staff: 1, lstaff: 1, oar: 1, spear: 1, glaive: 1, halberd: 1, flag: 1, pestle: 1, paddle: 1, hoe: 1, broom: 1, lantern: 1, oillamp: 1, yueqin: 1, basket: 1, medbox: 1 }[S.held]) {
       const hi = holdIdx;
-      p.arms[hi] = view === 'side' ? { a: 0.95, e: 0.3 } : { a: 0.2, e: 0.75, out: 0.25 };
+      p.arms[hi] = view === 'side' ? { a: 0.95, e: 0.3 } : { a: 0.2, e: 0.75, out: 0.45 };
       if (S.held === 'lantern' || S.held === 'oillamp' || S.held === 'basket' || S.held === 'medbox') p.arms[hi] = view === 'side' ? { a: 0.35, e: 0.25 } : { a: 0.1, e: 0.15, out: 0.35 };
       if (S.held === 'yueqin') p.arms[hi] = view === 'side' ? { a: 0.7, e: 1.0 } : { a: 0.3, e: 1.2, out: -0.2 };
     } else if (S.held) {
@@ -2279,7 +2280,7 @@
     }
     if (S.armPose) { // giant figures: 千里眼 shading the eyes, 順風耳 cupping the ear
       const hi = view === 'side' ? 1 : view === 'back' ? 1 : 0;
-      p.arms[hi] = S.armPose === 'brow' ? (view === 'side' ? { a: 2.3, e: 1.7 } : { a: 0.6, e: 2.4, out: 0.2, eo: -0.6 }) : (view === 'side' ? { a: 1.9, e: 2.2 } : { a: 0.3, e: 2.5, out: 0.5, eo: -0.5 });
+      p.arms[hi] = S.armPose === 'brow' ? (view === 'side' ? { a: 1.75, e: 1.25 } : { a: 0.6, e: 2.4, out: 0.2, eo: -0.6 }) : (view === 'side' ? { a: 1.5, e: 1.6 } : { a: 0.3, e: 2.5, out: 0.5, eo: -0.5 });
     }
     if (S.armsBack) p.arms = view === 'side' ? [{ a: -0.4, e: 1.2 }, { a: -0.3, e: 1.3 }] : p.arms;
     return p;
@@ -2472,7 +2473,7 @@
     return c;
   }
   function mapFrame(id, view, f, ghost) {
-    const key = id + '|m|' + view + '|' + f + (ghost ? '|g' : '');
+    const key = id + '|m|' + view + '|' + f + (ghost ? '|g' : '') + '|' + (G.S || 1);
     let c = CACHE.get(key);
     if (c) return c;
     if (ghost) { c = ghostify(mapFrame(id, view, f, false), SPECS[id].ghostTint); CACHE.set(key, c); return c; }
@@ -2497,7 +2498,7 @@
     return [0.4 * s, -0.4 * s, -0.4 * s, 0.4 * s];
   }
   function battleFrame(id, pose, ghost) {
-    const key = id + '|b|' + pose + (ghost ? '|g' : '');
+    const key = id + '|b|' + pose + (ghost ? '|g' : '') + '|' + (G.S || 1);
     let c = CACHE.get(key);
     if (c) return c;
     if (ghost) { c = ghostify(battleFrame(id, pose, false), SPECS[id].ghostTint); CACHE.set(key, c); return c; }
@@ -2524,9 +2525,7 @@
         drawHuman(x, S, R);
         return;
       }
-      const R = rig(S, true, 'q', p);
-      if (p.tilt) { R.pose.tilt = p.tilt; }
-      drawHuman(x, S, R);
+      drawHuman(x, S, rig(S, true, 'q', p));
     });
     CACHE.set(key, c);
     return c;
@@ -2638,6 +2637,15 @@
       return { w: c.lw, h: c.lh, ax: c.ax, ay: c.ay };
     },
     clearCache() { CACHE.clear(); },
+    // optional: pre-render all map frames (and battle poses if battle=true) to avoid first-use hitches
+    preload(ids, battle) {
+      for (const id of ids || []) {
+        if (!SPECS[id]) continue;
+        const S = SPECS[id], g = !!S.ghost;
+        for (const v of ['front', 'back', 'side']) for (const f of [0, 1, 3]) mapFrame(id, v, f, g);
+        if (battle) for (const p of ['idle', 'ready', 'attack', 'cast', 'hurt', 'ko', 'guard', 'victory', 'item']) battleFrame(id, p, g);
+      }
+    },
   };
 
   // =================================================================================== character specs

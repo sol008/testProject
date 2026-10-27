@@ -1001,7 +1001,7 @@ G.Battle = (() => {
         if (u.side === 'party' || u.sprite) {
           let ok = false;
           if (G.Sprites && G.Sprites.has(u.sprite)) {
-            try { G.Sprites.drawBattle(c, u.sprite, u.dead && u.side === 'party' ? 'ko' : u.pose, t + (u.hx || 0), x, y, { flip: u.side === 'enemy' }); ok = true; } catch (e) { G.warnOnce('sprite ' + u.sprite, e); }
+            try { G.Sprites.drawBattle(c, u.sprite, u.dead && u.side === 'party' ? 'ko' : u.pose, t + (u.hx || 0), x, y, { flip: u.side === 'enemy', shadow: false }); ok = true; } catch (e) { G.warnOnce('sprite ' + u.sprite, e); }
           }
           if (!ok) { c.fillStyle = '#4a6ab8'; c.fillRect(x - 25, y - 140, 50, 140); }
         } else {
@@ -1091,7 +1091,12 @@ G.Battle = (() => {
         ctx.strokeStyle = i === 0 ? '#ffe08a' : 'rgba(255,255,255,0.35)';
         ctx.lineWidth = i === 0 ? 2.5 : 1;
         ctx.beginPath(); ctx.roundRect(x, y + (i === 0 ? 0 : 6), 46, i === 0 ? 50 : 40, 8); ctx.fill(); ctx.stroke();
-        G.Render.text(ctx, u.name.slice(0, 1), x + 23, y + (i === 0 ? 10 : 12), { size: i === 0 ? 26 : 22, align: 'center', color: '#fff4dc' });
+        let chip = u.name.slice(0, 1);
+        if (G.I18N.isEn()) {
+          const nm = G.T(u.name);
+          chip = /[A-Za-z]/.test(nm) ? nm.split(/[\s・-]+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() : nm.slice(0, 1);
+        }
+        G.Render.text(ctx, chip, x + 23, y + (i === 0 ? 10 : 12), { size: i === 0 ? 26 : 22, align: 'center', color: '#fff4dc' });
         const tg = tag(u);
         if (tg) G.Render.text(ctx, tg, x + 40, y + (i === 0 ? 30 : 32), { size: 13, bold: true, align: 'center', color: '#ffd97a' });
         ctx.restore();
