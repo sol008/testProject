@@ -12,6 +12,7 @@ G.I18N = (() => {
   const templates = [];      // { re, src, dst, kinds }
   const memo = new Map();
   const CJK = /[㐀-鿿豈-﫿　-〿＀-￯]/;
+  const IDEO = /[㐀-鿿豈-﫿]/;
   I.missing = new Set();
   I.trackMissing = false;
 
@@ -83,6 +84,10 @@ G.I18N = (() => {
       if (s.includes('\n')) {
         const parts = s.split('\n').map((p) => I.t(p));
         r = parts.join('\n');
+      } else if (!IDEO.test(s)) {
+        // punctuation-only lines (「……？」「——！」) need no dictionary: use ASCII punctuation in English
+        r = s.replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ')
+          .replace(/[。]/g, '.').replace(/[、]/g, ',').replace(/[「」『』]/g, '"').replace(/——/g, '—');
       } else {
         if (I.trackMissing) I.missing.add(s);
         r = s;
