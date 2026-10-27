@@ -1049,7 +1049,7 @@
     await S.say('', '紅纓擦擦眼睛，站起來，把槍往沙裡一插。');
     await S.say('hongying:angry', '好！明天我煮早餐！');
     await S.say('xinghe:surprise', '欸？不、不用了吧——');
-    if (V().ch9_comfort === 'talk') await S.say('hongying:smug', '你早上不是說胃太好？');
+    if (V().ch9_comfort === 'talk') await S.say('hongying:smug', '你剛剛不是說胃太好？');
     else await S.say('hongying:smug', '誰叫你剛剛陪我。');
     S.bgm('south');
     await S.say('', '星河看著海，乾笑。');

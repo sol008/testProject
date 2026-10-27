@@ -343,7 +343,7 @@ G.I18N.add({
   '紅纓擦擦眼睛，站起來，把槍往沙裡一插。': 'Hongying wipes her eyes, stands, and plants her spear in the sand.',
   '好！明天我煮早餐！': 'Right! I\'m making breakfast tomorrow!',
   '欸？不、不用了吧——': 'Eh? N-no, you really don\'t have to—',
-  '你早上不是說胃太好？': 'Didn\'t you say earlier your stomach\'s too good these days?',
+  '你剛剛不是說胃太好？': 'Didn\'t you say earlier your stomach\'s too good these days?',
   '誰叫你剛剛陪我。': 'That\'s what you get for keeping me company just now.',
   '星河看著海，乾笑。': 'Xinghe stares out at the sea and laughs weakly.',
   '隔天早上，星河吃了一碗「黑色的、會冒泡的粥」。': 'The next morning, Xinghe ate a bowl of "black congee that bubbles."',
