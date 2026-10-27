@@ -3082,45 +3082,84 @@
     await S.warp(DECK, 22, 8, 'right', { reload: true, fade: 0 });
     S.hideFollowers(true);
     await S.fadeIn(0.8);
-    S.bgm('sea');
+    S.bgm('sea', { fade: 3 });
     await S.say('', '王船離開玄武嶼。海水由墨綠，一寸一寸地，變成漆黑。');
+    await pause(S, 1.0);
     S.face('player', 'right');
     if (F('ch11_study')) {
       await S.say('', '星河走到舵旁，遞出那張舊畫像。');
       await S.say('xinghe:normal', '陳伯。我們在他房裡，找到這個。');
     } else {
       await S.say('xinghe:serious', '陳伯。他叫你「阿渡」。你們以前……是什麼關係？');
+      await pause(S, 1.4);
       await S.say('', '陳伯沉默了很久，從懷裡摸出一張折得很小、褪了色的畫——同一幅畫的小樣。');
       await S.say('chenbo:sad', '……這張，我也留著一張。');
     }
+    await pause(S, 0.8);
+    // he never lets go of the helm
+    await S.say('', '陳伯一手把著舵，一手拿著畫，看了很久。');
+    await pause(S, 1.2);
     await L(S, [
-      ['', '陳伯看了很久。'],
       ['chenbo:sad', '……這是念丫頭五歲那年。安平的畫師畫的。'],
       ['chenbo:smile', '畫完收了三個錢。說兩個引魂人加一個小鬼頭，打個折。'],
+    ]);
+    await pause(S, 0.8);
+    await L(S, [
       ['chenbo:normal', '我跟阿玄，十六歲就一起划槳了。'],
       ['chenbo:smile', '他划得比我好，燈也點得比我亮。死人都喜歡他。'],
+    ]);
+    await pause(S, 1.0);
+    // the music drains away as he comes to the night of the wreck
+    S.bgm(null, { fade: 3 });
+    await L(S, [
       ['chenbo:sad', '二十年前，他回唐山接念丫頭。她娘病死了，只剩這個女兒。'],
       ['chenbo:sad', '回程的船，在黑水溝翻了。那一晚，我在海上當班。'],
       ['chenbo:serious', '我划過去的時候，船已經沒了。滿海都是燈。'],
+    ]);
+    await pause(S, 0.8);
+    await L(S, [
       ['chenbo:sad', '他在水裡。一手抱著木板，一手抓著一盞小小的燈。'],
       ['chenbo:serious', '引魂人的規矩，第一條——引魂人不留魂。'],
       ['chenbo:sad', '我叫他放手。他不肯。我去搶……'],
-      ['chenbo:sad', '……他用槳打了我。然後抱著那盞燈，消失在霧裡。'],
+    ]);
+    await pause(S, 1.2);
+    await S.say('chenbo:sad', '……他用槳打了我。然後抱著那盞燈，消失在霧裡。');
+    await pause(S, 1.6);
+    await L(S, [
       ['chenbo:normal', '從那天起，我就不划槳了。回九份，糊燈籠。'],
       ['xinghe:sad', '……陳伯，你從來沒說過。'],
       ['chenbo:serious', '說了有什麼用。我沒攔住他。這二十年的債，有一半是我的。'],
+    ]);
+    await pause(S, 1.2);
+    await L(S, [
       ['chenbo:normal', '兩年後的中元，我在八斗子撿到一盞水燈。'],
       ['chenbo:smile', '裡面躺著一個哭得震天響的小鬼。'],
-      ['xinghe:surprise', '……！'],
+    ]);
+    S.emote('player', '!');
+    // the story 星河 has told all his life (ch1: 「睡得跟豬一樣」)
+    await S.say('xinghe:surprise', '……你不是一直說，我睡得跟豬一樣？');
+    await S.say('chenbo:normal', '騙你的。');
+    await pause(S, 0.8);
+    await S.say('chenbo:sad', '你哭了一整暝。我抱著你，在海邊坐到天光。');
+    await pause(S, 1.0);
+    await L(S, [
       ['chenbo:serious', '那小鬼身上，有燈的火。我一看就知道。'],
       ['chenbo:normal', '我想——這一次，我一定要把這孩子顧好。'],
+    ]);
+    await pause(S, 0.8);
+    S.bgm('sea', { fade: 4 });
+    await L(S, [
       ['chenbo:smug', '結果，顧成一個懶鬼。'],
       ['xinghe:cry', '陳伯……'],
       ['chenbo:angry', '哭什麼！眼淚收起來，留到見到那丫頭再用。'],
       ['hongying:smile', '……陳伯，你剛剛那句，跟星河平常講話一模一樣。'],
       ['chenbo:angry', '是他學我！'],
-      ['chenbo:serious', '坐穩了。前面，就是黑水溝。'],
     ]);
+    await pause(S, 1.0);
+    await S.say('', F('ch11_study') ? '陳伯把畫還給星河。兩隻手，都回到了舵上。' : '陳伯把畫折好，收回懷裡。兩隻手，都回到了舵上。');
+    await S.say('chenbo:serious', '坐穩了。前面，就是黑水溝。');
+    S.sfx('splash'); S.shake(4, 0.8);
+    await pause(S, 1.0);
     S.flag('ch11_chenbo_story');
     bumpMoon(2);
     S.quest('q_ch11_main', 5);
