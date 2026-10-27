@@ -308,5 +308,5 @@ function printShops(env) {
   for (const [k, v] of Object.entries(SHOPS)) console.log(k.padEnd(14), v.map((id) => `${id}${env.G.Data.items[id] ? '' : '(?)'}`).join(' '));
 }
 
-module.exports = { loadGame, makeAI, runFight, runOnce, setup, describe };
+module.exports = { loadGame, makeAI, runFight, runOnce, setup, describe, bestGear, gearScore, kitFrom };
 if (require.main === module) main().catch((e) => { console.error(e); process.exit(1); });
