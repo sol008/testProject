@@ -368,6 +368,16 @@
 18. 施燈師(smile): 好字。有槍的味道。
 19. 星河(smile): [點上燭火。燈籠亮起，「洛」字在紅光裡透出來] ……好了。
 - 獲得：**洛家燈**（key；古厝內的攜帶光源）。flag `ch5_lamp`
+- （若持有 長明燈碎片 `key_lamp_shard`，第四章取得）
+  19a. 雲歸(serious): 老師傅，再請教一件事。[取出竹塹風穴裡撿到的長明燈碎片] 這個底款。
+  19b. 施燈師(think): [湊近，眼鏡推到額頭上] ……半個字。左邊是個「方」，右邊糊掉了……
+  19c. 施燈師(surprise): ……這是「施」。這是我的店號。
+  19d. 施燈師(sad): 去年，府城來了一個人，說廟裡要用燈，一口氣訂了三百副燈骨。錢給得很爽快。
+  19e. 施燈師(sad): 我還高興了好幾天……那個長鬍子道士拿著一模一樣的碎片來問我，我才知道。
+  19f. 施燈師(angry): 我做了一輩子的燈，是給人照路的。不是……不是給人關人的！
+  19g. 施燈師(sad): [把洛家燈推到紅纓手裡] 這盞，不收錢。……就當我替那三百副燈骨，還一點債。
+  19h. 雲歸(normal): ……師父來鹿港，就是為了追這個底款。
+  - 失去 長明燈碎片。flag `ch5_shard_traced`
 20. [白芷的視線被角落一盞褪色的兔子燈吸住了。紙已發黃，一隻耳朵垂下來]
 21. 白芷(think): ……這是什麼？
 22. 施燈師(smile): 兔子燈。元宵的時候給囝仔提的。這盞是舊的，不賣。
@@ -393,7 +403,7 @@
 41. 雲歸(serious): [按住白芷的肩] 先坐下。照魂鏡之後，第二次了。
 42. 施燈師(surprise): 姑娘……妳怎麼知道……念念的燈……
 43. 白芷(sad): 我不知道。我只是……記得。
-- 獲得：渡魂謠殘句「忘了名，忘了鄉，忘不了岸上有人等。」flag `lyric_ch5`
+- 獲得：渡魂謠殘句「名也忘來鄉也忘，岸頭仍有一人等。」flag `lyric_ch5`（編號由主編統一）
 - 施燈師（劇情後）(normal): 這盞兔子燈……妳帶去吧。[遞給白芷] 我留著它，也只是一直想起那個囝仔。
   - 獲得：**兔子燈**（key；第六章劇情用）。flag `ch5_rabbit`
 - flag `ch5_memory_nian`。任務日誌：「天黑了。提著洛家燈，回洛家古厝。」`ch5_time`=2（夜）。
@@ -837,7 +847,7 @@
   - **心燈 +1：半邊井**（`lantern_halfwell`）
   - 獲得：半邊井水（道具×3：全體 HP+30%、MP+30%）、王家謝禮 1500 文。flag `ch5_well_done`
 
-### 4-3 糰子的蕈譜 #2：憶蕈（`q_tuanzi_mush`，`mush_1` 已取得）
+### 4-3 糰子的蕈譜：憶蕈（`q_tuanzi_mush`，需 `mush_1`）
 - 條件：`ch5_enter` 後，`luo_1f` 後院大榕樹根部（靈視才可見）。
 1. [老榕樹的氣根間，長著幾朵半透明、會隨著燈光改變顏色的小蕈]
 2. 雲歸(surprise): 憶蕈……古書上說，長在有很多回憶的老房子裡。
@@ -856,7 +866,7 @@
 15. 糰子(serious): 而且吾看見雲歸小時候尿床。
 16. 雲歸(angry): 那是你自己編的！你又沒看過！
 17. 糰子: [倒下打呼]
-- `tuanzi_mush` +1，蕈譜第 2 格：憶蕈。flag `mush_2`
+- `tuanzi_mush` +1，蕈譜記下一格：憶蕈。flag `mush_ch5`
 
 ---
 
@@ -1018,13 +1028,13 @@
 ### 7-1 旗標
 `ch5_start`, `ch5_gate`, `ch5_mazu`, `ch5_jiaobei`, `ch5_alley`, `ch5_lamp`, `ch5_rabbit`, `ch5_memory_nian`, `lyric_ch5`,
 `ch5_enter`, `ch5_mem1`, `ch5_mem2`, `ch5_trunk`, `ch5_mirrors`, `ch5_boss`, `ch5_unmask`, `ch5_fubo_done`, `ch5_noodles`,
-`ch5_rest`, `ch5_done`；支線：`ch5_well_gong`, `ch5_well_done`, `mush_2`。變數：`ch5_time`（0–4）、`tuanzi_mush`。
+`ch5_rest`, `ch5_done`；支線：`ch5_well_gong`, `ch5_well_done`, `mush_ch5`。變數：`ch5_time`（0–4）、`tuanzi_mush`。
 任務：`q_ch5_main`, `q_fubo`, `q_halfwell`, `q_tuanzi_mush`。
 
 ### 7-2 心燈
 - `lantern_fubo` 福伯（#10）
 - `lantern_halfwell` 半邊井（#11）
-本章 2 盞（＋糰子蕈 #2、歌詞碎片 `lyric_ch5`）。
+本章 2 盞（＋糰子蕈「憶蕈」、歌詞碎片 `lyric_ch5`）。
 
 ### 7-3 美術需求
 - 物件：`roof_cover`（不見天街的連續屋簷，over:true，w 可調；或以 `lantern_string` 與半透明屋頂片代替）、`rabbit_lantern`、

@@ -200,7 +200,7 @@ G.Title = (() => {
       ctx.globalAlpha = ta;
       G.Render.text(ctx, '彼岸燈', G.W / 2, 118, { size: 120, align: 'center', color: '#fff3dc', glow: 'rgba(255,170,90,0.85)', glowBlur: 34 });
       ctx.font = G.font(26);
-      const sub = 'S H O R E L I G H T';
+      const sub = G.I18N.isEn() ? '彼　岸　燈' : 'S H O R E L I G H T';
       G.Render.text(ctx, sub, G.W / 2, 262, { size: 24, align: 'center', color: '#e8cfa0' });
       ctx.strokeStyle = 'rgba(232,207,160,0.5)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(G.W / 2 - 300, 300); ctx.lineTo(G.W / 2 - 40, 300); ctx.moveTo(G.W / 2 + 40, 300); ctx.lineTo(G.W / 2 + 300, 300); ctx.stroke();

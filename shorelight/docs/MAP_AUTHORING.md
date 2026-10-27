@@ -150,3 +150,12 @@ Minigames (js/engine/minigames.js): `await G.Mini.timing({...})`, `await G.Mini.
 - Use Playwright (require('playwright')) to load each of your maps, walk the critical path, trigger the main
   events (auto-advance dialogue by pressing Z while `G.Dialog.isOpen()`), and check there are no console errors
   and `G.lastError` stays null. Screenshot key scenes and look at them.
+
+## Extra hooks (added later)
+- Map `onUpdate: (dt, mapScene, busy) => {}` runs every frame (custom mechanics: noise meters, timed windows,
+  lit/dark zones — read `mapScene.player.x/y`, start scripts with `G.Script.run`). Pair with `drawOver(ctx, t, mapScene)`
+  (world space, above actors) and `drawGround(ctx, t, mapScene)` (world space, below actors) for visuals.
+- `S.battle(troop, { guests: ['yungui'], turnLimit: 6, turnLimitResult: 'win', loseOk: true, mode: 'ambush' })`:
+  `guests` fight this battle only (created at the party's average level if they have never joined);
+  `turnLimit` ends the battle after N rounds with `turnLimitResult`.
+- Enemy data `endAt: 0.5` ends a story battle as a win at 50% HP (no death animation).

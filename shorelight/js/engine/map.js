@@ -310,6 +310,7 @@ G.Mapx = G.Mapx || {};
       for (const n of this.npcs) this.updateNpc(n, dt, busy);
       for (const e of this.enemies) this.updateEnemy(e, dt, busy);
       if (this.updateMech) this.updateMech(dt, busy);
+      if (this.def.onUpdate) this.def.onUpdate(dt, this, busy);
       // camera
       const [tx, ty] = this.clampCam(...this.camTarget());
       const k = Math.min(1, dt * (this.cam.speed || 7));

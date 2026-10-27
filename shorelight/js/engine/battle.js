@@ -88,7 +88,18 @@ G.Battle = (() => {
       this.snapshot = G.Render.snapshot();
       this.introT = 0;
       this.diff = G.settings.difficulty;
-      this.party = G.Party.active().map((m, i) => partyUnit(m, i));
+      const members = G.Party.active().slice();
+      // guests: characters who fight in this battle only (o.guests: [charId]); created at the party's average level if new
+      for (const gid of this.o.guests || []) {
+        if (members.length >= 4 || members.some((m) => m.id === gid)) continue;
+        if (!G.state.members[gid]) {
+          const avg = members.length ? Math.round(members.reduce((a, m) => a + m.lv, 0) / members.length) : 1;
+          G.Party.create(gid, avg);
+        }
+        members.push(G.state.members[gid]);
+      }
+      this.party = members.map((m, i) => partyUnit(m, i));
+      this.rounds = 0;
       const ens = this.troop.enemies;
       this.enemies = ens.map((e, i) => enemyUnit(e, i, ens.length, this.diff));
       this.bg = this.troop.bg || 'forest';
@@ -134,6 +145,10 @@ G.Battle = (() => {
       while (!this.result && turnGuard++ < 5000) {
         const u = this.nextActor();
         if (!u) break;
+        if (u === this.party[0]) {
+          this.rounds++;
+          if (this.o.turnLimit && this.rounds > this.o.turnLimit) { this.result = this.o.turnLimitResult || 'win'; this.scriptedEnd = true; break; }
+        }
         this.active = u;
         const skip = await this.startTurn(u);
         if (this.checkEnd()) break;
@@ -982,16 +997,19 @@ G.Battle = (() => {
       // statuses
       const sts = Object.keys(u.st);
       if (sts.length && !u.dead) {
-        let sx = x - sts.length * 11;
+        ctx.font = G.font(13, true);
+        const widths = sts.map((k) => (STATUS_INFO[k] ? Math.max(20, G.Render.measure(ctx, STATUS_INFO[k].ch) + 8) : 0));
+        let sx = x - (widths.reduce((a, b) => a + b + 2, 0)) / 2;
         const sy = u.side === 'enemy' ? y + 26 : y - 168;
-        for (const k of sts) {
+        sts.forEach((k, i) => {
           const info = STATUS_INFO[k];
-          if (!info) continue;
-          ctx.fillStyle = info.c; ctx.beginPath(); ctx.roundRect(sx, sy, 20, 20, 5); ctx.fill();
-          G.Render.text(ctx, info.ch, sx + 10, sy + 2, { size: 14, bold: true, align: 'center', color: '#101010', shadow: false });
-          if (info.up) G.Render.text(ctx, info.up > 0 ? '▲' : '▼', sx + 17, sy - 6, { size: 10, color: info.up > 0 ? '#8aff8a' : '#ff8a8a', shadow: false });
-          sx += 22;
-        }
+          if (!info) return;
+          const bw = widths[i];
+          ctx.fillStyle = info.c; ctx.beginPath(); ctx.roundRect(sx, sy, bw, 20, 5); ctx.fill();
+          G.Render.text(ctx, info.ch, sx + bw / 2, sy + 3, { size: 13, bold: true, align: 'center', color: '#101010', shadow: false });
+          if (info.up) G.Render.text(ctx, info.up > 0 ? '▲' : '▼', sx + bw - 3, sy - 6, { size: 10, color: info.up > 0 ? '#8aff8a' : '#ff8a8a', shadow: false });
+          sx += bw + 2;
+        });
       }
       ctx.restore();
     }
