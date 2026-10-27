@@ -101,6 +101,14 @@ class Session {
   async run(body) { await this.ev((b) => { G.Script.run(new Function('S', 'return (async () => {' + b + '})()')); }, body); await this.idle(); }
   flag(k) { return this.ev((kk) => G.state.flags[kk], k); }
   map() { return this.ev(() => G.mapScene && G.mapScene.def.id); }
+  // the debug chapter start gives starting gear only; give the party what a player would have bought by ch8
+  async gear() {
+    await this.ev(() => {
+      const E = { xinghe: ['c8_liuguang', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_qingxin'], hongying: ['c8_jingtao', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_huzhao'], yungui: ['c8_leiyin', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_yeming'] };
+      for (const id in E) for (const it of E[id]) { G.Inv.add(it, 1); G.Party.equip(id, G.Data.items[it].type, it); }
+      G.Party.healAll();
+    });
+  }
   async boost(lv) { await this.ev((L) => { for (const m of G.Party.active()) while (m.lv < L) G.Party.addExpTo(m, G.Party.expToNext(m.lv) - m.exp, []); G.Party.healAll(); }, lv); }
   async shot(n) { if (SHOTS) await this.page.screenshot({ path: path.join(OUT, 'ch8_' + n + '.png') }); }
   async collect() {
@@ -122,6 +130,7 @@ test('main', 'critical path: startch=8 → G.Story.next(9)', async (s) => {
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'beigang', null, { timeout: 60000 });
   await s.idle();
   assert(await s.flag('ch8_start'), '8-1 intro ran');
+  await s.gear();
   assert((await s.ev(() => G.state.party.slice(0, 3).join(','))) === 'xinghe,hongying,yungui', 'party = 星河 紅纓 雲歸');
   await s.shot('01_beigang');
   await s.talk('boatman');

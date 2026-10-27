@@ -802,6 +802,7 @@
       const pLit = lit(c, p.x, p.y);
       // puppets
       for (const pu of c.puppets) {
+        if (!ms.enemies.some((e) => e.id === pu.id)) continue;   // beaten in a fight → gone until the map reloads
         if (pu.frozen > 0) { pu.frozen -= dt; continue; }
         pu.turnT += dt;
         if (pu.turnT >= 3) { pu.turnT = 0; pu.dir = CW[pu.dir]; const e = ms.enemies.find((x) => x.id === pu.id); if (e) e.dir = pu.dir; }
@@ -920,7 +921,7 @@
       }
       // puppet vision cones (the puppets themselves are map enemies → proper 2D/3D rendering)
       for (const pu of c.puppets) {
-        if (pu.frozen > 0) continue;
+        if (pu.frozen > 0 || !ms.enemies.some((e) => e.id === pu.id)) continue;
         const [dx, dy] = U.dirs[pu.dir];
         ctx.fillStyle = 'rgba(210,140,255,0.16)';
         for (let f = 1; f <= 4; f++) {
@@ -984,6 +985,7 @@
         }
       }
       for (const pu of c.puppets) {
+        if (!ms.enemies.some((e) => e.id === pu.id)) continue;
         const p = scrCell(ms, pu.x, pu.y, 1.7);
         if (!p.vis) continue;
         if (pu.frozen > 0) {
@@ -1856,7 +1858,8 @@
   })());
 
   // =================================================================================================== 長明宮 S1 水門倉
-  // 傀儡哨: a stationary map enemy (never chases, never touched — its cell is solid) drawn with the marionette art
+  // 傀儡哨: a stationary map enemy drawn with the marionette art. It never moves or chases; bumping into it starts a
+  // fight like any roaming enemy (and a beaten puppet is gone until the map reloads).
   const puppet = (id, x, y, dir) => ({ id, troop: 't_c6_guard_a', x, y, dir, art: 'marionette', variant: 1, radius: 0, chase: 0, lv: 40, speed: 0.01 });
   const jarHide = (x, y) => ({ t: 'jar', x, y, v: 1, label: '躲進大甕', interact: (S, o) => Stealth.hideIn(S, o) });
   const palaceLight = { ambient: 0.7, color: '#04081a', playerR: 150, glow: 0.35 };
@@ -1890,7 +1893,6 @@
         { id: 'g2', sprite: 'temple_guard', path: [[18, 7], [27, 7]], speed: 1.6, pause: 2, pauseFace: 'down', troop: 't_c6_guard_a' },
       ],
       stealth: { area: 's1', creaky: [[13, 5], [14, 5], [15, 5], [16, 5]], puppets: [{ id: 'p1', x: 15, y: 11, dir: 'up' }], fwPhase: 18 },
-      pass: [{ x: 15, y: 11, solid: true }],
       enemies: [puppet('p1', 15, 11, 'up')],
       events: [
         { id: 'enter', trigger: 'auto', if: (st) => !st.flags.ch6_s1_tut, run: (S) => Sc.stealthTutorial(S) },
@@ -1937,7 +1939,6 @@
       ],
       stealth: { area: 's2', creaky: [[15, 3], [16, 3], [17, 3], [18, 3], [15, 4], [16, 4], [17, 4], [18, 4], [35, 15], [36, 15]],
         puppets: [{ id: 'p2', x: 5, y: 4, dir: 'down' }, { id: 'p3', x: 35, y: 26, dir: 'left' }], fwPhase: 10 },
-      pass: [{ x: 5, y: 4, solid: true }, { x: 35, y: 26, solid: true }],
       enemies: [puppet('p2', 5, 4, 'down'), puppet('p3', 35, 26, 'left')],
       events: [
         { id: 'enter', trigger: 'auto', if: (st) => !st.flags.ch6_s2_in, run: (S) => Sc.hallEnter(S) },

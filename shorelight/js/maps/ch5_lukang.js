@@ -440,11 +440,15 @@
       gr.addColorStop(0, '#3a1e14'); gr.addColorStop(0.15, '#6a3420'); gr.addColorStop(0.85, '#5a2a1a'); gr.addColorStop(1, '#2a140c');
       ctx.fillStyle = gr;
       ctx.fillRect(x0, y0, w, h);
-      // roof tiles
+      // roof tiles: rows of barrel tiles with scalloped eaves, a ridge between each shop's roof
       ctx.strokeStyle = 'rgba(30,12,6,0.55)'; ctx.lineWidth = 2;
       for (let x = x0 + 8; x < x0 + w; x += 16) { ctx.beginPath(); ctx.moveTo(x, y0 + 6); ctx.lineTo(x, y0 + h - 8); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(160,70,40,0.35)';
+      for (let y = y0 + 24; y < y0 + h - 12; y += 26) for (let x = x0; x < x0 + w; x += 16) { ctx.beginPath(); ctx.arc(x + 8, y, 7, 0, Math.PI); ctx.fill(); }
+      ctx.fillStyle = 'rgba(30,10,4,0.5)';
+      for (let x = x0 + T * 4; x < x0 + w; x += T * 4) ctx.fillRect(x - 3, y0, 6, h);
       ctx.strokeStyle = 'rgba(255,190,120,0.18)'; ctx.lineWidth = 1;
-      for (let y = y0 + 20; y < y0 + h - 8; y += 22) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke(); }
+      for (let y = y0 + 20; y < y0 + h - 8; y += 26) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke(); }
       // eave beams & ridge
       ctx.fillStyle = '#2a1008'; ctx.fillRect(x0 - 6, y0 - 4, w + 12, 10); ctx.fillRect(x0 - 6, y0 + h - 8, w + 12, 10);
       ctx.fillStyle = '#b8382a'; ctx.fillRect(x0 - 6, y0 + h - 2, w + 12, 3);
@@ -2264,11 +2268,15 @@
           ctx.strokeStyle = 'rgba(150,140,120,0.5)';
           for (const o of [-12, 0, 12]) { ctx.beginPath(); ctx.moveTo(x + o * 0.3, y - 26); ctx.lineTo(x + o, y + 40); ctx.stroke(); }
         } else {
+          // the mirror's facing, as a bold 「／」 or 「＼」 across the bronze face
           const d = mir[k].d;
-          ctx.strokeStyle = 'rgba(255,220,140,0.95)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-          ctx.beginPath();
-          if (d === '/') { ctx.moveTo(x - 12, y + 12); ctx.lineTo(x + 12, y - 12); } else { ctx.moveTo(x - 12, y - 12); ctx.lineTo(x + 12, y + 12); }
-          ctx.stroke();
+          ctx.lineCap = 'round';
+          for (const [w, c] of [[8, 'rgba(40,20,8,0.85)'], [4, 'rgba(255,224,150,1)']]) {
+            ctx.strokeStyle = c; ctx.lineWidth = w;
+            ctx.beginPath();
+            if (d === '/') { ctx.moveTo(x - 15, y + 15); ctx.lineTo(x + 15, y - 15); } else { ctx.moveTo(x - 15, y - 15); ctx.lineTo(x + 15, y + 15); }
+            ctx.stroke();
+          }
         }
         ctx.restore();
       }
@@ -2772,6 +2780,7 @@
     G.state.vars.c5_inn_scene = true;
     await S.fadeOut(0.8);
     setTime(S, 3);
+    S.light({ ambient: 0.08, color: '#120804', tint: null });
     G.Party.healAll();
     S.refresh();
     S.hideFollowers(false);

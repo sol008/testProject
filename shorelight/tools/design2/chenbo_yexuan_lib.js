@@ -141,6 +141,20 @@
     if (!open) L.part(ctx, L.circle(x, y - s * 0.1, s * 0.48), L.lt(col, 0.2), { sh: 0.5, rim: 0, lw: 1.1 });
   };
 
+  // ---------- 魚符 half-tally (shared by both characters) ----------
+  // fish hanging head-up, split lengthwise with a zigzag seam. This draws the LEFT half; mirror for the right half.
+  L.tallyHalf = (ctx, metal, glyph, glyphCol, glow, glowCol) => {
+    const d = 'M0,-17 C-6,-16.5 -11,-11 -11.5,-3 C-12,4 -9,10 -4,13 L-11,21 C-7,21.5 -3,20.5 0,18 L0,10 L-3,10 L-3,5 L0,5 L0,-3 L-3,-3 L-3,-8 L0,-8 Z';
+    if (glow && !L.SIL) L.glow(ctx, -4, 2, 30, glowCol, 0.5);
+    L.part(ctx, d, metal, { sh: 2, hi: 1, rim: 0.8, lw: 1.4, detail: (c) => {
+      L.fill(c, L.circle(-5.5, -10, 1.6), '#2b1d10');
+      L.line(c, 'M-10.5,-6 C-7,-7.5 -3,-7.5 0,-6', L.dk(metal, 0.4), 1.1);
+      L.line(c, 'M-9,10 C-7,12 -5,14 -4,13', L.dk(metal, 0.4), 0.9);
+      if (glyph) { c.save(); c.fillStyle = glyphCol; c.font = `bold 7px ${L.FONT_ZH}`; c.textAlign = 'center'; c.fillText(glyph, -6, 6.5); c.restore(); }
+      else for (let i = 0; i < 2; i++) L.line(c, `M-10,${-1 + i * 5} C-8,${-3 + i * 5} -5,${-3 + i * 5} -4,${-1 + i * 5}`, L.lt(metal, 0.32), 0.9);
+    } });
+  };
+
   // ---------- hands ----------
   // local: wrist at (0,0), fingers toward +y, thumb toward +x (mirror for the other hand). s = hand length.
   L.hand = (ctx, x, y, ang, s, skin, o = {}) => {

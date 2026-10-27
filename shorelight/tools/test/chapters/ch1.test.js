@@ -52,7 +52,9 @@ async function session(browser, query) {
     ev: (fn, arg) => page.evaluate(fn, arg),
     async idle(ms = 120000) {
       const ok = await page.evaluate((t) => G.Debug.idle(t), ms);
-      assert(ok, 'timed out waiting for the map to become idle; stack = ' + JSON.stringify(await page.evaluate(() => G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'))));
+      assert(ok, 'timed out waiting for the map to become idle; ' + JSON.stringify(await page.evaluate(() => ({
+        stack: G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'), map: G.mapScene && G.mapScene.def.id,
+        last: G.Dialog.log.slice(-3).map((l) => l.name + '：' + l.text), dbg: G.Debug.log.slice(-3) }))));
     },
     flags: () => page.evaluate(() => Object.assign({}, G.state.flags)),
     map: () => page.evaluate(() => G.mapScene && G.mapScene.def.id),

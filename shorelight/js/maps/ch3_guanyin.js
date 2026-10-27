@@ -149,7 +149,7 @@
 
   c3enemy('c3_monkey_king', {
     name: '石猴王', art: 'stone_monkey', variant: 2, scale: 1.6, lv: 12, elem: 'earth', weak: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 8.2, atk: 1.45, def: 1.7, mag: 0.6, spd: 0.85, exp: 3.5, gold: 3 },
+    m: { hp: 6.6, atk: 1.3, def: 1.55, mag: 0.6, spd: 0.85, exp: 3.5, gold: 3 },
     skills: [['c3_monkey_rocks', 3], ['c3_monkey_fist', 3], ['c3_monkey_incense', 2, 'hp<50'], ['e_monkey_taunt', 1]],
     drops: [['jinchuang', 1]],
     desc: '一塊會站起來的觀音山巨石，石紋像皺巴巴的猴臉，頭頂插著一炷從土地公廟偷來的香。',

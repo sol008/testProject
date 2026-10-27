@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><title>夜玄 「玄冥法師」 — final design v2</title>
+<script src="chenbo_yexuan_lib.js"></script>
+<script src="chenbo.js"></script>
+<script src="yexuan.js"></script>
+</head>
+<body><div id="sheet"></div>
+<script>
+(function () {
+  const C = YX.C;
+  const st = document.createElement('style'); st.textContent = L.SHEET_CSS; document.head.appendChild(st);
+  L.RIM = '#f3eeff';
+  const paper = (ctx, w, h, a = '#e9e7e3', b = '#d9d5cf') => { const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, a); g.addColorStop(1, b); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); };
+  // 萬燈閣 — the hall of jarred souls
+  const hall = (ctx, w, h) => {
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#120f16'); g.addColorStop(0.7, '#1d1720'); g.addColorStop(1, '#0d0b10'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    for (let row = 0; row < 6; row++) {
+      const y = 90 + row * 120;
+      ctx.fillStyle = '#2a2026'; ctx.fillRect(0, y + 26, w, 7); ctx.fillStyle = 'rgba(205,165,82,0.25)'; ctx.fillRect(0, y + 26, w, 1.5);
+      for (let i = 0; i < 9; i++) {
+        const x = 30 + i * 68 + (row % 2) * 30; if (x > w - 20) continue;
+        L.glow(ctx, x, y + 8, 30, C.soul, 0.22);
+        ctx.fillStyle = 'rgba(214,226,220,0.32)'; ctx.beginPath(); ctx.ellipse(x, y + 10, 11, 15, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = 'rgba(28,27,34,0.85)'; ctx.fillRect(x - 7, y - 8, 14, 4);
+        ctx.fillStyle = 'rgba(143,220,255,0.55)'; ctx.beginPath(); ctx.arc(x, y + 11, 3, 0, 7); ctx.fill();
+      }
+    }
+    const v = ctx.createRadialGradient(w / 2, h * 0.55, 80, w / 2, h * 0.55, w * 0.85); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.7)'); ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  };
+  const Z = 1.16, GY = 852;
+  L.sheet(document.getElementById('sheet'), {
+    bg: '#e4e1dc', accent: '#a8873c', ink: '#211d24', outline: '#120f15',
+    kicker: '彼岸燈 Shorelight · Character Design v2 · Final · 故事角色 Story cast · Antagonist',
+    name: '夜玄 「玄冥法師」', nameEn: 'Ye Xuan, “Master Xuanming” — head of 府城 長明宮, former 引魂人',
+    subtitle: '「我不是要留住死人，陳兄。我只是……不想讓她被忘記。」 — calm, courteous, gaunt, and catastrophically wrong out of love.',
+    stats: [['Age 年齡', '44'], ['Height 身高', '184 cm'], ['Proportion 比例', '7.9 heads · gaunt'], ['Role 定位', 'Antagonist · final boss'], ['Weapon 武器', '長明燈杖 lantern-staff · 符'], ['Motif 母題', 'lantern · jar · black/white/gold']],
+    shapeTitle: 'Shape language 造形語言',
+    shape: '<b>Vertical & angular</b> — a floor-length black column, a crown spike on top, a long narrow face with a pointed beard, and an inverted bell of <b>blade-like white strips</b> around the shoulders: everything points up or down, nothing is round or soft. <b>Value:</b> black body / white mantle / one gold accent. Captive-soul <b>blue</b> appears only on things he refuses to let go of — crown flame, the jar, the staff lantern.',
+    turn: {
+      title: '轉面圖', titleEn: 'Turnaround — temple master (neutral pose)', w: 1460, h: 900, z: Z, gy: GY, bg: '#e9e7e3',
+      backdrop: (ctx, w, h) => paper(ctx, w, h, '#eceae6', '#dbd7d0'),
+      guides: [[-690, '冠 crown'], [-662, 'head top'], [-578, '1 · chin'], [-494, '2'], [-410, '3'], [-326, '4'], [-242, '5'], [-158, '6'], [-74, '7'], [0, '7.9 · 184 cm']],
+      views: [
+        { key: 'front', zh: '正面', en: 'Front', x: 430, draw: (c) => YX.front(c) },
+        { key: 'side', zh: '側面', en: 'Side', x: 790, draw: (c) => YX.side(c) },
+        { key: 'back', zh: '背面', en: 'Back', x: 1110, draw: (c) => YX.back(c) },
+      ],
+      callouts: [
+        { view: 'front', at: [-8, -668], lx: 240, ly: 70, zh: '長明冠 · 髮髻', en: ['lantern crown on a topknot;', 'blue captive flame'] },
+        { view: 'front', at: [-40, -520], lx: 240, ly: 190, zh: '雲肩', en: ['black silk cloud-collar,', 'gold lantern-lobed edge'] },
+        { view: 'front', at: [-70, -470], lx: 240, ly: 290, zh: '千條簑 · 白絲', en: ['white silk strip mantle,', 'gold-dipped tips (echo of 簑衣)'] },
+        { view: 'front', at: [-52, -330], lx: 240, ly: 420, zh: '大襟長袍 · 立領', en: ['black silk robe, right-side', 'closure, gold piping & knots'] },
+        { view: 'front', at: [-80, -312], lx: 240, ly: 510, zh: '白袖頭', en: ['wide sleeves, white', 'turned-back cuffs'] },
+        { view: 'front', at: [-50, -30], lx: 240, ly: 640, zh: '燈浪金邊', en: ['hem band: lantern & wave', 'pattern (painted texture)'] },
+        { view: 'front', at: [70, -366], lx: 560, ly: 470, zh: '夜念魂罐', en: ['celadon jar, red string,', 'paper seal — 夜念 inside'] },
+        { view: 'back', at: [0, -300], lx: 1250, ly: 560, zh: '長明宮印', en: ['temple sigil: a lantern', 'in turning waves'] },
+        { view: 'back', at: [2, -480], lx: 1250, ly: 300, zh: '半束髮 · 金箍', en: ['Taoist exemption: full hair', 'kept (no queue), tied tail'] },
+        { view: 'back', at: [-20, -620], lx: 1250, ly: 160, zh: '紗帶', en: ['black gauze crown', 'ribbons'] },
+      ],
+    },
+    extra: {
+      title: '萬燈閣 · 持杖', titleEn: 'Key look — hall of ten thousand lanterns', w: 620, h: 900, z: 1.0, gx: 340, gy: 870,
+      tcol: '#f2ecdf', ecol: '#bfb6a8', lcol: '#e9dfc9',
+      draw: (ctx, w, h) => { hall(ctx, w, h); L.figure(ctx, w, h, 340, 870, 1.0, (c) => YX.front(c, { staff: true, ex: 'cold' }), { ocol: '#050407' }); },
+      callouts: [
+        { at: [-60, -760], lx: 470, ly: 60, zh: '長明燈杖', en: ['gold cage lantern —', 'a trapped soul burns'] },
+        { at: [-84, -400], lx: 470, ly: 560, zh: '黑漆杖身', en: ['black lacquer shaft,', 'gold collars'] },
+        { at: [12, -620], lx: 470, ly: 200, zh: '金瞳', en: ['gold irises flare in', 'phase 2 (逆潮)'] },
+      ],
+    },
+    bust: { title: '頭像', titleEn: 'Bust — face structure', w: 560, h: 560,
+      draw: (ctx, w, h) => { paper(ctx, w, h, '#ecebe7', '#d6d2cb'); L.figure(ctx, w, h, 280, 262 + 620 * 2.75, 2.75, (c) => YX.front(c)); } },
+    exW: 180, exH: 190, exprNote: 'courtesy is the mask',
+    expressions: [
+      { zh: '悲', en: 'grief — 夜念', draw: (ctx, w, h) => { paper(ctx, w, h); L.figure(ctx, w, h, 90, 104, 1.62, (c) => YX.headFront(c, 'grief')); } },
+      { zh: '冷', en: 'cold — 逆潮', draw: (ctx, w, h) => { hall(ctx, w, h); L.figure(ctx, w, h, 90, 104, 1.62, (c) => YX.headFront(c, 'cold'), { ocol: '#050407' }); } },
+      { zh: '側', en: 'profile', draw: (ctx, w, h) => { paper(ctx, w, h); L.figure(ctx, w, h, 104, 104, 1.62, (c) => YX.headSide(c)); } },
+    ],
+    palette: [
+      { zh: '玄黑', en: 'Xuan black — robe, collar, crown', hex: C.robe }, { zh: '素白', en: 'Mourning white — mantle, cuffs, sash', hex: C.white },
+      { zh: '長明金', en: 'Eternal-light gold — trim, staff', hex: C.gold }, { zh: '蒼白膚', en: 'Indoor-pale skin', hex: C.skin },
+      { zh: '墨髮 · 霜鬢', en: 'Ink hair, silver temples', hex: C.hair }, { zh: '魂藍', en: 'Captive-soul blue (emissive)', hex: C.soul },
+      { zh: '青瓷', en: 'Celadon — 夜念’s jar', hex: C.glaze }, { zh: '硃紅', en: 'Cinnabar — jar string, seal ink', hex: C.red },
+    ],
+    paletteNote: 'Value plan: three blocks only — black (robe), white (mantle & cuffs), gold (trim). <b>Gold</b> is the focal accent and always frames the head or a lantern. Soul-blue is reserved for trapped souls, and the only warm red on him is the string that ties his daughter’s jar shut. Silver temples: grief aged him early.',
+    props: { title: '道具', titleEn: 'Props — modelled as separate meshes', w: 720, h: 560, draw: (ctx, w, h) => {
+      paper(ctx, w, h, '#ecebe7', '#dad6cf');
+      const lab = (x, y, zh, en) => { ctx.save(); ctx.fillStyle = '#211d24'; ctx.font = `bold 15px ${L.FONT_ZH}`; ctx.fillText(zh, x, y); ctx.font = `italic 12px ${L.FONT_EN}`; ctx.fillStyle = '#6a6066'; (Array.isArray(en) ? en : [en]).forEach((t, i) => ctx.fillText(t, x, y + 15 + i * 14)); ctx.restore(); };
+      // staff head close-up
+      L.figure(ctx, w, h, 50, 110 + 740 * 2.0, 2.0, (c) => YX.staff(c, 0, -790, {}));
+      lab(130, 250, '長明燈杖 lantern-staff · 220 cm', ['black lacquer, gold cage; the', 'blue flame is a soul he took']);
+      // jar large
+      L.figure(ctx, w, h, 360, 170, 3.7, (c) => YX.jar(c, 0, 0, 1));
+      lab(290, 425, '夜念魂罐 the soul jar', ['celadon-white porcelain, lotus band,', 'lacquer lid, red string, paper seal 符;', '陳渡’s 「同」 tally half tied below.']);
+      // what is inside: 夜念's tiny soul-lantern
+      L.figure(ctx, w, h, 620, 170, 3.0, (c) => {
+        L.glow(c, 0, 0, 40, C.soul, 0.6);
+        L.part(c, 'M-7,-12 C-16,-9 -16,9 -7,12 L7,12 C16,9 16,-9 7,-12 Z', '#e9f8ff', { sh: 2, hi: 0, rim: 0, ink: '#3f6f86', shCol: '#a9def5', detail: (cc) => { L.fill(cc, 'M0,-6 C3,-2 3,3 0,5 C-3,3 -3,-2 0,-6 Z', '#fff', 0.95); } });
+        L.part(c, 'M-6,-12 L6,-12 L5,-16 L-5,-16 Z', '#d9cba8', { sh: 0.5, rim: 0, lw: 1 }); L.line(c, 'M0,12 L0,18', C.red, 1.4);
+      });
+      lab(560, 260, '夜念之燈', ['inside the jar: a child’s', 'soul-lantern, tired & dim']);
+      // crown close-up
+      L.figure(ctx, w, h, 160, 470, 2.4, (c) => { L.part(c, L.ellipse(0, 2, 14, 7), C.hair, { sh: 1.5, rim: 0, ink: '#050407' }); YX.crown(c, 0, 0, 1); });
+      lab(130, 520, '長明冠 crown', ['lacquer, gold frame & pin;', 'blue flame finial']);
+    } },
+    notes: [
+      { h: '設計概念 Concept', p: '府城最受敬重的法師：一身玄黑長袍、白絲千條簑、長明金邊，溫文有禮，提燈驅鬼。其實他的長明燈困著魂魄；腰間那只青瓷罐裡，是二十年前在黑水溝溺死的女兒夜念。<br><i>A beloved saint whose every lantern is a cage — and the first cage was built out of love.</i>' },
+      { h: '個性 → 造形 Personality → shape', p: 'Calm and courteous: a perfectly upright column, hands always composed (one rests protectively on the jar). Tragic: silver at the temples, sleepless shadows, inner brow ends lifted in permanent sorrow. Dangerous: all-sharp shapes — crown spike, blade-strips, pointed beard, long nails of light at the hem.' },
+      { h: '文化根據 Cultural basis', p: 'Qing gentleman’s 大襟長袍 with 立領, 盤扣 and side slits; Taiwanese temple practice of lighting 光明燈 / 長明燈 for blessing (his temple’s “ghost-warding” lamps parody it); Taoist & folk 法師 ritual masters (hair kept in a topknot — clergy were exempt from the queue under the popular 「僧道不從」 custom). 雲肩 and white mourning silk come from ritual & funeral dress; 紙紮 paper-effigy whites inspire the strips. No real deity, god-image or real sect regalia is depicted.' },
+      { h: '幻想延伸 Fantasy departures', p: 'The 長明冠, the strip mantle 千條簑 (silk translation of a ferryman’s straw cape), gold irises and blue captive flames are invented. The temple sigil (lantern in turning waves) is fictional and reads as 逆潮 — the tide turned back.' },
+      { h: '雙人呼應 Pair link with 陳渡', p: 'Same order, opposite choices. 陳渡 wears real straw and paper lanterns that let souls go; 夜玄 wears silk strips and gold cages that keep them. The bronze 「同渡」 tally was split between them — 夜玄 tied his 「同」 half to 夜念’s jar. In the finale both halves meet again.' },
+      { h: '遊戲用途 In-game use', p: 'Portrait: courteous default, grief & cold for key scenes. Map sprite: white bell mantle + crown spike read instantly at 90 px. Boss phase 1: staff & talismans; phase 2 (逆潮): strips lift and stream like tide-tendrils (same meshes, animated), gold irises flare, the jar glows brighter until 夜念 speaks.' },
+    ],
+    sil: { w: 520, h: 230, draw: (ctx, w, h) => {
+      ctx.fillStyle = '#efede9'; ctx.fillRect(0, 0, w, h);
+      L.silhouette(ctx, w, h, (x) => { L.at(x, 50, 205, 0.27, (c) => YX.front(c)); L.at(x, 125, 205, 0.27, (c) => YX.side(c)); L.at(x, 205, 205, 0.27, (c) => YX.back(c)); L.at(x, 300, 205, 0.27, (c) => YX.front(c, { staff: true })); L.at(x, 405, 205, 0.13, (c) => YX.front(c)); L.at(x, 465, 205, 0.13, (c) => YX.front(c, { staff: true })); });
+      ctx.fillStyle = '#7a6e70'; ctx.font = `11px ${L.FONT_EN}`; ctx.fillText('front · side · back · staff @180 px', 12, 224); ctx.fillText('@90 px sprite', 400, 224);
+    } },
+    model: [
+      '<b>Primary forms:</b> long cone robe, inverted bell of strips, small cylinder crown — one clear vertical from any camera angle.',
+      '<b>Strips:</b> ~30 flat card meshes (15 front / 15 back) on a 2-bone chain each; gold tips are texture. Phase-2 “tide” = animation on the same cards.',
+      '<b>Geometry vs paint:</b> hem pattern, back sigil, piping, knot buttons, jar lotus band and seal writing are <b>texture</b>.',
+      '<b>Hair:</b> skull cap + topknot + one tail mesh (3 bones); 2 loose front strands as cards.',
+      '<b>Toon shading:</b> 2-tone ramp, cool rim on black; emissive on crown flame, jar interior, staff lantern, irises (phase 2).',
+    ],
+  });
+})();
+</script>
+</body></html>

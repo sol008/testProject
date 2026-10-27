@@ -116,27 +116,30 @@
 
   // ============================================================ HEAD — PROFILE (facing viewer-left; origin = ear centre)
   YX.headSide = (ctx, o = {}) => {
-    L.part(ctx, 'M10,-40 C24,-34 30,-16 30,6 C31,40 30,80 28,104 L6,104 C8,70 6,30 2,0 Z', C.hair, { sh: 3, hi: 1, rim: 1.2, dx: -1, ink: '#050407', detail: (c) => { for (let i = 0; i < 4; i++) L.taper(c, [[12 + i * 4, -30], [20 + i * 2, 30], [16 + i * 3, 100]], 1.2, C.hairHi, 'both', 0.6); } });
-    const face = 'M2,-50 C-14,-50 -27,-44 -33,-32 C-36,-25 -37,-18 -37,-12 C-37,-8 -36,-6 -35,-4 C-37,2 -41,9 -46,15 C-47,17 -46,19 -42,19.6 C-40,20 -39,21 -39,23 C-39,25 -38.6,26 -39,27.4 C-38,28.6 -38,30 -39,31.4 C-38,33 -37,34 -37.4,36 C-38,39 -38,42 -36,45 C-32,48 -26,47 -20,43 C-12,38 -4,33 2,28 C12,20 18,8 22,-4 C26,-20 22,-36 14,-44 C10,-48 6,-50 2,-50 Z';
-    L.part(ctx, face, C.skin, { sh: 3.5, hi: 1.2, rim: 1.2, dx: -1, shades: ['M-30,6 C-24,12 -20,20 -20,28 C-25,24 -28,16 -30,6 Z', 'M-35,-4 C-31,-7 -26,-7 -23,-4 C-27,-2 -31,-2 -35,-4 Z', 'M-36,36 C-30,40 -22,38 -14,34 C-20,42 -30,46 -36,44 Z'], under: (c) => L.fill(c, L.ellipse(-27, 4, 6, 2), C.circle, 0.2) });
+    // tied tail falling behind the neck (gold cuff at the nape)
+    L.part(ctx, L.tube([[18, 2], [26, 30], [30, 70], [28, 120], [22, 150]], [16, 15, 13, 10, 6]), C.hair, { sh: 3, hi: 1, rim: 1.2, dx: -1, ink: '#050407', detail: (c) => { for (let i = 0; i < 3; i++) L.taper(c, [[16 + i * 3, 10], [24 + i * 2, 60], [22 + i * 2, 140]], 1.1, C.hairHi, 'both', 0.6); } });
+    const face = 'M4,-50 C-14,-50 -28,-44 -34,-32 C-37,-25 -38,-18 -38,-12 C-38,-9 -37,-7 -36,-5 C-38,0 -44,8 -50,16 C-51,18 -50,20 -46,20.5 C-44,21 -42,21.5 -41,23 C-41,25 -40.5,26 -41,27.5 C-40,28.5 -40,29.5 -41,30.5 C-40,32 -39,33 -39,35 C-40,38 -40,42 -37,45 C-33,48 -26,47 -20,43 C-12,38 -4,33 2,28 C12,20 18,8 22,-4 C26,-20 22,-36 14,-44 C10,-48 6,-50 4,-50 Z';
+    L.part(ctx, face, C.skin, { sh: 3.5, hi: 1.2, rim: 1.2, dx: -1, shades: ['M-36,-5 C-32,-7 -27,-7 -24,-4 C-28,-2 -32,-2 -36,-5 Z', 'M-37,45 C-30,47 -24,45 -18,41 C-22,46 -30,49 -37,45 Z'],
+      under: (c) => { L.fill(c, L.ellipse(-28, 4, 5, 1.8), C.circle, 0.18); L.fill(c, 'M-24,8 C-20,14 -18,20 -19,27 C-22,22 -24,15 -24,8 Z', C.skinD, 0.35); } });
     // hair cap (swept back), ear partly visible
-    L.part(ctx, 'M-31,-36 C-26,-48 -10,-55 6,-53 C20,-51 30,-38 30,-22 C30,-10 26,0 20,6 C17,0 13,-5 7,-8 C4,-16 0,-22 -8,-27 C-16,-31 -24,-32 -31,-36 Z', C.hair, { sh: 2, hi: 1, rim: 1, dx: -1, ink: '#050407', detail: (c) => {
+    L.part(ctx, 'M-33,-33 C-28,-47 -10,-55 6,-53 C20,-51 30,-38 30,-22 C30,-10 26,0 20,6 C17,0 13,-5 7,-8 C4,-16 -2,-24 -10,-28 C-18,-31 -26,-31 -33,-33 Z', C.hair, { sh: 2, hi: 1, rim: 1, dx: -1, ink: '#050407', detail: (c) => {
       for (let i = 0; i < 6; i++) L.taper(c, [[-26 + i * 3, -38 - i * 1.4], [-6 + i * 3, -44 + i * 2], [14 + i * 2, -36 + i * 5]], 1, C.hairHi, 'both', 0.7);
       L.taper(c, [[-22, -34], [-6, -32], [6, -20]], 2.4, C.streak, 'both', 0.85);
     } });
     L.part(ctx, 'M-2,-8 C4,-11 10,-7 10,0 C10,7 7,12 2,13 C-1,13 -2,10 -2,6 Z', C.skin, { sh: 1.6, hi: 0.6, rim: 0.8, dx: -1, detail: (c) => L.line(c, 'M0,-5 C5,-6 7,-1 6,4 C5,8 3,9 1,9', C.skinD, 1) });
     L.part(ctx, L.ellipse(6, -54, 11, 7, -0.2), C.hair, { sh: 1.5, rim: 1, dx: -1, ink: '#050407' });
+    L.part(ctx, 'M12,0 L24,-2 L27,8 L15,11 Z', C.gold, { sh: 1, rim: 0, lw: 1.1, dx: -1 });
     YX.crownSide(ctx, 6, -55, 0.72);
     // features
-    L.part(ctx, 'M-38,-12.5 C-32,-14.5 -24,-14.5 -17,-12.5 C-24,-12.4 -32,-11.8 -38,-10.6 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
+    L.part(ctx, 'M-38,-13 C-32,-15 -24,-15 -18,-13 C-24,-12.6 -32,-12 -38,-10.8 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
     L.fill(ctx, 'M-35,-1 C-33,-3.6 -29,-3.6 -27,-1.6 C-29,0.4 -33,0.6 -35,-1 Z', '#f3ede6'); L.fill(ctx, L.ellipse(-33, -1.3, 1.3, 1.9), C.iris);
     L.taper(ctx, [[-36, -1.2], [-31, -3.8], [-26, -1]], 1.8, '#120c10'); L.taper(ctx, [[-28, -1.6], [-24, 0.4]], 1.4, '#120c10', 'end');
     L.taper(ctx, [[-33, -6], [-27, -5]], 0.9, C.skinD);
-    L.fill(ctx, L.ellipse(-41, 18, 2, 0.9, 0.3), '#6e4a48', 0.7);
-    L.taper(ctx, [[-40, 23], [-36, 23.6]], 1.6, C.hair, 'end');
-    L.taper(ctx, [[-39, 28.2], [-35, 28.6]], 1.2, '#5c3a3c');
-    L.part(ctx, 'M-38.5,31 C-38,37 -38,44 -40,54 C-35,46 -34,38 -35,32 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
-    L.part(ctx, L.taperPath([[-6, -26], [-8, -10], [-6, 10], [-8, 30]], 2.4, 'mid'), C.hair, { sh: 0, rim: 0, lw: 0.8, ink: '#050407' });
+    L.fill(ctx, L.ellipse(-44, 18.6, 2.4, 1, 0.3), '#6e4a48', 0.7); L.taper(ctx, [[-42, 12], [-40, 17], [-43, 20]], 1, C.skinD);
+    L.taper(ctx, [[-42, 23.5], [-35, 24.4]], 1.6, C.hair, 'end');
+    L.taper(ctx, [[-41, 29], [-36, 29.4]], 1.2, '#5c3a3c');
+    L.part(ctx, 'M-39.5,32 C-39,38 -39,45 -42,55 C-36,47 -35,39 -36,33 Z', C.hair, { sh: 0, rim: 0, lw: 0.8 });
+    L.part(ctx, L.taperPath([[-12, -28], [-14, -12], [-12, 6], [-14, 22]], 1.8, 'mid'), C.hair, { sh: 0, rim: 0, lw: 0.8, ink: '#050407' });
   };
   YX.crownSide = (ctx, x, y, s) => {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s); const K0 = L.K; L.K = K0 / s;
@@ -153,15 +156,15 @@
   // ============================================================ HEAD — BACK
   YX.headBack = (ctx) => {
     for (const m of [-1, 1]) L.part(ctx, MX('M-29,-4 C-37,-9 -40,0 -38,8 C-37,15 -33,19 -28,17 Z', m), C.skin, { sh: 2, rim: 1 });
-    L.part(ctx, 'M0,-46 C20,-46 33,-32 33,-12 C34,10 40,40 42,70 C43,88 40,98 36,104 L-36,104 C-40,98 -43,88 -42,70 C-40,40 -34,10 -33,-12 C-33,-32 -20,-46 0,-46 Z', C.hair, { sh: 5, hi: 2, rim: 1.4, ink: '#050407', detail: (c) => {
-      for (let i = -5; i <= 5; i++) L.taper(c, [[i * 5, -44 + Math.abs(i)], [i * 6, -10], [i * 6.6, 40], [i * 6.4, 100]], 1.2, C.hairHi, 'both', 0.6);
-      for (const m of [-1, 1]) L.taper(c, MP([[-30, -26], [-34, 10], [-36, 60]], m), 3, C.streak, 'both', 0.6);
-      L.line(c, 'M-28,-22 C-14,-16 14,-16 28,-22', '#050407', 1.4); // half-up gathering line
+    L.part(ctx, 'M0,-46 C20,-46 33,-32 33,-12 C34,4 30,20 22,32 C14,40 -14,40 -22,32 C-30,20 -34,4 -33,-12 C-33,-32 -20,-46 0,-46 Z', C.hair, { sh: 4, hi: 1.5, rim: 1.4, ink: '#050407', detail: (c) => {
+      for (let i = -6; i <= 6; i++) L.taper(c, [[i * 5, -44 + Math.abs(i)], [i * 4.4, -10], [i * 1.2, 28]], 1.1, C.hairHi, 'both', 0.6);
+      for (const m of [-1, 1]) L.taper(c, MP([[-31, -20], [-30, 4], [-20, 26]], m), 2.6, C.streak, 'both', 0.7);
     } });
+    L.part(ctx, L.tube([[0, 30], [1, 70], [-1, 120], [0, 160], [2, 186]], [17, 15, 13, 10, 5]), C.hair, { sh: 3, hi: 1, rim: 1.2, ink: '#050407', detail: (c) => { for (let i = -1; i <= 1; i++) L.taper(c, [[i * 4, 36], [i * 4.4, 100], [i * 2, 180]], 1.1, C.hairHi, 'both', 0.6); } });
+    L.part(ctx, 'M-9,28 L9,28 L8,40 L-8,40 Z', C.gold, { sh: 1, rim: 0, lw: 1.1, detail: (c) => L.line(c, 'M-8,34 L8,34', C.goldD, 1) }); // nape cuff
     L.part(ctx, L.ellipse(0, -50, 12, 8), C.hair, { sh: 2, rim: 1, ink: '#050407' });
-    L.part(ctx, 'M-6,-22 L6,-22 L5,-16 L-5,-16 Z', C.gold, { sh: 0.6, rim: 0, lw: 1 }); // hair cuff
     YX.crown(ctx, 0, -52, 0.72);
-    for (const m of [-1, 1]) L.part(ctx, MX('M-6,-50 C-12,-30 -16,10 -18,110 L-8,112 C-8,40 -6,-10 -2,-48 Z', m), '#2a2832', { sh: 1.5, rim: 0.8 }); // gauze ribbons
+    for (const m of [-1, 1]) L.part(ctx, MX('M-6,-50 C-14,-30 -20,20 -24,130 L-15,132 C-12,40 -8,-10 -2,-48 Z', m), '#2a2832', { sh: 1.5, rim: 0.8 }); // gauze ribbons
   };
 
   // ============================================================ PROPS
@@ -180,11 +183,12 @@
     L.part(ctx, L.circle(0, -33, 3), C.gold, { sh: 0.6, rim: 0, lw: 1 });
     L.part(ctx, 'M-4,-30 L4,-30 L5,6 L-5,6 Z', C.paper, { sh: 0.8, rim: 0, lw: 1, ink: '#7a6230', detail: (c) => { L.line(c, 'M0,-26 L0,2 M-2,-20 L2,-20 M-2,-12 L2,-12 M-2,-4 C0,-2 2,-4 2,-6', C.red, 1); } }); // talisman seal
     L.line(ctx, 'M-14,-24 C-6,-21 6,-21 14,-24', C.red, 2); L.line(ctx, 'M-2,-22 C-6,-16 -8,-10 -9,-2 M2,-22 C6,-16 8,-10 9,-2', C.red, 1.4);
-    if (!o.noTally) { // 陳渡's matching half — 夜玄 keeps the 「同」 half tied to the jar
-      ctx.save(); ctx.translate(14, 30); ctx.scale(-0.9, 0.9); const K1 = L.K; L.K = K1 / 0.9;
-      L.line(ctx, 'M0,-10 C-1,-4 1,0 0,4', C.red, 1.6);
-      L.part(ctx, 'M-11,-6 C-4,-8 4,-8 9,-3 C12,0 12,6 9,10 C5,15 -3,16 -9,13 L-5,9 L-12,6 L-6,3 L-12,0 Z', C.bronze, { sh: 2, hi: 1, rim: 0.6, lw: 1.3, detail: (c) => L.fill(c, L.circle(4, 0, 1.6), '#2b1d10') });
-      L.K = K1; ctx.restore();
+    if (!o.noTally) { // 陳渡's matching half — 夜玄 keeps the 「同」 half (right half of the fish) tied to the jar
+      L.line(ctx, 'M12,-20 C18,-6 20,10 18,24', C.red, 1.4);
+      ctx.save(); ctx.translate(18, 42); ctx.scale(-1, 1); const K1 = L.K; L.K = K1;
+      L.tallyHalf(ctx, C.bronze, '', '', false);
+      ctx.restore(); L.K = K1;
+      ctx.save(); ctx.fillStyle = L.dk(C.bronze, 0.5); ctx.font = `bold 7px ${L.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillText('同', 24, 48.5); ctx.restore();
     }
     L.K = K0; ctx.restore();
   };
@@ -264,7 +268,6 @@
       L.part(ctx, MX('M-46,-6 L-8,-6 L-8,1 C-22,3 -36,3 -46,1 Z', m), C.sole, { sh: 1, rim: 0, lw: 1.3 });
       L.part(ctx, MX('M-40,-24 C-46,-18 -48,-10 -46,-6 L-8,-6 C-7,-12 -8,-20 -12,-24 Z', m), C.boot, { sh: 2, hi: 1, rim: 1, lights: [MX('M-38,-14 C-34,-18 -26,-18 -22,-14 Z', m)] });
     }
-    ctx.save(); ctx.translate(0, -620); YX.backHair(ctx); ctx.restore();
     // robe 長袍
     const robe = 'M-24,-556 C-40,-552 -54,-542 -58,-526 C-56,-490 -50,-460 -46,-430 C-48,-380 -54,-300 -62,-200 C-68,-120 -74,-60 -80,-16 C-40,-12 40,-12 80,-16 C74,-60 68,-120 62,-200 C54,-300 48,-380 46,-430 C50,-460 56,-490 58,-526 C54,-542 40,-552 24,-556 Z';
     L.part(ctx, robe, C.robe, { sh: 12, hi: 3, rim: 2.2, rimCol: '#9fb3d6', shades: ['M40,-430 C44,-300 52,-180 66,-16 L80,-16 C74,-60 68,-120 62,-200 C54,-300 48,-380 46,-430 Z'],
@@ -292,7 +295,8 @@
       L.taper(c, [[-56, -470], [-70, -420], [-80, -340]], 2.2, L.lt(C.robe, 0.14)); L.taper(c, [[-62, -450], [-74, -380], [-90, -326]], 2, '#0b0a0e');
     } });
     L.part(ctx, 'M-100,-322 C-90,-312 -68,-310 -57,-318 L-56,-304 C-68,-296 -92,-298 -102,-306 Z', C.white, { sh: 1.5, hi: 0.6, rim: 0.8, detail: (c) => L.line(c, 'M-101,-318 C-90,-308 -68,-306 -57,-314', C.gold, 1.6) });
-    L.hand(ctx, -79, -306, 0.12, 48, C.skin, { pose: 'relax', thin: true, bony: true, mirror: false });
+    if (o.staff) { YX.staff(ctx, -84, -790, {}); L.hand(ctx, -82, -314, 0, 44, C.skin, { pose: 'grip', thin: true }); }
+    else L.hand(ctx, -79, -306, 0.12, 48, C.skin, { pose: 'relax', thin: true, bony: true, mirror: false });
     // left arm (viewer-right): forearm forward, hand resting on the jar lid
     YX.jar(ctx, 74, -366, 1.05);
     const slvR = 'M44,-540 C58,-536 68,-520 72,-500 C78,-470 84,-440 88,-416 C84,-398 70,-392 58,-398 C56,-420 54,-440 48,-460 Z';
