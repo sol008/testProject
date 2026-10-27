@@ -97,6 +97,36 @@ setTimeout(function () {
   const cs = cell || (Math.max(0.6, ...boxes.map((b) => Math.max(b.max.x - b.min.x, b.max.z - b.min.z))) + 0.25);
   items.forEach((it, i) => { const c = i % cols, r = Math.floor(i / cols); it.base = new THREE.Vector3(c * cs, 0, r * cs); it.obj.position.copy(it.base); });
   if (q.get('look')) { const l = q.get('look').split(',').map(Number); for (const it of items) it.inst.lookAt(new THREE.Vector3(l[0], l[1], l[2]).add(it.base)); }
+  // slide=1: foot-planting metric. Moves each root at its commanded speed, tracks the paws' world positions and
+  // reports, per paw, the max horizontal drift while the paw is planted (paw height < plant threshold).
+  if (q.get('slide') === '1') {
+    const res = {};
+    for (const it of items) {
+      const ins = it.inst, names = ['handL', 'handR', 'footL', 'footR'].filter((n) => ins.B[n]);
+      const rec = {}; for (const n of names) rec[n] = [];
+      const steps = Math.round(num('dur', 4) * 60), wp = new THREE.Vector3();
+      for (let st = 0; st < steps; st++) {
+        it.obj.position.x += Math.sin(it.yaw) * ins._speed / 60; it.obj.position.z += Math.cos(it.yaw) * ins._speed / 60;
+        ins.update(1 / 60, 0, null);
+        if (st < 90) continue; // let the gait settle
+        for (const n of names) { ins.B[n].getWorldPosition(wp); rec[n].push([wp.x, wp.y, wp.z]); }
+      }
+      if (q.get('log') && rec[q.get('log')] && it === items[0]) window.__log = rec[q.get('log')].map((r) => r.map((v) => +v.toFixed(4)));
+      const track = {};
+      for (const n of names) {
+        const R_ = rec[n], minY = Math.min(...R_.map((r) => r[1]));
+        const T = track[n] = { anchor: null, max: 0, planted: 0, frames: R_.length };
+        for (const r of R_) {
+          if (r[1] < minY + 0.001) { if (!T.anchor) T.anchor = r; else T.max = Math.max(T.max, Math.hypot(r[0] - T.anchor[0], r[2] - T.anchor[2])); T.planted++; }
+          else T.anchor = null;
+        }
+      }
+      res[it.id] = { speed: ins._speed, gait: ins.gait, drift_mm: Object.fromEntries(names.map((n) => [n, Math.round(track[n].max * 1000)])), planted: Object.fromEntries(names.map((n) => [n, +(track[n].planted / track[n].frames).toFixed(2)])) };
+    }
+    window.__stats = { slide: res, log: window.__log }; window.__ready = true;
+    document.getElementById('info').textContent = JSON.stringify(res);
+    return;
+  }
   const mv = num('movez', 0); // move the root with the speed (to verify foot planting in world space)
   for (const it of items) {
     const steps = Math.round(it.tt * 60);

@@ -1741,9 +1741,9 @@ G.Animal3D = (() => {
   // ================================================================================== gaits (cat family)
   // offsets: phase of each foot's touchdown within the stride; duty: stance fraction. All lengths in plan units.
   const GAITS = {
-    walk: { duty: 0.64, off: { HL: 0, FL: 0.24, HR: 0.5, FR: 0.74 }, lift: 0.032, liftF: 0.04, f0: 1.25, fk: 2.4, sweepMax: 0.105, bob: 0.004, roll: 0.03, yaw: 0.07, scap: 0.008 },
-    trot: { duty: 0.44, off: { FL: 0, HR: 0.02, FR: 0.5, HL: 0.52 }, lift: 0.04, liftF: 0.048, f0: 2.3, fk: 0.9, sweepMax: 0.12, bob: 0.006, roll: 0.02, yaw: 0.035, scap: 0.006 },
-    gallop: { duty: 0.3, off: { HL: 0, HR: 0.09, FR: 0.44, FL: 0.53 }, lift: 0.05, liftF: 0.06, f0: 2.7, fk: 0.22, sweepMax: 0.14, bob: 0.014, roll: 0.0, yaw: 0.0, scap: 0.004, flex: 0.2 },
+    walk: { duty: 0.64, off: { HL: 0, FL: 0.24, HR: 0.5, FR: 0.74 }, lift: 0.032, liftF: 0.04, f0: 1.25, fk: 2.4, sweepMax: 0.11, bob: 0.004, roll: 0.03, yaw: 0.07, scap: 0.008 },
+    trot: { duty: 0.44, off: { FL: 0, HR: 0.02, FR: 0.5, HL: 0.52 }, lift: 0.04, liftF: 0.048, f0: 2.3, fk: 0.9, sweepMax: 0.13, bob: 0.006, roll: 0.02, yaw: 0.035, scap: 0.006 },
+    gallop: { duty: 0.3, off: { HL: 0, HR: 0.09, FR: 0.44, FL: 0.53 }, lift: 0.05, liftF: 0.06, f0: 2.7, fk: 0.22, sweepMax: 0.2, bob: 0.014, roll: 0.0, yaw: 0.0, scap: 0.004, flex: 0.2 },
   };
   function gaitPose(p, I, g, phase, vp, vf) {
     const G_ = I.gaits[g];
@@ -1770,19 +1770,21 @@ G.Animal3D = (() => {
       W(p, L + 'z', z); W(p, L + 'y', y); W(p, L + 'm', m); W(p, L + 't', t);
     }
     const ph2 = phase * TAU;
+    // legs reach further by lowering the body: drop ≈ (sweep/2)² / (2·leg length)
+    const drop = (sweep * 0.5) ** 2 / (2 * I.legLenN);
     if (g === 'gallop') {
       const fl = G_.flex;
       const flex = cos(ph2 - 0.3); // +1 gathered (arched), -1 extended
       W(p, 'sp1P', -fl * 0.5 * flex); W(p, 'sp2P', -fl * 0.5 * flex); W(p, 'chP', -fl * 0.25 * flex);
       W(p, 'hipP', 0.12 * sin(ph2 - 1.2));
-      W(p, 'hipY', G_.bob * cos(ph2 - 5.6) - 0.004);
+      W(p, 'hipY', G_.bob * cos(ph2 - 5.6) - 0.004 - drop);
       W(p, 'hipZ', 0.012 * flex);
       W(p, 'neckP', 0.12 * sin(ph2 - 0.6)); W(p, 'headP', -0.12 * sin(ph2 - 0.6));
       W(p, 'tailP', -0.15 + 0.15 * sin(ph2)); W(p, 'tailCurl', 0.03);
       W(p, 'earLP', -0.25); W(p, 'earRP', -0.25);
     } else {
       // two dips per stride (each hind touchdown), roll toward the stance side, lateral spine wave, head stabilised
-      W(p, 'hipY', -G_.bob * (0.5 + 0.5 * cos(2 * ph2 - 0.6)));
+      W(p, 'hipY', -G_.bob * (0.5 + 0.5 * cos(2 * ph2 - 0.6)) - drop);
       W(p, 'hipR', G_.roll * sin(ph2));
       W(p, 'chR', -G_.roll * 0.8 * sin(ph2 + PI * 0.5));
       W(p, 'sp1Y', G_.yaw * sin(ph2)); W(p, 'sp2Y', -G_.yaw * 0.5 * sin(ph2)); W(p, 'chY', -G_.yaw * 0.6 * sin(ph2 + 0.4));
@@ -1796,7 +1798,8 @@ G.Animal3D = (() => {
       const u = (phase * 2) % 1, amp = vp * 0.5 / max(f, 0.01) * 0.8;
       W(p, 'neckZ', G_.hop ? 0 : (u < 0.75 ? amp * (0.5 - u / 0.75) : amp * (-0.5 + (u - 0.75) / 0.25)));
       W(p, 'hipR', G_.roll * sin(ph2)); W(p, 'sp1Y', 0); W(p, 'sp2Y', 0); W(p, 'chY', 0); W(p, 'neckY', 0); W(p, 'headY', 0); W(p, 'headR', 0);
-      if (G_.hop) { W(p, 'hipY', G_.bob * max(0, sin(ph2 - 0.5))); W(p, 'wing', 0.08 * max(0, sin(ph2))); W(p, 'tailP', -0.2 * sin(ph2)); }
+      W(p, 'hipY', -drop);
+      if (G_.hop) { W(p, 'hipY', G_.bob * max(0, sin(ph2 - 0.5)) - drop); W(p, 'wing', 0.08 * max(0, sin(ph2))); W(p, 'tailP', -0.2 * sin(ph2)); }
       W(p, 'tailP', Rd(p, 'tailP') * 0.3); W(p, 'tailWaveA', 0);
       return;
     }
@@ -2209,6 +2212,7 @@ G.Animal3D = (() => {
           femur0: (() => { const d = ch[1].clone().sub(ch[0]).normalize(); return Math.atan2(d.dot(fwd), d.dot(down)); })(),
         };
       }
+      this.legLenN = min(...this.legKeys.map((L) => this.legs[L].la + this.legs[L].lb)) / this.ps;
       // eye/lid axes (head-local = model at rest)
       this.eyeInfo = plan.eyes.map((e) => ({ sx: e.sx, x: new THREE.Vector3(...e.F.x), y: new THREE.Vector3(...e.F.y), z: new THREE.Vector3(...e.F.z) }));
       // state
@@ -2489,7 +2493,25 @@ G.Animal3D = (() => {
       this.root.updateMatrixWorld(true);
       // legs (model space = skeleton root space)
       const rootInv = this._tmp.m.copy(B.root.matrixWorld).invert();
+      // pelvis adjustment: lower the whole body until every ground-space paw target is within reach
+      // (instant when more drop is needed, smooth release), so planted paws never get dragged
+      let need = 0;
+      for (const L of this.legKeys) need = max(need, this.reachDeficit(L, P, rootInv));
+      this.dropS = need > (this.dropS || 0) ? need : (this.dropS || 0) + (need - (this.dropS || 0)) * min(1, this._dt * 6);
+      if (this.dropS > 1e-5) { B.hips.position.y -= this.dropS; this.root.updateMatrixWorld(true); rootInv.copy(B.root.matrixWorld).invert(); }
       for (const L of this.legKeys) this.solveLeg(L, P, rootInv);
+    }
+    reachDeficit(L, P, rootInv) {
+      const lg = this.legs[L], S = this.ps;
+      if (Rd(P, L + 'g') > 0.3) return 0;
+      const T = this._tmp.e.set(Rd(P, L + 'x') * S, Rd(P, L + 'y') * S, Rd(P, L + 'z') * S).add(lg.restPaw);
+      T.y = max(T.y, lg.minY * 0.6);
+      const pA = this._tmp.f.setFromMatrixPosition(this._tmp.m2.multiplyMatrices(rootInv, lg.bones[0].matrixWorld));
+      const maxR = (lg.la + lg.lb) * 0.975 + lg.lc * 0.9 + (lg.front ? lg.la * 0.3 : 0);
+      const d = T.distanceTo(pA);
+      if (d <= maxR) return 0;
+      const dx = Math.hypot(T.x - pA.x, T.z - pA.z), hy = pA.y - T.y;
+      return max(0, hy - sqrt(max(0, maxR * maxR - dx * dx)));
     }
     solveLeg(L, P, rootInv) {
       const THREE = T3();
@@ -2513,9 +2535,28 @@ G.Animal3D = (() => {
       const sign = lg.front ? 1 : -1;
       let phi = lg.meta0 + Rd(P, L + 'm');
       let pB, K;
+      // out of reach? 1) the scapula glides toward the paw (front), 2) the metatarsus aligns with the reach line
+      const reach = (lg.la + lg.lb) * 0.985;
+      if (lg.front && lg.def.scap && lg.bones[0].parent) {
+        const sc = lg.bones[0].parent, need = T.distanceTo(pA) - reach - lg.lc * 0.6;
+        if (need > 0) {
+          const dm = T.clone().sub(pA).normalize().multiplyScalar(min(need, lg.la * 0.35));
+          const qc = new THREE.Quaternion(); new THREE.Matrix4().multiplyMatrices(this._tmp.m, sc.parent.matrixWorld).decompose(new THREE.Vector3(), qc, new THREE.Vector3());
+          sc.position.add(dm.clone().applyQuaternion(qc.invert()));
+          sc.updateMatrixWorld(true);
+          pA.setFromMatrixPosition(this._tmp.m.clone().multiply(A.matrixWorld));
+        }
+      }
       for (let it = 0; it < (lg.front ? 1 : 2); it++) {
-        const md = down.clone().multiplyScalar(cos(phi)).addScaledVector(fwd, sin(phi));
+        let md = down.clone().multiplyScalar(cos(phi)).addScaledVector(fwd, sin(phi));
         K = T.clone().addScaledVector(md, -lg.lc);
+        const over = K.distanceTo(pA) - reach;
+        if (over > 0) { // swing the metatarsus toward the hip→paw line (heel lift) just enough to reach
+          const line = T.clone().sub(pA).normalize();
+          const w = clamp(over / (lg.lc * 0.8), 0, 1);
+          md = md.lerp(line, w).normalize();
+          K = T.clone().addScaledVector(md, -lg.lc);
+        }
         pB = this.solve2(pA, K, lg.la, lg.lb, n, sign);
         if (!lg.front) { // pantograph: metatarsus stays roughly parallel to the femur
           const fd = pB.clone().sub(pA).normalize();
