@@ -100,7 +100,7 @@
       this.list.draw(ctx, 40, 32, 214, t, { size: 22, focus: !this.sub });
       // info plate
       UI().panel(ctx, 30, G.H - 106, 230, 96, { ornament: false });
-      R().textClip(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, 200, { size: 20, minSize: 14, color: '#fff0d0' });
+      R().textClip(ctx, (G.mapScene && G.mapScene.map.name) || '', 48, G.H - 96, 200, { size: 20, minSize: 13, color: '#fff0d0' });
       R().text(ctx, '時間 ' + U.fmtTime(G.state.playtime), 48, G.H - 68, { size: 17, color: '#c9b893' });
       R().text(ctx, '錢財 ' + G.state.gold + ' 文', 48, G.H - 44, { size: 17, color: '#ffe08a' });
       UI().lanternIcon(ctx, 220, G.H - 56, 9, t);

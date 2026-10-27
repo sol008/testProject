@@ -60,6 +60,7 @@ const eq = (w, a, h, f, ac) => Object.fromEntries(Object.entries({ weapon: w, ar
 const T4 = { [XH]: eq('sw_jiujiang', 'ar_hakka', 'hd_huabu', 'ft_muji'), [BZ]: eq('fl_shange', 'ar_hakka', 'hd_huabu', 'ft_muji'), [HY]: eq('sp_zhujie', 'ar_hakka', 'hd_huabu', 'ft_muji'), [YG]: eq('fn_zhugu', 'ar_hakka', 'hd_huabu', 'ft_muji') };
 const T7 = { [XH]: eq('sw_qixing', 'ar_chain', 'hd_yuguan', 'ft_lupi'), [HY]: eq('sp_qilin', 'ar_chain', null, 'ft_lupi'), [YG]: eq('fn_qixing', 'ar_brocade', null, 'ft_lupi') };
 const T8 = { [XH]: eq('c8_liuguang', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_qingxin'), [HY]: eq('c8_jingtao', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_huzhao'), [YG]: eq('c8_leiyin', 'c8_jinxiang', 'hd_yunjin', 'ft_bangtui', 'ac_yeming') };
+const T5 = { [XH]: eq('sw_bailian', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [BZ]: eq('fl_diaohua', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [HY]: eq('c5_sp_steel', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi'), [YG]: eq('fn_zhusha', 'ar_brocade', 'c5_hd_warmhat', 'ft_lupi') };
 const DBG = { jinchuang: 5, xumingsan: 5, jiuzhuan: 5, huanhunxiang: 5, huanhundan: 5, jiedu: 5, xiangbao: 5, pinganfu: 5, yuyuan: 5, caozaiguo: 5, mijiu: 5, mifentang: 5 }; // ?debug&map=… start
 const K6 = { xumingsan: 6, huanhunxiang: 4 }, K7 = { xumingsan: 6, wanguo: 3, fenglisu: 3, huanhunxiang: 3, xiangbao: 3 };
 const K9 = { shimuyu: 3, xumingsan: 5, huanhunxiang: 3, xiancao: 3 }, K10 = { wuyuzi: 5, yinghuaxia: 3, huanhunxiang: 5, jiuzhuan: 2, mijiu: 5, aiyu: 4 };
@@ -171,12 +172,12 @@ function FIGHTS() {
     { id: 'c4_coast_intro', test: { lv: 13, gear: T4 }, ch: 4, file: 'ch4', name: '九降風精 (4-1)', troop: 't4_coast_intro', opts: null, party: FOUR, lv: 13, shops: S3, gifts: yinghuo },
     { id: 'c4_racks', test: { lv: 15, gear: T4 }, ch: 4, file: 'ch4', name: '米粉架 ×3 (4-3, back to back)', troop: 't4_rack_3', opts: null,
       before: [{ troop: 't4_rack_1' }, { troop: 't4_rack_2' }], party: FOUR, lv: 14, shops: S4, gifts: yinghuo },
-    { id: 'c4_ratking', test: { lv: 15, gear: T4 }, ch: 4, file: 'ch4', name: '柿鼠大王 (side quest)', troop: 't4_ratking', opts: null, party: FOUR, lv: 15, shops: S4, gifts: yinghuo },
+    { id: 'c4_ratking', test: { lv: 17, gear: T4 }, ch: 4, file: 'ch4', name: '柿鼠大王 (side quest)', troop: 't4_ratking', opts: null, party: FOUR, lv: 15, shops: S4, gifts: yinghuo },
     { id: 'c4_wind_demon', test: { lv: 17, gear: T4 }, ch: 4, file: 'ch4', name: '風魔 (4-15)', troop: 't4_boss_wind_demon', opts: null,
       party: FOUR, lv: 16, shops: S4, gifts: yinghuo, tactics: tWindDemon },
 
     // ============================================================== ch5 鹿港舊夢
-    { id: 'c5_feast', test: { lv: 19 }, ch: 5, file: 'ch5', name: '怨宴 (3-12)', troop: 't_c5_feast', opts: "{ intro: feastIntro }", party: FOUR, lv: 19, shops: S5, gifts: yinghuo },
+    { id: 'c5_feast', test: { lv: 21, gear: T5 }, ch: 5, file: 'ch5', name: '怨宴 (3-12)', troop: 't_c5_feast', opts: "{ intro: feastIntro }", party: FOUR, lv: 19, shops: S5, gifts: yinghuo },
 
     // ============================================================== ch6 府城長明
     { id: 'c6_plague_mass', test: { lv: 19, gear: T6, inv: K6 }, ch: 6, file: 'ch6', name: '疫聚 (鹽水蜂炮)', troop: 't_c6_plague_mass',
@@ -228,7 +229,7 @@ function FIGHTS() {
       party: TRIO, lv: 31, shops: S9a, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
     { id: 'c9_plague', test: { lv: 31, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '瘟鬼頭 (東港 船台)', troop: 't_c9_plague_boss', opts: '{ intro: plagueIntro() }',
       party: TRIO, lv: 32, shops: S9b, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
-    { id: 'c9_fallwind', test: { lv: 33, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '落山風靈 (龍磐)', troop: 't_c9_fallwind', opts: '{ intro: fallwindIntro() }',
+    { id: 'c9_fallwind', test: { lv: 35, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '落山風靈 (龍磐)', troop: 't_c9_fallwind', opts: '{ intro: fallwindIntro() }',
       party: TRIO, lv: 33, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, pre: (G) => G.__X.ch7.ev('C7.applyFlame()') },
     { id: 'c9_moray', test: { lv: 34, gearMaxCh: 8, inv: K9 }, ch: 9, file: 'ch9', name: '潮病鰻王 (鵝鑾鼻)', troop: 't_c9_moray_king', opts: '{ intro: morayIntro() }',
       party: TRIO, lv: 34, shops: S9, gifts: yinghuo, skills: SK9, flags: AWAKE, vars: { flame: 60 }, pre: (G) => G.__X.ch7.ev('C7.applyFlame()'), tactics: tMoray },
