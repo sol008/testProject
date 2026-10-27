@@ -89,7 +89,7 @@ setTimeout(function () {
       const dist = (hgt * 0.5 + 0.6) / Math.tan(15 * Math.PI / 180) * 1.25 * num('dist', 1);
       const look = new THREE.Vector3(0, hgt * 0.5, 0);
       cam.position.set(0, look.y + Math.sin(pitch) * dist, Math.cos(pitch) * dist); cam.lookAt(look);
-      if (inst.lights) for (const L of inst.lights()) { const pl = new THREE.PointLight(L.color, L.i * 3, L.r * 2, 2); pl.position.set(L.x, L.y, L.z); scene.add(pl); }
+      if (inst.lights) for (const L of inst.lights()) { const pl = new THREE.PointLight(L.color, L.i * 1.2, L.r * 2, 2); pl.position.set(L.x, L.y, L.z); scene.add(pl); }
       const x = c * CW, y = H - (r + 1) * CH;
       renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.setScissorTest(true);
       renderer.setClearColor(bg); renderer.clear();
@@ -97,7 +97,8 @@ setTimeout(function () {
       renderer.render(scene, cam);
       if (!isFb && !stats[id]) {
         // count with only the creature (ground + shadow pass excluded): main-pass calls/tris
-        stats[id] = { calls: renderer.info.render.calls - 1, tris: renderer.info.render.triangles - 2, h: +hgt.toFixed(2), parts: {} };
+        let dc = 0; inst.root.traverse((o) => { if ((o.isMesh || o.isPoints) && o.visible) dc++; });
+        stats[id] = { calls: dc, tris: renderer.info.render.triangles - 2, h: +hgt.toFixed(2), parts: {} };
         inst.root.traverse((o) => { if (o.geometry && o.geometry.index) stats[id].parts[o.name || o.type] = o.geometry.index.count / 3; });
         let nan = false; inst.root.traverse((o) => { if (o.geometry) { o.geometry.computeBoundingSphere(); if (isNaN(o.geometry.boundingSphere.radius)) nan = true; } });
         if (nan) console.error('NaN bounding sphere', id);
