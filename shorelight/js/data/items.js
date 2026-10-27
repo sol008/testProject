@@ -165,7 +165,7 @@ G.Data.items = {
   ac_xionghuang: { name: '雄黃香囊', desc: '裝著雄黃的香囊，蛇蟲毒物不近身。免疫中毒。', type: 'acc', price: 150, ch: 2, icon: 'bag', stats: { def: 2 }, immune: ['poison'] },
   ac_huzhao: { name: '虎爪項鍊', desc: '虎姑婆留下的一枚爪子。攻擊提升，暴擊率提升。', type: 'acc', price: 400, ch: 2, icon: 'charm', stats: { atk: 5 }, special: ['critUp'] },
   ac_tongling: { name: '銅鈴', desc: '道士的手搖銅鈴，叮噹聲能喚醒迷魂。免疫睡眠。', type: 'acc', price: 300, ch: 3, icon: 'charm', stats: { mag: 3 }, immune: ['sleep'] },
-  ac_tuanzi: { name: '糰子毛球', desc: '糰子掉的毛搓成的小球，軟綿綿。紅纓偷偷收了好幾顆。', type: 'acc', price: 0, ch: 3, icon: 'charm', stats: { luk: 8, spd: 2 } },
+  ac_tuanzi: { name: '貓毛球', desc: '麻糬換毛季掉的長毛搓成的小球，軟綿綿。紅纓偷偷收了好幾顆。', type: 'acc', price: 0, ch: 3, icon: 'charm', stats: { luk: 8, spd: 2 } },
   ac_bagua: { name: '八卦鏡墜', desc: '小小的八卦鏡，邪術照了就彈回去。免疫封印。', type: 'acc', price: 600, ch: 4, icon: 'jade', stats: { def: 4 }, immune: ['seal'] },
   ac_yingshi: { name: '螢石墜', desc: '會在黑暗中微微發光的石頭。劍意累積加快。', type: 'acc', price: 800, ch: 4, icon: 'gem', stats: { luk: 4 }, special: ['gaugeUp'] },
   ac_maobi: { name: '秀才毛筆', desc: '竹塹老秀才送的毛筆。「讀萬卷書，行萬里路。」獲得經驗提升。', type: 'acc', price: 1000, ch: 4, icon: 'scroll', stats: { mag: 4 }, special: ['expUp'] },
@@ -176,9 +176,9 @@ G.Data.items = {
   ac_haixing: { name: '海星墜', desc: '恆春海邊撿到的海星化石。', type: 'acc', price: 1400, ch: 9, icon: 'gem', stats: { def: 8, hp: 60, luk: 4 } },
   ac_lianhua: { name: '蓮花燈墜', desc: '一盞小小的蓮花燈，裡面亮著所有被渡過的人的光。', type: 'acc', price: 0, ch: 11, icon: 'lantern', stats: { atk: 6, def: 6, mag: 6, spd: 4, luk: 6 }, special: ['autoRegen', 'gaugeUp'] },
 
-  // ===================================================================================== Materials (糰子's mushroom quest etc.)
+  // ===================================================================================== Materials (雲歸's mushroom quest etc.)
   mat_wuxun: { name: '霧林小蕈', desc: '霧林裡常見的小蕈。雲歸：「可以吃，但不建議。」', type: 'material', price: 20, ch: 2, icon: 'mushroom' },
-  mat_yueguang: { name: '月光蕈', desc: '只在滿月夜發光的蕈。糰子的蕈菇清單之一。', type: 'material', price: 80, ch: 3, icon: 'mushroom' },
+  mat_yueguang: { name: '月光蕈', desc: '只在滿月夜發光的蕈。雲歸的蕈菇清單之一。', type: 'material', price: 80, ch: 3, icon: 'mushroom' },
   mat_fengxun: { name: '風穴石耳', desc: '五指山風穴岩壁上長的石耳。', type: 'material', price: 120, ch: 4, icon: 'mushroom' },
   mat_yunzhi: { name: '雲芝', desc: '雲霧林中的靈芝，紋路像雲。', type: 'material', price: 300, ch: 7, icon: 'mushroom' },
   mat_haixun: { name: '潮汐蕈', desc: '只長在退潮礁岩上的奇怪蕈類。', type: 'material', price: 400, ch: 9, icon: 'mushroom' },
@@ -201,3 +201,49 @@ G.Data.items = {
   key_flag: { name: '順風旗', desc: '頭城搶孤奪下的順風旗，最後的航程需要它。', type: 'key', price: 0, ch: 10, icon: 'scroll' },
   key_homeletter: { name: '唐山客的家書', desc: '黑水溝上一個溺死的唐山客託付的信，寫著回不去的家鄉地址。', type: 'key', price: 0, ch: 11, icon: 'letter' },
 };
+
+// ===================================================================================== engine fixes to chapter items
+// Chapter files (js/maps/chN_*.js) load after this file and Object.assign their own items into G.Data.items. A fix
+// listed here is merged into that chapter definition the moment it is assigned (top-level fields replace; `use`
+// merges), so the id keeps working everywhere without touching the chapter file. Keep the reason next to each fix.
+G.Data.itemFixes = {
+  // 回魂香 (ch6 藥鋪 / chest c6_12): the design (docs/story/ch6_tainan.md, item table) is a WHOLE-PARTY revive at
+  // 30% for 1200 文; the chapter data had a single-target 60% revive. Battle + field menu handle target 'allies' +
+  // revive (the fallen are included in the target pool).
+  c6_revive_incense: {
+    desc: '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。', price: 1200,
+    use: { target: 'allies', revive: 0.3 },
+  },
+  // 月老紅線 (ch6 3-8): LUK+20, and while 星河 (the wearer) and 白芷 are both in the active party they each get
+  // SPD+5 (docs/story/ch6_tainan.md). `pair` is applied by G.Party.stats; the old flat spd:3 stood in for it.
+  c6_red_thread: {
+    stats: { luk: 20 },
+    pair: { with: 'baizhi', both: true, stats: { spd: 5 }, label: '與白芷同在隊伍時，兩人速度＋5' },
+  },
+};
+(function () {
+  const items = G.Data.items;
+  const merge = (v, fix) => {
+    if (!v || typeof v !== 'object') return v;
+    const out = Object.assign({}, v, fix);
+    if (fix.use) out.use = Object.assign({}, v.use || {}, fix.use);
+    return out;
+  };
+  for (const id of Object.keys(G.Data.itemFixes)) {
+    const fix = G.Data.itemFixes[id];
+    if (items[id]) { items[id] = merge(items[id], fix); continue; }
+    // not defined yet: the first assignment (the chapter's Object.assign) stores the merged definition as a plain
+    // data property; until then the id stays non-enumerable so loops over G.Data.items never see an empty entry
+    Object.defineProperty(items, id, {
+      configurable: true, enumerable: false,
+      get() { return undefined; },
+      set(v) { Object.defineProperty(items, id, { value: merge(v, fix), writable: true, enumerable: true, configurable: true }); },
+    });
+  }
+  if (G.I18N && G.I18N.add) {
+    G.I18N.add({
+      '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。': 'A whole bundle of soul-calling incense; its smoke finds every soul that has lost its way. Revives all fallen allies with 30% HP.',
+      '與白芷同在隊伍時，兩人速度＋5': 'With Bai Zhi in the party: both SPD +5',
+    });
+  }
+})();

@@ -1,4 +1,4 @@
-// 彼岸燈 — skills (G.Data.skills): player skills, 合擊 combos, ultimates, 糰子 outcomes, enemy skills (e_*).
+// 彼岸燈 — skills (G.Data.skills): player skills, 合擊 combos, ultimates, 貓咪助陣 outcomes, enemy skills (e_*).
 //
 // Contract fields (docs/CONTRACTS.md "Data"):
 //   name, desc, mp, type:'phys'|'mag'|'heal'|'buff'|'debuff'|'revive'|'cure'|'special', elem, target,
@@ -20,8 +20,8 @@
 //   combo:[ids] — 合擊: every listed member must be in the active party, alive and able to act;
 //             each pays `mp`; all listed members spend their next turn. Uses the participants' average
 //             atk (phys) / mag (mag/heal). `comboLv` = min level of each; `flag` = story gate (optional).
-//   hidden:true — not shown in skill menus (used internally, e.g. 糰子 outcomes).
-//   special:'tuanzi' — 召喚糰子: pick one entry of `outcomes` by weight `w`, show its `text`
+//   hidden:true — not shown in skill menus (used internally, e.g. 貓咪助陣 outcomes).
+//   special:'cats' — 貓咪助陣: pick one entry of `outcomes` by weight `w`, show its `text`
 //             (battle message), then resolve skill `skill` with the caster as user.
 //   type 'special' with no `special`/`summon` = flavour action (message only, turn spent).
 //   summon:[enemyIds] (enemy skills only) — adds those enemies to the battle if there is room (max 5).
@@ -89,19 +89,20 @@ G.Data.skills = {
   yg_jinfu: { name: '金符', desc: '符化飛劍。金屬性單體術法。', mp: 4, type: 'mag', elem: 'metal', target: 'enemy', power: 1.8, fx: 'metal', sfx: 'metal' },
   yg_tufu: { name: '土符', desc: '地裂石起。土屬性單體術法。', mp: 4, type: 'mag', elem: 'earth', target: 'enemy', power: 1.8, fx: 'earth', sfx: 'earth' },
   yg_dingshen: { name: '定身符', desc: '貼上就不能動——理論上。可能使敵人暈眩。', mp: 6, type: 'debuff', elem: null, target: 'enemy', power: 0, status: { id: 'stun', chance: 0.65, turns: 1 }, fx: 'seal', sfx: 'magic' },
-  yg_tuanzi: {
-    name: '召喚糰子', desc: '「糰子，上！」……至於牠會做什麼，連雲歸自己也不知道。', mp: 6, type: 'special', elem: null, target: 'self', power: 0,
-    special: 'tuanzi', fx: 'summon', sfx: 'magic',
+  // 貓咪助陣 (白芷): 芋圓 or 麻糬 answers the call and does… something. (Replaced the removed 糰子 summon.)
+  bz_maomi: {
+    name: '貓咪助陣', desc: '「芋圓、麻糬——拜託了！」至於來的是哪一隻、會做什麼，只有貓知道。', mp: 6, type: 'special', elem: null, target: 'self', power: 0,
+    special: 'cats', fx: 'summon', sfx: 'magic',
     outcomes: [
-      { w: 4, skill: 'tz_scratch', text: '糰子炸毛撲上去一陣亂抓！' },
-      { w: 3, skill: 'tz_roll', text: '糰子縮成一顆毛球滾了過去！' },
-      { w: 2, skill: 'tz_snack', text: '糰子從懷裡掏出私藏的芋圓分給大家……雖然有點黏。' },
-      { w: 2, skill: 'tz_purr', text: '糰子打起呼嚕，聲音療癒得連妖怪都睏了。' },
-      { w: 2, skill: 'tz_cute', text: '糰子翻肚賣萌。敵人戰意全消，紅纓也差點放下槍。' },
-      { w: 2, skill: 'tz_cosmic', text: '糰子吃了一朵靈蕈，開始講解「宇宙是一顆會呼吸的芋圓」。敵人聽得頭昏腦脹。' },
-      { w: 2, skill: 'tz_fart', text: '糰子放了一個……帶著蕈味的屁。' },
-      { w: 2, skill: 'tz_nap', text: '糰子打了個哈欠，原地睡著了。' },
-      { w: 1, skill: 'tz_jackpot', text: '糰子雙眼放光——石虎神威！天雷滾滾！' },
+      { w: 4, cat: 'yuyuan', skill: 'tz_scratch', text: '芋圓炸毛撲上去一陣亂抓！' },
+      { w: 3, cat: 'yuyuan', skill: 'tz_roll', text: '芋圓整隻坐了上去——十二斤的壓制力！' },
+      { w: 2, cat: 'yuyuan', skill: 'tz_guard', text: '芋圓擋在最虛弱的同伴前面，一臉「你敢？」。' },
+      { w: 3, cat: 'mochi', skill: 'tz_purr', text: '麻糬閉上眼呼嚕，水色漣漪漾開——同伴的傷口慢慢合起來。' },
+      { w: 2, cat: 'mochi', skill: 'tz_lantern', text: '麻糬身邊浮起一盞小水燈，燈光照得妖怪睜不開眼。' },
+      { w: 2, cat: 'yuyuan', skill: 'tz_cute', text: '芋圓翻肚賣萌。敵人戰意全消，紅纓也差點放下槍。' },
+      { w: 2, cat: 'mochi', skill: 'tz_stare', text: '麻糬盯著敵人，慢慢眨了一次眼。敵人不知為何心生慚愧。' },
+      { w: 2, cat: 'yuyuan', skill: 'tz_nap', text: '芋圓打了個哈欠，原地睡著了。' },
+      { w: 1, cat: 'both', skill: 'tz_jackpot', text: '芋圓與麻糬同時抬頭——水燈與石獅齊現！' },
     ],
   },
   yg_mihun: { name: '迷魂扇', desc: '扇面一開，香氣迷人。敵方全體攻擊下降。', mp: 10, type: 'debuff', elem: null, target: 'enemies', power: 0, buffs: [{ stat: 'atk', amt: -0.3, turns: 4 }], fx: 'debuff', sfx: 'debuff' },
@@ -117,16 +118,16 @@ G.Data.skills = {
   yg_taixu: { name: '太虛神雷', desc: '師父最後的傳授。雷落太虛，木屬性全體極大傷害，可能使敵暈眩。', mp: 45, type: 'mag', elem: 'wood', target: 'enemies', power: 4.0, status: { id: 'stun', chance: 0.3, turns: 1 }, fx: 'wood_big', sfx: 'thunder' },
   u_yungui: { name: '太極・萬符朝宗', desc: '【奧義】千張符籙如雪紛飛，五行輪轉。無屬性全體大傷害，並降低敵方防禦。', mp: 0, type: 'mag', elem: null, target: 'enemies', power: 4.8, buffs: [{ stat: 'def', amt: -0.3, turns: 3 }], ultimate: true, fx: 'ultimate_yungui', sfx: 'ultimate' },
 
-  // ---- 糰子 outcomes (hidden; resolved via yg_tuanzi) ----
-  tz_scratch: { name: '糰子亂抓', desc: '', mp: 0, type: 'phys', elem: null, target: 'random', power: 0.9, hits: 3, hidden: true, fx: 'claw', sfx: 'slash2' },
-  tz_roll: { name: '毛球滾滾', desc: '', mp: 0, type: 'mag', elem: 'earth', target: 'enemies', power: 1.6, hidden: true, fx: 'earth', sfx: 'push' },
-  tz_snack: { name: '私藏芋圓', desc: '', mp: 0, type: 'heal', elem: null, target: 'allies', power: 1.0, hidden: true, fx: 'heal_all', sfx: 'item' },
-  tz_purr: { name: '療癒呼嚕', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, status: { id: 'sleep', chance: 0.5, turns: 2 }, hidden: true, fx: 'sleep', sfx: 'sing' },
+  // ---- 貓咪助陣 outcomes (hidden; resolved via bz_maomi) ----
+  tz_scratch: { name: '芋圓亂抓', desc: '', mp: 0, type: 'phys', elem: null, target: 'random', power: 0.9, hits: 3, hidden: true, fx: 'claw', sfx: 'slash2' },
+  tz_roll: { name: '十二斤壓制', desc: '', mp: 0, type: 'mag', elem: 'earth', target: 'enemy', power: 2.2, hidden: true, fx: 'earth', sfx: 'push' },
+  tz_guard: { name: '石獅擋招', desc: '', mp: 0, type: 'buff', elem: 'earth', target: 'allies', power: 0, buffs: [{ stat: 'def', amt: 0.35, turns: 3 }], hidden: true, fx: 'buff', sfx: 'buff' },
+  tz_purr: { name: '療癒呼嚕', desc: '', mp: 0, type: 'heal', elem: 'water', target: 'allies', power: 1.1, status: { id: 'regen', chance: 1, turns: 3 }, hidden: true, fx: 'heal_all', sfx: 'sing' },
+  tz_lantern: { name: '水燈照妖', desc: '', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 1.5, hidden: true, fx: 'water', sfx: 'water' },
   tz_cute: { name: '翻肚賣萌', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, buffs: [{ stat: 'atk', amt: -0.3, turns: 3 }], hidden: true, fx: 'debuff', sfx: 'debuff' },
-  tz_cosmic: { name: '宇宙芋圓論', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, status: { id: 'trance', chance: 0.6, turns: 2 }, buffs: [{ stat: 'mag', amt: -0.3, turns: 3 }], hidden: true, fx: 'kaleido', sfx: 'magic' },
-  tz_fart: { name: '蕈味之屁', desc: '', mp: 0, type: 'debuff', elem: 'wood', target: 'enemies', power: 0, status: { id: 'poison', chance: 0.7, turns: 4 }, hidden: true, fx: 'poison', sfx: 'poison' },
+  tz_stare: { name: '慢眨眼', desc: '', mp: 0, type: 'debuff', elem: null, target: 'enemies', power: 0, status: { id: 'sleep', chance: 0.5, turns: 2 }, hidden: true, fx: 'sleep', sfx: 'sing' },
   tz_nap: { name: '原地睡著', desc: '', mp: 0, type: 'special', elem: null, target: 'self', power: 0, hidden: true, fx: 'sleep', sfx: 'miss' },
-  tz_jackpot: { name: '石虎神威', desc: '', mp: 0, type: 'mag', elem: 'wood', target: 'enemies', power: 4.0, hidden: true, fx: 'wood_big', sfx: 'thunder' },
+  tz_jackpot: { name: '水燈石獅', desc: '', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 4.0, hidden: true, fx: 'water_big', sfx: 'water' },
 
   // ===================================================================================== 合擊
   c_xingbai: { name: '星河渡燈', desc: '【合擊・星河＋白芷】劍火點燈，笛聲送行，一河燈火渡盡陰霾。全體術法大傷害。', mp: 10, type: 'mag', elem: null, target: 'enemies', power: 3.0, combo: ['xinghe', 'baizhi'], comboLv: 3, fx: 'combo', sfx: 'lantern' },
@@ -330,3 +331,5 @@ G.Data.skills = {
   e_wx_void: { name: '虛無', desc: '', mp: 0, type: 'mag', elem: null, target: 'enemy', power: 2.6, delay: 1.3, fx: 'dark', sfx: 'dark' },
   e_wx_drown: { name: '溺斃萬魂', desc: '所有沉沒的記憶一起壓下來。', mp: 0, type: 'mag', elem: 'water', target: 'enemies', power: 1.8, delay: 1.4, status: { id: 'sleep', chance: 0.2, turns: 2 }, fx: 'water_big', sfx: 'ghost' },
 };
+// legacy id from the removed 糰子 summon (old saves): same skill as 白芷's 貓咪助陣, hidden from menus
+G.Data.skills.yg_tuanzi = Object.assign({}, G.Data.skills.bz_maomi, { hidden: true });

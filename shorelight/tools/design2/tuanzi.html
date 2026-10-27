@@ -1,45 +1,15 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
-<title>糰子 Tuanzi — design pass v2</title>
-<!-- fonts: the build script injects text-subset fonts; for live viewing load them from Google Fonts -->
+<title>tuanzi — pet design options v2</title>
+<!-- fonts: the build script injects text-subset fonts; for live viewing they load from Google Fonts -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&family=Noto+Serif+TC:wght@400;700&display=swap">
 <style>body{margin:0;background:#0b0d13;color:#ddd;font-family:"Noto Serif TC",serif}canvas{display:block;max-width:100%;height:auto}</style>
 </head><body>
+<!-- ?only=3&k=1.1 renders one card; no params = full sheet.  ?workers=4 parallel trace (needs --allow-file-access-from-files) -->
 <script src="tuanzi_nianer_lantern_mother_engine.js"></script>
 <script src="tuanzi_nianer_lantern_mother_layout.js"></script>
-<script src="tuanzi_kit.js"></script>
+<script src="tuanzi_yuyuan_mochi_catkit.js"></script>
+<script src="tuanzi_yuyuan_mochi_cards.js"></script>
 <script src="tuanzi.js"></script>
-<script>
-// Usage: open in Chromium (file:// needs --allow-file-access-from-files for the render workers, else single-threaded)
-//   tuanzi.html            → full sheet        tuanzi.html?only=3&k=1.25 → one card
-// workers only help on multi-core hosts: ?workers=4
-if (+new URLSearchParams(location.search).get('workers')) SDF.initWorkers(+new URLSearchParams(location.search).get('workers'), { worker: 'tuanzi_nianer_lantern_mother_worker.js', libs: ['tuanzi_nianer_lantern_mother_engine.js', 'tuanzi_kit.js', 'tuanzi.js'] });
-window.buildCards = async function (only, k, q) {
-  const out = [];
-  for (const d of TZ_DESIGNS) { if (only && d.no !== only) continue; out.push({ no: d.no, cv: await TZ.renderCard(d, k, q) }); }
-  return out;
-};
-window.debugViews = async function (spec, q) {
-  const items = spec.split(';').map((s) => s.split(','));
-  const cvs = [];
-  for (const [no, yaw, pitch, px, focus] of items) {
-    const d = TZ_DESIGNS.find((x) => x.no === +no); const S = d.scene({}); let v;
-    if (focus === 'head') { const a = S.anchors.head; v = { yaw: +yaw, pitch: +pitch, cx: a[0], cy: a[1] - 0.05 * a[3], cz: a[2], scale: +px / (2.8 * a[3]), w: +px, h: +px, variant: { bust: true } }; }
-    else v = TZ.fitView(S, +yaw, +pitch, +px, +px, 0.04);
-    v.ss = q; cvs.push((await LAY.view(d, v, { no: d.no })).cv);
-  }
-  const W = cvs.reduce((a, c) => a + c.width + 10, 0), H = Math.max(...cvs.map((c) => c.height));
-  const out = document.createElement('canvas'); out.width = W; out.height = H; const g = out.getContext('2d'); g.fillStyle = '#556'; g.fillRect(0, 0, W, H);
-  let x = 0; for (const c of cvs) { g.drawImage(c, x, 0); x += c.width + 10; } return out;
-};
-window.addEventListener('load', async () => {
-  const P = new URLSearchParams(location.search);
-  if (P.get('auto') === '0') { document.body.dataset.ready = 1; return; }
-  await document.fonts.ready;
-  const cards = await buildCards(+P.get('only') || 0, +P.get('k') || 1, +P.get('q') || 2);
-  if (P.get('only')) cards.forEach((c) => document.body.appendChild(c.cv));
-  else document.body.appendChild(await TZ.renderSheet(cards.map((c) => c.cv), 1));
-  document.body.dataset.ready = 1;
-});
-</script>
+<script>bootPets(['tuanzi_nianer_lantern_mother_engine.js', 'tuanzi_yuyuan_mochi_catkit.js', 'tuanzi.js']);</script>
 </body></html>

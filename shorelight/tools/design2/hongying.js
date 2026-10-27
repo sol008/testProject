@@ -147,7 +147,7 @@
         brow: { off: 0.12, angle: 0.07, w: 0.028, innerDrop: 0.018, arch: 0.01, len: 1.1 },
         nose: { style: 'anime', y: 0.77 }, mouth: { expr: 'smirk', side: -1, w: 0.11, y: 0.87, lipA: 0.35 }, blushA: 0.16,
       };
-      if (!F.back) LQ.face(F, fc, null); else cel(LQ.facePath(F, fc), '#000');
+      if (!F.back) LQ.face(F, fc, LQ.EXPR || null); else cel(LQ.facePath(F, fc), '#000'); // LQ.EXPR: portrait bake
       // ---- front hair: side-parted fringe swept toward her right, long side locks
       const cap = sp(R(F, [[-0.41, 0.52], [-0.44, 0.24], [-0.3, 0.0], [0, -0.05], [0.3, 0.0], [0.44, 0.24], [0.41, 0.52], [0.36, 0.36], [0.2, 0.18], [0, 0.14], [-0.2, 0.18], [-0.36, 0.36]]), true);
       const locks = fringe(F, [[0.16, 0.02, 0.38, -0.1, 0.53, -0.09], [-0.06, 0.04, 0.34, -0.3, 0.5, -0.07], [-0.26, 0.11, 0.24, -0.41, 0.6, -0.04], [0.28, 0.06, 0.28, 0.12, 0.47, 0.04], [0.39, 0.15, 0.18, 0.36, 0.55, 0.05],

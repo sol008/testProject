@@ -42,7 +42,7 @@
         { view: 'front', at: [-6, -446], lx: 220, ly: 270, zh: '對襟短衫 · 盤扣', en: ['faded-indigo jacket,', 'cut-in-one sleeves'] },
         { view: 'front', at: [-82, -318], lx: 220, ly: 350, zh: '袖套', en: ['sleeve guards over', 'the forearms'] },
         { view: 'front', at: [-14, -300], lx: 220, ly: 430, zh: '帆布圍裙 · 工具袋', en: ['stained canvas apron:', 'bamboo strips, brush'] },
-        { view: 'front', at: [-42, -298], lx: 220, ly: 520, zh: '青銅魚符「渡」', en: ['half-tally of the', '引魂人 (pair link)'] },
+        { view: 'front', at: [-40, -296], lx: 220, ly: 520, zh: '青銅魚符「渡」', en: ['half-tally of the', '引魂人 (pair link)'] },
         { view: 'front', at: [-36, -70], lx: 220, ly: 640, zh: '綁腿 · 布鞋', en: ['leg wraps, cloth shoes', 'with 千層底 soles'] },
         { view: 'back', at: [2, -420], lx: 1250, ly: 300, zh: '髮辮 · 紅繩', en: ['grey queue down the', 'spine, red silk tie'] },
         { view: 'back', at: [28, -430], lx: 1250, ly: 390, zh: '補丁', en: ['mended patch — the', 'jacket outlived 20 yrs'] },
@@ -88,11 +88,12 @@
       lab(36, 384, '引魂燈 soul-lantern', ['paper globe, lacquer caps;', 'left: shop stock, unlit;', 'right: a soul aboard, lit']);
       // pipe + pouch
       L.figure(ctx, w, h, 330, 218, 1.45, (c) => CB.pipe(c, [0, 0], [180, 0], 1));
-      lab(330, 300, '煙吹 long pipe', ['bamboo stem, brass bowl, jade', 'mouthpiece, leather tobacco pouch']);
+      lab(400, 300, '煙吹 long pipe', ['bamboo stem, brass bowl, jade', 'mouthpiece, leather tobacco pouch']);
       // the paired tally
-      L.figure(ctx, w, h, 470, 420, 3.1, (c) => { CB.tally(c, -16, 0, 1, true); c.save(); c.translate(16, 0); c.scale(-1, 1); CB.tally(c, 0, 0, 1, false); c.restore(); });
-      ctx.save(); ctx.font = `bold 20px ${L.FONT_ZH}`; ctx.textAlign = 'center'; ctx.fillStyle = '#2f8f86'; ctx.fillText('渡', 400, 532); ctx.fillStyle = '#8c6b2b'; ctx.fillText('同', 540, 532); ctx.restore();
-      lab(36, 470, '魚符「同渡」 paired tally', ['陳渡 keeps 「渡」 (teal-lit);', '夜玄 keeps 「同」 tied to his', "daughter's jar. Together:", '"we cross together".']);
+      L.figure(ctx, w, h, 0, 0, 3.4, (c) => { c.translate(118, 122); L.tallyHalf(c, C.bronze, '渡', '#1f6e66', true, C.teal); c.save(); c.translate(26, 0); c.scale(-1, 1); L.tallyHalf(c, C.bronze, '', '', false); c.restore(); c.save(); c.fillStyle = '#8c6b2b'; c.font = `bold 6px ${L.FONT_ZH}`; c.textAlign = 'center'; c.fillText('同', 31, 8); c.restore();
+        c.translate(58, 0); L.tallyHalf(c, C.bronze, '渡', '#1f6e66', false); c.save(); c.scale(-1, 1); L.tallyHalf(c, C.bronze, '', '', false); c.restore(); c.save(); c.fillStyle = L.dk(C.bronze, 0.5); c.font = `bold 6px ${L.FONT_ZH}`; c.textAlign = 'center'; c.fillText('同', 5, 8); c.restore(); });
+      ctx.save(); ctx.font = `12px ${L.FONT_EN}`; ctx.fillStyle = '#6a5c60'; ctx.textAlign = 'center'; ctx.fillText('apart', 435, 530); ctx.fillText('joined', 598, 530); ctx.restore();
+            lab(36, 470, '魚符「同渡」 paired tally', ['陳渡 keeps 「渡」 (teal-lit);', '夜玄 keeps 「同」 tied to his', "daughter's jar. Together:", '"we cross together".']);
     } },
     notes: [
       { h: '設計概念 Concept', p: '一個把船槳藏在燈籠舖後面二十年的老人。白天是九份最兇的燈籠師傅：褪色靛藍對襟衫、沾滿紅漆金粉的帆布圍裙、袖套、煙吹。夜裡披上簑衣斗笠、拔起引魂槳，就是黑水溝上最後的引魂人。<br><i>The grumpy grandpa is the disguise; the ferryman is the man.</i>' },

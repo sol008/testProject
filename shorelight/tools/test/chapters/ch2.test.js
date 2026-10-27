@@ -44,7 +44,7 @@ async function session(browser, query) {
   const page = await ctx.newPage();
   const errors = [];
   // the WebGL presentation layer is still in development: drive the 2D renderer (the game logic is identical)
-  await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
+  await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh', quality: 'low' })); } catch (e) { /* ignore */ } });
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch2.test.js */' }));
   page.on('console', (m) => {
     const t = m.text();
@@ -58,8 +58,16 @@ async function session(browser, query) {
   const s = {
     page, errors,
     ev: (fn, arg) => page.evaluate(fn, arg),
-    async idle(ms = 120000) {
-      const ok = await page.evaluate((t) => G.Debug.idle(t), ms);
+    async idle(ms = 300000) {
+      // stable idle: auto events start on the frame after a script ends, so require ~0.5 s of continuous idleness
+      const ok = await page.evaluate((t) => new Promise((res) => {
+        const t0 = Date.now(); let since = 0;
+        const iv = setInterval(() => {
+          const idle = !G.Script.busy() && G.Scenes.top() === G.mapScene && G.Render.fade.a < 0.05;
+          since = idle ? since || Date.now() : 0;
+          if ((since && Date.now() - since > 500) || Date.now() - t0 > t) { clearInterval(iv); res(!!since); }
+        }, 50);
+      }), ms);
       assert(ok, 'timed out waiting for the map to become idle; map=' + (await page.evaluate(() => G.mapScene && G.mapScene.def.id)) + ' stack = ' + JSON.stringify(await page.evaluate(() => G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'))));
     },
     async onMap(id, ms = 60000) {
@@ -108,7 +116,7 @@ async function run(name, browser, fn) {
 
 // ------------------------------------------------------------------------------------------------ 1. critical path
 async function testCritical(browser, open) {
-  const s = await open('?debug&startch=2');
+  const s = await open('?debug&startch=2&flags=mochi_joined,yuyuan_joined');
   await s.ev(() => G.Debug.setAutoplay(true));
   await s.onMap('mistforest_n');
   let f = await s.flags();
@@ -252,7 +260,7 @@ async function testCritical(browser, open) {
 
 // ------------------------------------------------------------------------------------------------ 2. maze rules
 async function testMaze(browser, open) {
-  const s = await open('?debug&map=mist_loop&x=11&y=6&lv=6&party=xinghe,baizhi&flags=ch2_start,ch2_grove_open,ch2_lingshi&autoplay=1');
+  const s = await open('?debug&map=mist_loop&x=11&y=6&lv=6&party=xinghe,baizhi&flags=mochi_joined,yuyuan_joined,ch2_start,ch2_grove_open,ch2_lingshi&autoplay=1');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'mist_loop', null, { timeout: 30000 });
   await s.idle();
   // no 靈視: wrong turn resets, the right order still works blind
@@ -284,7 +292,7 @@ async function testMaze(browser, open) {
 
 // ------------------------------------------------------------------------------------------------ 3. side quests
 async function testSides(browser, open) {
-  const s = await open('?debug&map=mistforest_n&x=33&y=30&lv=7&party=xinghe,baizhi&flags=ch2_start,ch2_azhu_met&autoplay=1');
+  const s = await open('?debug&map=mistforest_n&x=33&y=30&lv=7&party=xinghe,baizhi&flags=mochi_joined,yuyuan_joined,ch2_start,ch2_azhu_met&autoplay=1');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'mistforest_n', null, { timeout: 30000 });
   await s.idle();
   // 老獵人的魂 (spirit) & his chest

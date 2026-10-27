@@ -337,6 +337,10 @@
     c.width = src.width; c.height = src.height;
     const ctx = c.getContext('2d');
     ctx.drawImage(src, 0, 0);
+    // threshold alpha so soft glows / FX do not count as silhouette
+    const id = ctx.getImageData(0, 0, c.width, c.height), d = id.data;
+    for (let i = 3; i < d.length; i += 4) d[i] = d[i] > 150 ? 255 : 0;
+    ctx.putImageData(id, 0, 0);
     ctx.globalCompositeOperation = 'source-in';
     ctx.fillStyle = color || '#111';
     ctx.fillRect(0, 0, c.width, c.height);
@@ -475,9 +479,10 @@
         ctx.fillStyle = T.expr || T.bust1; ctx.fill(ep); ctx.clip(ep);
         const eimg = K.renderView(e.draw, e.box, e.scale * 1.5, { lineScale: e.lineScale || 0.5, bust: true });
         ctx.drawImage(eimg, ex + (e.offX || 0), y + (e.offY || 0), (e.box[2] - e.box[0]) * e.scale, (e.box[3] - e.box[1]) * e.scale);
+        ctx.fillStyle = 'rgba(10,8,14,0.62)'; ctx.fillRect(ex, y + eh - 30, ew, 30);
         ctx.restore();
         ctx.fillStyle = T.title || '#f3ead8'; ctx.font = `600 15px ${K.FONT_ZH}`;
-        ctx.fillText(e.label, ex + 12, y + eh - 14);
+        ctx.fillText(e.label, ex + 12, y + eh - 10);
       });
       y += eh + 16;
     }
@@ -520,13 +525,12 @@
       if (col) yB = cy; else yA = cy;
     });
 
-    // ----- bottom columns
-    const bt = S.bottom; // [x,y,w,h]
+    // ----- bottom columns (under the stage)
+    const bt = S.bottom; // [x,y,w]
     const cols = S.cols;
-    const sil = S.silBox; // width of silhouette box
-    const cw = (bt[2] - sil - 24 * cols.length) / cols.length;
+    const cw = (bt[2] - 28 * (cols.length - 1)) / cols.length;
     cols.forEach((c, i) => {
-      const cx = bt[0] + i * (cw + 24);
+      const cx = bt[0] + i * (cw + 28);
       ctx.fillStyle = T.gold; ctx.font = `600 18px ${K.FONT_ZH}`;
       ctx.fillText(c.h, cx, bt[1] + 22);
       ctx.fillStyle = K.rgba(T.gold, 0.75); ctx.font = `600 11.5px ${K.FONT_EN}`;
@@ -535,42 +539,60 @@
       for (const para of c.body) {
         ctx.fillStyle = para.en ? K.rgba(T.title || '#f3ead8', 0.62) : (T.title || '#f3ead8');
         yy = K.wrap(ctx, para.t, cx, yy, cw, para.en ? 17 : 21, { font: para.en ? `12.5px ${K.FONT_EN}` : `14.5px ${K.FONT_ZH}` });
-        yy += para.en ? 8 : 2;
+        yy += para.en ? 9 : 2;
       }
     });
-    // silhouettes
-    const sx = bt[0] + bt[2] - sil;
+    // ----- props & details strip (under the text columns)
+    if (S.props) {
+      const P = S.props, n = P.items.length, gap = 14;
+      const gw = (bt[2] - gap * (n - 1)) / n;
+      ctx.fillStyle = T.gold; ctx.font = `600 14px ${K.FONT_EN}`;
+      ctx.fillText('道具與細節  PROPS & DETAILS (texture-paint reference)', bt[0], P.y - 10);
+      P.items.forEach((it, i) => {
+        const x = bt[0] + i * (gw + gap);
+        ctx.save();
+        const pp = K.rrect(x, P.y, gw, P.h, 10);
+        ctx.fillStyle = T.propBg || T.paper0; ctx.fill(pp); ctx.clip(pp);
+        const img = K.renderView(it.draw, it.box, it.scale * 2, { lineScale: it.lineScale || 0.8 });
+        const w = (it.box[2] - it.box[0]) * it.scale, h = (it.box[3] - it.box[1]) * it.scale;
+        ctx.drawImage(img, x + (gw - w) / 2, P.y + 6 + (P.h - 30 - h) / 2, w, h);
+        ctx.fillStyle = 'rgba(20,16,24,0.08)'; ctx.fillRect(x, P.y + P.h - 26, gw, 26);
+        ctx.fillStyle = T.ink; ctx.font = `600 13px ${K.FONT_ZH}`;
+        ctx.fillText(it.label, x + 10, P.y + P.h - 8);
+        ctx.restore();
+      });
+    }
+    // ----- silhouettes (bottom of the right panel)
+    const sy = Math.max(yA, yB) + 6, sx = rp[0], sw = rp[2], sh = Hh - 46 - sy;
     ctx.save();
     ctx.fillStyle = T.silBg || 'rgba(255,255,255,0.06)';
-    ctx.fill(K.rrect(sx, bt[1], sil, bt[3], 12));
-    ctx.fillStyle = T.gold; ctx.font = `600 16px ${K.FONT_ZH}`;
-    ctx.fillText('剪影檢查', sx + 16, bt[1] + 26);
-    ctx.fillStyle = K.rgba(T.gold, 0.75); ctx.font = `600 11px ${K.FONT_EN}`;
-    ctx.fillText('SILHOUETTE · large / 90 px sprite scale', sx + 96, bt[1] + 26);
-    const big = S.silBig || 210;
-    let ox = sx + 26;
-    const ground = bt[1] + 48 + big;
+    ctx.fill(K.rrect(sx, sy, sw, sh, 12));
+    ctx.fillStyle = T.silText || T.gold; ctx.font = `600 14px ${K.FONT_ZH}`;
+    ctx.fillText('剪影檢查', sx + 16, sy + 24);
+    ctx.fillStyle = K.rgba(T.silText || T.gold, 0.75); ctx.font = `600 11px ${K.FONT_EN}`;
+    ctx.fillText('SILHOUETTE · front / side / back · right: 90 px sprite scale', sx + 86, sy + 24);
+    const big = sh - 50;
+    let ox = sx + 18;
+    const ground = sy + 36 + big;
     S.views.forEach((v, i) => {
-      const s = K.silhouette(rendered[i], '#0d0b10');
-      const fh = v.box[3] - v.box[1];
-      const k = big / (S.silRef || fh);
+      const sil = K.silhouette(rendered[i], '#0d0b10');
+      const k = big / (S.silRef || (v.box[3] - v.box[1]));
       const w = (v.box[2] - v.box[0]) * k;
-      ctx.drawImage(s, ox, ground + v.box[1] * k, w, fh * k);
-      ox += w + 10;
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.drawImage(sil, ox, ground + v.box[1] * k, w, (v.box[3] - v.box[1]) * k);
+      ox += w + 4;
     });
-    // sprite-scale row
-    let ox2 = sx + 26;
-    const g2 = bt[1] + bt[3] - 22;
-    ctx.fillStyle = K.rgba(T.title || '#f3ead8', 0.6); ctx.font = `11px ${K.FONT_EN}`;
+    let ox2 = ox + 18;
     S.views.forEach((v, i) => {
-      const s = K.silhouette(rendered[i], '#0d0b10');
+      const sil = K.silhouette(rendered[i], '#0d0b10');
       const k = 90 / (S.silRef || (v.box[3] - v.box[1]));
       const w = (v.box[2] - v.box[0]) * k, h = (v.box[3] - v.box[1]) * k;
-      ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill(K.rrect(ox2 - 4, g2 - h - 4, w + 8, h + 8, 6));
-      ctx.drawImage(s, ox2, g2 - h, w, h);
-      ox2 += w + 22;
+      ctx.fillStyle = 'rgba(241,235,224,0.95)'; ctx.fill(K.rrect(ox2 - 4, ground - h - 2, w + 8, h + 8, 6));
+      ctx.drawImage(sil, ox2, ground - h + 2, w, h);
+      ox2 += w + 12;
     });
     ctx.restore();
+    // light backing behind big silhouettes is drawn first for contrast
     // footer
     ctx.fillStyle = K.rgba(T.title || '#f3ead8', 0.4); ctx.font = `12px ${K.FONT_EN}`;
     ctx.fillText(S.footer || '', 44, Hh - 18);

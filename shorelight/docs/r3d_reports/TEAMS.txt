@@ -1,0 +1,11 @@
+chars          session_0189q81Mfp2xj624R9swVw72  r3d-chars
+animals        session_0189q81NbuA9HHovYdBXAsx4  r3d-animals
+arch-han       session_0189q81KKFTYSP226t4W1iuE  r3d-arch-han
+arch-coast     session_0189q81JSnNRyg6hsz1sQJUH  r3d-arch-coast
+nature         session_0189q81MJ4auLKJcvSNnAv2f  r3d-nature
+props-street   session_0189q81NTPgmMy6ZmgjA2hd7  r3d-props-street
+props-interior session_0189q81MackDyRw8HjvKhEE4  r3d-props-interior
+monsters-a     session_0189q81NuBj3HJhExfzR7iMp  r3d-monsters-a
+monsters-b     session_0189q81NumwcjdWLjLgXrTU5  r3d-monsters-b
+env            session_0189q81NuSc17M8jbunwuwTC  r3d-env
+battle         session_0189q81LXjqCeWTXSTSQaPwr  r3d-battle

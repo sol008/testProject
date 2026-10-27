@@ -109,7 +109,7 @@
       bg: { top: '#f1ede0', bottom: '#e2d8c2', motif: (ctx, w, h) => XD.motifs.clouds(ctx, w, h, '#6e5320') },
       palette: [['#3e6070', '褪青', 'faded teal'], ['#f0ece1', '汗衫白', 'undershirt'], ['#c49a3a', '薑黃帶', 'ochre sash'], ['#6a5038', '土褐褲', 'earth brown'], ['#7aa04a', '草莖', 'grass'], ['#e4ad84', '膚', 'skin'], ['#2a1e1a', '髮', 'warm black']],
       callouts: [
-        { x: 10, y: -468, zh: '呆毛亂髮', en: 'bed-head + cowlick', side: 'L', ly: 30 },
+        { x: 12, y: -448, zh: '呆毛亂髮', en: 'bed-head + cowlick', side: 'L', ly: 30 },
         { x: 26, y: -362, zh: '叼草', en: 'chewing a grass stem', side: 'R', ly: 30 },
         { x: -100, y: -370, zh: '雙手抱頭', en: 'hands behind the head', side: 'L', ly: 120 },
         { x: -80, y: -228, zh: '劍橫插背後', en: 'sword across the back', side: 'L', ly: 250 },
@@ -142,6 +142,7 @@
       blushA: 0.08,
       skinExtras: (c) => { XL.line(c, [[-0.3, 0.7], [-0.2, 0.74]], XL.rgba('#a85a4a', 0.9), 1.2); },
     };
+    global.XH07F = F; // exposed for the in-game portrait bake
     const backHair = (c) => {
       // high ponytail streaming right
       const tail = [XL.curve([[0.0, -0.18], [0.3, -0.24], [0.7, -0.1], [1.1, 0.18], [1.5, 0.3], [1.85, 0.62, 'c'], [1.4, 0.5], [1.05, 0.42], [0.62, 0.22], [0.25, 0.04], [0.0, -0.02]]),
@@ -160,7 +161,7 @@
       locks.push(XL.curve([[-0.42, 0.16], [-0.38, -0.06], [-0.2, -0.17], [0.02, -0.19], [0.24, -0.16], [0.4, -0.04], [0.42, 0.16], [0, 0.0]]));
       c.save(); c.clip(XL.faceShape(F)); c.fillStyle = XL.skinShadow(C.skin);
       c.fill(XL.curve([[-0.45, 0.1], [-0.38, 0.62], [-0.28, 0.4], [-0.06, 0.48], [0.0, 0.3], [0.06, 0.48], [0.28, 0.38], [0.38, 0.6], [0.45, 0.1]])); c.restore();
-      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.01, -0.34, 0.34, XL.rgba('#6e6a86', 0.7), { n: 4 }) });
+      XL.paintMass(c, locks, C.hair, { lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.01, -0.34, 0.34, XL.rgba('#6e6a86', 0.55), {}) });
       // hair tie (red cord) at the crown
       XL.paint(c, XL.ribbon([[-0.02, -0.2], [0.12, -0.24]], 0.05), '#c8432b', { lw: 1 });
     };
@@ -216,6 +217,7 @@
       XL.paint(ctx, XL.ribbon([[70, -284], [56, -306]], [18, 17]), C.belt, { lw: 1.3, after: (c) => XL.line(c, [[68, -290], [58, -296]], C.brass, 0.9) });
       XD.limb(ctx, [[72, -282], [60, -300], [50, -312]], [14, 13, 12], C.skin);
       XD.swordFingers(ctx, 50, -313, angTo([60, -300], [48, -316]), B.handL * 0.85, C.skin, false);
+      XL.paint(ctx, XL.ribbon([[52, -296], [62, -306]], 2.6), '#c8432b', { lw: 0.8 });
       XD.head(ctx, 0, B.top, hu, F, backHair, frontHair, { tilt: -0.03 });
     }
     function fx(ctx) {

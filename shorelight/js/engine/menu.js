@@ -50,7 +50,7 @@
         { label: '心燈', k: 'lanterns', icon: 'lantern' },
         { label: '地圖', k: 'world', icon: 'scroll' },
         { label: '圖鑑', k: 'bestiary', icon: 'mushroom' },
-        { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.mapScene.def.noSave) },
+        { label: '存檔', k: 'save', icon: 'ring', disabled: !!(G.mapScene && G.Mapx.val(G.mapScene.def.noSave)) },
         { label: '讀檔', k: 'load', icon: 'key' },
         { label: '設定', k: 'settings', icon: 'fan' },
         { label: '回標題', k: 'title', icon: 'hat' },
@@ -223,6 +223,7 @@
         if (it.stats) {
           for (const k in it.stats) { R().text(ctx, `${STAT_NAMES[k === 'hp' ? 'mhp' : k === 'mp' ? 'mmp' : k] || k} ${it.stats[k] > 0 ? '+' : ''}${it.stats[k]}`, 950, yy, { size: 18, color: '#c9e8c0' }); yy += 26; }
         }
+        if (it.pair && it.pair.label) { R().text(ctx, it.pair.label, 950, yy, { size: 17, color: '#f4c8d0' }); yy += 26; }
         if (it.who) R().text(ctx, '可裝備：' + it.who.map(charName).join('、'), 950, yy + 6, { size: 17, color: '#c9b893' });
         R().text(ctx, '售價 ' + Math.floor((it.price || 0) / 2) + ' 文', 950, 400, { size: 16, color: '#9c947f' });
       }
@@ -675,7 +676,7 @@
     G.inGame = true;
     const st = G.state;
     G.mapScene = null;
-    G.Scenes.replace({ update() {}, draw() {} });
+    G.Scenes.replace(new G.BlankScene(false));
     G.Mapx.goto(st.map, st.x, st.y, st.dir);
     G.Render.fade.a = 1;
     G.Render.fadeTo(0, 0.6);

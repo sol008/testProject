@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>沈星河 portrait bake</title>
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style></head>
+<body>
+<canvas id="cv"></canvas>
+<script src="xinghe_lib.js"></script>
+<script src="xinghe_designs_a.js"></script>
+<script src="xinghe_designs_a2.js"></script>
+<script src="xinghe_designs_a3.js"></script>
+<script src="xinghe_designs_b.js"></script>
+<script src="xinghe_designs_c.js"></script>
+<script src="xinghe_card.js"></script>
+<script>
+// Bakes the in-game dialogue portrait of 沈星河 (client pick v2 #07 螢火劍客) from the exact design-sheet drawing.
+// ?expr=<name>&blink=1&k=<pixel scale>   canonical box 300x340 (bottom-aligned bust), transparent background.
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const expr = q.get('expr') || 'normal', blink = q.get('blink') === '1', k = parseFloat(q.get('k') || '2');
+  await document.fonts.ready;
+  const D = window.XINGHE_DESIGNS.find((d) => d.id === '07');
+  const F = window.XH07F;
+  const base = JSON.parse(JSON.stringify({ eye: F.eye, brow: F.brow, mouth: F.mouth, blushA: F.blushA }));
+  const sadBrow = { y0: 0.465, y1: 0.49, arch: 0.004 };
+  const E = {
+    normal: {},
+    smile: { eye: { lid: 0.12 }, mouth: { type: 'smile', w: 0.07 } },
+    laugh: { eye: { closed: true }, brow: { y0: 0.49, y1: 0.45 }, mouth: { type: 'smile', w: 0.085 } },
+    sad: { eye: { lid: 0.3, irisDy: 0.008 }, brow: sadBrow, mouth: { type: 'neutral', w: 0.055 } },
+    cry: { eye: { lid: 0.34, irisDy: 0.01 }, brow: sadBrow, mouth: { type: 'neutral', w: 0.05 }, tears: true },
+    angry: { eye: { lid: 0.06 }, brow: { y0: 0.535, y1: 0.43, arch: 0.004 }, mouth: { type: 'set', w: 0.065 } },
+    surprise: { eye: { h: 0.06, lid: 0 }, brow: { y0: 0.475, y1: 0.42, arch: 0.02 }, mouth: { type: 'ooh', w: 0.06 } },
+    think: { eye: { look: 0.38, irisDy: -0.008, lid: 0.14 }, mouth: { type: 'smirk', w: 0.06 } },
+    shy: { eye: { look: -0.32, lid: 0.22, irisDy: 0.006 }, brow: { y0: 0.485, y1: 0.47 }, mouth: { type: 'smile', w: 0.055 }, blushA: 0.62 },
+    hurt: { eye: { closed: 'flat' }, brow: sadBrow, mouth: { type: 'set', w: 0.06 } },
+    serious: { eye: { lid: 0.1 }, brow: { y0: 0.515, y1: 0.44 }, mouth: { type: 'set', w: 0.065 } },
+    smug: { eye: { lid: 0.3, look: 0.2 }, mouth: { type: 'smirk', w: 0.07 } },
+  }[expr] || {};
+  F.eye = Object.assign({}, base.eye, E.eye || {});
+  F.brow = Object.assign({}, base.brow, E.brow || {});
+  F.mouth = Object.assign({}, base.mouth, E.mouth || {});
+  F.blushA = E.blushA != null ? E.blushA : base.blushA;
+  if (blink && !F.eye.closed) F.eye.closed = 'flat';
+  const W = 300, H = 340, S = 2.9;
+  const cv = document.getElementById('cv'), c = cv.getContext('2d');
+  cv.width = W * k; cv.height = H * k;
+  const crownY = -426, top = 52, ox = W / 2 - 18;
+  XH_drawFigure(c, D, ox, top - crownY * S, S, k, { bust: true });
+  if (E.tears) {
+    c.save(); c.scale(k, k);
+    const hu = 420 / D.heads, hx = ox, hy = top + (-420 - crownY) * S; // head top in px
+    for (const [x, len] of [[-0.17, 40], [0.17, 30]]) {
+      const sx = hx + x * hu * S, sy = hy + 0.66 * hu * S;
+      const g = c.createLinearGradient(0, sy, 0, sy + len);
+      g.addColorStop(0, 'rgba(210,235,255,0.95)'); g.addColorStop(1, 'rgba(210,235,255,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(sx, sy + len / 2, 2.2, len / 2, 0, 0, 7); c.fill();
+    }
+    c.restore();
+  }
+  document.body.dataset.ready = '1';
+})().catch((e) => { document.body.dataset.error = String(e && e.stack || e); document.body.dataset.ready = '1'; });
+</script>
+</body></html>

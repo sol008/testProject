@@ -12,7 +12,7 @@
 //   joinLv: suggested level for G.Party.join(id, lv) — scripts should pass max(joinLv, party average).
 //
 // Availability (STORY_BIBLE / WRITERS_GUIDE): 星河 & 白芷 from ch1 (星河 alone in the 序章 dream and the
-// 舊金礦坑), 紅纓 joins after the ch2 duel (~L5), 雲歸 + 糰子 after the ch3 鬼面 raid (~L10).
+// 舊金礦坑), 紅纓 joins after the ch2 duel (~L5), 雲歸 after the ch3 鬼面 raid (~L10).
 // 白芷 is captured at the end of ch6 and rejoins at the top of 彼岸燈塔 (ch11) for 夜玄 / 黑潮・無相 —
 // rejoin her at the party's level.
 'use strict';
@@ -59,6 +59,7 @@ G.Data.chars = {
       { lv: 3, skill: 'bz_duhun' },        // 渡魂謠
       { lv: 5, skill: 'bz_jiee' },         // 解厄
       { lv: 8, skill: 'bz_chaosheng' },    // 潮生曲
+      { lv: 10, skill: 'bz_maomi' },       // 貓咪助陣 (芋圓 / 麻糬)
       { lv: 11, skill: 'bz_huihun' },      // 回魂
       { lv: 14, skill: 'bz_yuewu' },       // 月霧護身曲
       { lv: 17, skill: 'bz_haichao' },     // 海潮
@@ -102,7 +103,7 @@ G.Data.chars = {
   yungui: {
     name: '雲歸', title: '太虛觀道士', elem: 'wood', weapon: 'talisman',
     sprite: 'yungui', portrait: 'yungui', joinLv: 10,
-    desc: '觀音山太虛觀的道士，愛喝米酒、愛讀禁書、更愛研究蘑菇。身邊總跟著一隻胖石虎「糰子」。符籙五行俱全，專攻弱點。',
+    desc: '觀音山太虛觀的道士，愛喝米酒、愛讀禁書、更愛研究蘑菇。符籙五行俱全，專攻弱點。',
     base: { hp: 96, mp: 28, atk: 10, def: 8, mag: 17, spd: 12, luk: 12 },
     growth: { hp: 14, mp: 3.6, atk: 1.6, def: 1.4, mag: 2.9, spd: 0.9, luk: 0.7 },
     learn: [
@@ -112,7 +113,6 @@ G.Data.chars = {
       { lv: 1, skill: 'yg_jinfu' },        // 金符 (金)
       { lv: 4, skill: 'yg_tufu' },         // 土符 (土)
       { lv: 7, skill: 'yg_dingshen' },     // 定身符
-      { lv: 10, skill: 'yg_tuanzi' },      // 召喚糰子
       { lv: 12, skill: 'yg_mihun' },       // 迷魂扇
       { lv: 14, skill: 'yg_wulei' },       // 五雷正法
       { lv: 16, skill: 'yg_huichun' },     // 回春符

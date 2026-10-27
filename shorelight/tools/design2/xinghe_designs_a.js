@@ -85,7 +85,7 @@
   };
   // anime/toon hair shine: a band with a jagged lower edge, following the skull curve (unit head space)
   XD.shine = (c, y, x0, x1, col, o = {}) => {
-    const n = o.n || 4, th = o.th || 0.024, curve = o.curve === undefined ? 0.07 : o.curve, len = o.len || 0.82;
+    const n = o.n || 3, th = o.th || 0.026, curve = o.curve === undefined ? 0.07 : o.curve, len = o.len || 0.9;
     for (let i = 0; i < n; i++) {
       const t0 = (i + (1 - len) / 2) / n, t1 = (i + 1 - (1 - len) / 2) / n, pts = [];
       for (let k = 0; k <= 4; k++) { const t = t0 + (t1 - t0) * k / 4; pts.push([x0 + (x1 - x0) * t, y + curve * Math.pow(2 * t - 1, 2) + (k === 2 ? (o.dip || 0.005) : 0)]); }
@@ -191,8 +191,8 @@
       });
       // neck + upper sleeves sit behind the jacket body (連袖 dropped shoulder)
       XD.neck(ctx, 0, B.chin, B.shY, B.neckW * 2, C.skin, hu);
-      XD.sleeve(ctx, [[-46, -326], [-58, -300], [-71, -270]], [18, 26, 27], C.indigo, { rim, round: true, paint: { sh: [7, 2], after: (c) => XD.folds(c, [[[-64, -300], [-58, -286]], [[-70, -286], [-66, -276]]], XL.shadow(C.indigo, 0.3), 1.4) } });
-      XD.sleeve(ctx, [[46, -326], [57, -300], [66, -270]], [18, 26, 27], C.indigo, { rim, round: true, paint: { sh: [7, 2], after: (c) => XD.folds(c, [[[64, -298], [58, -284]]], XL.shadow(C.indigo, 0.3), 1.4) } });
+      XD.sleeve(ctx, [[-46, -326], [-60, -298], [-70, -270]], [17, 23, 23], C.indigo, { rim, round: true, paint: { sh: [7, 2], after: (c) => XD.folds(c, [[[-64, -300], [-58, -286]], [[-70, -286], [-66, -276]]], XL.shadow(C.indigo, 0.3), 1.4) } });
+      XD.sleeve(ctx, [[46, -326], [58, -298], [65, -270]], [17, 23, 23], C.indigo, { rim, round: true, paint: { sh: [7, 2], after: (c) => XD.folds(c, [[[64, -298], [58, -284]]], XL.shadow(C.indigo, 0.3), 1.4) } });
       // jacket 對襟短衫
       const jk = XL.sym([[0, -343], [13, -344], [32, -339], [50, -332], [57, -322, 'c'], [56, -296], [56, -262], [61, -214], [64, -193, 'c'], [30, -189], [0, -188]]);
       const jacket = XL.curve(jk);
@@ -232,13 +232,13 @@
       XL.paint(ctx, XL.lock(-40, -251, -46, -228, 5, -3), '#8a6a42', { lw: 1 });
       // ---- arms
       // screen-left arm: holds the half-papered lantern by its loop
-      XL.paint(ctx, XL.ribbon([[-61, -276], [-76, -262]], 11), XL.light(C.indigo, 0.1), { rim, lw: 1.3 }); // rolled cuff
+      XL.paint(ctx, XL.ribbon([[-68, -278], [-72, -266]], 26), XL.light(C.indigo, 0.1), { rim, lw: 1.3, sh: [4, 1] }); // rolled cuff
       XD.sleeve(ctx, [[-72, -264], [-80, -238], [-86, -214]], [22, 21, 18], C.guard, { rim, paint: { after: (c) => XD.folds(c, [[[-82, -250], [-74, -246]], [[-85, -232], [-77, -228]]], XL.shadow(C.guard, 0.25), 1.2) } });
       XL.paint(ctx, XL.ribbon([[-77, -220], [-95, -214]], 3.2), '#8a6a42', { lw: 0.9 });
       XD.lantern(ctx, -97, -204, 30, { papered: 'half', paper: C.paper, rib: C.bamboo, hang: 14, char: '', rim, tall: 1.0 });
       XL.hand(ctx, -88, -214, 0.08, B.handL * 0.92, C.skin, 'gripV', true, { rim });
       // screen-right arm: relaxed, brush in hand, red string bracelet
-      XL.paint(ctx, XL.ribbon([[56, -272], [74, -266]], 11), XL.light(C.indigo, 0.1), { rim, lw: 1.3 });
+      XL.paint(ctx, XL.ribbon([[64, -278], [66, -266]], 26), XL.light(C.indigo, 0.1), { rim, lw: 1.3, sh: [4, 1] });
       XD.sleeve(ctx, [[66, -266], [69, -240], [71, -214]], [22, 21, 18], C.guard, { rim, paint: { after: (c) => XD.folds(c, [[[64, -252], [72, -248]], [[64, -232], [73, -229]]], XL.shadow(C.guard, 0.25), 1.2) } });
       XL.paint(ctx, XL.ribbon([[63, -218], [79, -216]], 3.2), '#8a6a42', { lw: 0.9 });
       XL.paint(ctx, XL.ribbon([[64, -209], [79, -207]], 2.6), C.red, { lw: 0.9 });

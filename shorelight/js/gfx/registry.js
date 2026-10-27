@@ -33,8 +33,12 @@ G.Monsters = {
   has(id) { return !!this.defs[id]; },
   draw(ctx, id, x, y, t, o = {}) {
     const d = this.defs[id];
-    if (d && d.draw) d.draw(ctx, x, y, t, o);
-    else {
+    if (d && d.draw) {
+      // isolate: some art leaves transform/alpha changed (e.g. setTransform inside a draw)
+      const tf = ctx.getTransform();
+      ctx.save();
+      try { d.draw(ctx, x, y, t, o); } finally { ctx.restore(); ctx.setTransform(tf); }
+    } else {
       // placeholder blob
       ctx.save();
       ctx.fillStyle = '#7a5cff';

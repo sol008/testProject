@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>洛紅纓 portrait bake</title>
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style></head>
+<body>
+<canvas id="cv"></canvas>
+<script src="hongying_qingfeng_common.js"></script>
+<script src="hongying_card.js"></script>
+<script src="hongying.js"></script>
+<script>
+// Bakes the in-game dialogue portrait of 洛紅纓 (client pick v2 #01 洛家槍・承) from the exact design-sheet drawing.
+// ?expr=<name>&blink=1&k=<pixel scale>   canonical box 300x340 (bottom-aligned bust), transparent background.
+(async function () {
+  const q = new URLSearchParams(location.search);
+  const expr = q.get('expr') || 'normal', blink = q.get('blink') === '1', k = parseFloat(q.get('k') || '2');
+  await document.fonts.ready;
+  const D = LQ.HONGYING[0];
+  const sadBrow = { angle: -0.05, innerDrop: -0.012 };
+  const E = {
+    normal: null,
+    smile: { eye: { lid: 0.18 }, mouth: { expr: 'smile' } },
+    laugh: { eye: { closed: 'happy' }, mouth: { expr: 'grin', open: 0.045 }, blush: 0.3 },
+    sad: { eye: { lid: 0.32, gaze: [0, 0.008] }, brow: sadBrow, mouth: { expr: 'sad' } },
+    cry: { eye: { lid: 0.36, gaze: [0, 0.01] }, brow: sadBrow, mouth: { expr: 'frown' }, tears: true },
+    angry: { eye: { lid: 0.1 }, brow: { angle: 0.16, innerDrop: 0.03 }, mouth: { expr: 'shout', open: 0.05 } },
+    surprise: { eye: { h: 0.115, lid: 0 }, brow: { angle: 0.0, innerDrop: -0.01 }, mouth: { expr: 'gasp', open: 0.05 } },
+    think: { eye: { gazeX: 0.02, gaze: [0.01, -0.01], lid: 0.2 }, mouth: { expr: 'pout' } },
+    shy: { eye: { lid: 0.3, gazeX: -0.02 }, brow: { angle: 0.0, innerDrop: -0.006 }, mouth: { expr: 'pout' }, blush: 0.75, hatch: true },
+    hurt: { eye: { closed: true }, brow: sadBrow, mouth: { expr: 'grin', open: 0.03 } },
+    serious: { eye: { lid: 0.12 }, brow: { angle: 0.1 }, mouth: { expr: 'set' } },
+    smug: { eye: { lid: 0.34 }, mouth: { expr: 'smirk', side: -1 } },
+  }[expr];
+  const ex = E ? JSON.parse(JSON.stringify(E)) : {};
+  if (blink) { ex.eye = Object.assign({}, ex.eye || {}, { closed: true }); }
+  LQ.EXPR = Object.keys(ex).length ? ex : null;
+  const W = 300, H = 340, SC = 2.95;
+  const cv = document.getElementById('cv'), c = cv.getContext('2d');
+  cv.width = W * k; cv.height = H * k;
+  c.scale(k, k);
+  LQ.begin(c, {});
+  const ox = W / 2 + 2, oy = 74;
+  const F = LQ.drawFigure(D, ox, oy, SC, { bust: true });
+  if (ex.tears) {
+    for (const [x, len] of [[-0.19, 42], [0.19, 32]]) {
+      const sx = ox + x * F.h * SC, sy = oy + 0.68 * F.h * SC;
+      const g = c.createLinearGradient(0, sy, 0, sy + len);
+      g.addColorStop(0, 'rgba(210,235,255,0.95)'); g.addColorStop(1, 'rgba(210,235,255,0)');
+      c.fillStyle = g; c.beginPath(); c.ellipse(sx, sy + len / 2, 2.2, len / 2, 0, 0, 7); c.fill();
+    }
+  }
+  document.body.dataset.ready = '1';
+})().catch((e) => { document.body.dataset.error = String(e && e.stack || e); document.body.dataset.ready = '1'; });
+</script>
+</body></html>

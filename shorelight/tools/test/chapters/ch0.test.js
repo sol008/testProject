@@ -315,7 +315,6 @@ async function test3d(browser, open) {
   await s.page.waitForTimeout(4000);
   const r = await s.ev(() => ({ on: !!(G.R3 && G.R3.enabled && G.R3.enabled()), v: !!G.mapScene.view3d }));
   if (!r.on) warnings.push('3D renderer not available in this browser — 3D smoke test only checked the 2D fallback');
-  await s.shot('30_3d');
   return s;
 }
 

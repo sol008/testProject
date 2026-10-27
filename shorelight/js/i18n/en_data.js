@@ -1151,3 +1151,27 @@ G.I18N.add({
 G.I18N.add({
   '%s、%s': '%s, %s',
 });
+// 貓咪助陣 (replaces the removed 糰子 summon)
+G.I18N.add({
+  '貓咪助陣': 'Cat Assist',
+  '「芋圓、麻糬——拜託了！」至於來的是哪一隻、會做什麼，只有貓知道。': '"Taro, Mochi — please!" Which cat answers, and what it does, only the cat knows.',
+  '芋圓炸毛撲上去一陣亂抓！': 'Taro Ball puffs up and pounces in a flurry of claws!',
+  '芋圓整隻坐了上去——十二斤的壓制力！': 'Taro Ball sits on it. Twelve pounds of pure suppression!',
+  '芋圓擋在最虛弱的同伴前面，一臉「你敢？」。': 'Taro Ball plants himself in front of the weakest ally. "Try it."',
+  '麻糬閉上眼呼嚕，水色漣漪漾開——同伴的傷口慢慢合起來。': 'Mochi closes her eyes and purrs; ripples of water-light spread and wounds begin to close.',
+  '麻糬身邊浮起一盞小水燈，燈光照得妖怪睜不開眼。': 'A little water lantern rises beside Mochi, its glow too bright for the demons to bear.',
+  '芋圓翻肚賣萌。敵人戰意全消，紅纓也差點放下槍。': 'Taro Ball rolls over, belly up. The enemy loses all will to fight, and Hongying almost drops her spear.',
+  '麻糬盯著敵人，慢慢眨了一次眼。敵人不知為何心生慚愧。': 'Mochi gives the enemy one long, slow blink. For some reason, it feels ashamed.',
+  '芋圓打了個哈欠，原地睡著了。': 'Taro Ball yawns and falls asleep on the spot.',
+  '芋圓與麻糬同時抬頭——水燈與石獅齊現！': 'Taro Ball and Mochi look up together — the water lantern and the stone lion appear as one!',
+  '芋圓亂抓': 'Taro’s Scratch', '十二斤壓制': 'Twelve-Pound Press', '石獅擋招': 'Stone-Lion Guard', '水燈照妖': 'Lantern Glare',
+  '慢眨眼': 'Slow Blink', '水燈石獅': 'Lantern & Lion', '貓毛球': 'Fur Ball',
+  '麻糬換毛季掉的長毛搓成的小球，軟綿綿。紅纓偷偷收了好幾顆。': 'A soft little ball rolled from Mochi’s shed winter coat. Hongying has secretly kept several.',
+  '雲歸的蕈菇清單之一。': 'One of the mushrooms on Yun Gui’s list.',
+  '觀音山太虛觀的道士，愛喝米酒、愛讀禁書、更愛研究蘑菇。符籙五行俱全，專攻弱點。':
+    'A Taoist of Taixu Temple on Mount Guanyin who loves rice wine, forbidden books, and—above all—mushrooms. His talismans span all Five Phases, so he hunts for weak spots.',
+  '只在滿月夜發光的蕈。雲歸的蕈菇清單之一。': 'A mushroom that glows only under a full moon. One of the mushrooms on Yun Gui’s list.',
+  '一整束的回魂香，煙會找到所有迷路的魂。倒下的同伴全體復活並回復三成氣血。':
+    'A whole bundle of soul-recall incense; its smoke finds every lost soul. Revives all fallen allies with 30% HP.',
+  '與白芷同在隊伍時，兩人速度＋5': 'While Bai Zhi is in the party, both gain +5 Speed',
+});

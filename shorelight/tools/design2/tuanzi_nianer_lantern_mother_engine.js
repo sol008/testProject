@@ -75,113 +75,137 @@
     return (x, y, z) => { x -= ox; y -= oy; z -= oz; out[0] = m[0] * x + m[3] * y + m[6] * z; out[1] = m[1] * x + m[4] * y + m[7] * z; out[2] = m[2] * x + m[5] * y + m[8] * z; return out; };
   };
 
-  // ------------------------------------------------------------------ SDF scene graph (closures)
-  let MAT = 0; // material id of the nearest leaf of the last evaluation
-  E.matOf = () => MAT;
+  // ------------------------------------------------------------------ SDF scene graph → compiled JS
+  // Builders return plain node objects; E.compile() turns a tree into ONE flat JS function (new Function) so V8 can
+  // optimise it (closure-per-primitive evaluation was ~30x slower). Material id of the nearest leaf → MB[0].
+  const MB = new Int32Array(1); E.MB = MB;
+  // 2D polygon distance (Quilez) on flat arrays [x0,y0,x1,y1,...]
+  function poly2(px, py, v) {
+    const n = v.length / 2; let d = (px - v[0]) * (px - v[0]) + (py - v[1]) * (py - v[1]); let s = 1;
+    for (let i = 0, j = n - 1; i < n; j = i, i++) {
+      const vix = v[2 * i], viy = v[2 * i + 1], vjx = v[2 * j], vjy = v[2 * j + 1];
+      const ex = vjx - vix, ey = vjy - viy, wx = px - vix, wy = py - viy;
+      const t = clamp((wx * ex + wy * ey) / (ex * ex + ey * ey), 0, 1); const bx = wx - ex * t, by = wy - ey * t; const dd = bx * bx + by * by; if (dd < d) d = dd;
+      const c1 = py >= viy, c2 = py < vjy, c3 = ex * wy > ey * wx; if ((c1 && c2 && c3) || (!c1 && !c2 && !c3)) s = -s;
+    }
+    return s * sqrt(d);
+  }
+  E.poly2 = poly2;
 
-  // Scene: registry of materials + builders that capture material ids
   E.Scene = function () {
     const S = { mats: [null], names: {}, root: null, bounds: null, anchors: {}, overlays: [], params: {} };
     S.mat = (name, def) => { const id = S.mats.length; def.name = name; def.id = id; S.mats.push(def); S.names[name] = id; return id; };
-    const M = (m) => (typeof m === 'number' ? m : S.names[m]);
-    // primitives ------------------------------------------------------------
-    S.sphere = (m, cx, cy, cz, r) => { const id = M(m); return (x, y, z) => { MAT = id; x -= cx; y -= cy; z -= cz; return sqrt(x * x + y * y + z * z) - r; }; };
-    S.ell = (m, cx, cy, cz, rx, ry, rz) => {
-      const id = M(m), irx = 1 / rx, iry = 1 / ry, irz = 1 / rz;
-      return (x, y, z) => { MAT = id; x -= cx; y -= cy; z -= cz; const ax = x * irx, ay = y * iry, az = z * irz; const k0 = sqrt(ax * ax + ay * ay + az * az); const bx = ax * irx, by = ay * iry, bz = az * irz; const k1 = sqrt(bx * bx + by * by + bz * bz); return k1 < 1e-9 ? -min(rx, ry, rz) : k0 * (k0 - 1) / k1; };
-    };
-    // round cone from a (radius r1) to b (radius r2)
-    S.cone = (m, ax, ay, az, bx, by, bz, r1, r2) => {
-      const id = M(m); const bax = bx - ax, bay = by - ay, baz = bz - az; const l2 = bax * bax + bay * bay + baz * baz; const rr = r1 - r2; const a2 = l2 - rr * rr; const il2 = 1 / l2; const srr = Math.sign(rr) * rr * rr;
-      return (x, y, z) => {
-        MAT = id; const pax = x - ax, pay = y - ay, paz = z - az; const yy = pax * bax + pay * bay + paz * baz; const zz = yy - l2;
-        const xx = pax * l2 - bax * yy, xy = pay * l2 - bay * yy, xz = paz * l2 - baz * yy; const x2 = xx * xx + xy * xy + xz * xz; const y2 = yy * yy * l2, z2 = zz * zz * l2; const k = srr * x2;
-        if (Math.sign(zz) * a2 * z2 > k) return sqrt(x2 + z2) * il2 - r2;
-        if (Math.sign(yy) * a2 * y2 < k) return sqrt(x2 + y2) * il2 - r1;
-        return (sqrt(x2 * a2 * il2) + yy * rr) * il2 - r1;
-      };
-    };
+    const M = (m) => (m == null ? 0 : typeof m === 'number' ? m : (S.names[m] != null ? S.names[m] : (() => { throw new Error('unknown material ' + m); })()));
+    const N = (t, m, a, c) => ({ t, m: M(m), a, c });
+    S.sphere = (m, cx, cy, cz, r) => N('sph', m, [cx, cy, cz, r]);
+    S.ell = (m, cx, cy, cz, rx, ry, rz) => N('ell', m, [cx, cy, cz, rx, ry, rz]);
+    S.cone = (m, ax, ay, az, bx, by, bz, r1, r2) => N('cone', m, [ax, ay, az, bx, by, bz, r1, r2]);
     S.cap = (m, ax, ay, az, bx, by, bz, r) => S.cone(m, ax, ay, az, bx, by, bz, r, r);
-    // chain of round cones through points [[x,y,z,r],...]
-    S.tube = (m, pts, k = 0) => { const segs = []; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; segs.push(S.cone(m, a[0], a[1], a[2], b[0], b[1], b[2], a[3], b[3])); } return k > 0 ? S.su(k, ...segs) : S.u(...segs); };
-    S.box = (m, cx, cy, cz, hx, hy, hz, r = 0) => {
-      const id = M(m); return (x, y, z) => { MAT = id; const qx = abs(x - cx) - hx + r, qy = abs(y - cy) - hy + r, qz = abs(z - cz) - hz + r; const mx = max(qx, 0), my = max(qy, 0), mz = max(qz, 0); return sqrt(mx * mx + my * my + mz * mz) + min(max(qx, max(qy, qz)), 0) - r; };
-    };
-    // vertical capped cylinder (axis y), rounded edge r
-    S.cyl = (m, cx, cy, cz, rad, h, r = 0) => {
-      const id = M(m); return (x, y, z) => { MAT = id; x -= cx; y -= cy; z -= cz; const dx = sqrt(x * x + z * z) - rad + r, dy = abs(y) - h + r; const mx = max(dx, 0), my = max(dy, 0); return min(max(dx, dy), 0) + sqrt(mx * mx + my * my) - r; };
-    };
-    S.torus = (m, cx, cy, cz, R, r) => { const id = M(m); return (x, y, z) => { MAT = id; x -= cx; y -= cy; z -= cz; const q = sqrt(x * x + z * z) - R; return sqrt(q * q + y * y) - r; }; };
-    // 2D polygon distance (Quilez) on flat arrays [x0,y0,x1,y1,...]
-    function poly2(px, py, v) {
-      const n = v.length / 2; let d = (px - v[0]) * (px - v[0]) + (py - v[1]) * (py - v[1]); let s = 1;
-      for (let i = 0, j = n - 1; i < n; j = i, i++) {
-        const vix = v[2 * i], viy = v[2 * i + 1], vjx = v[2 * j], vjy = v[2 * j + 1];
-        const ex = vjx - vix, ey = vjy - viy, wx = px - vix, wy = py - viy;
-        const t = clamp((wx * ex + wy * ey) / (ex * ex + ey * ey), 0, 1); const bx = wx - ex * t, by = wy - ey * t; const dd = bx * bx + by * by; if (dd < d) d = dd;
-        const c1 = py >= viy, c2 = py < vjy, c3 = ex * wy > ey * wx; if ((c1 && c2 && c3) || (!c1 && !c2 && !c3)) s = -s;
-      }
-      return s * sqrt(d);
-    }
-    E.poly2 = poly2;
-    // revolve a 2D profile [(r,y)...] around the y axis; ribs: n-fold radial modulation amplitude
+    S.box = (m, cx, cy, cz, hx, hy, hz, r = 0) => N('box', m, [cx, cy, cz, hx, hy, hz, r]);
+    S.cyl = (m, cx, cy, cz, rad, h, r = 0) => N('cyl', m, [cx, cy, cz, rad, h, r]);
+    S.torus = (m, cx, cy, cz, R, r) => N('tor', m, [cx, cy, cz, R, r]);
     S.lathe = (m, cx, cy, cz, prof, round = 0, ribs = 0, ribAmp = 0, ribPhase = 0) => {
-      const id = M(m); const v = Array.isArray(prof[0]) ? prof.flat() : prof;
-      let ymin = 1e9, ymax = -1e9, rmax = 0; for (let i = 0; i < v.length; i += 2) { rmax = max(rmax, v[i]); ymin = min(ymin, v[i + 1]); ymax = max(ymax, v[i + 1]); }
-      const bcy = (ymin + ymax) / 2, brad = sqrt(rmax * rmax + ((ymax - ymin) / 2) ** 2) + ribAmp + round + 0.01;
-      return (x, y, z) => {
-        MAT = id; x -= cx; y -= cy; z -= cz;
-        const bd = sqrt(x * x + (y - bcy) * (y - bcy) + z * z) - brad; if (bd > 0.3 * brad) return bd;
-        let r = sqrt(x * x + z * z); if (ribs) r -= ribAmp * abs(Math.cos(Math.atan2(z, x) * ribs * 0.5 + ribPhase));
-        return poly2(r, y, v) - round;
-      };
+      const v = Array.isArray(prof[0]) ? prof.flat() : prof; let ymin = 1e9, ymax = -1e9, rmax = 0; for (let i = 0; i < v.length; i += 2) { rmax = max(rmax, v[i]); ymin = min(ymin, v[i + 1]); ymax = max(ymax, v[i + 1]); }
+      return N('lathe', m, [cx, cy, cz, round, ribs, ribAmp, ribPhase, (ymin + ymax) / 2, sqrt(rmax * rmax + ((ymax - ymin) / 2) ** 2) + ribAmp + round + 0.01, v]);
     };
-    // extrude a 2D polygon (xy) along z by half-depth hz
     S.extrude = (m, cx, cy, cz, poly, hz, round = 0) => {
-      const id = M(m); const v = Array.isArray(poly[0]) ? poly.flat() : poly;
-      let bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9; for (let i = 0; i < v.length; i += 2) { bx0 = min(bx0, v[i]); bx1 = max(bx1, v[i]); by0 = min(by0, v[i + 1]); by1 = max(by1, v[i + 1]); }
-      const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2, brad = sqrt(((bx1 - bx0) / 2) ** 2 + ((by1 - by0) / 2) ** 2 + hz * hz) + round + 0.01;
-      return (x, y, z) => {
-        MAT = id; x -= cx; y -= cy; z -= cz;
-        const bd = sqrt((x - bcx) ** 2 + (y - bcy) ** 2 + z * z) - brad; if (bd > 0.3 * brad) return bd;
-        const d2 = poly2(x, y, v) + round; const wz = abs(z) - hz + round; const mx = max(d2, 0), mz = max(wz, 0);
-        return min(max(d2, wz), 0) + sqrt(mx * mx + mz * mz) - round;
-      };
+      const v = Array.isArray(poly[0]) ? poly.flat() : poly; let bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9; for (let i = 0; i < v.length; i += 2) { bx0 = min(bx0, v[i]); bx1 = max(bx1, v[i]); by0 = min(by0, v[i + 1]); by1 = max(by1, v[i + 1]); }
+      return N('ext', m, [cx, cy, cz, hz, round, (bx0 + bx1) / 2, (by0 + by1) / 2, sqrt(((bx1 - bx0) / 2) ** 2 + ((by1 - by0) / 2) ** 2 + hz * hz) + round + 0.01, v]);
     };
-    S.fn = (m, f) => { const id = M(m); return (x, y, z) => { MAT = id; return f(x, y, z); }; };
-    // operators ---------------------------------------------------------------
-    S.u = (...n) => { n = n.filter(Boolean); const L = n.length; return (x, y, z) => { let best = 1e9, bm = 0; for (let i = 0; i < L; i++) { const d = n[i](x, y, z); if (d < best) { best = d; bm = MAT; } } MAT = bm; return best; }; };
-    S.su = (k, ...n) => { n = n.filter(Boolean); const L = n.length; return (x, y, z) => { let d = n[0](x, y, z), raw = d, bm = MAT; for (let i = 1; i < L; i++) { const e = n[i](x, y, z); if (e < raw) { raw = e; bm = MAT; } d = smin(d, e, k); } MAT = bm; return d; }; };
-    // smooth union where the *second* node keeps its material inside the blend (good for painted patches)
-    S.sub = (a, b, k = 0) => (x, y, z) => { const da = a(x, y, z); const mm = MAT; const db = b(x, y, z); MAT = mm; return k ? smax(da, -db, k) : max(da, -db); };
-    S.inter = (a, b, k = 0) => (x, y, z) => { const da = a(x, y, z); const mm = MAT; const db = b(x, y, z); MAT = mm; return k ? smax(da, db, k) : max(da, db); };
-    S.shell = (a, t) => (x, y, z) => abs(a(x, y, z)) - t;
-    S.t = (a, tx, ty, tz) => (x, y, z) => a(x - tx, y - ty, z - tz);
-    // rotate node about pivot (euler degrees)
-    S.r = (a, px, py, pz, rx, ry, rz) => { const m = rotM(rx, ry, rz); return (x, y, z) => { x -= px; y -= py; z -= pz; return a(m[0] * x + m[3] * y + m[6] * z + px, m[1] * x + m[4] * y + m[7] * z + py, m[2] * x + m[5] * y + m[8] * z + pz); }; };
-    S.sc = (a, s, px = 0, py = 0, pz = 0) => (x, y, z) => a((x - px) / s + px, (y - py) / s + py, (z - pz) / s + pz) * s;
-    S.mx = (a) => (x, y, z) => a(abs(x), y, z); // mirror across x=0
-    S.disp = (a, f) => (x, y, z) => a(x, y, z) + f(x, y, z);
-    S.bound = (a, cx, cy, cz, r) => (x, y, z) => { const bd = sqrt((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2) - r; return bd > 0.25 * r ? bd : a(x, y, z); };
-    // rotated ellipsoid about its own centre (euler degrees)
+    S.fn = (m, f) => N('fn', m, [f]);
+    S.u = (...n) => { n = n.filter(Boolean); return n.length === 1 ? n[0] : N('u', null, [], n); };
+    S.su = (k, ...n) => { n = n.filter(Boolean); return n.length === 1 ? n[0] : N('su', null, [k], n); };
+    S.sub = (a, b, k = 0) => N('sub', null, [k], [a, b]);
+    S.inter = (a, b, k = 0) => N('inter', null, [k], [a, b]);
+    S.shell = (a, t) => N('shell', null, [t], [a]);
+    S.t = (a, tx, ty, tz) => N('t', null, [tx, ty, tz], [a]);
+    S.r = (a, px, py, pz, rx, ry, rz) => N('r', null, [px, py, pz, rotM(rx, ry, rz)], [a]);
+    S.sc = (a, s, px = 0, py = 0, pz = 0) => N('sc', null, [s, px, py, pz], [a]);
+    S.mx = (a) => N('mx', null, [], [a]);
+    S.disp = (a, f) => N('disp', null, [f], [a]);
+    S.bound = (a, cx, cy, cz, r) => N('bound', null, [cx, cy, cz, r], [a]);
+    S.ns = (a, sx, sy, sz) => N('ns', null, [sx, sy, sz], [a]);
+    // fur clumps: displaces outward by amp*bump(p) only near the surface (cheap lower bound elsewhere)
+    S.fluff = (a, amp, freq, o = {}) => N('fluff', null, [amp, freq, o.sharp || 2.2, o.off || 0, o.sy || 1, o.mask || null], [a]);
+    S.tube = (m, pts, k = 0) => {
+      const segs = []; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; segs.push(S.cone(m, a[0], a[1], a[2], b[0], b[1], b[2], a[3], b[3])); }
+      const n = k > 0 ? S.su(k, ...segs) : S.u(...segs); return S.boundPts(n, pts, k);
+    };
+    S.boundPts = (node, pts, pad = 0) => {
+      let cx = 0, cy = 0, cz = 0; for (const p of pts) { cx += p[0]; cy += p[1]; cz += p[2]; } cx /= pts.length; cy /= pts.length; cz /= pts.length;
+      let r = 0; for (const p of pts) r = max(r, sqrt((p[0] - cx) ** 2 + (p[1] - cy) ** 2 + (p[2] - cz) ** 2) + (p[3] || 0)); r += pad + 0.005;
+      return S.bound(node, cx, cy, cz, r);
+    };
     S.rell = (m, cx, cy, cz, rx, ry, rz, ax, ay, az) => S.t(S.r(S.ell(m, 0, 0, 0, rx, ry, rz), 0, 0, 0, ax, ay, az), cx, cy, cz);
-    // non-uniform scale (approximate SDF; fine for mild factors)
-    S.ns = (a, sx, sy, sz) => { const k = min(sx, sy, sz); return (x, y, z) => a(x / sx, y / sy, z / sz) * k; };
-    // fur clumps: displaces a node outward by amp*bump(p) only near its surface (cheap lower bound elsewhere)
-    // bump = scalloped tufts from value noise sharpened; dirY biases tufts downward (gravity)
-    S.fluff = (a, amp, freq, o = {}) => {
-      const sharp = o.sharp || 2.2, off = o.off || 0, mask = o.mask || null;
-      return (x, y, z) => {
-        const d = a(x, y, z); if (d > amp * 2.2) return d - amp; const mm = MAT;
-        let w = mask ? mask(x, y, z) : 1; if (w <= 0) { MAT = mm; return d; }
-        const n = vnoise(x * freq + off, y * freq * (o.sy || 1) + off * 0.7, z * freq - off);
-        const b = Math.pow(clamp(n * 1.25 - 0.1, 0, 1), sharp);
-        MAT = mm; return d - amp * b * w;
-      };
-    };
-    S.relax = 1;
     return S;
   };
+
+  // ---- compiler
+  E.compile = function (root) {
+    let vid = 0; const decl = []; const K = []; const X = [];
+    const nv = (p) => { const n = p + (vid++); decl.push(n); return n; };
+    const kc = (v) => { K.push(v); return 'K[' + (K.length - 1) + ']'; };
+    const xf = (f) => { X.push(f); return 'X[' + (X.length - 1) + ']'; };
+    const f = (v) => { if (!isFinite(v)) throw new Error('bad number ' + v); const s = String(+v); return s === '-0' ? '0' : '(' + s + ')'; };
+    // returns { c: code, d: distVar, m: matExpr }
+    function g(n, x, y, z) {
+      const a = n.a; let c = '';
+      const leaf = (code) => { const d = nv('d'); return { c: code.replace(/@d/g, d), d, m: String(n.m) }; };
+      switch (n.t) {
+        case 'sph': return leaf(`{const qx=${x}-${f(a[0])},qy=${y}-${f(a[1])},qz=${z}-${f(a[2])};@d=Math.sqrt(qx*qx+qy*qy+qz*qz)-${f(a[3])};}`);
+        case 'ell': { const [cx, cy, cz, rx, ry, rz] = a; return leaf(`{const ax=(${x}-${f(cx)})*${f(1 / rx)},ay=(${y}-${f(cy)})*${f(1 / ry)},az=(${z}-${f(cz)})*${f(1 / rz)};const k0=Math.sqrt(ax*ax+ay*ay+az*az);const bx=ax*${f(1 / rx)},by=ay*${f(1 / ry)},bz=az*${f(1 / rz)};const k1=Math.sqrt(bx*bx+by*by+bz*bz);@d=k1<1e-9?${f(-min(rx, ry, rz))}:k0*(k0-1)/k1;}`); }
+        case 'cone': {
+          const [ax, ay, az, bx, by, bz, r1, r2] = a; const bax = bx - ax, bay = by - ay, baz = bz - az; const l2 = bax * bax + bay * bay + baz * baz; const rr = r1 - r2; const a2 = l2 - rr * rr; const il2 = 1 / l2; const srr = Math.sign(rr) * rr * rr;
+          return leaf(`{const pax=${x}-${f(ax)},pay=${y}-${f(ay)},paz=${z}-${f(az)};const yy=pax*${f(bax)}+pay*${f(bay)}+paz*${f(baz)};const zz=yy-${f(l2)};const xx=pax*${f(l2)}-${f(bax)}*yy,xy=pay*${f(l2)}-${f(bay)}*yy,xz=paz*${f(l2)}-${f(baz)}*yy;const qx2_=xx*xx+xy*xy+xz*xz;const qy2_=yy*yy*${f(l2)},qz2_=zz*zz*${f(l2)};const k=${f(srr)}*qx2_;`
+            + `if(Math.sign(zz)*${f(a2)}*qz2_>k)@d=Math.sqrt(qx2_+qz2_)*${f(il2)}-${f(r2)};else if(Math.sign(yy)*${f(a2)}*qy2_<k)@d=Math.sqrt(qx2_+qy2_)*${f(il2)}-${f(r1)};else @d=(Math.sqrt(qx2_*${f(a2 * il2)})+yy*${f(rr)})*${f(il2)}-${f(r1)};}`);
+        }
+        case 'box': { const [cx, cy, cz, hx, hy, hz, r] = a; return leaf(`{const qx=Math.abs(${x}-${f(cx)})-${f(hx - r)},qy=Math.abs(${y}-${f(cy)})-${f(hy - r)},qz=Math.abs(${z}-${f(cz)})-${f(hz - r)};const mx=Math.max(qx,0),my=Math.max(qy,0),mz=Math.max(qz,0);@d=Math.sqrt(mx*mx+my*my+mz*mz)+Math.min(Math.max(qx,Math.max(qy,qz)),0)-${f(r)};}`); }
+        case 'cyl': { const [cx, cy, cz, rad, h, r] = a; return leaf(`{const qx=${x}-${f(cx)},qz=${z}-${f(cz)};const dx=Math.sqrt(qx*qx+qz*qz)-${f(rad - r)},dy=Math.abs(${y}-${f(cy)})-${f(h - r)};const mx=Math.max(dx,0),my=Math.max(dy,0);@d=Math.min(Math.max(dx,dy),0)+Math.sqrt(mx*mx+my*my)-${f(r)};}`); }
+        case 'tor': { const [cx, cy, cz, R, r] = a; return leaf(`{const qx=${x}-${f(cx)},qy=${y}-${f(cy)},qz=${z}-${f(cz)};const q=Math.sqrt(qx*qx+qz*qz)-${f(R)};@d=Math.sqrt(q*q+qy*qy)-${f(r)};}`); }
+        case 'lathe': { const [cx, cy, cz, round, ribs, ribAmp, ribPhase, bcy, brad, v] = a; const V = kc(v);
+          return leaf(`{const qx=${x}-${f(cx)},qy=${y}-${f(cy)},qz=${z}-${f(cz)};const bd=Math.sqrt(qx*qx+(qy-${f(bcy)})*(qy-${f(bcy)})+qz*qz)-${f(brad)};if(bd>${f(0.3 * brad)})@d=bd;else{let r=Math.sqrt(qx*qx+qz*qz);${ribs ? `r-=${f(ribAmp)}*Math.abs(Math.cos(Math.atan2(qz,qx)*${f(ribs * 0.5)}+${f(ribPhase)}));` : ''}@d=H.poly2(r,qy,${V})-${f(round)};}}`); }
+        case 'ext': { const [cx, cy, cz, hz, round, bcx, bcy, brad, v] = a; const V = kc(v);
+          return leaf(`{const qx=${x}-${f(cx)},qy=${y}-${f(cy)},qz=${z}-${f(cz)};const bd=Math.sqrt((qx-${f(bcx)})*(qx-${f(bcx)})+(qy-${f(bcy)})*(qy-${f(bcy)})+qz*qz)-${f(brad)};if(bd>${f(0.3 * brad)})@d=bd;else{const d2=H.poly2(qx,qy,${V})+${f(round)};const wz=Math.abs(qz)-${f(hz - round)};const mx=Math.max(d2,0),mz=Math.max(wz,0);@d=Math.min(Math.max(d2,wz),0)+Math.sqrt(mx*mx+mz*mz)-${f(round)};}}`); }
+        case 'fn': return leaf(`@d=${xf(a[0])}(${x},${y},${z});`);
+        case 'u': case 'su': {
+          const rs = n.c.map((ch) => g(ch, x, y, z)); const d = nv('d'), m = nv('m'), raw = nv('w');
+          c = rs.map((r) => r.c).join('\n') + `\n${d}=${rs[0].d};${raw}=${rs[0].d};${m}=${rs[0].m};`;
+          for (let i = 1; i < rs.length; i++) {
+            if (n.t === 'u') c += `if(${rs[i].d}<${d}){${d}=${rs[i].d};${m}=${rs[i].m};}`;
+            else { const k = a[0]; c += `if(${rs[i].d}<${raw}){${raw}=${rs[i].d};${m}=${rs[i].m};}{const h=Math.max(${f(k)}-Math.abs(${d}-${rs[i].d}),0)*${f(1 / k)};${d}=Math.min(${d},${rs[i].d})-h*h*${f(k * 0.25)};}`; }
+          }
+          return { c, d, m };
+        }
+        case 'sub': case 'inter': {
+          const A = g(n.c[0], x, y, z), B = g(n.c[1], x, y, z); const d = nv('d'); const k = a[0]; const bb = n.t === 'sub' ? `(-${B.d})` : B.d;
+          c = A.c + '\n' + B.c + '\n' + (k ? `{const h=Math.max(${f(k)}-Math.abs(-${A.d}+${bb}),0)*${f(1 / k)};${d}=-(Math.min(-${A.d},-${bb})-h*h*${f(k * 0.25)});}` : `${d}=Math.max(${A.d},${bb});`);
+          return { c, d, m: A.m };
+        }
+        case 'shell': { const A = g(n.c[0], x, y, z); const d = nv('d'); return { c: A.c + `\n${d}=Math.abs(${A.d})-${f(a[0])};`, d, m: A.m }; }
+        case 't': { const X1 = nv('x'), Y1 = nv('y'), Z1 = nv('z'); const A = g(n.c[0], X1, Y1, Z1); return { c: `${X1}=${x}-${f(a[0])};${Y1}=${y}-${f(a[1])};${Z1}=${z}-${f(a[2])};\n` + A.c, d: A.d, m: A.m }; }
+        case 'r': { const [px, py, pz, mm] = a; const X1 = nv('x'), Y1 = nv('y'), Z1 = nv('z'); const A = g(n.c[0], X1, Y1, Z1);
+          return { c: `{const qx=${x}-${f(px)},qy=${y}-${f(py)},qz=${z}-${f(pz)};${X1}=${f(mm[0])}*qx+${f(mm[3])}*qy+${f(mm[6])}*qz+${f(px)};${Y1}=${f(mm[1])}*qx+${f(mm[4])}*qy+${f(mm[7])}*qz+${f(py)};${Z1}=${f(mm[2])}*qx+${f(mm[5])}*qy+${f(mm[8])}*qz+${f(pz)};}\n` + A.c, d: A.d, m: A.m }; }
+        case 'sc': { const [s, px, py, pz] = a; const X1 = nv('x'), Y1 = nv('y'), Z1 = nv('z'); const A = g(n.c[0], X1, Y1, Z1); const d = nv('d');
+          return { c: `${X1}=(${x}-${f(px)})*${f(1 / s)}+${f(px)};${Y1}=(${y}-${f(py)})*${f(1 / s)}+${f(py)};${Z1}=(${z}-${f(pz)})*${f(1 / s)}+${f(pz)};\n` + A.c + `\n${d}=${A.d}*${f(s)};`, d, m: A.m }; }
+        case 'ns': { const [sx, sy, sz] = a; const X1 = nv('x'), Y1 = nv('y'), Z1 = nv('z'); const A = g(n.c[0], X1, Y1, Z1); const d = nv('d');
+          return { c: `${X1}=${x}*${f(1 / sx)};${Y1}=${y}*${f(1 / sy)};${Z1}=${z}*${f(1 / sz)};\n` + A.c + `\n${d}=${A.d}*${f(min(sx, sy, sz))};`, d, m: A.m }; }
+        case 'mx': { const X1 = nv('x'); const A = g(n.c[0], X1, y, z); return { c: `${X1}=Math.abs(${x});\n` + A.c, d: A.d, m: A.m }; }
+        case 'disp': { const A = g(n.c[0], x, y, z); const d = nv('d'); return { c: A.c + `\n${d}=${A.d}+${xf(a[0])}(${x},${y},${z});`, d, m: A.m }; }
+        case 'bound': { const [cx, cy, cz, r] = a; const A = g(n.c[0], x, y, z); const d = nv('d'), m = nv('m');
+          return { c: `{const bd=Math.sqrt((${x}-${f(cx)})*(${x}-${f(cx)})+(${y}-${f(cy)})*(${y}-${f(cy)})+(${z}-${f(cz)})*(${z}-${f(cz)}))-${f(r)};if(bd>${f(0.25 * r + 0.12)}){${d}=bd-0.1;${m}=0;}else{\n${A.c}\n${d}=${A.d};${m}=${A.m};}}`, d, m }; }
+        case 'fluff': { const [amp, freq, sharp, off, sy, mask] = a; const A = g(n.c[0], x, y, z); const d = nv('d');
+          const mk = mask ? xf(mask) : null;
+          return { c: A.c + `\nif(${A.d}>${f(amp * 2.2)})${d}=${A.d}-${f(amp)};else{const w=${mk ? `${mk}(${x},${y},${z})` : '1'};if(w<=0)${d}=${A.d};else{const nn=H.vnoise(${x}*${f(freq)}+${f(off)},${y}*${f(freq * sy)}+${f(off * 0.7)},${z}*${f(freq)}-${f(off)});const bb=Math.pow(Math.min(Math.max(nn*1.25-0.1,0),1),${f(sharp)});${d}=${A.d}-${f(amp)}*bb*w;}}`, d, m: A.m };
+        }
+      }
+      throw new Error('unknown node ' + n.t);
+    }
+    const R = g(root, 'x', 'y', 'z');
+    const src = `return function sdf(x,y,z){let ${decl.join(',')};\n${R.c}\nMB[0]=${R.m};return ${R.d};}`;
+    try { return new Function('H', 'K', 'X', 'MB', src)({ poly2, vnoise }, K, X, MB); }
+    catch (e) { console.error('compile failed', e, src.slice(0, 2000)); throw e; }
+  };
+  E.fnOf = (S) => (typeof S.root === 'function' ? S.root : (S._f || (S._f = E.compile(S.root))));
 
   // ------------------------------------------------------------------ renderer
   // view: { yaw, pitch, cx, cy, cz (look-at), scale (px/unit), w, h, ss }
@@ -202,7 +226,7 @@
 
   // trace rows [j0,j1) of the supersampled image → raw buffers (runs in workers too)
   E.trace = function (S, view, j0, j1) {
-    const f = S.root, ss = view.ss || 2, W = Math.round(view.w * ss), H = Math.round(view.h * ss);
+    const f = E.fnOf(S), ss = view.ss || 2, W = Math.round(view.w * ss), H = Math.round(view.h * ss);
     if (j1 == null) j1 = H; const N = W * (j1 - j0);
     const cam = view.cam = camera(view); const sc = view.scale * ss; const px = 1 / sc;
     const P = S.params; const lightCam = view.light || P.light || [-0.55, 0.62, 0.56]; const L = camToWorld(cam, lightCam);
@@ -242,7 +266,7 @@
         const h = px * 0.6;
         const a1 = f(x + h, y - h, z - h), a2 = f(x - h, y - h, z + h), a3 = f(x - h, y + h, z - h), a4 = f(x + h, y + h, z + h);
         let nx = a1 - a2 - a3 + a4, ny = -a1 - a2 + a3 + a4, nz = -a1 + a2 - a3 + a4; const nl = sqrt(nx * nx + ny * ny + nz * nz) || 1; nx /= nl; ny /= nl; nz /= nl;
-        f(x, y, z); const mid = MAT; const m = S.mats[mid];
+        f(x, y, z); const mid = MB[0]; const m = S.mats[mid];
         hit[k] = mid; dep[k] = t; nrm[3 * k] = nx; nrm[3 * k + 1] = ny; nrm[3 * k + 2] = nz;
         const sh = { base: m.base, shade: m.shade, deep: m.deep, hi: m.hi, line: m.line, emit: m.emit || null, alpha: m.alpha != null ? m.alpha : 1, spec: m.spec || 0, rim: m.rim, noShade: m.flat };
         if (m.tex) m.tex(x, y, z, nx, ny, nz, sh, view);
@@ -262,7 +286,7 @@
           const dp = sh.deep || E.shadeOf(sd, 0.8);
           const deepT = sstep(0.45, 0.55, ao) * (m.deepAmt != null ? m.deepAmt : 0.7);
           r = mix(r, dp[0], deepT); g = mix(g, dp[1], deepT); b = mix(b, dp[2], deepT);
-          if (sh.hi) { const hiT = sstep(0.0, 0.04, ndl - (m.hiAt || 0.78)) * lit; r = mix(r, sh.hi[0], hiT); g = mix(g, sh.hi[1], hiT); b = mix(b, sh.hi[2], hiT); }
+          if (sh.hi) { const hiT = sstep(0.0, 0.04, ndl - (m.hiAt || 0.78)) * lit * (m.hiAmt != null ? m.hiAmt : 1); r = mix(r, r * 0.45 + sh.hi[0] * 0.55, hiT); g = mix(g, g * 0.45 + sh.hi[1] * 0.55, hiT); b = mix(b, b * 0.45 + sh.hi[2] * 0.55, hiT); }
           if (sh.spec) {
             const hx = L[0] + vx, hy = L[1] + vy, hz = L[2] + vz; const hl = sqrt(hx * hx + hy * hy + hz * hz); const ndh = (nx * hx + ny * hy + nz * hz) / hl;
             const sp = sstep(0.0, 0.015, ndh - (m.specAt || 0.985)) * sh.spec; r = mix(r, 1, sp); g = mix(g, 1, sp); b = mix(b, 1, sp);
@@ -289,17 +313,17 @@
     for (const p of parts) { const o = p.j0 * W; hit.set(p.hit, o); dep.set(p.dep, o); nrm.set(p.nrm, o * 3); col.set(p.col, o * 4); emi.set(p.emi, o * 3); lin.set(p.lin, o * 3); }
     const outW = (view.lineOut || P.lineOut || 2.2) * ss * 0.75, inW = (view.lineIn || P.lineIn || 1.3) * ss * 0.7;
     const dTh = (P.depthEdge || 0.035) * (P.size || 1); const cTh = P.crease != null ? P.crease : 0.35;
-    const dirs = []; for (let a = 0; a < 12; a++) dirs.push([Math.cos(a * Math.PI / 6), Math.sin(a * Math.PI / 6)]);
-    const ink = new Float32Array(N);
+    const oO = new Int32Array(24), oI = new Int32Array(24);
+    for (let a = 0; a < 12; a++) { const c = Math.cos(a * Math.PI / 6), sn = Math.sin(a * Math.PI / 6); oO[2 * a] = Math.round(c * outW); oO[2 * a + 1] = Math.round(sn * outW); oI[2 * a] = Math.round(c * inW); oI[2 * a + 1] = Math.round(sn * inW); }
+    const ink = new Float32Array(N); const mats = S.mats;
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-      const k = j * W + i; const mk = hit[k]; if (!mk) continue; const mt = S.mats[mk]; if (mt.noLine) continue;
+      const k = j * W + i; const mk = hit[k]; if (!mk) continue; const mt = mats[mk]; if (mt.noLine) continue;
       let e = 0;
-      // silhouette (outer) — thicker
-      for (const [dx, dy] of dirs) { const ii = Math.round(i + dx * outW), jj = Math.round(j + dy * outW); if (ii < 0 || jj < 0 || ii >= W || jj >= H || !hit[jj * W + ii]) { e = 1; break; } }
-      if (!e) for (const [dx, dy] of dirs) {
-        const ii = Math.round(i + dx * inW), jj = Math.round(j + dy * inW); const q = jj * W + ii; const mq = hit[q]; if (!mq) continue;
+      for (let a = 0; a < 24; a += 2) { const ii = i + oO[a], jj = j + oO[a + 1]; if (ii < 0 || jj < 0 || ii >= W || jj >= H || !hit[jj * W + ii]) { e = 1; break; } }
+      if (!e) for (let a = 0; a < 24; a += 2) {
+        const ii = i + oI[a], jj = j + oI[a + 1]; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const q = jj * W + ii; const mq = hit[q]; if (!mq) continue;
         if (dep[q] - dep[k] > dTh) { e = max(e, 0.95); break; }
-        const mtq = S.mats[mq];
+        const mtq = mats[mq];
         if (mq !== mk && (mtq.grp || 0) !== (mt.grp || 0) && !(mt.noPartLine || mtq.noPartLine)) { if (dep[k] <= dep[q] + dTh * 0.3 && (dep[k] < dep[q] - 1e-4 || mk < mq)) e = max(e, 0.85); }
         if (!mt.noCrease) { const dn = nrm[3 * k] * nrm[3 * q] + nrm[3 * k + 1] * nrm[3 * q + 1] + nrm[3 * k + 2] * nrm[3 * q + 2]; if (dn < cTh && dep[q] > dep[k] - dTh) e = max(e, 0.8); }
       }
@@ -311,7 +335,7 @@
       let r = 0, g = 0, b = 0, a = 0, gr = 0, gg = 0, gb = 0, cnt = 0, idv = 0;
       for (let y = 0; y < ss; y++) for (let x = 0; x < ss; x++) {
         const k = (j * ss + y) * W + (i * ss + x); if (!hit[k]) continue; idv = hit[k];
-        const al = col[4 * k + 3]; let cr = col[4 * k], cg = col[4 * k + 1], cb = col[4 * k + 2]; const e = ink[k];
+        const al = col[4 * k + 3]; let cr = col[4 * k], cg = col[4 * k + 1], cb = col[4 * k + 2]; const e = ink[k] * (al < 1 ? al : 1);
         if (e) { cr = mix(cr, lin[3 * k], e); cg = mix(cg, lin[3 * k + 1], e); cb = mix(cb, lin[3 * k + 2], e); }
         const al2 = e ? max(al, e) : al;
         r += cr * al2; g += cg * al2; b += cb * al2; a += al2; gr += emi[3 * k]; gg += emi[3 * k + 1]; gb += emi[3 * k + 2]; cnt++;

@@ -55,8 +55,14 @@ const flag = (k) => ev((k) => !!G.state.flags[k], k);
 const count = (id) => ev((id) => G.Inv.count(id), id);
 const pos = () => ev(() => [G.mapScene.player.x, G.mapScene.player.y]);
 async function stepOn(x, y) { await ev(([x, y]) => G.Debug.stepOn(x, y), [x, y]); await page.waitForTimeout(120); await idle(); }
-async function trigger(id) { await ev((id) => G.Debug.trigger(id), id); await idle(); }
-async function talk(id) { await ev((id) => G.Debug.talk(id), id); await idle(); }
+// scripts are raced against a timeout so a stuck script fails the test instead of hanging it
+async function runScript(kind, id) {
+  const r = await ev(([kind, id]) => Promise.race([G.Debug[kind](id).then(() => 'ok'), new Promise((res) => setTimeout(() => res('TIMEOUT'), 150000))]), [kind, id]);
+  if (r !== 'ok') throw new Error(`${kind}(${id}) did not finish: ` + JSON.stringify(await ev(() => ({ map: G.mapScene.def.id, top: G.Scenes.stack.map((s) => s.constructor.name) }))));
+  await idle();
+}
+async function trigger(id) { await runScript('trigger', id); }
+async function talk(id) { await runScript('talk', id); }
 async function choices(list) { await ev((l) => { G.Debug.choices = l.slice(); }, list); }
 async function warp(map, x, y, dir = 'down') { await ev(([m, x, y, d]) => G.Script.run((S) => S.warp(m, x, y, d)), [map, x, y, dir]); await page.waitForTimeout(150); await idle(); }
 async function interactObj(t, x, y) {
@@ -94,6 +100,13 @@ async function fightEnemy(id) {
   await idle();
   return ok;
 }
+// the gear a player buys in 竹塹 (打鐵舖 / 藍衫裁縫) — the test skips the shops, so equip it directly
+async function equipCh4() {
+  await ev(() => {
+    const W = { xinghe: 'sw_jiujiang', baizhi: 'fl_shange', hongying: 'sp_zhujie', yungui: 'fn_zhugu' };
+    for (const id in W) Object.assign(G.state.members[id].equip, { weapon: W[id], armor: 'ar_hakka', head: 'hd_huabu', feet: 'ft_muji' });
+  });
+}
 async function levelTo(lv) { await ev((lv) => { for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) G.Story.ensureLevel(id, lv); }, lv); }
 async function shot(name) {
   if (!SHOTS) return;
@@ -118,6 +131,8 @@ async function openPage(browser, query) {
     window.addEventListener('error', (e) => window.__c4.winerr.push({ msg: String(e.message), file: String(e.filename || ''), done: done(), loading: loading() }));
     window.addEventListener('unhandledrejection', (e) => window.__c4.winerr.push({ msg: 'unhandledrejection: ' + String(e.reason && e.reason.stack || e.reason), file: '', done: done() }));
   });
+  // 3D renderer off unless --3d (as the lead asked: localStorage settings, or ?r3lite with --3d)
+  if (!R3D) await page.addInitScript(() => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: false, lang: 'zh' })); } catch (e) { /* ignore */ } });
   await page.goto('file://' + path.join(ROOT, 'index.html') + query + (R3D ? '&r3lite' : ''));
   await page.waitForFunction(() => window.G && G.Debug && G.Debug.setAutoplay, null, { timeout: 30000 });
   await ev((r3d) => { G.Debug.setAutoplay(true); G.settings.lang = 'zh'; if (!r3d) G.settings.render3d = false; }, R3D);
@@ -149,24 +164,26 @@ async function problems() {
 async function mainPath(browser) {
   section = '[main]';
   console.log('\n== critical path ==');
-  await openPage(browser, '?debug&startch=4');
+  await openPage(browser, '?debug&startch=4&flags=mochi_joined,yuyuan_joined');
   await page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'zhuqian_coast' && G.state.flags.ch4_start, null, { timeout: 90000 });
   await idle();
   // 4-01
   check('chapter set to 4', (await ev(() => G.state.chapter)) === 4);
   check('party 星河 白芷 紅纓 雲歸', (await ev(() => G.state.party.slice(0, 4).join(','))) === 'xinghe,baizhi,hongying,yungui');
-  check('糰子 follows', await ev(() => G.mapScene.followers.some((f) => f.id === 'tuanzi')));
+  check('cats 麻糬 & 芋圓 follow', await ev(() => ['mochi', 'yuyuan'].every((id) => G.mapScene.followers.some((f) => f.id === id))));
+  check('no 糰子 anywhere', await ev(() => !G.mapScene.followers.some((f) => f.id === 'tuanzi')));
   check('levels ≥ 13', await ev(() => G.Party.active().every((m) => m.lv >= 13)));
   check('4-01 done (ch4_arrive_zhuqian, ch4_mifen_met)', (await flag('ch4_arrive_zhuqian')) && (await flag('ch4_mifen_met')));
   check('米粉湯 ×2', (await count('mifentang')) >= 2);
   check('q_ch4_main stage 0', (await ev(() => G.Quests.stage('q_ch4_main'))) === 0);
   check('visited 竹塹 on the world map', await ev(() => G.World.visited('hsinchu')));
+  await equipCh4();
   await shot('01_coast');
   // the road north is closed
   await stepOn(13, 1);
   check('north road sends you back', (await pos())[1] > 1);
   for (const id of ['ashun', 'awang', 'achun', 'fisher', 'xiaofeng']) await talk(id);
-  await trigger('shrine');
+  await choices(['離開']); await trigger('shrine');
   check('chest c4_01', await openChest('c4_01'));
   check('chest c4_02', await openChest('c4_02'));
   check('chest c4_03', await openChest('c4_03'));
@@ -214,7 +231,7 @@ async function mainPath(browser) {
   await stepOn(55, 21);
   await expectMap('hakka_road', '4-06');
   check('ch4_road', await flag('ch4_road'));
-  await trigger('bogong');
+  await choices(['離開']); await trigger('bogong');
   for (const c of ['c4_07', 'c4_08', 'c4_09', 'c4_11']) check('chest ' + c, await openChest(c));
   await shot('04_road');
   // 4-07 + 4-08
@@ -243,11 +260,11 @@ async function mainPath(browser) {
   await expectMap('hakka_village');
   for (const id of ['manmei_v', 'acheng', 'kid_m', 'vf1', 'vm1']) await talk(id);
   await trigger('jingzi');
-  await trigger('bogong_v');
+  await choices(['離開']); await trigger('bogong_v');
   // 4-09
   await stepOn(51, 20);
   await expectMap('wuzhi_trail');
-  await trigger('pavilion');
+  await choices(['離開']); await trigger('pavilion');
   await trigger('branch_sign');
   await stepOn(39, 40);
   await expectMap('wuzhi_trail', 'xiangtian branch closed before 4-10:');
@@ -283,7 +300,7 @@ async function mainPath(browser) {
   check('boundary pushes you back onto the guest slope', (await pos())[1] < 24);
   await stepOn(39, 21);
   check('boundary (east) pushes you back', (await pos())[0] < 39);
-  for (const id of ['fc_hy', 'fc_yg', 'fc_tz', 'fc_bz', 'acheng_f', 'afu_f', 'atao_f']) await talk(id);
+  for (const id of ['fc_hy', 'fc_yg', 'fc_yy', 'fc_mc', 'fc_bz', 'acheng_f', 'afu_f', 'atao_f']) await talk(id);
   await talk('xia_f');
   check('ch4_pastaay_witnessed', await flag('ch4_pastaay_witnessed'));
   const after = await ev(() => ({ battles: G.state.battles, inv: JSON.stringify(G.state.inv), gold: G.state.gold, lanterns: G.Lanterns.count(), exp: G.Party.active().map((m) => m.exp + ':' + m.lv).join(',') }));
@@ -418,10 +435,11 @@ async function mainPath(browser) {
 async function sides(browser) {
   section = '[side]';
   console.log('\n== side quests & 心燈 ==');
-  await openPage(browser, '?debug&startch=4');
+  await openPage(browser, '?debug&startch=4&flags=mochi_joined,yuyuan_joined');
   await page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'zhuqian_coast' && G.state.flags.ch4_start, null, { timeout: 90000 });
   await idle();
   await levelTo(15);
+  await equipCh4();
   await ev(() => { const f = G.state.flags; f.ch4_enter_city = f.ch4_citygod_visit = f.ch4_jiaobei_done = f.ch4_citygod_vision = true; G.Inv.add('key_ledger', 1); });
 
   // ---- S2 九降風裡的阿母 (part 1: three battles in a row at night)
@@ -479,7 +497,7 @@ async function sides(browser) {
   await talk('afu');
   check('S5 honest win → 花布頭巾', (await flag('ch4_shange_yungui_win')) && (await count('hd_huabu')) >= 1);
   check('q_shange_yungui done', await ev(() => G.Quests.isDone('q_shange_yungui')));
-  check('糰子 back with the party', await ev(() => !G.state.flags.tuanzi_hidden && G.mapScene.followers.some((f) => f.id === 'tuanzi')));
+  check('芋圓 back with the party after hiding in the hay', await ev(() => !G.state.flags.yuyuan_hidden && G.mapScene.followers.some((f) => f.id === 'yuyuan')));
   await talk('afu');
   check('S5 only once per rest', (await flag('ch4_s5_tried')));
   await stepOn(23, 11);

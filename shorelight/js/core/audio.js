@@ -294,6 +294,8 @@ G.Audio = (() => {
     buzz(t, o) { tone(t, 0.15, 'square', 140, 120, 0.06, o); },
     text(t, o) { tone(t, 0.03, 'sine', 2400 + Math.random() * 300, 2400, 0.025, o); },
     step(t, o) { noise(t, 0.05, 'lowpass', 500, 300, 0.05, o); },
+    // wooden clack (擲筊 blocks hitting the floor)
+    wood(t, o) { noise(t, 0.06, 'bandpass', 1400, 900, 0.22, o); tone(t, 0.08, 'triangle', 420, 300, 0.12, o); tone(t + 0.11, 0.06, 'triangle', 380, 280, 0.08, o); },
     door(t, o) { noise(t, 0.3, 'lowpass', 800, 200, 0.25, o); tone(t, 0.25, 'triangle', 90, 60, 0.15, o); },
     chest(t, o) {
       [0, 4, 7, 12].forEach((s, i) => { const m = 72 + s; o && tone(t + i * 0.07, 0.4, 'triangle', freq(m), freq(m), 0.1, o); });

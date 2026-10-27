@@ -324,7 +324,7 @@ G.Battle = (() => {
       const s = G.Data.skills[id];
       let targets;
       if (s.target === 'enemies' || s.target === 'random') targets = this.alive('enemy');
-      else if (s.target === 'allies') targets = this.alive('party');
+      else if (s.target === 'allies') targets = s.revive ? this.party.slice() : this.alive('party'); // revive:true also lifts the fallen
       else if (s.target === 'self') targets = [u];
       else targets = [target || this.alive('enemy')[0]];
       return { kind: s.ultimate ? 'ultimate' : 'skill', skill: id, targets };
@@ -456,12 +456,12 @@ G.Battle = (() => {
         for (const p of ps) if (p !== u) { p.mp = Math.max(0, p.mp - (s.mp || 0)); p.wait += 100 * 40 / (eff(p, 'spd') + 40); }
         this.comboAvg = { atk: ps.reduce((a, p) => a + eff(p, 'atk'), 0) / ps.length, mag: ps.reduce((a, p) => a + eff(p, 'mag'), 0) / ps.length };
       }
-      if (s.special === 'tuanzi' && s.outcomes) {
+      if ((s.special === 'cats' || s.special === 'tuanzi') && s.outcomes) {
         const tot = s.outcomes.reduce((a, o) => a + (o.w || 1), 0);
         let r = Math.random() * tot, pick = s.outcomes[0];
         for (const o of s.outcomes) { r -= (o.w || 1); if (r <= 0) { pick = o; break; } }
         this.banner(s.name, '#ffe6a8');
-        this.fx.push(summonFxIntro(u));
+        this.fx.push(summonFxIntro(u, pick.cat === 'mochi' ? 'mochi' : 'yuyuan'));
         G.Audio.sfx('magic');
         await this.wait(0.7);
         this.say(pick.text, 2.2);
@@ -861,9 +861,11 @@ G.Battle = (() => {
       }
       await G.Render.fadeTo(1, 0.45, '#000');
       G.Scenes.pop(this);
-      if (this.o.bgmAfter !== undefined) G.Music.play(this.o.bgmAfter);
+      // bgmAfter: null = silence after the fight (scripted beat follows)
+      if (this.o.bgmAfter === null) G.Music.stop(0.6);
+      else if (this.o.bgmAfter !== undefined) G.Music.play(this.o.bgmAfter);
       else if (this.prevBgm && this.prevBgm !== 'victory') G.Music.play(this.prevBgm, { fade: 0.6 });
-      else if (G.mapScene) G.Music.play(G.Mapx.val(G.mapScene.def.bgm));
+      else if (G.mapScene) { const b = G.Mapx.val(G.mapScene.def.bgm); if (b) G.Music.play(b); else G.Music.stop(0.6); }
       await G.Render.fadeTo(0, 0.45);
       this.resolve(r);
     }
@@ -1390,7 +1392,7 @@ G.Battle = (() => {
       },
     };
   }
-  function summonFxIntro(u) {
+  function summonFxIntro(u, cat = 'yuyuan') {
     let t = 0;
     return {
       update(dt) { t += dt; return t < 0.9; },
@@ -1399,7 +1401,7 @@ G.Battle = (() => {
         const k = Math.min(1, t / 0.5);
         ctx.save();
         ctx.globalAlpha = Math.min(1, (0.9 - t) * 4);
-        G.Sprites.drawChar(ctx, 'tuanzi', 'left', Math.floor(t * 10) % 4, u.x - 70 * k, u.y - Math.sin(k * Math.PI) * 60, {});
+        G.Sprites.drawChar(ctx, cat, 'left', Math.floor(t * 10) % 4, u.x - 70 * k, u.y - Math.sin(k * Math.PI) * 60, {});
         ctx.restore();
       },
     };
@@ -1417,7 +1419,7 @@ G.Battle = (() => {
         if (G.Sprites) {
           ctx.save();
           ctx.translate(x, y); ctx.scale(1.4, 1.4); ctx.rotate(k * 8);
-          G.Sprites.drawChar(ctx, 'tuanzi', 'left', Math.floor(k * 12) % 4, 0, 30, { shadow: false });
+          G.Sprites.drawChar(ctx, 'yuyuan', 'left', Math.floor(k * 12) % 4, 0, 30, { shadow: false });
           ctx.restore();
         }
       },
@@ -1510,7 +1512,10 @@ G.Battle = (() => {
         case 'enemies': pool = sc.alive('enemy'); all = true; break;
         case 'random': pool = sc.alive('enemy'); all = true; break;
         case 'ally': pool = sc.alive('party'); break;
-        case 'allies': pool = cmd.skill && G.Data.skills[cmd.skill] && G.Data.skills[cmd.skill].revive ? sc.party.slice() : sc.alive('party'); all = true; break;
+        case 'allies': { // whole-party revives (skills with revive:true, items with use.revive) include the fallen
+          const sk = cmd.skill && G.Data.skills[cmd.skill], it = cmd.item && G.Data.items[cmd.item];
+          pool = (sk && sk.revive) || (it && it.use && it.use.revive) ? sc.party.slice() : sc.alive('party'); all = true; break;
+        }
         case 'deadAlly': pool = sc.party.filter((p) => p.dead); if (!pool.length) pool = sc.alive('party'); break;
         case 'self': pool = [this.u]; break;
         default: pool = sc.alive('enemy');
@@ -1629,7 +1634,7 @@ G.Battle = (() => {
 })();
 
 // ------------------------------------------------------------------ Game over
-G.GameOverScene = class {
+G.GameOverScene = class GameOverScene {
   constructor(troopId, o, stateBefore, resolve) {
     this.opaque = true;
     this.t = 0;

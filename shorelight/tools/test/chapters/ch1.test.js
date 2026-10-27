@@ -13,7 +13,10 @@
 //   3. ahuang   : 心燈②「阿黃回家」— 小金 / 阿旺 / 阿土嬸 / the mine mouth → xd_ahuang, 小金的金仔石.
 //   4. xingmu   : 「醒木失竊記」— the cat chase, 阿水's 小魚乾, the 醒木 back to 阿炳伯 → 說書折扇.
 //   5. townsfolk: every NPC of every map talked to in every phase (P1, P2, P3, P4-raid map, P5), every action event.
-//   6. maps     : every chapter-1 map loads and renders (screenshots with --shots).
+//   6. maps     : the raid map, mines and festival maps load and render (screenshots with --shots).
+//   7. 3d       : (only with --3d) the WebGL field view (?r3lite) runs a raid cutscene through update3d.
+// Functional tests run with the 2D renderer (localStorage render3d:false); only test 7 uses the 3D view.
+// Debug aid: --from=raid starts the critical path at the night raid.
 // Other chapters' files (2…11) are stubbed out so work in progress elsewhere cannot break this test.
 'use strict';
 const fs = require('fs');
@@ -36,6 +39,9 @@ async function session(browser, query) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'zh-TW', deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
+  // functional tests run on the 2D renderer (the WebGL view is slow under SwiftShader); a separate test uses ?r3lite
+  const use3d = /r3lite/.test(query);
+  await page.addInitScript((d3) => { try { localStorage.setItem('shorelight_settings', JSON.stringify({ render3d: d3, lang: 'zh' })); } catch (e) { /* ignore */ } }, use3d);
   await page.route(STUB, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '/* stubbed by ch1.test.js */' }));
   page.on('console', (m) => {
     const t = m.text();
@@ -45,14 +51,16 @@ async function session(browser, query) {
   });
   page.on('pageerror', (e) => errors.push('pageerror: ' + (e.message + ' ' + (e.stack || '')).slice(0, 600)));
   await page.goto(BASE + query);
-  await page.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: 30000 });
+  await page.waitForFunction(() => window.G && G.Debug && G.Scenes && G.Scenes.top(), null, { timeout: use3d ? 240000 : 30000 });
   await page.evaluate(() => G.Debug.setAutoplay(true));
   const s = {
     page, errors,
     ev: (fn, arg) => page.evaluate(fn, arg),
     async idle(ms = 120000) {
       const ok = await page.evaluate((t) => G.Debug.idle(t), ms);
-      assert(ok, 'timed out waiting for the map to become idle; stack = ' + JSON.stringify(await page.evaluate(() => G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'))));
+      assert(ok, 'timed out waiting for the map to become idle; ' + JSON.stringify(await page.evaluate(() => ({
+        stack: G.Scenes.stack.map((x) => (x.constructor && x.constructor.name) || '?'), map: G.mapScene && G.mapScene.def.id,
+        last: G.Dialog.log.slice(-3).map((l) => l.name + '：' + l.text), dbg: G.Debug.log.slice(-3) }))));
     },
     flags: () => page.evaluate(() => Object.assign({}, G.state.flags)),
     map: () => page.evaluate(() => G.mapScene && G.mapScene.def.id),
@@ -69,14 +77,16 @@ async function session(browser, query) {
 async function waitMap(s, id, ms = 60000) {
   await s.page.waitForFunction((m) => G.mapScene && G.mapScene.def.id === m, id, { timeout: ms });
   await s.idle();
+  await s.page.waitForTimeout(300);   // let the map's auto events start
+  await s.idle();
 }
 // no roaming enemies get in the way of the scripted path
 const calm = (s) => s.ev(() => { if (G.mapScene) G.mapScene.enemies = []; });
-const step = async (s, x, y, choices = []) => {
+const step = async (s, x, y, choices = [], ms) => {
   await s.idle(); await calm(s);
   await s.ev(([x, y, ch]) => { G.Debug.choices = ch.slice(); G.Debug.stepOn(x, y); }, [x, y, choices]);
   await s.page.waitForTimeout(150);
-  await s.idle();
+  await s.idle(ms);
 };
 const act = async (s, id, choices = []) => {
   await s.idle(); await calm(s);
@@ -93,6 +103,16 @@ const warp = async (s, m, x, y, dir = 'down') => {
   await s.ev(([m, x, y, d]) => G.Script.run((S) => S.warp(m, x, y, d)), [m, x, y, dir]);
   await waitMap(s, m);
 };
+// one keyboard tap = one tile; waits until the step (and anything it triggered) is over
+async function tap(s, key) {
+  await s.idle();
+  const before = await s.ev(() => { const p = G.mapScene.player; return [p.x, p.y, p.dir].join(); });
+  await s.page.keyboard.down(key);
+  await s.page.waitForFunction((b) => { const p = G.mapScene && G.mapScene.player; return !p || p.moving || [p.x, p.y, p.dir].join() !== b || G.Script.busy(); }, before, { timeout: 10000 });
+  await s.page.keyboard.up(key);
+  await s.page.waitForFunction(() => G.mapScene && !G.mapScene.player.moving, null, { timeout: 10000 });
+  await s.page.waitForTimeout(60);
+}
 const level = (s, lv) => s.ev((lv) => { for (const id of G.state.party) G.Story.ensureLevel(id, lv); G.Party.healAll(); }, lv);
 const hasItem = (s, id) => s.ev((id) => G.Inv.count(id), id);
 
@@ -113,7 +133,16 @@ async function run(name, browser, fn) {
 }
 
 // ------------------------------------------------------------------------------------------------ 1. critical path
+const FROM = (process.argv.find((a) => a.startsWith('--from=')) || '').slice(7);   // debugging aid: --from=raid
+const RAID_FLAGS = 'ch1_start,ch1_errands,ch1_err_tea,ch1_err_oil,ch1_err_fude,ch1_ahuang_lost,ch1_mine_open,ch1_foreman,ch1_atu_met,ch1_mine_done,' +
+  'ch1_depart_fest,ch1_keelung,ch1_moya_seen,ch1_fu_taken,ch1_procession,ch1_bd_in,ch1_release,ch1_lanterns_back,ch1_baizhi_found,ch1_home_night,ch1_baizhi_wake,ch1_baizhi_join,ch1_night_raid';
 async function testCritical(browser, open) {
+  if (FROM === 'raid') {
+    const s = await open('?debug&map=jiufen&x=23&y=30&lv=4&party=xinghe,baizhi&chapter=1&flags=' + RAID_FLAGS);
+    await waitMap(s, 'jiufen');
+    await s.ev(() => { G.Inv.add('c1_changming_fu', 1); for (const id of ['tut_battle', 'tut_move', 'tut_talk']) G.state.flags[id] = true; });
+    return critRaid(s);
+  }
   const s = await open('?debug&startch=1');
   await waitMap(s, 'jiufen_shop_2f');
   let f = await s.flags();
@@ -122,8 +151,16 @@ async function testCritical(browser, open) {
   assert(st.ch === 1 && st.party.join() === 'xinghe' && st.lv >= 2 && !st.bz, 'chapter start state: ' + JSON.stringify(st));
   assert(st.obj === '下樓找陳伯', 'objective ' + st.obj);
   await s.shot('01_attic');
+  // real keyboard input: walk over, look at the little 水燈 (Z), then walk down the stairs
+  await tap(s, 'ArrowRight');
+  await tap(s, 'ArrowUp');
+  assert(JSON.stringify(await s.ev(() => [G.mapScene.player.x, G.mapScene.player.y, G.mapScene.player.dir])) === '[6,4,"up"]', 'keyboard walk in the attic');
+  await s.page.keyboard.press('z');
+  await s.page.waitForTimeout(300);
+  await s.idle();
+  assert((await s.flags()).ch1_seen_lantern, 'Z on the little lantern');
+  for (const k of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowDown', 'ArrowDown', 'ArrowDown']) await tap(s, k);
   // 1-2
-  await step(s, 9, 7);
   await waitMap(s, 'jiufen_shop');
   f = await s.flags();
   assert(f.ch1_errands, '1-2 errands');
@@ -228,6 +265,10 @@ async function testCritical(browser, open) {
   st = await s.ev(() => ({ party: G.state.party.slice(), bz: G.state.members.baizhi.lv, xh: G.state.members.xinghe.lv }));
   assert(st.party.join() === 'xinghe,baizhi' && st.bz === st.xh, '白芷 joins at the party level: ' + JSON.stringify(st));
   await s.shot('11_jiufen_raid');
+  return critRaid(s);
+}
+async function critRaid(s) {
+  let f, st;
   // 1-16 / 1-17
   await step(s, 19, 24);
   await step(s, 19, 15);
@@ -235,7 +276,7 @@ async function testCritical(browser, open) {
   assert(f.ch1_salt && f.tut_battle_item && await hasItem(s, 'c1_salt') >= 1, '1-17');
   // 1-18 … 1-21
   await level(s, 5);
-  await step(s, 19, 4, [0]);
+  await step(s, 19, 4, [0], 400000);   // 1-18 … 1-21: three battles incl. two bosses
   await waitMap(s, 'jiufen_shop', 180000);
   f = await s.flags();
   assert(f.ch1_xiaojin_saved && f.lyric_2 && f.ch1_moya_beaten && f.ch1_yinghuo && f.ch1_wgk_beaten && f.ch1_chenbo_hurt, '1-18…1-21: ' + JSON.stringify(f));
@@ -248,14 +289,14 @@ async function testCritical(browser, open) {
   // 1-23b
   await step(s, 7, 11); await waitMap(s, 'jiufen');
   await s.shot('13_jiufen_P5');
-  // the departure gate before the cats have joined
-  await step(s, 19, 40);
-  assert(!(await s.flags()).ch1_done && (await s.ev(() => G.mapScene.player.y)) === 39, 'departure must wait for the teahouse farewell');
   await step(s, 13, 11); await waitMap(s, 'jiufen_yuyuan');
   f = await s.flags();
   assert(f.ch1_yuyuan && await hasItem(s, 'yuyuan') >= 3, '1-23b');
   assert(await s.ev(() => G.state.vars.objective) === '去聽雨樓跟鄭頭家道別', 'objective after 芋圓');
   await step(s, 7, 9); await waitMap(s, 'jiufen');
+  // the departure gate before the cats have joined
+  await step(s, 19, 40);
+  assert(!(await s.flags()).ch1_done && (await s.ev(() => G.mapScene.player.y)) === 39, 'departure must wait for the teahouse farewell');
   // 1-23d 麻糬 & 芋圓
   await step(s, 15, 23); await waitMap(s, 'jiufen_teahouse');
   f = await s.flags();
@@ -435,6 +476,20 @@ async function testMaps(browser, open) {
   return s;
 }
 
+// ------------------------------------------------------------------------------------------------ 7. 3D view smoke test
+async function test3d(browser, open) {
+  const s = await open(`?debug&map=jiufen&x=19&y=26&lv=5&party=xinghe,baizhi&chapter=1&r3lite&flags=${RAID_FLAGS}`);
+  await waitMap(s, 'jiufen', 180000);
+  assert(await s.ev(() => !!(G.mapScene.view3d && G.R3.enabled())), '3D view is active');
+  await step(s, 19, 24);   // 鬼燈籠 apparitions → monster billboards in the 3D scene, then the fight
+  assert((await s.flags())['ev_jiufen_raid_lanterns'], 'raid event ran in 3D');
+  assert(await s.ev(() => !!(G.mapScene.view3d && G.mapScene.view3d._c1)), 'update3d hook built its objects');
+  await s.shot('50_3d_raid');
+  await warp(s, 'keelung_fest', 38, 7, 'left');
+  await s.shot('51_3d_keelung');
+  return s;
+}
+
 (async () => {
   console.log('第一章　九份燈火 — chapter 1 playthrough');
   const browser = await chromium.launch();
@@ -446,8 +501,13 @@ async function testMaps(browser, open) {
     ['醒木失竊記', testXingmu],
     ['townsfolk in every phase, festival maps', testTownsfolk],
     ['raid map, mines & festival maps render', testMaps],
+    ['3D view (?r3lite): raid apparitions, festival', test3d],
   ];
-  for (const [name, fn] of tests) if (!only.length || only.some((o) => name.includes(o))) await run(name, browser, fn);
+  // the WebGL view is slow under SwiftShader: its smoke test only runs with --3d
+  for (const [name, fn] of tests) {
+    if (fn === test3d && !process.argv.includes('--3d')) continue;
+    if (!only.length || only.some((o) => name.includes(o))) await run(name, browser, fn);
+  }
   await browser.close();
   const fail = results.filter((r) => r.status !== 'PASS');
   console.log('\n' + (fail.length ? `FAIL — ${fail.length}/${results.length} test(s) failed` : `PASS — ${results.length}/${results.length} tests`));

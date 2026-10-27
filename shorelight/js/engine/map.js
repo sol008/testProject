@@ -217,8 +217,8 @@ G.Mapx = G.Mapx || {};
     buildFollowers() {
       const st = G.state;
       const list = st.party.slice(1, 4).slice();
-      if (st.party.includes('yungui') && !st.flags.tuanzi_hidden) list.push('tuanzi');
-      if (st.party.includes('baizhi') && st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
+      // 麻糬 stays with the party even while 白芷 is away (ch7–ch11), waiting for her
+      if (st.flags.mochi_joined && !st.flags.mochi_hidden) list.push('mochi');
       if (st.flags.yuyuan_joined && !st.flags.yuyuan_hidden) list.push('yuyuan');
       const prev = {};
       for (const f of this.followers || []) prev[f.id] = f;
@@ -278,6 +278,7 @@ G.Mapx = G.Mapx || {};
     blocked(x, y, self) {
       if (x < 0 || y < 0 || x >= this.w || y >= this.h) return true;
       if (this.solid[y * this.w + x]) return true;
+      if (self && self === this.player && this.def.winds && this.windResists && this.windResists(x, y)) return true; // no stepping into a gust
       for (const n of this.npcs) if (n !== self && n.visible && !n.through && this.npcActive(n) && n.x === x && n.y === y) return true;
       if (self && self !== this.player && this.player.x === x && this.player.y === y) return true;
       return false;
@@ -360,11 +361,14 @@ G.Mapx = G.Mapx || {};
       const run = I.held('run') !== !!G.settings.runDefault;
       const spd = run ? 1.65 : 1;
       if (p.moving) {
-        if (p.updateMove(dt, p.scripted ? 1 : spd)) this.onPlayerArrive();
+        if (p.updateMove(dt, p.scripted ? 1 : spd * (p.stepMul || 1))) this.onPlayerArrive();
       }
-      if (p.queue.length && !p.moving) { this.stepQueue(p); return; }
+      if (p.queue.length && !p.moving) { p.stepMul = 1; this.stepQueue(p); return; }
       if (busy || p.moving) return;
       const d = this.view3d ? this.view3d.remapDir(I.dir()) : I.dir();
+      p.stepMul = 1;
+      // map winds (mapmech.js): a gust pushes the player between steps, even while a direction is held
+      if (this.windStep && this.windStep(d)) { this.interactTarget = null; return; }
       if (d) {
         p.dir = d;
         const [dx, dy] = U.dirs[d];
@@ -400,7 +404,10 @@ G.Mapx = G.Mapx || {};
     updateFollowers(dt) {
       const run = G.Input.held('run') !== !!G.settings.runDefault;
       for (const f of this.followers) {
-        if (f.moving) f.updateMove(dt, run && !G.Script.busy() ? 1.65 : (this.player.scripted ? 1 : 1));
+        if (f.moving) {
+          // scripted moves on followers (S.move) resolve on arrival
+          if (f.updateMove(dt, run && !G.Script.busy() ? 1.65 : 1) && f.onArrive) { const r = f.onArrive; f.onArrive = null; r(); }
+        }
         else if (f.queue.length) this.stepQueue(f);
         else f.phase = 0;
       }

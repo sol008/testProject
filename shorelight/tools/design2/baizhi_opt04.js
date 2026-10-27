@@ -20,8 +20,9 @@
           for (const k of [-0.6, 0, 0.6]) line(P((p) => p.ellipse(cx, cy, 0.19 * Math.abs(Math.cos(k * 1.2)) + 0.001, 0.17, 0, -Math.PI / 2, Math.PI / 2, k < 0)), rgba(C.hairSh, 0.7), 1);
           stroke([[cx - 0.1, cy - 0.1], [cx - 0.02, cy - 0.14], [cx + 0.08, cy - 0.12]], 3, rgba(C.hairHi, 0.8));
         } });
-        part(P((p) => p.roundRect(cx - 0.07, cy - 0.21, 0.14, 0.05, 0.015)), C.lacquer, { lw: 1.1, rim: false, sh: false });
-        part(P((p) => p.roundRect(cx - 0.07, cy + 0.16, 0.14, 0.05, 0.015)), C.lacquer, { lw: 1.1, rim: false, sh: false });
+        part(P((p) => p.roundRect(cx - 0.08, cy - 0.21, 0.16, 0.06, 0.015)), C.red, { lw: 1.1, rim: false, sh: false });
+        part(P((p) => p.roundRect(cx - 0.08, cy + 0.15, 0.16, 0.06, 0.015)), C.red, { lw: 1.1, rim: false, sh: false });
+        line(P((p) => p.ellipse(cx, cy, 0.19, 0.04, 0, 0, 7)), C.gold, 1.2);
       }
     }, -0.07);
   }
@@ -142,7 +143,7 @@
     zh: '白家燈籠',
     en: 'The Bai-House Lantern',
     tier: 'WHIMSICAL · 紙燈',
-    ratio: 5.5,
+    ratio: 6.2,
     shape: 'round · bouncy',
     accent: '#d23b35',
     idea: '「白」是寫在燈籠上的姓——她把自己穿成一盞會走路的家門燈籠：圓裙、半紮雙髻小燈、對什麼都輕輕「咦？」一聲。',

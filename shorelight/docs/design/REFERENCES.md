@@ -33,7 +33,7 @@ colouring, mood), then render in the game's style and 19th-century Qing-era Taiw
 - **Body:** big, heavy, loaf-like, with dignified bulk.
 - **Personality:** silent, heavy, unimpressed by everything (including ghosts); has decided 星河 belongs to him.
   In battle he is an earth-element body-block assist. On the field he sits on pressure plates.
-- (糰子 the 石虎 spirit is unchanged and separate; these two cats are NEW pets.)
+- (糰子, the original 石虎 spirit, has been cut; these two cats are the party's only pets.)
 
 ### 麻糬 Mochi (NEW pet companion, travels with 白芷) ← cat reference B
 - **Breed/coat:** large, very fluffy **long-haired dilute calico** (Siberian / Maine-coon-like floof).
@@ -44,7 +44,7 @@ colouring, mood), then render in the game's style and 19th-century Qing-era Taiw
   white whiskers, ear tufts (lynx tips).
 - **Body:** long-bodied and heavy under all that fur, with white "mitten" paws with toe tufts and a big plumed tail.
 - **Personality:** gentle, serene, attaches to 白芷 at once; sees spirits; purrs when lanterns are near. She doesn't
-  speak (contrast with chatty 糰子). She communicates by chirps and looks, and 白芷 seems to understand her.
+  speak. She communicates by chirps and looks, and 白芷 seems to understand her.
 - **Story hook:** a 九份 teahouse cat who follows 白芷 from chapter 1 (she senses the lamp-spirit's light). In battle:
-  a support "assist" like 糰子 (healing purr / soothing aura, water-element), and she can find hidden spirit items on
+  a support "assist" (healing purr / soothing aura, water-element), and she can find hidden spirit items on
   the field.

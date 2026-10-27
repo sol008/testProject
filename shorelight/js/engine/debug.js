@@ -20,7 +20,7 @@ G.Debug = {
         if (q.get('auto')) { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; }
       if (q.get('autoplay')) G.Debug.setAutoplay(true);
         for (const f of (q.get('flags') || '').split(',').filter(Boolean)) G.state.flags[f] = true;
-        G.Scenes.replace({ opaque: true, update() {}, draw(ctx) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } });
+        G.Scenes.replace(new G.BlankScene());
         G.Script.run((S) => G.Story.next(S, n));
       }, 300);
       return;
@@ -102,21 +102,49 @@ G.Debug.talk = function (npcId) {
   const talk = n.talk || (n.def && n.def.talk);
   return G.Script.run(async (S) => { if (typeof talk === 'function') await talk(S, n); else await S.lines(talk, n); });
 };
-// teleport the player onto a cell and fire touch events / warps as if they had walked there
-G.Debug.stepOn = function (x, y) {
-  const m = G.mapScene;
-  m.player.setCell(x, y);
-  m.player.onArrive = null;
+// teleport the player onto a cell and fire touch events / warps as if they had walked there. The player faces the
+// direction of the step (dominant axis from the old cell; horizontal on a tie), so direction-gated warps (`dir`) and
+// facing checks behave as after a real step; pass `dir` to force a facing (e.g. a long jump onto an 'up' warp).
+G.Debug.stepOn = function (x, y, dir) {
+  const m = G.mapScene, p = m.player;
+  const dx = x - p.x, dy = y - p.y;
+  if (!dir && (dx || dy)) dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+  if (dir) { p.dir = dir; G.state.dir = dir; }
+  p.setCell(x, y);
+  p.onArrive = null;
   m.onPlayerArrive();
 };
-// wait until no script is running and no overlay scene is open (resolves with true, or false on timeout)
-G.Debug.idle = function (timeoutMs = 60000) {
+// an auto event on the current map whose conditions hold right now: MapScene.checkAuto starts it on the next update,
+// so the map is not really idle yet (e.g. one auto event's script just ended and the next one is about to begin)
+G.Debug.pendingAuto = function () {
+  const m = G.mapScene;
+  if (!m || !m.def || G.Scenes.top() !== m) return null;
+  for (const e of m.def.events || []) if (e.trigger === 'auto' && m.eventOk(e)) return e;
+  return null;
+};
+// idle right now: no script running, the map is the top scene, no fade, and no auto event about to fire
+G.Debug.idleNow = function () {
+  const top = G.Scenes.top();
+  return !G.Script.busy() && !!top && top === G.mapScene && G.Render.fade.a < 0.05 && !G.Debug.pendingAuto();
+};
+// wait until the game is idle (see idleNow) and has STAYED idle across `frames` scene updates (default 2), so the gap
+// between two chained scripts never reads as idle. Resolves true, 'gameover', or false on timeout.
+// opts: { frames: 2 }. If the game loop is not advancing at all, ~1 s of uninterrupted idleness also counts.
+G.Debug.idle = function (timeoutMs = 60000, opts = {}) {
+  const need = opts.frames == null ? 2 : opts.frames;
   const t0 = Date.now();
+  let since = null; // { frame, at } of the first observation in the current idle streak
   return new Promise((res) => {
-    const iv = setInterval(() => {
+    let iv = null;
+    const check = () => {
       const top = G.Scenes.top();
-      const idle = !G.Script.busy() && top === G.mapScene && G.Render.fade.a < 0.05;
-      if (idle || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(idle); }
-    }, 100);
+      if (G.GameOverScene && top instanceof G.GameOverScene) { clearInterval(iv); res('gameover'); return true; }
+      if (!G.Debug.idleNow()) since = null;
+      else if (!since) since = { frame: G.Scenes.frame, at: Date.now() };
+      const stable = !!since && (G.Scenes.frame - since.frame >= need || Date.now() - since.at >= 1000);
+      if (stable || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(stable); return true; }
+      return false;
+    };
+    if (!check()) iv = setInterval(check, 25);
   });
 };

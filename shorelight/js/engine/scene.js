@@ -20,8 +20,10 @@ G.Scenes = (() => {
       return S.push(s);
     },
     has: (s) => stack.includes(s),
+    frame: 0, // number of update() calls so far (main loop and test fast-forward loops alike)
     update(dt) {
       // only the top scene receives input/update; scenes below may request background updates
+      S.frame++;
       const top = S.top();
       for (let i = 0; i < stack.length - 1; i++) if (stack[i].bgUpdate) stack[i].bgUpdate(dt);
       if (top) top.update(dt);
@@ -37,5 +39,16 @@ G.Scenes = (() => {
       for (let i = start; i < stack.length; i++) stack[i].draw(ctx);
     },
   };
+  // readable name of a scene for diagnostics (class name; plain-object scenes may set `sceneName`)
+  S.nameOf = (s) => (s && (s.sceneName || (s.constructor && s.constructor !== Object && s.constructor.name))) || (s ? 'Object' : 'none');
+  S.names = () => stack.map(S.nameOf);
   return S;
 })();
+
+// Placeholder base scene (black when opaque) used while a chapter / load sets up the real one. Named so stuck-test
+// diagnostics that print constructor.name stay readable.
+G.BlankScene = class BlankScene {
+  constructor(opaque = true) { this.opaque = opaque; }
+  update() {}
+  draw(ctx) { if (this.opaque) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } }
+};

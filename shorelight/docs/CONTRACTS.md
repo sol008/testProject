@@ -222,7 +222,12 @@ G.Data.skills[id]  = { name, desc, mp, type:'phys'|'mag'|'heal'|'buff'|'debuff'|
                        fx:'<fx id>', sfx:'<sfx id>', combo?:[charIdA, charIdB] }
 G.Data.items[id]   = { name, desc, type:'use'|'weapon'|'armor'|'head'|'feet'|'acc'|'key'|'material', price,
                        use?:{ target, heal?, mp?, revive?, cure?:[status], status?, buffs?, damage?, elem?, field?:bool, battle?:bool },
-                       stats?:{atk,def,...}, elem?, who?:[charIds], icon:'potion'|'herb'|'sword'|... }
+                       stats?:{atk,def,...}, elem?, who?:[charIds], icon:'potion'|'herb'|'sword'|...,
+                       pair?:{ with: charId, stats:{...}, both?:bool, label?:'menu line' } }
+                     use.target 'allies' + revive → revives every fallen party member (battle and field menu).
+                     pair: while the wearer and `with` are both in the active party (first four), the wearer gets
+                     `stats` (both:true → the partner too); applied in G.Party.stats, label shown in the item menu.
+                     Engine-side corrections to chapter-defined items go in G.Data.itemFixes (js/data/items.js).
 G.Data.enemies[id] = { name, art (monster id) | sprite (character id, drawn facing right), lv, hp, mp, atk, def,
                        mag, spd, luk, elem, weak?:[elems], resist?:[elems], exp, gold, drops:[{item, rate}],
                        skills:[{id, w (weight), if?:'hp<50'|'ally_hurt'|...}], boss?:bool, scale?:number, desc }

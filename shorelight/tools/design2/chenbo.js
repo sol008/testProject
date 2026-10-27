@@ -85,7 +85,8 @@
       L.taper(ctx, [[31 * m, -8], [37 * m, -4], [38 * m, 0]], 1.6, C.grey); // drooping long hairs
     }
     // nose — broad, bulbous, ruddy tip
-    L.part(ctx, 'M-4,-2 C-5,5 -7,10 -9,14 C-12,16 -11,21 -7,21 C-4,23 4,23 7,21 C11,21 12,16 9,14 C7,10 5,5 4,-2 Z', C.skin, { sh: 2.2, hi: 0.8, rim: 0.8, lw: 1.3, under: (c) => L.fill(c, L.ellipse(0, 16, 6.5, 4.5), C.blush, 0.55) });
+    L.part(ctx, 'M-4,-2 C-5,5 -7,10 -9,14 C-12,16 -11,21 -7,21 C-4,23 4,23 7,21 C11,21 12,16 9,14 C7,10 5,5 4,-2 Z', C.skin, { sh: 2.2, hi: 0.8, rim: 0.8, lw: 0, under: (c) => L.fill(c, L.ellipse(0, 16, 6.5, 4.5), C.blush, 0.55) });
+    L.line(ctx, 'M-8,12.5 C-12,15 -11.5,21 -7,21 C-4,23 4,23 7,21 C11.5,21 12,15 8,12.5', L.ink(C.skin), 1.4); L.taper(ctx, [[4, -1], [6, 8], [8, 13]], 1.1, C.skinD, 'both', 0.8);
     L.fill(ctx, L.ellipse(-3, 20.2, 2.2, 1.2), '#5a2f24', 0.85); L.fill(ctx, L.ellipse(3, 20.2, 2.2, 1.2), '#5a2f24', 0.85);
     L.fill(ctx, L.ellipse(-1.5, 14.5, 1.6, 1.1), '#fff', 0.55);
     // nasolabial folds
@@ -211,7 +212,7 @@
     // neck — thick, short (stoop)
     L.part(ctx, 'M-26,-500 C-27,-492 -28,-484 -30,-476 C-12,-470 12,-470 30,-476 C28,-484 27,-492 26,-500 Z', C.skin, { sh: 4, hi: 1, rim: 1.2, shades: ['M-24,-500 C-10,-484 10,-484 24,-500 L26,-500 C26,-492 24,-486 20,-484 C8,-480 -8,-480 -20,-484 C-24,-486 -26,-492 -26,-500 Z'] });
     if (!o.noPipe) CB.pipe(ctx, [60, -400], [86, -296], 1);
-    if (!o.noTally) CB.tally(ctx, -42, -306, 1, o.glow);
+    if (!o.noTally) CB.tally(ctx, -36, -298, 1, o.glow);
   };
 
   CB.pipe = (ctx, a, b, s = 1) => { // a = bowl end, b = mouthpiece end
@@ -233,16 +234,9 @@
   CB.tally = (ctx, x, y, s = 1, glow = false) => {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     const K0 = L.K; L.K = K0 / s;
-    L.line(ctx, 'M0,-36 C-2,-24 1,-14 0,-8', C.red, 2.2); L.line(ctx, 'M1.5,-36 C0,-24 2.5,-14 1.5,-8', C.teal, 1.2);
-    L.part(ctx, 'M0,-12 L4,-6 L-4,-6 Z', C.red, { sh: 0.5, rim: 0, lw: 1 });
-    if (glow) L.glow(ctx, 0, 6, 34, C.teal, 0.55);
-    const d = 'M-11,-6 C-4,-8 4,-8 9,-3 C12,0 12,6 9,10 C5,15 -3,16 -9,13 L-5,9 L-12,6 L-6,3 L-12,0 Z';
-    L.part(ctx, d, C.bronze, { sh: 2, hi: 1, rim: 0.8, lw: 1.4, detail: (c) => {
-      L.fill(c, L.circle(4, 0, 1.6), '#2b1d10'); L.line(c, 'M-2,-5 C2,-2 2,8 -2,12', L.dk(C.bronze, 0.4), 1);
-      for (let i = 0; i < 3; i++) L.line(c, `M${-6 + i * 3.4},${-3 + i * 0.2} C${-4 + i * 3.4},1 ${-4 + i * 3.4},6 ${-6 + i * 3.4},10`, L.lt(C.bronze, 0.3), 0.8);
-    } });
-    L.line(ctx, 'M-1,14 C-2,22 -1,28 -2,34 M1,14 C2,22 1,28 2,34 M0,14 L0,36', C.red, 1.4); // tassel
-    if (glow) L.line(ctx, 'M-2,-1 C2,1 4,5 2,9', C.teal, 1.4);
+    L.line(ctx, 'M-2,-38 C-4,-28 -1,-22 -2,-16', C.red, 2.2); L.line(ctx, 'M-0.5,-38 C-2,-28 0.5,-22 -0.5,-16', C.teal, 1.2);
+    L.tallyHalf(ctx, C.bronze, '渡', glow ? '#1f6e66' : L.dk(C.bronze, 0.5), glow, C.teal);
+    L.line(ctx, 'M-7,21 C-8,26 -7,30 -8,36 M-5,21 C-4,26 -5,30 -4,36 M-6,21 L-6,38', C.red, 1.4); // tassel
     L.K = K0; ctx.restore();
   };
 
@@ -278,14 +272,13 @@
   // ============================================================ HEAD — BACK (origin = eye line, as front)
   CB.headBack = (ctx) => {
     for (const m of [-1, 1]) L.part(ctx, MX('M-36,-6 C-46,-12 -51,-1 -48,9 C-46,17 -42,22 -36,20 Z', m), C.skin, { sh: 2.5, hi: 0.8, rim: 1 });
-    L.part(ctx, 'M0,-47 C25,-47 39,-31 38,-9 C38,6 37,20 32,32 C22,42 -22,42 -32,32 C-37,20 -38,6 -38,-9 C-39,-31 -25,-47 0,-47 Z', C.grey, { sh: 4, hi: 1.5, rim: 1.4, ink: C.greyD,
+    L.part(ctx, 'M0,-47 C25,-47 39,-31 38,-9 C38,6 37,20 32,32 C22,42 -22,42 -32,32 C-37,20 -38,6 -38,-9 C-39,-31 -25,-47 0,-47 Z', L.dk(C.grey, 0.12), { sh: 4, hi: 1.5, rim: 1.4, ink: C.greyD, shades: ['M-30,-40 C-14,-50 14,-50 30,-40 C20,-44 -20,-44 -30,-40 Z'], under: (c) => { L.fill(c, 'M-26,-43 C-12,-49 12,-49 26,-43 C16,-38 -16,-38 -26,-43 Z', C.skin, 0.9); },
       detail: (c) => { // hair combed back & down to the queue root at the occiput
-        for (let i = -7; i <= 7; i++) { const a0 = (i / 7) * 1.25; L.taper(c, [[Math.sin(a0) * 40, -46 * Math.cos(a0 * 0.9) + 2], [Math.sin(a0) * 22, -16], [i * 0.9, 4]], 1.1, C.greyD, 'both', 0.7); }
+        for (let i = -6; i <= 6; i++) { const a0 = (i / 6) * 1.2; L.taper(c, [[Math.sin(a0) * 38, -40 * Math.cos(a0 * 0.9) + 1], [Math.sin(a0) * 24, -14], [i * 1.2, 8]], 1.2, C.greyD, 'both', 0.45); }
+        for (let i = -3; i <= 3; i++) L.taper(c, [[i * 9, -34], [i * 6, -18]], 2.2, C.grey, 'both', 0.5);
         for (let i = -4; i <= 4; i++) L.taper(c, [[i * 8, 34 - Math.abs(i) * 2], [i * 3, 18], [i * 0.8, 9]], 1, C.greyD, 'both', 0.6);
       } });
-    L.part(ctx, 'M-6,0 C-8,6 -5,12 0,13 C5,12 8,6 6,0 C3,-2 -3,-2 -6,0 Z', C.grey, { sh: 1.5, rim: 0, ink: C.greyD });
-    L.line(ctx, 'M-6,9 L6,9', C.red, 2.2);
-  };
+      };
 
   // queue braid hanging along a path
   CB.queue = (ctx, pts, w = 9) => {
@@ -322,7 +315,7 @@
       for (let y = -112; y < -28; y += 10) L.line(c, `M-30,${y + 2} Q-6,${y + 6} 22,${y - 2}`, L.dk(C.wrap, 0.32), 1.2);
     } });
     L.line(ctx, 'M-28,-114 C-14,-112 4,-112 18,-115', C.red, 2.4);
-    L.part(ctx, 'M-44,-262 C-46,-210 -42,-170 -34,-130 C-32,-124 -30,-120 -28,-116 C-12,-112 6,-112 22,-118 C28,-160 32,-210 34,-268 C10,-276 -24,-276 -44,-262 Z', C.trou, { sh: 7, hi: 2.5, rim: 1.6, dx: -1, ao: [-170, -116, 0.35], detail: (c) => {
+    L.part(ctx, 'M-48,-262 C-50,-210 -44,-170 -34,-130 C-32,-124 -30,-120 -28,-116 C-12,-112 6,-112 22,-118 C28,-160 32,-210 34,-268 C10,-276 -24,-276 -44,-262 Z', C.trou, { sh: 7, hi: 2.5, rim: 1.6, dx: -1, ao: [-170, -116, 0.35], detail: (c) => {
       const k = L.dk(C.trou, 0.6);
       L.taper(c, [[-32, -240], [-34, -180], [-26, -132]], 2, k); L.taper(c, [[22, -240], [18, -170], [12, -124]], 2, k);
       L.taper(c, [[-36, -146], [-18, -130], [0, -122]], 1.8, k); L.taper(c, [[-30, -170], [-14, -150]], 1.6, k);
@@ -339,7 +332,7 @@
     L.part(ctx, 'M-31,-482 C-22,-488 2,-494 16,-490 L14,-480 C0,-484 -18,-480 -28,-474 Z', L.dk(C.indigo, 0.15), { sh: 1.5, rim: 0, lw: 1.5 });
     L.part(ctx, 'M-31,-480 C-34,-470 -36,-460 -38,-450 L-34,-448 C-30,-460 -28,-470 -26,-478 Z', C.white, { sh: 0.8, rim: 0, lw: 1.2 });
     // apron (side: thin canvas plane in front)
-    L.part(ctx, 'M-48,-348 C-52,-300 -54,-250 -54,-198 L-44,-196 C-42,-250 -42,-300 -42,-346 Z', C.apron, { sh: 2, rim: 0.8, lw: 1.6, detail: (c) => L.fill(c, 'M-50,-250 L-46,-250 L-46,-238 L-50,-238 Z', C.stainR, 0.6) });
+    L.part(ctx, 'M-50,-348 C-53,-300 -57,-250 -60,-199 C-55,-196 -49,-195 -45,-196 C-45,-250 -45,-300 -44,-346 Z', C.apron, { sh: 2, rim: 0.8, lw: 1.6, detail: (c) => L.fill(c, 'M-50,-250 L-46,-250 L-46,-238 L-50,-238 Z', C.stainR, 0.6) });
     L.part(ctx, 'M-50,-354 C-20,-358 20,-358 46,-354 L46,-340 C20,-344 -20,-344 -50,-340 Z', C.sash, { sh: 2.5, hi: 1, rim: 1.4, dx: -1 });
     // pipe at his left hip (near side)
     CB.pipe(ctx, [-8, -398], [20, -296], 1);
@@ -392,7 +385,8 @@
     CB.pipe(ctx, [-60, -400], [-86, -296], 1);
     L.part(ctx, 'M-26,-500 C-27,-492 -28,-484 -30,-476 C-12,-472 12,-472 30,-476 C28,-484 27,-492 26,-500 Z', C.skin, { sh: 4, rim: 1.2, detail: (c) => { for (const y of [-492, -486]) L.taper(c, [[-16, y], [0, y + 1.5], [16, y]], 1.2, C.skinD, 'both', 0.7); } });
     ctx.save(); ctx.translate(0, -531); CB.headBack(ctx); ctx.restore();
-    CB.queue(ctx, [[0, -524], [0, -500], [1, -460], [0, -420], [-1, -380], [0, -330]], 10);
+    CB.queue(ctx, [[0, -516], [0, -496], [1, -460], [0, -420], [-1, -380], [0, -330]], 10);
+    L.part(ctx, 'M-5,-519 L5,-519 L4.4,-513 L-4.4,-513 Z', C.red, { sh: 0.8, rim: 0, lw: 1.1 });
   };
 
   // ============================================================ HIDDEN 引魂人 GEAR (front, ready to row the Black Tide)
@@ -485,7 +479,7 @@
     CB.strawTier(ctx, 86, -456, -408, 27, 37);
     // forearm rising along the cape's edge, fist on the oar shaft
     L.part(ctx, L.tube([[-100, -300], [-110, -282], [-117, -330], [ox + 2, -380]], [30, 31, 28, 26], 'flat'), C.guard, { sh: 4, hi: 1.5, rim: 1.4, detail: (c) => L.taper(c, [[-112, -300], [-116, -350]], 1.6, L.lt(C.guard, 0.2)) });
-    L.part(ctx, 'M-88,-300 C-94,-286 -104,-276 -114,-276 C-122,-282 -124,-296 -118,-306 L-96,-312 Z', C.indigo, { sh: 3, hi: 1, rim: 1.2 }); // elbow of the sleeve peeking below the straw
+    L.part(ctx, 'M-90,-300 C-92,-288 -100,-278 -112,-276 C-120,-278 -124,-288 -121,-300 C-112,-298 -100,-298 -90,-300 Z', C.indigo, { sh: 3, hi: 1, rim: 1.2, detail: (c) => L.taper(c, [[-96, -296], [-104, -286], [-114, -282]], 1.4, L.dk(C.indigo, 0.5)) }); // elbow of the sleeve peeking below the straw
     L.line(ctx, `M${ox - 14},-374 C${ox - 6},-370 ${ox + 6},-370 ${ox + 14},-376`, C.white, 2.2);
     L.hand(ctx, ox + 1, -376, Math.PI, 42, C.skin, { pose: 'grip', mirror: true });
     // lantern hanging off the T-grip

@@ -59,7 +59,11 @@ class Run {
     });
     await this.page.goto(BASE + query + (R3D ? '&r3lite' : ''));
     await this.page.waitForFunction(() => window.G && G.Debug && G.Scenes, null, { timeout: 30000 });
-    await this.ev(() => G.Debug.setAutoplay(true));
+    await this.ev(() => {
+      G.Debug.setAutoplay(true);
+      const say = G.Dialog.say;
+      G.Dialog.say = function (who, ...rest) { if (/^tuanzi\b/.test(String(who || ''))) console.error('speaker tuanzi used (糰子 was cut)'); return say.call(this, who, ...rest); };
+    });
   }
   ev(fn, arg) { return this.page.evaluate(fn, arg); }
   check(cond, msg) { this.checks++; if (!cond) { this.fails.push(msg); console.log(`    ✗ ${msg}`); } else if (VERBOSE) console.log(`    ✓ ${msg}`); }
@@ -96,7 +100,7 @@ class Run {
       if (!o || o.open) return false;
       m.openChest(o);
       return true;
-    }, id);
+    }, id).then(async (ok) => { await this.idle(); return ok; });
   }
   async finish() {
     const le = await this.ev(() => G.lastError && String(G.lastError.stack || G.lastError)).catch(() => null);
@@ -129,6 +133,7 @@ async function mainPath(r) {
   await r.idle();
   r.check(await r.ev(() => G.state.chapter) === 3, 'chapter is 3');
   r.check(await r.ev(() => G.state.party.join(',')) === 'xinghe,baizhi,hongying', 'party starts as 星河・白芷・紅纓');
+  r.check(await r.ev(() => G.state.flags.mochi_joined && G.state.flags.yuyuan_joined), 'pets 芋圓・麻糬 with the party');
   await r.flags(['ch3_start'], '3-1');
   await r.shot('tamsui_dusk');
   // 3-2 inn night → sleep
@@ -173,11 +178,20 @@ async function mainPath(r) {
   await r.talk('c3_yg_npc');
   await r.flags(['ch3_roof_talk', 'ch3_guimian_raid', 'ch3_yungui_join'], '3-8/3-9');
   r.check(await r.ev(() => G.state.party.includes('yungui')), '雲歸 joined');
-  r.check(await r.ev(() => G.mapScene.followers.some((f) => f.id === 'tuanzi')), '糰子 follows on the map');
+  r.check(await r.ev(() => ['yuyuan', 'mochi'].every((id) => G.mapScene.followers.some((f) => f.id === id))), '芋圓 & 麻糬 follow on the map');
+  r.check(await r.ev(() => !G.mapScene.npcs.some((n) => n.sprite === 'tuanzi') && !G.mapScene.followers.some((f) => f.id === 'tuanzi')), 'no 糰子 anywhere');
   r.check(await r.ev(() => G.state.members.yungui.lv) >= 11, '雲歸 level ≥ 11');
-  r.check(await r.ev(() => G.state.members.yungui.skills.includes('yg_tuanzi')), '雲歸 knows 召喚糰子');
   r.check(await r.item('c3_taixu_key') === 1 && await r.item('c3_mush_book') === 1, 'got 太虛觀鑰匙 & 雲歸蕈譜');
   await r.shot('taixu_after_raid');
+  await mainBangka(r, false);
+}
+// second half of the main path (艋舺 → 南門). Standalone segment: `node ch3.test.js main-bangka`
+async function mainBangka(r, standalone) {
+  if (standalone) {
+    await r.open('?debug&map=taixu&x=13&y=19&lv=12&chapter=3&party=xinghe,baizhi,hongying,yungui&flags=mochi_joined,yuyuan_joined,ch3_start,ch3_inn,ch3_ferry,ch3_fog_done,ch3_yungui_met,ch3_mirror,ch3_legend,ch3_roof_talk,ch3_guimian_raid,ch3_yungui_join');
+    await r.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'taixu', null, { timeout: 60000 });
+    await r.idle();
+  }
   // down the mountain (shortcut) → ferry to 艋舺
   await r.choices([0]);
   await r.step(13, 21);
@@ -275,7 +289,7 @@ async function soldiers(r) {
 
 // ------------------------------------------------------------------------------------------------ 艋舺 side quests
 async function bangkaSide(r) {
-  await r.open('?debug&map=bangka&x=7&y=19&lv=13&chapter=3&party=xinghe,baizhi,hongying,yungui&flags=ch3_start,ch3_inn,ch3_ferry,ch3_yungui_join,ch3_bangka_arrive');
+  await r.open('?debug&map=bangka&x=7&y=19&lv=13&chapter=3&party=xinghe,baizhi,hongying,yungui&flags=mochi_joined,yuyuan_joined,ch3_start,ch3_inn,ch3_ferry,ch3_yungui_join,ch3_bangka_arrive');
   await r.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'bangka', null, { timeout: 60000 });
   await r.ev(() => { G.state.vars.ch3_day = 0; });
   await r.idle();
@@ -371,7 +385,7 @@ async function bangkaSide(r) {
 
 // ------------------------------------------------------------------------------------------------ trail & 太虛觀 extras
 async function trailExtras(r) {
-  await r.open('?debug&map=guanyin_trail&x=20&y=51&lv=11&chapter=3&party=xinghe,baizhi,hongying&flags=ch3_start,ch3_inn,ch3_ferry');
+  await r.open('?debug&map=guanyin_trail&x=20&y=51&lv=11&chapter=3&party=xinghe,baizhi,hongying&flags=mochi_joined,yuyuan_joined,ch3_start,ch3_inn,ch3_ferry');
   await r.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'guanyin_trail', null, { timeout: 60000 });
   await r.idle();
   await r.ev(() => G.Inv.add('c3_riceball', 1));
@@ -429,6 +443,7 @@ async function trailExtras(r) {
   const browser = await chromium.launch();
   const t0 = Date.now();
   await session('main', browser, mainPath);
+  if (ONLY.some((w) => w === 'main-bangka')) await session('main-bangka', browser, (r) => mainBangka(r, true));
   await session('soldiers', browser, soldiers);
   await session('bangka-side', browser, bangkaSide);
   await session('trail-extras', browser, trailExtras);

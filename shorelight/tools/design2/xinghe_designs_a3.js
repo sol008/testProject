@@ -53,7 +53,7 @@
       c.save(); c.clip(XL.faceShape(F)); c.fillStyle = XL.skinShadow(C.skin);
       c.fill(XL.curve([[-0.45, 0.2], [-0.4, 0.5], [-0.28, 0.42], [-0.12, 0.5], [0.0, 0.4], [0.08, 0.52], [0.3, 0.46], [0.45, 0.42], [0.45, 0.2]])); c.restore();
       XL.paintMass(c, locks, C.hair, {
-        lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.04, -0.34, 0.36, XL.rgba('#8a86a6', 0.7), {}),
+        lw: 1.7, sh: [3, 2], hl: false, after: (cc) => XD.shine(cc, 0.04, -0.34, 0.36, XL.rgba('#8a86a6', 0.5), {}),
       });
       // headband 抹額 across the forehead, knot at the right temple
       XL.paint(c, XL.curve([[-0.45, 0.25], [0, 0.2], [0.45, 0.25], [0.45, 0.33], [0, 0.29], [-0.45, 0.33]]), C.band, { lw: 1.5, sh: [3, 1.5], after: (cc) => XL.line(cc, [[-0.44, 0.275], [0, 0.23], [0.44, 0.275]], XL.light(C.band, 0.3), 0.8) });
@@ -230,6 +230,7 @@
       XL.paint(ctx, XL.ribbon([[-62, -226], [-122, -252]], 3.2, { round: true }), '#b98c4c', { lw: 1 });
       XD.lantern(ctx, -118, -250, 16, { paper: C.paper, hang: 8, char: '陳', charCol: C.red, lit: true, glow: '#ffb24a', tall: 1.15 });
       XL.hand(ctx, -70, -238, -0.15, B.handL * 0.85, C.skin, 'fist', true);
+      XL.paint(ctx, XL.ribbon([[-76, -246], [-62, -244]], 2.6), C.red, { lw: 0.8 });
       XD.head(ctx, 0, B.top, hu, F, backHair, null, { tilt: 0.05 });
     }
     function back(ctx) {
