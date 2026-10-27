@@ -268,16 +268,39 @@
       bottom: { type: 'pants', color: '#1e1d26' }, shoes: { type: 'cloth', color: BZ.apron, sole: '#8a8698' },
       bracelet: { color: BZ.red }, hip: ['jade'], held: null, weapon: 'flute', glow: '#bfe8ff', aura: '#7fd3ff',
     },
-    body3d: { neckLen: 0.05, neckR: 0.037, sh: 0.15, headW: 0.168 },
+    // slender, graceful build (REFERENCES.md: slender neck and shoulders): narrow shoulders and waist with a soft hip
+    // curve, long legs, a long slim neck, fine wrists, small hands and feet
+    body3d: { H: 1.64, head: 0.222, headW: 0.164, headD: 0.184, legTop: 0.885, neckLen: 0.06, neckR: 0.031,
+      sh: 0.137, chestW: 0.118, chestF: 0.084, chestB: 0.077, waistW: 0.088, waistF: 0.064, waistB: 0.062, hipW: 0.136, hipF: 0.086, hipB: 0.102,
+      upArm: 0.262, foreArm: 0.222, armR: 0.03, elbowR: 0.024, foreR: 0.025, wristR: 0.0175, hand: 0.138, palm: 0.8,
+      thighR: 0.066, kneeR: 0.038, calfR: 0.041, ankleR: 0.022, foot: 0.198, footW: 0.034, hipSep: 0.076 },
+    // delicate oval face, gently tapered chin; large soft almond eyes, upturned outer corners, long lashes, subtle double
+    // lid; natural softly arched brows; small refined nose; full rose-pink lips in a faint smile; light blush
     face3d: {
-      eyeStyle: 'soft', ew: 0.255, eh: 0.6, tilt: 0.2, irisR: 0.58, iris: '#4b2c20', irisLight: '#8a5838', lash: 0.75, dbl: 0.7, low: 0.5,
-      browW: 1.15, browArch: 0.3, browAng: 0.05, browCol: '#16131a',
-      lips: '#d98892', lipTint: 0.6, mouthW: 0.155, restCurve: 0.32, chin: 0.43, jaw: 0.82, cheek: 0.035, blush: 0.32,
-      marks: [{ x: -0.2, y: -0.27, r: 0.75, color: '#3a2224' }],
+      eyeStyle: 'soft', ew: 0.29, eh: 0.6, tilt: 0.26, irisR: 0.6, iris: '#4b2c20', irisLight: '#9a6a46', lash: 1.0, lidW: 1.1, wing: 1.15, dbl: 0.85, low: 0.6,
+      browW: 1.1, browArch: 0.42, browAng: 0.04, browCol: '#17131a', browY: 0.21,
+      lips: '#cf7684', lipTint: 0.85, lipFull: 1.25, mouthW: 0.185, restCurve: 0.34,
+      chin: 0.38, jaw: 0.79, jawTop: -0.06, cheek: 0.03, nose: 0.85, noseH: 0.1, blush: 0.6, blushCol: '#f2808e',
+      marks: [{ x: -0.21, y: -0.34, r: 0.8, color: '#3a2224' }],
     },
     expr: 'dreamy',
     props3d: { flute: { mat: 'jade', tag: true, len: 1.45, foot: 0.3 } },
-    style: { rest: { head: [-3, 0, -3], neck: [-2, 0, 0], upperArmL: [0, 0, -2], upperArmR: [0, 0, 2] } },
+    // posture & motion: upright, relaxed, elegant economy of movement
+    style: {
+      rest: { chest: [-2, 0, 0], head: [-3, 0, -3], neck: [-3, 0, 0], shoulderL: [0, 0, 1.5], shoulderR: [0, 0, -1.5], upperArmL: [0, 0, -3], upperArmR: [0, 0, 3] },
+      idle: { shift: 1, tilt: 4, hands: 'fold', sway: 0.8, dur: 5.5 },   // weight on one leg, hands lightly folded at the waist
+      fidgets: ['f_look', 'f_shift', 'f_tuck'],
+      // a lighter step: soft heel strike, smaller arm swing with soft elbows and wrists, feet near one line, a little
+      // more hip sway and roll, a lifted chest
+      gait: {
+        walk: { lift: 0.065, bob: 0.014, sway: 0.028, hipYaw: 5, hipRoll: 5.5, chestYaw: -4, arm: 13, armOut: 3, elbow: 16, heel: 11, toeOff: 28, lean: 1.5, twist: 2, track: 0.03, toeOut: 3, wrist: 10, wristOut: 6 },
+        jog: { arm: 22, armOut: 4, sway: 0.018, hipRoll: 4.5, track: 0.018, wrist: 8 },
+        run: { arm: 32, sway: 0.012, track: 0.012, wrist: 6 },
+      },
+      // battle: a poised 丁字步 (front foot on the line, back foot turned out, weight back), flute raised to the lips
+      stance: { flute: { fL: [0.0, 0, 0.1], fR: [-0.045, 0, -0.06], fLy: -2, fRy: 38, hp: [0.008, -0.022, -0.01], h: [0, -14, 2], sp: [0, 2, 0], ch: [-4, 9, -2], nk: [-2, -4, 2], hd: [-5, -8, 8],
+        hR: [-0.19, 1.39, 0.14], hRr: [-4, 90, 0] } },
+    },
     parts: [(B) => earrings(B, { sides: [1], len: 0.05, bead: 'dark', drop: 'jade' })],
     clips: {
       // the sheet pose: the jade flute held level across the body at the waist, both hands near its middle
