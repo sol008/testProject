@@ -219,9 +219,8 @@ function mapInfo(id) {
   for (let i = 0; i < W * H; i++) if (onPath[i]) cells.push([i % W, (i / W) | 0]);
   const dToPath = (x, y) => { let b = 1e9; for (const [cx, cy] of cells) { const d = Math.abs(cx - x) + Math.abs(cy - y); if (d < b) b = d; } return b; };
   const enemies = (def.enemies || []).map((e) => {
-    const t = troopSum(G, e.troop);
     const chase = e.chase == null ? 4 : e.chase;
-    return { id: e.id, troop: e.troop, lv: e.lv, exp: t.exp, gold: t.gold, chase, respawn: e.respawn !== false, d: dToPath(e.x, e.y),
+    return { id: e.id, troop: e.troop, lv: e.lv, get exp() { return troopSum(G, e.troop).exp; }, get gold() { return troopSum(G, e.troop).gold; }, chase, respawn: e.respawn !== false, d: dToPath(e.x, e.y),
       story: chase === 0, met: chase > 0 && dToPath(e.x, e.y) <= chase + Math.min(2, e.radius == null ? 3 : e.radius) };
   });
   const chests = (def.chests || []).map((c) => ({ id: c.id, gold: c.gold || 0, item: c.item || null, n: c.n || 1, d: dToPath(c.x, c.y), extra: c.run ? String(c.run) : '' }));
@@ -231,71 +230,74 @@ function mapInfo(id) {
 }
 
 // ------------------------------------------------------------------------------------------------ gear the bosses assume
-function bossGear(G, F) {
+const SLOTS = ['weapon', 'armor', 'head', 'feet', 'acc'];
+const SLOT_ORDER = { weapon: 0, armor: 1, head: 2, feet: 2, acc: 3 };
+// best item per slot among `pool` (+ what the member wears) — tools/sim_story.js bestGear / gearScore
+function wantedGear(G, F, cid, wearing, extra) {
   const { bestGear } = require('./sim_story');
+  const gifts = (F.gifts && F.gifts[cid]) || [];
+  const cand = (F.shops || []).concat(Object.values(wearing).filter(Boolean)).concat(gifts).concat(extra || []);
   const out = {};
-  for (const cid of F.party) {
-    const m = { equip: Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, (G.Data.chars[cid] || {}).equip || {}) };
-    const gifts = (F.gifts && F.gifts[cid]) || [];
-    const cand = (F.shops || []).concat(Object.values(m.equip).filter(Boolean)).concat(gifts);
-    out[cid] = {};
-    for (const slot of ['weapon', 'armor', 'head', 'feet', 'acc']) {
-      const fixed = F.gear && F.gear[cid] && F.gear[cid][slot];
-      const b = fixed !== undefined ? fixed : bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id)), slot);
-      if (b) out[cid][slot] = b;
-    }
+  for (const slot of SLOTS) {
+    const fixed = F.gear && F.gear[cid] && F.gear[cid][slot];
+    const b = fixed !== undefined ? fixed : bestGear(G, cid, cand.filter((id) => !(F.withhold || []).includes(id)), slot);
+    if (b) out[slot] = b;
   }
   return out;
 }
-function kitCost(G, F) {
+function kitOf(G, F) {
   const { kitFrom } = require('./sim_story');
   const inv = kitFrom(G, F.shops || [], F);
-  let c = 0;
-  for (const [id, n] of Object.entries(inv)) c += ((G.Data.items[id] || {}).price || 0) * n;
-  return c;
+  let cost = 0;
+  for (const [id, n] of Object.entries(inv)) cost += ((G.Data.items[id] || {}).price || 0) * n;
+  return { inv, cost };
 }
 
 // ------------------------------------------------------------------------------------------------ the model
 const STYLES = ['minimal', 'normal', 'thorough'];
 function model(o = {}) {
   const { G, fileOf } = game();
+  const { gearScore } = require('./sim_story');
   const diffK = o.diff === 'easy' ? 1.2 : o.diff === 'hard' ? 0.9 : 1;
   const { FIGHTS } = require('./sim_story_fights');
   const fights = {};
   for (const F of FIGHTS(G)) fights[F.id] = F;
+  const I = G.Data.items;
   const e2n = (lv) => G.Party.expToNext(lv);
   const res = { chapters: [], bosses: [] };
   const P = {};
-  for (const s of STYLES) P[s] = { lv: 1, exp: 0, gold: 0, owned: new Set(), spent: 0, income: 0 };
+  // each style's player: level / exp (every active member gets the full troop exp, so one track), gold, the gear each
+  // member wears, gear found in chests (free, not yet worn)
+  for (const s of STYLES) P[s] = { lv: 1, exp: 0, gold: 0, wear: {}, found: [] };
+  const wearOf = (p, cid) => p.wear[cid] || (p.wear[cid] = Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, (G.Data.chars[cid] || {}).equip || {}));
   const gain = (p, exp) => { p.exp += exp; while (p.exp >= e2n(p.lv) && p.lv < 50) { p.exp -= e2n(p.lv); p.lv++; } };
   const floorTo = (p, lv) => { if (p.lv < lv) { p.lv = lv; p.exp = 0; } };
+  const lvf = (p) => +(p.lv + p.exp / e2n(p.lv)).toFixed(2);
   for (const C of STORY) {
     if (C.ch === 0) continue;
-    const row = { ch: C.ch, floor: C.floor, styles: {}, encounters: [], maps: [] };
-    // per style, the sources of this chapter
+    const row = { ch: C.ch, floor: C.floor, styles: {}, encounters: [] };
     const chMaps = Object.keys(fileOf).filter((id) => fileOf[id] === C.ch);
     const mainMaps = C.steps.filter((s) => s.map).map((s) => s.map);
     for (const s of STYLES) {
       const p = P[s];
-      const r = row.styles[s] = { lvIn: null, goldIn: p.gold, storyExp: 0, storyGold: 0, encExp: 0, encGold: 0, encFights: 0, chestGold: 0, questGold: 0, spentGear: 0, spentKit: 0, bosses: [] };
+      const r = row.styles[s] = { goldIn: p.gold, storyExp: 0, storyGold: 0, encExp: 0, encGold: 0, encFights: 0, chestGold: 0, questGold: 0, spentGear: 0, spentKit: 0, wantedGear: 0, bosses: [] };
       floorTo(p, C.floor);
       r.lvIn = p.lv;
-      // chests and quests: credited at the chapter start (a player picks them up on the way; shopping happens in
-      // the chapter's towns before its dungeons)
-      const chestMaps = s === 'thorough' ? chMaps : mainMaps.concat(chMaps.filter((id) => !(G.Maps.defs[id].enemies || []).length && !(C.side || []).includes(id)));
+      // chests (main-path maps: those near the path; town maps: all; thorough: every chest of the chapter) and quests
+      // are credited at the chapter start: a player picks them up on the way, and shops in the chapter's towns
+      const townMaps = chMaps.filter((id) => !(G.Maps.defs[id].enemies || []).length && !(C.side || []).includes(id));
+      const chestMaps = s === 'thorough' ? chMaps : mainMaps.concat(townMaps);
       for (const id of chestMaps) {
         const mi = mapInfo(id);
         for (const c of mi.chests) {
-          if (s !== 'thorough' && c.d > CHEST_NEAR[s] && (G.Maps.defs[id].enemies || []).length) continue;
+          if (s !== 'thorough' && mainMaps.includes(id) && c.d > CHEST_NEAR[s]) continue;
           r.chestGold += c.gold;
-          if (c.item && G.Data.items[c.item] && ['weapon', 'armor', 'head', 'feet', 'acc'].includes(G.Data.items[c.item].type)) p.owned.add(c.item);
+          if (c.item && I[c.item] && SLOTS.includes(I[c.item].type)) p.found.push(c.item);
         }
       }
-      const qs = REWARDS[C.ch] || [];
-      for (const q of qs) {
+      for (const q of REWARDS[C.ch] || []) {
         if (s === 'minimal') continue;
-        const k = s === 'thorough' ? 1 : q.lantern ? 0.5 : 0;
-        r.questGold += Math.round((q.gold || 0) * k);
+        r.questGold += Math.round((q.gold || 0) * (s === 'thorough' ? 1 : q.lantern ? 0.5 : 0));
       }
       p.gold += r.chestGold + r.questGold;
       let kitBought = false;
@@ -315,41 +317,79 @@ function model(o = {}) {
           if (s === 'normal') row.encounters.push({ map: st.map, exp: Math.round(ex), gold: Math.round(go), fights: +n.toFixed(1) });
           continue;
         }
-        // a story battle
-        const t = troopSum(G, st.troop);
         const F = st.boss && fights[st.boss];
         if (F) {
-          // buy what the boss assumes (first time it is needed), restock the kit once per chapter
-          const gear = bossGear(G, F);
-          let need = 0;
-          for (const cid in gear) for (const slot in gear[cid]) {
-            const id = gear[cid][slot];
-            const key = cid + ':' + id;
-            if (p.owned.has(key) || p.owned.has(id + '#' + cid)) continue;
-            const it = G.Data.items[id];
-            const free = !(it && it.price > 0) || (G.Data.chars[cid].equip && Object.values(G.Data.chars[cid].equip).includes(id)) || (F.gifts && (F.gifts[cid] || []).includes(id));
-            if (!free && !p.owned.has(id)) need += it.price;
-            if (p.owned.has(id)) p.owned.delete(id); // a chest item covers one member
-            p.owned.add(key);
-          }
-          const kit = kitBought ? 0 : kitCost(G, F);
-          kitBought = true;
+          // before a boss: restock the kit (once per chapter), then buy toward the gear docs/BALANCE.md assumes —
+          // weapons, armour, head/feet, accessories, the biggest gain per coin first — with the gold carried
           const before = p.gold;
-          r.spentGear += need; r.spentKit += kit;
-          p.gold -= need + kit;
-          const b = { id: st.boss, name: F.name, ch: C.ch, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv, lv: p.lv,
-            goldBefore: before, gearCost: need, kitCost: kit, short: Math.max(0, -p.gold) };
+          const kit = kitOf(G, F);
+          let kitCost = 0;
+          if (!kitBought && p.gold >= kit.cost * 0.5) { kitCost = Math.min(kit.cost, p.gold); p.gold -= kitCost; kitBought = true; }
+          const wants = [];
+          let wantCost = 0;
+          for (const cid of F.party) {
+            const wear = wearOf(p, cid);
+            const goal = wantedGear(G, F, cid, wear, p.found);
+            for (const slot of SLOTS) {
+              const id = goal[slot];
+              if (!id || id === wear[slot]) continue;
+              const cur = wear[slot] && I[wear[slot]] ? gearScore(G, cid, I[wear[slot]], slot) : 0;
+              const gainV = gearScore(G, cid, I[id], slot) - cur;
+              if (gainV <= 0.01) continue;
+              const fi = p.found.indexOf(id);
+              if (fi >= 0) { p.found.splice(fi, 1); wear[slot] = id; continue; } // found in a chest
+              const gift = (F.gifts && (F.gifts[cid] || []).includes(id)) || !(I[id].price > 0);
+              if (gift) { wear[slot] = id; continue; }
+              wants.push({ cid, slot, id, gain: gainV, price: I[id].price });
+              wantCost += I[id].price;
+            }
+          }
+          wants.sort((a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot] || b.gain / b.price - a.gain / a.price);
+          let spent = 0;
+          const missing = [];
+          for (const w of wants) {
+            if (p.gold >= w.price) { p.gold -= w.price; spent += w.price; wearOf(p, w.cid)[w.slot] = w.id; } else missing.push(`${w.cid}.${w.slot}=${w.id}(${w.price})`);
+          }
+          r.spentGear += spent; r.spentKit += kitCost; r.wantedGear += wantCost;
+          const b = { id: st.boss, name: F.name, ch: C.ch, style: s, lvBalance: typeof F.lv === 'object' ? Math.min(...Object.values(F.lv)) : F.lv,
+            lv: p.lv, lvf: lvf(p), goldBefore: before, wantCost, spent, kitCost, kitFull: kitCost >= kit.cost, missing,
+            gear: Object.fromEntries(F.party.map((cid) => [cid, Object.assign({}, wearOf(p, cid))])), kit: kitCost >= kit.cost ? kit.inv : {} };
+          // coverage: the share (by price) of the boss's BALANCE.md gear the party wears, a slot at least as good counting
+          let balV = 0, haveV = 0;
+          for (const cid of F.party) {
+            const bal = wantedGear(G, F, cid, Object.assign({ weapon: null, armor: null, head: null, feet: null, acc: null }, (G.Data.chars[cid] || {}).equip || {}));
+            const wear = wearOf(p, cid);
+            for (const slot of SLOTS) {
+              const id = bal[slot];
+              if (!id || !(I[id].price > 0)) continue;
+              balV += I[id].price;
+              if (wear[slot] && gearScore(G, cid, I[wear[slot]], slot) >= gearScore(G, cid, I[id], slot) - 0.01) haveV += I[id].price;
+            }
+          }
+          b.coverage = balV ? +(haveV / balV).toFixed(2) : 1;
           r.bosses.push(b);
-          if (s === 'normal') res.bosses.push(Object.assign({ style: s }, b));
-          else res.bosses.push(Object.assign({ style: s }, b));
-          if (p.gold < 0) p.gold = 0; // what could not be bought is simply not bought (the next chapter still assumes it)
+          res.bosses.push(b);
         }
         if (!st.noReward && !st.lose) {
+          const t = troopSum(G, st.troop);
           r.storyExp += t.exp * diffK; r.storyGold += t.gold;
           gain(p, Math.round(t.exp * diffK)); p.gold += t.gold;
         }
       }
-      r.lvOut = p.lv; r.expOut = p.exp; r.goldOut = p.gold;
+      if (s === 'thorough') {
+        // the chapter's other maps with roaming enemies (side areas), all of them ~1.5 times
+        for (const id of chMaps) {
+          if (mainMaps.includes(id) || !(G.Maps.defs[id].enemies || []).length) continue;
+          for (const e of mapInfo(id).enemies) {
+            if (e.story) continue;
+            const k = e.respawn ? THOROUGH : 1;
+            r.encExp += e.exp * k * diffK; r.encGold += e.gold * k; r.encFights += k;
+            gain(p, Math.round(e.exp * k * diffK)); p.gold += Math.round(e.gold * k);
+          }
+        }
+      }
+      r.lvOut = p.lv; r.lvOutF = lvf(p); r.goldOut = p.gold;
+      r.income = Math.round(r.encGold + r.storyGold + r.chestGold + r.questGold);
       for (const k of ['encExp', 'encGold', 'encFights', 'storyExp']) r[k] = Math.round(r[k] * 10) / 10;
     }
     res.chapters.push(row);
@@ -411,15 +451,16 @@ if (require.main === module) {
   for (const row of M.chapters) {
     const parts = STYLES.map((s) => {
       const r = row.styles[s];
-      return `${s[0].toUpperCase()} Lv${r.lvIn}→${r.lvOut} enc ${r.encFights}f ${Math.round(r.encExp)}xp/${Math.round(r.encGold)}g story ${Math.round(r.storyExp)}xp/${r.storyGold}g chest ${r.chestGold}g quest ${r.questGold}g spent ${r.spentGear}+${r.spentKit} out ${r.goldOut}g`;
+      return `${s[0].toUpperCase()} Lv${r.lvIn}→${r.lvOutF} enc ${r.encFights}f ${Math.round(r.encExp)}xp/${Math.round(r.encGold)}g story ${Math.round(r.storyExp)}xp/${r.storyGold}g chest ${r.chestGold}g quest ${r.questGold}g = ${r.income}g · gear ${r.spentGear}/${r.wantedGear} kit ${r.spentKit} · out ${r.goldOut}g`;
     });
     console.log(`ch${row.ch} (floor ${row.floor})\n   ` + parts.join('\n   '));
   }
-  console.log('\nbosses: BALANCE.md level vs the level each style has; gold before the boss vs the gear + kit it assumes');
+  console.log('\nbosses: docs/BALANCE.md level vs each style (level.fraction); gold before the boss, spent on gear / wanted (the BALANCE gear), kit');
   const by = {};
   for (const b of M.bosses) (by[b.id] = by[b.id] || {})[b.style] = b;
   for (const [id, x] of Object.entries(by)) {
     const n = x.normal, m = x.minimal, t = x.thorough;
-    console.log(`  ${id.padEnd(16)} ch${String(n.ch).padEnd(3)} BAL Lv${String(n.lvBalance).padEnd(3)} min ${m.lv} norm ${n.lv} thor ${t.lv}   gold norm ${n.goldBefore} vs ${n.gearCost}+${n.kitCost}${n.short ? ' SHORT ' + n.short : ''} · min ${m.goldBefore} vs ${m.gearCost + m.kitCost}${m.short ? ' SHORT ' + m.short : ''}`);
+    const g = (b) => `${b.goldBefore}g → gear ${b.spent}/${b.wantCost}${b.kitFull ? ' +kit' : b.kitCost ? ' +part kit' : ' NO KIT'}`;
+    console.log(`  ${id.padEnd(15)} ch${String(n.ch).padEnd(3)} BAL ${String(n.lvBalance).padEnd(3)} min ${m.lvf.toFixed(1).padStart(4)} norm ${n.lvf.toFixed(1).padStart(4)} thor ${t.lvf.toFixed(1).padStart(4)} · norm ${g(n)} · min ${g(m)}`);
   }
 }
