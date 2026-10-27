@@ -229,7 +229,7 @@ async function testCritical(browser, open) {
   await s.onMap('tiger_den');
   assert((await s.flags()).ev_tiger_den_enter, '2-14 intro');
   // 挑夫的擔子 (4.2 step 2)
-  await interact(s, 'basket@3,4');
+  await trig(s, 'bundle');
   await s.idle();
   assert(await s.ev(() => G.Inv.count('key_sonletter') === 1 && G.Inv.count('c2_porter_bundle') === 1), 'bundle → letter');
   // cages (the 2nd is behind the breathing wall: needs 靈視)
