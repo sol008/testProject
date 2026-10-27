@@ -50,7 +50,7 @@ G.I18N.add({
   '你的……在哪裡呢？': 'So where… is yours?',
   '快回去吧。這裡不是活人來的地方。': 'Go home, quickly. This is no place for the living.',
   '大哥哥，前面好暗喔。': 'Big brother, it\'s really dark up ahead.',
-  '以前一直往前漂，就會看到光。阿嬤說，那叫做『彼岸』。': 'Before, if you just kept drifting forward, you\'d see a light. Grandma said it\'s called \'the Far Shore.\'',
+  '以前一直往前漂，就會看到光。阿嬤說，那叫做「彼岸」。': 'Before, if you just kept drifting forward, you\'d see a light. Grandma said it\'s called "the Far Shore."',
   '可是現在……燈好像累了。': 'But now… the light looks tired.',
   '……別怕，哥哥去前面看看。': '…Don\'t be scared. Big brother\'ll go take a look.',
   '大哥哥，你身上暖暖的。我可以跟著你一下嗎？': 'Big brother, you\'re warm. Can I follow you for a little while?',
