@@ -56,7 +56,7 @@ Measured in game (jiufen, 20 characters): about 1.5 ms per frame of CPU in total
 ## Known gaps
 - ~~The party's final costumes are pending.~~ Applied; see "v2 cast applied" below.
 - Sheets for 青鋒, 清虛, 藤婆, 夜念 and 燈母 have not landed yet; these are upgraded 2D specs.
-- Faces are a single canvas front projection: there is no SDF face shadow and no blendshape mouth. Lip flap is texture-based.
+- ~~No SDF face shadow.~~ Added in the face pass (below). There is still no blendshape mouth; lip flap is texture-based.
 - Hands are mitten or fist shapes with no finger bones.
 - There is no turn-in-place stepping when an idle character rotates (feet rotate with the root).
 - Field hold poses for some props are FK approximations (fan, book, pipe), and battle clips were tuned for blade and pole first. Fan and flute attacks are simpler.
@@ -154,3 +154,102 @@ jogs in the contact sheets show the same trailing from motion alone).
 - Raised wide, flowing or banner sleeves do not slide down the forearm (there is no cloth simulation); the drape
   spring lets them hang instead.
 - The pets 芋圓 / 麻糬 are the animals team's and were not touched.
+
+## Face pass (main cast + generator)
+The client found the faces flat, simpler than the design portraits, with ears that were too large. The pass matches the
+baked 2D portraits (`G.PortraitImages[id]`, js/gfx/portraits_*.js) in a toon-3D style. 白芷 also got a feminine
+body and motion pass (REFERENCES.md, v2/baizhi.md §02). Each contact sheet now has the 3D face, the 2D portrait and
+the face before the pass side by side.
+
+**Generator (chars.js): every character gets these.**
+- **SDF face shadow.** The head shader (`charMat({ faceSDF })`) replaces N·L on the face with a Genshin-style threshold
+  map (`C.faceSDFTex(F)`, 96², cached per feature layout). It compares the light's angle around the head with the
+  map, mirrored toward the light. The shadow first sweeps the far cheek and jaw, then crosses the eye in one step and
+  stops at the nose line, with a small nose-side wedge under strong side light. No terminator crosses the eyes, nose
+  or mouth. A soft form term from smooth normals keeps cheek and jaw roundness. The face weight fades to normal toon
+  shading at the ears and under the jaw. The head mesh carries a per-vertex `aFace` attribute (longitude, height,
+  weight), added after the outline merge.
+- **Head mesh.**
+  - C1-smooth width profile (`jaw`, `chin`, new `jawTop`), so the old jaw corner and V chin are gone. Defaults were
+    re-fitted to the portrait silhouette: a soft oval with a gently tapered chin.
+  - A real nose ridge (bridge → small tip → steep fall-off, `noseH`/`noseW`), which reads in ¾ and profile through
+    the outline.
+  - A softer face plane.
+  - Front-weighted tessellation: denser across the face and from brow to chin. Heroes use 44×32, NPCs keep 36×26.
+- **Feature layout.** Features sit lower on the head, as in the portraits (bigger cranium, short lower face).
+  Defaults: eyes −0.10/−0.12 (fem), nose −0.41/−0.44, mouth −0.66/−0.68. Eyes are set wider (0.44) and female eyes
+  are 6% larger. Hat bands follow a separate skull reference (`hatRef`), so hats did not move.
+- **Ears.** About 35% smaller and pressed to the head between eye and nose height, top tilted back. The inner bowl
+  comes from vertex AO. `ears: 0` hides them.
+- **Face painter.** Static parts are painted once into a cached base layer; blinks, saccades and lip-flap redraw only
+  the dynamic parts.
+  - Eyes: almond lid with a tapered lash-line ribbon and a wing (`wing`); lashes at the outer end and a lower lash
+    flick; a soft lower lid line and a double-lid crease.
+  - Iris: layered, with a limbal ring, a lighter lower glow, striations and a deep pupil. A lid shadow falls over it,
+    two screen-fixed highlights sit on top, and the inner corner is pink.
+  - Brows: tapered, with a blunt head and a thin tail.
+  - Nose and blush: a side line on the bridge plus a shade under the tip and a highlight. Blush ellipses are larger
+    and softer.
+  - Mouth: rose lips (`lipFull`, cupid's-bow upper lip, fuller lower lip with a highlight), a tapered mouth line and a
+    shade under the lower lip.
+  - Skin: a soft warm contour at the sides of the face.
+- **Hairline.** The hair cap thins to the skin at its edge. The face canvas paints the hair colour just past the edge,
+  frays it into fine strands, and adds a soft hair shadow and a sheen line, so there is no hard cap edge.
+- **Hair options.**
+  - `front` (hairline height) and `temple` (temples brought down into an arch around the part).
+  - `bangW` (bang width).
+  - `tuck: 'L'|'R'`: a band swept from the temple over the top of the ear and behind it; that side's outer bangs are
+    dropped.
+  - Long-hair locks now grow out of the cap with thin roots (`lock({ rootK })`), which removes the slab "shelf" on top
+    of long hair.
+- **Skin shadows.** Skin vertices are flagged (vertex colour G). Their shadows take a warm rose tint (`skinTint`) like
+  the face, so a neck in the head's shadow no longer goes grey. The neck has a soft AO under the jaw.
+- **Per-look motion style.**
+  - `style.gait.{all,walk,jog,run}` overrides gait shape: lift, bob, sway, hip roll, arm swing, elbows, plus new
+    `track` (feet nearer one line), `toeOut`, `wrist` and `wristOut`. Speed, stride and duty stay global, so cadence
+    still matches speed and the feet stay planted.
+  - `style.idle = { shift, tilt, hands: 'fold', sway, dur }` gives a contrapposto idle with an optional
+    folded-hands IK pose.
+  - `style.stance[family]` merges onto the battle stance.
+  - `style.fidgets` sets the fidget list. A new `f_tuck` fidget tucks the hair behind the ear, and the existing
+    fidgets keep folded hands folded.
+
+**Per look (chars_cast.js).**
+- **白芷.**
+  - Build: slimmer and longer (1.64 m, 7.4 heads, legTop 0.885), with narrower shoulders (0.137) and waist (0.088),
+    a soft hip curve, a long slender neck (0.031 r), fine wrists, and smaller hands (0.138) and feet (0.198). The robe
+    follows the narrower torso.
+  - Face: oval with a gently tapered chin and no cheek bulge; large almond eyes (ew 0.29, tilt 0.26) with long lashes,
+    a wing and a double lid; soft arched brows; a small refined nose; full rose-pink lips in a faint smile; light
+    blush. The beauty mark stays on her right cheek beside the nose (viewer's left).
+  - Hair: blue sheen, more volume, a lower arched hairline, wider bangs. The curtain falls on the viewer's left and
+    she is tucked behind the left ear, where the small ear and drop earring show. The earring is re-anchored to the new
+    ear lobe.
+  - Motion:
+    - Idle: weight on one leg with the free foot turned out, head inclined, hands lightly folded at the waist.
+    - Walk: soft heel strike, narrow track, small arm swing with soft elbows and wrists, a little hip sway.
+    - Battle: a poised 丁字步 with the jade flute raised to her lips.
+    - Fidgets: look, shift, tuck.
+- **星河.** Narrow face with a sharper jaw re-fitted to the new profile, a lower hairline and wider, longer bangs.
+- **紅纓.** Rounder face, heavier bangs (`bangW` 1.6) and a lower hairline.
+- **雲歸.** Soft oval; parted hair brought down over the temples.
+- **夜玄, 墨鴉, 青鋒.** Chin and jaw re-fitted to the new profile.
+
+| Character | Tris before → after | Draw calls | Contact sheet |
+|---|---|---|---|
+| 白芷 | 13.5k → 15.0k | 3 | [cast/baizhi_v2.png](cast/baizhi_v2.png) |
+| 星河 | 11.3k → 12.4k | 3 | [cast/xinghe_v2.png](cast/xinghe_v2.png) |
+| 紅纓 | 11.2k → 12.3k | 3 | [cast/hongying_v2.png](cast/hongying_v2.png) |
+| 雲歸 | 13.2k → 14.3k | 3 | [cast/yungui_v2.png](cast/yungui_v2.png) |
+
+All are under the 25k hero budget. NPCs gain about 120 triangles (the hair cap has two extra rows).
+
+**Checks.**
+- All 14 expressions plus blink, saccade and lip-flap checked on 白芷 and 紅纓.
+- Hero heads checked: 陳伯, 夜玄, 墨鴉, 青鋒, 清虛, 藤婆, 夜念, 燈母. Beards, moustaches, crowns and hats are in place.
+- Generic NPC heads checked, including hats.
+- In-game smoke test (jiufen, `?debug&r3lite`): all characters build in 3D with no console errors.
+
+**Notes.**
+- The SDF map assumes the key light is the sun. Point lights also go through it, which suits lanterns.
+- The bench's PCF shadow edge on the neck is noisy under SwiftShader. This is a shadow-map artefact, not the face.
