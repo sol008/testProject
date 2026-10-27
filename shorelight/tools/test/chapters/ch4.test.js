@@ -175,7 +175,7 @@ async function mainPath(browser) {
   await stepOn(13, 1);
   check('north road sends you back', (await pos())[1] > 1);
   for (const id of ['ashun', 'awang', 'achun', 'fisher', 'xiaofeng']) await talk(id);
-  await trigger('shrine');
+  await choices(['離開']); await trigger('shrine');
   check('chest c4_01', await openChest('c4_01'));
   check('chest c4_02', await openChest('c4_02'));
   check('chest c4_03', await openChest('c4_03'));
@@ -223,7 +223,7 @@ async function mainPath(browser) {
   await stepOn(55, 21);
   await expectMap('hakka_road', '4-06');
   check('ch4_road', await flag('ch4_road'));
-  await trigger('bogong');
+  await choices(['離開']); await trigger('bogong');
   for (const c of ['c4_07', 'c4_08', 'c4_09', 'c4_11']) check('chest ' + c, await openChest(c));
   await shot('04_road');
   // 4-07 + 4-08
@@ -252,11 +252,11 @@ async function mainPath(browser) {
   await expectMap('hakka_village');
   for (const id of ['manmei_v', 'acheng', 'kid_m', 'vf1', 'vm1']) await talk(id);
   await trigger('jingzi');
-  await trigger('bogong_v');
+  await choices(['離開']); await trigger('bogong_v');
   // 4-09
   await stepOn(51, 20);
   await expectMap('wuzhi_trail');
-  await trigger('pavilion');
+  await choices(['離開']); await trigger('pavilion');
   await trigger('branch_sign');
   await stepOn(39, 40);
   await expectMap('wuzhi_trail', 'xiangtian branch closed before 4-10:');
