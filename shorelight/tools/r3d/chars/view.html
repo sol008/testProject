@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Char3D test bench</title>
+<style>html,body{margin:0;background:#1b1d22;color:#ddd;font:12px/1.3 system-ui,sans-serif;overflow:hidden}.lb{position:absolute;transform:translate(-50%,0);padding:1px 5px;background:rgba(0,0,0,.5);border-radius:3px;white-space:nowrap}</style></head>
+<body><canvas id="c"></canvas>
+<!--
+  Characters test bench (characters team). Params:
+    ids=a,b         sprite ids                         views=1|4|8  (front, ¾, side, back, …)
+    anim=idle|walk|jog|run|<clip>   t=seconds (time sampled)   strip=n (n frames across [t0, t0+span])  span=s
+    speed=m/s (locomotion override)  ctx=map|battle   expr=<expression>  talk=1  look=x,y,z
+    cam=full|close|face|game  yaw=deg pitch=deg  bg=#hex night=1  ground=0  labels=0  cols=n  spacing=m
+-->
+<script>window.G_VIEWER = true;</script>
+<script src="../../../js/core/util.js"></script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.warn(k, e));</script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/sprites.js"></script>
+<script src="../../../js/vendor/three.bundle.js"></script>
+<script src="../../../js/r3d/core.js"></script>
+<script src="../../../js/r3d/materials.js"></script>
+<script src="../../../js/r3d/models.js"></script>
+<script src="../../../js/r3d/chars.js"></script>
+<script src="../../../js/r3d/chars_cast.js"></script>
+<script src="../../../js/r3d/animals.js"></script>
+<script>
+setTimeout(function () {
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const W = num('w', 1280), H = num('h', 720);
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = q.get('shadows') !== '0'; renderer.shadowMap.type = THREE.PCFShadowMap;
+  G.R3.renderer = renderer;
+  const night = q.get('night') === '1';
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(q.get('bg') || (night ? '#0b1020' : '#9db8cc'));
+  scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.35 : 1.1));
+  const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.5 : 2.6);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+  scene.add(sun, sun.target);
+  try { const pm = new THREE.PMREMGenerator(renderer); const es = new THREE.Scene(); es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: night ? 0x1a2240 : 0xbcd4e6 }))); scene.environment = pm.fromScene(es, 0.04).texture; scene.environmentIntensity = 0.55; } catch (e) {}
+  const ids = (q.get('ids') || 'villager_m').split(',').filter(Boolean);
+  const views = num('views', 1), strip = num('strip', 1), span = num('span', 1), T0 = num('t', 0.5);
+  const anim = q.get('anim') || 'idle', ctx = q.get('ctx') || 'battle';
+  const VY = [0, -Math.PI / 4, -Math.PI / 2, Math.PI, Math.PI / 2, Math.PI * 3 / 4, -Math.PI * 3 / 4, Math.PI / 4];
+  const items = [];
+  for (const id of ids) for (let v = 0; v < views; v++) for (let f = 0; f < strip; f++) {
+    const inst = G.Char3D.create(id, { context: ctx });
+    if (!inst) { console.error('no char', id); continue; }
+    inst.setFacing(VY[v] + num('yawoff', 0) * Math.PI / 180);
+    const tt = strip > 1 ? T0 + span * f / strip : T0;
+    items.push({ id, inst, t: tt, label: id + (views > 1 ? ' ' + ['front', '¾', 'side', 'back', 'L side', 'back¾', '¾L', 'f¾L'][v] : '') + (strip > 1 ? ' ' + tt.toFixed(2) : '') });
+    scene.add(inst.root);
+  }
+  const cols = num('cols', Math.min(items.length, strip > 1 ? strip : Math.ceil(Math.sqrt(items.length * 2.2))));
+  const sp = num('spacing', 1.15);
+  items.forEach((it, i) => { it.inst.root.position.set((i % cols) * sp, 0, Math.floor(i / cols) * sp * 1.4); });
+  const look = q.get('look') ? new THREE.Vector3(...q.get('look').split(',').map(Number)) : null;
+  for (const it of items) {
+    const ins = it.inst;
+    const spd = num('speed', anim === 'walk' ? 2.2 : anim === 'jog' ? 4.2 : anim === 'run' ? 6.9 : 0);
+    if (spd > 0) { ins.setMove(spd); ins.speed = spd; }
+    else if (anim !== 'idle') ins.play(anim, { loop: q.get('loop') !== '0' });
+    if (q.get('expr')) ins.setExpression(q.get('expr'));
+    if (q.get('talk')) ins.talk(true);
+    if (look) ins.lookAt(look.clone().add(ins.root.position));
+    ins.fidgetT = 1e9;
+    const steps = Math.round(it.t * 60);
+    for (let s = 0; s < steps; s++) ins.update(1 / 60, 0, null);
+  }
+  // camera
+  const camMode = q.get('cam') || 'full';
+  const all = new THREE.Box3(); for (const it of items) { it.inst.root.updateMatrixWorld(true); all.expandByPoint(it.inst.root.position.clone()); all.expandByPoint(it.inst.root.position.clone().add(new THREE.Vector3(0, it.inst.height, 0))); }
+  all.expandByScalar(0.35);
+  const ctr = all.getCenter(new THREE.Vector3()), size = all.getSize(new THREE.Vector3());
+  const yaw = num('yaw', camMode === 'game' ? 0 : 12) * Math.PI / 180, pitch = num('pitch', camMode === 'game' ? 52 : camMode === 'face' ? 4 : 12) * Math.PI / 180;
+  const fov = num('fov', camMode === 'game' ? 32 : 26);
+  const cam = new THREE.PerspectiveCamera(fov, W / H, 0.02, 300);
+  let target = ctr.clone(), dist;
+  if (camMode === 'face') { const h = items[0].inst.height; target = items[0].inst.bmap.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); dist = num('dist', 0.9); }
+  else if (camMode === 'close') { target.y = items[0].inst.height * 0.72; dist = num('dist', 2.0); }
+  else if (camMode === 'game') { dist = num('dist', 15); target.y = 0.8; }
+  else { const fitH = Math.max(size.y, size.x / (W / H)) * 1.08; dist = fitH / 2 / Math.tan(fov * Math.PI / 360) * num('dist', 1); target.y = size.y * 0.5 - 0.2; }
+  cam.position.set(target.x + Math.sin(yaw) * Math.cos(pitch) * dist, target.y + Math.sin(pitch) * dist, target.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+  cam.lookAt(target);
+  for (const it of items) it.inst.update(0, 0, cam);
+  if (q.get('ground') !== '0') {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 256; const g = gc.getContext('2d'); g.fillStyle = '#7a8466'; g.fillRect(0, 0, 256, 256); g.strokeStyle = 'rgba(0,0,0,0.15)'; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+    const tx = new THREE.CanvasTexture(gc); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.repeat.set(60, 60);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ map: tx, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.set(ctr.x, 0, ctr.z); ground.receiveShadow = true; scene.add(ground);
+  }
+  sun.position.copy(ctr).add(new THREE.Vector3(-8, 14, 7)); sun.target.position.copy(ctr); sun.target.updateMatrixWorld();
+  const sc = sun.shadow.camera; const r2 = Math.max(size.x, size.z) * 0.8 + 3; sc.left = -r2; sc.right = r2; sc.top = r2; sc.bottom = -r2; sc.far = 60; sc.updateProjectionMatrix();
+  renderer.render(scene, cam);
+  if (q.get('labels') !== '0' && camMode !== 'face') items.forEach((it) => { const p = it.inst.root.position.clone().project(cam); const d = document.createElement('div'); d.className = 'lb'; d.textContent = it.label; d.style.left = ((p.x * 0.5 + 0.5) * W) + 'px'; d.style.top = ((-p.y * 0.5 + 0.5) * H + 2) + 'px'; document.body.appendChild(d); });
+  const info = renderer.info.render;
+  window.__stats = { calls: info.calls, tris: info.triangles, items: items.length, perChar: items.length ? G.Char3D.stats(items[0].id) : null };
+  window.__ready = true;
+}, 0);
+</script></body></html>
