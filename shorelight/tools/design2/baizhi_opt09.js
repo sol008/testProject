@@ -22,7 +22,7 @@
       } });
       const kn = P2(-0.5, 0.32);
       part(P((p) => p.ellipse(kn[0], kn[1], 4.5, 4, 0.3, 0, 7)), C.band, { lw: 1.2, rimW: 0.6 });
-      for (const [dx, dy] of [[-14, 10], [-10, 18]]) part(ribbon([[kn[0], kn[1]], [kn[0] + dx * 0.6, kn[1] + dy * 0.4], [kn[0] + dx, kn[1] + dy]], [3.2, 3, 1.2]), C.band, { lw: 1.1, rimW: 0.6 });
+      for (const [dx, dy] of [[-6, 14], [-2, 20]]) part(ribbon([[kn[0], kn[1]], [kn[0] + dx * 0.6, kn[1] + dy * 0.4], [kn[0] + dx, kn[1] + dy]], [3.2, 3, 1.2]), C.band, { lw: 1.1, rimW: 0.6 });
     },
   });
   function legs() {
@@ -98,18 +98,18 @@
     part(ribbon([[50, -260], [53, -238], [54, -222]], [5.4, 4.8, 4.2]), C.skin, { lw: 1.4, rimW: 1, sh: B.mix(C.skin, '#c97a6c', 0.3) });
     hand(54, -224, -0.05, 29, 'relax', C.skin, 1);
     // viewer-left arm raised: holds up a little crab by one leg to look at it
-    part(ribbon([[-38, -330], [-56, -312], [-66, -294]], [9, 8.5, 8]), C.shirt, { lw: 1.7, rimW: 1.2, sh: '#cfc3b0' });
+    part(ribbon([[-36, -332], [-58, -318], [-74, -300]], [9, 8.5, 8]), C.shirt, { lw: 1.7, rimW: 1.2, sh: '#cfc3b0' });
     part(P((p) => {
-      p.moveTo(-62, -304);
-      p.lineTo(-74, -292);
-      p.lineTo(-66, -284);
-      p.lineTo(-56, -296);
+      p.moveTo(-70, -310);
+      p.lineTo(-84, -302);
+      p.lineTo(-78, -292);
+      p.lineTo(-66, -300);
       p.closePath();
     }), '#e2d6be', { lw: 1.3, rimW: 0.8 });
-    part(ribbon([[-68, -292], [-70, -320], [-66, -346]], [5.2, 4.6, 4.2]), C.skin, { lw: 1.4, rimW: 1, sh: B.mix(C.skin, '#c97a6c', 0.3) });
-    redString(-69, -340, 4.4, 3.1);
-    hand(-66, -346, Math.PI - 0.15, 28, 'pinch', C.skin, 1);
-    crab(-58, -398);
+    part(ribbon([[-77, -300], [-82, -326], [-84, -352]], [5.2, 4.6, 4.2]), C.skin, { lw: 1.4, rimW: 1, sh: B.mix(C.skin, '#c97a6c', 0.3) });
+    redString(-83.5, -346, 4.4, 3.1);
+    hand(-84, -352, Math.PI - 0.08, 28, 'pinch', C.skin, 1);
+    crab(-80, -404);
   }
   function crab(x, y) {
     // dangling by one leg, claws up in protest
@@ -145,17 +145,17 @@
     idea: '退潮的八斗子礁岸：她捲起褲管赤腳踩進潮池，把一隻小螃蟹拎到眼前認真打招呼——「你好。你也是從海那邊來的嗎？」',
     culture: '基隆漁家女子：大襟汗衫、捲褲、腰間布帶、花布頭帕、竹編魚簍；赤腳拾貝撿海菜是當時海岸日常。奇幻：腳踝紅線與潮水接觸處泛起微光。',
     model: '最簡潔的一套：短衫＋捲褲＋頭帕三件；魚簍為道具（竹編用貼圖）；小螃蟹做成可互動小道具（戰鬥外待機動作）。',
-    palette: [[C.shirt, '汗衫米', 'cotton shirt'], [C.trouser, '烏褲', 'dark trousers'], [C.sash, '靛帶', 'indigo sash'], [C.band, '花布頭帕', 'floral headband'], [C.basket, '竹簍', 'bamboo creel'], [C.skin, '膚', 'skin'], [C.crab, '蟹紅', 'crab']],
+    palette: [[C.shirt, '汗衫米', 'cotton shirt'], [C.trouser, '烏褲', 'trousers'], [C.sash, '靛帶', 'indigo sash'], [C.band, '花布頭帕', 'headband'], [C.basket, '竹簍', 'creel'], [C.skin, '膚', 'skin'], [C.crab, '蟹紅', 'crab']],
     callouts: [
       { zh: '花布頭帕', en: 'floral cloth headband, side knot', at: [-30, -420] },
-      { zh: '小螃蟹（好奇）', en: 'a crab, held up for a polite chat', at: [-58, -392] },
+      { zh: '小螃蟹（好奇）', en: 'a crab, held up for a polite chat', at: [-80, -398] },
       { zh: '腰帶插玉笛', en: 'flute tucked in the indigo sash', at: [-6, -244] },
       { zh: '竹編魚簍', en: 'bamboo fish creel', at: [64, -196] },
       { zh: '捲褲・赤腳', en: 'rolled trousers, bare feet', at: [-21, -60] },
     ],
     bg: ['#b8c8c4', '#6a7a80'],
     bust: { y: -380, z: 1.8 },
-    fx: 4,
+    fx: 12,
     rim: '#fff4dc',
     shTint: '#3a4a6a',
     stage(c, x, y, w, h) {

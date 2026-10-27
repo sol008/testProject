@@ -23,14 +23,17 @@ const opt = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 
 const ONLY = opt('only', '') ? String(opt('only')).split(',') : null;
 const MAPS = opt('maps', '') ? String(opt('maps')).split(',') : null;
 const TROOP_LIMIT = +opt('troops', 0) || 0;
-const WORKERS = Math.max(1, +opt('workers', 3) || 3);
+const WORKERS = Math.max(1, +opt('workers', 2) || 2);
 const HEADED = argv.includes('--headed');
 const SHOTS = argv.includes('--shots');
 const NO_SWEEP = argv.includes('--no-sweep');
-// 3D renderer (js/r3d, Three.js / WebGL #game3d canvas): scenario tests run with the game's default;
-// sweeps run with settings.render3d=false (software WebGL is very slow headless) unless --3d. --no3d forces it off everywhere.
+// 3D renderer (js/r3d, Three.js / WebGL #game3d canvas): headless Chromium only has SwiftShader software
+// WebGL (measured ~20 s per frame on this box), so by default every test runs with settings.render3d=false
+// (the 2D path, which the 3D view is layered over). --3d keeps the game's default (3D on) for all tests and
+// enables the '3d' test; use it on a machine with a real GPU (add --headed).
 const FORCE_3D = argv.includes('--3d');
 const NO_3D = argv.includes('--no3d');
+const TSCALE = Math.max(1, +opt('slow', 1) || 1); // --slow 3 multiplies every timeout (busy machines)
 const OUT = path.join(__dirname, 'out');
 fs.mkdirSync(OUT, { recursive: true });
 const BASE = 'file://' + path.join(ROOT, 'index.html');
@@ -138,7 +141,7 @@ class Session {
     if (!this.ctx) {
       this.ctx = await this.browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
       await this.ctx.addInitScript(INIT);
-      const off = NO_3D || (this.no3d && !FORCE_3D);
+      const off = NO_3D || !FORCE_3D;
       if (off) await this.ctx.addInitScript(() => { try { const k = 'shorelight_settings'; const v = JSON.parse(localStorage.getItem(k) || '{}'); v.render3d = false; localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } });
     }
     if (this.page) await this.page.close().catch(() => {});
@@ -150,11 +153,11 @@ class Session {
       else if (m.type() === 'warning') this.warnings.push(t.slice(0, 300));
     });
     this.page.on('pageerror', (e) => this.errors.push('pageerror: ' + (e.stack || e.message).slice(0, 1500)));
-    await this.page.goto(BASE + query, { timeout: 90000 });
-    await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: o.timeout || 60000 });
+    await this.page.goto(BASE + query, { timeout: 120000 * TSCALE });
+    await this.page.waitForFunction(() => window.G && G.Scenes && G.Scenes.top(), null, { timeout: (o.timeout || 60000) * TSCALE });
     // Autoplay/test hooks must never mask input bugs: every e2e test runs with them OFF.
     await this.page.evaluate(() => { if (G.Debug) { if (G.Debug.setAutoplay) G.Debug.setAutoplay(false); G.Debug.autoplay = false; } G.settings.autoAdvance = false; });
-    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: o.timeout || 60000 });
+    if (o.waitMap) await this.page.waitForFunction(() => G.mapScene && G.mapScene.def && G.Scenes.has(G.mapScene), null, { timeout: (o.timeout || 60000) * TSCALE });
     return this.page;
   }
   async close() { if (this.ctx) await this.ctx.close().catch(() => {}); this.ctx = null; this.page = null; }
@@ -167,7 +170,7 @@ class Session {
   }
   async keys(...ks) { for (const k of ks) await this.key(k); }
   top() { return this.ev(() => __qa.top()); }
-  async waitTop(name, timeout = 8000) {
+  async waitTop(name, timeout = 8000 * TSCALE) {
     await this.page.waitForFunction((n) => __qa.top() === n, name, { timeout }).catch(async () => { throw new Error(`timed out waiting for top scene ${name}; stack = ${JSON.stringify(await this.ev(() => __qa.stack()))}`); });
   }
   ff(sec, o) { return this.page.evaluate(([s, oo]) => __qa.ff(s, oo), [sec, o || {}]); }
@@ -264,7 +267,7 @@ async function runTest(browser, t) {
   let status = 'pass', msg = '';
   const warnings = [];
   try {
-    await Promise.race([t.fn(s, (w) => warnings.push(w)), new Promise((_, rej) => setTimeout(() => rej(new Error(`test timeout ${t.o.timeout || 90000}ms`)), t.o.timeout || 90000))]);
+    await Promise.race([t.fn(s, (w) => warnings.push(w)), new Promise((_, rej) => setTimeout(() => rej(new Error(`test timeout ${(t.o.timeout || 120000) * TSCALE}ms`)), (t.o.timeout || 120000) * TSCALE))]);
   } catch (e) {
     if (e instanceof Skip) { status = 'skip'; msg = e.message; } else { status = 'fail'; msg = e.message; }
   }
@@ -343,13 +346,13 @@ function defineKeyTests(info) {
       await S.say('', '結束。');
       return [c1, c2];
     }`);
-    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && G.Scenes.top().text === '短句。', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && G.Scenes.top().text === '短句。', null, { timeout: 3000 * TSCALE });
     // single-page line: first press completes the typewriter (or advances if already complete), at most 2 presses
     let presses = 0;
     while ((await s.ev(() => G.Dialog.log.length && G.Dialog.log[G.Dialog.log.length - 1].text)) === '短句。' && presses < 4) { await pressAndSettle(s, 'z', 4); presses++; }
     assert(presses <= 2, `single-page line needed ${presses} Z presses (Z not advancing dialogue?)`);
     // multi-page line
-    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && (G.Scenes.top().text || '').length > 100, null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene' && (G.Scenes.top().text || '').length > 100, null, { timeout: 3000 * TSCALE });
     const pages = await s.ev(() => (G.Scenes.top().pages || [0]).length);
     if (pages < 2) warn('long line did not paginate (pages=' + pages + ') — multi-page path not exercised');
     const keysCycle = ['z', 'Space', 'Enter'];
@@ -373,11 +376,11 @@ function defineKeyTests(info) {
     assert((await s.top()) === 'ChoiceScene', 'X closed a choice that has no cancel option');
     await pressAndSettle(s, 'Enter');
     // choice 2: X cancels → index 1
-    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene' && G.Scenes.top().options.length === 2, null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene' && G.Scenes.top().options.length === 2, null, { timeout: 3000 * TSCALE });
     await pressAndSettle(s, 'x');
-    await s.page.waitForFunction(() => __qa.top() === 'DialogScene', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'DialogScene', null, { timeout: 3000 * TSCALE });
     for (let i = 0; i < 4 && !(await s.ev(() => window.__qa.done)); i++) await pressAndSettle(s, 'z', 5);
-    await s.page.waitForFunction(() => window.__qa.done, null, { timeout: 3000 }).catch(() => { throw new Error('final line not dismissed by Z'); });
+    await s.page.waitForFunction(() => window.__qa.done, null, { timeout: 3000 * TSCALE }).catch(() => { throw new Error('final line not dismissed by Z'); });
     const res = await s.ev(() => window.__qa.res);
     assert(JSON.stringify(res) === '[1,1]', 'choice results ' + JSON.stringify(res));
     assert(await s.autoplayOff(), 'autoplay switched on');
@@ -395,7 +398,7 @@ function defineKeyTests(info) {
       if (!orig.__qa) { G.Battle.Scene.prototype.execute = function (u, cmd) { if (u.side === 'party') window.__qa.cmds.push(cmd.kind + (cmd.skill ? ':' + cmd.skill : '') + (cmd.item ? ':' + cmd.item : '')); return orig.call(this, u, cmd); }; G.Battle.Scene.prototype.execute.__qa = true; }
     }, item);
     await s.script(`async (S) => S.battle(${JSON.stringify(troop)})`);
-    await s.waitTop('BattleScene', 5000);
+    await s.waitTop('BattleScene', 5000 * TSCALE);
     // keep the fight going long enough to try every command (test setup, not input)
     await s.ev(() => { for (const e of G.Scenes.top().enemies) { e.hp = e.mhp = 999999; } });
     const waitUi = async () => {
@@ -490,17 +493,17 @@ function defineKeyTests(info) {
     assert((await s.ev(() => window.__qa.res)) === 'win', 'battle did not end in a win via keyboard (res ' + (await s.ev(() => window.__qa.res)) + ', top ' + (await s.top()) + ')');
     assert((await s.top()) === 'MapScene', 'not back on the map');
     assert(await s.autoplayOff(), 'autoplay switched on');
-  }, { timeout: 150000 });
+  }, { timeout: 150000 * TSCALE });
 
   test('key-newgame', 'REAL KEYS: title → 新的旅程 → play the opening with Z/Enter/arrows only until the player has control', async (s, warn) => {
     await s.open('');
-    await s.waitTop('TitleScene', 15000);
+    await s.waitTop('TitleScene', 15000 * TSCALE);
     await s.frames(10);
     if ((await s.ev(() => G.Scenes.top().stage)) !== 'menu') await pressAndSettle(s, 'Space');
     const idx = await s.ev(() => G.Scenes.top().list.items.findIndex((i) => i.k === 'new'));
     for (let g = 0; g < 10 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await pressAndSettle(s, 'ArrowDown');
     await pressAndSettle(s, 'Enter');
-    await s.page.waitForFunction(() => G.inGame && G.state.party.length > 0, null, { timeout: 10000 }).catch(() => { throw new Error('new game did not start'); });
+    await s.page.waitForFunction(() => G.inGame && G.state.party.length > 0, null, { timeout: 10000 * TSCALE }).catch(() => { throw new Error('new game did not start'); });
     assert(await s.autoplayOff(), 'autoplay on');
     let presses = 0, noChange = 0, quiet = 0;
     const t0 = Date.now();
@@ -536,14 +539,14 @@ function defineKeyTests(info) {
     if (fin.busy || fin.top !== 'MapScene') warn(`opening still running after ${presses} presses / 150s (top=${fin.top}, map=${fin.map})`);
     assert(fin.log > 0, 'no dialogue was shown in the opening');
     assert(await s.autoplayOff(), 'autoplay switched on');
-  }, { timeout: 200000 });
+  }, { timeout: 200000 * TSCALE });
 }
 
 // ================================================================== tests
 function defineTests(info) {
   defineKeyTests(info);
   test('3d', '3D renderer: #game3d WebGL canvas coexists with the 2D UI canvas; maps render; menu/dialog still work', async (s, warn) => {
-    if (NO_3D) skip('--no3d');
+    if (!FORCE_3D) skip('3D renderer disabled for headless runs (software WebGL); run with --3d [--headed] on a GPU machine');
     const maps = info.maps.filter((m) => m !== 'sandbox').slice(0, 3).concat(info.maps.includes('sandbox') ? ['sandbox'] : []);
     for (const m of maps) {
       await s.open(DEBUG_Q(m), { waitMap: true });
@@ -559,15 +562,15 @@ function defineTests(info) {
     }
     // UI over 3D: pause menu opens/closes with real keys
     await pressAndSettle(s, 'Escape', 4);
-    await s.waitTop('MenuScene', 5000);
+    await s.waitTop('MenuScene', 5000 * TSCALE);
     await pressAndSettle(s, 'x', 4);
-    await s.waitTop('MapScene', 5000);
-  }, { timeout: 240000 });
+    await s.waitTop('MapScene', 5000 * TSCALE);
+  }, { timeout: 240000 * TSCALE });
 
   test('boot', 'boot: page loads, title scene renders, no errors', async (s) => {
     await s.open('');
-    await s.waitTop('TitleScene', 15000);
-    await s.page.waitForFunction(() => document.getElementById('boot').classList.contains('hide'), null, { timeout: 15000 });
+    await s.waitTop('TitleScene', 15000 * TSCALE);
+    await s.page.waitForFunction(() => document.getElementById('boot').classList.contains('hide'), null, { timeout: 15000 * TSCALE });
     await s.frames(60);
     const cs = await s.screenStats();
     assert(cs.std > 3 && cs.nonBlack > 0.05, `title canvas looks empty (std ${cs.std.toFixed(1)}, nonBlack ${(cs.nonBlack * 100).toFixed(1)}%)`);
@@ -578,16 +581,16 @@ function defineTests(info) {
 
   test('key-title', 'title: any key → menu; settings open/change/persist; back', async (s) => {
     await s.open('');
-    await s.waitTop('TitleScene', 15000);
+    await s.waitTop('TitleScene', 15000 * TSCALE);
     await s.frames(10);
     await s.key('Space');
-    await s.page.waitForFunction(() => G.Scenes.top().stage === 'menu', null, { timeout: 3000 }).catch(() => { throw new Error('title did not switch to menu after a key press'); });
+    await s.page.waitForFunction(() => G.Scenes.top().stage === 'menu', null, { timeout: 3000 * TSCALE }).catch(() => { throw new Error('title did not switch to menu after a key press'); });
     // navigate to 設定
     const idx = await s.ev(() => G.Scenes.top().list.items.findIndex((i) => i.k === 'settings'));
     assert(idx >= 0, 'no settings entry in title menu');
     for (let g = 0; g < 10 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await s.key('ArrowDown');
     await s.key('z');
-    await s.waitTop('SettingsScene', 3000);
+    await s.waitTop('SettingsScene', 3000 * TSCALE);
     const before = await s.ev(() => JSON.stringify(G.settings));
     // walk every row and press right then left (exercises every enum/volume), except the fullscreen action
     const rows = await s.ev(() => G.Scenes.top().rows.map((r) => ({ k: r.k, type: r.type })));
@@ -600,7 +603,7 @@ function defineTests(info) {
     const changed = await s.ev((b) => { const o = JSON.parse(b); return Object.keys(G.settings).filter((k) => JSON.stringify(G.settings[k]) !== JSON.stringify(o[k])); }, before);
     assert(changed.length >= 5, 'expected several settings to change, changed: ' + changed.join(','));
     await s.key('Escape');
-    await s.waitTop('TitleScene', 3000);
+    await s.waitTop('TitleScene', 3000 * TSCALE);
     // reload: settings survive
     const ts = await s.ev(() => G.settings.textSpeed);
     await s.open('');
@@ -609,19 +612,19 @@ function defineTests(info) {
 
   test('newgame', 'title: 新的旅程 starts the game (G.Story.newGame)', async (s, warn) => {
     await s.open('');
-    await s.waitTop('TitleScene', 15000);
+    await s.waitTop('TitleScene', 15000 * TSCALE);
     await s.key('Space');
     const idx = await s.ev(() => G.Scenes.top().list.items.findIndex((i) => i.k === 'new'));
     for (let g = 0; g < 10 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await s.key('ArrowDown');
     await s.key('Enter');
     if (!info.story) warn('G.Story.newGame does not exist — title falls back to joining xinghe on the first map');
-    await s.page.waitForFunction(() => G.inGame && G.state.party.length > 0, null, { timeout: 10000 }).catch(() => { throw new Error('new game did not start (G.inGame / party)'); });
+    await s.page.waitForFunction(() => G.inGame && G.state.party.length > 0, null, { timeout: 10000 * TSCALE }).catch(() => { throw new Error('new game did not start (G.inGame / party)'); });
     const r = await s.drive(40);
     const st = await s.ev(() => ({ top: __qa.top(), map: G.mapScene && G.mapScene.def.id, party: G.state.party, chapter: G.state.chapter, busy: G.Script.busy() }));
     if (r === 'timeout') warn(`opening script still running after 40s of auto-advance (top=${st.top})`);
     assert(st.party.includes('xinghe'), 'xinghe not in party after new game');
     await s.shot('newgame');
-  }, { timeout: 120000 });
+  }, { timeout: 120000 * TSCALE });
 
   test('key-move', 'map: arrow keys move the player and update G.state.x/y', async (s) => {
     await openOnMap(s, info);
@@ -634,7 +637,7 @@ function defineTests(info) {
     const d = dirs[0];
     const p0 = await s.ev(() => [G.state.x, G.state.y]);
     await s.key(key[d], 180);
-    await s.page.waitForFunction(() => !G.mapScene.player.moving, null, { timeout: 3000 });
+    await s.page.waitForFunction(() => !G.mapScene.player.moving, null, { timeout: 3000 * TSCALE });
     const p1 = await s.ev(() => [G.state.x, G.state.y, G.mapScene.player.x, G.mapScene.player.y, G.state.dir]);
     assert(p1[0] !== p0[0] || p1[1] !== p0[1], `player did not move ${d} from ${p0}`);
     assert(p1[0] === p1[2] && p1[1] === p1[3], 'G.state.x/y out of sync with the player actor');
@@ -643,7 +646,7 @@ function defineTests(info) {
     await s.page.keyboard.down('Shift');
     await s.key(key[G_opp(d)], 150);
     await s.page.keyboard.up('Shift');
-    await s.page.waitForFunction(() => !G.mapScene.player.moving, null, { timeout: 3000 });
+    await s.page.waitForFunction(() => !G.mapScene.player.moving, null, { timeout: 3000 * TSCALE });
     // collision: walking into a wall does not move
     const blocked = await s.ev(() => { const m = G.mapScene, p = m.player; const e = Object.entries(G.U.dirs).find(([, [dx, dy]]) => m.blocked(p.x + dx, p.y + dy, p)); return e ? e[0] : null; });
     if (blocked) {
@@ -667,7 +670,7 @@ function defineTests(info) {
       G.state.members[G.state.party[1] || G.state.party[0]].hp = 1;
     });
     await s.key('Escape');
-    await s.waitTop('MenuScene', 3000);
+    await s.waitTop('MenuScene', 3000 * TSCALE);
     const items = await s.ev(() => G.Scenes.top().items.map((i) => ({ k: i.k, disabled: !!i.disabled })));
     const visited = [];
     for (let i = 0; i < items.length; i++) {
@@ -722,20 +725,20 @@ function defineTests(info) {
       visited.push(k);
     }
     await s.key('x');
-    await s.waitTop('MapScene', 3000);
+    await s.waitTop('MapScene', 3000 * TSCALE);
     assert(visited.length >= 8, 'visited only ' + visited.join(','));
-  }, { timeout: 120000 });
+  }, { timeout: 120000 * TSCALE });
 
   test('key-saveload', 'save to slot 1 via menu, mutate, load it back, state matches', async (s) => {
     await openOnMap(s, info);
     await s.ev(() => { G.state.gold = 4321; G.state.flags.qa_saved = true; G.Inv.add(Object.keys(G.Data.items)[0], 3); });
     const goMenu = async (k) => {
-      await s.key('Escape'); await s.waitTop('MenuScene', 3000);
+      await s.key('Escape'); await s.waitTop('MenuScene', 3000 * TSCALE);
       const idx = await s.ev((kk) => G.Scenes.top().items.findIndex((i) => i.k === kk), k);
       assert(idx >= 0, 'menu has no ' + k);
       for (let g = 0; g < 20 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await s.key('ArrowDown');
       await s.key('z');
-      await s.waitTop('SaveScene', 3000);
+      await s.waitTop('SaveScene', 3000 * TSCALE);
     };
     await goMenu('save');
     assert((await s.ev(() => G.Scenes.top().slots[G.Scenes.top().idx])) === 1, 'save cursor not on slot 1');
@@ -747,13 +750,13 @@ function defineTests(info) {
     const meta = await s.ev(() => G.Save.meta(1));
     assert(meta && meta.party && meta.party.length, 'save meta missing party');
     await s.key('x'); await s.key('x');
-    await s.waitTop('MapScene', 3000);
+    await s.waitTop('MapScene', 3000 * TSCALE);
     await s.ev(() => { G.state.gold = 1; G.state.flags.qa_saved = false; G.state.x += 0; });
     await goMenu('load');
     const want = await s.ev(() => G.Scenes.top().slots.indexOf(1));
     for (let g = 0; g < 12 && (await s.ev(() => G.Scenes.top().idx)) !== want; g++) await s.key((await s.ev(() => G.Scenes.top().idx)) < want ? 'ArrowDown' : 'ArrowUp');
     await s.key('z');
-    await s.page.waitForFunction(() => __qa.top() === 'MapScene' && G.state.gold === 4321, null, { timeout: 5000 }).catch(() => { throw new Error('load did not restore gold / return to map'); });
+    await s.page.waitForFunction(() => __qa.top() === 'MapScene' && G.state.gold === 4321, null, { timeout: 5000 * TSCALE }).catch(() => { throw new Error('load did not restore gold / return to map'); });
     const now = await s.ev(() => G.state);
     const strip = (o) => { const c = JSON.parse(JSON.stringify(o)); delete c.playtime; return c; };
     const a = JSON.stringify(strip(saved)), b = JSON.stringify(strip(now));
@@ -763,21 +766,21 @@ function defineTests(info) {
   test('key-continue', 'menu 回標題 → title → 繼續旅程 resumes the latest save', async (s) => {
     const m = await openOnMap(s, info);
     await s.ev(() => { G.state.gold = 2468; G.Save.write(3, null); });
-    await s.key('Escape'); await s.waitTop('MenuScene', 3000);
+    await s.key('Escape'); await s.waitTop('MenuScene', 3000 * TSCALE);
     const idx = await s.ev(() => G.Scenes.top().items.findIndex((i) => i.k === 'title'));
     for (let g = 0; g < 20 && (await s.ev(() => G.Scenes.top().list.idx)) !== idx; g++) await s.key('ArrowDown');
     await s.key('z');
     assert((await s.top()) === 'ChoiceScene', 'no confirmation for 回標題');
     await s.key('z'); // 回到標題畫面
-    await s.waitTop('TitleScene', 5000);
+    await s.waitTop('TitleScene', 5000 * TSCALE);
     assert(!(await s.ev(() => G.inGame)), 'G.inGame still true on the title screen');
     // with a running AudioContext the title skips 'press any key' and opens the menu directly
     if ((await s.ev(() => G.Scenes.top().stage)) !== 'menu') await s.key('Space');
-    await s.page.waitForFunction(() => G.Scenes.top().stage === 'menu', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => G.Scenes.top().stage === 'menu', null, { timeout: 3000 * TSCALE });
     const cur = await s.ev(() => G.Scenes.top().list.cur.k);
     assert(cur === 'continue', `title cursor should default to 繼續旅程 when saves exist (on ${cur})`);
     await s.key('z');
-    await s.page.waitForFunction(() => G.mapScene && G.Scenes.has(G.mapScene) && G.inGame, null, { timeout: 5000 }).catch(() => { throw new Error('continue did not load a map'); });
+    await s.page.waitForFunction(() => G.mapScene && G.Scenes.has(G.mapScene) && G.inGame, null, { timeout: 5000 * TSCALE }).catch(() => { throw new Error('continue did not load a map'); });
     const r = await s.ev(() => ({ gold: G.state.gold, map: G.mapScene.def.id }));
     assert(r.gold === 2468 && r.map === m, 'continue did not restore the latest save: ' + JSON.stringify(r));
   });
@@ -792,7 +795,7 @@ function defineTests(info) {
       await S.narrate(['旁白一', '旁白二']);
       return c;
     }`);
-    await s.page.waitForFunction(() => G.Dialog.isOpen(), null, { timeout: 3000 });
+    await s.page.waitForFunction(() => G.Dialog.isOpen(), null, { timeout: 3000 * TSCALE });
     await s.frames(5);
     await s.key('l');
     assert((await s.top()) === 'BacklogScene', 'L did not open the backlog');
@@ -806,7 +809,7 @@ function defineTests(info) {
     assert(seen.length === 5 && seen[0].endsWith('第一句。') && seen[4].endsWith('丙'), 'dialogue log order wrong: ' + seen.join(' / '));
     await s.key('ArrowDown');
     await s.key('z');
-    await s.page.waitForFunction(() => __qa.top() === 'NarrateScene', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'NarrateScene', null, { timeout: 3000 * TSCALE });
     for (let i = 0; i < 6 && (await s.ev(() => !window.__qa.done)); i++) { await s.ff(1.0); await s.key('z'); }
     await s.ff(1.5);
     assert(await s.ev(() => window.__qa.done), 'script did not finish');
@@ -822,7 +825,7 @@ function defineTests(info) {
     assert(goods.length, 'no buyable items');
     await s.ev(() => { G.state.gold = 10000; G.state.inv = {}; });
     await s.script(`async (S) => { await S.shop(${JSON.stringify(goods)}, { title: 'QA' }); return 'closed'; }`);
-    await s.waitTop('ShopScene', 3000);
+    await s.waitTop('ShopScene', 3000 * TSCALE);
     const g0 = await s.ev(() => G.state.gold);
     const price = await s.ev((id) => G.Data.items[id].price, goods[0]);
     await s.key('z'); // 購買
@@ -845,7 +848,7 @@ function defineTests(info) {
     assert(await s.ev(() => window.__qa.done && window.__qa.res === 'closed'), 'S.shop promise did not resolve on 離開');
     // invalid ids are filtered rather than crashing
     await s.script(`async (S) => { await S.shop(['__no_such_item__', ${JSON.stringify(goods[0])}]); return 'ok'; }`);
-    await s.waitTop('ShopScene', 3000);
+    await s.waitTop('ShopScene', 3000 * TSCALE);
     assert((await s.ev(() => G.Scenes.top().goods.length)) === 1, 'unknown shop items should be filtered');
     await s.key('x');
     await s.ff(0.5);
@@ -855,7 +858,7 @@ function defineTests(info) {
     await openOnMap(s, info);
     await s.ev(() => { G.state.gold = 100; for (const id of G.state.party) G.state.members[id].hp = 1; });
     await s.script(`async (S) => S.inn(30)`);
-    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene', null, { timeout: 3000 * TSCALE });
     await s.key('z');
     await s.ff(6, { until: 'window.__qa.done' });
     const r = await s.ev(() => ({ res: window.__qa.res, gold: G.state.gold, full: G.state.party.every((id) => G.state.members[id].hp === G.Party.stats(id).mhp), fade: G.Render.fade.a }));
@@ -863,7 +866,7 @@ function defineTests(info) {
     assert(r.fade < 0.05, 'screen left faded out after inn');
     await s.ev(() => { G.state.gold = 5; });
     await s.script(`async (S) => S.inn(30)`);
-    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene', null, { timeout: 3000 });
+    await s.page.waitForFunction(() => __qa.top() === 'ChoiceScene', null, { timeout: 3000 * TSCALE });
     await s.key('z');
     await s.drive(10);
     assert((await s.ev(() => window.__qa.res)) === false, 'inn should refuse when gold is insufficient');
@@ -875,7 +878,7 @@ function defineTests(info) {
     const troop = info.normalTroops[0];
     await s.ev(() => { G.state.vars.autoBattle = false; G.settings.battleSpeed = 3; });
     await s.script(`async (S) => S.battle(${JSON.stringify(troop)})`);
-    await s.waitTop('BattleScene', 5000);
+    await s.waitTop('BattleScene', 5000 * TSCALE);
     let res;
     for (let turn = 0; turn < 30; turn++) {
       await s.ff(20, { until: '(G.Scenes.top().ui && G.Scenes.top().ui.mode === "main") || window.__qa.done' });
@@ -895,13 +898,13 @@ function defineTests(info) {
     if (!info.bossTroops.length) return;
     const boss = info.bossTroops[0];
     await s.script(`async (S) => S.battle(${JSON.stringify(boss)})`);
-    await s.waitTop('BattleScene', 5000);
+    await s.waitTop('BattleScene', 5000 * TSCALE);
     await s.ff(20, { until: 'G.Scenes.top().ui && G.Scenes.top().ui.mode === "main"' });
     await s.ev(() => G.Scenes.top().ui.done({ kind: 'flee' }));
     await s.ff(3);
     const r2 = await s.ev(() => ({ top: __qa.top(), result: G.Scenes.top().result || null }));
     assert(r2.top === 'BattleScene' && r2.result !== 'flee', 'fled from a boss battle');
-  }, { timeout: 120000 });
+  }, { timeout: 120000 * TSCALE });
 
   test('key-gameover', 'battle: defeat → GameOver scene → 重新挑戰 restores state and the retry can be won', async (s) => {
     await openOnMap(s, info);
@@ -910,7 +913,7 @@ function defineTests(info) {
     const hpBefore = await s.ev(() => G.state.party.map((id) => G.state.members[id].hp));
     await s.ev(() => { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; });
     await s.script(`async (S) => S.battle(${JSON.stringify(troop)})`);
-    await s.waitTop('BattleScene', 5000);
+    await s.waitTop('BattleScene', 5000 * TSCALE);
     await s.ff(0.05); // battle intro waits 0.9s/battleSpeed before the first turn — wipe the party before anyone acts
     await s.ev(() => { const sc = G.Scenes.top(); for (const p of sc.party) if (!p.dead) sc.damage(p, 1e7, {}); });
     const go = await s.ff(30, { until: '__qa.top() === "GameOverScene"' });
@@ -920,7 +923,7 @@ function defineTests(info) {
     assert(items[0] === 'retry', 'first game-over option is not retry: ' + items.join(','));
     await s.ff(1.5);
     await s.key('z');
-    await s.waitTop('BattleScene', 5000);
+    await s.waitTop('BattleScene', 5000 * TSCALE);
     const hpRetry = await s.ev(() => G.state.party.map((id) => G.state.members[id].hp));
     assert(JSON.stringify(hpRetry) === JSON.stringify(hpBefore), 'retry did not restore the pre-battle party state');
     await s.ev(() => G.Input._hold('skip', true));
@@ -928,14 +931,14 @@ function defineTests(info) {
     await s.ev(() => G.Input._hold('skip', false));
     const r = await s.ev(() => ({ res: window.__qa.res, top: __qa.top() }));
     assert(r.res === 'win', `retry battle result ${r.res} (top ${r.top})`);
-  }, { timeout: 150000 });
+  }, { timeout: 150000 * TSCALE });
 
   test('world', 'world map: G.World.travel animation resolves; viewer opens/closes', async (s) => {
     await openOnMap(s, info);
     if (!info.world) throw new Error('G.World is undefined (js/engine/worldmap.js not loaded) — menu 地圖 and S.travel will crash');
     const places = await s.ev(() => Object.keys(G.World.PLACES));
     await s.script(`async (S) => { await S.travel(${JSON.stringify(places[0])}, ${JSON.stringify(places[2] || places[1])}); return 'arrived'; }`);
-    await s.waitTop('TravelScene', 3000);
+    await s.waitTop('TravelScene', 3000 * TSCALE);
     await s.shot('travel');
     await s.ff(8, { until: 'window.__qa.done' });
     assert(await s.ev(() => window.__qa.res === 'arrived'), 'travel did not resolve');
@@ -943,7 +946,7 @@ function defineTests(info) {
     await s.ev(() => G.Scenes.push(new G.WorldMapScene()));
     await s.frames(5);
     await s.key('x');
-    await s.waitTop('MapScene', 3000);
+    await s.waitTop('MapScene', 3000 * TSCALE);
   });
 
   test('warp', 'S.warp: same-map reposition, fade restored, autosave written', async (s) => {
@@ -971,7 +974,7 @@ function defineTests(info) {
     const n = await s.ev(() => G.mapScene.enemies.length);
     assert((await s.top()) === 'MapScene', 'did not return to map');
     assert(n === 0 || (await s.ev((t) => !G.mapScene.enemies.some((x) => x.def.troop === t && x.x === 0), e.troop)), 'defeated roaming enemy still on the map');
-  }, { timeout: 120000 });
+  }, { timeout: 120000 * TSCALE });
 }
 
 // ------------------------------------------------------------------ sweeps (parallel)
