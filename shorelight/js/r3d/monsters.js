@@ -455,7 +455,7 @@
         }
         if (ri > 0) {
           const a0 = (ri - 1) * (segN + 1), b0 = ri * (segN + 1);
-          for (let s = 0; s < segN; s++) idx.push(a0 + s, b0 + s, a0 + s + 1, a0 + s + 1, b0 + s, b0 + s + 1);
+          for (let s = 0; s < segN; s++) idx.push(a0 + s, a0 + s + 1, b0 + s, a0 + s + 1, b0 + s + 1, b0 + s);
         }
       });
       const g = new T.BufferGeometry();
@@ -514,7 +514,15 @@
       g.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
       g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
       g.setIndex(idx); g.computeVertexNormals();
-      return this.geo(g, Object.assign({ outline: false, smooth: false }, o, o.bones ? { wv } : {}));
+      const oo = Object.assign({ outline: false, smooth: false }, o, o.bones ? { wv } : {});
+      if (o.oneSided) return this.geo(g, oo);
+      // back side: same verts, reversed winding & flipped normals (body material is front-sided)
+      const bk = g.clone();
+      const bi = []; for (let i = 0; i < idx.length; i += 3) bi.push(idx[i], idx[i + 2], idx[i + 1]);
+      bk.setIndex(bi);
+      const nn = bk.attributes.normal; for (let i = 0; i < nn.count; i++) nn.setXYZ(i, -nn.getX(i), -nn.getY(i), -nn.getZ(i));
+      this.geo(g, Object.assign({}, oo, o.at || o.rot ? {} : {}));
+      return this.geo(bk, oo);
     }
     // simple eye: flattened ellipsoid with its own bone (blink = scale y), painted with slot (iris centred)
     eye(name, parent, c, r, o = {}) {
@@ -549,30 +557,36 @@
   // ------------------------------------------------------------------------------------------- atlas
   const atlasCache = new Map();
   function makeAtlas(key, slots, p, seed) {
-    const S = 1024, C = 256;
-    const cells = []; // allocate
-    const grid = new Array(16).fill(false);
+    if (atlasCache.has(key)) return atlasCache.get(key);
     const all = Object.assign({
-      white: { paint: (g, w, h) => { Paint.fill(g, w, h, '#ffffff'); } },
-      lit: { paint: (g, w, h) => Paint.fill(g, w, h, '#ffffff'), emit: (g, w, h) => Paint.fill(g, w, h, '#ffffff') },
-      dark: { paint: (g, w, h) => Paint.fill(g, w, h, '#1c1a1e') },
+      white: { size: 1, paint: (g, w, h) => { Paint.fill(g, w, h, '#ffffff'); } },
+      lit: { size: 1, paint: (g, w, h) => Paint.fill(g, w, h, '#ffffff'), emit: (g, w, h) => Paint.fill(g, w, h, '#ffffff') },
+      dark: { size: 1, paint: (g, w, h) => Paint.fill(g, w, h, '#1c1a1e') },
     }, slots);
+    // slot size in 128 px units: 1 = 128, 2 = 256 (default), 4 = 512. Atlas grows 1024 → 2048 when full.
     const list = Object.keys(all).map((k) => [k, typeof all[k] === 'function' ? { paint: all[k] } : all[k]]);
-    list.sort((a, b) => (b[1].size || 1) - (a[1].size || 1));
-    const rects = {};
-    for (const [k, s] of list) {
-      const sz = s.size || 1;
-      let placed = false;
-      for (let cy = 0; cy <= 4 - sz && !placed; cy++) for (let cx = 0; cx <= 4 - sz && !placed; cx++) {
-        let free = true;
-        for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) if (grid[(cy + y) * 4 + cx + x]) free = false;
-        if (!free) continue;
-        for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) grid[(cy + y) * 4 + cx + x] = true;
-        cells.push([k, s, cx * C, cy * C, sz * C]); placed = true;
+    list.sort((a, b) => (b[1].size || 2) - (a[1].size || 2));
+    let S = 1024, cells = null;
+    for (; S <= 2048 && !cells; S *= 2) {
+      const n = S / 128, grid = new Array(n * n).fill(false), out = [];
+      let ok = true;
+      for (const [k, s] of list) {
+        const sz = s.size || 2;
+        let placed = false;
+        for (let cy = 0; cy <= n - sz && !placed; cy++) for (let cx = 0; cx <= n - sz && !placed; cx++) {
+          let free = true;
+          for (let y = 0; y < sz && free; y++) for (let x = 0; x < sz; x++) if (grid[(cy + y) * n + cx + x]) { free = false; break; }
+          if (!free) continue;
+          for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) grid[(cy + y) * n + cx + x] = true;
+          out.push([k, s, cx * 128, cy * 128, sz * 128]); placed = true;
+        }
+        if (!placed) { ok = false; break; }
       }
-      if (!placed) throw new Error('mon3d atlas full: ' + key);
+      if (ok) cells = out;
     }
-    if (atlasCache.has(key)) { const a = atlasCache.get(key); return a; }
+    S /= 2;
+    if (!cells) throw new Error('mon3d atlas full: ' + key);
+    const rects = {};
     const c = document.createElement('canvas'); c.width = c.height = S;
     const e = document.createElement('canvas'); e.width = e.height = S;
     const g = c.getContext('2d'), ge = e.getContext('2d');
@@ -691,7 +705,7 @@
           geo.setIndex(keep);
         }
         const tmp = new T.SkinnedMesh(geo, this.matBody); tmp.bind(this.skeleton, this.body.bindMatrix);
-        this.outline = G.R3M.outline(tmp, { width: spec.outlineW != null ? spec.outlineW : 0.010, color: spec.outlineCol || shade(p.line || '#2a2026', -0.35) });
+        this.outline = G.R3M.outline(tmp, { width: spec.outlineW != null ? spec.outlineW : 0.0032, color: spec.outlineCol || shade(p.line || '#2a2026', -0.35) });
         this.outline.frustumCulled = false; this.outline.name = 'outline';
         this.model.add(this.outline); this.outline.bind(this.skeleton, this.body.bindMatrix);
         this.outlineGeo = geo !== this.body.geometry ? geo : null;
@@ -1111,7 +1125,7 @@
     vars: [{ h: 115, s: 0.9, keep: ['talis', 'ink', 'eye', 'trim'] }, { h: 50, s: 1.2, l: 0.02, keep: ['talis', 'ink', 'eye'] }],
     slots: {
       skin(g, w, h, p, R) { Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 40, 8, 30, 0.35, R); Paint.mottle(g, w, h, '#c9d8b4', 20, 6, 20, 0.25, R); Paint.strokes(g, w, h, shade(p.skinD, -0.2), 30, 30, PI / 2, 1, 0.25, R, 1.5); },
-      face: { size: 2, paint(g, w, h, p, R) {
+      face: { size: 4, paint(g, w, h, p, R) {
         Paint.fill(g, w, h, p.skin); Paint.mottle(g, w, h, p.skinD, 70, 10, 40, 0.3, R); Paint.mottle(g, w, h, '#d6e2c2', 30, 10, 30, 0.25, R);
         // sunken sockets
         for (const s of [-1, 1]) {
@@ -1156,13 +1170,15 @@
         for (let i = 0; i < 18; i++) { const a = i / 17; const x = lerp(w * 0.36, w * 0.64, a), y = h * 0.12 + sin(a * PI) * h * 0.3; g.fillStyle = i % 6 === 0 ? '#c8242c' : '#c9a35a'; g.beginPath(); g.arc(x, y, 3.2, 0, TAU); g.fill(); }
       },
       hem(g, w, h, p, R) {
-        Paint.vgrad(g, w, h, [0, p.robeD, 1, p.robe]); Paint.weave(g, w, h, '#000', 4, 0.08);
+        Paint.vgrad(g, w, h, [0, p.robe, 0.6, mix(p.robe, p.robeL, 0.25), 1, p.robeD]); Paint.weave(g, w, h, '#000', 4, 0.08);
+        g.strokeStyle = rgba(p.robeL, 0.4); g.lineWidth = 1.5;
+        for (let i = 0; i < 18; i++) { const x = R() * w, y = R() * h * 0.6; g.beginPath(); g.arc(x, y, 6, 0, PI * 1.5); g.arc(x + 8, y - 2, 4, PI, PI * 2.6); g.stroke(); }
         // 海水江崖 wave hem (v 0..0.25)
         const y0 = h * 0.72;
         for (let k = 0; k < 5; k++) { g.strokeStyle = k % 2 ? p.trim : '#5aa0b8'; g.lineWidth = 3; g.beginPath(); for (let x = 0; x <= w; x += 4) g.lineTo(x, y0 + k * 11 + sin(x * 0.12 + k) * 4); g.stroke(); }
         g.fillStyle = p.trim; g.fillRect(0, h - 10, w, 6);
       },
-      cuff(g, w, h, p) { Paint.fill(g, w, h, p.robeD); g.fillStyle = p.trim; g.fillRect(0, h * 0.1, w, 8); g.fillRect(0, h * 0.25, w, 3); },
+      cuff(g, w, h, p) { Paint.fill(g, w, h, p.robe); g.fillStyle = p.trim; g.fillRect(0, 0, w, h * 0.12); g.fillRect(0, h * 0.2, w, 4); g.fillStyle = p.robeD; g.fillRect(0, h * 0.75, w, h * 0.25); },
       hat(g, w, h, p, R) { Paint.fill(g, w, h, p.hat); Paint.strokes(g, w, h, '#555', 120, 14, PI / 2, 1, 0.3, R); },
       tassel(g, w, h, p, R) { Paint.fill(g, w, h, p.tassel); Paint.strokes(g, w, h, shade(p.tassel, -0.4), 200, 60, PI / 2, 1.5, 0.6, R, 0.1); Paint.strokes(g, w, h, shade(p.tassel, 0.3), 80, 50, PI / 2, 1, 0.5, R, 0.1); },
       talis(g, w, h, p, R) {
@@ -1209,7 +1225,7 @@
       // peacock feather plume (花翎) trailing back
       B.strip([[0, 1.9, -0.1], [0, 1.86, -0.24], [0, 1.78, -0.34]], [0.05, 0.07, 0.04], { w: 'hat', slot: 'plume', side: [1, 0, 0] });
       // talisman (spring)
-      B.strip([[0, 1.82, 0.15], [0, 1.69, 0.17], [0, 1.57, 0.175], [0, 1.47, 0.17]], 0.075, { bones: ['tal0', 'tal1', 'tal2', 'tal2'], slot: 'talis', side: [1, 0, 0], sub: 3 });
+      B.strip([[0, 1.82, 0.15], [0, 1.69, 0.165], [0, 1.57, 0.17], [0, 1.47, 0.165]], 0.1, { bones: ['tal0', 'tal1', 'tal2', 'tal2'], slot: 'talis', side: [1, 0, 0], sub: 3 });
       // queue braid
       B.tube([[0, 1.68, -0.12], [0, 1.46, -0.17], [0, 1.25, -0.18], [0, 1.12, -0.17]], [0.03, 0.026, 0.02, 0.008], { bones: ['q0', 'q1', 'q2', 'q2'], slot: 'hair', seg: 6, twist: 30 });
       // torso
@@ -1229,14 +1245,14 @@
       // arms with wide sleeves + cuffs, gnarled hands
       for (const [s, S] of SIDES) {
         limb(B, J['sh' + S], J['el' + S], J['hand' + S], (u) => 0.075 + u * 0.04, ['sh' + S, 'arm' + S, 'hand' + S], { slot: 'robe', cap1: false });
-        B.tube([v3(J['hand' + S], [0, 0, -0.08]), v3(J['hand' + S], [0, 0, -0.01])], [0.11, 0.115], { w: 'arm' + S, slot: 'cuff', seg: 14, cap1: false });
+        B.tube([v3(J['hand' + S], [0, 0, -0.08]), v3(J['hand' + S], [0, 0, -0.01])], [0.11, 0.115], { w: 'arm' + S, slot: 'cuff', seg: 14, cap1: 0.25 });
         B.tube([v3(J['hand' + S], [0, 0, -0.04]), v3(J['hand' + S], [0, -0.005, 0.04])], [0.04, 0.035], { w: 'hand' + S, slot: 'skin', seg: 8 });
         claw(B, S, s, v3(J['hand' + S], [0, -0.01, 0.03]), [0, -0.25, 1], { size: 0.055, curl: 0.35, nailLen: 0.9, nailSlot: 'nail' });
       }
     },
     slotsExtra: null,
     springs: [
-      { chain: ['tal0', 'tal1', 'tal2'], tip: [0, -0.1, 0], k: 70, d: 6, g: 1.5, wind: 3, max: 1.0 },
+      { chain: ['tal0', 'tal1', 'tal2'], tip: [0, -0.1, 0], k: 90, d: 7, g: 1.2, wind: 1.2, max: 0.6 },
       { chain: ['q0', 'q1', 'q2'], tip: [0, -0.13, 0.01], k: 60, d: 7, g: 3, max: 0.9 },
       { chain: ['skirtF'], tip: [0, -0.6, 0.1], k: 120, d: 10, g: 0.5, max: 0.4 },
       { chain: ['skirtB'], tip: [0, -0.6, -0.1], k: 120, d: 10, g: 0.5, max: 0.4 },
@@ -1272,7 +1288,7 @@
       attack(P, t, k, C) {
         const A = atk(k, 0.3, 0.45, 0.68), H = 1.95;
         const air = bump(k, 0.28, 0.52);
-        P.rootM(0, air * 0.2 * H - A.a * 0.04 * H, (0.42 * A.s - 0.05 * A.a) * H, 0.25 * A.s - 0.08 * A.a, 0, 0, -0.12 * A.a + 0.08 * air);
+        P.rootM(0, air * 0.16 * H - A.a * 0.04 * H, (0.26 * A.s - 0.05 * A.a) * H, 0.2 * A.s - 0.08 * A.a, 0, 0, -0.12 * A.a + 0.08 * air);
         for (const [s, S] of SIDES) {
           P.r('sh' + S, -0.5 * A.a + 0.35 * A.s, 0, 0).r('arm' + S, 0, 0, 0).r('hand' + S, 0.5 * A.a - 0.4 * A.s, 0, 0);
           P.r('leg' + S, -0.35 * A.a, 0, 0).r('knee' + S, 0.7 * A.a, 0, 0);
