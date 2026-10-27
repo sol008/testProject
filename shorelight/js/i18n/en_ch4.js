@@ -1293,3 +1293,10 @@ G.I18N.add({
 G.I18N.add({
   '細妹，莫放棄！唱贏阿福个人，德興伯有好東西相送喔！': 'Don\'t give up, lass! Whoever out-sings A-Fu gets something special from Uncle Dexing!',
 });
+// side-quest discoverability clues (docs/qa/sidequests_ch3-5.md)
+G.I18N.add({
+  '……風裡有人叫名字，北郊米粉寮的阿順伯也說過。出東門前，回去看看他吧？': '…Someone calling names in the wind—Uncle Shun at the noodle shed on the northern outskirts said the same. Let\'s go back and see him before we leave by the east gate.',
+  '……今暗，我想去伙房，請滿妹婆再教我一次擂茶。': '…Tonight I want to go back to the farmhouse and ask Granny Manmei to teach me leicha again.',
+  '（麻糬盯著東邊角落那塊石頭，鬍鬚一動一動。石頭後面，隱約有風「叮、叮」地響。）': '(Mochi stares at the rock in the east corner, whiskers twitching. From behind it comes a faint ting… ting… of wind.)',
+  '……肉眼看是石頭。開了靈視，說不定就不是了。': '…To the naked eye it\'s a rock. With spirit sight, maybe it isn\'t.',
+});
