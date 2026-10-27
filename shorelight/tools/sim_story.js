@@ -85,6 +85,10 @@ function headless(G) {
   const exec = P.execute;
   P.execute = async function (u, cmd) {
     this.__acts = (this.__acts || 0) + 1;
+    if (G.__trace) {
+      const tg = cmd && cmd.targets ? cmd.targets.map((t) => t && (t.id + ':' + t.hp)).join(',') : '';
+      G.__trace.push(`r${this.rounds} ${u.id}(${u.hp}/${u.mhp} mp${u.mp}) ${cmd ? cmd.kind + ' ' + (cmd.skill || cmd.item || '') : '-'} -> ${tg}`);
+    }
     if (u.side === 'enemy') { this.__last = this.__last || new Map(); this.__last.set(u, cmd); }
     if (u.side === 'party' && cmd && cmd.kind === 'item') this.__items = (this.__items || 0) + 1;
     if (u.side === 'party' && cmd && cmd.kind === 'defend') this.__guards = (this.__guards || 0) + 1;
@@ -465,6 +469,15 @@ async function main() {
   const { FIGHTS } = require('./sim_story_fights');
   const fights = FIGHTS(G);
   if (opt('shops')) { printShops(env); return; }
+  if (opt('trace')) {
+    const F = fights.find((f) => f.id === opt('trace'));
+    G.__trace = [];
+    console.log(describe(env, F, +opt('lv', 0)));
+    const r = await runOnce(env, F, +opt('lv', 0));
+    console.log(G.__trace.join('\n'));
+    console.log('result', r.result, 'rounds', r.rounds, 'party', (r.sc ? r.sc.party : []).map((p) => p.id + ':' + p.hp).join(' '), 'enemies', (r.sc ? r.sc.enemies : []).map((e) => e.id + ':' + e.hp + '/' + e.mhp).join(' '));
+    return;
+  }
   const only = opt('only', null) ? String(opt('only')).split(',') : null;
   const chOnly = opt('ch', null) != null ? +opt('ch') : null;
   const n = +opt('n', 300);

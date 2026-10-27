@@ -242,33 +242,50 @@
     },
   });
 
-  // ================================================================================================ 白芷
-  // Face & hair follow docs/design/REFERENCES.md (binding): very long straight jet-black hair with a blue-black sheen,
-  // worn down, slightly off-centre part, long face-framing lengths with one side tucked behind the ear; soft oval face;
-  // dark-brown almond eyes with softly upturned outer corners and a subtle double lid (mid-sized, not oversized);
-  // natural soft brows; small nose; full rose lips in a faint knowing smile; a beauty mark on HER RIGHT cheek beside the
-  // nose (viewer's left); long drop earrings; red string at the wrist; jade tag; dreamy upward-drifting gaze.
-  // Costume: the lamp-spirit's pale layered dress (v2 costume pick pending → swap via a new look).
-  look('baizhi', 'reference', {
+  // ================================================================================================ 白芷 (FINAL: v2 #02 藍衫笛歌, docs/design/v2/baizhi.md §02)
+  // Face & hair follow docs/design/REFERENCES.md (binding): very long straight jet-black hair (#17151C) with a blue-black
+  // sheen, worn down, slightly off-centre part; the long face-framing curtain falls on the VIEWER'S LEFT (her right),
+  // the other side is tucked behind the ear, where the long drop earring hangs (gold hook, dark bead, jade drop); soft
+  // oval face; mid-sized dark-brown almond eyes, softly upturned, subtle double lid; natural soft brows; small nose; full
+  // rose lips in a faint knowing half-smile; beauty mark on HER RIGHT cheek beside the nose (viewer's left); dreamy gaze.
+  // Costume (Hakka guest outfit from the 竹塹 山歌 duel, 7 heads, vertical column + banner sleeves): indigo 藍衫 to
+  // mid-calf (right overlap 大襟 with light-blue piping, side slits), wide banner sleeves with turned-back light-blue and
+  // cream cuff bands, dark 圍身裙 bib apron on a silver neck chain with gold running stitch and embroidered flowers, black
+  // trousers, cloth shoes; half-up loop with a jade comb and red string; red string at the wrist; jade flute with the
+  // red-string 「白芷」 jade tag hanging from its foot.
+  const BZ = { shirt: '#36598a', cuff: '#a9c9e6', cream: '#f4efe6', apron: '#2b2a3a', hair: '#17151c', sheen: '#5d6f98', skin: '#f3dccb', jade: '#9fd3bd', red: '#c3303a' };
+  look('baizhi', 'v2_02', {
     spec: {
-      skin: '#f7e2d2', eyes: '#3a2418',
-      hair: { style: 'center', part: 0.18, color: '#0c0c11', sheen: '#2e3d5c', back: 'long', len: 0.47, locks: 1.75, locksSide: 'L', tie: null, knot: null, pins: [{ type: 'lantern', th: -2.0, ph: 0.85 }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
-      top: { color: '#e6f4f2', len: 0.86, closure: 'cross', inner: '#fbfefe', trim: '#8fcdcb', sleeve: 'wide', cuff: '#bfe6e4', emb: '#7fbfc0' },
-      skirt: { color: '#cdeceb', len: 1.0, flare: 0.45, trim: '#9fd6d6' },
-      sash: { color: '#9fd2d8', w: 2.6, tails: true }, bracelet: { color: '#c8282a' },
-      shoes: { type: 'cloth', color: '#d8eef0' }, hip: ['jade'], weapon: 'flute', glow: '#bfe8ff',
+      body: 'female', skin: BZ.skin, eyes: '#4b2c20',
+      hair: { style: 'center', part: 0.18, color: BZ.hair, sheen: BZ.sheen, back: 'long', len: 0.5, locks: 1.75, locksSide: 'R', tie: BZ.red, knot: 'halfup',
+        pins: [{ type: 'comb', color: BZ.jade, th: 1.7, ph: 0.5, w: 0.05, h: 0.02, string: BZ.red }], vol: 1.05, bangLen: -0.04, bangSpread: 1.35 },
+      hat: null,
+      top: { color: BZ.shirt, len: 0.86, closure: 'side', inner: BZ.cream, trim: BZ.cuff, sleeve: 'banner', cuff: BZ.cuff, cuff2: BZ.cream, cuffW: 0.15, sleeveR: 0.1, hang: 0.17, slits: 0.06, button: BZ.cream },
+      apron: { color: BZ.apron, len: 0.62, bib: true, bibDrop: 0.075, bibW: 0.6, chain: '#c8ccd6', stitch: '#d8b860', emb: '#e8788a', embN: 3, band: '#1e1d2b', trim: '#4a5a82' },
+      skirt: null, sash: null, vest: null,
+      bottom: { type: 'pants', color: '#1e1d26' }, shoes: { type: 'cloth', color: BZ.apron, sole: '#ece6d6' },
+      bracelet: { color: BZ.red }, hip: ['jade'], held: null, weapon: 'flute', glow: '#bfe8ff', aura: '#7fd3ff',
     },
     body3d: { neckLen: 0.05, neckR: 0.037, sh: 0.15, headW: 0.168 },
     face3d: {
-      eyeStyle: 'soft', ew: 0.255, eh: 0.6, tilt: 0.2, irisR: 0.58, iris: '#3a2418', irisLight: '#8a5838', lash: 0.75, dbl: 0.7, low: 0.5,
+      eyeStyle: 'soft', ew: 0.255, eh: 0.6, tilt: 0.2, irisR: 0.58, iris: '#4b2c20', irisLight: '#8a5838', lash: 0.75, dbl: 0.7, low: 0.5,
       browW: 1.15, browArch: 0.3, browAng: 0.05, browCol: '#16131a',
-      lips: '#d97482', lipTint: 0.6, mouthW: 0.155, restCurve: 0.32, chin: 0.43, jaw: 0.82, cheek: 0.035, blush: 0.32,
-      marks: [{ x: -0.2, y: -0.27, r: 0.75, color: '#3a2226' }],
+      lips: '#d98892', lipTint: 0.6, mouthW: 0.155, restCurve: 0.32, chin: 0.43, jaw: 0.82, cheek: 0.035, blush: 0.32,
+      marks: [{ x: -0.2, y: -0.27, r: 0.75, color: '#3a2224' }],
     },
     expr: 'dreamy',
-    props3d: { flute: { mat: 'jade', tassel: 'tassel' } },
+    props3d: { flute: { mat: 'jade', tag: true } },
     style: { rest: { head: [-3, 0, -3], neck: [-2, 0, 0], upperArmL: [0, 0, -2], upperArmR: [0, 0, 2] } },
-    parts: [(B) => earrings(B, { sides: [1, -1], len: 0.05, bead: 'dark', drop: 'jade' })],
+    parts: [(B) => earrings(B, { sides: [1], len: 0.05, bead: 'dark', drop: 'jade' })],
+    clips: {
+      // the sheet pose: the jade flute held level across the body at the waist, both hands near its middle
+      sheet: () => ({ dur: 4, loop: true, k: [
+        { t: 0, hp: [0, 0, 0], ch: [-1, 0, 0], nk: [-2, 0, 0], hd: [-3, 6, -4], fL: [0.01, 0, 0], fR: [-0.01, 0, 0],
+          hR: [-0.07, 1.0, 0.22], hRd: [1, 0, 0.04], hRroll: 90, hRm: 'on', hL: 0.15, hLm: 'on' },
+        { t: 2, ch: [0.5, 0, 0], hp: [0, -0.005, 0], hR: [-0.07, 0.995, 0.22] },
+        { t: 4, ch: [-1, 0, 0], hp: [0, 0, 0], hR: [-0.07, 1.0, 0.22] },
+      ] }),
+    },
   });
 
   // ================================================================================================ 洛紅纓
