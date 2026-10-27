@@ -21,7 +21,7 @@ G.Models = (() => {
     let proto = cache.get(key);
     if (!proto) {
       try {
-        proto = d.build(Object.assign({}, o, { v }), M.kit());
+        proto = d.build(d.variants ? Object.assign({}, o, { v }) : Object.assign({}, o), M.kit());  // defs without variants keep o.v (cache by key())
       } catch (e) { G.warnOnce('model ' + id, e); return null; }
       if (!proto) return null;
       proto.traverse((n) => { if (n.isMesh && n.castShadow === undefined) n.castShadow = true; });

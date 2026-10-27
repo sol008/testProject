@@ -808,7 +808,12 @@ G.Map3D = (() => {
         const o = node.userData.o, md = node.userData.def;
         if (md && md.update) { try { md.update(node.children[0], o, this.t, dt); } catch (e) { G.warnOnce('mupd ' + o.t, e); } }
         if (node.children[0] && node.children[0].userData.fallback) node.children[0].traverse((n) => { if (n.userData.billboard) n.rotation.y = this.yaw; });
-        if (o.spirit) node.traverse((n) => { if (n.material && !n.userData.outline) { n.material.transparent = true; n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3); } });
+        if (o.spirit) node.traverse((n) => {
+          if (!n.material || n.userData.outline || Array.isArray(n.material)) return;
+          // materials are shared between instances of a model: give spirit objects their own copy before fading
+          if (!n.userData.spiritMat) { n.material = n.material.clone(); n.userData.spiritMat = true; n.material.transparent = true; }
+          n.material.opacity = 0.7 + 0.25 * Math.sin(this.t * 3);
+        });
       }
       if (this.waterU) this.waterU.value = this.t;
       if (this.sky) this.sky.material.uniforms.time.value = this.t;
