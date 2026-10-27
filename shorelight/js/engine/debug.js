@@ -116,6 +116,8 @@ G.Debug.idle = function (timeoutMs = 60000) {
     const iv = setInterval(() => {
       const top = G.Scenes.top();
       const idle = !G.Script.busy() && top === G.mapScene && G.Render.fade.a < 0.05;
+      const over = !!(G.GameOverScene && top instanceof G.GameOverScene);
+      if (over) { clearInterval(iv); res('gameover'); return; }
       if (idle || Date.now() - t0 > timeoutMs) { clearInterval(iv); res(idle); }
     }, 100);
   });

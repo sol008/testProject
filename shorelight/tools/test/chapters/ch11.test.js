@@ -3,7 +3,9 @@
 //
 //   node tools/test/chapters/ch11.test.js            # full run (true ending, then normal ending)
 //   node tools/test/chapters/ch11.test.js --shots    # also screenshot every map / key moment → tools/test/out/ch11/
-//   node tools/test/chapters/ch11.test.js --only normal   # skip run A, start run B from a fresh debug state
+//   node tools/test/chapters/ch11.test.js --from tower        # replay from the snapshot saved after segment 'field'
+//   node tools/test/chapters/ch11.test.js --only normal       # one segment (normal needs snap_breath.json)
+//   segments: temple magong flats xuanwu voyage field tower breath true normal  (3D renderer disabled; ch1–10 map files stubbed unless --all)
 //
 // Run A: ?debug&startch=11&autoplay — drives the critical path (every main event) and every side quest / 心燈,
 //        forces the heart-lantern count ≥ G.Lanterns.THRESHOLD (G.Lanterns.add) → 真結局「千燈」 → credits → stinger → title.

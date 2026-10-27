@@ -162,6 +162,14 @@ G.Map3D = (() => {
       this.post.vignette = this.dark > 0.4 ? 0.5 : 0.34;
     }
 
+    rebuildEnvironment() {
+      for (const o of [this.sky, this.hemi, this.sun, this.sun && this.sun.target, ...(this.pool || []), ...(this.halos || [])]) if (o) { this.scene.remove(o); if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }
+      if (this.envRT) this.envRT.dispose();
+      this.sky = null; this.halos = [];
+      this.buildEnvironment();
+      if (this.apron && this.outdoor) this.apron.material.color.copy(this.edgeColor());
+    }
+
     // ------------------------------------------------------------------ terrain
     // vertex height on the half-tile lattice (hx, hz in half-tiles)
     heightAt(hx, hz) {
@@ -741,6 +749,8 @@ G.Map3D = (() => {
         const d = wrapA(this.yawGoal - this.yaw);
         this.yaw = Math.abs(d) < 0.002 ? this.yawGoal : this.yaw + d * Math.min(1, dt * 7);
       }
+      // S.light() mid-map (time-of-day change): rebuild sky, sun, fog, IBL and the light pool
+      if (ms.lightCfg !== this._lightCfg) { if (this._lightCfg) this.rebuildEnvironment(); this._lightCfg = ms.lightCfg; }
       // terrain edits by scripts (rare): re-bake affected chunks
       if ((this._tf = (this._tf || 0) + 1) % 15 === 0) this.checkTerrain();
       this.syncObjects(false);
