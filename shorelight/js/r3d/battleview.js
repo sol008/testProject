@@ -37,7 +37,7 @@ G.Battle3D = (() => {
       if (t.a < 0.42) discard;
       float n = texture2D(uNoise, uv * 2.3).r;
       if (uDissolve > 0.0 && n < uDissolve) discard;
-      vec3 c = t.rgb * uLight + uGlow * t.a;
+      vec3 c = t.rgb * uLight; c += min(uGlow, vec3(0.6)) * t.a * (1.0 - 0.55 * c); // capped, screen-like flash: the art stays readable
       float edge = uDissolve > 0.0 ? smoothstep(uDissolve + 0.08, uDissolve, n) : 0.0;
       c = mix(c, uEdge, edge);
       gl_FragColor = vec4(c, uOpacity);
@@ -2234,9 +2234,15 @@ G.Battle3D.Arena = (() => {
     caveShell(K, '#2a3038', 15, 10, true);
     // the bright mouth of the cave behind the enemies
     const TT = K.T;
-    const mouth = new TT.Mesh(new TT.CircleGeometry(6, 24), new TT.MeshBasicMaterial({ color: C('#d8ecff').multiplyScalar(2.2), fog: false }));
-    mouth.position.set(0, 5, -26); mouth.scale.y = 0.8;
-    K.out.group.add(mouth); K.out.disposables.push(() => { mouth.geometry.dispose(); mouth.material.dispose(); });
+    // soft radial glow (a hard disc read as a white cut-out against the rock)
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const g2 = cv.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(232,244,255,1)'); gr.addColorStop(0.35, 'rgba(200,226,255,0.75)'); gr.addColorStop(0.7, 'rgba(150,190,240,0.22)'); gr.addColorStop(1, 'rgba(120,160,220,0)');
+    g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
+    const mtex = new TT.CanvasTexture(cv); mtex.colorSpace = TT.SRGBColorSpace;
+    const mouth = new TT.Mesh(new TT.PlaneGeometry(16, 11), new TT.MeshBasicMaterial({ map: mtex, color: C('#ffffff').multiplyScalar(1.4), transparent: true, depthWrite: false, blending: TT.AdditiveBlending, fog: false }));
+    mouth.position.set(0, 4.5, -26);
+    K.out.group.add(mouth); K.out.disposables.push(() => { mouth.geometry.dispose(); mouth.material.dispose(); mtex.dispose(); });
     for (let i = 0; i < 8; i++) { const sp = K.mesh(new TT.ConeGeometry(K.r(0.4, 1), K.r(2, 5), 6), K.mat('#c8e0f0', { roughness: 0.3, metalness: 0.1 }), K.r(-5, 5), 0, -24 + K.r(-1, 1)); sp.position.y = sp.geometry.parameters.height / 2; K.staticGroup.add(sp); }
     K.ring(14, 13, 8, (x, z) => K.place(PR.rock(K, K.r(0.5, 1.6), ['#3a4048', '#2a3038']), x, z));
     K.ring(10, 11.5, 7, (x, z) => M(K, 'crystal', x, z, { s: K.r(1, 1.8) }), { phase: 0.3 });
