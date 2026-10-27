@@ -157,6 +157,9 @@ function mapInfo(id) {
   const st0 = def.start || [1, 1];
   G.state = G.newState(); G.state.party = ['xinghe']; G.Party.create('xinghe', 10);
   const sc = new G.MapScene(id, st0[0], st0[1]);
+  // conditional blockers (puzzle rubble, story gates, push blocks, 靈視 walls) are open on the way through
+  sc.objActive = (ob) => !(ob.if || ob.push || ob.spirit || ob.illusion);
+  sc.computeSolid();
   const W = sc.w, H = sc.h, solid = sc.solid;
   const free = (x, y) => x >= 0 && y >= 0 && x < W && y < H && !solid[y * W + x];
   // a walkable cell next to a rect (warps sit on doors / edges)
@@ -167,29 +170,40 @@ function mapInfo(id) {
   };
   const warps = (def.warps || []).map((w) => ({ to: w.to, cell: near(w.x + Math.floor((w.w || 1) / 2), w.y + Math.floor((w.h || 1) / 2)) })).filter((w) => w.cell);
   const events = (def.events || []).filter((e) => e.x != null && e.y != null && e.trigger !== 'auto' && !e.spirit).map((e) => ({ id: e.id, cell: near(e.x, e.y) })).filter((e) => e.cell);
+  // shortest walk (Dijkstra): a closed gate / story wall (solid now, open when the story gets there) costs 25 steps
+  const SOLID = 25;
   const bfs = (from) => {
-    const dist = new Int32Array(W * H).fill(-1), prev = new Int32Array(W * H).fill(-1);
-    const q = [from[1] * W + from[0]]; dist[q[0]] = 0;
-    for (let h = 0; h < q.length; h++) {
-      const i = q[h], x = i % W, y = (i / W) | 0;
+    const dist = new Float64Array(W * H).fill(Infinity), prev = new Int32Array(W * H).fill(-1);
+    const s0 = from[1] * W + from[0];
+    dist[s0] = 0;
+    const heap = [[0, s0]];
+    const push = (e) => { heap.push(e); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+    const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+    while (heap.length) {
+      const [d, i] = pop();
+      if (d > dist[i]) continue;
+      const x = i % W, y = (i / W) | 0;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy;
-        if (!free(nx, ny)) continue;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
         const j = ny * W + nx;
-        if (dist[j] >= 0) continue;
-        dist[j] = dist[i] + 1; prev[j] = i; q.push(j);
+        const nd = d + (solid[j] ? SOLID : 1);
+        if (nd < dist[j]) { dist[j] = nd; prev[j] = i; push([nd, j]); }
       }
     }
     return { dist, prev };
   };
-  // critical path: from the first warp (arrival) to every other warp; a dead end (≤ 1 warp) also walks to its
-  // farthest story event (the reason to go there)
+  // critical path: from the arrival warp to every other warp and to every story / puzzle spot of the map (touch and
+  // action events, inspectable objects); a dead end without any also walks to its farthest NPC or chest
   const root = warps[0] ? warps[0].cell : near(st0[0], st0[1]);
   const { dist, prev } = bfs(root);
-  const targets = warps.slice(1).map((w) => w.cell);
-  if (warps.length <= 1 && events.length) {
+  const spotsOf = (list) => list.map((c) => near(c[0], c[1])).filter(Boolean);
+  const inspect = spotsOf(sc.objects.filter((ob) => ob.interact && !ob.chest).map((ob) => [ob.x, ob.y]));
+  const targets = warps.slice(1).map((w) => w.cell).concat(events.map((e) => e.cell)).concat(inspect);
+  if (!targets.length) {
     let far = null;
-    for (const e of events) { const d = dist[e.cell[1] * W + e.cell[0]]; if (d > 0 && (!far || d > far.d)) far = { d, cell: e.cell }; }
+    const spots = spotsOf((def.npcs || []).filter((n) => n.x != null).map((n) => [n.x, n.y]).concat((def.chests || []).map((c) => [c.x, c.y])));
+    for (const c of spots) { const d = dist[c[1] * W + c[0]]; if (d > 0 && d < Infinity && (!far || d > far.d)) far = { d, cell: c }; }
     if (far) targets.push(far.cell);
   }
   const onPath = new Uint8Array(W * H);
@@ -197,7 +211,7 @@ function mapInfo(id) {
   let steps = 0;
   for (const t of targets) {
     let i = t[1] * W + t[0];
-    if (dist[i] < 0) continue;
+    if (!(dist[i] < Infinity)) continue;
     steps += dist[i];
     while (i >= 0 && !onPath[i]) { onPath[i] = 1; i = prev[i]; }
   }
