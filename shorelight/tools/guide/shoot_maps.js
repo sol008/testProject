@@ -22,7 +22,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const GUIDE = path.join(ROOT, 'docs', 'guide');
 const OUT = path.join(GUIDE, 'img');
 const BASE = 'file://' + path.join(ROOT, 'index.html');
-const MAX_BYTES = 120 * 1024;
+const MAX_BYTES = 117 * 1024; // < 120 KB in both decimal and binary units
 const argv = process.argv.slice(2);
 const FORCE = argv.includes('--force');
 

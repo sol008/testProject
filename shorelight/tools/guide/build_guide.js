@@ -698,8 +698,8 @@ const ELEM_COLOR = { metal: 'var(--e-metal)', wood: 'var(--e-wood)', water: 'var
 const r1 = (x) => Math.round(x * 10) / 10;
 function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; }
 const kfmt = (v) => (v >= 10000 ? (v / 1000) + 'K' : v >= 1000 ? r1(v / 1000) + 'K' : String(v));
-function figure(id, title, sub, svg, tableMd) {
-  return { id, title, sub, svg, tableMd };
+function figure(id, title, sub, svg, tableMd, cls) {
+  return { id, title, sub, svg, tableMd, cls: cls || (/^route/.test(id) ? 'route' : '') };
 }
 function svgOpen(w, h, label) { return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg">`; }
 function yAxis(x0, x1, y0, y1, max, ticks, fmt = kfmt) {
@@ -878,58 +878,100 @@ function chartLanterns() {
   return figure('lanterns', '心燈分布', `全遊戲共 ${total} 盞心燈；真結局需要 ${th} 盞。長條是各章可取得的數量，折線是全部拿到時的累計。`, s, tableMd);
 }
 
-// Taiwan route map — coastline parsed from js/engine/worldmap.js
-const WM_SRC = fs.readFileSync(path.join(ROOT, 'js', 'engine', 'worldmap.js'), 'utf8');
-const COAST = (() => { const i = WM_SRC.indexOf('const COAST = ['); const b = WM_SRC.indexOf('[', i); return vm.runInNewContext(WM_SRC.slice(b, matchBracket(WM_SRC, b))); })();
-const ISLANDS = (() => { const i = WM_SRC.indexOf('const ISLANDS = {'); const b = WM_SRC.indexOf('{', i); return vm.runInNewContext('(' + WM_SRC.slice(b, matchBracket(WM_SRC, b)) + ')'); })();
 const CH_PLACES = (() => {
   const out = {};
   for (const ch of CHS) out[ch] = [...new Set(D.own[ch].maps.filter((m) => !/^ending_/.test(m)).map((m) => G.Maps.defs[m].place).filter((p) => p && G.World.PLACES[p]))];
   // a chapter that opens where the last one ended keeps that place first (ch7 leaves from 府城)
   return out;
 })();
+// Taiwan route map. Simplified coastline (lon, lat), clockwise from 富貴角; islands; the journey from each
+// chapter's map `place`s (G.World.PLACES coordinates), with the 王船's sea legs routed around the coast.
+const COAST = [
+  [121.535, 25.297], [121.60, 25.27], [121.64, 25.23], [121.69, 25.21], [121.74, 25.155], [121.80, 25.145], [121.87, 25.14], [121.92, 25.13],
+  [121.97, 25.06], [122.00, 25.01], [121.95, 25.02], [121.89, 24.94], [121.84, 24.86], [121.83, 24.76], [121.86, 24.66], [121.87, 24.59],
+  [121.82, 24.48], [121.76, 24.36], [121.70, 24.21], [121.63, 24.06], [121.60, 23.93], [121.55, 23.72], [121.51, 23.50], [121.45, 23.33],
+  [121.40, 23.12], [121.30, 22.97], [121.19, 22.80], [121.10, 22.70], [121.00, 22.61], [120.93, 22.45], [120.90, 22.33], [120.88, 22.20],
+  [120.88, 22.06], [120.85, 21.905], [120.80, 21.93], [120.74, 21.92], [120.72, 21.97], [120.70, 22.07], [120.66, 22.20], [120.62, 22.30],
+  [120.58, 22.37], [120.50, 22.43], [120.44, 22.46], [120.38, 22.50], [120.30, 22.56], [120.26, 22.62], [120.25, 22.72], [120.20, 22.85],
+  [120.16, 22.97], [120.11, 23.06], [120.07, 23.14], [120.10, 23.27], [120.14, 23.44], [120.16, 23.58], [120.19, 23.72], [120.24, 23.84],
+  [120.31, 23.94], [120.38, 24.04], [120.46, 24.16], [120.52, 24.28], [120.58, 24.40], [120.65, 24.48], [120.72, 24.57], [120.80, 24.66],
+  [120.87, 24.74], [120.92, 24.83], [120.98, 24.91], [121.05, 25.01], [121.12, 25.06], [121.20, 25.11], [121.30, 25.14], [121.40, 25.17],
+  [121.44, 25.19], [121.49, 25.26],
+];
+const ISLES = {
+  penghu: [[119.56, 23.57], [119.60, 23.53], [119.66, 23.545], [119.70, 23.585], [119.67, 23.63], [119.62, 23.62], [119.585, 23.60]],
+  baisha: [[119.58, 23.645], [119.63, 23.645], [119.635, 23.68], [119.59, 23.69], [119.565, 23.67]],
+  xiyu: [[119.505, 23.565], [119.53, 23.57], [119.535, 23.62], [119.515, 23.64], [119.495, 23.60]],
+  wangan: [[119.48, 23.36], [119.51, 23.355], [119.515, 23.375], [119.49, 23.385]],
+  qimei: [[119.41, 23.20], [119.44, 23.195], [119.445, 23.215], [119.415, 23.22]],
+  orchid: [[121.50, 22.02], [121.55, 21.995], [121.60, 22.02], [121.61, 22.06], [121.57, 22.09], [121.52, 22.085], [121.495, 22.055]],
+  green: [[121.475, 22.64], [121.50, 22.635], [121.51, 22.66], [121.495, 22.68], [121.475, 22.67]],
+  turtle: [[121.94, 24.835], [121.955, 24.83], [121.965, 24.84], [121.955, 24.85], [121.94, 24.845]],
+  keelung: [[121.775, 25.185], [121.79, 25.185], [121.79, 25.195], [121.775, 25.195]],
+};
+// sea legs of the 王船 (ch9–11): extra waypoints so the line follows the coast instead of crossing the island
+const SEA_VIA = {
+  'eluanbi>orchid': [[121.05, 21.95]],
+  'taitung>taroko': [[121.42, 22.95], [121.58, 23.40], [121.72, 23.95]],
+  'taroko>toucheng': [[121.85, 24.30], [121.93, 24.62]],
+  'toucheng>penghu': [[122.06, 24.98], [121.90, 25.24], [121.55, 25.36], [121.10, 25.20], [120.60, 24.62], [120.00, 24.05]],
+  'penghu>farshore': [],
+};
+const SEA = new Set(Object.keys(SEA_VIA));
+// label placement [dx, dy, anchor] in px (font 11) — the northern stops are crowded
+const LBL = {
+  jiufen: [8, 7, 'start'], badouzi: [-5, -7, 'end'], pingxi: [0, 16, 'middle'], tamsui: [-7, -5, 'end'], guanyin: [-7, 8, 'end'],
+  bangka: [-6, 18, 'end'], hsinchu: [-7, 2, 'end'], xiangtian: [7, 6, 'start'], lukang: [-7, 4, 'end'], beigang: [-7, 4, 'end'],
+  yanshui: [-7, 4, 'end'], tainan: [-7, 4, 'end'], alishan: [-7, 10, 'end'], yushan: [7, 8, 'start'], sunmoon: [7, 4, 'start'],
+  takao: [-7, 2, 'end'], donggang: [-6, 12, 'end'], hengchun: [-7, 2, 'end'], eluanbi: [0, 16, 'middle'], orchid: [8, 4, 'start'],
+  taitung: [7, 6, 'start'], taroko: [-7, 4, 'end'], toucheng: [7, 4, 'start'], penghu: [0, -12, 'middle'], farshore: [0, 18, 'middle'],
+};
 function chartRoute(hl) {
-  const W = 520, H = 700;
-  const lon0 = 118.75, lon1 = 122.15, lat0 = 25.45, lat1 = 21.75;
-  const sx = (W - 20) / (lon1 - lon0), sy = sx / Math.cos(23.7 * Math.PI / 180);
-  const P = (lon, lat) => [10 + (lon - lon0) * sx, 10 + (lat0 - lat) * sy];
-  const Hh = Math.ceil(20 + (lat0 - lat1) * sy);
-  let s = svgOpen(W, Hh, hl == null ? '旅程路線圖' : `${CH_TITLE(hl)} 路線圖`);
+  const lon0 = 118.85, lon1 = 122.12, lat0 = 25.40, lat1 = 21.84;
+  const W = 420, sx = (W - 16) / (lon1 - lon0), sy = sx / Math.cos((23.6 * Math.PI) / 180);
+  const H = Math.ceil(16 + (lat0 - lat1) * sy);
+  const P = (lon, lat) => [8 + (lon - lon0) * sx, 8 + (lat0 - lat) * sy];
   const poly = (pts) => pts.map(([a, b]) => P(a, b).map(r1).join(',')).join(' ');
+  const PL = G.World.PLACES;
+  let s = svgOpen(W, H, hl == null ? '旅程路線圖' : `${CH_TITLE(hl)} 路線圖`);
   s += `<polygon class="land" points="${poly(COAST)}"/>`;
-  for (const k2 in ISLANDS) s += `<polygon class="land" points="${poly(ISLANDS[k2])}"/>`;
-  // journey
+  for (const k in ISLES) s += `<polygon class="land" points="${poly(ISLES[k])}"/>`;
+  const [bx, by] = P(119.95, 22.55);
+  s += `<text class="sea" x="${r1(bx)}" y="${r1(by)}" text-anchor="middle">黑水溝</text>`;
+  const [px2, py2] = P(122.0, 23.0);
+  s += `<text class="sea" x="${r1(px2)}" y="${r1(py2)}" text-anchor="middle" transform="rotate(90 ${r1(px2)} ${r1(py2)})">黑潮</text>`;
+  // journey sequence
   const seq = [];
-  for (const ch of CHS) for (const p of CH_PLACES[ch]) if (!seq.length || seq[seq.length - 1].p !== p) seq.push({ p, ch });
-  const n = seq.length;
-  for (let i = 1; i < n; i++) {
-    const a = P(...G.World.PLACES[seq[i - 1].p]), b = P(...G.World.PLACES[seq[i].p]);
-    const ch = seq[i].ch;
+  for (const ch of CHS) for (const p of (CH_PLACES[ch] || [])) if (!seq.length || seq[seq.length - 1].p !== p) seq.push({ p, ch });
+  const focus = new Set(hl == null ? [] : (hl === 0 ? ['jiufen'] : CH_PLACES[hl] || []));
+  for (let i = 1; i < seq.length; i++) {
+    const a = seq[i - 1].p, b = seq[i].p, ch = seq[i].ch, key = a + '>' + b;
+    const pts = [PL[a].slice(0, 2), ...(SEA_VIA[key] || []), PL[b].slice(0, 2)].map(([x, y]) => P(x, y));
     const on = hl == null || ch === hl;
-    const col = hl == null ? `var(--r${Math.min(11, ch)})` : on ? 'var(--s2)' : 'var(--muted2)';
-    const sea = ch >= 9 && ['orchid', 'taitung', 'taroko', 'toucheng', 'penghu', 'farshore', 'eluanbi', 'hengchun'].includes(seq[i].p);
-    s += `<line x1="${r1(a[0])}" y1="${r1(a[1])}" x2="${r1(b[0])}" y2="${r1(b[1])}" stroke="${col}" stroke-width="${on ? 2.5 : 1.5}" stroke-linecap="round"${sea ? ' stroke-dasharray="1 5"' : ''}><title>${CH_SHORT(ch)}：${G.World.PLACES[seq[i - 1].p][2]} → ${G.World.PLACES[seq[i].p][2]}</title></line>`;
+    const col = hl == null ? `var(--r${Math.min(11, Math.max(1, ch))})` : on ? 'var(--s2)' : 'var(--muted2)';
+    const d = 'M' + pts.map((p) => p.map(r1).join(',')).join(' L');
+    s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${on ? 2.5 : 1.5}" stroke-linecap="round" stroke-linejoin="round"${SEA.has(key) ? ' stroke-dasharray="2 4"' : ''}><title>${CH_SHORT(ch)}：${PL[a][2]} → ${PL[b][2]}${SEA.has(key) ? '（王船）' : ''}</title></path>`;
   }
   const placed = new Set();
-  seq.forEach((q, i) => {
-    if (placed.has(q.p)) return;
+  for (const q of seq) {
+    if (placed.has(q.p)) continue;
     placed.add(q.p);
-    const [x, y] = P(...G.World.PLACES[q.p]);
+    const [x, y] = P(PL[q.p][0], PL[q.p][1]);
     const chs = [...new Set(seq.filter((z) => z.p === q.p).map((z) => z.ch))];
-    const on = hl == null || chs.includes(hl);
-    const right = x < W * 0.55 ? q.p !== 'farshore' : false;
-    const off = { tamsui: [-1, -6], guanyin: [-1, 8], bangka: [1, 12], pingxi: [1, 12], jiufen: [1, -2], badouzi: [1, -8], hsinchu: [-1, 0], xiangtian: [1, 6], beigang: [-1, 0], yanshui: [-1, -2], tainan: [-1, 6], takao: [-1, 0], alishan: [-1, -2], yushan: [1, 4], sunmoon: [1, -2], farshore: [1, 0], penghu: [1, 0] }[q.p] || [right ? 1 : -1, 0];
-    const anchor = off[0] > 0 ? 'start' : 'end';
-    s += `<circle cx="${r1(x)}" cy="${r1(y)}" r="${on ? 5 : 3.5}" fill="${on ? (hl == null ? `var(--r${Math.min(11, chs[0])})` : 'var(--s2)') : 'var(--muted2)'}" stroke="var(--surface)" stroke-width="2"><title>${G.World.PLACES[q.p][2]}（${chs.map(CH_SHORT).join('、')}）</title></circle>`;
-    if (on || hl == null) s += `<text class="${on ? 'lab' : 'tick'}" x="${r1(x + off[0] * 9)}" y="${r1(y + 4 + off[1])}" text-anchor="${anchor}">${esc(G.World.PLACES[q.p][2])}${hl == null ? ' ' + chs.join('・') : ''}</text>`;
-    void i;
-  });
-  s += '</svg>';
-  const rows = CHS.filter((ch) => CH_PLACES[ch].length).map((ch) => [CH_SHORT(ch), CH_TITLE(ch).replace(/^\S+　/, ''), CH_PLACES[ch].map((p) => G.World.PLACES[p][2]).join(' → ')]);
-  if (hl != null) {
-    return figure('route_ch' + hl, `${CH_TITLE(hl)}・路線`, `本章走過的地點：${(CH_PLACES[hl] || []).map((p) => G.World.PLACES[p][2]).join(' → ') || '夢境'}。`, s, null);
+    const on = hl == null ? true : focus.has(q.p) && (hl === 0 || chs.includes(hl));
+    const fill = hl == null ? `var(--r${Math.min(11, Math.max(1, chs[0]))})` : on ? 'var(--s2)' : 'var(--muted2)';
+    s += `<circle cx="${r1(x)}" cy="${r1(y)}" r="${on && hl != null ? 5 : 3.5}" fill="${fill}" stroke="var(--surface)" stroke-width="1.5"><title>${PL[q.p][2]}（${chs.map(CH_SHORT).join('、')}）</title></circle>`;
+    const [dx, dy, anc] = LBL[q.p] || [7, 4, 'start'];
+    const label = PL[q.p][2] + (hl == null ? ' ' + chs.join('・') : '');
+    s += `<text class="${hl != null && on ? 'stop on' : 'stop'}" x="${r1(x + dx)}" y="${r1(y + dy)}" text-anchor="${anc}">${esc(label)}</text>`;
   }
-  return figure('route', '旅程路線圖', '一年一渡：一行人大致順時針繞行全島。地名後的數字是到訪的章；顏色由淺到深代表旅程先後，虛線是王船的海路。', s, mdTable(['章', '標題', '地點'], rows));
+  s += '</svg>';
+  if (hl != null) {
+    const names = hl === 0 ? '夢境・燈橋（醒來的地方是九份）' : (CH_PLACES[hl] || []).map((p) => PL[p][2]).join(' → ');
+    return figure('route_ch' + hl, `${CH_TITLE(hl)}・路線`, `本章走過的地點：${names}。橘色是本章，灰色是其他章節；虛線是王船的海路。`, s, null);
+  }
+  const rows = CHS.filter((ch) => (CH_PLACES[ch] || []).length).map((ch) => [CH_SHORT(ch), CH_TITLE(ch).replace(/^\S+　/, ''), CH_PLACES[ch].map((p) => PL[p][2]).join(' → ')]);
+  return figure('route', '旅程路線圖', '一年一渡：一行人大致順時針繞行全島。地名後的數字是到訪的章；線條顏色由淺到深代表旅程先後，虛線是第九章起王船沿黑潮北上、再橫渡黑水溝到彼岸的海路。', s, mdTable(['章', '標題', '地點'], rows));
 }
 
 function chartById(id) {
@@ -1103,7 +1145,7 @@ function expand(md) {
     let fid = 'fig-' + f.id, k = 2;
     while (figIds.has(fid)) fid = 'fig-' + f.id + '-' + k++;
     figIds.add(fid);
-    raw.push(`<figure class="chart-fig" id="${fid}"><figcaption><span class="fig-title">${esc(f.title)}</span><span class="fig-sub">${esc(f.sub)}</span></figcaption>${f.svg}` +
+    raw.push(`<figure class="chart-fig${f.cls ? ' fig-' + f.cls : ''}" id="${fid}"><figcaption><span class="fig-title">${esc(f.title)}</span><span class="fig-sub">${esc(f.sub)}</span></figcaption>${f.svg}` +
       (f.tableMd ? `\n@@TABLE:${raw.length}@@` : '') + '</figure>');
     if (f.tableMd) f.rawIndex = raw.length - 1;
     htmlSrc.push('', `@@RAW:${raw.length - 1}@@`, '');

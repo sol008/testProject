@@ -140,7 +140,12 @@ svg.chart .val { fill: var(--ink); font-size: 11px; font-variant-numeric: tabula
 svg.chart .ttl { fill: var(--ink); font-size: 13px; font-weight: 700; }
 svg.chart .elem { fill: #fff; font-size: 30px; font-weight: 700; paint-order: stroke; stroke: rgba(0, 0, 0, .25); stroke-width: 2px; }
 svg.chart .band { fill: var(--band); }
-svg.chart .land { fill: var(--land); stroke: var(--land-line); stroke-width: 1; }
+svg.chart .land { fill: var(--land); stroke: var(--land-line); stroke-width: 1; stroke-linejoin: round; }
+svg.chart .stop { fill: var(--muted); font-size: 11px; }
+svg.chart .stop.on { fill: var(--ink); font-size: 12.5px; font-weight: 700; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+svg.chart .sea { fill: var(--muted); font-size: 12px; letter-spacing: .4em; opacity: .7; }
+figure.fig-route { max-width: 470px; margin-left: auto; margin-right: auto; }
+figure.fig-route svg.chart { max-width: 430px; }
 svg.chart [stroke-width] title, svg.chart title { pointer-events: none; }
 svg.chart path:hover, svg.chart circle:hover, svg.chart rect:hover { opacity: .8; }
 svg.chart line[stroke-width="2"]:hover { stroke-width: 3.5; }
