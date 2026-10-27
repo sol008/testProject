@@ -261,7 +261,7 @@ G.I18N.add({
   '跟轎的香客': 'Pilgrim',
   '帝君保庇！帝君保庇！': 'Lord Guan protect us! Lord Guan protect us!',
   '包著毛巾的阿姨': 'Towel-Wrapped Auntie',
-  '（她全身包得只剩兩隻眼睛，對你們比了一個讚。）': '(She\'s wrapped up so tight only her eyes show. She gives you a thumbs-up.)',
+  '（她全身包得只剩兩隻眼睛，對你們豎起了大拇指。）': '(She\'s wrapped up so tight only her eyes show. She gives you a thumbs-up.)',
   '咳嗽的婦人': 'Coughing Woman',
   '今晚先在客棧歇一晚。天一亮，往府城。': 'We\'ll rest at the inn tonight. At first light, on to Tainan.',
   '往南是府城。……不過，都到鹽水了，不看蜂炮再走？': 'South is Tainan. …Though, now that we\'re in Yanshui, we\'re not leaving without seeing the beehive rockets, are we?',
