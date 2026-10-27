@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>arch_coast test viewer</title>
+<style>
+  html, body { margin: 0; background: #1b1d22; color: #ddd; font: 13px/1.3 system-ui, sans-serif; overflow: hidden; }
+  .lb { position: absolute; transform: translate(-50%, 0); padding: 2px 6px; background: rgba(0,0,0,.55); border-radius: 4px; white-space: nowrap; pointer-events: none; }
+  #info { position: absolute; left: 8px; top: 6px; opacity: .85; }
+</style></head>
+<body>
+<canvas id="c"></canvas><div id="info"></div>
+<!--
+  Architecture team B test viewer (extends tools/r3d/viewer.html for map-object instance state).
+    ids=a,b         model ids                 o={"water":true}   extra instance fields (JSON, applied to every id)
+    yaw pitch dist fov   camera                t=s   animate update() to time t (default 0.6)
+    night=1         dark scene + point lights from def.lights(o)
+    water=1         water plane at y=-0.07 (map water level)
+    solid=1         draw the 2D def's solid cells (red) / footprint (yellow) on the ground
+    fallback=1      2D-art billboards instead of models      cols=n  w/h px  labels=0
+  window.__stats = per-item { id, tris, calls, meshes, bbox, nan } plus totals; window.__errors collects build errors.
+-->
+<script>window.G_VIEWER = true; window.__errors = [];</script>
+<script>
+// load the game's script list (minus main.js) in order, so chapter-defined objects (c10_*) exist too
+(function () {
+  const list = ["js/core/util.js", "js/core/fontdata.js", "js/core/font.js", "js/core/i18n.js", "js/core/input.js", "js/core/audio.js", "js/core/music.js", "js/core/render.js", "js/core/state.js", "js/vendor/three.bundle.js", "js/r3d/core.js", "js/r3d/materials.js", "js/r3d/models.js", "js/r3d/chars.js", "js/r3d/chars_cast.js", "js/r3d/animals.js", "js/r3d/arch_han.js", "js/r3d/arch_coast.js", "js/r3d/nature.js", "js/r3d/props.js", "js/r3d/monsters.js", "js/r3d/monsters_boss.js", "js/r3d/env.js", "js/r3d/vfx.js", "js/r3d/mapview.js", "js/r3d/battleview.js", "js/gfx/registry.js", "js/gfx/ui.js", "js/gfx/tiles.js", "js/gfx/nature.js", "js/gfx/objects.js", "js/gfx/objects2.js", "js/gfx/interior.js", "js/gfx/sprites.js", "js/gfx/portraits.js", "js/gfx/monsters.js", "js/gfx/monsters2.js", "js/gfx/monsters3.js", "js/gfx/backdrops.js", "js/gfx/fx.js", "js/i18n/en_ui.js", "js/i18n/en_data.js", "js/i18n/en_ch0.js", "js/i18n/en_ch1.js", "js/i18n/en_ch2.js", "js/i18n/en_ch3.js", "js/i18n/en_ch4.js", "js/i18n/en_ch5.js", "js/i18n/en_ch6.js", "js/i18n/en_ch7.js", "js/i18n/en_ch8.js", "js/i18n/en_ch9.js", "js/i18n/en_ch10.js", "js/i18n/en_ch11.js", "js/data/characters.js", "js/data/skills.js", "js/data/items.js", "js/data/enemies.js", "js/data/quests.js", "js/engine/scene.js", "js/engine/dialog.js", "js/engine/script.js", "js/engine/map.js", "js/engine/mapmech.js", "js/engine/battle.js", "js/engine/menu.js", "js/engine/shop.js", "js/engine/worldmap.js", "js/engine/minigames.js", "js/engine/title.js", "js/engine/debug.js", "js/story/story.js", "js/maps/test.js", "js/maps/ch0_prologue.js", "js/maps/ch1_jiufen.js", "js/maps/ch2_mistforest.js", "js/maps/ch3_guanyin.js", "js/maps/ch4_hsinchu.js", "js/maps/ch5_lukang.js", "js/maps/ch6_tainan.js", "js/maps/ch7_mountains.js", "js/maps/ch8_tide.js", "js/maps/ch9_south.js", "js/maps/ch10_east.js", "js/maps/ch11_farshore.js", "js/story/ending.js"];
+  const stubs = () => { G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = G.time || 0;
+    G.warnOnce = (k, e) => { console.error(k, e); window.__errors.push(k + ': ' + (e && e.stack || e)); }; };
+  let i = 0;
+  const next = () => {
+    if (i === 1) stubs();
+    if (i >= list.length) { stubs(); setTimeout(() => { try { boot(); } catch (e) { window.__errors.push('boot: ' + e.stack); window.__stats = { errors: window.__errors }; window.__ready = true; } }, 0); return; }
+    const s = document.createElement('script'); s.src = '../../../' + list[i++];
+    s.onload = next; s.onerror = next; document.body.appendChild(s);
+  };
+  next();
+})();
+</script>
+<script>
+function boxOf(obj) {
+  // bounds ignoring light volumes (userData.noBounds subtrees)
+  const b = new THREE.Box3(); obj.updateMatrixWorld(true);
+  const skip = new Set(); obj.traverse((n) => { if (n.userData.noBounds) n.traverse((c) => skip.add(c)); });
+  obj.traverse((n) => { if ((n.isMesh || n.isSprite) && !skip.has(n)) { if (n.isSprite) b.expandByPoint(n.getWorldPosition(new THREE.Vector3())); else { n.geometry.computeBoundingBox(); b.union(n.geometry.boundingBox.clone().applyMatrix4(n.matrixWorld)); } } });
+  return b;
+}
+function boot() {
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const W = num('w', 1280), H = num('h', 720);
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  G.R3.renderer = renderer;
+  const scene = new THREE.Scene();
+  const night = q.get('night') === '1';
+  G.R3.view = { dark: night ? 0.85 : 0, yaw: 0, t: 0, fake: true };
+  scene.background = new THREE.Color(night ? 0x0b1020 : 0x8fb4d0);
+  scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.3 : 1.15));
+  const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.35 : 2.8);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+  scene.add(sun, sun.target);
+  try {
+    const pm = new THREE.PMREMGenerator(renderer);
+    const es = new THREE.Scene();
+    es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: night ? 0x1a2240 : 0xbcd4e6 })));
+    scene.environment = pm.fromScene(es, 0.04).texture; scene.environmentIntensity = night ? 0.3 : 0.55;
+  } catch (e) { console.warn(e); }
+
+  const ids = (q.get('ids') || '').split(',').filter(Boolean);
+  const extra = q.get('o') ? JSON.parse(q.get('o')) : {};
+  const fallback = q.get('fallback') === '1';
+  const items = [];
+  for (const id of ids) {
+    const d = G.Objects.get(id) || { w: 1, h: 1 };
+    const o = Object.assign({ t: id, x: 7, y: 3, v: num('v', 0), w: d.w, h: d.h }, extra);
+    if (extra.w == null) o.w = d.w; if (extra.h == null) o.h = d.h;
+    let obj = null;
+    try { obj = (!fallback && G.Models.has(id)) ? G.Models.create(id, o) : G.Models.billboard(o); } catch (e) { window.__errors.push(id + ': ' + e.stack); }
+    if (!obj) { obj = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true })); obj.userData.missing = true; }
+    const holder = new THREE.Group(); holder.add(obj);
+    items.push({ id, o, obj, holder, d });
+    scene.add(holder);
+  }
+  // per-item stats before layout
+  const stats = [];
+  for (const it of items) {
+    let tris = 0, calls = 0, meshes = 0, nan = false;
+    it.obj.traverse((n) => {
+      if (!n.isMesh && !n.isPoints && !n.isLine) return;
+      meshes++; calls++;
+      const g = n.geometry;
+      const c = g.index ? g.index.count : g.attributes.position.count;
+      if (n.isMesh) tris += c / 3;
+      g.computeBoundingSphere();
+      if (!g.boundingSphere || isNaN(g.boundingSphere.radius)) nan = true;
+    });
+    it.holder.updateMatrixWorld(true);
+    const b = boxOf(it.obj);
+    stats.push({ id: it.id, tris: Math.round(tris), calls, meshes, nan, missing: !!it.obj.userData.missing,
+      bbox: [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z].map((v) => +v.toFixed(2)) });
+  }
+  // layout: footprint-sized cells in a row/grid
+  const cols = num('cols', Math.ceil(Math.sqrt(items.length * 1.8)));
+  const boxes = items.map((it) => boxOf(it.holder));
+  const cell = Math.max(2, ...boxes.map((b) => Math.max(b.max.x - b.min.x, b.max.z - b.min.z))) + 0.8;
+  items.forEach((it, i) => { it.holder.position.set((i % cols) * cell, 0, Math.floor(i / cols) * cell); });
+  // animate deterministically
+  const T = num('t', 0.6), steps = Math.max(1, Math.round(T * 30));
+  for (let s = 0; s < steps; s++) {
+    G.R3.view.t = s / 30;
+    for (const it of items) { const md = G.Models.defs[it.id]; if (md && md.update && !fallback) { try { md.update(it.obj, it.o, (s + 1) / 30, 1 / 30); } catch (e) { window.__errors.push('update ' + it.id + ': ' + e.stack); } } }
+  }
+  const all = new THREE.Box3();
+  for (const it of items) all.union(boxOf(it.holder));
+  const ctr = all.getCenter(new THREE.Vector3()), size = all.getSize(new THREE.Vector3());
+  // ground
+  const gs = Math.max(size.x, size.z) + 24;
+  if (q.get('ground') !== '0') {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+    const g = gc.getContext('2d'); g.fillStyle = q.get('water') === '1' ? '#c9b98e' : '#6e7a5e'; g.fillRect(0, 0, 256, 256);
+    g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+    const tx = new THREE.CanvasTexture(gc); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; tx.repeat.set(gs, gs);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(gs, gs), new THREE.MeshStandardMaterial({ map: tx, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.set(ctr.x, q.get('water') === '1' ? -0.5 : 0, ctr.z); ground.receiveShadow = true;
+    scene.add(ground);
+  }
+  if (q.get('water') === '1') {
+    const wm = new THREE.Mesh(new THREE.PlaneGeometry(gs, gs), new THREE.MeshStandardMaterial({ color: 0x2f6f96, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.78 }));
+    wm.rotation.x = -Math.PI / 2; wm.position.set(ctr.x, -0.07, ctr.z); wm.receiveShadow = true; scene.add(wm);
+  }
+  // solid-cell overlay
+  if (q.get('solid') === '1') for (const it of items) {
+    const w = it.o.w || it.d.w || 1, h = it.o.h || it.d.h || 1;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) {
+      const sol = it.d.solidAt ? it.d.solidAt(it.o, dx, dy) : it.d.solid !== false;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.92), new THREE.MeshBasicMaterial({ color: sol ? 0xff3030 : 0xffe040, transparent: true, opacity: 0.45, depthWrite: false }));
+      m.rotation.x = -Math.PI / 2; m.position.set(it.holder.position.x - w / 2 + dx + 0.5, 0.03, it.holder.position.z - h / 2 + dy + 0.5);
+      scene.add(m);
+    }
+  }
+  // lights from def.lights(o)
+  if (night) for (const it of items) {
+    const md = G.Models.defs[it.id];
+    if (!md || !md.lights || fallback) continue;
+    for (const l of md.lights(it.o) || []) {
+      const pl = new THREE.PointLight(l.color || '#ffb060', (l.intensity || 1) * 6, (l.distance || 4) * 1.2, 1.6);
+      pl.position.set(it.holder.position.x + (l.x || 0), l.y != null ? l.y : 1.2, it.holder.position.z + (l.z || 0));
+      scene.add(pl);
+    }
+  }
+  const cam = new THREE.PerspectiveCamera(num('fov', 30), W / H, 0.05, 500);
+  const camYaw = num('yaw', 20) * Math.PI / 180, pitch = num('pitch', 28) * Math.PI / 180;
+  G.R3.view.yaw = camYaw;
+  const radius = Math.max(size.x, size.y * 1.6, size.z) * 0.5 + 0.5;
+  const dist = radius / Math.tan(cam.fov * Math.PI / 360) * 1.15 * num('dist', 1);
+  const look = ctr.clone(); look.y = num('ly', size.y * 0.42);
+  cam.position.set(look.x + Math.sin(camYaw) * Math.cos(pitch) * dist, look.y + Math.sin(pitch) * dist, look.z + Math.cos(camYaw) * Math.cos(pitch) * dist);
+  cam.lookAt(look);
+  sun.position.copy(look).add(new THREE.Vector3(-12, 20, 9)); sun.target.position.copy(look); sun.target.updateMatrixWorld();
+  const sc = sun.shadow.camera; const r2 = radius * 1.5 + 2; sc.left = -r2; sc.right = r2; sc.top = r2; sc.bottom = -r2; sc.far = 80; sc.updateProjectionMatrix();
+  scene.traverse((n) => { if (n.userData.billboard) n.rotation.y = camYaw; });
+  renderer.render(scene, cam);
+  if (q.get('labels') !== '0') items.forEach((it) => {
+    const b = boxOf(it.holder);
+    const p = new THREE.Vector3((b.min.x + b.max.x) / 2, 0, b.max.z).project(cam);
+    const dv = document.createElement('div'); dv.className = 'lb'; dv.textContent = it.id;
+    dv.style.left = ((p.x * 0.5 + 0.5) * W) + 'px'; dv.style.top = ((-p.y * 0.5 + 0.5) * H + 4) + 'px';
+    document.body.appendChild(dv);
+  });
+  const info = renderer.info.render;
+  document.getElementById('info').textContent = `${items.length} items · ${info.calls} calls · ${info.triangles} tris`;
+  window.__stats = { calls: info.calls, tris: info.triangles, items: stats, errors: window.__errors };
+  window.__ready = true;
+}
+</script>
+</body></html>
