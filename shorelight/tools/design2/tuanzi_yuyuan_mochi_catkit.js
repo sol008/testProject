@@ -8,7 +8,8 @@
   const E = G.SDF; const { hex, mix, clamp, sstep, cmix } = E;
   const sq = Math.sqrt, ab = Math.abs;
   const C = {};
-  C.cols = (c) => { const o = {}; for (const k in c) o[k] = Array.isArray(c[k]) || typeof c[k] !== 'string' ? c[k] : hex(c[k]); return o; };
+  const cv = (v) => (typeof v === 'string' ? hex(v) : Array.isArray(v) && typeof v[0] === 'string' ? v.map(hex) : v);
+  C.cols = (c) => { const o = {}; for (const k in c) o[k] = cv(c[k]); return o; };
   function segD(px, py, ax, ay, bx, by) { const ex = bx - ax, ey = by - ay; const t = clamp(((px - ax) * ex + (py - ay) * ey) / (ex * ex + ey * ey), 0, 1); return sq((px - ax - ex * t) ** 2 + (py - ay - ey * t) ** 2); }
   C.segD = segD;
 

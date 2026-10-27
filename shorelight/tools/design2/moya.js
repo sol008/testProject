@@ -240,7 +240,7 @@
     K.part(ctx, goat, { fill: '#1a1520', line: '#050307', lw: 1.2 });
 
     // --- 瓜皮帽 six-panel skullcap with red knot (mapped onto the skull)
-    const CM = (pts) => pts.map((q) => { const dd = -0.3 + 0.28 * Math.max(0, 1 - Math.abs(q[0]) / 0.42); const r = m(q[0], q[1], dd); if (q[2]) r.push(1); return r; });
+    const CM = (pts) => pts.map((q) => { const dd = q[0] * th > 0 ? -0.02 : -0.3 + 0.28 * Math.max(0, 1 - Math.abs(q[0]) / 0.42); const r = m(q[0], q[1], dd); if (q[2]) r.push(1); return r; });
     const capP = K.S(CM([[-0.415, 0.3, 1], [-0.41, 0.16], [-0.34, 0.03], [-0.18, -0.04], [0, -0.06], [0.18, -0.04], [0.34, 0.03], [0.41, 0.16], [0.415, 0.3, 1], [0.2, 0.312], [0, 0.316], [-0.2, 0.312]]), true);
     K.cast(ctx, faceP, capP, 0, 4, sk.sh, 0.55);
     K.toon(ctx, capP, MT.hair, {
@@ -990,14 +990,14 @@
     },
     exprH: 172,
     props: {
-      y: 1500, h: 128,
+      y: 1490, h: 146,
       items: [
-        { label: '長明燈 soul lantern', draw: (c) => { K.line(c, [[0, -60], [0, -46]], 1.8, C.red); lantern(c, 0, -46, 72, 88, {}); }, box: [-60, -64, 60, 92], scale: 0.62 },
+        { label: '長明燈 soul lantern', draw: (c) => { K.line(c, [[0, -60], [0, -46]], 1.8, C.red); lantern(c, 0, -46, 72, 88, {}); }, box: [-60, -64, 60, 92], scale: 0.72 },
         { label: '鴉首鉤 crook finial', draw: (c) => { const ck = [[-60, 30], [-57, 2], [-36, -18], [-6, -18], [14, -2], [20, 18]]; K.taper(c, ck, 13, MT.bam.line, { w0: 1, w1: 0.8, noScale: true }); K.taper(c, ck, 9.5, MT.bam.base, { w0: 1, w1: 0.8, noScale: true }); crowHead(c, 20, 20, 1.6, false); }, box: [-70, -30, 72, 46], scale: 1.05 },
         { label: '敕令符 talismans', draw: (c) => { talisman(c, -16, -46, 22, 92, -0.08, 3); talisman(c, 16, -44, 22, 88, 0.08, 7); }, box: [-44, -50, 44, 50], scale: 0.95 },
         { label: '長明宮令牌 token', draw: (c) => token(c, 0, -26, 1.45), box: [-34, -64, 34, 54], scale: 0.85 },
         { label: '號褂圓補 badge', draw: (c) => badge(c, 0, 0, 34), box: [-40, -40, 40, 40], scale: 1.15 },
-        { label: '辮梢 queue tip', draw: (c) => braid(c, [[0, -70], [2, -30], [0, 10]], 20, 13, { seg: 15, tail: 30 }), box: [-40, -74, 40, 64], scale: 0.7 },
+        { label: '辮梢 queue tip', draw: (c) => braid(c, [[0, -96], [3, -40], [0, 20]], 20, 13, { seg: 15, tail: 30 }), box: [-40, -100, 40, 76], scale: 0.62 },
       ],
     },
     exprs: [
