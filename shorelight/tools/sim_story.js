@@ -466,6 +466,13 @@ async function main() {
   const { G } = env;
   G.__ai = makeAI(G, opt('ai', 'smart'));
   G.__plain = !!opt('plain'); G.__noacc = !!opt('noacc');
+  // --set "enemyId:hp*1.3,atk*1.2/otherId:spd*0.9" — try stat multipliers without editing the data
+  if (opt('set')) for (const part of String(opt('set')).split('/')) {
+    const [eid, mods] = part.split(':');
+    const e = G.Data.enemies[eid];
+    if (!e) { console.log('--set: unknown enemy ' + eid); continue; }
+    for (const m of mods.split(',')) { const [k, f] = m.split('*'); e[k] = Math.round(e[k] * +f); }
+  }
   const { FIGHTS } = require('./sim_story_fights');
   const fights = FIGHTS(G);
   if (opt('shops')) { printShops(env); return; }
