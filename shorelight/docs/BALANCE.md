@@ -2,7 +2,8 @@
 
 Goal: every boss and scripted fight of chapters 0–11 is winnable on the **first try** by a normal player at the level
 and gear they really have there, but stays a real challenge: a player who heals, guards and uses items sensibly should
-win **about 70–90 %** of the time. The auto-battle does not count.
+win **about 70–90 %** of the time. The tuning did not target the in-game auto-battle; since the "In-game auto-battle"
+section below, the F-key auto-battle plays this same policy and reaches about the same numbers.
 
 ## How it was measured
 
@@ -166,7 +167,7 @@ to guard — whole-party wipes with the 風團 acting 15 times in a row. The 風
 
 ## Playthrough tests
 
-The playthrough tests fight with the in-game auto-battle, which never guards, never uses items and heals late; with
+The playthrough tests used to fight with the old in-game auto-battle, which never guarded, never used items and healed late; with
 the tests' gear it now loses most retuned bosses even 8–12 levels above the tests' levels (simulated). The
 tests check story flow, not balance, so instead of raising levels further:
 
@@ -418,6 +419,88 @@ Field gold is unchanged.
 - The minimal player stays ≈ 1–2.5 levels under the BALANCE level (it never fights in the field) and relies on gear,
   kit and careful play: 63 % (心魔・雲歸) is its lowest first-try rate, and every boss has 重新挑戰.
 
+## In-game auto-battle (F) — `js/engine/autobattle.js`
+
+The old F-key auto-battle (`BattleScene.autoCommand`) never used items, never guarded and healed late: with the
+retuned bosses it lost most of them on normal, the final 無相 included (37 % mean first-try win over the 36 bosses of
+`--model normal`, 26 of them under 70 %). It is now **`G.AutoBattle`**, a port of the battle bot's policy (above) loaded
+before `battle.js`; `autoCommand(u)` asks it first and keeps the old logic as `basicAutoCommand` (fallback if it throws).
+
+- Same decisions as the bot: revive → healer heals → heal items when the healer can't act first → MP item for the healer
+  → cure → guard against telegraphed blows (a warning that names a member: only that member) → boss openers →
+  ultimates / combos / best expected damage. Deterministic, a few passes over skills × enemies per turn. The battle
+  scene now records what it reads (`acts`, each enemy's `lastCmd`, `msgAt` in `say`).
+- The per-fight hints the sim's player follows (`tactics` / `focus` / `valueMod` in `tools/sim_story_fights.js`) are
+  built in as `G.AutoBattle.FIGHTS`, keyed by enemy id and reading only what the screen shows (燈印, 泣訴, hunger, the
+  燈火 meter, the serpent's dive target, 石巨靈's armour); a skill an on-screen message names in 「」 (渡魂謠, 千燈) is
+  played when usable. Hits on a `submerged` enemy count as 0.
+- **Settings** (menu → 設定; `G.settings`): `autoStyle` 保守 / **標準** / 積極 (heal, item and guard thresholds, MP cost
+  weight and the healer's MP reserve — `G.AutoBattle.STYLES`) and `autoItems` 使用道具 **開** / 關. Items: restoratives
+  only, never `key` items, items without a shop price (story gifts) or flagged `rare`, never attack items.
+- **Boss vs ordinary fight** (troop or a living enemy flagged `boss`): ordinary fights save ultimates (unless a member
+  is down or below 40 %; 積極 always uses them), weigh MP 3–4× more heavily, keep a larger healer reserve, use no MP
+  items, use heal items only below ¾ of the boss threshold and only when no healer is up, only items priced
+  ≤ `40 + 30 × chapter`, and revive items only when one member is left.
+- `tools/test/lib/battlebot.js` is **kept as it is** (it does not call `G.AutoBattle`): the chapter tests last passed
+  with it, and switching them to the in-game AI would change every test's fights while only a few segments could be
+  re-run here. The in-game AI reproduces the bot's numbers (below), so the two can be merged later by making
+  `makeAI(G, 'smart')` return `G.AutoBattle.command` and re-running all chapter tests.
+
+**Measured** — `node tools/sim_story.js --model normal --ai auto [--autostyle safe|bold] [--autoitems off] --n 300`
+(each boss at the level / gear / kit a normal player has there; "before" = the same run on the commit before this
+change via `SIM_ROOT`; "bot" = the battle bot with the sim's per-fight hints). Win (KO) = first-try win rate (share of
+fights where a member fell); items = items the auto-battle used per fight.
+
+| Fight | Ch | Lv | Before | **After, 標準** (KO) | Items | Bot | 保守 / 積極 | 標準, 使用道具 關 |
+|---|---|---|---|---|---|---|---|---|
+| 工頭魂・金貴仔 (1-7) | 1 | 3 | 80% | **88%** (12%) | 0.4 | 88% | 89% / 93% | 76% |
+| 墨鴉 (1-19, after the 1-18 fight) | 1 | 5 | 96% | **97%** (10%) | 0.1 | 97% | 98% / 90% | 95% |
+| 水鬼王 + 陳伯 (1-20, right after 墨鴉) | 1 | 5 | 94% | **96%** (10%) | 0.3 | 96% | 99% / 94% | 95% |
+| 洛紅纓 duel (2-8, loseOk) | 2 | 7 | 100% | **100%** (0%) | 0 | 100% | 100% / 100% | 100% |
+| 虎姑婆 (2-15) | 2 | 8 | 100% | **100%** (13%) | 0.2 | 100% | 100% / 100% | 99% |
+| 石猴王 (3-5) | 3 | 9 | 82% | **100%** (30%) | 1.4 | 100% | 100% / 100% | 95% |
+| 鬼面 raid (3-9, after the 陰兵 fight) | 3 | 10 | 99% | **100%** (13%) | 0.3 | 100% | 100% / 100% | 99% |
+| 河伯怨靈 (4-2) | 3 | 12 | 100% | **100%** (37%) | 1.7 | 100% | 100% / 100% | 100% |
+| 風魔 (4-15) | 4 | 15 | 49% | **100%** (51%) | 1.3 | 100% | 100% / 99% | 90% |
+| 怨宴 (3-12) | 5 | 18 | 26% | **84%** (82%) | 3.1 | 91% | 93% / 82% | 51% |
+| 疫聚 (鹽水蜂炮) | 6 | 19 | 90% | **99%** (49%) | 0.6 | 99% | 100% / 98% | 96% |
+| 林投姐 (3-11) | 6 | 21 | 0% | **100%** (0%) | 0 | 100% | 100% / 100% | 100% |
+| 冥燈護法 (萬燈閣) | 6 | 22 | 25% | **95%** (83%) | 2.3 | 97% | 98% / 96% | 80% |
+| 黑熊精 (alishan) | 7 | 23 | 13% | **88%** (77%) | 2.1 | 88% | 92% / 68% | 50% |
+| 心魔・雲歸 | 7 | 25 | 77% | **93%** (74%) | 2 | 93% | 94% / 84% | 73% |
+| 無光之影 (心火 awakens) | 7 | 25 | 28% | **91%** (80%) | 2.3 | 91% | 95% / 66% | 45% |
+| 蛟 (日月潭) | 7 | 26 | 10% | **95%** (87%) | 2.5 | 93% | 99% / 84% | 70% |
+| 清虛真人 + 冥燈印 (燈母祠) | 7 | 27 | 3% | **91%** (73%) | 2.6 | 93% | 97% / 73% | 34% |
+| 潮怨・百手 (8-4) | 8 | 29 | 0% | **97%** (73%) | 4.6 | 97% | 99% / 83% | 19% |
+| 洛青鋒 (8-6) | 8 | 29 | 6% | **91%** (75%) | 2.2 | 91% | 96% / 83% | 50% |
+| 大肚貪鬼 (半屏山) | 9 | 31 | 1% | **93%** (53%) | 1.3 | 93% | 96% / 82% | 72% |
+| 瘟鬼頭 (東港 船台) | 9 | 32 | 2% | **94%** (52%) | 1.7 | 88% | 94% / 80% | 67% |
+| 落山風靈 (龍磐) | 9 | 33 | 28% | **94%** (33%) | 1.3 | 93% | 99% / 87% | 81% |
+| 潮病鰻王 (鵝鑾鼻) | 9 | 34 | 0% | **90%** (60%) | 1.8 | 92% | 94% / 78% | 66% |
+| 潮病海蛇 (蘭嶼) | 10 | 35 | 0% | **95%** (75%) | 1.7 | 91% | 95% / 86% | 69% |
+| 大潮怨 (海祭 岬角) | 10 | 36 | 35% | **95%** (35%) | 0.8 | 96% | 95% / 95% | 92% |
+| 太魯閣石巨靈 | 10 | 37 | 2% | **78%** (87%) | 2 | 77% | 85% / 59% | 51% |
+| 孤魂眾 (頭城 普渡) | 10 | 38 | 1% | **94%** (48%) | 5 | 90% | 94% / 81% | 50% |
+| 烏鬚船主 (11-05) | 11 | 39 | 6% | **93%** (66%) | 1.8 | 93% | 96% / 88% | 73% |
+| 鎖魂將 (11-10) | 11 | 41 | 2% | **93%** (69%) | 1.8 | 90% | 96% / 86% | 68% |
+| 鯤 (11-14) | 11 | 42 | 0% | **96%** (70%) | 2.9 | 97% | 99% / 93% | 52% |
+| 千年燈塔守 (11-23) | 11 | 43 | 46% | **96%** (23%) | 0.6 | 98% | 96% / 97% | 89% |
+| 夜玄・玄冥法師 (11-28 phase 1) | 11 | 44/44/44/45 | 64% | **100%** (30%) | 0.8 | 100% | 100% / 100% | 96% |
+| 夜玄・逆潮法身 (phase 2, after phase 1 +30%) | 11 | 44/44/44/45 | 9% | **93%** (62%) | 1.5 | 93% | 98% / 86% | 75% |
+| 黑潮・無相 (phase 1, full heal before) | 11 | 44/44/44/45 | 57% | **100%** (27%) | 0.6 | 100% | 100% / 99% | 96% |
+| 無相・深淵 (phase 2, trio, +50% after phase 1) | 11 | 44/44/44/45 | 8% | **94%** (52%) | 1.4 | 94% | 98% / 83% | 67% |
+| **Mean** | | | **37 %** | **94.5 %** | 1.5 | 94.4 % | 96.8 % / 88.1 % | 74.5 % |
+| Bosses < 70 % | | | 26 | **0** | | 0 | 0 / 3 | 14 |
+
+保守 is a little safer than the bot (fewer KOs: 39 % vs 48 % of fights), 積極 is faster (8.4 vs 8.8 rounds) and loses
+more; with items off the late bosses drop to 20–75 %. The battle bot without the per-fight hints (`--notactics`, the
+browser bot of the chapter tests) is 93.8 % — the hints matter mostly for 冥燈護法 (71 % → 95 %).
+
+js/data troops (`node tools/sim_story.js --areas --ai auto --n 50`: sim_battle.js's area list through the real engine,
+area level, best gear of chapter ≤ the area's, the standard kit): the 173 field troops are won 100 % with **0 items**
+used (before: 100 %, 0); the 26 area bosses average **86 %** (before 51 %, bot 85 %; `boss_wuxiang` at L44 1 % → 90 %).
+Browser: `index.html?debug&battle=boss_wuxiang&party=xinghe,hongying,yungui,baizhi&lv=46&auto=1` (normal) — BROWSER
+
 ## Needs a human playtest
 
 - **Speed of the retuned bosses.** Most now act about twice per party round. That is what makes them dangerous for a
@@ -430,7 +513,8 @@ Field gold is unchanged.
 - **Economy feel** (Progression & economy): bosses now pay 0.5–1 level each and the normal player ends with gold to
   spare; check that field fights still feel worth taking in ch7 / ch10 / ch11, where their exp moved to the bosses.
 - **工頭魂** at Lv3 (星河 alone, guard tutorial): one bad 鶴嘴鋤重擊 crit can end it; 93 % in the sim.
-- **The in-game auto-battle (F)** can no longer beat these bosses on normal.
+- **The in-game auto-battle (F)** now plays the bot's policy (see above) and wins 78–100 % of the bosses at the normal
+  player's state on 標準; check that it feels sensible to watch (guards, item use) and that 保守/積極 feel different.
 - **無相・深淵** is now clearly weaker on paper than phase 1; it is the party state (trio, half HP/MP, no 白芷) that makes
   it a fight. Worth a look in the real ending sequence, together with 夜玄's 15-round phase 1.
 - **The bot's hints are generic**: in the sim the player follows each fight's on-screen hints (`tactics`); a player who
