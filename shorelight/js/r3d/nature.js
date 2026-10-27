@@ -1881,4 +1881,385 @@
       return out;
     },
   });
+
+  // =====================================================================================================
+  // ROCKS — noise-displaced faceted boulders with box-projected painted stone, moss on top faces
+  // =====================================================================================================
+  function stoneTex(key, P) {
+    return tex('stone_' + key, 512, 512, (g, w, h) => {
+      const r = RNG(P.seed || 1), n = vnoise(P.seed || 1);
+      const img = g.createImageData(w, h), d = img.data;
+      const a = srgb(P.dark), b = srgb(P.light), vc = P.vein ? srgb(P.vein) : null;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        // tileable: blend 4 noise samples
+        const u = x / w, v = y / h;
+        const s = (fx, fy) => fbm(n, fx * 6, fy * 6, 4);
+        let f = s(u, v) * (1 - u) * (1 - v) + s(u - 1, v) * u * (1 - v) + s(u, v - 1) * (1 - u) * v + s(u - 1, v - 1) * u * v;
+        f = clamp((f - 0.5) * (P.contrast || 1.6) + 0.5, 0, 1);
+        let R = a.r + (b.r - a.r) * f, Gc = a.g + (b.g - a.g) * f, B = a.b + (b.b - a.b) * f;
+        if (P.speckle) { const sp = (((x * 73856093) ^ (y * 19349663)) >>> 0) % 1000 / 1000; if (sp < P.speckle) { const k = sp < P.speckle / 2 ? 0.55 : 1.35; R *= k; Gc *= k; B *= k; } }
+        if (vc) {
+          const vv = abs(sin((u * 3 + v * 5 + fbm(n, u * 4 + 9, v * 4 + 9, 3) * 2.2) * PI * 2));
+          const vk = pow(1 - vv, 18) * 0.9;
+          R = lerp(R, vc.r, vk); Gc = lerp(Gc, vc.g, vk); B = lerp(B, vc.b, vk);
+        }
+        const i = (y * w + x) * 4; d[i] = clamp(R, 0, 1) * 255; d[i + 1] = clamp(Gc, 0, 1) * 255; d[i + 2] = clamp(B, 0, 1) * 255; d[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      // cracks
+      for (let i = 0; i < (P.cracks || 10); i++) {
+        let x = r() * w, y = r() * h;
+        g.strokeStyle = rgba(P.crack || '#1a1814', 0.45 + r() * 0.3); g.lineWidth = 1 + r() * 1.5;
+        g.beginPath(); g.moveTo(x, y);
+        for (let k = 0; k < 8; k++) { x += r.pm(22); y += r.pm(22); g.lineTo(x, y); }
+        g.stroke();
+      }
+      if (P.pits) for (let i = 0; i < P.pits; i++) { g.fillStyle = rgba(P.crack || '#111', 0.5); g.beginPath(); g.arc(r() * w, r() * h, 1 + r() * 2.5, 0, TAU); g.fill(); }
+    }, { wrap: true });
+  }
+  const ROCK = {
+    granite: { seed: 3, dark: '#5e5a52', light: '#a8a294', speckle: 0.05, cracks: 12, contrast: 1.4 },
+    marble: { seed: 5, dark: '#c8c8c4', light: '#f4f4f0', vein: '#6a6a70', cracks: 3, contrast: 0.9, crack: '#8a8a90' },
+    basalt: { seed: 7, dark: '#38383a', light: '#6c6a68', pits: 260, cracks: 6, contrast: 1.2, crack: '#0a0a0a' },
+    wood: null,
+  };
+  function rockMat(kind) {
+    return cmat('rock_' + kind, () => G.R3M.env({ map: stoneTex(kind, ROCK[kind]), vertexColors: true, roughness: kind === 'marble' ? 0.45 : 0.9, flatShading: false }));
+  }
+  // Boulder geometry: icosphere displaced by 3D noise, flattened base, faceted normals, box-projected uvs.
+  // o: { r: [rx, ry, rz], detail, noise, facet (0 smooth .. 1 faceted), moss: {k, col}, seed, sink }
+  const Simplex = T.SimplexNoise ? new T.SimplexNoise() : null;
+  function n3(x, y, z) { return Simplex ? Simplex.noise3d(x, y, z) : (sin(x * 1.7 + y * 2.3) * cos(z * 1.9 - x) * 0.5); }
+  function boulder(acc, c, o) {
+    const g = new T.IcosahedronGeometry(1, o.detail || 2);
+    const P = g.attributes.position;
+    const seed = o.seed || 0, nk = o.noise || 0.25;
+    const pos = [];
+    for (let i = 0; i < P.count; i++) {
+      let x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+      const d = 1 + n3(x * 1.3 + seed, y * 1.3, z * 1.3) * nk + n3(x * 3.1, y * 3.1 + seed, z * 3.1) * nk * 0.35;
+      x *= d * o.r[0]; y *= d * o.r[1]; z *= d * o.r[2];
+      // chisel: quantise toward a few planes for stylised facets
+      if (o.flatTop && y > o.r[1] * 0.55) y = o.r[1] * 0.55 + (y - o.r[1] * 0.55) * 0.25;
+      if (y < -o.r[1] * (o.base || 0.35)) y = -o.r[1] * (o.base || 0.35) - (y + o.r[1] * (o.base || 0.35)) * 0.15;
+      pos.push(V3(x, y, z));
+    }
+    const ix = g.index ? g.index.array : [...Array(P.count).keys()];
+    // smooth normals per vertex (for blending with facets)
+    const sm = pos.map(() => V3());
+    for (let k = 0; k < ix.length; k += 3) {
+      const a = pos[ix[k]], b = pos[ix[k + 1]], cc = pos[ix[k + 2]];
+      const fn = b.clone().sub(a).cross(cc.clone().sub(a));
+      sm[ix[k]].add(fn); sm[ix[k + 1]].add(fn); sm[ix[k + 2]].add(fn);
+    }
+    sm.forEach((v) => v.normalize());
+    const facet = o.facet != null ? o.facet : 0.6;
+    const yMin = -o.r[1] * (o.base || 0.35);
+    for (let k = 0; k < ix.length; k += 3) {
+      const vs = [pos[ix[k]], pos[ix[k + 1]], pos[ix[k + 2]]];
+      const fn = vs[1].clone().sub(vs[0]).cross(vs[2].clone().sub(vs[0])).normalize();
+      const ax = abs(fn.x) > abs(fn.y) ? (abs(fn.x) > abs(fn.z) ? 0 : 2) : (abs(fn.y) > abs(fn.z) ? 1 : 2);
+      const ts = o.texScale || 0.8;
+      const b0 = acc.count;
+      for (let j = 0; j < 3; j++) {
+        const p = vs[j], nn = sm[ix[k + j]].clone().lerp(fn, facet).normalize();
+        const u = ax === 0 ? p.z : p.x, v = ax === 1 ? p.z : p.y;
+        // AO toward the ground, moss on upward faces, tint
+        const up = nn.y;
+        const ao = lerp(0.55, 1, sstep(yMin, yMin + o.r[1] * 0.6, p.y));
+        let col = o.tint ? o.tint.slice() : [1, 1, 1];
+        if (o.moss) { const mk = sstep(0.45, 0.85, up + n3(p.x * 2 + seed, p.y * 2, p.z * 2) * 0.25) * o.moss.k; col = col.map((x2, i2) => lerp(x2, o.moss.col[i2], mk)); }
+        acc.v(c.x + p.x, c.y + p.y, c.z + p.z, nn.x, nn.y, nn.z, u / ts + seed, v / ts, col[0] * ao, col[1] * ao, col[2] * ao);
+      }
+      acc.tri(b0, b0 + 1, b0 + 2);
+    }
+    g.dispose();
+  }
+  const MOSS = { k: 0.85, col: [0.32, 0.5, 0.18] };
+  function defRock(id, def) { G.Models.define(id, Object.assign({ variants: 3, occluder: false }, def)); }
+  const rockDecal = (key, rad) => decal('rock_' + key, { seed: 31, core: '#141410' }, rad);
+
+  defRock('rock_small', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2000 + v * 11), acc = new Acc();
+      boulder(acc, V3(0, 0.18, 0), { r: [0.42, 0.34, 0.36], seed: v * 7.1, noise: 0.28, moss: v === 1 ? MOSS : { k: 0.35, col: MOSS.col } });
+      if (v !== 2) boulder(acc, V3(0.28, 0.06, 0.2), { r: [0.16, 0.12, 0.14], seed: v * 3 + 1, noise: 0.3, detail: 1 });
+      const out = K.merge(K.group(meshOf(acc, rockMat('granite'))));
+      out.add(rockDecal('small', 0.65));
+      return out;
+    },
+  });
+  defRock('rock_big', {
+    occluder: true,
+    build(o, K) {
+      const v = o.v || 0, acc = new Acc();
+      boulder(acc, V3(-0.05, 0.55, -0.05), { r: [0.98, 0.95, 0.85], seed: 10 + v * 5.3, noise: 0.3, detail: 3, moss: MOSS, facet: 0.7 });
+      boulder(acc, V3(0.62, 0.25, 0.5), { r: [0.42, 0.36, 0.38], seed: 20 + v, noise: 0.3, moss: { k: 0.5, col: MOSS.col } });
+      if (v !== 1) boulder(acc, V3(-0.7, 0.15, 0.6), { r: [0.28, 0.22, 0.26], seed: 30 + v, noise: 0.3, detail: 1 });
+      const out = K.merge(K.group(meshOf(acc, rockMat('granite'))));
+      out.add(rockDecal('big', 1.4));
+      return out;
+    },
+  });
+  defRock('rock_marble', {
+    build(o, K) {
+      const v = o.v || 0, acc = new Acc();
+      // water-polished Taroko marble: smooth rounded forms, white with grey veins
+      boulder(acc, V3(0, 0.2, 0), { r: [0.44, 0.36, 0.38], seed: 40 + v * 3, noise: 0.18, facet: 0.15, texScale: 1.4, tint: [1, 1, 1.02] });
+      if (v === 2) boulder(acc, V3(-0.25, 0.08, 0.22), { r: [0.18, 0.14, 0.15], seed: 44, noise: 0.15, facet: 0.1, detail: 1 });
+      const out = K.merge(K.group(meshOf(acc, rockMat('marble'))));
+      out.add(rockDecal('marble', 0.6));
+      return out;
+    },
+  });
+
+  // ---- columnar basalt (澎湖): packed hexagonal prisms ---------------------------------------------
+  function hexColumns(acc, cells, o) {
+    for (const c of cells) {
+      const g = new T.CylinderGeometry(c.r, c.r * 1.02, c.h, 6, 1);
+      g.rotateY(PI / 6 + (o.rot || 0));
+      const P = g.attributes.position, N = g.attributes.normal, ix = g.index.array;
+      for (let k = 0; k < ix.length; k += 3) {
+        const b0 = acc.count;
+        const vs = [0, 1, 2].map((j) => V3(P.getX(ix[k + j]), P.getY(ix[k + j]) + c.h / 2, P.getZ(ix[k + j])));
+        const fn = vs[1].clone().sub(vs[0]).cross(vs[2].clone().sub(vs[0])).normalize();
+        for (const p of vs) {
+          // tilted tops (weathered), lighter top faces, darker toward the ground
+          let y = p.y;
+          if (y > c.h - 0.001) y += (p.x * c.tx + p.z * c.tz);
+          const top = fn.y > 0.5;
+          const ao = top ? 1.25 : lerp(0.5, 1, sstep(0, c.h, y));
+          const u = top ? p.x : (abs(fn.x) > abs(fn.z) ? p.z : p.x), v = top ? p.z : y;
+          acc.v(c.x + p.x, y - 0.05, c.z + p.z, fn.x, fn.y, fn.z, u + c.x * 3, v, ao, ao, ao * 1.02);
+        }
+        acc.tri(b0, b0 + 1, b0 + 2);
+      }
+      g.dispose();
+    }
+  }
+  function hexCells(r, n, R, hMin, hMax, rad) {
+    const cells = [], dx = rad * sqrt(3) * 1.0;
+    for (let q = -n; q <= n; q++) for (let s2 = -n; s2 <= n; s2++) {
+      const x = (q + s2 * 0.5) * dx, z = s2 * rad * 1.5;
+      const d = Math.hypot(x / R[0], z / R[1]);
+      if (d > 1) continue;
+      cells.push({ x, z, r: rad * 0.97, h: lerp(hMax, hMin, sstep(0, 1, d + r.pm(0.25))), tx: r.pm(0.15), tz: r.pm(0.15) });
+    }
+    return cells;
+  }
+  defRock('rock_basalt', {
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2100 + v * 13), acc = new Acc();
+      hexColumns(acc, hexCells(r, 2, [0.42, 0.38], 0.25, 0.9 + v * 0.15, 0.13), { rot: v * 0.3 });
+      const out = K.merge(K.group(meshOf(acc, rockMat('basalt'))));
+      out.add(rockDecal('basalt', 0.6));
+      return out;
+    },
+  });
+  defRock('basalt', {
+    occluder: true,
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2200 + v * 17), acc = new Acc();
+      // stepped palisade, tallest at the back (north) so the cluster reads from the game camera
+      const cells = hexCells(r, 5, [0.95, 0.92], 0.3, 2.2, 0.17);
+      for (const c of cells) c.h = clamp(c.h * lerp(1.15, 0.65, (c.z + 0.9) / 1.8) + r.pm(0.15), 0.2, 2.6);
+      hexColumns(acc, cells, { rot: 0 });
+      const out = K.merge(K.group(meshOf(acc, rockMat('basalt'))));
+      out.add(rockDecal('basalt2', 1.3));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // WOOD — stump, log, driftwood
+  // =====================================================================================================
+  function ringTex(key, P) {
+    return tex('rings_' + key, 256, 256, (g, w) => {
+      const r = RNG(P.seed || 3);
+      g.fillStyle = P.outer; g.fillRect(0, 0, w, w);
+      for (let i = 30; i > 0; i--) {
+        const rr = (i / 30) * w * 0.47;
+        g.fillStyle = i % 2 ? P.a : P.b; g.beginPath();
+        for (let k = 0; k <= 48; k++) { const a = k / 48 * TAU; const q = rr * (1 + r.pm(0.015)); k ? g.lineTo(w / 2 + cos(a) * q, w / 2 + sin(a) * q) : g.moveTo(w / 2 + cos(a) * q, w / 2 + sin(a) * q); }
+        g.fill();
+      }
+      g.strokeStyle = rgba(P.crack, 0.7); g.lineWidth = 2.5;
+      for (let i = 0; i < 4; i++) { const a = r() * TAU; g.beginPath(); g.moveTo(w / 2, w / 2); g.lineTo(w / 2 + cos(a) * w * 0.42, w / 2 + sin(a) * w * 0.42); g.stroke(); }
+      g.strokeStyle = P.outer; g.lineWidth = 12; g.beginPath(); g.arc(w / 2, w / 2, w * 0.47, 0, TAU); g.stroke();
+    });
+  }
+  function capDisc(acc, c, nrm, rad, seg = 14, lumpy = 0.05, rr = RNG(1)) {
+    const n = nrm.clone().normalize();
+    const t1 = abs(n.y) < 0.9 ? V3(0, 1, 0).cross(n).normalize() : V3(1, 0, 0).cross(n).normalize();
+    const t2 = n.clone().cross(t1);
+    const ci = acc.v(c.x, c.y, c.z, n.x, n.y, n.z, 0.5, 0.5);
+    const b0 = acc.count;
+    for (let k = 0; k <= seg; k++) {
+      const a = k / seg * TAU, q = rad * (1 + rr.pm(lumpy));
+      const p = c.clone().addScaledVector(t1, cos(a) * q).addScaledVector(t2, sin(a) * q);
+      acc.v(p.x, p.y, p.z, n.x, n.y, n.z, 0.5 + cos(a) * 0.48, 0.5 + sin(a) * 0.48);
+    }
+    for (let k = 0; k < seg; k++) acc.tri(ci, b0 + k, b0 + k + 1);
+  }
+  const ringMat = (key, P) => cmat('ring_' + key, () => G.R3M.env({ map: ringTex(key, P), roughness: 0.9, vertexColors: true }));
+  const BARKS4 = {
+    stump: { seed: 51, style: 'furrow', dark: '#4e3a2a', mid: '#6e543c', light: '#8e7254', hi: '#b89a74', line: '#22160c', moss: '#5a7a30' },
+    drift: { seed: 53, style: 'fibre', dark: '#9a948a', mid: '#bab4a8', light: '#d8d2c6', hi: '#f2eee6', line: '#6a645a', vfreq: 0.8 },
+  };
+  G.Models.define('stump', {
+    variants: 3,
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2300 + v * 7);
+      const bark = new Acc(), top = new Acc(), mc = new Acc();
+      const ao = barkAO([0.55, 0.5, 0.42], 0.3, { h: 0.35, k: 0.55, c: [0.5, 0.7, 0.35] });
+      const h = 0.42 + r() * 0.2, R0 = 0.3;
+      const pts = [V3(0, -0.1, 0), V3(0, h * 0.5, 0), V3(0, h, 0)];
+      tube(bark, pts, [R0 * 1.25, R0 * 1.02, R0], { seg: 14, ao, flute: { n: 5, amp: 0.3, h: 0.3, y0: -0.1 }, lump: 0.08 });
+      for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + r.pm(0.3); const rp = limbPts(r, V3(cos(a) * 0.2, 0.15, sin(a) * 0.2), V3(cos(a), -0.6, sin(a)), 0.55, 4, { pull: V3(0, -1, 0), pullK: 0.12 }); tube(bark, rp, taperR(rp.length, 0.11, 0.02), { seg: 6, ao }); }
+      // saw-cut top (slightly tilted) with a broken splinter edge
+      capDisc(top, V3(0, h + 0.005, 0), V3(r.pm(0.08), 1, r.pm(0.08)), R0 * 0.98, 16, 0.02, r);
+      for (let k = 0; k < 4; k++) { const a = r() * TAU; const p = V3(cos(a) * R0 * 0.85, h, sin(a) * R0 * 0.85); tube(bark, [p, p.clone().add(V3(r.pm(0.03), 0.08 + r() * 0.1, r.pm(0.03)))], [0.04, 0.005], { seg: 3, ao }); }
+      // shelf fungi / little mushrooms
+      if (v !== 1) for (let k = 0; k < 3; k++) { const a = 0.6 + k * 0.5 + v; blob(mc, V3(cos(a) * R0 * 1.05, h * 0.35 + k * 0.08, sin(a) * R0 * 1.05), 0.09, 0.025, 0.09, col3(v === 0 ? '#c89a5a' : '#e8d8c0'), { shade: true }); }
+      else for (let k = 0; k < 4; k++) { const p = V3(0.35 + r.pm(0.1), 0, 0.15 + r.pm(0.2)); tube(mc, [p, p.clone().add(V3(0, 0.08, 0))], [0.012, 0.01], { seg: 4, ao: () => col3('#e8e0d0') }); blob(mc, p.clone().add(V3(0, 0.09, 0)), 0.035, 0.022, 0.035, col3('#c84a2a'), { shade: true }); }
+      const g = K.group(meshOf(bark, barkMat('stump', BARKS4.stump)), meshOf(top, ringMat('stump', { outer: '#5a4030', a: '#c8a070', b: '#b08858', crack: '#3a2414' })), meshOf(mc, plainMat('stump_misc', 0xffffff, null)));
+      const out = K.merge(g);
+      out.add(decal('stump', { seed: 33, core: '#141a0c', litter: ['#8a6a3a', '#a08050'], nLitter: 50, litterSize: 4 }, 0.75));
+      return out;
+    },
+  });
+  G.Models.define('log', {
+    variants: 3,
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2400 + v * 7);
+      const bark = new Acc(), ends = new Acc(), mc = new Acc();
+      const R0 = 0.27 + r() * 0.05, L = 1.75;
+      const pts = [];
+      for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(V3(-L / 2 + L * t, R0 * 0.85 + sin(t * 3 + v) * 0.03, sin(t * 2.2 + v) * 0.06)); }
+      // moss along the top: vertex tint where the surface faces up (tube ao receives the point only → use height)
+      const ao = (p) => { const k = sstep(R0 * 0.8, R0 * 1.6, p.y); return [lerp(0.7, 0.55, k), lerp(0.66, 0.8, k), lerp(0.58, 0.4, k)]; };
+      tube(bark, pts, taperR(pts.length, R0, R0 * 0.88), { seg: 12, ao: (p) => [0.85, 0.82, 0.78], lump: 0.12, texW: 0.5 });
+      // moss mantle: a half-tube slightly bigger along the top
+      const mossM = cmat('moss_mantle', () => G.R3M.env({ map: leafAtlas('moss', { seed: 111, shape: 'oval', n: 140, L: 12, W: 7, R: 100, massR: 0.85, gloss: false, dark: '#2e4a1a', mid: '#4a6e22', light: '#6e9a34', hi: '#a8c860' }), alphaTest: 0.45, vertexColors: true, roughness: 1 }));
+      const moss = new Acc();
+      for (let i = 0; i < 7; i++) {
+        const p = pts[1 + (i % 7)].clone().add(V3(r.pm(0.1), R0 * 0.75, r.pm(0.08)));
+        clump(moss, r, p, 0.22, { cards: 4, C: p.clone().add(V3(0, -0.3, 0)), Rn: V3(0.3, 0.2, 0.3), flat: 0.85, sphere: 0.8, size: 0.32 });
+      }
+      capDisc(ends, pts[0], V3(-1, 0, 0), R0 * 0.97, 14, 0.03, r);
+      capDisc(ends, pts[8], V3(1, 0, 0), R0 * 0.86, 14, 0.03, r);
+      // broken branch stubs
+      for (let k = 0; k < 2; k++) { const p = pts[2 + k * 4]; const s2 = limbPts(r, p, V3(r.pm(0.4), 0.8, k ? 1 : -1), 0.35, 2, {}); tube(bark, s2, [0.07, 0.06, 0.05], { seg: 6, cap: true }); }
+      // a few mushrooms (v2: little ferns instead)
+      for (let k = 0; k < 3; k++) { const p = V3(r.pm(0.6), 0.02, R0 * 0.9 + 0.05); blob(mc, p.clone().add(V3(0, 0.07, 0)), 0.04, 0.025, 0.04, col3(v === 2 ? '#d8a050' : '#b8603a'), { shade: true }); tube(mc, [p, p.clone().add(V3(0, 0.07, 0))], [0.01, 0.01], { seg: 4, ao: () => col3('#e8dcc8') }); }
+      const g = K.group(meshOf(bark, barkMat('log', Object.assign({ tex: 'stump' }, BARKS4.stump))), meshOf(ends, ringMat('log', { outer: '#4a3424', a: '#b89060', b: '#9c7448', crack: '#2a1a0c' })), meshOf(moss, mossM), meshOf(mc, plainMat('log_misc', 0xffffff, null)));
+      const out = K.merge(g);
+      out.add(decal('log', { seed: 35, core: '#141a0c' }, 1.1));
+      return out;
+    },
+  });
+  G.Models.define('driftwood', {
+    variants: 3,
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2500 + v * 7);
+      const bark = new Acc();
+      const ao = (p) => { const k = sstep(0, 0.25, p.y); return [lerp(0.6, 1, k), lerp(0.58, 1, k), lerp(0.55, 1, k)]; };
+      const L = 1.85, pts = [];
+      for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(V3(-L / 2 + L * t, 0.13 + sin(t * 5 + v) * 0.04, sin(t * 4 + v * 2) * 0.12)); }
+      tube(bark, pts, pts.map((_, i) => lerp(0.17, 0.07, i / 10) * (1 + 0.25 * sin(i * 1.7))), { seg: 9, ao, lump: 0.3, lumpSeed: 7 + v, texW: 0.4, cap: true });
+      // bleached root plate at one end + crooked branch arms
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; const rp = limbPts(r, pts[0], V3(-0.4, cos(a), sin(a)), 0.3 + r() * 0.25, 3, { wiggle: 0.4 }); tube(bark, rp, taperR(rp.length, 0.06, 0.015), { seg: 5, ao, cap: true }); }
+      for (let k = 0; k < 2; k++) { const p = pts[4 + k * 3]; const b2 = limbPts(r, p, V3(0.6, 0.5, k ? 1 : -1), 0.5, 3, { wiggle: 0.3 }); tube(bark, b2, taperR(b2.length, 0.05, 0.015), { seg: 5, ao, cap: true }); }
+      const out = K.merge(K.group(meshOf(bark, barkMat('driftwood', BARKS4.drift))));
+      out.add(decal('driftwood', { seed: 37, core: '#3a3020' }, 1.0));
+      return out;
+    },
+  });
+
+  // =====================================================================================================
+  // WATER PLANTS — lotus (on water), seaweed (washed-up kelp)
+  // =====================================================================================================
+  function padTex() {
+    return tex('lotuspad', 256, 256, (g, w) => {
+      const r = RNG(41);
+      const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+      gr.addColorStop(0, '#9ac860'); gr.addColorStop(0.5, '#5a9a3a'); gr.addColorStop(1, '#3a7a2a');
+      g.fillStyle = gr; g.fillRect(0, 0, w, w);
+      g.strokeStyle = 'rgba(200,236,150,0.55)'; g.lineWidth = 2;
+      for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; g.beginPath(); g.moveTo(w / 2, w / 2); g.quadraticCurveTo(w / 2 + cos(a + 0.1) * w * 0.25, w / 2 + sin(a + 0.1) * w * 0.25, w / 2 + cos(a) * w * 0.5, w / 2 + sin(a) * w * 0.5); g.stroke(); }
+      for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(255,255,255,0.08)'; g.beginPath(); g.arc(r() * w, r() * w, 2 + r() * 8, 0, TAU); g.fill(); }
+      g.fillStyle = '#c8e090'; g.beginPath(); g.arc(w / 2, w / 2, 6, 0, TAU); g.fill();
+    });
+  }
+  // cupped disc with a notch, rim slightly upturned
+  function pad(acc, c, R, rot, o = {}) {
+    const seg = 18, rings = 3, b0 = acc.count, notch = 0.22;
+    for (let i = 0; i <= rings; i++) {
+      const t = i / rings;
+      for (let k = 0; k <= seg; k++) {
+        const a = rot + notch / 2 + k / seg * (TAU - notch);
+        const rr = R * t * (1 + 0.03 * sin(a * 5));
+        const y = (o.cup || 0.04) * t * t + (o.lift || 0);
+        acc.v(c.x + cos(a) * rr, c.y + y, c.z + sin(a) * rr, -cos(a) * t * 0.15, 1, -sin(a) * t * 0.15, 0.5 + cos(a - rot) * t * 0.5, 0.5 + sin(a - rot) * t * 0.5);
+      }
+    }
+    for (let i = 0; i < rings; i++) for (let k = 0; k < seg; k++) { const a = b0 + i * (seg + 1) + k, b = a + seg + 1; acc.quad(a, b, b + 1, a + 1); }
+  }
+  G.Models.define('lotus', {
+    variants: 3,
+    occluder: false,
+    update(node, o, t) { Wind.tick(t); },
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2600 + v * 7);
+      const wind = { height: 0.8, strength: 0.04, flex: 1.5 };
+      const pm = cmat('lotus_pad', () => Wind.windify(G.R3M.env({ map: padTex(), side: T.DoubleSide, roughness: 0.35, vertexColors: true }), Object.assign({ var: [0.06, 0.06, 0.04] }, wind)));
+      const fm = plainMat('lotus_flower', 0xffffff, wind, { side: T.DoubleSide, roughness: 0.5, emissive: new T.Color(0x200810) });
+      const pads = new Acc(), fl = new Acc();
+      const WY = -0.06; // water surface
+      const n = 5 + r.int(3);
+      for (let i = 0; i < n; i++) {
+        const a = i / n * TAU + r.pm(0.4), d = 0.12 + r() * 0.3;
+        const raised = i < 2 && v !== 2;
+        pad(pads, V3(cos(a) * d, raised ? 0.25 + r() * 0.2 : WY, sin(a) * d), 0.16 + r() * 0.1, r() * TAU, { cup: raised ? 0.07 : 0.02 });
+        if (raised) tube(fl, [V3(cos(a) * d, WY - 0.1, sin(a) * d), V3(cos(a) * d, 0.24, sin(a) * d)], [0.012, 0.01], { seg: 4, ao: () => col3('#5a8a3a') });
+      }
+      // flowers: cupped pink petals around a yellow seed pod; v2 just buds
+      const nf = v === 2 ? 0 : 1 + (v === 1 ? 1 : 0);
+      const pink = col3('#ff9ac0'), deep = col3('#d8487a'), white = col3('#fff4f8');
+      for (let f = 0; f < nf; f++) {
+        const c = V3(r.pm(0.15), 0.32 + f * 0.1, r.pm(0.15));
+        tube(fl, [V3(c.x, WY - 0.1, c.z), c.clone()], [0.012, 0.01], { seg: 4, ao: () => col3('#5a8a3a') });
+        for (let ring = 0; ring < 2; ring++) for (let k = 0; k < 8; k++) {
+          const a = k / 8 * TAU + ring * 0.4, op = ring ? 0.55 : 0.9;
+          const pts = archPts(c, V3(cos(a) * op, 1.2 - ring * 0.3, sin(a) * op), 0.14 - ring * 0.025, 4, -0.25, { lin: true });
+          ribbon(fl, pts, [0.02, 0.045, 0.04, 0.012], { fold: -0.35, up: V3(cos(a), 0, sin(a)), ao: (p, t) => [lerp(white[0], lerp(pink[0], deep[0], t), t + 0.2), lerp(white[1], lerp(pink[1], deep[1], t), t + 0.2), lerp(white[2], lerp(pink[2], deep[2], t), t + 0.2)] });
+        }
+        blob(fl, c.clone().add(V3(0, 0.05, 0)), 0.035, 0.025, 0.035, col3('#e8d040'), { shade: true });
+      }
+      for (let b = 0; b < (v === 2 ? 3 : 1); b++) {
+        const c = V3(r.pm(0.25), 0.3 + r() * 0.15, r.pm(0.25));
+        tube(fl, [V3(c.x, WY - 0.1, c.z), c.clone()], [0.01, 0.009], { seg: 4, ao: () => col3('#5a8a3a') });
+        blob(fl, c.clone().add(V3(0, 0.06, 0)), 0.04, 0.08, 0.04, col3('#f088aa'), { shade: true });
+      }
+      return K.merge(K.group(meshOf(pads, pm, { cast: false }), meshOf(fl, fm)));
+    },
+  });
+  G.Models.define('seaweed', {
+    variants: 3,
+    occluder: false,
+    build(o, K) {
+      const v = o.v || 0, r = RNG(2700 + v * 7);
+      const m = plainMat('kelp', 0xffffff, null, { roughness: 0.42, side: T.DoubleSide, envMapIntensity: 0.4 });
+      const acc = new Acc();
+      const cA = col3(['#3a3a14', '#2a3a1a', '#4a3a1a'][v]), cB = col3(['#7a6a24', '#5a7a2a', '#8a6a2a'][v]);
+      for (let i = 0; i < 6; i++) {
+        const a = r() * TAU, p0 = V3(r.pm(0.3), 0.015, r.pm(0.3)), pts = [];
+        let p = p0.clone(), d = V3(cos(a), 0, sin(a));
+        for (let k = 0; k < 9; k++) { pts.push(p.clone()); d.applyAxisAngle(V3(0, 1, 0), r.pm(0.7)); p = p.clone().addScaledVector(d, 0.09); p.y = 0.012 + k * 0.001 + i * 0.002; }
+        ribbon(acc, pts, pts.map((_, k) => 0.025 + 0.02 * sin(k / 8 * PI)), { ao: (q, t) => [lerp(cA[0], cB[0], t), lerp(cA[1], cB[1], t), lerp(cA[2], cB[2], t)], twist: 0.3 });
+        for (let k = 2; k < 8; k += 3) blob(acc, pts[k].clone().add(V3(0, 0.012, 0)), 0.018, 0.012, 0.018, cB, { ws: 6, hs: 4, shade: true });
+      }
+      return K.merge(K.group(meshOf(acc, m, { cast: false })));
+    },
+  });
 })();
