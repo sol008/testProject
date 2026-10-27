@@ -76,16 +76,17 @@
     L.line(ctx, 'M-4,17 C-2,19.5 2,19.5 4,17', C.skinD, 1.4);
     L.fill(ctx, L.ellipse(-2.5, 17.6, 1.6, 0.8), '#6e4a48', 0.7); L.fill(ctx, L.ellipse(2.5, 17.6, 1.6, 0.8), '#6e4a48', 0.7);
     L.fill(ctx, L.ellipse(-1, 13, 1.2, 1.8), '#fff', 0.35);
-    L.taper(ctx, [[-6, 16], [-10, 22], [-12, 30]], 0.8, C.skinD, 'both', 0.6); L.taper(ctx, [[6, 16], [10, 22], [12, 30]], 0.9, C.skinD, 'both', 0.6);
+    L.taper(ctx, [[-6, 17], [-9.5, 22], [-11, 28]], 0.8, C.skinD, 'both', 0.38); L.taper(ctx, [[6, 17], [9.5, 22], [11, 28]], 0.9, C.skinD, 'both', 0.42);
     L.taper(ctx, [[-8, -22], [0, -23], [8, -22]], 0.8, C.skinD, 'both', 0.5);
-    for (const m of [-1, 1]) L.taper(ctx, [[23 * m, 2], [25 * m, 12], [22 * m, 22]], 1.2, C.skinD, 'both', 0.45);
+    for (const m of [-1, 1]) L.taper(ctx, [[23 * m, 4], [24.5 * m, 13], [21.5 * m, 22]], 1.2, C.skinD, 'both', 0.3);
+    L.fill(ctx, L.ellipse(-20, 2.5, 6, 2.2, -0.2), '#fff', 0.22); L.fill(ctx, L.ellipse(20, 2.5, 5, 2, 0.2), '#fff', 0.1);
     // mouth — thin; courteous almost-smile
     if (grief) L.taper(ctx, [[-7, 28], [0, 26.8], [7, 28]], 1.4, '#5c3a3c');
     else if (cold) L.taper(ctx, [[-7, 27.4], [0, 27], [7, 27.4]], 1.4, '#5c3a3c');
-    else { L.taper(ctx, [[-7.5, 26.4], [-3, 27.4], [0, 27.2], [3, 27.4], [7.5, 26.2]], 1.4, '#5c3a3c'); }
-    L.fill(ctx, 'M-5,28.6 C-2,30.4 2,30.4 5,28.6 C2,29.6 -2,29.6 -5,28.6 Z', C.lip, 0.8);
+    else { L.taper(ctx, [[-7.5, 27.2], [-3, 28.2], [0, 28], [3, 28.2], [7.5, 27]], 1.4, '#5c3a3c'); L.taper(ctx, [[7.2, 27], [8.6, 26]], 0.9, '#5c3a3c'); L.taper(ctx, [[-7.2, 27.2], [-8.6, 26.2]], 0.9, '#5c3a3c'); }
+    L.fill(ctx, 'M-5,29.4 C-2,31.4 2,31.4 5,29.4 C2,30.4 -2,30.4 -5,29.4 Z', C.lip, 0.8);
     // thin mustache + narrow goatee
-    for (const m of [-1, 1]) L.taper(ctx, [[1.5 * m, 22.2], [6 * m, 22.6], [11 * m, 25.2]], 1.6, C.hair, 'end');
+    for (const m of [-1, 1]) L.part(ctx, MX('M-1,22 C-4,21.6 -8,22.4 -11,25.6 C-11.6,26.4 -11,26.6 -10.4,26 C-7.6,24 -4,23.8 -1,24 Z', -m), C.hair, { sh: 0, hi: 0, rim: 0, lw: 0.7 });
     L.part(ctx, 'M-3.4,32 C-4,38 -3,46 0,56 C3,46 4,38 3.4,32 C1.2,33.2 -1.2,33.2 -3.4,32 Z', C.hair, { sh: 0.6, hi: 0, rim: 0, lw: 0.8 });
     // hair (front): centre-parted, swept back; silver at the temples
     for (const m of [-1, 1]) {

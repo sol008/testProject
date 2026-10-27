@@ -194,14 +194,14 @@
   const troop = (id, enemies, bg, bgm, extra) => { if (!D.troops[id]) D.troops[id] = Object.assign({ enemies, bg, bgm: bgm || 'battle' }, extra || {}); };
   troop('t4_coast_intro', ['wind_sprite', 'wind_sprite'], 'hakka', 'battle', { flee: false });
   troop('t4_coast_a', ['wind_sprite', 'wind_sprite'], 'hakka');
-  troop('t4_coast_b', ['wind_sprite', 'rat_spirit'], 'hakka');
-  troop('t4_coast_c', ['rat_spirit', 'rat_spirit', 'rat_spirit'], 'hakka');
+  troop('t4_coast_b', ['wind_sprite', 'rat_spirit_v2'], 'hakka');
+  troop('t4_coast_c', ['rat_spirit_v2', 'rat_spirit_v2', 'rat_spirit_v2'], 'hakka');
   troop('t4_road_a', ['wind_sprite', 'e_rat_persimmon'], 'hakka');
   troop('t4_road_b', ['e_rat_persimmon', 'e_rat_persimmon'], 'hakka');
   troop('t4_road_c', ['mountain_ghost'], 'hakka');
   troop('t4_road_d', ['wind_sprite', 'wind_sprite', 'e_rat_persimmon'], 'hakka');
   troop('t4_den_a', ['e_rat_persimmon', 'e_rat_persimmon', 'e_rat_persimmon'], 'forest');
-  troop('t4_den_b', ['e_rat_persimmon', 'e_rat_persimmon', 'rat_spirit'], 'forest');
+  troop('t4_den_b', ['e_rat_persimmon', 'e_rat_persimmon', 'rat_spirit_v2'], 'forest');
   troop('t4_ratking', ['e_rat_king', 'e_rat_persimmon', 'e_rat_persimmon'], 'forest', 'boss', { boss: true, flee: false });
   troop('t4_rack_1', ['wind_sprite', 'wind_sprite', 'wind_sprite'], 'hakka', 'battle', { flee: false });
   troop('t4_rack_2', ['e_wind_sprite_wail', 'wind_sprite', 'wind_sprite'], 'hakka', 'battle', { flee: false });

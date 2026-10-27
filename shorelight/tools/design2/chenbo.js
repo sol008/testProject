@@ -85,7 +85,8 @@
       L.taper(ctx, [[31 * m, -8], [37 * m, -4], [38 * m, 0]], 1.6, C.grey); // drooping long hairs
     }
     // nose — broad, bulbous, ruddy tip
-    L.part(ctx, 'M-4,-2 C-5,5 -7,10 -9,14 C-12,16 -11,21 -7,21 C-4,23 4,23 7,21 C11,21 12,16 9,14 C7,10 5,5 4,-2 Z', C.skin, { sh: 2.2, hi: 0.8, rim: 0.8, lw: 1.3, under: (c) => L.fill(c, L.ellipse(0, 16, 6.5, 4.5), C.blush, 0.55) });
+    L.part(ctx, 'M-4,-2 C-5,5 -7,10 -9,14 C-12,16 -11,21 -7,21 C-4,23 4,23 7,21 C11,21 12,16 9,14 C7,10 5,5 4,-2 Z', C.skin, { sh: 2.2, hi: 0.8, rim: 0.8, lw: 0, under: (c) => L.fill(c, L.ellipse(0, 16, 6.5, 4.5), C.blush, 0.55) });
+    L.line(ctx, 'M-8,12.5 C-12,15 -11.5,21 -7,21 C-4,23 4,23 7,21 C11.5,21 12,15 8,12.5', L.ink(C.skin), 1.4); L.taper(ctx, [[4, -1], [6, 8], [8, 13]], 1.1, C.skinD, 'both', 0.8);
     L.fill(ctx, L.ellipse(-3, 20.2, 2.2, 1.2), '#5a2f24', 0.85); L.fill(ctx, L.ellipse(3, 20.2, 2.2, 1.2), '#5a2f24', 0.85);
     L.fill(ctx, L.ellipse(-1.5, 14.5, 1.6, 1.1), '#fff', 0.55);
     // nasolabial folds

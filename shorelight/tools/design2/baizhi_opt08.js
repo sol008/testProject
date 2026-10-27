@@ -119,25 +119,19 @@
         p.closePath();
       });
     };
-    const shape = new Path2D();
-    shape.addPath(lobe(0, -312, 26, 30, 0));
-    shape.addPath(lobe(-40, -334, 24, 18, 0.25));
-    shape.addPath(lobe(40, -334, 24, 18, -0.25));
-    shape.addPath(P((p) => p.ellipse(0, -344, 30, 14, 0, 0, 7)));
+    const L = [[-50, -330, 28, 20, 0.22], [50, -330, 28, 20, -0.22], [0, -308, 26, 31, 0]];
     // fringe of tassels under the collar edge
-    if (!B.G.sil) for (const [x, y] of [[-58, -322], [-48, -314], [-30, -296], [-18, -284], [0, -278], [18, -284], [30, -296], [48, -314], [58, -322]]) {
-      line(poly([[x, y], [x, y + 16]], false), C.gold, 1.2);
-      part(P((p) => p.ellipse(x, y + 18, 1.6, 2.6, 0, 0, 7)), C.collar, { lw: 0.7, rim: false, sh: false });
+    if (!B.G.sil) for (const [x, y] of [[-74, -320], [-62, -312], [-46, -310], [-24, -292], [-12, -280], [0, -276], [12, -280], [24, -292], [46, -310], [62, -312], [74, -320]]) {
+      line(poly([[x, y], [x, y + 15]], false), C.gold, 1.2);
+      part(P((p) => p.ellipse(x, y + 17, 1.6, 2.6, 0, 0, 7)), C.collar, { lw: 0.7, rim: false, sh: false });
     }
-    part(shape, C.collar, { rule: 'nonzero', lw: 1.8, rimW: 1.5, inner: () => {
-      // gold edging + wave/lotus embroidery inside the lobes
-      line(lobe(0, -312, 21, 25, 0), C.gold, 1.4);
-      line(lobe(-40, -334, 19, 13.5, 0.25), C.gold, 1.4);
-      line(lobe(40, -334, 19, 13.5, -0.25), C.gold, 1.4);
-      for (const [x, y] of [[0, -306], [-40, -334], [40, -334]]) {
+    part(P((p) => p.ellipse(0, -346, 34, 15, 0, 0, 7)), C.collar, { lw: 1.6, rimW: 1.2 });
+    for (const [x, y, rx, ry, rot] of L) {
+      part(lobe(x, y, rx, ry, rot), C.collar, { lw: 1.8, rimW: 1.5, inner: () => {
+        line(lobe(x, y, rx - 5, ry - 5, rot), C.gold, 1.4);
         for (let i = 0; i < 3; i++) stroke([[x - 9, y + 6 - i * 4], [x - 4, y + 1 - i * 4], [x + 1, y + 6 - i * 4], [x + 6, y + 1 - i * 4], [x + 10, y + 6 - i * 4]], 1.2, rgba('#9fd8e0', 0.9));
-      }
-    } });
+      } });
+    }
     // inner neck edge
     part(P((p) => p.ellipse(0, -352, 13, 6, 0, 0, 7)), C.ao, { lw: 1.2, rim: false });
   }
@@ -190,10 +184,10 @@
     idea: '中元夜，街坊讓她披上嫁妝箱裡的如意雲肩、穿上馬面裙，在主普壇前領唱〈渡魂謠〉——一身節慶盛裝，眼神卻望向海的那頭。',
     culture: '清代漢人女子節慶／婚禮盛裝：四合如意雲肩（流蘇）、寬袖襖鑲寬邊、馬面裙（前後平幅、兩側打褶）、繡鞋、步搖。奇幻：雲肩刺繡為海水紋，唱歌時流蘇微光。',
     model: '雲肩為硬挺單層網格＋流蘇骨鏈；襖、馬面裙兩層（側褶用法線貼圖）；步搖垂珠物理；刺繡全部為貼圖。',
-    palette: [[C.ao, '孔雀綠襖', 'peacock ao'], [C.collar, '海棠紅', 'begonia red'], [C.gold, '金線', 'gold thread'], [C.skirt, '月白裙', 'moon-white skirt'], [C.border, '米鑲邊', 'cream border'], [C.skin, '膚', 'skin'], [C.jade, '玉笛', 'jade flute']],
+    palette: [[C.ao, '孔雀綠襖', 'peacock ao'], [C.collar, '海棠紅', 'begonia red'], [C.gold, '金線', 'gold thread'], [C.skirt, '月白裙', 'moon-white'], [C.border, '米鑲邊', 'border'], [C.skin, '膚', 'skin'], [C.jade, '玉笛', 'jade flute']],
     callouts: [
       { zh: '步搖・半紮髮', en: 'dangling hairpin on a half-up', at: [-24, -424] },
-      { zh: '四合如意雲肩', en: 'four-lobed ruyi cloud collar', at: [40, -334] },
+      { zh: '四合如意雲肩', en: 'four-lobed ruyi cloud collar', at: [56, -334] },
       { zh: '寬袖襖・寬鑲邊', en: 'wide-sleeved jacket, broad border', at: [-40, -214] },
       { zh: '馬面裙', en: 'pleated horse-face skirt', at: [0, -100] },
       { zh: '玉笛垂玉牌', en: 'flute with red string and jade tag', at: [52, -232] },
@@ -207,10 +201,11 @@
       // altar lanterns of the 主普壇
       for (let i = 0; i < 6; i++) {
         const lx = x + 22 + i * 50, ly = y + 40 + (i % 2) * 16;
-        c.fillStyle = 'rgba(255,170,90,0.35)';
-        c.beginPath();
-        c.ellipse(lx, ly, 12, 15, 0, 0, 7);
-        c.fill();
+        const g = c.createRadialGradient(lx, ly, 1, lx, ly, 16);
+        g.addColorStop(0, 'rgba(255,190,110,0.55)');
+        g.addColorStop(1, 'rgba(255,190,110,0)');
+        c.fillStyle = g;
+        c.fillRect(lx - 16, ly - 16, 32, 32);
       }
       bokeh(c, x, y, w, h * 0.7, 20, ['#ffc070', '#ff8060'], 81, 7, 0.45);
     },
@@ -229,7 +224,7 @@
       B.bzBack(c, R, -236, col);
       c.fillStyle = col;
       c.beginPath();
-      c.ellipse(0, -318, 24, 26, 0, 0, 7);
+      c.ellipse(0, -330, 70, 22, 0, 0, 7);
       c.fill();
       c.fillRect(-56, -48, 112, 30);
     },
