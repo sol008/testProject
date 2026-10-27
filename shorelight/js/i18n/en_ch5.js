@@ -743,7 +743,7 @@ G.I18N.add({
   '（紅纓連刺。鬼面一路退到牌位前，退無可退——）': '(Hongying thrusts again and again. Ghost Mask retreats all the way to the tablets, until he has nowhere left to go—)',
   '（紅纓突然背轉身。鬼面的劍下意識追上——）': '(Suddenly Hongying turns her back. Ghost Mask\'s sword follows by instinct—)',
   '（紅纓回手一挑。洛家回馬槍。槍尖擦過面具邊緣。——喀。）': '(Hongying whips her spear up and back. The Luo Turnabout Thrust. The spear tip grazes the edge of the mask. —Crack.)',
-  '（慢鏡頭。鬼王面具裂成兩半，落在地上。）': '(Slowly, the Ghost King mask splits in two and falls to the floor.)',
+  '（鬼王面具緩緩裂成兩半，落在地上。）': '(Slowly, the Ghost King mask splits in two and falls to the floor.)',
   '（面具下，是一張年輕男人的臉。左半邊完好，眉目和紅纓有七分像；右半邊，從額頭到下顎，是一大片被冷火燒過的疤。）': '(Beneath the mask is a young man\'s face. The left half is unmarked, the brows and eyes very like Hongying\'s. The right half, from forehead to jaw, is one great scar seared by cold fire.)',
   '……哥……？': '…Brother…?',
   '……槍，還是握得太緊。': '…Still gripping the spear too tight.',

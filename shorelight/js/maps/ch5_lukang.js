@@ -2725,7 +2725,7 @@
     await S.wait(1.0);
     const qa = G.mapScene.actor('qf');
     if (qa) qa.sprite = 'qingfeng';
-    await S.say('', '（慢鏡頭。鬼王面具裂成兩半，落在地上。）');
+    await S.say('', '（鬼王面具緩緩裂成兩半，落在地上。）');
     await S.say('', '（面具下，是一張年輕男人的臉。左半邊完好，眉目和紅纓有七分像；右半邊，從額頭到下顎，是一大片被冷火燒過的疤。）');
     await S.wait(0.8);
     await S.say('hongying:surprise', '……');
