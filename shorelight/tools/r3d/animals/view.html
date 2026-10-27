@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Shorelight animals viewer</title>
+<style>
+  html, body { margin: 0; background: #1b1d22; color: #ddd; font: 13px/1.3 system-ui, sans-serif; overflow: hidden; }
+  #c { display: block; }
+  .lb { position: absolute; transform: translate(-50%, 0); padding: 1px 5px; background: rgba(0,0,0,.55); border-radius: 4px; white-space: nowrap; pointer-events: none; font-size: 11px; }
+  #info { position: absolute; left: 8px; top: 6px; opacity: .8; }
+</style></head>
+<body>
+<canvas id="c"></canvas><div id="info"></div>
+<!--
+  Animals team viewer: drives G.Animal3D directly (no dependency on chars.js delegation).
+  Params:
+    ids=a,b                 animal sprite ids (default: all quad/bird ids)
+    views=1|4               4 = front, 3/4, side, back
+    anim=idle|walk|trot|run|<clip>   speed=<tiles/s> overrides the locomotion speed
+    t=<s>                   time to advance to (60 fps fixed steps)
+    frames=n dt=<s>         strip: n copies of each id at t, t+dt, ... (side view unless yaw given per view)
+    face=<deg>              facing yaw of every instance (deg); default by view
+    expr=<name> emote=<k> look=x,y,z (look target relative to instance root)
+    yaw pitch dist fov      camera; w h size; night=1; ground=0; labels=0; zoom=head (frame the head)
+    ghost=1 opacity=a
+-->
+<script>window.G_VIEWER = true;</script>
+<script src="../../../js/core/util.js"></script>
+<script>G.settings = Object.assign({ quality: 'high', lang: 'zh', visualFx: 1 }, G.settings || {}); G.time = 0;
+  G.Render = G.Render || { shakeOffset: () => [0, 0], fade: { a: 0 } }; G.warnOnce = G.warnOnce || ((k, e) => console.warn(k, e));</script>
+<script src="../../../js/gfx/registry.js"></script>
+<script src="../../../js/gfx/sprites.js"></script>
+<script src="../../../js/vendor/three.bundle.js"></script>
+<script src="../../../js/r3d/core.js"></script>
+<script src="../../../js/r3d/materials.js"></script>
+<script src="../../../js/r3d/models.js"></script>
+<script src="../../../js/r3d/animals.js"></script>
+<script>
+// extra spirit-animal ids that maps define at load time (mirrors js/maps/ch2_mistforest.js, ch10_east.js)
+G.Sprites.define('c2_light_leopard', { kind: 'quad', species: 'leopardcat', size: 1.05, ghost: true, ghostTint: '#ffe39a' });
+G.Sprites.define('c2_light_muntjac', { kind: 'quad', species: 'dog', size: 0.9, ghost: true, ghostTint: '#b8ffd8', col: { base: '#9a6438', belly: '#d8b488', dark: '#4a2c16', nose: '#2a2020', eye: '#2a1a10', collar: '' } });
+G.Sprites.define('c2_light_magpie', { kind: 'bird', species: 'crow', size: 1.2, ghost: true, ghostTint: '#4a9cff' });
+G.Sprites.define('c10_muntjac', { kind: 'quad', species: 'dog', size: 0.9, col: { base: '#9a6438', belly: '#d8b488', dark: '#4a2c16', nose: '#2a2020', eye: '#2a1a10', collar: '' } });
+setTimeout(function () {
+  const q = new URLSearchParams(location.search);
+  const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+  const W = num('w', 1280), H = num('h', 720);
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  G.R3.renderer = renderer;
+  const scene = new THREE.Scene();
+  const night = q.get('night') === '1';
+  scene.background = new THREE.Color(night ? 0x0b1020 : (q.get('bg') ? '#' + q.get('bg') : 0x8fb4d0));
+  scene.add(new THREE.HemisphereLight(night ? 0x5a6a9a : 0xdfeaf5, 0x5a4a3a, night ? 0.35 : 1.15));
+  const sun = new THREE.DirectionalLight(night ? 0x9fb6ff : 0xfff0d8, night ? 0.4 : 2.8);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+  scene.add(sun, sun.target);
+  try {
+    const pm = new THREE.PMREMGenerator(renderer);
+    const es = new THREE.Scene();
+    es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 16, 8), new THREE.MeshBasicMaterial({ side: THREE.BackSide, color: night ? 0x1a2240 : 0xbcd4e6 })));
+    scene.environment = pm.fromScene(es, 0.04).texture; scene.environmentIntensity = 0.55;
+  } catch (e) { console.warn(e); }
+
+  let ids = q.get('ids') ? q.get('ids').split(',').filter(Boolean) : G.Sprites.ids().filter((i) => G.Animal3D.has(i));
+  const views = num('views', 1), frames = num('frames', 1), fdt = num('dt', 0.1);
+  const anim = q.get('anim') || 'idle', T = num('t', 0.5);
+  const items = [];
+  const t0 = performance.now();
+  for (const id of ids) for (let v = 0; v < views; v++) for (let f = 0; f < frames; f++) {
+    let inst = null;
+    try { inst = G.Animal3D.create(id, { context: q.get('ctx') || 'map' }); } catch (e) { console.error('build failed', id, e); }
+    if (!inst) continue;
+    let yaw = frames > 1 && views === 1 ? Math.PI / 2 : ([0, -Math.PI / 4, -Math.PI / 2, Math.PI][v] || 0);
+    if (q.has('face')) yaw = num('face', 0) * Math.PI / 180 + ([0, -Math.PI / 4, -Math.PI / 2, Math.PI][v] || 0);
+    items.push({ id, inst, obj: inst.root, yaw, tt: T + f * fdt, label: id + (views > 1 ? ['', ' ¾', ' side', ' back'][v] : '') + (frames > 1 ? ' ' + (T + f * fdt).toFixed(2) : '') });
+    scene.add(inst.root);
+  }
+  const buildMs = performance.now() - t0;
+  const camYaw = num('yaw', 20) * Math.PI / 180;
+  const speeds = { walk: 1.6, trot: 3.2, run: 4.2, gallop: 7, lope: 4.2 };
+  for (const it of items) {
+    const ins = it.inst;
+    ins.setFacing(it.yaw);
+    if (q.has('speed')) ins.setMove(num('speed', 0));
+    else if (speeds[anim] != null) ins.setMove(speeds[anim]);
+    if (speeds[anim] == null && anim !== 'idle') ins.play(anim, { loop: q.get('loop') !== '0' });
+    if (q.get('expr')) ins.setExpression(q.get('expr'));
+    if (q.get('emote')) ins.emote(q.get('emote'));
+    if (q.has('opacity') || q.get('ghost') === '1') ins.setOpacity(num('opacity', 1), q.get('ghost') === '1');
+  }
+  // layout
+  const cell = num('cell', 0);
+  const boxes = items.map((it) => { it.obj.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(it.obj); return b.isEmpty() ? new THREE.Box3(new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(0.5, 1, 0.5)) : b; });
+  const cols = num('cols', frames > 1 ? frames : Math.ceil(Math.sqrt(items.length * 1.8)));
+  const cs = cell || (Math.max(0.6, ...boxes.map((b) => Math.max(b.max.x - b.min.x, b.max.z - b.min.z))) + 0.25);
+  items.forEach((it, i) => { const c = i % cols, r = Math.floor(i / cols); it.base = new THREE.Vector3(c * cs, 0, r * cs); it.obj.position.copy(it.base); });
+  if (q.get('look')) { const l = q.get('look').split(',').map(Number); for (const it of items) it.inst.lookAt(new THREE.Vector3(l[0], l[1], l[2]).add(it.base)); }
+  const mv = num('movez', 0); // move the root with the speed (to verify foot planting in world space)
+  for (const it of items) {
+    const steps = Math.round(it.tt * 60);
+    for (let s = 0; s < steps; s++) {
+      G.time = s / 60;
+      if (mv && it.inst._speed) { it.obj.position.x += Math.sin(it.yaw) * it.inst._speed / 60; it.obj.position.z += Math.cos(it.yaw) * it.inst._speed / 60; }
+      it.inst.update(1 / 60, camYaw, null);
+    }
+  }
+  const all = new THREE.Box3();
+  for (const it of items) all.expandByObject(it.obj);
+  const ctr = all.getCenter(new THREE.Vector3()), size = all.getSize(new THREE.Vector3());
+  if (q.get('ground') !== '0') {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+    const g = gc.getContext('2d'); g.fillStyle = '#6e7a5e'; g.fillRect(0, 0, 256, 256);
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+    g.strokeStyle = 'rgba(0,0,0,0.12)'; g.lineWidth = 1; for (let i = 1; i < 10; i++) { g.beginPath(); g.moveTo(i * 25.6, 0); g.lineTo(i * 25.6, 256); g.moveTo(0, i * 25.6); g.lineTo(256, i * 25.6); g.stroke(); }
+    const tx = new THREE.CanvasTexture(gc); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace;
+    const gs = Math.max(size.x, size.z) + 20; tx.repeat.set(gs, gs);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(gs, gs), new THREE.MeshStandardMaterial({ map: tx, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.set(Math.round(ctr.x), 0, Math.round(ctr.z)); ground.receiveShadow = true;
+    scene.add(ground);
+  }
+  const cam = new THREE.PerspectiveCamera(num('fov', 30), W / H, 0.02, 500);
+  const pitch = num('pitch', 18) * Math.PI / 180;
+  let look = ctr.clone(); look.y = size.y * 0.45;
+  let radius = Math.max(size.x, size.y * 1.6 * W / H * 0.6, size.z) * 0.5 + 0.08;
+  if (q.get('zoom') === 'head' && items[0]) {
+    const hb = items[0].inst.bone('head'); const hp = new THREE.Vector3(); hb.getWorldPosition(hp);
+    look = hp.add(new THREE.Vector3(0, 0.02, 0)); radius = num('zr', 0.16);
+  }
+  const dist = radius / Math.tan(cam.fov * Math.PI / 360) * 1.1 * num('dist', 1);
+  cam.position.set(look.x + Math.sin(camYaw) * Math.cos(pitch) * dist, look.y + Math.sin(pitch) * dist, look.z + Math.cos(camYaw) * Math.cos(pitch) * dist);
+  cam.lookAt(look);
+  sun.position.copy(look).add(new THREE.Vector3(-6, 10, 5)); sun.target.position.copy(look); sun.target.updateMatrixWorld();
+  const sc = sun.shadow.camera; const r2 = Math.max(size.x, size.z) * 0.7 + 1; sc.left = -r2; sc.right = r2; sc.top = r2; sc.bottom = -r2; sc.far = 40; sc.updateProjectionMatrix();
+  for (const it of items) it.inst.update(0, camYaw, cam);
+  renderer.render(scene, cam);
+  if (q.get('labels') !== '0') items.forEach((it) => {
+    const b = new THREE.Box3().setFromObject(it.obj);
+    const p = new THREE.Vector3((b.min.x + b.max.x) / 2, 0, b.max.z).project(cam);
+    const d = document.createElement('div'); d.className = 'lb'; d.textContent = it.label;
+    d.style.left = ((p.x * 0.5 + 0.5) * W) + 'px'; d.style.top = ((-p.y * 0.5 + 0.5) * H + 4) + 'px';
+    document.body.appendChild(d);
+  });
+  const info = renderer.info.render;
+  // per-item budget
+  const per = items.length ? (() => { let tris = 0, calls = 0; items[0].obj.traverse((n) => { if (n.isMesh && n.visible) { calls++; const g = n.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); return { calls, tris: Math.round(tris) }; })() : {};
+  document.getElementById('info').textContent = `${items.length} items · ${info.calls} calls · ${info.triangles} tris · first: ${per.calls} calls ${per.tris} tris · build ${buildMs.toFixed(0)}ms`;
+  window.__stats = { calls: info.calls, tris: info.triangles, items: items.length, first: per, buildMs: Math.round(buildMs) };
+  window.__ready = true;
+}, 0);
+</script>
+</body></html>
