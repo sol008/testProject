@@ -127,7 +127,7 @@ G.World = (() => {
       ctx.strokeStyle = '#2a1408'; ctx.lineWidth = 1.5; ctx.stroke();
       if (cur) G.UI.lanternIcon(ctx, x, y - 22, 8, t);
       const right = p[0] > 121.3 || id === 'farshore';
-      G.Render.text(ctx, p[2], x + (right ? -10 : 10), y - 10, { size: 15 * Math.max(1, box.s), align: right ? 'right' : 'left', color: known ? '#fff0d0' : '#8a8a8a', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
+      G.Render.text(ctx, p[2], x + (right ? -10 : 10), y - 10, { size: Math.min(26, 15 * Math.max(1, box.s * 0.75)), align: right ? 'right' : 'left', color: known ? '#fff0d0' : '#8a8a8a', stroke: 'rgba(10,14,24,0.85)', strokeW: 3 });
     }
     ctx.restore();
   };
@@ -148,8 +148,18 @@ G.World = (() => {
     }
     draw(ctx) {
       const t = this.t;
-      const box = { x: 0, y: 0, w: G.W, h: G.H, ox: 300, oy: -10, s: 1 };
-      const a = this.from === this.to ? null : null; void a;
+      // zoom to fit the two places (short hops zoom in, long voyages show the whole island)
+      if (!this.box) {
+        const pa = W.PLACES[this.from], pb = W.PLACES[this.to];
+        const unit = { x: 0, y: 0, s: 1 };
+        const [ax, ay] = W.proj(pa[0], pa[1], unit), [bx2, by2] = W.proj(pb[0], pb[1], unit);
+        const span = Math.max(Math.abs(ax - bx2) / (G.W * 0.55), Math.abs(ay - by2) / (G.H * 0.55), 0.0001);
+        const s = G.U.clamp(1 / span, 1, 3.2);
+        const cx = (ax + bx2) / 2, cy = (ay + by2) / 2;
+        this.box = { x: 0, y: 0, w: G.W, h: G.H, ox: G.W * 0.58 - cx * s, oy: G.H * 0.45 - cy * s, s };
+        if (s <= 1.05) { this.box.ox = 300; this.box.oy = -10; this.box.s = 1; }
+      }
+      const box = this.box;
       W.drawMap(ctx, box, t, { current: null, extra: [this.from, this.to] });
       const sub = { x: box.x + box.ox, y: box.y + box.oy, s: box.s };
       const p0 = W.PLACES[this.from], p1 = W.PLACES[this.to];

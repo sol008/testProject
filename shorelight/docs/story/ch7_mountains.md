@@ -2,7 +2,7 @@
 
 > 季節：早春（正月底～二月）。白芷被擄往玄武嶼，星河體內借來的燈火日漸黯淡。
 > 隊伍：星河、紅纓、雲歸（糰子以跟隨精靈身分在地圖上同行、戰鬥中由雲歸召喚）。白芷缺席。
-> 建議等級：進入 23 → 離開 27～28。
+> 建議等級：進入 22～23 → 離開 25～26。
 > 本章主題：**借來的光要怎麼還？**——答案不是「還」，而是「點亮自己，再把光分出去」。
 > 文化重點（遵守 STORY_BIBLE「Cultural accuracy & respect guide」）：鄒族 kuba 與獵人倫理、塔山；布農族 pasibutbut
 > （八部合音）只「聽」不「參與」、玉山洪水傳說與紅嘴黑鵯取火；邵族白鹿傳說與杵音；**不去 Lalu、不上塔山**。
@@ -1165,7 +1165,6 @@
 47. 藤婆（聲音）: 回來吧，孩子們。天亮了。
 48. [白光。淡出。]
 - `flag: ch7_xinhuo`
-- `flag: ch6_xinhuo`（**相容**：`js/data/characters.js` 目前以 `ch6_xinhuo` 解鎖心火三技能，兩個旗標都要設；之後由主筆統一改名）
 - 清除 `ch7_flame`。
 
 ### 7-11 天亮（`tengpo_hut`，清晨）
@@ -1416,7 +1415,6 @@
 53. 糰子(cry)（很小聲）: 雲歸……本大爺的毛……給你擦……
 54. 雲歸(cry): ……全是貓毛。笨蛋。
 - `flag: ch7_qingxu_freed`  `flag: ch7_taixu`
-- `flag: ch6_taixu`（**相容**：`js/data/characters.js` 以此旗標授予 `yg_taixu`）
 - 雲歸習得：**太虛神雷**
 - 獲得：**清虛古符**（雲歸武器）
 
@@ -1722,7 +1720,7 @@
 - **第二階段（清虛 HP ≤60%）**：冥燈印現形，可被選取。清虛的 HP **不會低於 1**（「勿傷師父」；若打到 1，清虛進入「虛脫」不再行動 2 回合，雲歸台詞：「別再打他了——打燈！」）。每 3 回合清虛有一次「掙扎」：該回合清虛不行動，並說一句清醒的台詞（見 7-15），同時冥燈印 DEF −50%（1 回合）。冥燈印每回合「吸命」。
 - **第三階段（冥燈印 HP ≤50%）**：冥燈印驅使清虛施放「五雷轟頂」（全體 木 1.4，2 回合一次，施放前一回合有「天空雷雲聚集」提示）。
 - 勝利條件：擊破冥燈印。戰鬥結束時清虛 HP 保持原值（劇情中他仍然死去——他的命早已被燈吸乾）。
-- 平衡：預期隊伍 Lv 27、心火已覺醒，約 10～14 回合。
+- 平衡：預期隊伍 Lv 25～26、心火已覺醒，約 10～14 回合。
 
 **頭目設計：無光之影**
 - 星河的黑色剪影，兩眼是空洞。周身有逆流的黑水。
@@ -1759,12 +1757,12 @@
 | 熊膽、蛟鱗、金剛石屑 | 材料 | （如有合成系統） | 掉落 |
 
 ## 8. 旗標總表
-`ch7_start, ch7_flame(數值), ch7_cart, ch7_trader, ch7_bear_freed, ch7_voyu, ch7_tsou_welcome, ch7_tasan_told, ch7_pasuya_told, ch7_sq_pasuya(0/1/2), ch7_heartlamp_tsou, ch7_shenmu, ch7_seaofclouds, ch7_yushan_enter, ch7_biung, ch7_bunun_shelter, ch7_pasibutbut_heard, ch7_flood_legend, ch7_bunun_farewell, ch7_tengpo_met, ch7_dieta, ch7_intent(1/2/3), ch7_rite, ch7_vision_enter, ch7_trial_hongying, ch7_trial_yungui, ch7_cycles_seen, lyric_ch7, ch7_xinhuo, ch6_xinhuo(相容), ch7_dawn_after, ch7_leopard, ch7_thao_met, ch7_white_deer, ch7_lalu_respect, ch7_chuyin, ch7_mist_path, ch7_jiao, ch7_shrine_revealed, ch7_murals, ch7_heartlamp_murals, ch7_lamp_puzzle, ch7_qingxu_freed, ch7_taixu, ch6_taixu(相容), ch7_mother_voice, ch7_end, tuanzi_mush_ch7`
+`ch7_start, ch7_flame(數值), ch7_cart, ch7_trader, ch7_bear_freed, ch7_voyu, ch7_tsou_welcome, ch7_tasan_told, ch7_pasuya_told, ch7_sq_pasuya(0/1/2), ch7_heartlamp_tsou, ch7_shenmu, ch7_seaofclouds, ch7_yushan_enter, ch7_biung, ch7_bunun_shelter, ch7_pasibutbut_heard, ch7_flood_legend, ch7_bunun_farewell, ch7_tengpo_met, ch7_dieta, ch7_intent(1/2/3), ch7_rite, ch7_vision_enter, ch7_trial_hongying, ch7_trial_yungui, ch7_cycles_seen, lyric_ch7, ch7_xinhuo, ch7_dawn_after, ch7_leopard, ch7_thao_met, ch7_white_deer, ch7_lalu_respect, ch7_chuyin, ch7_mist_path, ch7_jiao, ch7_shrine_revealed, ch7_murals, ch7_heartlamp_murals, ch7_lamp_puzzle, ch7_qingxu_freed, ch7_taixu, ch7_mother_voice, ch7_end, tuanzi_mush_ch7`
 
 心燈：**13 霧中的獵刀**（`ch7_heartlamp_tsou`）、**14 燈母祠的壁畫**（`ch7_heartlamp_murals`）。
 
 ## 9. 給實作與其他作者的備註
-- **旗標相容**：`js/data/characters.js` 目前以 `ch6_xinhuo`（星河心火）、`ch6_taixu`（雲歸太虛神雷）解鎖技能——這是舊章節編號。本章兩組旗標都設；建議主筆日後把 characters.js 改為 `ch7_xinhuo`／`ch7_taixu`。
+- **技能旗標**：`ch7_xinhuo` 解鎖 `xh_xinhuo_ran/zhao/bumie`、`ch7_taixu` 解鎖 `yg_taixu`（與 `js/data/characters.js` 一致）。
 - **新技能（被動）**：`hy_fangshou`（紅纓「放手」）、`yg_mankan`（雲歸「慢看」）、星河被動「心火」（最大 HP +8%、火傷 +10%）。若不想新增被動系統，可改為一般增益技能。
 - **新 art id 建議**：`mist_spirit, hundred_eyes, snake_shadow, bear_spirit, jiao, stone_guard, lamp_moth, tide_grudge, dark_seal`；地圖物件可能需要 `thao_house`（邵族家屋）、`hut_moss`（藤婆小屋），沒有時以文中替代方案處理。
 - **文化把關**：pasibutbut 段落不得做成小遊戲、不得播放任何模仿歌聲的合成音；kuba 不可進入；Lalu、塔山都不可前往（船/路以文字拒絕）。夢藤與入夢禮的所有說明文字都明確屬於藤婆，原住民 NPC 只說「那位老婆婆不是我們的人」。

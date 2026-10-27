@@ -10,3 +10,12 @@
   drum 1x1, bell 1x1, weapon_rack 2x1, mirror_stand 1x1 (照魂鏡), cauldron 1x1, herbs_rack 1x1, bucket 1x1, broom 1x1, plant_pot 1x1 (o.v 0–2),
   divination_blocks 1x1, fortune_sticks 1x1, mill_stone 1x1 (擂茶), loom_small 1x1, fishing_net 2x1, lighthouse_lamp 2x2.
 - Light emitters: shelf_lanterns, counter, stove, altar, switch (on), brazier, soul_jar (blue), eternal_lamp, mirror_stand (cyan), lighthouse_lamp.
+
+## Regional architecture (js/gfx/objects2.js)
+hakka_house 6x4 (door [2], text 堂號), drying_rack 2x1 (v 0 米粉 / 1 柿餅), red_fort 5x4 (door 2), chikan_tower 5x4 (door 2),
+city_god_temple / mazu_temple 6x4 (door 2 or 3 = centre doorway; 1/4 side doors; text = vertical plaque), palanquin 2x2 (anim; still),
+kuba 4x3 (door 1 ladder), bunun_house 4x3 (door 1), millet_rack 2x1, tao_house 4x3 (door 1), tatala 2x1 (water:true bobs),
+wang_boat 6x3 (water:true afloat, else on beach cradle), guzhao 4x3 (~470px tall), fort_gate 3x2 (door centre, text 南門),
+stone_weir 5x3 resizable (v 0 arc / 1 double-heart; solid only along the wall), basalt 2x2, firecracker_tower 2x1 (lit:false to stop),
+qixi_pavilion 2x2, pilgrim_flag 1x1 (text, color), rainbow_arch 6x2 (over, non-solid).
+Deities are never depicted (temple interiors show only altar silhouettes; palanquin curtain closed).

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Objects 2 Preview — regional architecture</title>
+<style>
+  html, body { margin: 0; background: #0c0e14; color: #ccd; font: 13px sans-serif; }
+  #bar { padding: 6px 10px; position: sticky; top: 0; background: #12141c; z-index: 2; }
+  #bar a { color: #9cf; margin-right: 10px; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <a href="?">day</a><a href="?night=1">night + lights</a><a href="?grid=1">collision grid</a><a href="?perf=1">perf</a>
+  | query: t=&lt;sec&gt; freeze, only=a,b, scale=N
+</div>
+<canvas id="c"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/objects2.js"></script>
+<script>
+'use strict';
+const Q = new URLSearchParams(location.search);
+const freezeT = Q.has('t') ? parseFloat(Q.get('t')) : null;
+const night = Q.has('night'), grid = Q.has('grid'), zoom = parseFloat(Q.get('scale') || '1');
+G.S = 1;
+const T = 64;
+const errors = [];
+window.addEventListener('error', (e) => errors.push(String(e.message)));
+
+// [label, instance params, ground]
+let ITEMS = [
+  ['伙房 hakka_house', { t: 'hakka_house' }, 'grass'],
+  ['城隍廟 city_god_temple', { t: 'city_god_temple' }, 'stone'],
+  ['天后宮 mazu_temple', { t: 'mazu_temple' }, 'stone'],
+  ['紅毛城 red_fort', { t: 'red_fort' }, 'grass'],
+  ['赤崁樓 chikan_tower', { t: 'chikan_tower' }, 'stone'],
+  ['恆春古城 fort_gate', { t: 'fort_gate' }, 'dirt'],
+  ['kuba (Tsou)', { t: 'kuba' }, 'dirt'],
+  ['Bunun slate house', { t: 'bunun_house' }, 'slate'],
+  ['Tao house (vahey)', { t: 'tao_house' }, 'sand'],
+  ['孤棚 guzhao', { t: 'guzhao' }, 'dirt'],
+  ['王船 wang_boat (cradle)', { t: 'wang_boat' }, 'sand'],
+  ['王船 wang_boat (water)', { t: 'wang_boat', water: true }, 'water'],
+  ['石滬 stone_weir v0', { t: 'stone_weir' }, 'water'],
+  ['石滬 雙心 v1', { t: 'stone_weir', v: 1, w: 4, h: 4 }, 'water'],
+  ['basalt', { t: 'basalt' }, 'grass'],
+  ['神轎 palanquin', { t: 'palanquin' }, 'stone'],
+  ['tatala', { t: 'tatala' }, 'sand'],
+  ['tatala (water)', { t: 'tatala', water: true }, 'water'],
+  ['米粉 drying_rack v0', { t: 'drying_rack', v: 0 }, 'dirt'],
+  ['柿餅 drying_rack v1', { t: 'drying_rack', v: 1 }, 'dirt'],
+  ['millet_rack', { t: 'millet_rack' }, 'dirt'],
+  ['蜂炮 firecracker_tower', { t: 'firecracker_tower' }, 'stone'],
+  ['七娘媽亭 qixi_pavilion', { t: 'qixi_pavilion' }, 'stone'],
+  ['進香旗 pilgrim_flag', { t: 'pilgrim_flag' }, 'stone'],
+  ['rainbow_arch', { t: 'rainbow_arch' }, 'grass'],
+];
+if (Q.get('only')) { const s = Q.get('only').split(','); ITEMS = ITEMS.filter((it) => s.includes(it[1].t)); }
+
+// per-type headroom above the footprint (px) for layout
+const TOP = { guzhao: 470, wang_boat: 330, rainbow_arch: 300, red_fort: 150, chikan_tower: 90, hakka_house: 60,
+  city_god_temple: 70, mazu_temple: 70, fort_gate: 120, pilgrim_flag: 120, firecracker_tower: 130, basalt: 100,
+  qixi_pavilion: 80, kuba: 70, palanquin: 60, millet_rack: 70, drying_rack: 40, tatala: 50, bunun_house: 34 };
+
+const CW = 1700;
+const cells = [];
+{
+  let x = 0, y = 0, rowH = 0;
+  for (const it of ITEMS) {
+    const o = it[1], d = G.Objects.get(o.t);
+    const w = (o.w || (d ? d.w : 1)), h = (o.h || (d ? d.h : 1));
+    const cw = Math.max(200, w * T + 2 * T + 40), ch = (TOP[o.t] || 40) + h * T + 2 * T + 30;
+    if (x + cw > CW) { x = 0; y += rowH; rowH = 0; }
+    cells.push({ it, x, y, cw, ch, w, h });
+    x += cw; rowH = Math.max(rowH, ch);
+  }
+  var TOTAL_H = y + rowH;
+}
+const cv = document.getElementById('c');
+cv.width = CW * zoom; cv.height = TOTAL_H * zoom;
+const ctx = cv.getContext('2d');
+
+function ground(kind, x, y, w, h, t) {
+  const tilesX = Math.ceil(w / T), tilesY = Math.ceil(h / T);
+  for (let ty = 0; ty < tilesY; ty++) for (let tx = 0; tx < tilesX; tx++) {
+    const px = x + tx * T, py = y + ty * T, r = G.U.hash(tx, ty, kind.length);
+    let base = { grass: '#5d8a46', dirt: '#9a8058', sand: '#d9c597', stone: '#8d8a84', slate: '#6c7176', water: '#2f6f8f' }[kind];
+    ctx.fillStyle = G.U.shade(base, (r - 0.5) * 0.08); ctx.fillRect(px, py, T, T);
+    if (kind === 'stone' || kind === 'slate') { ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.strokeRect(px + 0.5, py + 0.5, 31, 31); ctx.strokeRect(px + 32.5, py + 32.5, 31, 31); ctx.strokeRect(px + 32.5, py + 0.5, 31, 31); ctx.strokeRect(px + 0.5, py + 32.5, 31, 31); }
+    if (kind === 'grass') for (let i = 0; i < 10; i++) { ctx.fillStyle = 'rgba(160,200,110,0.35)'; ctx.fillRect(px + G.U.hash(i, tx * 7 + ty, 3) * T, py + G.U.hash(i, ty * 5 + tx, 4) * T, 1.5, 4); }
+    if (kind === 'sand' || kind === 'dirt') for (let i = 0; i < 14; i++) { ctx.fillStyle = 'rgba(80,60,30,0.15)'; ctx.fillRect(px + G.U.hash(i, tx * 7 + ty, 3) * T, py + G.U.hash(i, ty * 5 + tx, 4) * T, 2, 2); }
+    if (kind === 'water') {
+      ctx.strokeStyle = 'rgba(200,235,255,0.25)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) { const yy = py + 12 + i * 20 + Math.sin(t + tx + i) * 2; ctx.beginPath(); ctx.moveTo(px + 8 + i * 6, yy); ctx.quadraticCurveTo(px + 20 + i * 6, yy - 3, px + 32 + i * 6, yy); ctx.stroke(); }
+    }
+  }
+}
+
+function drawAll(t) {
+  ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+  ctx.fillStyle = '#0c0e14'; ctx.fillRect(0, 0, CW, TOTAL_H);
+  const lights = [];
+  for (const c of cells) {
+    const [label, o, gk] = c.it;
+    const fx = c.x + T + 20, fy = c.y + (TOP[o.t] || 40) + T;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(c.x, c.y, c.cw, c.ch); ctx.clip();
+    ground(gk, c.x, c.y + 20, c.cw, c.ch - 20, t);
+    const d = G.Objects.get(o.t);
+    try {
+      d.draw(ctx, fx, fy, Object.assign({ x: c.x / T | 0, y: c.y / T | 0 }, o), t);
+      if (d.lights) for (const l of d.lights(o) || []) lights.push({ x: fx + l.dx, y: fy + l.dy, r: l.r, color: l.color, f: l.flicker || 0, clip: c });
+    } catch (e) { errors.push(o.t + ': ' + e.message); console.error(e); }
+    if (grid) {
+      for (let dy = 0; dy < c.h; dy++) for (let dx = 0; dx < c.w; dx++) {
+        let s = d.solidAt ? d.solidAt(o, dx, dy) : d.solid;
+        ctx.fillStyle = s ? 'rgba(255,40,40,0.18)' : 'rgba(40,255,90,0.22)';
+        ctx.fillRect(fx + dx * T + 1, fy + dy * T + 1, T - 2, T - 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.strokeRect(fx + dx * T + 0.5, fy + dy * T + 0.5, T - 1, T - 1);
+      }
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(10,10,16,0.75)'; ctx.fillRect(c.x, c.y, c.cw, 20);
+    ctx.fillStyle = '#f0e2c0'; ctx.font = G.font(15, true); ctx.fillText(label, c.x + 6, c.y + 15);
+    ctx.font = '11px monospace'; ctx.fillStyle = '#9ab';
+    ctx.fillText(`${c.w}x${c.h}`, c.x + c.cw - 40, c.y + 15);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.strokeRect(c.x + 0.5, c.y + 0.5, c.cw - 1, c.ch - 1);
+  }
+  if (night) {
+    ctx.fillStyle = 'rgba(8,12,34,0.72)'; ctx.fillRect(0, 0, CW, TOTAL_H);
+    ctx.globalCompositeOperation = 'lighter';
+    for (const l of lights) {
+      const f = 1 - l.f * 0.25 * (0.5 + 0.5 * Math.sin(t * 9 + l.x));
+      const g = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * f);
+      g.addColorStop(0, G.U.rgba(l.color, 0.55)); g.addColorStop(1, G.U.rgba(l.color, 0));
+      ctx.save(); ctx.beginPath(); ctx.rect(l.clip.x, l.clip.y, l.clip.cw, l.clip.ch); ctx.clip();
+      ctx.fillStyle = g; ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2); ctx.restore();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
+if (Q.has('perf')) {
+  drawAll(0);
+  const t0 = performance.now();
+  for (let i = 0; i < 60; i++) drawAll(i / 60);
+  window.PERF = (performance.now() - t0) / 60;
+  document.title = 'PERF ' + window.PERF.toFixed(2) + ' ms/frame (all cells)';
+} else {
+  const frame = (now) => { drawAll(freezeT != null ? freezeT : now / 1000); if (freezeT == null) requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+}
+window.ERRORS = errors;
+window.READY = true;
+</script>
+</body>
+</html>
