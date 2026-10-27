@@ -432,7 +432,7 @@ G.Map3D = (() => {
       return holder;
     }
     footprint(o) { const d = G.Objects.get(o.t); return [o.w || (d ? d.w : 1), o.h || (d ? d.h : 1)]; }
-    objSig(o) { return o.t + '|' + o.x + ',' + o.y + '|' + (o.open ? 1 : 0) + '|' + (o.v || 0) + '|' + (o.state || '') + '|' + (o.lit ? 1 : 0); }
+    objSig(o) { return o.t + '|' + o.x + ',' + o.y + '|' + (o.open ? 1 : 0) + '|' + (o.v || 0) + '|' + (o.state || '') + '|' + (o.lit ? 1 : 0) + '|' + (o.on ? 1 : 0) + '|' + (o.text || '') + '|' + (o.color || '') + '|' + (o.hang || '') + '|' + (o.w || ''); }
 
     syncObjects(initial) {
       const ms = this.ms;
