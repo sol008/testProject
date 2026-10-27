@@ -46,8 +46,8 @@ shared, and every helper is private to the IIFE.
 | moray | 6 | 3128 |  |
 | sea_monster | 5 | 11656 |  |
 | cliff_spirit | 5 | 5030 |  |
-| fallwind | 8 | 11724 | boss |
-| gorge_colossus | 7 | 11140 | boss |
+| fallwind | 8 | 10536 | boss |
+| gorge_colossus | 7 | 27484 | boss |
 | tide_serpent | 7 | 9316 | boss |
 
 Budgets: ≤ 8 draw calls each (the outline hull and particle systems count). Regular creatures stay under 15k tris and
@@ -138,6 +138,8 @@ jewel_child, wuxiang phase 3) use the psychedelic shaders.
 * **NaN guard.** The template merger fixes degenerate normals before upload. One NaN pixel spreads over the whole frame
   through bloom. Other teams may want the same guard.
 * **Shared clock.** Shader time comes from `G.time`, so all creatures share one clock and the viewer is deterministic.
-* **Possible follow-ups:**
-  * gorge_colossus still reads a little blocky up close; it could use more sculpted plates
-  * fallwind's grass mane is thin at battle distance
+* **Polish pass (after merge):**
+  * gorge_colossus is rebuilt from sculpted masses: chiselled, tapered superellipsoids with a chest bulge, joint stones,
+    a neck collar and knuckle ridges. The tide-sickness drips now hang from the seams.
+  * fallwind has a full 芒草 mane: about 45 multi-blade clumps in a ruff around the face plus three layers streaming
+    back, driven by five wind-blown spring chains.
