@@ -195,6 +195,8 @@
             }
           }`);
     };
+    // instancing-aware (wm = modelMatrix × instanceMatrix above): G.Batch3D may instance these materials
+    if (G.R3M.markInstSafe) G.R3M.markInstSafe(mat, prev);
     const prevKey = mat.customProgramCacheKey;
     mat.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|wind' + (inst ? 'G' : '') + (fx ? 'F' : ''); };
     mat.needsUpdate = true;
@@ -727,11 +729,15 @@
     node.rotation.y = (h - Math.floor(h)) * TAU;
   }
   Nature.spin = spin;
+  // batch: true + pose: update() only ticks the shared wind clock and applies spin() once, so G.Batch3D may draw
+  // these as instances with the pose baked in (js/r3d/batch.js)
+  const BATCH = { batch: true, pose: spin };
   function defTree(id, def) {
     G.Models.define(id, Object.assign({
       variants: 3,
       occluder: true,
       update(node, o, t) { Wind.tick(t); spin(node, o); },
+      ...BATCH,
     }, def));
   }
 
@@ -1558,6 +1564,7 @@
   G.Models.define('bamboo', {
     variants: 3,
     update(node, o, t) { Wind.tick(t); spin(node, o); },
+    ...BATCH,
     build(o, K) {
       const v = o.v || 0, r = RNG(1300 + v * 53);
       const H = 5.0 * (1 + r.pm(0.08));
@@ -1647,7 +1654,7 @@
     }
   }
   function defPlant(id, def) {
-    G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o, t) { Wind.tick(t); spin(node, o); } }, def));
+    G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o, t) { Wind.tick(t); spin(node, o); }, ...BATCH }, def));
   }
   const C = (hexs) => col3(hexs);
 
@@ -2013,7 +2020,7 @@
     g.dispose();
   }
   const MOSS = { k: 0.85, col: [0.32, 0.5, 0.18] };
-  function defRock(id, def) { G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o) { spin(node, o); } }, def)); }
+  function defRock(id, def) { G.Models.define(id, Object.assign({ variants: 3, occluder: false, update(node, o) { spin(node, o); }, ...BATCH }, def)); }
   const rockDecal = (key, rad) => decal('rock_' + key, { seed: 31, core: '#141410' }, rad);
 
   defRock('rock_small', {
@@ -2146,6 +2153,7 @@
   G.Models.define('stump', {
     variants: 3,
     update(node, o) { spin(node, o); },
+    ...BATCH,
     build(o, K) {
       const v = o.v || 0, r = RNG(2300 + v * 7);
       const bark = new Acc(), top = new Acc(), mc = new Acc();
@@ -2247,6 +2255,7 @@
     variants: 3,
     occluder: false,
     update(node, o, t) { Wind.tick(t); spin(node, o); },
+    ...BATCH,
     build(o, K) {
       const v = o.v || 0, r = RNG(2600 + v * 7);
       const wind = { height: 0.8, strength: 0.04, flex: 1.5 };
@@ -2424,6 +2433,7 @@
     variants: 3,
     occluder: false,
     update(node, o, t) { Wind.tick(t); spin(node, o); },
+    ...BATCH,
     lights(o) { return [{ x: 0, y: 0.45, z: 0.1, color: SHROOM[(o.v || 0) % 3].light, intensity: 1.3, distance: 3.2, flicker: 0.15 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3100 + v * 11);
@@ -2450,6 +2460,7 @@
     variants: 3,
     occluder: true,
     update(node, o, t) { Wind.tick(t); },
+    batch: true,
     lights(o) { const c = ['#5ff0ff', '#b88aff', '#ff7ad0'][(o.v || 0) % 3]; return [{ x: 0, y: 3.0, z: 0, color: c, intensity: 1.6, distance: 7, flicker: 0.1 }, { x: 0, y: 0.6, z: 0.6, color: '#d8c8ff', intensity: 0.8, distance: 3, flicker: 0.05 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3200 + v * 11);
@@ -2509,6 +2520,7 @@
     variants: 3,
     occluder: false,
     update(node, o, t) { Wind.tick(t); spin(node, o); },
+    ...BATCH,
     lights(o) { return [{ x: 0, y: 0.7, z: 0.1, color: CRY[(o.v || 0) % 3].glow, intensity: 1.3, distance: 3.6, flicker: 0.08 }]; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3300 + v * 13), C0 = CRY[v];
@@ -2648,6 +2660,7 @@
     variants: 3,
     key: (o) => String(o.w || 1),
     update(node, o, t) { Wind.tick(t); },
+    batch: true,
     lights(o) { const v = (o.v || 0) % 3; return v ? [{ x: 0, y: 1.3, z: 0.1, color: v === 1 ? '#7affe0' : '#ff9af0', intensity: 1, distance: 2.4 + (o.w || 1) * 0.6, flicker: 0.1 }] : []; },
     build(o, K) {
       const v = o.v || 0, r = RNG(3600 + v * 7), W = o.w || 1;

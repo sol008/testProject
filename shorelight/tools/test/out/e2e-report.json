@@ -1,37 +1,85 @@
 {
- "when": "2026-10-27T06:26:52.082Z",
- "pass": 3,
- "fail": 0,
+ "when": "2026-10-27T19:07:53.349Z",
+ "pass": 0,
+ "fail": 4,
  "skip": 0,
  "results": [
   {
-   "id": "key-dialog",
-   "name": "REAL KEYS: dialogue single & multi-page advance with Z/Space/Enter; choices with arrows, Enter and X",
-   "status": "pass",
-   "msg": "",
-   "ms": 26019,
+   "id": "map:mist_loop",
+   "name": "map mist_loop: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "soft-lock in event 'exit_s': script busy with nothing on screen for 15s (actors: none)",
+   "ms": 72728,
    "errors": [],
-   "warnings": []
+   "warnings": [
+    "slow: update+draw averages 56.9ms/frame (p95 324.4ms) > 16ms"
+   ]
   },
   {
-   "id": "key-battle",
-   "name": "REAL KEYS: battle commands — attack (target cycling), skill, cancel, defend, item, speed key, victory with Z",
-   "status": "pass",
-   "msg": "",
-   "ms": 33951,
+   "id": "map:citygod_vision",
+   "name": "map citygod_vision: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "soft-lock in event 'c4_405': script busy with nothing on screen for 15s (actors: none)",
+   "ms": 93823,
    "errors": [],
-   "warnings": []
+   "warnings": [
+    "slow: update+draw averages 33.0ms/frame (p95 158.6ms) > 16ms"
+   ]
   },
   {
-   "id": "key-dialog-script",
-   "name": "dialogue: say/choice/narrate/lines advance with Z, choice index returned, backlog opens",
-   "status": "pass",
-   "msg": "",
-   "ms": 30511,
+   "id": "map:mist_grove",
+   "name": "map mist_grove: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "soft-lock in event 'vision': script busy with nothing on screen for 15s (actors: none)",
+   "ms": 298869,
    "errors": [],
-   "warnings": []
+   "warnings": [
+    "slow: update+draw averages 124.6ms/frame (p95 509.9ms) > 16ms"
+   ]
+  },
+  {
+   "id": "map:taixu",
+   "name": "map taixu: loads, renders, NPC dialogue & events run",
+   "status": "fail",
+   "msg": "soft-lock in event 'tx_gate_down': script busy with nothing on screen for 15s (actors: none)",
+   "ms": 318125,
+   "errors": [],
+   "warnings": [
+    "slow: update+draw averages 63.0ms/frame (p95 565.1ms) > 16ms",
+    "map-entry script left the map; NPC checks use a fresh load",
+    "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio  (×2)"
+   ]
   }
  ],
- "perf": [],
+ "perf": [
+  {
+   "map": "mist_grove",
+   "rafAvg": 79.44,
+   "rafMax": 316.7,
+   "cpuAvg": 124.59,
+   "cpuP95": 509.9
+  },
+  {
+   "map": "taixu",
+   "rafAvg": 97.78,
+   "rafMax": 849.9,
+   "cpuAvg": 63.05,
+   "cpuP95": 565.1
+  },
+  {
+   "map": "mist_loop",
+   "rafAvg": 63.05,
+   "rafMax": 299.9,
+   "cpuAvg": 56.89,
+   "cpuP95": 324.4
+  },
+  {
+   "map": "citygod_vision",
+   "rafAvg": 57.22,
+   "rafMax": 133.4,
+   "cpuAvg": 33.04,
+   "cpuP95": 158.6
+  }
+ ],
  "bootErrors": []
 }

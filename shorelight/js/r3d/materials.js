@@ -27,6 +27,15 @@ G.R3M = (() => {
   // him, dissolve with an ordered dither (industry-standard occluder cutout; depth/shadow passes unaffected).
   // Foliage (mat.userData.foliage, set by nature.js leaf materials — read at compile time, so it may be set after
   // this call) uses a larger hole (uCutFoliage × radius) so closed canopies of dense forests don't hide the player.
+  // onBeforeCompile patches that are correct under instancing (they use #include <project_vertex> / instanceMatrix,
+  // never modelMatrix alone for a per-object value): a material whose whole patch chain is in this set may be drawn
+  // as an InstancedMesh by G.Batch3D. Register with M.markInstSafe(mat, prev) right after installing a patch.
+  M.instSafe = new WeakSet();
+  M.markInstSafe = function (mat, prev) {
+    const base = T().Material.prototype.onBeforeCompile;
+    if (!prev || prev === base || M.instSafe.has(prev)) M.instSafe.add(mat.onBeforeCompile);
+  };
+
   M.addCutout = function (mat) {
     if (mat.userData.cutout) return mat;
     const U = M.cutUniforms();
@@ -56,6 +65,7 @@ G.R3M = (() => {
             if (r < 1.0 && cutBayer(gl_FragCoord.xy) > keep) discard;
           }`);
     };
+    M.markInstSafe(mat, prev);
     const prevKey = mat.customProgramCacheKey;
     mat.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|cut'; };
     return mat;

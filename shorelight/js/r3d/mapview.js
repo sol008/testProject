@@ -473,6 +473,8 @@ G.Map3D = (() => {
 
     syncObjects(initial) {
       const ms = this.ms;
+      // repeated static objects (plants, trees, rocks …) → instanced batches with proxy nodes (js/r3d/batch.js)
+      if (initial && !this.batch && G.Batch3D) this.batch = G.Batch3D.attach(this);
       const seen = new Set();
       for (const o of ms.objects) {
         seen.add(o);
@@ -484,6 +486,7 @@ G.Map3D = (() => {
         node.visible = on;
       }
       for (const [o, node] of this.nodes) if (!seen.has(o)) { this.scene.remove(node); this.nodes.delete(o); }
+      if (this.batch) this.batch.sync(); // objects that turned dynamic leave their batch for a per-object node
     }
 
     // ------------------------------------------------------------------ actors
@@ -934,6 +937,7 @@ G.Map3D = (() => {
     dispose() {
       for (const [, rec] of this.actors) if (rec.ch.dispose) rec.ch.dispose();
       this.actors.clear();
+      if (this.batch) this.batch.dispose();
       G.R3.dispose(this.scene);
       for (const ch of this.chunks || []) if (ch.tex) ch.tex.dispose();
       if (this.envRT) this.envRT.dispose();
