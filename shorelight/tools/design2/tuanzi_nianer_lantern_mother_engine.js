@@ -313,17 +313,17 @@
     for (const p of parts) { const o = p.j0 * W; hit.set(p.hit, o); dep.set(p.dep, o); nrm.set(p.nrm, o * 3); col.set(p.col, o * 4); emi.set(p.emi, o * 3); lin.set(p.lin, o * 3); }
     const outW = (view.lineOut || P.lineOut || 2.2) * ss * 0.75, inW = (view.lineIn || P.lineIn || 1.3) * ss * 0.7;
     const dTh = (P.depthEdge || 0.035) * (P.size || 1); const cTh = P.crease != null ? P.crease : 0.35;
-    const dirs = []; for (let a = 0; a < 12; a++) dirs.push([Math.cos(a * Math.PI / 6), Math.sin(a * Math.PI / 6)]);
-    const ink = new Float32Array(N);
+    const oO = new Int32Array(24), oI = new Int32Array(24);
+    for (let a = 0; a < 12; a++) { const c = Math.cos(a * Math.PI / 6), sn = Math.sin(a * Math.PI / 6); oO[2 * a] = Math.round(c * outW); oO[2 * a + 1] = Math.round(sn * outW); oI[2 * a] = Math.round(c * inW); oI[2 * a + 1] = Math.round(sn * inW); }
+    const ink = new Float32Array(N); const mats = S.mats;
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-      const k = j * W + i; const mk = hit[k]; if (!mk) continue; const mt = S.mats[mk]; if (mt.noLine) continue;
+      const k = j * W + i; const mk = hit[k]; if (!mk) continue; const mt = mats[mk]; if (mt.noLine) continue;
       let e = 0;
-      // silhouette (outer) — thicker
-      for (const [dx, dy] of dirs) { const ii = Math.round(i + dx * outW), jj = Math.round(j + dy * outW); if (ii < 0 || jj < 0 || ii >= W || jj >= H || !hit[jj * W + ii]) { e = 1; break; } }
-      if (!e) for (const [dx, dy] of dirs) {
-        const ii = Math.round(i + dx * inW), jj = Math.round(j + dy * inW); const q = jj * W + ii; const mq = hit[q]; if (!mq) continue;
+      for (let a = 0; a < 24; a += 2) { const ii = i + oO[a], jj = j + oO[a + 1]; if (ii < 0 || jj < 0 || ii >= W || jj >= H || !hit[jj * W + ii]) { e = 1; break; } }
+      if (!e) for (let a = 0; a < 24; a += 2) {
+        const ii = i + oI[a], jj = j + oI[a + 1]; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const q = jj * W + ii; const mq = hit[q]; if (!mq) continue;
         if (dep[q] - dep[k] > dTh) { e = max(e, 0.95); break; }
-        const mtq = S.mats[mq];
+        const mtq = mats[mq];
         if (mq !== mk && (mtq.grp || 0) !== (mt.grp || 0) && !(mt.noPartLine || mtq.noPartLine)) { if (dep[k] <= dep[q] + dTh * 0.3 && (dep[k] < dep[q] - 1e-4 || mk < mq)) e = max(e, 0.85); }
         if (!mt.noCrease) { const dn = nrm[3 * k] * nrm[3 * q] + nrm[3 * k + 1] * nrm[3 * q + 1] + nrm[3 * k + 2] * nrm[3 * q + 2]; if (dn < cTh && dep[q] > dep[k] - dTh) e = max(e, 0.8); }
       }
