@@ -244,14 +244,15 @@ G.Audio = (() => {
     },
   };
 
-  function playNote(instName, t, midi, dur, vol, toReverb = 0.5) {
-    if (!ac) return;
+  // dryOut / wetOut: optional destination nodes (used by the music engine for per-song faders)
+  function playNote(instName, t, midi, dur, vol, toReverb = 0.5, dryOut, wetOut) {
+    if (!ac || !inst[instName]) return;
     const out = ac.createGain();
     out.gain.value = 1;
-    out.connect(musicBus);
+    out.connect(dryOut || musicBus);
     if (toReverb > 0) {
       const s = ac.createGain(); s.gain.value = toReverb;
-      out.connect(s); s.connect(reverbSend);
+      out.connect(s); s.connect(wetOut || reverbSend);
     }
     inst[instName](t, midi, dur, vol, out);
   }
@@ -359,6 +360,7 @@ G.Audio = (() => {
     setMusicVol(v) { settings.music = v; if (musicBus) musicBus.gain.setTargetAtTime(v, ac.currentTime, 0.05); },
     setSfxVol(v) { settings.sfx = v; if (sfxBus) sfxBus.gain.setTargetAtTime(v, ac.currentTime, 0.05); },
     musicBus: () => musicBus,
+    reverbInput: () => reverbSend,
     playNote,
     noteToMidi,
     sfx(name, delay = 0) {

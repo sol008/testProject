@@ -4,7 +4,26 @@
 G.Debug = {
   init() {
     const q = new URLSearchParams(location.search);
-    const map = q.get('map'), battle = q.get('battle');
+    const map = q.get('map'), battle = q.get('battle'), startch = q.get('startch');
+    if (startch != null) {
+      // jump to the start of a chapter with a party matching the progression table
+      setTimeout(() => {
+        G.Audio.unlock();
+        G.state = G.newState();
+        G.inGame = true;
+        const n = +startch;
+        const prog = (G.Data.progression || []).find((p) => p.ch === n) || { lv: [1, 1], party: ['xinghe'] };
+        const lv = +(q.get('lv') || prog.lv[0]);
+        for (const id of prog.party) G.Party.join(id, lv);
+        if (n >= 7) { G.Party.join('baizhi', lv); G.Party.leave('baizhi'); }
+        G.state.gold = 300 * (n + 1);
+        if (q.get('auto')) { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; }
+        for (const f of (q.get('flags') || '').split(',').filter(Boolean)) G.state.flags[f] = true;
+        G.Scenes.replace({ opaque: true, update() {}, draw(ctx) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, G.W, G.H); } });
+        G.Script.run((S) => G.Story.next(S, n));
+      }, 300);
+      return;
+    }
     if (!map && !battle) return;
     // skip title
     setTimeout(async () => {
@@ -18,7 +37,6 @@ G.Debug = {
       if (G.Data.items) for (const id of Object.keys(G.Data.items).slice(0, 12)) if (G.Data.items[id].type === 'use') G.Inv.add(id, 5);
       if (q.get('chapter')) G.state.chapter = +q.get('chapter');
       if (q.get('auto')) { G.state.vars.autoBattle = true; G.settings.battleSpeed = 3; }
-      if (q.get('flags')) for (const f of q.get('flags').split(',')) G.state.flags[f] = true;
       for (const f of (q.get('flags') || '').split(',').filter(Boolean)) G.state.flags[f] = true;
       const mid = map || Object.keys(G.Maps.defs)[0];
       const def = G.Maps.get(mid);

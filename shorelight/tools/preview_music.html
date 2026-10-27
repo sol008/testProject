@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>彼岸燈 — music preview</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: "Kaiti TC", "STKaiti", serif, sans-serif; }
+  body { padding: 18px 22px 40px; }
+  h1 { font-size: 22px; font-weight: normal; margin: 0 0 4px; color: #f2d79b; }
+  #status { font-size: 13px; opacity: 0.8; margin-bottom: 14px; font-family: monospace; min-height: 1.3em; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 16px; }
+  h2 { font-size: 14px; font-weight: normal; color: #8fa6c8; margin: 10px 0 0; letter-spacing: 1px; }
+  button { background: #18202f; color: #dfe6f3; border: 1px solid #2c3a52; border-radius: 6px; padding: 7px 12px;
+    font-size: 13px; cursor: pointer; font-family: monospace; }
+  button:hover { border-color: #f2d79b; }
+  button.on { background: #6b2a1e; border-color: #f2a65a; color: #fff3dc; }
+  label { font-size: 13px; margin-right: 14px; }
+  canvas { display: block; margin-top: 10px; background: #070910; border: 1px solid #1c2638; border-radius: 6px; }
+</style>
+</head>
+<body>
+<h1>彼岸燈 — 配樂試聽</h1>
+<div id="status">click any song to start audio</div>
+<div class="row">
+  <button id="stop">■ stop</button>
+  <label>fade <input id="fade" type="range" min="0" max="3" step="0.1" value="1"> <span id="fadev">1.0</span>s</label>
+  <label>music vol <input id="vol" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+</div>
+<div id="groups"></div>
+<canvas id="scope" width="900" height="120"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/audio.js"></script>
+<script src="../js/core/music.js"></script>
+<script>
+'use strict';
+(() => {
+  const GROUPS = {
+    '主題 themes': ['title', 'dream', 'love', 'sad', 'ending', 'credits', 'villain'],
+    '地方 places': ['jiufen', 'festival', 'night', 'mine', 'forest', 'mushroom', 'pingxi', 'temple', 'city', 'mansion',
+      'tainan', 'palace', 'stealth', 'tribe', 'vision', 'lake', 'shrine', 'chaos', 'sea', 'farshore', 'lighthouse', 'breath'],
+    '環島 regional': ['hakka', 'wind', 'mountain', 'procession', 'south', 'voyage', 'orchid', 'taroko', 'toucheng', 'penghu'],
+    '戰鬥 battle & cues': ['battle', 'battle2', 'boss', 'final_boss', 'tension', 'victory', 'gameover'],
+  };
+  const all = G.Music.ids();
+  const listed = new Set([].concat(...Object.values(GROUPS)));
+  const extra = all.filter((id) => !listed.has(id));
+  if (extra.length) GROUPS['其他 other'] = extra;
+  const groups = document.getElementById('groups');
+  const buttons = {};
+  for (const [name, ids] of Object.entries(GROUPS)) {
+    const h = document.createElement('h2'); h.textContent = name; groups.appendChild(h);
+    const row = document.createElement('div'); row.className = 'row'; groups.appendChild(row);
+    for (const id of ids) {
+      const b = document.createElement('button');
+      b.textContent = id + (all.includes(id) ? '' : ' (missing)');
+      b.disabled = !all.includes(id);
+      b.onclick = () => { G.Audio.unlock(); G.Music.play(id, { fade: +document.getElementById('fade').value }); };
+      row.appendChild(b); buttons[id] = b;
+    }
+  }
+  document.getElementById('stop').onclick = () => G.Music.stop(+document.getElementById('fade').value);
+  document.getElementById('fade').oninput = (e) => { document.getElementById('fadev').textContent = (+e.target.value).toFixed(1); };
+  document.getElementById('vol').oninput = (e) => { G.Audio.unlock(); G.Audio.setMusicVol(+e.target.value); };
+
+  // little oscilloscope + status line
+  const cv = document.getElementById('scope'), cx = cv.getContext('2d');
+  let an = null, buf = null;
+  function frame() {
+    const ac = G.Audio.ctx;
+    if (ac && !an && G.Audio.musicBus()) {
+      an = ac.createAnalyser(); an.fftSize = 2048; buf = new Float32Array(an.fftSize);
+      G.Audio.musicBus().connect(an);
+    }
+    for (const id in buttons) buttons[id].classList.toggle('on', G.Music.current === id);
+    const st = document.getElementById('status');
+    st.textContent = 'ctx: ' + (ac ? ac.state : 'none') + '   current: ' + (G.Music.current || '—') +
+      '   notes scheduled: ' + G.Music.stats.scheduled;
+    cx.fillStyle = '#070910'; cx.fillRect(0, 0, cv.width, cv.height);
+    if (an) {
+      an.getFloatTimeDomainData(buf);
+      cx.strokeStyle = '#f2a65a'; cx.beginPath();
+      for (let i = 0; i < buf.length; i++) {
+        const x = i / buf.length * cv.width, y = cv.height / 2 - buf[i] * cv.height * 0.9;
+        if (i) cx.lineTo(x, y); else cx.moveTo(x, y);
+      }
+      cx.stroke();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>

@@ -19,3 +19,16 @@ wang_boat 6x3 (water:true afloat, else on beach cradle), guzhao 4x3 (~470px tall
 stone_weir 5x3 resizable (v 0 arc / 1 double-heart; solid only along the wall), basalt 2x2, firecracker_tower 2x1 (lit:false to stop),
 qixi_pavilion 2x2, pilgrim_flag 1x1 (text, color), rainbow_arch 6x2 (over, non-solid).
 Deities are never depicted (temple interiors show only altar silhouettes; palanquin curtain closed).
+
+## Buildings & street props (js/gfx/objects.js)
+- Variants default to hash(x,y); set `v` to pin. `lit:false` = dark windows/unlit (abandoned). `door:false`/-1 removes the doorway.
+- Roof overhang draws above the footprint (lighthouse ~280px). Characters just north of tall buildings get hidden — leave a walkway.
+- house_jiufen 4x3 (door 1, w/h, v 0–3, text plaque), teahouse 5x4 fixed (door 2, text), house_minnan 5x3 (door mid, w/h, v 0–1),
+  shophouse 4x3 (door 1, w, v 0–3, text), temple 7x5 fixed (door 3, text), shrine_small 2x2 solid (text), slate_house 4x3 (door 1, w),
+  granary 2x2, pavilion 3x3 (front-middle (1,2) walkable), paifang 4x1 (only cols 0 & 3 solid; v 0 granite/1 red; text),
+  lighthouse 3x3 (door 1, beam:false), mine_entrance 3x2 (door 1, text), city_wall 4x1 (w, v 0 stone/1 brick, tall px), gate_city 3x2 (door col 1 passable both rows, text).
+- Props 1x1 unless noted: lantern_string 3x1 over/non-solid (w, v 0 red/1 festival/2 blue soul, lift), lamp_post, stone_lantern,
+  red_lantern (text, hang:true = non-solid eave lantern), well, cart 2x1, barrel/crate/jar (v), basket (v 0–3), stall 2x1 (text, v),
+  signboard (text, v:1 red), bench 2x1 (w), fence_wood/fence_bamboo 3x1 (w; w:1,h:N vertical), laundry 2x1 (ends solid),
+  boat_small 2x1, boat_ferry 3x2, dock_post, water_lantern (non-solid, text), sky_lantern (over, non-solid, v, text, alt),
+  statue_lion (v, flip), wind_lion, banner (color, edge, text), grave (v 0–2), coffin 2x1, bones (non-solid), firepit, totem, loom, drum_rack, bell_tower 2x2.

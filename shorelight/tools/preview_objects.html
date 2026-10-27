@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>彼岸燈 — objects preview</title>
+<style>
+  html, body { margin: 0; background: #0b0d14; color: #cfd6e6; font-family: sans-serif; }
+  canvas { display: block; }
+  #bar { position: fixed; top: 6px; right: 10px; font-size: 12px; opacity: 0.75; background: rgba(0,0,0,0.5); padding: 3px 6px; }
+</style>
+</head>
+<body>
+<div id="bar">?mode=gallery|street &amp; night=1 &amp; ids=a,b &amp; zoom=2 &amp; t=1.2 (freeze) &amp; grid=1 (solid cells)</div>
+<canvas id="cv"></canvas>
+<script src="../js/core/util.js"></script>
+<script src="../js/core/font.js"></script>
+<script src="../js/gfx/registry.js"></script>
+<script src="../js/gfx/objects.js"></script>
+<script>
+'use strict';
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const zoom = parseFloat(q.get('zoom') || '1');
+  const freeze = q.has('t') ? parseFloat(q.get('t')) : null;
+  const mode = q.get('mode') || 'gallery';
+  const night = q.get('night') === '1';
+  const showGrid = q.get('grid') === '1';
+  const T = G.TILE;
+  const U = G.U;
+  try { await G.loadFonts(); } catch (e) { /* ignore */ }
+
+  // ---------------------------------------------------------------- simple ground tiles (preview only)
+  function ground(ctx, kind, px, py, cx, cy) {
+    const h = U.hash(cx, cy, 3);
+    if (kind === 'g' || kind === 'G') {
+      ctx.fillStyle = U.mix(kind === 'g' ? '#4f7a3e' : '#3f6a36', '#5c8a46', h * 0.5); ctx.fillRect(px, py, T, T);
+      for (let i = 0; i < 6; i++) { const a = U.hash(cx, cy, 10 + i), b = U.hash(cx, cy, 20 + i); ctx.fillStyle = 'rgba(120,170,80,0.35)'; ctx.fillRect(px + a * 60, py + b * 60, 2, 5); }
+    } else if (kind === 's') { // 九份 stone street
+      ctx.fillStyle = U.mix('#8a8478', '#9a9488', h); ctx.fillRect(px, py, T, T);
+      ctx.strokeStyle = 'rgba(50,46,40,0.45)'; ctx.lineWidth = 1;
+      for (let r = 0; r < 4; r++) { ctx.beginPath(); ctx.moveTo(px, py + r * 16); ctx.lineTo(px + T, py + r * 16); ctx.stroke();
+        const off = (r % 2) * 16 + U.hash(cx, cy + r, 4) * 6; for (let x = off; x < T; x += 30) { ctx.beginPath(); ctx.moveTo(px + x, py + r * 16); ctx.lineTo(px + x, py + r * 16 + 16); ctx.stroke(); } }
+    } else if (kind === '=') { // stairs
+      ctx.fillStyle = '#857f72'; ctx.fillRect(px, py, T, T);
+      for (let r = 0; r < 4; r++) { ctx.fillStyle = '#a49e90'; ctx.fillRect(px, py + r * 16, T, 9); ctx.fillStyle = 'rgba(30,26,22,0.45)'; ctx.fillRect(px, py + r * 16 + 13, T, 3); }
+    } else if (kind === 'w' || kind === 'W') {
+      ctx.fillStyle = kind === 'w' ? '#2c5a6e' : '#1c3a52'; ctx.fillRect(px, py, T, T);
+      ctx.strokeStyle = 'rgba(200,230,255,0.18)'; ctx.lineWidth = 1.2;
+      for (let i = 0; i < 3; i++) { const yy = py + 12 + i * 20 + U.hash(cx, cy, i) * 6; ctx.beginPath(); ctx.moveTo(px + 6, yy); ctx.quadraticCurveTo(px + 20, yy - 3, px + 34, yy); ctx.stroke(); }
+    } else if (kind === 'd') { ctx.fillStyle = U.mix('#7a6046', '#8a6e50', h); ctx.fillRect(px, py, T, T); }
+    else if (kind === 'b') { ctx.fillStyle = '#9a4a36'; ctx.fillRect(px, py, T, T); ctx.strokeStyle = 'rgba(220,200,180,0.35)'; for (let r = 0; r < 8; r++) { ctx.beginPath(); ctx.moveTo(px, py + r * 8); ctx.lineTo(px + T, py + r * 8); ctx.stroke(); } }
+    else if (kind === 'p') { ctx.fillStyle = '#6a4a32'; ctx.fillRect(px, py, T, T); ctx.strokeStyle = 'rgba(30,20,10,0.5)'; for (let r = 0; r < 5; r++) { ctx.beginPath(); ctx.moveTo(px, py + r * 13); ctx.lineTo(px + T, py + r * 13); ctx.stroke(); } }
+    else { ctx.fillStyle = '#2a2d36'; ctx.fillRect(px, py, T, T); }
+  }
+
+  // ---------------------------------------------------------------- scenes
+  const all = Object.keys(G.Objects.defs);
+  const TOP = { lighthouse: 300, paifang: 220, gate_city: 230, temple: 170, teahouse: 120, bell_tower: 150, totem: 120, banner: 130, sky_lantern: 230, lamp_post: 100, red_lantern: 100, lantern_string: 70, stone_lantern: 80, mine_entrance: 90, city_wall: 140, wind_lion: 60, statue_lion: 60 };
+  let items = [], groundMap = null, W = 1600, H = 900, labels = [];
+
+  if (mode === 'gallery') {
+    const ids = q.get('ids') ? q.get('ids').split(',').filter((i) => all.includes(i)) : all;
+    W = Math.round(1800 / zoom);
+    let x = 30, y = 40, rowH = 0, rowTop = 0;
+    const rows = [];
+    let row = [];
+    for (const id of ids) {
+      const d = G.Objects.get(id);
+      const pw = d.w * T, ph = d.h * T, top = (TOP[id] || 80) + 20;
+      const cw = pw + 90;
+      if (x + cw > W && row.length) { rows.push(row); row = []; x = 30; }
+      row.push({ id, pw, ph, top, cw, x });
+      x += cw;
+    }
+    if (row.length) rows.push(row);
+    for (const r of rows) {
+      const maxTop = Math.max(...r.map((c) => c.top)), maxH = Math.max(...r.map((c) => c.ph));
+      for (const c of r) {
+        const px = c.x + 30, py = y + maxTop;
+        items.push({ t: c.id, x: px / T, y: py / T, px, py });
+        labels.push({ x: px + c.pw / 2, y: py + maxH + 34, w: c.cw - 8, s: `${c.id}  ${G.Objects.get(c.id).w}×${G.Objects.get(c.id).h}` });
+      }
+      y += maxTop + maxH + 56;
+    }
+    H = y + 20;
+  } else {
+    // 九份 hillside street: terraces climbing north, stairs (豎崎路) in the middle, lantern strings across
+    const map = [
+      'GGGGGGGGGGGGGGGGGGGGGGGG',
+      'GGGGGGGGGGGGGGGGGGGGGGGG',
+      'GGGGGGGGGGGGGGGGGGGGGGGG',
+      'GGGGGGGGGGGGGGGGGGGGGGGG',
+      'sssssssssss==sssssssssss',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'sssssssssss==sssssssssss',
+      'sssssssssss==sssssssssss',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'GGGGGGGGGGG==GGGGGGGGGGG',
+      'sssssssssss==sssssssssss',
+      'sssssssssss==sssssssssss',
+      'wwwwwwwwwwwwwwwwwwwwwwww',
+    ];
+    groundMap = map;
+    W = map[0].length * T; H = map.length * T;
+    const P = (t, x, y, extra) => items.push(Object.assign({ t, x, y }, extra || {}));
+    // top terrace
+    P('temple', 3, -1); P('stone_lantern', 10, 2); P('statue_lion', 2, 3); P('statue_lion', 10, 3, { flip: true });
+    P('house_jiufen', 14, 1, { v: 0 }); P('house_jiufen', 18, 1, { v: 2, w: 3, door: 1 }); P('shrine_small', 22, 2);
+    // middle terrace
+    P('teahouse', 0, 4); P('house_jiufen', 5, 5, { v: 1, door: 2, text: '芋圓' }); P('stall', 9, 7, { text: '芋圓' });
+    P('shophouse', 13, 5, { v: 0 }); P('house_jiufen', 17, 5, { v: 3, w: 3 }); P('red_lantern', 20, 7); P('house_minnan', 21, 5, { w: 3, door: 1 });
+    P('barrel', 4, 7); P('jar', 12, 7, { v: 1 }); P('crate', 16, 7, { v: 1 }); P('basket', 13, 9, { v: 0 });
+    // lower terrace
+    P('house_jiufen', 0, 10, { v: 2 }); P('house_jiufen', 4, 10, { v: 0, w: 3 }); P('lamp_post', 7, 12); P('signboard', 8, 12, { text: '茶' }); P('bench', 8, 13);
+    P('shophouse', 13, 10, { v: 2 }); P('house_jiufen', 17, 10, { v: 1, w: 3 }); P('laundry', 20, 12); P('well', 22, 12);
+    P('stall', 14, 13, { text: '草仔粿' }); P('cart', 17, 13); P('fence_wood', 20, 14, { w: 3 }); P('dock_post', 3, 14); P('boat_small', 4, 15); P('water_lantern', 9, 15); P('water_lantern', 15, 15); P('boat_ferry', 18, 14);
+    P('lantern_string', 9, 9, { w: 6 }); P('lantern_string', 9, 13, { w: 6, v: 1 }); P('lantern_string', 10, 4, { w: 4 });
+    P('sky_lantern', 6, 2, { v: 0 }); P('sky_lantern', 12, 1, { v: 1, alt: 180 }); P('sky_lantern', 17, 0, { v: 2, alt: 120 });
+    P('firepit', 23, 9); P('banner', 1, 8); P('jar', 23, 7, { v: 2 });
+    items = items.filter((o) => G.Objects.get(o.t));
+    for (const o of items) { o.px = o.x * T; o.py = o.y * T; }
+  }
+
+  const cv = document.getElementById('cv');
+  cv.width = W * zoom; cv.height = H * zoom;
+  const ctx = cv.getContext('2d');
+  const dark = document.createElement('canvas'); dark.width = cv.width; dark.height = cv.height;
+  const dctx = dark.getContext('2d');
+
+  const errors = new Set();
+  function drawScene(t) {
+    ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+    if (groundMap) {
+      groundMap.forEach((row, cy) => [...row].forEach((k, cx) => ground(ctx, k, cx * T, cy * T, cx, cy)));
+    } else {
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#2c3a34'); bg.addColorStop(1, '#22302c');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#e8d9b0'; ctx.font = G.font(20, true); ctx.textAlign = 'left';
+      ctx.fillText('彼岸燈 · 建築與街景 (objects.js) — ' + all.length + ' types', 14, 26);
+      for (const it of items) {
+        const d = G.Objects.get(it.t);
+        for (let dy = 0; dy < d.h; dy++) for (let dx = 0; dx < d.w; dx++) ground(ctx, (dx + dy) % 2 ? 's' : 'g', it.px + dx * T, it.py + dy * T, dx + it.x * 7, dy);
+        if (['boat_small', 'boat_ferry', 'water_lantern', 'dock_post'].includes(it.t)) for (let dy = -1; dy <= d.h; dy++) for (let dx = -1; dx <= d.w; dx++) ground(ctx, 'w', it.px + dx * T, it.py + dy * T, dx, dy);
+      }
+    }
+    // y-sort by footprint bottom, over:true last
+    const sorted = items.slice().sort((a, b) => {
+      const da = G.Objects.get(a.t), db = G.Objects.get(b.t);
+      if (!!da.over !== !!db.over) return da.over ? 1 : -1;
+      return (a.y + (a.h || da.h)) - (b.y + (b.h || db.h));
+    });
+    for (const it of sorted) {
+      try { G.Objects.draw(ctx, it, it.px, it.py, t); } catch (e) { if (!errors.has(it.t)) { errors.add(it.t); console.error(it.t, e); } }
+    }
+    if (showGrid) {
+      for (const it of items) {
+        const d = G.Objects.get(it.t), w = it.w || d.w, h = it.h || d.h;
+        for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) {
+          const solid = d.solidAt ? d.solidAt(it, dx, dy) : d.solid;
+          ctx.strokeStyle = solid ? 'rgba(255,60,60,0.7)' : 'rgba(80,255,120,0.8)'; ctx.lineWidth = 1.5;
+          ctx.strokeRect(it.px + dx * T + 2, it.py + dy * T + 2, T - 4, T - 4);
+        }
+      }
+    }
+    if (night) {
+      dctx.setTransform(1, 0, 0, 1, 0, 0);
+      dctx.globalCompositeOperation = 'source-over';
+      dctx.clearRect(0, 0, dark.width, dark.height);
+      dctx.fillStyle = 'rgba(8,12,34,0.78)'; dctx.fillRect(0, 0, dark.width, dark.height);
+      dctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+      dctx.globalCompositeOperation = 'destination-out';
+      const lights = [];
+      for (const it of items) {
+        const d = G.Objects.get(it.t);
+        if (!d.lights) continue;
+        for (const L of d.lights(it)) {
+          const f = 1 - (L.flicker || 0) * (0.5 + 0.5 * Math.sin(t * 9 + it.x * 3 + L.dx)) * 0.35;
+          lights.push({ x: it.px + L.dx, y: it.py + L.dy, r: L.r * f, c: L.color });
+        }
+      }
+      for (const L of lights) {
+        const gr = dctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r);
+        gr.addColorStop(0, 'rgba(0,0,0,0.95)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        dctx.fillStyle = gr; dctx.fillRect(L.x - L.r, L.y - L.r, L.r * 2, L.r * 2);
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(dark, 0, 0);
+      ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const L of lights) {
+        const gr = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r * 0.8);
+        gr.addColorStop(0, U.rgba(L.c, 0.22)); gr.addColorStop(1, U.rgba(L.c, 0));
+        ctx.fillStyle = gr; ctx.fillRect(L.x - L.r, L.y - L.r, L.r * 2, L.r * 2);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.fillStyle = '#e8eef8'; ctx.font = G.font(12); ctx.textAlign = 'center';
+    for (const l of labels) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(l.x - l.w / 2, l.y - 12, l.w, 18); ctx.fillStyle = '#e8eef8'; ctx.fillText(l.s, l.x, l.y + 2); }
+  }
+  function frame(now) {
+    const t = freeze != null ? freeze : now / 1000;
+    drawScene(t);
+    if (freeze == null) requestAnimationFrame(frame);
+    else window.__done = true;
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
