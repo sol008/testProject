@@ -134,45 +134,45 @@
   }
   const BOSS_IMM = ['sleep', 'stun', 'trance'];
   edef('e_wind_sprite_wail', {
-    name: '哭風精', art: 'wind_sprite', variant: 1, lv: 15, elem: 'wood', m: { hp: 0.85, atk: 0.85, mag: 1.15, spd: 1.4 },
+    name: '哭風精', art: 'wind_sprite', variant: 1, lv: 15, elem: 'wood', m: { hp: 1.05, atk: 1.0, mag: 1.3, spd: 1.4 },
     skills: [['e_wind_blade', 2], ['e_wind_howl', 2], ['e_gust_spin', 1]], drops: [['mat_fengxu', 0.4], ['xiangbao', 0.1]],
     desc: '風裡的哭聲聚成了形。它一邊撲人，一邊喊著一個誰也聽不清的名字。',
   });
   edef('e_wind_sprite_storm', {
-    name: '亂流精', art: 'wind_sprite', variant: 2, lv: 17, elem: 'wood', resist: ['water'], m: { hp: 0.9, atk: 0.9, mag: 1.2, spd: 1.45 },
+    name: '亂流精', art: 'wind_sprite', variant: 2, lv: 17, elem: 'wood', resist: ['water'], m: { hp: 1.1, atk: 1.05, mag: 1.35, spd: 1.45 },
     skills: [['e_wind_cyclone', 2], ['e_wind_blade', 2], ['e_gust_spin', 1]], drops: [['mat_fengxu', 0.5], ['xumingsan', 0.08]],
     desc: '風穴深處被燈火攪亂的氣流。它沒有方向，只是一直轉、一直轉。',
   });
   edef('e_rat_persimmon', {
-    name: '柿鼠', art: 'rat_demon', variant: 1, lv: 14, elem: 'water', weak: ['earth'], m: { hp: 0.8, atk: 0.95, spd: 1.3, luk: 2 },
+    name: '柿鼠', art: 'rat_demon', variant: 1, lv: 14, elem: 'water', weak: ['earth'], m: { hp: 1.0, atk: 1.1, spd: 1.3, luk: 2 },
     skills: [['e_rat_gnaw', 3], ['e_persimmon_throw', 2], ['e_rat_swarm', 1]], drops: [['shibing', 0.25], ['jiedu', 0.15]],
     desc: '偷吃柿餅吃到毛都變成橘紅色的老鼠。身上有一股甜甜的柿子味。',
   });
   edef('e_rat_king', {
     name: '柿鼠大王', art: 'rat_demon', variant: 2, lv: 15, elem: 'water', weak: ['earth'], boss: true, immune: BOSS_IMM, scale: 1.6,
-    m: { hp: 6.2, atk: 1.9, mag: 1.2, def: 1.2, spd: 1.0, exp: 5, gold: 6 },
+    m: { hp: 10, atk: 2.3, mag: 1.2, def: 1.2, spd: 1.0, exp: 5, gold: 6 },
     skills: [['e_ratking_belly', 3], ['e_rat_swarm', 2], ['e_ratking_call', 1], ['e_ratking_gorge', 2, 'hp<50']],
     drops: [['mat_ratking_tooth', 1], ['shibing', 1]],
     desc: '坐在柿餅王座上的大老鼠，圓得像一顆柿子。牠堅持那三百個柿餅是「冬糧」。',
   });
   edef('e_mountain_ghost_chief', {
-    name: '山鬼頭目', art: 'mountain_ghost', variant: 1, lv: 16, elem: 'earth', weak: ['wood'], resist: ['water'], m: { hp: 1.45, atk: 1.2, def: 1.15, spd: 0.95 },
+    name: '山鬼頭目', art: 'mountain_ghost', variant: 1, lv: 16, elem: 'earth', weak: ['wood'], resist: ['water'], m: { hp: 1.7, atk: 1.35, def: 1.15, spd: 0.95 },
     skills: [['e_mountain_rock', 2], ['e_mountain_stomp', 2], ['e_mountain_mimic', 1], ['e_heavy', 1]], drops: [['mat_shanguimao', 0.5], ['xumingsan', 0.1]],
     desc: '五指山的山鬼裡年紀最大的一個。牠會學人說話，學得最像的是「救命」。',
   });
   edef('e_cave_bat', {
-    name: '風穴蝙蝠', art: 'mine_bat', variant: 1, lv: 15, elem: 'wood', m: { hp: 0.65, atk: 0.68, spd: 1.35, def: 0.8 },
+    name: '風穴蝙蝠', art: 'mine_bat', variant: 1, lv: 15, elem: 'wood', m: { hp: 0.8, atk: 0.8, spd: 1.35, def: 0.8 },
     skills: [['e_bat_swarm', 3], ['e_bite', 2], ['e_bat_screech', 1]], drops: [['xiangbao', 0.15]],
     desc: '倒掛在風穴岩壁上的灰白蝙蝠。風一吹，牠們就像一片片紙灰一樣飛起來。',
   });
   edef('e_wind_drowned', {
-    name: '溺風魂', art: 'sea_wisp', variant: 2, lv: 16, elem: 'water', weak: ['earth'], resist: ['fire'], m: { hp: 0.9, atk: 0.8, mag: 1.2, gold: 0 },
+    name: '溺風魂', art: 'sea_wisp', variant: 2, lv: 16, elem: 'water', weak: ['earth'], resist: ['fire'], m: { hp: 1.1, atk: 0.9, mag: 1.35, gold: 0 },
     skills: [['e_drown_pull', 2], ['e_drowned_cry', 2], ['e_ghost_touch', 1]], drops: [['mat_tear', 0.3]],
     desc: '被風從海上捲來的溺死者的魂，衣角化成了風絲。它不想打——它只是很冷。（白芷的渡魂謠能送它走。）',
   });
   edef('e_wind_demon', {
     name: '風魔', art: 'wind_demon', lv: 18, elem: 'wood', weak: ['metal'], resist: ['wood'], boss: true, immune: BOSS_IMM,
-    m: { hp: 15.5, atk: 2.7, mag: 2.6, def: 1.15, spd: 1.4, exp: 7, gold: 8 },
+    m: { hp: 17.5, atk: 2.7, mag: 2.6, def: 1.15, spd: 1.4, exp: 7, gold: 8 },
     skills: [['e_wd_gust', 3], ['e_wind_howl', 2], ['e_wd_headwind', 1]],
     phases: [
       {

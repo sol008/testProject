@@ -103,7 +103,16 @@
     };
     S.cap = (m, ax, ay, az, bx, by, bz, r) => S.cone(m, ax, ay, az, bx, by, bz, r, r);
     // chain of round cones through points [[x,y,z,r],...]
-    S.tube = (m, pts, k = 0) => { const segs = []; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; segs.push(S.cone(m, a[0], a[1], a[2], b[0], b[1], b[2], a[3], b[3])); } return k > 0 ? S.su(k, ...segs) : S.u(...segs); };
+    S.tube = (m, pts, k = 0) => {
+      const segs = []; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1]; segs.push(S.cone(m, a[0], a[1], a[2], b[0], b[1], b[2], a[3], b[3])); }
+      const n = k > 0 ? S.su(k, ...segs) : S.u(...segs); return S.boundPts(n, pts, k);
+    };
+    // bounding sphere around [[x,y,z,r],...]
+    S.boundPts = (node, pts, pad = 0) => {
+      let cx = 0, cy = 0, cz = 0; for (const p of pts) { cx += p[0]; cy += p[1]; cz += p[2]; } cx /= pts.length; cy /= pts.length; cz /= pts.length;
+      let r = 0; for (const p of pts) r = max(r, sqrt((p[0] - cx) ** 2 + (p[1] - cy) ** 2 + (p[2] - cz) ** 2) + (p[3] || 0)); r += pad + 0.005;
+      return S.bound(node, cx, cy, cz, r);
+    };
     S.box = (m, cx, cy, cz, hx, hy, hz, r = 0) => {
       const id = M(m); return (x, y, z) => { MAT = id; const qx = abs(x - cx) - hx + r, qy = abs(y - cy) - hy + r, qz = abs(z - cz) - hz + r; const mx = max(qx, 0), my = max(qy, 0), mz = max(qz, 0); return sqrt(mx * mx + my * my + mz * mz) + min(max(qx, max(qy, qz)), 0) - r; };
     };

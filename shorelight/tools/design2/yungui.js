@@ -838,7 +838,7 @@
       H.neck(ctx, B, skin, { w: 0.16, adam: true });
       H.trousers(ctx, B, { c: blk, hemY: B.kneeY + 0.45 * u, feet, wHem: 0.3, kneeW: 0.36, rolled: true });
       for (const fx of feet) H.legwrap(ctx, B, fx, B.kneeY + 0.35 * u, B.gy - 0.25 * u, 0.26 * u, 0.2 * u, skin, { bare: true, sh: DZ.skinSh(skin), ln: DZ.skinLn(skin) });
-      H.shoes(ctx, B, { type: 'clog', skin, spread: 0, dx: 0, w: 0.15, h: 0.3, c: '#8a6a44', strap: '#3a2a24' });
+      H.shoes(ctx, B, { type: 'clog', skin, spread: 0.36, dx: 0, w: 0.15, h: 0.3, c: '#8a6a44', strap: '#3a2a24' });
       // (clogs are drawn at ±spread; place them under the feet)
       // undershirt 汗衫 (short sleeves, side-fastened, collar loose)
       const shirt = sym(cx, [[0, B.shY - 0.2 * u], [0.22 * u, B.shY - 0.34 * u, 1], [0.55 * u, B.shY - 0.18 * u], [0.92 * u, B.shY + 0.05 * u], [0.86 * u, B.shY + 0.75 * u], [0.68 * u, B.waistY], [0.74 * u, B.hipY - 0.1 * u, 1], [0, B.hipY - 0.05 * u]]);
@@ -859,6 +859,10 @@
       cel(ctx, sp([[WL[0] - 0.12 * u, WL[1] + 0.32 * u], [WL[0] + 0.12 * u, WL[1] + 0.32 * u], [WL[0] + 0.08 * u, WL[1] + 0.48 * u], [WL[0] - 0.08 * u, WL[1] + 0.48 * u]]), { c: '#efe6d6', s: 1, h: 0, rim: 0, lw: 1.3, fx: (c) => { if (!DZ.sil) { c.strokeStyle = '#3d5a8a'; c.lineWidth = 0.02 * u; c.beginPath(); c.moveTo(WL[0] - 0.1 * u, WL[1] + 0.38 * u); c.lineTo(WL[0] + 0.1 * u, WL[1] + 0.38 * u); c.stroke(); } } });
       DZ.hand(ctx, WL[0], WL[1], 0.05, 0.62 * u, 'relax', -1, skin);
       // viewer-right arm: jar on the shoulder
+      const SR = [cx + 0.82 * u, B.shY + 0.12 * u], ER = [cx + 1.3 * u, B.waistY - 0.35 * u], WR = [cx + 1.22 * u, B.shY - 0.45 * u];
+      cel(ctx, ribbon([[SR[0] - 0.05 * u, SR[1] - 0.1 * u], [SR[0] + 0.12 * u, SR[1] + 0.32 * u]], 0.42 * u, 0.36 * u), { c: white, s: 2, h: 1, rim: 1, lw: 1.6 });
+      H.skinLimb(ctx, [[SR[0] + 0.1 * u, SR[1] + 0.28 * u], ER, WR], 0.28 * u, 0.2 * u, skin);
+      DZ.hand(ctx, WR[0], WR[1], Math.PI * 0.85, 0.6 * u, 'fist', 1, skin);
       const jc = [cx + 0.92 * u, B.shY - 0.42 * u];
       const jar = sp([[jc[0] - 0.18 * u, jc[1] - 0.52 * u, 1], [jc[0] + 0.18 * u, jc[1] - 0.52 * u, 1], [jc[0] + 0.22 * u, jc[1] - 0.4 * u], [jc[0] + 0.5 * u, jc[1] - 0.1 * u], [jc[0] + 0.5 * u, jc[1] + 0.3 * u], [jc[0] + 0.3 * u, jc[1] + 0.5 * u, 1], [jc[0] - 0.3 * u, jc[1] + 0.5 * u, 1], [jc[0] - 0.5 * u, jc[1] + 0.3 * u], [jc[0] - 0.5 * u, jc[1] - 0.1 * u], [jc[0] - 0.22 * u, jc[1] - 0.4 * u]]);
       cel(ctx, jar, {
@@ -872,10 +876,6 @@
         },
       });
       cel(ctx, sp([[jc[0] - 0.24 * u, jc[1] - 0.72 * u], [jc[0] + 0.24 * u, jc[1] - 0.72 * u], [jc[0] + 0.24 * u, jc[1] - 0.58 * u], [jc[0] - 0.24 * u, jc[1] - 0.58 * u]]), { c: '#c4362c', s: 1, h: 0, rim: 0, lw: 1.3 });
-      const SR = [cx + 0.82 * u, B.shY + 0.12 * u], ER = [cx + 1.3 * u, B.waistY - 0.35 * u], WR = [cx + 1.36 * u, B.shY - 0.2 * u];
-      cel(ctx, ribbon([[SR[0] - 0.05 * u, SR[1] - 0.1 * u], [SR[0] + 0.12 * u, SR[1] + 0.32 * u]], 0.42 * u, 0.36 * u), { c: white, s: 2, h: 1, rim: 1, lw: 1.6 });
-      H.skinLimb(ctx, [[SR[0] + 0.1 * u, SR[1] + 0.28 * u], ER, WR], 0.28 * u, 0.2 * u, skin);
-      DZ.hand(ctx, WR[0], WR[1], Math.PI * 0.85, 0.6 * u, 'open', 1, skin);
       // head — queue coiled round the head, shaved forehead
       const tilt = -0.1;
       ctx.save(); ctx.translate(cx, B.chin); ctx.rotate(tilt); ctx.translate(-cx, -B.chin);
@@ -943,7 +943,7 @@
       H.shoes(ctx, B, { type: 'cloth', c: '#141318', sole: '#d9d2c2', spread: 0.24, w: 0.16 });
       // slim ink robe with high side slits showing vermilion lining
       const hemY = B.gy - 0.36 * u, vY = B.chestY - 0.12 * u;
-      cel(ctx, sp([[cx - 0.75 * u, B.hipY], [cx + 0.75 * u, B.hipY], [cx + 0.9 * u, hemY], [cx - 0.9 * u, hemY]]), { c: '#9a2a24', s: 2, h: 0, rim: 0, lw: 1.6 });
+      cel(ctx, sp([[cx - 0.66 * u, B.hipY], [cx + 0.66 * u, B.hipY], [cx + 0.83 * u, hemY], [cx - 0.83 * u, hemY]]), { c: '#9a2a24', s: 2, h: 0, rim: 0, lw: 1.6 });
       const robe = H.robe(B, { vY, hemY, hem: 0.82, waist: 0.6, hip: 0.68, knee: 0.74, wave: 2 });
       cel(ctx, robe, {
         c: ink, s: 0.15 * u, h: 1.6, hi: '#3a3a48', rim: 2, lw: 2, rimC: '#f5d68a',
@@ -972,7 +972,7 @@
       DZ.hand(ctx, WR[0], WR[1], Math.PI * 0.82, 0.58 * u, 'pinch', -1, skin);
       // viewer-left arm: giant brush held diagonally
       const SL = [cx - 0.85 * u, B.shY + 0.1 * u], EL = [cx - 1.15 * u, B.waistY - 0.05 * u], WL = [cx - 0.9 * u, B.hipY + 0.1 * u];
-      const b0 = [cx - 0.55 * u, B.gy - 0.15 * u], b1 = [cx - 1.75 * u, hb - 0.4 * u];
+      const b0 = [cx - 0.6 * u, B.gy - 0.15 * u], b1 = [cx - 1.68 * u, hb + 0.05 * u];
       cel(ctx, ribbon([b0, b1], 0.1 * u, 0.12 * u), { c: '#b48a52', s: 1, h: 0.8, rim: 1, lw: 1.5, fx: (c) => { if (DZ.sil) return; for (let t = 0.1; t < 0.9; t += 0.18) { const x = b0[0] + (b1[0] - b0[0]) * t, y = b0[1] + (b1[1] - b0[1]) * t; c.fillStyle = DZ.dk('#b48a52', 0.35); c.beginPath(); c.ellipse(x, y, 0.07 * u, 0.02 * u, -0.9, 0, 7); c.fill(); } } });
       const bt = [b1[0] - 0.12 * u, b1[1] - 0.18 * u];
       cel(ctx, sp([[b1[0] + 0.06 * u, b1[1] + 0.06 * u], [b1[0] - 0.14 * u, b1[1] - 0.06 * u], [bt[0] - 0.12 * u, bt[1] - 0.25 * u], [bt[0] - 0.22 * u, bt[1] - 0.42 * u, 1], [bt[0] + 0.02 * u, bt[1] - 0.2 * u], [b1[0] + 0.1 * u, b1[1] - 0.05 * u]]), { c: '#2a2026', s: 2, h: 1, rim: 1, lw: 1.5, fx: (c) => { if (!DZ.sil) { c.fillStyle = ver; c.fill(sp([[bt[0] - 0.05 * u, bt[1] - 0.2 * u], [bt[0] - 0.22 * u, bt[1] - 0.42 * u], [bt[0] - 0.02 * u, bt[1] - 0.25 * u]])); } } });

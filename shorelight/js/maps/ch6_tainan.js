@@ -596,6 +596,7 @@
   function moyaRules() {
     return { intro: async (b) => { await b.say2('moya:smug', '又是你們！墨護法今天要一雪前恥！'); } };
   }
+  G.Mapx.c6Rules = { beehive: beehiveRules, linto: lintoRules, nether: netherRules, yexuan: yexuanRules, moya: moyaRules };
 
   // =================================================================================================== stealth (長明宮 S1–S3)
   // Map def fields: guards (mapmech) + stealth: { area: 's1', creaky: [[x,y]...], puppets: [{id,x,y,dir}], fwPhase }.

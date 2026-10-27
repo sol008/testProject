@@ -211,7 +211,7 @@
     // neck — thick, short (stoop)
     L.part(ctx, 'M-26,-500 C-27,-492 -28,-484 -30,-476 C-12,-470 12,-470 30,-476 C28,-484 27,-492 26,-500 Z', C.skin, { sh: 4, hi: 1, rim: 1.2, shades: ['M-24,-500 C-10,-484 10,-484 24,-500 L26,-500 C26,-492 24,-486 20,-484 C8,-480 -8,-480 -20,-484 C-24,-486 -26,-492 -26,-500 Z'] });
     if (!o.noPipe) CB.pipe(ctx, [60, -400], [86, -296], 1);
-    if (!o.noTally) CB.tally(ctx, -42, -306, 1, o.glow);
+    if (!o.noTally) CB.tally(ctx, -36, -298, 1, o.glow);
   };
 
   CB.pipe = (ctx, a, b, s = 1) => { // a = bowl end, b = mouthpiece end
@@ -331,7 +331,7 @@
     L.part(ctx, 'M-31,-482 C-22,-488 2,-494 16,-490 L14,-480 C0,-484 -18,-480 -28,-474 Z', L.dk(C.indigo, 0.15), { sh: 1.5, rim: 0, lw: 1.5 });
     L.part(ctx, 'M-31,-480 C-34,-470 -36,-460 -38,-450 L-34,-448 C-30,-460 -28,-470 -26,-478 Z', C.white, { sh: 0.8, rim: 0, lw: 1.2 });
     // apron (side: thin canvas plane in front)
-    L.part(ctx, 'M-50,-348 C-53,-300 -55,-250 -56,-198 L-45,-196 C-45,-250 -45,-300 -44,-346 Z', C.apron, { sh: 2, rim: 0.8, lw: 1.6, detail: (c) => L.fill(c, 'M-50,-250 L-46,-250 L-46,-238 L-50,-238 Z', C.stainR, 0.6) });
+    L.part(ctx, 'M-50,-348 C-53,-300 -57,-250 -60,-199 C-55,-196 -49,-195 -45,-196 C-45,-250 -45,-300 -44,-346 Z', C.apron, { sh: 2, rim: 0.8, lw: 1.6, detail: (c) => L.fill(c, 'M-50,-250 L-46,-250 L-46,-238 L-50,-238 Z', C.stainR, 0.6) });
     L.part(ctx, 'M-50,-354 C-20,-358 20,-358 46,-354 L46,-340 C20,-344 -20,-344 -50,-340 Z', C.sash, { sh: 2.5, hi: 1, rim: 1.4, dx: -1 });
     // pipe at his left hip (near side)
     CB.pipe(ctx, [-8, -398], [20, -296], 1);
@@ -384,8 +384,8 @@
     CB.pipe(ctx, [-60, -400], [-86, -296], 1);
     L.part(ctx, 'M-26,-500 C-27,-492 -28,-484 -30,-476 C-12,-472 12,-472 30,-476 C28,-484 27,-492 26,-500 Z', C.skin, { sh: 4, rim: 1.2, detail: (c) => { for (const y of [-492, -486]) L.taper(c, [[-16, y], [0, y + 1.5], [16, y]], 1.2, C.skinD, 'both', 0.7); } });
     ctx.save(); ctx.translate(0, -531); CB.headBack(ctx); ctx.restore();
-    CB.queue(ctx, [[0, -524], [0, -500], [1, -460], [0, -420], [-1, -380], [0, -330]], 10);
-    L.part(ctx, 'M-6,-527 L6,-527 L5,-519 L-5,-519 Z', C.red, { sh: 0.8, rim: 0, lw: 1.1 });
+    CB.queue(ctx, [[0, -516], [0, -496], [1, -460], [0, -420], [-1, -380], [0, -330]], 10);
+    L.part(ctx, 'M-5,-519 L5,-519 L4.4,-513 L-4.4,-513 Z', C.red, { sh: 0.8, rim: 0, lw: 1.1 });
   };
 
   // ============================================================ HIDDEN 引魂人 GEAR (front, ready to row the Black Tide)
@@ -478,7 +478,7 @@
     CB.strawTier(ctx, 86, -456, -408, 27, 37);
     // forearm rising along the cape's edge, fist on the oar shaft
     L.part(ctx, L.tube([[-100, -300], [-110, -282], [-117, -330], [ox + 2, -380]], [30, 31, 28, 26], 'flat'), C.guard, { sh: 4, hi: 1.5, rim: 1.4, detail: (c) => L.taper(c, [[-112, -300], [-116, -350]], 1.6, L.lt(C.guard, 0.2)) });
-    L.part(ctx, 'M-88,-300 C-94,-286 -104,-276 -114,-276 C-122,-282 -124,-296 -118,-306 L-96,-312 Z', C.indigo, { sh: 3, hi: 1, rim: 1.2 }); // elbow of the sleeve peeking below the straw
+    L.part(ctx, 'M-90,-300 C-92,-288 -100,-278 -112,-276 C-120,-278 -124,-288 -121,-300 C-112,-298 -100,-298 -90,-300 Z', C.indigo, { sh: 3, hi: 1, rim: 1.2, detail: (c) => L.taper(c, [[-96, -296], [-104, -286], [-114, -282]], 1.4, L.dk(C.indigo, 0.5)) }); // elbow of the sleeve peeking below the straw
     L.line(ctx, `M${ox - 14},-374 C${ox - 6},-370 ${ox + 6},-370 ${ox + 14},-376`, C.white, 2.2);
     L.hand(ctx, ox + 1, -376, Math.PI, 42, C.skin, { pose: 'grip', mirror: true });
     // lantern hanging off the T-grip

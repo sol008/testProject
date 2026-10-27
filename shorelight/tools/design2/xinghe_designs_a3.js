@@ -230,6 +230,7 @@
       XL.paint(ctx, XL.ribbon([[-62, -226], [-122, -252]], 3.2, { round: true }), '#b98c4c', { lw: 1 });
       XD.lantern(ctx, -118, -250, 16, { paper: C.paper, hang: 8, char: '陳', charCol: C.red, lit: true, glow: '#ffb24a', tall: 1.15 });
       XL.hand(ctx, -70, -238, -0.15, B.handL * 0.85, C.skin, 'fist', true);
+      XL.paint(ctx, XL.ribbon([[-76, -246], [-62, -244]], 2.6), C.red, { lw: 0.8 });
       XD.head(ctx, 0, B.top, hu, F, backHair, null, { tilt: 0.05 });
     }
     function back(ctx) {

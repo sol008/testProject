@@ -23,20 +23,6 @@
       }
     },
   });
-  function driftLocks() {
-    // hair ends drifting outward as if under water, breaking into foam
-    for (const s of [-1, 1]) {
-      const p = ribbon([[s * 36, -346], [s * 62, -340], [s * 92, -322], [s * 112, -330], [s * 122, -350]], [6, 7.5, 6, 4, 0.5]);
-      part(p, '#17151c', { lw: 1.4, rimW: 1, rim: '#4f8fa0', grad: [rgba('#e8fffb', 0), rgba('#e8fffb', 0.95), -330, -330] , inner: (c) => {
-        const g = c.createLinearGradient(s * 60, 0, s * 122, 0);
-        g.addColorStop(0, rgba('#e8fffb', 0));
-        g.addColorStop(1, rgba('#e8fffb', 0.95));
-        c.fillStyle = g;
-        c.fillRect(-140, -380, 280, 80);
-      } });
-    }
-    motes([[-126, -356, 1.4], [-118, -368, 1], [-132, -340, 0.9], [124, -360, 1.3], [134, -346, 0.9], [118, -372, 0.8]], '#e8fffb');
-  }
   function wave() {
     // she stands on a breaking wave crest
     const wv = P((p) => {
@@ -151,7 +137,7 @@
     ratio: 7.5,
     shape: 'flowing S-curves',
     accent: '#1f6f78',
-    idea: '靈視下的白芷：踏在一道碎浪上，長髮的末梢化成浮沫向兩側漂散，半透明的海紗褙子邊緣捲成浪頭——像剛從黑水溝回來。',
+    idea: '靈視下的白芷：踏在一道碎浪上，長髮的末梢化成浮沫，半透明的海紗褙子邊緣捲成浪頭——像剛從黑水溝回來。',
     culture: '以宋明以來的褙子（直領對襟開衫）＋高腰裙為骨，只在「靈境／海中」形態使用（brief 允許神靈界的古風）；裙襬用傳統「海水紋」。奇幻：髮梢化沫、衣襬成浪、赤足踏浪。',
     model: '海紗外衣與袖為半透明雙面網格（toon + fresnel 邊緣光）；髮梢與浪花泡沫為粒子／溶解 shader；腳下浪為獨立特效網格。',
     palette: [[C.foam, '浪沫白', 'foam white'], [C.aqua, '海玻璃', 'sea-glass'], [C.teal, '深海青', 'deep teal'], [C.deep, '黑水藍', 'black-tide'], [C.coral, '珊瑚結', 'coral knot'], [C.skin, '膚', 'skin'], [C.jade, '玉', 'jade']],

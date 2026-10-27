@@ -417,7 +417,7 @@
       const pr = o.pawR || 1; const s2 = sz * pr;
       const toes = []; for (let i = 0; i < 4; i++) { const a = (-0.33 + i * 0.22); toes.push(S.sphere(PW, Math.sin(a) * 0.05 * s2, 0.008 * s2, 0.055 * s2 + Math.cos(a) * 0.012 * s2 - ab(a) * 0.02 * s2, 0.024 * s2)); }
       const pawN = S.su(0.018 * s2, S.ell(PW, 0, 0.004 * s2, 0, 0.058 * s2, 0.042 * s2, 0.072 * s2), ...toes);
-      return S.t(S.r(pawN, 0, 0, 0, pitch, yaw, 0), x, y, z);
+      return S.bound(S.t(S.r(pawN, 0, 0, 0, pitch, yaw, 0), x, y, z), x, y, z, 0.1 * s2);
     });
     let limbs = S.su(0.03, ...legs, ...paws);
     if (o.legFur) limbs = S.fluff(limbs, o.legFur, o.furF || 30, { sharp: 2.6 });

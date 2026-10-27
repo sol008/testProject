@@ -714,6 +714,10 @@
     if (!o.sil && o.outline !== false && !o._inner) {
       const main = S.ctx; const dpr = main.getTransform().a; const L1 = layer(0, main.canvas); L1.c.setTransform(main.getTransform());
       S.ctx = L1.c; const F = LQ.drawFigure(D, ox, oy, sc, Object.assign({}, o, { _inner: true })); S.ctx = main;
+      // unify the figure: soft key light from the upper left, gentle falloff toward the feet
+      { const c = L1.c; c.save(); c.globalCompositeOperation = 'source-atop'; c.setTransform(main.getTransform()); c.translate(ox, oy); c.scale(sc, sc);
+        const H = F.H; const g = c.createLinearGradient(-H * 0.3, -H * 0.1, H * 0.35, H * 1.05); g.addColorStop(0, 'rgba(255,248,235,0.10)'); g.addColorStop(0.45, 'rgba(255,248,235,0)'); g.addColorStop(0.8, 'rgba(40,20,50,0.06)'); g.addColorStop(1, 'rgba(40,20,50,0.16)');
+        c.fillStyle = g; c.fillRect(-H, -H * 0.6, H * 2, H * 2); c.restore(); }
       const L2 = layer(1, main.canvas); const r = (o.olw || 1.25) * dpr * (o.bust ? 1.3 : 1);
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; L2.c.drawImage(L1.cv, Math.cos(a) * r, Math.sin(a) * r); }
       L2.c.globalCompositeOperation = 'source-in'; L2.c.fillStyle = D.ink || '#1f1218'; L2.c.fillRect(0, 0, L2.cv.width, L2.cv.height);

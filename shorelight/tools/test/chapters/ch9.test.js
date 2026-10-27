@@ -62,7 +62,16 @@ function installErrorHooks(p) {
 
 const ev = (fn, arg) => page.evaluate(fn, arg);
 async function idleOnce(ms = 180000) {
-  const ok = await ev((t) => G.Debug.idle(t), ms);
+  const ok = await ev((t) => new Promise((res) => {
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      const top = G.Scenes.top();
+      if (top && G.GameOverScene && top instanceof G.GameOverScene) { clearInterval(iv); res('gameover'); return; }
+      const idle = !G.Script.busy() && top === G.mapScene && G.Render.fade.a < 0.05;
+      if (idle || Date.now() - t0 > t) { clearInterval(iv); res(idle); }
+    }, 100);
+  }), ms);
+  if (ok === 'gameover') throw new Error('GAME OVER on map ' + (await mapId()));
   if (!ok) throw new Error('game did not become idle (map ' + (await mapId()) + ')');
 }
 // settle: idle, give auto events a few frames to start, idle again
@@ -187,7 +196,9 @@ async function partA(browser) {
   check('quest q_ch9_banping done', await ev(() => G.Quests.isDone('q_ch9_banping')));
   await shot('07_banping_reward');
 
-  // C9-04 沿海南行 → 東港 (with the two road battles)
+  // rest at the inn, then C9-04 沿海南行 → 東港 (with the two road battles)
+  await choices(['住宿']);
+  await talk('qh_inn');
   await choices(['沿路巡一巡']);
   await stepOn(22, 35);
   await expectMap('donggang', 'C9-04 → 東港');
@@ -211,7 +222,9 @@ async function partA(browser) {
   await shot('09_hall');
   await stepOn(9, 13);
   await expectMap('donggang', 'night in 東港');
-  // C9-07 王船廠
+  // C9-07 王船廠 (rest first)
+  await choices(['住宿']);
+  await talk('dg_inn');
   await stepOn(46, 9);
   await expectMap('wangchuan_yard');
   check('C9-07 intro (ch9_shipyard_enter) and 艾草束 ×3', (await flag('ch9_shipyard_enter')) && (await count('c9_aicao')) >= 3);
@@ -274,6 +287,8 @@ async function partA(browser) {
   check('C9-11 (ch9_names_quest, ch9_hongying_song)', (await flag('ch9_names_quest')) && (await flag('ch9_hongying_song')));
   await shot('14_wall_night');
   await stepOn(1, 4);
+  await choices(['住宿']);
+  await talk('hc_inn');
   await stepOn(37, 1);
   await expectMap('longpan', 'east gate → 龍磐');
   await shot('15_longpan');
@@ -308,7 +323,9 @@ async function partA(browser) {
   await stepOn(24, 41);
   await expectMap('wangboat_deck', 'board at 南灣');
 
-  // C9-14 鵝鑾鼻
+  // C9-14 鵝鑾鼻 (rest in the ship's hold first)
+  await choices(['在船艙休息']);
+  await trigger('deck_rest');
   await choices(['鵝鑾鼻']);
   await talk('chenbo');
   await expectMap('eluanbi', 'sail to 鵝鑾鼻 and go ashore');

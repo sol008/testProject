@@ -117,10 +117,10 @@
       part(sl, C.robe, { lw: 1.7, rimW: 1.5, rim: C.cyan, sh: '#cfd6e8' });
       // flared gold cuff
       part(P((p) => {
-        p.moveTo(s * 16, -280);
-        p.lineTo(s * 6, -300);
-        p.lineTo(s * 14, -306);
-        p.lineTo(s * 26, -284);
+        p.moveTo(s * 15, -283);
+        p.lineTo(s * 8, -298);
+        p.lineTo(s * 12, -301);
+        p.lineTo(s * 19, -286);
         p.closePath();
       }), C.gold, { lw: 1.2, rimW: 0.8 });
     }

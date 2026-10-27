@@ -154,6 +154,13 @@
     drops: [['jinchuang', 1]],
     desc: '一塊會站起來的觀音山巨石，石紋像皺巴巴的猴臉，頭頂插著一炷從土地公廟偷來的香。',
   });
+  // 鬼面 at the 太虛觀 raid: a gentler copy of data's qingfeng_mask (two 陰兵 fight beside him; ends at 50% HP)
+  c3enemy('c3_guimian', {
+    name: '鬼面', sprite: 'qingfeng_mask', lv: 11, elem: 'metal', weak: ['fire'], resist: ['metal'], boss: true, immune: BOSS_IMM, endAt: 0.5,
+    m: { hp: 30, atk: 1.62, mag: 1.5, def: 1.2, spd: 1.35, exp: 7, gold: 6 },
+    skills: [['e_qf_sword', 3], ['e_qf_luojia', 2], ['e_qf_crescent', 1], ['e_qf_shadow', 2, 'hp<75']],
+    desc: '戴著鬼面具的劍客，夜襲太虛觀。他的劍路——紅纓一眼就認得出來。',
+  });
   c3enemy('c3_mist_imp', {
     name: '霧精', art: 'mosina', variant: 1, lv: 11, elem: 'wood', m: { hp: 0.85, atk: 0.9, spd: 1.3, luk: 2 },
     skills: [['e_mosin_trick', 2], ['e_mist_veil', 2], ['e_claw', 2]], drops: [['xiangbao', 0.2]],
@@ -183,7 +190,7 @@
     t_c3_trail_e: { enemies: ['c3_mist_imp', 'c3_mist_imp', 'rat_spirit'], bg: 'forest', bgm: 'battle' },
     t_c3_monkeyking: { enemies: ['c3_monkey_king', 'stone_monkey', 'stone_monkey'], bg: 'mountain', bgm: 'boss', boss: true, flee: false },
     t_c3_raid: { enemies: ['yin_soldier', 'yin_soldier', 'yin_soldier'], bg: 'temple', bgm: 'battle', flee: false },
-    t_c3_guimian: { enemies: ['qingfeng_mask', 'yin_soldier', 'yin_soldier'], bg: 'temple', bgm: 'boss', boss: true, flee: false },
+    t_c3_guimian: { enemies: ['c3_guimian', 'yin_soldier', 'yin_soldier'], bg: 'temple', bgm: 'boss', boss: true, flee: false },
     t_c3_theatre: { enemies: ['paper_man', 'paper_man', 'paper_man', 'rat_spirit_v1'], bg: 'city', bgm: 'battle', flee: false },
     t_c3_river_a: { enemies: ['water_ghost_v1', 'water_ghost_v1', 'rat_spirit_v1'], bg: 'shore', bgm: 'battle' },
     t_c3_river_b: { enemies: ['river_wraith_v1', 'river_wraith_v1'], bg: 'shore', bgm: 'battle' },
@@ -1325,7 +1332,7 @@
     r = await S.battle('t_c3_guimian', {
       guests: ['yungui'], rewards: true, bgmAfter: 'tension',
       onTurn: async (b, u) => {
-        const boss = b.enemies.find((e) => e.id === 'qingfeng_mask');
+        const boss = b.enemies.find((e) => e.id === 'c3_guimian');
         const hy = b.party.find((pp) => pp.id === 'hongying');
         if (boss && u === boss && hy && !hy.dead) hy.st.guard = 1;
         if (boss && !said75 && boss.hp <= boss.mhp * 0.75) {

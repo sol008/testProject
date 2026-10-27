@@ -373,8 +373,34 @@
   // compose a map's onUpdate: 陳伯 follows + optional extra mechanics
   const withFollow = (extra) => (dt, m, busy) => { chenboFollow(m, dt, busy); if (extra) extra(dt, m, busy); };
 
+  // ---- 3D field view support -------------------------------------------------------------------------
+  // G.Map3D does not call drawGround / drawOver. Maps with custom visuals also define update3d: cutscene
+  // monsters become billboards in the 3D scene and HUD meters are drawn on the 2D overlay canvas (G.ctx).
+  //   spec: { monsters: [{ key, art, x, y, height, variant, alpha: () => 0..1 }], hud: (ctx, mapScene, t) => {} }
+  function view3d(spec) {
+    return (view, dt) => {
+      view._c9 = view._c9 || {};
+      for (const mo of spec.monsters || []) {
+        const a = mo.alpha();
+        let rec = view._c9[mo.key];
+        if (!rec && a > 0.01 && G.Models && G.Models.monsterBillboard) {
+          rec = view._c9[mo.key] = G.Models.monsterBillboard(mo.art, { height: mo.height || 2.4, variant: mo.variant || 0 });
+          rec.root.position.set(mo.x + 0.5, 0, mo.y + 0.5);
+          view.scene.add(rec.root);
+        }
+        if (rec) {
+          rec.root.visible = a > 0.01;
+          if (rec.setOpacity) rec.setOpacity(Math.min(1, a));
+          if (rec.update) rec.update(dt, view.yaw || 0, view.camera);
+        }
+      }
+      if (spec.hud && G.ctx) { G.ctx.save(); spec.hud(G.ctx, view.ms, view.t || 0); G.ctx.restore(); }
+    };
+  }
+  // draw a screen-space HUD from a 2D drawOver (whose ctx is translated into world space)
+  function hud2d(ctx, m, t, fn) { ctx.save(); ctx.translate(m.cam.x, m.cam.y); fn(ctx, m, t); ctx.restore(); }
+
   // ---- small UI bits drawn in world space ---------------------------------------------------------
-  function screenOrigin(ctx, m) { return [m.cam.x, m.cam.y]; }
   function glowDot(ctx, x, y, r, col, a) {
     const gr = ctx.createRadialGradient(x, y, 0, x, y, r);
     gr.addColorStop(0, U.rgba(col, a)); gr.addColorStop(1, U.rgba(col, 0));
@@ -1379,6 +1405,7 @@
         drawMonsterAt(ctx, 'greed_ghost', 20, 1, t, { scale: 0.7, variant: 1, alpha: v.ch9_bpGhost });
       }
     },
+    update3d: view3d({ monsters: [{ key: 'big', art: 'greed_ghost', x: 20, y: 1, height: 2.6, variant: 1, alpha: () => V().ch9_bpGhost || 0 }] }),
   });
 
   async function banpingBoss(S) {
@@ -2124,7 +2151,8 @@
     lights: (s) => {
       const out = [{ x: 21, y: 24, r: 180, color: '#ffb060', flicker: 0.2 }, { x: 8, y: 23, r: 110, color: '#ffb060' }];
       if (!s.flags.ch9_shipyard_clear) out.push({ x: 21, y: 13, r: 180, color: '#7aff6a', flicker: 0.6 });
-      out.push({ x: 8, y: 16, r: 70, color: '#ffd890' });
+      if (!s.flags.ch9_part_rudder) out.push({ x: 8, y: 16, r: 90, color: '#ffe7a0', flicker: 0.2 });
+      if (!s.flags.ch9_part_sail) out.push({ x: 33, y: 3, r: 90, color: '#ffe7a0', flicker: 0.2 });
       return out;
     },
     npcs: [
@@ -2199,6 +2227,7 @@
       const v = V();
       if (v.ch9_chiefShow) drawMonsterAt(ctx, 'plague_ghost', 21, 15, t, { scale: 0.85, variant: 2, alpha: v.ch9_chiefShow });
     },
+    update3d: view3d({ monsters: [{ key: 'chief', art: 'plague_ghost', x: 21, y: 15, height: 2.8, variant: 2, alpha: () => V().ch9_chiefShow || 0 }] }),
     onUpdate: (dt, m, busy) => {
       if (busy) return;
       const s = st();
@@ -2951,20 +2980,10 @@
     drawOver: (ctx, t, m) => {
       const s = st(), v = V();
       if (!s.flags.ch9_fallwind_defeated && v.ch9_fwShow) drawMonsterAt(ctx, 'fallwind', 23, 5, t, { scale: 0.62, alpha: v.ch9_fwShow });
-      // gust streaks
-      if (m._lpGust || m._lpWarn) {
-        const [cx, cy] = [m.cam.x, m.cam.y];
-        ctx.save();
-        ctx.strokeStyle = m._lpGust ? 'rgba(240,230,210,0.5)' : 'rgba(240,230,210,0.18)';
-        ctx.lineWidth = 2; ctx.lineCap = 'round';
-        for (let i = 0; i < (m._lpGust ? 36 : 12); i++) {
-          const yy = cy + U.hash(i, 3, 7) * G.H;
-          const xx = cx + G.W - ((t * 900 + i * 97) % (G.W + 300));
-          ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 90, yy + 40); ctx.stroke();
-        }
-        ctx.restore();
-      }
+      hud2d(ctx, m, t, lpGustHud);
     },
+    update3d: view3d({ monsters: [{ key: 'fw', art: 'fallwind', x: 23, y: 5, height: 4.2, alpha: () => (st().flags.ch9_fallwind_defeated ? 0 : V().ch9_fwShow || 0) }], hud: (ctx, m, t) => lpGustHud(ctx, m, t) }),
+    lights: (s) => (s.flags.ch9_name_7 ? [] : [{ x: 43, y: 18, r: 110, color: '#fff2c0', flicker: 0.2 }]),
     npcs: [chenboNpc('longpan', [4, 40])],
     onUpdate: withFollow((dt, m, busy) => {
       const s = st();
@@ -3023,6 +3042,18 @@
     }),
   });
 
+  // gust streaks across the screen (screen space)
+  function lpGustHud(ctx, m, t) {
+    if (!m._lpGust && !m._lpWarn) return;
+    ctx.strokeStyle = m._lpGust ? 'rgba(240,230,210,0.5)' : 'rgba(240,230,210,0.18)';
+    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    for (let i = 0; i < (m._lpGust ? 36 : 12); i++) {
+      const yy = U.hash(i, 3, 7) * G.H;
+      const xx = G.W - ((t * 900 + i * 97) % (G.W + 300));
+      ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 90, yy + 40); ctx.stroke();
+    }
+    if (m._lpWarn || m._lpGust) G.Render.text(ctx, m._lpGust ? '陣風！' : '風要來了……', G.W / 2, 96, { size: 26, align: 'center', color: '#f6ead0', stroke: 'rgba(10,14,24,0.8)', strokeW: 4 });
+  }
   async function lpFall(S) {
     S.sfx('earth'); S.shake(6, 0.4);
     await S.say('', '腳下一空——掉進了滲穴！');
@@ -3413,18 +3444,9 @@
     drawOver: (ctx, t, m) => {
       const v = V();
       if (v.ch9_kingShow) drawMonsterAt(ctx, 'moray', 21, 39, t, { scale: 0.8, variant: 2, alpha: v.ch9_kingShow });
-      if (F('ch9_cave_cleared')) return;
-      // flame meter (screen space)
-      const x = m.cam.x + 30, y = m.cam.y + 30, f = v.flame == null ? 100 : v.flame;
-      ctx.save();
-      G.UI.plate(ctx, x, y, 236, 44, 0.6, 20);
-      G.UI.lanternIcon(ctx, x + 24, y + 22, 9, t);
-      G.Render.text(ctx, '燈火', x + 42, y + 9, { size: 20, color: '#ffe0a0' });
-      G.UI.bar(ctx, x + 92, y + 16, 124, 12, f / 100, '#ffd27a', '#e07a2a');
-      const hi = lkHigh(m);
-      G.Render.text(ctx, hi ? '漲潮' : '退潮', x + 250, y + 9, { size: 20, color: hi ? '#8ac8ff' : '#d8f0ff' });
-      ctx.restore();
+      hud2d(ctx, m, t, lkHud);
     },
+    update3d: view3d({ monsters: [{ key: 'king', art: 'moray', x: 21, y: 39, height: 3.2, variant: 2, alpha: () => V().ch9_kingShow || 0 }], hud: (ctx, m, t) => lkHud(ctx, m, t) }),
     onUpdate: (dt, m, busy) => {
       const s = st(), v = V();
       if (s.flags.ch9_cave_cleared) return;
@@ -3478,6 +3500,18 @@
     },
   });
 
+  // flame meter & tide indicator (screen space)
+  function lkHud(ctx, m, t) {
+    if (F('ch9_cave_cleared')) return;
+    const v = V();
+    const x = 30, y = 30, f = v.flame == null ? 100 : v.flame;
+    G.UI.plate(ctx, x, y, 300, 44, 0.6, 20);
+    G.UI.lanternIcon(ctx, x + 24, y + 22, 9, t);
+    G.Render.text(ctx, '燈火', x + 42, y + 9, { size: 20, color: '#ffe0a0' });
+    G.UI.bar(ctx, x + 92, y + 16, 124, 12, f / 100, '#ffd27a', '#e07a2a');
+    const hi = lkHigh(m);
+    G.Render.text(ctx, hi ? '漲潮' : '退潮', x + 234, y + 9, { size: 20, color: hi ? '#8ac8ff' : '#d8f0ff' });
+  }
   async function morayBoss(S) {
     S.bgm('tension');
     S.setPos('player', 21, 37, 'down'); S.gather();

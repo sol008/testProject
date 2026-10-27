@@ -261,7 +261,7 @@
       fx,
       palette: [['#1c1d33', '夜靛', 'night indigo'], ['#ff7a2a', '借火', 'borrowed ember'], ['#ffcf5a', '燈金', 'lamp gold'], ['#efe6d4', '素衣', 'raw silk'], ['#d2322a', '紅繩', 'red string'], ['#ecc1a0', '膚', 'skin'], ['#24181c', '髮根', 'hair root']],
       callouts: [
-        { x: 0, y: -470, zh: '焰髮', en: 'flame-swept hair, ember tips', side: 'R', ly: 28 },
+        { x: 6, y: -448, zh: '焰髮', en: 'flame-swept hair, ember tips', side: 'R', ly: 28 },
         { x: 18, y: -380, zh: '異色瞳', en: 'one eye borrowed gold', side: 'R', ly: 90 },
         { x: 0, y: -322, zh: '心燈印', en: 'heart-flame on the sternum', side: 'R', ly: 160 },
         { x: -97, y: -392, zh: '掌中火', en: 'flame floating in the palm', side: 'L', ly: 60 },
