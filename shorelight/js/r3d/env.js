@@ -539,7 +539,9 @@ G.Env3D = (() => {
             blackW += (ki == 7 ? 1.0 : 0.0) * wgt;
           }
           float sd = md.r * 5.0 - 1.0;                       // signed shore distance (tiles)
-          if (outd > 0.0) sd = mix(sd, 4.0 + outd, uEdge);    // open sea beyond the map edge
+          // open sea beyond the map edge: continue from the edge value (md is sampled at the clamped uv), so there is
+          // no seam along the map border (was 4 + outd: a hard shallow/deep line wherever the edge water is shallow)
+          if (outd > 0.0) sd = mix(sd, max(sd, 0.0) + outd * 0.8, uEdge);
           float deepK = smoothstep(0.0, 3.2, sd) * (0.55 + 0.45 * md.b);
           bool black = blackW > 0.5;
           // ---- normals: swell (analytic) + ripples (flow-mapped for rivers)

@@ -300,7 +300,7 @@
       const ph = (o.seq || 0) * 0.6;
       p.material.opacity = Math.min(1, (0.62 + 0.38 * Math.sin(t * 2.4 - ph)) * (o.fade == null ? 1 : o.fade));
     },
-    lights: (o) => (o.kind ? [] : [{ x: 0, y: 0.25, z: 0.05, color: '#cfe8ff', intensity: 0.5, distance: 1.6, flicker: 0.3 }]),
+    lights: () => [], // the print glows by itself; a pool light + halo per print read as floating blobs on maze paths
   });
 
   // ---------------------------------------------------------------- c4_saisiyat_house: 賽夏族 thatched house (4×3)

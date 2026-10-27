@@ -183,11 +183,23 @@ G.Map3D = (() => {
         const cx = G.U.clamp(x, 0, ms.w - 1), cz = G.U.clamp(z, 0, ms.h - 1);
         cells.push(ms.terrain[cz * ms.w + cx]);
       }
-      let water = 0, deep = 0;
-      for (const id of cells) if (this.isWater(id)) { water++; if (id !== 'shallow' && id !== 'marsh') deep++; }
+      let water = 0;
+      for (const id of cells) if (this.isWater(id)) water++;
       if (!water) return 0;
-      if (water === cells.length) return deep === cells.length ? -0.48 : -0.2;
-      return -0.12;
+      if (water < cells.length) return -0.12;
+      // open water: a smooth bed (weighted average of the per-cell depths within 2.5 tiles) instead of per-tile
+      // terraces, whose -0.2 / -0.48 steps showed through translucent shallows as straight blocky shelves
+      const px = hx / 2, pz = hz / 2, R = 2.5;
+      let sw = 0, sh = 0;
+      for (let cz = Math.floor(pz - R); cz <= Math.ceil(pz + R); cz++) for (let cx = Math.floor(px - R); cx <= Math.ceil(px + R); cx++) {
+        const d = Math.hypot(cx + 0.5 - px, cz + 0.5 - pz);
+        if (d >= R) continue;
+        const id = ms.terrain[G.U.clamp(cz, 0, ms.h - 1) * ms.w + G.U.clamp(cx, 0, ms.w - 1)];
+        const wgt = (1 - d / R) * (1 - d / R);
+        sh += wgt * (!this.isWater(id) ? -0.12 : id === 'shallow' || id === 'marsh' ? -0.2 : -0.48);
+        sw += wgt;
+      }
+      return Math.min(-0.13, sw ? sh / sw : -0.2);
     }
 
     buildGround() {
@@ -221,7 +233,11 @@ G.Map3D = (() => {
       // apron beyond the map edges (outdoors) so the world doesn't end in a hard line
       if (this.outdoor) {
         const edge = this.edgeColor();
-        const apron = new T.Mesh(new T.PlaneGeometry(400, 400), G.R3M.env({ color: edge, roughness: 1, cutout: false }));
+        // a frame around the map, not a full plane: at y -0.03 it would otherwise lie over every water tile's sunk bed
+        // (-0.12 … -0.48) and the water plane (-0.07), hiding inland rivers, lakes and harbours under a flat slab
+        const ring = new T.Shape([new T.Vector2(-200, -200), new T.Vector2(200, -200), new T.Vector2(200, 200), new T.Vector2(-200, 200)]);
+        ring.holes.push(new T.Path([new T.Vector2(-ms.w / 2, -ms.h / 2), new T.Vector2(-ms.w / 2, ms.h / 2), new T.Vector2(ms.w / 2, ms.h / 2), new T.Vector2(ms.w / 2, -ms.h / 2)]));
+        const apron = new T.Mesh(new T.ShapeGeometry(ring), G.R3M.env({ color: edge, roughness: 1, cutout: false }));
         apron.rotation.x = -Math.PI / 2;
         apron.position.set(ms.w / 2, -0.03, ms.h / 2);
         apron.receiveShadow = true;
@@ -231,15 +247,32 @@ G.Map3D = (() => {
     }
 
     edgeColor() {
-      // average colour of the outer ring of baked chunks
-      const T = THREE;
+      // average baked colour of the map's border floor tiles (walls, water and void skipped; up to ~48 tiles)
+      const T = THREE, ms = this.ms;
+      if (this._edgeCol) return this._edgeCol.clone(); // computed once (canvas readbacks are slow and warn when repeated)
       try {
-        const c = this.chunks[0].canvas;
-        const g = c.getContext('2d');
-        const d = g.getImageData(0, 0, Math.min(c.width, 64), Math.min(c.height, 64)).data;
+        const cells = [];
+        for (let x = 0; x < ms.w; x++) cells.push([x, 0], [x, ms.h - 1]);
+        for (let y = 1; y < ms.h - 1; y++) cells.push([0, y], [ms.w - 1, y]);
+        let use = cells.filter(([x, y]) => { const id = ms.terrain[y * ms.w + x]; return this.walkable(x, y) && !this.isWater(id); });
+        if (!use.length) use = cells;
+        const step = Math.max(1, Math.floor(use.length / 48));
         let r = 0, gg = 0, b = 0, n = 0;
-        for (let i = 0; i < d.length; i += 16) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++; }
-        return new T.Color(r / n / 255, gg / n / 255, b / n / 255).convertSRGBToLinear().multiplyScalar(0.8);
+        const px = new Map(); // one readback per chunk canvas
+        for (let i = 0; i < use.length; i += step) {
+          const [x, y] = use[i];
+          const ch = this.chunks.find((c) => x >= c.x0 && x < c.x0 + c.cw && y >= c.y0 && y < c.y0 + c.ch);
+          if (!ch) continue;
+          if (!px.has(ch)) px.set(ch, ch.canvas.getContext('2d').getImageData(0, 0, ch.canvas.width, ch.canvas.height).data);
+          const d = px.get(ch), P = ch.PX, W = ch.canvas.width;
+          for (let yy = P / 4; yy < P * 0.75; yy += 4) for (let xx = P / 4; xx < P * 0.75; xx += 4) {
+            const k = (((y - ch.y0) * P + yy) * W + (x - ch.x0) * P + xx) * 4;
+            r += d[k]; gg += d[k + 1]; b += d[k + 2]; n++;
+          }
+        }
+        if (!n) return new T.Color(0x2a3a22);
+        this._edgeCol = new T.Color(r / n / 255, gg / n / 255, b / n / 255).convertSRGBToLinear().multiplyScalar(0.8);
+        return this._edgeCol.clone();
       } catch (e) { return new T.Color(0x2a3a22); }
     }
 
@@ -366,17 +399,18 @@ G.Map3D = (() => {
     buildWater() {
       const T = THREE, ms = this.ms;
       const counts = {};
-      let any = 0, rim = 0;
+      let any = 0, rim = 0, rimSea = 0;
       for (let cy = 0; cy < ms.h; cy++) for (let cx = 0; cx < ms.w; cx++) {
         const id = ms.terrain[cy * ms.w + cx];
         if (!this.isWater(id)) continue;
         any++; counts[id] = (counts[id] || 0) + 1;
-        if (cx === 0 || cy === 0 || cx === ms.w - 1 || cy === ms.h - 1) rim++;
+        if (cx === 0 || cy === 0 || cx === ms.w - 1 || cy === ms.h - 1) { rim++; if (id === 'water' || id === 'deepwater' || id === 'black_sea') rimSea++; }
       }
       if (!any) return;
-      // open sea beyond the map only when a real share of the border is water: a river or creek leaving the map
-      // through one or two edge cells must not turn the whole world outside the map into ocean
-      const edge = rim / Math.max(1, 2 * (ms.w + ms.h) - 4) > 0.12;
+      // open sea beyond the map only when a real share of the border is water (or a harbour mouth of sea water):
+      // a river or creek leaving the map through a few edge cells must not turn the world outside into ocean
+      const per = Math.max(1, 2 * (ms.w + ms.h) - 4);
+      const edge = rim / per > 0.12 || rimSea / per > 0.04;
       const main = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
       const col = new T.Color(WATER_COL[main] != null ? WATER_COL[main] : 0x2f6f96);
       const nrm = G.R3M.tex('waternrm', 256, 256, paintWaterNormal, { wrap: true, srgb: false });
