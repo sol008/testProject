@@ -1139,6 +1139,14 @@ G.Char3D = (() => {
         g.strokeStyle = o.patch.color; g.lineWidth = r * 0.12; g.stroke();
         g.fillStyle = o.patch.color; g.font = `bold ${round(r * 1.2)}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(o.patch.text || '勇', px, py + r * 0.05);
       }
+      for (const m of top.mends || []) { // mended patches: { th (angle), v (0 top..1 hem), w, h (m), color }
+        const px = U(m.th), py = y + h * m.v, pw = m.w * d, ph = m.h * d;
+        g.fillStyle = m.color || shade(col, 0.12); g.fillRect(px - pw / 2, py - ph / 2, pw, ph);
+        Pn.texture(g, px - pw / 2, py - ph / 2, pw, ph, 'linen', 0.25);
+        g.strokeStyle = rgba(shade(col, -0.5), 0.8); g.lineWidth = max(1, d * 0.004); g.setLineDash([max(2, d * 0.01), max(1.5, d * 0.008)]);
+        g.strokeRect(px - pw / 2 + 2, py - ph / 2 + 2, pw - 4, ph - 4); g.setLineDash([]);
+      }
+      if (top.hemArt) top.hemArt(g, x, y, w, h, d, U, V, Pn);
       if (o.after) o.after(g, x, y, w, h, d, U, V);
       // underarm / side shading and top AO
       Pn.aoEdges(g, x, y, w, h, 0.18, 0.12);
@@ -1226,7 +1234,7 @@ G.Char3D = (() => {
         rect = B.rect('shoe_' + shoe, 0.25, 0.25, (g, x, y, w, h) => {
           Pn.cloth(g, x, y, w, h, shCol, { weave: shoe === 'boots' ? 'leather' : 'cotton', folds: false });
           // 千層底: white layered sole stripe on the lower half of the loft (u ≈ 0.25..0.75 is the sole side)
-          g.fillStyle = shoe === 'boots' ? shade(shCol, -0.3) : '#ece6d6';
+          g.fillStyle = S.shoes.sole || (shoe === 'boots' ? shade(shCol, -0.3) : '#ece6d6');
           g.fillRect(x + w * 0.31, y - 2, w * 0.38, h + 4);
           g.fillStyle = 'rgba(0,0,0,0.12)'; for (let i = 0; i < 4; i++) g.fillRect(x + w * (0.33 + i * 0.09), y, 1, h);
           g.fillStyle = rgba('#ffffff', 0.12); g.fillRect(x + w * 0.85, y, w * 0.1, h);
@@ -1427,10 +1435,13 @@ G.Char3D = (() => {
     if (S.beads) buildBeads(B, S.beads);
     if (S.bag) buildBag(B, S.bag);
     if (S.bracers) for (const SD of ['L', 'R']) {
-      const rect = clothRect(B, 'bracer', 0.2, 0.2, S.bracers.color, { weave: 'leather', folds: false, after: (g, x, y, w, h) => { g.strokeStyle = rgba(shade(S.bracers.color, 0.35), 0.6); g.lineWidth = max(1, h * 0.03); for (let i = 1; i < 5; i++) { g.beginPath(); g.moveTo(x, y + h * i / 5); g.lineTo(x + w, y + h * i / 5 + h * 0.05); g.stroke(); } } });
+      const BR = S.bracers;
+      const rect = clothRect(B, 'bracer', 0.2, 0.2, BR.color, { weave: BR.cloth ? 'cotton' : 'leather', folds: !!BR.cloth, after: (g, x, y, w, h) => {
+        if (BR.tapes) { g.fillStyle = BR.tapes; g.fillRect(x - 2, y + h * 0.02, w + 4, h * 0.09); g.fillRect(x - 2, y + h * 0.86, w + 4, h * 0.09); g.fillStyle = rgba('#000', 0.15); g.fillRect(x - 2, y + h * 0.1, w + 4, h * 0.02); }
+        else { g.strokeStyle = rgba(shade(BR.color, 0.35), 0.6); g.lineWidth = max(1, h * 0.03); for (let i = 1; i < 5; i++) { g.beginPath(); g.moveTo(x, y + h * i / 5); g.lineTo(x + w, y + h * i / 5 + h * 0.05); g.stroke(); } } } });
       const e = P.upArm / (P.upArm + P.foreArm);
       const pts = armPts(B, SD);
-      const a = vlerp(pts[1], pts[2], 0.35), b = vlerp(pts[1], pts[2], 1.0);
+      const a = vlerp(pts[1], pts[2], S.bracers.from != null ? S.bracers.from : 0.35), b = vlerp(pts[1], pts[2], 1.0);
       tube(B.G, [a, b], 10, rect, (t) => { const r = armProfile(P, lerp(e + (1 - e) * 0.35, 1, t)) + (sl === 'long' ? 0.03 : 0.012) * s; return { rx: r, ry: r * 0.95 }; }, () => [[B.b('foreArm' + SD), 1]], { nv: 3, linear: true, up: [0, 0, 1] });
     }
     if (S.bracelet) {
@@ -1445,7 +1456,7 @@ G.Char3D = (() => {
   // which hands grip something (→ fist shape)
   function handsHolding(B) {
     const S = B.S;
-    return { R: !!(S.held || S.weapon), L: !!(S.heldL) || ['spear', 'glaive', 'halberd', 'lstaff', 'oar', 'staff', 'bow'].includes(S.weapon) };
+    return { R: !!(S.held || S.weapon), L: !!(S.heldL) || ['spear', 'glaive', 'halberd', 'lstaff', 'oar', 'staff', 'bow', 'crook', 'flute'].includes(S.weapon) };
   }
 
   function buildSash(B, sa, infl) {
@@ -1682,6 +1693,7 @@ G.Char3D = (() => {
       paint: S.face && S.face.paint, tattoo: S.face && S.face.tattoo,
     }, f3);
     if (F.irisLight == null) F.irisLight = shade(F.iris, 0.35);
+    if (F.restCurve == null) F.restCurve = { smile: 0.42, frown: -0.42, smirk: 0.3, flat: 0 }[F.mouth] || 0;
     return F;
   }
   C.faceParams = faceParams;
@@ -1960,14 +1972,15 @@ G.Char3D = (() => {
       const g = this.g, F = this.F, a = this.a, b = this.b;
       this.at(0, F.mouthY * b + (st.mouthDy || 0) * b);
       const w = F.mouthW * a * 1000 * (st.mouthW || 1);  // half width mm
-      const curve = st.curve != null ? st.curve : 0;       // + smile
+      const curve = st.curve != null ? st.curve : F.restCurve || 0;       // + smile
       const open = clamp(st.mOpen || 0, 0, 1);
       const cy = -curve * 2.2;
       g.lineCap = 'round'; g.lineJoin = 'round';
       const lipLine = shade(F.lips, -0.45);
       if (open < 0.06) {
         g.strokeStyle = lipLine; g.lineWidth = (0.75) * this.lw;
-        g.beginPath(); g.moveTo(-w, cy); g.quadraticCurveTo(0, cy + curve * 4.2 + (st.pout || 0) * 1.5, w, cy); g.stroke();
+        const sk = F.mouth === 'smirk' && st.curve == null ? 1.6 : 0;
+        g.beginPath(); g.moveTo(-w, cy + sk * 0.4); g.quadraticCurveTo(0, cy + curve * 4.2 + (st.pout || 0) * 1.5, w, cy - sk); g.stroke();
         if (F.lipTint > 0.1) { g.fillStyle = rgba(F.lips, F.lipTint); g.beginPath(); g.ellipse(0, 1.5 + curve * 1.5, w * 0.55, 1.4, 0, 0, TAU); g.fill(); }
         if (curve > 0.5) { g.strokeStyle = rgba(lipLine, 0.6); g.lineWidth = (0.45) * this.lw; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * w * 1.02, cy - 0.6); g.lineTo(s * w * 1.12, cy + 0.6); g.stroke(); } }
         return;
@@ -2084,6 +2097,7 @@ G.Char3D = (() => {
         g.fillRect(x + i, yy - hh * (0.4 + 0.6 * k), 1.6, hh * 2 * (0.4 + 0.6 * k));
       }
       g.restore();
+      if (B.S.hair.temples && kind === 'cap') { for (const uc of [0.25, 0.75]) { const gx = x + w * uc; const gr2 = g.createRadialGradient(gx, y + h * 0.85, 0, gx, y + h * 0.85, w * 0.12); gr2.addColorStop(0, rgba(B.S.hair.temples, 0.95)); gr2.addColorStop(1, rgba(B.S.hair.temples, 0)); g.fillStyle = gr2; g.fillRect(gx - w * 0.13, y + h * 0.5, w * 0.26, h * 0.52); } }
       if (B.S.hair.vines && kind !== 'cap') { g.strokeStyle = '#5a7a3a'; g.lineWidth = max(1, w * 0.04); for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(x, y + h * (0.1 + i * 0.2)); g.lineTo(x + w, y + h * (0.18 + i * 0.2)); g.stroke(); } }
     };
   }
@@ -2171,9 +2185,12 @@ G.Char3D = (() => {
         }
         F.bangShadow = true;
       } else if (style === 'center') {
+        const po = H.part || 0; // off-centre part (rad, + = toward the character's left)
         for (const sg of [-1, 1]) for (let i = 0; i < 4; i++) {
           const t = i / 3;
-          bang(sg * (0.06 + t * 0.35), sg * (0.35 + t * 0.6), eyeLvl + 0.05 + t * 0.35, 0.03 - t * 0.003, { ph0: 0.12, sweepP: 0.9, lift: 0.006 });
+          const span = (sg > 0 ? 1 - po : 1 + po) * (H.bangSpread || 1);
+          // curtain fringe: short at the part, lengthening toward the temples so the eyes stay clear
+          bang(po + sg * (0.08 + t * 0.35 * span), po + sg * (0.42 + t * 0.6) * span, eyeLvl + 0.05 + t * 0.35 + (H.bangLen || 0) + (H.bangSpread ? (t - 0.5) * 0.2 : 0), 0.03 - t * 0.003, { ph0: 0.12, sweepP: H.bangSpread ? 0.7 : 0.9, lift: 0.006 });
         }
       } else if (style === 'straight') {
         for (let i = 0; i < 9; i++) { const t = i / 8 - 0.5; bang(t * 1.6, t * 1.75, eyeLvl - 0.02 + abs(t) * 0.35, 0.028, { ph0: 0.2, blunt: true, lift: 0.004 }); }
@@ -2201,7 +2218,7 @@ G.Char3D = (() => {
     const locks = H.locks || 0;
     const lockChains = [];
     if (locks > 0) {
-      for (const sg of [-1, 1]) {
+      for (const sg of (H.locksSide === 'L' ? [1] : H.locksSide === 'R' ? [-1] : [-1, 1])) {
         const L = locks * P.head * 0.95;
         const p0 = headPt(B, sg * 1.0, 0.95, capOff * 1.3);
         const p1 = headPt(B, sg * 1.22, 1.45, capOff * 1.6);
@@ -2601,12 +2618,13 @@ G.Char3D = (() => {
           const pts = [];
           for (let i = 0; i <= 4; i++) { const t = i / 4; pts.push(headPt(B, sg * lerp(0.02, 0.42, t), lerp(mouthPh - 0.2, mouthPh + 0.06, t), 0.004 * s + 0.004 * s * sin(t * PI))); }
           if (kind === 'whiskers') { const e = pts[4]; pts.push(vadd(e, [sg * 0.008, -droop * s * 0.6, 0.004]), vadd(e, [sg * 0.01, -droop * s, 0.002])); }
-          lock(B, br, pts, (kind === 'full' ? 0.012 : 0.009) * s, 0.004 * s, () => W, { up: [0, 0, 1], nv: 8, taperP: 1.3 });
+          if (fc.beardCurl) { const e = pts[4]; pts.push(vadd(e, [sg * 0.006 * s, 0.006 * s, 0.002]), vadd(e, [sg * 0.004 * s, 0.012 * s, 0.003])); }
+          lock(B, br, pts, (kind === 'full' ? 0.012 : 0.009) * s * (fc.beardThin || 1), 0.004 * s * (fc.beardThin || 1), () => W, { up: [0, 0, 1], nv: 8, taperP: 1.3 });
         }
       }
       if (kind === 'goatee' || kind === 'whiskers') {
         const p0 = headPt(B, 0, PI * 0.96, 0.004 * s), p1 = vadd(p0, [0, -0.03 * s, 0.012 * s]), p2 = vadd(p0, [0, -0.055 * s, 0.01 * s]);
-        lock(B, br, [headPt(B, 0, PI * 0.86, 0.003), p0, p1, p2], (kind === 'goatee' ? 0.012 : 0.008) * s, 0.008 * s, () => W, { up: [0, 0, 1], nv: 8 });
+        lock(B, br, [headPt(B, 0, PI * 0.86, 0.003), p0, p1, p2], (kind === 'goatee' ? 0.012 : 0.008) * s * (fc.beardThin ? 0.75 : 1), 0.008 * s, () => W, { up: [0, 0, 1], nv: 8 });
       }
       if (kind === 'full') { // beard shell over the jaw
         grid(B.G, 18, 5, br, (u, v) => { const th = lerp(-1.75, 1.75, u); const ph = lerp(mouthPh + 0.1, PI * 0.995, v) - (abs(th) > 1.2 ? (abs(th) - 1.2) * 0.4 * (1 - v) : 0); return { p: headPt(B, th, ph, 0.006 * s + 0.01 * s * v * (1 - abs(th) / 1.75)), w: W }; }, {});
@@ -2717,8 +2735,16 @@ G.Char3D = (() => {
     celadon: (g, x, y, w, h, d, e) => { g.fillStyle = '#c8e0d6'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.strokeStyle = '#6a9a8a'; g.lineWidth = 1; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(x + w * (i + 0.5) / 10, y + h * 0.6, w * 0.04, PI, 0); g.stroke(); } if (e) { e.fillStyle = '#2a5a7a'; e.fillRect(x, y + h * 0.15, w, h * 0.35); } },
     green: (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, '#4a7a3a', { weave: 'linen', folds: false }); },
     fiber: (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, '#d8c890', { weave: 'straw', folds: false }); },
+    teal: (g, x, y, w, h, d, e) => { g.fillStyle = '#4fd8c8'; g.fillRect(x - 2, y - 2, w + 4, h + 4); if (e) { e.fillStyle = '#3ac8b8'; e.fillRect(x - 2, y - 2, w + 4, h + 4); } },
+    darkwood: (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, '#4a3324', { weave: 'wood', folds: false, weaveK: 0.4 }); },
+    crow: (g, x, y, w, h) => { Pn.cloth(g, x, y, w, h, '#1d1c27', { weave: 'hair', folds: false, weaveK: 0.35 }); g.fillStyle = rgba('#55609a', 0.45); g.fillRect(x, y + h * 0.3, w, h * 0.12); },
+    paperBlue: (g, x, y, w, h, d, e) => { const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, '#e8f8ff'); gr.addColorStop(0.5, '#ffffff'); gr.addColorStop(1, '#cfefff'); g.fillStyle = gr; g.fillRect(x - 2, y - 2, w + 4, h + 4);
+      g.strokeStyle = rgba('#6aa8c8', 0.6); g.lineWidth = 1; for (let i = 1; i < 6; i++) { g.beginPath(); g.moveTo(x, y + h * i / 6); g.lineTo(x + w, y + h * i / 6); g.stroke(); }
+      g.fillStyle = '#c8372b'; g.font = `bold ${round(h * 0.34)}px serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('長', x + w * 0.25, y + h * 0.36); g.fillText('明', x + w * 0.25, y + h * 0.68); g.fillText('長', x + w * 0.75, y + h * 0.36); g.fillText('明', x + w * 0.75, y + h * 0.68);
+      if (e) { e.fillStyle = '#5ab8e8'; e.fillRect(x - 2, y - 2, w + 4, h + 4); e.fillStyle = '#aef0ff'; e.fillRect(x, y + h * 0.25, w, h * 0.5); } },
   };
-  function sw(B, k) { return B.rect('sw_' + k, 0, 0, SW[k] || SW.wood, { px: [24, 24], emissive: ['lantern', 'soul', 'blue', 'ember', 'celadon'].includes(k) }); }
+  const EMISSIVE_SW = ['lantern', 'soul', 'blue', 'ember', 'celadon', 'teal', 'paperBlue'];
+  function sw(B, k) { return B.rect('sw_' + k, 0, 0, SW[k] || SW.wood, { px: k === 'paperBlue' || k === 'soul' || k === 'lantern' ? [48, 48] : [24, 24], emissive: EMISSIVE_SW.includes(k) }); }
   C.swatch = sw; C.SW = SW;
 
   // prop kit: local frame (origin o, axes X, Y, Z world vectors) → emits into B.G weighted to bone
@@ -2746,7 +2772,7 @@ G.Char3D = (() => {
 
   // ------------------------------------------------------------------------------------------ hold classes
   const HOLD = {
-    pole: ['staff', 'lstaff', 'oar', 'spear', 'glaive', 'halberd', 'flag', 'pestle', 'rod', 'paddle'],
+    pole: ['staff', 'lstaff', 'oar', 'spear', 'glaive', 'halberd', 'flag', 'pestle', 'rod', 'paddle', 'crook'],
     cane: ['cane'],
     hang: ['lantern', 'oillamp', 'basket', 'medbox', 'beads'],
     shoulder: ['axe', 'pick', 'hoe', 'broom'],
@@ -2757,7 +2783,7 @@ G.Char3D = (() => {
   function weaponFamily(w) {
     if (!w) return 'none';
     if (['sword', 'saber'].includes(w)) return 'blade';
-    if (['spear', 'glaive', 'halberd', 'lstaff', 'oar', 'staff'].includes(w)) return 'pole';
+    if (['spear', 'glaive', 'halberd', 'lstaff', 'oar', 'staff', 'crook'].includes(w)) return 'pole';
     if (['fan', 'ffan', 'whisk'].includes(w)) return 'fan';
     if (w === 'flute') return 'flute';
     return 'none';
@@ -2811,7 +2837,11 @@ G.Char3D = (() => {
         } else if (item === 'oar' || item === 'paddle') {
           const bl = item === 'oar' ? 0.55 : 0.45, bw = item === 'oar' ? 0.075 : 0.09;
           grid(B.G, 8, 8, sw(B, look.blade || 'wood'), (u, v) => { const th = u * TAU; const z = g1 - 0.42 + v * bl; const w = bw * sin(min(1, v * 1.15) * PI * 0.5 + 0.35) * (v > 0.85 ? (1 - v) / 0.15 * 0.6 + 0.4 : 1); return { p: K.T([sin(th) * w, cos(th) * 0.012 * (1 - v * 0.4), z]), w: K.W }; }, { closed: true });
-          if (item === 'oar') { K.cyl([0, 0, g0 - 0.005], [0, 0, g0 + 0.005], 0.06, 0.06, 'dark', 6, { flat: 0.3 }); }
+          if (item === 'oar') { K.cyl([0, 0, g0 - 0.005], [0, 0, g0 + 0.005], 0.06, 0.06, look.tgrip || 'dark', 6, { flat: 0.3 }); }
+          if (look.inlay) { // glowing tide-line inlay carved into the blade (both faces)
+            for (const sd of [1, -1]) for (let k2 = 0; k2 < 3; k2++) { const zz = g1 - 0.32 + k2 * 0.11; K.path([[-0.04, sd * 0.0125, zz], [-0.015, sd * 0.0135, zz + 0.02], [0.015, sd * 0.0135, zz - 0.01], [0.04, sd * 0.0125, zz + 0.012]], 0.0035, 'teal', 3, { flat: 0.5 }); }
+          }
+          if (look.lantern) { const top = K.T([0, 0, g0 - 0.01]); hangLantern(B, bone, top, look.lantern); }
           if (look.collar) K.cyl([0, 0, g1 - 0.46], [0, 0, g1 - 0.4], 0.022, 0.022, look.collar, 8);
         } else if (item === 'flag') {
           const fr = B.rect('flag', 0.4, 0.5, (g, x, y, w, h) => { g.fillStyle = '#f0c83a'; g.fillRect(x - 2, y - 2, w + 4, h + 4); g.fillStyle = '#c8282a'; g.fillRect(x, y, w, h * 0.12); g.fillRect(x, y + h * 0.88, w, h * 0.12); g.font = `bold ${round(w * 0.5)}px serif`; g.textAlign = 'center'; g.fillText('進香', x + w / 2, y + h * 0.55); });
@@ -2820,6 +2850,16 @@ G.Char3D = (() => {
           grid(B.G, 6, 6, fr, (u, v) => { const p0 = K.T([0, 0, g1 - 0.03 - u * 0.5]); const d = vsc([0, -1, 0], v * 0.32); return { p: vadd(p0, d), w: [[fb[v < 0.5 ? 0 : 1], 1]] }; }, {});
         }
         if (look.ring) K.cyl([0, 0, g1 - 0.15], [0, 0, g1 - 0.12], 0.024, 0.024, look.ring, 8);
+        break;
+      }
+      case 'crook': {
+        const L = 1.95 * (look.len || 1), g0 = -0.55 * L, g1 = g0 + L;
+        K.cyl([0, 0, g0], [0, 0, g1], 0.016, 0.015, 'lacq', 7);
+        for (let k2 = 1; k2 < 6; k2++) K.cyl([0, 0, g0 + k2 * L / 6 - 0.005], [0, 0, g0 + k2 * L / 6 + 0.005], 0.019, 0.019, 'dark', 7); // bamboo nodes
+        K.path([[0, 0, g1], [0, 0.02, g1 + 0.09], [0, 0.0, g1 + 0.16], [0, -0.07, g1 + 0.18], [0, -0.12, g1 + 0.14]], 0.014, 'lacq', 6);
+        K.ball([0, -0.13, g1 + 0.14], 0.03, 'crow', 1.2, 0.9, 1); // crow head
+        K.path([[0, -0.15, g1 + 0.15], [0, -0.2, g1 + 0.12]], (t) => 0.012 * (1 - t), 'gold', 4); // beak
+        hangLantern(B, bone, K.T([0, -0.15, g1 + 0.12]), look.lantern || { mat: 'paperBlue', cage: 'lacq', r: 0.075, h: 0.17, light: '#8cf3ff', cord: 0.05, tasselMat: 'tassel' });
         break;
       }
       case 'cane': {
@@ -2963,12 +3003,15 @@ G.Char3D = (() => {
     else if (item === 'creel') { K.lathe((v) => [lerp(0.06, 0.08, sin(v * PI)), -v * 0.16], 'straw', 10, 5); }
     else if (item === 'lamp') { K.lathe((v) => [0.025 + 0.01 * sin(v * PI), -v * 0.07], 'bronze', 10, 3); K.ball([0, -0.04, 0.03], 0.012, 'ember'); B.lights.push({ bone: ch[0], pos: K.T([0, -0.04, 0.03]), color: '#ffb060', i: 0.35, r: 1.6, flicker: 0.25 }); }
     else if (item === 'pipe') { const K2 = kit(B, bone, vadd(o, [0.02 * sg, 0.02, 0.05]), [1, 0, 0], [0, 0, 1], [0.15, -0.85, 0.45]); K2.cyl([0, 0, -0.05], [0, 0, 0.45], 0.006, 0.006, 'bamboo', 5); K2.ball([0, 0.012, 0.45], 0.014, 'bronze'); K2.ball([0, 0, -0.055], 0.008, 'jade'); }
-    else if (item === 'tally') { K.path([[0, 0.02, 0], [0, -0.04, 0]], 0.002, 'red', 3); K.box([0, -0.075, 0], 0.028, 0.04, 0.006, 'bronze'); }
+    else if (item === 'tally' || item === 'tallyGlow') { // bronze 魚符 half-tally on a cord (glowing teal inlay when souls are near)
+      K.path([[0, 0.02, 0], [0, -0.04, 0]], 0.002, 'red', 3); K.box([0, -0.075, 0], 0.026, 0.042, 0.006, 'bronze');
+      if (item === 'tallyGlow') { K.box([0, -0.075, 0.0062], 0.012, 0.024, 0.0012, 'teal'); B.lights.push({ bone: ch[0], pos: K.T([0, -0.075, 0.01]), color: '#4fd8c8', i: 0.25, r: 1.2, flicker: 0.1 }); } }
     else if (item === 'jar') { // celadon soul jar
       K.path([[0, 0.02, 0], [0, -0.03, 0]], 0.003, 'red', 3);
       K.lathe((v) => [0.06 * sin(0.3 + v * 2.6) + 0.015, -0.03 - v * 0.15], 'celadon', 14, 6);
       K.lathe((v) => [0.035 * (1 - v), -0.03 + 0.012 * v], 'lacq', 12, 2);
       B.lights.push({ bone: ch[0], pos: K.T([0, -0.1, 0]), color: '#8fdcff', i: 0.35, r: 1.4, flicker: 0.12 });
+      K.path([[0.05, -0.05, 0.02], [0.06, -0.1, 0.03], [0.06, -0.16, 0.03]], 0.0018, 'red', 3); K.box([0.06, -0.19, 0.03], 0.024, 0.036, 0.006, 'bronze');
     }
   }
   C.buildBackItem = buildBackItem; C.buildHipItem = buildHipItem;
@@ -3726,12 +3769,21 @@ G.Char3D = (() => {
   C.looks = {}; C.activeLook = {};
   C.defineLook = function (id, name, look) { (C.looks[id] = C.looks[id] || {})[name] = look; if (!C.activeLook[id]) C.activeLook[id] = name; C.invalidate(id); };
   C.setLook = function (id, name) { C.activeLook[id] = name; C.invalidate(id); };
-  C.lookOf = (id) => { const L = C.looks[id]; return L ? L[C.activeLook[id]] || null : null; };
+  C.lookOf = (id, ctx) => {
+    const L = C.looks[id]; if (!L) return null;
+    const base = L[C.activeLook[id]] || null;
+    // a look may name per-context variants: { contextLooks: { battle: 'guide' } } (e.g. 陳伯's hidden 引魂人 gear)
+    if (ctx && base && base.contextLooks && base.contextLooks[ctx] && L[base.contextLooks[ctx]]) return L[base.contextLooks[ctx]];
+    return base;
+  };
+  C.lookName = (id, ctx) => { const L = C.looks[id]; if (!L) return ''; const base = L[C.activeLook[id]]; if (ctx && base && base.contextLooks && base.contextLooks[ctx]) return base.contextLooks[ctx]; return C.activeLook[id] || ''; };
 
-  function specFor(id) {
+  function specFor(id, ctx) {
     if (!G.Sprites || !G.Sprites.has(id)) return null;
     const raw = G.Sprites.spec(id);
-    const look = C.lookOf(id);
+    let look = C.lookOf(id, ctx);
+    // a variant look can extend another look of the same id: { extend: 'day', spec: {...} }
+    if (look && look.extend && C.looks[id][look.extend]) { const b = C.looks[id][look.extend]; look = Object.assign({}, b, look, { spec: C.merge(C.merge({}, b.spec || {}), look.spec || {}), parts: (b.parts || []).concat(look.parts || []), face3d: Object.assign({}, b.face3d || {}, look.face3d || {}) }); }
     let s = I.normalize(raw);
     if (look) {
       if (look.replace) s = I.normalize(look.spec || {}); // full replacement spec (costume data)
@@ -3744,9 +3796,9 @@ G.Char3D = (() => {
   // ------------------------------------------------------------------------------------------ template build
   const templates = new Map();
   C.invalidate = function (id) { for (const k of Array.from(templates.keys())) if (k.split('#')[0] === id) templates.delete(k); };
-  function buildTemplate(id) {
+  function buildTemplate(id, ctx) {
     const THREE = window.THREE;
-    const sp = specFor(id);
+    const sp = specFor(id, ctx);
     if (!sp) return null;
     const { s: S, look } = sp;
     const hero = !!(look && look.hero) || (C.HEROES || []).includes(id);
@@ -3779,7 +3831,7 @@ G.Char3D = (() => {
     const fam = C.weaponFamily(B.flags.weapon);
     const hold = C.holdClass(S.held);
     const style = (look && look.style) || S.style || {};
-    const clips = C.clipSet(B, { fam, hold, style, styleKey: look ? id + ':' + C.activeLook[id] : '', extraClips: look && look.clips });
+    const clips = C.clipSet(B, { fam, hold, style, styleKey: look ? id + ':' + C.lookName(id, ctx) : '', extraClips: look && look.clips });
     // outline material (shared per template)
     const tmp = new THREE.SkinnedMesh(ogeo, new THREE.MeshBasicMaterial());
     const outlineCol = new THREE.Color(S.outline || mixc(S.hair.color || '#2a2026', '#1a1218', 0.6));
@@ -3794,11 +3846,11 @@ G.Char3D = (() => {
     tmp.geometry = new THREE.BufferGeometry(); // detach
     return T;
   }
-  function template(id) {
-    const key = id + '#' + (C.activeLook[id] || '');
+  function template(id, ctx) {
+    const key = id + '#' + C.lookName(id, ctx);
     if (templates.has(key)) return templates.get(key);
     let T = null;
-    try { T = buildTemplate(id); } catch (e) { warn('char3d build ' + id, e); T = null; }
+    try { T = buildTemplate(id, ctx); } catch (e) { warn('char3d build ' + id, e); T = null; }
     templates.set(key, T);
     return T;
   }
@@ -4005,7 +4057,7 @@ G.Char3D = (() => {
       this.lookTarget = null; this.lookW = 0; this.lookYaw = 0; this.lookPitch = 0; this._lv = new THREE.Vector3();
       this.eye = { x: 0, y: 0, tx: 0, ty: 0, next: 0.5 };
       this.blink = { t: 0, next: 1 + random() * 3, dur: 0, dbl: false };
-      this.expr = (T.look && T.look.expr) || (S.face3d && S.face3d.expr) || 'neutral';
+      this.expr = (T.B.look && T.B.look.expr) || (S.face3d && S.face3d.expr) || 'neutral';
       this.baseExpr = this.expr; this.exprT = 0;
       this.talking = false; this.mouth = { i: 0, t: 0 };
       this.springs = new Springs(this);
@@ -4317,10 +4369,10 @@ G.Char3D = (() => {
     const k = kindOf(id);
     if (!k) return null;
     if (k === 'quad' || k === 'bird') return G.Animal3D && G.Animal3D.create ? G.Animal3D.create(id, opts) : null;
-    const T = template(id);
+    const T = template(id, opts.context);
     if (!T) return null;
     try { return new Char3DInst(T, opts); } catch (e) { warn('char3d inst ' + id, e); return null; }
   };
-  C.stats = function (id) { const T = template(id); return T ? { tris: T.tris, bones: T.defs.length, chains: T.chains.length, atlas: T.B.atlas.S, density: round(T.B.atlas.d) } : null; };
+  C.stats = function (id, ctx) { const T = template(id, ctx); return T ? { tris: T.tris, bones: T.defs.length, chains: T.chains.length, atlas: T.B.atlas.S, density: round(T.B.atlas.d) } : null; };
   C.clearCache = function () { templates.clear(); };
 })();
