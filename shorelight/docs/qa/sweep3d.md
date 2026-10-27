@@ -345,6 +345,12 @@ off again, then on. The clock is frozen, `Math.random` is seeded and 8 fixed-dt 
 | hengchun | ordinary | 102 → 98 (−4 %) | 251k → 252k | 2691 → 1127 | 12 | 30 | 0 | 0.043 / 134 | 0 |
 | fc_inn | ordinary (interior) | 60 → 60 | 192k → 192k | 47 → 55 | 0 | 0 | 0 | 0.140 / 224 | 0.024 |
 
+**Shadows.** r3lite has no shadow maps, so the same A/B was rerun with `--full` (PCF shadows and post-processing)
+on sugarcane_night, mistforest_n and wuzhi_trail. Δpx > 8 was 0.017 %, 0.054 % and 0.059 % (max 142–161), the same
+isolated edge pixels. Batched trees and bamboo cast and receive the same shadows; the depth pass instances with
+the stock depth material, as the per-object meshes did. In `--full` mode `renderer.info` counts only the final
+post-processing pass, so draw calls come from the r3lite runs.
+
 **Reading the table:**
 - **Draw calls.** The heavy maps drop by 22–87 %. sugarcane_night falls from 6× the median to below it.
   Ordinary maps, towns and interiors barely change: there is little to batch.
