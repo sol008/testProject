@@ -1286,7 +1286,10 @@
       const h = R.head, k = R.k, col = o.color || '#5c7aa8', vol = 3 * k;
       const cx = h.x + h.rx * 0.06 * R.T, cy = h.y - h.ry * 0.12;
       if (phase === 'back' || (phase === 'front' && R.B)) {
-        c.beginPath(); c.ellipse(cx, cy, h.rx + vol, h.ry + vol * 0.9, 0, PI * 0.88, PI * 2.12); c.closePath();
+        c.beginPath();
+        if (R.B) c.ellipse(cx, cy, h.rx + vol, h.ry + vol * 0.9, 0, 0, TAU);
+        else c.ellipse(cx, cy, h.rx + vol, h.ry + vol * 0.9, 0, PI * 0.88, PI * 2.12);
+        c.closePath();
         paint(c, col, cx - h.rx, cy - h.ry, cx + h.rx, cy + h.ry, R.lw, 0.18, -0.2);
         clipDo(c, () => { if (o.acc) for (let y = cy - h.ry * 1.2; y < cy + h.ry; y += 3.4 * k) for (let x = cx - h.rx * 1.2; x < cx + h.rx * 1.2; x += 3.4 * k) { circ(c, x + ((y / (3.4 * k)) | 0) % 2 * 1.7 * k, y, 0.7 * k); fill(c, o.acc); } });
         if (R.B || R.LT) { // knot & tails
@@ -1490,7 +1493,9 @@
         ell(c, h.x, h.y - h.ry * 0.05, h.rx * 1.02, h.ry * 1.0); paint(c, S.skin, h.x - h.rx, h.y - h.ry, h.x + h.rx, h.y + h.ry, R.lw, 0.15, -0.15);
       }
       if (hat && HATS[hat.type]) HATS[hat.type](c, R, hat, 'back');
-      drawKnot(c, R, H, 'post'); drawVines(c, R, H); drawPins(c, R, H);
+      if (!covers) { drawKnot(c, R, H, 'post'); drawPins(c, R, H); }
+      drawVines(c, R, H);
+      if (hat && HATS[hat.type] && !covers) HATS[hat.type](c, R, hat, 'front');
       return;
     }
     if (S.halo) haloBehind(c, R, S.halo);
@@ -1839,7 +1844,7 @@
       const ang = R.LT ? -PI / 2 - 0.12 : -PI / 2 + sg * 0.06;
       const L = propLen(R, it);
       drawProp(c, R, it, x, y + 1 * k, ang, { grip: clamp((-y - 2) / L, 0.12, 0.8) });
-    } else if (it === 'cane') drawProp(c, R, 'cane', x, y, PI / 2 + (R.LT ? 0.25 : sg * -0.12));
+    } else if (it === 'cane') drawProp(c, R, 'cane', x, y, -PI / 2 + (R.LT ? -0.22 : sg * 0.1), { grip: clamp(1 - (-y - 1) / propLen(R, 'cane'), 0, 0.97) });
     else if (it === 'lantern' || it === 'oillamp') drawProp(c, R, it, x, y, PI / 2);
     else if (it === 'basket') drawProp(c, R, 'basket', x - 5 * k, y + 1 * k, 0);
     else if (it === 'medbox') drawProp(c, R, 'medbox', x, y, PI / 2);

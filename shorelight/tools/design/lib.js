@@ -287,9 +287,12 @@
   HF.loops = (c, S, o = {}) => {
     const K = S.K, s = o.s || 1;
     // each loop = a lock that leaves the crown, arcs up and tucks back in (leaves a hole)
-    for (const [x, y, d] of [[-44, -100, -1], [8, -108, 1]]) {
-      const sp = [x, y, x + d * 6 - 26 * s, y - 64 * s, x + d * 6 + 26 * s, y - 70 * s, x + d * 4 + 8, y - 2];
-      K.lock(c, sp, 15 * s, { p: 0.15, bulge: 0.1, w0: 1, strands: 2, rootLine: 0 });
+    for (const [x, y, d] of [[-40, -104, -1], [4, -110, 1]]) {
+      // loop leans outward (d) and is wider than tall
+      const sp = d < 0
+        ? [x + 10, y, x - 44 * s, y - 10 * s, x - 50 * s, y - 56 * s, x - 6, y - 8]
+        : [x - 6, y, x + 40 * s, y - 14 * s, x + 44 * s, y - 58 * s, x + 10, y - 8];
+      K.lock(c, sp, 14 * s, { p: 0.15, bulge: 0.1, w0: 1, strands: 2, rootLine: 0 });
     }
     // knot at the base of the loops
     K.mass(c, (c) => { ell(c, -16, -106, 26, 12, -0.1); }, { y0: -118, y1: -94 });
