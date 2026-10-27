@@ -277,6 +277,7 @@ test('tide', 'tide counter terrain (3/5/7) and failure at 8', async (s) => {
   await s.open('?debug&map=beigang_river&x=9&y=9&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=mochi_joined,yuyuan_joined,ch8_start,ch8_dusk,ch8_qijia,ch8_surge,ch8_river_intro');
   await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'beigang_river', null, { timeout: 30000 });
   await s.ev(() => { G.state.flags.ch8_tide_base = 0; G.state.flags.ch8_tide = 0; G.state.flags.ch8_saved = 0; G.state.battles = 0; });
+  await s.gear(); // a real player arrives with ch8 gear; bare-handed the river ambush wipes the party
   await s.idle();
   const at = (x, y) => s.ev(([a, b]) => G.mapScene.terrainAt(a, b), [x, y]);
   assert((await at(15, 15)) === 'dirt' && (await at(22, 16)) === 'bridge_h', 'initial terrain');
