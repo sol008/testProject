@@ -664,6 +664,24 @@ TABLES.balance = (arg) => {
   return mdTable(['頭目戰', '章', '設計等級', '首戰勝率', '有人倒下', '平均回合'],
     BAL.results.map((r) => [r.fight.replace(/\s*\(.*?\)/g, ''), CH_SHORT(r.ch), r.lv, r.win, r.ko, r.rounds]), ['l', 'l', 'r', 'r', 'r', 'r']);
 };
+// 「不可錯過」: the points of no return documented by QA (docs/qa/points_of_no_return.md) — its tables are copied as they
+// are; without tables, its top-level bullet points. Missing doc → nothing (the placeholder disappears).
+TABLES.no_return = () => {
+  const src = read(path.join(ROOT, 'docs', 'qa', 'points_of_no_return.md'));
+  if (!src) return '';
+  const lines = src.split('\n');
+  const tables = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*\|/.test(lines[i]) && /^\s*\|?\s*:?-{2,}/.test(lines[i + 1] || '')) {
+      const t = [];
+      while (i < lines.length && /^\s*\|/.test(lines[i])) t.push(lines[i++].trim());
+      tables.push(t.join('\n'));
+    }
+  }
+  const body = tables.length ? tables.join('\n\n') : lines.filter((l) => /^[-*]\s+/.test(l)).join('\n');
+  if (!body.trim()) return '';
+  return `<details class="spoiler" open><summary>不可錯過：無法回頭的時間點（輕微劇透）</summary>\n\n過了下面這些時間點，就回不到前面的地區，沒做完的心燈和支線也拿不到了。遊戲在這些地方會先跳出提醒。\n\n${body}\n\n</details>`;
+};
 function expandTable(id) {
   const [k, ...rest] = id.split(':');
   const arg = rest.join(':');
