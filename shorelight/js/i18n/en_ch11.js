@@ -98,7 +98,7 @@ G.I18N.add({
   '七色蕈鈴': 'Seven-Hued Mushroom Bell',
   '七仙蕈全收集的證明。雲歸說他看見了世上所有的顏色——還是很想喝酒。雲歸裝備。': 'Proof of all seven Immortal Mushrooms. Yun Gui says he has seen every color in the world—and he\'d still really like a drink. Yun Gui only.',
   '海賊金幣': 'Pirate Gold Coin',
-  '三百年前的金幣。烏鬚的字條說：真正的寶，是一路的伙伴。': 'A gold coin from three hundred years ago. Blackbeard\'s note says the real treasure was the friends you made along the way.',
+  '三百年前的金幣。烏鬚的字條說：真正的寶，是一路的夥伴。': 'A gold coin from three hundred years ago. Blackbeard\'s note says the real treasure was the friends you made along the way.',
   '海賊寶箱裡的貝殼。很漂亮，不太值錢。': 'A seashell from the pirate\'s chest. Very pretty, not worth much.',
   // ---------------------------------------------------------------- skills (enemy skills e11_*, player skill c11_yg_cosmic) ----
   '萬色符': 'Every-Color Talisman',

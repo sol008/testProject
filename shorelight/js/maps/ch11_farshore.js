@@ -95,7 +95,7 @@
     D('c11_captain', { base: 'pirate_ghost', body: 'stout', size: 1.12, face: { beard: 'full', beardColor: '#16161c' }, brows: 'grumpy',
       top: { color: '#8a2a24', len: 0.6, closure: 'open', trim: '#d8b04a', sleeve: 'long' }, hat: { type: 'scarf', color: '#a8221c' } });
     D('c11_pirate_kid', { base: 'pirate_ghost', size: 0.82, mouth: 'frown', eyeStyle: 'round' });
-    D('c11_echo_baizhi', { base: 'baizhi', ghost: true, glow: '#fff2c8', halo: '#ffe6a0' });
+    D('c11_echo_baizhi', { base: 'baizhi_spirit', ghost: true, glow: '#fff2c8', halo: '#ffe6a0' });
     D('c11_echo_qingfeng', { base: 'qingfeng', ghost: true, ghostTint: '#ffd8c8', size: 0.92 });
     D('c11_echo_hongying', { base: 'hongying', ghost: true, ghostTint: '#ffd8c8', size: 0.9 });
     D('c11_echo_father', { base: 'noble_m', ghost: true, ghostTint: '#ffe0c8', face: { beard: 'goatee', beardColor: '#3a3028' } });
@@ -164,7 +164,7 @@
     c11_ac_wanxiang_bell: { name: '萬象鈴', desc: '萬象童子給的鈴。搖起來，每一聲都是不同的顏色。', type: 'acc', price: 0, ch: 11, icon: 'ring', stats: { atk: 8, def: 8, mag: 8, spd: 8, luk: 8 } },
     c11_mat_nameless: { name: '無名之色', desc: '「它不值錢，所以它很珍貴！」——一小片沒有名字的顏色。', type: 'material', price: 2, ch: 11, icon: 'gem' },
     c11_ac_cosmic: { name: '七色蕈鈴', desc: '七仙蕈全收集的證明。雲歸說他看見了世上所有的顏色——還是很想喝酒。雲歸裝備。', type: 'acc', price: 0, ch: 11, icon: 'ring', who: ['yungui'], stats: { mag: 14, luk: 14 }, special: ['mpRegen'] },
-    c11_pirate_coin: { name: '海賊金幣', desc: '三百年前的金幣。烏鬚的字條說：真正的寶，是一路的伙伴。', type: 'material', price: 6000, ch: 11, icon: 'bag' },
+    c11_pirate_coin: { name: '海賊金幣', desc: '三百年前的金幣。烏鬚的字條說：真正的寶，是一路的夥伴。', type: 'material', price: 6000, ch: 11, icon: 'bag' },
     c11_shell: { name: '貝殼', desc: '海賊寶箱裡的貝殼。很漂亮，不太值錢。', type: 'material', price: 10, ch: 11, icon: 'gem' },
   });
 
@@ -368,10 +368,10 @@
     { ids: ['lantern_halfwell'], sprite: 'noble_m', ghost: true, lines: [['王老太爺', '一半給出去，不是少了一半。是同一口水。']] },
     { ids: ['lantern_linto'], sprite: 'linto', ghost: true, lines: [['linto:smile', '我已經不恨了。所以，我還剩一點光，可以借你們。']] },
     { ids: ['lantern_yanshui'], sprite: 'old_f', ghost: true, lines: [['阿義的阿母', '這次有說再見喔。……你們也要好好說再見。']] },
-    { ids: ['ch7_heartlamp_tsou'], kind: 'mountain', lines: [['', '霧的東方極遠處，阿里山的方向，雲海之上有一點光亮了一下。'], ['yungui:think', '……那是塔山。他們有自己的山。山也在看著我們。']] },
-    { ids: ['ch7_heartlamp_murals'], kind: 'murals', sprite: 'ghost_m', ghost: true, lines: [['', '壁畫上的人影，一個一個從霧中走過，都提著燈。其中有一個少年的背影，很像星河。']] },
-    { ids: ['ch8_heartlamp_pilgrims'], sprite: 'pilgrim', living: true, lines: [['進香的阿姨', '阮有替恁跋桮問媽祖——三个聖桮！一路順風！']] },
-    { ids: ['ch8_heartlamp_oyster'], sprite: 'fisherman', ghost: true, lines: [['阿嬤的尪', '阮某煮的虱目魚粥，我後來有食著喔。']] },
+    { ids: ['ch7_heartlamp_tsou', 'lantern_tsou_hunter'], kind: 'mountain', lines: [['', '霧的東方極遠處，阿里山的方向，雲海之上有一點光亮了一下。'], ['yungui:think', '……那是塔山。他們有自己的山。山也在看著我們。']] },
+    { ids: ['ch7_heartlamp_murals', 'lantern_lamp_murals'], kind: 'murals', sprite: 'ghost_m', ghost: true, lines: [['', '壁畫上的人影，一個一個從霧中走過，都提著燈。其中有一個少年的背影，很像星河。']] },
+    { ids: ['ch8_heartlamp_pilgrims', 'lantern_beigang_pilgrims'], sprite: 'pilgrim', living: true, lines: [['進香的阿姨', '阮有替恁跋桮問媽祖——三个聖桮！一路順風！']] },
+    { ids: ['ch8_heartlamp_oyster', 'lantern_oyster_grandma'], sprite: 'fisherman', ghost: true, lines: [['阿嬤的尪', '阮某煮的虱目魚粥，我後來有食著喔。']] },
     { ids: ['xd_banpingshan'], sprite: 'merchant', living: true, lines: [['金萬', '白拿的，吃不飽。人家請的，才吃得飽。……這次，我請你們。']] },
     { ids: ['xd_yueqin_names'], sprite: 'yueqin_singer', ghost: true, extra: 'ghost_m', sfx: 'sing', lines: [['', '月琴聲，遠遠地傳來。'], ['七個聲音', '陳水生。黃阿九。林添福。阿財仔……'], ['七個聲音', '我們的名字，有人唱了。']] },
     { ids: ['xd_lighthouse_home'], sprite: 'lighthouse_keeper', ghost: true, lines: [['湯姆', 'Boy！告訴她——不用燒掉自己。分出去就好！']] },
@@ -393,10 +393,10 @@
     { place: 'lukang', ids: ['lantern_fubo', 'lantern_halfwell'], text: '洛家古厝的門前，掛起了一盞寫著「洛」字的燈籠——是半邊井的鄰居們掛的。', voice: ['半邊井的鄰居', '洛家的燈，總要有人點。'] },
     { place: 'tainan', ids: ['lantern_linto'], text: '林投林的海邊，一盞燈在林投葉之間亮起。那是溫暖的顏色。', voice: ['linto:smile', '……我也還有光。'] },
     { place: 'yanshui', ids: ['lantern_yanshui'], text: '鹽水的武廟前，扛轎的阿義不知道為什麼，抬頭看著西邊的天空。', voice: ['阿義', '……阿母？'] },
-    { place: 'alishan', ids: ['ch7_heartlamp_tsou'], text: '阿里山的方向，雲海之上，塔山也亮著。那不是為彼岸燈而亮的光——那是山自己的光。但它照到了海上。' },
-    { place: 'sunmoon', ids: ['ch7_heartlamp_murals'], text: '日月潭的霧裡，燈母祠的壁畫一幅一幅亮起；畫中歷代渡海的人，都舉起了燈。', voice: ['yungui:think', '……那最後一幅空白的，畫上了。'] },
-    { place: 'beigang', ids: ['ch8_heartlamp_pilgrims'], text: '北港的廟埕前，進香的人們舉起了手中的燈。', voice: ['進香的阿姨', '媽祖婆，保庇彼幾个囡仔！'] },
-    { place: 'tainan', ids: ['ch8_heartlamp_oyster'], text: '安平的海邊，蚵殼阿嬤把一碗熱熱的虱目魚粥，放在那顆石頭上。', voice: ['蚵殼阿嬤', '……這碗，請你們。'] },
+    { place: 'alishan', ids: ['ch7_heartlamp_tsou', 'lantern_tsou_hunter'], text: '阿里山的方向，雲海之上，塔山也亮著。那不是為彼岸燈而亮的光——那是山自己的光。但它照到了海上。' },
+    { place: 'sunmoon', ids: ['ch7_heartlamp_murals', 'lantern_lamp_murals'], text: '日月潭的霧裡，燈母祠的壁畫一幅一幅亮起；畫中歷代渡海的人，都舉起了燈。', voice: ['yungui:think', '……那最後一幅空白的，畫上了。'] },
+    { place: 'beigang', ids: ['ch8_heartlamp_pilgrims', 'lantern_beigang_pilgrims'], text: '北港的廟埕前，進香的人們舉起了手中的燈。', voice: ['進香的阿姨', '媽祖婆，保庇彼幾个囡仔！'] },
+    { place: 'tainan', ids: ['ch8_heartlamp_oyster', 'lantern_oyster_grandma'], text: '安平的海邊，蚵殼阿嬤把一碗熱熱的虱目魚粥，放在那顆石頭上。', voice: ['蚵殼阿嬤', '……這碗，請你們。'] },
     { place: 'hengchun', ids: ['xd_banpingshan', 'xd_yueqin_names'], text: '恆春的城門下，老人撥起月琴。歌裡的每一個名字，都變成了一盞燈。' },
     { place: 'eluanbi', always: true, text: '鵝鑾鼻的燈塔，燈光掃過海面，在最西邊停了一瞬。', voiceIf: ['xd_lighthouse_home', ['阿目', '燈要擦乾淨，船才看得到！']] },
     { place: 'orchid', ids: ['xd_tao_tatala'], text: '蘭嶼的沙灘上，一艘新的拼板舟靜靜躺著。船頭的眼睛，在晨光前閃了一下。' },
@@ -3864,7 +3864,7 @@
       fadeFig(spirit, 0.85, 1.2); G.Tweens.to(spirit, { y: 560 }, 1.6, 'outQuad');
       await pause(S, 1.4);
       await L(S, [
-        ['', '燈的光中，一個身影緩緩降下。黑色的長髮像光一樣散開，眼裡燃著金色的火——是白芷。但比現在更透明、更像火焰。'],
+        ['', '燈的光中，一個身影緩緩降下。銀白的長髮像光一樣散開，眼裡燃著金色的火——是白芷。但比現在更透明、更像火焰。'],
         ['xinghe:surprise', '白芷……！'],
         ['yungui:serious', '……十八年前的她。燈靈。'],
         ['', '燈靈伸出雙手，捧住那點小小的光。光停止了哭泣。'],
@@ -4050,7 +4050,7 @@
     S.setPos('player', 7, 9, 'up');
     await L(S, [
       ['', '塔頂。一扇由光構成的門，被六條黑色的鎖鏈纏住。門後，隱約可見一團巨大的白色火焰——弱得像風中的燭火。'],
-      ['', '只剩心跳般的低頻。'],
+      ['', '只剩心跳般的低鳴。'],
       ['xinghe:serious', '門……打不開。'],
       ['hongying:angry', '那就劈開！'],
     ]);
@@ -5170,7 +5170,7 @@
       ['baizhi:smile', '……好。我會說好吃。'],
       ['hongying:angry', '要真的好吃！'],
       ['', '雲歸伸出手，拍了拍白芷的頭。'],
-      ['yungui:smile', '一年後，貧道帶你去吃蘑菇。可以吃的那種。'],
+      ['yungui:smile', '一年後，貧道帶妳去吃蘑菇。可以吃的那種。'],
       ['', '芋圓把繡球推到白芷腳邊。那是牠最寶貝的東西。'],
       ['baizhi:laugh', '……好。我替你顧著。'],
       ['', '最後，白芷看著星河。'],
@@ -5287,10 +5287,10 @@
     { ids: ['lantern_yimin'], from: '竹塹・滿妹婆', pic: 'hakka', text: '九降風又欲吹了，米粉曬得頂好，寄一包分你們。紅纓那妹仔的山歌，還是恁難聽喔。' },
     { ids: ['lantern_halfwell'], from: '鹿港・半邊井', pic: 'mansion', text: '洛家的門，每天都開著。紅纓姑娘煮的東西，我們還是不太敢吃。' },
     { from: '府城・做十六歲的女孩', pic: 'tainan', text: '我今年十七歲了！七娘媽亭我留著，等白芷姊姊回來，給她「補做」十六歲。' },
-    { ids: ['ch7_heartlamp_tsou'], from: '阿里山・Voyu', pic: 'alishan', text: '山上的霧很好。我媽說：記得，跟等，是不一樣的。下次來，記得先跟長老打招呼。' },
+    { ids: ['ch7_heartlamp_tsou', 'lantern_tsou_hunter'], from: '阿里山・Voyu', pic: 'alishan', text: '山上的霧很好。我媽說：記得，跟等，是不一樣的。下次來，記得先跟長老打招呼。' },
     { from: '玉山・布農族的一家', pic: 'yushan', text: '小米收成了。孩子長高了一個頭。山，還是那座不會淹的山。' },
     { from: '日月潭・邵族的長老', pic: 'sunmoon', text: '白鹿的故事，我又跟孩子們講了一遍。他們問，那幾個人後來呢？我說，回家了。' },
-    { ids: ['ch8_heartlamp_pilgrims'], from: '北港・進香的阿姨', pic: 'procession', text: '今年遶境，阮閣鑽轎腳，替恁祈平安。阮跋著三个聖桮喔！' },
+    { ids: ['ch8_heartlamp_pilgrims', 'lantern_beigang_pilgrims'], from: '北港・進香的阿姨', pic: 'procession', text: '今年遶境，阮閣鑽轎腳，替恁祈平安。阮跋著三个聖桮喔！' },
     { ids: ['xd_yueqin_names'], from: '恆春・月琴伯', pic: 'hengchun', text: '歌裡又多了幾個名字——這次是好名字。是新出世的孫仔的名字。' },
     { ids: ['xd_lighthouse_home'], from: '鵝鑾鼻・阿目', pic: 'cape', text: '燈罩我每天都擦。湯先生說，燈要留下來。我就留下來。' },
     { ids: ['xd_tao_tatala'], from: '蘭嶼・達悟族的少年', pic: 'orchid', text: '我和爸爸一起造了新的船。船的眼睛是我刻的。今年飛魚很多。' },

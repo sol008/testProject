@@ -481,8 +481,8 @@ G.I18N.add({
   // ------------------------------------------------------------------ story bootstrap & credits
   '（未完待續）': '(To be continued)',
   '下一章正在趕工中……': 'The next chapter is still being written…',
-  '— 完 —': '— The End —',
-  '— 彼岸 —': '— The Far Shore —',
+  '—— 完 ——': '— The End —',
+  '—— 彼岸 ——': '— The Far Shore —',
   '#彼岸燈　Shorelight': '#Shorelight',
   '彼岸燈　Shorelight': 'Shorelight',
   '#劇本・世界觀': '#Story & Worldbuilding',
