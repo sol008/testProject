@@ -1,0 +1,34 @@
+# chapters 0-5 walkthrough maps (ch00-ch05.md)
+dream
+jiufen
+mine_1
+mist_loop
+tiger_den
+guanyin_trail
+bangka
+zhuqian
+hakka_village
+wind_cave_2 vision
+lukang_jiuqu
+luo_1f
+luo_2f
+# chapters 6-11 walkthrough maps (ch06-ch11.md)
+fucheng
+linto
+tsou_hosa
+cloud_forest
+vision_hub
+lamp_shrine
+beigang
+beigang_river
+qihou
+wangchuan_yard
+longpan
+longkeng_caves
+orchid_shore
+taroko_gorge
+toucheng
+penghu_magong
+xuanwu_b1 vision
+farshore_field
+breath_realm
