@@ -2476,7 +2476,7 @@ G.Char3D = (() => {
       const rrect = C._internal.clothRect(B, 'ribbon' + rc, 0.1, 0.5, rc, { weave: 'silk', folds: false });
       for (const sg of [-1, 1]) {
         const p0 = vadd(B._tieAt, [sg * 0.015 * P.s, 0, -0.01]);
-        const L = 0.38 * P.s;
+        const L = (H.ribbonLen || 0.38) * P.s;
         const pts = [p0, vadd(p0, [sg * 0.02, -L * 0.25, -0.03]), vadd(p0, [sg * 0.025, -L * 0.55, -0.04]), vadd(p0, [sg * 0.025, -L * 0.8, -0.045]), vadd(p0, [sg * 0.02, -L, -0.05])];
         const ids = B.chain('ribbon' + (sg > 0 ? 'L' : 'R'), 'head', pts, { stiff: 0.35, drag: 0.25, grav: 1.0, r: 0.012, groups: ['body', 'head'], kind: 'ribbon' });
         C.ribbon(B, pts, ids, rrect, (t) => (0.014 + 0.004 * t) * P.s, [1, 0, 0], () => 0.002);
