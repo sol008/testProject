@@ -1179,7 +1179,8 @@
 22. xinghe(serious)：嗯。
 23. 湯姆：Tell her——告訴她，不用燒掉自己。分出去就好。Like this one.（指著大燈）
 24. xinghe(surprise)：……
-25. 湯姆：Well then.（整理制服，敬禮）Keeper Thomas Archer, going home. 守燈人湯姆，回家了。
+25. 湯姆：Well then.（整理制服，敬禮）Keeper Thomas Archer, going home.
+25a. 湯姆：守燈人湯姆……回家了。
 26. [湯姆的身體化成燈塔光束裡的一點一點亮光。光束掃過海面，往北，往很遠很遠的地方。]
 27. [燈塔的燈沒有變暗。]
 28. **心燈 +1：燈塔守的家書**（`xd_lighthouse_home`）
@@ -1206,7 +1207,7 @@
 | 恆春 S8 武具 | `hc_shop_arms` | 海風符扇 雲歸 mag+62（4400）、斗笠 head def+16 抗 wind 系（1600）、牛皮護心 armor def+44（3800）、月牙槍 紅纓 atk+72（5200，C9-13 後上架） |
 | 燈塔（湯姆） | `el_shop_tom` | 「ship biscuit」船用硬餅乾 HP+300（「一文！One cash！很便宜，very hard」實價 30）、燈油 MP+100（200）、`防水火柴`（戰鬥中使用：敵全體 fire 小傷害，120） |
 
-湯姆開店台詞：「Welcome to Tom's shop！我的店！……其實是倉庫。Everything one cash！……OK，不是 one cash。」
+湯姆開店台詞：「Welcome to Tom's shop！我的店！……其實是倉庫。」／「Everything one cash！……OK，不是 one cash。」
 
 ### 5.2 旅店
 旗後 80 文／東港 90 文／恆春 100 文／王船艙口 免費（全回復）。
