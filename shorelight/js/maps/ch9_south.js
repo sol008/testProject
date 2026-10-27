@@ -1090,5 +1090,394 @@
     S.quest('q_ch9_banping', 'done');
   }
 
+  // =====================================================================================================
+  // MAP 2 — banping_foot 半屏山下
+  // =====================================================================================================
+  function drawMonsterAt(ctx, art, cx, cy, t, o = {}) {
+    if (!G.Monsters || !G.Monsters.get(art)) return;
+    ctx.save();
+    ctx.globalAlpha = o.alpha == null ? 1 : o.alpha;
+    ctx.translate(cx * T + T / 2, cy * T + T - 6 + Math.sin(t * 2) * 3);
+    if (o.flip) ctx.scale(-1, 1);
+    const s = o.scale || 0.5;
+    ctx.scale(s, s);
+    G.Monsters.draw(ctx, art, 0, 0, t, { state: 'idle', variant: o.variant || 0, phase: o.phase });
+    ctx.restore();
+  }
+  G.Maps.define('banping_foot', {
+    name: '半屏山下', subtitle: '被吃掉一半的山', place: 'takao', bgm: 'south', start: [19, 27],
+    light: (s) => (s.flags.ch9_banping_done ? { ambient: 0.25, color: '#3a1a08' } : { ambient: 0 }),
+    particles: ['leaves', { type: 'motes', density: 0.6 }],
+    tiles: (() => {
+      const g = grid(40, 30, '.');
+      g.rect(0, 0, 40, 6, 'X');
+      g.rect(19, 3, 2, 3, 'v');
+      g.rect(1, 7, 9, 7, 'l');
+      g.rect(19, 6, 2, 24, '=');
+      g.rect(24, 14, 12, 6, 'f');
+      g.rect(16, 12, 3, 1, '=').rect(21, 12, 6, 1, '=');
+      g.rect(17, 28, 6, 2, '=');
+      g.rect(7, 16, 12, 1, ':');
+      g.dots([[1, 14], [9, 14], [10, 9], [10, 10]], ',');
+      return g.rows();
+    })(),
+    deco: (() => {
+      const d = grid(40, 30, ' ');
+      d.dots([[0, 6], [11, 6], [37, 6], [38, 13], [1, 22], [2, 26], [38, 24], [36, 27]], 't');
+      d.dots([[36, 8], [37, 9], [36, 10], [37, 11], [38, 8], [38, 10]], 'B');
+      d.dots([[24, 8], [30, 9], [22, 22], [14, 24], [30, 24], [26, 26]], 'u');
+      d.dots([[2, 14], [5, 14], [8, 14], [10, 12], [10, 13]], 'e');
+      d.dots([[3, 9], [6, 10], [4, 12], [8, 8], [7, 12]], 'o');
+      d.dots([[28, 7], [33, 7], [14, 20], [5, 24]], 'r');
+      d.dots([[12, 18], [13, 19], [11, 20], [25, 22], [27, 23], [33, 21]], 'w');
+      return d.rows();
+    })(),
+    objects: [
+      { t: 'tree_banyan', x: 13, y: 8 },
+      { t: 'stall', x: 16, y: 11, text: '湯圓', counter: true, light: { r: 120, color: '#ffd27a', flicker: 0.2 } },
+      { t: 'cauldron', x: 18, y: 10 },
+      { t: 'bench', x: 15, y: 14 },
+      { t: 'drying_rack', x: 27, y: 10, v: 0 },
+      { t: 'house_minnan', x: 2, y: 16, v: 0 },
+      { t: 'rock_big', x: 9, y: 6 }, { t: 'rock_big', x: 30, y: 6 },
+      { t: 'fence_wood', x: 24, y: 13, w: 5 }, { t: 'fence_wood', x: 31, y: 13, w: 5 },
+      { t: 'basket', x: 29, y: 11 },
+      { t: 'signboard', x: 21, y: 7, text: '半屏山', interact: ['山的南面，是一整片灰白色的陡直石壁——像被刀切掉了一半。', '石壁正中，有一道黑漆漆的裂縫。'], label: '看' },
+    ],
+    npcs: [
+      chenboNpc('banping_foot', [19, 27]),
+      { id: 'bp_peddler', sprite: 'old_m', name: '仙翁', x: 16, y: 10, dir: 'down', fixedDir: true, light: { r: 80, color: '#ffe7a0' }, talk: async (S) => { await peddlerTalk(S); } },
+      { id: 'bp_ama', sprite: 'old_f', name: '曬菜阿嬤', x: 26, y: 11, dir: 'down', wander: 1, talk: [
+        '半屏山的古早故事喔？以前有個賣湯圓的老人，喊說一碗一文錢、兩碗不用錢。',
+        '大家都拿兩碗，越吃越多，吃到後來，山就少了一半。',
+        '只有一個少年仔，乖乖拿出一文錢買一碗。後來老人就帶他走了，說他是有仙緣的人。',
+        '那湯圓啊，是用山的土搓的。白拿的，就是拿山的肉。',
+      ] },
+      { id: 'bp_farmer', sprite: 'villager_m', name: '種田阿伯', x: 30, y: 17, dir: 'left', wander: 2, talk: [
+        '昨天那個旗後的金萬，坐轎來的喔，衫褲都是綢的。一來就吃，吃了二十碗。',
+        '吃完肚子大到走不動，自己爬進山壁裂縫裡去了。叫也叫不回來。',
+      ] },
+      { id: 'bp_kid', sprite: 'child_m', name: '牽牛囝仔', x: 9, y: 19, dir: 'right', talk: async (S) => {
+        await S.say('牽牛囝仔', '我阿爸說，那個湯圓攤只有心不貪的人看得到。……我看得到喔！');
+        if (F('ch9_banping_done')) await S.say('牽牛囝仔', '仙翁請我吃了一碗！他說是請客，不是白拿。');
+        else await S.say('牽牛囝仔', '可是我沒錢。');
+      } },
+      { id: 'bp_buffalo', sprite: 'buffalo', name: '水牛', x: 10, y: 19, dir: 'left', wander: 1 },
+    ],
+    events: [
+      { id: 'bp_crack_closed', trigger: 'touch', x: 19, y: 5, w: 2, h: 1, if: (s) => !s.flags.ch9_banping_cave_open, run: async (S) => {
+        await S.say('', '石壁的裂縫很窄，裡面黑漆漆的，隱約傳來咀嚼的聲音……');
+        await S.say('yungui:think', '先去問問山腳下的人吧。');
+        await S.move('player', 'D');
+      } },
+      { id: 'bp_south', trigger: 'touch', x: 17, y: 29, w: 6, h: 1, run: async (S) => {
+        await S.fadeOut(0.5);
+        await S.narrate(['沿著小路走回哨船頭，再坐竹筏回旗後。'], { veil: 1 });
+        await S.warp('qihou', 40, 8, 'left', { fade: 0.01 });
+      } },
+    ],
+    warps: [
+      { x: 19, y: 3, w: 2, to: 'banping_cave', tx: 19, ty: 37, tdir: 'up', if: (s) => !!s.flags.ch9_banping_cave_open },
+    ],
+    onUpdate: withFollow(),
+  });
+
+  async function peddlerTalk(S) {
+    if (F('ch9_banping_done')) { await S.say('仙翁', '每隔幾十年擺一次攤。看看人有沒有變。……你們，沒變。'); return; }
+    if (F('ch9_banping_cave_open')) { await S.say('仙翁', '姓金的在山肚子裡。去吧，他還在吃。'); return; }
+    if (!F('ch9_banping_open')) { await S.say('仙翁', '湯圓——一碗一文錢，兩碗不用錢喔——'); return; }
+    await S.say('', '大榕樹下，一個白鬍子老人顧著一口熱騰騰的鍋。攤子周圍有淡淡的金光。');
+    await S.say('仙翁', '湯圓——一碗一文錢，兩碗不用錢喔——');
+    await S.say('tuanzi:laugh', '兩碗不用錢！！本大爺要兩碗！不，四碗！不用錢的話，八碗！');
+    await S.say('yungui:think', '……這攤子，跟傳說裡的一模一樣。');
+    await S.say('仙翁', '少年仔，吃不吃？');
+    const c = await S.choice(['付一文錢，買一碗', '拿兩碗（不用錢）', '不吃']);
+    if (c === 0) {
+      S.gold(-1);
+      await S.say('', '星河把一文錢放在攤上。仙翁看了那枚銅錢一眼，笑了。');
+      await S.say('仙翁', '這碗，算你們的。');
+      await S.say('', '一碗熱湯圓，白白圓圓，湯是薑糖湯。星河吃了一口。');
+      await S.say('xinghe:surprise', '……好甜。好好吃。');
+      await S.say('tuanzi:cry', '本大爺的那碗呢？');
+      await S.say('仙翁', '（再推一碗給糰子）這碗，我請的。');
+      await S.say('tuanzi:surprise', '……請的？不是不用錢的？');
+      await S.say('仙翁', '不一樣喔。不用錢，是你拿；我請，是我給。記住。');
+      S.flag('ch9_tangyuan_paid');
+    } else if (c === 1) {
+      await S.say('', '糰子撲上去捧起兩碗。湯圓一入口——喀。');
+      S.sfx('hit');
+      await S.say('tuanzi:cry', '喵嗚！是、是土！是泥巴！！');
+      await S.say('仙翁', '哈哈哈。不用錢的，本來就是山的。拿山的，就吃到山。');
+      await S.say('yungui:smug', '傳說誠不我欺。');
+      S.flag('ch9_tangyuan_free');
+    } else {
+      await S.say('仙翁', '不吃也好。不貪，也不欠。');
+      S.flag('ch9_tangyuan_none');
+    }
+    await S.say('仙翁', '你們是來找那個姓金的吧？');
+    await S.say('仙翁', '他吃了二十碗不用錢的。現在在山肚子裡，還在吃。停不下來。');
+    await S.say('仙翁', '那些很久以前白拿的人，也都在裡面。吃了幾百年，沒有一個飽過。');
+    await S.say('xinghe:think', '阿伯，你……是當年那個仙人？');
+    await S.say('仙翁', '我？（笑）我是當年那個付了一文錢的少年仔啦。');
+    await S.say('仙翁', '師父帶我走了，教我搓湯圓。師父早就不知道去哪了，我還在這裡賣。');
+    await S.say('仙翁', '每隔幾十年擺一次攤。看看人有沒有變。');
+    await S.say('hongying:serious', '……變了嗎？');
+    S.face('bp_peddler', 'hongying');
+    await S.say('仙翁', '（看了一眼紅纓）有的有，有的沒有。跟以前一樣。');
+    S.flag('ch9_banping_cave_open');
+    S.quest('q_ch9_banping', 1);
+    S.toast('支線：進入半屏山腹，帶回金萬', 'scroll');
+  }
+
+  // =====================================================================================================
+  // MAP 3 — banping_cave 半屏山腹「貪肚」
+  // =====================================================================================================
+  const BP_ROOMS = {
+    w: { y: 10, xs: [5, 7, 9], loot: [{ item: 'c9_ac_tanlang' }, { item: 'huanhunxiang', n: 2 }, { gold: 1500 }] },
+    m: { y: 19, xs: [15, 17, 23], loot: [{ item: 'c9_mat_banpingshi' }, { item: 'ezaijian', n: 3 }, { item: 'c9_ar_shanni' }] },
+    e: { y: 10, xs: [30, 32, 34], loot: [{ item: 'c9_hd_jinlv' }, { item: 'c9_baicaogao', n: 2 }, { item: 'c9_xiancaodong', n: 5 }] },
+  };
+  const bpState = (s, r) => ((s.vars.ch9_rooms || {})[r]) || { state: 'none', took: -1 };
+  function bpRoom(r) { const v = V(); v.ch9_rooms = v.ch9_rooms || {}; return v.ch9_rooms[r] || (v.ch9_rooms[r] = { state: 'none', took: -1 }); }
+  const bpObj = (r, i) => G.mapScene && G.mapScene.objects.find((o) => o.key === `bpc_${r}${i}`);
+  async function bpGive(S, loot) {
+    if (loot.gold) S.gold(loot.gold);
+    else await S.give(loot.item, loot.n || 1);
+  }
+  async function bpLose(S, loot) {
+    if (loot.gold) { G.state.gold = Math.max(0, G.state.gold - loot.gold); await S.say('', `${loot.gold} 文錢化成了一把山泥。`); return; }
+    const n = loot.n || 1;
+    let left = n - Math.min(n, G.Inv.count(loot.item));
+    G.Inv.remove(loot.item, Math.min(n, G.Inv.count(loot.item)));
+    for (const m of Object.values(G.state.members)) for (const slot in m.equip) if (left > 0 && m.equip[slot] === loot.item) { m.equip[slot] = null; left--; }
+    await S.say('', `${D.items[loot.item].name}化成了一把山泥。`);
+  }
+  async function bpOpen(S, r, i) {
+    const R = bpRoom(r), def = BP_ROOMS[r];
+    if (!F('ch9_bp_hint')) { S.flag('ch9_bp_hint'); await S.say('yungui:think', '白拿的東西，多拿一個，連前一個都會不見。……我猜。'); }
+    if (R.state === 'none') {
+      S.sfx('chest');
+      const o = bpObj(r, i); if (o) o.open = true;
+      R.state = 'one'; R.took = i;
+      await bpGive(S, def.loot[i]);
+      for (let k = 0; k < 3; k++) { const o2 = bpObj(r, k); if (o2 && k !== i) o2.light = { r: 90, color: '#ffd27a', flicker: 0.3 }; }
+      await S.say('', '另外兩個寶箱發出了金光——「還有兩箱。再拿一個吧？反正不用錢。」');
+      return;
+    }
+    await S.say('', '寶箱閃著金光。「再拿一個吧？反正不用錢。」');
+    const c = await S.choice(['打開', '不要'], { cancel: 1 });
+    if (c !== 0) {
+      await S.say('', '你把手收了回來。金光暗了一點。');
+      return;
+    }
+    S.sfx('dark');
+    S.shake(6, 0.4);
+    await S.say('', '寶箱的蓋子自己掀開——裡面伸出一隻沾滿泥巴的手！');
+    const res = await S.battle('t_c9_greed_ambush', { mode: 'ambush', bgmAfter: 'mine' });
+    if (res !== 'win') return;
+    await bpLose(S, def.loot[R.took]);
+    R.state = 'lost';
+    for (let k = 0; k < 3; k++) { const o2 = bpObj(r, k); if (o2) o2.light = null; }
+    await S.say('yungui:smug', '……我猜對了。');
+    if (r === 'm') S.flag('ch9_bp_middoor');
+  }
+  async function bpPlate(S) {
+    await S.say('', '一面山壁擋住了去路。山壁中間有一個空的石盤，石盤上刻著：「給出去，才過得去。」');
+    const ids = G.Inv.list((it) => it.type !== 'key').slice(0, 7);
+    if (!ids.length) {
+      await S.say('', '石盤上，不知什麼時候出現了一碗湯圓。旁邊刻著小字：「沒有東西可給的人，給一句謝謝也行。」');
+      const c = await S.choice(['「謝謝。」', '算了'], { cancel: 1 });
+      if (c !== 0) return;
+    } else {
+      const c = await S.choice(ids.map((id) => D.items[id].name).concat(['算了']), { cancel: ids.length });
+      if (c >= ids.length) return;
+      const id = ids[c];
+      G.Inv.remove(id, 1);
+      await S.say('', `星河把${D.items[id].name}放上石盤。石盤上的東西一下子就不見了。`);
+      if (D.items[id].icon === 'food' || D.items[id].icon === 'drink') await S.say('tuanzi:cry', '本大爺的……！');
+    }
+    S.sfx('earth'); S.shake(8, 0.6);
+    await S.say('', '轟隆——山壁慢慢往兩邊讓開了。');
+    S.flag('ch9_bp_gate');
+  }
+
+  G.Maps.define('banping_cave', {
+    name: '半屏山腹', subtitle: '「貪肚」', place: 'takao', bgm: 'mine', start: [19, 37], noSave: false,
+    light: { ambient: 0.6, color: '#140c04', playerR: 230, playerColor: '#ffd890' },
+    particles: [{ type: 'motes', density: 1.2 }, { type: 'dust', density: 0.6 }],
+    legend: { '$': 'dirt' },
+    tiles: (() => {
+      const g = grid(40, 40, 'C');
+      g.rect(19, 34, 2, 6, 'v');
+      g.rect(8, 27, 24, 8, 'v');
+      g.rect(19, 24, 2, 3, 'v');
+      g.rect(13, 17, 14, 7, 'v');
+      g.rect(19, 8, 2, 9, '$');
+      g.rect(3, 9, 10, 6, 'v').rect(13, 11, 6, 2, '$');
+      g.rect(27, 9, 10, 6, 'v').rect(21, 11, 6, 2, '$');
+      g.rect(17, 6, 6, 2, 'v');
+      g.rect(4, 1, 32, 4, 'v').rect(19, 5, 2, 1, 'v');
+      g.dots([[10, 29], [11, 30], [26, 31], [27, 30], [15, 33], [24, 28], [16, 21], [24, 22], [6, 12], [33, 13]], '$');
+      return g.rows();
+    })(),
+    objects: (s) => {
+      const out = [
+        { t: 'signboard', x: 17, y: 28, text: '石刻', interact: ['石壁上刻著一行字：「一碗一文錢，兩碗不用錢。」', '字的下面，有很多很多手指抓過的痕跡。'], label: '看' },
+        { t: 'pot', x: 10, y: 28 }, { t: 'pot', x: 12, y: 33 }, { t: 'jar', x: 28, y: 28 }, { t: 'jar', x: 30, y: 33 }, { t: 'pot', x: 25, y: 33 },
+        { t: 'rock_big', x: 9, y: 31 }, { t: 'rock_small', x: 28, y: 31 }, { t: 'rock_small', x: 14, y: 30 },
+        { t: 'pot', x: 14, y: 22 }, { t: 'jar', x: 25, y: 17 }, { t: 'pot', x: 3, y: 14 }, { t: 'jar', x: 36, y: 14 },
+        { t: 'city_wall', x: 19, y: 16, w: 2, v: 0, tall: 70, if: (st) => !st.flags.ch9_bp_middoor && bpState(st, 'm').state === 'none',
+          interact: async (S) => {
+            await S.say('', '一道石門擋在路上。門上刻著：「拿了，門才開。」');
+            const c = await S.choice(['不拿寶物，直接推門', '先看看寶箱'], { cancel: 1 });
+            if (c === 0) { S.sfx('earth'); await S.say('', '石門晃了晃，慢慢沉進了地裡。'); S.flag('ch9_bp_middoor'); }
+          }, label: '推門' },
+        { t: 'mill_stone', x: 22, y: 6, interact: async (S) => { if (F('ch9_bp_gate')) await S.say('', '空的石盤。「給出去，才過得去。」'); else await bpPlate(S); }, label: '調查' },
+        { t: 'rock_big', x: 19, y: 4, if: (st) => !st.flags.ch9_bp_gate },
+        { t: 'table', x: 13, y: 2, w: 10 },
+        { t: 'pot', x: 12, y: 1 }, { t: 'pot', x: 12, y: 2 }, { t: 'jar', x: 23, y: 1 }, { t: 'jar', x: 23, y: 2 },
+        { t: 'pot', x: 6, y: 2 }, { t: 'pot', x: 8, y: 3 }, { t: 'jar', x: 28, y: 2 }, { t: 'pot', x: 31, y: 3 }, { t: 'jar', x: 33, y: 1 },
+      ];
+      for (const r of ['w', 'm', 'e']) {
+        const R = bpState(s, r), def = BP_ROOMS[r];
+        def.xs.forEach((x, i) => out.push({
+          t: 'chest', x, y: def.y, key: `bpc_${r}${i}`, open: R.took === i,
+          light: R.state === 'one' && R.took !== i ? { r: 90, color: '#ffd27a', flicker: 0.3 } : null,
+          if: (st) => bpState(st, r).state !== 'lost',
+        }));
+      }
+      return out;
+    },
+    lights: [
+      { x: 9, y: 28, r: 120, color: '#e8b040', flicker: 0.2 }, { x: 30, y: 29, r: 120, color: '#e8b040', flicker: 0.2 },
+      { x: 20, y: 20, r: 160, color: '#f0c050', flicker: 0.15 }, { x: 7, y: 11, r: 120, color: '#e8b040' }, { x: 32, y: 11, r: 120, color: '#e8b040' },
+      { x: 20, y: 12, r: 110, color: '#d8a030' }, { x: 18, y: 2, r: 220, color: '#ffcf60', flicker: 0.2 },
+    ],
+    enemies: [
+      { id: 'bpe1', troop: 't_c9_greed_a', x: 12, y: 30, art: 'greed_ghost', lv: 31, radius: 3 },
+      { id: 'bpe2', troop: 't_c9_greed_b', x: 27, y: 32, art: 'greed_ghost', lv: 31, radius: 3 },
+      { id: 'bpe3', troop: 't_c9_greed_a', x: 20, y: 12, art: 'greed_ghost', lv: 31, radius: 2 },
+    ],
+    events: (() => {
+      const ev = [];
+      for (const r of ['w', 'm', 'e']) {
+        BP_ROOMS[r].xs.forEach((x, i) => ev.push({
+          id: `bpc_${r}${i}`, trigger: 'action', x, y: BP_ROOMS[r].y, label: '開啟',
+          if: (s) => { const R = bpState(s, r); return R.state !== 'lost' && R.took !== i; },
+          run: async (S) => { await bpOpen(S, r, i); },
+        }));
+      }
+      ev.push({ id: 'bp_boss', trigger: 'touch', x: 17, y: 3, w: 6, h: 2, if: (s) => !!s.flags.ch9_bp_gate && !s.flags.ch9_banping_done, run: async (S) => { await banpingBoss(S); } });
+      return ev;
+    })(),
+    warps: [
+      { x: 19, y: 39, w: 2, to: 'banping_foot', tx: 19, ty: 7, tdir: 'down' },
+    ],
+    drawOver: (ctx, t) => {
+      const v = V();
+      if (v.ch9_bpGhost) {
+        drawMonsterAt(ctx, 'greed_ghost', 20, 1, t, { scale: 0.7, variant: 1, alpha: v.ch9_bpGhost });
+      }
+    },
+  });
+
+  async function banpingBoss(S) {
+    S.bgm('tension');
+    S.setPos('player', 19, 4, 'up'); S.gather();
+    await S.camera(17, 2, 0.8);
+    S.spawn({ id: 'bp_jinwan', sprite: 'merchant', x: 13, y: 3, dir: 'right' });
+    await S.say('', '長桌上堆著吃不完的湯圓。金萬坐在桌首，綢緞衣服撐破了，肚子大得像石鼓。');
+    await S.say('', '他的下半身已經變成灰白的石頭，跟山壁連在一起。他一手抓一顆湯圓，一直往嘴裡塞。');
+    await S.say('金萬', '不用錢……不用錢的……多吃一顆是一顆……');
+    await S.say('xinghe:surprise', '金萬伯！不要吃了！你的腳——');
+    S.emote('bp_jinwan', '💢');
+    await S.say('金萬', '你們是誰？要跟我搶？這些都是我的！不用錢的都是我的！');
+    const gs = [[15, 3], [17, 1], [21, 3], [14, 1]];
+    gs.forEach(([x, y], i) => { const a = S.spawn({ id: 'bp_g' + i, sprite: i % 2 ? 'ghost_f' : 'ghost_m', x, y, dir: 'down', ghost: true }); a.alpha = 0; S.fadeActor('bp_g' + i, 0.85, 0.6); });
+    V().ch9_bpGhost = 0.01;
+    await G.Tweens.to(V(), { ch9_bpGhost: 1 }, 0.8, 'linear');
+    await S.say('', '桌子周圍，一圈灰色的人影抬起頭——每個都肚子圓鼓、四肢細瘦，嘴裡塞滿泥土。');
+    await S.say('貪鬼們', '……不用錢……不用錢……餓……還是餓……');
+    await S.say('大肚貪鬼', '我們白拿了幾百年……從來沒有飽過……');
+    await S.say('大肚貪鬼', '新來的這個，也會一樣。');
+    const stolen = [];
+    const r = await S.battle('t_c9_greed_boss', { intro: greedIntro(stolen), bgmAfter: 'mine' });
+    if (r !== 'win') return;
+    if (stolen.length) {
+      for (const id of stolen) G.Inv.add(id, 1);
+      S.sfx('item');
+      S.toast('被吞掉的道具都吐出來了', 'bag');
+    }
+    await S.give('c9_xiancaodong', 1);
+    S.cameraFollow();
+    await S.camera(17, 2, 0.4);
+    await S.say('', '貪鬼們跌坐在地，大肚貪鬼喘著氣。');
+    await S.say('金萬', '（發抖）我、我的腳……動不了……');
+    await S.say('yungui:serious', '山不放你走。你拿了山多少，就被山抓多少。');
+    await S.say('金萬', '那、那怎麼辦！我有錢！我回去拿錢給山！');
+    await S.say('xinghe:normal', '金萬伯，你身上有錢嗎？');
+    await S.say('金萬', '……沒有。我出門從來不帶錢。都是別人付。');
+    await S.say('hongying:angry', '……你這個人！');
+    const c = await S.choice(['給金萬一文錢', '告訴他「把水窟仔打開」']);
+    if (c === 0) {
+      S.gold(-1);
+      await S.say('xinghe:normal', '拿去。一文錢。');
+      await S.say('金萬', '……我金萬不欠人。');
+      await S.say('xinghe:smile', '那你現在欠我一文了。回旗後再還我。');
+      await S.say('金萬', '（瞪著那枚銅錢，手在抖）……');
+    } else {
+      await S.say('xinghe:serious', '你孫女每天晚上偷偷開你的鎖，分水給厝邊。');
+      await S.say('xinghe:serious', '她被你罵了，還是繼續開。她在替你付錢啊。');
+      await S.say('金萬', '……阿秀？');
+    }
+    S.bgm('sad');
+    await S.say('金萬', '（突然哭了出來）我……我少年時是羅漢腳，從唐山一個人過來，一文錢也沒有。');
+    await S.say('金萬', '餓過，渴過。所以我發誓，這輩子什麼都要拿，什麼都不給。');
+    await S.say('金萬', '拿了一輩子……我從來都沒有飽過。');
+    await S.say('', '他低頭看著手上的湯圓。慢慢地，把湯圓放回桌上。');
+    await S.say('金萬', '……我不吃了。');
+    S.sfx('earth');
+    await S.say('', '石頭從他的腳上一片片剝落。');
+    await S.say('', '山腹深處傳來一聲輕笑。仙翁提著鍋子，從山壁裡走了出來。');
+    const old = S.spawn({ id: 'bp_old', sprite: 'old_m', x: 25, y: 1, dir: 'left', light: { r: 110, color: '#ffe7a0' } });
+    old.alpha = 0; await S.fadeActor('bp_old', 1, 0.8);
+    await S.move('bp_old', 'DDLLL');
+    await S.say('仙翁', '姓金的，要不要買一碗？一碗一文錢。');
+    if (c === 0) await S.say('金萬', '（緊握著星河給的那一文錢）……我買。');
+    else await S.say('金萬', '（從懷裡摸出唯一一枚壓箱銅錢）……我買。');
+    S.sfx('coin');
+    await S.say('', '金萬把錢放進仙翁手裡。仙翁舀了一碗湯圓給他。他吃了一口，整個人愣住。');
+    await S.say('金萬', '……飽了。');
+    await S.say('金萬', '一碗而已……我怎麼……飽了……');
+    await S.say('', '貪鬼們一個一個抬起頭，看著金萬，看著那口鍋。');
+    await S.say('大肚貪鬼', '我們……也想要……可是我們沒有錢……');
+    await S.say('仙翁', '今天不用錢。');
+    await S.say('大肚貪鬼', '……不用錢？');
+    await S.say('仙翁', '不是「不用錢」。是請客。我請你們。');
+    await S.say('仙翁', '白拿的，吃不飽。人家請的，才吃得飽。');
+    S.bgm('love');
+    await S.say('', '仙翁一碗一碗舀給貪鬼。每個貪鬼吃完一碗，肚子就消下去，臉上露出很久很久沒有過的、安靜的表情——');
+    for (let i = 0; i < gs.length; i++) { S.fadeActor('bp_g' + i, 0, 0.8); await S.wait(0.3); }
+    await S.say('', '然後化成一點金光，散進山壁裡。山壁在金光中，彷彿長回了一點點。');
+    await S.say('大肚貪鬼', '（最後一個）……好甜。……多謝。');
+    await G.Tweens.to(V(), { ch9_bpGhost: 0 }, 1.0, 'linear');
+    V().ch9_bpGhost = 0;
+    for (let i = 0; i < gs.length; i++) S.remove('bp_g' + i);
+    await S.lantern('xd_banpingshan', '半屏山湯圓');
+    await S.say('仙翁', '（把那枚銅錢拋回給星河）這文錢，被誠心花過一次了。');
+    await S.say('仙翁', '誠心花過的錢，很好用。帶著。');
+    await S.give('c9_ac_tongqian', 1);
+    if (F('ch9_tangyuan_paid')) {
+      await S.say('仙翁', '上次你們付了錢，這碗是找你們的。');
+      await S.give('c9_tangyuan', 1);
+    }
+    S.flag('ch9_banping_done');
+    S.quest('q_ch9_banping', 2);
+    await S.fadeOut(0.8);
+    S.remove('bp_old'); S.remove('bp_jinwan');
+    await S.narrate(['金萬扶著山壁，一步一步走出了山腹。', '回旗後的路上，他一句話也沒說。手裡一直握著那只空碗。'], { veil: 1 });
+    await S.warp('qihou', 15, 26, 'up', { fade: 0.01 });
+  }
+
   // @@MAPS@@
 })();
