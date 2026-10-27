@@ -865,6 +865,8 @@
         S.emote('yuyuan', '💢');
         await S.say('', '芋圓瞇起眼睛，一臉「你再說一次」。');
         await S.say('阿全', '阿嬤說晚上不能在海邊叫人家名字，會被聽到。');
+        // 半屏山湯圓: points at 阿秀 in the 金萬 courtyard
+        if (F('ch9_qihou_night_done') && !F('ch9_banping_open')) await S.say('阿全', '還有，金萬伯家的阿秀一直在哭，說她阿公不見了。她在西邊金萬大厝的院子裡。');
       } },
       { id: 'qh_xiu', sprite: 'child_f', name: '阿秀', x: 15, y: 25, dir: 'down', if: (s) => !!s.flags.ch9_qihou_night_done && !s.flags.ch9_banping_reward, talk: async (S) => {
         if (F('ch9_banping_done')) { await S.say('阿秀', '阿公回來了！他在水窟仔那邊……'); return; }
@@ -2175,7 +2177,8 @@
         { t: 'lantern_frame', x: 26, y: 23 }, { t: 'crate', x: 40, y: 23 }, { t: 'barrel', x: 41, y: 23 }, { t: 'log', x: 37, y: 28 },
         { t: 'red_lantern', x: 20, y: 22 }, { t: 'red_lantern', x: 23, y: 22 },
       ];
-      CART_Y.forEach((y, i) => out.push({ t: 'log', x: cp[i], y, key: 'cart' + i, label: '推', interact: async (S) => { await pushCart(S, i); } }));
+      // w: 2 spelled out: the Z-key lookup (findInteract) reads o.w, so without it the cart's right half could not be pushed
+      CART_Y.forEach((y, i) => out.push({ t: 'log', x: cp[i], y, w: 2, key: 'cart' + i, label: '推', interact: async (S) => { await pushCart(S, i); } }));
       BOARD_TXT.forEach((txt, i) => out.push({ t: 'signboard', x: 30 + i * 2, y: 8, text: txt, v: i === 5 ? 1 : 0, label: '查看', interact: async (S) => { await eyeBoard(S, i); } }));
       for (const k of ['w', 'n', 'e']) {
         const z = YZ[k];
@@ -2407,7 +2410,8 @@
       const ok = await S.choice(['出航（之後將無法再回到南部海域）', '再等等'], { cancel: 1 });
       // point of no return: the 王船 rides the 黑潮 north and never comes back to the southern ports
       if (ok === 0 && await S.pointOfNoReturn({ chapter: 9,
-        quests: ['q_ch9_banping', 'q_ch9_names', 'q_ch9_lighthouse'],
+        // 雲歸的蕈譜 needs all seven 七仙蕈: leaving without 龍坑's 潮汐蕈 loses the quest (completed in ch11)
+        quests: ['q_ch9_banping', 'q_ch9_names', 'q_ch9_lighthouse', { id: 'q_tuanzi_mush', open: (st) => !st.flags.mush_ch9 }],
         lanterns: { xd_banpingshan: 'q_ch9_banping', xd_yueqin_names: 'q_ch9_names', xd_lighthouse_home: 'q_ch9_lighthouse' } })) await chapterEnd(S);
       return;
     }
@@ -2735,7 +2739,7 @@
       { id: 'hcw_ashun', sprite: 'yueqin_singer', name: '阿順伯', x: 13, y: 3, dir: 'up', fixedDir: true,
         if: (s) => !!s.flags.ch9_ashun_met && (!s.flags.ch9_hengchun_done || !s.flags.ch9_yueqin_xindeng), talk: async (S) => {
           if (F('ch9_hengchun_done') && nameCount() === 7 && !F('ch9_yueqin_xindeng')) { await wallSong(S, false); return; }
-          if (F('ch9_hengchun_done')) { await S.say('阿順伯', '還是缺了幾個。不要緊，我記得幾個，就唱幾個。'); await S.say('阿順伯', `現在找回了 ${nameCount()} 個名字。`); return; }
+          if (F('ch9_hengchun_done')) { await S.say('阿順伯', '還是缺了幾個。不要緊，我記得幾個，就唱幾個。'); await S.say('阿順伯', `現在找回了 ${nameCount()} 個名字。`); await namesLeftHint(S); return; }
           if (F('ch9_names_quest') && !F('ch9_fallwind_defeated')) { await S.say('阿順伯', '去吧。明天日落前，我在這裡等。我會一直彈，讓你們聽得到方向。'); return; }
           await S.say('阿順伯', '……聽。');
         } },
@@ -2892,11 +2896,18 @@
     await S.give('c9_ac_yueqin', 1);
     S.flag('ch9_hengchun_done');
     await S.say('阿順伯', '去吧。南岬的風，現在讓你們過了。');
+    if (n < 7) { await S.say('阿順伯', '……還沒找回來的名字，若是找到了，再上來找我。'); await namesLeftHint(S); }
     for (const id of ['hcw_widow', 'hcw_afu', 'hcw_v1', 'hcw_v2', 'hcw_v3']) S.remove(id);
     days(S, 1);
     S.quest('q_ch9_main', 5);
     S.objective('乘王船繞過南岬，前往鵝鑾鼻（南門外的南灣）');
     S.bgm('south');
+  }
+  // 阿順伯 points at each name still missing (①–④ always come from the 落山風靈 fight)
+  async function namesLeftHint(S) {
+    if (!F('ch9_name_5')) await S.say('阿順伯', '城南潘家的阿嬸，她丈夫也在歌裡。風停了，她或許想起來了。');
+    if (!F('ch9_name_6')) await S.say('阿順伯', '阿福仔家門口那支舊槳，刻著他阿公的名字。風沙落定，字應該看得清了。');
+    if (!F('ch9_name_7')) await S.say('阿順伯', '龍磐東邊的沙溝對面，石縫裡還有一點光。風停了，沙橋不會自己出來——撥一下那條琴弦試試。');
   }
   async function widowTalk(S) {
     if (F('ch9_name_5')) { await S.say('潘家阿嬸', '潘金水！是潘金水！……他名字裡有金又有水，他說這樣出海才會發。'); return; }
@@ -2934,6 +2945,8 @@
   })();
   const LP_BRIDGE = { y: 18, x0: 37, n: 6 };
   const lpCalm = (s) => !!s.flags.ch9_fallwind_defeated;
+  // 月琴弦護符 in the bag or worn by anyone (calls the sand bridge once the wind has stopped)
+  const lpString = (s) => G.Inv.has('c9_ac_yueqin') || Object.values(s.members).some((m) => Object.values(m.equip).includes('c9_ac_yueqin'));
   const lpInA = (x, y) => y >= 22 && y <= 42 && x <= 32;
   G.Maps.define('longpan', {
     name: '龍磐風原', subtitle: '落山風的源頭', place: 'hengchun', start: [4, 40],
@@ -2996,14 +3009,20 @@
         await gainName(S, 7);
         S.flag('ch9_name_7');
       } });
-      ev.push({ id: 'lp_pluck', trigger: 'action', x: 37, y: 18, label: '撥弦', if: (s) => lpCalm(s) && !s.flags.ch9_name_7 && (G.Inv.has('c9_ac_yueqin') || Object.values(s.members).some((m) => Object.values(m.equip).includes('c9_ac_yueqin'))), run: async (S) => {
+      ev.push({ id: 'lp_pluck', trigger: 'action', x: 37, y: 18, label: '撥弦', hint: true, if: (s) => lpCalm(s) && !s.flags.ch9_name_7 && lpString(s), run: async (S) => {
         S.sfx('sing');
         await S.say('', '星河撥了一下月琴弦。叮——一陣小風從山上吹下來，沙子開始往坡上流。');
         G.mapScene._lpOne = 0;
       } });
-      ev.push({ id: 'lp_bridge_hint', trigger: 'touch', x: 36, y: 17, h: 3, once: true, run: async (S) => {
+      // one hint per situation (windy / calm without the string / calm with it): a single `once` hint seen while the wind
+      // still blew used to hide the 琴弦 hint for good
+      const lpHintKey = (s) => (!lpCalm(s) ? 'ch9_lp_hint_wind' : lpString(s) ? 'ch9_lp_hint_string' : 'ch9_lp_hint_calm');
+      ev.push({ id: 'lp_bridge_hint', trigger: 'touch', x: 36, y: 17, h: 3, if: (s) => !s.flags.ch9_name_7 && !s.flags[lpHintKey(s)], run: async (S) => {
+        const k = lpHintKey(st());
+        S.flag(k);
         await S.say('', '眼前是一道寬寬的沙溝，過不去。對面的咾咕石縫裡，好像有一點光。');
-        if (lpCalm(st())) await S.say('yungui:think', '風停了，沙橋也不會再出現了。……阿順伯給的琴弦，或許有用。');
+        if (k === 'ch9_lp_hint_string') await S.say('yungui:think', '風停了，沙橋也不會再出現了。……阿順伯給的琴弦，或許有用。');
+        else if (k === 'ch9_lp_hint_calm') await S.say('yungui:think', '風停了，沙橋也不會再出現了。……要是能再叫來一陣風就好了。');
         else await S.say('yungui:think', '風一吹，沙往上坡流……陣風的時候，沙溝上會浮出一條路。');
       } });
       return ev;
@@ -3088,6 +3107,17 @@
           });
           return;
         }
+      }
+      // once the wind is calm no gust brings the sand bridge back: the 月琴弦's single bridge collapses while the
+      // party is still on the far strip (x 43, name ⑦) → slide them back across instead of stranding them there
+      if (calm && !busy && m._lpOne == null && !m._lpBack && m.player.x === 43 && m.player.y >= 16 && m.player.y <= 20) {
+        m._lpBack = true;
+        G.Script.run(async (S) => {
+          S.sfx('wind');
+          await S.say('', '沙橋已經崩落了。眾人抓著咾咕石，順著沙坡一步一步滑回了沙溝這一頭。');
+          await S.warp('longpan', 35, 18, 'left');
+        });
+        return;
       }
       if (calm || busy) return;
       if (G.Debug && G.Debug.autoplay) return;
@@ -3292,6 +3322,7 @@
           await S.say('湯姆', 'You\'re back! 船頭燈亮了！我看到了！Brilliant！');
           await S.say('湯姆', '我的日誌……那天晚上，風把它吹出窗外。掉到龍坑裡去了吧。');
           await S.say('湯姆', `你們找到了 ${logCount()} 頁。`);
+          await S.say('湯姆', '剩下的，大概還在龍坑的側洞裡。洞裡的怪物走了，現在下去很安全。');
           await tomShop(S);
         } },
     ],
@@ -3397,6 +3428,10 @@
     await S.give('key_lighthouse', 1);
     await S.say('湯姆', 'Bring it back alive！要活著拿回來——火跟你們都是！');
     await S.say('chenbo:normal', '我把船繞到龍坑出口的海邊等你們。湯先生會在燈塔上替你們照路。');
+    // 燈塔守的家書: the keeper himself points at the log pages (the quest used to start only when a page was found)
+    await S.say('湯姆', 'Oh——and if you see paper down there……颱風那天晚上，我的日誌被風吹出窗外，散進龍坑的側洞裡了。');
+    await S.say('湯姆', '上面寫了什麼，我也不記得了。Please，撿得到就幫我撿回來。');
+    if (!G.state.quests.q_ch9_lighthouse) S.quest('q_ch9_lighthouse', 0);
     S.remove('el_amu_run');
     S.flag('ch9_keeper_met');
     S.quest('q_ch9_main', 6);
@@ -3517,6 +3552,8 @@
     lights: (s) => {
       const out = [];
       LK_BZ.forEach(([x, y], i) => { if (!s.flags['ch9_lkbz_' + i]) out.push({ x, y, r: 50, color: '#6a7aa0' }); });
+      // the log pages glimmer in the dark side caves, so they can be spotted from the cave mouths
+      LK_LOGS.forEach((L, i) => { if (!s.flags['ch9_log_' + (i + 1)]) out.push({ x: L.x, y: L.y, r: 80, color: '#fff2c0', flicker: 0.2 }); });
       out.push({ x: 21, y: 41, r: 220, color: '#ffb060', flicker: 0.2 });
       return out;
     },
@@ -3543,6 +3580,8 @@
         ctx.fillRect(x * T + 4, y * T + 4, T - 8, T - 8);
       }
       ctx.restore();
+      const s = st();
+      LK_LOGS.forEach((L, i) => { if (!s.flags['ch9_log_' + (i + 1)]) drawSpark(ctx, L.x, L.y, t); });
     },
     drawOver: (ctx, t, m) => {
       const v = V();
