@@ -100,40 +100,49 @@
     } });
   }
   function yunjian() {
-    // 雲肩 four-lobed ruyi cloud collar, tassel fringe hanging from its edge
-    const lobe = (cx, cy, rx, ry, rot) => {
-      // ruyi lobe: three-bump cloud head
-      return P((p) => {
-        const pts = [];
-        for (let i = 0; i <= 40; i++) {
-          const t = (i / 40) * Math.PI * 2;
-          const bump = 1 + 0.16 * Math.cos(3 * t);
-          pts.push([rx * bump * Math.cos(t), ry * bump * Math.sin(t)]);
-        }
-        const c0 = Math.cos(rot), s0 = Math.sin(rot);
-        pts.forEach(([x, y], i) => {
-          const X = cx + x * c0 - y * s0, Y = cy + x * s0 + y * c0;
-          if (i) p.lineTo(X, Y);
-          else p.moveTo(X, Y);
-        });
-        p.closePath();
-      });
-    };
-    const L = [[-50, -330, 28, 20, 0.22], [50, -330, 28, 20, -0.22], [0, -308, 26, 31, 0]];
-    // fringe of tassels under the collar edge
-    if (!B.G.sil) for (const [x, y] of [[-74, -320], [-62, -312], [-46, -310], [-24, -292], [-12, -280], [0, -276], [12, -280], [24, -292], [46, -310], [62, -312], [74, -320]]) {
+    // 雲肩: one stiff collar resting on the shoulders, edge carved into ruyi cloud heads (left, front, right)
+    const S = [-13, -354];
+    const segs = [
+      [[-30, -353], [-50, -348], [-62, -340]],
+      [[-78, -336], [-80, -318], [-70, -310]],
+      [[-63, -305], [-58, -315], [-52, -313]],
+      [[-46, -310], [-44, -302], [-36, -303]],
+      [[-30, -305], [-27, -311], [-21, -311]],
+      [[-32, -298], [-24, -280], [-10, -282]],
+      [[-5, -283], [-3, -278], [0, -273]],
+    ];
+    const build = (k) => P((p) => {
+      const T = ([x, y]) => [x * k, -320 + (y + 320) * k];
+      p.moveTo(...T(S));
+      for (const [c1, c2, e] of segs) p.bezierCurveTo(...T(c1), ...T(c2), ...T(e));
+      for (let i = segs.length - 1; i >= 0; i--) {
+        const [c1, c2] = segs[i];
+        const e = i ? segs[i - 1][2] : S;
+        const m = ([x, y]) => T([-x, y]);
+        p.bezierCurveTo(...m(c2), ...m(c1), ...m(e));
+      }
+      p.closePath();
+    });
+    // fringe of tassels under the carved edge
+    if (!B.G.sil) for (const [x, y] of [[-70, -312], [-52, -312], [-36, -304], [-20, -296], [-8, -284], [0, -275], [8, -284], [20, -296], [36, -304], [52, -312], [70, -312]]) {
       line(poly([[x, y], [x, y + 15]], false), C.gold, 1.2);
       part(P((p) => p.ellipse(x, y + 17, 1.6, 2.6, 0, 0, 7)), C.collar, { lw: 0.7, rim: false, sh: false });
     }
-    part(P((p) => p.ellipse(0, -346, 34, 15, 0, 0, 7)), C.collar, { lw: 1.6, rimW: 1.2 });
-    for (const [x, y, rx, ry, rot] of L) {
-      part(lobe(x, y, rx, ry, rot), C.collar, { lw: 1.8, rimW: 1.5, inner: () => {
-        line(lobe(x, y, rx - 5, ry - 5, rot), C.gold, 1.4);
-        for (let i = 0; i < 3; i++) stroke([[x - 9, y + 6 - i * 4], [x - 4, y + 1 - i * 4], [x + 1, y + 6 - i * 4], [x + 6, y + 1 - i * 4], [x + 10, y + 6 - i * 4]], 1.2, rgba('#9fd8e0', 0.9));
-      } });
-    }
-    // inner neck edge
-    part(P((p) => p.ellipse(0, -352, 13, 6, 0, 0, 7)), C.ao, { lw: 1.2, rim: false });
+    part(build(1), C.collar, { lw: 1.9, rimW: 1.6, shift: [4, 3], inner: () => {
+      line(build(0.84), C.gold, 1.5);
+      line(build(0.7), rgba(C.gold, 0.7), 0.9);
+      // sea-wave embroidery in each cloud head
+      for (const [x, y] of [[-58, -326], [58, -326], [0, -298]]) for (let i = 0; i < 3; i++) stroke([[x - 9, y + 6 - i * 4], [x - 4, y + 1 - i * 4], [x + 1, y + 6 - i * 4], [x + 6, y + 1 - i * 4], [x + 10, y + 6 - i * 4]], 1.2, rgba('#9fd8e0', 0.9));
+      for (const s of [-1, 1]) {
+        for (let i = 0; i < 5; i++) {
+          const a2 = (i / 5) * Math.PI * 2;
+          fillP(P((p) => p.ellipse(s * 28 + Math.cos(a2) * 3, -332 + Math.sin(a2) * 2.6, 2.6, 1.6, a2, 0, 7)), '#f4c6cc');
+        }
+        fillP(P((p) => p.arc(s * 28, -332, 1.4, 0, 7)), C.gold);
+      }
+    } });
+    // neck opening
+    part(P((p) => p.ellipse(0, -351, 13, 6, 0, 0, 7)), C.ao, { lw: 1.2, rim: false });
   }
   function arms() {
     // viewer-left: raised to the chest in a singing gesture; viewer-right: lowered, holding the flute
@@ -187,7 +196,7 @@
     palette: [[C.ao, '孔雀綠襖', 'peacock ao'], [C.collar, '海棠紅', 'begonia red'], [C.gold, '金線', 'gold thread'], [C.skirt, '月白裙', 'moon-white'], [C.border, '米鑲邊', 'border'], [C.skin, '膚', 'skin'], [C.jade, '玉笛', 'jade flute']],
     callouts: [
       { zh: '步搖・半紮髮', en: 'dangling hairpin on a half-up', at: [-24, -424] },
-      { zh: '四合如意雲肩', en: 'four-lobed ruyi cloud collar', at: [56, -334] },
+      { zh: '四合如意雲肩', en: 'ruyi cloud collar with tassel fringe', at: [62, -326] },
       { zh: '寬袖襖・寬鑲邊', en: 'wide-sleeved jacket, broad border', at: [-40, -214] },
       { zh: '馬面裙', en: 'pleated horse-face skirt', at: [0, -100] },
       { zh: '玉笛垂玉牌', en: 'flute with red string and jade tag', at: [52, -232] },

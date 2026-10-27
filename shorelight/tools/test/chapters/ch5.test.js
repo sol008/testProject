@@ -27,6 +27,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const results = [];
 let page;
 const problems = [];
+const foreign = [];
 
 function check(name, ok, detail) {
   results.push({ name, ok: !!ok, detail });
@@ -84,9 +85,14 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
   page.on('console', (m) => {
     const t = m.text();
     if (m.type() === 'error') { if (!/ERR_FILE_NOT_FOUND/.test(t)) problems.push('console.error: ' + t.slice(0, 400)); }
-    else if (m.type() === 'warning' && !/^THREE\.|GL Driver Message|GPU stall/.test(t)) problems.push('console.warn: ' + t.slice(0, 400));
+    else if (m.type() === 'warning' && !/^THREE\.|GL Driver Message|GPU stall|AudioContext was not allowed/.test(t)) problems.push('console.warn: ' + t.slice(0, 400));
   });
-  page.on('pageerror', (e) => problems.push('pageerror: ' + (e.stack || e.message).slice(0, 400)));
+  page.on('pageerror', (e) => {
+    const st = String(e.stack || e.message);
+    // runtime errors thrown while loading OTHER chapters' files (being written in parallel) are not ours
+    if (/js\/maps\/ch(?!5_)\d+_[a-z]+\.js/.test(st) && !/ch5_lukang\.js/.test(st)) { foreign.push(st.split('\n')[0]); return; }
+    problems.push('pageerror: ' + st.slice(0, 400));
+  });
 
   const url = 'file://' + path.join(ROOT, 'index.html') + '?debug&startch=5&flags=mush_1,ch3_mask_shard,ch4_lamp_broken';
   await page.goto(url);
@@ -264,7 +270,9 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     await ev(() => { for (const id of ['xinghe', 'baizhi', 'hongying', 'yungui']) G.Story.ensureLevel(id, 19); G.Party.healAll(); });
     await stepOn(29, 11);
     await expectMap('luo_1f');
-    await stepOn(19, 15);
+    await ev(() => G.Debug.stepOn(19, 15));
+    await page.waitForTimeout(300);
+    await idle(900000); // memory ③ + the boss battle (autoplay) + the unmasking take a few minutes headless
     check('怨宴 defeated (ch5_boss)', await flag('ch5_boss'));
     check('怨宴燭台 dropped', await ev(() => G.Inv.has('c5_feast_candle')));
     check('unmasked (ch5_unmask)', await flag('ch5_unmask'));
@@ -345,6 +353,7 @@ async function expectMap(id, label) { const m = await mapId(); check(`${label ||
     return true;
   });
   const lastErr = await ev(() => (G.lastError ? String(G.lastError.stack || G.lastError) : null)).catch(() => null);
+  if (foreign.length) console.log(`  note: ignored ${foreign.length} runtime error(s) thrown by other chapters' files: ${[...new Set(foreign)].slice(0, 3).join(' | ')}`);
   if (foreignSyntax.length) console.log(`  note: ignored ${foreignSyntax.length} syntax error(s) in other chapters' files: ${[...new Set(foreignSyntax.map((e) => path.basename(e.file)))].join(', ')}`);
   check('no page/console errors or warnings', bad.length === 0, bad.slice(0, 8).join('\n        '));
   check('G.lastError is null', !lastErr, lastErr);

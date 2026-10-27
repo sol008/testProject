@@ -239,7 +239,7 @@
   Q.q_persimmon = { name: '柿柿如意', desc: '彭阿伯的柿餅少了三百個，糰子嘴角卻是橘色的。', stages: ['在柿餅寮附近調查三處線索。', '鼠窩裡有誰在啃柿餅？', '把失竊的柿餅交還彭阿伯。'], doneText: '真正的賊是柿鼠大王。' };
   Q.q_leicha = { name: '擂茶課', desc: '滿妹婆說：擂茶愛擂，正有味。', stages: ['跟滿妹婆學擂茶。'], doneText: '硬頸，也愛曉得轉彎。' };
   Q.q_shange_yungui = { name: '山歌擂台・道士篇', desc: '阿福想跟在旁邊笑了半天的道士哥對山歌。', stages: ['在禾埕跟阿福對山歌。'], doneText: '道士哥的歌像在念經，毋過押得準。' };
-  if (!Q.q_tuanzi_mush) Q.q_tuanzi_mush = { name: '糰子的蕈譜', desc: '雲歸的蕈譜上有七個空格。糰子負責……試吃。', stages: ['找到蕈譜上的蕈。', '等待下一種蕈。'] };
+  if (!Q.q_tuanzi_mush) Q.q_tuanzi_mush = { name: '糰子的蕈譜', desc: '雲歸的蕈譜上有七個空格。糰子負責……試吃。', stages: ['找到蕈譜上的蕈。', '找到蕈譜上的蕈。', '等待下一種蕈。'] };
 
   // regional sprite variants requested by the screenplay (8-3) — built on existing specs
   if (G.Sprites && G.Sprites.define) {
@@ -2804,6 +2804,7 @@
         talk: async (S) => {
           if (broken(G.state)) { await S.say('夏大嫂', '下次來，我教那個姑娘織一條帶子。她的手很巧。'); return; }
           await S.say('夏大嫂', '苧麻要先剝、刮、曬，再捻成線，才能織布。一件衣服，要好幾個月。');
+          if (!F('ch4_pastaay_witnessed')) await S.say('夏大嫂', '那個銀頭髮的姑娘，身體好冷。我煮了熱湯，你拿去給她。');
         },
       },
       { id: 'afu_x', sprite: 'hakka_m', name: '阿福', x: 36, y: 21, dir: 'down', if: (st) => !st.flags.ch4_pastaay_witnessed, talk: ['𠊎兜來作客。祭典个事，聽主人家个。'] },
@@ -3166,7 +3167,7 @@
     await S.give('mat_fengxun', 1);
     V().tuanzi_mush = (V().tuanzi_mush || 0) + 1;
     S.flag('mush_ch4');
-    S.quest('q_tuanzi_mush', 1);
+    S.quest('q_tuanzi_mush', Math.max(2, G.Quests.stage('q_tuanzi_mush')));
   }
   G.Maps.define('wind_cave_1', {
     name: '五指山風穴', subtitle: '風道', place: 'hsinchu', bgm: (st) => (broken(st) ? 'mountain' : 'wind'), start: [20, 42],
