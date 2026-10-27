@@ -4,6 +4,8 @@
 //   node tools/test/chapters/ch8.test.js            # everything
 //   node tools/test/chapters/ch8.test.js --only main # only tests whose id contains a word
 //   node tools/test/chapters/ch8.test.js --shots     # also save screenshots to tools/test/out/ch8_*.png
+//   node tools/test/chapters/ch8.test.js --only main --from fort   # main path from a segment (beigang river anping fort tower)
+//   node tools/test/chapters/ch8.test.js --only main --seg river   # just one segment
 //
 // main      : ?debug&startch=8 → 北港 (8-1 … 8-2 起駕・鑽轎腳) → 8-3a 逆潮 → 北港溪口 rescue of all five pilgrims (P8-1)
 //             → 潮怨・百手 → 黎明 (心燈 北港的香客) → 渡頭線索 → 安平 (蚵殼阿嬤 A) → 舊城 sluice puzzle (P8-2) → 觀潮台
@@ -125,91 +127,147 @@ const assert = (c, msg) => { if (!c) throw new Error('assert: ' + msg); };
 const tests = [];
 const test = (id, name, fn) => tests.push({ id, name, fn });
 
-// ------------------------------------------------------------------------------------------ main path
-test('main', 'critical path: startch=8 → G.Story.next(9)', async (s) => {
-  await s.open('?debug&startch=8');
-  await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'beigang', null, { timeout: 60000 });
-  await s.idle();
-  assert(await s.flag('ch8_start'), '8-1 intro ran');
-  await s.gear();
-  assert((await s.ev(() => G.state.party.slice(0, 3).join(','))) === 'xinghe,hongying,yungui', 'party = 星河 紅纓 雲歸');
-  await s.shot('01_beigang');
-  await s.talk('boatman');
-  assert(await s.flag('ch8_no_boat'), '8-1b boatman');
-  await s.step(27, 13);
-  assert(await s.flag('ch8_jiajiang_seen'), '8-1c 八家將與神將');
-  await s.talk('keeper', ['準備好了']);
-  assert(await s.flag('ch8_qijia') && await s.flag('ch8_zuanjiao'), '8-2 起駕・鑽轎腳');
-  assert((await s.ev(() => G.Inv.count('c8_xianghuo'))) === 3, '3 北港香火袋');
-  await s.shot('02_night');
-  await s.step(27, 25);
-  assert((await s.map()) === 'beigang_river' && await s.flag('ch8_surge'), '8-3a → river');
-  await s.idle();
-  assert(await s.flag('ch8_river_intro'), 'river intro');
-  await s.shot('03_river');
-  // P8-1: rescue ①③④ (→ ⑤ appears & is rescued automatically) then ②
-  for (const z of ['zone1', 'zone3', 'zone4']) { await s.talk('rv_aunt'); await s.trigger(z); }
-  assert(await s.flag('ch8_afu_found'), '⑤ 阿福 found after three rescues');
-  await s.talk('rv_aunt');
-  await s.trigger('zone2');
-  const tide = await s.flag('ch8_tide');
-  assert((await s.flag('ch8_saved')) === 5 && tide <= 5 && !(await s.flag('ch8_tide_fail')), `all five saved before tide 8 (tide ${tide})`);
-  assert(await s.flag('ch8_rescue_over'), 'rescue phase over');
-  assert(await s.ev(() => G.mapScene.enemies.some((e) => e.def.troop === 't_c8_hundred')), '百手 appears at the mouth');
-  await s.boost(31);
-  await s.step(44, 34);
-  assert(await s.flag('ch8_hundred_done') && await s.flag('ch8_surge_end'), '8-3c 百手 defeated, surge ended');
-  assert((await s.map()) === 'beigang', 'back to 北港 at dawn');
-  await s.idle();
-  assert(await s.flag('ch8_dawn_done'), '8-3d dawn scene');
-  assert(await s.ev(() => G.Lanterns.has('lantern_beigang_pilgrims')), '心燈 北港的香客');
-  assert(await s.flag('ch8_heartlamp_pilgrims') && (await s.ev(() => G.Inv.count('c8_mazubing'))) === 5, 'pilgrim reward: 媽祖餅×5');
-  assert(await s.ev(() => G.Inv.count('c8_chaoxin') === 1), '潮心珠 drop');
-  await s.shot('04_dawn');
-  await s.talk('xiuying');
-  assert(await s.flag('ch8_xiuying_gift'), '秀英姨 gift');
-  await s.step(50, 24);
-  assert(await s.flag('ch8_clue_anping'), '8-3e clue');
-  await s.step(27, 43, ['出發']);
-  assert((await s.map()) === 'anping' && await s.flag('ch8_anping'), '→ 安平, 8-4');
-  await s.shot('05_anping');
-  await s.talk('oyster', [0]);
-  assert((await s.flag('ch8_sq_oyster')) === 1, '蚵殼阿嬤 option A');
-  await s.talk('disciple'); await s.talk('disciple');
-  assert(await s.flag('ch8_qf_rumor'), 'rumor');
-  await s.talk('axing');
-  assert(await s.flag('ch8_gate_open') && await s.flag('ch8_dusk_ap'), 'gate open, dusk');
-  await s.step(21, 2, ['入夜']);
-  assert((await s.map()) === 'anping_fort' && await s.flag('ch8_fort_enter'), '8-4b → fort');
-  await s.idle();
-  // P8-2: open A → courtyard (guards) → notes → open B → east, open C → back, close A → channel 3 dry
-  const wheel = (w) => s.run(`const o = G.mapScene.objects.find((x) => x.wheel === '${w}'); await o.interact(S, o);`);
-  await wheel('A');
-  assert(await s.ev(() => !G.mapScene.solid[32 * 40 + 20]), 'channel 1 dry after A');
-  await s.step(20, 27);
-  assert(await s.flag('ch8_fort_guards'), '8-5b guards');
-  await s.run(`const o = G.mapScene.objects.find((x) => x.chest && x.chest.id === 'c8_fort_r'); G.mapScene.openChest(o);`);
-  assert(await s.flag('ch8_notes_read') && await s.ev(() => G.Inv.count('c8_cm_note') === 1), '長明宮手記');
-  await wheel('B'); await wheel('C');
-  assert(await s.ev(() => G.mapScene.solid[12 * 40 + 20] === 1), 'channel 3 still wet while A is open');
-  await wheel('A');
-  assert(await s.ev(() => !G.mapScene.solid[12 * 40 + 20] && G.mapScene.solid[32 * 40 + 20] === 1), 'A closed: channel 3 dry, channel 1 flooded');
-  await s.run(`const o = G.mapScene.objects.find((x) => x.chest && x.chest.id === 'c8_fort_q'); G.mapScene.openChest(o);`);
-  await s.shot('06_fort');
-  await s.boost(33);
-  await s.step(20, 1);
-  // 觀潮台: battle → 8-6b/c/d → 8-7 → 安平 dawn (8-8)
-  await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'anping' && G.state.flags.ch8_dawn, null, { timeout: 400000 }).catch(() => {});
-  await s.idle(400);
-  assert(await s.flag('ch8_qingfeng_dead') && await s.flag('ch8_jianpu') && await s.flag('ch8_deadline'), '8-6 / 8-7 flags');
-  assert(await s.ev(() => G.state.members.hongying.skills.includes('hy_luojia') && G.Inv.count('key_jianpu') === 1), '洛家劍譜 learned');
-  assert(await s.flag('ch8_end') && await s.flag('ch8_chenbo_arrive') && await s.flag('ch8_wangchuan_hint'), '8-8 end flags');
-  await s.shot('07_anping_dawn');
-  await s.talk('oyster');
-  assert(await s.ev(() => G.Lanterns.has('lantern_oyster_grandma')), '心燈 蚵殼阿嬤');
-  await s.talk('chenbo_ap', ['出發']);
-  await s.ff(3);
-  assert((await s.ev(() => G.state.chapter)) === 9, 'chapter 9 reached via G.Story.next');
+// ------------------------------------------------------------------------------------------ main path (segments)
+// The critical path is split into segments; `--from <seg>` opens the game directly at that segment's entry state
+// (debug map URL + the flags the earlier segments would have set) and plays from there to the end.
+const Q = (map, x, y, flags) => `?debug&map=${map}&x=${x}&y=${y}&lv=28&party=xinghe,hongying,yungui&chapter=8&flags=mochi_joined,yuyuan_joined,${flags}`;
+const F_BEIGANG = 'ch8_start,ch8_no_boat,ch8_jiajiang_seen,ch8_dusk,ch8_qijia,ch8_zuanjiao';
+const F_RIVER = F_BEIGANG + ',ch8_surge';
+const F_ANPING = F_RIVER + ',ch8_river_intro,ch8_afu_shown,ch8_afu_found,ch8_rescue_over,ch8_hundred_done,ch8_surge_end,ch8_dawn_done,ch8_clue_anping,ch8_heartlamp_pilgrims';
+const F_FORT = F_ANPING + ',ch8_anping,ch8_disciple_1,ch8_qf_rumor,ch8_gate_open,ch8_dusk_ap,ch8_night_ap,ch8_fort_enter';
+const F_TOWER = F_FORT + ',ch8_fort_intro,ch8_fort_guards,ch8_notes_read,ch8_gate_B,ch8_gate_C';
+const SEGMENTS = [
+  {
+    id: 'beigang', entry: '?debug&startch=8',
+    async run(s, fresh) {
+      if (fresh) await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'beigang', null, { timeout: 60000 });
+      await s.idle();
+      assert(await s.flag('ch8_start'), '8-1 intro ran');
+      assert((await s.ev(() => G.state.party.slice(0, 3).join(','))) === 'xinghe,hongying,yungui', 'party = 星河 紅纓 雲歸');
+      assert(await s.flag('yuyuan_joined') && await s.flag('mochi_joined'), 'cats follow');
+      await s.gear();
+      await s.shot('01_beigang');
+      await s.talk('boatman');
+      assert(await s.flag('ch8_no_boat'), '8-1b boatman');
+      await s.step(27, 13);
+      assert(await s.flag('ch8_jiajiang_seen'), '8-1c 八家將與神將');
+      await s.talk('keeper', ['準備好了']);
+      assert(await s.flag('ch8_qijia') && await s.flag('ch8_zuanjiao'), '8-2 起駕・鑽轎腳');
+      assert((await s.ev(() => G.Inv.count('c8_xianghuo'))) === 3, '3 北港香火袋');
+      await s.shot('02_night');
+      await s.step(27, 25);
+      assert((await s.map()) === 'beigang_river' && await s.flag('ch8_surge'), '8-3a → river');
+    },
+  },
+  {
+    id: 'river', entry: Q('beigang_river', 9, 9, F_RIVER),
+    async run(s, fresh) {
+      if (fresh) { await s.ev(() => { G.state.flags.ch8_tide_base = G.state.battles; G.state.flags.ch8_tide = 0; G.state.flags.ch8_saved = 0; }); await s.gear(); }
+      await s.idle();
+      assert(await s.flag('ch8_river_intro'), 'river intro');
+      await s.shot('03_river');
+      // P8-1: rescue ①③④ (→ ⑤ appears & is rescued automatically) then ②; heal at the temple aunt between fights
+      for (const z of ['zone1', 'zone3', 'zone4']) { await s.talk('rv_aunt'); await s.trigger(z); }
+      assert(await s.flag('ch8_afu_found'), '⑤ 阿福 found after three rescues');
+      await s.talk('rv_aunt');
+      await s.trigger('zone2');
+      const tide = await s.flag('ch8_tide');
+      assert((await s.flag('ch8_saved')) === 5 && tide <= 5 && !(await s.flag('ch8_tide_fail')), `all five saved before tide 8 (tide ${tide})`);
+      assert(await s.flag('ch8_rescue_over'), 'rescue phase over');
+      assert(await s.ev(() => G.mapScene.enemies.some((e) => e.def.troop === 't_c8_hundred')), '百手 appears at the mouth');
+      await s.boost(31);
+      await s.step(44, 34);
+      assert(await s.flag('ch8_hundred_done') && await s.flag('ch8_surge_end'), '8-3c 百手 defeated, surge ended');
+      assert((await s.map()) === 'beigang', 'back to 北港 at dawn');
+      await s.idle();
+      assert(await s.flag('ch8_dawn_done'), '8-3d dawn scene');
+      assert(await s.ev(() => G.Lanterns.has('lantern_beigang_pilgrims')), '心燈 北港的香客');
+      assert(await s.flag('ch8_heartlamp_pilgrims') && (await s.ev(() => G.Inv.count('c8_mazubing'))) === 5, 'pilgrim reward: 媽祖餅×5');
+      assert(await s.ev(() => G.Inv.count('c8_chaoxin') === 1), '潮心珠 drop');
+      await s.shot('04_dawn');
+      await s.talk('xiuying');
+      assert(await s.flag('ch8_xiuying_gift'), '秀英姨 gift');
+      await s.step(50, 24);
+      assert(await s.flag('ch8_clue_anping'), '8-3e clue');
+      await s.step(27, 43, ['出發']);
+      assert((await s.map()) === 'anping', '→ 安平');
+    },
+  },
+  {
+    id: 'anping', entry: Q('anping', 41, 17, F_ANPING),
+    async run(s, fresh) {
+      if (fresh) await s.gear();
+      await s.idle();
+      assert(await s.flag('ch8_anping'), '8-4 intro');
+      await s.shot('05_anping');
+      await s.talk('oyster', [0]);
+      assert((await s.flag('ch8_sq_oyster')) === 1, '蚵殼阿嬤 option A');
+      await s.talk('disciple'); await s.talk('disciple');
+      assert(await s.flag('ch8_qf_rumor'), 'rumor');
+      await s.talk('axing');
+      assert(await s.flag('ch8_gate_open') && await s.flag('ch8_dusk_ap'), 'gate open, dusk');
+      await s.step(21, 2, ['入夜']);
+      assert((await s.map()) === 'anping_fort' && await s.flag('ch8_fort_enter'), '8-4b → fort');
+    },
+  },
+  {
+    id: 'fort', entry: Q('anping_fort', 20, 41, F_FORT),
+    async run(s, fresh) {
+      if (fresh) { await s.ev(() => { G.state.flags.ch8_sq_oyster = 1; }); await s.gear(); }
+      await s.idle();
+      assert(await s.flag('ch8_fort_intro'), '8-5a');
+      // P8-2: open A → courtyard (guards) → notes → open B → east, open C → back, close A → channel 3 dry
+      const wheel = (w) => s.run(`const o = G.mapScene.objects.find((x) => x.wheel === '${w}'); await o.interact(S, o);`);
+      await wheel('A');
+      assert(await s.ev(() => !G.mapScene.solid[32 * 40 + 20]), 'channel 1 dry after A');
+      await s.boost(29);
+      await s.step(20, 27);
+      assert(await s.flag('ch8_fort_guards'), '8-5b guards');
+      await s.run(`const o = G.mapScene.objects.find((x) => x.chest && x.chest.id === 'c8_fort_r'); G.mapScene.openChest(o);`);
+      assert(await s.flag('ch8_notes_read') && await s.ev(() => G.Inv.count('c8_cm_note') === 1), '長明宮手記');
+      await wheel('B'); await wheel('C');
+      assert(await s.ev(() => G.mapScene.solid[12 * 40 + 20] === 1), 'channel 3 still wet while A is open');
+      await wheel('A');
+      assert(await s.ev(() => !G.mapScene.solid[12 * 40 + 20] && G.mapScene.solid[32 * 40 + 20] === 1), 'A closed: channel 3 dry, channel 1 flooded');
+      await s.run(`const o = G.mapScene.objects.find((x) => x.chest && x.chest.id === 'c8_fort_q'); G.mapScene.openChest(o);`);
+      assert(await s.ev(() => G.Inv.count('c8_leiyin') >= 1), '雷音扇');
+      await s.shot('06_fort');
+      await s.boost(36);
+      await s.ev(() => G.Debug.stepOn(20, 1));   // → 觀潮台 (the long scene is awaited by the next segment)
+    },
+  },
+  {
+    id: 'tower', entry: Q('anping_fort', 20, 4, F_TOWER),
+    async run(s, fresh) {
+      if (fresh) { await s.ev(() => { G.state.flags.ch8_sq_oyster = 1; }); await s.gear(); await s.idle(); await s.boost(36); await s.ev(() => G.Debug.stepOn(20, 1)); }
+      await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'anping_tower', null, { timeout: 30000 });
+      // 觀潮台: battle → 8-6b/c/d → 8-7 → 安平 dawn (8-8)
+      await s.page.waitForFunction(() => G.mapScene && G.mapScene.def.id === 'anping' && G.state.flags.ch8_dawn, null, { timeout: 400000, polling: 1000 }).catch(() => {});
+      await s.idle(400);
+      assert(await s.flag('ch8_qingfeng_dead') && await s.flag('ch8_jianpu') && await s.flag('ch8_deadline'), '8-6 / 8-7 flags');
+      assert(await s.ev(() => G.state.members.hongying.skills.includes('hy_luojia') && G.Inv.count('key_jianpu') === 1), '洛家劍譜 learned');
+      assert(await s.flag('ch8_end') && await s.flag('ch8_chenbo_arrive') && await s.flag('ch8_wangchuan_hint'), '8-8 end flags');
+      await s.shot('07_anping_dawn');
+      await s.talk('oyster');
+      assert(await s.ev(() => G.Lanterns.has('lantern_oyster_grandma')), '心燈 蚵殼阿嬤');
+      await s.talk('chenbo_ap', ['出發']);
+      await s.ff(3);
+      assert((await s.ev(() => G.state.chapter)) === 9, 'chapter 9 reached via G.Story.next');
+    },
+  },
+];
+const FROM = argv.includes('--from') ? String(argv[argv.indexOf('--from') + 1]) : null;
+const ONLY_SEG = argv.includes('--seg') ? String(argv[argv.indexOf('--seg') + 1]) : null;
+test('main', 'critical path: startch=8 → G.Story.next(9)' + (FROM ? ` (from ${FROM})` : ONLY_SEG ? ` (segment ${ONLY_SEG})` : ''), async (s) => {
+  let i0 = Math.max(0, SEGMENTS.findIndex((g) => g.id === (FROM || ONLY_SEG || 'beigang')));
+  const i1 = ONLY_SEG ? i0 : SEGMENTS.length - 1;
+  await s.open(SEGMENTS[i0].entry);
+  if (i0 > 0) await s.page.waitForFunction(() => G.mapScene && G.mapScene.def, null, { timeout: 30000 });
+  for (let i = i0; i <= i1; i++) {
+    const g = SEGMENTS[i];
+    try { await g.run(s, i === i0); } catch (e) { throw new Error(`[segment ${g.id}] ${e.message}`); }
+    console.log(`    · segment ${g.id} ok`);
+  }
 });
 
 // ------------------------------------------------------------------------------------------ tide system & failure branch
