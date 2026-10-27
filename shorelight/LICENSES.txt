@@ -1,0 +1,53 @@
+彼岸燈 Shorelight — license notes / 授權說明
+==========================================
+
+Game (story, art drawn in code, music, program code): © Shorelight Team.
+
+Shorelight bundles the following third-party components. Their licenses are reproduced or referenced below.
+本遊戲包含下列第三方元件，其授權條款如下。
+
+
+1. LXGW WenKai TC 霞鶩文楷 TC  (font)
+---------------------------------------------------------------------------
+Files:    js/core/fontdata.js (a subset of the font, embedded as base64 WOFF2, family name "QDKai" in the game)
+Source:   https://github.com/lxgw/LxgwWenkaiTC  (slices obtained via Google Fonts)
+License:  SIL Open Font License, Version 1.1 — full text in fonts/OFL.txt
+          Copyright 2022-2026 The LXGW WenKai Project Authors.
+Notes:    The font declares no Reserved Font Name. It is subset to the characters the game uses; the font's own
+          copyright and license records are kept inside every embedded subset. The font is bundled with the game
+          and is not sold by itself.
+
+
+2. three.js r186 (3D renderer) and its example add-ons
+---------------------------------------------------------------------------
+Files:    js/vendor/three.bundle.js  (three 0.186.1 plus examples/jsm post-processing, Sky, Water, utilities)
+Source:   https://github.com/mrdoob/three.js
+License:  MIT
+
+The MIT License
+
+Copyright © 2010-2026 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+3. Electron (optional desktop app only — not part of the browser version)
+---------------------------------------------------------------------------
+The optional macOS app built with `npm run dist` contains Electron (MIT) and Chromium; electron-builder places
+their license files (LICENSE.electron.txt, LICENSES.chromium.html) inside the .app bundle automatically.

@@ -11,22 +11,26 @@ screen or in 設定 / Settings).
 
 ## 如何遊玩 · How to play (macOS)
 
+**完整說明 / Full guide: [`PLAYING.md`](PLAYING.md)** (繁體中文 & English — Mac, Chrome on any OS, controls, language,
+3D / low-spec settings, save locations, building the desktop app).
+
 **最簡單 / Easiest:** double-click **`Play Shorelight.command`**.
 It opens the game in its own window (Google Chrome / Edge / Brave app mode; falls back to Safari or your default browser).
-*First time only:* macOS may say the file is from an unidentified developer — right-click → **Open** → **Open**.
+*First time only:* macOS may say the file is from an unidentified developer — right-click → **Open** → **Open**
+(macOS 15+: System Settings → Privacy & Security → **Open Anyway**).
 
-**Or** open `index.html` directly in Chrome or Safari. No internet connection, server or installation is needed —
+**Or** open `index.html` directly in Chrome (any OS) or Safari. No internet connection, server or installation is needed —
 all art is drawn in code, all music is synthesised live, and the Chinese calligraphic font is bundled.
 
 **Native app (optional):** with Node.js installed, run in this folder:
 ```bash
 npm install
 npm start          # play in a desktop window
-npm run dist       # build a macOS .dmg (on a Mac)
+npm run dist       # build a macOS .dmg (on a Mac) → dist/Shorelight-<version>-universal.dmg
 ```
 
-Saves live in the browser's local storage (8 slots + autosave). The launcher uses its own profile, so saves made through
-`Play Shorelight.command` stay together.
+Saves live in the browser's local storage (8 slots + autosave): the launcher keeps them in
+`~/Library/Application Support/Shorelight/browser-profile`, the desktop app in `…/Shorelight/electron-profile`.
 
 ## 操作 · Controls
 
@@ -34,14 +38,15 @@ Saves live in the browser's local storage (8 slots + autosave). The launcher use
 |---|---|---|
 | 移動 Move | 方向鍵 / WASD | D-pad / left stick |
 | 決定・對話・調查 Confirm / talk / examine | Z / Space / Enter | A |
-| 取消・選單 Cancel / menu | X / Esc | B / Start |
+| 取消・選單 Cancel / menu | X / Esc (menu also C / M / Tab) | B / Y / Start |
 | 奔跑 Run | 按住 Shift | X / RB |
 | 先制攻擊 Pre-emptive strike | 面對野外妖怪按 Z | A |
 | 自動戰鬥・自動對話 Auto battle / auto text | F | Select |
 | 戰鬥速度 Battle speed | E | — |
+| 旋轉鏡頭 Rotate camera (3D) | Q / E | LB / RB |
 | 對話紀錄 Dialogue log | L | — |
-| 快進 Fast-forward text | 按住 Ctrl | — |
-| 全螢幕 Fullscreen | F11 / ⌘F | — |
+| 快進 Fast-forward text | 按住 Ctrl / ⌘ | — |
+| 全螢幕 Fullscreen | ⌘F / F11 / Alt+Enter | — |
 
 ## 特色 · Features
 - **一年環島 · A journey around the whole island:** 九份 → 平溪 → 淡水・觀音山・艋舺 → 竹塹 → 鹿港 → 府城 → 阿里山・玉山・日月潭 → 北港 →
@@ -64,4 +69,8 @@ Font: [LXGW WenKai TC 霞鶩文楷](https://github.com/lxgw/LxgwWenkaiTC) — SI
   screenplays in `docs/story/`.
 - Debug URLs: `index.html?debug&map=<id>`, `?debug&startch=<n>`, `?debug&battle=<troop>&lv=<n>&auto=1`; F2 opens the debug menu.
 - Tests: `bash tools/test/run.sh` (content validation, unit tests, end-to-end browser tests, chapter playthroughs).
-- Translation coverage: `node tools/i18n/extract.js`. Font bundle: `python3 tools/build_font.py`.
+- Translation coverage: `node tools/i18n/extract.js`.
+- Font bundle: `python3 tools/build_font.py` — re-run after adding text (new chapters / translations) and commit
+  `js/core/fontdata.js` (≈1.6 MB: LXGW WenKai TC subset to the ~3,100 characters the game uses).
+- Release zip: `bash tools/package.sh [-o DIR]` → `dist/Shorelight-<version>-<date>.zip` (game, launcher, PLAYING.md,
+  licenses; no tools/docs/tests). It rebuilds the font from the current text; `--offline` ships the committed one.

@@ -16,7 +16,12 @@
   "build": {
     "appId": "com.shorelight.game",
     "productName": "Shorelight",
-    "mac": { "category": "public.app-category.role-playing-games", "target": ["dmg"] },
-    "files": ["index.html", "electron-main.js", "css/**", "js/**", "fonts/**"]
+    "copyright": "© Shorelight Team. Font: LXGW WenKai TC, SIL OFL 1.1",
+    "directories": { "output": "dist" },
+    "files": ["index.html", "electron-main.js", "package.json", "css/**", "js/**", "fonts/**", "LICENSES.txt"],
+    "mac": {
+      "category": "public.app-category.role-playing-games",
+      "target": [{ "target": "dmg", "arch": ["universal"] }]
+    }
   }
 }
