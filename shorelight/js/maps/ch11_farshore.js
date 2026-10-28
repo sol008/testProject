@@ -379,7 +379,8 @@
     { ids: ['xd_amis_haiji'], sprite: 'amis_elder', living: true, lines: [['長老', '海是大家的。願你們平安回到岸上。']] },
     { ids: ['xd_luohanjiao'], sprite: 'villager_m', ghost: true, lines: [['阿義', '少年仔！你寫的名字，我一路帶著！']] },
     { ids: ['lantern_penghu_weir'], sprite: 'c11_ayong', ghost: true, lines: [['阿湧', '阮阿兄叫我來的！滬仔有留縫，我才游會出來！']] },
-    { ids: ['lantern_tangshan'], sprite: 'c11_amu_old', ghost: true, lines: [['阿木伯', '阮嘛來！少年仔，阮這世人頭一擺，照人的路！']] },
+    // his 心燈 is only lit on the far shore, after the fog: he comes along as the little lamp on the bow (letter written)
+    { ids: ['lantern_tangshan'], when: () => F('ch11_tangshan_letter'), sprite: 'c11_amu_old', ghost: true, lines: [['阿木伯', '阮嘛來！少年仔，阮這世人頭一擺，照人的路！']] },
   ];
   const RISE = [
     { place: 'jiufen', always: true, text: '九份。陳記燈籠舖的屋簷下，一盞燈籠自己亮了。豎崎路上，阿柑姨推開窗，在門口多點了一盞燈。', voice: ['agan:think', '……奇怪，今暗哪會想欲點燈？'] },
@@ -1242,6 +1243,7 @@
       { t: 'stone_weir', x: 45, y: 11, w: 5, h: 4 },
       { t: 'stone_weir', x: 14, y: 26, w: 6, h: 4, v: 1, interact: ['兩個心疊在一起的石滬。阿添伯說，七美也有一口。'], label: '調查' },
       { t: 'basalt', x: 7, y: 7, interact: ['一根根六角形的黑色石柱，整齊得像有人排過。很久很久以前，這裡是火山流出的熔岩。'], label: '調查' },
+      { t: 'mushroom_glow', x: 9, y: 8, spirit: true, solid: false, if: (st) => !st.flags.mush_7 }, // 玄武蕈 (seen with 靈視)
       { t: 'boat_ferry', x: 40, y: 29, interact: ['擱淺的舊船，船腹破了一個大洞。'], label: '調查' },
       { t: 'boat_ferry', x: 19, y: 36 }, { t: 'boat_ferry', x: 23, y: 37 },
       { t: 'eternal_lamp', x: 22, y: 35, if: (st) => !st.flags.ch11_captain },
@@ -1303,7 +1305,8 @@
         await S.say('', '藍色的光幕擋住了礁口。光幕的另一頭，烏鬚船主的沉船上，一盞長明燈幽幽地亮著。');
         S.setPos('player', 7, 37, 'up');
       } },
-      { id: 'mush7', trigger: 'action', x: 7, y: 7, w: 2, h: 2, spirit: true, label: '調查', if: (st) => !st.flags.mush_7, run: (S) => H.mush7(S) },
+      // 玄武蕈: the column (and the glow beside it, 9,8) answers without 靈視 too — 麻糬 sits there and something glimmers
+      { id: 'mush7', trigger: 'action', x: 7, y: 7, w: 3, h: 2, label: '調查', if: (st) => !st.flags.mush_7, run: (S) => H.mush7Look(S) },
     ],
     warps: [
       { x: 27, y: 0, w: 2, to: 'penghu_magong', tx: 25, ty: 33, tdir: 'up' },
@@ -1757,6 +1760,7 @@
       disc(g, 11.5, 11.5, 11.6, 'P');
       disc(g, 11.5, 12, 9.4, 't', 9.0);
       fill(g, 10, 21, 3, 1, 't');
+      set(g, 11, 3, 't');                               // the up-stairs (11,3) sit on the wall ring: give them floor to stand on
       if (n === 3 && p3Active(st)) {
         for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (g[y][x] === 't') g[y][x] = 'K';
         fill(g, 9, 18, 7, 4, 't'); fill(g, 14, 13, 2, 2, 'Y'); fill(g, 10, 3, 4, 3, 't');
@@ -2234,7 +2238,8 @@
       if (c === 1) { await cabinRest(S); return; }
       if (c !== 0) { await S.say('chenbo:normal', '想做什麼就去做。我在這裡等。'); return; }
       // point of no return: 澎湖 is left behind for good (the shared warning lists what is still open there)
-      const penghu = { chapter: 11, quests: ['q_penghu_weir', 'q_ch11_treasure'], lanterns: { lantern_penghu_weir: 'q_penghu_weir' } };
+      // (雲歸的蕈譜: the 玄武蕈 grows only on the 石滬灘)
+      const penghu = { chapter: 11, quests: ['q_penghu_weir', 'q_ch11_treasure', { id: 'q_tuanzi_mush', open: (st) => !st.flags.mush_7 }], lanterns: { lantern_penghu_weir: 'q_penghu_weir' } };
       if (!F('ch11_weir_done') && F('ch11_tianhou') && G.Story.openContent(penghu).any) {
         penghu.intro = [['', '麻糬望著媽宮的方向，輕輕叫了一聲。'], ['yungui:think', '……石滬那邊，還有人在哭。']];
       }
@@ -2746,6 +2751,16 @@
   };
 
   // ---------------------------------------------------------------- 4-4 七仙蕈之七「玄武蕈」
+  // without 靈視 the column only hints (and offers a 七彩靈蕈 from the bag, like ch3's 杉皮蕈)
+  H.mush7Look = async (S) => {
+    if (!G.mapScene || !G.mapScene.visionOn()) {
+      await S.say('', '麻糬坐在這根玄武岩柱前，一動也不動。石柱的側面，好像有什麼在微微發亮……看不清楚。');
+      if (!S.hasItem('lingxun')) { await S.say('yungui:think', '……要是有七彩靈蕈，開了靈視，也許就看得見。'); return; }
+      if (await S.choice(['吃一朵七彩靈蕈，開啟靈視', '算了'], { cancel: 1 }) !== 0) return;
+      S.take('lingxun', 1); S.vision(60); S.sfx('magic');
+    }
+    await H.mush7(S);
+  };
   H.mush7 = async (S) => {
     await L(S, [
       ['', '一根六角形的玄武岩柱側面，長著一排小小的蕈。蕈傘也是六角形的，像縮小的石柱，發著黑曜石般的微光。'],
@@ -3440,7 +3455,7 @@
       await L(S, [['燈橋上的孩子', '大哥哥！你身上……有好多燈了！'], ['燈橋上的婦人', '孩子，你找到你的燈了。']]);
       S.remove('cam'); S.remove('cam2'); k++;
     }
-    for (const f of FOG) if (hasAny(f.ids)) await fogCameo(S, f, k++);
+    for (const f of FOG) if (f.when ? f.when() : hasAny(f.ids)) await fogCameo(S, f, k++);
     for (const e of extraLanterns()) {
       S.sfx('lantern');
       if (e.c && e.c.fog) { await fogCameo(S, { sprite: e.c.sprite || 'ghost_m', ghost: true, lines: [[e.c.who || '', e.c.fog]] }, k++); continue; }

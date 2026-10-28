@@ -1243,4 +1243,15 @@ G.I18N.add({
   '我少年時，旗後海邊擱淺過一隻大鯨。全庄的人顧了牠三天三夜，牠還是走了。': 'When I was a boy, a great whale beached itself here at Qihou. The whole village sat with it three days and three nights, and still it passed.',
   '牠留下來的骨頭，我嵌了鋼，打成一支劍。泡了幾十年海水，一點鏽都沒有。': 'I set steel into the bone it left behind and forged a sword. Decades in seawater, and not a speck of rust.',
   '我老了，拿不動了。海上的事，交給拿得動的人。': 'I\'m old—I can\'t lift it anymore. What happens at sea belongs to those who still can.',
+  // side-quest clues (QA pass: every optional step has a line pointing at it)
+  '還有，金萬伯家的阿秀一直在哭，說她阿公不見了。她在西邊金萬大厝的院子裡。': 'Oh, and Uncle Jinwan\'s A-Xiu keeps crying. She says her grandpa\'s gone missing. She\'s in the courtyard of the big Jinwan house, out west.',
+  'Oh——and if you see paper down there……颱風那天晚上，我的日誌被風吹出窗外，散進龍坑的側洞裡了。': 'Oh—and if you see paper down there… the night of the typhoon, the wind blew my logbook out the window. The pages scattered into the side caves of Longkeng.',
+  '上面寫了什麼，我也不記得了。Please，撿得到就幫我撿回來。': 'What I wrote in it, I don\'t remember anymore. Please—if you can pick them up, bring them back to me.',
+  '剩下的，大概還在龍坑的側洞裡。洞裡的怪物走了，現在下去很安全。': 'The rest must still be in Longkeng\'s side caves. The monsters are gone now—it\'s safe to go down.',
+  '風停了，沙橋也不會再出現了。……要是能再叫來一陣風就好了。': 'The wind has stopped, so the sand bridge won\'t appear again. …If only we could call up one more gust.',
+  '城南潘家的阿嬸，她丈夫也在歌裡。風停了，她或許想起來了。': 'Auntie Pan in the south of town—her husband is in the song too. Now the wind has stopped, maybe she remembers.',
+  '阿福仔家門口那支舊槳，刻著他阿公的名字。風沙落定，字應該看得清了。': 'The old oar by A-Fu\'s door has his grandpa\'s name carved on it. With the sand settled, the carving should be readable now.',
+  '龍磐東邊的沙溝對面，石縫裡還有一點光。風停了，沙橋不會自己出來——撥一下那條琴弦試試。': 'Across the sand gully on the east side of Longpan, there\'s still a light in a crack in the rocks. With the wind gone, the sand bridge won\'t rise by itself—try plucking that string.',
+  '沙橋已經崩落了。眾人抓著咾咕石，順著沙坡一步一步滑回了沙溝這一頭。': 'The sand bridge has already crumbled. Clinging to the coral rock, everyone inches back down the sand slope to this side of the gully.',
+  '……還沒找回來的名字，若是找到了，再上來找我。': '…The names we haven\'t found yet—if you find them, come up and see me again.',
 });
