@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f6e7d4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tinker &amp; Bolt</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="Tinker and Bolt game"></canvas>
+</div>
+<!-- order: config → core → vendor/r3d → gfx → data → engine → content → main -->
+<script src="js/game/config.js"></script>
+<script src="js/core/util.js"></script>
+<script src="js/core/fontdata.js"></script>
+<script src="js/core/render.js"></script>
+<script src="js/core/input.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/vendor/three.min.js"></script>
+<script src="js/r3d/core.js"></script>
+<script src="js/gfx/clay.js"></script>
+<script src="js/gfx/fx.js"></script>
+<script src="js/engine/scene.js"></script>
+<script src="js/engine/ui.js"></script>
+<script src="js/engine/match3.js"></script>
+<script src="js/engine/screws.js"></script>
+<script src="js/engine/dialog.js"></script>
+<script src="js/engine/m3_scene.js"></script>
+<script src="js/engine/screw_scene.js"></script>
+<script src="js/engine/menus.js"></script>
+<script src="js/engine/home.js"></script>
+<script src="js/engine/title.js"></script>
+<script src="js/engine/debug.js"></script>
+<!-- CONTENT-BEGIN -->
+<script src="js/content/levels_ch1.js"></script>
+<script src="js/content/levels_ch2.js"></script>
+<script src="js/content/restore.js"></script>
+<script src="js/content/story.js"></script>
+<script src="js/content/shop_scene.js"></script>
+<!-- CONTENT-END -->
+<script src="js/main.js"></script>
+</body>
+</html>

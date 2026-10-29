@@ -1,0 +1,6 @@
+html, body { margin: 0; padding: 0; height: 100%; background: #e8cfb3; overflow: hidden; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+#stage { position: fixed; inset: 0; }
+#stage canvas { position: absolute; display: block; }
+#game { z-index: 2; }
+#r3 { z-index: 1; }
