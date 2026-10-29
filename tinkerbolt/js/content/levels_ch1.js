@@ -5,7 +5,7 @@
   const G = window.G;
   const D = (G.Data = G.Data || {});
   D.levels = D.levels || [];
-  const L = (o) => { o.chapter = 1; o.mechanic = 'match3'; o.n = D.levels.length + 1; o.hard = o.n % G.CONFIG.hardEvery === 0; D.levels.push(o); };
+  const L = (o) => { o.chapter = 1; o.mechanic = 'match3'; o.n = D.levels.length + 1; D.levels.push(o); };
 
   L({ id: 'c1_l01', title: 'Spilled cherries', colors: 4, moves: 15, seed: 101, stars: [60700, 96000],
     goals: [{ type: 'collect', color: 0, n: 56 }],
@@ -43,11 +43,11 @@
     goals: [{ type: 'crate' }, { type: 'dust' }, { type: 'collect', color: 0, n: 32 }],
     grid: ['........', '........', '........', '.cC..Cc.', '.cC..Cc.', 'dddddddd', 'dddddddd', '........'] });
 
-  L({ id: 'c1_l09', title: 'Window frame', colors: 5, moves: 17, seed: 109, stars: [20600, 26000],
-    goals: [{ type: 'crate' }, { type: 'collect', color: 4, n: 18 }],
+  L({ id: 'c1_l09', title: 'Window frame', colors: 5, moves: 17, seed: 109, stars: [29000, 40100],
+    goals: [{ type: 'crate' }, { type: 'collect', color: 4, n: 33 }],
     grid: ['........', '.cccccc.', '.c....c.', '.c.  .c.', '.c.  .c.', '.c....c.', '.cccccc.', '........'] });
 
-  L({ id: 'c1_l10', title: 'Tied with twine', colors: 5, moves: 14, seed: 110, stars: [25700, 34300],
+  L({ id: 'c1_l10', title: 'Tied with twine', colors: 5, moves: 16, seed: 110, stars: [25800, 35000],
     goals: [{ type: 'dust' }, { type: 'collect', color: 0, n: 29 }],
     tutorial: 'twine',
     grid: ['.......', '.......', '.xx.xx.', '.......', '.xx.xx.', '.......', '.......'] });

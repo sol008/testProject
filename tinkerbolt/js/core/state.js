@@ -25,7 +25,7 @@
   S.defaults = DEFAULTS;
 
   // ---- save ----
-  const SAVE_V = 1;
+  const SAVE_V = 2;   // v2: levels interleaved (js/content/order.js); v1 records are renumbered on load
   function fresh() {
     return {
       v: SAVE_V, coins: C().startCoins, boosters: Object.assign({}, C().startBoosters),
@@ -47,6 +47,16 @@
     for (const k of Object.keys(f)) if (d[k] === undefined) d[k] = f[k];
     for (const k of Object.keys(f.stats)) if (d.stats[k] === undefined) d.stats[k] = f.stats[k];
     for (const k of Object.keys(f.boosters)) if (d.boosters[k] === undefined) d.boosters[k] = 0;
+    if ((d.v || 1) < 2 && G.Data.LEGACY_ORDER) {
+      const levels = {};
+      for (const [n, rec] of Object.entries(d.levels)) {
+        const id = G.Data.LEGACY_ORDER[+n - 1];
+        const pos = id ? G.Data.positionOf(id) : 0;
+        if (pos > 0) levels[pos] = rec;
+      }
+      d.levels = levels;
+      d.inProgress = null;
+    }
     d.v = SAVE_V;
     return d;
   };

@@ -155,6 +155,8 @@
     let best = -1;
     this.level.plates.forEach((p, pi) => {
       if (g.fallen[pi] || g.pivotOf(pi) < 0) return;
+      const sp0 = this.level.screws[g.pivotOf(pi)];
+      if (Math.hypot(p.x - sp0.x, p.y - sp0.y) < 0.3) return;   // pinned at its centre: turning it changes nothing
       if (G.SC.distToPlate(this.visPose(pi), bx, by) > 0.1) return;
       if (best < 0 || p.layer > this.level.plates[best].layer) best = pi;
     });
@@ -320,7 +322,7 @@
       const piv = g.pivotOf(pi);
       if (this.userRot[pi] != null && this.userPivot[pi] !== piv) delete this.userRot[pi];
       if (this.drag && this.drag.pi === pi) return;
-      const target = this.userRot[pi] != null ? this.userRot[pi] : (g.pose(pi).rot || 0);
+      const target = this.userRot[pi] != null ? this.userRot[pi] : this.restRot(pi);
       let v = this.vis[pi];
       if (!v) { this.vis[pi] = { rot: target, vel: 0 }; return; }
       const steps = 4, h = dt / steps;
@@ -331,6 +333,31 @@
       }
       if (Math.abs(v.rot - target) < 0.05 && Math.abs(v.vel) < 0.5) { v.rot = target; v.vel = 0; }
     });
+  };
+  // Where a plate hanging from one screw comes to rest: as close to straight down as possible, but turned so it
+  // does not lie over any screw still on the board (so screws never look as if they sat on the wrong plate).
+  S.restRot = function (pi) {
+    const g = this.game, piv = g.pivotOf(pi);
+    const hangRot = g.pose(pi).rot || 0;
+    if (piv < 0) return hangRot;
+    const key = piv + ':' + g.removed.filter(Boolean).length;
+    this.restCache = this.restCache || {};
+    const c = this.restCache[pi];
+    if (c && c.key === key) return c.rot;
+    const rest = this.level.plates[pi], sp = this.level.screws[piv];
+    const dx = rest.x - sp.x, dy = rest.y - sp.y;
+    let best = hangRot, bestCost = Infinity;
+    for (let k = 0; k < 36; k++) {
+      const off = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 10;   // 0, -10, +10, -20, … away from straight down
+      const rot = hangRot + off, a = (rot - (rest.rot || 0)) * Math.PI / 180;
+      const pose = Object.assign({}, rest, { x: sp.x + dx * Math.cos(a) - dy * Math.sin(a), y: sp.y + dx * Math.sin(a) + dy * Math.cos(a), rot });
+      let over = 0;
+      this.level.screws.forEach((s2, i) => { if (!g.removed[i] && i !== piv && G.SC.distToPlate(pose, s2.x, s2.y) < 0.4) over++; });
+      const cost = over * 1000 + Math.abs(off);
+      if (cost < bestCost) { bestCost = cost; best = rot; }
+    }
+    this.restCache[pi] = { key, rot: best };
+    return best;
   };
   // Hole positions of a plate in its (visual) pose.
   S.holesFor = function (pi, pose) {

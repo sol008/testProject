@@ -56,7 +56,8 @@
     G.Scenes.reset(new G.TitleScene());
     if (G.debug) {
       const lv = G.Debug.param('level');
-      if (lv) { G.Debug.levelStart(+lv); G.playLevel(+lv); }
+      const n = lv && /^c\d_l\d\d$/.test(lv) ? G.Data.positionOf(lv) : +lv;   // ?level=12 or ?level=c1_l06
+      if (n) { G.Debug.levelStart(n); G.playLevel(n); }
       else if (G.Debug.param('home')) G.goHome();
     }
     document.addEventListener('visibilitychange', () => { if (document.hidden && G.state) G.Save.save(); });

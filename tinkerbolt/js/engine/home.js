@@ -159,7 +159,7 @@
       const r = G.Progress.rec(b.n);
       for (let k = 0; k < 3; k++) K.icon(ctx, k < r.best ? 'star' : 'starOff', b.x + 16 + k * 24, b.y + 92, 22);
     }
-    R.text(ctx, 'Chapter 1: match-3 · Chapter 2: screws · red = hard', G.W / 2, 140, { size: 16, color: PAL().inkSoft, weight: 800 });
+    R.text(ctx, 'Candy and screw levels take turns · red = hard', G.W / 2, 140, { size: 16, color: PAL().inkSoft, weight: 800 });
   };
   G.LevelsScene = LevelsScene;
 

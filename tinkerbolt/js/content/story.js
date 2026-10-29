@@ -19,7 +19,7 @@
       T('Well, I never! Bolt? You still work, after all these years?'),
       T('I closed the shop, you know. My hands got too shaky for the little screws.'),
       B('happy'),
-      T('You want to fix it up? Ha! All right, little helper. Let\'s start with that candy mess.'),
+      T('You want to fix it up? Ha! All right, little helper. One job at a time: loose screws, spilled candy, the lot.'),
     ],
     // tutorials (shown once, on the level that introduces each element)
     tut_swap: [T('Swap two neighbouring candies to line up three of a kind. Clear the candies the goal at the top asks for before you run out of moves.')],
@@ -29,7 +29,7 @@
     tut_twine: [T('Candies tied with twine can\'t be swapped. Match them where they are to snip the twine.')],
     tut_gear: [T('My lost gears! Clear the candies under a gear so it drops. Bring every gear down to the bottom row — look for the little arrows.')],
     tut_screws: [
-      T('Now the workbench. These toys are all screwed shut.'),
+      T('Everything in here is screwed shut, and rusty to boot.'),
       T('Tap a screw to take it out. It flies into the toolbox of its colour; a full toolbox of three is packed away.'),
       T('A plate drops once all its screws are out. A screw under another plate can\'t be reached yet.'),
       T('When a plate hangs from just one screw it swings. Drag it round to see what\'s behind it — it won\'t get in your way.'),

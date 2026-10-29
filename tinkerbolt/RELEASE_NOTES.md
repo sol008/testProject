@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.4.0 (2026-10-29): levels interleaved
+- Candy and screw levels now take turns (mostly screw, candy, screw, candy…) instead of 15 + 15. Each mechanic still introduces its elements in order; hard levels (5, 10, …, 30) alternate between the two and never fall on a tutorial level. Both story chapters contain both kinds.
+- Saves from older versions are renumbered automatically: won levels and stars are kept.
+- A plate hanging from one screw comes to rest at an angle that doesn't lie over other screws (screws no longer look like they sit on the wrong plate).
+- Round plates pinned at their centre are no longer grabbed by a drag, so the swinging plate underneath turns instead.
+- Early screw levels renamed for the storefront (hinges, latches, brackets…); both kinds of level re-tuned / regenerated for their new positions.
+
 ## 0.3.1 (2026-10-29): screw playtest fixes
 - A plate hanging from one screw can be **dragged round** that screw; tapping a screw it lies over swings it aside. Swinging plates no longer block screws (except right next to their pin), so they can't trap a level.
 - "Next" shows only the next box's colour.
