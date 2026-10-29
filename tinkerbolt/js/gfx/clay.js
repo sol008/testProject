@@ -133,6 +133,7 @@
   K.candy = function (ctx, c, sp, x, y, size, alpha) {
     const info = K.CANDY[c] || K.CANDY[0];
     if (sp === 'rainbow') { K.sprite(ctx, 'rainbow', size, paintRainbow, x, y, alpha); return; }
+    if (sp === 'fish') { K.sprite(ctx, 'fish' + c, size, (g, s) => paintFish(g, s, info.col), x, y, alpha); return; }
     K.sprite(ctx, 'candy' + c + (sp || ''), size, (g, s) => {
       if (sp === 'bomb') paintWrapper(g, s, info.col);
       clayFill(g, SHAPES[info.shape](s), info.col, s);
@@ -151,6 +152,25 @@
       }
     }, x, y, alpha);
   };
+  // The fish special (from a 2×2 square): a little clay fish in the candy's colour.
+  function paintFish(g, s, col) {
+    const body = (gg) => {
+      gg.beginPath();
+      gg.ellipse(-s * 0.04, 0, s * 0.3, s * 0.22, 0, 0, Math.PI * 2);
+      gg.moveTo(s * 0.2, 0);
+      gg.lineTo(s * 0.44, -s * 0.2);
+      gg.quadraticCurveTo(s * 0.36, 0, s * 0.44, s * 0.2);
+      gg.closePath();
+    };
+    clayFill(g, body, col, s);
+    g.fillStyle = 'rgba(255,255,255,0.9)';
+    g.beginPath(); g.arc(-s * 0.17, -s * 0.05, s * 0.07, 0, 7); g.fill();
+    g.fillStyle = '#3b2a20';
+    g.beginPath(); g.arc(-s * 0.18, -s * 0.05, s * 0.035, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = s * 0.03; g.lineCap = 'round';
+    g.beginPath(); g.arc(-s * 0.02, s * 0.02, s * 0.12, -0.9, 0.9); g.stroke();
+  }
+  K.fish = (ctx, c, x, y, size, alpha) => K.candy(ctx, c, 'fish', x, y, size, alpha);
   function paintWrapper(g, s, col) {
     g.save();
     g.fillStyle = R.shade(col, 0.25);

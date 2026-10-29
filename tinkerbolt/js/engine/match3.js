@@ -75,7 +75,9 @@
   };
   B.makesRun = function (x, y, c) {
     const same = (xx, yy) => { const t = this.at(xx, yy); return t && t.kind === 'candy' && t.c === c; };
-    return (same(x - 1, y) && same(x - 2, y)) || (same(x, y - 1) && same(x, y - 2));
+    if ((same(x - 1, y) && same(x - 2, y)) || (same(x, y - 1) && same(x, y - 2))) return true;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (same(x + dx, y) && same(x, y + dy) && same(x + dx, y + dy)) return true;
+    return false;
   };
 
   B.movable = function (t) { return t && !t.lock; };
@@ -107,17 +109,28 @@
         y = e;
       }
     }
+    // 2×2 squares of one colour (they make a fish)
+    for (let y = 0; y + 1 < h; y++) {
+      for (let x = 0; x + 1 < w; x++) {
+        const c = colorAt(x, y);
+        if (c >= 0 && colorAt(x + 1, y) === c && colorAt(x, y + 1) === c && colorAt(x + 1, y + 1) === c) {
+          runs.push({ cells: [this.idx(x, y), this.idx(x + 1, y), this.idx(x, y + 1), this.idx(x + 1, y + 1)], dir: 'sq', c });
+        }
+      }
+    }
     // union runs that share a cell
     const groups = [];
     const owner = new Map();
     for (const r of runs) {
       let g = null;
       for (const i of r.cells) if (owner.has(i)) { g = owner.get(i); break; }
-      if (!g) { g = { cells: new Set(), c: r.c, h: 0, v: 0 }; groups.push(g); }
+      if (!g) { g = { cells: new Set(), c: r.c, h: 0, v: 0, sq: false }; groups.push(g); }
       for (const i of r.cells) { g.cells.add(i); owner.set(i, g); }
-      if (r.dir === 'h') g.h = Math.max(g.h, r.cells.length); else g.v = Math.max(g.v, r.cells.length);
+      if (r.dir === 'h') g.h = Math.max(g.h, r.cells.length);
+      else if (r.dir === 'v') g.v = Math.max(g.v, r.cells.length);
+      else g.sq = true;
     }
-    return groups.map((g) => ({ cells: Array.from(g.cells), c: g.c, h: g.h, v: g.v }));
+    return groups.map((g) => ({ cells: Array.from(g.cells), c: g.c, h: g.h, v: g.v, sq: g.sq }));
   };
 
   B.hasMatchAt = function (x, y) {
@@ -128,7 +141,9 @@
     let n = 1; for (let k = x - 1; same(k, y); k--) n++; for (let k = x + 1; same(k, y); k++) n++;
     if (n >= 3) return true;
     n = 1; for (let k = y - 1; same(x, k); k--) n++; for (let k = y + 1; same(x, k); k++) n++;
-    return n >= 3;
+    if (n >= 3) return true;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (same(x + dx, y) && same(x, y + dy) && same(x + dx, y + dy)) return true;
+    return false;
   };
 
   B.rawSwap = function (a, b) {
@@ -177,6 +192,7 @@
     this.cascade = 0;
     this.lastSwap = [{ x: b.x, y: b.y }, { x: a.x, y: a.y }];   // where ta and tb now are
     this.pendingCombo = null;
+    this.comboAt = { x: b.x, y: b.y };   // combos go off where the dragged candy landed
     if (ta.sp && tb.sp) this.pendingCombo = tb.sp === 'rainbow' ? { a: tb, b: ta } : { a: ta, b: tb };
     else if (ta.sp === 'rainbow') this.pendingCombo = { a: ta, b: tb };
     else if (tb.sp === 'rainbow') this.pendingCombo = { a: tb, b: ta };
@@ -263,11 +279,38 @@
     if (k === 'rh' || k === 'row') for (let xx = 0; xx < this.w; xx++) this.hitCell(xx, y, ev);
     else if (k === 'rv' || k === 'col') for (let yy = 0; yy < this.h; yy++) this.hitCell(x, yy, ev);
     else if (k === 'bomb') { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) this.hitCell(x + dx, y + dy, ev); }
+    else if (k === 'fish') {
+      ev.blasts.pop();
+      const tg = this.fishTarget();
+      ev.blasts.push({ kind: 'fish', x, y, tx: tg.x, ty: tg.y, c: t.c });
+      this.hitCell(tg.x, tg.y, ev);
+    }
     else if (k === 'rainbow') {
       const c = t.target != null ? t.target : this.mostCommonColor();
       for (let i = 0; i < this.cells.length; i++) { const u = this.cells[i]; if (u && u.kind === 'candy' && u.c === c) this.hitCell(u.x, u.y, ev); }
     }
     this.addPoints(ev, 200);
+  };
+
+  // Where a fish swims: something the goals need (crate, dust, a goal-coloured candy, the candy under a gear),
+  // else any candy. Ties broken by the board's own RNG so replays and resumes stay deterministic.
+  B.fishTarget = function () {
+    const goals = this.level.goals;
+    const want = (g) => { const pr = this.goalProgress(g); return pr.have < pr.need; };
+    const pick = (list) => list[this.rng.int(list.length)];
+    const cells = [];
+    for (let i = 0; i < this.cells.length; i++) if (this.valid[i]) cells.push(i);
+    const xy = (i) => ({ x: i % this.w, y: Math.floor(i / this.w) });
+    const live = (i) => this.cells[i] && !this.cells[i]._clearing;
+    const tiers = [
+      goals.some((g) => g.type === 'crate' && want(g)) ? cells.filter((i) => this.crate[i] > 0) : [],
+      goals.some((g) => g.type === 'dust' && want(g)) ? cells.filter((i) => this.dust[i] > 0 && live(i) && this.cells[i].kind === 'candy') : [],
+      cells.filter((i) => live(i) && this.cells[i].kind === 'candy' && goals.some((g) => g.type === 'collect' && g.color === this.cells[i].c && want(g))),
+      goals.some((g) => g.type === 'gear' && want(g)) ? cells.filter((i) => { const above = i - this.w; return above >= 0 && this.cells[above] && this.cells[above].kind === 'gear' && live(i); }) : [],
+      cells.filter((i) => live(i) && this.cells[i].kind === 'candy'),
+    ];
+    for (const t of tiers) if (t.length) return xy(pick(t));
+    return xy(cells[0]);
   };
 
   B.mostCommonColor = function () {
@@ -290,7 +333,8 @@
   B.comboBlast = function (ev) {
     const { a, b } = this.pendingCombo;
     this.pendingCombo = null;
-    const p = { x: b.x, y: b.y };
+    const p = this.comboAt || { x: b.x, y: b.y };
+    const at = (c) => ({ x: p.x, y: p.y, c });
     const take = (t) => { const i = this.idx(t.x, t.y); if (this.cells[i] === t) { t._clearing = true; this.cells[i] = null; ev.cleared.push({ id: t.id, x: t.x, y: t.y, c: t.c, sp: t.sp }); if (this.dust[i] > 0) { this.dust[i]--; ev.dust.push({ x: t.x, y: t.y, left: this.dust[i] }); } } };
     const sa = a.sp, sb = b.sp;
     take(a); take(b);
@@ -299,15 +343,23 @@
       for (let i = 0; i < this.cells.length; i++) if (this.ok(i % this.w, Math.floor(i / this.w))) this.hitCell(i % this.w, Math.floor(i / this.w), ev);
     } else if (sa === 'rainbow') {
       const c = b.c;
-      ev.blasts.push({ kind: 'rainbow', x: a.x, y: a.y, c });
+      ev.blasts.push({ kind: 'rainbow', x: p.x, y: p.y, c });
       if (sb) {   // every candy of that colour becomes b's special, then goes off
-        for (const t of this.cells) if (t && t.kind === 'candy' && t.c === c && !t.sp) t.sp = sb === 'bomb' ? 'bomb' : (this.rng.next() < 0.5 ? 'rh' : 'rv');
+        for (const t of this.cells) if (t && t.kind === 'candy' && t.c === c && !t.sp) t.sp = sb === 'bomb' || sb === 'fish' ? sb : (this.rng.next() < 0.5 ? 'rh' : 'rv');
       }
       for (let i = 0; i < this.cells.length; i++) { const u = this.cells[i]; if (u && u.kind === 'candy' && u.c === c) this.hitCell(u.x, u.y, ev); }
       if (sb) { this.queue = this.queue || []; this.queue.push(b); }
     } else {
       const rocket = (s) => s === 'rh' || s === 'rv';
-      if (rocket(sa) && rocket(sb)) { this.blast(b, ev, 'row'); this.blast(b, ev, 'col'); }
+      if (sa === 'fish' || sb === 'fish') {
+        const other = sa === 'fish' ? sb : sa;
+        if (other === 'fish') { for (let k = 0; k < 3; k++) this.blast(at(a.c), ev, 'fish'); }
+        else {   // the fish carries the other special to its target and sets it off there
+          const tg = this.fishTarget();
+          ev.blasts.push({ kind: 'fish', x: p.x, y: p.y, tx: tg.x, ty: tg.y, c: a.c });
+          this.blast({ x: tg.x, y: tg.y, c: b.c }, ev, other === 'bomb' ? 'bomb' : other);
+        }
+      } else if (rocket(sa) && rocket(sb)) { this.blast(at(b.c), ev, 'row'); this.blast(at(b.c), ev, 'col'); }
       else if (sa === 'bomb' && sb === 'bomb') {
         ev.blasts.push({ kind: 'bomb2', x: p.x, y: p.y });
         for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) this.hitCell(p.x + dx, p.y + dy, ev);
@@ -350,6 +402,7 @@
         if (len >= 5) sp = 'rainbow';
         else if (g.h >= 3 && g.v >= 3) sp = 'bomb';
         else if (len === 4) sp = g.h === 4 ? 'rv' : 'rh';
+        else if (g.sq) sp = 'fish';
         let at = g.cells.find((i) => swapCells.indexOf(i) >= 0);
         if (at == null) at = g.cells[Math.floor(g.cells.length / 2)];
         if (sp) toCreate.push({ at, sp, c: g.c });
@@ -394,7 +447,7 @@
   // Gravity with diagonal slides around crates and tied candy; refills from the top of each column.
   B.gravity = function () {
     const moves = [];
-    const canFall = (t) => t && !t.lock;
+    const canFall = (t) => !!t;   // tied candy still falls; twine only stops swaps
     for (let pass = 0; pass < 200; pass++) {
       let changed = false;
       for (let y = this.h - 1; y >= 0; y--) {

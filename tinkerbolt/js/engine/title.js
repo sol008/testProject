@@ -51,6 +51,7 @@
   G.resumeSaved = function () {
     const ip = G.state.inProgress;
     if (!ip || !G.Progress.level(ip.n)) return false;
+    if (ip.sig !== G.Progress.levelSig(ip.n)) { G.Progress.clearProgress(); return false; }   // level changed in an update: start it fresh
     const lv = G.Progress.level(ip.n);
     const data = ip.data && ip.data.mech === lv.mechanic ? (lv.mechanic === 'screws' ? ip.data : ip.data.board) : null;
     if (!data) { G.Progress.clearProgress(); return false; }

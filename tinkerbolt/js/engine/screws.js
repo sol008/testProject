@@ -4,7 +4,9 @@
 (function () {
   const G = window.G;
   const SC = (G.SC = G.SC || {});
-  SC.SCREW_R = 0.42;
+  // A screw counts as covered only when a higher plate overlaps its head noticeably (not just touches its rim).
+  // Drawn head radius ≈ 0.36 units; the plate must reach within 0.26 of the centre. Matches what the player sees.
+  SC.SCREW_R = 0.26;
 
   // Distance from point to a plate's shape (0 inside).
   SC.distToPlate = function (p, x, y) {
@@ -17,16 +19,34 @@
     return Math.hypot(dx, dy);
   };
 
-  // Precompute which plates cover each screw (static geometry).
+  // A plate held by one screw swings around it and hangs straight down (its centre below the pivot).
+  SC.hangPose = function (p, px, py) {
+    const dx = p.x - px, dy = p.y - py, d = Math.hypot(dx, dy);
+    if (d < 0.05) return { shape: p.shape, x: p.x, y: p.y, w: p.w, h: p.h, r: p.r, rot: p.rot || 0 };
+    const turn = Math.atan2(dx, dy);   // angle from straight-down to the current centre offset
+    return { shape: p.shape, x: px, y: py + d, w: p.w, h: p.h, r: p.r, rot: (p.rot || 0) + turn * 180 / Math.PI };
+  };
+
+  // Precompute coverage (static geometry): which plates cover each screw at rest, and — for each plate and each
+  // of its screws acting as the last pivot — which screws the hanging plate covers.
   SC.prepare = function (level) {
-    if (level._prep) return level._prep;
+    if (level._prep && level._prep.hang) return level._prep;   // ignore caches from older rule versions
     const plates = level.plates, screws = level.screws;
     const pIndex = {};
     plates.forEach((p, i) => { pIndex[p.id] = i; });
-    const coveredBy = screws.map((s) => {
-      const own = plates[pIndex[s.plate]];
-      const out = [];
-      plates.forEach((q, qi) => { if (q.layer > own.layer && SC.distToPlate(q, s.x, s.y) < SC.SCREW_R) out.push(qi); });
+    const covers = (pose, s) => SC.distToPlate(pose, s.x, s.y) < SC.SCREW_R;
+    const above = screws.map((s) => { const own = plates[pIndex[s.plate]]; return plates.map((q, qi) => (q.layer > own.layer ? qi : -1)).filter((qi) => qi >= 0); });
+    const coveredBy = screws.map((s, i) => above[i].filter((qi) => covers(plates[qi], s)));
+    // hang[qi][pivotScrew] = Set of screw indices covered by plate qi hanging from that screw
+    const hang = plates.map((q, qi) => {
+      const out = {};
+      screws.forEach((sp, j) => {
+        if (pIndex[sp.plate] !== qi) return;
+        const pose = SC.hangPose(q, sp.x, sp.y);
+        const set = new Set();
+        screws.forEach((s, i) => { if (above[i].indexOf(qi) >= 0 && covers(pose, s)) set.add(i); });
+        out[j] = { pose, set };
+      });
       return out;
     });
     const plateScrews = plates.map((p) => screws.map((s, i) => (s.plate === p.id ? i : -1)).filter((i) => i >= 0));
@@ -34,7 +54,7 @@
     const keyOf = {};
     screws.forEach((s, i) => { if (s.key) keyOf[s.key] = i; });
     const lockKey = screws.map((s) => (s.lock ? keyOf[s.lock] : -1));
-    level._prep = { pIndex, coveredBy, plateScrews, tether, lockKey, screwPlate: screws.map((s) => pIndex[s.plate]) };
+    level._prep = { pIndex, coveredBy, above, hang, plateScrews, tether, lockKey, screwPlate: screws.map((s) => pIndex[s.plate]) };
     return level._prep;
   };
 
@@ -59,7 +79,31 @@
   const P = Game.prototype;
 
   P.nextBox = function () { return this.qi < this.level.boxes.length ? { c: this.level.boxes[this.qi++], n: 0 } : null; };
-  P.isCovered = function (i) { return this.prep.coveredBy[i].some((q) => !this.fallen[q]); };
+  // The single screw still holding plate q, or -1 if it has 0 or 2+ screws left.
+  P.pivotOf = function (q) {
+    let piv = -1;
+    for (const j of this.prep.plateScrews[q]) if (!this.removed[j]) { if (piv >= 0) return -1; piv = j; }
+    return piv;
+  };
+  P.pose = function (q) { const piv = this.pivotOf(q); return piv >= 0 ? this.prep.hang[q][piv].pose : this.level.plates[q]; };
+  // Plates currently covering screw i (for feedback when a covered screw is tapped).
+  P.coverers = function (i) {
+    const out = [];
+    for (const q of this.prep.above[i]) {
+      if (this.fallen[q]) continue;
+      const piv = this.pivotOf(q);
+      if (piv >= 0 ? this.prep.hang[q][piv].set.has(i) : this.prep.coveredBy[i].indexOf(q) >= 0) out.push(q);
+    }
+    return out;
+  };
+  P.isCovered = function (i) {
+    for (const q of this.prep.above[i]) {
+      if (this.fallen[q]) continue;
+      const piv = this.pivotOf(q);
+      if (piv >= 0 ? this.prep.hang[q][piv].set.has(i) : this.prep.coveredBy[i].indexOf(q) >= 0) return true;
+    }
+    return false;
+  };
   P.isLocked = function (i) { const k = this.prep.lockKey[i]; return k >= 0 && !this.removed[k]; };
   P.tappable = function (i) { return !this.removed[i] && !this.isCovered(i) && !this.isLocked(i); };
   P.updateSeen = function () { for (let i = 0; i < this.seen.length; i++) if (!this.seen[i] && !this.isCovered(i)) this.seen[i] = true; };
@@ -137,7 +181,9 @@
     for (let i = 0; i < this.removed.length; i++) if (this.tappable(i) && this.destFor(i)) out.push(i);
     return out;
   };
-  P.isStuck = function () { return !this.isWon() && this.moves().length === 0; };
+  // Lost when the tray is completely full (v4 rule, as in Screwdom), or when nothing can move.
+  P.trayFull = function () { return this.tray.length >= this.trayCap; };
+  P.isStuck = function () { return !this.isWon() && (this.trayFull() || this.moves().length === 0); };
   P.starsFor = function (peak) {
     const opt = this.level.optPeak != null ? this.level.optPeak : 0;
     return peak <= opt ? 3 : peak <= opt + 2 ? 2 : 1;
@@ -181,6 +227,7 @@
         const d = game.destFor(m);
         if (d.kind === 'tray' && game.tray.length + 1 > limit) continue;
         game.tap(m);
+        if (game.isStuck()) { game.restore(snap); continue; }
         path.push(m);
         if (dfs()) return true;
         path.pop();
@@ -206,7 +253,7 @@
     const game = opts.game || new Game(level, { extraSlots: opts.extraSlots || 0 });
     const lo = opts.game ? game.tray.length : 0;
     let totalNodes = 0;
-    for (let limit = lo; limit <= game.trayCap; limit++) {
+    for (let limit = lo; limit < game.trayCap; limit++) {
       const r = SC.solveWithin(game, limit, budget);
       totalNodes += r.nodes;
       if (r.ok) return { solvable: true, peak: Math.max(limit, game.peak), path: r.path, nodes: totalNodes };
@@ -217,7 +264,7 @@
 
   // Hint for the current position: first move of a solution within the current tray capacity, else a sensible move.
   SC.hint = function (game) {
-    const r = SC.solveWithin(game, game.trayCap, 30000);
+    const r = SC.solveWithin(game, game.trayCap - 1, 30000);
     if (r.ok && r.path.length) return r.path[0];
     const ms = game.moves();
     const toBox = ms.find((m) => game.destFor(m).kind === 'box');

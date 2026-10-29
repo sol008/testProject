@@ -35,6 +35,8 @@
     this.moodT = 0;
     this.trayFlash = 0;
     this.banner = null;
+    this.vis = this.level.plates.map(() => null);
+    this.blockFlash = {};
     this.usedSlot = this.usedSlotSaved;
     this.layout();
     this.relayoutTray();
@@ -135,6 +137,7 @@
       this.shakes[i] = 0.35;
       if (ev.why === 'full') { G.Audio.play('full'); this.trayFlash = 1; G.FX.text('Tray full!', G.W / 2, 320, { size: 26, col: '#fff', life: 0.8, rise: 20 }); }
       else G.Audio.play('bad');
+      if (ev.why === 'covered') for (const q of g.coverers(i)) this.blockFlash[q] = 0.6;   // show which plate is in the way
       G.Haptics.buzz('bad');
       return false;
     }
@@ -171,7 +174,7 @@
       });
     }
     for (const pi of ev.fallen) {
-      this.falling.push({ pi, t: -0.08, dir: Math.random() < 0.5 ? -1 : 1 });
+      this.falling.push({ pi, t: -0.08, dir: Math.random() < 0.5 ? -1 : 1, pose: this.visPose(pi) });
       G.Tw.wait(0.1).then(() => { G.Audio.play('plate'); G.Haptics.buzz('plate'); });
     }
     for (const j of ev.unlocked) { const p = this.screwPos(j); G.FX.burst(p.x, p.y, ['#e3b04b', '#fff3c4'], 10, { speed: 160, kind: 'star' }); G.Audio.play('special'); }
@@ -214,7 +217,11 @@
   S.stuck = function () {
     G.Audio.play('lose');
     this.mood = 'sad'; this.moodT = 3;
-    const offer = !this.level.hard ? { id: 'slot', label: 'Extra slot', onUse: () => { if (this.addSlot()) { this.ended = false; return true; } return false; } } : null;
+    // normal levels: use (or buy) the Extra slot booster; hard levels: a coin-paid continue (+1 slot)
+    const offer = !this.level.hard
+      ? { id: 'slot', label: 'Extra slot', onUse: () => { if (this.addSlot()) { this.ended = false; return true; } return false; } }
+      : { label: '+1 tray slot', price: G.CONFIG.continueOffer.price, icon: 'slot',
+        onUse: () => { this.game.trayCap++; this.usedSlot = true; this.ended = false; this.saveNow(); G.Audio.play('special'); return true; } };
     G.Scenes.push(new G.ResultScene({ n: this.n, won: false, reason: G.CONFIG.text.stuck, offer,
       onRetry: () => G.playLevel(this.n), onLose: () => G.Progress.recordLoss() }));
   };
@@ -228,6 +235,8 @@
     for (const f of this.flights) { if (f.delay > 0) f.delay -= dt; else f.t += dt; }
     for (const f of this.flights) if (f.t >= f.dur && !f.landed) { f.landed = true; G.Audio.play('drop'); }
     this.flights = this.flights.filter((f) => f.t < f.dur);
+    this.updateSwing(dt);
+    for (const k of Object.keys(this.blockFlash)) { this.blockFlash[k] -= dt; if (this.blockFlash[k] <= 0) delete this.blockFlash[k]; }
     for (const p of this.falling) p.t += dt;
     this.falling = this.falling.filter((p) => p.t < 1.1);
     for (const l of this.leaving) l.t += dt;
@@ -238,6 +247,44 @@
     if (!this.ended && !this.blocked && G.Input.idleFor() > G.CONFIG.hintDelay && this.hint < 0) this.hint = G.SC.hint(this.game);
   };
 
+  // Visual pose of a plate: its angle follows the rules' pose through a damped spring (a little pendulum swing).
+  S.visPose = function (pi) {
+    const g = this.game, rest = this.level.plates[pi], target = g.pose(pi);
+    let v = this.vis[pi];
+    if (!v) v = this.vis[pi] = { rot: target.rot || 0, vel: 0 };
+    const piv = g.pivotOf(pi);
+    if (piv < 0 || target === rest) return Object.assign({}, rest, { rot: v.rot });
+    const sp = this.level.screws[piv];
+    const a = (v.rot - (rest.rot || 0)) * Math.PI / 180;
+    const dx = rest.x - sp.x, dy = rest.y - sp.y;
+    return Object.assign({}, rest, { x: sp.x + dx * Math.cos(a) - dy * Math.sin(a), y: sp.y + dx * Math.sin(a) + dy * Math.cos(a), rot: v.rot });
+  };
+  S.updateSwing = function (dt) {
+    const g = this.game;
+    this.level.plates.forEach((p, pi) => {
+      if (g.fallen[pi]) return;
+      const target = g.pose(pi).rot || 0;
+      let v = this.vis[pi];
+      if (!v) { this.vis[pi] = { rot: target, vel: 0 }; return; }
+      const steps = 4, h = dt / steps;
+      for (let k = 0; k < steps; k++) {
+        const acc = -38 * (v.rot - target) - 4.5 * v.vel;
+        v.vel += acc * h;
+        v.rot += v.vel * h;
+      }
+      if (Math.abs(v.rot - target) < 0.05 && Math.abs(v.vel) < 0.5) { v.rot = target; v.vel = 0; }
+    });
+  };
+  // Hole positions of a plate in its (visual) pose.
+  S.holesFor = function (pi, pose) {
+    const rest = this.level.plates[pi];
+    const a = ((pose.rot || 0) - (rest.rot || 0)) * Math.PI / 180;
+    return this.game.prep.plateScrews[pi].map((i) => {
+      const s2 = this.level.screws[i];
+      const dx = s2.x - rest.x, dy = s2.y - rest.y;
+      return { x: pose.x + dx * Math.cos(a) - dy * Math.sin(a), y: pose.y + dx * Math.sin(a) + dy * Math.cos(a) };
+    });
+  };
   S.inFlight = function (s) { return this.flights.some((f) => f.s === s); };
 
   S.draw = function (ctx) {
@@ -297,7 +344,10 @@
       const p = this.trayPos[t.s] || this.traySlot(0);
       K.screw(ctx, t.c, p.x, p.y, 44);
     }
-    if (g.tray.length >= cap - 1 && !this.ended) R.text(ctx, g.tray.length >= cap ? 'Tray full' : 'Almost full', G.W / 2, 312, { size: 16, color: '#c0392b', weight: 900 });
+    if (g.tray.length === cap - 1 && !this.ended) {   // one slot left: filling it loses
+      R.panel(ctx, G.W / 2 - 80, 228, 160, 28, { r: 14, fill: '#e2574c', lift: 2 });
+      R.text(ctx, '1 slot left!', G.W / 2, 243, { size: 16, color: '#fff', weight: 900 });
+    }
     // board backdrop
     R.panel(ctx, this.bx - 14, this.by - 14, this.level.board.w * this.u + 28, this.level.board.h * this.u + 28, { fill: '#cfa77f', r: 28, lift: 8 });
     ctx.fillStyle = 'rgba(255,255,255,0.12)';
@@ -308,9 +358,14 @@
     const order = this.level.plates.map((p, i) => i).sort((a, b) => this.level.plates[a].layer - this.level.plates[b].layer);
     for (const pi of order) {
       if (g.fallen[pi]) continue;
-      const p = this.level.plates[pi];
-      const holes = g.prep.plateScrews[pi].map((i) => this.level.screws[i]);
-      K.plate(ctx, p, this.u, holes, 0.9);
+      const p = this.visPose(pi);
+      K.plate(ctx, p, this.u, this.holesFor(pi, p), 0.72);
+      if (this.blockFlash[pi]) {   // the plate blocking a tapped screw blinks
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, this.blockFlash[pi] * 2) * (0.5 + 0.5 * Math.sin(this.t * 30));
+        K.plate(ctx, Object.assign({}, p, { tint: '#fff3a0' }), this.u, null, 0.6);
+        ctx.restore();
+      }
       if (p.tether) this.drawTether(ctx, p, this.level.plates[g.prep.pIndex[p.tether]], g.fallen[g.prep.pIndex[p.tether]]);
       for (const i of g.prep.plateScrews[pi]) {
         if (g.removed[i]) continue;
@@ -327,14 +382,14 @@
     // falling plates
     for (const f of this.falling) {
       if (f.t < 0) continue;
-      const p = this.level.plates[f.pi];
+      const p = f.pose || this.level.plates[f.pi];
       const k = f.t / 1.1;
       ctx.save();
       ctx.translate(0, U.ease.inCubic(k) * 700);
       ctx.translate(p.x * this.u, p.y * this.u);
       ctx.rotate(f.dir * k * 1.2);
       ctx.translate(-p.x * this.u, -p.y * this.u);
-      K.plate(ctx, p, this.u, g.prep.plateScrews[f.pi].map((i) => this.level.screws[i]), 1 - k);
+      K.plate(ctx, p, this.u, this.holesFor(f.pi, p), 0.72 * (1 - k));
       ctx.restore();
     }
     ctx.restore();

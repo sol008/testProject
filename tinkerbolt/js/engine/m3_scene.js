@@ -206,11 +206,12 @@
     for (const b of ev.blasts) {
       const p = this.cellCenter(b.x, b.y);
       if (b.kind === 'rainbow' || b.kind === 'all') { G.Audio.play('rainbow'); R.addFlash(0.4); }
+      else if (b.kind === 'fish') { G.Audio.play('special'); const q = this.cellCenter(b.tx, b.ty); G.FX.burst(q.x, q.y, ['#fff6c8', '#9fd3ef'], 12, { speed: 220, kind: 'star', r: 7 }); }
       else { G.Audio.play('blast'); R.addShake(0.25); }
       G.Haptics.buzz('special');
       G.FX.burst(p.x, p.y, ['#fff6c8', '#ffc85a'], 14, { speed: 320, kind: 'star', r: 8 });
       this.beams = this.beams || [];
-      this.beams.push({ kind: b.kind, x: b.x, y: b.y, t: 0 });
+      this.beams.push({ kind: b.kind, x: b.x, y: b.y, tx: b.tx, ty: b.ty, c: b.c, t: 0 });
     }
     for (const c of ev.created) {
       this.views.set(c.id, { x: c.x, y: c.y, vy: 0, s: 0.1, a: 1 });
@@ -294,7 +295,10 @@
     G.Audio.play('lose');
     this.setMood('sad');
     await G.Tw.wait(0.6);
-    G.Scenes.push(new G.ResultScene({ n: this.n, won: false, reason: G.CONFIG.text.outOfMoves, onRetry: () => G.playLevel(this.n), onLose: () => G.Progress.recordLoss() }));
+    const more = G.CONFIG.continueOffer.moves;
+    const offer = { label: '+' + more + ' moves', price: G.CONFIG.continueOffer.price, icon: 'coin',
+      onUse: () => { this.board.movesLeft += more; this.ended = false; this.mood = 'happy'; this.saveNow(); G.Input.lastInput = G.time; return true; } };
+    G.Scenes.push(new G.ResultScene({ n: this.n, won: false, reason: G.CONFIG.text.outOfMoves, offer, onRetry: () => G.playLevel(this.n), onLose: () => G.Progress.recordLoss() }));
   };
 
   S.resume = function () { this.refreshCounts(); G.Input.lastInput = G.time; };
@@ -481,6 +485,13 @@
       if (bm.kind === 'rh' || bm.kind === 'row') ctx.fillRect(this.bx, p.y - c * 0.25 * (1 - k), this.bw, c * 0.5 * (1 - k));
       if (bm.kind === 'rv' || bm.kind === 'col') ctx.fillRect(p.x - c * 0.25 * (1 - k), this.by, c * 0.5 * (1 - k), this.bh);
       if (bm.kind === 'bomb' || bm.kind === 'bomb2') { ctx.beginPath(); ctx.arc(p.x, p.y, c * (bm.kind === 'bomb2' ? 2.5 : 1.5) * (0.5 + k), 0, 7); ctx.fill(); }
+      if (bm.kind === 'fish' && bm.tx != null) {
+        // the fish swims in an arc from where it was made to its target
+        const q = this.cellCenter(bm.tx, bm.ty), e = U.ease.inOutSine(k);
+        const fx = U.lerp(p.x, q.x, e), fy = U.lerp(p.y, q.y, e) - Math.sin(e * Math.PI) * c * 1.2;
+        ctx.globalAlpha = 1;
+        ctx.save(); ctx.translate(fx, fy); ctx.scale(q.x < p.x ? 1 : -1, 1); G.Clay.fish(ctx, bm.c >= 0 ? bm.c : 0, 0, 0, c * 0.9); ctx.restore();
+      }
       if (bm.kind === 'cross3') { ctx.fillRect(this.bx, p.y - c * 1.5, this.bw, c * 3); ctx.fillRect(p.x - c * 1.5, this.by, c * 3, this.bh); }
       ctx.restore();
     }

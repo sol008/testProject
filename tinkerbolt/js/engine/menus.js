@@ -74,7 +74,7 @@
         UI.button({ x: 90, y: 626, w: 360, h: 78, label: G.CONFIG.text.retry, col: '#f4a259', size: 30, onTap: () => { lose(); o.onRetry(); } }),
         UI.button({ x: 90, y: 720, w: 360, h: 64, label: 'Back to shop', col: '#6fa8dc', size: 24, onTap: () => { lose(); G.goHome(); } }),
       ];
-      if (o.offer) {
+      if (o.offer && o.offer.id) {   // a booster from the inventory (bought on the spot if needed)
         const have = G.state.boosters[o.offer.id] || 0;
         this.ui.unshift(UI.button({ x: 90, y: 536, w: 360, h: 72, label: (have > 0 ? 'Use ' : 'Buy ') + o.offer.label + (have > 0 ? ' (' + have + ')' : ' · ' + G.CONFIG.boosters[o.offer.id].price),
           icon: o.offer.id, col: '#a98bd6', size: 24,
@@ -82,6 +82,17 @@
             if (!(G.state.boosters[o.offer.id] > 0) && !G.Progress.buy(o.offer.id)) { G.Audio.play('bad'); return; }
             if (o.offer.onUse()) G.Scenes.pop();
           } }));
+      } else if (o.offer) {           // a coin-paid continue
+        const b = UI.button({ x: 90, y: 536, w: 360, h: 72, label: 'Continue: ' + o.offer.label + ' · ' + o.offer.price, icon: 'coin', col: '#a98bd6', size: 23,
+          onTap: () => {
+            if (!G.Progress.payCoins(o.offer.price)) { G.Audio.play('bad'); return; }
+            G.Audio.play('coin');
+            G.state.stats.continues = (G.state.stats.continues || 0) + 1;
+            if (o.offer.onUse()) G.Scenes.pop();
+          } });
+        b.enabled = G.state.coins >= o.offer.price;
+        if (!b.enabled) { b.label = o.offer.label + ' · ' + o.offer.price + ' (you have ' + G.state.coins + ')'; b.size = 20; }
+        this.ui.unshift(b);
       }
     }
   });
@@ -115,6 +126,7 @@
       K.bolt(ctx, G.W / 2, 352, 110, { t: this.t, mood: 'sad' });
       R.text(ctx, G.Progress.unlimitedMs() > 0 ? 'Unlimited lives: no life lost!' : 'This costs 1 life' + (G.state.streak > 0 ? ' and ends your streak of ' + G.state.streak : '') + '.', G.W / 2, 438, { size: 19, color: pal.inkSoft, weight: 800, maxW: 400 });
       G.UI.livesPill(ctx, G.W / 2, 488);
+
     }
     UI.draw(ctx, this.ui);
     G.FX.draw(ctx);

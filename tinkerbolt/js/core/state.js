@@ -195,7 +195,14 @@
   };
 
   // ---- level in progress (v3): saved after every move, resumed on the next launch ----
-  P.saveProgress = function (n, data) { G.state.inProgress = { n, data, at: G.now() }; Save.save(); };
+  // A level's content signature: a saved board is only resumed if the level it was made from is unchanged.
+  P.levelSig = function (n) {
+    const l = P.level(n);
+    if (!l) return '';
+    const core = l.mechanic === 'screws' ? [l.plates, l.screws, l.boxes, l.tray] : [l.grid, l.goals, l.moves, l.colors, l.gears];
+    return String(G.U.hash(JSON.stringify(core)));
+  };
+  P.saveProgress = function (n, data) { G.state.inProgress = { n, data, sig: P.levelSig(n), at: G.now() }; Save.save(); };
   P.clearProgress = function () { if (G.state.inProgress) { G.state.inProgress = null; Save.save(); } };
 
   P.buy = function (id) {
@@ -203,6 +210,12 @@
     if (!b || G.state.coins < b.price) return false;
     G.state.coins -= b.price;
     G.state.boosters[id] = (G.state.boosters[id] || 0) + 1;
+    Save.save();
+    return true;
+  };
+  P.payCoins = function (n) {
+    if (G.state.coins < n) return false;
+    G.state.coins -= n;
     Save.save();
     return true;
   };

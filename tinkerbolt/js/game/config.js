@@ -4,7 +4,7 @@
   const G = (window.G = window.G || {});
   G.CONFIG = {
     id: 'tinkerbolt',
-    version: '0.2.0',
+    version: '0.3.0',
     title: { en: 'Tinker & Bolt' },
     subtitle: 'a cozy toy-shop puzzle',
     sourceLang: 'en',
@@ -24,6 +24,8 @@
       { inf: 15, coins: 20 }, { inf: 30, booster: 'hammer' }, { inf: 30, coins: 30 }, { inf: 45, booster: 'shuffle' },
       { inf: 45, booster: 'slot' }, { inf: 45, coins: 40 }, { inf: 60, coins: 60, booster: 'hammer' },
     ],
+    // Continue after losing (v4): out of moves → +5 moves; stuck on screws → +1 tray slot. Paid in coins, allowed on hard levels too.
+    continueOffer: { moves: 5, price: 50 },
     hardEvery: 5,
     hardCoinMul: 2,
     boosters: {
