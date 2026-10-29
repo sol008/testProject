@@ -37,7 +37,7 @@
     this.btnRestore.visible = !!next && P.chapterUnlocked(next.chapter);
     if (next) {
       this.btnRestore.label = 'Restore';
-      this.btnRestore.enabled = P.stars() >= next.cost;
+      this.btnRestore.enabled = P.canRestore(next.id);
       this.btnRestore.badge = this.btnRestore.enabled ? '!' : null;
     }
     // ch1 levels done but the sign isn't up yet: Play has nothing new to offer
@@ -118,9 +118,10 @@
       R.rr(ctx, 40 + k * 46, 610, 40, 12, 6); ctx.fill();
     }
     if (next && P.chapterUnlocked(next.chapter)) {
+      if (!P.finaleBlocked(next.id)) K.icon(ctx, 'star', 52, 692, 30);
       R.text(ctx, next.name, 40, 656, { size: 22, align: 'left', weight: 800, maxW: 280 });
-      K.icon(ctx, 'star', 52, 692, 30);
-      R.text(ctx, next.cost + ' needed', 74, 693, { size: 19, align: 'left', weight: 800, color: P.stars() >= next.cost ? '#4f9d69' : pal.inkSoft });
+      if (P.finaleBlocked(next.id)) R.text(ctx, 'Win every chapter ' + next.chapter + ' level first', 40, 693, { size: 18, align: 'left', weight: 800, color: pal.inkSoft, maxW: 280 });
+      else R.text(ctx, next.cost + ' needed', 74, 693, { size: 19, align: 'left', weight: 800, color: P.stars() >= next.cost ? '#4f9d69' : pal.inkSoft });
     } else if (!next) {
       R.text(ctx, 'The shop is open again!', 40, 670, { size: 24, align: 'left', weight: 900, color: '#4f9d69' });
     } else {

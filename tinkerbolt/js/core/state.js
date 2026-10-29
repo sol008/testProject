@@ -90,9 +90,12 @@
     for (const t of G.Data.restorations) if (!P.isRestored(t.id)) return t;
     return null;
   };
+  // The last restoration of a chapter (sign, parade) also needs every level of that chapter won.
+  P.isFinale = (id) => { const t = P.task(id); const list = t ? P.tasksFor(t.chapter) : []; return !!t && list[list.length - 1].id === id; };
+  P.finaleBlocked = (id) => P.isFinale(id) && !P.allWon(P.task(id).chapter);
   P.canRestore = function (id) {
     const t = P.task(id), nt = P.nextTask();
-    return !!(t && nt && nt.id === id && P.chapterUnlocked(t.chapter) && P.stars() >= t.cost);
+    return !!(t && nt && nt.id === id && P.chapterUnlocked(t.chapter) && P.stars() >= t.cost && !P.finaleBlocked(id));
   };
   P.restore = function (id) {
     if (!P.canRestore(id)) return false;

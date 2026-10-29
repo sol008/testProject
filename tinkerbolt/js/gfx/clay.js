@@ -17,25 +17,43 @@
   K.SCREW = ['#ef6f6c', '#6fa8dc', '#f6d55c', '#7cc6a4', '#a98bd6', '#f4a259'];
   K.SCREW_NAMES = ['red', 'blue', 'yellow', 'green', 'purple', 'orange'];
 
+  // Sprite cache. Sizes are snapped to a few buckets (8 per doubling) and scaled when drawn, and the cache is
+  // capped (oldest entries freed), so animations that change size every frame never create unbounded canvases.
+  // WebKit (Safari, iOS, the Claude apps) caps total canvas memory and returns blank canvases once it is hit.
   const cache = new Map();
-  K.clearCache = () => cache.clear();
+  const MAX_SPRITES = 220;
+  K.cacheSize = () => cache.size;
+  K.clearCache = function () { for (const c of cache.values()) { c.width = 0; c.height = 0; } cache.clear(); };
+  const bucket = (size) => Math.max(8, Math.round(Math.pow(2, Math.ceil(Math.log2(size) * 8) / 8)));
   // Draw cached art centred at (x, y) with logical size `size`.
   K.sprite = function (ctx, key, size, painter, x, y, alpha) {
-    const pr = R.scale * R.dpr;
-    const ck = key + '@' + size + '@' + pr.toFixed(2);
+    if (!(size > 0.5)) return;
+    const pr = Math.min(3, R.scale * R.dpr);
+    const bs = bucket(size);
+    const ck = key + '@' + bs + '@' + pr.toFixed(2);
     let c = cache.get(ck);
-    if (!c) {
-      const pad = Math.ceil(size * 0.25);
-      const px = Math.ceil((size + pad * 2) * pr);
+    if (c) { cache.delete(ck); cache.set(ck, c); }   // LRU: move to the newest end
+    else {
+      const pad = Math.ceil(bs * 0.25);
+      const px = Math.ceil((bs + pad * 2) * pr);
       c = R.makeCanvas(px, px);
       const g = c.getContext('2d');
+      if (!g) { G.warnOnce('sprite canvas unavailable'); return; }
       g.setTransform(pr, 0, 0, pr, 0, 0);
-      g.translate(pad + size / 2, pad + size / 2);
-      try { painter(g, size); } catch (e) { G.warnOnce('paint ' + key, e); G.lastError = e; }
+      g.translate(pad + bs / 2, pad + bs / 2);
+      try { painter(g, bs); } catch (e) { G.warnOnce('paint ' + key, e); G.lastError = e; }
       c._pad = pad;
+      c._size = bs;
       cache.set(ck, c);
+      while (cache.size > MAX_SPRITES) {
+        const oldest = cache.keys().next().value;
+        const o = cache.get(oldest);
+        o.width = 0; o.height = 0;   // release the backing store now (WebKit frees it lazily otherwise)
+        cache.delete(oldest);
+      }
     }
-    const full = size + c._pad * 2;
+    const k = size / c._size;
+    const full = (c._size + c._pad * 2) * k;
     ctx.save();
     if (alpha != null) ctx.globalAlpha *= alpha;
     ctx.drawImage(c, x - full / 2, y - full / 2, full, full);
@@ -280,6 +298,12 @@
     path();
     ctx.fillStyle = p.tint || '#e8c9a0';
     ctx.fill();
+    ctx.restore();
+    ctx.save();
+    path();
+    ctx.lineWidth = Math.max(2, u * 0.07);
+    ctx.strokeStyle = R.shade(p.tint || '#e8c9a0', -0.28);
+    ctx.stroke();
     ctx.restore();
     ctx.save();
     path();
