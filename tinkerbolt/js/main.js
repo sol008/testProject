@@ -41,7 +41,9 @@
     } catch (e) { G.warnOnce('font', e); }
   }
 
-  window.addEventListener('load', async () => {
+  async function boot() {
+    if (G.booted) return;
+    G.booted = true;
     G.Settings.load();
     G.Save.load();
     G.state.stats.sessions++;
@@ -61,5 +63,8 @@
     window.addEventListener('pagehide', () => G.Save.save());
     G.ready = true;
     requestAnimationFrame(frame);
-  });
+  }
+  // Some hosts (link previewers, proxies) inject the scripts after the load event has already fired.
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
 })();
