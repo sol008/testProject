@@ -4,7 +4,7 @@
   const G = (window.G = window.G || {});
   G.CONFIG = {
     id: 'tinkerbolt',
-    version: '0.3.0',
+    version: '0.3.1',
     title: { en: 'Tinker & Bolt' },
     subtitle: 'a cozy toy-shop puzzle',
     sourceLang: 'en',

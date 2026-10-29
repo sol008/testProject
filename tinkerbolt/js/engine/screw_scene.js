@@ -37,6 +37,9 @@
     this.banner = null;
     this.vis = this.level.plates.map(() => null);
     this.blockFlash = {};
+    this.userRot = {};      // plate → angle the player swung it to (kept while the same single screw holds it)
+    this.userPivot = {};
+    this.drag = null;
     this.usedSlot = this.usedSlotSaved;
     this.layout();
     this.relayoutTray();
@@ -121,16 +124,67 @@
 
   S.input = function (ev) {
     if (UI.handle(this.ui, ev)) return;
+    if (this.drag) {   // turning a swinging plate around its last screw
+      if (ev.type === 'move') {
+        const d = this.drag, sp = this.level.screws[d.piv];
+        const ang = Math.atan2(ev.y - (this.by + sp.y * this.u), ev.x - (this.bx + sp.x * this.u));
+        let step = ang - d.lastAng;   // accumulate small steps so crossing ±180° never jumps a full turn
+        while (step > Math.PI) step -= 2 * Math.PI;
+        while (step < -Math.PI) step += 2 * Math.PI;
+        d.turned += step;
+        d.lastAng = ang;
+        const rot = d.startRot + d.turned * 180 / Math.PI;
+        const v = this.vis[d.pi];
+        v.rot = rot; v.vel = 0;
+        this.userRot[d.pi] = rot; this.userPivot[d.pi] = d.piv;
+      } else if (ev.type === 'up' || ev.type === 'cancel') this.drag = null;
+      return;
+    }
     if (this.ended || this.blocked || ev.type !== 'down') return;
     const i = this.screwAt(ev.x, ev.y);
-    if (i < 0) return;
+    if (i < 0) { this.startDrag(ev); return; }
     this.hint = -1;
     const ok = this.hammerMode ? this.tap(i, true) : this.tap(i, false);
     if (ok && this.hammerMode) { G.Progress.useBooster('hammer'); this.refreshCounts(); this.hammerMode = false; }
   };
 
+  // Start turning the topmost plate under the finger that hangs from a single screw.
+  S.startDrag = function (ev) {
+    const g = this.game;
+    const bx = (ev.x - this.bx) / this.u, by = (ev.y - this.by) / this.u;
+    let best = -1;
+    this.level.plates.forEach((p, pi) => {
+      if (g.fallen[pi] || g.pivotOf(pi) < 0) return;
+      if (G.SC.distToPlate(this.visPose(pi), bx, by) > 0.1) return;
+      if (best < 0 || p.layer > this.level.plates[best].layer) best = pi;
+    });
+    if (best < 0) return;
+    const piv = g.pivotOf(best), sp = this.level.screws[piv];
+    const a0 = Math.atan2(ev.y - (this.by + sp.y * this.u), ev.x - (this.bx + sp.x * this.u));
+    this.drag = { pi: best, piv, lastAng: a0, turned: 0, startRot: this.vis[best].rot };
+    G.Audio.play('tap');
+  };
+  // Plates hanging from one screw that visually lie over screw i swing aside before it is taken out.
+  S.swingAway = function (i) {
+    const g = this.game, s2 = this.level.screws[i];
+    for (const q of g.prep.above[i]) {
+      if (g.fallen[q] || g.pivotOf(q) < 0) continue;
+      const pose = this.visPose(q);
+      if (G.SC.distToPlate(pose, s2.x, s2.y) > 0.36) continue;
+      const piv = g.pivotOf(q), sp = this.level.screws[piv];
+      const away = Math.atan2(s2.y - sp.y, s2.x - sp.x) + Math.PI;
+      const now = Math.atan2(pose.y - sp.y, pose.x - sp.x);
+      let d = away - now;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      this.userRot[q] = this.vis[q].rot + d * 180 / Math.PI;
+      this.userPivot[q] = piv;
+    }
+  };
+
   S.tap = function (i, force) {
     const g = this.game;
+    if (g.tappable(i) || force) this.swingAway(i);
     const fromPos = this.screwPos(i);
     const ev = g.tap(i, force);
     if (!ev.ok) {
@@ -263,7 +317,10 @@
     const g = this.game;
     this.level.plates.forEach((p, pi) => {
       if (g.fallen[pi]) return;
-      const target = g.pose(pi).rot || 0;
+      const piv = g.pivotOf(pi);
+      if (this.userRot[pi] != null && this.userPivot[pi] !== piv) delete this.userRot[pi];
+      if (this.drag && this.drag.pi === pi) return;
+      const target = this.userRot[pi] != null ? this.userRot[pi] : (g.pose(pi).rot || 0);
       let v = this.vis[pi];
       if (!v) { this.vis[pi] = { rot: target, vel: 0 }; return; }
       const steps = 4, h = dt / steps;
@@ -301,11 +358,9 @@
     const remaining = this.level.boxes.length - g.qi;
     R.panel(ctx, G.W - 92, 122, 76, 92, { r: 18, fill: '#f3e6d4' });
     R.text(ctx, 'Next', G.W - 54, 140, { size: 15, color: pal.inkSoft, weight: 900 });
-    for (let k = 0; k < Math.min(3, remaining); k++) {
-      const c = this.level.boxes[g.qi + k];
-      ctx.fillStyle = K.SCREW[c];
-      R.rr(ctx, G.W - 80 + k * 18, 158 + k * 8, 26, 18, 6);
-      ctx.fill();
+    if (remaining > 0) {   // only the very next box's colour
+      const c = this.level.boxes[g.qi];
+      R.panel(ctx, G.W - 76, 154, 44, 30, { r: 9, fill: K.SCREW[c], lift: 3 });
     }
     R.text(ctx, remaining + ' left', G.W - 54, 202, { size: 14, color: pal.inkSoft, weight: 800 });
     // boxes
@@ -378,6 +433,13 @@
         if (this.hammerMode && !covered) { ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, this.u * 0.55, 0, 7); ctx.stroke(); }
         K.screw(ctx, g.colorShown(i), x, y, this.u * 0.86, { lock: g.isLocked(i), key: !!s.key });
       }
+    }
+    // free screws that a swinging plate happens to lie over are drawn on top (they can be tapped)
+    for (let i = 0; i < this.level.screws.length; i++) {
+      if (g.removed[i] || !g.tappable(i)) continue;
+      const s2 = this.level.screws[i];
+      const over = g.prep.above[i].some((q) => !g.fallen[q] && g.pivotOf(q) >= 0 && G.SC.distToPlate(this.visPose(q), s2.x, s2.y) < 0.36);
+      if (over) K.screw(ctx, g.colorShown(i), s2.x * this.u, s2.y * this.u, this.u * 0.86, { lock: g.isLocked(i), key: !!s2.key });
     }
     // falling plates
     for (const f of this.falling) {

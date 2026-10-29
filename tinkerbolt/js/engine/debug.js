@@ -13,6 +13,7 @@
     if (G.Tw.busy()) return false;
     if (t.name === 'match3' && (t.busy || t._settle)) return false;
     if (t.name === 'screws' && (t.flights.length || t.falling.length || t.leaving.length || t.blocked)) return false;
+    if (t.name === 'screws' && t.vis && t.vis.some((v) => v && Math.abs(v.vel) > 0.5)) return false;   // a plate is still swinging
     if (t.name === 'dialog' && !t.full()) return false;
     return true;
   };

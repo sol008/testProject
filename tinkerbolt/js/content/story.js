@@ -32,6 +32,8 @@
       T('Now the workbench. These toys are all screwed shut.'),
       T('Tap a screw to take it out. It flies into the toolbox of its colour; a full toolbox of three is packed away.'),
       T('A plate drops once all its screws are out. A screw under another plate can\'t be reached yet.'),
+      T('When a plate hangs from just one screw it swings. Drag it round to see what\'s behind it — it won\'t get in your way.'),
+      T('Careful: if the tray fills right up, Bolt is stuck!'),
     ],
     tut_tray: [T('No toolbox for that colour yet? The screw waits in the tray below the boxes. If the tray fills up, you\'re stuck — so watch the "Next" boxes!')],
     tut_lock: [T('A padlocked screw won\'t budge until you take out the gold key screw. The key has a little gold ring.')],

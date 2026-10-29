@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.3.1 (2026-10-29): screw playtest fixes
+- A plate hanging from one screw can be **dragged round** that screw; tapping a screw it lies over swings it aside. Swinging plates no longer block screws (except right next to their pin), so they can't trap a level.
+- "Next" shows only the next box's colour.
+- Mystery "?" screws show their colour as soon as no plate covers them.
+- Chapter 2 regenerated and re-proven under these rules; tutorial explains dragging and the full-tray rule.
+
 ## 0.3.0 (2026-10-29): playtest fixes
 - Out of moves → **Continue: +5 moves** for 50 coins; stuck on screws → Extra slot (or a 50-coin +1 slot on hard levels).
 - New special: a **2×2 square** makes a **fish** that swims to something your goals need.

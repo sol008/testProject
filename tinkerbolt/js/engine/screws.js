@@ -37,15 +37,24 @@
     const covers = (pose, s) => SC.distToPlate(pose, s.x, s.y) < SC.SCREW_R;
     const above = screws.map((s) => { const own = plates[pIndex[s.plate]]; return plates.map((q, qi) => (q.layer > own.layer ? qi : -1)).filter((qi) => qi >= 0); });
     const coveredBy = screws.map((s, i) => above[i].filter((qi) => covers(plates[qi], s)));
-    // hang[qi][pivotScrew] = Set of screw indices covered by plate qi hanging from that screw
+    // hang[qi][pivotScrew]: a plate held by one screw can be swung (by gravity or the player's finger) to any
+    // angle, so it only blocks screws it covers at EVERY angle: those inside the disc around the pivot that
+    // stays within the plate whatever the rotation ("core" radius = pivot's distance to the plate's edge).
     const hang = plates.map((q, qi) => {
       const out = {};
       screws.forEach((sp, j) => {
         if (pIndex[sp.plate] !== qi) return;
         const pose = SC.hangPose(q, sp.x, sp.y);
+        let core;
+        if (q.shape === 'circle') core = q.r - Math.hypot(sp.x - q.x, sp.y - q.y);
+        else {
+          const a = -(q.rot || 0) * Math.PI / 180, dx = sp.x - q.x, dy = sp.y - q.y;
+          const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+          core = Math.min(q.w / 2 - Math.abs(lx), q.h / 2 - Math.abs(ly));
+        }
         const set = new Set();
-        screws.forEach((s, i) => { if (above[i].indexOf(qi) >= 0 && covers(pose, s)) set.add(i); });
-        out[j] = { pose, set };
+        screws.forEach((s, i) => { if (above[i].indexOf(qi) >= 0 && Math.hypot(s.x - sp.x, s.y - sp.y) < core + SC.SCREW_R) set.add(i); });
+        out[j] = { pose, set, core };
       });
       return out;
     });
